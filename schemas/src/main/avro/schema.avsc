@@ -1,0 +1,60 @@
+[{
+    "type": "record",
+    "name": "Account",
+    "namespace": "com.spotify.cloud.dataflow.avro",
+    "doc": "Record for an account",
+    "fields": [
+        {"name": "id", "type": "int"},
+        {"name": "type", "type": "string"},
+        {"name": "name", "type": "string"},
+        {"name": "amount", "type": "double"}
+    ]
+}, {
+    "type": "record",
+    "name": "User",
+    "namespace": "com.spotify.cloud.dataflow.avro",
+    "doc": "Record for a user",
+    "fields": [
+        {"name": "id", "type": "int"},
+        {"name": "last_name", "type": "string"},
+        {"name": "first_name", "type": "string"},
+        {"name": "email", "type": "string"},
+        {
+            "name": "accounts",
+            "type": {
+                "type": "array",
+                "items": "Account"
+            }
+        },
+        {
+            "name": "address",
+            "type": {
+                "type": "record",
+                "name": "Address",
+                "namespace": "com.spotify.cloud.dataflow.avro",
+                "doc": "Record for an address",
+                "fields": [
+                    {"name": "street1", "type": "string"},
+                    {"name": "street2", "type": "string"},
+                    {"name": "city", "type": "string"},
+                    {"name": "state", "type": "string"},
+                    {"name": "zip", "type": "string"},
+                    {"name": "country", "type": "string"}
+                ]
+            }
+        }
+    ]
+}, {
+    "type": "record",
+    "name": "TestRecord",
+    "namespace": "com.spotify.cloud.dataflow.avro",
+    "doc": "Record for testing",
+    "fields": [
+        {"name": "int_field", "type": ["int", "null"]},
+        {"name": "long_field", "type": ["long", "null"]},
+        {"name": "float_field", "type": ["float", "null"]},
+        {"name": "double_field", "type": ["double", "null"]},
+        {"name": "boolean_field", "type": ["boolean", "null"]},
+        {"name": "string_field", "type": ["string", "null"]}
+    ]
+}]
