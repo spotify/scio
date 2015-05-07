@@ -177,7 +177,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   def foldByKey(zeroValue: V)(op: (V, V) => V): SCollection[(K, V)] =
     this.applyPerKey(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op)), kvToTuple[K, V])
 
-  def foldByKey(implicit mon: Monoid[V]): SCollection[(K, V)] = this.foldByKey(mon.zero)(mon.plus)
+  def foldByKey(implicit mon: Monoid[V]): SCollection[(K, V)] =
+    this.applyPerKey(Combine.perKey(Functions.reduceFn(mon)), kvToTuple[K, V])
 
   def groupByKey(): SCollection[(K, Iterable[V])] =
     this.applyPerKey(GroupByKey.create[K, V](), kvIterableToTuple[K, V])

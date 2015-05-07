@@ -104,7 +104,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def fold(zeroValue: T)(op: (T, T) => T): SCollection[T] =
     this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(op, op)))
 
-  def fold(implicit mon: Monoid[T]): SCollection[T] = fold(mon.zero)(mon.plus)
+  def fold(implicit mon: Monoid[T]): SCollection[T] = this.apply(Combine.globally(Functions.reduceFn(mon)))
 
   def groupBy[K: ClassTag](f: T => K): SCollection[(K, Iterable[T])] =
     this
