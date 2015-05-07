@@ -234,6 +234,7 @@ class SCollectionTest extends PipelineTest {
       sum(1L, 2L, 3L).internal should containSingleValue (6L)
       sum(1F, 2F, 3F).internal should containSingleValue (6F)
       sum(1.0, 2.0, 3.0).internal should containSingleValue (6.0)
+      sum(1 to 100: _*).internal should containSingleValue (5050)
     }
   }
 

@@ -203,7 +203,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
       if (t._2._1.nonEmpty && t._2._2.isEmpty) t._2._1.map((t._1, _)) else  Seq.empty
     }
 
-  def sumByKey()(implicit sg: Semigroup[V]): SCollection[(K, V)] = this.reduceByKey(sg.plus)
+  def sumByKey()(implicit sg: Semigroup[V]): SCollection[(K, V)] =
+    this.applyPerKey(Combine.perKey(Functions.reduceFn(sg)), kvToTuple[K, V])
 
   // Scala lambda is simpler than transforms.KvSwap
   def swap: SCollection[(V, K)] = self.map(kv => (kv._2, kv._1))

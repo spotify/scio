@@ -280,8 +280,8 @@ class PairSCollectionFunctionsTest extends PipelineTest {
 
   it should "support sumByKey()" in {
     runWithContext { pipeline =>
-      val p = pipeline.parallelize(("a", 1), ("b", 2), ("b", 2), ("c", 3), ("c", 3), ("c", 3)).sumByKey()
-      p.internal should containInAnyOrder (("a", 1), ("b", 4), ("c", 9))
+      val p = pipeline.parallelize(List(("a", 1), ("b", 2), ("b", 2)) ++ (1 to 100).map(("c", _)): _*).sumByKey()
+      p.internal should containInAnyOrder (("a", 1), ("b", 4), ("c", 5050))
     }
   }
 

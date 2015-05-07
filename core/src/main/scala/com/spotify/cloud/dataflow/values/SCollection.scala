@@ -143,8 +143,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     }
 
   // Scala lambda is simpler and more powerful than transforms.Sum
-  // TODO: use sg.sumOption instead
-  def sum()(implicit sg: Semigroup[T]): SCollection[T] = this.reduce(sg.plus)
+  def sum()(implicit sg: Semigroup[T]): SCollection[T] = this.apply(Combine.globally(Functions.reduceFn(sg)))
 
   def take(num: Long): SCollection[T] = this.apply(Sample.any(num))
 
