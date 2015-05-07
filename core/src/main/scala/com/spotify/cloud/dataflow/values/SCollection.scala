@@ -15,13 +15,16 @@ import com.google.cloud.dataflow.sdk.io.{
   TextIO => GTextIO
 }
 import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
-import com.google.cloud.dataflow.sdk.transforms._
+import com.google.cloud.dataflow.sdk.transforms.{
+  ApproximateQuantiles, ApproximateUnique, Combine, Count, DoFn, Filter, Flatten, GroupByKey, Mean, ParDo, Partition,
+  RemoveDuplicates, Sample, Top, View, WithKeys
+}
 import com.google.cloud.dataflow.sdk.transforms.windowing._
 import com.google.cloud.dataflow.sdk.values._
 import com.spotify.cloud.dataflow.DataflowContext
 import com.spotify.cloud.dataflow.testing._
 import com.spotify.cloud.dataflow.util._
-import com.twitter.algebird.{Monoid, Semigroup}
+import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.Schema
 import org.apache.avro.generic.{IndexedRecord, GenericRecord}
 import org.apache.avro.specific.SpecificRecord
@@ -77,6 +80,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   def aggregate[U: ClassTag](zeroValue: U)(seqOp: (U, T) => U, combOp: (U, U) => U): SCollection[U] =
     this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(seqOp, combOp)))
+
+  // Algebird approach, more powerful and better optimized in some cases
+  def aggregate[A: ClassTag, U: ClassTag](aggregator: Aggregator[T, A, U]): SCollection[U] =
+    this.map(aggregator.prepare).sum()(aggregator.semigroup).map(aggregator.present)
 
   def combine[C: ClassTag](createCombiner: T => C)
                           (mergeValue: (C, T) => C)

@@ -1,7 +1,7 @@
 package com.spotify.cloud.dataflow.values
 
 import com.spotify.cloud.dataflow.testing.PipelineTest
-import com.twitter.algebird.Semigroup
+import com.twitter.algebird.{Aggregator, Semigroup}
 import org.joda.time.{Duration, Instant}
 
 import scala.reflect.ClassTag
@@ -67,8 +67,13 @@ class SCollectionTest extends PipelineTest {
 
   it should "support aggregate()" in {
     runWithContext { pipeline =>
-      val p = pipeline.parallelize(1 to 100: _*).aggregate(0.0)(_ + _, _ + _)
-      p.internal should containSingleValue (5050.0)
+      val p = pipeline.parallelize(1 to 100: _*)
+      val p1 = p.aggregate(0.0)(_ + _, _ + _)
+      val p2 = p.aggregate(Aggregator.max[Int])
+      val p3 = p.aggregate(Aggregator.sortedReverseTake[Int](5))
+      p1.internal should containSingleValue (5050.0)
+      p2.internal should containSingleValue (100)
+      p3.internal should containSingleValue (Seq(100, 99, 98, 97, 96))
     }
   }
 

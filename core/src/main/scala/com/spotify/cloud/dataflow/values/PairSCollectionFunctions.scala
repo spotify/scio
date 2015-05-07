@@ -2,12 +2,14 @@ package com.spotify.cloud.dataflow.values
 
 import java.lang.{Long => JLong}
 
-import com.google.cloud.dataflow.sdk.transforms._
+import com.google.cloud.dataflow.sdk.transforms.{
+  ApproximateQuantiles, ApproximateUnique, Combine, GroupByKey, Keys, ParDo, PTransform, Sample, Top, Values
+}
 import com.google.cloud.dataflow.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}
 import com.google.cloud.dataflow.sdk.values.{PCollection, KV, TupleTag}
 import com.spotify.cloud.dataflow.{Implicits, DataflowContext}
 import com.spotify.cloud.dataflow.util._
-import com.twitter.algebird.{Monoid, Semigroup}
+import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -152,6 +154,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   def aggregateByKey[U: ClassTag](zeroValue: U)(seqOp: (U, V) => U, combOp: (U, U) => U): SCollection[(K, U)] =
     this.applyPerKey(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp)), kvToTuple[K, U])
+
+  // Algebird approach, more powerful and better optimized in some cases
+  def aggregateByKey[A: ClassTag, U: ClassTag](aggregator: Aggregator[V, A, U]): SCollection[(K, U)] =
+    this.mapValues(aggregator.prepare).sumByKey()(aggregator.semigroup).mapValues(aggregator.present)
 
   def approxQuantilesByKey(numQuantiles: Int)(implicit ord: Ordering[V]): SCollection[(K, Iterable[V])] =
     this.applyPerKey(ApproximateQuantiles.perKey(numQuantiles, ord), kvListToTuple[K, V])

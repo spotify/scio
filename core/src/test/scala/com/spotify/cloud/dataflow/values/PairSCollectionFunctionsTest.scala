@@ -1,6 +1,7 @@
 package com.spotify.cloud.dataflow.values
 
 import com.spotify.cloud.dataflow.testing.PipelineTest
+import com.twitter.algebird.Aggregator
 
 class PairSCollectionFunctionsTest extends PipelineTest {
 
@@ -162,8 +163,12 @@ class PairSCollectionFunctionsTest extends PipelineTest {
     runWithContext { pipeline =>
       val p1 = pipeline.parallelize(1 to 100: _*).map(("a", _))
       val p2 = pipeline.parallelize(1 to 10: _*).map(("b", _))
-      val p = (p1 ++ p2).aggregateByKey(0.0)(_ + _, _ + _)
-      p.internal should containInAnyOrder (("a", 5050.0), ("b", 55.0))
+      val r1 = (p1 ++ p2).aggregateByKey(0.0)(_ + _, _ + _)
+      val r2 = (p1 ++ p2).aggregateByKey(Aggregator.max[Int])
+      val r3 = (p1 ++ p2).aggregateByKey(Aggregator.sortedReverseTake[Int](5))
+      r1.internal should containInAnyOrder (("a", 5050.0), ("b", 55.0))
+      r2.internal should containInAnyOrder (("a", 100), ("b", 10))
+      r3.internal should containInAnyOrder (("a", Seq(100, 99, 98, 97, 96)), ("b", Seq(10, 9, 8, 7, 6)))
     }
   }
 
