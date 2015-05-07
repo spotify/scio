@@ -104,6 +104,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def fold(zeroValue: T)(op: (T, T) => T): SCollection[T] =
     this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(op, op)))
 
+  // Algebird approach, more powerful and better optimized in some cases
   def fold(implicit mon: Monoid[T]): SCollection[T] = this.apply(Combine.globally(Functions.reduceFn(mon)))
 
   def groupBy[K: ClassTag](f: T => K): SCollection[(K, Iterable[T])] =
@@ -142,7 +143,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       if (t._2._1.nonEmpty && t._2._2.isEmpty) Seq(t._1) else Seq.empty
     }
 
-  // Scala lambda is simpler and more powerful than transforms.Sum
+  // Algebird approach, more powerful and better optimized in some cases
   def sum()(implicit sg: Semigroup[T]): SCollection[T] = this.apply(Combine.globally(Functions.reduceFn(sg)))
 
   def take(num: Long): SCollection[T] = this.apply(Sample.any(num))

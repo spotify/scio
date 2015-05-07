@@ -177,6 +177,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   def foldByKey(zeroValue: V)(op: (V, V) => V): SCollection[(K, V)] =
     this.applyPerKey(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op)), kvToTuple[K, V])
 
+  // Algebird approach, more powerful and better optimized in some cases
   def foldByKey(implicit mon: Monoid[V]): SCollection[(K, V)] =
     this.applyPerKey(Combine.perKey(Functions.reduceFn(mon)), kvToTuple[K, V])
 
@@ -204,6 +205,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
       if (t._2._1.nonEmpty && t._2._2.isEmpty) t._2._1.map((t._1, _)) else  Seq.empty
     }
 
+  // Algebird approach, more powerful and better optimized in some cases
   def sumByKey()(implicit sg: Semigroup[V]): SCollection[(K, V)] =
     this.applyPerKey(Combine.perKey(Functions.reduceFn(sg)), kvToTuple[K, V])
 
