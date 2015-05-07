@@ -98,82 +98,49 @@ private[dataflow] object Functions {
   }
 
   private abstract class ReduceFn[T] extends KryoCombineFn[T, JList[T], T] {
+
     override def createAccumulator(): JList[T] = Lists.newArrayList()
-  }
-
-  def reduceFn[T](f: (T, T) => T): CombineFn[T, JList[T], T] = new ReduceFn[T] {
-
-    val g = f  // defeat closure
 
     override def addInput(accumulator: JList[T], input: T): JList[T] = {
       accumulator.add(input)
       if (accumulator.size > BUFFER_SIZE) {
-        val combined = accumulator.asScala.reduce(g)
+        val combined = reduce(accumulator.asScala)
         accumulator.clear()
         accumulator.add(combined)
       }
       accumulator
     }
 
-    // TODO: maybe unsafe if addInput is never called?
-    override def extractOutput(accumulator: JList[T]): T = accumulator.asScala.reduce(g)
+    override def extractOutput(accumulator: JList[T]): T = reduce(accumulator.asScala)
 
     override def mergeAccumulators(accumulators: JIterable[JList[T]]): JList[T] = {
-      val partial: Iterable[T] = accumulators.asScala.map(_.asScala.reduce(g))
-      val combined = partial.reduce(g)
+      val partial: Iterable[T] = accumulators.asScala.map(a => reduce(a.asScala))
+      val combined = reduce(partial)
       Lists.newArrayList(combined)
     }
 
+    def reduce(accumulator: Iterable[T]): T
+
+  }
+
+  def reduceFn[T](f: (T, T) => T): CombineFn[T, JList[T], T] = new ReduceFn[T] {
+    val g = f  // defeat closure
+    override def reduce(accumulator: Iterable[T]): T = accumulator.reduce(g)
   }
 
   def reduceFn[T](sg: Semigroup[T]): CombineFn[T, JList[T], T] = new ReduceFn[T] {
-
     val _sg = sg  // defeat closure
-
-    override def addInput(accumulator: JList[T], input: T): JList[T] = {
-      accumulator.add(input)
-      if (accumulator.size > BUFFER_SIZE) {
-        val acc = _sg.sumOption(accumulator.asScala)
-        accumulator.clear()
-        acc.foreach(accumulator.add)
-      }
-      accumulator
-    }
-
-    // TODO: maybe unsafe if addInput is never called?
-    override def extractOutput(accumulator: JList[T]): T = _sg.sumOption(accumulator.asScala).get
-
     override def mergeAccumulators(accumulators: JIterable[JList[T]]): JList[T] = {
       val partial = accumulators.asScala.flatMap(a => _sg.sumOption(a.asScala))
       val combined = _sg.sumOption(partial).get
       Lists.newArrayList(combined)
     }
-
+    override def reduce(accumulator: Iterable[T]): T = _sg.sumOption(accumulator).get
   }
 
   def reduceFn[T](mon: Monoid[T]): CombineFn[T, JList[T], T] = new ReduceFn[T] {
-
     val _mon = mon  // defeat closure
-
-    override def addInput(accumulator: JList[T], input: T): JList[T] = {
-      accumulator.add(input)
-      if (accumulator.size > BUFFER_SIZE) {
-        val acc = _mon.sum(accumulator.asScala)
-        accumulator.clear()
-        accumulator.add(acc)
-      }
-      accumulator
-    }
-
-    // TODO: maybe unsafe if addInput is never called?
-    override def extractOutput(accumulator: JList[T]): T = _mon.sum(accumulator.asScala)
-
-    override def mergeAccumulators(accumulators: JIterable[JList[T]]): JList[T] = {
-      val partial = accumulators.asScala.map(a => _mon.sum(a.asScala))
-      val combined = _mon.sum(partial)
-      Lists.newArrayList(combined)
-    }
-
+    override def reduce(accumulator: Iterable[T]): T = _mon.sum(accumulator)
   }
 
 }
