@@ -29,51 +29,81 @@ private[dataflow] object Functions {
   }
 
   def aggregateFn[T, U: ClassTag](zeroValue: U)(seqOp: (U, T) => U, combOp: (U, U) => U)
-      : CombineFn[T, Array[U], U] = new KryoCombineFn[T, Array[U], U] {
+      : CombineFn[T, (U, JList[T]), U] = new KryoCombineFn[T, (U, JList[T]), U] {
 
     // defeat closure
     val s = seqOp
     val c = combOp
 
-    override def createAccumulator(): Array[U] = Array(zeroValue)
-
-    override def addInput(accumulator: Array[U], input: T): Array[U] = {
-      accumulator(0) = s(accumulator(0), input)
-      accumulator
+    private def fold(accumulator: (U, JList[T])): U = {
+      val (a, l) = accumulator
+      l.asScala.foldLeft(a)(s)
     }
 
-    override def extractOutput(accumulator: Array[U]): U = accumulator(0)
+    override def createAccumulator(): (U, JList[T]) = (zeroValue, Lists.newArrayList())
 
-    override def mergeAccumulators(accumulators: JIterable[Array[U]]): Array[U] =
-      Array(accumulators.asScala.map(_(0)).reduce(c))
+    override def addInput(accumulator: (U, JList[T]), input: T): (U, JList[T]) = {
+      val (a, l) = accumulator
+      l.add(input)
+      if (l.size() >= BUFFER_SIZE) {
+        (fold(accumulator), Lists.newArrayList())
+      } else {
+        accumulator
+      }
+    }
+
+    override def extractOutput(accumulator: (U, JList[T])): U = accumulator._2.asScala.foldLeft(accumulator._1)(s)
+
+    override def mergeAccumulators(accumulators: JIterable[(U, JList[T])]): (U, JList[T]) = {
+      val combined = accumulators.asScala.map(fold).reduce(c)
+      (combined, Lists.newArrayList())
+    }
 
   }
 
   def combineFn[T, C: ClassTag](createCombiner: T => C, mergeValue: (C, T) => C, mergeCombiners: (C, C) => C)
-      : CombineFn[T, JList[C], C] = new KryoCombineFn[T, JList[C], C] {
+      : CombineFn[T, (Option[C], JList[T]), C] = new KryoCombineFn[T, (Option[C], JList[T]), C] {
 
     // defeat closure
     val cc = createCombiner
     val mv = mergeValue
     val mc = mergeCombiners
 
-    override def createAccumulator(): JList[C] = Lists.newArrayList()
-
-
-    override def addInput(accumulator: JList[C], input: T): JList[C] = {
-      if (accumulator.isEmpty) {
-        accumulator.add(cc(input))
+    private def fold(accumulator: (Option[C], JList[T])): C = {
+      val (a, l) = accumulator
+      if (a.isDefined) {
+        l.asScala.foldLeft(a.get)(mv)
       } else {
-        accumulator.set(0, mv(accumulator.get(0), input))
+        var c = cc(l.get(0))
+        var i = 1
+        while (i < l.size) {
+          c = mv(c, l.get(i))
+          i += 1
+        }
+        c
       }
-      accumulator
+    }
+
+    override def createAccumulator(): (Option[C], JList[T]) = (None, Lists.newArrayList())
+
+    override def addInput(accumulator: (Option[C], JList[T]), input: T): (Option[C], JList[T]) = {
+      val (a, l) = accumulator
+      l.add(input)
+      if (l.size() >= BUFFER_SIZE) {
+        (Some(fold(accumulator)), Lists.newArrayList())
+      } else {
+        accumulator
+      }
     }
 
     // TODO: maybe unsafe if addInput is never called?
-    override def extractOutput(accumulator: JList[C]): C = accumulator.get(0)
+    override def extractOutput(accumulator: (Option[C], JList[T])): C = fold(accumulator)
 
-    override def mergeAccumulators(accumulators: JIterable[JList[C]]): JList[C] =
-      Lists.newArrayList(accumulators.asScala.map(_.get(0)).reduce(mc))
+
+    override def mergeAccumulators(accumulators: JIterable[(Option[C], JList[T])]): (Option[C], JList[T]) = {
+      val combined = accumulators.asScala.map(fold).reduce(mc)
+      (Some(combined), Lists.newArrayList())
+    }
 
   }
 
