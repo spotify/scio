@@ -7,13 +7,7 @@ Scala API for Google Cloud Dataflow
 
 # Getting Started
 
-First clone my fork of [DataflowJavaSDK](https://github.com/nevillelyh/DataflowJavaSDK) and install in your local Maven repository:
-
-```bash
-git clone git@github.com:nevillelyh/DataflowJavaSDK.git
-cd DataflowJavaSDK
-mvn clean install
-```
+First install the [Google Cloud SDK](https://cloud.google.com/sdk/) and create a Cloud Storage bucket for your project.
 
 Then clone this repository and publish artifacts locally.
 
@@ -22,8 +16,6 @@ git clone git@github.com:spotify/dataflow-scala.git
 cd dataflow-scala
 sbt publishLocal
 ```
-
-You'll also need to install the [Google Cloud SDK](https://cloud.google.com/sdk/) and create a Cloud Storage bucket for your project.
 
 # Running the Examples
 
