@@ -107,7 +107,8 @@ object DataflowScalaBuild extends Build {
 
   lazy val dataflowScalaExamples: Project = Project(
     "dataflow-scala-examples",
-    file("examples")
+    file("examples"),
+    settings = buildSettings
   ).settings(
     publish := {},
     publishLocal := {}
