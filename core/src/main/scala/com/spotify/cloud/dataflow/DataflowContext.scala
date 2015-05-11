@@ -4,9 +4,6 @@ import java.beans.Introspector
 import java.io.File
 import java.net.URI
 
-import com.google.api.client.http.javanet.NetHttpTransport
-import com.google.api.client.json.jackson.JacksonFactory
-import com.google.api.services.bigquery.Bigquery
 import com.google.api.services.bigquery.model._
 import com.google.api.services.datastore.DatastoreV1.{Query, Entity}
 import com.google.cloud.dataflow.sdk.Pipeline
@@ -22,6 +19,7 @@ import com.google.cloud.dataflow.sdk.options.{PipelineOptionsFactory, DataflowPi
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.{PTransform, Create}
 import com.google.cloud.dataflow.sdk.values.{TimestampedValue, PBegin, POutput}
+import com.spotify.cloud.bigquery.BigQueryClient
 import com.spotify.cloud.dataflow.testing._
 import com.spotify.cloud.dataflow.util.CallSites
 import com.spotify.cloud.dataflow.values._
@@ -73,6 +71,8 @@ class DataflowContext(cmdlineArgs: Array[String]) extends Implicits {
     (_args, _pipeline)
   }
 
+  private lazy val bigQueryClient: BigQueryClient = new BigQueryClient(this.options.getGcpCredential)
+
   def close(): Unit = pipeline.run()
 
   /* Test wiring */
@@ -120,47 +120,16 @@ class DataflowContext(cmdlineArgs: Array[String]) extends Implicits {
     if (this.isTest) {
       this.getTestInput(BigQueryIO(sqlQuery))
     } else {
-      val credential = this.options.getGcpCredential
-      val projectId = this.options.getProject
-      val bigquery = new Bigquery(new NetHttpTransport(), new JacksonFactory, credential)
-
-      val destinationTable = new TableReference()
-        .setProjectId(projectId)
-        .setDatasetId(stagingDataset)
-        .setTableId(this.options.getJobName.replaceAll("-", "_") + "_" + _sqlId)
+      val tableId = this.options.getJobName.replaceAll("-", "_") + "_" + _sqlId
       _sqlId += 1
 
-      val queryConfig: JobConfigurationQuery = new JobConfigurationQuery()
-        .setQuery(sqlQuery)
-        .setAllowLargeResults(true)
-        .setFlattenResults(false)
-        .setPriority("BATCH")
-        .setDestinationTable(destinationTable)
-      val jobConfig: JobConfiguration = new JobConfiguration().setQuery(queryConfig)
-      val job = new Job().setConfiguration(jobConfig)
+      val table = new TableReference()
+        .setProjectId(options.getProject)
+        .setDatasetId(stagingDataset)
+        .setTableId(tableId)
 
-      val insert = bigquery.jobs().insert(projectId, job)
-      val jobId = insert.execute().getJobReference
-
-      val startTime = System.currentTimeMillis()
-
-      var pollJob: Job = null
-      var state: String = null
-      do {
-        pollJob = bigquery.jobs().get(projectId, jobId.getJobId).execute()
-        val error = pollJob.getStatus.getErrorResult
-        if (error != null) {
-          throw new RuntimeException(s"BigQuery failed: $error")
-        }
-        state = pollJob.getStatus.getState
-        val ms = System.currentTimeMillis() - startTime
-        println(s"Job status ($ms): ${jobId.getJobId}: $state")
-        Thread.sleep(1000)
-      } while (state != "DONE")
-
-      // Permission problem
-      // bigQueryTable(pollJob.getConfiguration.getQuery.getDestinationTable)
-      bigQueryTable(destinationTable).setName(sqlQuery)
+      this.bigQueryClient.queryIntoTable(sqlQuery, table)
+      bigQueryTable(table).setName(sqlQuery)
     }
 
   def bigQueryTable(table: TableReference): SCollection[TableRow] = {
@@ -173,7 +142,7 @@ class DataflowContext(cmdlineArgs: Array[String]) extends Implicits {
   }
 
   def bigQueryTable(tableSpec: String): SCollection[TableRow] =
-    bigQueryTable(GBigQueryIO.parseTableSpec(tableSpec))
+    this.bigQueryTable(GBigQueryIO.parseTableSpec(tableSpec))
 
   def datastore(datasetId: String, query: Query): SCollection[Entity] =
     if (this.isTest) {

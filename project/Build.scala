@@ -76,8 +76,7 @@ object DataflowScalaBuild extends Build {
     file("bigquery"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
-        "com.google.apis" % "google-api-services-bigquery" % "v2-rev187-1.19.1"
-          exclude("com.google.guava", "guava-jdk5"),
+        "com.google.cloud.dataflow" % "google-cloud-dataflow-java-sdk-all" % sdkVersion,
         "org.scalatest" %% "scalatest" % scalaTestVersion
       ),
       libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
