@@ -9,8 +9,7 @@ import com.google.common.io.ByteStreams
 import com.twitter.chill._
 import org.apache.avro.specific.SpecificRecord
 
-// TODO: need to fix for scala 2.11
-import scala.collection.JavaConversions.JIterableWrapper
+import scala.collection.convert.Wrappers.JIterableWrapper
 
 private[dataflow] class KryoAtomicCoder extends AtomicCoder[Any] {
 
@@ -20,7 +19,6 @@ private[dataflow] class KryoAtomicCoder extends AtomicCoder[Any] {
 
     // java.lang.Iteable.asScala returns JIterableWrapper which causes problem.
     // Treat it as standard Iteable instead.
-    // TODO: need to fix for scala 2.11
     k.register(classOf[JIterableWrapper[_]], new JIterableWrapperSerializer)
 
     k.forSubclass[SpecificRecord](new AvroSerializer)
