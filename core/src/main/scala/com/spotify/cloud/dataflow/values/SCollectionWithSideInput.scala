@@ -27,7 +27,7 @@ private class SCollectionWithSideInputImpl[T, S, R](val internal: PCollection[T]
                                                        (implicit val context: DataflowContext, val ct: ClassTag[T])
   extends SCollectionWithSideInput[T, S] with PCollectionWrapper[T] {
 
-  override protected def parDo[U: ClassManifest](fn: DoFn[T, U]): SCollection[U] =
+  override protected def parDo[U: ClassTag](fn: DoFn[T, U]): SCollection[U] =
     this.apply(ParDo.withSideInputs(view).of(fn)).setCoder(this.getCoder[U])
 
   def filter(f: (T, S) => Boolean): SCollectionWithSideInput[T, S] = {
