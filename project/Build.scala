@@ -8,9 +8,9 @@ object BuildSettings {
     organization       := "com.spotify",
     version            := "0.1.0-SNAPSHOT",
 
-    scalaVersion       := "2.10.5",
+    scalaVersion       := "2.11.6",
     crossScalaVersions := Seq("2.10.5", "2.11.6"),
-    scalacOptions      ++= Seq(),
+    scalacOptions      ++= Seq("-deprecation", "-feature", "-unchecked"),
     javacOptions       ++= Seq("-source", "1.7", "-target", "1.7")
   )
 }
@@ -24,11 +24,13 @@ object DataflowScalaBuild extends Build {
   val macrosVersion = "2.0.1"
   val scalaTestVersion = "2.2.1"
 
+  lazy val paradiseDependency =
+    "org.scalamacros" % "paradise" % macrosVersion cross CrossVersion.full
+
   lazy val root: Project = Project(
     "root",
     file("."),
-    settings = buildSettings ++ Seq(
-      run <<= run in Compile in dataflowScalaExamples)
+    settings = buildSettings ++ Seq(run <<= run in Compile in dataflowScalaExamples)
   ).settings(
     publish := {},
     publishLocal := {}
@@ -77,21 +79,19 @@ object DataflowScalaBuild extends Build {
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
         "com.google.cloud.dataflow" % "google-cloud-dataflow-java-sdk-all" % sdkVersion,
+        "joda-time" % "joda-time" % "2.7",
         "org.scalatest" %% "scalatest" % scalaTestVersion
       ),
       libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
-      libraryDependencies := {
-        CrossVersion.partialVersion(scalaVersion.value) match {
-          // if Scala 2.11+ is used, quasiquotes are available in the standard distribution
-          case Some((2, scalaMajor)) if scalaMajor >= 11 =>
-            libraryDependencies.value
-          // in Scala 2.10, quasiquotes are provided by macro paradise
-          case Some((2, 10)) =>
-            libraryDependencies.value ++ Seq(
-              compilerPlugin("org.scalamacros" % "paradise" % macrosVersion cross CrossVersion.full),
-              "org.scalamacros" %% "quasiquotes" % macrosVersion cross CrossVersion.binary)
-        }
-      }
+      libraryDependencies ++= (
+        if (scalaVersion.value.startsWith("2.10"))
+          List("org.scalamacros" %% "quasiquotes" % macrosVersion cross CrossVersion.binary)
+        else
+          Nil
+      ),
+      addCompilerPlugin(paradiseDependency),
+      // workaround for GcpCrentials
+      dependencyOverrides ++= Set("com.google.http-client" % "google-http-client" % "1.20.0")
     )
   )
 
@@ -102,12 +102,16 @@ object DataflowScalaBuild extends Build {
   ).settings(
     publish := {},
     publishLocal := {}
+  ).dependsOn(
+    bigqueryScala
   )
 
   lazy val dataflowScalaExamples: Project = Project(
     "dataflow-scala-examples",
     file("examples"),
-    settings = buildSettings
+    settings = buildSettings ++ Seq(
+      addCompilerPlugin(paradiseDependency)
+    )
   ).settings(
     publish := {},
     publishLocal := {}
