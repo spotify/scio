@@ -44,7 +44,7 @@ class Accumulator[T, U] {
   private val m: MMap[String, Aggregator[_]] = MMap.empty
   private var c: DoFn[T, U]#ProcessContext = null
 
-  def withContext(c: DoFn[T, U]#ProcessContext): Accumulator[T, U] = {
+  private[util] def withContext(c: DoFn[T, U]#ProcessContext): Accumulator[T, U] = {
     this.c = c
     this
   }
