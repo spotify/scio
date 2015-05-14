@@ -27,17 +27,17 @@ private[dataflow] object TestDataManager {
   private val outputs = MMap.empty[String, TestOutput]
   private val distCaches = MMap.empty[String, TestDistCache]
 
-  def getInput(testId: String) = inputs(testId)
-  def getOutput(testId: String) = outputs(testId)
-  def getDistCache(testId: String) = distCaches(testId)
+  def getInput(testId: String): TestInput = inputs(testId)
+  def getOutput(testId: String): TestOutput = outputs(testId)
+  def getDistCache(testId: String): TestDistCache = distCaches(testId)
 
-  def setInput(testId: String, input: TestInput) = inputs += (testId -> input)
-  def setOutput(testId: String, output: TestOutput) = outputs += (testId -> output)
-  def setDistCache(testId: String, distCache: TestDistCache) = distCaches += (testId -> distCache)
+  def setInput(testId: String, input: TestInput): Unit = inputs += (testId -> input)
+  def setOutput(testId: String, output: TestOutput): Unit = outputs += (testId -> output)
+  def setDistCache(testId: String, distCache: TestDistCache): Unit = distCaches += (testId -> distCache)
 
-  def unsetInput(testId: String) = inputs -= testId
-  def unsetOutput(testId: String) = outputs -= testId
-  def unsetDistCache(testId: String) = distCaches -= testId
+  def unsetInput(testId: String): Unit = inputs -= testId
+  def unsetOutput(testId: String): Unit = outputs -= testId
+  def unsetDistCache(testId: String): Unit = distCaches -= testId
 
 }
 

@@ -30,7 +30,7 @@ object FilterExamples {
       new TableFieldSchema().setName("mean_temp").setType("FLOAT"))
     val schema = new TableSchema().setFields(fields.asJava)
 
-    def recordToRow(r: Record) =
+    def recordToRow(r: Record): TableRow =
       TableRow("year" -> r.year, "month" -> r.month, "day" -> r.day, "mean_temp" -> r.meanTemp)
 
     val monthFilter = args.getOrElse("monthFilter", "7").toInt

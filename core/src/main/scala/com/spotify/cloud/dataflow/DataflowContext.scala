@@ -52,8 +52,11 @@ class DataflowContext(cmdlineArgs: Array[String]) extends Implicits {
     val dfPatterns = classOf[DataflowPipelineOptions].getMethods.flatMap { m =>
       val n = m.getName
       if ((!n.startsWith("get") && !n.startsWith("is")) ||
-        m.getParameterTypes.length != 0 || m.getReturnType == classOf[Unit]) None
-      else Some(Introspector.decapitalize(n.substring(if (n.startsWith("is")) 2 else 3)))
+        m.getParameterTypes.length != 0 || m.getReturnType == classOf[Unit]) {
+        None
+      } else {
+        Some(Introspector.decapitalize(n.substring(if (n.startsWith("is")) 2 else 3)))
+      }
     }.map(s => s"--$s($$|=)".r)
 
     val (dfArgs, appArgs) = cmdlineArgs.partition(arg => dfPatterns.exists(_.findFirstIn(arg).isDefined))
@@ -79,7 +82,7 @@ class DataflowContext(cmdlineArgs: Array[String]) extends Implicits {
 
   private implicit def context: DataflowContext = this
 
-  def isTest = args.optional("testId").isDefined
+  def isTest: Boolean = args.optional("testId").isDefined
 
   def testIn: TestInput = TestDataManager.getInput(args("testId"))
   def testOut: TestOutput = TestDataManager.getOutput(args("testId"))

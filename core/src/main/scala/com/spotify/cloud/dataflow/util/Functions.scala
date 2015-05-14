@@ -121,7 +121,7 @@ private[dataflow] object Functions {
     val g = f  // defeat closure
     override def processElement(c: DoFn[T, U]#ProcessContext): Unit = c.output(g(c.element()))
   }
-  
+
   def partitionFn[T](numPartitions: Int, f: T => Int): PartitionFn[T] = new PartitionFn[T] {
     val g = f  // defeat closure
     override def partitionFor(elem: T, numPartitions: Int): Int = f(elem)

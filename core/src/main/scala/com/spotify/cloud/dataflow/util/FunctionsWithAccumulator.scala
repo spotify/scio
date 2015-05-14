@@ -12,31 +12,31 @@ sealed trait AccumulatorType[T] {
   type CF = CombineFn[T, Array[T], T]
   type BCF = Combine.BinaryCombineFn[T]
 
-  protected def _sumFn(): CombineFn[_, _, _]
-  protected def _minFn(): Combine.BinaryCombineFn[_]
-  protected def _maxFn(): Combine.BinaryCombineFn[_]
+  protected def sumFnImpl(): CombineFn[_, _, _]
+  protected def minFnImpl(): Combine.BinaryCombineFn[_]
+  protected def maxFnImpl(): Combine.BinaryCombineFn[_]
 
-  def sumFn() = _sumFn().asInstanceOf[CF]
-  def minFn() = _minFn().asInstanceOf[BCF]
-  def maxFn() = _maxFn().asInstanceOf[BCF]
+  def sumFn(): CF = sumFnImpl().asInstanceOf[CF]
+  def minFn(): BCF = minFnImpl().asInstanceOf[BCF]
+  def maxFn(): BCF = maxFnImpl().asInstanceOf[BCF]
 }
 
 private[dataflow] class IntAccumulatorType extends AccumulatorType[Int] {
-  override def _sumFn() = new SumIntegerFn()
-  override def _minFn() = new MinIntegerFn()
-  override def _maxFn() = new MaxIntegerFn()
+  override protected def sumFnImpl() = new SumIntegerFn()
+  override protected def minFnImpl() = new MinIntegerFn()
+  override protected def maxFnImpl() = new MaxIntegerFn()
 }
 
 private[dataflow] class LongAccumulatorType extends AccumulatorType[Long] {
-  override def _sumFn() = new SumLongFn()
-  override def _minFn() = new MinLongFn()
-  override def _maxFn() = new MaxLongFn()
+  override protected def sumFnImpl() = new SumLongFn()
+  override protected def minFnImpl() = new MinLongFn()
+  override protected def maxFnImpl() = new MaxLongFn()
 }
 
 private[dataflow] class DoubleAccumulatorType extends AccumulatorType[Double] {
-  override def _sumFn() =  new SumDoubleFn()
-  override def _minFn() = new MinDoubleFn()
-  override def _maxFn() = new MaxDoubleFn()
+  override protected def sumFnImpl() =  new SumDoubleFn()
+  override protected def minFnImpl() = new MinDoubleFn()
+  override protected def maxFnImpl() = new MaxDoubleFn()
 }
 
 class Accumulator[T, U] {

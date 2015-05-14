@@ -17,7 +17,7 @@ object JoinUtil {
   val EVENT_TABLE = "gdelt-bq:gdeltv2.events"
   val COUNTRY_TABLE = "gdelt-bq:full.crosswalk_geocountrycodetohuman"
 
-  def extractEventInfo(row: TableRow) = {
+  def extractEventInfo(row: TableRow): Seq[(String, String)] = {
     val countryCode = row.get("ActionGeo_CountryCode").asInstanceOf[String]
     val sqlDate = row.get("SQLDATE").asInstanceOf[String]
     val actor1Name = row.get("Actor1Name").asInstanceOf[String]
@@ -27,13 +27,13 @@ object JoinUtil {
     if (countryCode == null || eventInfo == null) Seq() else Seq((countryCode, eventInfo))
   }
 
-  def extractCountryInfo(row: TableRow) = {
+  def extractCountryInfo(row: TableRow): (String, String) = {
     val countryCode = row.get("FIPSCC").asInstanceOf[String]
     val countryName = row.get("HumanName").asInstanceOf[String]
     (countryCode, countryName)
   }
 
-  def formatOutput(countryCode: String, countryName: String, eventInfo: String) =
+  def formatOutput(countryCode: String, countryName: String, eventInfo: String): String =
     s"Country code: $countryCode, Country name: $countryName, Event info: $eventInfo"
 
 }

@@ -49,6 +49,7 @@ class BigQueryClient(credential: Credential = null) {
       }
       state = pollJob.getStatus.getState
       val ms = System.currentTimeMillis() - startTime
+      // TODO: replace with logger
       println(s"Job status ($ms): ${jobId.getJobId}: $state")
       Thread.sleep(1000)
     } while (state != "DONE")

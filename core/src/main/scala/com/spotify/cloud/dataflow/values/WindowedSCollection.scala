@@ -29,4 +29,3 @@ class WindowedSCollection[T] private[values] (val internal: PCollection[T])
   def toSCollection: SCollection[T] = SCollection(internal)
 
 }
-

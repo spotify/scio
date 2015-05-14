@@ -28,7 +28,7 @@ object Args {
 }
 
 class Args(val m: Map[String, List[String]]) {
-  
+
   def apply(key: String): String = required(key)
 
   def getOrElse(key: String, default: String): String = optional(key).getOrElse(default)

@@ -9,14 +9,14 @@ object JobTest {
                      outputs: Map[TestIO[_], PCollection[_] => Unit],
                      distCaches: Map[DistCacheIO[_], _]) {
 
-    def args(newArgs: String*) = this.copy(cmdlineArgs = (this.cmdlineArgs.toSeq ++ newArgs).toArray)
+    def args(newArgs: String*): Builder = this.copy(cmdlineArgs = (this.cmdlineArgs.toSeq ++ newArgs).toArray)
 
-    def input[T](key: TestIO[T], value: Iterable[T]) = this.copy(inputs = this.inputs + (key -> value))
+    def input[T](key: TestIO[T], value: Iterable[T]): Builder = this.copy(inputs = this.inputs + (key -> value))
 
-    def output[T](key: TestIO[T])(value: PCollection[T] => Unit) =
+    def output[T](key: TestIO[T])(value: PCollection[T] => Unit): Builder =
       this.copy(outputs = this.outputs + (key -> value.asInstanceOf[PCollection[_] => Unit]))
 
-    def distCache[T](key: DistCacheIO[T], value: T) = this.copy(distCaches = this.distCaches + (key -> value))
+    def distCache[T](key: DistCacheIO[T], value: T): Builder = this.copy(distCaches = this.distCaches + (key -> value))
 
     def run(): Unit = {
       val testId = className + "-" + System.currentTimeMillis()
@@ -36,6 +36,6 @@ object JobTest {
 
   }
 
-  def apply(className: String) = Builder(className, Array(), Map.empty, Map.empty, Map.empty)
+  def apply(className: String): Builder = Builder(className, Array(), Map.empty, Map.empty, Map.empty)
 
 }
