@@ -33,10 +33,6 @@ private[dataflow] trait PCollectionMatchers {
 
   def equalInAnyOrder[T](value: Iterable[T]): Matcher[PCollection[T]] = new InAnyOrderMatcher(value)
 
-  def containInOrder[T](value: T*): Matcher[PCollection[T]] = new InAnyOrderMatcher(value)
-
-  def equalInOrder[T](value: Iterable[T]): Matcher[PCollection[T]] = new InAnyOrderMatcher(value)
-
   def containSingleValue[T](value: T): Matcher[PCollection[T]] = new Matcher[PCollection[T]] {
     override def apply(left: PCollection[T]): MatchResult = {
       MatchResult(tryAssert(() => DataflowAssert.thatSingleton(left).isEqualTo(value)), "", "")
