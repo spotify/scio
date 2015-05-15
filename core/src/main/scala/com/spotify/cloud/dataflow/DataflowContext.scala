@@ -74,7 +74,7 @@ class DataflowContext(cmdlineArgs: Array[String]) extends Implicits {
     (_args, _pipeline)
   }
 
-  private lazy val bigQueryClient: BigQueryClient = new BigQueryClient(this.options.getGcpCredential)
+  private lazy val bigQueryClient: BigQueryClient = BigQueryClient(this.options.getGcpCredential)
 
   def close(): Unit = pipeline.run()
 

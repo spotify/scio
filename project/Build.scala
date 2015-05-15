@@ -78,7 +78,9 @@ object DataflowScalaBuild extends Build {
     file("bigquery"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
-        "com.google.cloud.dataflow" % "google-cloud-dataflow-java-sdk-all" % sdkVersion,
+        "com.google.apis" % "google-api-services-bigquery" % "v2-rev158-1.19.0",
+        "com.google.oauth-client" % "google-oauth-client" % "1.19.0",
+        "com.google.http-client" % "google-http-client-jackson2" % "1.19.0",
         "joda-time" % "joda-time" % "2.7",
         "org.scalatest" %% "scalatest" % scalaTestVersion
       ),
@@ -89,9 +91,7 @@ object DataflowScalaBuild extends Build {
         else
           Nil
       ),
-      addCompilerPlugin(paradiseDependency),
-      // workaround for GcpCrentials
-      dependencyOverrides ++= Set("com.google.http-client" % "google-http-client" % "1.20.0")
+      addCompilerPlugin(paradiseDependency)
     )
   )
 
