@@ -9,26 +9,22 @@ import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.bigquery.{BigqueryScopes, Bigquery}
 import com.google.api.services.bigquery.model._
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
 
-class BigQueryClient private (credential: Credential) {
+object Util {
 
-  private val bigquery = new Bigquery(new NetHttpTransport, new JacksonFactory, credential)
-
-
-  // Ported from com.google.cloud.dataflow.sdk.io.BigQueryIO
+  // ported from com.google.cloud.dataflow.sdk.io.BigQueryIO
 
   private val PROJECT_ID_REGEXP = "[a-z][-a-z0-9:.]{4,61}[a-z0-9]"
   private val DATASET_REGEXP = "[-\\w.]{1,1024}"
   private val TABLE_REGEXP = "[-\\w$@]{1,1024}"
   private val DATASET_TABLE_REGEXP =
-    String.format(
-      "((?<PROJECT>%s):)?(?<DATASET>%s)\\.(?<TABLE>%s)",
-      PROJECT_ID_REGEXP, DATASET_REGEXP, TABLE_REGEXP)
+    s"((?<PROJECT>$PROJECT_ID_REGEXP):)?(?<DATASET>$DATASET_REGEXP)\\.(?<TABLE>$TABLE_REGEXP)"
   private val TABLE_SPEC = Pattern.compile(DATASET_TABLE_REGEXP)
 
-  private def parseTableSpec(tableSpec: String): TableReference = {
+  def parseTableSpec(tableSpec: String): TableReference = {
     val m = TABLE_SPEC.matcher(tableSpec)
     if (!m.matches()) {
       throw new IllegalArgumentException(
@@ -40,8 +36,19 @@ class BigQueryClient private (credential: Credential) {
       .setTableId(m.group("TABLE"))
   }
 
+  def toTableSpec(table: TableReference): String =
+    (if (table.getProjectId != null) table.getProjectId + ":" else "") + table.getDatasetId + "."  + table.getTableId
+
+}
+
+class BigQueryClient private (credential: Credential) {
+
+  private val bigquery: Bigquery = new Bigquery(new NetHttpTransport, new JacksonFactory, credential)
+
+  private val logger: Logger = LoggerFactory.getLogger(classOf[BigQueryClient])
+
   def queryIntoTable(sqlQuery: String, tableSpec: String): TableReference =
-    this.queryIntoTable(sqlQuery, parseTableSpec(tableSpec))
+    this.queryIntoTable(sqlQuery, Util.parseTableSpec(tableSpec))
 
   def queryIntoTable(sqlQuery: String, table: TableReference): TableReference = {
     val queryConfig: JobConfigurationQuery = new JobConfigurationQuery()
@@ -57,10 +64,9 @@ class BigQueryClient private (credential: Credential) {
     val insert = bigquery.jobs().insert(table.getProjectId, job)
     val jobId = insert.execute().getJobReference
 
-    val startTime = System.currentTimeMillis()
-
     var pollJob: Job = null
     var state: String = null
+    logger.info(s"Executing BigQuery for table ${Util.toTableSpec(table)}")
     do {
       pollJob = bigquery.jobs().get(table.getProjectId, jobId.getJobId).execute()
       val error = pollJob.getStatus.getErrorResult
@@ -68,16 +74,14 @@ class BigQueryClient private (credential: Credential) {
         throw new RuntimeException(s"BigQuery failed: $error")
       }
       state = pollJob.getStatus.getState
-      val ms = System.currentTimeMillis() - startTime
-      // TODO: replace with logger
-      println(s"Job status ($ms): ${jobId.getJobId}: $state")
-      Thread.sleep(1000)
+      logger.info(s"Job ${jobId.getJobId}: $state")
+      Thread.sleep(10000)
     } while (state != "DONE")
 
     table
   }
 
-  def getSchema(tableSpec: String): TableSchema = getSchema(parseTableSpec(tableSpec))
+  def getSchema(tableSpec: String): TableSchema = getSchema(Util.parseTableSpec(tableSpec))
 
   def getSchema(table: TableReference): TableSchema =
     bigquery.tables().get(table.getProjectId, table.getDatasetId, table.getTableId).execute().getSchema

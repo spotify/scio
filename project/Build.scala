@@ -82,6 +82,7 @@ object DataflowScalaBuild extends Build {
           exclude ("com.google.guava", "guava-jdk5"),
         "com.google.oauth-client" % "google-oauth-client" % "1.19.0",
         "com.google.http-client" % "google-http-client-jackson2" % "1.19.0",
+        "org.slf4j" % "slf4j-api" % "1.7.7",
         "joda-time" % "joda-time" % "2.7",
         "org.scalatest" %% "scalatest" % scalaTestVersion
       ),
