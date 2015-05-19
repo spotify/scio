@@ -226,12 +226,12 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /* Hash operations */
 
   def hashJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, W))] =
-    self.withKVSideInput(that).flatMap { (kv, m) =>
+    self.withMapSideInput(that).flatMap { (kv, m) =>
       m.getOrElse(kv._1, Seq()).map(w => (kv._1, (kv._2, w)))
     }.toSCollection
 
   def hashLeftJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, Option[W]))] =
-    self.withKVSideInput(that).flatMap { (kv, m) =>
+    self.withMapSideInput(that).flatMap { (kv, m) =>
       val (k, v) = kv
       if (m.contains(k)) m(k).map(w => (k, (v, Some(w)))) else Seq((k, (v, None)))
     }.toSCollection

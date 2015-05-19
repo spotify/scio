@@ -70,7 +70,7 @@ object SideInputJoinExamples {
     val countryInfo = context.bigQueryTable(COUNTRY_TABLE).map(extractCountryInfo)
 
     eventsInfo
-      .withKVSideInput(countryInfo)
+      .withMapSideInput(countryInfo)
       .map { (kv, m) =>
         val (countryCode, eventInfo) = kv
         val countryName = m.getOrElse(countryCode, Seq()).headOption.getOrElse("none")

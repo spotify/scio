@@ -2,6 +2,7 @@ package com.spotify.cloud.dataflow.values
 
 import java.io.File
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
+import java.util.{Map => JMap}
 
 import com.google.api.services.bigquery.model.{TableSchema, TableReference, TableRow}
 import com.google.api.services.datastore.DatastoreV1.Entity
@@ -160,8 +161,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /* Hash operations */
 
-  def hashLookup[V: ClassTag](that: SCollection[(T, V)]): SCollection[(T, Seq[V])] =
-    this.withKVSideInput(that).map((t, m) => (t, m.getOrElse(t, Seq()))).toSCollection
+  def hashLookup[V: ClassTag](that: SCollection[(T, V)]): SCollection[(T, Iterable[V])] =
+    this.withMapSideInput(that).map((t, m) => (t, m.getOrElse(t, Iterable()))).toSCollection
 
   /* Accumulator operations */
 
@@ -176,18 +177,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   def withIterableSideInput[U](that: SCollection[U]): SCollectionWithSideInput[T, Iterable[U]] = {
     val view = that.applyInternal(View.asIterable())
-    type S = JIterable[U]
-    new SCollectionWithSideInputImpl[T, Iterable[U], S](internal, view, _.asScala)
+    val sideFn = (s: JIterable[U]) => s.asScala
+    new SCollectionWithSideInputImpl(internal, view, sideFn)
   }
 
-  def withKVSideInput[K: ClassTag, V: ClassTag](that: SCollection[(K, V)])
-      : SCollectionWithSideInput[T, Map[K, Seq[V]]] = {
-    val view = that.toKV.applyInternal(View.asIterable())
-    val sideFn = (s: JIterable[KV[K, V]]) => {
-      val sideMap: MMap[K, MBuffer[V]] = MMap.empty
-      s.asScala.foreach(kv => sideMap.getOrElseUpdate(kv.getKey, MBuffer.empty).append(kv.getValue))
-      sideMap.mapValues(_.toSeq).toMap
-    }
+  def withMapSideInput[K: ClassTag, V: ClassTag](that: SCollection[(K, V)])
+      : SCollectionWithSideInput[T, Map[K, Iterable[V]]] = {
+    val view = that.toKV.applyInternal(View.asMap())
+    val sideFn = (s: JMap[K, JIterable[V]]) => s.asScala.mapValues(_.asScala).toMap
     new SCollectionWithSideInputImpl(internal, view, sideFn)
   }
 
