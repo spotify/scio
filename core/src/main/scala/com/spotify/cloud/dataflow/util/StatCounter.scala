@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-// package org.apache.spark.util
+// Ported from package org.apache.spark.util
 package com.spotify.cloud.dataflow.util
 
 /**

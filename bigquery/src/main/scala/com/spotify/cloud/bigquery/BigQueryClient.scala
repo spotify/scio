@@ -15,7 +15,7 @@ import scala.collection.JavaConverters._
 
 object Util {
 
-  // ported from com.google.cloud.dataflow.sdk.io.BigQueryIO
+  // Ported from com.google.cloud.dataflow.sdk.io.BigQueryIO
 
   private val PROJECT_ID_REGEXP = "[a-z][-a-z0-9:.]{4,61}[a-z0-9]"
   private val DATASET_REGEXP = "[-\\w.]{1,1024}"

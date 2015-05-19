@@ -35,7 +35,7 @@ object CombinePerKeyExamples {
         val word = row.get("word").toString
         if (word.length > MIN_WORD_LENGTH) Seq((word, playName)) else Seq()
       }
-      // sort values to make test happy
+      // Sort values to make test happy
       .aggregateByKey(SortedSet[String]())(_ + _, _ ++ _)
       .mapValues(_.mkString(","))
       .map(kv => TableRow("word" -> kv._1, "all_plays" -> kv._2))

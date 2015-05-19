@@ -21,7 +21,7 @@ private[values] trait PCollectionWrapper[T] extends Implicits {
 
   protected def apply[U: ClassTag](transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {
     val t = if (classOf[Combine.Globally[T, U]] isAssignableFrom transform.getClass) {
-      // in case PCollection is windowed
+      // In case PCollection is windowed
       transform.asInstanceOf[Combine.Globally[T, U]].withoutDefaults()
     } else {
       transform

@@ -20,7 +20,8 @@ object Args {
       throw new IllegalArgumentException(s"Conflicting boolean and property '$arg'")
     }
 
-    val m = (propertyMap ++ booleanMap).map(identity)  // workaround to ensure Map is serializable
+    // Workaround to ensure Map is serializable
+    val m = (propertyMap ++ booleanMap).map(identity)
 
     new Args(m)
   }
