@@ -23,11 +23,9 @@ You can execute the examples locally from SBT. By default pipelines will be exec
 
 ```
 neville@localhost dataflow-scala $ sbt
-[info] Loading global plugins from /home/neville/.sbt/0.13/plugins
-[info] Loading project definition from /home/neville/src/gcp/dataflow-scala/project
-[info] Set current project to root (in build file:/home/neville/src/gcp/dataflow-scala/)
+[info] ...
 > project dataflow-scala-examples
-[info] Set current project to dataflow-scala-examples (in build file:/home/neville/src/gcp/dataflow-scala/)
+[info] ...
 > runMain com.spotify.cloud.dataflow.examples.WordCount \
 --input=<INPUT FILE PATTERN> \
 --output=<OUTPUT DIRECTORY>
@@ -37,11 +35,9 @@ You can use the `BlockingDataflowPipelineRunner` or `DataflowPipelineRunner` to 
 
 ```
 neville@localhost dataflow-scala $ sbt
-[info] Loading global plugins from /home/neville/.sbt/0.13/plugins
-[info] Loading project definition from /home/neville/src/gcp/dataflow-scala/project
-[info] Set current project to root (in build file:/home/neville/src/gcp/dataflow-scala/)
+[info] ...
 > project dataflow-scala-examples
-[info] Set current project to dataflow-scala-examples (in build file:/home/neville/src/gcp/dataflow-scala/)
+[info] ...
 > runMain com.spotify.cloud.dataflow.examples.WordCount \
 --project=<YOUR CLOUD PLATFORM PROJECT NAME> \
 --stagingLocation=<YOUR CLOUD STORAGE LOCATION> \
