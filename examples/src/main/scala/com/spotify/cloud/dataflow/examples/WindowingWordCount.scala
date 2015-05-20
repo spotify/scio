@@ -1,7 +1,6 @@
 package com.spotify.cloud.dataflow.examples
 
 import com.spotify.cloud.dataflow._
-import com.spotify.cloud.dataflow.values.WindowedValue
 import org.joda.time.{Duration, Instant}
 
 /*
