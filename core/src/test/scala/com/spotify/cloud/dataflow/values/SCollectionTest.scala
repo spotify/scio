@@ -263,6 +263,18 @@ class SCollectionTest extends PipelineTest {
     }
   }
 
+  it should "support cross()" in {
+    runWithContext { pipeline =>
+      val p1 = pipeline.parallelize("a", "b", "c")
+      val p2 = pipeline.parallelize(1)
+      val p3 = pipeline.parallelize(1, 2)
+      val s1 = p1.cross(p2)
+      val s2 = p1.cross(p3)
+      s1.internal should containInAnyOrder (("a", 1), ("b", 1), ("c", 1))
+      s2.internal should containInAnyOrder (("a", 1), ("a", 2), ("b", 1), ("b", 2), ("c", 1), ("c", 2))
+    }
+  }
+
   it should "support hashLookup()" in {
     runWithContext { pipeline =>
       val p1 = pipeline.parallelize("a", "b", "c")

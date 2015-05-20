@@ -159,6 +159,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /* Hash operations */
 
+  def cross[U: ClassTag](that: SCollection[U]): SCollection[(T, U)] = {
+    val side = that.asIterableSideInput
+    this
+      .withSideInputs(side)
+      .flatMap((t, s) => s(side).map((t, _)))
+      .toSCollection
+  }
+
   def hashLookup[V: ClassTag](that: SCollection[(T, V)]): SCollection[(T, Iterable[V])] = {
     val side = that.asMapSideInput
     this
