@@ -2,9 +2,7 @@ package com.spotify.cloud.dataflow.values
 
 import java.lang.{Long => JLong}
 
-import com.google.cloud.dataflow.sdk.transforms.{
-  ApproximateQuantiles, ApproximateUnique, Combine, GroupByKey, Keys, ParDo, PTransform, Sample, Top, Values
-}
+import com.google.cloud.dataflow.sdk.transforms._
 import com.google.cloud.dataflow.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}
 import com.google.cloud.dataflow.sdk.values.{PCollection, KV, TupleTag}
 import com.spotify.cloud.dataflow.{Implicits, DataflowContext}
@@ -225,15 +223,24 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   /* Hash operations */
 
-  def hashJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, W))] =
-    self.withMapSideInput(that).flatMap { (kv, m) =>
-      m.getOrElse(kv._1, Seq()).map(w => (kv._1, (kv._2, w)))
+  def hashJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, W))] = {
+    val side = that.asMapSideInput
+    self.withSideInputs(side).flatMap[(K, (V, W))] { (kv, s) =>
+      s(side).getOrElse(kv._1, Iterable()).toSeq.map(w => (kv._1, (kv._2, w)))
     }.toSCollection
+  }
 
-  def hashLeftJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, Option[W]))] =
-    self.withMapSideInput(that).flatMap { (kv, m) =>
+  def hashLeftJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, Option[W]))] = {
+    val side = that.asMapSideInput
+    self.withSideInputs(side).flatMap[(K, (V, Option[W]))] { (kv, s) =>
       val (k, v) = kv
+      val m = s(side)
       if (m.contains(k)) m(k).map(w => (k, (v, Some(w)))) else Seq((k, (v, None)))
     }.toSCollection
+  }
+
+  /* Side input operations */
+
+  def asMapSideInput: SideInput[Map[K, Iterable[V]]] = new MapSideInput[K, V](self.toKV.applyInternal(View.asMap()))
 
 }

@@ -67,12 +67,13 @@ object SideInputJoinExamples {
     import JoinUtil._
 
     val eventsInfo = context.bigQueryTable(EVENT_TABLE).flatMap(extractEventInfo)
-    val countryInfo = context.bigQueryTable(COUNTRY_TABLE).map(extractCountryInfo)
+    val countryInfo = context.bigQueryTable(COUNTRY_TABLE).map(extractCountryInfo).asMapSideInput
 
     eventsInfo
-      .withMapSideInput(countryInfo)
-      .map { (kv, m) =>
+      .withSideInputs(countryInfo)
+      .map[String] { (kv, side) =>
         val (countryCode, eventInfo) = kv
+        val m = side(countryInfo)
         val countryName = m.getOrElse(countryCode, Seq()).headOption.getOrElse("none")
         formatOutput(countryCode, countryName, eventInfo)
       }

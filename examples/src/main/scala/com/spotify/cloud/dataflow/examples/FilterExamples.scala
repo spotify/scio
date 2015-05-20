@@ -44,12 +44,12 @@ object FilterExamples {
       Record(year, month, day, meanTemp)
     }
 
-    val globalMeanTemp = pipe.map(_.meanTemp).mean()
+    val globalMeanTemp = pipe.map(_.meanTemp).mean().asSingletonSideInput
 
     pipe
       .filter(_.month == monthFilter)
-      .withSingletonSideInput(globalMeanTemp)
-      .filter((row, gMeanTemp) => row.meanTemp < gMeanTemp)
+      .withSideInputs(globalMeanTemp)
+      .filter((row, side) => row.meanTemp < side(globalMeanTemp))
       .toSCollection
       .map(recordToRow)
       .saveAsBigQuery(args("output"), schema, CREATE_IF_NEEDED, WRITE_TRUNCATE)

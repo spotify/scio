@@ -2,7 +2,6 @@ package com.spotify.cloud.dataflow.values
 
 import java.io.File
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
-import java.util.{Map => JMap}
 
 import com.google.api.services.bigquery.model.{TableSchema, TableReference, TableRow}
 import com.google.api.services.datastore.DatastoreV1.Entity
@@ -32,7 +31,6 @@ import org.apache.avro.specific.SpecificRecord
 import org.joda.time.{Instant, Duration}
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}
 import scala.reflect.ClassTag
 
 object SCollection {
@@ -161,8 +159,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /* Hash operations */
 
-  def hashLookup[V: ClassTag](that: SCollection[(T, V)]): SCollection[(T, Iterable[V])] =
-    this.withMapSideInput(that).map((t, m) => (t, m.getOrElse(t, Iterable()))).toSCollection
+  def hashLookup[V: ClassTag](that: SCollection[(T, V)]): SCollection[(T, Iterable[V])] = {
+    val side = that.asMapSideInput
+    this
+      .withSideInputs(side)
+      .map((t, s) => (t, s(side).getOrElse(t, Iterable())))
+      .toSCollection
+  }
 
   /* Accumulator operations */
 
@@ -170,23 +173,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /* Side input operations */
 
-  def withSingletonSideInput[U](that: SCollection[U]): SCollectionWithSideInput[T, U] = {
-    val view = that.applyInternal(View.asSingleton())
-    new SCollectionWithSideInputImpl[T, U, U](internal, view, identity)
-  }
+  def asSingletonSideInput: SideInput[T] = new SingletonSideInput[T](this.applyInternal(View.asSingleton()))
 
-  def withIterableSideInput[U](that: SCollection[U]): SCollectionWithSideInput[T, Iterable[U]] = {
-    val view = that.applyInternal(View.asIterable())
-    val sideFn = (s: JIterable[U]) => s.asScala
-    new SCollectionWithSideInputImpl(internal, view, sideFn)
-  }
+  def asIterableSideInput: SideInput[Iterable[T]] = new IterableSideInput[T](this.applyInternal(View.asIterable()))
 
-  def withMapSideInput[K: ClassTag, V: ClassTag](that: SCollection[(K, V)])
-      : SCollectionWithSideInput[T, Map[K, Iterable[V]]] = {
-    val view = that.toKV.applyInternal(View.asMap())
-    val sideFn = (s: JMap[K, JIterable[V]]) => s.asScala.mapValues(_.asScala).toMap
-    new SCollectionWithSideInputImpl(internal, view, sideFn)
-  }
+  def withSideInputs(sides: SideInput[_]*): SCollectionWithSideInput[T] =
+    new SCollectionWithSideInput[T](internal, sides)
 
   /* Side output operations */
 

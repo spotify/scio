@@ -1,50 +1,36 @@
 package com.spotify.cloud.dataflow.values
 
-import com.google.cloud.dataflow.sdk.transforms.{DoFn, ParDo}
-import com.google.cloud.dataflow.sdk.values.{PCollection, PCollectionView}
+import com.google.cloud.dataflow.sdk.transforms.ParDo
+import com.google.cloud.dataflow.sdk.values.PCollection
 import com.spotify.cloud.dataflow.DataflowContext
 import com.spotify.cloud.dataflow.util.FunctionsWithSideInput
 
+import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
-sealed trait SCollectionWithSideInput[T, S] {
+class SCollectionWithSideInput[T] private[values] (val internal: PCollection[T],
+                                                   sides: Iterable[SideInput[_]])
+                                                  (implicit val context: DataflowContext, val ct: ClassTag[T])
+  extends PCollectionWrapper[T] {
 
-  def filter(f: (T, S) => Boolean): SCollectionWithSideInput[T, S]
+  private val parDo = ParDo.withSideInputs(sides.map(_.view).asJava)
 
-  def flatMap[U: ClassTag](f: (T, S) => TraversableOnce[U]): SCollectionWithSideInput[U, S]
-
-  def keyBy[K: ClassTag](f: (T, S) => K): SCollectionWithSideInput[(K, T), S]
-
-  def map[U: ClassTag](f: (T, S) => U): SCollectionWithSideInput[U, S]
-
-  def toSCollection: SCollection[T]
-
-}
-
-private class SCollectionWithSideInputImpl[T, S, R](val internal: PCollection[T],
-                                                        view: PCollectionView[R],
-                                                        sideFn: R => S)
-                                                       (implicit val context: DataflowContext, val ct: ClassTag[T])
-  extends SCollectionWithSideInput[T, S] with PCollectionWrapper[T] {
-
-  override protected def parDo[U: ClassTag](fn: DoFn[T, U]): SCollection[U] =
-    this.apply(ParDo.withSideInputs(view).of(fn)).setCoder(this.getCoder[U])
-
-  def filter(f: (T, S) => Boolean): SCollectionWithSideInput[T, S] = {
-    val o = this.parDo(FunctionsWithSideInput.filterFn(view, sideFn, f)).internal
-    new SCollectionWithSideInputImpl[T, S, R](o, view, sideFn)
+  def filter(f: (T, SideInputContext[T]) => Boolean): SCollectionWithSideInput[T] = {
+    val o = this.apply(parDo.of(FunctionsWithSideInput.filterFn(f))).internal.setCoder(this.getCoder[T])
+    new SCollectionWithSideInput[T](o, sides)
   }
 
-  def flatMap[U: ClassTag](f: (T, S) => TraversableOnce[U]): SCollectionWithSideInput[U, S] = {
-    val o = this.parDo(FunctionsWithSideInput.flatMapFn(view, sideFn, f)).internal
-    new SCollectionWithSideInputImpl[U, S, R](o, view, sideFn)
+  def flatMap[U: ClassTag](f: (T, SideInputContext[T]) => TraversableOnce[U]): SCollectionWithSideInput[U] = {
+    val o = this.apply(parDo.of(FunctionsWithSideInput.flatMapFn(f))).internal.setCoder(this.getCoder[U])
+    new SCollectionWithSideInput[U](o, sides)
   }
 
-  def keyBy[K: ClassTag](f: (T, S) => K): SCollectionWithSideInput[(K, T), S] = this.map((v, c) => (f(v, c), v))
+  def keyBy[K: ClassTag](f: (T, SideInputContext[T]) => K): SCollectionWithSideInput[(K, T)] =
+    this.map((x, s) => (f(x, s), x))
 
-  def map[U: ClassTag](f: (T, S) => U): SCollectionWithSideInput[U, S] = {
-    val o = this.parDo(FunctionsWithSideInput.mapFn(view, sideFn, f)).internal
-    new SCollectionWithSideInputImpl[U, S, R](o, view, sideFn)
+  def map[U: ClassTag](f: (T, SideInputContext[T]) => U): SCollectionWithSideInput[U] = {
+    val o = this.apply(parDo.of(FunctionsWithSideInput.mapFn(f))).internal.setCoder(this.getCoder[U])
+    new SCollectionWithSideInput[U](o, sides)
   }
 
   def toSCollection: SCollection[T] = SCollection(internal)
