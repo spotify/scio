@@ -71,7 +71,7 @@ object SideInputJoinExamples {
 
     eventsInfo
       .withSideInputs(countryInfo)
-      .map[String] { (kv, side) =>
+      .map { (kv, side) =>
         val (countryCode, eventInfo) = kv
         val m = side(countryInfo)
         val countryName = m.getOrElse(countryCode, Seq()).headOption.getOrElse("none")

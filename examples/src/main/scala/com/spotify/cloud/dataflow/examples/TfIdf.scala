@@ -60,11 +60,9 @@ object TfIdf {
       .map(t => (t._1._1, (t._1._2, t._2)))  // (d, (t, tf))
 
 
-    val numDocs = docs.keys.distinct().count().asSingletonSideInput
     val wordToDf = uriToWords.distinct().values.countByValue()  // (t, df)
-      .withSideInputs(numDocs)  // N
-      .map[(String, Double)] { case ((t, df), side) => (t, df.toDouble / side(numDocs)) }  // (t, df/N)
-      .toSCollection
+      .cross(docs.keys.distinct().count())  // N
+      .map { case ((t, df), numDocs) => (t, df.toDouble / numDocs) }  // (t, df/N)
 
     uriToWords.keys.countByValue()  // (d, |d|)
       .join(uriToWordAndCount)  // (d, (|d|, (t, tf)))
