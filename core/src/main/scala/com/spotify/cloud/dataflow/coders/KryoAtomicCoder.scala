@@ -17,8 +17,8 @@ private[dataflow] class KryoAtomicCoder extends AtomicCoder[Any] {
   private lazy val kryo: Kryo = {
     val k = KryoSerializer.registered.newKryo()
 
-    // java.lang.Iteable.asScala returns JIterableWrapper which causes problem.
-    // Treat it as standard Iteable instead.
+    // java.lang.Iterable.asScala returns JIterableWrapper which causes problem.
+    // Treat it as standard Iterable instead.
     k.register(classOf[JIterableWrapper[_]], new JIterableWrapperSerializer)
 
     k.forSubclass[SpecificRecord](new AvroSerializer)
