@@ -16,7 +16,7 @@ import com.google.cloud.dataflow.sdk.io.{
 }
 import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
 import com.google.cloud.dataflow.sdk.transforms.{
-  ApproximateQuantiles, ApproximateUnique, Combine, Count, DoFn, Filter, Flatten, GroupByKey, Mean, ParDo, Partition,
+  ApproximateQuantiles, ApproximateUnique, Combine, Count, DoFn, Filter, Flatten, GroupByKey, Mean, Partition,
   RemoveDuplicates, Sample, Top, View, WithKeys
 }
 import com.google.cloud.dataflow.sdk.transforms.windowing._
@@ -182,32 +182,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /* Side output operations */
 
-  def mapWithSideOutput[U: ClassTag, S: ClassTag](f: T => (U, S)): (SCollection[U], SCollection[S]) = {
-    val mainTag = new TupleTag[U]()
-    val sideTag = new TupleTag[S]()
-
-    val tuple = this.applyInternal(ParDo
-      .withOutputTags(mainTag, TupleTagList.of(sideTag))
-      .of(FunctionsWithSideOutput.mapFn(f, sideTag)))
-
-    val o = tuple.get(mainTag).setCoder(this.getCoder[U])
-    val s = tuple.get(sideTag).setCoder(this.getCoder[S])
-    (SCollection(o), SCollection(s))
-  }
-
-  def flatMapWithSideOutput[U: ClassTag, S: ClassTag](f: T => (TraversableOnce[U], TraversableOnce[S]))
-      : (SCollection[U], SCollection[S]) = {
-    val mainTag = new TupleTag[U]()
-    val sideTag = new TupleTag[S]()
-
-    val tuple = this.applyInternal(ParDo
-      .withOutputTags(mainTag, TupleTagList.of(sideTag))
-      .of(FunctionsWithSideOutput.flatMapFn(f, sideTag)))
-
-    val o = tuple.get(mainTag).setCoder(this.getCoder[U])
-    val s = tuple.get(sideTag).setCoder(this.getCoder[S])
-    (SCollection(o), SCollection(s))
-  }
+  def withSideOutputs(sides: SideOutput[_]*): SCollectionWithSideOutput[T] =
+    new SCollectionWithSideOutput[T](internal, sides)
 
   /* Windowing operations */
 

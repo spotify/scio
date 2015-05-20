@@ -272,24 +272,6 @@ class SCollectionTest extends PipelineTest {
     }
   }
 
-  it should "support mapWithSideOutput()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize("a", "b", "c")
-      val (r1, r2) = p.mapWithSideOutput(s => (s + "1", s + "2"))
-      r1.internal should containInAnyOrder ("a1", "b1", "c1")
-      r2.internal should containInAnyOrder ("a2", "b2", "c2")
-    }
-  }
-
-  it should "support flatMapWithSideOutput()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize("a", "b", "c")
-      val (r1, r2) = p.flatMapWithSideOutput(s => (Seq(s + "1x", s + "1y"), Seq(s + "2x", s + "2y")))
-      r1.internal should containInAnyOrder ("a1x", "a1y", "b1x", "b1y", "c1x", "c1y")
-      r2.internal should containInAnyOrder ("a2x", "a2y", "b2x", "b2y", "c2x", "c2y")
-    }
-  }
-
   it should "support withFixedWindows()" in {
     runWithContext { context =>
       val p = context.parallelizeTimestamped(Seq("a", "b", "c", "d", "e", "f"), (0 to 5).map(new Instant(_)))

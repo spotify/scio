@@ -1,32 +1,25 @@
 package com.spotify.cloud.dataflow.util
 
 import com.google.cloud.dataflow.sdk.transforms.DoFn
-import com.google.cloud.dataflow.sdk.values.TupleTag
+import com.spotify.cloud.dataflow.values.SideOutputContext
 
 private[dataflow] object FunctionsWithSideOutput {
 
-  def mapFn[T, U, S](f: T => (U, S), s: TupleTag[S]): DoFn[T, U] = new DoFn[T, U] {
-    // defeat closure
-    val g = f
-    val t = s
-
+  def mapFn[T, U](f: (T, SideOutputContext[T]) => U): DoFn[T, U] = new DoFn[T, U] {
+    val g = f  // defeat closure
     override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-      val (o, s) = f(c.element())
-      c.output(o)
-      c.sideOutput(t, s)
+      // workaround for type inference limit
+      val ctx = new SideOutputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])
+      c.output(g(c.element(), ctx))
     }
   }
 
-  def flatMapFn[T, U, S](f: T => (TraversableOnce[U], TraversableOnce[S]),
-                            s: TupleTag[S]): DoFn[T, U] = new DoFn[T, U] {
-    // defeat closure
-    val g = f
-    val t = s
-
+  def flatMapFn[T, U](f: (T, SideOutputContext[T]) => TraversableOnce[U]): DoFn[T, U] = new DoFn[T, U] {
+    val g = f  // defeat closure
     override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-      val (o, s) = f(c.element())
-      o.foreach(c.output)
-      s.foreach(c.sideOutput(t, _))
+      // workaround for type inference limit
+      val ctx = new SideOutputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])
+      g(c.element(), ctx).foreach(c.output)
     }
   }
 
