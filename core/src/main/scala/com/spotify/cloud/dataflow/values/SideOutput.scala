@@ -15,7 +15,7 @@ object SideOutput {
   def apply[T](): SideOutput[T] = new SideOutput[T]
 }
 
-class SideOutputContext[T] private[dataflow] (private val context: DoFn[T, AnyRef]#ProcessContext) extends AnyVal {
+class SideOutputContext[T] private[dataflow] (private val context: DoFn[T, AnyRef]#ProcessContext) {
   def output[S](sideOutput: SideOutput[S], output: S, timestamp: Instant = null): SideOutputContext[T] = {
     if (timestamp == null) {
       context.sideOutput(sideOutput.tupleTag, output)

@@ -29,6 +29,6 @@ private[values] class MapSideInput[K, V](val view: PCollectionView[JMap[K, JIter
   }
 }
 
-class SideInputContext[T] private[dataflow] (private val context: DoFn[T, AnyRef]#ProcessContext) extends AnyVal {
+class SideInputContext[T] private[dataflow] (private val context: DoFn[T, AnyRef]#ProcessContext) {
   def apply[S](side: SideInput[S]): S = side.get(context)
 }
