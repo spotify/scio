@@ -2,7 +2,7 @@ package com.spotify.cloud.dataflow.values
 
 import com.google.cloud.dataflow.sdk.values.PCollection
 import com.spotify.cloud.dataflow.DataflowContext
-import com.spotify.cloud.dataflow.util.{Accumulator, FunctionsWithAccumulator}
+import com.spotify.cloud.dataflow.util.FunctionsWithAccumulator
 
 import scala.reflect.ClassTag
 

@@ -2,8 +2,10 @@ package com.spotify.cloud.dataflow
 
 import com.google.cloud.dataflow.sdk.coders.CoderRegistry
 import com.spotify.cloud.dataflow.coders.RichCoderRegistry
-import com.spotify.cloud.dataflow.util.{LongAccumulatorType, DoubleAccumulatorType, IntAccumulatorType, AccumulatorType}
-import com.spotify.cloud.dataflow.values.{DoubleSCollectionFunctions, PairSCollectionFunctions, SCollection}
+import com.spotify.cloud.dataflow.values.{
+  AccumulatorType, DoubleAccumulatorType, DoubleSCollectionFunctions, IntAccumulatorType, LongAccumulatorType,
+  PairSCollectionFunctions, SCollection
+}
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
