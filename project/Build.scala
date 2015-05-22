@@ -1,5 +1,10 @@
 import sbt._
 import Keys._
+import com.typesafe.sbt.SbtSite.site
+import com.typesafe.sbt.SbtGhPages.ghpages
+import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
+import sbtunidoc.Plugin._
+import sbtunidoc.Plugin.UnidocKeys._
 import xerial.sbt.Sonatype
 import xerial.sbt.Sonatype.SonatypeKeys._
 
@@ -12,6 +17,11 @@ object BuildSettings {
     crossScalaVersions := Seq("2.10.5", "2.11.6"),
     scalacOptions      ++= Seq("-target:jvm-1.7", "-deprecation", "-feature", "-unchecked"),
     javacOptions       ++= Seq("-source", "1.7", "-target", "1.7")
+  )
+
+  val publishSettings = site.settings ++ ghpages.settings ++ unidocSettings ++ Seq(
+    site.addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), ""),
+    gitRemoteRepo := "git@github.com:spotify/dataflow-scala.git"
   )
 }
 
@@ -30,10 +40,12 @@ object DataflowScalaBuild extends Build {
   lazy val root: Project = Project(
     "root",
     file("."),
-    settings = buildSettings ++ Seq(run <<= run in Compile in dataflowScalaExamples)
+    settings = buildSettings ++ publishSettings ++ Seq(run <<= run in Compile in dataflowScalaExamples)
   ).settings(
     publish := {},
-    publishLocal := {}
+    publishLocal := {},
+    unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
+      -- inProjects(dataflowScalaSchemas) -- inProjects(dataflowScalaExamples)
   ).aggregate(
     dataflowScalaCore,
     dataflowScalaTest,
