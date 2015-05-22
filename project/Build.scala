@@ -16,7 +16,8 @@ object BuildSettings {
     scalaVersion       := "2.11.6",
     crossScalaVersions := Seq("2.10.5", "2.11.6"),
     scalacOptions      ++= Seq("-target:jvm-1.7", "-deprecation", "-feature", "-unchecked"),
-    javacOptions       ++= Seq("-source", "1.7", "-target", "1.7")
+    javacOptions in (Compile)          ++= Seq("-source", "1.7"),
+    javacOptions in (Compile, compile) ++= Seq("-target", "1.7")
   )
 
   val publishSettings = site.settings ++ ghpages.settings ++ unidocSettings ++ Seq(
