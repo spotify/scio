@@ -2,7 +2,7 @@ package com.spotify.cloud.dataflow.coders
 
 import com.google.cloud.dataflow.sdk.coders.CoderRegistry
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
-import com.spotify.cloud.dataflow.Implicits
+import com.spotify.cloud.dataflow.PrivateImplicits
 import com.spotify.cloud.dataflow.avro.TestRecord
 import com.spotify.cloud.dataflow.coders.CoderTestUtils._
 import org.scalatest.matchers.{MatchResult, Matcher}
@@ -10,7 +10,7 @@ import org.scalatest.{Matchers, FlatSpec}
 
 import scala.reflect.ClassTag
 
-class RichCoderRegistryTest extends FlatSpec with Matchers with Implicits {
+class RichCoderRegistryTest extends FlatSpec with Matchers with PrivateImplicits {
 
   val pipeline = TestPipeline.create()
   val registry = pipeline.getCoderRegistry

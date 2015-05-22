@@ -3,12 +3,12 @@ package com.spotify.cloud.dataflow.testing
 import java.lang.{Iterable => JIterable}
 
 import com.google.common.collect.Lists
-import com.spotify.cloud.dataflow.{Implicits, DataflowContext}
+import com.spotify.cloud.dataflow.{PrivateImplicits, DataflowContext}
 import org.scalatest.{Matchers, FlatSpec}
 
 import scala.collection.JavaConverters._
 
-trait PipelineTest extends FlatSpec with Matchers with PCollectionMatchers with Implicits {
+trait PipelineTest extends FlatSpec with Matchers with PCollectionMatchers with PrivateImplicits {
 
   def runWithContext(test: DataflowContext => Unit): Unit = {
     val context = DataflowContext(Array("--testId=PipelineTest"))

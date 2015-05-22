@@ -2,7 +2,7 @@ package com.spotify.cloud.dataflow.values
 
 import com.google.cloud.dataflow.sdk.transforms.DoFn
 import com.google.cloud.dataflow.sdk.values.{PCollectionTuple, TupleTag}
-import com.spotify.cloud.dataflow.{DataflowContext, Implicits}
+import com.spotify.cloud.dataflow.{DataflowContext, PrivateImplicits}
 import org.joda.time.Instant
 
 import scala.reflect.ClassTag
@@ -29,7 +29,7 @@ class SideOutputContext[T] private[dataflow] (private val context: DoFn[T, AnyRe
 }
 
 class SideOutputCollections private[values] (private val tuple: PCollectionTuple)
-                                            (implicit val context: DataflowContext) extends Implicits {
+                                            (implicit val context: DataflowContext) extends PrivateImplicits {
   def apply[T: ClassTag](sideOutput: SideOutput[T]): SCollection[T] = {
     val r = tuple.getPipeline.getCoderRegistry
     val o = tuple.get(sideOutput.tupleTag).setCoder(r.getScalaCoder[T])

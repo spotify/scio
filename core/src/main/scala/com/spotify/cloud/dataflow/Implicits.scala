@@ -9,19 +9,24 @@ import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 // A trait can be extended or mixed in
-trait Implicits {
+private[dataflow] trait PrivateImplicits {
 
-  implicit def makeRichCoderRegistry(r: CoderRegistry): RichCoderRegistry = new RichCoderRegistry(r)
+  implicit protected def makeRichCoderRegistry(r: CoderRegistry): RichCoderRegistry = new RichCoderRegistry(r)
+
+}
+
+// A trait can be extended or mixed in
+trait Implicits {
 
   implicit def makeDoubleSCollectionFunctions(s: SCollection[Double]): DoubleSCollectionFunctions =
     new DoubleSCollectionFunctions(s)
 
   implicit def makeDoubleSCollectionFunctions[T](s: SCollection[T])(implicit num: Numeric[T])
-      : DoubleSCollectionFunctions =
+  : DoubleSCollectionFunctions =
     new DoubleSCollectionFunctions(s.map(num.toDouble))
 
   implicit def makePairSCollectionFunctions[K: ClassTag, V: ClassTag](s: SCollection[(K, V)])
-      : PairSCollectionFunctions[K, V] =
+  : PairSCollectionFunctions[K, V] =
     new PairSCollectionFunctions(s)
 
   implicit def makeIntAccumulatorType: AccumulatorType[Int] = new IntAccumulatorType

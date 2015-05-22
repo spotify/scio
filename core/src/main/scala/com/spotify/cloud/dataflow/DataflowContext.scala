@@ -41,7 +41,7 @@ object DataflowContext {
   def apply(args: Array[String]): DataflowContext = new DataflowContext(args)
 }
 
-class DataflowContext private (cmdlineArgs: Array[String]) extends Implicits {
+class DataflowContext private (cmdlineArgs: Array[String]) extends PrivateImplicits {
 
   private var _options: DataflowPipelineOptions = null
   def options: DataflowPipelineOptions = _options

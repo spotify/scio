@@ -5,7 +5,7 @@ import java.lang.{Long => JLong}
 import com.google.cloud.dataflow.sdk.transforms._
 import com.google.cloud.dataflow.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}
 import com.google.cloud.dataflow.sdk.values.{PCollection, KV, TupleTag}
-import com.spotify.cloud.dataflow.{Implicits, DataflowContext}
+import com.spotify.cloud.dataflow.{PrivateImplicits, DataflowContext}
 import com.spotify.cloud.dataflow.util._
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 
@@ -13,7 +13,7 @@ import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
-                                    (implicit ctKey: ClassTag[K], ctValue: ClassTag[V]) extends Implicits {
+                                    (implicit ctKey: ClassTag[K], ctValue: ClassTag[V]) extends PrivateImplicits {
 
   import TupleFunctions._
 
