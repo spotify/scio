@@ -1,6 +1,6 @@
-/* From com.google.cloud.dataflow.sdk.coders.DoubleCoder */
+/* Ported com.google.cloud.dataflow.sdk.coders.DoubleCoder */
 
-package com.google.cloud.dataflow.sdk.coders;
+package com.spotify.cloud.dataflow.coders;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
@@ -13,13 +13,14 @@ import java.io.OutputStream;
 import java.io.UTFDataFormatException;
 
 // package hack
-import com.google.cloud.dataflow.sdk.coders.Coder.Context;
+import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
+import com.google.cloud.dataflow.sdk.coders.CoderException;
 
 /**
  * A FloatCoder encodes Floats in 4 bytes.
  */
 @SuppressWarnings("serial")
-public class FloatCoder extends AtomicCoder<Float> {
+class FloatCoder extends AtomicCoder<Float> {
   @JsonCreator
   public static FloatCoder of() {
     return INSTANCE;
