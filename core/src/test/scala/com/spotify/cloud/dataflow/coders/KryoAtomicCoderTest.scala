@@ -10,7 +10,7 @@ import org.scalatest.{Matchers, FlatSpec}
 
 import scala.reflect.ClassTag
 
-// case classes should be defined at top level to avoid including unnecessary closure
+// Case classes should be defined at top level to avoid including unnecessary closure
 case class Pair(name: String, size: Int)
 case class PairWithAvro(name: String, size: Int, record: TestRecord)
 
