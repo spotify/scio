@@ -6,7 +6,7 @@ import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.collection.JavaConverters._
 
-private[dataflow] trait PCollectionMatchers {
+private[dataflow] trait PCollectionMatcher {
 
   private def tryAssert(f: () => Any): Boolean = {
     try {

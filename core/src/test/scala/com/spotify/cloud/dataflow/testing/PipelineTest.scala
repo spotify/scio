@@ -8,7 +8,7 @@ import org.scalatest.{Matchers, FlatSpec}
 
 import scala.collection.JavaConverters._
 
-trait PipelineTest extends FlatSpec with Matchers with PCollectionMatchers with PrivateImplicits {
+trait PipelineTest extends FlatSpec with Matchers with PCollectionMatcher with PrivateImplicits {
 
   def runWithContext(test: DataflowContext => Unit): Unit = {
     val context = DataflowContext(Array("--testId=PipelineTest"))
