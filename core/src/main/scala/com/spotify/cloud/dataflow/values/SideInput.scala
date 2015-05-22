@@ -9,8 +9,8 @@ import com.google.cloud.dataflow.sdk.values.PCollectionView
 import scala.collection.JavaConverters._
 
 trait SideInput[T] extends Serializable {
-  def get[I, O](context: DoFn[I, O]#ProcessContext): T
-  val view: PCollectionView[_]
+  private[values] def get[I, O](context: DoFn[I, O]#ProcessContext): T
+  private[values] val view: PCollectionView[_]
 }
 
 private[values] class SingletonSideInput[T](val view: PCollectionView[T]) extends SideInput[T] {

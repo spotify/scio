@@ -7,12 +7,14 @@ import org.joda.time.Instant
 
 import scala.reflect.ClassTag
 
-class SideOutput[T] extends Serializable {
-  private[values] val tupleTag: TupleTag[T] = new TupleTag[T]()
+trait SideOutput[T] extends Serializable {
+  private[values] val tupleTag: TupleTag[T]
 }
 
 object SideOutput {
-  def apply[T](): SideOutput[T] = new SideOutput[T]
+  def apply[T](): SideOutput[T] = new SideOutput[T] {
+    override private[values] val tupleTag: TupleTag[T] = new TupleTag[T]()
+  }
 }
 
 class SideOutputContext[T] private[dataflow] (private val context: DoFn[T, AnyRef]#ProcessContext) {

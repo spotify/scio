@@ -28,7 +28,7 @@ object Args {
 
 }
 
-class Args(val m: Map[String, List[String]]) {
+class Args private (val m: Map[String, List[String]]) {
 
   def apply(key: String): String = required(key)
 

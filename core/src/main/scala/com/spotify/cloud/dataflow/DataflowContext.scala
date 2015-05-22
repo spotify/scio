@@ -41,7 +41,7 @@ object DataflowContext {
   def apply(args: Array[String]): DataflowContext = new DataflowContext(args)
 }
 
-class DataflowContext(cmdlineArgs: Array[String]) extends Implicits {
+class DataflowContext private (cmdlineArgs: Array[String]) extends Implicits {
 
   private var _options: DataflowPipelineOptions = null
   def options: DataflowPipelineOptions = _options
@@ -82,11 +82,11 @@ class DataflowContext(cmdlineArgs: Array[String]) extends Implicits {
 
   private implicit def context: DataflowContext = this
 
-  def isTest: Boolean = args.optional("testId").isDefined
+  private[dataflow] def isTest: Boolean = args.optional("testId").isDefined
 
-  def testIn: TestInput = TestDataManager.getInput(args("testId"))
-  def testOut: TestOutput = TestDataManager.getOutput(args("testId"))
-  def testDistCache: TestDistCache = TestDataManager.getDistCache(args("testId"))
+  private[dataflow] def testIn: TestInput = TestDataManager.getInput(args("testId"))
+  private[dataflow] def testOut: TestOutput = TestDataManager.getOutput(args("testId"))
+  private[dataflow] def testDistCache: TestDistCache = TestDataManager.getDistCache(args("testId"))
 
   private def getTestInput[T: ClassTag](key: TestIO[T]): SCollection[T] =
     this.parallelize(testIn(key).asInstanceOf[Seq[T]])
