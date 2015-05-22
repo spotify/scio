@@ -5,6 +5,7 @@ import com.spotify.cloud.dataflow.coders.RichCoderRegistry
 import com.spotify.cloud.dataflow.util.{LongAccumulatorType, DoubleAccumulatorType, IntAccumulatorType, AccumulatorType}
 import com.spotify.cloud.dataflow.values.{DoubleSCollectionFunctions, PairSCollectionFunctions, SCollection}
 
+import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 // A trait can be extended or mixed in
