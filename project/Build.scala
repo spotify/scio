@@ -96,6 +96,7 @@ object DataflowScalaBuild extends Build {
         "com.google.http-client" % "google-http-client-jackson2" % "1.19.0",
         "org.slf4j" % "slf4j-api" % "1.7.7",
         "joda-time" % "joda-time" % "2.7",
+        "org.joda" % "joda-convert" % "1.7",
         "org.scalatest" %% "scalatest" % scalaTestVersion
       ),
       libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
