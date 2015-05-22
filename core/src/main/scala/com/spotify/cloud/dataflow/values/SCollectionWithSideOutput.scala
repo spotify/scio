@@ -10,7 +10,8 @@ import scala.reflect.ClassTag
 
 class SCollectionWithSideOutput[T] private[values] (val internal: PCollection[T],
                                                     sides: Iterable[SideOutput[_]])
-                                                   (implicit val context: DataflowContext, val ct: ClassTag[T])
+                                                   (implicit private[values] val context: DataflowContext,
+                                                    protected val ct: ClassTag[T])
   extends PCollectionWrapper[T] {
 
   private val sideTags = TupleTagList.of(sides.map(_.tupleTag).toList.asJava)

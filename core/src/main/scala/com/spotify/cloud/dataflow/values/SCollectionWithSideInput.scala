@@ -10,7 +10,8 @@ import scala.reflect.ClassTag
 
 class SCollectionWithSideInput[T] private[values] (val internal: PCollection[T],
                                                    sides: Iterable[SideInput[_]])
-                                                  (implicit val context: DataflowContext, val ct: ClassTag[T])
+                                                  (implicit private[values] val context: DataflowContext,
+                                                   protected val ct: ClassTag[T])
   extends PCollectionWrapper[T] {
 
   private val parDo = ParDo.withSideInputs(sides.map(_.view).asJava)

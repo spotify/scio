@@ -7,7 +7,8 @@ import com.spotify.cloud.dataflow.util.{Accumulator, FunctionsWithAccumulator}
 import scala.reflect.ClassTag
 
 class SCollectionWithAccumulator[T] private[values] (val internal: PCollection[T])
-                                                    (implicit val context: DataflowContext, val ct: ClassTag[T])
+                                                    (implicit private[values] val context: DataflowContext,
+                                                     protected val ct: ClassTag[T])
   extends PCollectionWrapper[T] {
 
   def filter(f: (T, Accumulator[T, T]) => Boolean): SCollectionWithAccumulator[T] =

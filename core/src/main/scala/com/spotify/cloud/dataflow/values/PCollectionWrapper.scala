@@ -12,11 +12,11 @@ private[values] trait PCollectionWrapper[T] extends PrivateImplicits {
 
   val internal: PCollection[T]
 
-  implicit val context: DataflowContext
+  implicit private[values] val context: DataflowContext
 
-  protected implicit val ct: ClassTag[T]
+  implicit protected val ct: ClassTag[T]
 
-  def applyInternal[Output <: POutput](transform: PTransform[_ >: PCollection[T], Output]): Output =
+  private[values] def applyInternal[Output <: POutput](transform: PTransform[_ >: PCollection[T], Output]): Output =
     internal.apply(transform.withName(CallSites.getCurrent))
 
   protected def apply[U: ClassTag](transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {

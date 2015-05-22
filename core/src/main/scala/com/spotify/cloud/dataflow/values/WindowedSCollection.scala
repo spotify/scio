@@ -11,7 +11,8 @@ import scala.reflect.ClassTag
 case class WindowedValue[T](value: T, timestamp: Instant, windows: Iterable[BoundedWindow])
 
 class WindowedSCollection[T] private[values] (val internal: PCollection[T])
-                                             (implicit val context: DataflowContext, val ct: ClassTag[T])
+                                             (implicit private[values] val context: DataflowContext,
+                                              protected val ct: ClassTag[T])
   extends PCollectionWrapper[T] {
 
   def filter(f: WindowedValue[T] => Boolean): WindowedSCollection[T] =

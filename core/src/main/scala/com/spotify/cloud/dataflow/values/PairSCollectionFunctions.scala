@@ -17,7 +17,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   import TupleFunctions._
 
-  implicit def context: DataflowContext = self.context
+  implicit private val context: DataflowContext = self.context
 
   private def toKvTransform = ParDo.of(Functions.mapFn[(K, V), KV[K, V]](kv => KV.of(kv._1, kv._2)))
 
