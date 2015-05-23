@@ -17,10 +17,34 @@ object BuildSettings {
     crossScalaVersions := Seq("2.10.5", "2.11.6"),
     scalacOptions      ++= Seq("-target:jvm-1.7", "-deprecation", "-feature", "-unchecked"),
     javacOptions in (Compile)          ++= Seq("-source", "1.7"),
-    javacOptions in (Compile, compile) ++= Seq("-target", "1.7")
-  )
+    javacOptions in (Compile, compile) ++= Seq("-target", "1.7"),
 
-  val publishSettings = site.settings ++ ghpages.settings ++ unidocSettings ++ Seq(
+    apiMappings ++= {
+      def apiMapping(organization: String, name: String, apiUrl: String): Option[(File, URL)] = {
+        (for {
+          entry <- (fullClasspath in Compile).value
+          module <- entry.get(moduleID.key)
+          if module.organization == organization
+          if module.name.startsWith(name)
+            jarFile = entry.data
+        } yield jarFile).headOption.map((_, url(apiUrl)))
+      }
+      Seq(
+        // TODO: fix JavaDoc URLs
+        /*
+        apiMapping(
+          "com.google.cloud.dataflow", "google-cloud-dataflow-java-sdk-all",
+          "https://cloud.google.com/dataflow/java-sdk/JavaDoc"),
+         */
+        apiMapping("com.twitter", "algebird-core", "http://twitter.github.io/algebird")
+      ).flatten.toMap
+    }
+  )
+}
+
+object SiteSettings {
+  val siteSettings = site.settings ++ ghpages.settings ++ unidocSettings ++ Seq(
+    autoAPIMappings := true,
     site.addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), ""),
     gitRemoteRepo := "git@github.com:spotify/dataflow-scala.git"
   )
@@ -28,6 +52,7 @@ object BuildSettings {
 
 object DataflowScalaBuild extends Build {
   import BuildSettings._
+  import SiteSettings._
 
   val sdkVersion = "0.4.150414"
 
@@ -41,7 +66,7 @@ object DataflowScalaBuild extends Build {
   lazy val root: Project = Project(
     "root",
     file("."),
-    settings = buildSettings ++ publishSettings ++ Seq(run <<= run in Compile in dataflowScalaExamples)
+    settings = buildSettings ++ siteSettings ++ Seq(run <<= run in Compile in dataflowScalaExamples)
   ).settings(
     publish := {},
     publishLocal := {},
