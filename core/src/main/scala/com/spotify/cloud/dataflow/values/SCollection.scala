@@ -33,32 +33,53 @@ import org.joda.time.{Instant, Duration}
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
+/** Convenience functions for creating SCollections. */
 object SCollection {
+
+  /** Create a new SCollection from a PCollection. */
   def apply[T: ClassTag](p: PCollection[T])(implicit context: DataflowContext): SCollection[T] =
     new SCollectionImpl(p)
 
+  /** Create a union of multiple SCollections */
   def unionAll[T: ClassTag](scs: Iterable[SCollection[T]]): SCollection[T] = {
     val o = PCollectionList.of(scs.map(_.internal).asJava).apply(Flatten.pCollections().withName(CallSites.getCurrent))
     new SCollectionImpl(o)(scs.head.context, scs.head.ct)
   }
+
 }
 
+/** Scala wrapper for PCollection. */
 sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   import TupleFunctions._
 
-  /* Delegations */
+  // =======================================================================
+  // Delegations for internal PCollection
+  // =======================================================================
 
+  /** A friendly name for this SCollection. */
   def name: String = internal.getName
 
+  /** Assign a Coder to this SCollection. */
   def setCoder(coder: Coder[T]): SCollection[T] = SCollection(internal.setCoder(coder))
 
+  /** Assign a name to this SCollection. */
   def setName(name: String): SCollection[T] = SCollection(internal.setName(name))
 
-  /* Collection operations */
+  // =======================================================================
+  // Collection operations
+  // =======================================================================
 
+  /**
+   * Return the union of this SCollection and another one. Any identical elements will appear
+   * multiple times (use `.distinct()` to eliminate them).
+   */
   def ++(that: SCollection[T]): SCollection[T] = this.union(that)
 
+  /**
+   * Return the union of this SCollection and another one. Any identical elements will appear
+   * multiple times (use `.distinct()` to eliminate them).
+   */
   def union(that: SCollection[T]): SCollection[T] = {
     val o = PCollectionList
       .of(internal).and(that.internal)
@@ -66,66 +87,154 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     SCollection(o)
   }
 
+  /**
+   * Return the intersection of this SCollection and another one. The output will not contain any
+   * duplicate elements, even if the input SCollections did.
+   *
+   * Note that this method performs a shuffle internally.
+   */
   def intersection(that: SCollection[T]): SCollection[T] =
     this.map((_, 1)).coGroup(that.map((_, 1))).flatMap { t =>
       if (t._2._1.nonEmpty && t._2._2.nonEmpty) Seq(t._1) else Seq.empty
     }
 
+  /**
+   * Partition this SCollection with the provided function.
+   *
+   * @param numPartitions number of output partitions
+   * @param f function that assigns an output partition to each element, should be in the range
+   * `[0, numPartitions - 1]`
+   * @return partitioned SCollections in a Seq
+   */
   def partition(numPartitions: Int, f: T => Int): Seq[SCollection[T]] =
     this.applyInternal(Partition.of[T](numPartitions, Functions.partitionFn[T](numPartitions, f)))
       .getAll.asScala.map(p => SCollection(p))
 
-  /* Transformations */
+  // =======================================================================
+  // Transformations
+  // =======================================================================
 
+  /**
+   * Aggregate the elements using given combine functions and a neutral "zero value". This
+   * function can return a different result type, U, than the type of this SCollection, T. Thus,
+   * we need one operation for merging a T into an U and one operation for merging two U's. Both
+   * of these functions are allowed to modify and return their first argument instead of creating
+   * a new U to avoid memory allocation.
+   */
   def aggregate[U: ClassTag](zeroValue: U)(seqOp: (U, T) => U, combOp: (U, U) => U): SCollection[U] =
     this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(seqOp, combOp)))
 
-  // Algebird approach, more powerful and better optimized in some cases
+  /**
+   * Aggregate with [[com.twitter.algebird.Aggregator]]. First each item T is mapped to A, then we
+   * reduce with a semigroup of A, then finally we present the results as U. This could be more
+   * powerful and better optimized in some cases.
+   */
   def aggregate[A: ClassTag, U: ClassTag](aggregator: Aggregator[T, A, U]): SCollection[U] =
     this.map(aggregator.prepare).sum()(aggregator.semigroup).map(aggregator.present)
 
+  /**
+   * Generic function to combine the elements using a custom set of aggregation functions. Turns
+   * an SCollection[T] into a result of type SCollection[C], for a "combined type" C. Note that V
+   * and C can be different -- for example, one might combine an SCollection of type Int into an
+   * SCollection of type Seq[Int]. Users provide three functions:
+   *
+   * - `createCombiner`, which turns a V into a C (e.g., creates a one-element list)
+   *
+   * - `mergeValue`, to merge a V into a C (e.g., adds it to the end of a list)
+   *
+   * - `mergeCombiners`, to combine two C's into a single one.
+   */
   def combine[C: ClassTag](createCombiner: T => C)
                           (mergeValue: (C, T) => C)
                           (mergeCombiners: (C, C) => C): SCollection[C] =
     this.apply(Combine.globally(Functions.combineFn(createCombiner, mergeValue, mergeCombiners)))
 
+  /**
+   * Count the number of elements in the SCollection.
+   * @return a new SCollection with the count
+   */
   def count(): SCollection[Long] = this.apply(Count.globally[T]()).asInstanceOf[SCollection[Long]]
 
+  /**
+   * Count approximate number of distinct elements in the SCollection.
+   * @param sampleSize the number of entries in the statisticalsample; the higher this number, the
+   * more accurate the estimate will be; should be `>= 16`
+   */
   def countApproxDistinct(sampleSize: Int): SCollection[Long] =
     this.apply(ApproximateUnique.globally[T](sampleSize)).asInstanceOf[SCollection[Long]]
 
+  /**
+   * Count approximate number of distinct elements in the SCollection.
+   * @param maximumEstimationError the maximum estimation error, which should be in the range
+   * `[0.01, 0.5]`
+   */
   def countApproxDistinct(maximumEstimationError: Double = 0.02): SCollection[Long] =
     this.apply(ApproximateUnique.globally[T](maximumEstimationError)).asInstanceOf[SCollection[Long]]
 
+  /** Count of each unique value in this SCollection as an SCollection of (value, count) pairs. */
   def countByValue(): SCollection[(T, Long)] =
     this.apply(Count.perElement[T]()).map(kvToTuple).asInstanceOf[SCollection[(T, Long)]]
 
+  /** Return a new SCollection containing the distinct elements in this SCollection. */
   def distinct(): SCollection[T] = this.apply(RemoveDuplicates.create[T]())
 
+  /** Return a new SCollection containing only the elements that satisfy a predicate. */
   def filter(f: T => Boolean): SCollection[T] =
     this.apply(Filter.by(Functions.serializableFn(f.asInstanceOf[T => JBoolean])))
 
+  /**
+   * Return a new SCollection by first applying a function to all elements of
+   * this SCollection, and then flattening the results.
+   */
   def flatMap[U: ClassTag](f: T => TraversableOnce[U]): SCollection[U] = this.parDo(Functions.flatMapFn(f))
 
+  /**
+   * Aggregate the elements using a given associative function and a neutral "zero value". The
+   * function op(t1, t2) is allowed to modify t1 and return it as its result value to avoid object
+   * allocation; however, it should not modify t2.
+   */
   def fold(zeroValue: T)(op: (T, T) => T): SCollection[T] =
     this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(op, op)))
 
-  // Algebird approach, more powerful and better optimized in some cases
+  /**
+   * Fold with [[com.twitter.algebird.Monoid]], which defines the associative function and "zero
+   * value" for T. This could be more powerful and better optimized in some cases.
+   */
   def fold(implicit mon: Monoid[T]): SCollection[T] = this.apply(Combine.globally(Functions.reduceFn(mon)))
 
+  /**
+   * Return an SCollection of grouped items. Each group consists of a key and a sequence of
+   * elements mapping to that key. The ordering of elements within each group is not guaranteed,
+   * and may even differ each time the resulting SCollection is evaluated.
+   *
+   * Note: This operation may be very expensive. If you are grouping in order to perform an
+   * aggregation (such as a sum or average) over each key, using
+   * [[PairSCollectionFunctions.aggregateByKey[U]* PairSCollectionFunctions.aggregateByKey]] or
+   * [[PairSCollectionFunctions.reduceByKey]] will provide much better performance.
+   */
   def groupBy[K: ClassTag](f: T => K): SCollection[(K, Iterable[T])] =
     this
       .apply(WithKeys.of(Functions.serializableFn(f))).setCoder(this.getKvCoder[K, T])
       .apply(GroupByKey.create[K, T]()).map(kvIterableToTuple)
 
+  /** Create tuples of the elements in this SCollection by applying `f`. */
   // Scala lambda is simpler than transforms.WithKeys
   def keyBy[K: ClassTag](f: T => K): SCollection[(K, T)] = this.map(v => (f(v), v))
 
+  /** Return a new SCollection by applying a function to all elements of this SCollection. */
   def map[U: ClassTag](f: T => U): SCollection[U] = this.parDo(Functions.mapFn(f))
 
+  /**
+   * Return the max of this SCollection as defined by the implicit Ordering[T].
+   * @return a new SCollection with the maximum element
+   */
   // Scala lambda is simpler and more powerful than transforms.Max
   def max()(implicit ord: Ordering[T]): SCollection[T] = this.reduce(ord.max)
 
+  /**
+   * Return the mean of this SCollection as defined by the implicit Numeric[T].
+   * @return a new SCollection with the mean of elements
+   */
   def mean()(implicit ev: Numeric[T]): SCollection[Double] = {
     val o = this
       .map(ev.toDouble).asInstanceOf[SCollection[JDouble]]
@@ -133,32 +242,68 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     SCollection(o)
   }
 
+  /**
+   * Return the min of this SCollection as defined by the implicit Ordering[T].
+   * @return a new SCollection with the minimum element
+   */
   // Scala lambda is simpler and more powerful than transforms.Min
   def min()(implicit ord: Ordering[T]): SCollection[T] = this.reduce(ord.min)
 
+  /**
+   * Compute the SCollection's data distribution using approximate `N`-tiles.
+   * @return a new SCollection whose single value is an Iterable of the approximate `N`-tiles of
+   * the elements
+   */
   def quantilesApprox(numQuantiles: Int)(implicit ord: Ordering[T]): SCollection[Iterable[T]] =
     this.apply(ApproximateQuantiles.globally(numQuantiles, ord)).map(_.asInstanceOf[JIterable[T]].asScala)
 
+  /**
+   * Reduce the elements of this SCollection using the specified commutative and associative
+   * binary operator.
+   */
   def reduce(op: (T, T) => T): SCollection[T] = this.apply(Combine.globally(Functions.reduceFn(op)))
 
+  /**
+   * Return a sampled subset of this SCollection.
+   * @return a new SCollection whose single value is an Iterable of the
+   * samples
+   */
   def sample(sampleSize: Int): SCollection[Iterable[T]] =
     this.apply(Sample.fixedSizeGlobally(sampleSize)).map(_.asScala)
 
+  // TODO: implement sample by fraction, with and without replacement.
+
+  /** Return an SCollection with the elements from `this` that are not in `other`. */
   def subtract(that: SCollection[T]): SCollection[T] =
     this.map((_, 1)).coGroup(that.map((_, 1))).flatMap { t =>
       if (t._2._1.nonEmpty && t._2._2.isEmpty) Seq(t._1) else Seq.empty
     }
 
-  // Algebird approach, more powerful and better optimized in some cases
+  /**
+   * Reduce with [[com.twitter.algebird.Semigroup]]. This could be more powerful and better
+   * optimized in some cases.
+   */
   def sum()(implicit sg: Semigroup[T]): SCollection[T] = this.apply(Combine.globally(Functions.reduceFn(sg)))
 
+  /** Return a sampled subset of any `num` elements of the SCollection. */
   def take(num: Long): SCollection[T] = this.apply(Sample.any(num))
 
+  /**
+   * Return the top k (largest) elements from this SCollection as defined by the specified
+   * implicit Ordering[T].
+   * @return a new SCollection whose single value is an Iterable of the top k
+   */
   def top(num: Int)(implicit ord: Ordering[T]): SCollection[Iterable[T]] =
     this.apply(Top.of(num, ord)).map(_.asInstanceOf[JIterable[T]].asScala)
 
-  /* Hash operations */
+  // =======================================================================
+  // Hash operations
+  // =======================================================================
 
+  /**
+   * Return the cross product with another SCollection. The right side should be tiny and fit in
+   * memory.
+   */
   def cross[U: ClassTag](that: SCollection[U]): SCollection[(T, U)] = {
     val side = that.asIterableSideInput
     this
@@ -167,6 +312,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .toSCollection
   }
 
+  /**
+   * Look up values in a SCollection[(T, V)] for each element T in this SCollection. The right
+   * side should be tiny and fit in memory.
+   */
   def hashLookup[V: ClassTag](that: SCollection[(T, V)]): SCollection[(T, Iterable[V])] = {
     val side = that.asMapSideInput
     this
@@ -175,11 +324,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .toSCollection
   }
 
-  /* Accumulator operations */
+  // =======================================================================
+  // Accumulator operations
+  // =======================================================================
 
   def withAccumulator: SCollectionWithAccumulator[T] = new SCollectionWithAccumulator[T](internal)
 
-  /* Side input operations */
+  // =======================================================================
+  // Side input operations
+  // =======================================================================
 
   def asSingletonSideInput: SideInput[T] = new SingletonSideInput[T](this.applyInternal(View.asSingleton()))
 
@@ -188,12 +341,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def withSideInputs(sides: SideInput[_]*): SCollectionWithSideInput[T] =
     new SCollectionWithSideInput[T](internal, sides)
 
-  /* Side output operations */
+  // =======================================================================
+  // Side output operations
+  // =======================================================================
 
   def withSideOutputs(sides: SideOutput[_]*): SCollectionWithSideOutput[T] =
     new SCollectionWithSideOutput[T](internal, sides)
 
-  /* Windowing operations */
+  // =======================================================================
+  // Windowing operations
+  // =======================================================================
 
   def toWindowed: WindowedSCollection[T] = new WindowedSCollection[T](internal)
 
@@ -232,7 +389,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   def timestampBy(f: T => Instant): SCollection[T] = this.parDo(FunctionsWithWindowedValue.timestampFn(f))
 
-  /* Write operations */
+  // =======================================================================
+  // Write operations
+  // =======================================================================
 
   private def pathWithShards(path: String) = {
     if (this.context.pipeline.getRunner.isInstanceOf[DirectPipelineRunner]) {
@@ -254,6 +413,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   private def tableRowJsonOut(path: String, numShards: Int) =
     textOut(path, ".json", numShards).withCoder(TableRowJsonCoder.of())
 
+  /** Save this SCollection as an Avro file. Note that elements must be of type IndexedRecord. */
   def saveAsAvroFile(path: String, numShards: Int = 0)(implicit ev: T <:< IndexedRecord): Unit =
     if (context.isTest) {
       context.testOut(AvroIO(path))(internal)
@@ -271,6 +431,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       }
     }
 
+  /** Save this SCollection as a Bigquery table. Note that elements must be of type TableRow. */
   def saveAsBigQuery(table: TableReference, schema: TableSchema,
                      createDisposition: CreateDisposition,
                      writeDisposition: WriteDisposition)
@@ -287,12 +448,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     }
   }
 
+  /** Save this SCollection as a Bigquery table. Note that elements must be of type TableRow. */
   def saveAsBigQuery(tableSpec: String, schema: TableSchema = null,
                      createDisposition: CreateDisposition = null,
                      writeDisposition: WriteDisposition = null)
                     (implicit ev: T <:< TableRow): Unit =
     saveAsBigQuery(GBigQueryIO.parseTableSpec(tableSpec), schema, createDisposition, writeDisposition)
 
+  /** Save this SCollection as a Datastore dataset. Note that elements must be of type Entity. */
   def saveAsDatastore(datasetId: String)(implicit ev: T <:< Entity): Unit =
     if (context.isTest) {
       context.testOut(DatastoreIO(datasetId))(internal.asInstanceOf[PCollection[Entity]])
@@ -300,6 +463,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       this.asInstanceOf[SCollection[Entity]].applyInternal(GDatastoreIO.writeTo(datasetId))
     }
 
+  /** Save this SCollection as a Pub/Sub topic. Note that elements must be of type String. */
   def saveAsPubsub(topic: String)(implicit ev: T <:< String): Unit =
     if (context.isTest) {
       context.testOut(PubsubIO(topic))(internal.asInstanceOf[PCollection[String]])
@@ -307,6 +471,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       this.asInstanceOf[SCollection[String]].applyInternal(GPubsubIO.Write.topic(topic))
     }
 
+  /** Save this SCollection as a JSON text file. Note that elements must be of type TableRow. */
   def saveAsTableRowJsonFile(path: String, numShards: Int = 0)(implicit ev: T <:< TableRow): Unit =
     if (context.isTest) {
       context.testOut(BigQueryIO(path))(internal.asInstanceOf[PCollection[TableRow]])
@@ -314,6 +479,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       this.asInstanceOf[SCollection[TableRow]].applyInternal(tableRowJsonOut(path, numShards))
     }
 
+  /** Save this SCollection as a text file. Note that elements must be of type String. */
   def saveAsTextFile(path: String, suffix: String = ".txt", numShards: Int = 0)(implicit ev: T <:< String): Unit =
     if (context.isTest) {
       context.testOut(TextIO(path))(internal.asInstanceOf[PCollection[String]])
