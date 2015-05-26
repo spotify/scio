@@ -301,8 +301,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // =======================================================================
 
   /**
-   * Return the cross product with another SCollection. The right side should be tiny and fit in
-   * memory.
+   * Return the cross product with another SCollection by replicating `that` to all workers. The
+   * right side should be tiny and fit in memory.
    */
   def cross[U: ClassTag](that: SCollection[U]): SCollection[(T, U)] = {
     val side = that.asIterableSideInput
@@ -313,8 +313,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /**
-   * Look up values in a SCollection[(T, V)] for each element T in this SCollection. The right
-   * side should be tiny and fit in memory.
+   * Look up values in a SCollection[(T, V)] for each element T in this SCollection by replicating
+   * `that` to all workers. The right side should be tiny and fit in memory.
    */
   def hashLookup[V: ClassTag](that: SCollection[(T, V)]): SCollection[(T, Iterable[V])] = {
     val side = that.asMapSideInput
