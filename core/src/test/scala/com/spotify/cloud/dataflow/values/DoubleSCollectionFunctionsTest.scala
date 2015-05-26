@@ -18,12 +18,12 @@ class DoubleSCollectionFunctionsTest extends PipelineTest {
   }
 
   "DoubleSCollection" should "support sampleStdev()" in {
-    runWithContext { pipeline =>
+    runWithContext { context =>
       val e = expected.sampleStdev
-      val p1 = pipeline.parallelize(ints: _*).sampleStdev()
-      val p2 = pipeline.parallelize(longs: _*).sampleStdev()
-      val p3 = pipeline.parallelize(floats: _*).sampleStdev()
-      val p4 = pipeline.parallelize(doubles: _*).sampleStdev()
+      val p1 = context.parallelize(ints: _*).sampleStdev()
+      val p2 = context.parallelize(longs: _*).sampleStdev()
+      val p3 = context.parallelize(floats: _*).sampleStdev()
+      val p4 = context.parallelize(doubles: _*).sampleStdev()
       checkError(p1, e)
       checkError(p2, e)
       checkError(p3, e)
@@ -32,12 +32,12 @@ class DoubleSCollectionFunctionsTest extends PipelineTest {
   }
 
   it should "support sampleVariance()" in {
-    runWithContext { pipeline =>
+    runWithContext { context =>
       val e = expected.sampleVariance
-      val p1 = pipeline.parallelize(ints: _*).sampleVariance()
-      val p2 = pipeline.parallelize(longs: _*).sampleVariance()
-      val p3 = pipeline.parallelize(floats: _*).sampleVariance()
-      val p4 = pipeline.parallelize(doubles: _*).sampleVariance()
+      val p1 = context.parallelize(ints: _*).sampleVariance()
+      val p2 = context.parallelize(longs: _*).sampleVariance()
+      val p3 = context.parallelize(floats: _*).sampleVariance()
+      val p4 = context.parallelize(doubles: _*).sampleVariance()
       checkError(p1, e)
       checkError(p2, e)
       checkError(p3, e)
@@ -46,12 +46,12 @@ class DoubleSCollectionFunctionsTest extends PipelineTest {
   }
 
   it should "support stdev()" in {
-    runWithContext { pipeline =>
+    runWithContext { context =>
       val e = expected.stdev
-      val p1 = pipeline.parallelize(ints: _*).stdev()
-      val p2 = pipeline.parallelize(longs: _*).stdev()
-      val p3 = pipeline.parallelize(floats: _*).stdev()
-      val p4 = pipeline.parallelize(doubles: _*).stdev()
+      val p1 = context.parallelize(ints: _*).stdev()
+      val p2 = context.parallelize(longs: _*).stdev()
+      val p3 = context.parallelize(floats: _*).stdev()
+      val p4 = context.parallelize(doubles: _*).stdev()
       checkError(p1, e)
       checkError(p2, e)
       checkError(p3, e)
@@ -60,12 +60,12 @@ class DoubleSCollectionFunctionsTest extends PipelineTest {
   }
 
   it should "support variance()" in {
-    runWithContext { pipeline =>
+    runWithContext { context =>
       val e = expected.variance
-      val p1 = pipeline.parallelize(ints: _*).variance()
-      val p2 = pipeline.parallelize(longs: _*).variance()
-      val p3 = pipeline.parallelize(floats: _*).variance()
-      val p4 = pipeline.parallelize(doubles: _*).variance()
+      val p1 = context.parallelize(ints: _*).variance()
+      val p2 = context.parallelize(longs: _*).variance()
+      val p3 = context.parallelize(floats: _*).variance()
+      val p4 = context.parallelize(doubles: _*).variance()
       checkError(p1, e)
       checkError(p2, e)
       checkError(p3, e)

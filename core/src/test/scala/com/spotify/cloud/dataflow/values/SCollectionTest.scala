@@ -9,16 +9,16 @@ import scala.reflect.ClassTag
 class SCollectionTest extends PipelineTest {
 
   "SCollection" should "support setName()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize(1, 2, 3, 4, 5).setName("MySCollection")
+    runWithContext { context =>
+      val p = context.parallelize(1, 2, 3, 4, 5).setName("MySCollection")
       p.name should equal ("MySCollection")
     }
   }
 
   it should "support ++ operator" in {
-    runWithContext { pipeline =>
-      val p1 = pipeline.parallelize("a", "b", "c")
-      val p2 = pipeline.parallelize("d", "e", "f")
+    runWithContext { context =>
+      val p1 = context.parallelize("a", "b", "c")
+      val p2 = context.parallelize("d", "e", "f")
       val r1 = p1 ++ p2
       val r2 = p1.union(p2)
       val expected = Seq("a", "b", "c", "d", "e", "f")
@@ -28,9 +28,9 @@ class SCollectionTest extends PipelineTest {
   }
 
   it should "support ++ operator with duplicates" in {
-    runWithContext { pipeline =>
-      val p1 = pipeline.parallelize("a", "b", "c", "a", "d")
-      val p2 = pipeline.parallelize("d", "e", "f", "a", "d")
+    runWithContext { context =>
+      val p1 = context.parallelize("a", "b", "c", "a", "d")
+      val p2 = context.parallelize("d", "e", "f", "a", "d")
       val r1 = p1 ++ p2
       val r2 = p1.union(p2)
       val expected = Seq("a", "a", "a", "b", "c", "d", "d", "d", "e", "f")
@@ -40,34 +40,34 @@ class SCollectionTest extends PipelineTest {
   }
 
   it should "support intersection()" in {
-    runWithContext { pipeline =>
-      val p1 = pipeline.parallelize(1, 2, 3, 4, 5)
-      val p2 = pipeline.parallelize(2, 4, 6, 8, 10)
+    runWithContext { context =>
+      val p1 = context.parallelize(1, 2, 3, 4, 5)
+      val p2 = context.parallelize(2, 4, 6, 8, 10)
       val p = p1.intersection(p2)
       p.internal should containInAnyOrder (2, 4)
     }
   }
 
   it should "support intersection() with duplicates" in {
-    runWithContext { pipeline =>
-      val p1 = pipeline.parallelize(1, 2, 3, 4, 5, 2, 4)
-      val p2 = pipeline.parallelize(2, 4, 6, 8, 10, 2, 4)
+    runWithContext { context =>
+      val p1 = context.parallelize(1, 2, 3, 4, 5, 2, 4)
+      val p2 = context.parallelize(2, 4, 6, 8, 10, 2, 4)
       val p = p1.intersection(p2)
       p.internal should containInAnyOrder (2, 4)
     }
   }
 
   it should "support partition()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize(1, 2, 3, 4, 5, 6).partition(2, _ % 2)
+    runWithContext { context =>
+      val p = context.parallelize(1, 2, 3, 4, 5, 6).partition(2, _ % 2)
       p(0).internal should containInAnyOrder (2, 4, 6)
       p(1).internal should containInAnyOrder (1, 3, 5)
     }
   }
 
   it should "support aggregate()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize(1 to 100: _*)
+    runWithContext { context =>
+      val p = context.parallelize(1 to 100: _*)
       val p1 = p.aggregate(0.0)(_ + _, _ + _)
       val p2 = p.aggregate(Aggregator.max[Int])
       val p3 = p.aggregate(Aggregator.sortedReverseTake[Int](5))
@@ -78,22 +78,22 @@ class SCollectionTest extends PipelineTest {
   }
 
   it should "support combine()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize(1 to 100: _*).combine(_.toDouble)(_ + _)(_ + _)
+    runWithContext { context =>
+      val p = context.parallelize(1 to 100: _*).combine(_.toDouble)(_ + _)(_ + _)
       p.internal should containSingleValue (5050.0)
     }
   }
 
   it should "support count()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize("a", "b", "c").count()
+    runWithContext { context =>
+      val p = context.parallelize("a", "b", "c").count()
       p.internal should containSingleValue (3L)
     }
   }
 
   it should "support countApproxDistinct()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize("a", "b", "b", "c", "c", "c")
+    runWithContext { context =>
+      val p = context.parallelize("a", "b", "b", "c", "c", "c")
       val r1 = p.countApproxDistinct()
       val r2 = p.countApproxDistinct(sampleSize = 10000)
       r1.internal should containSingleValue (3L)
@@ -102,36 +102,36 @@ class SCollectionTest extends PipelineTest {
   }
 
   it should "support countByValue()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize("a", "b", "b", "c", "c", "c").countByValue()
+    runWithContext { context =>
+      val p = context.parallelize("a", "b", "b", "c", "c", "c").countByValue()
       p.internal should containInAnyOrder (("a", 1L), ("b", 2L), ("c", 3L))
     }
   }
 
   it should "support distinct()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize("a", "b", "b", "c", "c", "c").distinct()
+    runWithContext { context =>
+      val p = context.parallelize("a", "b", "b", "c", "c", "c").distinct()
       p.internal should containInAnyOrder ("a", "b", "c")
     }
   }
 
   it should "support filter()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize(1, 2, 3, 4, 5).filter(_ % 2 == 0)
+    runWithContext { context =>
+      val p = context.parallelize(1, 2, 3, 4, 5).filter(_ % 2 == 0)
       p.internal should containInAnyOrder (2, 4)
     }
   }
 
   it should "support flatMap()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize("a b c", "d e", "f").flatMap(_.split(" "))
+    runWithContext { context =>
+      val p = context.parallelize("a b c", "d e", "f").flatMap(_.split(" "))
       p.internal should containInAnyOrder ("a", "b", "c", "d", "e", "f")
     }
   }
 
   it should "support fold()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize(1 to 100: _*)
+    runWithContext { context =>
+      val p = context.parallelize(1 to 100: _*)
       val r1 = p.fold(0)(_ + _)
       val r2 = p.fold
       r1.internal should containSingleValue (5050)
@@ -140,29 +140,29 @@ class SCollectionTest extends PipelineTest {
   }
 
   it should "support groupBy()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize(1, 2, 3, 4).groupBy(_ % 2).mapValues(_.toSet)
+    runWithContext { context =>
+      val p = context.parallelize(1, 2, 3, 4).groupBy(_ % 2).mapValues(_.toSet)
       p.internal should containInAnyOrder ((0, Set(2, 4)), (1, Set(1, 3)))
     }
   }
 
   it should "support keyBy()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize("hello", "world").keyBy(_.substring(0, 1))
+    runWithContext { context =>
+      val p = context.parallelize("hello", "world").keyBy(_.substring(0, 1))
       p.internal should containInAnyOrder (("h", "hello"), ("w", "world"))
     }
   }
 
   it should "support map()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize("1", "2", "3").map(_.toInt)
+    runWithContext { context =>
+      val p = context.parallelize("1", "2", "3").map(_.toInt)
       p.internal should containInAnyOrder (1, 2, 3)
     }
   }
 
   it should "support max()" in {
-    runWithContext { pipeline =>
-      def max[T: ClassTag : Numeric](elems: T*) = pipeline.parallelize(elems: _*).max
+    runWithContext { context =>
+      def max[T: ClassTag : Numeric](elems: T*) = context.parallelize(elems: _*).max
       max(1, 2, 3).internal should containSingleValue (3)
       max(1L, 2L, 3L).internal should containSingleValue (3L)
       max(1F, 2F, 3F).internal should containSingleValue (3F)
@@ -171,8 +171,8 @@ class SCollectionTest extends PipelineTest {
   }
 
   it should "support mean()" in {
-    runWithContext { pipeline =>
-      def mean[T: ClassTag : Numeric](elems: T*) = pipeline.parallelize(elems: _*).mean
+    runWithContext { context =>
+      def mean[T: ClassTag : Numeric](elems: T*) = context.parallelize(elems: _*).mean
       mean(1, 2, 3).internal should containSingleValue (2.0)
       mean(1L, 2L, 3L).internal should containSingleValue (2.0)
       mean(1F, 2F, 3F).internal should containSingleValue (2.0)
@@ -181,8 +181,8 @@ class SCollectionTest extends PipelineTest {
   }
 
   it should "support min()" in {
-    runWithContext { pipeline =>
-      def min[T: ClassTag : Numeric](elems: T*) = pipeline.parallelize(elems: _*).min
+    runWithContext { context =>
+      def min[T: ClassTag : Numeric](elems: T*) = context.parallelize(elems: _*).min
       min(1, 2, 3).internal should containSingleValue (1)
       min(1L, 2L, 3L).internal should containSingleValue (1L)
       min(1F, 2F, 3F).internal should containSingleValue (1F)
@@ -191,22 +191,22 @@ class SCollectionTest extends PipelineTest {
   }
 
   it should "support quantilesApprox()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize(0 to 100: _*).quantilesApprox(5)
+    runWithContext { context =>
+      val p = context.parallelize(0 to 100: _*).quantilesApprox(5)
       p.internal should containSingleValue (iterable(0, 25, 50, 75, 100))
     }
   }
 
   it should "support reduce()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize(1, 2, 3, 4, 5).reduce(_ + _)
+    runWithContext { context =>
+      val p = context.parallelize(1, 2, 3, 4, 5).reduce(_ + _)
       p.internal should containSingleValue (15)
     }
   }
 
   it should "support sample()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize(1, 1, 1, 1, 1)
+    runWithContext { context =>
+      val p = context.parallelize(1, 1, 1, 1, 1)
       val r1 = p.sample(1)
       val r2 = p.sample(5)
       r1.internal should containSingleValue (iterable(1))
@@ -215,26 +215,26 @@ class SCollectionTest extends PipelineTest {
   }
 
   it should "support subtract()" in {
-    runWithContext { pipeline =>
-      val p1 = pipeline.parallelize(1, 2, 3, 4, 5)
-      val p2 = pipeline.parallelize(2, 4, 6, 8, 10)
+    runWithContext { context =>
+      val p1 = context.parallelize(1, 2, 3, 4, 5)
+      val p2 = context.parallelize(2, 4, 6, 8, 10)
       val p = p1.subtract(p2)
       p.internal should containInAnyOrder (1, 3, 5)
     }
   }
 
   it should "support subtract() with duplicates" in {
-    runWithContext { pipeline =>
-      val p1 = pipeline.parallelize(1, 2, 3, 4, 5, 1, 3, 5)
-      val p2 = pipeline.parallelize(2, 4, 6, 8, 10)
+    runWithContext { context =>
+      val p1 = context.parallelize(1, 2, 3, 4, 5, 1, 3, 5)
+      val p2 = context.parallelize(2, 4, 6, 8, 10)
       val p = p1.subtract(p2)
       p.internal should containInAnyOrder (1, 3, 5)
     }
   }
 
   it should "support sum()" in {
-    runWithContext { pipeline =>
-      def sum[T: ClassTag : Semigroup](elems: T*) = pipeline.parallelize(elems: _*).sum
+    runWithContext { context =>
+      def sum[T: ClassTag : Semigroup](elems: T*) = context.parallelize(elems: _*).sum
       sum(1, 2, 3).internal should containSingleValue (6)
       sum(1L, 2L, 3L).internal should containSingleValue (6L)
       sum(1F, 2F, 3F).internal should containSingleValue (6F)
@@ -244,8 +244,8 @@ class SCollectionTest extends PipelineTest {
   }
 
   it should "support take()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize(1, 2, 3, 4, 5)
+    runWithContext { context =>
+      val p = context.parallelize(1, 2, 3, 4, 5)
       val r1 = p.take(1).count()
       val r2 = p.take(2).count()
       r1.internal should containSingleValue (1L)
@@ -254,8 +254,8 @@ class SCollectionTest extends PipelineTest {
   }
 
   it should "support top()" in {
-    runWithContext { pipeline =>
-      val p = pipeline.parallelize(1, 2, 3, 4, 5)
+    runWithContext { context =>
+      val p = context.parallelize(1, 2, 3, 4, 5)
       val r1 = p.top(3)
       val r2 = p.top(3)(Ordering.by(-_))
       r1.internal should containSingleValue (iterable(5, 4, 3))
@@ -264,10 +264,10 @@ class SCollectionTest extends PipelineTest {
   }
 
   it should "support cross()" in {
-    runWithContext { pipeline =>
-      val p1 = pipeline.parallelize("a", "b", "c")
-      val p2 = pipeline.parallelize(1)
-      val p3 = pipeline.parallelize(1, 2)
+    runWithContext { context =>
+      val p1 = context.parallelize("a", "b", "c")
+      val p2 = context.parallelize(1)
+      val p3 = context.parallelize(1, 2)
       val s1 = p1.cross(p2)
       val s2 = p1.cross(p3)
       s1.internal should containInAnyOrder (("a", 1), ("b", 1), ("c", 1))
@@ -276,9 +276,9 @@ class SCollectionTest extends PipelineTest {
   }
 
   it should "support hashLookup()" in {
-    runWithContext { pipeline =>
-      val p1 = pipeline.parallelize("a", "b", "c")
-      val p2 = pipeline.parallelize(("a", 1), ("b", 2), ("b", 3))
+    runWithContext { context =>
+      val p1 = context.parallelize("a", "b", "c")
+      val p2 = context.parallelize(("a", 1), ("b", 2), ("b", 3))
       val p = p1.hashLookup(p2).mapValues(_.toSet)
       p.internal should containInAnyOrder (("a", Set(1)), ("b", Set(2, 3)), ("c", Set[Int]()))
     }
