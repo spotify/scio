@@ -6,7 +6,7 @@ import com.spotify.cloud.dataflow.values.SideInputContext
 private[dataflow] object FunctionsWithSideInput {
 
   def filterFn[T](f: (T, SideInputContext[T]) => Boolean): DoFn[T, T] = new DoFn[T, T] {
-    val g = f  // defeat closure
+    val g = ClosureCleaner(f)  // defeat closure
     override def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
       // Workaround for type inference limit
       val ctx = new SideInputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])
@@ -15,7 +15,7 @@ private[dataflow] object FunctionsWithSideInput {
   }
 
   def flatMapFn[T, U](f: (T, SideInputContext[T]) => TraversableOnce[U]): DoFn[T, U] = new DoFn[T, U] {
-    val g = f  // defeat closure
+    val g = ClosureCleaner(f)  // defeat closure
     override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
       // Workaround for type inference limit
       val ctx = new SideInputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])
@@ -24,7 +24,7 @@ private[dataflow] object FunctionsWithSideInput {
   }
 
   def mapFn[T, U](f: (T, SideInputContext[T]) => U): DoFn[T, U] = new DoFn[T, U] {
-    val g = f  // defeat closure
+    val g = ClosureCleaner(f)  // defeat closure
     override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
       // Workaround for type inference limit
       val ctx = new SideInputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])

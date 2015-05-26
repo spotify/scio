@@ -11,19 +11,19 @@ private[dataflow] object FunctionsWithAccumulator {
   }
 
   def filterFn[T](f: (T, Accumulator[T, T]) => Boolean): DoFn[T, T] = new DoFnWithAccumulator[T, T] {
-    val g = f  // defeat closure
+    val g = ClosureCleaner(f)  // defeat closure
     override def processElement(c: DoFn[T, T]#ProcessContext): Unit =
       if (g(c.element(), acc.withContext(c))) c.output(c.element())
   }
 
   def flatMapFn[T, U](f: (T, Accumulator[T, U]) => TraversableOnce[U]): DoFn[T, U] = new DoFnWithAccumulator[T, U] {
-    val g = f  // defeat closure
+    val g = ClosureCleaner(f)  // defeat closure
     override def processElement(c: DoFn[T, U]#ProcessContext): Unit =
       g(c.element(), acc.withContext(c)).foreach(c.output)
   }
 
   def mapFn[T, U](f: (T, Accumulator[T, U]) => U): DoFn[T, U] = new DoFnWithAccumulator[T, U] {
-    val g = f  // defeat closure
+    val g = ClosureCleaner(f)  // defeat closure
     override def processElement(c: DoFn[T, U]#ProcessContext): Unit = c.output(g(c.element(), acc.withContext(c)))
   }
 

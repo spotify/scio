@@ -32,8 +32,8 @@ private[dataflow] object Functions {
       : CombineFn[T, (U, JList[T]), U] = new KryoCombineFn[T, (U, JList[T]), U] {
 
     // defeat closure
-    val s = seqOp
-    val c = combOp
+    val s = ClosureCleaner(seqOp)
+    val c = ClosureCleaner(combOp)
 
     private def fold(accumulator: (U, JList[T])): U = {
       val (a, l) = accumulator
@@ -65,9 +65,9 @@ private[dataflow] object Functions {
       : CombineFn[T, (Option[C], JList[T]), C] = new KryoCombineFn[T, (Option[C], JList[T]), C] {
 
     // defeat closure
-    val cc = createCombiner
-    val mv = mergeValue
-    val mc = mergeCombiners
+    val cc = ClosureCleaner(createCombiner)
+    val mv = ClosureCleaner(mergeValue)
+    val mc = ClosureCleaner(mergeCombiners)
 
     private def fold(accumulator: (Option[C], JList[T])): C = {
       val (a, l) = accumulator
@@ -108,22 +108,22 @@ private[dataflow] object Functions {
   }
 
   def flatMapFn[T, U](f: T => TraversableOnce[U]): DoFn[T, U] = new DoFn[T, U] {
-    val g = f  // defeat closure
+    val g = ClosureCleaner(f)  // defeat closure
     override def processElement(c: DoFn[T, U]#ProcessContext): Unit = g(c.element()).foreach(c.output)
   }
 
   def serializableFn[T, U](f: T => U): SerializableFunction[T, U] = new SerializableFunction[T, U] {
-    val g = f  // defeat closure
+    val g = ClosureCleaner(f)  // defeat closure
     override def apply(input: T): U = g(input)
   }
 
   def mapFn[T, U](f: T => U): DoFn[T, U] = new DoFn[T, U] {
-    val g = f  // defeat closure
+    val g = ClosureCleaner(f)  // defeat closure
     override def processElement(c: DoFn[T, U]#ProcessContext): Unit = c.output(g(c.element()))
   }
 
   def partitionFn[T](numPartitions: Int, f: T => Int): PartitionFn[T] = new PartitionFn[T] {
-    val g = f  // defeat closure
+    val g = ClosureCleaner(f)  // defeat closure
     override def partitionFor(elem: T, numPartitions: Int): Int = f(elem)
   }
 
@@ -154,12 +154,12 @@ private[dataflow] object Functions {
   }
 
   def reduceFn[T](f: (T, T) => T): CombineFn[T, JList[T], T] = new ReduceFn[T] {
-    val g = f  // defeat closure
+    val g = ClosureCleaner(f)  // defeat closure
     override def reduce(accumulator: Iterable[T]): T = accumulator.reduce(g)
   }
 
   def reduceFn[T](sg: Semigroup[T]): CombineFn[T, JList[T], T] = new ReduceFn[T] {
-    val _sg = sg  // defeat closure
+    val _sg = ClosureCleaner(sg)  // defeat closure
     override def mergeAccumulators(accumulators: JIterable[JList[T]]): JList[T] = {
       val partial = accumulators.asScala.flatMap(a => _sg.sumOption(a.asScala))
       val combined = _sg.sumOption(partial).get
@@ -169,7 +169,7 @@ private[dataflow] object Functions {
   }
 
   def reduceFn[T](mon: Monoid[T]): CombineFn[T, JList[T], T] = new ReduceFn[T] {
-    val _mon = mon  // defeat closure
+    val _mon = ClosureCleaner(mon)  // defeat closure
     override def reduce(accumulator: Iterable[T]): T = _mon.sum(accumulator)
   }
 
