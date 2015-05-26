@@ -122,7 +122,8 @@ object DataflowScalaBuild extends Build {
         "com.google.cloud.dataflow" % "google-cloud-dataflow-java-sdk-all" % sdkVersion,
         "com.twitter" %% "algebird-core" % "0.9.0",
         "com.twitter" %% "chill" % chillVersion,
-        "com.twitter" %% "chill-avro" % chillVersion
+        "com.twitter" %% "chill-avro" % chillVersion,
+        "org.apache.commons" % "commons-math3" % "3.5"
       )
     )
   ).dependsOn(

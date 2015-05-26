@@ -30,7 +30,7 @@ private[values] trait PCollectionWrapper[T] extends PrivateImplicits {
     SCollection(this.applyInternal(t))
   }
 
-  protected def parDo[U: ClassTag](fn: DoFn[T, U]): SCollection[U] =
+  private[values] def parDo[U: ClassTag](fn: DoFn[T, U]): SCollection[U] =
     this.apply(ParDo.of(fn)).setCoder(this.getCoder[U])
 
   private[values] def getCoder[U: ClassTag]: Coder[U] = internal.getPipeline.getCoderRegistry.getScalaCoder[U]

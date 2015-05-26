@@ -214,6 +214,26 @@ class SCollectionTest extends PipelineTest {
     }
   }
 
+  it should "support sample() with replacement" in {
+    runWithContext { context =>
+      import RandomSamplerUtils._
+      verify(context, true, 0.5, 0.5).internal should containSingleValue (true)
+      verify(context, true, 0.7, 0.7).internal should containSingleValue (true)
+      verify(context, true, 0.9, 0.9).internal should containSingleValue (true)
+      verify(context, true, 0.4, 0.6).internal should containSingleValue (false)
+    }
+  }
+
+  it should "support sample() without replacement" in {
+    runWithContext { context =>
+      import RandomSamplerUtils._
+      verify(context, false, 0.5, 0.5).internal should containSingleValue (true)
+      verify(context, false, 0.7, 0.7).internal should containSingleValue (true)
+      verify(context, false, 0.9, 0.9).internal should containSingleValue (true)
+      verify(context, false, 0.4, 0.6).internal should containSingleValue (false)
+    }
+  }
+
   it should "support subtract()" in {
     runWithContext { context =>
       val p1 = context.parallelize(1, 2, 3, 4, 5)

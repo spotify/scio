@@ -24,6 +24,7 @@ import com.google.cloud.dataflow.sdk.values._
 import com.spotify.cloud.dataflow.DataflowContext
 import com.spotify.cloud.dataflow.testing._
 import com.spotify.cloud.dataflow.util._
+import com.spotify.cloud.dataflow.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.Schema
 import org.apache.avro.generic.{IndexedRecord, GenericRecord}
@@ -295,7 +296,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def sample(sampleSize: Int): SCollection[Iterable[T]] =
     this.apply(Sample.fixedSizeGlobally(sampleSize)).map(_.asScala)
 
-  // TODO: implement sample by fraction, with and without replacement.
+  /**
+   * Return a sampled subset of this SCollection.
+   */
+  def sample(withReplacement: Boolean, fraction: Double): SCollection[T] = {
+    if (withReplacement) {
+      this.parDo(new PoissonSampler[T](fraction))
+    } else {
+      this.parDo(new BernoulliSampler[T](fraction))
+    }
+  }
 
   /** Return an SCollection with the elements from `this` that are not in `other`. */
   def subtract(that: SCollection[T]): SCollection[T] =

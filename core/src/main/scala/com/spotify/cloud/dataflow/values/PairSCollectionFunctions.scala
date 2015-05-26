@@ -5,6 +5,7 @@ import java.lang.{Long => JLong}
 import com.google.cloud.dataflow.sdk.transforms._
 import com.google.cloud.dataflow.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}
 import com.google.cloud.dataflow.sdk.values.{PCollection, KV, TupleTag}
+import com.spotify.cloud.dataflow.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.spotify.cloud.dataflow.{PrivateImplicits, DataflowContext}
 import com.spotify.cloud.dataflow.util._
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
@@ -345,6 +346,26 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   def sampleByKey(sampleSize: Int): SCollection[(K, Iterable[V])] =
     this.applyPerKey(Sample.fixedSizePerKey[K, V](sampleSize), kvIterableToTuple[K, V])
+
+  /**
+   * Return a subset of this SCollection sampled by key (via stratified sampling).
+   *
+   * Create a sample of this SCollection using variable sampling rates for different keys as
+   * specified by `fractions`, a key to sampling rate map, via simple random sampling with one
+   * pass over the SCollection, to produce a sample of size that's approximately equal to the sum
+   * of math.ceil(numItems * samplingRate) over all key values.
+   *
+   * @param withReplacement whether to sample with or without replacement
+   * @param fractions map of specific keys to sampling rates
+   * @return SCollection containing the sampled subset
+   */
+  def sampleByKey(withReplacement: Boolean, fractions: Map[K, Double]): SCollection[(K, V)] = {
+    if (withReplacement) {
+      self.parDo(new PoissonValueSampler[K, V](fractions))
+    } else {
+      self.parDo(new BernoulliValueSampler[K, V](fractions))
+    }
+  }
 
   // TODO: implement sample by fraction, with and without replacement.
 

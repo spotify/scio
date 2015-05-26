@@ -274,6 +274,26 @@ class PairSCollectionFunctionsTest extends PipelineTest {
     }
   }
 
+  it should "support sampleByKey() with replacement()" in {
+    runWithContext { context =>
+      import RandomSamplerUtils._
+      verifyByKey(context, true, 0.5, 0.5, 0.9, 0.9).internal should containSingleValue ((true, true))
+      verifyByKey(context, true, 0.9, 0.9, 0.4, 0.6).internal should containSingleValue ((true, false))
+      verifyByKey(context, true, 0.4, 0.6, 0.9, 0.9).internal should containSingleValue ((false, true))
+      verifyByKey(context, true, 0.4, 0.6, 0.4, 0.6).internal should containSingleValue ((false, false))
+    }
+  }
+
+  it should "support sampleByKey() without replacement()" in {
+    runWithContext { context =>
+      import RandomSamplerUtils._
+      verifyByKey(context, false, 0.5, 0.5, 0.9, 0.9).internal should containSingleValue ((true, true))
+      verifyByKey(context, false, 0.9, 0.9, 0.4, 0.6).internal should containSingleValue ((true, false))
+      verifyByKey(context, false, 0.4, 0.6, 0.9, 0.9).internal should containSingleValue ((false, true))
+      verifyByKey(context, false, 0.4, 0.6, 0.4, 0.6).internal should containSingleValue ((false, false))
+    }
+  }
+
   it should "support subtractByKey()" in {
     runWithContext { context =>
       val p1 = context.parallelize(("a", 1), ("b", 2), ("b", 3), ("c", 4), ("c", 5), ("c", 6))
