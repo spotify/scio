@@ -4,7 +4,7 @@ import java.beans.Introspector
 import java.io.File
 import java.net.URI
 
-import com.google.api.services.bigquery.model._
+import com.google.api.services.bigquery.model.TableReference
 import com.google.api.services.datastore.DatastoreV1.{Query, Entity}
 import com.google.cloud.dataflow.sdk.Pipeline
 import com.google.cloud.dataflow.sdk.coders.TableRowJsonCoder
@@ -19,7 +19,7 @@ import com.google.cloud.dataflow.sdk.options.{PipelineOptionsFactory, DataflowPi
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.{PTransform, Create}
 import com.google.cloud.dataflow.sdk.values.{TimestampedValue, PBegin, POutput}
-import com.spotify.cloud.bigquery.BigQueryClient
+import com.spotify.cloud.bigquery._
 import com.spotify.cloud.dataflow.testing._
 import com.spotify.cloud.dataflow.util.CallSites
 import com.spotify.cloud.dataflow.values._
