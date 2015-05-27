@@ -8,8 +8,9 @@ import com.spotify.cloud.dataflow.util.StatCounter
 class DoubleSCollectionFunctions(self: SCollection[Double]) {
 
   /**
-   * Return an SCollection with a single [[com.spotify.cloud.dataflow.util.StatCounter]] object
-   * that captures the mean, variance and count of the SCollection's elements in one operation.
+   * Return an SCollection with a single [[com.spotify.cloud.dataflow.util.StatCounter
+   * StatCounter]] object that captures the mean, variance and count of the SCollection's elements
+   * in one operation.
    */
   def stats(): SCollection[StatCounter] = self.combine(StatCounter(_))(_.merge(_))(_.merge(_))
 

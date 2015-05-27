@@ -125,9 +125,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(seqOp, combOp)))
 
   /**
-   * Aggregate with [[com.twitter.algebird.Aggregator]]. First each item T is mapped to A, then we
-   * reduce with a semigroup of A, then finally we present the results as U. This could be more
-   * powerful and better optimized in some cases.
+   * Aggregate with [[com.twitter.algebird.Aggregator Aggregator]]. First each item T is mapped to
+   * A, then we reduce with a semigroup of A, then finally we present the results as U. This could
+   * be more powerful and better optimized in some cases.
    */
   def aggregate[A: ClassTag, U: ClassTag](aggregator: Aggregator[T, A, U]): SCollection[U] =
     this.map(aggregator.prepare).sum()(aggregator.semigroup).map(aggregator.present)
@@ -197,8 +197,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(op, op)))
 
   /**
-   * Fold with [[com.twitter.algebird.Monoid]], which defines the associative function and "zero
-   * value" for T. This could be more powerful and better optimized in some cases.
+   * Fold with [[com.twitter.algebird.Monoid Monoid]], which defines the associative function and
+   * "zero value" for T. This could be more powerful and better optimized in some cases.
    */
   def fold(implicit mon: Monoid[T]): SCollection[T] = this.apply(Combine.globally(Functions.reduceFn(mon)))
 
@@ -280,8 +280,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     }
 
   /**
-   * Reduce with [[com.twitter.algebird.Semigroup]]. This could be more powerful and better
-   * optimized in some cases.
+   * Reduce with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful and
+   * better optimized in some cases.
    */
   def sum()(implicit sg: Semigroup[T]): SCollection[T] = this.apply(Combine.globally(Functions.reduceFn(sg)))
 

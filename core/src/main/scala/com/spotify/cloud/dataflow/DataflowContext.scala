@@ -263,7 +263,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) extends PrivateImplic
   // =======================================================================
 
   /**
-   * Create a new [[DistCache]] instance.
+   * Create a new [[com.spotify.cloud.dataflow.values.DistCache DistCache]] instance.
    * @param uri Google Cloud Storage URI of the file to be distributed to all workers
    * @param initFn function to initialized the distributed file
    *
@@ -289,7 +289,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) extends PrivateImplic
     }
 
   /**
-   * Create a new [[DistCache]] instance.
+   * Create a new [[com.spotify.cloud.dataflow.values.DistCache DistCache]] instance.
    * @param uris Google Cloud Storage URIs of the files to be distributed to all workers
    * @param initFn function to initialized the distributed files
    */

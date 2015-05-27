@@ -211,9 +211,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     this.applyPerKey(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp)), kvToTuple[K, U])
 
   /**
-   * Aggregate the values of each key with [[com.twitter.algebird.Aggregator]]. First each value V
-   * is mapped to A, then we reduce with a semigroup of A, then finally we present the results as
-   * U. This could be more powerful and better optimized in some cases.
+   * Aggregate the values of each key with [[com.twitter.algebird.Aggregator Aggregator]]. First
+   * each value V is mapped to A, then we reduce with a semigroup of A, then finally we present
+   * the results as U. This could be more powerful and better optimized in some cases.
    */
   def aggregateByKey[A: ClassTag, U: ClassTag](aggregator: Aggregator[V, A, U]): SCollection[(K, U)] =
     this.mapValues(aggregator.prepare).sumByKey()(aggregator.semigroup).mapValues(aggregator.present)
@@ -284,7 +284,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     this.applyPerKey(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op)), kvToTuple[K, V])
 
   /**
-   * Fold by key with [[com.twitter.algebird.Monoid]], which defines the associative
+   * Fold by key with [[com.twitter.algebird.Monoid Monoid]], which defines the associative
    * function and "zero value" for V. This could be more powerful and better optimized in some
    * cases.
    */
@@ -355,8 +355,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     }
 
   /**
-   * Reduce by key with [[com.twitter.algebird.Semigroup]]. This could be more powerful and better
-   * optimized in some cases.
+   * Reduce by key with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful
+   * and better optimized in some cases.
    */
   def sumByKey()(implicit sg: Semigroup[V]): SCollection[(K, V)] =
     this.applyPerKey(Combine.perKey(Functions.reduceFn(sg)), kvToTuple[K, V])
