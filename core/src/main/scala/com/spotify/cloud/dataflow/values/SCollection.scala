@@ -397,6 +397,23 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // Side output operations
   // =======================================================================
 
+  /**
+   * Convert this SCollection to an [[SCollectionWithSideOutput]] with one or more
+   * [[SideOutput]]s, so that a single transform can write to multiple destinations.
+   *
+   * {{{
+   * // Prepare side inputs
+   * val side1 = SideOutput[String]()
+   * val side2 = SideOutput[Int]()
+   *
+   * val p: SCollection[MyRecord] = // ...
+   * p.withSideOutputs(side1, side2).map { (x, s) =>
+   *   // Write to side outputs via context
+   *   s.output(side1, "word").output(side2, 1)
+   *   // ...
+   * }
+   * }}}
+   */
   def withSideOutputs(sides: SideOutput[_]*): SCollectionWithSideOutput[T] =
     new SCollectionWithSideOutput[T](internal, sides)
 
