@@ -14,7 +14,7 @@ Then clone this repository and publish artifacts locally.
 ```bash
 git clone git@github.com:spotify/dataflow-scala.git
 cd dataflow-scala
-sbt publishLocal
+sbt publish-local
 ```
 
 # Running the Examples
