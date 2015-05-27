@@ -32,7 +32,7 @@ object DistCacheExample {
       .tableRowJsonFile(args.getOrElse("input", EXPORTED_WIKI_TABLE))
       .map(row => new Instant(row.getLong("timestamp") * 1000L).toDateTime.getMonthOfYear)
       .countByValue()
-      .map(kv => dc.get().getOrElse(kv._1, "unknown") + " " + kv._2)
+      .map(kv => dc().getOrElse(kv._1, "unknown") + " " + kv._2)
       .saveAsTextFile(args("output"))
 
     context.close()

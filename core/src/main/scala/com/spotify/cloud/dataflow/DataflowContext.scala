@@ -278,7 +278,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) extends PrivateImplic
    *
    * val p: SCollection[Int] = // ...
    * // Extract distributed cache inside a transform
-   * p.map(x => dc.get().getOrElse(x, "unknown"))
+   * p.map(x => dc().getOrElse(x, "unknown"))
    * }}}
    */
   def distCache[F](uri: String)(initFn: File => F): DistCache[F] =

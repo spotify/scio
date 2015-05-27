@@ -10,8 +10,10 @@ import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import org.slf4j.{Logger, LoggerFactory}
 
+/** Encapsulate files on Google Cloud Storage that can be distributed to all workers. */
 sealed trait DistCache[F] extends Serializable {
-  def get(): F
+  /** Extract the underlying data. */
+  def apply(): F
 }
 
 private[dataflow] abstract class GcsDistCache[F](gcsOptions: GcsOptions) extends DistCache[F] {
@@ -22,7 +24,7 @@ private[dataflow] abstract class GcsDistCache[F](gcsOptions: GcsOptions) extends
 
   protected lazy val data: F = init()
 
-  override def get(): F = data
+  override def apply(): F = data
 
   protected def init(): F
 
@@ -58,7 +60,7 @@ private[dataflow] abstract class GcsDistCache[F](gcsOptions: GcsOptions) extends
 }
 
 private[dataflow] class MockDistCache[F](val value: F) extends DistCache[F] {
-  override def get(): F = value
+  override def apply(): F = value
 }
 
 private[dataflow] class DistCacheSingle[F](val uri: URI, val initFn: File => F, gcsOptions: GcsOptions)
