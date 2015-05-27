@@ -351,10 +351,45 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // Side input operations
   // =======================================================================
 
+  /**
+   * Convert this SCollection of a single item to a SideInput, to be used with
+   * [[SCollection.withSideInputs]].
+   */
   def asSingletonSideInput: SideInput[T] = new SingletonSideInput[T](this.applyInternal(View.asSingleton()))
 
+  /**
+   * Convert this SCollection to a SideInput of Iterable, to be used with
+   * [[SCollection.withSideInputs]].
+   */
   def asIterableSideInput: SideInput[Iterable[T]] = new IterableSideInput[T](this.applyInternal(View.asIterable()))
 
+  /**
+   * Convert this SCollection to an [[SCollectionWithSideInput]] with one or more [[SideInput]]s,
+   * similar to Spark broadcast variables. Call [[SCollectionWithSideInput.toSCollection]] when
+   * done with side inputs.
+   *
+   * Note that the side inputs should be tiny and fit in memory.
+   *
+   * {{{
+   * val s1: SCollection[Int] = // ...
+   * val s2: SCollection[String] = // ...
+   * val s3: SCollection[(String, Double)] = // ...
+   *
+   * // Prepare side inputs
+   * val side1 = s1.asSingletonSideInput
+   * val side2 = s2.asIterableSideInput
+   * val side3 = s3.asMapSideInput
+   *
+   * val p: SCollection[MyRecord] = // ...
+   * p.withSideInputs(side1, side2, side3).map { (x, s) =>
+   *   // Extract side inputs from context
+   *   val s1: Int = s(side1)
+   *   val s2: Iterable[String] = s(side2)
+   *   val s3: Map[String, Iterable[Double]] = s(side3)
+   *   // ...
+   * }
+   * }}}
+   */
   def withSideInputs(sides: SideInput[_]*): SCollectionWithSideInput[T] =
     new SCollectionWithSideInput[T](internal, sides)
 

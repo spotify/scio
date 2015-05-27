@@ -8,6 +8,7 @@ import com.google.cloud.dataflow.sdk.values.PCollectionView
 
 import scala.collection.JavaConverters._
 
+/** Encapsulate an SCollection when it is being used as a side input. */
 trait SideInput[T] extends Serializable {
   private[values] def get[I, O](context: DoFn[I, O]#ProcessContext): T
   private[values] val view: PCollectionView[_]
@@ -29,6 +30,8 @@ private[values] class MapSideInput[K, V](val view: PCollectionView[JMap[K, JIter
   }
 }
 
+/** Encapsulate context of one or more [[SideInput]]s in an [[SCollectionWithSideInput]]. */
 class SideInputContext[T] private[dataflow] (private val context: DoFn[T, AnyRef]#ProcessContext) {
+  /** Extract the value of a given [[SideInput]]. */
   def apply[S](side: SideInput[S]): S = side.get(context)
 }

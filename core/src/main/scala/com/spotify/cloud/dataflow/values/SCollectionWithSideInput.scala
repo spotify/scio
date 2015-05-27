@@ -8,6 +8,10 @@ import com.spotify.cloud.dataflow.util.FunctionsWithSideInput
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
+/**
+ * An enhanced SCollection that provides access to one or more [[SideInput]]s for some transforms.
+ * [[SideInput]]s are accessed via the additional [[SideInputContext]] argument.
+ */
 class SCollectionWithSideInput[T] private[values] (val internal: PCollection[T],
                                                    sides: Iterable[SideInput[_]])
                                                   (implicit private[values] val context: DataflowContext,
@@ -16,24 +20,29 @@ class SCollectionWithSideInput[T] private[values] (val internal: PCollection[T],
 
   private val parDo = ParDo.withSideInputs(sides.map(_.view).asJava)
 
+  /** [[SCollection.filter]] with an additional SideInputContext argument. */
   def filter(f: (T, SideInputContext[T]) => Boolean): SCollectionWithSideInput[T] = {
     val o = this.apply(parDo.of(FunctionsWithSideInput.filterFn(f))).internal.setCoder(this.getCoder[T])
     new SCollectionWithSideInput[T](o, sides)
   }
 
+  /** [[SCollection.flatMap]] with an additional SideInputContext argument. */
   def flatMap[U: ClassTag](f: (T, SideInputContext[T]) => TraversableOnce[U]): SCollectionWithSideInput[U] = {
     val o = this.apply(parDo.of(FunctionsWithSideInput.flatMapFn(f))).internal.setCoder(this.getCoder[U])
     new SCollectionWithSideInput[U](o, sides)
   }
 
+  /** [[SCollection.keyBy]] with an additional SideInputContext argument. */
   def keyBy[K: ClassTag](f: (T, SideInputContext[T]) => K): SCollectionWithSideInput[(K, T)] =
     this.map((x, s) => (f(x, s), x))
 
+  /** [[SCollection.map]] with an additional SideInputContext argument. */
   def map[U: ClassTag](f: (T, SideInputContext[T]) => U): SCollectionWithSideInput[U] = {
     val o = this.apply(parDo.of(FunctionsWithSideInput.mapFn(f))).internal.setCoder(this.getCoder[U])
     new SCollectionWithSideInput[U](o, sides)
   }
 
+  /** Convert back to a basic SCollection. */
   def toSCollection: SCollection[T] = SCollection(internal)
 
 }

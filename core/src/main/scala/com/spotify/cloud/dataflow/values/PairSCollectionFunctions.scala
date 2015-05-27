@@ -406,6 +406,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   // Side input operations
   // =======================================================================
 
+  /**
+   * Convert this SCollection of (key, value) to a SideInput of Map[key, Iterable[value]], to be
+   * used with [[SCollection.withSideInputs]].
+   */
   def asMapSideInput: SideInput[Map[K, Iterable[V]]] = new MapSideInput[K, V](self.toKV.applyInternal(View.asMap()))
 
 }
