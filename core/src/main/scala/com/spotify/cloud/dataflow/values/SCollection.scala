@@ -32,6 +32,7 @@ import org.apache.avro.specific.SpecificRecord
 import org.joda.time.{Instant, Duration}
 
 import scala.collection.JavaConverters._
+import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
 
 /** Convenience functions for creating SCollections. */
@@ -281,6 +282,32 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def quantilesApprox(numQuantiles: Int)(implicit ord: Ordering[T]): SCollection[Iterable[T]] =
     this.apply(ApproximateQuantiles.globally(numQuantiles, ord)).map(_.asInstanceOf[JIterable[T]].asScala)
+
+  /**
+   * Randomly splits this SCollection with the provided weights.
+   *
+   * @param weights weights for splits, will be normalized if they don't sum to 1
+   * @return split SCollections in an array
+   */
+  def randomSplit(weights: Array[Double]): Array[SCollection[T]] = {
+    val sum = weights.sum
+    val normalizedCumWeights = weights.map(_ / sum).scanLeft(0.0d)(_ + _)
+    val m = TreeMap(normalizedCumWeights.zipWithIndex: _*)  // Map[lower bound, split]
+
+    val sides = (1 to weights.length - 1).map(_ => SideOutput[T]())
+    val (head, tail) = this
+      .withSideOutputs(sides: _*)
+      .flatMap { (x, c) =>
+        val i = m.to(scala.util.Random.nextDouble()).last._2
+        if (i == 0) {
+          Seq(x)  // Main output
+        } else {
+          c.output(sides(i - 1), x)  // Side output
+          Seq()
+        }
+      }
+    (head +: sides.map(tail(_))).toArray
+  }
 
   /**
    * Reduce the elements of this SCollection using the specified commutative and associative
