@@ -46,6 +46,22 @@ object SCollection {
     new SCollectionImpl(o)(scs.head.context, scs.head.ct)
   }
 
+  import scala.language.implicitConversions
+
+  /** Implicit conversion from SCollection to DoubleSCollectionFunctions */
+  implicit def makeDoubleSCollectionFunctions(s: SCollection[Double]): DoubleSCollectionFunctions =
+    new DoubleSCollectionFunctions(s)
+
+  /** Implicit conversion from SCollection to DoubleSCollectionFunctions */
+  implicit def makeDoubleSCollectionFunctions[T](s: SCollection[T])(implicit num: Numeric[T])
+  : DoubleSCollectionFunctions =
+    new DoubleSCollectionFunctions(s.map(num.toDouble))
+
+  /** Implicit conversion from SCollection to PairSCollectionFunctions */
+  implicit def makePairSCollectionFunctions[K: ClassTag, V: ClassTag](s: SCollection[(K, V)])
+  : PairSCollectionFunctions[K, V] =
+    new PairSCollectionFunctions(s)
+
 }
 
 /** Scala wrapper for PCollection. */
