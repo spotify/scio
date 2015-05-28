@@ -367,8 +367,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     }
   }
 
-  // TODO: implement sample by fraction, with and without replacement.
-
   /** Return an SCollection with the pairs from `this` whose keys are not in `other`. */
   def subtractByKey[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, V)] =
     this.coGroup(that).flatMap { t =>

@@ -123,6 +123,7 @@ private[dataflow] class BernoulliValueSampler[K, V](fractions: Map[K, Double])
     },
     s"Sampling fractions must be on interval [0, 1]")
 
+  // TODO: is it necessary to setSeed for each instance like Spark does?
   override def init(fraction: Double): JRandom = RandomSampler.newDefaultRNG
 
   override def samples(fraction: Double, rng: JRandom): Int = {
@@ -145,6 +146,7 @@ private[dataflow] class PoissonValueSampler[K, V](fractions: Map[K, Double])
     fractions.values.forall(f => f >= (0.0 - RandomSampler.roundingEpsilon)),
     s"Sampling fractions must be >= 0")
 
+  // TODO: is it necessary to setSeed for each instance like Spark does?
   override def init(fraction: Double): IntegerDistribution =
     new PoissonDistribution(if (fraction > 0.0) fraction else 1.0)
 
