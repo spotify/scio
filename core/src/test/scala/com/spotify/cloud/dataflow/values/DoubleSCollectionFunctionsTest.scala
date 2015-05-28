@@ -13,8 +13,8 @@ class DoubleSCollectionFunctionsTest extends PipelineTest {
   val expected = StatCounter((1 to 100).map(_.toDouble): _*)
 
   def checkError(p: SCollection[Double], e: Double): Unit = {
-    p.count().internal should containSingleValue (1L)
-    p.map(x => math.abs(x - e) < 1e-10).internal should containSingleValue (true)
+    p.count().internal should containSingleValue(1L)
+    p.map(x => math.abs(x - e) < 1e-10).internal should containSingleValue(true)
   }
 
   "DoubleSCollection" should "support sampleStdev()" in {
