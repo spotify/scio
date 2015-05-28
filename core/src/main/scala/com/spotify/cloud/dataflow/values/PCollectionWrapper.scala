@@ -10,6 +10,7 @@ import scala.reflect.ClassTag
 
 private[values] trait PCollectionWrapper[T] extends PrivateImplicits {
 
+  /** The PCollection being wrapped internally. */
   val internal: PCollection[T]
 
   implicit private[values] val context: DataflowContext
