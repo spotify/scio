@@ -274,7 +274,7 @@ class PairSCollectionFunctionsTest extends PipelineTest {
     }
   }
 
-  it should "support sampleByKey() with replacement()" in {
+  ignore should "support sampleByKey() with replacement()" in {
     runWithContext { context =>
       import RandomSamplerUtils._
       verifyByKey(context, true, 0.5, 0.5, 0.9, 0.9).internal should containSingleValue ((true, true))
@@ -284,7 +284,7 @@ class PairSCollectionFunctionsTest extends PipelineTest {
     }
   }
 
-  it should "support sampleByKey() without replacement()" in {
+  ignore should "support sampleByKey() without replacement()" in {
     runWithContext { context =>
       import RandomSamplerUtils._
       verifyByKey(context, false, 0.5, 0.5, 0.9, 0.9).internal should containSingleValue ((true, true))
