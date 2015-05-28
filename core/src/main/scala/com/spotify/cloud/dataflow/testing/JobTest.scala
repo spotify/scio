@@ -2,6 +2,42 @@ package com.spotify.cloud.dataflow.testing
 
 import com.google.cloud.dataflow.sdk.values.PCollection
 
+/**
+ * Set up a Dataflow job for unit testing.
+ * To be used in a [[com.spotify.cloud.dataflow.testing.JobSpec JobSpec]]. For example:
+ *
+ * {{{
+ * import com.spotify.cloud.dataflow.testing._
+ *
+ * class WordCountTest extends JobSpec {
+ *
+ *   // Mock input data, mock distributed cache and expected result
+ *   val inData = Seq("a b c d e", "a b a b")
+ *   val distCache = Map(1 -> "Jan", 2 -> "Feb", 3 -> "Mar")
+ *   val expected = Seq("a: 3", "b: 3", "c: 1", "d: 1", "e: 1")
+ *
+ *   // Test specification
+ *   "WordCount" should "work" in {
+ *     JobTest("com.spotify.cloud.dataflow.examples.WordCount")
+ *
+ *       // Command line arguments
+ *       .args("--input=in.txt", "--output=out.txt")
+ *
+ *       // Mock input data
+ *       .input(TextIO("in.txt"), inData)
+ *
+ *       // Mock distributed cache
+ *       .distCache(DistCacheIO("gs://dataflow-samples/samples/misc/months.txt", distCache)
+ *
+ *       // Verify output
+ *       .output(TextIO("out.txt")) { actual => actual should equalInAnyOrder (expected) }
+ *
+ *       // Run job test
+ *       .run()
+ *   }
+ * }
+ * }}}
+ */
 object JobTest {
 
   case class Builder(className: String, cmdlineArgs: Array[String],
@@ -36,6 +72,7 @@ object JobTest {
 
   }
 
+  /** Create a new JobTest.Builder instance. */
   def apply(className: String): Builder = Builder(className, Array(), Map.empty, Map.empty, Map.empty)
 
 }
