@@ -41,7 +41,14 @@ object ContextAndArgs {
 
 /** Companion object for [[DataflowContext]]. */
 object DataflowContext {
-  /** Create a new [[DataflowContext]] instance. */
+  /**
+   * Create a new [[DataflowContext]] instance.
+   *
+   * @param args command line arguments including both Dataflow and job specific ones. Dataflow
+   * specific ones will be parsed as
+   * [[com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions DataflowPipelineOptions]] in
+   * field `options`. Job specific ones will be parsed as [[Args]] in field `args`.
+   */
   def apply(args: Array[String]): DataflowContext = new DataflowContext(args)
 }
 
@@ -61,7 +68,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
     val dfPatterns = classOf[DataflowPipelineOptions].getMethods.flatMap { m =>
       val n = m.getName
       if ((!n.startsWith("get") && !n.startsWith("is")) ||
-        m.getParameterTypes.length != 0 || m.getReturnType == classOf[Unit]) {
+        m.getParameterTypes.nonEmpty || m.getReturnType == classOf[Unit]) {
         None
       } else {
         Some(Introspector.decapitalize(n.substring(if (n.startsWith("is")) 2 else 3)))
