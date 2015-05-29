@@ -2,8 +2,14 @@ package com.spotify.cloud.dataflow
 
 import scala.util.control.NonFatal
 
+/**
+ * A simple command line argument parser.
+ *
+ * Arguments can be either properties (`--key=value1,value2,...`) or booleans (`--test`).
+ */
 object Args {
 
+  /** Parse arguments. */
   def apply(args: Array[String]): Args = {
     val (properties, booleans) = args.map { arg =>
       if (!arg.startsWith("--")) throw new IllegalArgumentException(s"Argument '$arg' does not begin with '--'")
@@ -13,7 +19,7 @@ object Args {
     val propertyMap = properties.map { s =>
       val Array(k, v) = s.split("=", 2)
       (k, v.split(","))
-    }.groupBy(_._1).mapValues(_.flatMap(_._2).toList).toMap
+    }.groupBy(_._1).mapValues(_.flatMap(_._2).toList)
     val booleanMap = booleans.map((_, List("true"))).toMap
 
     propertyMap.keySet.intersect(booleanMap.keySet).foreach { arg =>
@@ -28,40 +34,54 @@ object Args {
 
 }
 
-class Args private (val m: Map[String, List[String]]) {
+/** Encapsulate parsed commandline arguments. */
+class Args private (private val m: Map[String, List[String]]) {
 
+  /** Shortcut for `required`. */
   def apply(key: String): String = required(key)
 
+  /** Shortcut for `optional(key).getOrElse(default)`. */
   def getOrElse(key: String, default: String): String = optional(key).getOrElse(default)
 
+  /** Get the list of values for a given key. */
   def list(key: String): List[String] = m.getOrElse(key, List())
 
+  /** Get an Option if there is zero or one element for a given key. */
   def optional(key: String): Option[String] = list(key) match {
     case List() => None
     case List(v) => Some(v)
     case _ => throw new IllegalArgumentException(s"Multiple values for property '$key'")
   }
 
+  /** Get exactly one value for a given key. */
   def required(key: String): String = list(key) match {
     case List() => throw new IllegalArgumentException(s"Missing value for property '$key'")
     case List(v) => v
     case _ => throw new IllegalArgumentException(s"Multiple values for property '$key'")
   }
 
+  /** Get value as Int with a default. */
   def int(key: String, default: Int): Int = getOrElse(key, default, _.toInt)
 
+  /** Get value as Int. */
   def int(key: String): Int = get(key, _.toInt)
 
+  /** Get value as Long with a default. */
   def long(key: String, default: Long): Long = getOrElse(key, default, _.toLong)
 
+  /** Get value as Long. */
   def long(key: String): Long = get(key, _.toLong)
 
+  /** Get value as Float with a default. */
   def float(key: String, default: Float): Float = getOrElse(key, default, _.toFloat)
 
+  /** Get value as Float. */
   def float(key: String): Float = get(key, _.toFloat)
 
+  /** Get value as Double with a default. */
   def double(key: String, default: Double): Double = getOrElse(key, default, _.toDouble)
 
+  /** Get value as Double. */
   def double(key: String): Double = get(key, _.toDouble)
 
   private def getOrElse[T](key: String, default: T, f: String => T): T = {
