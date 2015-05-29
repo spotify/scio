@@ -1,12 +1,13 @@
 package com.spotify.cloud.bigquery
 
-import java.io.{FileInputStream, File}
+import java.io.{StringReader, FileInputStream, File}
 import java.util.regex.Pattern
 
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.http.javanet.NetHttpTransport
+import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.bigquery.{BigqueryScopes, Bigquery}
 import com.google.api.services.bigquery.model._
@@ -15,7 +16,8 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.collection.JavaConverters._
 import scala.util.Random
 
-private object Util {
+/** Utility for BigQuery data types. */
+object Util {
 
   // Ported from com.google.cloud.dataflow.sdk.io.BigQueryIO
 
@@ -26,6 +28,7 @@ private object Util {
     s"((?<PROJECT>$PROJECT_ID_REGEXP):)?(?<DATASET>$DATASET_REGEXP)\\.(?<TABLE>$TABLE_REGEXP)"
   private val TABLE_SPEC = Pattern.compile(DATASET_TABLE_REGEXP)
 
+  /** Parse a table specification string. */
   def parseTableSpec(tableSpec: String): TableReference = {
     val m = TABLE_SPEC.matcher(tableSpec)
     require(m.matches(), s"Table reference is not in [project_id]:[dataset_id].[table_id] format: $tableSpec")
@@ -35,8 +38,13 @@ private object Util {
       .setTableId(m.group("TABLE"))
   }
 
+  /** Convert a table reference to string. */
   def toTableSpec(table: TableReference): String =
     (if (table.getProjectId != null) table.getProjectId + ":" else "") + table.getDatasetId + "."  + table.getTableId
+
+  /** Parse a schema string. */
+  def parseSchema(schemaString: String): TableSchema =
+    new JsonObjectParser(new JacksonFactory).parseAndClose(new StringReader(schemaString), classOf[TableSchema])
 
 }
 
