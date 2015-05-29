@@ -90,7 +90,8 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
     (_args, _pipeline)
   }
 
-  private lazy val bigQueryClient: BigQueryClient = BigQueryClient(this.options.getGcpCredential)
+  private lazy val bigQueryClient: BigQueryClient =
+    BigQueryClient(this.options.getProject, this.options.getGcpCredential)
 
   /** Dataflow pipeline specific options, e.g. project, zone, runner, stagingLocation. */
   def options: DataflowPipelineOptions = _options
@@ -151,19 +152,11 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
     }
 
   /** Get an SCollection for a BigQuery SELECT query. */
-  def bigQuerySelect(sqlQuery: String, stagingDataset: String): SCollection[TableRow] =
+  def bigQuerySelect(sqlQuery: String): SCollection[TableRow] =
     if (this.isTest) {
       this.getTestInput(BigQueryIO(sqlQuery))
     } else {
-      val tableId = this.options.getJobName.replaceAll("-", "_") + "_" + _sqlId
-      _sqlId += 1
-
-      val table = new TableReference()
-        .setProjectId(options.getProject)
-        .setDatasetId(stagingDataset)
-        .setTableId(tableId)
-
-      this.bigQueryClient.queryIntoTable(sqlQuery, table)
+      val table = this.bigQueryClient.queryIntoTable(sqlQuery)
       bigQueryTable(table).setName(sqlQuery)
     }
 
