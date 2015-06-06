@@ -98,7 +98,7 @@ object DataflowScalaBuild extends Build {
     "org.scalamacros" % "paradise" % macrosVersion cross CrossVersion.full
 
   lazy val root: Project = Project(
-    "root",
+    "dataflow-scala",
     file("."),
     settings = buildSettings ++ siteSettings ++ Seq(run <<= run in Compile in dataflowScalaExamples)
   ).settings(
