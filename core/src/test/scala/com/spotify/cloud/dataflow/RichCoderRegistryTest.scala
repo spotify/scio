@@ -1,16 +1,18 @@
-package com.spotify.cloud.dataflow.coders
+package com.spotify.cloud.dataflow
 
 import com.google.cloud.dataflow.sdk.coders.CoderRegistry
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
-import com.spotify.cloud.dataflow.PrivateImplicits
 import com.spotify.cloud.dataflow.avro.TestRecord
 import com.spotify.cloud.dataflow.coders.CoderTestUtils._
+import com.spotify.cloud.dataflow.coders.{Pair, PairWithAvro}
 import org.scalatest.matchers.{MatchResult, Matcher}
-import org.scalatest.{Matchers, FlatSpec}
+import org.scalatest.{FlatSpec, Matchers}
 
 import scala.reflect.ClassTag
 
-class RichCoderRegistryTest extends FlatSpec with Matchers with PrivateImplicits {
+class RichCoderRegistryTest extends FlatSpec with Matchers {
+
+  import PrivateImplicits._
 
   val pipeline = TestPipeline.create()
   val registry = pipeline.getCoderRegistry

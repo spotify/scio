@@ -8,7 +8,9 @@ import com.spotify.cloud.dataflow.util.CallSites
 
 import scala.reflect.ClassTag
 
-private[values] trait PCollectionWrapper[T] extends PrivateImplicits {
+private[values] trait PCollectionWrapper[T] {
+
+  import PrivateImplicits._
 
   /** The PCollection being wrapped internally. */
   val internal: PCollection[T]

@@ -1,6 +1,6 @@
 /* Ported com.google.cloud.dataflow.sdk.coders.DoubleCoder */
 
-package com.spotify.cloud.dataflow.coders;
+package com.spotify.cloud.dataflow;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 

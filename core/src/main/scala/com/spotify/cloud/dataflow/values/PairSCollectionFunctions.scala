@@ -17,8 +17,9 @@ import scala.reflect.ClassTag
  * Extra functions available on SCollections of (key, value) pairs through an implicit conversion.
  */
 class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
-                                    (implicit ctKey: ClassTag[K], ctValue: ClassTag[V]) extends PrivateImplicits {
+                                    (implicit ctKey: ClassTag[K], ctValue: ClassTag[V]) {
 
+  import PrivateImplicits._
   import TupleFunctions._
 
   implicit private val context: DataflowContext = self.context

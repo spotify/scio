@@ -49,7 +49,9 @@ object DataflowContext {
  * Main entry point for Dataflow functionality. A DataflowContext represents a Dataflow pipeline,
  * and can be used to create SCollections and distributed caches on that cluster.
  */
-class DataflowContext private (cmdlineArgs: Array[String]) extends PrivateImplicits {
+class DataflowContext private (cmdlineArgs: Array[String]) {
+
+  import PrivateImplicits._
 
   private var _options: DataflowPipelineOptions = null
 
