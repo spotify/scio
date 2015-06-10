@@ -11,6 +11,24 @@ private[types] object ConverterProvider {
 
   def fromTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(TableRow => T)] = {
     import c.universe._
+    val tpe = implicitly[c.WeakTypeTag[T]].tpe
+    val r = fromTableRowInternal(c)(tpe)
+    debug(s"ConverterProvider.fromTableRowImpl[${weakTypeOf[T]}]:")
+    debug(r)
+    c.Expr[(TableRow => T)](r)
+  }
+
+  def toTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(T => TableRow)] = {
+    import c.universe._
+    val tpe = implicitly[c.WeakTypeTag[T]].tpe
+    val r = toTableRowInternal(c)(tpe)
+    debug(s"ConverterProvider.toTableRowImpl[${weakTypeOf[T]}]:")
+    debug(r)
+    c.Expr[(T => TableRow)](r)
+  }
+
+  private def fromTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
+    import c.universe._
 
     // =======================================================================
     // Case class helpers
@@ -83,19 +101,14 @@ private[types] object ConverterProvider {
     // Entry point
     // =======================================================================
 
-    val tpe = implicitly[c.WeakTypeTag[T]].tpe
-
-    val r = q"""(r: ${p(c, GBQM)}.TableRow) => {
-                  import _root_.scala.collection.JavaConverters._
-                  ${constructor(tpe, TermName("r"))}
-                }
-            """
-    debug(s"ConverterProvider.fromTableRowImpl[${weakTypeOf[T]}]:")
-    debug(r)
-    c.Expr[(TableRow => T)](r)
+    q"""(r: ${p(c, GBQM)}.TableRow) => {
+          import _root_.scala.collection.JavaConverters._
+          ${constructor(tpe, TermName("r"))}
+        }
+    """
   }
 
-  def toTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(T => TableRow)] = {
+  private def toTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
     import c.universe._
 
     // =======================================================================
@@ -167,20 +180,11 @@ private[types] object ConverterProvider {
     // Entry point
     // =======================================================================
 
-    val tpe = implicitly[c.WeakTypeTag[T]].tpe
-
-    val r = q"""(r: $tpe) => {
-                  import _root_.scala.collection.JavaConverters._
-                  ${constructor(tpe, TermName("r"))}
-                }
-            """
-    debug(s"ConverterProvider.toTableRowImpl[${weakTypeOf[T]}]:")
-    debug(r)
-    c.Expr[(T => TableRow)](r)
-  }
-
-  def test(r: TableRow) = {
-    null
+    q"""(r: $tpe) => {
+          import _root_.scala.collection.JavaConverters._
+          ${constructor(tpe, TermName("r"))}
+        }
+    """
   }
 
 }
