@@ -105,6 +105,7 @@ private[types] object TypeProvider {
     val r = annottees.map(_.tree) match {
       case List(q"class $name") => {
         val ts = tq"${p(c, GBQM)}.TableSchema"
+        val caseClass = q"case class $name(..$fields)"
 
         val overrides = q"override def schema: $ts = ${p(c, SBQ)}.Util.parseSchema(${schema.toString})" :: extraOverrides
         val companion = if (extraTrait != null) {
@@ -113,7 +114,7 @@ private[types] object TypeProvider {
           q"object ${TermName(name.toString)} extends ${p(c, SBQT)}.HasSchema { ..$overrides }"
         }
 
-        q"""case class $name(..$fields)
+        q"""$caseClass
             $companion
             ..$records
         """
