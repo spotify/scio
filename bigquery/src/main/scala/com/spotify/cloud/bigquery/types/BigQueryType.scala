@@ -31,7 +31,7 @@ object BigQueryType {
    * Macro annotation for a BigQuery table.
    *
    * Generate case classes for a BigQuery table. Note that `tableSpec` must be a string literal in
-   * the form of `project:dataset.table`. For example:
+   * the form of `project:dataset.table` with optional `.stripMargin` at the end. For example:
    *
    * {{{
    * @BigQueryType.fromTable("project:dataset.table") class MyRecord
@@ -45,18 +45,20 @@ object BigQueryType {
    * Macro annotation for a BigQuery schema.
    *
    * Generate case classes for a BigQuery schema. Note that `schema` must be a string literal of
-   * the JSON schema. For example:
+   * the JSON schema with optional `.stripMargin` at the end. For example:
    *
    * {{{
-   * @BigQueryType.fromSchema("""
-   *   {
-   *     "fields": [
-   *       {"mode": "REQUIRED", "name": "f1", "type": "INTEGER"},
-   *       {"mode": "REQUIRED", "name": "f2", "type": "FLOAT"},
-   *       {"mode": "REQUIRED", "name": "f3", "type": "STRING"},
-   *       {"mode": "REQUIRED", "name": "f4", "type": "TIMESTAMP"}
-   *     ]
-   *   }""") class MyRecord
+   * @BigQueryType.fromSchema(
+   *   """
+   *     |{
+   *     |  "fields": [
+   *     |    {"mode": "REQUIRED", "name": "f1", "type": "INTEGER"},
+   *     |    {"mode": "REQUIRED", "name": "f2", "type": "FLOAT"},
+   *     |    {"mode": "REQUIRED", "name": "f3", "type": "STRING"},
+   *     |    {"mode": "REQUIRED", "name": "f4", "type": "TIMESTAMP"}
+   *     |  ]
+   *     |}
+   *   """.stripMargin) class MyRecord
    * }}}
    */
   class fromSchema(schema: String) extends StaticAnnotation {
@@ -68,7 +70,7 @@ object BigQueryType {
    * Macro annotation for a BigQuery SELECT query.
    *
    * Generate case classes for a BigQuery SELECT query. Note that `schema` must be a string
-   * literal of the SELECT query. For example:
+   * literal of the SELECT query with optional `.stripMargin` at the end. For example:
    *
    * {{{
    * @BigQueryType.fromQuery("SELECT field1, field2 FROM [project:dataset.table]")

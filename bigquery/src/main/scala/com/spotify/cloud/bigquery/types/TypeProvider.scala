@@ -14,13 +14,21 @@ private[types] object TypeProvider {
 
   private lazy val bigquery: BigQueryClient = BigQueryClient()
 
+  private def extractString(c: blackbox.Context, errorMessage: String): String = {
+    import c.universe._
+
+    c.macroApplication match {
+      case Apply(Select(Apply(_, List(Literal(Constant(s: String)))), _), _) => s
+      case Apply(Select(Apply(_, List(Select(Literal(Constant(s: String)), TermName("stripMargin")))), _), _) =>
+        s.stripMargin
+      case _ => c.abort(c.enclosingPosition, errorMessage)
+    }
+  }
+
   def tableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
-    val tableSpec = c.macroApplication match {
-      case Apply(Select(Apply(_, List(Literal(Constant(s: String)))), _), _) => s
-      case _ => c.abort(c.enclosingPosition, "Missing table specification")
-    }
+    val tableSpec = extractString(c, "Missing table specification")
     val schema = bigquery.getTableSchema(tableSpec)
 
     val extraTrait = tq"${p(c, SBQT)}.HasTable"
@@ -31,12 +39,7 @@ private[types] object TypeProvider {
   }
 
   def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    import c.universe._
-
-    val schemaString = c.macroApplication match {
-      case Apply(Select(Apply(_, List(Literal(Constant(s: String)))), _), _) => s
-      case _ => c.abort(c.enclosingPosition, "Missing schema")
-    }
+    val schemaString = extractString(c, "Missing schema")
     val schema = Util.parseSchema(schemaString)
 
     schemaToType(c)(schema, annottees, null, Nil)
@@ -45,10 +48,7 @@ private[types] object TypeProvider {
   def queryImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
-    val query = c.macroApplication match {
-      case Apply(Select(Apply(_, List(Literal(Constant(s: String)))), _), _) => s
-      case _ => c.abort(c.enclosingPosition, "Missing query")
-    }
+    val query = extractString(c, "Missing query")
     val schema = bigquery.getQuerySchema(query)
 
     val extraTrait = tq"${p(c, SBQT)}.HasQuery"

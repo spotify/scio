@@ -9,20 +9,50 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   val NOW = Instant.now()
 
+  @BigQueryType.fromSchema("""{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}""")
+  class S1
+
   @BigQueryType.fromSchema(
     """
-       {
-         "fields": [
-           {"mode": "REQUIRED", "name": "f1", "type": "INTEGER"},
-           {"mode": "REQUIRED", "name": "f2", "type": "FLOAT"},
-           {"mode": "REQUIRED", "name": "f3", "type": "STRING"},
-           {"mode": "REQUIRED", "name": "f4", "type": "TIMESTAMP"}
-         ]
-       }
+       {"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}
     """)
+  class S2
+
+  @BigQueryType.fromSchema(
+    """
+      |{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}
+    """.stripMargin)
+  class S3
+
+  "BigQueryEntity.fromSchema" should "string literal" in {
+    val r = S1(1L)
+    r.f1 should equal (1L)
+  }
+
+  it should "multi-line string literal" in {
+    val r = S2(1L)
+    r.f1 should equal (1L)
+  }
+
+  it should "multi-line string literal with stripMargin" in {
+    val r = S3(1L)
+    r.f1 should equal (1L)
+  }
+
+  @BigQueryType.fromSchema(
+    """
+      |{
+      |  "fields": [
+      |    {"mode": "REQUIRED", "name": "f1", "type": "INTEGER"},
+      |    {"mode": "REQUIRED", "name": "f2", "type": "FLOAT"},
+      |    {"mode": "REQUIRED", "name": "f3", "type": "STRING"},
+      |    {"mode": "REQUIRED", "name": "f4", "type": "TIMESTAMP"}
+      |    ]
+      |}
+    """.stripMargin)
   class RecordWithRequiredPrimitives
 
-  "BigQueryEntity.fromSchema" should "support required primitive types" in {
+  it should "support required primitive types" in {
     val r = RecordWithRequiredPrimitives(1L, 1.5, "hello", NOW)
     r.f1 should equal (1L)
     r.f2 should equal (1.5)
@@ -32,15 +62,15 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   @BigQueryType.fromSchema(
     """
-       {
-         "fields": [
-           {"mode": "NULLABLE", "name": "f1", "type": "INTEGER"},
-           {"mode": "NULLABLE", "name": "f2", "type": "FLOAT"},
-           {"mode": "NULLABLE", "name": "f3", "type": "STRING"},
-           {"mode": "NULLABLE", "name": "f4", "type": "TIMESTAMP"}
-         ]
-       }
-    """)
+      |{
+      |  "fields": [
+      |    {"mode": "NULLABLE", "name": "f1", "type": "INTEGER"},
+      |    {"mode": "NULLABLE", "name": "f2", "type": "FLOAT"},
+      |    {"mode": "NULLABLE", "name": "f3", "type": "STRING"},
+      |    {"mode": "NULLABLE", "name": "f4", "type": "TIMESTAMP"}
+      |  ]
+      |}
+    """.stripMargin)
   class RecordWithNullablePrimitives
 
   it should "support nullable primitive types" in {
@@ -59,15 +89,15 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   @BigQueryType.fromSchema(
     """
-       {
-         "fields": [
-           {"mode": "REPEATED", "name": "f1", "type": "INTEGER"},
-           {"mode": "REPEATED", "name": "f2", "type": "FLOAT"},
-           {"mode": "REPEATED", "name": "f3", "type": "STRING"},
-           {"mode": "REPEATED", "name": "f4", "type": "TIMESTAMP"}
-         ]
-       }
-    """)
+      |{
+      |  "fields": [
+      |    {"mode": "REPEATED", "name": "f1", "type": "INTEGER"},
+      |    {"mode": "REPEATED", "name": "f2", "type": "FLOAT"},
+      |    {"mode": "REPEATED", "name": "f3", "type": "STRING"},
+      |    {"mode": "REPEATED", "name": "f4", "type": "TIMESTAMP"}
+      |  ]
+      |}
+    """.stripMargin)
   class RecordWithRepeatedPrimitives
 
   it should "support repeated primitive types" in {
@@ -87,14 +117,14 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   @BigQueryType.fromSchema(
     """
-       {
-         "fields": [
-           {"mode": "REQUIRED", "name": "f1", "type": "RECORD", "fields": [{"mode": "REQUIRED", "name": "g", "type": "INTEGER"}]},
-           {"mode": "REQUIRED", "name": "f2", "type": "RECORD", "fields": [{"mode": "NULLABLE", "name": "g", "type": "INTEGER"}]},
-           {"mode": "REQUIRED", "name": "f3", "type": "RECORD", "fields": [{"mode": "REPEATED", "name": "g", "type": "INTEGER"}]}
-         ]
-       }
-    """)
+      |{
+      |  "fields": [
+      |    {"mode": "REQUIRED", "name": "f1", "type": "RECORD", "fields": [{"mode": "REQUIRED", "name": "g", "type": "INTEGER"}]},
+      |    {"mode": "REQUIRED", "name": "f2", "type": "RECORD", "fields": [{"mode": "NULLABLE", "name": "g", "type": "INTEGER"}]},
+      |    {"mode": "REQUIRED", "name": "f3", "type": "RECORD", "fields": [{"mode": "REPEATED", "name": "g", "type": "INTEGER"}]}
+      |  ]
+      |}
+    """.stripMargin)
   class RecordWithRequiredRecords
 
   it should "support required records" in {
@@ -106,14 +136,14 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   @BigQueryType.fromSchema(
     """
-       {
-         "fields": [
-           {"mode": "NULLABLE", "name": "f1", "type": "RECORD", "fields": [{"mode": "REQUIRED", "name": "g", "type": "INTEGER"}]},
-           {"mode": "NULLABLE", "name": "f2", "type": "RECORD", "fields": [{"mode": "NULLABLE", "name": "g", "type": "INTEGER"}]},
-           {"mode": "NULLABLE", "name": "f3", "type": "RECORD", "fields": [{"mode": "REPEATED", "name": "g", "type": "INTEGER"}]}
-         ]
-       }
-    """)
+      |{
+      |  "fields": [
+      |    {"mode": "NULLABLE", "name": "f1", "type": "RECORD", "fields": [{"mode": "REQUIRED", "name": "g", "type": "INTEGER"}]},
+      |    {"mode": "NULLABLE", "name": "f2", "type": "RECORD", "fields": [{"mode": "NULLABLE", "name": "g", "type": "INTEGER"}]},
+      |    {"mode": "NULLABLE", "name": "f3", "type": "RECORD", "fields": [{"mode": "REPEATED", "name": "g", "type": "INTEGER"}]}
+      |  ]
+      |}
+    """.stripMargin)
   class RecordWithNullableRecords
 
   it should "support nullable records" in {
@@ -125,14 +155,14 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   @BigQueryType.fromSchema(
     """
-       {
-         "fields": [
-           {"mode": "REPEATED", "name": "f1", "type": "RECORD", "fields": [{"mode": "REQUIRED", "name": "g", "type": "INTEGER"}]},
-           {"mode": "REPEATED", "name": "f2", "type": "RECORD", "fields": [{"mode": "NULLABLE", "name": "g", "type": "INTEGER"}]},
-           {"mode": "REPEATED", "name": "f3", "type": "RECORD", "fields": [{"mode": "REPEATED", "name": "g", "type": "INTEGER"}]}
-         ]
-       }
-    """)
+      |{
+      |  "fields": [
+      |    {"mode": "REPEATED", "name": "f1", "type": "RECORD", "fields": [{"mode": "REQUIRED", "name": "g", "type": "INTEGER"}]},
+      |    {"mode": "REPEATED", "name": "f2", "type": "RECORD", "fields": [{"mode": "NULLABLE", "name": "g", "type": "INTEGER"}]},
+      |    {"mode": "REPEATED", "name": "f3", "type": "RECORD", "fields": [{"mode": "REPEATED", "name": "g", "type": "INTEGER"}]}
+      |  ]
+      |}
+    """.stripMargin)
   class RecordWithRepeatedRecords
 
   it should "support repeated records" in {
