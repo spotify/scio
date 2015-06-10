@@ -107,11 +107,15 @@ private[types] object TypeProvider {
         val ts = tq"${p(c, GBQM)}.TableSchema"
         val caseClass = q"case class $name(..$fields)"
 
-        val overrides = q"override def schema: $ts = ${p(c, SBQ)}.Util.parseSchema(${schema.toString})" :: extraOverrides
+        val methods = List(
+          q"override def schema: $ts = ${p(c, SBQ)}.Util.parseSchema(${schema.toString})",
+          q"def fromTableRow = ${p(c, SBQT)}.fromTableRow[$name]",
+          q"def toTableRow = ${p(c, SBQT)}.toTableRow[$name]"
+        ) ++ extraOverrides
         val companion = if (extraTrait != null) {
-          q"object ${TermName(name.toString)} extends ${p(c, SBQT)}.HasSchema with $extraTrait { ..$overrides }"
+          q"object ${TermName(name.toString)} extends ${p(c, SBQT)}.HasSchema with $extraTrait { ..$methods }"
         } else {
-          q"object ${TermName(name.toString)} extends ${p(c, SBQT)}.HasSchema { ..$overrides }"
+          q"object ${TermName(name.toString)} extends ${p(c, SBQT)}.HasSchema { ..$methods }"
         }
 
         q"""$caseClass
