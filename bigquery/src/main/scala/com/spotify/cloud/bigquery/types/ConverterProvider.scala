@@ -57,7 +57,7 @@ private[types] object ConverterProvider {
         case t if isCaseClass(t) =>
           val fn = TermName("r" + t.typeSymbol.name)
           q"""{
-                val $fn = $tree.asInstanceOf[${p(c, GBQM)}.TableRow]
+                val $fn = $tree.asInstanceOf[${p(c, GModel)}.TableRow]
                 ${constructor(t, fn)}
               }
           """
@@ -101,7 +101,7 @@ private[types] object ConverterProvider {
     // Entry point
     // =======================================================================
 
-    q"""(r: ${p(c, GBQM)}.TableRow) => {
+    q"""(r: ${p(c, GModel)}.TableRow) => {
           import _root_.scala.collection.JavaConverters._
           ${constructor(tpe, TermName("r"))}
         }
@@ -170,7 +170,7 @@ private[types] object ConverterProvider {
         case t if isCaseClass(t) => getFields(t).map(s => field(s, fn))
         case t => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
-      val tr = q"new ${p(c, GBQM)}.TableRow()"
+      val tr = q"new ${p(c, GModel)}.TableRow()"
       sets.foldLeft(tr) { case (acc, (name, value)) =>
         q"$acc.set($name, $value)"
       }

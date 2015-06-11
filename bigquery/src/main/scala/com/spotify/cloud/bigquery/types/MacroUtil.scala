@@ -20,9 +20,12 @@ private[types] object MacroUtil {
     }
   }
 
-  val SBQ = "_root_.com.spotify.cloud.bigquery"
-  val SBQT = s"$SBQ.types.BigQueryType"
-  val GBQM = "_root_.com.google.api.services.bigquery.model"
+  // Shorten namespaces in quotes
+
+  private val SBQ = "_root_.com.spotify.cloud.bigquery"
+  val GModel = "_root_.com.google.api.services.bigquery.model"
+  val SType = s"$SBQ.types.BigQueryType"
+  val SUtil = s"$SBQ.Util"
 
   def p(c: blackbox.Context, code: String): c.Tree = c.parse(code)
 

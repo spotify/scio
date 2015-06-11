@@ -18,9 +18,15 @@ object BigQueryType {
   }
 
   /** Trait for companion objects of case classes generated with schema. */
-  trait HasSchema {
+  trait HasSchema[T] {
     /** Case class schema. */
     def schema: TableSchema
+
+    /** TableRow to `T` converter. */
+    def fromTableRow: (TableRow => T)
+
+    /** `T` to TableRow converter. */
+    def toTableRow: (T => TableRow)
   }
 
   /** Trait for companion objects of case classes generated with SELECT query. */
@@ -122,7 +128,11 @@ object BigQueryType {
 
 }
 
-/** Type class for case class `T` annotated for BigQuery IO. */
+/**
+ * Type class for case class `T` annotated for BigQuery IO.
+ *
+ * This decouples generated fields and methods from macro expansion to keep core macro free.
+ */
 class BigQueryType[T: TypeTag] {
 
   private val bases = typeOf[T].companion.baseClasses
