@@ -29,6 +29,9 @@ object BigQueryType {
     def query: String
   }
 
+  /** Trait for case classes with generated companion objects. */
+  trait HasAnnotation
+
   /**
    * Macro annotation for a BigQuery table.
    *

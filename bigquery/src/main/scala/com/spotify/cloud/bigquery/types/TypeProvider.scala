@@ -63,7 +63,7 @@ private[types] object TypeProvider {
     val r = annottees.map(_.tree) match {
       case List(q"case class $name(..$fields) { ..$body }") =>
         val ts = tq"${p(c, GBQM)}.TableSchema"
-        val caseClass = q"case class $name(..$fields) { ..$body }"
+        val caseClass = q"case class $name(..$fields) extends ${p(c, SBQT)}.HasAnnotation { ..$body }"
         val methods = List(
           q"override def schema: $ts = ${p(c, SBQT)}.schemaOf[$name]",
           q"def fromTableRow = ${p(c, SBQT)}.fromTableRow[$name]",
@@ -129,7 +129,7 @@ private[types] object TypeProvider {
     val r = annottees.map(_.tree) match {
       case List(q"class $name") => {
         val ts = tq"${p(c, GBQM)}.TableSchema"
-        val caseClass = q"case class $name(..$fields)"
+        val caseClass = q"case class $name(..$fields) extends ${p(c, SBQT)}.HasAnnotation"
         val methods = List(
           q"override def schema: $ts = ${p(c, SBQ)}.Util.parseSchema(${schema.toString})",
           q"def fromTableRow = ${p(c, SBQT)}.fromTableRow[$name]",

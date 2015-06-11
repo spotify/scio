@@ -3,6 +3,7 @@ package com.spotify.cloud.dataflow
 import com.google.api.services.bigquery.model.TableReference
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{WriteDisposition, CreateDisposition}
 import com.spotify.cloud.bigquery.Util
+import com.spotify.cloud.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.cloud.dataflow.values.SCollection
 
 import scala.reflect.ClassTag
@@ -43,7 +44,7 @@ package object experimental {
      * context.typedBigQuery[Row]("myproject:samples.gsod")
      * }}}
      */
-    def typedBigQuery[T: ClassTag : TypeTag](newSource: String = null): SCollection[T] = {
+    def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null): SCollection[T] = {
       val bqt = BigQueryType[T]
 
       if (bqt.isTable) {
@@ -72,7 +73,7 @@ package object experimental {
     def saveAsTypedBigQuery(table: TableReference,
                             createDisposition: CreateDisposition,
                             writeDisposition: WriteDisposition)
-                           (implicit ct: ClassTag[T], tt: TypeTag[T]): Unit = {
+                           (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation): Unit = {
       val bqt = BigQueryType[T]
       self
         .map(bqt.toTableRow)
@@ -80,8 +81,10 @@ package object experimental {
     }
 
     /**
-     * Save this SCollection as a Bigquery table. Note that element type `T` must be a case class
-     * annotated with [[BigQueryType.toTable]]. For example:
+     * Save this SCollection as a Bigquery table. Note that element type `T` must annotated with
+     * [[BigQueryType]].
+     *
+     * This could be a complete case class with [[BigQueryType.toTable]]. For example:
      *
      * {{{
      * @BigQueryType.toTable()
@@ -90,11 +93,23 @@ package object experimental {
      * val p: SCollection[Result] = // process data and convert elements to Result
      * p.saveAsTypedBigQuery("myproject:mydataset.mytable")
      * }}}
+     *
+     * It could also be an empty class with schema from [[BigQueryType.fromSchema]],
+     * [[BigQueryType.fromTable]], or [[BigQueryType.fromQuery]]. For example:
+     *
+     * {{{
+     * @BigQueryType.fromTable("publicdata:samples.gsod")
+     * class Row
+     *
+     * context.typedBigQuery[Row]()
+     *   .sample(withReplacement = false, fraction = 0.1)
+     *   .saveAsTypedBigQuery("myproject:samples.gsod")
+     * }}}
      */
     def saveAsTypedBigQuery(tableSpec: String,
                             createDisposition: CreateDisposition = null,
                             writeDisposition: WriteDisposition = null)
-                           (implicit ct: ClassTag[T], tt: TypeTag[T]): Unit = {
+                           (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation): Unit = {
       val bqt = BigQueryType[T]
       self
         .map(bqt.toTableRow)
