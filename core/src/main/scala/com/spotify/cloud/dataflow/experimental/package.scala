@@ -26,31 +26,32 @@ package object experimental {
     /**
      * Get a typed SCollection for a BigQuery SELECT query or table.
      *
-     * Note that `T` must be annotated with
-     * [[com.spotify.cloud.bigquery.types.BigQueryType.fromSchema BigQueryType.fromSchema]],
-     * [[com.spotify.cloud.bigquery.types.BigQueryType.fromTable BigQueryType.fromTable]], or
-     * [[com.spotify.cloud.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]. For
-     * example:
+     * Note that `T` must be annotated with [[BigQueryType.fromSchema]],
+     * [[BigQueryType.fromTable]], or [[BigQueryType.fromQuery]].
+     *
+     * By default the source (table or query) specified in the annotation will be used, but it can
+     * be overridden with the `newSource` parameter. For example:
      *
      * {{{
      * @BigQueryType.fromTable("publicdata:samples.gsod")
      * class Row
      *
+     * // Read from [publicdata:samples.gsod] as specified in the annotation.
      * context.typedBigQuery[Row]()
-     * }}}
      *
-     * By default source (table or query) from the annotation will be used, but it can be
-     * overridden with the `source` parameter.
+     * // Read from [myproject:samples.gsod] instead.
+     * context.typedBigQuery[Row]("myproject:samples.gsod")
+     * }}}
      */
-    def typedBigQuery[T: ClassTag : TypeTag](source: String = null): SCollection[T] = {
+    def typedBigQuery[T: ClassTag : TypeTag](newSource: String = null): SCollection[T] = {
       val bqt = BigQueryType[T]
 
       if (bqt.isTable) {
-        val src = if (source != null) source else Util.toTableSpec(bqt.table.get)
-        self.bigQueryTable(src).map(bqt.fromTableRow)
+        val table = if (newSource != null) Util.parseTableSpec(newSource) else bqt.table.get
+        self.bigQueryTable(table).map(bqt.fromTableRow)
       } else if (bqt.isQuery) {
-        val src = if (source != null) source else bqt.query.get
-        self.bigQuerySelect(src).map(bqt.fromTableRow)
+        val query = if (newSource != null) newSource else bqt.query.get
+        self.bigQuerySelect(query).map(bqt.fromTableRow)
       } else {
         throw new IllegalArgumentException(s"Missing table or query field in companion")
       }
@@ -66,8 +67,7 @@ package object experimental {
 
     /**
      * Save this SCollection as a Bigquery table. Note that element type `T` must be a case class
-     * annotated with [[com.spotify.cloud.bigquery.types.BigQueryType.toTable
-     * BigQueryType.toTable]].
+     * annotated with [[BigQueryType.toTable]].
      */
     def saveAsTypedBigQuery(table: TableReference,
                             createDisposition: CreateDisposition,
@@ -81,8 +81,7 @@ package object experimental {
 
     /**
      * Save this SCollection as a Bigquery table. Note that element type `T` must be a case class
-     * annotated with [[com.spotify.cloud.bigquery.types.BigQueryType.toTable
-     * BigQueryType.toTable]].
+     * annotated with [[BigQueryType.toTable]].
      */
     def saveAsTypedBigQuery(tableSpec: String,
                             createDisposition: CreateDisposition = null,
