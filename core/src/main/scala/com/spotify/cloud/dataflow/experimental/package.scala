@@ -81,7 +81,15 @@ package object experimental {
 
     /**
      * Save this SCollection as a Bigquery table. Note that element type `T` must be a case class
-     * annotated with [[BigQueryType.toTable]].
+     * annotated with [[BigQueryType.toTable]]. For example:
+     *
+     * {{{
+     * @BigQueryType.toTable()
+     * case class Result(name: String, score: Double)
+     *
+     * val p: SCollection[Result] = // process data and convert elements to Result
+     * p.saveAsTypedBigQuery("myproject:mydataset.mytable")
+     * }}}
      */
     def saveAsTypedBigQuery(tableSpec: String,
                             createDisposition: CreateDisposition = null,
