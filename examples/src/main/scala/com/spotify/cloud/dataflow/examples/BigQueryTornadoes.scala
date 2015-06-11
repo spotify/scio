@@ -1,13 +1,11 @@
 package com.spotify.cloud.dataflow.examples
 
-import com.google.api.services.bigquery.model.{TableSchema, TableFieldSchema}
-import com.spotify.cloud.bigquery._
 import com.spotify.cloud.dataflow._
-
-import scala.collection.JavaConverters._
+import com.spotify.cloud.dataflow.experimental._
 
 /*
-SBT
+sbt -Dbigquery.secret=/path/to/secret.json -Dbigquery.project=[PROJECT]
+
 runMain
   com.spotify.cloud.dataflow.examples.BigQueryTornadoes
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
@@ -17,22 +15,30 @@ runMain
 
 object BigQueryTornadoes {
 
-  val WEATHER_SAMPLES_TABLE = "publicdata:samples.gsod"
+  // Annotate input class with schema inferred from a BigQuery SELECT.
+  // Class Row will be expanded into a case class with fields from the SELECT query. A companion
+  // object will also be generated to provide easy access to original query/table from annotation,
+  // TableSchema and converter methods between the generated case class and TableRow.
+  @BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]")
+  class Row
+
+  // Annotate output case class.
+  // Note that the case class is already defined and will not be expanded. Only the companion
+  // object will be generated to provide easy access to TableSchema and converter methods.
+  @BigQueryType.toTable()
+  case class Result(month: Long, tornado_count: Long)
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (context, args) = ContextAndArgs(cmdlineArgs)
 
-    val fields = List(
-      new TableFieldSchema().setName("month").setType("INTEGER"),
-      new TableFieldSchema().setName("tornado_count").setType("INTEGER"))
-    val schema = new TableSchema().setFields(fields.asJava)
-
-    context
-      .bigQueryTable(args.getOrElse("input", WEATHER_SAMPLES_TABLE))
-      .flatMap(row => if (row.getBoolean("tornado")) Seq(row.getInt("month")) else Seq())
+    // Get input from BigQuery and convert elements from TableRow to Row.
+    // SELECT query from the original annotation is used by default.
+    context.typedBigQuery[Row]()
+      .flatMap(r => if (r.tornado.getOrElse(false)) Seq(r.month) else Seq())
       .countByValue()
-      .map(kv => TableRow("month" -> kv._1, "tornado_count" -> kv._2))
-      .saveAsBigQuery(args("output"), schema, CREATE_IF_NEEDED, WRITE_TRUNCATE)
+      .map(kv => Result(kv._1, kv._2))
+      // Convert elements from Result to TableRow and save output to BigQuery.
+      .saveAsTypedBigQuery(args("output"), CREATE_IF_NEEDED, WRITE_TRUNCATE)
 
     context.close()
   }
