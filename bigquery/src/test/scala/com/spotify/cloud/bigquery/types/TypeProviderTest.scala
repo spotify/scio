@@ -108,11 +108,11 @@ class TypeProviderTest extends FlatSpec with Matchers {
     r1.f3 should equal (List("hello", "world"))
     r1.f4 should equal (List(NOW, NOW.plus(1000)))
 
-    val r2 = RecordWithRepeatedPrimitives(List(), List(), List(), List())
-    r2.f1 should equal (List())
-    r2.f2 should equal (List())
-    r2.f3 should equal (List())
-    r2.f4 should equal (List())
+    val r2 = RecordWithRepeatedPrimitives(Nil, Nil, Nil, Nil)
+    r2.f1 should equal (Nil)
+    r2.f2 should equal (Nil)
+    r2.f3 should equal (Nil)
+    r2.f4 should equal (Nil)
   }
 
   @BigQueryType.fromSchema(
