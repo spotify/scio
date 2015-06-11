@@ -12,7 +12,7 @@ class BigQueryTornadoesTest extends JobSpec {
     (3, true),
     (4, true),
     (4, true)
-  ).map(t => TableRow("month" -> t._1, "tornado"-> t._2))
+  ).map(t => TableRow("month" -> t._1, "tornado" -> t._2))
 
   val expected = Seq((1, 1), (3, 1), (4, 2)).map(t => TableRow("month" -> t._1, "tornado_count" -> t._2))
 

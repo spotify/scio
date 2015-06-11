@@ -36,7 +36,7 @@ class SchemaProviderTest extends FlatSpec with Matchers {
   }
 
   it should "support repeated primitive types" in {
-    SchemaProvider.schemaOf[P3] should equal(tableSchema(s"{${basicFields("REPEATED")}}"))
+    SchemaProvider.schemaOf[P3] should equal (tableSchema(s"{${basicFields("REPEATED")}}"))
   }
 
   def recordFields(mode: String) =
