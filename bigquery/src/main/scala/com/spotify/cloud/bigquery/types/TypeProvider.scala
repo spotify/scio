@@ -57,6 +57,30 @@ private[types] object TypeProvider {
     schemaToType(c)(schema, annottees, extraTrait, extraOverrides)
   }
 
+  def toTableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+    import c.universe._
+
+    val r = annottees.map(_.tree) match {
+      case List(q"case class $name(..$fields) { ..$body }") =>
+        val ts = tq"${p(c, GBQM)}.TableSchema"
+        val caseClass = q"case class $name(..$fields) { ..$body }"
+        val methods = List(
+          q"override def schema: $ts = ${p(c, SBQT)}.schemaOf[$name]",
+          q"def fromTableRow = ${p(c, SBQT)}.fromTableRow[$name]",
+          q"def toTableRow = ${p(c, SBQT)}.toTableRow[$name]"
+        )
+        val companion = q"object ${TermName(name.toString)} extends ${p(c, SBQT)}.HasSchema { ..$methods }"
+
+        q"""$caseClass
+            $companion
+        """
+      case _ => c.abort(c.enclosingPosition, "Invalid annotation")
+    }
+    debug(s"TypeProvider.toTableImpl:")
+    debug(r)
+    c.Expr[Any](r)
+  }
+
   private def schemaToType(c: blackbox.Context)
                           (schema: TableSchema, annottees: Seq[c.Expr[Any]],
                            extraTrait: c.Tree , extraOverrides: List[c.Tree]): c.Expr[Any] = {
@@ -106,7 +130,6 @@ private[types] object TypeProvider {
       case List(q"class $name") => {
         val ts = tq"${p(c, GBQM)}.TableSchema"
         val caseClass = q"case class $name(..$fields)"
-
         val methods = List(
           q"override def schema: $ts = ${p(c, SBQ)}.Util.parseSchema(${schema.toString})",
           q"def fromTableRow = ${p(c, SBQT)}.fromTableRow[$name]",

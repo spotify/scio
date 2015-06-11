@@ -4,7 +4,9 @@ import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSc
 
 import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros
+import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import scala.util.Try
 
 /** Macro annotations and converter generators for BigQuery types. */
 object BigQueryType {
@@ -36,6 +38,8 @@ object BigQueryType {
    * {{{
    * @BigQueryType.fromTable("project:dataset.table") class MyRecord
    * }}}
+   *
+   * Also generate a companion object with convenience methods.
    */
   class fromTable(tableSpec: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.tableImpl
@@ -60,11 +64,12 @@ object BigQueryType {
    *     |}
    *   """.stripMargin) class MyRecord
    * }}}
+   *
+   * Also generate a companion object with convenience methods.
    */
   class fromSchema(schema: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.schemaImpl
   }
-
 
   /**
    * Macro annotation for a BigQuery SELECT query.
@@ -75,9 +80,27 @@ object BigQueryType {
    * {{{
    * @BigQueryType.fromQuery("SELECT field1, field2 FROM [project:dataset.table]")
    * }}}
+   *
+   * Also generate a companion object with convenience methods.
    */
   class fromQuery(query: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.queryImpl
+  }
+
+  /**
+   * Macro annotation for case classes to be saved to a BigQuery table.
+   *
+   * Note that this annotation does not generate case classes, only a companion object with
+   * convenience methods. You need to define a complete case class for as output record. For
+   * example:
+   *
+   * {{{
+   * @BigQueryType.toTable()
+   * case class Result(name: String, score: Double)
+   * }}}
+   */
+  class toTable() extends StaticAnnotation {
+    def macroTransform(annottees: Any*): Any = macro TypeProvider.toTableImpl
   }
 
   /**
@@ -90,5 +113,41 @@ object BigQueryType {
 
   /** Generate a converter function from the given case class `T` to [[TableRow]]. */
   def toTableRow[T]: (T => TableRow) = macro ConverterProvider.toTableRowImpl[T]
+
+  /** Create a new BigQueryType instance. */
+  def apply[T: ClassTag : TypeTag]: BigQueryType[T] = new BigQueryType[T]
+
+}
+
+/** Type class for case class `T` annotated for BigQuery IO. */
+class BigQueryType[T: TypeTag] {
+
+  private val bases = typeOf[T].companion.baseClasses
+  private val instance = runtimeMirror(getClass.getClassLoader)
+    .reflectModule(typeOf[T].typeSymbol.companion.asModule)
+    .instance
+
+  private def getField(key: String) = instance.getClass.getMethod(key).invoke(instance)
+
+  /** Whether the case class is annotated for a table. */
+  def isTable: Boolean = bases.contains(typeOf[BigQueryType.HasTable].typeSymbol)
+
+  /** Whether the case class is annotated for a query. */
+  def isQuery: Boolean = bases.contains(typeOf[BigQueryType.HasQuery].typeSymbol)
+
+  /** Table reference from the annotation. */
+  def table: Option[TableReference] = Try(getField("table").asInstanceOf[TableReference]).toOption
+
+  /** Query from the annotation. */
+  def query: Option[String] = Try(getField("query").asInstanceOf[String]).toOption
+
+  /** TableRow to `T` converter. */
+  def fromTableRow: (TableRow => T) = getField("fromTableRow").asInstanceOf[(TableRow => T)]
+
+  /** `T` to TableRow converter. */
+  def toTableRow: (T => TableRow) = getField("toTableRow").asInstanceOf[(T => TableRow)]
+
+  /** TableSchema of `T`. */
+  def schema: TableSchema = BigQueryType.schemaOf[T]
 
 }
