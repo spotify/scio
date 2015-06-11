@@ -303,7 +303,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
           Seq(x)  // Main output
         } else {
           c.output(sides(i - 1), x)  // Side output
-          Seq()
+          Nil
         }
       }
     (head +: sides.map(tail(_))).toArray

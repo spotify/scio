@@ -29,9 +29,9 @@ class SCollectionWithSideInputTest extends PipelineTest {
       val p4 = context.parallelize(("a", 1), ("a", 2), ("b", 3), ("b", 4)).asMapSideInput
       val s1 = p1.withSideInputs(p2).flatMap((x, s) => Seq(x + s(p2) + "x", x + s(p2) + "y"))
       val s2 = p1.withSideInputs(p3).flatMap((x, s) => s(p3).map(x + _))
-      val s3 = p1.withSideInputs(p4).flatMap((x, s) => s(p4).getOrElse(x, Seq()).map(x + _))
+      val s3 = p1.withSideInputs(p4).flatMap((x, s) => s(p4).getOrElse(x, Nil).map(x + _))
       val s4 = p1.withSideInputs(p2, p3, p4).flatMap { (x, s) =>
-        s(p4).getOrElse(x, Seq()).map(i => x + (i + s(p2) + s(p3).sum))
+        s(p4).getOrElse(x, Nil).map(i => x + (i + s(p2) + s(p3).sum))
       }
       s1.internal should containInAnyOrder ("a1x", "b1x", "c1x", "a1y", "b1y", "c1y")
       s2.internal should containInAnyOrder ("a1", "b1", "c1", "a2", "b2", "c2", "a3", "b3", "c3")

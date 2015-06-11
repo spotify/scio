@@ -24,7 +24,7 @@ object JoinUtil {
     val sourceUrl = row.get("SOURCEURL").asInstanceOf[String]
     val eventInfo = s"Date: $sqlDate, Actor1: $actor1Name, url: $sourceUrl"
 
-    if (countryCode == null || eventInfo == null) Seq() else Seq((countryCode, eventInfo))
+    if (countryCode == null || eventInfo == null) Nil else Seq((countryCode, eventInfo))
   }
 
   def extractCountryInfo(row: TableRow): (String, String) = {
@@ -74,7 +74,7 @@ object SideInputJoinExamples {
       .map { (kv, side) =>
         val (countryCode, eventInfo) = kv
         val m = side(countryInfo)
-        val countryName = m.getOrElse(countryCode, Seq()).headOption.getOrElse("none")
+        val countryName = m.getOrElse(countryCode, Nil).headOption.getOrElse("none")
         formatOutput(countryCode, countryName, eventInfo)
       }
       .toSCollection

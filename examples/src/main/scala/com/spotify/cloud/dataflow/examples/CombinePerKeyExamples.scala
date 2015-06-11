@@ -33,7 +33,7 @@ object CombinePerKeyExamples {
       .flatMap { row =>
         val playName = row.get("corpus").toString
         val word = row.get("word").toString
-        if (word.length > MIN_WORD_LENGTH) Seq((word, playName)) else Seq()
+        if (word.length > MIN_WORD_LENGTH) Seq((word, playName)) else Nil
       }
       // Sort values to make test happy
       .aggregateByKey(SortedSet[String]())(_ + _, _ ++ _)
