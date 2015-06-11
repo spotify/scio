@@ -44,18 +44,18 @@ class Args private (private val m: Map[String, List[String]]) {
   def getOrElse(key: String, default: String): String = optional(key).getOrElse(default)
 
   /** Get the list of values for a given key. */
-  def list(key: String): List[String] = m.getOrElse(key, List())
+  def list(key: String): List[String] = m.getOrElse(key, Nil)
 
   /** Get an Option if there is zero or one element for a given key. */
   def optional(key: String): Option[String] = list(key) match {
-    case List() => None
+    case Nil => None
     case List(v) => Some(v)
     case _ => throw new IllegalArgumentException(s"Multiple values for property '$key'")
   }
 
   /** Get exactly one value for a given key. */
   def required(key: String): String = list(key) match {
-    case List() => throw new IllegalArgumentException(s"Missing value for property '$key'")
+    case Nil => throw new IllegalArgumentException(s"Missing value for property '$key'")
     case List(v) => v
     case _ => throw new IllegalArgumentException(s"Multiple values for property '$key'")
   }
