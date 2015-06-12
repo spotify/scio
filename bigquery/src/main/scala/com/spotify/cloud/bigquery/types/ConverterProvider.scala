@@ -31,16 +31,6 @@ private[types] object ConverterProvider {
     import c.universe._
 
     // =======================================================================
-    // Case class helpers
-    // =======================================================================
-    // TODO: deduplicate
-
-    def isCaseClass(t: Type): Boolean = !t.toString.startsWith("scala.") &&
-      List(typeOf[Product], typeOf[Serializable], typeOf[Equals]).forall(b => t.baseClasses.contains(b.typeSymbol))
-    def isField(s: Symbol): Boolean = !s.isSynthetic && s.isTerm && s.isPrivate
-    def getFields(t: Type): Iterable[Symbol] = t.decls.filter(isField)
-
-    // =======================================================================
     // Converter helpers
     // =======================================================================
 
@@ -54,7 +44,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Boolean] => q"$s.toBoolean"
         case t if t =:= typeOf[String] => q"$s"
         case t if t =:= typeOf[Instant] => q"_root_.org.joda.time.Instant.parse($s)"
-        case t if isCaseClass(t) =>
+        case t if isCaseClass(c)(t) =>
           val fn = TermName("r" + t.typeSymbol.name)
           q"""{
                 val $fn = $tree.asInstanceOf[${p(c, GModel)}.TableRow]
@@ -91,7 +81,7 @@ private[types] object ConverterProvider {
     def constructor(tpe: Type, fn: TermName): Tree = {
       val companion = tpe.typeSymbol.companion
       val gets = tpe.erasure match {
-        case t if isCaseClass(t) => getFields(t).map(s => field(s, fn))
+        case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
         case t => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
       q"$companion(..$gets)"
@@ -112,16 +102,6 @@ private[types] object ConverterProvider {
     import c.universe._
 
     // =======================================================================
-    // Case class helpers
-    // =======================================================================
-    // TODO: deduplicate
-
-    def isCaseClass(t: Type): Boolean = !t.toString.startsWith("scala.") &&
-      List(typeOf[Product], typeOf[Serializable], typeOf[Equals]).forall(b => t.baseClasses.contains(b.typeSymbol))
-    def isField(s: Symbol): Boolean = !s.isSynthetic && s.isTerm && s.isPrivate
-    def getFields(t: Type): Iterable[Symbol] = t.decls.filter(isField)
-
-    // =======================================================================
     // Converter helpers
     // =======================================================================
 
@@ -134,7 +114,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Boolean] => tree
         case t if t =:= typeOf[String] => tree
         case t if t =:= typeOf[Instant] => tree
-        case t if isCaseClass(t) =>
+        case t if isCaseClass(c)(t) =>
           val fn = TermName("r" + t.typeSymbol.name)
           q"""{
                 val $fn = $tree
@@ -167,7 +147,7 @@ private[types] object ConverterProvider {
 
     def constructor(tpe: Type, fn: TermName): Tree = {
       val sets = tpe.erasure match {
-        case t if isCaseClass(t) => getFields(t).map(s => field(s, fn))
+        case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
         case t => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
       val tr = q"new ${p(c, GModel)}.TableRow()"
