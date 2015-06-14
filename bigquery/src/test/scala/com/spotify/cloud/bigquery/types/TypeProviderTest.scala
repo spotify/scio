@@ -148,9 +148,18 @@ class TypeProviderTest extends FlatSpec with Matchers {
     """
       |{
       |  "fields": [
-      |    {"mode": "REQUIRED", "name": "f1", "type": "RECORD", "fields": [{"mode": "REQUIRED", "name": "g", "type": "INTEGER"}]},
-      |    {"mode": "REQUIRED", "name": "f2", "type": "RECORD", "fields": [{"mode": "NULLABLE", "name": "g", "type": "INTEGER"}]},
-      |    {"mode": "REQUIRED", "name": "f3", "type": "RECORD", "fields": [{"mode": "REPEATED", "name": "g", "type": "INTEGER"}]}
+      |    {
+      |      "mode": "REQUIRED", "name": "f1", "type": "RECORD",
+      |      "fields": [{"mode": "REQUIRED", "name": "g", "type": "INTEGER"}]
+      |    },
+      |    {
+      |      "mode": "REQUIRED", "name": "f2", "type": "RECORD",
+      |      "fields": [{"mode": "NULLABLE", "name": "g", "type": "INTEGER"}]
+      |    },
+      |    {
+      |      "mode": "REQUIRED", "name": "f3", "type": "RECORD",
+      |      "fields": [{"mode": "REPEATED", "name": "g", "type": "INTEGER"}]
+      |    }
       |  ]
       |}
     """.stripMargin)
@@ -167,9 +176,18 @@ class TypeProviderTest extends FlatSpec with Matchers {
     """
       |{
       |  "fields": [
-      |    {"mode": "NULLABLE", "name": "f1", "type": "RECORD", "fields": [{"mode": "REQUIRED", "name": "g", "type": "INTEGER"}]},
-      |    {"mode": "NULLABLE", "name": "f2", "type": "RECORD", "fields": [{"mode": "NULLABLE", "name": "g", "type": "INTEGER"}]},
-      |    {"mode": "NULLABLE", "name": "f3", "type": "RECORD", "fields": [{"mode": "REPEATED", "name": "g", "type": "INTEGER"}]}
+      |    {
+      |      "mode": "NULLABLE", "name": "f1", "type": "RECORD",
+      |      "fields": [{"mode": "REQUIRED", "name": "g", "type": "INTEGER"}]
+      |    },
+      |    {
+      |      "mode": "NULLABLE", "name": "f2", "type": "RECORD",
+      |      "fields": [{"mode": "NULLABLE", "name": "g", "type": "INTEGER"}]
+      |    },
+      |    {
+      |      "mode": "NULLABLE", "name": "f3", "type": "RECORD",
+      |      "fields": [{"mode": "REPEATED", "name": "g", "type": "INTEGER"}]
+      |    }
       |  ]
       |}
     """.stripMargin)
@@ -186,9 +204,18 @@ class TypeProviderTest extends FlatSpec with Matchers {
     """
       |{
       |  "fields": [
-      |    {"mode": "REPEATED", "name": "f1", "type": "RECORD", "fields": [{"mode": "REQUIRED", "name": "g", "type": "INTEGER"}]},
-      |    {"mode": "REPEATED", "name": "f2", "type": "RECORD", "fields": [{"mode": "NULLABLE", "name": "g", "type": "INTEGER"}]},
-      |    {"mode": "REPEATED", "name": "f3", "type": "RECORD", "fields": [{"mode": "REPEATED", "name": "g", "type": "INTEGER"}]}
+      |    {
+      |      "mode": "REPEATED", "name": "f1", "type": "RECORD",
+      |      "fields": [{"mode": "REQUIRED", "name": "g", "type": "INTEGER"}]
+      |    },
+      |    {
+      |      "mode": "REPEATED", "name": "f2", "type": "RECORD",
+      |      "fields": [{"mode": "NULLABLE", "name": "g", "type": "INTEGER"}]
+      |    },
+      |    {
+      |      "mode": "REPEATED", "name": "f3", "type": "RECORD",
+      |      "fields": [{"mode": "REPEATED", "name": "g", "type": "INTEGER"}]
+      |    }
       |  ]
       |}
     """.stripMargin)
