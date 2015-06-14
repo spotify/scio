@@ -49,7 +49,7 @@ private[types] object TypeProvider {
       case List(q"case class $name(..$fields) { ..$body }") =>
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SType)}.schemaOf[$name]"
         q"""${caseClass(c)(name, fields, body)}
-            ${companion(c)(name, Nil, Seq(defSchema))}
+            ${companion(c)(name, Nil, Seq(defSchema), fields.asInstanceOf[Seq[Tree]].size)}
         """
       case _ => c.abort(c.enclosingPosition, "Invalid annotation")
     }
@@ -106,7 +106,7 @@ private[types] object TypeProvider {
       case List(q"class $name") =>
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SUtil)}.parseSchema(${schema.toString})"
         q"""${caseClass(c)(name, fields, Nil)}
-            ${companion(c)(name, traits, Seq(defSchema) ++ overrides)}
+            ${companion(c)(name, traits, Seq(defSchema) ++ overrides, fields.size)}
             ..$records
         """
       case _ => c.abort(c.enclosingPosition, "Invalid annotation")
@@ -138,9 +138,10 @@ private[types] object TypeProvider {
   }
   /** Generate a companion object. */
   private def companion(c: blackbox.Context)
-                       (name: c.TypeName, traits: Seq[c.Tree], methods: Seq[c.Tree]): c.Tree = {
+                       (name: c.TypeName, traits: Seq[c.Tree], methods: Seq[c.Tree], numFields: Int): c.Tree = {
     import c.universe._
-    val m = converters(c)(name) ++ methods
+    val tupled = if (numFields > 1) Seq(q"def tupled = (${TermName(name.toString)}.apply _).tupled") else Nil
+    val m = converters(c)(name) ++ tupled ++ methods
     q"""object ${TermName(name.toString)} extends ${p(c, SType)}.HasSchema[$name] with ..$traits {
           ..$m
         }
