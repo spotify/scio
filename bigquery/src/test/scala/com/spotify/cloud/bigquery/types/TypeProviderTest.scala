@@ -1,5 +1,6 @@
 package com.spotify.cloud.bigquery.types
 
+import com.spotify.cloud.bigquery.TableRow
 import org.joda.time.Instant
 import org.scalatest.{Matchers, FlatSpec}
 
@@ -60,6 +61,26 @@ class TypeProviderTest extends FlatSpec with Matchers {
     r.f3 should equal (true)
     r.f4 should equal ("hello")
     r.f5 should equal (NOW)
+  }
+
+  it should "support .tupled in companion" in {
+    val r1 = RecordWithRequiredPrimitives(1L, 1.5, true, "hello", NOW)
+    val r2 = RecordWithRequiredPrimitives.tupled((1L, 1.5, true, "hello", NOW))
+    r1 should equal (r2)
+  }
+
+  it should "support .schema in companion object" in {
+    RecordWithRequiredPrimitives.schema should not be null
+  }
+
+  it should "support .fromTableRow in companion object" in {
+    (classOf[(TableRow => RecordWithRequiredPrimitives)]
+      isAssignableFrom RecordWithRequiredPrimitives.fromTableRow.getClass) shouldBe true
+  }
+
+  it should "support .toTableRow in companion object" in {
+    (classOf[(ToTable => RecordWithRequiredPrimitives)]
+      isAssignableFrom RecordWithRequiredPrimitives.toTableRow.getClass) shouldBe true
   }
 
   @BigQueryType.fromSchema(
@@ -178,6 +199,27 @@ class TypeProviderTest extends FlatSpec with Matchers {
     r.f1 should equal (List(f13(1L)))
     r.f2 should equal (List(f23(Some(1L))))
     r.f3 should equal (List(f33(List(1L, 2L))))
+  }
+
+  @BigQueryType.toTable()
+  case class ToTable(f1: Long, f2: Double, f3: Boolean, f4: String, f5: Instant)
+
+  "BigQueryEntity.toTable" should "support .tupled in companion object" in {
+    val r1 = ToTable(1L, 1.5, true, "hello", NOW)
+    val r2 = ToTable.tupled((1L, 1.5, true, "hello", NOW))
+    r1 should equal (r2)
+  }
+
+  it should "support .schema in companion object" in {
+    ToTable.schema should not be null
+  }
+
+  it should "support .fromTableRow in companion object" in {
+    (classOf[(TableRow => ToTable)] isAssignableFrom ToTable.fromTableRow.getClass) shouldBe true
+  }
+
+  it should "support .toTableRow in companion object" in {
+    (classOf[(ToTable => TableRow)] isAssignableFrom ToTable.toTableRow.getClass) shouldBe true
   }
 
 }
