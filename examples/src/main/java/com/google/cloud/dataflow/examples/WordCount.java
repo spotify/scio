@@ -36,25 +36,37 @@ import com.google.cloud.dataflow.sdk.values.PCollection;
 
 /**
  * An example that counts words in Shakespeare. For a detailed walkthrough of this
- * example see:
+ * example see
+ *   <a href="https://cloud.google.com/dataflow/java-sdk/wordcount-example">
  *   https://cloud.google.com/dataflow/java-sdk/wordcount-example
+ *   </a>
  *
  * <p> Concepts: Reading/writing text files; counting a PCollection; user-defined PTransforms
  *
  * <p> To execute this pipeline locally, specify general pipeline configuration:
- *   --project=<PROJECT ID>
+ * <pre>{@code
+ *   --project=YOUR_PROJECT_ID
+ * }
+ * </pre>
  * and a local output file or output prefix on GCS:
- *   --output=[<LOCAL FILE> | gs://<OUTPUT PREFIX>]
+ * <pre>{@code
+ *   --output=[YOUR_LOCAL_FILE | gs://YOUR_OUTPUT_PREFIX]
+ * }</pre>
  *
  * <p> To execute this pipeline using the Dataflow service, specify pipeline configuration:
- *   --project=<PROJECT ID>
- *   --stagingLocation=gs://<STAGING DIRECTORY>
+ * <pre>{@code
+ *   --project=YOUR_PROJECT_ID
+ *   --stagingLocation=gs://YOUR_STAGING_DIRECTORY
  *   --runner=BlockingDataflowPipelineRunner
+ * }
+ * </pre>
  * and an output prefix on GCS:
- *   --output=gs://<OUTPUT PREFIX>
+ * <pre>{@code
+ *   --output=gs://YOUR_OUTPUT_PREFIX
+ * }</pre>
  *
- * <p> The input file defaults to gs://dataflow-samples/shakespeare/kinglear.txt and can be
- * overridden with --input.
+ * <p> The input file defaults to {@code gs://dataflow-samples/shakespeare/kinglear.txt} and can be
+ * overridden with {@code --input}.
  */
 public class WordCount {
 
@@ -62,12 +74,8 @@ public class WordCount {
   static class ExtractWordsFn extends DoFn<String, String> {
     private static final long serialVersionUID = 0;
 
-    private Aggregator<Long> emptyLines;
-
-    @Override
-    public void startBundle(Context c) {
-      emptyLines = c.createAggregator("emptyLines", new Sum.SumLongFn());
-    }
+    private final Aggregator<Long, Long> emptyLines =
+        createAggregator("emptyLines", new Sum.SumLongFn());
 
     @Override
     public void processElement(ProcessContext c) {

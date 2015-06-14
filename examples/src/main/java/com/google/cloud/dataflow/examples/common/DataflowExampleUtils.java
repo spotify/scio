@@ -61,7 +61,6 @@ public class DataflowExampleUtils {
   private Bigquery bigQueryClient = null;
   private Pubsub pubsubClient = null;
   private Dataflow dataflowClient = null;
-  private Pipeline injectorPipeline = null;
   private Set<DataflowPipelineJob> jobsToCancel = Sets.newHashSet();
   private List<String> pendingMessages = Lists.newArrayList();
 
@@ -216,28 +215,42 @@ public class DataflowExampleUtils {
     copiedOptions.setStreaming(false);
     copiedOptions.setNumWorkers(
         options.as(ExamplePubsubTopicOptions.class).getInjectorNumWorkers());
-    injectorPipeline = Pipeline.create(copiedOptions);
+    Pipeline injectorPipeline = Pipeline.create(copiedOptions);
     injectorPipeline.apply(TextIO.Read.from(inputFile))
                     .apply(IntraBundleParallelization
-                        .of(new PubsubFileInjector.Publish(topic))
+                        .of(PubsubFileInjector.publish(topic))
                         .withMaxParallelism(20));
     DataflowPipelineJob injectorJob = (DataflowPipelineJob) injectorPipeline.run();
     jobsToCancel.add(injectorJob);
   }
 
   /**
-   * Waits for the pipeline to finish, and cancels it (and the injector) before the program exists.
+   * Runs the provided injector pipeline for the streaming pipeline.
+   */
+  public void runInjectorPipeline(Pipeline injectorPipeline) {
+    DataflowPipelineJob injectorJob = (DataflowPipelineJob) injectorPipeline.run();
+    jobsToCancel.add(injectorJob);
+  }
+
+  /**
+   * If {@literal DataflowPipelineRunner} or {@literal BlockingDataflowPipelineRunner} is used,
+   * waits for the pipeline to finish and cancels it (and the injector) before the program exists.
    */
   public void waitToFinish(PipelineResult result) {
-    final DataflowPipelineJob job = (DataflowPipelineJob) result;
-    jobsToCancel.add(job);
-    if (!options.as(DataflowExampleOptions.class).getKeepJobsRunning()) {
-      addShutdownHook(jobsToCancel);
-    }
-    try {
-      job.waitToFinish(-1, TimeUnit.SECONDS, new MonitoringUtil.PrintHandler(System.out));
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to wait for job to finish: " + job.getJobId());
+    if (result instanceof DataflowPipelineJob) {
+      final DataflowPipelineJob job = (DataflowPipelineJob) result;
+      jobsToCancel.add(job);
+      if (!options.as(DataflowExampleOptions.class).getKeepJobsRunning()) {
+        addShutdownHook(jobsToCancel);
+      }
+      try {
+        job.waitToFinish(-1, TimeUnit.SECONDS, new MonitoringUtil.PrintHandler(System.out));
+      } catch (Exception e) {
+        throw new RuntimeException("Failed to wait for job to finish: " + job.getJobId());
+      }
+    } else {
+      // Do nothing if the given PipelineResult doesn't support waitToFinish(),
+      // such as EvaluationResults returned by DirectPipelineRunner.
     }
   }
 
