@@ -24,17 +24,17 @@ class TypeProviderTest extends FlatSpec with Matchers {
     """.stripMargin)
   class S3
 
-  "BigQueryEntity.fromSchema" should "string literal" in {
+  "BigQueryEntity.fromSchema" should "support string literal" in {
     val r = S1(1L)
     r.f1 should equal (1L)
   }
 
-  it should "multi-line string literal" in {
+  it should "support multi-line string literal" in {
     val r = S2(1L)
     r.f1 should equal (1L)
   }
 
-  it should "multi-line string literal with stripMargin" in {
+  it should "support multi-line string literal with stripMargin" in {
     val r = S3(1L)
     r.f1 should equal (1L)
   }
