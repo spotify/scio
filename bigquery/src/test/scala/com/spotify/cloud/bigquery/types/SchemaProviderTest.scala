@@ -1,18 +1,11 @@
 package com.spotify.cloud.bigquery.types
 
-import java.io.StringReader
-
-import com.google.api.client.json.JsonObjectParser
-import com.google.api.client.json.jackson2.JacksonFactory
-import com.google.api.services.bigquery.model.TableSchema
+import com.spotify.cloud.bigquery.Util.parseSchema
 import org.scalatest.{Matchers, FlatSpec}
 
 class SchemaProviderTest extends FlatSpec with Matchers {
 
   import Schemas._
-
-  def tableSchema(schemaString: String): TableSchema =
-    new JsonObjectParser(new JacksonFactory).parseAndClose(new StringReader(schemaString), classOf[TableSchema])
 
   def basicFields(mode: String) =
     s"""
@@ -28,15 +21,15 @@ class SchemaProviderTest extends FlatSpec with Matchers {
        |""".stripMargin
 
   "SchemaProvider.toSchema" should "support required primitive types" in {
-    SchemaProvider.schemaOf[P1] should equal (tableSchema(s"{${basicFields("REQUIRED")}}"))
+    SchemaProvider.schemaOf[P1] should equal (parseSchema(s"{${basicFields("REQUIRED")}}"))
   }
 
   it should "support nullable primitive types" in {
-    SchemaProvider.schemaOf[P2] should equal (tableSchema(s"{${basicFields("NULLABLE")}}"))
+    SchemaProvider.schemaOf[P2] should equal (parseSchema(s"{${basicFields("NULLABLE")}}"))
   }
 
   it should "support repeated primitive types" in {
-    SchemaProvider.schemaOf[P3] should equal (tableSchema(s"{${basicFields("REPEATED")}}"))
+    SchemaProvider.schemaOf[P3] should equal (parseSchema(s"{${basicFields("REPEATED")}}"))
   }
 
   def recordFields(mode: String) =
@@ -51,15 +44,15 @@ class SchemaProviderTest extends FlatSpec with Matchers {
        |""".stripMargin
 
   it should "support required records" in {
-    SchemaProvider.schemaOf[R1] should equal (tableSchema(recordFields("REQUIRED")))
+    SchemaProvider.schemaOf[R1] should equal (parseSchema(recordFields("REQUIRED")))
   }
 
   it should "support nullable records" in {
-    SchemaProvider.schemaOf[R2] should equal (tableSchema(recordFields("NULLABLE")))
+    SchemaProvider.schemaOf[R2] should equal (parseSchema(recordFields("NULLABLE")))
   }
 
   it should "support repeated records" in {
-    SchemaProvider.schemaOf[R3] should equal (tableSchema(recordFields("REPEATED")))
+    SchemaProvider.schemaOf[R3] should equal (parseSchema(recordFields("REPEATED")))
   }
 
 }
