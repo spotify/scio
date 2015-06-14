@@ -157,7 +157,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
   class RecordWithRequiredRecords
 
   it should "support required records" in {
-    val r = RecordWithRequiredRecords(f1(1L), f2(Some(1L)), f3(List(1L, 2L)))
+    val r = RecordWithRequiredRecords(F1$(1L), F2$(Some(1L)), F3$(List(1L, 2L)))
     r.f1.g should equal (1L)
     r.f2.g should equal (Some(1L))
     r.f3.g should equal (List(1L, 2L))
@@ -176,7 +176,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
   class RecordWithNullableRecords
 
   it should "support nullable records" in {
-    val r = RecordWithNullableRecords(Some(f12(1L)), Some(f22(Some(1L))), Some(f32(List(1L, 2L))))
+    val r = RecordWithNullableRecords(Some(F1$2(1L)), Some(F2$2(Some(1L))), Some(F3$2(List(1L, 2L))))
     r.f1.get.g should equal (1L)
     r.f2.get.g should equal (Some(1L))
     r.f3.get.g should equal (List(1L, 2L))
@@ -195,10 +195,10 @@ class TypeProviderTest extends FlatSpec with Matchers {
   class RecordWithRepeatedRecords
 
   it should "support repeated records" in {
-    val r = RecordWithRepeatedRecords(List(f13(1L)), List(f23(Some(1L))), List(f33(List(1L, 2L))))
-    r.f1 should equal (List(f13(1L)))
-    r.f2 should equal (List(f23(Some(1L))))
-    r.f3 should equal (List(f33(List(1L, 2L))))
+    val r = RecordWithRepeatedRecords(List(F1$3(1L)), List(F2$3(Some(1L))), List(F3$3(List(1L, 2L))))
+    r.f1 should equal (List(F1$3(1L)))
+    r.f2 should equal (List(F2$3(Some(1L))))
+    r.f3 should equal (List(F3$3(List(1L, 2L))))
   }
 
   @BigQueryType.toTable()

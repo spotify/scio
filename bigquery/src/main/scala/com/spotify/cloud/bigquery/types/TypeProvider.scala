@@ -167,13 +167,16 @@ private[types] object NameProvider {
    * field names.
    */
   def getUniqueName(name: String): String = m.synchronized {
-    if (m.contains(name)) {
-      m(name) += 1
-      name + m(name)
+    val cName = camelCase(name) + '$'
+    if (m.contains(cName)) {
+      m(cName) += 1
+      cName + m(cName)
     } else {
-      m.put(name, 1)
-      name
+      m.put(cName, 1)
+      cName
     }
   }
 
+  private def camelCase(s: String): String =
+    s.split('_').filter(_.nonEmpty).map(t => t(0).toUpper + t.drop(1).toLowerCase).mkString("")
 }
