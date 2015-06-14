@@ -45,19 +45,21 @@ class TypeProviderTest extends FlatSpec with Matchers {
       |  "fields": [
       |    {"mode": "REQUIRED", "name": "f1", "type": "INTEGER"},
       |    {"mode": "REQUIRED", "name": "f2", "type": "FLOAT"},
-      |    {"mode": "REQUIRED", "name": "f3", "type": "STRING"},
-      |    {"mode": "REQUIRED", "name": "f4", "type": "TIMESTAMP"}
+      |    {"mode": "REQUIRED", "name": "f3", "type": "BOOLEAN"},
+      |    {"mode": "REQUIRED", "name": "f4", "type": "STRING"},
+      |    {"mode": "REQUIRED", "name": "f5", "type": "TIMESTAMP"}
       |    ]
       |}
     """.stripMargin)
   class RecordWithRequiredPrimitives
 
   it should "support required primitive types" in {
-    val r = RecordWithRequiredPrimitives(1L, 1.5, "hello", NOW)
+    val r = RecordWithRequiredPrimitives(1L, 1.5, true, "hello", NOW)
     r.f1 should equal (1L)
     r.f2 should equal (1.5)
-    r.f3 should equal ("hello")
-    r.f4 should equal (NOW)
+    r.f3 should equal (true)
+    r.f4 should equal ("hello")
+    r.f5 should equal (NOW)
   }
 
   @BigQueryType.fromSchema(
@@ -66,25 +68,28 @@ class TypeProviderTest extends FlatSpec with Matchers {
       |  "fields": [
       |    {"mode": "NULLABLE", "name": "f1", "type": "INTEGER"},
       |    {"mode": "NULLABLE", "name": "f2", "type": "FLOAT"},
-      |    {"mode": "NULLABLE", "name": "f3", "type": "STRING"},
-      |    {"mode": "NULLABLE", "name": "f4", "type": "TIMESTAMP"}
+      |    {"mode": "NULLABLE", "name": "f3", "type": "BOOLEAN"},
+      |    {"mode": "NULLABLE", "name": "f4", "type": "STRING"},
+      |    {"mode": "NULLABLE", "name": "f5", "type": "TIMESTAMP"}
       |  ]
       |}
     """.stripMargin)
   class RecordWithNullablePrimitives
 
   it should "support nullable primitive types" in {
-    val r1 = RecordWithNullablePrimitives(Some(1L), Some(1.5), Some("hello"), Some(NOW))
+    val r1 = RecordWithNullablePrimitives(Some(1L), Some(1.5), Some(true), Some("hello"), Some(NOW))
     r1.f1 should equal (Some(1L))
     r1.f2 should equal (Some(1.5))
-    r1.f3 should equal (Some("hello"))
-    r1.f4 should equal (Some(NOW))
+    r1.f3 should equal (Some(true))
+    r1.f4 should equal (Some("hello"))
+    r1.f5 should equal (Some(NOW))
 
-    val r2 = RecordWithNullablePrimitives(None, None, None, None)
+    val r2 = RecordWithNullablePrimitives(None, None, None, None, None)
     r2.f1 should equal (None)
     r2.f2 should equal (None)
     r2.f3 should equal (None)
     r2.f4 should equal (None)
+    r2.f5 should equal (None)
   }
 
   @BigQueryType.fromSchema(
@@ -93,8 +98,9 @@ class TypeProviderTest extends FlatSpec with Matchers {
       |  "fields": [
       |    {"mode": "REPEATED", "name": "f1", "type": "INTEGER"},
       |    {"mode": "REPEATED", "name": "f2", "type": "FLOAT"},
-      |    {"mode": "REPEATED", "name": "f3", "type": "STRING"},
-      |    {"mode": "REPEATED", "name": "f4", "type": "TIMESTAMP"}
+      |    {"mode": "REPEATED", "name": "f3", "type": "BOOLEAN"},
+      |    {"mode": "REPEATED", "name": "f4", "type": "STRING"},
+      |    {"mode": "REPEATED", "name": "f5", "type": "TIMESTAMP"}
       |  ]
       |}
     """.stripMargin)
@@ -102,17 +108,19 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   it should "support repeated primitive types" in {
     val r1 = RecordWithRepeatedPrimitives(
-      List(1L, 2L), List(1.5, 2.5), List("hello", "world"), List(NOW, NOW.plus(1000)))
+      List(1L, 2L), List(1.5, 2.5), List(true, false), List("hello", "world"), List(NOW, NOW.plus(1000)))
     r1.f1 should equal (List(1L, 2L))
     r1.f2 should equal (List(1.5, 2.5))
-    r1.f3 should equal (List("hello", "world"))
-    r1.f4 should equal (List(NOW, NOW.plus(1000)))
+    r1.f3 should equal (List(true, false))
+    r1.f4 should equal (List("hello", "world"))
+    r1.f5 should equal (List(NOW, NOW.plus(1000)))
 
-    val r2 = RecordWithRepeatedPrimitives(Nil, Nil, Nil, Nil)
+    val r2 = RecordWithRepeatedPrimitives(Nil, Nil, Nil, Nil, Nil)
     r2.f1 should equal (Nil)
     r2.f2 should equal (Nil)
     r2.f3 should equal (Nil)
     r2.f4 should equal (Nil)
+    r2.f5 should equal (Nil)
   }
 
   @BigQueryType.fromSchema(
