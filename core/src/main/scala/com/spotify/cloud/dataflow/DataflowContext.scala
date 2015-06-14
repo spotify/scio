@@ -123,7 +123,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
   /* Read operations */
 
   private def applyInternal[Output <: POutput](root: PTransform[_ >: PBegin, Output]): Output =
-    pipeline.apply(root.withName(CallSites.getCurrent))
+    pipeline.apply(root.setName(CallSites.getCurrent))
 
   /** Get an SCollection of specific record type for an Avro file. */
   def avroFile[T <: IndexedRecord: ClassTag](path: String): SCollection[T] =

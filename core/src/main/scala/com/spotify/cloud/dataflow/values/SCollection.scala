@@ -44,7 +44,7 @@ object SCollection {
 
   /** Create a union of multiple SCollections */
   def unionAll[T: ClassTag](scs: Iterable[SCollection[T]]): SCollection[T] = {
-    val o = PCollectionList.of(scs.map(_.internal).asJava).apply(Flatten.pCollections().withName(CallSites.getCurrent))
+    val o = PCollectionList.of(scs.map(_.internal).asJava).apply(Flatten.pCollections().setName(CallSites.getCurrent))
     new SCollectionImpl(o)(scs.head.context, scs.head.ct)
   }
 
@@ -109,7 +109,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def union(that: SCollection[T]): SCollection[T] = {
     val o = PCollectionList
       .of(internal).and(that.internal)
-      .apply(Flatten.pCollections().withName(CallSites.getCurrent))
+      .apply(Flatten.pCollections().setName(CallSites.getCurrent))
     SCollection(o)
   }
 

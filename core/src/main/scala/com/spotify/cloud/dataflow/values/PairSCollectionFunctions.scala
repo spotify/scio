@@ -36,11 +36,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollection[U]]() {
       override def apply(input: PCollection[(K, V)]): PCollection[U] =
         input
-          .apply(toKvTransform.withName("TupleToKv"))
+          .apply(toKvTransform.setName("TupleToKv"))
           .setCoder(self.getKvCoder[K, V])
           .apply(t)
           .setCoder(self.getCoder[U])
-    }.withName(CallSites.getCurrent))
+    }.setName(CallSites.getCurrent))
     SCollection(o)
   }
 
@@ -50,12 +50,12 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollection[(K, UO)]]() {
       override def apply(input: PCollection[(K, V)]): PCollection[(K, UO)] =
         input
-          .apply(toKvTransform.withName("TupleToKv"))
+          .apply(toKvTransform.setName("TupleToKv"))
           .setCoder(self.getKvCoder[K, V])
           .apply(t)
-          .apply(ParDo.of(Functions.mapFn[KV[K, UI], (K, UO)](f)).withName("KvToTuple"))
+          .apply(ParDo.of(Functions.mapFn[KV[K, UI], (K, UO)](f)).setName("KvToTuple"))
           .setCoder(self.getCoder[(K, UO)])
-    }.withName(CallSites.getCurrent))
+    }.setName(CallSites.getCurrent))
     SCollection(o)
   }
 
@@ -72,7 +72,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     val keyed = KeyedPCollectionTuple
       .of(tagV, this.toKV.internal)
       .and(tagW, that.toKV.internal)
-      .apply(CoGroupByKey.create().withName(CallSites.getCurrent))
+      .apply(CoGroupByKey.create().setName(CallSites.getCurrent))
 
     SCollection(keyed).map { kv =>
       val (k, r) = (kv.getKey, kv.getValue)
@@ -93,7 +93,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
       .of(tagV, this.toKV.internal)
       .and(tagW1, that1.toKV.internal)
       .and(tagW2, that2.toKV.internal)
-      .apply(CoGroupByKey.create().withName(CallSites.getCurrent))
+      .apply(CoGroupByKey.create().setName(CallSites.getCurrent))
 
     SCollection(keyed).map { kv =>
       val (k, r) = (kv.getKey, kv.getValue)
@@ -116,7 +116,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
       .and(tagW1, that1.toKV.internal)
       .and(tagW2, that2.toKV.internal)
       .and(tagW3, that3.toKV.internal)
-      .apply(CoGroupByKey.create().withName(CallSites.getCurrent))
+      .apply(CoGroupByKey.create().setName(CallSites.getCurrent))
 
     SCollection(keyed).map { kv =>
       val (k, r) = (kv.getKey, kv.getValue)

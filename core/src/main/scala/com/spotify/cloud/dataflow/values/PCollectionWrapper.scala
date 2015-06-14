@@ -20,7 +20,7 @@ private[values] trait PCollectionWrapper[T] {
   implicit protected val ct: ClassTag[T]
 
   private[values] def applyInternal[Output <: POutput](transform: PTransform[_ >: PCollection[T], Output]): Output =
-    internal.apply(transform.withName(CallSites.getCurrent))
+    internal.apply(transform.setName(CallSites.getCurrent))
 
   protected def apply[U: ClassTag](transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {
     val t = if (classOf[Combine.Globally[T, U]] isAssignableFrom transform.getClass) {
