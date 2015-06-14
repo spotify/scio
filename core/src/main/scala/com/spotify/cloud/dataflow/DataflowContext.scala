@@ -183,20 +183,20 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
     }
 
   /** Get an SCollection for a Pub/Sub subscription. */
-  def pubsubSubscription(subscription: String, dropLateData: Boolean = true): SCollection[String] =
+  def pubsubSubscription(subscription: String): SCollection[String] =
     if (this.isTest) {
       this.getTestInput(PubsubIO(subscription))
     } else {
-      SCollection(this.applyInternal(GPubsubIO.Read.subscription(subscription).dropLateData(dropLateData)))
+      SCollection(this.applyInternal(GPubsubIO.Read.subscription(subscription)))
         .setName(subscription)
     }
 
   /** Get an SCollection for a Pub/Sub topic. */
-  def pubsubTopic(topic: String, dropLateData: Boolean = true): SCollection[String] =
+  def pubsubTopic(topic: String): SCollection[String] =
     if (this.isTest) {
       this.getTestInput(PubsubIO(topic))
     } else {
-      SCollection(this.applyInternal(GPubsubIO.Read.topic(topic).dropLateData(dropLateData))).setName(topic)
+      SCollection(this.applyInternal(GPubsubIO.Read.topic(topic))).setName(topic)
     }
 
   /** Get an SCollection of TableRow for a JSON file. */

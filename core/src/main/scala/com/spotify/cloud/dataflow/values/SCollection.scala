@@ -482,6 +482,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // Windowing operations
   // =======================================================================
 
+  // TODO: re-work this section, include WindowingStrategy, Triggering, etc.
+
   def toWindowed: WindowedSCollection[T] = new WindowedSCollection[T](internal)
 
   def withWindowFn(fn: WindowFn[T, _]): SCollection[T] = this.apply(Window.into(fn))
