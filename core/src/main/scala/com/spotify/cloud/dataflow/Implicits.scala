@@ -3,8 +3,7 @@ package com.spotify.cloud.dataflow
 import java.lang.{Float => JFloat}
 
 import com.google.cloud.dataflow.sdk.coders._
-import com.google.cloud.dataflow.sdk.values.KV
-import com.google.common.reflect.TypeToken
+import com.google.cloud.dataflow.sdk.values.{TypeDescriptor, KV}
 import com.spotify.cloud.dataflow.coders.KryoAtomicCoder
 import com.spotify.cloud.dataflow.values.{
   AccumulatorType, DoubleAccumulatorType, IntAccumulatorType, LongAccumulatorType
@@ -29,7 +28,7 @@ private[dataflow] object PrivateImplicits {
 
     def getScalaCoder[T: ClassTag]: Coder[T] = {
       val ct = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
-      val tt = TypeToken.of(ct)
+      val tt = TypeDescriptor.of(ct)
       val coder = r.getDefaultCoder(tt)
 
       // For classes not registered in CoderRegistry, it returns
