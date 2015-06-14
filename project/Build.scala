@@ -72,6 +72,7 @@ object DataflowScalaBuild extends Build {
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
         "com.google.cloud.dataflow" % "google-cloud-dataflow-java-sdk-all" % sdkVersion,
+        "com.google.guava" % "guava" % "18.0",
         "com.twitter" %% "algebird-core" % "0.9.0",
         "com.twitter" %% "chill" % chillVersion,
         "com.twitter" %% "chill-avro" % chillVersion,
