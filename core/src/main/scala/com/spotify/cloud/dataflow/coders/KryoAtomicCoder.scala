@@ -66,7 +66,4 @@ private[dataflow] class KryoAtomicCoder extends AtomicCoder[Any] {
     }
   }
 
-  // TODO: double check
-  override def isDeterministic: Boolean = true
-
 }

@@ -54,17 +54,6 @@ class FloatCoder extends AtomicCoder<Float> {
     }
   }
 
-  /**
-   * Floating-point operations are not guaranteed to be deterministic, even
-   * if the storage format might be, so floating point representations are not
-   * recommended for use in operations which require deterministic inputs.
-   */
-  @Override
-  @Deprecated
-  public boolean isDeterministic() {
-    return false;
-  }
-
   @Override
   public void verifyDeterministic() throws NonDeterministicException {
     throw new NonDeterministicException(this,
