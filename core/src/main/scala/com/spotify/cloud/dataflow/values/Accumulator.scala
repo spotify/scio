@@ -51,7 +51,7 @@ private[dataflow] class DoubleAccumulatorType extends AccumulatorType[Double] {
  */
 class Accumulator[T, U] private[dataflow]() {
 
-  private val m: MMap[String, Aggregator[_]] = MMap.empty
+  private val m: MMap[String, Aggregator[_, _]] = MMap.empty
   private var c: DoFn[T, U]#ProcessContext = null
 
   private[dataflow] def withContext(c: DoFn[T, U]#ProcessContext): Accumulator[T, U] = {
@@ -59,8 +59,14 @@ class Accumulator[T, U] private[dataflow]() {
     this
   }
 
-  private def aggregator[V, VA](name: String, f: CombineFn[V, VA, V]): Aggregator[V] =
-    m.getOrElseUpdate(name, c.createAggregator(name, f)).asInstanceOf[Aggregator[V]]
+  private def aggregator[V, VA](name: String, f: CombineFn[V, VA, V]): Aggregator[V, V] = {
+    // m.getOrElseUpdate(name, c.createAggregator(name, f)).asInstanceOf[Aggregator[V]]
+    new Aggregator[V, V] {
+      override def getCombineFn: CombineFn[V, V, V] = null
+      override def getName: String = name
+      override def addValue(value: V): Unit = {}
+    }
+  }
 
   /** Add value to the named accumulation. */
   def add[V](name: String, value: V)(implicit at: AccumulatorType[V]): Accumulator[T, U] = {
