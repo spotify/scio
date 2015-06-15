@@ -21,7 +21,7 @@ object SideOutput {
 }
 
 /** Encapsulate context of one or more [[SideOutput]]s in an [[SCollectionWithSideOutput]]. */
-class SideOutputContext[T] private[dataflow] (private val context: DoFn[T, AnyRef]#ProcessContext) {
+class SideOutputContext[T] private[dataflow] (private val context: DoFn[T, AnyRef]#ProcessContext) extends AnyVal {
   /** Write a value to a given [[SideOutput]]. */
   def output[S](sideOutput: SideOutput[S], output: S, timestamp: Instant = null): SideOutputContext[T] = {
     if (timestamp == null) {

@@ -31,7 +31,7 @@ private[values] class MapSideInput[K, V](val view: PCollectionView[JMap[K, JIter
 }
 
 /** Encapsulate context of one or more [[SideInput]]s in an [[SCollectionWithSideInput]]. */
-class SideInputContext[T] private[dataflow] (private val context: DoFn[T, AnyRef]#ProcessContext) {
+class SideInputContext[T] private[dataflow] (private val context: DoFn[T, AnyRef]#ProcessContext) extends AnyVal {
   /** Extract the value of a given [[SideInput]]. */
   def apply[S](side: SideInput[S]): S = side.get(context)
 }
