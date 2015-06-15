@@ -1,6 +1,9 @@
 package com.spotify.cloud
 
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write
+import com.spotify.cloud.dataflow.values.{
+  AccumulatorType, DoubleAccumulatorType, LongAccumulatorType, IntAccumulatorType
+}
 
 /**
  * Main package for public APIs. Import all.
@@ -28,5 +31,9 @@ package object dataflow {
 
   /** Alias for BigQuery WriteDisposition. */
   val WRITE_TRUNCATE = Write.WriteDisposition.WRITE_TRUNCATE
+
+  implicit val intAccumulatorType: AccumulatorType[Int] = new IntAccumulatorType
+  implicit val longAccumulatorType: AccumulatorType[Long] = new LongAccumulatorType
+  implicit val doubleAccumulatorType: AccumulatorType[Double] = new DoubleAccumulatorType
 
 }

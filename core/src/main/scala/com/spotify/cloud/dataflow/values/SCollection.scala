@@ -386,6 +386,39 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   // =======================================================================
+  // Accumulators
+  // =======================================================================
+
+  /**
+   * Convert this SCollection to an [[SCollectionWithAccumulator]] with one or more
+   * [[Accumulator]]s, similar to Hadoop counters. Call
+   * [[SCollectionWithAccumulator.toSCollection]] when done with accumulators.
+   *
+   * Create accumulators with [[DataflowContext.maxAccumulator]],
+   * [[DataflowContext.minAccumulator]] or [[DataflowContext.sumAccumulator]]. For example:
+   *
+   * {{{
+   * val maxLineLength = context.maxAccumulator[Int]("maxLineLength")
+   * val minLineLength = context.maxAccumulator[Int]("maxLineLength")
+   * val emptyLines = context.maxAccumulator[Long]("emptyLines")
+   *
+   * val p: SCollection[String] = // ...
+   * p
+   *   .withAccumulators(maxLineLength, minLineLength, emptyLines)
+   *   .filter { (l, c) =>
+   *     val t = l.strip()
+   *     c.addValue(maxLineLength, t.length).addValue(minLineLength, t.length)
+   *     val b = t.isEmpty
+        if (b) c.addValue(emptyLines, 1L)
+        !b
+   *   }
+   *   .toSCollection
+   * }}}
+   */
+  def withAccumulator(acc: Accumulator[_]*): SCollectionWithAccumulator[T] =
+    new SCollectionWithAccumulator[T](internal, acc)
+
+  // =======================================================================
   // Side input operations
   // =======================================================================
 

@@ -17,7 +17,8 @@ import com.google.cloud.dataflow.sdk.io.{
 }
 import com.google.cloud.dataflow.sdk.options.{PipelineOptionsFactory, DataflowPipelineOptions}
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
-import com.google.cloud.dataflow.sdk.transforms.{PTransform, Create}
+import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
+import com.google.cloud.dataflow.sdk.transforms.{Aggregator, PTransform, Create}
 import com.google.cloud.dataflow.sdk.values.{TimestampedValue, PBegin, POutput}
 import com.spotify.cloud.bigquery._
 import com.spotify.cloud.dataflow.testing._
@@ -213,6 +214,43 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
       this.getTestInput(TextIO(path))
     } else {
       SCollection(this.applyInternal(GTextIO.Read.from(path))).setName(path)
+    }
+
+  // =======================================================================
+  // Accumulators
+  // =======================================================================
+
+  /**
+   * Create a new [[com.spotify.cloud.dataflow.values.Accumulator Accumulator]] that keeps track
+   * of the maximum value. See [[com.spotify.cloud.dataflow.values.SCollection.withAccumulator
+   * SCollection.withAccumulator]] for examples.
+   */
+  def maxAccumulator[U](n: String)(implicit at: AccumulatorType[U]): Accumulator[U] =
+    new Accumulator[U] {
+      override val name: String = n
+      override val combineFn: CombineFn[U, _, U] = at.maxFn()
+    }
+
+  /**
+   * Create a new [[com.spotify.cloud.dataflow.values.Accumulator Accumulator]] that keeps track
+   * of the minimum value. See [[com.spotify.cloud.dataflow.values.SCollection.withAccumulator
+   * SCollection.withAccumulator]] for examples.
+   */
+  def minAccumulator[U](n: String)(implicit at: AccumulatorType[U]): Accumulator[U] =
+    new Accumulator[U] {
+      override val name: String = n
+      override val combineFn: CombineFn[U, _, U] = at.minFn()
+    }
+
+  /**
+   * Create a new [[com.spotify.cloud.dataflow.values.Accumulator Accumulator]] that keeps track
+   * of the sum of values. See [[com.spotify.cloud.dataflow.values.SCollection.withAccumulator
+   * SCollection.withAccumulator]] for examples.
+   */
+  def sumAccumulator[U](n: String)(implicit at: AccumulatorType[U]): Accumulator[U] =
+    new Accumulator[U] {
+      override val name: String = n
+      override val combineFn: CombineFn[U, _, U] = at.sumFn()
     }
 
   // =======================================================================
