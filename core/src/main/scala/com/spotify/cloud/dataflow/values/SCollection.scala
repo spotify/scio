@@ -20,6 +20,7 @@ import com.google.cloud.dataflow.sdk.transforms.{
   RemoveDuplicates, Sample, Top, View, WithKeys
 }
 import com.google.cloud.dataflow.sdk.transforms.windowing._
+import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values._
 import com.spotify.cloud.dataflow.DataflowContext
 import com.spotify.cloud.dataflow.testing._
@@ -496,37 +497,92 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   def toWindowed: WindowedSCollection[T] = new WindowedSCollection[T](internal)
 
-  def withWindowFn(fn: WindowFn[T, _]): SCollection[T] = this.apply(Window.into(fn))
+  def withWindowFn(fn: WindowFn[T, _],
+                   allowedLateness: Duration = null,
+                   trigger: Trigger[_] = null,
+                   accumulationMode: AccumulationMode = null): SCollection[T] = {
+    require(
+      !(trigger == null ^ accumulationMode == null),
+      "Both trigger and accumulationMode must be null or set")
+    var transform = Window.into(fn)
+    if (allowedLateness != null) transform = transform.withAllowedLateness(allowedLateness)
+    if (trigger != null && accumulationMode != null) {
+      val t = transform.triggering(trigger)
+      transform = if (accumulationMode == AccumulationMode.ACCUMULATING_FIRED_PANES) {
+        t.accumulatingFiredPanes()
+      } else if (accumulationMode == AccumulationMode.DISCARDING_FIRED_PANES) {
+        t.discardingFiredPanes()
+      } else {
+        throw new RuntimeException(s"Unsupported accumulation mode $accumulationMode")
+      }
+    }
+    this.apply(transform)
+  }
 
-  def withFixedWindows(duration: Duration, offset: Duration = Duration.ZERO): SCollection[T] =
-    this.withWindowFn(FixedWindows.of(duration).withOffset(offset).asInstanceOf[WindowFn[T, _]])
+  def withFixedWindows(duration: Duration,
+                       offset: Duration = Duration.ZERO,
+                       allowedLateness: Duration = null,
+                       trigger: Trigger[_] = null,
+                       accumulationMode: AccumulationMode = null): SCollection[T] =
+    this.withWindowFn(
+      FixedWindows.of(duration).withOffset(offset).asInstanceOf[WindowFn[T, _]],
+      allowedLateness, trigger, accumulationMode)
 
   def withSlidingWindows(size: Duration,
                          period: Duration = Duration.millis(1),
-                         offset: Duration = Duration.ZERO): SCollection[T] =
-    this.withWindowFn(SlidingWindows.of(size).every(period).withOffset(offset).asInstanceOf[WindowFn[T, _]])
+                         offset: Duration = Duration.ZERO,
+                         allowedLateness: Duration = null,
+                         trigger: Trigger[_] = null,
+                         accumulationMode: AccumulationMode = null): SCollection[T] =
+    this.withWindowFn(
+      SlidingWindows.of(size).every(period).withOffset(offset).asInstanceOf[WindowFn[T, _]],
+      allowedLateness, trigger, accumulationMode)
 
-  def withSessionWindows(gapDuration: Duration): SCollection[T] =
-    this.withWindowFn(Sessions.withGapDuration(gapDuration).asInstanceOf[WindowFn[T, _]])
+  def withSessionWindows(gapDuration: Duration,
+                         allowedLateness: Duration = null,
+                         trigger: Trigger[_] = null,
+                         accumulationMode: AccumulationMode = null): SCollection[T] =
+    this.withWindowFn(
+      Sessions.withGapDuration(gapDuration).asInstanceOf[WindowFn[T, _]],
+      allowedLateness, trigger, accumulationMode)
 
   def withGlobalWindow(): SCollection[T] = this.withWindowFn(new GlobalWindows().asInstanceOf[WindowFn[T, _]])
 
-  def windowByYears(number: Int): SCollection[T] =
-    this.withWindowFn(CalendarWindows.years(number).asInstanceOf[WindowFn[T, _]])
+  def windowByYears(number: Int,
+                    allowedLateness: Duration = null,
+                    trigger: Trigger[_] = null,
+                    accumulationMode: AccumulationMode = null): SCollection[T] =
+    this.withWindowFn(
+      CalendarWindows.years(number).asInstanceOf[WindowFn[T, _]],
+      allowedLateness, trigger, accumulationMode)
 
-  def windowByMonths(number: Int): SCollection[T] =
-    this.withWindowFn(CalendarWindows.months(number).asInstanceOf[WindowFn[T, _]])
+  def windowByMonths(number: Int,
+                     allowedLateness: Duration = null,
+                     trigger: Trigger[_] = null,
+                     accumulationMode: AccumulationMode = null): SCollection[T] =
+    this.withWindowFn(
+      CalendarWindows.months(number).asInstanceOf[WindowFn[T, _]],
+      allowedLateness, trigger, accumulationMode)
 
-  def windowByWeeks(number: Int, startDayOfWeek: Int): SCollection[T] =
-    this.withWindowFn(CalendarWindows.weeks(number, startDayOfWeek).asInstanceOf[WindowFn[T, _]])
+  def windowByWeeks(number: Int, startDayOfWeek: Int,
+                    allowedLateness: Duration = null,
+                    trigger: Trigger[_] = null,
+                    accumulationMode: AccumulationMode = null): SCollection[T] =
+    this.withWindowFn(
+      CalendarWindows.weeks(number, startDayOfWeek).asInstanceOf[WindowFn[T, _]],
+      allowedLateness, trigger, accumulationMode)
 
-  def windowByDay(number: Int): SCollection[T] =
-    this.withWindowFn(CalendarWindows.days(number).asInstanceOf[WindowFn[T, _]])
+  def windowByDay(number: Int,
+                  allowedLateness: Duration = null,
+                  trigger: Trigger[_] = null,
+                  accumulationMode: AccumulationMode = null): SCollection[T] =
+    this.withWindowFn(
+      CalendarWindows.days(number).asInstanceOf[WindowFn[T, _]],
+      allowedLateness, trigger, accumulationMode)
 
   def withTimestamp(): SCollection[(T, Instant)] = this.parDo(new DoFn[T, (T, Instant)] {
-    override def processElement(c: DoFn[T, (T, Instant)]#ProcessContext): Unit = {
+    override def processElement(c: DoFn[T, (T, Instant)]#ProcessContext): Unit =
       c.output((c.element(), c.timestamp()))
-    }
   })
 
   def timestampBy(f: T => Instant): SCollection[T] = this.parDo(FunctionsWithWindowedValue.timestampFn(f))

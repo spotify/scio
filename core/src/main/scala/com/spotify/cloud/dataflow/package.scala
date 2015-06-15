@@ -1,6 +1,7 @@
 package com.spotify.cloud
 
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write
+import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.spotify.cloud.dataflow.values.{
   AccumulatorType, DoubleAccumulatorType, LongAccumulatorType, IntAccumulatorType
 }
@@ -31,6 +32,12 @@ package object dataflow {
 
   /** Alias for BigQuery WriteDisposition. */
   val WRITE_TRUNCATE = Write.WriteDisposition.WRITE_TRUNCATE
+
+  /** Alias for WindowingStrategy AccumulationMode.ACCUMULATING_FIRED_PANES. */
+  val ACCUMULATING_FIRED_PANES = AccumulationMode.ACCUMULATING_FIRED_PANES
+
+  /** Alias for WindowingStrategy AccumulationMode.DISCARDING_FIRED_PANES. */
+  val DISCARDING_FIRED_PANES = AccumulationMode.DISCARDING_FIRED_PANES
 
   implicit val intAccumulatorType: AccumulatorType[Int] = new IntAccumulatorType
   implicit val longAccumulatorType: AccumulatorType[Long] = new LongAccumulatorType
