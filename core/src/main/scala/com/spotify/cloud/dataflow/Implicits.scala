@@ -24,6 +24,11 @@ private[dataflow] object PrivateImplicits {
       r.registerCoder(classOf[Long], classOf[VarLongCoder])
       r.registerCoder(classOf[Float], classOf[FloatCoder])
       r.registerCoder(classOf[Double], classOf[DoubleCoder])
+
+      // Fall back to Kryo
+      r.setFallbackCoderProvider(new CoderProvider {
+        override def getCoder[T](`type`: TypeDescriptor[T]): Coder[T] = new KryoAtomicCoder().asInstanceOf[Coder[T]]
+      })
     }
 
     def getScalaCoder[T: ClassTag]: Coder[T] = {
