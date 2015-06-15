@@ -386,29 +386,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   // =======================================================================
-  // Accumulator operations
-  // =======================================================================
-
-  /**
-   * Convert this SCollection to an enhanced [[SCollectionWithAccumulator]] that provides access
-   * to an [[Accumulator]] for some transforms, similar to Hadoop counters. Call
-   * [[SCollectionWithAccumulator.toSCollection]] when done with accumulators.
-   * For example, mapping over an SCollection of integers and accumulating sum, max, and min.
-   *
-   * {{{
-   * val p: SCollection[Int] = // ...
-   * p.withAccumulator.map { (x, acc) =>
-   *   acc.add("sum", x)
-   *      .max("max", x)
-   *      .min("min", x)
-   *   x
-   * }
-   * .toSCollection
-   * }}}
-   */
-  def withAccumulator: SCollectionWithAccumulator[T] = new SCollectionWithAccumulator[T](internal)
-
-  // =======================================================================
   // Side input operations
   // =======================================================================
 

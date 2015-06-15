@@ -5,14 +5,11 @@ import java.lang.{Float => JFloat}
 import com.google.cloud.dataflow.sdk.coders._
 import com.google.cloud.dataflow.sdk.values.{TypeDescriptor, KV}
 import com.spotify.cloud.dataflow.coders.KryoAtomicCoder
-import com.spotify.cloud.dataflow.values.{
-  AccumulatorType, DoubleAccumulatorType, IntAccumulatorType, LongAccumulatorType
-}
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
-private[dataflow] object PrivateImplicits {
+private[dataflow] object Implicits {
 
   private[dataflow] implicit class RichCoderRegistry(val r: CoderRegistry) extends AnyVal {
 
@@ -49,14 +46,5 @@ private[dataflow] object PrivateImplicits {
     def getScalaKvCoder[K: ClassTag, V: ClassTag]: Coder[KV[K, V]] = KvCoder.of(getScalaCoder[K], getScalaCoder[V])
 
   }
-
-}
-
-// A trait can be extended or mixed in
-trait Implicits {
-
-  implicit def makeIntAccumulatorType: AccumulatorType[Int] = new IntAccumulatorType
-  implicit def makeLongAccumulatorType: AccumulatorType[Long] = new LongAccumulatorType
-  implicit def makeDoubleAccumulatorType: AccumulatorType[Double] = new DoubleAccumulatorType
 
 }

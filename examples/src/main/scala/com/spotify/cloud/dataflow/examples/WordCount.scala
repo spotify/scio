@@ -17,15 +17,11 @@ object WordCount {
     val (context, args) = ContextAndArgs(cmdlineArgs)
 
     context.textFile(args.getOrElse("input", "gs://dataflow-samples/shakespeare/kinglear.txt"))
-      .withAccumulator
-      .filter { (l, acc) =>
+      .filter { l =>
         val t = l.trim
-        acc.max("maxLineLength", t.length).min("minLineLength", t.length)
         val b = t.isEmpty
-        if (b) acc.add("emptyLines", 1L)
         !b
       }
-      .toSCollection
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue()
       .map(t => t._1 + ": " + t._2)

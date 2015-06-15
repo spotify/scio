@@ -3,14 +3,14 @@ package com.spotify.cloud.dataflow.values
 import com.google.cloud.dataflow.sdk.coders.Coder
 import com.google.cloud.dataflow.sdk.transforms.{Combine, ParDo, DoFn, PTransform}
 import com.google.cloud.dataflow.sdk.values.{KV, POutput, PCollection}
-import com.spotify.cloud.dataflow.{PrivateImplicits, DataflowContext}
+import com.spotify.cloud.dataflow.{Implicits, DataflowContext}
 import com.spotify.cloud.dataflow.util.CallSites
 
 import scala.reflect.ClassTag
 
 private[values] trait PCollectionWrapper[T] {
 
-  import PrivateImplicits._
+  import Implicits._
 
   /** The PCollection being wrapped internally. */
   val internal: PCollection[T]

@@ -12,7 +12,7 @@ import scala.reflect.ClassTag
 
 class RichCoderRegistryTest extends FlatSpec with Matchers {
 
-  import PrivateImplicits._
+  import Implicits._
 
   val pipeline = TestPipeline.create()
   val registry = pipeline.getCoderRegistry

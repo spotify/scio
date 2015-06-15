@@ -2,7 +2,7 @@ package com.spotify.cloud.dataflow.values
 
 import com.google.cloud.dataflow.sdk.transforms.DoFn
 import com.google.cloud.dataflow.sdk.values.{PCollectionTuple, TupleTag}
-import com.spotify.cloud.dataflow.{DataflowContext, PrivateImplicits}
+import com.spotify.cloud.dataflow.{DataflowContext, Implicits}
 import org.joda.time.Instant
 
 import scala.reflect.ClassTag
@@ -36,7 +36,7 @@ class SideOutputContext[T] private[dataflow] (private val context: DoFn[T, AnyRe
 /** Encapsulate output of one or more [[SideOutput]]s in an [[SCollectionWithSideOutput]]. */
 class SideOutputCollections private[values] (private val tuple: PCollectionTuple)
                                             (implicit context: DataflowContext) {
-  import PrivateImplicits._
+  import Implicits._
 
   /** Extract the [[SCollection]] of a given [[SideOutput]]. */
   def apply[T: ClassTag](sideOutput: SideOutput[T]): SCollection[T] = {

@@ -58,7 +58,7 @@ object DataflowContext {
  */
 class DataflowContext private (cmdlineArgs: Array[String]) {
 
-  import PrivateImplicits._
+  import Implicits._
 
   private var _options: DataflowPipelineOptions = null
 

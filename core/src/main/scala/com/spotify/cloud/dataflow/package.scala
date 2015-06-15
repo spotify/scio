@@ -9,7 +9,7 @@ import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write
  * import com.spotify.cloud.dataflow._
  * }}}
  */
-package object dataflow extends Implicits {
+package object dataflow {
 
   /** Alias for [[com.spotify.cloud.dataflow.values.WindowedValue]]. */
   type WindowedValue[T] = values.WindowedValue[T]
