@@ -184,19 +184,24 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
     }
 
   /** Get an SCollection for a Pub/Sub subscription. */
-  def pubsubSubscription(subscription: String): SCollection[String] =
+  def pubsubSubscription(sub: String, idLabel: String = null, timestampLabel: String = null): SCollection[String] =
     if (this.isTest) {
-      this.getTestInput(PubsubIO(subscription))
+      this.getTestInput(PubsubIO(sub))
     } else {
-      SCollection(this.applyInternal(GPubsubIO.Read.subscription(subscription)))
-        .setName(subscription)
+      var transform = GPubsubIO.Read.subscription(sub)
+      if (idLabel != null) transform = transform.idLabel(idLabel)
+      if (timestampLabel != null) transform = transform.timestampLabel(timestampLabel)
+      SCollection(this.applyInternal(transform)).setName(sub)
     }
 
   /** Get an SCollection for a Pub/Sub topic. */
-  def pubsubTopic(topic: String): SCollection[String] =
+  def pubsubTopic(topic: String, idLabel: String = null, timestampLabel: String = null): SCollection[String] =
     if (this.isTest) {
       this.getTestInput(PubsubIO(topic))
     } else {
+      var transform = GPubsubIO.Read.topic(topic)
+      if (idLabel != null) transform = transform.idLabel(idLabel)
+      if (timestampLabel != null) transform = transform.timestampLabel(timestampLabel)
       SCollection(this.applyInternal(GPubsubIO.Read.topic(topic))).setName(topic)
     }
 
