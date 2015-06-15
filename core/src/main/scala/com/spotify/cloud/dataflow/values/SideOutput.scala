@@ -40,7 +40,7 @@ class SideOutputCollections private[values] (private val tuple: PCollectionTuple
 
   /** Extract the [[SCollection]] of a given [[SideOutput]]. */
   def apply[T: ClassTag](sideOutput: SideOutput[T]): SCollection[T] = {
-    val r = tuple.getPipeline.getCoderRegistry
+    val r = context.pipeline.getCoderRegistry
     val o = tuple.get(sideOutput.tupleTag).setCoder(r.getScalaCoder[T])
     SCollection(o)
   }
