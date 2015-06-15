@@ -42,6 +42,7 @@ object DataflowScalaBuild extends Build {
 
   val sdkVersion = "0.4.150602"
 
+  val guavaVersion = "18.0"
   val chillVersion = "0.5.2"
   val macrosVersion = "2.0.1"
   val scalaTestVersion = "2.2.1"
@@ -72,7 +73,7 @@ object DataflowScalaBuild extends Build {
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
         "com.google.cloud.dataflow" % "google-cloud-dataflow-java-sdk-all" % sdkVersion,
-        "com.google.guava" % "guava" % "18.0",
+        "com.google.guava" % "guava" % guavaVersion,
         "com.twitter" %% "algebird-core" % "0.9.0",
         "com.twitter" %% "chill" % chillVersion,
         "com.twitter" %% "chill-avro" % chillVersion,
@@ -108,6 +109,7 @@ object DataflowScalaBuild extends Build {
           exclude ("com.google.guava", "guava-jdk5"),
         "com.google.oauth-client" % "google-oauth-client" % "1.19.0",
         "com.google.http-client" % "google-http-client-jackson2" % "1.19.0",
+        "com.google.guava" % "guava" % guavaVersion,
         "org.slf4j" % "slf4j-api" % "1.7.7",
         "org.slf4j" % "slf4j-simple" % "1.7.7" % "provided",
         "joda-time" % "joda-time" % "2.7",

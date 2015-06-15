@@ -11,10 +11,13 @@ import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.bigquery.{BigqueryScopes, Bigquery}
 import com.google.api.services.bigquery.model._
+import com.google.common.base.Charsets
+import com.google.common.hash.Hashing
+import com.google.common.io.Files
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
-import scala.util.Random
+import scala.util.{Try, Random}
 
 /** Utility for BigQuery data types. */
 object Util {
@@ -56,7 +59,7 @@ class BigQueryClient private (private val projectId: String, credential: Credent
   private val logger: Logger = LoggerFactory.getLogger(classOf[BigQueryClient])
 
   /** Get schema for a query without executing it. */
-  def getQuerySchema(sqlQuery: String): TableSchema = {
+  def getQuerySchema(sqlQuery: String): TableSchema = withCacheKey(sqlQuery) {
     prepareStagingDataset()
 
     // Create temporary table view and get schema
@@ -86,8 +89,9 @@ class BigQueryClient private (private val projectId: String, credential: Credent
   def getTableSchema(tableSpec: String): TableSchema = getTableSchema(Util.parseTableSpec(tableSpec))
 
   /** Get schema from a table. */
-  def getTableSchema(table: TableReference): TableSchema =
+  def getTableSchema(table: TableReference): TableSchema = withCacheKey(Util.toTableSpec(table)) {
     bigquery.tables().get(table.getProjectId, table.getDatasetId, table.getTableId).execute().getSchema
+  }
 
   /** Execute a query and save results into a temporary table. */
   def queryIntoTable(sqlQuery: String, tableSpec: String = null): TableReference = {
@@ -151,6 +155,36 @@ class BigQueryClient private (private val projectId: String, credential: Credent
       .setTableId(tableId)
   }
 
+  // =======================================================================
+  // Schema caching
+  // =======================================================================
+
+  private def withCacheKey(key: String)(method: => TableSchema): TableSchema = getCacheSchema(key) match {
+    case Some(schema) => schema
+    case None =>
+      val schema = method
+      setCacheSchema(key, schema)
+      schema
+  }
+
+  private def setCacheSchema(key: String, schema: TableSchema): Unit =
+    Files.write(schema.toPrettyString, cacheFile(key), Charsets.UTF_8)
+
+  private def getCacheSchema(key: String): Option[TableSchema] = Try {
+    Util.parseSchema(scala.io.Source.fromFile(cacheFile(key)).mkString)
+  }.toOption
+
+  private def cacheFile(key: String): File = {
+    val cacheDir = sys.props("bigquery.cache.directory")
+    val outputDir = if (cacheDir != null) cacheDir else sys.props("user.dir") + "/.bigquery"
+    val outputFile = new File(outputDir)
+    if (!outputFile.exists()) {
+      outputFile.mkdirs()
+    }
+    val filename = Hashing.sha1().hashString(key, Charsets.UTF_8).toString.substring(0, 32) + ".json"
+    new File(s"$outputDir/$filename")
+  }
+
 }
 
 /** Companion object for [[BigQueryClient]]. */
@@ -165,7 +199,7 @@ object BigQueryClient {
   def apply(project: String, credential: Credential): BigQueryClient = new BigQueryClient(project, credential)
 
   /**
-   * Create a new BigQueryClient instance with project and JSON secret from system properties..
+   * Create a new BigQueryClient instance with project and JSON secret from system properties.
    *
    * Project and path to JSON secret must be set in `bigquery.project` and `bigquery.secret`
    * system properties. For example, by adding the following to your job code:
@@ -179,6 +213,10 @@ object BigQueryClient {
    * {{{
    * sbt -Dbigquery.project=my-project -Dbigquery.secret=/path/to/secret.json
    * }}}
+   *
+   * The client also caches schemas from tables or queries. The cached files are stored in
+   * `[PROJECT_ROOT]/.bigquery` by default but can be overridden with `bigquery.cache.directory`
+   * system property.
    */
   def apply(): BigQueryClient = {
     val project = sys.props("bigquery.project")
