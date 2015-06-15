@@ -7,6 +7,7 @@ import com.google.cloud.dataflow.sdk.transforms.DoFn
 import com.google.cloud.dataflow.sdk.values.PCollectionView
 
 import scala.collection.JavaConverters._
+import scala.collection.breakOut
 
 /** Encapsulate an SCollection when it is being used as a side input. */
 trait SideInput[T] extends Serializable {
@@ -24,10 +25,8 @@ private[values] class IterableSideInput[T](val view: PCollectionView[JIterable[T
 
 private[values] class MapSideInput[K, V](val view: PCollectionView[JMap[K, JIterable[V]]])
   extends SideInput[Map[K, Iterable[V]]] {
-  override def get[I, O](context: DoFn[I, O]#ProcessContext): Map[K, Iterable[V]] = {
-    // TODO: reduce copies
-    context.sideInput(view).asScala.mapValues(_.asScala.toList.asInstanceOf[Iterable[V]]).toMap
-  }
+  override def get[I, O](context: DoFn[I, O]#ProcessContext): Map[K, Iterable[V]] =
+    context.sideInput(view).asScala.map(kv => (kv._1, kv._2.asScala))(breakOut)
 }
 
 /** Encapsulate context of one or more [[SideInput]]s in an [[SCollectionWithSideInput]]. */
