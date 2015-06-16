@@ -21,7 +21,8 @@ private[dataflow] class KryoAtomicCoder extends AtomicCoder[Any] {
     // Treat it as standard Iterable instead.
     k.register(classOf[JIterableWrapper[_]], new JIterableWrapperSerializer)
 
-    k.forSubclass[SpecificRecord](new AvroSerializer)
+    k.forClass(new GenericAvroSerializer)
+    k.forSubclass[SpecificRecord](new SpecializedAvroSerializer)
 
     k.forClass(new KVSerializer)
     // TODO:

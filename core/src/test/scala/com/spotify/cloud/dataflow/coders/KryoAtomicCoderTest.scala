@@ -10,10 +10,6 @@ import org.scalatest.{Matchers, FlatSpec}
 
 import scala.reflect.ClassTag
 
-// Case classes should be defined at top level to avoid including unnecessary closure
-case class Pair(name: String, size: Int)
-case class PairWithAvro(name: String, size: Int, record: TestRecord)
-
 class KryoAtomicCoderTest extends FlatSpec with Matchers with PipelineTest {
 
   val c = new KryoAtomicCoder()
@@ -51,17 +47,25 @@ class KryoAtomicCoderTest extends FlatSpec with Matchers with PipelineTest {
     c should roundTrip (iterable(1, 2, 3))
   }
 
-  it should "support Avro records" in {
+  it should "support Avro GenericRecord" in {
+    val r = newGenericRecord
+    c should roundTrip (r)
+    c should roundTrip (("key", r))
+    c should roundTrip (CaseClassWithGenericRecord("record", 10, r))
+  }
+
+  it should "support Avro SpecificRecord" in {
     val r = new TestRecord(1, 1L, 1F, 1.0, true, "hello")
     c should roundTrip (r)
     c should roundTrip (("key", r))
-    c should roundTrip (PairWithAvro("record", 10, r))
+    c should roundTrip (CaseClassWithSpecificRecord("record", 10, r))
   }
 
   it should "support KV" in {
     c should roundTrip (KV.of("key", 1.0))
     c should roundTrip (KV.of("key", (10, 10.0)))
     c should roundTrip (KV.of("key", new TestRecord(1, 1L, 1F, 1.0, true, "hello")))
+    c should roundTrip (KV.of("key", newGenericRecord))
   }
 
 }

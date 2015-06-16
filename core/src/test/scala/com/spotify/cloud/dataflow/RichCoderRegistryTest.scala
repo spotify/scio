@@ -4,7 +4,6 @@ import com.google.cloud.dataflow.sdk.coders.CoderRegistry
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.spotify.cloud.dataflow.avro.TestRecord
 import com.spotify.cloud.dataflow.coders.CoderTestUtils._
-import com.spotify.cloud.dataflow.coders.{Pair, PairWithAvro}
 import org.scalatest.matchers.{MatchResult, Matcher}
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -49,11 +48,18 @@ class RichCoderRegistryTest extends FlatSpec with Matchers {
     registry should roundTrip (Pair("record", 10))
   }
 
-  it should "support Avro records" in {
+  it should "support Avro GenericRecord" in {
+    val r = newGenericRecord
+    registry should roundTrip (r)
+    registry should roundTrip (("key", r))
+    registry should roundTrip (CaseClassWithGenericRecord("record", 10, r))
+  }
+
+  it should "support Avro SpecificRecord" in {
     val r = new TestRecord(1, 1L, 1F, 1.0, true, "hello")
     registry should roundTrip (r)
     registry should roundTrip (("key", r))
-    registry should roundTrip (PairWithAvro("record", 10, r))
+    registry should roundTrip (CaseClassWithSpecificRecord("record", 10, r))
   }
 
 }
