@@ -50,11 +50,11 @@
     "namespace": "com.spotify.cloud.dataflow.avro",
     "doc": "Record for testing",
     "fields": [
-        {"name": "int_field", "type": ["int", "null"]},
-        {"name": "long_field", "type": ["long", "null"]},
-        {"name": "float_field", "type": ["float", "null"]},
-        {"name": "double_field", "type": ["double", "null"]},
-        {"name": "boolean_field", "type": ["boolean", "null"]},
-        {"name": "string_field", "type": ["string", "null"]}
+        {"name": "int_field", "type": ["null", "int"], "default": null},
+        {"name": "long_field", "type": ["null", "long"], "default": null},
+        {"name": "float_field", "type": ["null", "float"], "default": null},
+        {"name": "double_field", "type": ["null", "double"], "default": null},
+        {"name": "boolean_field", "type": ["null", "boolean"], "default": null},
+        {"name": "string_field", "type": ["null", "string"], "default": null}
     ]
 }]
