@@ -1,5 +1,6 @@
 package com.spotify.cloud.dataflow
 
+import scala.collection.breakOut
 import scala.util.control.NonFatal
 
 /**
@@ -20,7 +21,7 @@ object Args {
       val Array(k, v) = s.split("=", 2)
       (k, v.split(","))
     }.groupBy(_._1).mapValues(_.flatMap(_._2).toList)
-    val booleanMap = booleans.map((_, List("true"))).toMap
+    val booleanMap: Map[String, List[String]] = booleans.map((_, List("true")))(breakOut)
 
     propertyMap.keySet.intersect(booleanMap.keySet).foreach { arg =>
       throw new IllegalArgumentException(s"Conflicting boolean and property '$arg'")
