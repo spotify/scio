@@ -6,6 +6,8 @@ import com.spotify.cloud.dataflow.DataflowContext
 import com.spotify.cloud.dataflow.util.random.RandomSampler
 import org.apache.commons.math3.distribution.PoissonDistribution
 
+import scala.collection.breakOut
+
 // Ported from org.apache.spark.util.random.RandomSamplerSuite
 object RandomSamplerUtils extends Serializable {
 
@@ -134,7 +136,14 @@ object RandomSamplerUtils extends Serializable {
       .groupByKey()
       .groupBy(_ => 0)
       .values
-      .map(_.toMap.mapValues { v => val a = v.toArray; scala.util.Sorting.quickSort(a); a })
+      .map { v =>
+        val r: Map[String, Array[Int]] = v.map { kv =>
+          val a = kv._2.toArray
+          scala.util.Sorting.quickSort(a)
+          (kv._1, a)
+        }(breakOut)
+        r
+      }
       .map { actual =>
         val b1 = medianKSD(gaps(expected("a")), gaps(actual("a"))) < D
         val b2 = medianKSD(gaps(expected("b")), gaps(actual("b"))) < D
