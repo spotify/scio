@@ -75,6 +75,14 @@ object SCollection {
  * contains operations available only on SCollections of key-value pairs, such as `groupByKey` and
  * `join`; [[DoubleSCollectionFunctions]] contains operations available only on SCollections of
  * Doubles.
+ *
+ * @groupname collection Collection Operations
+ * @groupname hash Hash Operations
+ * @groupname output Output Sinks
+ * @groupname side Side Input and Output Operations
+ * @groupname transform Transformations
+ * @groupname window Windowing Operations
+ * @groupname Ungrouped Other Operations
  */
 sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
@@ -100,12 +108,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /**
    * Return the union of this SCollection and another one. Any identical elements will appear
    * multiple times (use `.distinct()` to eliminate them).
+   * @group collection
    */
   def ++(that: SCollection[T]): SCollection[T] = this.union(that)
 
   /**
    * Return the union of this SCollection and another one. Any identical elements will appear
    * multiple times (use `.distinct()` to eliminate them).
+   * @group collection
    */
   def union(that: SCollection[T]): SCollection[T] = {
     val o = PCollectionList
@@ -119,6 +129,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * duplicate elements, even if the input SCollections did.
    *
    * Note that this method performs a shuffle internally.
+   * @group collection
    */
   def intersection(that: SCollection[T]): SCollection[T] =
     this.map((_, 1)).coGroup(that.map((_, 1))).flatMap { t =>
@@ -132,6 +143,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @param f function that assigns an output partition to each element, should be in the range
    * `[0, numPartitions - 1]`
    * @return partitioned SCollections in a Seq
+   * @group collection
    */
   def partition(numPartitions: Int, f: T => Int): Seq[SCollection[T]] =
     this.applyInternal(Partition.of[T](numPartitions, Functions.partitionFn[T](numPartitions, f)))
@@ -147,6 +159,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * we need one operation for merging a T into an U and one operation for merging two U's. Both
    * of these functions are allowed to modify and return their first argument instead of creating
    * a new U to avoid memory allocation.
+   * @group transform
    */
   def aggregate[U: ClassTag](zeroValue: U)(seqOp: (U, T) => U, combOp: (U, U) => U): SCollection[U] =
     this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(seqOp, combOp)))
@@ -155,6 +168,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Aggregate with [[com.twitter.algebird.Aggregator Aggregator]]. First each item T is mapped to
    * A, then we reduce with a semigroup of A, then finally we present the results as U. This could
    * be more powerful and better optimized in some cases.
+   * @group transform
    */
   def aggregate[A: ClassTag, U: ClassTag](aggregator: Aggregator[T, A, U]): SCollection[U] =
     this.map(aggregator.prepare).sum()(aggregator.semigroup).map(aggregator.present)
@@ -170,6 +184,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * - `mergeValue`, to merge a V into a C (e.g., adds it to the end of a list)
    *
    * - `mergeCombiners`, to combine two C's into a single one.
+   * @group transform
    */
   def combine[C: ClassTag](createCombiner: T => C)
                           (mergeValue: (C, T) => C)
@@ -179,6 +194,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /**
    * Count the number of elements in the SCollection.
    * @return a new SCollection with the count
+   * @group transform
    */
   def count(): SCollection[Long] = this.apply(Count.globally[T]()).asInstanceOf[SCollection[Long]]
 
@@ -186,6 +202,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Count approximate number of distinct elements in the SCollection.
    * @param sampleSize the number of entries in the statisticalsample; the higher this number, the
    * more accurate the estimate will be; should be `>= 16`
+   * @group transform
    */
   def countApproxDistinct(sampleSize: Int): SCollection[Long] =
     this.apply(ApproximateUnique.globally[T](sampleSize)).asInstanceOf[SCollection[Long]]
@@ -194,24 +211,35 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Count approximate number of distinct elements in the SCollection.
    * @param maximumEstimationError the maximum estimation error, which should be in the range
    * `[0.01, 0.5]`
+   * @group transform
    */
   def countApproxDistinct(maximumEstimationError: Double = 0.02): SCollection[Long] =
     this.apply(ApproximateUnique.globally[T](maximumEstimationError)).asInstanceOf[SCollection[Long]]
 
-  /** Count of each unique value in this SCollection as an SCollection of (value, count) pairs. */
+  /**
+   * Count of each unique value in this SCollection as an SCollection of (value, count) pairs.
+   * @group transform
+   */
   def countByValue(): SCollection[(T, Long)] =
     this.apply(Count.perElement[T]()).map(kvToTuple).asInstanceOf[SCollection[(T, Long)]]
 
-  /** Return a new SCollection containing the distinct elements in this SCollection. */
+  /**
+   * Return a new SCollection containing the distinct elements in this SCollection.
+   * @group transform
+   */
   def distinct(): SCollection[T] = this.apply(RemoveDuplicates.create[T]())
 
-  /** Return a new SCollection containing only the elements that satisfy a predicate. */
+  /**
+   * Return a new SCollection containing only the elements that satisfy a predicate.
+   * @group transform
+   */
   def filter(f: T => Boolean): SCollection[T] =
     this.apply(Filter.by(Functions.serializableFn(f.asInstanceOf[T => JBoolean])))
 
   /**
    * Return a new SCollection by first applying a function to all elements of
    * this SCollection, and then flattening the results.
+   * @group transform
    */
   def flatMap[U: ClassTag](f: T => TraversableOnce[U]): SCollection[U] = this.parDo(Functions.flatMapFn(f))
 
@@ -219,6 +247,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Aggregate the elements using a given associative function and a neutral "zero value". The
    * function op(t1, t2) is allowed to modify t1 and return it as its result value to avoid object
    * allocation; however, it should not modify t2.
+   * @group transform
    */
   def fold(zeroValue: T)(op: (T, T) => T): SCollection[T] =
     this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(op, op)))
@@ -226,6 +255,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /**
    * Fold with [[com.twitter.algebird.Monoid Monoid]], which defines the associative function and
    * "zero value" for T. This could be more powerful and better optimized in some cases.
+   * @group transform
    */
   def fold(implicit mon: Monoid[T]): SCollection[T] = this.apply(Combine.globally(Functions.reduceFn(mon)))
 
@@ -238,22 +268,30 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * aggregation (such as a sum or average) over each key, using
    * [[PairSCollectionFunctions.aggregateByKey[U]* PairSCollectionFunctions.aggregateByKey]] or
    * [[PairSCollectionFunctions.reduceByKey]] will provide much better performance.
+   * @group transform
    */
   def groupBy[K: ClassTag](f: T => K): SCollection[(K, Iterable[T])] =
     this
       .apply(WithKeys.of(Functions.serializableFn(f))).setCoder(this.getKvCoder[K, T])
       .apply(GroupByKey.create[K, T]()).map(kvIterableToTuple)
 
-  /** Create tuples of the elements in this SCollection by applying `f`. */
+  /**
+   * Create tuples of the elements in this SCollection by applying `f`.
+   * @group transform
+   */
   // Scala lambda is simpler than transforms.WithKeys
   def keyBy[K: ClassTag](f: T => K): SCollection[(K, T)] = this.map(v => (f(v), v))
 
-  /** Return a new SCollection by applying a function to all elements of this SCollection. */
+  /**
+   * Return a new SCollection by applying a function to all elements of this SCollection.
+   * @group transform
+   */
   def map[U: ClassTag](f: T => U): SCollection[U] = this.parDo(Functions.mapFn(f))
 
   /**
    * Return the max of this SCollection as defined by the implicit Ordering[T].
    * @return a new SCollection with the maximum element
+   * @group transform
    */
   // Scala lambda is simpler and more powerful than transforms.Max
   def max()(implicit ord: Ordering[T]): SCollection[T] = this.reduce(ord.max)
@@ -261,6 +299,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /**
    * Return the mean of this SCollection as defined by the implicit Numeric[T].
    * @return a new SCollection with the mean of elements
+   * @group transform
    */
   def mean()(implicit ev: Numeric[T]): SCollection[Double] = {
     val o = this
@@ -272,6 +311,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /**
    * Return the min of this SCollection as defined by the implicit Ordering[T].
    * @return a new SCollection with the minimum element
+   * @group transform
    */
   // Scala lambda is simpler and more powerful than transforms.Min
   def min()(implicit ord: Ordering[T]): SCollection[T] = this.reduce(ord.min)
@@ -280,6 +320,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Compute the SCollection's data distribution using approximate `N`-tiles.
    * @return a new SCollection whose single value is an Iterable of the approximate `N`-tiles of
    * the elements
+   * @group transform
    */
   def quantilesApprox(numQuantiles: Int)(implicit ord: Ordering[T]): SCollection[Iterable[T]] =
     this.apply(ApproximateQuantiles.globally(numQuantiles, ord)).map(_.asInstanceOf[JIterable[T]].asScala)
@@ -289,6 +330,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *
    * @param weights weights for splits, will be normalized if they don't sum to 1
    * @return split SCollections in an array
+   * @group transform
    */
   def randomSplit(weights: Array[Double]): Array[SCollection[T]] = {
     val sum = weights.sum
@@ -313,6 +355,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /**
    * Reduce the elements of this SCollection using the specified commutative and associative
    * binary operator.
+   * @group transform
    */
   def reduce(op: (T, T) => T): SCollection[T] = this.apply(Combine.globally(Functions.reduceFn(op)))
 
@@ -320,12 +363,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Return a sampled subset of this SCollection.
    * @return a new SCollection whose single value is an Iterable of the
    * samples
+   * @group transform
    */
   def sample(sampleSize: Int): SCollection[Iterable[T]] =
     this.apply(Sample.fixedSizeGlobally(sampleSize)).map(_.asScala)
 
   /**
    * Return a sampled subset of this SCollection.
+   * @group transform
    */
   def sample(withReplacement: Boolean, fraction: Double): SCollection[T] = {
     if (withReplacement) {
@@ -335,7 +380,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     }
   }
 
-  /** Return an SCollection with the elements from `this` that are not in `other`. */
+  /**
+   * Return an SCollection with the elements from `this` that are not in `other`.
+   * @group transform
+   */
   def subtract(that: SCollection[T]): SCollection[T] =
     this.map((_, 1)).coGroup(that.map((_, 1))).flatMap { t =>
       if (t._2._1.nonEmpty && t._2._2.isEmpty) Seq(t._1) else Seq.empty
@@ -344,16 +392,21 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /**
    * Reduce with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful and
    * better optimized in some cases.
+   * @group transform
    */
   def sum()(implicit sg: Semigroup[T]): SCollection[T] = this.apply(Combine.globally(Functions.reduceFn(sg)))
 
-  /** Return a sampled subset of any `num` elements of the SCollection. */
+  /**
+   * Return a sampled subset of any `num` elements of the SCollection.
+   * @group transform
+   */
   def take(num: Long): SCollection[T] = this.apply(Sample.any(num))
 
   /**
    * Return the top k (largest) elements from this SCollection as defined by the specified
    * implicit Ordering[T].
    * @return a new SCollection whose single value is an Iterable of the top k
+   * @group transform
    */
   def top(num: Int)(implicit ord: Ordering[T]): SCollection[Iterable[T]] =
     this.apply(Top.of(num, ord)).map(_.asInstanceOf[JIterable[T]].asScala)
@@ -365,6 +418,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /**
    * Return the cross product with another SCollection by replicating `that` to all workers. The
    * right side should be tiny and fit in memory.
+   * @group hash
    */
   def cross[U: ClassTag](that: SCollection[U]): SCollection[(T, U)] = {
     val side = that.asIterableSideInput
@@ -377,6 +431,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /**
    * Look up values in a SCollection[(T, V)] for each element T in this SCollection by replicating
    * `that` to all workers. The right side should be tiny and fit in memory.
+   * @group hash
    */
   def hashLookup[V: ClassTag](that: SCollection[(T, V)]): SCollection[(T, Iterable[V])] = {
     val side = that.asMapSideInput
@@ -426,12 +481,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /**
    * Convert this SCollection of a single item to a SideInput, to be used with
    * [[SCollection.withSideInputs]].
+   * @group side
    */
   def asSingletonSideInput: SideInput[T] = new SingletonSideInput[T](this.applyInternal(View.asSingleton()))
 
   /**
    * Convert this SCollection to a SideInput of Iterable, to be used with
    * [[SCollection.withSideInputs]].
+   * @group side
    */
   def asIterableSideInput: SideInput[Iterable[T]] = new IterableSideInput[T](this.applyInternal(View.asIterable()))
 
@@ -461,6 +518,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   // ...
    * }
    * }}}
+   * @group side
    */
   def withSideInputs(sides: SideInput[_]*): SCollectionWithSideInput[T] =
     new SCollectionWithSideInput[T](internal, sides)
@@ -485,6 +543,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   // ...
    * }
    * }}}
+   * @group side
    */
   def withSideOutputs(sides: SideOutput[_]*): SCollectionWithSideOutput[T] =
     new SCollectionWithSideOutput[T](internal, sides)
@@ -494,9 +553,18 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // =======================================================================
 
   // TODO: re-work this section, include WindowingStrategy, Triggering, etc.
+  // TODO: better documentation
 
+  /**
+   * Convert this SCollection to an [[WindowedSCollection]].
+   * @group window
+   */
   def toWindowed: WindowedSCollection[T] = new WindowedSCollection[T](internal)
 
+  /**
+   * Window values with the given function.
+   * @group window
+   */
   def withWindowFn(fn: WindowFn[T, _],
                    allowedLateness: Duration = null,
                    trigger: Trigger[_] = null,
@@ -519,6 +587,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.apply(transform)
   }
 
+  /**
+   * Window values into fixed windows.
+   * @group window
+   */
   def withFixedWindows(duration: Duration,
                        offset: Duration = Duration.ZERO,
                        allowedLateness: Duration = null,
@@ -528,6 +600,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       FixedWindows.of(duration).withOffset(offset).asInstanceOf[WindowFn[T, _]],
       allowedLateness, trigger, accumulationMode)
 
+  /**
+   * Window values into sliding windows.
+   * @group window
+   */
   def withSlidingWindows(size: Duration,
                          period: Duration = Duration.millis(1),
                          offset: Duration = Duration.ZERO,
@@ -538,6 +614,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       SlidingWindows.of(size).every(period).withOffset(offset).asInstanceOf[WindowFn[T, _]],
       allowedLateness, trigger, accumulationMode)
 
+  /**
+   * Window values based on sessions.
+   * @group window
+   */
   def withSessionWindows(gapDuration: Duration,
                          allowedLateness: Duration = null,
                          trigger: Trigger[_] = null,
@@ -546,8 +626,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       Sessions.withGapDuration(gapDuration).asInstanceOf[WindowFn[T, _]],
       allowedLateness, trigger, accumulationMode)
 
+  /**
+   * Group values in to a single global window.
+   * @group window
+   */
   def withGlobalWindow(): SCollection[T] = this.withWindowFn(new GlobalWindows().asInstanceOf[WindowFn[T, _]])
 
+  /**
+   * Window values into by years.
+   * @group window
+   */
   def windowByYears(number: Int,
                     allowedLateness: Duration = null,
                     trigger: Trigger[_] = null,
@@ -556,6 +644,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       CalendarWindows.years(number).asInstanceOf[WindowFn[T, _]],
       allowedLateness, trigger, accumulationMode)
 
+  /**
+   * Window values into by months.
+   * @group window
+   */
   def windowByMonths(number: Int,
                      allowedLateness: Duration = null,
                      trigger: Trigger[_] = null,
@@ -564,6 +656,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       CalendarWindows.months(number).asInstanceOf[WindowFn[T, _]],
       allowedLateness, trigger, accumulationMode)
 
+  /**
+   * Window values into by weeks.
+   * @group window
+   */
   def windowByWeeks(number: Int, startDayOfWeek: Int,
                     allowedLateness: Duration = null,
                     trigger: Trigger[_] = null,
@@ -572,19 +668,31 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       CalendarWindows.weeks(number, startDayOfWeek).asInstanceOf[WindowFn[T, _]],
       allowedLateness, trigger, accumulationMode)
 
-  def windowByDay(number: Int,
-                  allowedLateness: Duration = null,
-                  trigger: Trigger[_] = null,
-                  accumulationMode: AccumulationMode = null): SCollection[T] =
+  /**
+   * Window values into by days.
+   * @group window
+   */
+  def windowByDays(number: Int,
+                   allowedLateness: Duration = null,
+                   trigger: Trigger[_] = null,
+                   accumulationMode: AccumulationMode = null): SCollection[T] =
     this.withWindowFn(
       CalendarWindows.days(number).asInstanceOf[WindowFn[T, _]],
       allowedLateness, trigger, accumulationMode)
 
+  /**
+   * Convert values into pairs of (value, timestamp).
+   * @group window
+   */
   def withTimestamp(): SCollection[(T, Instant)] = this.parDo(new DoFn[T, (T, Instant)] {
     override def processElement(c: DoFn[T, (T, Instant)]#ProcessContext): Unit =
       c.output((c.element(), c.timestamp()))
   })
 
+  /**
+   * Assign timestamps to values.
+   * @group window
+   */
   def timestampBy(f: T => Instant): SCollection[T] = this.parDo(FunctionsWithWindowedValue.timestampFn(f))
 
   // =======================================================================
@@ -611,7 +719,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   private def tableRowJsonOut(path: String, numShards: Int) =
     textOut(path, ".json", numShards).withCoder(TableRowJsonCoder.of())
 
-  /** Save this SCollection as an Avro file. Note that elements must be of type IndexedRecord. */
+  /**
+   * Save this SCollection as an Avro file. Note that elements must be of type IndexedRecord.
+   * @group output
+   */
   def saveAsAvroFile(path: String, numShards: Int = 0)(implicit ev: T <:< IndexedRecord): Unit =
     if (context.isTest) {
       context.testOut(AvroIO(path))(internal)
@@ -629,7 +740,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       }
     }
 
-  /** Save this SCollection as a Bigquery table. Note that elements must be of type TableRow. */
+  /**
+   * Save this SCollection as a Bigquery table. Note that elements must be of type TableRow.
+   * @group output
+   */
   def saveAsBigQuery(table: TableReference, schema: TableSchema,
                      createDisposition: CreateDisposition,
                      writeDisposition: WriteDisposition)
@@ -646,14 +760,20 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     }
   }
 
-  /** Save this SCollection as a Bigquery table. Note that elements must be of type TableRow. */
+  /**
+   * Save this SCollection as a Bigquery table. Note that elements must be of type TableRow.
+   * @group output
+   */
   def saveAsBigQuery(tableSpec: String, schema: TableSchema = null,
                      createDisposition: CreateDisposition = null,
                      writeDisposition: WriteDisposition = null)
                     (implicit ev: T <:< TableRow): Unit =
     saveAsBigQuery(GBigQueryIO.parseTableSpec(tableSpec), schema, createDisposition, writeDisposition)
 
-  /** Save this SCollection as a Datastore dataset. Note that elements must be of type Entity. */
+  /**
+   * Save this SCollection as a Datastore dataset. Note that elements must be of type Entity.
+   * @group output
+   */
   def saveAsDatastore(datasetId: String)(implicit ev: T <:< Entity): Unit =
     if (context.isTest) {
       context.testOut(DatastoreIO(datasetId))(internal.asInstanceOf[PCollection[Entity]])
@@ -661,7 +781,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       this.asInstanceOf[SCollection[Entity]].applyInternal(GDatastoreIO.writeTo(datasetId))
     }
 
-  /** Save this SCollection as a Pub/Sub topic. Note that elements must be of type String. */
+  /**
+   * Save this SCollection as a Pub/Sub topic. Note that elements must be of type String.
+   * @group output
+   */
   def saveAsPubsub(topic: String)(implicit ev: T <:< String): Unit =
     if (context.isTest) {
       context.testOut(PubsubIO(topic))(internal.asInstanceOf[PCollection[String]])
@@ -669,7 +792,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       this.asInstanceOf[SCollection[String]].applyInternal(GPubsubIO.Write.topic(topic))
     }
 
-  /** Save this SCollection as a JSON text file. Note that elements must be of type TableRow. */
+  /**
+   * Save this SCollection as a JSON text file. Note that elements must be of type TableRow.
+   * @group output
+   */
   def saveAsTableRowJsonFile(path: String, numShards: Int = 0)(implicit ev: T <:< TableRow): Unit =
     if (context.isTest) {
       context.testOut(BigQueryIO(path))(internal.asInstanceOf[PCollection[TableRow]])
@@ -677,7 +803,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       this.asInstanceOf[SCollection[TableRow]].applyInternal(tableRowJsonOut(path, numShards))
     }
 
-  /** Save this SCollection as a text file. Note that elements must be of type String. */
+  /**
+   * Save this SCollection as a text file. Note that elements must be of type String.
+   * @group output
+   */
   def saveAsTextFile(path: String, suffix: String = ".txt", numShards: Int = 0)(implicit ev: T <:< String): Unit =
     if (context.isTest) {
       context.testOut(TextIO(path))(internal.asInstanceOf[PCollection[String]])
