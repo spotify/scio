@@ -8,16 +8,28 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.util.Try
 
-/** Macro annotations and converter generators for BigQuery types. */
+/**
+ * Macro annotations and converter generators for BigQuery types.
+ * @groupname trait Traits for annotated types
+ * @groupname annotation Type annotations
+ * @groupname converters Converters
+ * @groupname Ungrouped Other Members
+ */
 object BigQueryType {
 
-  /** Trait for companion objects of case classes generated with table. */
+  /**
+   * Trait for companion objects of case classes generated with table.
+   * @group trait
+   */
   trait HasTable {
     /** Table for case class schema. */
     def table: TableReference
   }
 
-  /** Trait for companion objects of case classes generated with schema. */
+  /**
+   * Trait for companion objects of case classes generated with schema.
+   * @group trait
+   */
   trait HasSchema[T] {
     /** Case class schema. */
     def schema: TableSchema
@@ -29,13 +41,19 @@ object BigQueryType {
     def toTableRow: (T => TableRow)
   }
 
-  /** Trait for companion objects of case classes generated with SELECT query. */
+  /**
+   * Trait for companion objects of case classes generated with SELECT query.
+   * @group trait
+   */
   trait HasQuery {
     /** SELECT query for case class schema. */
     def query: String
   }
 
-  /** Trait for case classes with generated companion objects. */
+  /**
+   * Trait for case classes with generated companion objects.
+   * @group trait
+   */
   trait HasAnnotation
 
   /**
@@ -49,6 +67,7 @@ object BigQueryType {
    * }}}
    *
    * Also generate a companion object with convenience methods.
+   * @group annotation
    */
   class fromTable(tableSpec: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.tableImpl
@@ -75,6 +94,7 @@ object BigQueryType {
    * }}}
    *
    * Also generate a companion object with convenience methods.
+   * @group annotation
    */
   class fromSchema(schema: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.schemaImpl
@@ -91,6 +111,7 @@ object BigQueryType {
    * }}}
    *
    * Also generate a companion object with convenience methods.
+   * @group annotation
    */
   class fromQuery(query: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.queryImpl
@@ -107,6 +128,7 @@ object BigQueryType {
    * @BigQueryType.toTable()
    * case class Result(name: String, score: Double)
    * }}}
+   * @group annotation
    */
   class toTable() extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.toTableImpl
@@ -117,10 +139,16 @@ object BigQueryType {
    */
   def schemaOf[T: TypeTag]: TableSchema = SchemaProvider.schemaOf[T]
 
-  /** Generate a converter function from [[TableRow]] to the given case class `T`. */
+  /**
+   * Generate a converter function from [[TableRow]] to the given case class `T`.
+   * @group converters
+   */
   def fromTableRow[T]: (TableRow => T) = macro ConverterProvider.fromTableRowImpl[T]
 
-  /** Generate a converter function from the given case class `T` to [[TableRow]]. */
+  /**
+   * Generate a converter function from the given case class `T` to [[TableRow]].
+   * @group converters
+   */
   def toTableRow[T]: (T => TableRow) = macro ConverterProvider.toTableRowImpl[T]
 
   /** Create a new BigQueryType instance. */
