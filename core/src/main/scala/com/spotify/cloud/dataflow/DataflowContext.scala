@@ -56,6 +56,12 @@ object DataflowContext {
 /**
  * Main entry point for Dataflow functionality. A DataflowContext represents a Dataflow pipeline,
  * and can be used to create SCollections and distributed caches on that cluster.
+ *
+ * @groupname accumulator Accumulators
+ * @groupname dist_cache Distributed Cache
+ * @groupname in_memory In-memory Collections
+ * @groupname input Input Sources
+ * @groupname Ungrouped Other Members
  */
 class DataflowContext private (cmdlineArgs: Array[String]) {
 
@@ -126,7 +132,10 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
   private def applyInternal[Output <: POutput](root: PTransform[_ >: PBegin, Output]): Output =
     pipeline.apply(root.setName(CallSites.getCurrent))
 
-  /** Get an SCollection of specific record type for an Avro file. */
+  /**
+   * Get an SCollection of specific record type for an Avro file.
+   * @group input
+   */
   def avroFile[T <: IndexedRecord: ClassTag](path: String): SCollection[T] =
     if (this.isTest) {
       this.getTestInput(AvroIO[T](path))
@@ -136,7 +145,10 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
       SCollection(o).setName(path)
     }
 
-  /** Get an SCollection of generic record type for an Avro file. */
+  /**
+   * Get an SCollection of generic record type for an Avro file.
+   * @group input
+   */
   def avroFile(path: String, schema: Schema): SCollection[GenericRecord] =
     if (this.isTest) {
       this.getTestInput(AvroIO[GenericRecord](path))
@@ -144,7 +156,10 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
       SCollection(this.applyInternal(GAvroIO.Read.from(path).withSchema(schema))).setName(path)
     }
 
-  /** Get an SCollection of generic record type for an Avro file. */
+  /**
+   * Get an SCollection of generic record type for an Avro file.
+   * @group input
+   */
   def avroFile(path: String, schemaString: String): SCollection[GenericRecord] =
     if (this.isTest) {
       this.getTestInput(AvroIO[GenericRecord](path))
@@ -152,7 +167,10 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
       SCollection(this.applyInternal(GAvroIO.Read.from(path).withSchema(schemaString))).setName(path)
     }
 
-  /** Get an SCollection for a BigQuery SELECT query. */
+  /**
+   * Get an SCollection for a BigQuery SELECT query.
+   * @group input
+   */
   def bigQuerySelect(sqlQuery: String): SCollection[TableRow] =
     if (this.isTest) {
       this.getTestInput(BigQueryIO(sqlQuery))
@@ -161,7 +179,10 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
       bigQueryTable(table).setName(sqlQuery)
     }
 
-  /** Get an SCollection for a BigQuery table. */
+  /**
+   * Get an SCollection for a BigQuery table.
+   * @group input
+   */
   def bigQueryTable(table: TableReference): SCollection[TableRow] = {
     val tableSpec: String = GBigQueryIO.toTableSpec(table)
     if (this.isTest) {
@@ -171,11 +192,17 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
     }
   }
 
-  /** Get an SCollection for a BigQuery table. */
+  /**
+   * Get an SCollection for a BigQuery table.
+   * @group input
+   */
   def bigQueryTable(tableSpec: String): SCollection[TableRow] =
     this.bigQueryTable(GBigQueryIO.parseTableSpec(tableSpec))
 
-  /** Get an SCollection for a Datastore query. */
+  /**
+   * Get an SCollection for a Datastore query.
+   * @group input
+   */
   def datastore(datasetId: String, query: Query): SCollection[Entity] =
     if (this.isTest) {
       this.getTestInput(DatastoreIO(datasetId, query))
@@ -183,7 +210,10 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
       SCollection(this.applyInternal(GDatastoreIO.readFrom(datasetId, query)))
     }
 
-  /** Get an SCollection for a Pub/Sub subscription. */
+  /**
+   * Get an SCollection for a Pub/Sub subscription.
+   * @group input
+   */
   def pubsubSubscription(sub: String, idLabel: String = null, timestampLabel: String = null): SCollection[String] =
     if (this.isTest) {
       this.getTestInput(PubsubIO(sub))
@@ -194,7 +224,10 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
       SCollection(this.applyInternal(transform)).setName(sub)
     }
 
-  /** Get an SCollection for a Pub/Sub topic. */
+  /**
+   * Get an SCollection for a Pub/Sub topic.
+   * @group input
+   */
   def pubsubTopic(topic: String, idLabel: String = null, timestampLabel: String = null): SCollection[String] =
     if (this.isTest) {
       this.getTestInput(PubsubIO(topic))
@@ -205,7 +238,10 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
       SCollection(this.applyInternal(GPubsubIO.Read.topic(topic))).setName(topic)
     }
 
-  /** Get an SCollection of TableRow for a JSON file. */
+  /**
+   * Get an SCollection of TableRow for a JSON file.
+   * @group input
+   */
   def tableRowJsonFile(path: String): SCollection[TableRow] =
     if (this.isTest) {
       this.getTestInput(TableRowJsonIO(path))
@@ -213,7 +249,10 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
       SCollection(this.applyInternal(GTextIO.Read.from(path).withCoder(TableRowJsonCoder.of()))).setName(path)
     }
 
-  /** Get an SCollection for a text file. */
+  /**
+   * Get an SCollection for a text file.
+   * @group input
+   */
   def textFile[T](path: String): SCollection[String] =
     if (this.isTest) {
       this.getTestInput(TextIO(path))
@@ -229,6 +268,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
    * Create a new [[com.spotify.cloud.dataflow.values.Accumulator Accumulator]] that keeps track
    * of the maximum value. See [[com.spotify.cloud.dataflow.values.SCollection.withAccumulator
    * SCollection.withAccumulator]] for examples.
+   * @group accumulator
    */
   def maxAccumulator[U](n: String)(implicit at: AccumulatorType[U]): Accumulator[U] =
     new Accumulator[U] {
@@ -240,6 +280,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
    * Create a new [[com.spotify.cloud.dataflow.values.Accumulator Accumulator]] that keeps track
    * of the minimum value. See [[com.spotify.cloud.dataflow.values.SCollection.withAccumulator
    * SCollection.withAccumulator]] for examples.
+   * @group accumulator
    */
   def minAccumulator[U](n: String)(implicit at: AccumulatorType[U]): Accumulator[U] =
     new Accumulator[U] {
@@ -251,6 +292,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
    * Create a new [[com.spotify.cloud.dataflow.values.Accumulator Accumulator]] that keeps track
    * of the sum of values. See [[com.spotify.cloud.dataflow.values.SCollection.withAccumulator
    * SCollection.withAccumulator]] for examples.
+   * @group accumulator
    */
   def sumAccumulator[U](n: String)(implicit at: AccumulatorType[U]): Accumulator[U] =
     new Accumulator[U] {
@@ -262,40 +304,58 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
   // In-memory collections
   // =======================================================================
 
-  /** Distribute local values to form an SCollection. */
+  /**
+   * Distribute local values to form an SCollection.
+   * @group in_memory
+   */
   def parallelize[T: ClassTag](elems: T*): SCollection[T] = {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     SCollection(this.applyInternal(Create.of(elems: _*)).setCoder(coder)).setName(elems.toString())
   }
 
-  /** Distribute a local Scala Iterable to form an SCollection. */
+  /**
+   * Distribute a local Scala Iterable to form an SCollection.
+   * @group in_memory
+   */
   def parallelize[T: ClassTag](elems: Iterable[T]): SCollection[T] = {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     SCollection(this.applyInternal(Create.of(elems.asJava)).setCoder(coder)).setName(elems.toString())
   }
 
-  /** Distribute a local Scala Map to form an SCollection. */
+  /**
+   * Distribute a local Scala Map to form an SCollection.
+   * @group in_memory
+   */
   def parallelize[K: ClassTag, V: ClassTag](elems: Map[K, V]): SCollection[(K, V)] = {
     val coder = pipeline.getCoderRegistry.getScalaKvCoder[K, V]
     SCollection(this.applyInternal(Create.of(elems.asJava)).setCoder(coder)).map(kv => (kv.getKey, kv.getValue))
       .setName(elems.toString())
   }
 
-  /** Distribute local values with timestamps to form an SCollection. */
+  /**
+   * Distribute local values with timestamps to form an SCollection.
+   * @group in_memory
+   */
   def parallelizeTimestamped[T: ClassTag](elems: (T, Instant)*): SCollection[T] = {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     val v = elems.map(t => TimestampedValue.of(t._1, t._2))
     SCollection(this.applyInternal(Create.timestamped(v: _*)).setCoder(coder)).setName(elems.toString())
   }
 
-  /** Distribute a local Scala Iterable with timestamps to form an SCollection. */
+  /**
+   * Distribute a local Scala Iterable with timestamps to form an SCollection.
+   * @group in_memory
+   */
   def parallelizeTimestamped[T: ClassTag](elems: Iterable[(T, Instant)]): SCollection[T] = {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     val v = elems.map(t => TimestampedValue.of(t._1, t._2))
     SCollection(this.applyInternal(Create.timestamped(v.asJava)).setCoder(coder)).setName(elems.toString())
   }
 
-  /** Distribute a local Scala Iterable with timestamps to form an SCollection. */
+  /**
+   * Distribute a local Scala Iterable with timestamps to form an SCollection.
+   * @group in_memory
+   */
   def parallelizeTimestamped[T: ClassTag](elems: Iterable[T],
                                           timestamps: Iterable[Instant]): SCollection[T] = {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
@@ -325,6 +385,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
    * // Extract distributed cache inside a transform
    * p.map(x => dc().getOrElse(x, "unknown"))
    * }}}
+   * @group dist_cache
    */
   def distCache[F](uri: String)(initFn: File => F): DistCache[F] =
     if (this.isTest) {
@@ -337,6 +398,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
    * Create a new [[com.spotify.cloud.dataflow.values.DistCache DistCache]] instance.
    * @param uris Google Cloud Storage URIs of the files to be distributed to all workers
    * @param initFn function to initialized the distributed files
+   * @group dist_cache
    */
   def distCache[F](uris: Seq[String])(initFn: Seq[File] => F): DistCache[F] =
     if (this.isTest) {
