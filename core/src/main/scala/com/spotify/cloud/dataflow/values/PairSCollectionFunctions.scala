@@ -15,11 +15,15 @@ import scala.reflect.ClassTag
 
 /**
  * Extra functions available on SCollections of (key, value) pairs through an implicit conversion.
+ * @groupname cogroup CoGroup Operations
+ * @groupname join Join Operations
+ * @groupname per_key Per Key Aggregations
+ * @groupname transform Transformations
+ * @groupname Ungrouped Other Members
  */
 class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
                                     (implicit ctKey: ClassTag[K], ctValue: ClassTag[V]) {
 
-  import Implicits._
   import TupleFunctions._
 
   implicit private val context: DataflowContext = self.context
@@ -66,6 +70,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * For each key k in `this` or `that`, return a resulting SCollection that contains a tuple with
    * the list of values for that key in `this` as well as `that`.
+   * @group cogroup
    */
   def coGroup[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Iterable[V], Iterable[W]))] = {
     val (tagV, tagW) = (new TupleTag[V](), new TupleTag[W]())
@@ -84,6 +89,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * For each key k in `this` or `that1` or `that2`, return a resulting SCollection that contains
    * a tuple with the list of values for that key in `this`, `that1` and `that2`.
+   * @group cogroup
    */
   def coGroup[W1: ClassTag, W2: ClassTag]
   (that1: SCollection[(K, W1)], that2: SCollection[(K, W2)])
@@ -106,6 +112,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * For each key k in `this` or `that1` or `that2` or `that3`, return a resulting SCollection
    * that contains a tuple with the list of values for that key in `this`, `that1`, `that2` and
    * `that3`.
+   * @group cogroup
    */
   def coGroup[W1: ClassTag, W2: ClassTag, W3: ClassTag]
   (that1: SCollection[(K, W1)], that2: SCollection[(K, W2)], that3: SCollection[(K, W3)])
@@ -126,17 +133,26 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     }
   }
 
-  /** Alias for cogroup. */
+  /**
+   * Alias for cogroup.
+   * @group cogroup
+   */
   def groupWith[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Iterable[V], Iterable[W]))] =
     this.coGroup(that)
 
-  /** Alias for cogroup. */
+  /**
+   * Alias for cogroup.
+   * @group cogroup
+   */
   def groupWith[W1: ClassTag, W2: ClassTag]
   (that1: SCollection[(K, W1)], that2: SCollection[(K, W2)])
   : SCollection[(K, (Iterable[V], Iterable[W1], Iterable[W2]))] =
     this.coGroup(that1, that2)
 
-  /** Alias for cogroup. */
+  /**
+   * Alias for cogroup.
+   * @group cogroup
+   */
   def groupWith[W1: ClassTag, W2: ClassTag, W3: ClassTag]
   (that1: SCollection[(K, W1)], that2: SCollection[(K, W2)], that3: SCollection[(K, W3)])
   : SCollection[(K, (Iterable[V], Iterable[W1], Iterable[W2], Iterable[W3]))] =
@@ -153,6 +169,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * element (k, w) in `that`, the resulting SCollection will either contain all pairs (k,
    * (Some(v), Some(w))) for v in `this`, or the pair (k, (None, Some(w))) if no elements in
    * `this` have key k. Uses the given Partitioner to partition the output SCollection.
+   * @group join
    */
   def fullOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Option[V], Option[W]))] =
     this.coGroup(that).flatMapValues { t =>
@@ -165,6 +182,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * Return an SCollection containing all pairs of elements with matching keys in `this` and
    * `that`. Each pair of elements will be returned as a (k, (v1, v2)) tuple, where (k, v1) is in
    * `this` and (k, v2) is in `that`. Uses the given Partitioner to partition the output RDD.
+   * @group join
    */
   def join[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, W))] =
     this.coGroup(that).flatMapValues { t =>
@@ -177,6 +195,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * resulting SCollection will either contain all pairs (k, (v, Some(w))) for w in `that`, or the
    * pair (k, (v, None)) if no elements in `that` have key k. Uses the given Partitioner to
    * partition the output SCollection.
+   * @group join
    */
   def leftOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, Option[W]))] =
     this.coGroup(that).flatMapValues { t =>
@@ -190,6 +209,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * resulting SCollection will either contain all pairs (k, (Some(v), w)) for v in `this`, or the
    * pair (k, (None, w)) if no elements in `this` have key k. Uses the given Partitioner to
    * partition the output SCollection.
+   * @group join
    */
   def rightOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Option[V], W))] =
     this.coGroup(that).flatMapValues { t =>
@@ -208,6 +228,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * SCollection, V. Thus, we need one operation for merging a V into a U and one operation for
    * merging two U's. To avoid memory allocation, both of these functions are allowed to modify
    * and return their first argument instead of creating a new U.
+   * @group per_key
    */
   def aggregateByKey[U: ClassTag](zeroValue: U)(seqOp: (U, V) => U, combOp: (U, U) => U): SCollection[(K, U)] =
     this.applyPerKey(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp)), kvToTuple[K, U])
@@ -216,6 +237,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * Aggregate the values of each key with [[com.twitter.algebird.Aggregator Aggregator]]. First
    * each value V is mapped to A, then we reduce with a semigroup of A, then finally we present
    * the results as U. This could be more powerful and better optimized in some cases.
+   * @group per_key
    */
   def aggregateByKey[A: ClassTag, U: ClassTag](aggregator: Aggregator[V, A, U]): SCollection[(K, U)] =
     this.mapValues(aggregator.prepare).sumByKey()(aggregator.semigroup).mapValues(aggregator.present)
@@ -223,7 +245,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * For each key, compute the values' data distribution using approximate `N`-tiles.
    * @return a new SCollection whose values are Iterables of the approximate `N`-tiles of
-   * the elements
+   * the elements.
+   * @group per_key
    */
   def approxQuantilesByKey(numQuantiles: Int)(implicit ord: Ordering[V]): SCollection[(K, Iterable[V])] =
     this.applyPerKey(ApproximateQuantiles.perKey(numQuantiles, ord), kvListToTuple[K, V])
@@ -240,6 +263,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * - `mergeValue`, to merge a V into a C (e.g., adds it to the end of a list)
    *
    * - `mergeCombiners`, to combine two C's into a single one.
+   * @group per_key
    */
   def combineByKey[C: ClassTag](createCombiner: V => C)
                                (mergeValue: (C, V) => C)
@@ -249,7 +273,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * Count approximate number of distinct values for each key in the SCollection.
    * @param sampleSize the number of entries in the statisticalsample; the higher this number, the
-   * more accurate the estimate will be; should be `>= 16`
+   * more accurate the estimate will be; should be `>= 16`.
+   * @group per_key
    */
   def countApproxDistinctByKey(sampleSize: Int): SCollection[(K, Long)] =
     this.applyPerKey(ApproximateUnique.perKey[K, V](sampleSize), kvToTuple[K, JLong])
@@ -258,7 +283,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * Count approximate number of distinct values for each key in the SCollection.
    * @param maximumEstimationError the maximum estimation error, which should be in the range
-   * `[0.01, 0.5]`
+   * `[0.01, 0.5]`.
+   * @group per_key
    */
   def countApproxDistinctByKey(maximumEstimationError: Double = 0.02): SCollection[(K, Long)] =
     this.applyPerKey(ApproximateUnique.perKey[K, V](maximumEstimationError), kvToTuple[K, JLong])
@@ -267,12 +293,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * Count the number of elements for each key.
    * @return a new SCollection of (key, count) pairs
+   * @group per_key
    */
   def countByKey(): SCollection[(K, Long)] = this.keys.countByValue()
 
   /**
    * Pass each value in the key-value pair SCollection through a flatMap function without changing
    * the keys.
+   * @group transform
    */
   def flatMapValues[U: ClassTag](f: V => TraversableOnce[U]): SCollection[(K, U)] =
     self.flatMap(kv => f(kv._2).map(v => (kv._1, v)))
@@ -281,6 +309,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * Merge the values for each key using an associative function and a neutral "zero value" which
    * may be added to the result an arbitrary number of times, and must not change the result
    * (e.g., Nil for list concatenation, 0 for addition, or 1 for multiplication.).
+   * @group per_key
    */
   def foldByKey(zeroValue: V)(op: (V, V) => V): SCollection[(K, V)] =
     this.applyPerKey(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op)), kvToTuple[K, V])
@@ -289,6 +318,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * Fold by key with [[com.twitter.algebird.Monoid Monoid]], which defines the associative
    * function and "zero value" for V. This could be more powerful and better optimized in some
    * cases.
+   * @group per_key
    */
   def foldByKey(implicit mon: Monoid[V]): SCollection[(K, V)] =
     this.applyPerKey(Combine.perKey(Functions.reduceFn(mon)), kvToTuple[K, V])
@@ -305,22 +335,28 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    *
    * Note: As currently implemented, groupByKey must be able to hold all the key-value pairs for
    * any key in memory. If a key has too many values, it can result in an OutOfMemoryError.
+   * @group per_key
    */
   def groupByKey(): SCollection[(K, Iterable[V])] =
     this.applyPerKey(GroupByKey.create[K, V](), kvIterableToTuple[K, V])
 
-  /** Return an SCollection with the keys of each tuple. */
+  /**
+   * Return an SCollection with the keys of each tuple.
+   * @group transform
+   */
   def keys: SCollection[K] = this.applyKv(Keys.create[K]())
 
   /**
    * Pass each value in the key-value pair SCollection through a map function without changing the
    * keys.
+   * @group transform
    */
   def mapValues[U: ClassTag](f: V => U): SCollection[(K, U)] = self.map(kv => (kv._1, f(kv._2)))
 
   /**
    * Return the max of values for each key as defined by the implicit Ordering[T].
    * @return a new SCollection of (key, maximum value) pairs
+   * @group per_key
    */
   // Scala lambda is simpler and more powerful than transforms.Max
   def maxByKey()(implicit ord: Ordering[V]): SCollection[(K, V)] = this.reduceByKey(ord.max)
@@ -328,6 +364,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * Return the min of values for each key as defined by the implicit Ordering[T].
    * @return a new SCollection of (key, minimum value) pairs
+   * @group per_key
    */
   // Scala lambda is simpler and more powerful than transforms.Min
   def minByKey()(implicit ord: Ordering[V]): SCollection[(K, V)] = this.reduceByKey(ord.min)
@@ -336,6 +373,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * Merge the values for each key using an associative reduce function. This will also perform
    * the merging locally on each mapper before sending results to a reducer, similarly to a
    * "combiner" in MapReduce.
+   * @group per_key
    */
   def reduceByKey(op: (V, V) => V): SCollection[(K, V)] =
     this.applyPerKey(Combine.perKey(Functions.reduceFn(op)), kvToTuple[K, V])
@@ -343,7 +381,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * Return a sampled subset of values for each key of this SCollection.
    * @return a new SCollection of (key, sampled values) pairs
-   * samples
+   * @group per_key
    */
   def sampleByKey(sampleSize: Int): SCollection[(K, Iterable[V])] =
     this.applyPerKey(Sample.fixedSizePerKey[K, V](sampleSize), kvIterableToTuple[K, V])
@@ -359,6 +397,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @param withReplacement whether to sample with or without replacement
    * @param fractions map of specific keys to sampling rates
    * @return SCollection containing the sampled subset
+   * @group per_key
    */
   def sampleByKey(withReplacement: Boolean, fractions: Map[K, Double]): SCollection[(K, V)] = {
     if (withReplacement) {
@@ -368,7 +407,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     }
   }
 
-  /** Return an SCollection with the pairs from `this` whose keys are not in `other`. */
+  /**
+   * Return an SCollection with the pairs from `this` whose keys are not in `other`.
+   * @group per_key
+   */
   def subtractByKey[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, V)] =
     this.coGroup(that).flatMap { t =>
       if (t._2._1.nonEmpty && t._2._2.isEmpty) t._2._1.map((t._1, _)) else  Seq.empty
@@ -377,11 +419,15 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * Reduce by key with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful
    * and better optimized in some cases.
+   * @group per_key
    */
   def sumByKey()(implicit sg: Semigroup[V]): SCollection[(K, V)] =
     this.applyPerKey(Combine.perKey(Functions.reduceFn(sg)), kvToTuple[K, V])
 
-  /** Swap the keys with the values. */
+  /**
+   * Swap the keys with the values.
+   * @group transform
+   */
   // Scala lambda is simpler than transforms.KvSwap
   def swap: SCollection[(V, K)] = self.map(kv => (kv._2, kv._1))
 
@@ -389,11 +435,15 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * Return the top k (largest) values for each key from this SCollection as defined by the
    * specified implicit Ordering[T].
    * @return a new SCollection of (key, top k) pairs
+   * @group per_key
    */
   def topByKey(num: Int)(implicit ord: Ordering[V]): SCollection[(K, Iterable[V])] =
     this.applyPerKey(Top.perKey[K, V, Ordering[V]](num, ord), kvListToTuple[K, V])
 
-  /** Return an SCollection with the values of each tuple. */
+  /**
+   * Return an SCollection with the values of each tuple.
+   * @group transform
+   */
   def values: SCollection[V] = this.applyKv(Values.create[V]())
 
   /* Hash operations */
@@ -401,6 +451,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * Perform an inner join by replicating `that` to all workers. The right side should be tiny and
    * fit in memory.
+   * @group transform
    */
   def hashJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, W))] = {
     val side = that.asMapSideInput
@@ -412,6 +463,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * Perform a left outer join by replicating `that` to all workers. The right side should be tiny
    * and fit in memory.
+   * @group transform
    */
   def hashLeftJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, Option[W]))] = {
     val side = that.asMapSideInput
