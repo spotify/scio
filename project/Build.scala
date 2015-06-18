@@ -115,7 +115,7 @@ object DataflowScalaBuild extends Build {
         "org.slf4j" % "slf4j-simple" % "1.7.7" % "provided",
         "joda-time" % "joda-time" % "2.7",
         "org.joda" % "joda-convert" % "1.7",
-        "org.scalatest" %% "scalatest" % scalaTestVersion
+        "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
       ),
       libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
       libraryDependencies ++= (
