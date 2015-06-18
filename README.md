@@ -57,6 +57,7 @@ More Dataflow pipeline specific options available can be found in [`DataflowPipe
 - `--maxNumWorkers`: [Experimental] The maximum number of workers to use when using workerpool autoscaling. (default=20)
 - `--diskSizeGb`: Remote worker disk size, in gigabytes, or 0 to use the default size.
 - `--workerMachineType`: Machine type to create Dataflow worker VMs as. See [https://cloud.google.com/compute/docs/machine-types](https://cloud.google.com/compute/docs/machine-types) for a list of valid options. If unset, the Dataflow service will choose a reasonable default.
+
 # dataflow-scala vs. Spark
 
 The dataflow-scala API is modeled after Spark with some minor differences.
