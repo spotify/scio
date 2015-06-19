@@ -15,6 +15,8 @@ import com.google.api.services.bigquery.model._
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
+import org.joda.time.Instant
+import org.joda.time.format.DateTimeFormat
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
@@ -61,6 +63,7 @@ class BigQueryClient private (private val projectId: String, credential: Credent
 
   private val TABLE_PREFIX = "dataflow_query"
   private val JOB_ID_PREFIX = "dataflow_query"
+  private val FORMAT = DateTimeFormat.forPattern("yyyyMMddHHmmss")
 
   /** Get schema for a query without executing it. */
   def getQuerySchema(sqlQuery: String): TableSchema = withCacheKey(sqlQuery) {
@@ -155,7 +158,7 @@ class BigQueryClient private (private val projectId: String, credential: Credent
   }
 
   private def temporaryTable(prefix: String): TableReference = {
-    val tableId = prefix + "_" + System.currentTimeMillis() + "_" + Random.nextInt(Int.MaxValue)
+    val tableId = prefix + "_" + Instant.now().toString(FORMAT) + "_" + Random.nextInt(Int.MaxValue)
     new TableReference()
       .setProjectId(projectId)
       .setDatasetId(BigQueryClient.stagingDataset)
