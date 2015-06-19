@@ -104,6 +104,8 @@ class BigQueryClient private (private val projectId: String, credential: Credent
       .setAllowLargeResults(true)
       .setFlattenResults(false)
       .setPriority("BATCH")
+      .setCreateDisposition("CREATE_IF_NEEDED")
+      .setWriteDisposition("WRITE_EMPTY")
       .setDestinationTable(destinationTable)
 
     val jobConfig: JobConfiguration = new JobConfiguration().setQuery(queryConfig)
