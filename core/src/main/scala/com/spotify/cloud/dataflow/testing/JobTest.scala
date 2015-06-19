@@ -1,5 +1,7 @@
 package com.spotify.cloud.dataflow.testing
 
+import java.lang.reflect.InvocationTargetException
+
 import com.google.cloud.dataflow.sdk.values.PCollection
 
 /**
@@ -60,10 +62,16 @@ object JobTest {
       TestDataManager.setOutput(testId, new TestOutput(outputs))
       TestDataManager.setDistCache(testId, new TestDistCache(distCaches))
 
-      Class
-        .forName(className)
-        .getMethod("main", classOf[Array[String]])
-        .invoke(null, cmdlineArgs :+ s"--testId=$testId")
+      try {
+        Class
+          .forName(className)
+          .getMethod("main", classOf[Array[String]])
+          .invoke(null, cmdlineArgs :+ s"--testId=$testId")
+      } catch {
+        // InvocationTargetException stacktrace is noisy and useless
+        case e: InvocationTargetException => throw e.getCause
+        case e: Throwable => throw e
+      }
 
       TestDataManager.unsetInput(testId)
       TestDataManager.unsetOutput(testId)
