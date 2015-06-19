@@ -1,6 +1,7 @@
 package com.spotify.cloud.bigquery
 
 import java.io.{StringReader, FileInputStream, File}
+import java.util.UUID
 import java.util.regex.Pattern
 
 import com.google.api.client.auth.oauth2.Credential
@@ -58,12 +59,15 @@ class BigQueryClient private (private val projectId: String, credential: Credent
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[BigQueryClient])
 
+  private val TABLE_PREFIX = "dataflow_query"
+  private val JOB_ID_PREFIX = "dataflow_query"
+
   /** Get schema for a query without executing it. */
   def getQuerySchema(sqlQuery: String): TableSchema = withCacheKey(sqlQuery) {
     prepareStagingDataset()
 
     // Create temporary table view and get schema
-    val table = temporaryTable("query_schema")
+    val table = temporaryTable(TABLE_PREFIX)
     logger.info(s"Creating temporary view ${Util.toTableSpec(table)}")
     val view = new ViewDefinition().setQuery(sqlQuery)
     val viewTable = new Table().setView(view).setTableReference(table)
@@ -94,10 +98,10 @@ class BigQueryClient private (private val projectId: String, credential: Credent
   }
 
   /** Execute a query and save results into a temporary table. */
-  def queryIntoTable(sqlQuery: String, tableSpec: String = null): TableReference = {
+  def queryIntoTable(sqlQuery: String): TableReference = {
     prepareStagingDataset()
 
-    val destinationTable = if (tableSpec == null) temporaryTable("query_into_table") else Util.parseTableSpec(tableSpec)
+    val destinationTable = temporaryTable(TABLE_PREFIX)
 
     val queryConfig: JobConfigurationQuery = new JobConfigurationQuery()
       .setQuery(sqlQuery)
@@ -108,8 +112,9 @@ class BigQueryClient private (private val projectId: String, credential: Credent
       .setWriteDisposition("WRITE_EMPTY")
       .setDestinationTable(destinationTable)
 
-    val jobConfig: JobConfiguration = new JobConfiguration().setQuery(queryConfig)
-    val job = new Job().setConfiguration(jobConfig)
+    val jobConfig = new JobConfiguration().setQuery(queryConfig)
+    val jobReference = createJobReference(projectId, JOB_ID_PREFIX)
+    val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
 
     val insert = bigquery.jobs().insert(projectId, job)
     val jobId = insert.execute().getJobReference
@@ -118,7 +123,7 @@ class BigQueryClient private (private val projectId: String, credential: Credent
     var state: String = null
     logger.info(s"Executing BigQuery for table ${Util.toTableSpec(destinationTable)}")
     do {
-      pollJob = bigquery.jobs().get(projectId, jobId.getJobId).execute()
+      pollJob = bigquery.jobs().get(projectId, jobReference.getJobId).execute()
       val error = pollJob.getStatus.getErrorResult
       if (error != null) {
         throw new RuntimeException(s"BigQuery failed: $error")
@@ -133,7 +138,7 @@ class BigQueryClient private (private val projectId: String, credential: Credent
 
   private def prepareStagingDataset(): Unit = {
     // Create staging dataset if it does not already exist
-    val datasetId = BigQueryClient.STAGING_DATASET
+    val datasetId = BigQueryClient.stagingDataset
     try {
       bigquery.datasets().get(projectId, datasetId).execute()
       logger.info(s"Staging dataset $projectId:$datasetId already exists")
@@ -153,8 +158,13 @@ class BigQueryClient private (private val projectId: String, credential: Credent
     val tableId = prefix + "_" + System.currentTimeMillis() + "_" + Random.nextInt(Int.MaxValue)
     new TableReference()
       .setProjectId(projectId)
-      .setDatasetId(BigQueryClient.STAGING_DATASET)
+      .setDatasetId(BigQueryClient.stagingDataset)
       .setTableId(tableId)
+  }
+
+  private def createJobReference(projectId: String, jobIdPrefix: String): JobReference = {
+    val fullJobId = projectId + "-" + UUID.randomUUID().toString
+    new JobReference().setProjectId(projectId).setJobId(fullJobId)
   }
 
   // =======================================================================
@@ -177,14 +187,13 @@ class BigQueryClient private (private val projectId: String, credential: Credent
   }.toOption
 
   private def cacheFile(key: String): File = {
-    val cacheDir = sys.props("bigquery.cache.directory")
-    val outputDir = if (cacheDir != null) cacheDir else sys.props("user.dir") + "/.bigquery"
-    val outputFile = new File(outputDir)
+    val cacheDir = BigQueryClient.cacheDirectory
+    val outputFile = new File(cacheDir)
     if (!outputFile.exists()) {
       outputFile.mkdirs()
     }
     val filename = Hashing.sha1().hashString(key, Charsets.UTF_8).toString.substring(0, 32) + ".json"
-    new File(s"$outputDir/$filename")
+    new File(s"$cacheDir/$filename")
   }
 
 }
@@ -192,10 +201,23 @@ class BigQueryClient private (private val projectId: String, credential: Credent
 /** Companion object for [[BigQueryClient]]. */
 object BigQueryClient {
 
-  private val SCOPES = List(BigqueryScopes.BIGQUERY).asJava
+  /** System property key for billing project. */
+  val PROJECT_KEY: String = "bigquery.project"
 
-  /** BigQuery dataset for staging results like temporary tables and views. */
-  val STAGING_DATASET = "bigquery_staging"
+  /** System property key for JSON secret path. */
+  val SECRET_KEY: String = "bigquery.secret"
+
+  /** System property key for staging dataset. */
+  val STAGING_DATASET_KEY: String = "bigquery.staging_dataset"
+
+  /** Default staging dataset. */
+  val STAGING_DATASET_DEFAULT: String = "bigquery_staging"
+
+  /** System property key for local schema cache directory. */
+  val CACHE_DIRECTORY_KEY: String = "bigquery.cache.directory"
+
+  /** Default cache directory. */
+  val CACHE_DIRECTORY_DEFAULT: String = sys.props("user.dir") + "/.bigquery"
 
   /** Create a new BigQueryClient instance with the given project and credential. */
   def apply(project: String, credential: Credential): BigQueryClient = new BigQueryClient(project, credential)
@@ -215,23 +237,31 @@ object BigQueryClient {
    * {{{
    * sbt -Dbigquery.project=my-project -Dbigquery.secret=/path/to/secret.json
    * }}}
-   *
-   * The client also caches schemas from tables or queries. The cached files are stored in
-   * `[PROJECT_ROOT]/.bigquery` by default but can be overridden with `bigquery.cache.directory`
-   * system property.
    */
   def apply(): BigQueryClient = {
-    val project = sys.props("bigquery.project")
+    val project = sys.props(PROJECT_KEY)
     if (project == null) {
-      throw new RuntimeException("Property bigquery.project not set. Use -Dbigquery.project=<BILLING_PROJECT>")
+      throw new RuntimeException(
+        s"Property $PROJECT_KEY not set. Use -D$PROJECT_KEY=<BILLING_PROJECT>")
     }
-    val secret = sys.props("bigquery.secret")
+    val secret = sys.props(SECRET_KEY)
     if (secret == null) {
-      throw new RuntimeException("Property bigquery.secret not set. Use -Dbigquery.secret=/path/to/secret.json")
+      throw new RuntimeException(
+        s"Property $SECRET_KEY not set. Use -D$SECRET_KEY=/path/to/secret.json")
     }
-    val credential = GoogleCredential.fromStream(new FileInputStream(new File(secret))).createScoped(SCOPES)
+    val scopes = List(BigqueryScopes.BIGQUERY).asJava
+    val credential = GoogleCredential.fromStream(new FileInputStream(new File(secret))).createScoped(scopes)
 
     BigQueryClient(project, credential)
+  }
+
+  private def stagingDataset: String = getPropOrElse(STAGING_DATASET_KEY, STAGING_DATASET_DEFAULT)
+
+  private def cacheDirectory: String = getPropOrElse(CACHE_DIRECTORY_KEY, CACHE_DIRECTORY_DEFAULT)
+
+  private def getPropOrElse(key: String, default: String): String = {
+    val value = sys.props(key)
+    if (value == null) default else value
   }
 
 }
