@@ -118,21 +118,19 @@ class BigQueryClient private (private val projectId: String, credential: Credent
     val jobConfig = new JobConfiguration().setQuery(queryConfig)
     val jobReference = createJobReference(projectId, JOB_ID_PREFIX)
     val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
-
-    val insert = bigquery.jobs().insert(projectId, job)
-    val jobId = insert.execute().getJobReference
+    val jobId = bigquery.jobs().insert(projectId, job).execute().getJobReference.getJobId
 
     var pollJob: Job = null
     var state: String = null
     logger.info(s"Executing BigQuery for table ${Util.toTableSpec(destinationTable)}")
     do {
-      pollJob = bigquery.jobs().get(projectId, jobReference.getJobId).execute()
+      pollJob = bigquery.jobs().get(projectId, jobId).execute()
       val error = pollJob.getStatus.getErrorResult
       if (error != null) {
         throw new RuntimeException(s"BigQuery failed: $error")
       }
       state = pollJob.getStatus.getState
-      logger.info(s"Job ${jobId.getJobId}: $state")
+      logger.info(s"Job $jobId: $state")
       Thread.sleep(10000)
     } while (state != "DONE")
 
