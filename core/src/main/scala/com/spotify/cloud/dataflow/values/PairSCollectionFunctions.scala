@@ -26,13 +26,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   import TupleFunctions._
 
-  implicit private val context: DataflowContext = self.context
+  private val context: DataflowContext = self.context
 
   private def toKvTransform = ParDo.of(Functions.mapFn[(K, V), KV[K, V]](kv => KV.of(kv._1, kv._2)))
 
   private[values] def toKV: SCollection[KV[K, V]] = {
     val o = self.applyInternal(toKvTransform).setCoder(self.getKvCoder[K, V])
-    SCollection(o)
+    context.wrap(o)
   }
 
   private[values] def applyKv[U: ClassTag](t: PTransform[_ >: PCollection[KV[K, V]], PCollection[U]])
@@ -45,7 +45,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
           .apply(t)
           .setCoder(self.getCoder[U])
     }.setName(CallSites.getCurrent))
-    SCollection(o)
+    context.wrap(o)
   }
 
   private def applyPerKey[UI: ClassTag, UO: ClassTag](t: PTransform[PCollection[KV[K, V]], PCollection[KV[K, UI]]],
@@ -60,7 +60,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
           .apply(ParDo.of(Functions.mapFn[KV[K, UI], (K, UO)](f)).setName("KvToTuple"))
           .setCoder(self.getCoder[(K, UO)])
     }.setName(CallSites.getCurrent))
-    SCollection(o)
+    context.wrap(o)
   }
 
   // =======================================================================
@@ -79,7 +79,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
       .and(tagW, that.toKV.internal)
       .apply(CoGroupByKey.create().setName(CallSites.getCurrent))
 
-    SCollection(keyed).map { kv =>
+    context.wrap(keyed).map { kv =>
       val (k, r) = (kv.getKey, kv.getValue)
       val (v, w) = (r.getAll(tagV).asScala, r.getAll(tagW).asScala)
       (k, (v, w))
@@ -101,7 +101,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
       .and(tagW2, that2.toKV.internal)
       .apply(CoGroupByKey.create().setName(CallSites.getCurrent))
 
-    SCollection(keyed).map { kv =>
+    context.wrap(keyed).map { kv =>
       val (k, r) = (kv.getKey, kv.getValue)
       val (v, w1, w2) = (r.getAll(tagV).asScala, r.getAll(tagW1).asScala, r.getAll(tagW2).asScala)
       (k, (v, w1, w2))
@@ -125,7 +125,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
       .and(tagW3, that3.toKV.internal)
       .apply(CoGroupByKey.create().setName(CallSites.getCurrent))
 
-    SCollection(keyed).map { kv =>
+    context.wrap(keyed).map { kv =>
       val (k, r) = (kv.getKey, kv.getValue)
       val v = r.getAll(tagV).asScala
       val (w1, w2, w3) = (r.getAll(tagW1).asScala, r.getAll(tagW2).asScala, r.getAll(tagW3).asScala)

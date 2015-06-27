@@ -10,23 +10,24 @@ import scala.reflect.ClassTag
 
 case class WindowedValue[T](value: T, timestamp: Instant, windows: Iterable[BoundedWindow])
 
-class WindowedSCollection[T] private[values] (val internal: PCollection[T])
-                                             (implicit private[values] val context: DataflowContext,
-                                              protected val ct: ClassTag[T])
+class WindowedSCollection[T: ClassTag] private[values] (val internal: PCollection[T],
+                                                        private[values] val context: DataflowContext)
   extends PCollectionWrapper[T] {
 
+  protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
+
   def filter(f: WindowedValue[T] => Boolean): WindowedSCollection[T] =
-    new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.filterFn(f)).internal)
+    new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.filterFn(f)).internal, context)
 
   def flatMap[U: ClassTag](f: WindowedValue[T] => TraversableOnce[WindowedValue[U]]): WindowedSCollection[U] =
-    new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.flatMapFn(f)).internal)
+    new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.flatMapFn(f)).internal, context)
 
   def keyBy[K: ClassTag](f: WindowedValue[T] => K): WindowedSCollection[(K, T)] =
     this.map(wv => wv.copy(value = (f(wv), wv.value)))
 
   def map[U: ClassTag](f: WindowedValue[T] => WindowedValue[U]): WindowedSCollection[U] =
-    new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.mapFn(f)).internal)
+    new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.mapFn(f)).internal, context)
 
-  def toSCollection: SCollection[T] = SCollection(internal)
+  def toSCollection: SCollection[T] = context.wrap(internal)
 
 }

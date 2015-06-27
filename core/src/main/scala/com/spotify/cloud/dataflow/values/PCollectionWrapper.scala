@@ -15,7 +15,7 @@ private[values] trait PCollectionWrapper[T] {
   /** The PCollection being wrapped internally. */
   val internal: PCollection[T]
 
-  implicit private[values] val context: DataflowContext
+  private[values] val context: DataflowContext
 
   implicit protected val ct: ClassTag[T]
 
@@ -29,7 +29,7 @@ private[values] trait PCollectionWrapper[T] {
     } else {
       transform
     }
-    SCollection(this.applyInternal(t))
+    context.wrap(this.applyInternal(t))
   }
 
   private[values] def parDo[U: ClassTag](fn: DoFn[T, U]): SCollection[U] =

@@ -34,14 +34,14 @@ class SideOutputContext[T] private[dataflow] (private val context: DoFn[T, AnyRe
 }
 
 /** Encapsulate output of one or more [[SideOutput]]s in an [[SCollectionWithSideOutput]]. */
-class SideOutputCollections private[values] (private val tuple: PCollectionTuple)
-                                            (implicit context: DataflowContext) {
+class SideOutputCollections private[values] (private val tuple: PCollectionTuple,
+                                             private val context: DataflowContext) {
   import Implicits._
 
   /** Extract the [[SCollection]] of a given [[SideOutput]]. */
   def apply[T: ClassTag](sideOutput: SideOutput[T]): SCollection[T] = {
     val r = context.pipeline.getCoderRegistry
     val o = tuple.get(sideOutput.tupleTag).setCoder(r.getScalaCoder[T])
-    SCollection(o)
+    context.wrap(o)
   }
 }

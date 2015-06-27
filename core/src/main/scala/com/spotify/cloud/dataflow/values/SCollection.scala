@@ -39,14 +39,10 @@ import scala.reflect.ClassTag
 /** Convenience functions for creating SCollections. */
 object SCollection {
 
-  /** Create a new SCollection from a PCollection. */
-  def apply[T: ClassTag](p: PCollection[T])(implicit context: DataflowContext): SCollection[T] =
-    new SCollectionImpl(p)
-
   /** Create a union of multiple SCollections */
   def unionAll[T: ClassTag](scs: Iterable[SCollection[T]]): SCollection[T] = {
     val o = PCollectionList.of(scs.map(_.internal).asJava).apply(Flatten.pCollections().setName(CallSites.getCurrent))
-    new SCollectionImpl(o)(scs.head.context, scs.head.ct)
+    new SCollectionImpl(o, scs.head.context)
   }
 
   import scala.language.implicitConversions
@@ -96,10 +92,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def name: String = internal.getName
 
   /** Assign a Coder to this SCollection. */
-  def setCoder(coder: Coder[T]): SCollection[T] = SCollection(internal.setCoder(coder))
+  def setCoder(coder: Coder[T]): SCollection[T] = context.wrap(internal.setCoder(coder))
 
   /** Assign a name to this SCollection. */
-  def setName(name: String): SCollection[T] = SCollection(internal.setName(name))
+  def setName(name: String): SCollection[T] = context.wrap(internal.setName(name))
 
   // =======================================================================
   // Collection operations
@@ -121,7 +117,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     val o = PCollectionList
       .of(internal).and(that.internal)
       .apply(Flatten.pCollections().setName(CallSites.getCurrent))
-    SCollection(o)
+    context.wrap(o)
   }
 
   /**
@@ -147,7 +143,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def partition(numPartitions: Int, f: T => Int): Seq[SCollection[T]] =
     this.applyInternal(Partition.of[T](numPartitions, Functions.partitionFn[T](numPartitions, f)))
-      .getAll.asScala.map(p => SCollection(p))
+      .getAll.asScala.map(p => context.wrap(p))
 
   // =======================================================================
   // Transformations
@@ -305,7 +301,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     val o = this
       .map(ev.toDouble).asInstanceOf[SCollection[JDouble]]
       .applyInternal(Mean.globally()).asInstanceOf[PCollection[Double]]
-    SCollection(o)
+    context.wrap(o)
   }
 
   /**
@@ -472,7 +468,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * }}}
    */
   def withAccumulator(acc: Accumulator[_]*): SCollectionWithAccumulator[T] =
-    new SCollectionWithAccumulator[T](internal, acc)
+    new SCollectionWithAccumulator(internal, context, acc)
 
   // =======================================================================
   // Side input operations
@@ -521,7 +517,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group side
    */
   def withSideInputs(sides: SideInput[_]*): SCollectionWithSideInput[T] =
-    new SCollectionWithSideInput[T](internal, sides)
+    new SCollectionWithSideInput[T](internal, context, sides)
 
   // =======================================================================
   // Side output operations
@@ -546,7 +542,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group side
    */
   def withSideOutputs(sides: SideOutput[_]*): SCollectionWithSideOutput[T] =
-    new SCollectionWithSideOutput[T](internal, sides)
+    new SCollectionWithSideOutput[T](internal, context, sides)
 
   // =======================================================================
   // Windowing operations
@@ -559,7 +555,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Convert this SCollection to an [[WindowedSCollection]].
    * @group window
    */
-  def toWindowed: WindowedSCollection[T] = new WindowedSCollection[T](internal)
+  def toWindowed: WindowedSCollection[T] = new WindowedSCollection[T](internal, context)
 
   /**
    * Window values with the given function.
@@ -816,6 +812,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
 }
 
-private class SCollectionImpl[T](val internal: PCollection[T])
-                                (implicit val context: DataflowContext, val ct: ClassTag[T])
-  extends SCollection[T] {}
+private[dataflow] class SCollectionImpl[T: ClassTag](val internal: PCollection[T],
+                                                     private[values] val context: DataflowContext)
+  extends SCollection[T] {
+  protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
+}

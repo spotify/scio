@@ -19,7 +19,7 @@ import com.google.cloud.dataflow.sdk.options.{PipelineOptionsFactory, DataflowPi
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
 import com.google.cloud.dataflow.sdk.transforms.{Aggregator, PTransform, Create}
-import com.google.cloud.dataflow.sdk.values.{TimestampedValue, PBegin, POutput}
+import com.google.cloud.dataflow.sdk.values.{PCollection, TimestampedValue, PBegin, POutput}
 import com.spotify.cloud.bigquery._
 import com.spotify.cloud.dataflow.testing._
 import com.spotify.cloud.dataflow.util.CallSites
@@ -112,6 +112,10 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
   /** Close the context. */
   def close(): Unit = pipeline.run()
 
+  /** Wrap a [[PCollection]]. */
+  def wrap[T: ClassTag](p: PCollection[T]): SCollection[T] =
+    new SCollectionImpl[T](p, this)
+
   // =======================================================================
   // Test wiring
   // =======================================================================
@@ -142,7 +146,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
     } else {
       val cls = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
       val o = this.applyInternal(GAvroIO.Read.from(path).withSchema(cls))
-      SCollection(o).setName(path)
+      wrap(o).setName(path)
     }
 
   /**
@@ -153,7 +157,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
     if (this.isTest) {
       this.getTestInput(AvroIO[GenericRecord](path))
     } else {
-      SCollection(this.applyInternal(GAvroIO.Read.from(path).withSchema(schema))).setName(path)
+      wrap(this.applyInternal(GAvroIO.Read.from(path).withSchema(schema))).setName(path)
     }
 
   /**
@@ -164,7 +168,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
     if (this.isTest) {
       this.getTestInput(AvroIO[GenericRecord](path))
     } else {
-      SCollection(this.applyInternal(GAvroIO.Read.from(path).withSchema(schemaString))).setName(path)
+      wrap(this.applyInternal(GAvroIO.Read.from(path).withSchema(schemaString))).setName(path)
     }
 
   /**
@@ -188,7 +192,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
     if (this.isTest) {
       this.getTestInput(BigQueryIO(tableSpec))
     } else {
-      SCollection(this.applyInternal(GBigQueryIO.Read.from(table))).setName(tableSpec)
+      wrap(this.applyInternal(GBigQueryIO.Read.from(table))).setName(tableSpec)
     }
   }
 
@@ -207,7 +211,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
     if (this.isTest) {
       this.getTestInput(DatastoreIO(datasetId, query))
     } else {
-      SCollection(this.applyInternal(GDatastoreIO.readFrom(datasetId, query)))
+      wrap(this.applyInternal(GDatastoreIO.readFrom(datasetId, query)))
     }
 
   /**
@@ -221,7 +225,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
       var transform = GPubsubIO.Read.subscription(sub)
       if (idLabel != null) transform = transform.idLabel(idLabel)
       if (timestampLabel != null) transform = transform.timestampLabel(timestampLabel)
-      SCollection(this.applyInternal(transform)).setName(sub)
+      wrap(this.applyInternal(transform)).setName(sub)
     }
 
   /**
@@ -235,7 +239,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
       var transform = GPubsubIO.Read.topic(topic)
       if (idLabel != null) transform = transform.idLabel(idLabel)
       if (timestampLabel != null) transform = transform.timestampLabel(timestampLabel)
-      SCollection(this.applyInternal(GPubsubIO.Read.topic(topic))).setName(topic)
+      wrap(this.applyInternal(GPubsubIO.Read.topic(topic))).setName(topic)
     }
 
   /**
@@ -246,7 +250,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
     if (this.isTest) {
       this.getTestInput(TableRowJsonIO(path))
     } else {
-      SCollection(this.applyInternal(GTextIO.Read.from(path).withCoder(TableRowJsonCoder.of()))).setName(path)
+      wrap(this.applyInternal(GTextIO.Read.from(path).withCoder(TableRowJsonCoder.of()))).setName(path)
     }
 
   /**
@@ -257,7 +261,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
     if (this.isTest) {
       this.getTestInput(TextIO(path))
     } else {
-      SCollection(this.applyInternal(GTextIO.Read.from(path))).setName(path)
+      wrap(this.applyInternal(GTextIO.Read.from(path))).setName(path)
     }
 
   // =======================================================================
@@ -310,7 +314,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
    */
   def parallelize[T: ClassTag](elems: T*): SCollection[T] = {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
-    SCollection(this.applyInternal(Create.of(elems: _*)).setCoder(coder)).setName(elems.toString())
+    wrap(this.applyInternal(Create.of(elems: _*)).setCoder(coder)).setName(elems.toString())
   }
 
   /**
@@ -319,7 +323,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
    */
   def parallelize[T: ClassTag](elems: Iterable[T]): SCollection[T] = {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
-    SCollection(this.applyInternal(Create.of(elems.asJava)).setCoder(coder)).setName(elems.toString())
+    wrap(this.applyInternal(Create.of(elems.asJava)).setCoder(coder)).setName(elems.toString())
   }
 
   /**
@@ -328,18 +332,18 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
    */
   def parallelize[K: ClassTag, V: ClassTag](elems: Map[K, V]): SCollection[(K, V)] = {
     val coder = pipeline.getCoderRegistry.getScalaKvCoder[K, V]
-    SCollection(this.applyInternal(Create.of(elems.asJava)).setCoder(coder)).map(kv => (kv.getKey, kv.getValue))
+    wrap(this.applyInternal(Create.of(elems.asJava)).setCoder(coder)).map(kv => (kv.getKey, kv.getValue))
       .setName(elems.toString())
   }
 
   /**
-   * Distribute local values with timestamps to form an SCollection.
+   * wrap local values with timestamps to form an SCollection.
    * @group in_memory
    */
   def parallelizeTimestamped[T: ClassTag](elems: (T, Instant)*): SCollection[T] = {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     val v = elems.map(t => TimestampedValue.of(t._1, t._2))
-    SCollection(this.applyInternal(Create.timestamped(v: _*)).setCoder(coder)).setName(elems.toString())
+    wrap(this.applyInternal(Create.timestamped(v: _*)).setCoder(coder)).setName(elems.toString())
   }
 
   /**
@@ -349,7 +353,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
   def parallelizeTimestamped[T: ClassTag](elems: Iterable[(T, Instant)]): SCollection[T] = {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     val v = elems.map(t => TimestampedValue.of(t._1, t._2))
-    SCollection(this.applyInternal(Create.timestamped(v.asJava)).setCoder(coder)).setName(elems.toString())
+    wrap(this.applyInternal(Create.timestamped(v.asJava)).setCoder(coder)).setName(elems.toString())
   }
 
   /**
@@ -360,7 +364,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
                                           timestamps: Iterable[Instant]): SCollection[T] = {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     val v = elems.zip(timestamps).map(t => TimestampedValue.of(t._1, t._2))
-    SCollection(this.applyInternal(Create.timestamped(v.asJava)).setCoder(coder)).setName(elems.toString())
+    wrap(this.applyInternal(Create.timestamped(v.asJava)).setCoder(coder)).setName(elems.toString())
   }
 
   // =======================================================================
