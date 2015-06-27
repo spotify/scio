@@ -29,7 +29,7 @@ private[dataflow] object Functions {
   }
 
   def aggregateFn[T, U: ClassTag](zeroValue: U)(seqOp: (U, T) => U, combOp: (U, U) => U)
-      : CombineFn[T, (U, JList[T]), U] = new KryoCombineFn[T, (U, JList[T]), U] {
+  : CombineFn[T, (U, JList[T]), U] = new KryoCombineFn[T, (U, JList[T]), U] {
 
     // defeat closure
     val s = ClosureCleaner(seqOp)
@@ -62,7 +62,7 @@ private[dataflow] object Functions {
   }
 
   def combineFn[T, C: ClassTag](createCombiner: T => C, mergeValue: (C, T) => C, mergeCombiners: (C, C) => C)
-      : CombineFn[T, (Option[C], JList[T]), C] = new KryoCombineFn[T, (Option[C], JList[T]), C] {
+  : CombineFn[T, (Option[C], JList[T]), C] = new KryoCombineFn[T, (Option[C], JList[T]), C] {
 
     // defeat closure
     val cc = ClosureCleaner(createCombiner)
