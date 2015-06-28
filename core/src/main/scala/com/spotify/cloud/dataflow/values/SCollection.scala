@@ -15,10 +15,7 @@ import com.google.cloud.dataflow.sdk.io.{
   TextIO => GTextIO
 }
 import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
-import com.google.cloud.dataflow.sdk.transforms.{
-  ApproximateQuantiles, ApproximateUnique, Combine, Count, DoFn, Filter, Flatten, GroupByKey, Mean, Partition,
-  RemoveDuplicates, Sample, Top, View, WithKeys
-}
+import com.google.cloud.dataflow.sdk.transforms._
 import com.google.cloud.dataflow.sdk.transforms.windowing._
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values._
@@ -548,9 +545,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // Windowing operations
   // =======================================================================
 
-  // TODO: re-work this section, include WindowingStrategy, Triggering, etc.
-  // TODO: better documentation
-
   /**
    * Convert this SCollection to an [[WindowedSCollection]].
    * @group window
@@ -561,23 +555,21 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Window values with the given function.
    * @group window
    */
-  def withWindowFn(fn: WindowFn[T, _],
-                   allowedLateness: Duration = null,
-                   trigger: Trigger[_] = null,
-                   accumulationMode: AccumulationMode = null): SCollection[T] = {
+  def withWindowFn[W <: BoundedWindow](fn: WindowFn[AnyRef, W],
+                                       options: WindowOptions[W] = WindowOptions()): SCollection[T] = {
     require(
-      !(trigger == null ^ accumulationMode == null),
+      !(options.trigger == null ^ options.accumulationMode == null),
       "Both trigger and accumulationMode must be null or set")
-    var transform = Window.into(fn)
-    if (allowedLateness != null) transform = transform.withAllowedLateness(allowedLateness)
-    if (trigger != null && accumulationMode != null) {
-      val t = transform.triggering(trigger)
-      transform = if (accumulationMode == AccumulationMode.ACCUMULATING_FIRED_PANES) {
+    var transform = Window.into(fn).asInstanceOf[Window.Bound[T]]
+    if (options.allowedLateness != null) transform = transform.withAllowedLateness(options.allowedLateness)
+    if (options.trigger != null && options.accumulationMode != null) {
+      val t = transform.triggering(options.trigger)
+      transform = if (options.accumulationMode == AccumulationMode.ACCUMULATING_FIRED_PANES) {
         t.accumulatingFiredPanes()
-      } else if (accumulationMode == AccumulationMode.DISCARDING_FIRED_PANES) {
+      } else if (options.accumulationMode == AccumulationMode.DISCARDING_FIRED_PANES) {
         t.discardingFiredPanes()
       } else {
-        throw new RuntimeException(s"Unsupported accumulation mode $accumulationMode")
+        throw new RuntimeException(s"Unsupported accumulation mode ${options.accumulationMode}")
       }
     }
     this.apply(transform)
@@ -589,12 +581,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def withFixedWindows(duration: Duration,
                        offset: Duration = Duration.ZERO,
-                       allowedLateness: Duration = null,
-                       trigger: Trigger[_] = null,
-                       accumulationMode: AccumulationMode = null): SCollection[T] =
-    this.withWindowFn(
-      FixedWindows.of(duration).withOffset(offset).asInstanceOf[WindowFn[T, _]],
-      allowedLateness, trigger, accumulationMode)
+                       options: WindowOptions[IntervalWindow] = WindowOptions()): SCollection[T] =
+    this.withWindowFn(FixedWindows.of(duration).withOffset(offset), options)
 
   /**
    * Window values into sliding windows.
@@ -603,78 +591,52 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def withSlidingWindows(size: Duration,
                          period: Duration = Duration.millis(1),
                          offset: Duration = Duration.ZERO,
-                         allowedLateness: Duration = null,
-                         trigger: Trigger[_] = null,
-                         accumulationMode: AccumulationMode = null): SCollection[T] =
-    this.withWindowFn(
-      SlidingWindows.of(size).every(period).withOffset(offset).asInstanceOf[WindowFn[T, _]],
-      allowedLateness, trigger, accumulationMode)
+                         options: WindowOptions[IntervalWindow] = WindowOptions()): SCollection[T] =
+    this.withWindowFn(SlidingWindows.of(size).every(period).withOffset(offset), options)
 
   /**
    * Window values based on sessions.
    * @group window
    */
   def withSessionWindows(gapDuration: Duration,
-                         allowedLateness: Duration = null,
-                         trigger: Trigger[_] = null,
-                         accumulationMode: AccumulationMode = null): SCollection[T] =
-    this.withWindowFn(
-      Sessions.withGapDuration(gapDuration).asInstanceOf[WindowFn[T, _]],
-      allowedLateness, trigger, accumulationMode)
+                         options: WindowOptions[IntervalWindow] = WindowOptions()): SCollection[T] =
+    this.withWindowFn(Sessions.withGapDuration(gapDuration), options)
 
   /**
    * Group values in to a single global window.
    * @group window
    */
-  def withGlobalWindow(): SCollection[T] = this.withWindowFn(new GlobalWindows().asInstanceOf[WindowFn[T, _]])
+  def withGlobalWindow(options: WindowOptions[GlobalWindow] = WindowOptions()): SCollection[T] =
+    this.withWindowFn(new GlobalWindows(), options)
 
   /**
    * Window values into by years.
    * @group window
    */
-  def windowByYears(number: Int,
-                    allowedLateness: Duration = null,
-                    trigger: Trigger[_] = null,
-                    accumulationMode: AccumulationMode = null): SCollection[T] =
-    this.withWindowFn(
-      CalendarWindows.years(number).asInstanceOf[WindowFn[T, _]],
-      allowedLateness, trigger, accumulationMode)
+  def windowByYears(number: Int, options: WindowOptions[IntervalWindow] = WindowOptions()): SCollection[T] =
+    this.withWindowFn(CalendarWindows.years(number), options)
 
   /**
    * Window values into by months.
    * @group window
    */
-  def windowByMonths(number: Int,
-                     allowedLateness: Duration = null,
-                     trigger: Trigger[_] = null,
-                     accumulationMode: AccumulationMode = null): SCollection[T] =
-    this.withWindowFn(
-      CalendarWindows.months(number).asInstanceOf[WindowFn[T, _]],
-      allowedLateness, trigger, accumulationMode)
+  def windowByMonths(number: Int, options: WindowOptions[IntervalWindow] = WindowOptions()): SCollection[T] =
+    this.withWindowFn(CalendarWindows.months(number), options)
 
   /**
    * Window values into by weeks.
    * @group window
    */
   def windowByWeeks(number: Int, startDayOfWeek: Int,
-                    allowedLateness: Duration = null,
-                    trigger: Trigger[_] = null,
-                    accumulationMode: AccumulationMode = null): SCollection[T] =
-    this.withWindowFn(
-      CalendarWindows.weeks(number, startDayOfWeek).asInstanceOf[WindowFn[T, _]],
-      allowedLateness, trigger, accumulationMode)
+                    options: WindowOptions[IntervalWindow] = WindowOptions()): SCollection[T] =
+    this.withWindowFn(CalendarWindows.weeks(number, startDayOfWeek), options)
 
   /**
    * Window values into by days.
    * @group window
    */
-  def windowByDays(number: Int,
-                   allowedLateness: Duration = null,
-                   trigger: Trigger[_] = null,
-                   accumulationMode: AccumulationMode = null): SCollection[T] =
-    this.withWindowFn(
-      CalendarWindows.days(number).asInstanceOf[WindowFn[T, _]],
-      allowedLateness, trigger, accumulationMode)
+  def windowByDays(number: Int, options: WindowOptions[IntervalWindow] = WindowOptions()): SCollection[T] =
+    this.withWindowFn(CalendarWindows.days(number), options)
 
   /**
    * Convert values into pairs of (value, timestamp).

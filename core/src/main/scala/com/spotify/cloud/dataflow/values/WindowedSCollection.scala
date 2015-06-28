@@ -1,12 +1,17 @@
 package com.spotify.cloud.dataflow.values
 
-import com.google.cloud.dataflow.sdk.transforms.windowing.BoundedWindow
+import com.google.cloud.dataflow.sdk.transforms.windowing.{Trigger, BoundedWindow}
+import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values.PCollection
 import com.spotify.cloud.dataflow.DataflowContext
 import com.spotify.cloud.dataflow.util.FunctionsWithWindowedValue
-import org.joda.time.Instant
+import org.joda.time.{Duration, Instant}
 
 import scala.reflect.ClassTag
+
+case class WindowOptions[W <: BoundedWindow](allowedLateness: Duration = null,
+                                             trigger: Trigger[W] = null,
+                                             accumulationMode: AccumulationMode = null)
 
 case class WindowedValue[T](value: T, timestamp: Instant, windows: Iterable[BoundedWindow])
 

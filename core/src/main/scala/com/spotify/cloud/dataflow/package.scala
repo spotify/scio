@@ -15,9 +15,6 @@ import com.spotify.cloud.dataflow.values.{
  */
 package object dataflow {
 
-  /** Alias for [[com.spotify.cloud.dataflow.values.WindowedValue]]. */
-  type WindowedValue[T] = values.WindowedValue[T]
-
   /** Alias for BigQuery CreateDisposition. */
   val CREATE_IF_NEEDED = Write.CreateDisposition.CREATE_IF_NEEDED
 
