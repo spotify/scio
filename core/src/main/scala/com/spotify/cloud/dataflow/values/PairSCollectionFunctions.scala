@@ -6,7 +6,7 @@ import com.google.cloud.dataflow.sdk.transforms._
 import com.google.cloud.dataflow.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}
 import com.google.cloud.dataflow.sdk.values.{PCollection, KV, TupleTag}
 import com.spotify.cloud.dataflow.util.random.{BernoulliValueSampler, PoissonValueSampler}
-import com.spotify.cloud.dataflow.{Implicits, DataflowContext}
+import com.spotify.cloud.dataflow.DataflowContext
 import com.spotify.cloud.dataflow.util._
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 
