@@ -112,7 +112,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
   /** Close the context. */
   def close(): Unit = pipeline.run()
 
-  /** Wrap a [[PCollection]]. */
+  /** Wrap a [[com.google.cloud.dataflow.sdk.values.PCollection PCollection]]. */
   def wrap[T: ClassTag](p: PCollection[T]): SCollection[T] =
     new SCollectionImpl[T](p, this)
 
@@ -270,8 +270,9 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
 
   /**
    * Create a new [[com.spotify.cloud.dataflow.values.Accumulator Accumulator]] that keeps track
-   * of the maximum value. See [[com.spotify.cloud.dataflow.values.SCollection.withAccumulator
-   * SCollection.withAccumulator]] for examples.
+   * of the maximum value. See
+   * [[com.spotify.cloud.dataflow.values.SCollection.withAccumulator SCollection.withAccumulator]]
+   * for examples.
    * @group accumulator
    */
   def maxAccumulator[U](n: String)(implicit at: AccumulatorType[U]): Accumulator[U] =
@@ -282,8 +283,9 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
 
   /**
    * Create a new [[com.spotify.cloud.dataflow.values.Accumulator Accumulator]] that keeps track
-   * of the minimum value. See [[com.spotify.cloud.dataflow.values.SCollection.withAccumulator
-   * SCollection.withAccumulator]] for examples.
+   * of the minimum value. See
+   * [[com.spotify.cloud.dataflow.values.SCollection.withAccumulator SCollection.withAccumulator]]
+   * for examples.
    * @group accumulator
    */
   def minAccumulator[U](n: String)(implicit at: AccumulatorType[U]): Accumulator[U] =
@@ -294,8 +296,9 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
 
   /**
    * Create a new [[com.spotify.cloud.dataflow.values.Accumulator Accumulator]] that keeps track
-   * of the sum of values. See [[com.spotify.cloud.dataflow.values.SCollection.withAccumulator
-   * SCollection.withAccumulator]] for examples.
+   * of the sum of values. See
+   * [[com.spotify.cloud.dataflow.values.SCollection.withAccumulator SCollection.withAccumulator]]
+   * for examples.
    * @group accumulator
    */
   def sumAccumulator[U](n: String)(implicit at: AccumulatorType[U]): Accumulator[U] =
