@@ -14,9 +14,11 @@ object CoderTestUtils {
   case class CaseClassWithGenericRecord(name: String, size: Int, record: GenericRecord)
   case class CaseClassWithSpecificRecord(name: String, size: Int, record: TestRecord)
 
-  def testRoundTrip[T](coder: Coder[T], value: T): Boolean = {
-    val bytes = CoderUtils.encodeToByteArray(coder, value)
-    val result = CoderUtils.decodeFromByteArray(coder, bytes)
+  def testRoundTrip[T](coder: Coder[T], value: T): Boolean = testRoundTrip(coder, coder, value)
+
+  def testRoundTrip[T](writer: Coder[T], reader: Coder[T], value: T): Boolean = {
+    val bytes = CoderUtils.encodeToByteArray(writer, value)
+    val result = CoderUtils.decodeFromByteArray(reader, bytes)
     result == value
   }
 
@@ -27,7 +29,8 @@ object CoderTestUtils {
         Schema.createUnion(List(Schema.create(Schema.Type.NULL), Schema.create(tpe)).asJava),
         null, null)
 
-    val schema = Schema.createRecord(List(
+    val schema = Schema.createRecord("GenericTestRecord", null, null, false)
+    schema.setFields(List(
       f("int_field", Schema.Type.INT),
       f("long_field", Schema.Type.LONG),
       f("float_field", Schema.Type.FLOAT),

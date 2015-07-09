@@ -17,6 +17,7 @@ private class GenericAvroSerializer extends KSerializer[GenericRecord] {
   private lazy val ids: BiMap[Int, Schema] = HashBiMap.create()
 
   private def get(id: Int) = cache.getOrElseUpdate(id, Avros.genericCoder(ids.get(id)))
+  private def get(id: Int, schema: Schema) = cache.getOrElseUpdate(id, Avros.genericCoder(schema))
 
   private def getId(schema: Schema): Int =
     if (ids.containsValue(schema)) {
@@ -33,6 +34,8 @@ private class GenericAvroSerializer extends KSerializer[GenericRecord] {
     val bytes = coder.encode(obj)
 
     out.writeInt(id)
+    // write schema before every record in case it's not in reader serializer's cache
+    out.writeString(obj.getSchema.toString)
     out.writeInt(bytes.length)
     out.writeBytes(bytes)
     out.flush()
@@ -40,7 +43,7 @@ private class GenericAvroSerializer extends KSerializer[GenericRecord] {
 
   override def read(kryo: Kryo, in: Input, cls: Class[GenericRecord]): GenericRecord = {
     val id = in.readInt()
-    val coder = get(id)
+    val coder = get(id, new Schema.Parser().parse(in.readString()))
 
     val bytes = Array.ofDim[Byte](in.readInt())
     in.readBytes(bytes)
@@ -49,7 +52,7 @@ private class GenericAvroSerializer extends KSerializer[GenericRecord] {
 
 }
 
-private class SpecializedAvroSerializer[T <: SpecificRecord] extends KSerializer[T] {
+private class SpecificAvroSerializer[T <: SpecificRecord] extends KSerializer[T] {
 
   private lazy val cache: MMap[Class[_], SpecificAvroCoder[_]] = MMap()
 
