@@ -106,10 +106,8 @@ object DataflowScalaBuild extends Build {
     file("bigquery"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
-        "com.google.apis" % "google-api-services-bigquery" % "v2-rev187-1.19.1"
+        "com.google.apis" % "google-api-services-bigquery" % "v2-rev218-1.19.1"
           exclude ("com.google.guava", "guava-jdk5"),
-        "com.google.oauth-client" % "google-oauth-client" % "1.19.0",
-        "com.google.http-client" % "google-http-client-jackson2" % "1.19.0",
         "com.google.guava" % "guava" % guavaVersion,
         "org.slf4j" % "slf4j-api" % "1.7.7",
         "org.slf4j" % "slf4j-simple" % "1.7.7" % "provided",
