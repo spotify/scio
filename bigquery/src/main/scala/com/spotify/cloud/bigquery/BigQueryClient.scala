@@ -147,10 +147,14 @@ class BigQueryClient private (private val projectId: String, credential: Credent
     } catch {
       case e: GoogleJsonResponseException if e.getStatusCode == 404 =>
         logger.info(s"Creating staging dataset $projectId:$datasetId")
-        val ds = new DatasetReference().setProjectId(projectId).setDatasetId(datasetId)
+        val dsRef = new DatasetReference().setProjectId(projectId).setDatasetId(datasetId)
+        val ds = new Dataset()
+          .setDatasetReference(dsRef)
+          .setDefaultTableExpirationMs(BigQueryClient.STAGING_DATASET_TABLE_EXPIRATION_MS)
+          .setDescription(BigQueryClient.STAGING_DATASET_DESCRIPTION)
         bigquery
           .datasets()
-          .insert(projectId, new Dataset().setDatasetReference(ds))
+          .insert(projectId, ds)
           .execute()
       case e: Throwable => throw e
     }
@@ -220,6 +224,12 @@ object BigQueryClient {
 
   /** Default cache directory. */
   val CACHE_DIRECTORY_DEFAULT: String = sys.props("user.dir") + "/.bigquery"
+
+  /** Table expiration in milliseconds for staging dataset. */
+  val STAGING_DATASET_TABLE_EXPIRATION_MS: Long = 86400000L
+
+  /** Description for staging dataset. */
+  val STAGING_DATASET_DESCRIPTION: String = "Staging dataset for temporary tables"
 
   /** Create a new BigQueryClient instance with the given project and credential. */
   def apply(project: String, credential: Credential): BigQueryClient = new BigQueryClient(project, credential)
