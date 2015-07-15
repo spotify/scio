@@ -74,7 +74,7 @@ object SideInputJoinExamples {
       .map { (kv, side) =>
         val (countryCode, eventInfo) = kv
         val m = side(countryInfo)
-        val countryName = m.getOrElse(countryCode, Nil).headOption.getOrElse("none")
+        val countryName = m.getOrElse(countryCode, "none")
         formatOutput(countryCode, countryName, eventInfo)
       }
       .toSCollection
