@@ -15,6 +15,7 @@ import com.google.cloud.dataflow.sdk.io.{
   PubsubIO => GPubsubIO,
   TextIO => GTextIO
 }
+import com.google.cloud.dataflow.sdk.options.PipelineOptions.CheckEnabled
 import com.google.cloud.dataflow.sdk.options.{PipelineOptionsFactory, DataflowPipelineOptions}
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
@@ -92,6 +93,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
       options.setAppName(CallSites.getAppName)
       Pipeline.create(options)
     }
+    _pipeline.getOptions.setStableUniqueNames(CheckEnabled.WARNING)
     _pipeline.getCoderRegistry.registerScalaCoders()
 
     (_args, _pipeline)
@@ -134,7 +136,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
   /* Read operations */
 
   private def applyInternal[Output <: POutput](root: PTransform[_ >: PBegin, Output]): Output =
-    pipeline.apply(root.setName(CallSites.getCurrent))
+    pipeline.apply(CallSites.getCurrent, root)
 
   /**
    * Get an SCollection of specific record type for an Avro file.
@@ -317,7 +319,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
    */
   def parallelize[T: ClassTag](elems: T*): SCollection[T] = {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
-    wrap(this.applyInternal(Create.of(elems: _*)).setCoder(coder)).setName(elems.toString())
+    wrap(this.applyInternal(Create.of(elems: _*).withCoder(coder))).setName(elems.toString())
   }
 
   /**
@@ -326,7 +328,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
    */
   def parallelize[T: ClassTag](elems: Iterable[T]): SCollection[T] = {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
-    wrap(this.applyInternal(Create.of(elems.asJava)).setCoder(coder)).setName(elems.toString())
+    wrap(this.applyInternal(Create.of(elems.asJava).withCoder(coder))).setName(elems.toString())
   }
 
   /**
@@ -335,7 +337,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
    */
   def parallelize[K: ClassTag, V: ClassTag](elems: Map[K, V]): SCollection[(K, V)] = {
     val coder = pipeline.getCoderRegistry.getScalaKvCoder[K, V]
-    wrap(this.applyInternal(Create.of(elems.asJava)).setCoder(coder)).map(kv => (kv.getKey, kv.getValue))
+    wrap(this.applyInternal(Create.of(elems.asJava).withCoder(coder))).map(kv => (kv.getKey, kv.getValue))
       .setName(elems.toString())
   }
 
@@ -346,7 +348,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
   def parallelizeTimestamped[T: ClassTag](elems: (T, Instant)*): SCollection[T] = {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     val v = elems.map(t => TimestampedValue.of(t._1, t._2))
-    wrap(this.applyInternal(Create.timestamped(v: _*)).setCoder(coder)).setName(elems.toString())
+    wrap(this.applyInternal(Create.timestamped(v: _*).withCoder(coder))).setName(elems.toString())
   }
 
   /**
@@ -356,7 +358,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
   def parallelizeTimestamped[T: ClassTag](elems: Iterable[(T, Instant)]): SCollection[T] = {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     val v = elems.map(t => TimestampedValue.of(t._1, t._2))
-    wrap(this.applyInternal(Create.timestamped(v.asJava)).setCoder(coder)).setName(elems.toString())
+    wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder))).setName(elems.toString())
   }
 
   /**
@@ -367,7 +369,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
                                           timestamps: Iterable[Instant]): SCollection[T] = {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     val v = elems.zip(timestamps).map(t => TimestampedValue.of(t._1, t._2))
-    wrap(this.applyInternal(Create.timestamped(v.asJava)).setCoder(coder)).setName(elems.toString())
+    wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder))).setName(elems.toString())
   }
 
   // =======================================================================

@@ -23,7 +23,12 @@ private[values] class IterableSideInput[T](val view: PCollectionView[JIterable[T
   override def get[I, O](context: DoFn[I, O]#ProcessContext): Iterable[T] = context.sideInput(view).asScala
 }
 
-private[values] class MapSideInput[K, V](val view: PCollectionView[JMap[K, JIterable[V]]])
+private[values] class MapSideInput[K, V](val view: PCollectionView[JMap[K, V]])
+  extends SideInput[Map[K, V]] {
+  override def get[I, O](context: DoFn[I, O]#ProcessContext): Map[K, V] = context.sideInput(view).asScala.toMap
+}
+
+private[values] class MultiMapSideInput[K, V](val view: PCollectionView[JMap[K, JIterable[V]]])
   extends SideInput[Map[K, Iterable[V]]] {
   override def get[I, O](context: DoFn[I, O]#ProcessContext): Map[K, Iterable[V]] =
     context.sideInput(view).asScala.map(kv => (kv._1, kv._2.asScala))(breakOut)

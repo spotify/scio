@@ -40,11 +40,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollection[U]]() {
       override def apply(input: PCollection[(K, V)]): PCollection[U] =
         input
-          .apply(toKvTransform.setName("TupleToKv"))
+          .apply("TupleToKv", toKvTransform)
           .setCoder(self.getKvCoder[K, V])
           .apply(t)
           .setCoder(self.getCoder[U])
-    }.setName(CallSites.getCurrent))
+    })
     context.wrap(o)
   }
 
@@ -54,12 +54,12 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollection[(K, UO)]]() {
       override def apply(input: PCollection[(K, V)]): PCollection[(K, UO)] =
         input
-          .apply(toKvTransform.setName("TupleToKv"))
+          .apply("TupleToKv", toKvTransform)
           .setCoder(self.getKvCoder[K, V])
           .apply(t)
-          .apply(ParDo.of(Functions.mapFn[KV[K, UI], (K, UO)](f)).setName("KvToTuple"))
+          .apply("KvToTuple", ParDo.of(Functions.mapFn[KV[K, UI], (K, UO)](f)))
           .setCoder(self.getCoder[(K, UO)])
-    }.setName(CallSites.getCurrent))
+    })
     context.wrap(o)
   }
 
@@ -77,7 +77,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     val keyed = KeyedPCollectionTuple
       .of(tagV, this.toKV.internal)
       .and(tagW, that.toKV.internal)
-      .apply(CoGroupByKey.create().setName(CallSites.getCurrent))
+      .apply(CallSites.getCurrent, CoGroupByKey.create())
 
     context.wrap(keyed).map { kv =>
       val (k, r) = (kv.getKey, kv.getValue)
@@ -99,7 +99,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
       .of(tagV, this.toKV.internal)
       .and(tagW1, that1.toKV.internal)
       .and(tagW2, that2.toKV.internal)
-      .apply(CoGroupByKey.create().setName(CallSites.getCurrent))
+      .apply(CallSites.getCurrent, CoGroupByKey.create())
 
     context.wrap(keyed).map { kv =>
       val (k, r) = (kv.getKey, kv.getValue)
@@ -123,7 +123,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
       .and(tagW1, that1.toKV.internal)
       .and(tagW2, that2.toKV.internal)
       .and(tagW3, that3.toKV.internal)
-      .apply(CoGroupByKey.create().setName(CallSites.getCurrent))
+      .apply(CallSites.getCurrent, CoGroupByKey.create())
 
     context.wrap(keyed).map { kv =>
       val (k, r) = (kv.getKey, kv.getValue)
@@ -454,7 +454,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group transform
    */
   def hashJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, W))] = {
-    val side = that.asMapSideInput
+    val side = that.asMultiMapSideInput
     self.withSideInputs(side).flatMap[(K, (V, W))] { (kv, s) =>
       s(side).getOrElse(kv._1, Iterable()).toSeq.map(w => (kv._1, (kv._2, w)))
     }.toSCollection
@@ -466,7 +466,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group transform
    */
   def hashLeftJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, Option[W]))] = {
-    val side = that.asMapSideInput
+    val side = that.asMultiMapSideInput
     self.withSideInputs(side).flatMap[(K, (V, Option[W]))] { (kv, s) =>
       val (k, v) = kv
       val m = s(side)
@@ -479,9 +479,17 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   // =======================================================================
 
   /**
+   * Convert this SCollection of (key, value) to a SideInput of Map[key, value], to be used with
+   * [[SCollection.withSideInputs]]. It is required that each key of the input be associated with
+   * a single value.
+   */
+  def asMapSideInput: SideInput[Map[K, V]] = new MapSideInput[K, V](self.toKV.applyInternal(View.asMap()))
+
+  /**
    * Convert this SCollection of (key, value) to a SideInput of Map[key, Iterable[value]], to be
    * used with [[SCollection.withSideInputs]].
    */
-  def asMapSideInput: SideInput[Map[K, Iterable[V]]] = new MapSideInput[K, V](self.toKV.applyInternal(View.asMap()))
+  def asMultiMapSideInput: SideInput[Map[K, Iterable[V]]] =
+    new MultiMapSideInput[K, V](self.toKV.applyInternal(View.asMultimap()))
 
 }

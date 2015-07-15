@@ -9,7 +9,7 @@ class SCollectionWithSideInputTest extends PipelineTest {
       val p1 = context.parallelize(10, 11, 12)
       val p2 = context.parallelize(1).asSingletonSideInput
       val p3 = context.parallelize(1, 2, 3).asIterableSideInput
-      val p4 = context.parallelize((10, 0), (11, 1), (12, 2)).asMapSideInput
+      val p4 = context.parallelize((10, 0), (11, 1), (12, 2)).asMultiMapSideInput
       val s1 = p1.withSideInputs(p2).filter((x, s) => (x + s(p2)) % 2 == 0)
       val s2 = p1.withSideInputs(p3).filter((x, s) => (x + s(p3).sum) % 2 == 0)
       val s3 = p1.withSideInputs(p4).filter((x, s) => (x + s(p4)(x).sum) % 2 == 0)
@@ -26,7 +26,7 @@ class SCollectionWithSideInputTest extends PipelineTest {
       val p1 = context.parallelize("a", "b", "c")
       val p2 = context.parallelize(1).asSingletonSideInput
       val p3 = context.parallelize(1, 2, 3).asIterableSideInput
-      val p4 = context.parallelize(("a", 1), ("a", 2), ("b", 3), ("b", 4)).asMapSideInput
+      val p4 = context.parallelize(("a", 1), ("a", 2), ("b", 3), ("b", 4)).asMultiMapSideInput
       val s1 = p1.withSideInputs(p2).flatMap((x, s) => Seq(x + s(p2) + "x", x + s(p2) + "y"))
       val s2 = p1.withSideInputs(p3).flatMap((x, s) => s(p3).map(x + _))
       val s3 = p1.withSideInputs(p4).flatMap((x, s) => s(p4).getOrElse(x, Nil).map(x + _))
@@ -45,7 +45,7 @@ class SCollectionWithSideInputTest extends PipelineTest {
       val p1 = context.parallelize("a", "b", "c")
       val p2 = context.parallelize(1).asSingletonSideInput
       val p3 = context.parallelize(1, 2, 3).asIterableSideInput
-      val p4 = context.parallelize(("a", 1), ("b", 2), ("c", 3)).asMapSideInput
+      val p4 = context.parallelize(("a", 1), ("b", 2), ("c", 3)).asMultiMapSideInput
       val s1 = p1.withSideInputs(p2).keyBy(_ + _(p2))
       val s2 = p1.withSideInputs(p3).keyBy(_ + _(p3).sum)
       val s3 = p1.withSideInputs(p4).keyBy((x, s) => x + s(p4)(x).sum)
@@ -62,7 +62,7 @@ class SCollectionWithSideInputTest extends PipelineTest {
       val p1 = context.parallelize("a", "b", "c")
       val p2 = context.parallelize(1).asSingletonSideInput
       val p3 = context.parallelize(1, 2, 3).asIterableSideInput
-      val p4 = context.parallelize(("a", 1), ("b", 2), ("c", 3)).asMapSideInput
+      val p4 = context.parallelize(("a", 1), ("b", 2), ("c", 3)).asMultiMapSideInput
       val s1 = p1.withSideInputs(p2).map(_ + _(p2))
       val s2 = p1.withSideInputs(p3).map(_ + _(p3).sum)
       val s3 = p1.withSideInputs(p4).map((x, s) => x + s(p4)(x).sum)
@@ -79,7 +79,7 @@ class SCollectionWithSideInputTest extends PipelineTest {
       val p1 = context.parallelize("a", "b", "c")
       val p2 = context.parallelize(1).asSingletonSideInput
       val p3 = context.parallelize(1, 2, 3).asIterableSideInput
-      val p4 = context.parallelize(("a", 1), ("b", 2), ("c", 3)).asMapSideInput
+      val p4 = context.parallelize(("a", 1), ("b", 2), ("c", 3)).asMultiMapSideInput
       val s1 = p1.withSideInputs(p2)
         .filter((x, s) => x == "a")
         .flatMap((x, s) => Seq(x + s(p2) + "x", x + s(p2) + "y"))

@@ -38,7 +38,7 @@ object SCollection {
 
   /** Create a union of multiple SCollections */
   def unionAll[T: ClassTag](scs: Iterable[SCollection[T]]): SCollection[T] = {
-    val o = PCollectionList.of(scs.map(_.internal).asJava).apply(Flatten.pCollections().setName(CallSites.getCurrent))
+    val o = PCollectionList.of(scs.map(_.internal).asJava).apply(CallSites.getCurrent, Flatten.pCollections())
     new SCollectionImpl(o, scs.head.context)
   }
 
@@ -113,7 +113,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def union(that: SCollection[T]): SCollection[T] = {
     val o = PCollectionList
       .of(internal).and(that.internal)
-      .apply(Flatten.pCollections().setName(CallSites.getCurrent))
+      .apply(CallSites.getCurrent, Flatten.pCollections())
     context.wrap(o)
   }
 
@@ -427,7 +427,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group hash
    */
   def hashLookup[V: ClassTag](that: SCollection[(T, V)]): SCollection[(T, Iterable[V])] = {
-    val side = that.asMapSideInput
+    val side = that.asMultiMapSideInput
     this
       .withSideInputs(side)
       .map((t, s) => (t, s(side).getOrElse(t, Iterable())))
