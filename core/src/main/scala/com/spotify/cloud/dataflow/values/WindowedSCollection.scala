@@ -13,7 +13,7 @@ case class WindowOptions[W <: BoundedWindow](allowedLateness: Duration = null,
                                              trigger: Trigger[W] = null,
                                              accumulationMode: AccumulationMode = null)
 
-case class WindowedValue[T](value: T, timestamp: Instant, windows: Iterable[BoundedWindow])
+case class WindowedValue[T](value: T, timestamp: Instant, window: BoundedWindow)
 
 class WindowedSCollection[T: ClassTag] private[values] (val internal: PCollection[T],
                                                         private[values] val context: DataflowContext)

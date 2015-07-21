@@ -1,3 +1,4 @@
+// DONE
 package com.spotify.cloud.dataflow.examples
 
 import com.google.cloud.dataflow.sdk.transforms.windowing.IntervalWindow
@@ -33,18 +34,18 @@ object TopWikipediaSessions {
       }
       .timestampBy(kv => new Instant(kv._2 * 1000L))
       .map(_._1)
-      .filter(s => Math.abs(s.hashCode) <= Int.MaxValue * samplingThreshold)
+      .sample(withReplacement = false, fraction = samplingThreshold)
       .withSessionWindows(Duration.standardHours(1))
       .countByValue()
       .toWindowed
-      .map { wv => wv.copy((wv.value._1 + " : " + wv.windows.head, wv.value._2)) }
+      .map(wv => wv.copy((wv.value._1 + " : " + wv.window, wv.value._2)))
       .toSCollection
       .windowByMonths(1)
       .top(1)(Ordering.by(_._2))
       .toWindowed
       .flatMap { wv =>
         wv.value.map { kv =>
-          val o = kv._1 + " : " + kv._2 + " : " + wv.windows.head.asInstanceOf[IntervalWindow].start()
+          val o = kv._1 + " : " + kv._2 + " : " + wv.window.asInstanceOf[IntervalWindow].start()
           wv.copy(value = o)
         }
       }
