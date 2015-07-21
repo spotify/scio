@@ -1,4 +1,4 @@
-package com.spotify.cloud.dataflow.examples
+package com.spotify.cloud.dataflow.examples.extra
 
 import com.spotify.cloud.bigquery._
 import com.spotify.cloud.dataflow.testing._
@@ -22,7 +22,7 @@ class DistCacheExampleTest extends JobSpec {
   val expected = Seq("Jan 3", "Feb 2", "Mar 1")
 
   "DistCacheExample" should "work" in {
-    JobTest("com.spotify.cloud.dataflow.examples.DistCacheExample")
+    JobTest("com.spotify.cloud.dataflow.examples.extra.DistCacheExample")
       .args("--output=out.txt")
       .input(TableRowJsonIO(DistCacheExample.EXPORTED_WIKI_TABLE), in)
       .distCache(DistCacheIO("gs://dataflow-samples/samples/misc/months.txt"), distCache)

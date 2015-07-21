@@ -1,12 +1,12 @@
-package com.spotify.cloud.dataflow.examples
+package com.spotify.cloud.dataflow.examples.cookbook
 
-import com.google.api.services.bigquery.model.TableRow
+import com.spotify.cloud.bigquery._
 import com.spotify.cloud.dataflow.testing._
 
 class FilterExamplesTest extends JobSpec {
 
   def gsodRow(year: Int, month: Int, day: Int, meanTemp: Double) =
-    new TableRow().set("year", year).set("month", month).set("day", day).set("mean_temp", meanTemp)
+    TableRow("year" -> year, "month" -> month, "day" -> day, "mean_temp" -> meanTemp)
 
   val input = Seq(
     (2015, 1, 1, 40.0),
@@ -20,7 +20,7 @@ class FilterExamplesTest extends JobSpec {
   ).map((gsodRow _).tupled)
 
   "FilterExamples" should "work" in {
-    JobTest("com.spotify.cloud.dataflow.examples.FilterExamples")
+    JobTest("com.spotify.cloud.dataflow.examples.cookbook.FilterExamples")
       .args("--output=dataset.table")
       .input(BigQueryIO(FilterExamples.WEATHER_SAMPLES_TABLE), input)
       .output(BigQueryIO("dataset.table"))(_ should equalInAnyOrder (expected))

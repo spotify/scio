@@ -4,6 +4,8 @@ import java.lang.reflect.InvocationTargetException
 
 import com.google.cloud.dataflow.sdk.values.PCollection
 
+import scala.reflect.ClassTag
+
 /**
  * Set up a Dataflow job for unit testing.
  * To be used in a [[com.spotify.cloud.dataflow.testing.JobSpec JobSpec]]. For example:
@@ -82,5 +84,12 @@ object JobTest {
 
   /** Create a new JobTest.Builder instance. */
   def apply(className: String): Builder = Builder(className, Array(), Map.empty, Map.empty, Map.empty)
+
+  /** Create a new JobTest.Builder instance. */
+  def apply[T: ClassTag]: Builder = {
+    val className= implicitly[ClassTag[T]].runtimeClass.getName.replaceAll("\\$$", "")
+    println(className)
+    Builder(className, Array(), Map.empty, Map.empty, Map.empty)
+  }
 
 }

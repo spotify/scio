@@ -1,6 +1,6 @@
-package com.spotify.cloud.dataflow.examples
+package com.spotify.cloud.dataflow.examples.cookbook
 
-import com.google.api.services.bigquery.model.{TableSchema, TableFieldSchema}
+import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.cloud.bigquery._
 import com.spotify.cloud.dataflow._
 
@@ -10,7 +10,7 @@ import scala.collection.SortedSet
 /*
 SBT
 runMain
-  com.spotify.cloud.dataflow.examples.CombinePerKeyExamples
+  com.spotify.cloud.dataflow.examples.cookbook.CombinePerKeyExamples
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/path/to/staging
   --output=[DATASET].combine_per_key_examples
@@ -24,15 +24,15 @@ object CombinePerKeyExamples {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (context, args) = ContextAndArgs(cmdlineArgs)
 
-    val fields = List(
+    val schema = new TableSchema().setFields(List(
       new TableFieldSchema().setName("word").setType("STRING"),
-      new TableFieldSchema().setName("all_plays").setType("STRING"))
-    val schema = new TableSchema().setFields(fields.asJava)
+      new TableFieldSchema().setName("all_plays").setType("STRING")
+    ).asJava)
 
     context.bigQueryTable(args.getOrElse("input", SHAKESPEARE_TABLE))
       .flatMap { row =>
-        val playName = row.get("corpus").toString
-        val word = row.get("word").toString
+        val playName = row.getString("corpus")
+        val word = row.getString("word")
         if (word.length > MIN_WORD_LENGTH) Seq((word, playName)) else Nil
       }
       // Sort values to make test happy

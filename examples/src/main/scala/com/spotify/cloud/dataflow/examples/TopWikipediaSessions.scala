@@ -1,4 +1,3 @@
-// DONE
 package com.spotify.cloud.dataflow.examples
 
 import com.google.cloud.dataflow.sdk.transforms.windowing.IntervalWindow

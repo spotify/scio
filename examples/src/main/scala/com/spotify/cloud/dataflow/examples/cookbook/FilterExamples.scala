@@ -1,6 +1,6 @@
-package com.spotify.cloud.dataflow.examples
+package com.spotify.cloud.dataflow.examples.cookbook
 
-import com.google.api.services.bigquery.model.{TableSchema, TableFieldSchema}
+import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.cloud.bigquery._
 import com.spotify.cloud.dataflow._
 
@@ -18,31 +18,28 @@ runMain
 */
 
 object FilterExamples {
-  val WEATHER_SAMPLES_TABLE = "publicdata:samples.gsod"
+  val WEATHER_SAMPLES_TABLE = "clouddataflow-readonly:samples.weather_stations"
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (context, args) = ContextAndArgs(cmdlineArgs)
 
-    val fields = List(
+    val schema = new TableSchema().setFields(List(
       new TableFieldSchema().setName("year").setType("INTEGER"),
       new TableFieldSchema().setName("month").setType("INTEGER"),
       new TableFieldSchema().setName("day").setType("INTEGER"),
-      new TableFieldSchema().setName("mean_temp").setType("FLOAT"))
-    val schema = new TableSchema().setFields(fields.asJava)
-
-    def recordToRow(r: Record): TableRow =
-      TableRow("year" -> r.year, "month" -> r.month, "day" -> r.day, "mean_temp" -> r.meanTemp)
+      new TableFieldSchema().setName("mean_temp").setType("FLOAT")
+    ).asJava)
 
     val monthFilter = args.getOrElse("monthFilter", "7").toInt
 
     val pipe = context.bigQueryTable(args.getOrElse("input", WEATHER_SAMPLES_TABLE))
       .map { row =>
-      val year = row.getInt("year")
-      val month = row.getInt("month")
-      val day = row.getInt("day")
-      val meanTemp = row.getDouble("mean_temp")
-      Record(year, month, day, meanTemp)
-    }
+        val year = row.getInt("year")
+        val month = row.getInt("month")
+        val day = row.getInt("day")
+        val meanTemp = row.getDouble("mean_temp")
+        Record(year, month, day, meanTemp)
+      }
 
     val globalMeanTemp = pipe.map(_.meanTemp).mean()
 
@@ -51,7 +48,7 @@ object FilterExamples {
       .cross(globalMeanTemp)
       .filter(kv => kv._1.meanTemp < kv._2)
       .keys
-      .map(recordToRow)
+      .map(r => TableRow("year" -> r.year, "month" -> r.month, "day" -> r.day, "mean_temp" -> r.meanTemp))
       .saveAsBigQuery(args("output"), schema, CREATE_IF_NEEDED, WRITE_TRUNCATE)
 
     context.close()

@@ -1,4 +1,4 @@
-package com.spotify.cloud.dataflow.examples
+package com.spotify.cloud.dataflow.examples.cookbook
 
 import com.spotify.cloud.bigquery._
 import com.spotify.cloud.dataflow.testing._
@@ -35,7 +35,7 @@ class JoinExamplesTest extends JobSpec {
   ).map((result _).tupled)
 
   "JoinExamples" should "work" in {
-    JobTest("com.spotify.cloud.dataflow.examples.JoinExamples")
+    JobTest("com.spotify.cloud.dataflow.examples.cookbook.JoinExamples")
       .args("--output=out.txt")
       .input(BigQueryIO(EVENT_TABLE), eventData)
       .input(BigQueryIO(COUNTRY_TABLE), countryData)
@@ -44,7 +44,7 @@ class JoinExamplesTest extends JobSpec {
   }
 
   "SideInputJoinExamples" should "work" in {
-    JobTest("com.spotify.cloud.dataflow.examples.SideInputJoinExamples")
+    JobTest("com.spotify.cloud.dataflow.examples.cookbook.SideInputJoinExamples")
       .args("--output=out.txt")
       .input(BigQueryIO(EVENT_TABLE), eventData)
       .input(BigQueryIO(COUNTRY_TABLE), countryData)
@@ -53,7 +53,7 @@ class JoinExamplesTest extends JobSpec {
   }
 
   "HashJoinExamples" should "work" in {
-    JobTest("com.spotify.cloud.dataflow.examples.HashJoinExamples")
+    JobTest("com.spotify.cloud.dataflow.examples.cookbook.HashJoinExamples")
       .args("--output=out.txt")
       .input(BigQueryIO(EVENT_TABLE), eventData)
       .input(BigQueryIO(COUNTRY_TABLE), countryData)

@@ -1,4 +1,4 @@
-package com.spotify.cloud.dataflow.examples
+package com.spotify.cloud.dataflow.examples.extra
 
 import com.spotify.cloud.bigquery._
 import com.spotify.cloud.dataflow._

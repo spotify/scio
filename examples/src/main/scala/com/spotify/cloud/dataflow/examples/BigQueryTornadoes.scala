@@ -1,7 +1,11 @@
 package com.spotify.cloud.dataflow.examples
 
+import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import com.spotify.cloud.bigquery._
 import com.spotify.cloud.dataflow._
 import com.spotify.cloud.dataflow.experimental._
+
+import scala.collection.JavaConverters._
 
 /*
 sbt -Dbigquery.secret=/path/to/secret.json -Dbigquery.project=[PROJECT]
@@ -10,10 +14,41 @@ runMain
   com.spotify.cloud.dataflow.examples.BigQueryTornadoes
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/path/to/staging
+  --input=clouddataflow-readonly:samples.weather_stations
   --output=[DATASET].bigquery_tornadoes
 */
 
 object BigQueryTornadoes {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (context, args) = ContextAndArgs(cmdlineArgs)
+
+    val schema = new TableSchema().setFields(List(
+      new TableFieldSchema().setName("month").setType("INTEGER"),
+      new TableFieldSchema().setName("tornado_count").setType("INTEGER")
+    ).asJava)
+
+    context
+      .bigQueryTable(args.getOrElse("input", "clouddataflow-readonly:samples.weather_stations"))
+      .flatMap(r => if (r.getBoolean("tornado")) Seq(r.getInt("month")) else Nil)
+      .countByValue()
+      .map(kv => TableRow("month" -> kv._1, "tornado_count" -> kv._2))
+      .saveAsBigQuery(args("output"), schema, CREATE_IF_NEEDED, WRITE_TRUNCATE)
+
+    context.close()
+  }
+}
+
+/*
+sbt -Dbigquery.secret=/path/to/secret.json -Dbigquery.project=[PROJECT]
+
+runMain
+  com.spotify.cloud.dataflow.examples.TypedBigQueryTornadoes
+  --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
+  --stagingLocation=gs://[BUCKET]/path/to/staging
+  --output=[DATASET].typed_bigquery_tornadoes
+*/
+
+object TypedBigQueryTornadoes {
 
   // Annotate input class with schema inferred from a BigQuery SELECT.
   // Class Row will be expanded into a case class with fields from the SELECT query. A companion

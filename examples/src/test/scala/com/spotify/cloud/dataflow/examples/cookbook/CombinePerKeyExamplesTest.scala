@@ -1,4 +1,4 @@
-package com.spotify.cloud.dataflow.examples
+package com.spotify.cloud.dataflow.examples.cookbook
 
 import com.spotify.cloud.bigquery._
 import com.spotify.cloud.dataflow.testing._
@@ -23,7 +23,7 @@ class CombinePerKeyExamplesTest extends JobSpec {
   ).map(kv => TableRow("word" -> kv._1, "all_plays" -> kv._2))
 
   "CombinePerKeyExamples" should "work" in {
-    JobTest("com.spotify.cloud.dataflow.examples.CombinePerKeyExamples")
+    JobTest("com.spotify.cloud.dataflow.examples.cookbook.CombinePerKeyExamples")
       .args("--output=dataset.table")
       .input(BigQueryIO(CombinePerKeyExamples.SHAKESPEARE_TABLE), input)
       .output(BigQueryIO("dataset.table"))(_ should equalInAnyOrder (expected))

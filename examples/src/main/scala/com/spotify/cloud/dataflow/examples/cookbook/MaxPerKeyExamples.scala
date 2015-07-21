@@ -1,6 +1,6 @@
-package com.spotify.cloud.dataflow.examples
+package com.spotify.cloud.dataflow.examples.cookbook
 
-import com.google.api.services.bigquery.model.{TableSchema, TableFieldSchema}
+import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.cloud.bigquery._
 import com.spotify.cloud.dataflow._
 
@@ -17,15 +17,14 @@ runMain
 
 object MaxPerKeyExamples {
 
-  val WEATHER_SAMPLE_TABLE = "publicdata:samples.gsod"
+  val WEATHER_SAMPLE_TABLE = "clouddataflow-readonly:samples.weather_stations"
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (context, args) = ContextAndArgs(cmdlineArgs)
 
-    val fields = List(
+    val schema = new TableSchema().setFields(List(
       new TableFieldSchema().setName("month").setType("INTEGER"),
-      new TableFieldSchema().setName("max_mean_temp").setType("FLOAT"))
-    val schema = new TableSchema().setFields(fields.asJava)
+      new TableFieldSchema().setName("max_mean_temp").setType("FLOAT")).asJava)
 
     context
       .bigQueryTable(args.getOrElse("input", WEATHER_SAMPLE_TABLE))

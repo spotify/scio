@@ -1,5 +1,6 @@
 package com.spotify.cloud.dataflow.examples
 
+import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
 import com.spotify.cloud.dataflow._
 
 /*
@@ -16,10 +17,19 @@ object WordCount {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (context, args) = ContextAndArgs(cmdlineArgs)
 
+    val input = args.getOrElse("input", "gs://dataflow-samples/shakespeare/kinglear.txt")
+    val output = args.optional("output").getOrElse(
+      if (context.options.getStagingLocation != null) {
+        GcsPath.fromUri(context.options.getStagingLocation).resolve("counts.txt").toString
+      } else {
+        throw new IllegalArgumentException("Must specify --output or --stagingLocation")
+      })
+
     val max = context.maxAccumulator[Int]("maxLineLength")
     val min = context.minAccumulator[Int]("minLineLength")
     val sum = context.sumAccumulator[Long]("emptyLines")
-    context.textFile(args.getOrElse("input", "gs://dataflow-samples/shakespeare/kinglear.txt"))
+
+    context.textFile(input)
       .withAccumulator(max, min, sum)
       .filter { (l, c) =>
         val t = l.trim
@@ -32,7 +42,7 @@ object WordCount {
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue()
       .map(t => t._1 + ": " + t._2)
-      .saveAsTextFile(args("output"))
+      .saveAsTextFile(output)
 
     context.close()
   }

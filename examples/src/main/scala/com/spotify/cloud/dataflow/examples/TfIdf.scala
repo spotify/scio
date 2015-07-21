@@ -35,7 +35,7 @@ object TfIdf {
       if (absoluteUri.getScheme == "file") {
         val dir = new File(absoluteUri)
         dir.list().map(e => new File(dir, e).toURI).toSet
-      } else {
+      } else if (absoluteUri.getScheme == "gs") {
         val glob = new URI(
           absoluteUri.getScheme,
           absoluteUri.getAuthority,
@@ -43,15 +43,17 @@ object TfIdf {
           absoluteUri.getQuery,
           absoluteUri.getFragment)
         context.options.asInstanceOf[GcsOptions].getGcsUtil.expand(GcsPath.fromUri(glob)).asScala.map(_.toUri).toSet
+      } else {
+        throw new IllegalArgumentException(s"Unsupported scheme ${absoluteUri.getScheme}")
       }
     }
 
-    val docs = SCollection.unionAll(uris.map { uri =>
+    val uriToContent = SCollection.unionAll(uris.map { uri =>
       val uriString = if (uri.getScheme == "file") new File(uri).getPath else uri.toString
       context.textFile(uriString).keyBy(_ => uriString)
     }.toSeq)
 
-    val uriToWords = docs.flatMap { case (uri, line) =>
+    val uriToWords = uriToContent.flatMap { case (uri, line) =>
       line.split("\\W+").filter(_.nonEmpty).map(w => (uri, w.toLowerCase))
     }  // (d, t)
 
@@ -61,7 +63,7 @@ object TfIdf {
 
 
     val wordToDf = uriToWords.distinct().values.countByValue()  // (t, df)
-      .cross(docs.keys.distinct().count())  // N
+      .cross(uriToContent.keys.distinct().count())  // N
       .map { case ((t, df), numDocs) => (t, df.toDouble / numDocs) }  // (t, df/N)
 
     uriToWords.keys.countByValue()  // (d, |d|)

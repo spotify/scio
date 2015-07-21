@@ -15,4 +15,12 @@ class WordCountTest extends JobSpec {
       .run()
   }
 
+  "MinimalWordCount" should "work" in {
+    JobTest("com.spotify.cloud.dataflow.examples.MinimalWordCount")
+      .args("--input=in.txt", "--output=out.txt")
+      .input(TextIO("in.txt"), inData)
+      .output(TextIO("out.txt"))(_ should equalInAnyOrder (expected))
+      .run()
+  }
+
 }

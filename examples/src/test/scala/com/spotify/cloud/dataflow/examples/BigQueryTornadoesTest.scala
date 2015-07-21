@@ -18,6 +18,14 @@ class BigQueryTornadoesTest extends JobSpec {
 
   "BigQueryTornadoes" should "work" in {
     JobTest("com.spotify.cloud.dataflow.examples.BigQueryTornadoes")
+      .args("--input=publicdata:samples.gsod", "--output=dataset.table")
+      .input(BigQueryIO("publicdata:samples.gsod"), input)
+      .output(BigQueryIO("dataset.table"))(_ should equalInAnyOrder (expected))
+      .run()
+  }
+
+  "TypedBigQueryTornadoes" should "work" in {
+    JobTest("com.spotify.cloud.dataflow.examples.TypedBigQueryTornadoes")
       .args("--output=dataset.table")
       .input(BigQueryIO("SELECT tornado, month FROM [publicdata:samples.gsod]"), input)
       .output(BigQueryIO("dataset.table"))(_ should equalInAnyOrder (expected))

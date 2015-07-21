@@ -1,4 +1,4 @@
-package com.spotify.cloud.dataflow.examples
+package com.spotify.cloud.dataflow.examples.cookbook
 
 import com.spotify.cloud.bigquery._
 import com.spotify.cloud.dataflow._
@@ -14,22 +14,22 @@ runMain
 
 object JoinUtil {
 
-  val EVENT_TABLE = "gdelt-bq:gdeltv2.events"
+  val EVENT_TABLE = "clouddataflow-readonly:samples.gdelt_sample"
   val COUNTRY_TABLE = "gdelt-bq:full.crosswalk_geocountrycodetohuman"
 
   def extractEventInfo(row: TableRow): Seq[(String, String)] = {
-    val countryCode = row.get("ActionGeo_CountryCode").asInstanceOf[String]
-    val sqlDate = row.get("SQLDATE").asInstanceOf[String]
-    val actor1Name = row.get("Actor1Name").asInstanceOf[String]
-    val sourceUrl = row.get("SOURCEURL").asInstanceOf[String]
+    val countryCode = row.getString("ActionGeo_CountryCode")
+    val sqlDate = row.getString("SQLDATE")
+    val actor1Name = row.getString("Actor1Name")
+    val sourceUrl = row.getString("SOURCEURL")
     val eventInfo = s"Date: $sqlDate, Actor1: $actor1Name, url: $sourceUrl"
 
     if (countryCode == null || eventInfo == null) Nil else Seq((countryCode, eventInfo))
   }
 
   def extractCountryInfo(row: TableRow): (String, String) = {
-    val countryCode = row.get("FIPSCC").asInstanceOf[String]
-    val countryName = row.get("HumanName").asInstanceOf[String]
+    val countryCode = row.getString("FIPSCC")
+    val countryName = row.getString("HumanName")
     (countryCode, countryName)
   }
 
