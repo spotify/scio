@@ -41,7 +41,7 @@ object DataflowScalaBuild extends Build {
   import BuildSettings._
   import SiteSettings._
 
-  val sdkVersion = "0.4.150710"
+  val sdkVersion = "0.4.150727"
 
   val guavaVersion = "18.0"
   val chillVersion = "0.5.2"
@@ -106,7 +106,7 @@ object DataflowScalaBuild extends Build {
     file("bigquery"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
-        "com.google.apis" % "google-api-services-bigquery" % "v2-rev218-1.19.1"
+        "com.google.apis" % "google-api-services-bigquery" % "v2-rev218-1.20.0"
           exclude ("com.google.guava", "guava-jdk5"),
         "com.google.guava" % "guava" % guavaVersion,
         "org.slf4j" % "slf4j-api" % "1.7.7",
