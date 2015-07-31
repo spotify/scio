@@ -31,7 +31,11 @@ private[dataflow] object Implicits {
     def getScalaCoder[T: ClassTag]: Coder[T] = {
       val ct = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
       val tt = TypeDescriptor.of(ct)
-      val coder = r.getDefaultCoder(tt)
+      val coder = try {
+        r.getDefaultCoder(tt)
+      } catch {
+        case e: Throwable=> null
+      }
 
       // For classes not registered in CoderRegistry, it returns
       // SerializableCoder if the class extends Serializable or null otherwise.

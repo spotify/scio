@@ -40,7 +40,7 @@ object WindowedWordCount {
         wv.copy(value = wv.value, timestamp = new Instant(randomTimestamp))
       }
       .toSCollection
-      .withFixedWindows(Duration.standardMinutes(args.optional("windowSize").map(_.toInt).getOrElse(WINDOW_SIZE)))
+      .withFixedWindows(Duration.standardMinutes(args.optional("windowSize").map(_.toLong).getOrElse(WINDOW_SIZE)))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue()
       .toWindowed
