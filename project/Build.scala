@@ -41,7 +41,7 @@ object DataflowScalaBuild extends Build {
   import BuildSettings._
   import SiteSettings._
 
-  val sdkVersion = "0.4.150727"
+  val sdkVersion = "1.0.0"
 
   val guavaVersion = "18.0"
   val chillVersion = "0.5.2"
