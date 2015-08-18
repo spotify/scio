@@ -14,8 +14,8 @@ object BuildSettings {
     organization       := "com.spotify",
     version            := "0.1.0-SNAPSHOT",
 
-    scalaVersion       := "2.11.6",
-    crossScalaVersions := Seq("2.11.6"),
+    scalaVersion       := "2.11.7",
+    crossScalaVersions := Seq("2.11.7"),
     scalacOptions      ++= Seq("-target:jvm-1.7", "-deprecation", "-feature", "-unchecked"),
     scalacOptions in (Compile,doc)     ++= Seq("-groups"),
     javacOptions in (Compile)          ++= Seq("-source", "1.7"),
