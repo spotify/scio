@@ -21,7 +21,6 @@ class KryoAtomicCoderTest extends FlatSpec with Matchers with PipelineTest {
         testRoundTrip(left(), left(), value),
         s"CoderRegistry did not round trip $value",
         s"CoderRegistry did round trip $value")
-
     }
   }
 
