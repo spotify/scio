@@ -31,13 +31,13 @@ object AutoComplete {
     }
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (context, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val input = if (args.optional("inputFile").isDefined) {
-      context.textFile(args("inputFile"))
+      sc.textFile(args("inputFile"))
     } else {
-      context.options.setStreaming(true)
-      context.pubsubTopic(args("inputTopic")).withSlidingWindows(Duration.standardMinutes(30))
+      sc.options.setStreaming(true)
+      sc.pubsubTopic(args("inputTopic")).withSlidingWindows(Duration.standardMinutes(30))
     }
 
 //    val candidates = input.flatMap(l => "#\\S+".r.findAllIn(l).map(_.substring(1))).countByValue()
@@ -87,6 +87,6 @@ object AutoComplete {
         .saveAsDatastore(args("outputDataset"))
     }
 
-    context.close()
+    sc.close()
   }
 }

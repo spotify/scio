@@ -447,9 +447,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * [[ScioContext.minAccumulator]] or [[ScioContext.sumAccumulator]]. For example:
    *
    * {{{
-   * val maxLineLength = context.maxAccumulator[Int]("maxLineLength")
-   * val minLineLength = context.maxAccumulator[Int]("maxLineLength")
-   * val emptyLines = context.maxAccumulator[Long]("emptyLines")
+   * val maxLineLength = sc.maxAccumulator[Int]("maxLineLength")
+   * val minLineLength = sc.maxAccumulator[Int]("maxLineLength")
+   * val emptyLines = sc.maxAccumulator[Long]("emptyLines")
    *
    * val p: SCollection[String] = // ...
    * p

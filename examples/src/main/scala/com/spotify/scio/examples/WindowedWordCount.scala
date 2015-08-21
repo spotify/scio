@@ -24,7 +24,7 @@ object WindowedWordCount {
   val WINDOW_SIZE = 1
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (context, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val schema = new TableSchema().setFields(List(
       new TableFieldSchema().setName("word").setType("STRING"),
@@ -32,7 +32,7 @@ object WindowedWordCount {
       new TableFieldSchema().setName("window_timestamp").setType("TIMESTAMP")
     ).asJava)
 
-    context
+    sc
       .textFile(args.getOrElse("input", "gs://dataflow-samples/shakespeare/kinglear.txt"))
       .toWindowed
       .map { wv =>
@@ -50,7 +50,7 @@ object WindowedWordCount {
       .toSCollection
       .saveAsBigQuery(args("output"), schema, CREATE_IF_NEEDED, WRITE_TRUNCATE)
 
-    context.close()
+    sc.close()
   }
 
 }

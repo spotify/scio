@@ -21,7 +21,7 @@ object FilterExamples {
   val WEATHER_SAMPLES_TABLE = "clouddataflow-readonly:samples.weather_stations"
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (context, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val schema = new TableSchema().setFields(List(
       new TableFieldSchema().setName("year").setType("INTEGER"),
@@ -32,7 +32,7 @@ object FilterExamples {
 
     val monthFilter = args.getOrElse("monthFilter", "7").toInt
 
-    val pipe = context.bigQueryTable(args.getOrElse("input", WEATHER_SAMPLES_TABLE))
+    val pipe = sc.bigQueryTable(args.getOrElse("input", WEATHER_SAMPLES_TABLE))
       .map { row =>
         val year = row.getInt("year")
         val month = row.getInt("month")
@@ -51,7 +51,7 @@ object FilterExamples {
       .map(r => TableRow("year" -> r.year, "month" -> r.month, "day" -> r.day, "mean_temp" -> r.meanTemp))
       .saveAsBigQuery(args("output"), schema, CREATE_IF_NEEDED, WRITE_TRUNCATE)
 
-    context.close()
+    sc.close()
   }
 
 }

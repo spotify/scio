@@ -15,21 +15,21 @@ runMain
 
 object WordCount {
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (context, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val input = args.getOrElse("input", "gs://dataflow-samples/shakespeare/kinglear.txt")
     val output = args.optional("output").getOrElse(
-      if (context.options.getStagingLocation != null) {
-        GcsPath.fromUri(context.options.getStagingLocation).resolve("counts.txt").toString
+      if (sc.options.getStagingLocation != null) {
+        GcsPath.fromUri(sc.options.getStagingLocation).resolve("counts.txt").toString
       } else {
         throw new IllegalArgumentException("Must specify --output or --stagingLocation")
       })
 
-    val max = context.maxAccumulator[Int]("maxLineLength")
-    val min = context.minAccumulator[Int]("minLineLength")
-    val sum = context.sumAccumulator[Long]("emptyLines")
+    val max = sc.maxAccumulator[Int]("maxLineLength")
+    val min = sc.minAccumulator[Int]("minLineLength")
+    val sum = sc.sumAccumulator[Long]("emptyLines")
 
-    context.textFile(input)
+    sc.textFile(input)
       .withAccumulator(max, min, sum)
       .filter { (l, c) =>
         val t = l.trim
@@ -44,6 +44,6 @@ object WordCount {
       .map(t => t._1 + ": " + t._2)
       .saveAsTextFile(output)
 
-    context.close()
+    sc.close()
   }
 }

@@ -14,20 +14,20 @@ runMain
 
 object DeDupExample {
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (context, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val input = args.getOrElse("input", "gs://dataflow-samples/shakespeare/*")
     val output = args.optional("output").getOrElse(
-      if (context.options.getStagingLocation != null) {
-        GcsPath.fromUri(context.options.getStagingLocation).resolve("deduped.txt").toString
+      if (sc.options.getStagingLocation != null) {
+        GcsPath.fromUri(sc.options.getStagingLocation).resolve("deduped.txt").toString
       } else {
         throw new IllegalArgumentException("Must specify --output or --stagingLocation")
       })
 
-    context.textFile(input)
+    sc.textFile(input)
       .distinct()
       .saveAsTextFile(output)
 
-    context.close()
+    sc.close()
   }
 }

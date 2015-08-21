@@ -20,21 +20,21 @@ runMain
 
 object BigQueryTornadoes {
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (context, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val schema = new TableSchema().setFields(List(
       new TableFieldSchema().setName("month").setType("INTEGER"),
       new TableFieldSchema().setName("tornado_count").setType("INTEGER")
     ).asJava)
 
-    context
+    sc
       .bigQueryTable(args.getOrElse("input", "clouddataflow-readonly:samples.weather_stations"))
       .flatMap(r => if (r.getBoolean("tornado")) Seq(r.getInt("month")) else Nil)
       .countByValue()
       .map(kv => TableRow("month" -> kv._1, "tornado_count" -> kv._2))
       .saveAsBigQuery(args("output"), schema, CREATE_IF_NEEDED, WRITE_TRUNCATE)
 
-    context.close()
+    sc.close()
   }
 }
 
@@ -64,18 +64,18 @@ object TypedBigQueryTornadoes {
   case class Result(month: Long, tornado_count: Long)
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (context, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     // Get input from BigQuery and convert elements from TableRow to Row.
     // SELECT query from the original annotation is used by default.
-    context.typedBigQuery[Row]()
+    sc.typedBigQuery[Row]()
       .flatMap(r => if (r.tornado.getOrElse(false)) Seq(r.month) else Nil)
       .countByValue()
       .map(kv => Result(kv._1, kv._2))
       // Convert elements from Result to TableRow and save output to BigQuery.
       .saveAsTypedBigQuery(args("output"), CREATE_IF_NEEDED, WRITE_TRUNCATE)
 
-    context.close()
+    sc.close()
   }
 
 }

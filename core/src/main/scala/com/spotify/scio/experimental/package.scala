@@ -38,10 +38,10 @@ package object experimental {
      * class Row
      *
      * // Read from [publicdata:samples.gsod] as specified in the annotation.
-     * context.typedBigQuery[Row]()
+     * sc.typedBigQuery[Row]()
      *
      * // Read from [myproject:samples.gsod] instead.
-     * context.typedBigQuery[Row]("myproject:samples.gsod")
+     * sc.typedBigQuery[Row]("myproject:samples.gsod")
      * }}}
      */
     def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null): SCollection[T] = {
@@ -101,7 +101,7 @@ package object experimental {
      * @BigQueryType.fromTable("publicdata:samples.gsod")
      * class Row
      *
-     * context.typedBigQuery[Row]()
+     * sc.typedBigQuery[Row]()
      *   .sample(withReplacement = false, fraction = 0.1)
      *   .saveAsTypedBigQuery("myproject:samples.gsod")
      * }}}

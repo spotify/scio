@@ -20,11 +20,11 @@ object TopWikipediaSessions {
   val EXPORTED_WIKI_TABLE = "gs://dataflow-samples/wikipedia_edits/*.json"
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (context, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val samplingThreshold = 0.1
 
-    context
+    sc
       .tableRowJsonFile(args.getOrElse("input", EXPORTED_WIKI_TABLE))
       .flatMap { row =>
         try Seq((row.getString("contributor_username"), row.getInt("timestamp"))) catch {
@@ -51,7 +51,7 @@ object TopWikipediaSessions {
       .toSCollection
       .saveAsTextFile(args("output"))
 
-    context.close()
+    sc.close()
   }
 
 }

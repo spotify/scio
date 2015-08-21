@@ -14,14 +14,14 @@ runMain
 
 object MinimalWordCount {
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (context, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    context.textFile(args.getOrElse("input", "gs://dataflow-samples/shakespeare/*"))
+    sc.textFile(args.getOrElse("input", "gs://dataflow-samples/shakespeare/*"))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue()
       .map(t => t._1 + ": " + t._2)
       .saveAsTextFile(args("output"))
 
-    context.close()
+    sc.close()
   }
 }

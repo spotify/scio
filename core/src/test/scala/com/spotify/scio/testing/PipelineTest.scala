@@ -17,24 +17,24 @@ import scala.reflect.ClassTag
 trait PipelineTest extends FlatSpec with Matchers with PCollectionMatcher {
 
   def runWithContext(test: ScioContext => Unit): Unit = {
-    val context = ScioContext(Array("--testId=PipelineTest"))
+    val sc = ScioContext(Array("--testId=PipelineTest"))
 
-    test(context)
+    test(sc)
 
-    context.close()
+    sc.close()
   }
 
   def runWithData[T: ClassTag, U: ClassTag](data: T*)(fn: SCollection[T] => SCollection[U]): Seq[U] = {
-    val context = ScioContext(Array())
+    val sc = ScioContext(Array())
 
-    val p = context.parallelize(data: _*)
+    val p = sc.parallelize(data: _*)
     val tmpFile = new File(
       new File(System.getProperty("java.io.tmpdir")),
       "pipeline-test-" + UUID.randomUUID().toString)
 
     fn(p).map(encode).saveAsTextFile(tmpFile.getPath, numShards = 1)
 
-    context.close()
+    sc.close()
 
     scala.io.Source
       .fromFile(new File(tmpFile, "part-00000-of-00001.txt"))

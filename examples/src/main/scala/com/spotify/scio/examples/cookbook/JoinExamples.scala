@@ -40,12 +40,12 @@ object JoinUtil {
 
 object JoinExamples {
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (context, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     import JoinUtil._
 
-    val eventsInfo = context.bigQueryTable(EVENT_TABLE).flatMap(extractEventInfo)
-    val countryInfo = context.bigQueryTable(COUNTRY_TABLE).map(extractCountryInfo)
+    val eventsInfo = sc.bigQueryTable(EVENT_TABLE).flatMap(extractEventInfo)
+    val countryInfo = sc.bigQueryTable(COUNTRY_TABLE).map(extractCountryInfo)
 
     eventsInfo
       .leftOuterJoin(countryInfo)
@@ -56,18 +56,18 @@ object JoinExamples {
       }
       .saveAsTextFile(args("output"))
 
-    context.close()
+    sc.close()
   }
 }
 
 object SideInputJoinExamples {
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (context, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     import JoinUtil._
 
-    val eventsInfo = context.bigQueryTable(EVENT_TABLE).flatMap(extractEventInfo)
-    val countryInfo = context.bigQueryTable(COUNTRY_TABLE).map(extractCountryInfo).asMapSideInput
+    val eventsInfo = sc.bigQueryTable(EVENT_TABLE).flatMap(extractEventInfo)
+    val countryInfo = sc.bigQueryTable(COUNTRY_TABLE).map(extractCountryInfo).asMapSideInput
 
     eventsInfo
       .withSideInputs(countryInfo)
@@ -80,18 +80,18 @@ object SideInputJoinExamples {
       .toSCollection
       .saveAsTextFile(args("output"))
 
-    context.close()
+    sc.close()
   }
 }
 
 object HashJoinExamples {
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (context, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     import JoinUtil._
 
-    val eventsInfo = context.bigQueryTable(EVENT_TABLE).flatMap(extractEventInfo)
-    val countryInfo = context.bigQueryTable(COUNTRY_TABLE).map(extractCountryInfo)
+    val eventsInfo = sc.bigQueryTable(EVENT_TABLE).flatMap(extractEventInfo)
+    val countryInfo = sc.bigQueryTable(COUNTRY_TABLE).map(extractCountryInfo)
 
     eventsInfo
       .hashLeftJoin(countryInfo)
@@ -102,6 +102,6 @@ object HashJoinExamples {
       }
       .saveAsTextFile(args("output"))
 
-    context.close()
+    sc.close()
   }
 }

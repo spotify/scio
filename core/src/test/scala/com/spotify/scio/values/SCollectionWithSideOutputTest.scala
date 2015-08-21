@@ -5,8 +5,8 @@ import com.spotify.scio.testing.PipelineTest
 class SCollectionWithSideOutputTest extends PipelineTest {
 
   "SCollectionWithSideOutput" should "support map()" in {
-    runWithContext { context =>
-      val p1 = context.parallelize("a", "b", "c")
+    runWithContext { sc =>
+      val p1 = sc.parallelize("a", "b", "c")
       val p2 = SideOutput[String]()
       val (main, side) = p1.withSideOutputs(p2).map { (x, s) => s.output(p2, x + "2"); x + "1" }
       main.internal should containInAnyOrder ("a1", "b1", "c1")
@@ -15,8 +15,8 @@ class SCollectionWithSideOutputTest extends PipelineTest {
   }
 
   it should "support flatMap()" in {
-    runWithContext { context =>
-      val p1 = context.parallelize("a", "b", "c")
+    runWithContext { sc =>
+      val p1 = sc.parallelize("a", "b", "c")
       val p2 = SideOutput[String]()
       val (main, side) = p1.withSideOutputs(p2).flatMap { (x, s) =>
         s.output(p2, x + "2x").output(p2, x + "2y")

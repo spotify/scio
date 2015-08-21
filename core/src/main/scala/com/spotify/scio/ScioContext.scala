@@ -55,7 +55,7 @@ object ScioContext {
 }
 
 /**
- * Main entry point for Dataflow functionality. A DataflowContext represents a Dataflow pipeline,
+ * Main entry point for Dataflow functionality. A ScioContext represents a Dataflow pipeline,
  * and can be used to create SCollections and distributed caches on that cluster.
  *
  * @groupname accumulator Accumulators
@@ -383,7 +383,7 @@ class ScioContext private (cmdlineArgs: Array[String]) {
    *
    * {{{
    * // Prepare distributed cache as Map[Int, String]
-   * val dc = context.distCache("gs://dataflow-samples/samples/misc/months.txt") { f =>
+   * val dc = sc.distCache("gs://dataflow-samples/samples/misc/months.txt") { f =>
    *   scala.io.Source.fromFile(f).getLines().map { s =>
    *     val t = s.split(" ")
    *     (t(0).toInt, t(1))

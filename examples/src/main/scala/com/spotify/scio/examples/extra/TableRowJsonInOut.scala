@@ -14,12 +14,12 @@ runMain
 
 object TableRowJsonInOut {
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (context, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    context.tableRowJsonFile(args("input"))
+    sc.tableRowJsonFile(args("input"))
       .take(100)
       .saveAsTableRowJsonFile(args("output"))
 
-    context.close()
+    sc.close()
   }
 }

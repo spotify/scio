@@ -22,7 +22,7 @@ runMain
 
 object TfIdf {
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (context, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val uris = {
       val baseUri = new URI(args.getOrElse("input", "gs://dataflow-samples/shakespeare/"))
@@ -42,7 +42,7 @@ object TfIdf {
           absoluteUri.getPath + "*",
           absoluteUri.getQuery,
           absoluteUri.getFragment)
-        context.options.asInstanceOf[GcsOptions].getGcsUtil.expand(GcsPath.fromUri(glob)).asScala.map(_.toUri).toSet
+        sc.options.asInstanceOf[GcsOptions].getGcsUtil.expand(GcsPath.fromUri(glob)).asScala.map(_.toUri).toSet
       } else {
         throw new IllegalArgumentException(s"Unsupported scheme ${absoluteUri.getScheme}")
       }
@@ -50,7 +50,7 @@ object TfIdf {
 
     val uriToContent = SCollection.unionAll(uris.map { uri =>
       val uriString = if (uri.getScheme == "file") new File(uri).getPath else uri.toString
-      context.textFile(uriString).keyBy(_ => uriString)
+      sc.textFile(uriString).keyBy(_ => uriString)
     }.toSeq)
 
     val uriToWords = uriToContent.flatMap { case (uri, line) =>
@@ -73,6 +73,6 @@ object TfIdf {
       .map { case (t, ((d, tf), df)) => Seq(t, d, tf * math.log(1 / df)).mkString("\t") }  // (t, d, tf/|d|*log(N/df)
       .saveAsTextFile(args("output"))
 
-    context.close()
+    sc.close()
   }
 }

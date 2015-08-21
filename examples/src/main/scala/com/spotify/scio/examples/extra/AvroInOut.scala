@@ -5,11 +5,11 @@ import com.spotify.scio.avro.{Account, TestRecord}
 
 object AvroInOut {
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (context, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    context.avroFile[TestRecord](args("input"))
+    sc.avroFile[TestRecord](args("input"))
       .map(r => new Account(r.getIntField, "checking", r.getStringField, r.getDoubleField))
       .saveAsAvroFile(args("output"))
-    context.close()
+    sc.close()
   }
 }

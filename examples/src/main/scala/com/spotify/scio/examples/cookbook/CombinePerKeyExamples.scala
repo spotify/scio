@@ -22,14 +22,14 @@ object CombinePerKeyExamples {
   val MIN_WORD_LENGTH = 9
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (context, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val schema = new TableSchema().setFields(List(
       new TableFieldSchema().setName("word").setType("STRING"),
       new TableFieldSchema().setName("all_plays").setType("STRING")
     ).asJava)
 
-    context.bigQueryTable(args.getOrElse("input", SHAKESPEARE_TABLE))
+    sc.bigQueryTable(args.getOrElse("input", SHAKESPEARE_TABLE))
       .flatMap { row =>
         val playName = row.getString("corpus")
         val word = row.getString("word")
@@ -41,7 +41,7 @@ object CombinePerKeyExamples {
       .map(kv => TableRow("word" -> kv._1, "all_plays" -> kv._2))
       .saveAsBigQuery(args("output"), schema, CREATE_IF_NEEDED, WRITE_TRUNCATE)
 
-    context.close()
+    sc.close()
   }
 
 }
