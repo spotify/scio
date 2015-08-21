@@ -50,6 +50,13 @@ object ScioBuild extends Build {
 
   lazy val paradiseDependency =
     "org.scalamacros" % "paradise" % macrosVersion cross CrossVersion.full
+  lazy val bigQueryDependency =
+    "com.google.apis" % "google-api-services-bigquery" % "v2-rev218-1.20.0" exclude ("com.google.guava", "guava-jdk5")
+  lazy val dataflowSdkDependencies = Seq(
+    "com.google.cloud.dataflow" % "google-cloud-dataflow-java-sdk-all" % sdkVersion
+      exclude ("com.google.apis", "google-api-services-bigquery"),
+    bigQueryDependency
+  )
 
   lazy val root: Project = Project(
     "scio",
@@ -72,8 +79,8 @@ object ScioBuild extends Build {
     "scio-core",
     file("core"),
     settings = buildSettings ++ Seq(
+      libraryDependencies ++= dataflowSdkDependencies,
       libraryDependencies ++= Seq(
-        "com.google.cloud.dataflow" % "google-cloud-dataflow-java-sdk-all" % sdkVersion,
         "com.google.guava" % "guava" % guavaVersion,
         "com.twitter" %% "algebird-core" % "0.11.0",
         "com.twitter" %% "chill" % chillVersion,
@@ -91,8 +98,8 @@ object ScioBuild extends Build {
     "scio-test",
     file("test"),
     settings = buildSettings ++ Seq(
+      libraryDependencies ++= dataflowSdkDependencies,
       libraryDependencies ++= Seq(
-        "com.google.cloud.dataflow" % "google-cloud-dataflow-java-sdk-all" % sdkVersion,
         "org.scalatest" %% "scalatest" % scalaTestVersion,
         // DataFlow testing requires junit and hamcrest
         "junit" % "junit" % "4.12",
@@ -106,8 +113,7 @@ object ScioBuild extends Build {
     file("bigquery"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
-        "com.google.apis" % "google-api-services-bigquery" % "v2-rev218-1.20.0"
-          exclude ("com.google.guava", "guava-jdk5"),
+        bigQueryDependency,
         "com.google.guava" % "guava" % guavaVersion,
         "org.slf4j" % "slf4j-api" % "1.7.7",
         "org.slf4j" % "slf4j-simple" % "1.7.7" % "provided",
