@@ -118,17 +118,11 @@ class HistogramTest extends PipelineTest {
 
   it should "throw exception on invalid bucket array" in {
     intercept[RuntimeException] {
-      runWithContext { sc =>
-        val p = sc.parallelize(1.0)
-        p.histogram(Array.empty[Double])
-      }
+      runWithContext { _.parallelize(1.0).histogram(Array.empty[Double]) }
     }
 
     intercept[RuntimeException] {
-      runWithContext { sc =>
-        val p = sc.parallelize(1.0)
-        p.histogram(Array(1.0))
-      }
+      runWithContext { _.parallelize(1.0).histogram(Array(1.0)) }
     }
   }
 
@@ -217,21 +211,15 @@ class HistogramTest extends PipelineTest {
 
   it should "throw exception on invalid SCollections" in {
     intercept[RuntimeException] {
-      runWithContext { sc =>
-        sc.parallelize(1.0, Double.PositiveInfinity).histogram(1)
-      }
+      runWithContext { _.parallelize(1.0, Double.PositiveInfinity).histogram(1) }
     }
 
     intercept[RuntimeException] {
-      runWithContext { sc =>
-        sc.parallelize(1.0, Double.NaN).histogram(1)
-      }
+      runWithContext { _.parallelize(1.0, Double.NaN).histogram(1) }
     }
 
     intercept[RuntimeException] {
-      runWithContext { sc =>
-        sc.parallelize[Double]().histogram(1)
-      }
+      runWithContext { _.parallelize[Double]().histogram(1) }
     }
   }
 
