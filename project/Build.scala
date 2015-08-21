@@ -173,7 +173,7 @@ object SiteSettings {
   val siteSettings = site.settings ++ ghpages.settings ++ unidocSettings ++ Seq(
     autoAPIMappings := true,
     site.addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), ""),
-    gitRemoteRepo := "git@github.com:spotify/dataflow-scala.git",
+    gitRemoteRepo := "git@github.com:spotify/scio.git",
     fixJavaDocLinksTask := {
       val bases = ApiMappings.javaMappings.map(m => m._3 + "/index.html")
       val t = (target in ScalaUnidoc).value
