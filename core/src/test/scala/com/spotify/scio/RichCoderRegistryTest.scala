@@ -25,7 +25,6 @@ class RichCoderRegistryTest extends FlatSpec with Matchers {
         testRoundTrip(coder, value),
         s"CoderRegistry did not round trip $value",
         s"CoderRegistry did round trip $value")
-
     }
   }
 
