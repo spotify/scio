@@ -28,19 +28,25 @@ trait PipelineTest extends FlatSpec with Matchers with PCollectionMatcher {
     val sc = ScioContext(Array())
 
     val p = sc.parallelize(data: _*)
-    val tmpFile = new File(
+    val tmpDir = new File(
       new File(System.getProperty("java.io.tmpdir")),
-      "pipeline-test-" + UUID.randomUUID().toString)
+      "scio-test-" + UUID.randomUUID().toString)
 
-    fn(p).map(encode).saveAsTextFile(tmpFile.getPath, numShards = 1)
+    fn(p).map(encode).saveAsTextFile(tmpDir.getPath, numShards = 1)
 
     sc.close()
 
-    scala.io.Source
-      .fromFile(new File(tmpFile, "part-00000-of-00001.txt"))
+    val tmpFile = new File(tmpDir, "part-00000-of-00001.txt")
+    val r = scala.io.Source
+      .fromFile(tmpFile)
       .getLines()
       .map(decode[U])
       .toSeq
+
+    tmpFile.delete()
+    tmpDir.delete()
+
+    r
   }
 
   // Value type Iterable[T] is wrapped from Java and fails equality check
