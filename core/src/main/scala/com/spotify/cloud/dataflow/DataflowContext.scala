@@ -19,7 +19,7 @@ import com.google.cloud.dataflow.sdk.options.PipelineOptions.CheckEnabled
 import com.google.cloud.dataflow.sdk.options.{PipelineOptionsFactory, DataflowPipelineOptions}
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
-import com.google.cloud.dataflow.sdk.transforms.{Aggregator, PTransform, Create}
+import com.google.cloud.dataflow.sdk.transforms.{PTransform, Create}
 import com.google.cloud.dataflow.sdk.values.{PCollection, TimestampedValue, PBegin, POutput}
 import com.spotify.cloud.bigquery._
 import com.spotify.cloud.dataflow.testing._
@@ -89,7 +89,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
     val _pipeline = if (_args.optional("testId").isDefined) {
       TestPipeline.create()
     } else {
-      _options = PipelineOptionsFactory.fromArgs(dfArgs).withValidation().as(classOf[DataflowPipelineOptions])
+      _options = PipelineOptionsFactory.fromArgs(dfArgs).as(classOf[DataflowPipelineOptions])
       options.setAppName(CallSites.getAppName)
       Pipeline.create(options)
     }
