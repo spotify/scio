@@ -37,7 +37,7 @@ object BuildSettings {
   )
 }
 
-object DataflowScalaBuild extends Build {
+object ScioBuild extends Build {
   import BuildSettings._
   import SiteSettings._
 
@@ -52,24 +52,24 @@ object DataflowScalaBuild extends Build {
     "org.scalamacros" % "paradise" % macrosVersion cross CrossVersion.full
 
   lazy val root: Project = Project(
-    "dataflow-scala",
+    "scio",
     file("."),
-    settings = buildSettings ++ siteSettings ++ Seq(run <<= run in Compile in dataflowScalaExamples)
+    settings = buildSettings ++ siteSettings ++ Seq(run <<= run in Compile in scioExamples)
   ).settings(
     publish := {},
     publishLocal := {},
     unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
-      -- inProjects(dataflowScalaSchemas) -- inProjects(dataflowScalaExamples)
+      -- inProjects(scioSchemas) -- inProjects(scioExamples)
   ).aggregate(
-    dataflowScalaCore,
-    dataflowScalaTest,
-    bigqueryScala,
-    dataflowScalaSchemas,
-    dataflowScalaExamples
+    scioCore,
+    scioTest,
+    scioBigQuery,
+    scioSchemas,
+    scioExamples
   )
 
-  lazy val dataflowScalaCore: Project = Project(
-    "dataflow-scala-core",
+  lazy val scioCore: Project = Project(
+    "scio-core",
     file("core"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
@@ -82,13 +82,13 @@ object DataflowScalaBuild extends Build {
       )
     )
   ).dependsOn(
-    bigqueryScala,
-    dataflowScalaSchemas % "test",
-    dataflowScalaTest % "test"
+    scioBigQuery,
+    scioSchemas % "test",
+    scioTest % "test"
   )
 
-  lazy val dataflowScalaTest: Project = Project(
-    "dataflow-scala-test",
+  lazy val scioTest: Project = Project(
+    "scio-test",
     file("test"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
@@ -101,8 +101,8 @@ object DataflowScalaBuild extends Build {
     )
   )
 
-  lazy val bigqueryScala: Project = Project(
-    "bigquery-scala",
+  lazy val scioBigQuery: Project = Project(
+    "scio-bigquery",
     file("bigquery"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
@@ -126,19 +126,19 @@ object DataflowScalaBuild extends Build {
     )
   )
 
-  lazy val dataflowScalaSchemas: Project = Project(
-    "dataflow-scala-schemas",
+  lazy val scioSchemas: Project = Project(
+    "scio-schemas",
     file("schemas"),
     settings = buildSettings ++ sbtavro.SbtAvro.avroSettings
   ).settings(
     publish := {},
     publishLocal := {}
   ).dependsOn(
-    bigqueryScala
+    scioBigQuery
   )
 
-  lazy val dataflowScalaExamples: Project = Project(
-    "dataflow-scala-examples",
+  lazy val scioExamples: Project = Project(
+    "scio-examples",
     file("examples"),
     settings = buildSettings ++ Seq(
       addCompilerPlugin(paradiseDependency)
@@ -147,9 +147,9 @@ object DataflowScalaBuild extends Build {
     publish := {},
     publishLocal := {}
   ).dependsOn(
-    dataflowScalaCore,
-    dataflowScalaSchemas,
-    dataflowScalaTest % "test"
+    scioCore,
+    scioSchemas,
+    scioTest % "test"
   )
 }
 
