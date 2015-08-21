@@ -1,7 +1,7 @@
 package com.spotify.cloud.dataflow.examples.extra
 
 import com.spotify.cloud.dataflow._
-import com.spotify.cloud.dataflow.avro.{Account, TestRecord}
+import com.spotify.scio.avro.{Account, TestRecord}
 
 object AvroInOut {
   def main(cmdlineArgs: Array[String]): Unit = {

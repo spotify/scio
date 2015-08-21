@@ -2,7 +2,7 @@ package com.spotify.cloud.dataflow
 
 import com.google.cloud.dataflow.sdk.coders.CoderRegistry
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
-import com.spotify.cloud.dataflow.avro.TestRecord
+import com.spotify.scio.avro.TestRecord
 import com.spotify.cloud.dataflow.coders.CoderTestUtils._
 import org.scalatest.matchers.{MatchResult, Matcher}
 import org.scalatest.{FlatSpec, Matchers}

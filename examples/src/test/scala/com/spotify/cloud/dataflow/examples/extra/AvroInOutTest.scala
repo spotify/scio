@@ -1,6 +1,6 @@
 package com.spotify.cloud.dataflow.examples.extra
 
-import com.spotify.cloud.dataflow.avro.{Account, TestRecord}
+import com.spotify.scio.avro.{Account, TestRecord}
 import com.spotify.cloud.dataflow.testing._
 
 class AvroInOutTest extends JobSpec {

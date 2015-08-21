@@ -2,7 +2,7 @@ package com.spotify.cloud.dataflow.coders
 
 import com.google.cloud.dataflow.sdk.coders.Coder
 import com.google.cloud.dataflow.sdk.util.CoderUtils
-import com.spotify.cloud.dataflow.avro.TestRecord
+import com.spotify.scio.avro.TestRecord
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
 
