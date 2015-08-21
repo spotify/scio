@@ -1,5 +1,5 @@
-dataflow-scala
-==============
+Scio
+====
 
 Scala API for Google Cloud Dataflow
 
@@ -12,8 +12,8 @@ First install the [Google Cloud SDK](https://cloud.google.com/sdk/) and create a
 Then clone this repository and publish artifacts locally.
 
 ```bash
-git clone git@github.com:spotify/dataflow-scala.git
-cd dataflow-scala
+git clone git@github.com:spotify/scio.git
+cd scio
 sbt publish-local
 ```
 
@@ -22,11 +22,11 @@ sbt publish-local
 You can execute the examples locally from SBT. By default pipelines will be executed using the `DirectPipelineRunner` and local filesystem will be used for input and output.
 
 ```
-neville@localhost dataflow-scala $ sbt
+neville@localhost scio $ sbt
 [info] ...
-> project dataflow-scala-examples
+> project scio-examples
 [info] ...
-> runMain com.spotify.cloud.dataflow.examples.WordCount \
+> runMain com.spotify.scio.examples.WordCount \
 --input=<INPUT FILE PATTERN> \
 --output=<OUTPUT DIRECTORY>
 ```
@@ -34,11 +34,11 @@ neville@localhost dataflow-scala $ sbt
 You can use the `BlockingDataflowPipelineRunner` or `DataflowPipelineRunner` to execute pipelines on Google Cloud Dataflow Service using managed resources in the Google Cloud Platform.
 
 ```
-neville@localhost dataflow-scala $ sbt
+neville@localhost scio $ sbt
 [info] ...
-> project dataflow-scala-examples
+> project scio-examples
 [info] ...
-> runMain com.spotify.cloud.dataflow.examples.WordCount \
+> runMain com.spotify.scio.examples.WordCount \
 --project=<YOUR CLOUD PLATFORM PROJECT NAME> \
 --stagingLocation=<YOUR CLOUD STORAGE LOCATION> \
 --runner=BlockingDataflowPipelineRunner \
@@ -58,12 +58,12 @@ More Dataflow pipeline specific options available can be found in [`DataflowPipe
 - `--diskSizeGb`: Remote worker disk size, in gigabytes, or 0 to use the default size.
 - `--workerMachineType`: Machine type to create Dataflow worker VMs as. See [https://cloud.google.com/compute/docs/machine-types](https://cloud.google.com/compute/docs/machine-types) for a list of valid options. If unset, the Dataflow service will choose a reasonable default.
 
-# dataflow-scala vs. Spark
+# Scio vs. Spark
 
-The dataflow-scala API is modeled after Spark with some minor differences.
+The Scio API is modeled after Spark with some minor differences.
 
-- [`SCollection`](http://spotify.github.io/dataflow-scala/#com.spotify.cloud.dataflow.values.SCollection) is equivalent to Spark's [`RDD`](https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.RDD).
-- [`PairSCollectionFunctions`](http://spotify.github.io/dataflow-scala/#com.spotify.cloud.dataflow.values.PairSCollectionFunctions) and [`DoubleSCollectionFunctions`](http://spotify.github.io/dataflow-scala/#com.spotify.cloud.dataflow.values.DoubleSCollectionFunctions) are specialized versions of `SCollection` and equivalent to Spark's [`PairRDDFunctions`](https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.PairRDDFunctions) and [`DoubleRDDFunctions`](https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.DoubleRDDFunctions).
+- [`SCollection`](http://spotify.github.io/scio/#com.spotify.scio.values.SCollection) is equivalent to Spark's [`RDD`](https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.RDD).
+- [`PairSCollectionFunctions`](http://spotify.github.io/scio/#com.spotify.scio.values.PairSCollectionFunctions) and [`DoubleSCollectionFunctions`](http://spotify.github.io/scio/#com.spotify.scio.values.DoubleSCollectionFunctions) are specialized versions of `SCollection` and equivalent to Spark's [`PairRDDFunctions`](https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.PairRDDFunctions) and [`DoubleRDDFunctions`](https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.DoubleRDDFunctions).
 - Execution planning is static and happens before the job is submitted. There is no driver node in a Dataflow cluster and one can only perform the equivalent of Spark _transformations_ (`RDD` &rarr; `RDD`) but not _actions_ (`RDD` &rarr; driver local memory).
 - There is no _broadcast_ either but the pattern of `RDD` &rarr; driver via _action_ and driver &rarr; `RDD` via _broadcast_ can be replaced with `SCollection.asSingleTonSideInput` and `SCollection.withSideInputs`.
 - There is no `DStream` (continuous series of `RDD`s) like in Spark Streaming. Values in a `SCollection` are windowed based on timestamp and windowing operation. The same API works regardless of batch (single global window by default) or streaming mode. Aggregation type _transformations_ that produce `SCollection`s of a single value under global window will produce one value each window when a non-global window is defined.
