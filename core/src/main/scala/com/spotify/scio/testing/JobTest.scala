@@ -88,7 +88,6 @@ object JobTest {
   /** Create a new JobTest.Builder instance. */
   def apply[T: ClassTag]: Builder = {
     val className= implicitly[ClassTag[T]].runtimeClass.getName.replaceAll("\\$$", "")
-    println(className)
     Builder(className, Array(), Map.empty, Map.empty, Map.empty)
   }
 
