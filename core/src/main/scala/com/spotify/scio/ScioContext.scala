@@ -32,26 +32,26 @@ import org.joda.time.Instant
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
-/** Convenience object for creating [[DataflowContext]] and [[Args]]. */
+/** Convenience object for creating [[ScioContext]] and [[Args]]. */
 object ContextAndArgs {
-  /** Create [[DataflowContext]] and [[Args]] for command line arguments. */
-  def apply(args: Array[String]): (DataflowContext, Args) = {
-    val context = DataflowContext(args)
+  /** Create [[ScioContext]] and [[Args]] for command line arguments. */
+  def apply(args: Array[String]): (ScioContext, Args) = {
+    val context = ScioContext(args)
     (context, context.args)
   }
 }
 
-/** Companion object for [[DataflowContext]]. */
-object DataflowContext {
+/** Companion object for [[ScioContext]]. */
+object ScioContext {
   /**
-   * Create a new [[DataflowContext]] instance.
+   * Create a new [[ScioContext]] instance.
    *
    * @param args command line arguments including both Dataflow and job specific ones. Dataflow
    * specific ones will be parsed as
    * [[com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions DataflowPipelineOptions]] in
    * field `options`. Job specific ones will be parsed as [[Args]] in field `args`.
    */
-  def apply(args: Array[String]): DataflowContext = new DataflowContext(args)
+  def apply(args: Array[String]): ScioContext = new ScioContext(args)
 }
 
 /**
@@ -64,7 +64,7 @@ object DataflowContext {
  * @groupname input Input Sources
  * @groupname Ungrouped Other Members
  */
-class DataflowContext private (cmdlineArgs: Array[String]) {
+class ScioContext private (cmdlineArgs: Array[String]) {
 
   import Implicits._
 
@@ -122,7 +122,7 @@ class DataflowContext private (cmdlineArgs: Array[String]) {
   // Test wiring
   // =======================================================================
 
-  private implicit def context: DataflowContext = this
+  private implicit def context: ScioContext = this
 
   private[scio] def isTest: Boolean = args.optional("testId").isDefined
 

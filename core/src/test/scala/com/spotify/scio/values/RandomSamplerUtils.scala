@@ -2,7 +2,7 @@ package com.spotify.scio.values
 
 import java.util.Random
 
-import com.spotify.scio.DataflowContext
+import com.spotify.scio.ScioContext
 import com.spotify.scio.util.random.RandomSampler
 import org.apache.commons.math3.distribution.PoissonDistribution
 
@@ -110,7 +110,7 @@ object RandomSamplerUtils extends Serializable {
     s.toArray
   }
 
-  def verify(context: DataflowContext, withReplacement: Boolean,
+  def verify(context: ScioContext, withReplacement: Boolean,
              expectedFraction: Double, actualFraction: Double): SCollection[Boolean] = {
     val expected = expectedSamples(withReplacement, expectedFraction)
 
@@ -123,7 +123,7 @@ object RandomSamplerUtils extends Serializable {
       .map(actual => medianKSD(gaps(expected), gaps(actual)) < D)
   }
 
-  def verifyByKey(context: DataflowContext, withReplacement: Boolean,
+  def verifyByKey(context: ScioContext, withReplacement: Boolean,
                   expectedFraction1: Double, actualFraction1: Double,
                   expectedFraction2: Double, actualFraction2: Double): SCollection[(Boolean, Boolean)] = {
     val expected = Map(

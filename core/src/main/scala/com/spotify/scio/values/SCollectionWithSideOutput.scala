@@ -2,7 +2,7 @@ package com.spotify.scio.values
 
 import com.google.cloud.dataflow.sdk.transforms.ParDo
 import com.google.cloud.dataflow.sdk.values.{TupleTagList, TupleTag, PCollection}
-import com.spotify.scio.DataflowContext
+import com.spotify.scio.ScioContext
 import com.spotify.scio.util.FunctionsWithSideOutput
 
 import scala.collection.JavaConverters._
@@ -15,7 +15,7 @@ import scala.reflect.ClassTag
  * [[SideOutputCollections]] return value.
  */
 class SCollectionWithSideOutput[T: ClassTag] private[values] (val internal: PCollection[T],
-                                                              private[values] val context: DataflowContext,
+                                                              private[values] val context: ScioContext,
                                                               sides: Iterable[SideOutput[_]])
   extends PCollectionWrapper[T] {
 

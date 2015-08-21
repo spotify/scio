@@ -21,8 +21,8 @@ package object experimental {
   /** Typed BigQuery annotations and converters. */
   val BigQueryType = com.spotify.scio.bigquery.types.BigQueryType
 
-  /** Enhanced version of [[DataflowContext]] with experimental features. */
-  implicit class ExperimentalDataflowContext(val self: DataflowContext) extends AnyVal {
+  /** Enhanced version of [[ScioContext]] with experimental features. */
+  implicit class ExperimentalDataflowContext(val self: ScioContext) extends AnyVal {
 
     /**
      * Get a typed SCollection for a BigQuery SELECT query or table.

@@ -6,7 +6,7 @@ import java.util.UUID
 
 import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.common.collect.Lists
-import com.spotify.scio.DataflowContext
+import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.KryoAtomicCoder
 import com.spotify.scio.values.SCollection
 import org.scalatest.{Matchers, FlatSpec}
@@ -16,8 +16,8 @@ import scala.reflect.ClassTag
 
 trait PipelineTest extends FlatSpec with Matchers with PCollectionMatcher {
 
-  def runWithContext(test: DataflowContext => Unit): Unit = {
-    val context = DataflowContext(Array("--testId=PipelineTest"))
+  def runWithContext(test: ScioContext => Unit): Unit = {
+    val context = ScioContext(Array("--testId=PipelineTest"))
 
     test(context)
 
@@ -25,7 +25,7 @@ trait PipelineTest extends FlatSpec with Matchers with PCollectionMatcher {
   }
 
   def runWithData[T: ClassTag, U: ClassTag](data: T*)(fn: SCollection[T] => SCollection[U]): Seq[U] = {
-    val context = DataflowContext(Array())
+    val context = ScioContext(Array())
 
     val p = context.parallelize(data: _*)
     val tmpFile = new File(

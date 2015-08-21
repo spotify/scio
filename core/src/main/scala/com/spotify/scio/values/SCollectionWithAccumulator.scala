@@ -1,7 +1,7 @@
 package com.spotify.scio.values
 
 import com.google.cloud.dataflow.sdk.values.PCollection
-import com.spotify.scio.DataflowContext
+import com.spotify.scio.ScioContext
 import com.spotify.scio.util.FunctionsWithAccumulator
 
 import scala.reflect.ClassTag
@@ -11,7 +11,7 @@ import scala.reflect.ClassTag
  * transforms. [[Accumulator]]s are accessed via the additional [[AccumulatorContext]] argument.
  */
 class SCollectionWithAccumulator[T: ClassTag] private[values] (val internal: PCollection[T],
-                                                               private[values] val context: DataflowContext,
+                                                               private[values] val context: ScioContext,
                                                                acc: Seq[Accumulator[_]])
   extends PCollectionWrapper[T] {
 

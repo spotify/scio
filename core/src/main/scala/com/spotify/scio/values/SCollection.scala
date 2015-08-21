@@ -19,7 +19,7 @@ import com.google.cloud.dataflow.sdk.transforms._
 import com.google.cloud.dataflow.sdk.transforms.windowing._
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values._
-import com.spotify.scio.DataflowContext
+import com.spotify.scio.ScioContext
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
@@ -443,8 +443,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * [[Accumulator]]s, similar to Hadoop counters. Call
    * [[SCollectionWithAccumulator.toSCollection]] when done with accumulators.
    *
-   * Create accumulators with [[DataflowContext.maxAccumulator]],
-   * [[DataflowContext.minAccumulator]] or [[DataflowContext.sumAccumulator]]. For example:
+   * Create accumulators with [[ScioContext.maxAccumulator]],
+   * [[ScioContext.minAccumulator]] or [[ScioContext.sumAccumulator]]. For example:
    *
    * {{{
    * val maxLineLength = context.maxAccumulator[Int]("maxLineLength")
@@ -775,7 +775,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 }
 
 private[scio] class SCollectionImpl[T: ClassTag](val internal: PCollection[T],
-                                                     private[values] val context: DataflowContext)
+                                                     private[values] val context: ScioContext)
   extends SCollection[T] {
   protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
 }

@@ -2,7 +2,7 @@ package com.spotify.scio.values
 
 import com.google.cloud.dataflow.sdk.transforms.ParDo
 import com.google.cloud.dataflow.sdk.values.PCollection
-import com.spotify.scio.DataflowContext
+import com.spotify.scio.ScioContext
 import com.spotify.scio.util.FunctionsWithSideInput
 
 import scala.collection.JavaConverters._
@@ -13,7 +13,7 @@ import scala.reflect.ClassTag
  * [[SideInput]]s are accessed via the additional [[SideInputContext]] argument.
  */
 class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PCollection[T],
-                                                             private[values] val context: DataflowContext,
+                                                             private[values] val context: ScioContext,
                                                              sides: Iterable[SideInput[_]])
   extends PCollectionWrapper[T] {
 

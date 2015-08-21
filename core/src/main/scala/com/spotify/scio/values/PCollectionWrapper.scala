@@ -3,7 +3,7 @@ package com.spotify.scio.values
 import com.google.cloud.dataflow.sdk.coders.Coder
 import com.google.cloud.dataflow.sdk.transforms.{Combine, ParDo, DoFn, PTransform}
 import com.google.cloud.dataflow.sdk.values.{KV, POutput, PCollection}
-import com.spotify.scio.{Implicits, DataflowContext}
+import com.spotify.scio.{Implicits, ScioContext}
 import com.spotify.scio.util.CallSites
 
 import scala.reflect.ClassTag
@@ -15,7 +15,7 @@ private[values] trait PCollectionWrapper[T] {
   /** The PCollection being wrapped internally. */
   val internal: PCollection[T]
 
-  private[values] val context: DataflowContext
+  private[values] val context: ScioContext
 
   implicit protected val ct: ClassTag[T]
 

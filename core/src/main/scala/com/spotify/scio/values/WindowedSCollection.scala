@@ -3,7 +3,7 @@ package com.spotify.scio.values
 import com.google.cloud.dataflow.sdk.transforms.windowing.{Trigger, BoundedWindow}
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values.PCollection
-import com.spotify.scio.DataflowContext
+import com.spotify.scio.ScioContext
 import com.spotify.scio.util.FunctionsWithWindowedValue
 import org.joda.time.{Duration, Instant}
 
@@ -16,7 +16,7 @@ case class WindowOptions[W <: BoundedWindow](allowedLateness: Duration = null,
 case class WindowedValue[T](value: T, timestamp: Instant, window: BoundedWindow)
 
 class WindowedSCollection[T: ClassTag] private[values] (val internal: PCollection[T],
-                                                        private[values] val context: DataflowContext)
+                                                        private[values] val context: ScioContext)
   extends PCollectionWrapper[T] {
 
   protected val ct: ClassTag[T] = implicitly[ClassTag[T]]

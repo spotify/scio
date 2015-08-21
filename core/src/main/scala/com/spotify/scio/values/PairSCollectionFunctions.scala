@@ -6,7 +6,7 @@ import com.google.cloud.dataflow.sdk.transforms._
 import com.google.cloud.dataflow.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}
 import com.google.cloud.dataflow.sdk.values.{PCollection, KV, TupleTag}
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
-import com.spotify.scio.DataflowContext
+import com.spotify.scio.ScioContext
 import com.spotify.scio.util._
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 
@@ -26,7 +26,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   import TupleFunctions._
 
-  private val context: DataflowContext = self.context
+  private val context: ScioContext = self.context
 
   private def toKvTransform = ParDo.of(Functions.mapFn[(K, V), KV[K, V]](kv => KV.of(kv._1, kv._2)))
 
