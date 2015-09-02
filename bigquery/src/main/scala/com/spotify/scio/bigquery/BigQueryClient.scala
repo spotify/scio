@@ -66,6 +66,13 @@ class BigQueryClient private (private val projectId: String, credential: Credent
   private val JOB_ID_PREFIX = "dataflow_query"
   private val FORMAT = DateTimeFormat.forPattern("yyyyMMddHHmmss")
 
+  private val PRIORITY =
+    if (Thread.currentThread().getStackTrace.exists(_.getClassName.startsWith("scala.tools.nsc.interpreter."))) {
+      "INTERACTIVE"
+    } else {
+      "BATCH"
+    }
+
   /** Get schema for a query without executing it. */
   def getQuerySchema(sqlQuery: String): TableSchema = withCacheKey(sqlQuery) {
     prepareStagingDataset()
@@ -111,7 +118,7 @@ class BigQueryClient private (private val projectId: String, credential: Credent
       .setQuery(sqlQuery)
       .setAllowLargeResults(true)
       .setFlattenResults(false)
-      .setPriority("BATCH")
+      .setPriority(PRIORITY)
       .setCreateDisposition("CREATE_IF_NEEDED")
       .setWriteDisposition("WRITE_EMPTY")
       .setDestinationTable(destinationTable)
