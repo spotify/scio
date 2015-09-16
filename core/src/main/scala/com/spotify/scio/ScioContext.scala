@@ -191,7 +191,7 @@ class ScioContext private (cmdlineArgs: Array[String]) {
   private[scio] def testOut: TestOutput = TestDataManager.getOutput(args("testId"))
   private[scio] def testDistCache: TestDistCache = TestDataManager.getDistCache(args("testId"))
 
-  private def getTestInput[T: ClassTag](key: TestIO[T]): SCollection[T] =
+  private[scio] def getTestInput[T: ClassTag](key: TestIO[T]): SCollection[T] =
     this.parallelize(testIn(key).asInstanceOf[Seq[T]])
 
   // =======================================================================

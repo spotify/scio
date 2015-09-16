@@ -42,7 +42,7 @@ private[scio] object TestDataManager {
 
 /* For matching IO types */
 
-class TestIO[+T] private[testing] (val key: String)
+class TestIO[+T] private[scio] (val key: String)
 
 case class AvroIO[T](path: String) extends TestIO(path)
 
