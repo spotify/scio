@@ -72,7 +72,9 @@ object ScioBuild extends Build {
     scioCore,
     scioTest,
     scioBigQuery,
-    scioSchemas
+    scioBigTable,
+    scioSchemas,
+    scioExamples
   )
 
   lazy val scioCore: Project = Project(
@@ -131,6 +133,19 @@ object ScioBuild extends Build {
       ),
       addCompilerPlugin(paradiseDependency)
     )
+  )
+
+  lazy val scioBigTable: Project = Project(
+    "scio-bigtable",
+    file("bigtable"),
+    settings = buildSettings ++ Seq(
+      libraryDependencies ++= Seq(
+        "com.google.cloud.bigtable" % "bigtable-hbase-dataflow" % "0.2.1",
+        "org.apache.hbase" % "hbase-common" % "1.0.1"
+      )
+    )
+  ).dependsOn(
+    scioCore
   )
 
   lazy val scioSchemas: Project = Project(

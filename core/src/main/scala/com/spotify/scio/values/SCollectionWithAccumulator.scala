@@ -11,7 +11,7 @@ import scala.reflect.ClassTag
  * transforms. [[Accumulator]]s are accessed via the additional [[AccumulatorContext]] argument.
  */
 class SCollectionWithAccumulator[T: ClassTag] private[values] (val internal: PCollection[T],
-                                                               private[values] val context: ScioContext,
+                                                               private[scio] val context: ScioContext,
                                                                acc: Seq[Accumulator[_]])
   extends PCollectionWrapper[T] {
 

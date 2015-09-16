@@ -198,7 +198,7 @@ class ScioContext private (cmdlineArgs: Array[String]) {
   // Read operations
   // =======================================================================
 
-  private def applyInternal[Output <: POutput](root: PTransform[_ >: PBegin, Output]): Output =
+  private[scio] def applyInternal[Output <: POutput](root: PTransform[_ >: PBegin, Output]): Output =
     pipeline.apply(CallSites.getCurrent, root)
 
   /**

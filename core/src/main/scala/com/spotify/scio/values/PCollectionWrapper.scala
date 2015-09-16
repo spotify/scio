@@ -15,11 +15,11 @@ private[values] trait PCollectionWrapper[T] {
   /** The PCollection being wrapped internally. */
   val internal: PCollection[T]
 
-  private[values] val context: ScioContext
+  private[scio] val context: ScioContext
 
   implicit protected val ct: ClassTag[T]
 
-  private[values] def applyInternal[Output <: POutput](transform: PTransform[_ >: PCollection[T], Output]): Output =
+  private[scio] def applyInternal[Output <: POutput](transform: PTransform[_ >: PCollection[T], Output]): Output =
     internal.apply(CallSites.getCurrent, transform)
 
   protected def apply[U: ClassTag](transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {

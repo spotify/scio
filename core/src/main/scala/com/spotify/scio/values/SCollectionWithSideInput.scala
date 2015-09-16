@@ -13,7 +13,7 @@ import scala.reflect.ClassTag
  * [[SideInput]]s are accessed via the additional [[SideInputContext]] argument.
  */
 class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PCollection[T],
-                                                             private[values] val context: ScioContext,
+                                                             private[scio] val context: ScioContext,
                                                              sides: Iterable[SideInput[_]])
   extends PCollectionWrapper[T] {
 
