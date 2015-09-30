@@ -41,7 +41,7 @@ object FilterExamples {
         Record(year, month, day, meanTemp)
       }
 
-    val globalMeanTemp = pipe.map(_.meanTemp).mean()
+    val globalMeanTemp = pipe.map(_.meanTemp).mean
 
     pipe
       .filter(_.month == monthFilter)

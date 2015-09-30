@@ -240,7 +240,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group per_key
    */
   def aggregateByKey[A: ClassTag, U: ClassTag](aggregator: Aggregator[V, A, U]): SCollection[(K, U)] =
-    this.mapValues(aggregator.prepare).sumByKey()(aggregator.semigroup).mapValues(aggregator.present)
+    this.mapValues(aggregator.prepare).sumByKey(aggregator.semigroup).mapValues(aggregator.present)
 
   /**
    * For each key, compute the values' data distribution using approximate `N`-tiles.
@@ -359,7 +359,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group per_key
    */
   // Scala lambda is simpler and more powerful than transforms.Max
-  def maxByKey()(implicit ord: Ordering[V]): SCollection[(K, V)] = this.reduceByKey(ord.max)
+  def maxByKey(implicit ord: Ordering[V]): SCollection[(K, V)] = this.reduceByKey(ord.max)
 
   /**
    * Return the min of values for each key as defined by the implicit Ordering[T].
@@ -367,7 +367,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group per_key
    */
   // Scala lambda is simpler and more powerful than transforms.Min
-  def minByKey()(implicit ord: Ordering[V]): SCollection[(K, V)] = this.reduceByKey(ord.min)
+  def minByKey(implicit ord: Ordering[V]): SCollection[(K, V)] = this.reduceByKey(ord.min)
 
   /**
    * Merge the values for each key using an associative reduce function. This will also perform
@@ -421,7 +421,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * and better optimized in some cases.
    * @group per_key
    */
-  def sumByKey()(implicit sg: Semigroup[V]): SCollection[(K, V)] =
+  def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] =
     this.applyPerKey(Combine.perKey(Functions.reduceFn(sg)), kvToTuple[K, V])
 
   /**

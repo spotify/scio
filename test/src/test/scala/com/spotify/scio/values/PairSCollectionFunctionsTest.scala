@@ -249,14 +249,14 @@ class PairSCollectionFunctionsTest extends PipelineTest {
 
   it should "support maxByKey()" in {
     runWithContext { sc =>
-      val p = sc.parallelize(("a", 1), ("a", 10), ("b", 2), ("b", 20)).maxByKey()
+      val p = sc.parallelize(("a", 1), ("a", 10), ("b", 2), ("b", 20)).maxByKey
       p.internal should containInAnyOrder (("a", 10), ("b", 20))
     }
   }
 
   it should "support minByKey()" in {
     runWithContext { sc =>
-      val p = sc.parallelize(("a", 1), ("a", 10), ("b", 2), ("b", 20)).minByKey()
+      val p = sc.parallelize(("a", 1), ("a", 10), ("b", 2), ("b", 20)).minByKey
       p.internal should containInAnyOrder (("a", 1), ("b", 2))
     }
   }
@@ -306,7 +306,7 @@ class PairSCollectionFunctionsTest extends PipelineTest {
 
   it should "support sumByKey()" in {
     runWithContext { sc =>
-      val p = sc.parallelize(List(("a", 1), ("b", 2), ("b", 2)) ++ (1 to 100).map(("c", _)): _*).sumByKey()
+      val p = sc.parallelize(List(("a", 1), ("b", 2), ("b", 2)) ++ (1 to 100).map(("c", _)): _*).sumByKey
       p.internal should containInAnyOrder (("a", 1), ("b", 4), ("c", 5050))
     }
   }

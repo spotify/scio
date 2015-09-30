@@ -164,7 +164,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def aggregate[A: ClassTag, U: ClassTag](aggregator: Aggregator[T, A, U]): SCollection[U] =
-    this.map(aggregator.prepare).sum()(aggregator.semigroup).map(aggregator.present)
+    this.map(aggregator.prepare).sum(aggregator.semigroup).map(aggregator.present)
 
   /**
    * Generic function to combine the elements using a custom set of aggregation functions. Turns
@@ -287,14 +287,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   // Scala lambda is simpler and more powerful than transforms.Max
-  def max()(implicit ord: Ordering[T]): SCollection[T] = this.reduce(ord.max)
+  def max(implicit ord: Ordering[T]): SCollection[T] = this.reduce(ord.max)
 
   /**
    * Return the mean of this SCollection as defined by the implicit Numeric[T].
    * @return a new SCollection with the mean of elements
    * @group transform
    */
-  def mean()(implicit ev: Numeric[T]): SCollection[Double] = {
+  def mean(implicit ev: Numeric[T]): SCollection[Double] = {
     val o = this
       .map(ev.toDouble).asInstanceOf[SCollection[JDouble]]
       .applyInternal(Mean.globally()).asInstanceOf[PCollection[Double]]
@@ -307,7 +307,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   // Scala lambda is simpler and more powerful than transforms.Min
-  def min()(implicit ord: Ordering[T]): SCollection[T] = this.reduce(ord.min)
+  def min(implicit ord: Ordering[T]): SCollection[T] = this.reduce(ord.min)
 
   /**
    * Compute the SCollection's data distribution using approximate `N`-tiles.
@@ -387,7 +387,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * better optimized in some cases.
    * @group transform
    */
-  def sum()(implicit sg: Semigroup[T]): SCollection[T] = this.apply(Combine.globally(Functions.reduceFn(sg)))
+  def sum(implicit sg: Semigroup[T]): SCollection[T] = this.apply(Combine.globally(Functions.reduceFn(sg)))
 
   /**
    * Return a sampled subset of any `num` elements of the SCollection.
