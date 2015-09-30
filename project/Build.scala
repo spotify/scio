@@ -88,9 +88,7 @@ object ScioBuild extends Build {
       )
     )
   ).dependsOn(
-    scioBigQuery,
-    scioSchemas % "test",
-    scioTest % "test"
+    scioBigQuery
   )
 
   lazy val scioTest: Project = Project(
@@ -105,6 +103,9 @@ object ScioBuild extends Build {
         "org.hamcrest" % "hamcrest-all" % "1.3"
       )
     )
+  ).dependsOn(
+    scioCore,
+    scioSchemas % "test"
   )
 
   lazy val scioBigQuery: Project = Project(

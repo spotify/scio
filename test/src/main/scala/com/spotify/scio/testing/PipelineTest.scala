@@ -9,7 +9,7 @@ import com.google.common.collect.Lists
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.KryoAtomicCoder
 import com.spotify.scio.values.SCollection
-import org.scalatest.{Matchers, FlatSpec}
+import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
