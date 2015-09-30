@@ -71,8 +71,7 @@ object ScioBuild extends Build {
     scioCore,
     scioTest,
     scioBigQuery,
-    scioSchemas,
-    scioExamples
+    scioSchemas
   )
 
   lazy val scioCore: Project = Project(
