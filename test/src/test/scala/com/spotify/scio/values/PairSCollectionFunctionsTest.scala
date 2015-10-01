@@ -6,6 +6,8 @@ import com.twitter.algebird.Aggregator
 
 class PairSCollectionFunctionsTest extends PipelineTest {
 
+  import com.spotify.scio.testing.TestingUtils._
+
   "PairSCollection" should "support coGroup()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))

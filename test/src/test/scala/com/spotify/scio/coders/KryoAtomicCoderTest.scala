@@ -12,6 +12,8 @@ import scala.reflect.ClassTag
 
 class KryoAtomicCoderTest extends FlatSpec with Matchers with PipelineTest {
 
+  import com.spotify.scio.testing.TestingUtils._
+
   type CoderFactory = () => Coder[Any]
   val cf = () => new KryoAtomicCoder
 

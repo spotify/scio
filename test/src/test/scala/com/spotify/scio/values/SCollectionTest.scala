@@ -9,6 +9,8 @@ import scala.reflect.ClassTag
 
 class SCollectionTest extends PipelineTest {
 
+  import com.spotify.scio.testing.TestingUtils._
+
   "SCollection" should "support setName()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).setName("MySCollection")

@@ -1,17 +1,14 @@
 package com.spotify.scio.testing
 
 import java.io.File
-import java.lang.{Iterable => JIterable}
 import java.util.UUID
 
 import com.google.cloud.dataflow.sdk.util.CoderUtils
-import com.google.common.collect.Lists
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.KryoAtomicCoder
 import com.spotify.scio.values.SCollection
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 trait PipelineTest extends FlatSpec with Matchers with PCollectionMatcher {
@@ -48,9 +45,6 @@ trait PipelineTest extends FlatSpec with Matchers with PCollectionMatcher {
 
     r
   }
-
-  // Value type Iterable[T] is wrapped from Java and fails equality check
-  def iterable[T](elems: T*): Iterable[T] = Lists.newArrayList(elems: _*).asInstanceOf[JIterable[T]].asScala
 
   private def encode[T](obj: T): String = CoderUtils.encodeToBase64(new KryoAtomicCoder(), obj)
 
