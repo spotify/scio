@@ -29,7 +29,7 @@ private[scio] trait PCollectionMatcher {
     }
   }
 
-  def containInAnyOrder[T](value: T*): Matcher[PCollection[T]] = new InAnyOrderMatcher(value)
+  def containInAnyOrder[T](value: Iterable[T]): Matcher[PCollection[T]] = new InAnyOrderMatcher(value)
 
   def equalInAnyOrder[T](value: Iterable[T]): Matcher[PCollection[T]] = new InAnyOrderMatcher(value)
 

@@ -87,10 +87,10 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
    * maximum value of the last position and all NaN entries will be counted in that bucket.
    */
   def histogram(buckets: Array[Double], evenBuckets: Boolean = false): SCollection[Array[Long]] =
-    histogramImpl(self.context.parallelize(buckets), evenBuckets)
+    histogramImpl(self.context.parallelize(Seq(buckets)), evenBuckets)
 
   private def histogramImpl(buckets: SCollection[Array[Double]],
-                        evenBuckets: Boolean = false): SCollection[Array[Long]] = {
+                            evenBuckets: Boolean = false): SCollection[Array[Long]] = {
     // Map buckets into a side input of bucket function
     val side = buckets.map { b =>
       if (b.length < 2) {
@@ -170,7 +170,7 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
     // Workaround since hist may be empty
     val bSide = bucketSize.asSingletonSideInput
     val hSide = hist.asIterableSideInput
-    self.context.parallelize(0)
+    self.context.parallelize(Seq(0))
       .withSideInputs(bSide, hSide)
       .map { (z, c) =>
         val h = c(hSide)

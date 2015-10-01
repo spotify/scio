@@ -24,10 +24,10 @@ trait PipelineTest extends FlatSpec with Matchers with PCollectionMatcher {
     sc.close()
   }
 
-  def runWithData[T: ClassTag, U: ClassTag](data: T*)(fn: SCollection[T] => SCollection[U]): Seq[U] = {
+  def runWithData[T: ClassTag, U: ClassTag](data: Iterable[T])(fn: SCollection[T] => SCollection[U]): Seq[U] = {
     val sc = ScioContext(Array())
 
-    val p = sc.parallelize(data: _*)
+    val p = sc.parallelize(data)
     val tmpDir = new File(
       new File(System.getProperty("java.io.tmpdir")),
       "scio-test-" + UUID.randomUUID().toString)

@@ -115,7 +115,7 @@ object RandomSamplerUtils extends Serializable {
     val expected = expectedSamples(withReplacement, expectedFraction)
 
     context
-      .parallelize(population: _*)
+      .parallelize(population)
       .sample(withReplacement, actualFraction)
       .groupBy(_ => 0)
       .values
@@ -131,7 +131,7 @@ object RandomSamplerUtils extends Serializable {
       "b" -> expectedSamples(withReplacement, expectedFraction2))
 
     context
-      .parallelize(keyedPopulation: _*)
+      .parallelize(keyedPopulation)
       .sampleByKey(withReplacement, Map("a" -> actualFraction1, "b" -> actualFraction2))
       .groupByKey()
       .groupBy(_ => 0)

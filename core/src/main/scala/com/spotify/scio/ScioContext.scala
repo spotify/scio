@@ -314,15 +314,6 @@ class ScioContext private (cmdlineArgs: Array[String]) {
   // =======================================================================
 
   /**
-   * Distribute local values to form an SCollection.
-   * @group in_memory
-   */
-  def parallelize[T: ClassTag](elems: T*): SCollection[T] = {
-    val coder = pipeline.getCoderRegistry.getScalaCoder[T]
-    wrap(this.applyInternal(Create.of(elems: _*).withCoder(coder))).setName(elems.toString())
-  }
-
-  /**
    * Distribute a local Scala Iterable to form an SCollection.
    * @group in_memory
    */
@@ -339,16 +330,6 @@ class ScioContext private (cmdlineArgs: Array[String]) {
     val coder = pipeline.getCoderRegistry.getScalaKvCoder[K, V]
     wrap(this.applyInternal(Create.of(elems.asJava).withCoder(coder))).map(kv => (kv.getKey, kv.getValue))
       .setName(elems.toString())
-  }
-
-  /**
-   * wrap local values with timestamps to form an SCollection.
-   * @group in_memory
-   */
-  def parallelizeTimestamped[T: ClassTag](elems: (T, Instant)*): SCollection[T] = {
-    val coder = pipeline.getCoderRegistry.getScalaCoder[T]
-    val v = elems.map(t => TimestampedValue.of(t._1, t._2))
-    wrap(this.applyInternal(Create.timestamped(v: _*).withCoder(coder))).setName(elems.toString())
   }
 
   /**

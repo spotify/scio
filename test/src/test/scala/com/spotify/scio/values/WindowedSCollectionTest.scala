@@ -10,7 +10,7 @@ class WindowedSCollectionTest extends PipelineTest {
       val p = sc.parallelizeTimestamped(Seq("a", "b", "c", "d"), Seq(1, 2, 3, 4).map(new Instant(_)))
       val r = p.toWindowed
         .filter(v => v.timestamp.getMillis % 2 == 0).toSCollection.withTimestamp().map(kv => (kv._1, kv._2.getMillis))
-      r.internal should containInAnyOrder (("b", 2L), ("d", 4L))
+      r.internal should containInAnyOrder (Seq(("b", 2L), ("d", 4L)))
     }
   }
 
@@ -20,7 +20,7 @@ class WindowedSCollectionTest extends PipelineTest {
       val r = p.toWindowed
         .flatMap(v => Seq(v.copy(v.value + "1"), v.copy(v.value + "2")))
         .toSCollection.withTimestamp().map(kv => (kv._1, kv._2.getMillis))
-      r.internal should containInAnyOrder (("a1", 1L), ("a2", 1L), ("b1", 2L), ("b2", 2L))
+      r.internal should containInAnyOrder (Seq(("a1", 1L), ("a2", 1L), ("b1", 2L), ("b2", 2L)))
     }
   }
 
@@ -28,7 +28,7 @@ class WindowedSCollectionTest extends PipelineTest {
     runWithContext { sc =>
       val p = sc.parallelizeTimestamped(Seq("a", "b"), Seq(1, 2).map(new Instant(_)))
       val r = p.toWindowed.keyBy(v => v.value + v.timestamp.getMillis).toSCollection
-      r.internal should containInAnyOrder (("a1", "a"), ("b2", "b"))
+      r.internal should containInAnyOrder (Seq(("a1", "a"), ("b2", "b")))
     }
   }
 
@@ -36,7 +36,7 @@ class WindowedSCollectionTest extends PipelineTest {
     runWithContext { sc =>
       val p = sc.parallelizeTimestamped(Seq("a", "b"), Seq(1, 2).map(new Instant(_)))
       val r = p.toWindowed.map(v => v.copy(v.value + v.timestamp.getMillis)).toSCollection
-      r.internal should containInAnyOrder ("a1", "b2")
+      r.internal should containInAnyOrder (Seq("a1", "b2"))
     }
   }
 
