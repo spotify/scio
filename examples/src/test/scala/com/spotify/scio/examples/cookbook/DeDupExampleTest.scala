@@ -10,7 +10,7 @@ class DeDupExampleTest extends JobSpec {
     JobTest("com.spotify.scio.examples.cookbook.DeDupExample")
       .args("--output=out.txt", "--n=10")
       .input(TextIO("gs://dataflow-samples/shakespeare/*"), input)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder ("a", "b", "c", "d"))
+      .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a", "b", "c", "d")))
       .run()
   }
 

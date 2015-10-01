@@ -11,16 +11,16 @@ class AlgebirdExamples extends PipelineTest {
 
   "SCollection.sum" should "support primitive types" in {
     val s = 1 to 10
-    runWithData(s: _*)(_.sum).head should equal (55)
-    runWithData(s.map(_.toLong): _*)(_.sum).head should equal (55L)
-    runWithData(s.map(_.toFloat): _*)(_.sum).head should equal (55F)
-    runWithData(s.map(_.toDouble): _*)(_.sum).head should equal (55.0)
+    runWithData(s)(_.sum).head should equal (55)
+    runWithData(s.map(_.toLong))(_.sum).head should equal (55L)
+    runWithData(s.map(_.toFloat))(_.sum).head should equal (55F)
+    runWithData(s.map(_.toDouble))(_.sum).head should equal (55.0)
   }
 
   it should "support tuples" in {
     val s = Seq.fill(1000)(Random.nextInt(100)) zip Seq.fill(1000)(Random.nextString(10))
 
-    val output = runWithData(s: _*) { p =>
+    val output = runWithData(s) { p =>
       p.map(t => (t._1, Set(t._2))).sum
     }.head
     output._1 should equal (s.map(_._1).sum)
@@ -31,7 +31,7 @@ class AlgebirdExamples extends PipelineTest {
     val s = Seq.fill(1000)(Random.nextInt(100))
     val expected = s.groupBy(identity).size
 
-    val hll = runWithData(s: _*) { p =>
+    val hll = runWithData(s) { p =>
       val hll = new HyperLogLogMonoid(10)
       p.map(hll.toHLL(_)).sum(hll)
     }.head
@@ -42,7 +42,7 @@ class AlgebirdExamples extends PipelineTest {
   it should "support BloomFilter" in {
     val s = Seq.fill(1000)(Random.nextString(10))
 
-    val bf = runWithData(s: _*) { p =>
+    val bf = runWithData(s) { p =>
       val bf = BloomFilter(1000, 0.01)
       p.map(bf.create).sum(bf)
     }.head
@@ -51,7 +51,7 @@ class AlgebirdExamples extends PipelineTest {
   }
 
   it should "support QTree" in {
-    val q = runWithData(1 to 1000: _*) {
+    val q = runWithData(1 to 1000) {
       _.map(QTree(_)).sum(new QTreeSemigroup[Long](10))
     }.head
 
@@ -64,7 +64,7 @@ class AlgebirdExamples extends PipelineTest {
     val s = Seq.fill(1000)(Random.nextInt(100))
     val expected = s.groupBy(identity).mapValues(_.size)
 
-    val cms = runWithData(s: _*) { p =>
+    val cms = runWithData(s) { p =>
       import CMSHasherImplicits._
       val cms = CMS.monoid[Int](0.001, 1e-10, 1)
       p.map(cms.create).sum(cms)
@@ -81,7 +81,7 @@ class AlgebirdExamples extends PipelineTest {
     val normalization = halfLife / math.log(2)
     val expected = s.map(_._1).reduce(_ * decayFactor + _) / normalization
 
-    val dv = runWithData(s: _*) {
+    val dv = runWithData(s) {
       _
         .map { case (v, t) => DecayedValue.build(v, t, 10.0) }
         .sum(DecayedValue.monoidWithEpsilon(1e-3))
