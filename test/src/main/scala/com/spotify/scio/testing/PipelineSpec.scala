@@ -19,6 +19,12 @@ trait PipelineSpec extends FlatSpec with Matchers with PCollectionMatcher {
   /**
    * Test pipeline components with a [[ScioContext]].
    * @param fn code that tests the components and verifies the result
+   *
+   * {{{
+   * runWithContext { sc =>
+   *   sc.parallelize(Seq(1, 2, 3)).sum.internal should containSingleValue (6)
+   * }
+   * }}}
    */
   def runWithContext(fn: ScioContext => Unit): Unit = {
     val sc = ScioContext(Array("--testId=PipelineTest"))
@@ -31,6 +37,12 @@ trait PipelineSpec extends FlatSpec with Matchers with PCollectionMatcher {
    * @param data input data
    * @param fn code that tests the components by feeding input and extracting output
    * @return output data
+   *
+   * {{{
+   * runWithData(Seq(1, 2, 3)) { p =>
+   *   p.sum
+   * } should equal (Seq(6))
+   * }}}
    */
   def runWithData[T: ClassTag, U: ClassTag](data: Iterable[T])(fn: SCollection[T] => SCollection[U]): Seq[U] = {
     runWithLocalOutput { sc => fn(sc.parallelize(data)) }
