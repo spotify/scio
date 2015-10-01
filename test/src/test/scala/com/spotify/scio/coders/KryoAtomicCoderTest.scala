@@ -4,13 +4,12 @@ import com.google.cloud.dataflow.sdk.coders.Coder
 import com.google.cloud.dataflow.sdk.values.KV
 import com.spotify.scio.avro.TestRecord
 import com.spotify.scio.coders.CoderTestUtils._
-import com.spotify.scio.testing.PipelineTest
+import com.spotify.scio.testing.PipelineSpec
 import org.scalatest.matchers.{MatchResult, Matcher}
-import org.scalatest.{FlatSpec, Matchers}
 
 import scala.reflect.ClassTag
 
-class KryoAtomicCoderTest extends FlatSpec with Matchers with PipelineTest {
+class KryoAtomicCoderTest extends PipelineSpec {
 
   import com.spotify.scio.testing.TestingUtils._
 

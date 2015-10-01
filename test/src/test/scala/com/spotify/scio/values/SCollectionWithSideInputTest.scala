@@ -1,8 +1,8 @@
 package com.spotify.scio.values
 
-import com.spotify.scio.testing.PipelineTest
+import com.spotify.scio.testing.PipelineSpec
 
-class SCollectionWithSideInputTest extends PipelineTest {
+class SCollectionWithSideInputTest extends PipelineSpec {
 
   "SCollectionWithSideInput" should "support filter()" in {
     runWithContext { sc =>

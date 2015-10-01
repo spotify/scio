@@ -8,12 +8,12 @@ import scala.reflect.ClassTag
 
 /**
  * Set up a Dataflow job for unit testing.
- * To be used in a [[com.spotify.scio.testing.JobSpec JobSpec]]. For example:
+ * To be used in a [[com.spotify.scio.testing.PipelineSpec PipelineSpec]]. For example:
  *
  * {{{
  * import com.spotify.scio.testing._
  *
- * class WordCountTest extends JobSpec {
+ * class WordCountTest extends PipelineSpec {
  *
  *   // Mock input data, mock distributed cache and expected result
  *   val inData = Seq("a b c d e", "a b a b")

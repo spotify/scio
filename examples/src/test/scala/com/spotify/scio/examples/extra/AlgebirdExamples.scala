@@ -1,11 +1,11 @@
 package com.spotify.scio.examples.extra
 
-import com.spotify.scio.testing.PipelineTest
+import com.spotify.scio.testing.PipelineSpec
 import com.twitter.algebird._
 
 import scala.util.Random
 
-class AlgebirdExamples extends PipelineTest {
+class AlgebirdExamples extends PipelineSpec {
 
   def boundsContain(b: (Double, Double), actual: Double) = actual >= b._1 && actual <= b._2
 

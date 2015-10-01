@@ -2,9 +2,9 @@
 
 package com.spotify.scio.values
 
-import com.spotify.scio.testing.PipelineTest
+import com.spotify.scio.testing.PipelineSpec
 
-class HistogramTest extends PipelineTest {
+class HistogramTest extends PipelineSpec {
 
   "DoubleSCollectionFunctions.histogram" should "work on empty input" in {
     runWithContext { sc =>

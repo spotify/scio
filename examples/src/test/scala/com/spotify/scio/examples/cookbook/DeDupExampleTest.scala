@@ -2,7 +2,7 @@ package com.spotify.scio.examples.cookbook
 
 import com.spotify.scio.testing._
 
-class DeDupExampleTest extends JobSpec {
+class DeDupExampleTest extends PipelineSpec {
 
   val input = Seq("a", "b", "a", "b", "c", "a", "b", "d")
 

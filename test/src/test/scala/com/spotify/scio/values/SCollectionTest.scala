@@ -1,13 +1,13 @@
 package com.spotify.scio.values
 
-import com.spotify.scio.testing.PipelineTest
+import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.Algebird
 import com.twitter.algebird.{Aggregator, Semigroup}
 import org.joda.time.{Duration, Instant}
 
 import scala.reflect.ClassTag
 
-class SCollectionTest extends PipelineTest {
+class SCollectionTest extends PipelineSpec {
 
   import com.spotify.scio.testing.TestingUtils._
 

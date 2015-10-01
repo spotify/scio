@@ -3,7 +3,7 @@ package com.spotify.scio.examples.cookbook
 import com.spotify.scio.bigquery._
 import com.spotify.scio.testing._
 
-class MaxPerKeyExamplesTest extends JobSpec {
+class MaxPerKeyExamplesTest extends PipelineSpec {
 
   val input = Seq((1, 10.0), (1, 20.0), (2, 18.0), (3, 19.0), (3, 21.0), (3, 23.0))
     .map(kv => TableRow("month" -> kv._1, "mean_temp" -> kv._2))

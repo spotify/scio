@@ -1,8 +1,8 @@
 package com.spotify.scio.values
 
-import com.spotify.scio.testing.PipelineTest
+import com.spotify.scio.testing.PipelineSpec
 
-class SCollectionWithSideOutputTest extends PipelineTest {
+class SCollectionWithSideOutputTest extends PipelineSpec {
 
   "SCollectionWithSideOutput" should "support map()" in {
     runWithContext { sc =>

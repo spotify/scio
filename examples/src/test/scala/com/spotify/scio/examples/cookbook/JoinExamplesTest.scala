@@ -3,7 +3,7 @@ package com.spotify.scio.examples.cookbook
 import com.spotify.scio.bigquery._
 import com.spotify.scio.testing._
 
-class JoinExamplesTest extends JobSpec {
+class JoinExamplesTest extends PipelineSpec {
 
   import JoinUtil._
 

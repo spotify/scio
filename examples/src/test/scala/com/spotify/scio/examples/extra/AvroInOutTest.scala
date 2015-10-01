@@ -3,7 +3,7 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio.avro.{Account, TestRecord}
 import com.spotify.scio.testing._
 
-class AvroInOutTest extends JobSpec {
+class AvroInOutTest extends PipelineSpec {
 
   val input = Seq(
     new TestRecord(1, 0L, 0F, 1000.0, false, "Alice"),

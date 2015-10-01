@@ -3,7 +3,7 @@ package com.spotify.scio.examples.cookbook
 import com.spotify.scio.bigquery._
 import com.spotify.scio.testing._
 
-class FilterExamplesTest extends JobSpec {
+class FilterExamplesTest extends PipelineSpec {
 
   def gsodRow(year: Int, month: Int, day: Int, meanTemp: Double) =
     TableRow("year" -> year, "month" -> month, "day" -> day, "mean_temp" -> meanTemp)

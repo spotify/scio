@@ -3,7 +3,7 @@ package com.spotify.scio.examples
 import com.spotify.scio.bigquery._
 import com.spotify.scio.testing._
 
-class BigQueryTornadoesTest extends JobSpec {
+class BigQueryTornadoesTest extends PipelineSpec {
 
   val input = Seq(
     (1, true),

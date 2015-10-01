@@ -1,10 +1,10 @@
 package com.spotify.scio.values
 
-import com.spotify.scio.testing.PipelineTest
+import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.Algebird
 import com.twitter.algebird.Aggregator
 
-class PairSCollectionFunctionsTest extends PipelineTest {
+class PairSCollectionFunctionsTest extends PipelineSpec {
 
   import com.spotify.scio.testing.TestingUtils._
 

@@ -3,7 +3,7 @@ package com.spotify.scio.examples.cookbook
 import com.spotify.scio.bigquery._
 import com.spotify.scio.testing._
 
-class CombinePerKeyExamplesTest extends JobSpec {
+class CombinePerKeyExamplesTest extends PipelineSpec {
 
   val input = Seq(
     ("c1", "verylongword1"),
