@@ -84,6 +84,7 @@ object ScioBuild extends Build {
         "com.twitter" %% "algebird-core" % "0.11.0",
         "com.twitter" %% "chill" % chillVersion,
         "com.twitter" %% "chill-avro" % chillVersion,
+        "commons-io" % "commons-io" % "2.4",
         "org.apache.commons" % "commons-math3" % "3.5"
       )
     )
