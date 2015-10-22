@@ -26,7 +26,8 @@ import com.spotify.scio.testing._
 import com.spotify.scio.util.CallSites
 import com.spotify.scio.values._
 import org.apache.avro.Schema
-import org.apache.avro.generic.{GenericRecord, IndexedRecord}
+import org.apache.avro.generic.GenericRecord
+import org.apache.avro.specific.SpecificRecord
 import org.joda.time.Instant
 
 import scala.collection.JavaConverters._
@@ -142,7 +143,7 @@ class ScioContext private (cmdlineArgs: Array[String]) {
    * Get an SCollection of specific record type for an Avro file.
    * @group input
    */
-  def avroFile[T <: IndexedRecord: ClassTag](path: String): SCollection[T] =
+  def avroFile[T <: SpecificRecord: ClassTag](path: String): SCollection[T] =
     if (this.isTest) {
       this.getTestInput(AvroIO[T](path))
     } else {
