@@ -100,7 +100,7 @@ trait PipelineSpec extends FlatSpec with Matchers with PCollectionMatcher {
     val sc = ScioContext(Array())
 
     val tmpDir = new File(
-      new File(System.getProperty("java.io.tmpdir")),
+      new File(sys.props("java.io.tmpdir")),
       "scio-test-" + UUID.randomUUID().toString)
     fn(sc).map(encode).saveAsTextFile(tmpDir.getPath, numShards = 1)
 
