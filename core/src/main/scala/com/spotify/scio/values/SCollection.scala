@@ -2,8 +2,9 @@ package com.spotify.scio.values
 
 import java.io.File
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
+import java.util.UUID
 
-import com.google.api.services.bigquery.model.{TableSchema, TableReference, TableRow}
+import com.google.api.services.bigquery.model.{TableSchema, TableReference}
 import com.google.api.services.datastore.DatastoreV1.Entity
 import com.google.cloud.dataflow.sdk.coders.{TableRowJsonCoder, Coder}
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{WriteDisposition, CreateDisposition}
@@ -14,19 +15,23 @@ import com.google.cloud.dataflow.sdk.io.{
   PubsubIO => GPubsubIO,
   TextIO => GTextIO
 }
+import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
 import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
 import com.google.cloud.dataflow.sdk.transforms._
 import com.google.cloud.dataflow.sdk.transforms.windowing._
+import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values._
 import com.spotify.scio.ScioContext
+import com.spotify.scio.bigquery.TableRow
+import com.spotify.scio.coders.KryoAtomicCoder
+import com.spotify.scio.sinks._
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.Schema
 import org.apache.avro.generic.{IndexedRecord, GenericRecord}
-import org.apache.avro.specific.SpecificRecord
 import org.joda.time.{Instant, Duration}
 
 import scala.collection.JavaConverters._
@@ -657,6 +662,22 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // Write operations
   // =======================================================================
 
+  def materialize: Sink[T] =
+    if (context.isTest) {
+      saveAsInMemorySink
+    } else {
+      val tmpDir = if (context.pipeline.getRunner.isInstanceOf[DirectPipelineRunner]) {
+        new File(sys.props("java.io.tmpdir"))
+      } else {
+        new File(context.pipeline.getOptions.asInstanceOf[DataflowPipelineOptions].getTempLocation)
+      }
+      val path = new File(tmpDir, "scio-materialize-" + UUID.randomUUID().toString).getCanonicalPath
+      this
+        .map(CoderUtils.encodeToBase64(KryoAtomicCoder[T], _))
+        .saveAsTextFile(path)
+      new KryoSink[T](context, path)
+    }
+
   private def pathWithShards(path: String) = {
     if (this.context.pipeline.getRunner.isInstanceOf[DirectPipelineRunner]) {
       val f = new File(path)
@@ -679,24 +700,34 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /**
    * Save this SCollection as an Avro file. Note that elements must be of type IndexedRecord.
+   * @param schema must be not null if T is of type GenericRecord.
    * @group output
    */
-  def saveAsAvroFile(path: String, numShards: Int = 0)(implicit ev: T <:< IndexedRecord): Unit =
+  def saveAsAvroFile(path: String, numShards: Int = 0, schema: Schema = null)(implicit ev: T <:< IndexedRecord): Sink[T] =
     if (context.isTest) {
       context.testOut(AvroIO(path))(internal)
+      saveAsInMemorySink
     } else {
-      val transform = avroOut(path, numShards)
-      if (classOf[GenericRecord] isAssignableFrom ct.runtimeClass) {
-        val schema = ct.runtimeClass.getMethod("getClassSchema").invoke(null).asInstanceOf[Schema]
-        this
-          .asInstanceOf[SCollection[GenericRecord]]
-          .applyInternal(transform.withSchema(schema))
-      } else if (classOf[SpecificRecord] isAssignableFrom ct.runtimeClass) {
-        this.applyInternal(transform.withSchema(ct.runtimeClass.asInstanceOf[Class[T]]))
+      if (schema != null) {
+        saveAsGenericAvroFile(path, numShards, schema)
       } else {
-        throw new RuntimeException(s"${ct.runtimeClass} is not supported")
+        saveAsSpecificAvroFile(path, numShards)
       }
     }
+
+  private def saveAsGenericAvroFile(path: String, numShards: Int, schema: Schema): Sink[T] = {
+    val transform = avroOut(path, numShards)
+    this
+      .asInstanceOf[SCollection[GenericRecord]]
+      .applyInternal(transform.withSchema(schema))
+    new GenericAvroSink(context, path).asInstanceOf[Sink[T]]
+  }
+
+  private def saveAsSpecificAvroFile(path: String, numShards: Int): Sink[T] = {
+    val transform = avroOut(path, numShards)
+    this.applyInternal(transform.withSchema(ct.runtimeClass.asInstanceOf[Class[T]]))
+    new SpecificAvroSink[T](context, path).asInstanceOf[Sink[T]]
+  }
 
   /**
    * Save this SCollection as a Bigquery table. Note that elements must be of type TableRow.
@@ -705,16 +736,28 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def saveAsBigQuery(table: TableReference, schema: TableSchema,
                      createDisposition: CreateDisposition,
                      writeDisposition: WriteDisposition)
-                    (implicit ev: T <:< TableRow): Unit = {
+                    (implicit ev: T <:< TableRow): Sink[TableRow] = {
     val tableSpec = GBigQueryIO.toTableSpec(table)
     if (context.isTest) {
       context.testOut(BigQueryIO(tableSpec))(internal.asInstanceOf[PCollection[TableRow]])
+
+      if (writeDisposition == WriteDisposition.WRITE_APPEND) {
+        new UnsupportedSink[TableRow](context, "BigQuery with append")
+      } else {
+        saveAsInMemorySink.asInstanceOf[Sink[TableRow]]
+      }
     } else {
       var transform = GBigQueryIO.Write.to(table)
       if (schema != null) transform = transform.withSchema(schema)
       if (createDisposition != null) transform = transform.withCreateDisposition(createDisposition)
       if (writeDisposition != null) transform = transform.withWriteDisposition(writeDisposition)
       this.asInstanceOf[SCollection[TableRow]].applyInternal(transform)
+
+      if (writeDisposition == WriteDisposition.WRITE_APPEND) {
+        new UnsupportedSink[TableRow](context, "BigQuery with append")
+      } else {
+        new BigQuerySink(context, table)
+      }
     }
   }
 
@@ -725,52 +768,66 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def saveAsBigQuery(tableSpec: String, schema: TableSchema = null,
                      createDisposition: CreateDisposition = null,
                      writeDisposition: WriteDisposition = null)
-                    (implicit ev: T <:< TableRow): Unit =
+                    (implicit ev: T <:< TableRow): Sink[TableRow] =
     saveAsBigQuery(GBigQueryIO.parseTableSpec(tableSpec), schema, createDisposition, writeDisposition)
 
   /**
    * Save this SCollection as a Datastore dataset. Note that elements must be of type Entity.
    * @group output
    */
-  def saveAsDatastore(datasetId: String)(implicit ev: T <:< Entity): Unit =
+  def saveAsDatastore(datasetId: String)(implicit ev: T <:< Entity): Sink[Entity] =
     if (context.isTest) {
       context.testOut(DatastoreIO(datasetId))(internal.asInstanceOf[PCollection[Entity]])
+      new UnsupportedSink[Entity](context, "Datastore")
     } else {
       this.asInstanceOf[SCollection[Entity]].applyInternal(GDatastoreIO.writeTo(datasetId))
+      new UnsupportedSink[Entity](context, "Datastore")
     }
 
   /**
    * Save this SCollection as a Pub/Sub topic. Note that elements must be of type String.
    * @group output
    */
-  def saveAsPubsub(topic: String)(implicit ev: T <:< String): Unit =
+  def saveAsPubsub(topic: String)(implicit ev: T <:< String): Sink[String] =
     if (context.isTest) {
       context.testOut(PubsubIO(topic))(internal.asInstanceOf[PCollection[String]])
+      new UnsupportedSink[String](context, "Pubsub")
     } else {
       this.asInstanceOf[SCollection[String]].applyInternal(GPubsubIO.Write.topic(topic))
+      new UnsupportedSink[String](context, "Pubsub")
     }
 
   /**
    * Save this SCollection as a JSON text file. Note that elements must be of type TableRow.
    * @group output
    */
-  def saveAsTableRowJsonFile(path: String, numShards: Int = 0)(implicit ev: T <:< TableRow): Unit =
+  def saveAsTableRowJsonFile(path: String, numShards: Int = 0)(implicit ev: T <:< TableRow): Sink[TableRow] =
     if (context.isTest) {
       context.testOut(BigQueryIO(path))(internal.asInstanceOf[PCollection[TableRow]])
+      saveAsInMemorySink.asInstanceOf[Sink[TableRow]]
     } else {
       this.asInstanceOf[SCollection[TableRow]].applyInternal(tableRowJsonOut(path, numShards))
+      new TableRowJsonSink(context, path)
     }
 
   /**
    * Save this SCollection as a text file. Note that elements must be of type String.
    * @group output
    */
-  def saveAsTextFile(path: String, suffix: String = ".txt", numShards: Int = 0)(implicit ev: T <:< String): Unit =
+  def saveAsTextFile(path: String, suffix: String = ".txt", numShards: Int = 0)(implicit ev: T <:< String): Sink[String] =
     if (context.isTest) {
       context.testOut(TextIO(path))(internal.asInstanceOf[PCollection[String]])
+      saveAsInMemorySink.asInstanceOf[Sink[String]]
     } else {
       this.asInstanceOf[SCollection[String]].applyInternal(textOut(path, suffix, numShards))
+      new TextSink(context, path)
     }
+
+  private[scio] def saveAsInMemorySink: Sink[T] = {
+    val sink = new InMemorySink[T](context)
+    this.applyInternal(Write.to(new InMemoryDataFlowSink[T](sink.id)))
+    sink
+  }
 
 }
 

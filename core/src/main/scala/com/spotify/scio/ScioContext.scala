@@ -71,7 +71,7 @@ class ScioContext private (cmdlineArgs: Array[String]) {
 
   private var _options: DataflowPipelineOptions = null
 
-  private var _sqlId: Int = 0
+  private var _isClosed: Boolean = false
 
   private val (_args, _pipeline) = {
     val dfPatterns = classOf[DataflowPipelineOptions].getMethods.flatMap { m =>
@@ -113,7 +113,13 @@ class ScioContext private (cmdlineArgs: Array[String]) {
   def pipeline: Pipeline = _pipeline
 
   /** Close the context. */
-  def close(): Unit = pipeline.run()
+  def close(): Unit = {
+    pipeline.run()
+    _isClosed = true
+  }
+
+  /** Whether the context is closed. */
+  def isClosed: Boolean = _isClosed
 
   /** Wrap a [[com.google.cloud.dataflow.sdk.values.PCollection PCollection]]. */
   def wrap[T: ClassTag](p: PCollection[T]): SCollection[T] =
@@ -161,17 +167,6 @@ class ScioContext private (cmdlineArgs: Array[String]) {
       this.getTestInput(AvroIO[GenericRecord](path))
     } else {
       wrap(this.applyInternal(GAvroIO.Read.from(path).withSchema(schema))).setName(path)
-    }
-
-  /**
-   * Get an SCollection of generic record type for an Avro file.
-   * @group input
-   */
-  def avroFile(path: String, schemaString: String): SCollection[GenericRecord] =
-    if (this.isTest) {
-      this.getTestInput(AvroIO[GenericRecord](path))
-    } else {
-      wrap(this.applyInternal(GAvroIO.Read.from(path).withSchema(schemaString))).setName(path)
     }
 
   /**

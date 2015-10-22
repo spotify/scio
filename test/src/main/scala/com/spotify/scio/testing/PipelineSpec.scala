@@ -27,7 +27,8 @@ trait PipelineSpec extends FlatSpec with Matchers with PCollectionMatcher {
    * }}}
    */
   def runWithContext(fn: ScioContext => Unit): Unit = {
-    val sc = ScioContext(Array("--testId=PipelineTest"))
+    val testId = "PipelineTest-" + System.currentTimeMillis()
+    val sc = ScioContext(Array(s"--testId=$testId"))
     fn(sc)
     sc.close()
   }
@@ -97,30 +98,10 @@ trait PipelineSpec extends FlatSpec with Matchers with PCollectionMatcher {
   }
 
   private def runWithLocalOutput[U](fn: ScioContext => SCollection[U]): Seq[U] = {
-    val sc = ScioContext(Array())
-
-    val tmpDir = new File(
-      new File(sys.props("java.io.tmpdir")),
-      "scio-test-" + UUID.randomUUID().toString)
-    fn(sc).map(encode).saveAsTextFile(tmpDir.getPath, numShards = 1)
-
+    val sc = ScioContext(Array.empty)
+    val sink = fn(sc).materialize
     sc.close()
-
-    val tmpFile = new File(tmpDir, "part-00000-of-00001.txt")
-    val r = scala.io.Source
-      .fromFile(tmpFile)
-      .getLines()
-      .map(decode[U])
-      .toSeq
-
-    tmpFile.delete()
-    tmpDir.delete()
-
-    r
+    sink.value.toSeq
   }
-
-  private def encode[T](obj: T): String = CoderUtils.encodeToBase64(new KryoAtomicCoder(), obj)
-
-  private def decode[T](b64: String): T = CoderUtils.decodeFromBase64(new KryoAtomicCoder, b64).asInstanceOf[T]
 
 }

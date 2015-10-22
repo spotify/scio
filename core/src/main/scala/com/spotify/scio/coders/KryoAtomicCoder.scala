@@ -2,7 +2,7 @@ package com.spotify.scio.coders
 
 import java.io.{IOException, ByteArrayOutputStream, OutputStream, InputStream}
 
-import com.google.cloud.dataflow.sdk.coders.{CoderException, AtomicCoder}
+import com.google.cloud.dataflow.sdk.coders.{Coder, CoderException, AtomicCoder}
 import com.google.cloud.dataflow.sdk.coders.Coder.Context
 import com.google.cloud.dataflow.sdk.util.VarInt
 import com.google.common.io.ByteStreams
@@ -68,4 +68,8 @@ private[scio] class KryoAtomicCoder extends AtomicCoder[Any] {
     }
   }
 
+}
+
+private[scio] object KryoAtomicCoder {
+  def apply[T]: Coder[T] = (new KryoAtomicCoder).asInstanceOf[Coder[T]]
 }

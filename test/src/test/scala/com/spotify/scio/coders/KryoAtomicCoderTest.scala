@@ -49,7 +49,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
   }
 
   it should "support Avro GenericRecord" in {
-    val r = newGenericRecord
+    val r = newGenericRecord(1)
     cf should roundTrip (r)
     cf should roundTrip (("key", r))
     cf should roundTrip (CaseClassWithGenericRecord("record", 10, r))
@@ -65,8 +65,8 @@ class KryoAtomicCoderTest extends PipelineSpec {
   it should "support KV" in {
     cf should roundTrip (KV.of("key", 1.0))
     cf should roundTrip (KV.of("key", (10, 10.0)))
-    cf should roundTrip (KV.of("key", new TestRecord(1, 1L, 1F, 1.0, true, "hello")))
-    cf should roundTrip (KV.of("key", newGenericRecord))
+    cf should roundTrip (KV.of("key", newSpecificRecord(1)))
+    cf should roundTrip (KV.of("key", newGenericRecord(1)))
   }
 
 }

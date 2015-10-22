@@ -26,7 +26,7 @@ private[scio] object Implicits {
 
       // Fall back to Kryo
       r.setFallbackCoderProvider(new CoderProvider {
-        override def getCoder[T](`type`: TypeDescriptor[T]): Coder[T] = new KryoAtomicCoder().asInstanceOf[Coder[T]]
+        override def getCoder[T](`type`: TypeDescriptor[T]): Coder[T] = KryoAtomicCoder[T]
       })
     }
 
@@ -43,7 +43,7 @@ private[scio] object Implicits {
       // SerializableCoder if the class extends Serializable or null otherwise.
       // Override both cases with KryoAtomicCoder.
       if (coder == null || coder.getClass == classOf[SerializableCoder[T]]) {
-        new KryoAtomicCoder().asInstanceOf[Coder[T]]
+        KryoAtomicCoder[T]
       } else {
         coder
       }
