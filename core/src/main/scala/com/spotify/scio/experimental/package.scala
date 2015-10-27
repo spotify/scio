@@ -22,7 +22,9 @@ package object experimental {
   val BigQueryType = com.spotify.scio.bigquery.types.BigQueryType
 
   /** Enhanced version of [[ScioContext]] with experimental features. */
-  implicit class ExperimentalDataflowContext(val self: ScioContext) extends AnyVal {
+  // TODO: scala 2.11
+  // implicit class ExperimentalDataflowContext(val self: ScioContext) extends AnyVal {
+  implicit class ExperimentalDataflowContext(val self: ScioContext) {
 
     /**
      * Get a typed SCollection for a BigQuery SELECT query or table.
@@ -64,7 +66,9 @@ package object experimental {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with
    * experimental features.
    */
-  implicit class ExperimentalSCollection[T](val self: SCollection[T]) extends AnyVal {
+  // TODO: scala 2.11
+  // implicit class ExperimentalSCollection[T](val self: SCollection[T]) extends AnyVal {
+  implicit class ExperimentalSCollection[T](val self: SCollection[T]) {
 
     /**
      * Save this SCollection as a Bigquery table. Note that element type `T` must be a case class
