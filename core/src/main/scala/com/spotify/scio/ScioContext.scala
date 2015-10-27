@@ -6,7 +6,9 @@ import java.net.URI
 
 import com.google.api.services.bigquery.model.TableReference
 import com.google.api.services.datastore.DatastoreV1.{Query, Entity}
-import com.google.cloud.dataflow.sdk.Pipeline
+import com.google.cloud.dataflow.sdk.PipelineResult.State
+import com.google.cloud.dataflow.sdk.runners.{DirectPipelineRunner, DataflowPipelineRunner}
+import com.google.cloud.dataflow.sdk.{PipelineResult, Pipeline}
 import com.google.cloud.dataflow.sdk.coders.TableRowJsonCoder
 import com.google.cloud.dataflow.sdk.io.{
   AvroIO => GAvroIO,
@@ -31,6 +33,8 @@ import org.apache.avro.specific.SpecificRecord
 import org.joda.time.Instant
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ListBuffer
+import scala.concurrent.{Promise, Future}
 import scala.reflect.ClassTag
 
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
@@ -71,7 +75,7 @@ class ScioContext private (cmdlineArgs: Array[String]) {
 
   private var _options: DataflowPipelineOptions = null
 
-  private var _isClosed: Boolean = false
+  private var _result: PipelineResult = null
 
   private val (_args, _pipeline) = {
     val dfPatterns = classOf[DataflowPipelineOptions].getMethods.flatMap { m =>
@@ -114,16 +118,42 @@ class ScioContext private (cmdlineArgs: Array[String]) {
 
   /** Close the context. */
   def close(): Unit = {
-    pipeline.run()
-    _isClosed = true
+    _result = pipeline.run()
+    complete()
   }
 
-  /** Whether the context is closed. */
-  def isClosed: Boolean = _isClosed
+  /** Dataflow pipeline result. */
+  def state: Option[State] = if (_result == null) None else Some(_result.getState)
+
+  def isCompleted: Boolean = _result != null && _result.getState.isTerminal
 
   /** Wrap a [[com.google.cloud.dataflow.sdk.values.PCollection PCollection]]. */
   def wrap[T: ClassTag](p: PCollection[T]): SCollection[T] =
     new SCollectionImpl[T](p, this)
+
+  // =======================================================================
+  // Futures
+  // =======================================================================
+
+  private val _callbacks: ListBuffer[State => Any] = ListBuffer.empty
+
+  private[scio] def onComplete[U](f: State => U): Unit = {
+    _callbacks.append(f)
+  }
+
+  private def complete(): Unit = {
+    if (pipeline.getRunner.isInstanceOf[DataflowPipelineRunner]) {
+      import scala.concurrent.ExecutionContext.Implicits.global
+      Future {
+        while (!isCompleted) {
+          Thread.sleep(1000)
+        }
+        _callbacks.foreach(_(_result.getState))
+      }
+    } else {
+      _callbacks.foreach(_(_result.getState))
+    }
+  }
 
   // =======================================================================
   // Test wiring
@@ -149,7 +179,7 @@ class ScioContext private (cmdlineArgs: Array[String]) {
    * Get an SCollection of specific record type for an Avro file.
    * @group input
    */
-  def avroFile[T <: SpecificRecord: ClassTag](path: String): SCollection[T] =
+  def avroFile[T: ClassTag](path: String): SCollection[T] =
     if (this.isTest) {
       this.getTestInput(AvroIO[T](path))
     } else {

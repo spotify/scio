@@ -1,14 +1,11 @@
 package com.spotify.scio.testing
 
-import java.io.File
-import java.util.UUID
-
-import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.KryoAtomicCoder
 import com.spotify.scio.values.SCollection
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
 /**
@@ -99,9 +96,9 @@ trait PipelineSpec extends FlatSpec with Matchers with PCollectionMatcher {
 
   private def runWithLocalOutput[U](fn: ScioContext => SCollection[U]): Seq[U] = {
     val sc = ScioContext(Array.empty)
-    val sink = fn(sc).materialize
+    val f = fn(sc).materialize
     sc.close()
-    sink.value.toSeq
+    Await.result(f, Duration.Inf).value.toSeq
   }
 
 }

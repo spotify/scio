@@ -6,6 +6,7 @@ import java.util.UUID
 
 import com.google.api.services.bigquery.model.{TableSchema, TableReference}
 import com.google.api.services.datastore.DatastoreV1.Entity
+import com.google.cloud.dataflow.sdk.PipelineResult.State
 import com.google.cloud.dataflow.sdk.coders.{TableRowJsonCoder, Coder}
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{WriteDisposition, CreateDisposition}
 import com.google.cloud.dataflow.sdk.io.{
@@ -23,19 +24,21 @@ import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values._
 import com.spotify.scio.ScioContext
-import com.spotify.scio.bigquery.TableRow
+import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
 import com.spotify.scio.coders.KryoAtomicCoder
-import com.spotify.scio.sinks._
+import com.spotify.scio.io._
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.Schema
 import org.apache.avro.generic.{IndexedRecord, GenericRecord}
+import org.apache.commons.io.FileUtils
 import org.joda.time.{Instant, Duration}
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
+import scala.concurrent._
 import scala.reflect.ClassTag
 
 /** Convenience functions for creating SCollections. */
@@ -662,9 +665,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // Write operations
   // =======================================================================
 
-  def materialize: Sink[T] =
+  /**
+   * Extract data from this SCollection as a Future. The Future will be completed once the
+   * pipeline completes successfully.
+   * @group output
+   */
+  def materialize: Future[Tap[T]] =
     if (context.isTest) {
-      saveAsInMemorySink
+      saveAsInMemoryTap
     } else {
       val tmpDir = if (context.pipeline.getRunner.isInstanceOf[DirectPipelineRunner]) {
         new File(sys.props("java.io.tmpdir"))
@@ -675,7 +683,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       this
         .map(CoderUtils.encodeToBase64(KryoAtomicCoder[T], _))
         .saveAsTextFile(path)
-      new KryoSink[T](context, path)
+      makeFutureTap(MaterializedTap[T](path))
     }
 
   private def pathWithShards(path: String) = {
@@ -703,10 +711,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @param schema must be not null if T is of type GenericRecord.
    * @group output
    */
-  def saveAsAvroFile(path: String, numShards: Int = 0, schema: Schema = null)(implicit ev: T <:< IndexedRecord): Sink[T] =
+  def saveAsAvroFile(path: String, numShards: Int = 0, schema: Schema = null)(implicit ev: T <:< IndexedRecord): Future[Tap[T]] =
     if (context.isTest) {
       context.testOut(AvroIO(path))(internal)
-      saveAsInMemorySink
+      saveAsInMemoryTap
     } else {
       if (schema != null) {
         saveAsGenericAvroFile(path, numShards, schema)
@@ -715,18 +723,18 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       }
     }
 
-  private def saveAsGenericAvroFile(path: String, numShards: Int, schema: Schema): Sink[T] = {
+  private def saveAsGenericAvroFile(path: String, numShards: Int, schema: Schema): Future[Tap[T]] = {
     val transform = avroOut(path, numShards)
     this
       .asInstanceOf[SCollection[GenericRecord]]
       .applyInternal(transform.withSchema(schema))
-    new GenericAvroSink(context, path).asInstanceOf[Sink[T]]
+    makeFutureTap(GenericAvroTap(path, schema)).asInstanceOf[Future[Tap[T]]]
   }
 
-  private def saveAsSpecificAvroFile(path: String, numShards: Int): Sink[T] = {
+  private def saveAsSpecificAvroFile(path: String, numShards: Int): Future[Tap[T]] = {
     val transform = avroOut(path, numShards)
     this.applyInternal(transform.withSchema(ct.runtimeClass.asInstanceOf[Class[T]]))
-    new SpecificAvroSink[T](context, path).asInstanceOf[Sink[T]]
+    makeFutureTap(SpecificAvroTap(path))
   }
 
   /**
@@ -736,15 +744,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def saveAsBigQuery(table: TableReference, schema: TableSchema,
                      createDisposition: CreateDisposition,
                      writeDisposition: WriteDisposition)
-                    (implicit ev: T <:< TableRow): Sink[TableRow] = {
+                    (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
     val tableSpec = GBigQueryIO.toTableSpec(table)
     if (context.isTest) {
       context.testOut(BigQueryIO(tableSpec))(internal.asInstanceOf[PCollection[TableRow]])
 
       if (writeDisposition == WriteDisposition.WRITE_APPEND) {
-        new UnsupportedSink[TableRow](context, "BigQuery with append")
+        Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
       } else {
-        saveAsInMemorySink.asInstanceOf[Sink[TableRow]]
+        saveAsInMemoryTap.asInstanceOf[Future[Tap[TableRow]]]
       }
     } else {
       var transform = GBigQueryIO.Write.to(table)
@@ -754,9 +762,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       this.asInstanceOf[SCollection[TableRow]].applyInternal(transform)
 
       if (writeDisposition == WriteDisposition.WRITE_APPEND) {
-        new UnsupportedSink[TableRow](context, "BigQuery with append")
+        Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
       } else {
-        new BigQuerySink(context, table)
+        makeFutureTap(BigQueryTap(table, context.options.get))
       }
     }
   }
@@ -768,65 +776,77 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def saveAsBigQuery(tableSpec: String, schema: TableSchema = null,
                      createDisposition: CreateDisposition = null,
                      writeDisposition: WriteDisposition = null)
-                    (implicit ev: T <:< TableRow): Sink[TableRow] =
+                    (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
     saveAsBigQuery(GBigQueryIO.parseTableSpec(tableSpec), schema, createDisposition, writeDisposition)
 
   /**
    * Save this SCollection as a Datastore dataset. Note that elements must be of type Entity.
    * @group output
    */
-  def saveAsDatastore(datasetId: String)(implicit ev: T <:< Entity): Sink[Entity] =
+  def saveAsDatastore(datasetId: String)(implicit ev: T <:< Entity): Future[Tap[Entity]] =
     if (context.isTest) {
       context.testOut(DatastoreIO(datasetId))(internal.asInstanceOf[PCollection[Entity]])
-      new UnsupportedSink[Entity](context, "Datastore")
+      Future.failed(new NotImplementedError("Datastore future not implemented"))
     } else {
       this.asInstanceOf[SCollection[Entity]].applyInternal(GDatastoreIO.writeTo(datasetId))
-      new UnsupportedSink[Entity](context, "Datastore")
+      Future.failed(new NotImplementedError("Datastore future not implemented"))
     }
 
   /**
    * Save this SCollection as a Pub/Sub topic. Note that elements must be of type String.
    * @group output
    */
-  def saveAsPubsub(topic: String)(implicit ev: T <:< String): Sink[String] =
+  def saveAsPubsub(topic: String)(implicit ev: T <:< String): Future[Tap[String]] =
     if (context.isTest) {
       context.testOut(PubsubIO(topic))(internal.asInstanceOf[PCollection[String]])
-      new UnsupportedSink[String](context, "Pubsub")
+      Future.failed(new NotImplementedError("Pubsub future not implemented"))
     } else {
       this.asInstanceOf[SCollection[String]].applyInternal(GPubsubIO.Write.topic(topic))
-      new UnsupportedSink[String](context, "Pubsub")
+      Future.failed(new NotImplementedError("Pubsub future not implemented"))
     }
 
   /**
    * Save this SCollection as a JSON text file. Note that elements must be of type TableRow.
    * @group output
    */
-  def saveAsTableRowJsonFile(path: String, numShards: Int = 0)(implicit ev: T <:< TableRow): Sink[TableRow] =
+  def saveAsTableRowJsonFile(path: String, numShards: Int = 0)(implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
     if (context.isTest) {
       context.testOut(BigQueryIO(path))(internal.asInstanceOf[PCollection[TableRow]])
-      saveAsInMemorySink.asInstanceOf[Sink[TableRow]]
+      saveAsInMemoryTap.asInstanceOf[Future[Tap[TableRow]]]
     } else {
       this.asInstanceOf[SCollection[TableRow]].applyInternal(tableRowJsonOut(path, numShards))
-      new TableRowJsonSink(context, path)
+      makeFutureTap(TableRowJsonTap(path))
     }
 
   /**
    * Save this SCollection as a text file. Note that elements must be of type String.
    * @group output
    */
-  def saveAsTextFile(path: String, suffix: String = ".txt", numShards: Int = 0)(implicit ev: T <:< String): Sink[String] =
+  def saveAsTextFile(path: String, suffix: String = ".txt", numShards: Int = 0)(implicit ev: T <:< String): Future[Tap[String]] =
     if (context.isTest) {
       context.testOut(TextIO(path))(internal.asInstanceOf[PCollection[String]])
-      saveAsInMemorySink.asInstanceOf[Sink[String]]
+      saveAsInMemoryTap.asInstanceOf[Future[Tap[String]]]
     } else {
       this.asInstanceOf[SCollection[String]].applyInternal(textOut(path, suffix, numShards))
-      new TextSink(context, path)
+      makeFutureTap(TextTap(path))
     }
 
-  private[scio] def saveAsInMemorySink: Sink[T] = {
-    val sink = new InMemorySink[T](context)
-    this.applyInternal(Write.to(new InMemoryDataFlowSink[T](sink.id)))
-    sink
+  private def makeFutureTap[U](sink: Tap[U]): Future[Tap[U]] = {
+    val p = Promise[Tap[U]]()
+    context.onComplete { s =>
+      if (s == State.DONE || s == State.UPDATED) {
+        p.success(sink)
+      } else {
+        p.failure(new RuntimeException("Dataflow pipeline failed to complete: " + s))
+      }
+    }
+    p.future
+  }
+
+  private[scio] def saveAsInMemoryTap: Future[Tap[T]] = {
+    val tap = new InMemoryTap[T]
+    this.applyInternal(Write.to(new InMemoryDataFlowSink[T](tap.id)))
+    makeFutureTap(tap)
   }
 
 }

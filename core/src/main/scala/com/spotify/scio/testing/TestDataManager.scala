@@ -1,9 +1,8 @@
 package com.spotify.scio.testing
 
 import com.google.api.services.bigquery.model.TableRow
-import com.google.api.services.datastore.DatastoreV1.{Query, Entity}
+import com.google.api.services.datastore.DatastoreV1.{Entity, Query}
 import com.google.cloud.dataflow.sdk.values.PCollection
-import org.apache.avro.generic.IndexedRecord
 
 import scala.collection.mutable.{Map => MMap}
 
@@ -45,7 +44,7 @@ private[scio] object TestDataManager {
 
 class TestIO[+T] private[testing] (val key: String)
 
-case class AvroIO[T <: IndexedRecord](path: String) extends TestIO(path)
+case class AvroIO[T](path: String) extends TestIO(path)
 
 case class BigQueryIO(tableSpecOrQuery: String) extends TestIO[TableRow](tableSpecOrQuery)
 

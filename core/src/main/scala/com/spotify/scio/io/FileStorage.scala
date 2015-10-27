@@ -1,4 +1,4 @@
-package com.spotify.scio.sinks
+package com.spotify.scio.io
 
 import java.io.{File, FileInputStream, InputStream, SequenceInputStream}
 import java.net.URI
@@ -13,7 +13,7 @@ import com.google.api.services.storage.Storage
 import com.spotify.scio.bigquery.TableRow
 import org.apache.avro.file.DataFileStream
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
-import org.apache.avro.specific.{SpecificDatumReader, SpecificRecord}
+import org.apache.avro.specific.SpecificDatumReader
 import org.apache.commons.io.{FileUtils, IOUtils}
 
 import scala.collection.JavaConverters._
@@ -58,12 +58,6 @@ trait FileStorage {
 
   protected def getObjectInputStream(path: String): InputStream
 
-}
-
-object Test {
-  def main(args: Array[String]): Unit = {
-//    new LocalStorage().specificAvroFile[EndSongCleaned]("testdata/avro").take(10).foreach(println)
-  }
 }
 
 class GcsStorage(protected val path: String) extends FileStorage {
