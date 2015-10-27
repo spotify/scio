@@ -14,7 +14,9 @@ private[types] object TypeProvider {
 
   private lazy val bigquery: BigQueryClient = BigQueryClient()
 
-  def tableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  // TODO: scala 2.11
+  // def tableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  def tableImpl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
     val tableSpec = extractString(c, "Missing table specification")
@@ -25,13 +27,17 @@ private[types] object TypeProvider {
     schemaToType(c)(schema, annottees, traits, overrides)
   }
 
-  def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  // TODO: scala 2.11
+  // def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  def schemaImpl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     val schemaString = extractString(c, "Missing schema")
     val schema = Util.parseSchema(schemaString)
     schemaToType(c)(schema, annottees, Nil, Nil)
   }
 
-  def queryImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  // TODO: scala 2.11
+  // def queryImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  def queryImpl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
     val query = extractString(c, "Missing query")
@@ -42,7 +48,9 @@ private[types] object TypeProvider {
     schemaToType(c)(schema, annottees, traits, overrides)
   }
 
-  def toTableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  // TODO: scala 2.11
+  // def toTableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  def toTableImpl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
     val r = annottees.map(_.tree) match {
@@ -58,7 +66,9 @@ private[types] object TypeProvider {
     c.Expr[Any](r)
   }
 
-  private def schemaToType(c: blackbox.Context)
+  // TODO: scala 2.11
+  // private def schemaToType(c: blackbox.Context)
+  private def schemaToType(c: Context)
                           (schema: TableSchema, annottees: Seq[c.Expr[Any]],
                            traits: Seq[c.Tree], overrides: Seq[c.Tree]): c.Expr[Any] = {
     import c.universe._
@@ -73,7 +83,7 @@ private[types] object TypeProvider {
       case "RECORD" =>
         val name = NameProvider.getUniqueName(tfs.getName)
         val (fields, records) = toFields(tfs.getFields)
-        (q"${Ident(TypeName(name))}", Seq(q"case class ${TypeName(name)}(..$fields)") ++ records)
+        (q"${Ident(newTypeName(name))}", Seq(q"case class ${newTypeName(name)}(..$fields)") ++ records)
       case t => c.abort(c.enclosingPosition, s"type: $t not supported")
     }
 
@@ -92,7 +102,9 @@ private[types] object TypeProvider {
     // Returns: ("fieldName: fieldType", nested case class definitions)
     def toField(tfs: TableFieldSchema): (Tree, Seq[Tree]) = {
       val (ft, r) = getFieldType(tfs)
-      (q"${TermName(tfs.getName)}: $ft", r)
+      // TODO: scala 2.11
+      // (q"${TermName(tfs.getName)}: $ft", r)
+      (q"${newTermName(tfs.getName)}: $ft", r)
     }
 
     def toFields(fields: JList[TableFieldSchema]): (Seq[Tree], Seq[Tree]) = {
@@ -117,38 +129,53 @@ private[types] object TypeProvider {
   }
 
   /** Extract string from annotation. */
-  private def extractString(c: blackbox.Context, errorMessage: String): String = {
+  // TODO: scala 2.11
+  // private def extractString(c: blackbox.Context, errorMessage: String): String = {
+  private def extractString(c: Context, errorMessage: String): String = {
     import c.universe._
 
     c.macroApplication match {
       // @annotation("string literal")
       case Apply(Select(Apply(_, List(Literal(Constant(s: String)))), _), _) => s
       // @annotation("string literal".stripMargin)
-      case Apply(Select(Apply(_, List(Select(Literal(Constant(s: String)), TermName("stripMargin")))), _), _) =>
+      // TODO: scala 2.11
+      // case Apply(Select(Apply(_, List(Select(Literal(Constant(s: String)), TermName("stripMargin")))), _), _) =>
+      case Apply(Select(Apply(_, List(Select(Literal(Constant(s: String)), m: TermName))), _), _) if m.toString == "stripMargin" =>
         s.stripMargin
       case _ => c.abort(c.enclosingPosition, errorMessage)
     }
   }
 
   /** Generate a case class. */
-  private def caseClass(c: blackbox.Context)
+  // TODO: scala 2.11
+  // private def caseClass(c: blackbox.Context)
+  private def caseClass(c: Context)
                        (name: c.TypeName, fields: Seq[c.Tree], body: Seq[c.Tree]): c.Tree = {
     import c.universe._
     q"case class $name(..$fields) extends ${p(c, SType)}.HasAnnotation { ..$body }"
   }
   /** Generate a companion object. */
-  private def companion(c: blackbox.Context)
+  // TODO: scala 2.11
+  // private def companion(c: blackbox.Context)
+  private def companion(c: Context)
                        (name: c.TypeName, traits: Seq[c.Tree], methods: Seq[c.Tree], numFields: Int): c.Tree = {
     import c.universe._
-    val tupled = if (numFields > 1) Seq(q"def tupled = (${TermName(name.toString)}.apply _).tupled") else Nil
+    // TODO: scala 2.11
+    // val tupled = if (numFields > 1) Seq(q"def tupled = (${TermName(name.toString)}.apply _).tupled") else Nil
+    val tupled = if (numFields > 1) Seq(q"def tupled = (${newTermName(name.toString)}.apply _).tupled") else Nil
     val m = converters(c)(name) ++ tupled ++ methods
-    q"""object ${TermName(name.toString)} extends ${p(c, SType)}.HasSchema[$name] with ..$traits {
+    // TODO: scala 2.11
+    // val tn = TermName(name.toString)
+    val tn = newTermName(name.toString)
+    q"""object $tn extends ${p(c, SType)}.HasSchema[$name] with ..$traits {
           ..$m
         }
     """
   }
   /** Generate override converter methods for HasSchema[T]. */
-  private def converters(c: blackbox.Context)(name: c.TypeName): Seq[c.Tree] = {
+  // TODO: scala 2.11
+  // private def converters(c: blackbox.Context)(name: c.TypeName): Seq[c.Tree] = {
+  private def converters(c: Context)(name: c.TypeName): Seq[c.Tree] = {
     import c.universe._
     List(
       q"override def fromTableRow: (${p(c, GModel)}.TableRow => $name) = ${p(c, SType)}.fromTableRow[$name]",

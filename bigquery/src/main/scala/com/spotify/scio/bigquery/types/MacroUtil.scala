@@ -1,6 +1,8 @@
 package com.spotify.scio.bigquery.types
 
-import scala.reflect.macros.blackbox
+// TODO: scala 2.11
+// import scala.reflect.macros.blackbox
+import scala.reflect.macros._
 import scala.reflect.runtime.universe._
 
 private[types] object MacroUtil {
@@ -10,17 +12,22 @@ private[types] object MacroUtil {
   def isCaseClass(t: Type): Boolean = !t.toString.startsWith("scala.") &&
     List(typeOf[Product], typeOf[Serializable], typeOf[Equals]).forall(b => t.baseClasses.contains(b.typeSymbol))
   def isField(s: Symbol): Boolean = !s.isSynthetic && s.isTerm && s.isPrivate
-  def getFields(t: Type): Iterable[Symbol] = t.decls.filter(isField)
+  def getFields(t: Type): Iterable[Symbol] = t.declarations.filter(isField)
 
   // Case class helpers for macros
 
-  def isCaseClass(c: blackbox.Context)(t: c.Type): Boolean = {
+  // TODO: scala 2.11
+  // def isCaseClass(c: blackbox.Context)(t: c.Type): Boolean = {
+  def isCaseClass(c: Context)(t: c.Type): Boolean = {
     import c.universe._
     !t.toString.startsWith("scala.") &&
       List(typeOf[Product], typeOf[Serializable], typeOf[Equals]).forall(b => t.baseClasses.contains(b.typeSymbol))
   }
-  def isField(c: blackbox.Context)(s: c.Symbol): Boolean = !s.isSynthetic && s.isTerm && s.isPrivate
-  def getFields(c: blackbox.Context)(t: c.Type): Iterable[c.Symbol] = t.decls.filter(isField(c))
+  // TODO: scala 2.11
+  // def isField(c: blackbox.Context)(s: c.Symbol): Boolean = !s.isSynthetic && s.isTerm && s.isPrivate
+  // def getFields(c: blackbox.Context)(t: c.Type): Iterable[c.Symbol] = t.decls.filter(isField(c))
+  def isField(c: Context)(s: c.Symbol): Boolean = !s.isSynthetic && s.isTerm && s.isPrivate
+  def getFields(c: Context)(t: c.Type): Iterable[c.Symbol] = t.declarations.filter(isField(c))
 
   // Debugging
 
@@ -37,6 +44,8 @@ private[types] object MacroUtil {
   val SType = s"$SBQ.types.BigQueryType"
   val SUtil = s"$SBQ.Util"
 
-  def p(c: blackbox.Context, code: String): c.Tree = c.parse(code)
+  // TODO: scala 2.11
+  // def p(c: blackbox.Context, code: String): c.Tree = c.parse(code)
+  def p(c: Context, code: String): c.Tree = c.parse(code)
 
 }

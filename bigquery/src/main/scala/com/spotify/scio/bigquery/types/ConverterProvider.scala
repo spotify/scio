@@ -9,7 +9,9 @@ import scala.reflect.macros._
 
 private[types] object ConverterProvider {
 
-  def fromTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(TableRow => T)] = {
+  // TODO: scala 2.11
+  // def fromTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(TableRow => T)] = {
+  def fromTableRowImpl[T: c.WeakTypeTag](c: Context): c.Expr[(TableRow => T)] = {
     import c.universe._
     val tpe = implicitly[c.WeakTypeTag[T]].tpe
     val r = fromTableRowInternal(c)(tpe)
@@ -18,7 +20,9 @@ private[types] object ConverterProvider {
     c.Expr[(TableRow => T)](r)
   }
 
-  def toTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(T => TableRow)] = {
+  // TODO: scala 2.11
+  // def toTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(T => TableRow)] = {
+  def toTableRowImpl[T: c.WeakTypeTag](c: Context): c.Expr[(T => TableRow)] = {
     import c.universe._
     val tpe = implicitly[c.WeakTypeTag[T]].tpe
     val r = toTableRowInternal(c)(tpe)
@@ -27,7 +31,9 @@ private[types] object ConverterProvider {
     c.Expr[(T => TableRow)](r)
   }
 
-  private def fromTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
+  // TODO: scala 2.11
+  // private def fromTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
+  private def fromTableRowInternal(c: Context)(tpe: c.Type): c.Tree = {
     import c.universe._
 
     // =======================================================================
@@ -45,7 +51,9 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[String] => q"$s"
         case t if t =:= typeOf[Instant] => q"_root_.org.joda.time.Instant.parse($s)"
         case t if isCaseClass(c)(t) =>
-          val fn = TermName("r" + t.typeSymbol.name)
+          // TODO: scala 2.11
+          // val fn = TermName("r" + t.typeSymbol.name)
+          val fn = newTermName("r" + t.typeSymbol.name)
           q"""{
                 val $fn = $tree.asInstanceOf[${p(c, GModel)}.TableRow]
                 ${constructor(t, fn)}
@@ -79,7 +87,9 @@ private[types] object ConverterProvider {
     }
 
     def constructor(tpe: Type, fn: TermName): Tree = {
-      val companion = tpe.typeSymbol.companion
+      // TODO: scala 2.11
+      // val companion = tpe.typeSymbol.companion
+      val companion = tpe.typeSymbol.companionSymbol
       val gets = tpe.erasure match {
         case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
         case t => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
@@ -91,14 +101,19 @@ private[types] object ConverterProvider {
     // Entry point
     // =======================================================================
 
+    // TODO: scala 2.11
+    // val tn = TermName("r")
+    val tn = newTermName("r")
     q"""(r: ${p(c, GModel)}.TableRow) => {
           import _root_.scala.collection.JavaConverters._
-          ${constructor(tpe, TermName("r"))}
+          ${constructor(tpe, tn)}
         }
     """
   }
 
-  private def toTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
+  // TODO: scala 2.11
+  // private def toTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
+  private def toTableRowInternal(c: Context)(tpe: c.Type): c.Tree = {
     import c.universe._
 
     // =======================================================================
@@ -115,7 +130,9 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[String] => tree
         case t if t =:= typeOf[Instant] => tree
         case t if isCaseClass(c)(t) =>
-          val fn = TermName("r" + t.typeSymbol.name)
+          // TODO: scala 2.11
+          // val fn = TermName("r" + t.typeSymbol.name)
+          val fn = newTermName("r" + t.typeSymbol.name)
           q"""{
                 val $fn = $tree
                 ${constructor(t, fn)}
@@ -135,7 +152,9 @@ private[types] object ConverterProvider {
       val tpe = symbol.typeSignature
       val TypeRef(_, _, args) = tpe
 
-      val tree = q"$fn.${TermName(name)}"
+      // TODO: scala 2.11
+      // val tree = q"$fn.${TermName(name)}"
+      val tree = q"$fn.${newTermName(name)}"
       if (tpe.erasure =:= typeOf[Option[_]].erasure) {
         (name, option(tree, args.head))
       } else if (tpe.erasure =:= typeOf[List[_]].erasure) {
@@ -160,9 +179,12 @@ private[types] object ConverterProvider {
     // Entry point
     // =======================================================================
 
+    // TODO: scala 2.11
+    // val tn = TermName("r")
+    val tn = newTermName("r")
     q"""(r: $tpe) => {
           import _root_.scala.collection.JavaConverters._
-          ${constructor(tpe, TermName("r"))}
+          ${constructor(tpe, tn)}
         }
     """
   }

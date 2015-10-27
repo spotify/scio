@@ -163,18 +163,25 @@ object BigQueryType {
  */
 class BigQueryType[T: TypeTag] {
 
-  private val bases = typeOf[T].companion.baseClasses
+  // TODO: scala 2.11
+  // private val bases = typeOf[T].companion.baseClasses
   private val instance = runtimeMirror(getClass.getClassLoader)
-    .reflectModule(typeOf[T].typeSymbol.companion.asModule)
+    // TODO: scala 2.11
+    //.reflectModule(typeOf[T].typeSymbol.companion.asModule)
+    .reflectModule(typeOf[T].typeSymbol.companionSymbol.asModule)
     .instance
 
   private def getField(key: String) = instance.getClass.getMethod(key).invoke(instance)
 
   /** Whether the case class is annotated for a table. */
-  def isTable: Boolean = bases.contains(typeOf[BigQueryType.HasTable].typeSymbol)
+  // TODO: scala 2.11
+  // def isTable: Boolean = bases.contains(typeOf[BigQueryType.HasTable].typeSymbol)
+  def isTable: Boolean = classOf[BigQueryType.HasTable] isAssignableFrom instance.getClass
 
   /** Whether the case class is annotated for a query. */
-  def isQuery: Boolean = bases.contains(typeOf[BigQueryType.HasQuery].typeSymbol)
+  // TODO: scala 2.11
+  // def isQuery: Boolean = bases.contains(typeOf[BigQueryType.HasQuery].typeSymbol)
+  def isQuery: Boolean = classOf[BigQueryType.HasQuery] isAssignableFrom instance.getClass
 
   /** Table reference from the annotation. */
   def table: Option[TableReference] = Try(getField("table").asInstanceOf[TableReference]).toOption
