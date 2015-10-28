@@ -41,12 +41,12 @@ object ScioBuild extends Build {
   import BuildSettings._
   import SiteSettings._
 
-  val sdkVersion = "1.2.0"
+  val sdkVersion = "1.2.1"
 
   val guavaVersion = "18.0"
-  val chillVersion = "0.5.2"
+  val chillVersion = "0.7.2"
   val macrosVersion = "2.0.1"
-  val scalaTestVersion = "2.2.1"
+  val scalaTestVersion = "2.2.5"
 
   lazy val paradiseDependency =
     "org.scalamacros" % "paradise" % macrosVersion cross CrossVersion.full
