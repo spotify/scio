@@ -2,6 +2,7 @@ package com.spotify.scio.util
 
 import com.twitter.algebird.{Aggregator, MonoidAggregator, TopK, TopKMonoid}
 
+/** Utility for Algebird. */
 object Algebird {
 
   /**
