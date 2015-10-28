@@ -12,7 +12,7 @@ import scala.collection.mutable.{Map => MMap}
 
 private class GenericAvroSerializer extends KSerializer[GenericRecord] {
 
-  private lazy val cache: MMap[Int, GenericAvroCoder] = MMap()
+  private lazy val cache: MMap[Int, AvroCoder[GenericRecord]] = MMap()
   private lazy val ids: BiMap[Int, Schema] = HashBiMap.create()
 
   private def get(id: Int) = cache.getOrElseUpdate(id, Avros.genericCoder(ids.get(id)))
@@ -53,7 +53,7 @@ private class GenericAvroSerializer extends KSerializer[GenericRecord] {
 
 private class SpecificAvroSerializer[T <: SpecificRecord] extends KSerializer[T] {
 
-  private lazy val cache: MMap[Class[_], SpecificAvroCoder[_]] = MMap()
+  private lazy val cache: MMap[Class[_], AvroCoder[_]] = MMap()
 
   private def get(cls: Class[T]) =
     cache.getOrElseUpdate(cls, Avros.specificCoder(cls)).asInstanceOf[SpecificAvroCoder[T]]
