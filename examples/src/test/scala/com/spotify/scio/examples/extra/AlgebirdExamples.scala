@@ -7,9 +7,7 @@ import scala.util.Random
 
 class AlgebirdExamples extends PipelineSpec {
 
-  def boundsContain(b: (Double, Double), actual: Double) = actual >= b._1 && actual <= b._2
-
-  "SCollection.sum" should "support primitive types" in {
+  "SCollection" should "support sum with primitive types" in {
     val s = 1 to 10
     runWithData(s)(_.sum).head should equal (55)
     runWithData(s.map(_.toLong))(_.sum).head should equal (55L)
@@ -17,7 +15,7 @@ class AlgebirdExamples extends PipelineSpec {
     runWithData(s.map(_.toDouble))(_.sum).head should equal (55.0)
   }
 
-  it should "support tuples" in {
+  it should "support sum with tuples" in {
     val s = Seq.fill(1000)(Random.nextInt(100)) zip Seq.fill(1000)(Random.nextString(10))
 
     val output = runWithData(s) { p =>
@@ -27,53 +25,88 @@ class AlgebirdExamples extends PipelineSpec {
     output._2 should equal (s.map(_._2).toSet)
   }
 
-  it should "support HyperLogLog" in {
+  it should "support sum and aggregate with HyperLogLog" in {
     val s = Seq.fill(1000)(Random.nextInt(100))
     val expected = s.groupBy(identity).size
 
-    val hll = runWithData(s) { p =>
-      val hll = new HyperLogLogMonoid(10)
-      p.map(hll.toHLL(_)).sum(hll)
-    }.head
+    runWithData(s) { p =>
+      val m = new HyperLogLogMonoid(10)
+      // HyperLogLog requires Array[Byte]
+      p.map(i => m.create(i.toString.getBytes)).sum(m)
+    }.head.approximateSize.boundsContain(expected) shouldBe true
 
-    hll.approximateSize.boundsContain(expected) shouldBe true
+    runWithData(s) {
+      // HyperLogLog requires Array[Byte]
+      _.aggregate(HyperLogLogAggregator(10).composePrepare(_.toString.getBytes))
+    }.head.approximateSize.boundsContain(expected) shouldBe true
   }
 
-  it should "support BloomFilter" in {
+  it should "support sum and aggregate with BloomFilter" in {
     val s = Seq.fill(1000)(Random.nextString(10))
 
-    val bf = runWithData(s) { p =>
-      val bf = BloomFilter(1000, 0.01)
-      p.map(bf.create).sum(bf)
+    val bf1 = runWithData(s) { p =>
+      val m = BloomFilter(1000, 0.01)
+      p.map(m.create).sum(m)
     }.head
+    all (s.map(bf1.contains(_).isTrue)) shouldBe true
 
-    all (s.map(bf.contains(_).isTrue)) shouldBe true
+    val bf2 = runWithData(s) { p =>
+      val width = BloomFilter.optimalWidth(1000, 0.01)
+      val numHashes = BloomFilter.optimalNumHashes(1000, width)
+      p.aggregate(BloomFilterAggregator(numHashes, width))
+    }.head
+    all (s.map(bf2.contains(_).isTrue)) shouldBe true
   }
 
-  it should "support QTree" in {
+  it should "support sum and aggregate with QTree" in {
+    def contains(qt: QTree[Long], p: Double)(v: Long) = {
+      val (l, u) = qt.quantileBounds(p)
+      l <= v && v <= u
+    }
+    val numbers = Seq(250, 500, 750)
+
     val q = runWithData(1 to 1000) {
       _.map(QTree(_)).sum(new QTreeSemigroup[Long](10))
     }.head
+    // each quantile bound should fit only one of the numbers
+    numbers.map(contains(q, 0.25)(_)) should equal (Seq(true, false, false))
+    numbers.map(contains(q, 0.50)(_)) should equal (Seq(false, true, false))
+    numbers.map(contains(q, 0.75)(_)) should equal (Seq(false, false, true))
 
-    boundsContain(q.quantileBounds(0.25), 250) shouldBe true
-    boundsContain(q.quantileBounds(0.50), 500) shouldBe true
-    boundsContain(q.quantileBounds(0.75), 750) shouldBe true
+    val i1 = runWithData(1 to 1000) {
+      _.aggregate(QTreeAggregator(0.25, 10))
+    }.head
+    numbers.map(i1.contains(_)) should equal (Seq(true, false, false))
+
+    val i2 = runWithData(1 to 1000) {
+      _.aggregate(QTreeAggregator(0.50, 10))
+    }.head
+    numbers.map(i2.contains(_)) should equal (Seq(false, true, false))
+
+    val i3 = runWithData(1 to 1000) {
+      _.aggregate(QTreeAggregator(0.75, 10))
+    }.head
+    numbers.map(i3.contains(_)) should equal (Seq(false, false, true))
   }
 
-  it should "support CountMinSketch" in {
+  it should "support sum and aggregate with CountMinSketch" in {
+    import CMSHasherImplicits._
     val s = Seq.fill(1000)(Random.nextInt(100))
     val expected = s.groupBy(identity).mapValues(_.size)
 
-    val cms = runWithData(s) { p =>
-      import CMSHasherImplicits._
-      val cms = CMS.monoid[Int](0.001, 1e-10, 1)
-      p.map(cms.create).sum(cms)
+    val cms1 = runWithData(s) { p =>
+      val m = CMS.monoid[Int](0.001, 1e-10, 1)
+      p.map(m.create).sum(m)
     }.head
+    all (expected.map(kv => cms1.frequency(kv._1).boundsContain(kv._2))) shouldBe true
 
-    all (expected.map(kv => cms.frequency(kv._1).boundsContain(kv._2))) shouldBe true
+    val cms2 = runWithData(s) {
+      _.aggregate(CMS.aggregator[Int](0.001, 1e-10, 1))
+    }.head
+    all (expected.map(kv => cms2.frequency(kv._1).boundsContain(kv._2))) shouldBe true
   }
 
-  it should "support DecayedValue" in {
+  it should "support sum and aggregate with DecayedValue" in {
     val s = (5001 to 6000).map(_.toDouble).zipWithIndex
 
     val halfLife = 10.0
@@ -81,13 +114,18 @@ class AlgebirdExamples extends PipelineSpec {
     val normalization = halfLife / math.log(2)
     val expected = s.map(_._1).reduce(_ * decayFactor + _) / normalization
 
-    val dv = runWithData(s) {
+    runWithData(s) {
       _
         .map { case (v, t) => DecayedValue.build(v, t, 10.0) }
         .sum(DecayedValue.monoidWithEpsilon(1e-3))
-    }.head
+    }.head.average(10.0) shouldBe expected +- 1e-3
 
-    dv.average(10.0) shouldBe expected +- 1e-3
+    runWithData(s) {
+      _.aggregate(
+        Aggregator
+          .fromMonoid(DecayedValue.monoidWithEpsilon(1e-3))
+          .composePrepare { case (v, t) => DecayedValue.build(v, t, 10.0) })
+    }.head.average(10.0) shouldBe expected +- 1e-3
   }
 
 }
