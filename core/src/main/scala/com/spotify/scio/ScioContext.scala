@@ -21,6 +21,7 @@ import com.google.cloud.dataflow.sdk.runners.DataflowPipelineRunner
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
 import com.google.cloud.dataflow.sdk.transforms.{Create, PTransform}
+import com.google.cloud.dataflow.sdk.util.IntervalBoundedExponentialBackOff
 import com.google.cloud.dataflow.sdk.values.{PBegin, PCollection, POutput, TimestampedValue}
 import com.google.cloud.dataflow.sdk.{Pipeline, PipelineResult}
 import com.spotify.scio.bigquery._
@@ -34,6 +35,7 @@ import org.joda.time.Instant
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
+import scala.concurrent.duration.{Duration, MINUTES, SECONDS}
 import scala.reflect.ClassTag
 
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
@@ -154,6 +156,9 @@ class ScioContext private (cmdlineArgs: Array[String]) {
   // Futures
   // =======================================================================
 
+  private val MAXIMUM_INTERVAL = Duration(5, MINUTES)
+  private val INITIAL_INTERVAL = Duration(5, SECONDS)
+
   private[scio] def onComplete[U](f: State => U): Unit = {
     _callbacks.append(f)
   }
@@ -163,8 +168,10 @@ class ScioContext private (cmdlineArgs: Array[String]) {
       // non-blocking runner, handle callbacks asynchronously
       import scala.concurrent.ExecutionContext.Implicits.global
       Future {
+        val backOff = new IntervalBoundedExponentialBackOff(
+          MAXIMUM_INTERVAL.toMillis.toInt, INITIAL_INTERVAL.toMillis)
         while (!isCompleted) {
-          Thread.sleep(1000)
+          Thread.sleep(backOff.nextBackOffMillis())
         }
         _callbacks.foreach(_(_result.getState))
         _callbacks.clear()
