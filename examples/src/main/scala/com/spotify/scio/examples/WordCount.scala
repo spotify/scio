@@ -19,8 +19,8 @@ object WordCount {
 
     val input = args.getOrElse("input", "gs://dataflow-samples/shakespeare/kinglear.txt")
     val output = args.optional("output").getOrElse(
-      if (sc.options.getStagingLocation != null) {
-        GcsPath.fromUri(sc.options.getStagingLocation).resolve("counts.txt").toString
+      if (sc.options.exists(_.getStagingLocation != null)) {
+        GcsPath.fromUri(sc.options.get.getStagingLocation).resolve("counts.txt").toString
       } else {
         throw new IllegalArgumentException("Must specify --output or --stagingLocation")
       })

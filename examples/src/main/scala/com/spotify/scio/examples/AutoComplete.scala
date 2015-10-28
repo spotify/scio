@@ -31,13 +31,12 @@ object AutoComplete {
     }
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-
-    val input = if (args.optional("inputFile").isDefined) {
-      sc.textFile(args("inputFile"))
+    val (sc, args, input) = if (cmdlineArgs.exists(_.startsWith("--inputFile"))) {
+      val (sc, args) = ContextAndArgs(cmdlineArgs)
+      (sc, args, sc.textFile(args("inputFile")))
     } else {
-      sc.options.setStreaming(true)
-      sc.pubsubTopic(args("inputTopic")).withSlidingWindows(Duration.standardMinutes(30))
+      val (sc, args) = ContextAndArgs(cmdlineArgs :+ "--streaming=true")
+      (sc, args, sc.pubsubTopic(args("inputTopic")).withSlidingWindows(Duration.standardMinutes(30)))
     }
 
 //    val candidates = input.flatMap(l => "#\\S+".r.findAllIn(l).map(_.substring(1))).countByValue()
