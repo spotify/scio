@@ -33,7 +33,7 @@ import org.apache.avro.generic.GenericRecord
 import org.joda.time.Instant
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ListBuffer, Set => MSet}
 import scala.concurrent.Future
 import scala.concurrent.duration.{Duration, MINUTES, SECONDS}
 import scala.reflect.ClassTag
@@ -80,8 +80,9 @@ class ScioContext private (cmdlineArgs: Array[String]) {
   val pipeline: Pipeline = this.newPipeline()
 
   /* Mutable members */
-  private var _result: PipelineResult = null
+  private var _isClosed: Boolean = false
   private val _callbacks: ListBuffer[State => Any] = ListBuffer.empty
+  private val _accumulators: MSet[String] = MSet.empty
 
   /** Wrap a [[com.google.cloud.dataflow.sdk.values.PCollection PCollection]]. */
   def wrap[T: ClassTag](p: PCollection[T]): SCollection[T] =
@@ -133,20 +134,17 @@ class ScioContext private (cmdlineArgs: Array[String]) {
   // =======================================================================
 
   /** Close the context. No operation can be performed once the context is closed. */
-  def close(): Unit = {
-    _result = this.pipeline.run()
-    this.handleCallbacks()
+  def close(): ScioContextResult = {
+    _isClosed = true
+    val result = this.pipeline.run()
+    this.handleCallbacks(result)
+    new ScioContextResult(result, pipeline)
   }
 
-  /** Dataflow pipeline result. */
-  def state: Option[State] = if (_result == null) None else Some(_result.getState)
-
   /** Whether the context is closed. */
-  def isClosed: Boolean = _result != null
+  def isClosed: Boolean = _isClosed
 
-  /** Whether the context is completed. */
-  def isCompleted: Boolean = _result != null && _result.getState.isTerminal
-
+  /* Ensure an operation is called before the pipeline is closed. */
   private def pipelineOp[U](body: => U): U = {
     require(!this.isClosed)
     body
@@ -159,26 +157,24 @@ class ScioContext private (cmdlineArgs: Array[String]) {
   private val MAXIMUM_INTERVAL = Duration(5, MINUTES)
   private val INITIAL_INTERVAL = Duration(5, SECONDS)
 
-  private[scio] def onComplete[U](f: State => U): Unit = {
-    _callbacks.append(f)
-  }
+  private[scio] def onComplete[U](f: State => U): Unit = _callbacks.append(f)
 
-  private def handleCallbacks(): Unit = {
+  private def handleCallbacks(result: PipelineResult): Unit = {
     if (pipeline.getRunner.isInstanceOf[DataflowPipelineRunner]) {
       // non-blocking runner, handle callbacks asynchronously
       import scala.concurrent.ExecutionContext.Implicits.global
       Future {
         val backOff = new IntervalBoundedExponentialBackOff(
           MAXIMUM_INTERVAL.toMillis.toInt, INITIAL_INTERVAL.toMillis)
-        while (!isCompleted) {
+        while (!result.getState.isTerminal) {
           Thread.sleep(backOff.nextBackOffMillis())
         }
-        _callbacks.foreach(_(_result.getState))
+        _callbacks.foreach(_(result.getState))
         _callbacks.clear()
       }
     } else {
       // blocking runner, handle callbacks directly
-      _callbacks.foreach(_(_result.getState))
+      _callbacks.foreach(_(result.getState))
       _callbacks.clear()
     }
   }
@@ -341,10 +337,12 @@ class ScioContext private (cmdlineArgs: Array[String]) {
    * for examples.
    * @group accumulator
    */
-  def maxAccumulator[U](n: String)(implicit at: AccumulatorType[U]): Accumulator[U] = pipelineOp {
-    new Accumulator[U] {
+  def maxAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] = pipelineOp {
+    require(!_accumulators.contains(n), s"Accumulator $n already exists")
+    _accumulators.add(n)
+    new Accumulator[T] {
       override val name: String = n
-      override val combineFn: CombineFn[U, _, U] = at.maxFn()
+      override val combineFn: CombineFn[T, _, T] = at.maxFn()
     }
   }
 
@@ -355,10 +353,12 @@ class ScioContext private (cmdlineArgs: Array[String]) {
    * for examples.
    * @group accumulator
    */
-  def minAccumulator[U](n: String)(implicit at: AccumulatorType[U]): Accumulator[U] = pipelineOp {
-    new Accumulator[U] {
+  def minAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] = pipelineOp {
+    require(!_accumulators.contains(n), s"Accumulator $n already exists")
+    _accumulators.add(n)
+    new Accumulator[T] {
       override val name: String = n
-      override val combineFn: CombineFn[U, _, U] = at.minFn()
+      override val combineFn: CombineFn[T, _, T] = at.minFn()
     }
   }
 
@@ -369,10 +369,12 @@ class ScioContext private (cmdlineArgs: Array[String]) {
    * for examples.
    * @group accumulator
    */
-  def sumAccumulator[U](n: String)(implicit at: AccumulatorType[U]): Accumulator[U] = pipelineOp {
-    new Accumulator[U] {
+  def sumAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] = pipelineOp {
+    require(!_accumulators.contains(n), s"Accumulator $n already exists")
+    _accumulators.add(n)
+    new Accumulator[T] {
       override val name: String = n
-      override val combineFn: CombineFn[U, _, U] = at.sumFn()
+      override val combineFn: CombineFn[T, _, T] = at.sumFn()
     }
   }
 

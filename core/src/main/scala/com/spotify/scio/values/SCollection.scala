@@ -450,6 +450,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * [[Accumulator]]s, similar to Hadoop counters. Call
    * [[SCollectionWithAccumulator.toSCollection]] when done with accumulators.
    *
+   * Note that each accumulator may be used in a single scope only.
+   *
    * Create accumulators with [[ScioContext.maxAccumulator]],
    * [[ScioContext.minAccumulator]] or [[ScioContext.sumAccumulator]]. For example:
    *
