@@ -1,7 +1,7 @@
 package com.spotify.scio
 
 import com.google.api.services.bigquery.model.TableReference
-import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{WriteDisposition, CreateDisposition}
+import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import com.spotify.scio.bigquery.Util
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.values.SCollection

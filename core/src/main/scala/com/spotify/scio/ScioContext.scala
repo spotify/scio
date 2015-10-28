@@ -5,10 +5,8 @@ import java.io.File
 import java.net.URI
 
 import com.google.api.services.bigquery.model.TableReference
-import com.google.api.services.datastore.DatastoreV1.{Query, Entity}
+import com.google.api.services.datastore.DatastoreV1.{Entity, Query}
 import com.google.cloud.dataflow.sdk.PipelineResult.State
-import com.google.cloud.dataflow.sdk.runners.{DirectPipelineRunner, DataflowPipelineRunner}
-import com.google.cloud.dataflow.sdk.{PipelineResult, Pipeline}
 import com.google.cloud.dataflow.sdk.coders.TableRowJsonCoder
 import com.google.cloud.dataflow.sdk.io.{
   AvroIO => GAvroIO,
@@ -18,23 +16,24 @@ import com.google.cloud.dataflow.sdk.io.{
   TextIO => GTextIO
 }
 import com.google.cloud.dataflow.sdk.options.PipelineOptions.CheckEnabled
-import com.google.cloud.dataflow.sdk.options.{PipelineOptionsFactory, DataflowPipelineOptions}
+import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptionsFactory}
+import com.google.cloud.dataflow.sdk.runners.DataflowPipelineRunner
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
-import com.google.cloud.dataflow.sdk.transforms.{PTransform, Create}
-import com.google.cloud.dataflow.sdk.values.{PCollection, TimestampedValue, PBegin, POutput}
+import com.google.cloud.dataflow.sdk.transforms.{Create, PTransform}
+import com.google.cloud.dataflow.sdk.values.{PBegin, PCollection, POutput, TimestampedValue}
+import com.google.cloud.dataflow.sdk.{Pipeline, PipelineResult}
 import com.spotify.scio.bigquery._
 import com.spotify.scio.testing._
 import com.spotify.scio.util.CallSites
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecord
 import org.joda.time.Instant
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.{Promise, Future}
+import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */

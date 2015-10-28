@@ -4,10 +4,10 @@ import java.lang.{Long => JLong}
 
 import com.google.cloud.dataflow.sdk.transforms._
 import com.google.cloud.dataflow.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}
-import com.google.cloud.dataflow.sdk.values.{PCollection, KV, TupleTag}
-import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
+import com.google.cloud.dataflow.sdk.values.{KV, PCollection, TupleTag}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util._
+import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 
 import scala.collection.JavaConverters._

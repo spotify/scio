@@ -3,6 +3,7 @@
 package com.spotify.scio.util.random
 
 import java.util.{Random => JRandom}
+
 import com.google.cloud.dataflow.sdk.transforms.DoFn
 import org.apache.commons.math3.distribution.{IntegerDistribution, PoissonDistribution}
 

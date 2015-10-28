@@ -2,7 +2,7 @@ package com.spotify.scio.coders
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
-import com.google.common.collect.{HashBiMap, BiMap}
+import com.google.common.collect.{BiMap, HashBiMap}
 import com.twitter.chill.KSerializer
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord

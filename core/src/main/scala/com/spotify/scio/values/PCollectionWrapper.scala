@@ -1,10 +1,10 @@
 package com.spotify.scio.values
 
 import com.google.cloud.dataflow.sdk.coders.Coder
-import com.google.cloud.dataflow.sdk.transforms.{Combine, ParDo, DoFn, PTransform}
-import com.google.cloud.dataflow.sdk.values.{KV, POutput, PCollection}
-import com.spotify.scio.{Implicits, ScioContext}
+import com.google.cloud.dataflow.sdk.transforms.{Combine, DoFn, PTransform, ParDo}
+import com.google.cloud.dataflow.sdk.values.{KV, PCollection, POutput}
 import com.spotify.scio.util.CallSites
+import com.spotify.scio.{Implicits, ScioContext}
 
 import scala.reflect.ClassTag
 

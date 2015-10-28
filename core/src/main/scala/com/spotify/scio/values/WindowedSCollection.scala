@@ -1,6 +1,6 @@
 package com.spotify.scio.values
 
-import com.google.cloud.dataflow.sdk.transforms.windowing.{Trigger, BoundedWindow}
+import com.google.cloud.dataflow.sdk.transforms.windowing.{BoundedWindow, Trigger}
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values.PCollection
 import com.spotify.scio.ScioContext

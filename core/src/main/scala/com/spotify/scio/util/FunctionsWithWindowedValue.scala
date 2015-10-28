@@ -5,8 +5,6 @@ import com.google.cloud.dataflow.sdk.transforms.DoFn.RequiresWindowAccess
 import com.spotify.scio.values.WindowedValue
 import org.joda.time.Instant
 
-import scala.collection.JavaConverters._
-
 private[scio] object FunctionsWithWindowedValue {
 
   abstract class WindowDoFn[T, U] extends DoFn[T, U] with RequiresWindowAccess

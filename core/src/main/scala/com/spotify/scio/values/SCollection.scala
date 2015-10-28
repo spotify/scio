@@ -4,11 +4,11 @@ import java.io.File
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.UUID
 
-import com.google.api.services.bigquery.model.{TableSchema, TableReference}
+import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.google.api.services.datastore.DatastoreV1.Entity
 import com.google.cloud.dataflow.sdk.PipelineResult.State
-import com.google.cloud.dataflow.sdk.coders.{TableRowJsonCoder, Coder}
-import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{WriteDisposition, CreateDisposition}
+import com.google.cloud.dataflow.sdk.coders.{Coder, TableRowJsonCoder}
+import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import com.google.cloud.dataflow.sdk.io.{
   AvroIO => GAvroIO,
   BigQueryIO => GBigQueryIO,
@@ -24,7 +24,7 @@ import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values._
 import com.spotify.scio.ScioContext
-import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
+import com.spotify.scio.bigquery.TableRow
 import com.spotify.scio.coders.KryoAtomicCoder
 import com.spotify.scio.io._
 import com.spotify.scio.testing._
@@ -32,9 +32,8 @@ import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.Schema
-import org.apache.avro.generic.{IndexedRecord, GenericRecord}
-import org.apache.commons.io.FileUtils
-import org.joda.time.{Instant, Duration}
+import org.apache.avro.generic.{GenericRecord, IndexedRecord}
+import org.joda.time.{Duration, Instant}
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap

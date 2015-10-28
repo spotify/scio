@@ -1,9 +1,9 @@
 package com.spotify.scio.coders
 
-import java.io.{IOException, ByteArrayOutputStream, OutputStream, InputStream}
+import java.io.{ByteArrayOutputStream, IOException, InputStream, OutputStream}
 
-import com.google.cloud.dataflow.sdk.coders.{Coder, CoderException, AtomicCoder}
 import com.google.cloud.dataflow.sdk.coders.Coder.Context
+import com.google.cloud.dataflow.sdk.coders.{AtomicCoder, Coder, CoderException}
 import com.google.cloud.dataflow.sdk.util.VarInt
 import com.google.common.io.ByteStreams
 import com.twitter.chill._

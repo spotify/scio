@@ -1,10 +1,10 @@
 package com.spotify.scio.values
 
-import java.io.{FileOutputStream, File}
+import java.io.{File, FileOutputStream}
 import java.net.URI
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.google.cloud.dataflow.sdk.options.{PipelineOptions, GcsOptions}
+import com.google.cloud.dataflow.sdk.options.{GcsOptions, PipelineOptions}
 import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing

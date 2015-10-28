@@ -3,7 +3,7 @@ package com.spotify.scio
 import java.lang.{Float => JFloat}
 
 import com.google.cloud.dataflow.sdk.coders._
-import com.google.cloud.dataflow.sdk.values.{TypeDescriptor, KV}
+import com.google.cloud.dataflow.sdk.values.{KV, TypeDescriptor}
 import com.spotify.scio.coders.KryoAtomicCoder
 
 import scala.language.implicitConversions

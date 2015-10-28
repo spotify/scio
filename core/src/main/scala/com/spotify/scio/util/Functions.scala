@@ -5,8 +5,8 @@ import java.util.{List => JList}
 
 import com.google.cloud.dataflow.sdk.coders.{Coder, CoderRegistry}
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
-import com.google.cloud.dataflow.sdk.transforms.{SerializableFunction, DoFn}
 import com.google.cloud.dataflow.sdk.transforms.Partition.PartitionFn
+import com.google.cloud.dataflow.sdk.transforms.{DoFn, SerializableFunction}
 import com.google.common.collect.Lists
 import com.spotify.scio.coders.KryoAtomicCoder
 import com.twitter.algebird.{Monoid, Semigroup}
