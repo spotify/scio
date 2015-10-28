@@ -51,7 +51,7 @@ Your Cloud Storage location should be entered in the form of `gs://bucket/path/t
 More Dataflow pipeline specific options available can be found in [`DataflowPipelineOptions`](https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/options/DataflowPipelineOptions) and super interfaces. Some more useful ones are from [`DataflowPipelineWorkerPoolOptions`](https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/options/DataflowPipelineWorkerPoolOptions):
 
 - `--numWorkers`: Number of workers to use when executing the Dataflow job.
-- `--autoscalingAlgorithm`: [Experimental] The autoscaling algorithm to use for the workerpool. `NONE`: does not change the size of the worker pool. `BASIC`: autoscale the worker pool size up to maxNumWorkers until the job completes. (default=`NONE`)
+- `--autoscalingAlgorithm`: [Experimental] The autoscaling algorithm to use for the workerpool. `NONE`: does not change the size of the worker pool. `THROUGHPUT_BASED`: Autoscale the workerpool based on throughput (up to maxNumWorkers). (default=`NONE`)
 - `--maxNumWorkers`: [Experimental] The maximum number of workers to use when using workerpool autoscaling. (default=20)
 - `--diskSizeGb`: Remote worker disk size, in gigabytes, or 0 to use the default size.
 - `--workerMachineType`: Machine type to create Dataflow worker VMs as. See [https://cloud.google.com/compute/docs/machine-types](https://cloud.google.com/compute/docs/machine-types) for a list of valid options. If unset, the Dataflow service will choose a reasonable default.
