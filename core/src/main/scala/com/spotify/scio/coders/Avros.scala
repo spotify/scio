@@ -1,15 +1,15 @@
-package com.spotify.scio.io
+package com.spotify.scio.coders
 
 import java.io.ByteArrayOutputStream
 
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.{DecoderFactory, EncoderFactory}
-import org.apache.avro.specific.{SpecificDatumWriter, SpecificDatumReader, SpecificRecord}
+import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter, SpecificRecord}
 
 import scala.reflect.ClassTag
 
-object Avros {
+private object Avros {
 
   def genericCoder(schema: Schema): GenericAvroCoder = new GenericAvroCoder(schema)
 
@@ -20,7 +20,7 @@ object Avros {
 
 }
 
-class GenericAvroCoder(schema: Schema) extends Serializable {
+private class GenericAvroCoder(schema: Schema) extends Serializable {
 
   private val schemaString = schema.toString
 
@@ -42,7 +42,7 @@ class GenericAvroCoder(schema: Schema) extends Serializable {
 
 }
 
-class SpecificAvroCoder[T <: SpecificRecord](cls: Class[_]) extends Serializable {
+private class SpecificAvroCoder[T <: SpecificRecord](cls: Class[_]) extends Serializable {
 
   private val schemaString = cls.getMethod("getClassSchema").invoke(null).asInstanceOf[Schema].toString
 

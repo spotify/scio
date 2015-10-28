@@ -3,7 +3,6 @@ package com.spotify.scio.coders
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.google.common.collect.{HashBiMap, BiMap}
-import com.spotify.scio.io.{SpecificAvroCoder, Avros, GenericAvroCoder}
 import com.twitter.chill.KSerializer
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
