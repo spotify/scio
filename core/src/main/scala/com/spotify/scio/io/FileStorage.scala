@@ -19,12 +19,12 @@ import org.apache.commons.io.{FileUtils, IOUtils}
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
-object FileStorage {
+private object FileStorage {
   def apply(path: String): FileStorage =
     if (new URI(path).getScheme == "gs") new GcsStorage(path) else new LocalStorage(path)
 }
 
-trait FileStorage {
+private trait FileStorage {
 
   protected val path: String
 
@@ -60,7 +60,7 @@ trait FileStorage {
 
 }
 
-class GcsStorage(protected val path: String) extends FileStorage {
+private class GcsStorage(protected val path: String) extends FileStorage {
 
   lazy private val storage = new Storage.Builder(
     GoogleNetHttpTransport.newTrustedTransport(),
@@ -114,7 +114,7 @@ class GcsStorage(protected val path: String) extends FileStorage {
 
 }
 
-class LocalStorage(protected val path: String)  extends FileStorage {
+private class LocalStorage(protected val path: String)  extends FileStorage {
 
   override def delete(): Unit = FileUtils.deleteDirectory(new File(path))
 
