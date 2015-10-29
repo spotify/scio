@@ -8,8 +8,8 @@ import com.spotify.scio.values.Accumulator
 
 import scala.collection.JavaConverters._
 
-/** Represent a ScioContext result. */
-class ScioContextResult private[scio] (val internal: PipelineResult, pipeline: Pipeline) {
+/** Represent a Scio pipeline result. */
+class ScioResult private[scio] (val internal: PipelineResult, pipeline: Pipeline) {
 
   private val aggregators: Map[String, Iterable[Aggregator[_, _]]] =
     new AggregatorPipelineExtractor(pipeline)
@@ -18,7 +18,7 @@ class ScioContextResult private[scio] (val internal: PipelineResult, pipeline: P
       .keys
       .groupBy(_.getName)
 
-  /** Whether the context is completed. */
+  /** Whether the pipeline is completed. */
   def isCompleted: Boolean = internal.getState.isTerminal
 
   /** Pipeline result state. */

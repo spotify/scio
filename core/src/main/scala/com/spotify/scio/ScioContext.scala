@@ -134,11 +134,11 @@ class ScioContext private (cmdlineArgs: Array[String]) {
   // =======================================================================
 
   /** Close the context. No operation can be performed once the context is closed. */
-  def close(): ScioContextResult = {
+  def close(): ScioResult = {
     _isClosed = true
     val result = this.pipeline.run()
     this.handleCallbacks(result)
-    new ScioContextResult(result, pipeline)
+    new ScioResult(result, pipeline)
   }
 
   /** Whether the context is closed. */

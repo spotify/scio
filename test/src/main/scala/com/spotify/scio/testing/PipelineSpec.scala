@@ -1,6 +1,6 @@
 package com.spotify.scio.testing
 
-import com.spotify.scio.{ScioContextResult, ScioContext}
+import com.spotify.scio.{ScioResult, ScioContext}
 import com.spotify.scio.values.SCollection
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -23,7 +23,7 @@ trait PipelineSpec extends FlatSpec with Matchers with PCollectionMatcher {
    * }
    * }}}
    */
-  def runWithContext[T](fn: ScioContext => T): ScioContextResult = {
+  def runWithContext[T](fn: ScioContext => T): ScioResult = {
     val testId = "PipelineTest-" + System.currentTimeMillis()
     val sc = ScioContext(Array(s"--testId=$testId"))
     fn(sc)
