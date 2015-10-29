@@ -7,7 +7,10 @@ private[scio] object CallSites {
   private val methodMap = Map("$plus$plus" -> "++")
 
   private def isExternalClass(c: String): Boolean =
-    (!c.startsWith(ns) && !c.startsWith("scala.")) || c.startsWith(ns + "examples.")
+    // Not in our code base or an interpreter
+    (!c.startsWith(ns) && !c.startsWith("scala.")) ||
+      c.startsWith(ns + "examples.") || // unless if it's in examples
+      c.startsWith(ns + "values.AccumulatorTest") // or this test
 
   def getAppName: String = {
     Thread.currentThread().getStackTrace

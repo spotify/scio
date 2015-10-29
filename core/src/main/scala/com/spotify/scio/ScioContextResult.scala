@@ -11,12 +11,12 @@ import scala.collection.JavaConverters._
 /** Represent a ScioContext result. */
 class ScioContextResult private[scio] (val internal: PipelineResult, pipeline: Pipeline) {
 
-  private val aggregators: Map[String, Aggregator[_, _]] =
+  private val aggregators: Map[String, Iterable[Aggregator[_, _]]] =
     new AggregatorPipelineExtractor(pipeline)
       .getAggregatorSteps
       .asScala
-      .map (kv =>  kv._1.getName -> kv._1)
-      .toMap
+      .keys
+      .groupBy(_.getName)
 
   /** Whether the context is completed. */
   def isCompleted: Boolean = internal.getState.isTerminal
@@ -24,8 +24,16 @@ class ScioContextResult private[scio] (val internal: PipelineResult, pipeline: P
   /** Pipeline result state. */
   def state: State = internal.getState
 
-  /** Get the value of an accumulator. */
-  def accumulatorValue[T](acc: Accumulator[T]): T =
-    internal.getAggregatorValues(aggregators(acc.name).asInstanceOf[Aggregator[_, T]]).getTotalValue(acc.combineFn)
+  /** Get the total value of an accumulator. */
+  def accumulatorTotalValue[T](acc: Accumulator[T]): T = {
+    acc.combineFn(getAggregatorValues(acc).map(_.getTotalValue(acc.combineFn)).asJava)
+  }
+
+  /** Get the values of an accumulator at each step it was used. */
+  def accumulatorValuesAtSteps[T](acc: Accumulator[T]): Map[String, T] =
+    getAggregatorValues(acc).flatMap(_.getValuesAtSteps.asScala).toMap
+
+  private def getAggregatorValues[T](acc: Accumulator[T]): Iterable[AggregatorValues[T]] =
+    aggregators(acc.name).map(a => internal.getAggregatorValues(a.asInstanceOf[Aggregator[_, T]]))
 
 }
