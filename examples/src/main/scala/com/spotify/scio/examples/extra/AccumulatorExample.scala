@@ -5,7 +5,7 @@ import com.spotify.scio._
 object AccumulatorExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val sc = ScioContext(Array.empty)
+    val sc = ScioContext()
 
     val max = sc.maxAccumulator[Int]("max")
     val min = sc.minAccumulator[Int]("min")

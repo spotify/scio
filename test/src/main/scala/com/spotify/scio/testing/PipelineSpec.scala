@@ -95,7 +95,7 @@ trait PipelineSpec extends FlatSpec with Matchers with PCollectionMatcher {
   }
 
   private def runWithLocalOutput[U](fn: ScioContext => SCollection[U]): Seq[U] = {
-    val sc = ScioContext(Array.empty)
+    val sc = ScioContext()
     val f = fn(sc).materialize
     sc.close()
     Await.result(f, Duration.Inf).value.toSeq

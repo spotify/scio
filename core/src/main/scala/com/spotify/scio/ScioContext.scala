@@ -57,7 +57,7 @@ object ScioContext {
    * [[com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions DataflowPipelineOptions]] in
    * field `options`. Job specific ones will be parsed as [[Args]] in field `args`.
    */
-  def apply(args: Array[String]): ScioContext = new ScioContext(args)
+  def apply(args: Array[String] = Array.empty): ScioContext = new ScioContext(args)
 }
 
 /**

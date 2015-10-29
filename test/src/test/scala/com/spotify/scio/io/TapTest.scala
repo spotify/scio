@@ -38,7 +38,7 @@ class TapTest extends PipelineSpec {
 
   it should "update isCompleted without testId" in {
     val dir = tmpDir
-    val sc = ScioContext(Array.empty)
+    val sc = ScioContext()
     val f = sc.parallelize(Seq(1, 2, 3))
       .map(newSpecificRecord)
       .saveAsAvroFile(dir.getPath)
