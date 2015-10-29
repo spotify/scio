@@ -105,7 +105,7 @@ class ScioContext private (cmdlineArgs: Array[String]) {
         Some(Introspector.decapitalize(n.substring(if (n.startsWith("is")) 2 else 3)))
       }
     }.map(s => s"--$s($$|=)".r)
-    val (appArgs, dfArgs) = cmdlineArgs.partition(arg => dfPatterns.exists(_.findFirstIn(arg).isEmpty))
+    val (appArgs, dfArgs) = cmdlineArgs.partition(arg => !dfPatterns.exists(_.findFirstIn(arg).isDefined))
 
     val args = Args(appArgs)
     val options = if (args.optional("testId").isDefined) {
