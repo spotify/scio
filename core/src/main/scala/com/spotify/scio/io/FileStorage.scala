@@ -69,7 +69,7 @@ private class GcsStorage(protected val path: String) extends FileStorage {
 
   override def delete(): Unit = {
     val uri = new URI(path)
-    require(uri.getScheme == "gs")
+    require(uri.getScheme == "gs", s"Not a GCS path: $path")
     val bucket = uri.getHost
     val prefix = uri.getPath.replaceAll("^/", "") + (if (uri.getPath.endsWith("/")) "" else "/")
     val objects = storage.objects()
@@ -84,7 +84,7 @@ private class GcsStorage(protected val path: String) extends FileStorage {
 
   override protected def list: Seq[String] = {
     val uri = new URI(path)
-    require(uri.getScheme == "gs")
+    require(uri.getScheme == "gs", s"Not a GCS path: $path")
     val bucket = uri.getHost
     val prefix = uri.getPath.replaceAll("^/", "") + (if (uri.getPath.endsWith("/")) "" else "/")
     val pDelimiters = prefix.count(isDelimiter)

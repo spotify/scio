@@ -18,7 +18,9 @@ private[scio] class InMemoryDataFlowSink[T](private val id: String) extends Sink
     new InMemoryWriteOperation(this, id)
 
   override def validate(options: PipelineOptions): Unit = {
-    require(classOf[DirectPipelineRunner] isAssignableFrom  options.getRunner)
+    require(
+      classOf[DirectPipelineRunner] isAssignableFrom  options.getRunner,
+      "InMemoryDataFlowSink can only be used with DirectPipelineRunner")
   }
 }
 
