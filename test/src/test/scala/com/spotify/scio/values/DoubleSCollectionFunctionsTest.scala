@@ -12,8 +12,8 @@ class DoubleSCollectionFunctionsTest extends PipelineSpec {
   val expected = StatCounter((1 to 100).map(_.toDouble): _*)
 
   def test(s: Seq[Double], e: Double): Unit = {
-    s.size should equal (1L)
-    s.head should equal (e +- 1e-10)
+    s.size shouldBe 1L
+    s.head shouldBe e +- 1e-10
   }
 
   "DoubleSCollection" should "support sampleStdev()" in {

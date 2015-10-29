@@ -14,7 +14,7 @@ class SCollectionTest extends PipelineSpec {
   "SCollection" should "support setName()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).setName("MySCollection")
-      p.name should equal ("MySCollection")
+      p.name shouldBe "MySCollection"
     }
   }
 
@@ -205,8 +205,8 @@ class SCollectionTest extends PipelineSpec {
       def round(c: Long): Long = math.round(c / 100.0) * 100
       val p1 = sc.parallelize(0 to 1000).randomSplit(Array(0.3, 0.7))
       val p2 = sc.parallelize(0 to 1000).randomSplit(Array(0.2, 0.3, 0.5))
-      p1.length should equal (2)
-      p2.length should equal (3)
+      p1.length shouldBe 2
+      p2.length shouldBe 3
       p1(0).count().map(round).internal should containSingleValue (300L)
       p1(1).count().map(round).internal should containSingleValue (700L)
       p2(0).count().map(round).internal should containSingleValue (200L)

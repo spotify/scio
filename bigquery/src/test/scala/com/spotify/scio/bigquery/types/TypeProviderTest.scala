@@ -27,17 +27,17 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   "BigQueryEntity.fromSchema" should "support string literal" in {
     val r = S1(1L)
-    r.f1 should equal (1L)
+    r.f1 shouldBe 1L
   }
 
   it should "support multi-line string literal" in {
     val r = S2(1L)
-    r.f1 should equal (1L)
+    r.f1 shouldBe 1L
   }
 
   it should "support multi-line string literal with stripMargin" in {
     val r = S3(1L)
-    r.f1 should equal (1L)
+    r.f1 shouldBe 1L
   }
 
   @BigQueryType.fromSchema(
@@ -56,11 +56,11 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   it should "support required primitive types" in {
     val r = RecordWithRequiredPrimitives(1L, 1.5, true, "hello", NOW)
-    r.f1 should equal (1L)
-    r.f2 should equal (1.5)
-    r.f3 should equal (true)
-    r.f4 should equal ("hello")
-    r.f5 should equal (NOW)
+    r.f1 shouldBe 1L
+    r.f2 shouldBe 1.5
+    r.f3 shouldBe true
+    r.f4 shouldBe "hello"
+    r.f5 shouldBe NOW
   }
 
   it should "support .tupled in companion" in {
@@ -106,11 +106,11 @@ class TypeProviderTest extends FlatSpec with Matchers {
     r1.f5 should equal (Some(NOW))
 
     val r2 = RecordWithNullablePrimitives(None, None, None, None, None)
-    r2.f1 should equal (None)
-    r2.f2 should equal (None)
-    r2.f3 should equal (None)
-    r2.f4 should equal (None)
-    r2.f5 should equal (None)
+    r2.f1 shouldBe None
+    r2.f2 shouldBe None
+    r2.f3 shouldBe None
+    r2.f4 shouldBe None
+    r2.f5 shouldBe None
   }
 
   @BigQueryType.fromSchema(
@@ -137,11 +137,11 @@ class TypeProviderTest extends FlatSpec with Matchers {
     r1.f5 should equal (List(NOW, NOW.plus(1000)))
 
     val r2 = RecordWithRepeatedPrimitives(Nil, Nil, Nil, Nil, Nil)
-    r2.f1 should equal (Nil)
-    r2.f2 should equal (Nil)
-    r2.f3 should equal (Nil)
-    r2.f4 should equal (Nil)
-    r2.f5 should equal (Nil)
+    r2.f1 shouldBe Nil
+    r2.f2 shouldBe Nil
+    r2.f3 shouldBe Nil
+    r2.f4 shouldBe Nil
+    r2.f5 shouldBe Nil
   }
 
   @BigQueryType.fromSchema(

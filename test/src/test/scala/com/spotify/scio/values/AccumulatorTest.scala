@@ -21,9 +21,9 @@ class AccumulatorTest extends PipelineSpec {
       }
     val r = sc.close()
 
-    r.accumulatorTotalValue(max) should equal (3)
-    r.accumulatorTotalValue(min) should equal (1)
-    r.accumulatorTotalValue(sum) should equal (6)
+    r.accumulatorTotalValue(max) shouldBe 3
+    r.accumulatorTotalValue(min) shouldBe 1
+    r.accumulatorTotalValue(sum) shouldBe 6
   }
 
   it should "support accumulatorValuesAtSteps" in {
@@ -49,7 +49,7 @@ class AccumulatorTest extends PipelineSpec {
     val r = sc.close()
 
     val av = r.accumulatorValuesAtSteps(count)
-    av.size should equal (3)
+    av.size shouldBe 3
     av.find(_._1.startsWith("map@")).map(_._2) should equal (Some(100))
     av.find(_._1.startsWith("filter@")).map(_._2) should equal (Some(50))
     av.find(_._1.startsWith("flatMap@")).map(_._2) should equal (Some(50))
