@@ -96,7 +96,6 @@ object ScioBuild extends Build {
     "scio-test",
     file("test"),
     settings = buildSettings ++ Seq(
-      libraryDependencies ++= dataflowSdkDependencies,
       libraryDependencies ++= Seq(
         "org.scalatest" %% "scalatest" % scalaTestVersion,
         // DataFlow testing requires junit and hamcrest
