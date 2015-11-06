@@ -99,7 +99,6 @@ private[scio] object Functions {
     // TODO: maybe unsafe if addInput is never called?
     override def extractOutput(accumulator: (Option[C], JList[T])): C = fold(accumulator)
 
-
     override def mergeAccumulators(accumulators: JIterable[(Option[C], JList[T])]): (Option[C], JList[T]) = {
       val combined = accumulators.asScala.map(fold).reduce(mc)
       (Some(combined), Lists.newArrayList())
