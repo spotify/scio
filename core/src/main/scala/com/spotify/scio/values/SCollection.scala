@@ -784,27 +784,27 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as a Datastore dataset. Note that elements must be of type Entity.
    * @group output
    */
-  def saveAsDatastore(datasetId: String)(implicit ev: T <:< Entity): Future[Tap[Entity]] =
+  def saveAsDatastore(datasetId: String)(implicit ev: T <:< Entity): Future[Tap[Entity]] = {
     if (context.isTest) {
       context.testOut(DatastoreIO(datasetId))(internal.asInstanceOf[PCollection[Entity]])
-      Future.failed(new NotImplementedError("Datastore future not implemented"))
     } else {
       this.asInstanceOf[SCollection[Entity]].applyInternal(GDatastoreIO.writeTo(datasetId))
-      Future.failed(new NotImplementedError("Datastore future not implemented"))
     }
+    Future.failed(new NotImplementedError("Datastore future not implemented"))
+  }
 
   /**
    * Save this SCollection as a Pub/Sub topic. Note that elements must be of type String.
    * @group output
    */
-  def saveAsPubsub(topic: String)(implicit ev: T <:< String): Future[Tap[String]] =
+  def saveAsPubsub(topic: String)(implicit ev: T <:< String): Future[Tap[String]] = {
     if (context.isTest) {
       context.testOut(PubsubIO(topic))(internal.asInstanceOf[PCollection[String]])
-      Future.failed(new NotImplementedError("Pubsub future not implemented"))
     } else {
       this.asInstanceOf[SCollection[String]].applyInternal(GPubsubIO.Write.topic(topic))
-      Future.failed(new NotImplementedError("Pubsub future not implemented"))
     }
+    Future.failed(new NotImplementedError("Pubsub future not implemented"))
+  }
 
   /**
    * Save this SCollection as a JSON text file. Note that elements must be of type TableRow.
