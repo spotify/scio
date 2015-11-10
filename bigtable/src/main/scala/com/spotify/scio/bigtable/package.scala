@@ -3,9 +3,12 @@ package com.spotify.scio
 import com.google.cloud.bigtable.dataflow.{CloudBigtableIO, CloudBigtableScanConfiguration}
 import com.google.cloud.dataflow.sdk.io.Read
 import com.google.cloud.dataflow.sdk.values.PCollection
+import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
 import org.apache.hadoop.hbase.client.{Mutation, Result, Scan}
+
+import scala.concurrent.Future
 
 package object bigtable {
 
@@ -30,7 +33,10 @@ package object bigtable {
 
   // implicit class BigTableSCollection[T](private val self: SCollection[T]) extends AnyVal {
   implicit class BigTableSCollection[T](val self: SCollection[T]) {
-    def saveAsBigTable(projectId: String, clusterId: String, zoneId: String, tableId: String)(implicit ev: T <:< Mutation): Unit =
+    def saveAsBigTable(projectId: String,
+                       clusterId: String,
+                       zoneId: String,
+                       tableId: String)(implicit ev: T <:< Mutation): Future[Tap[Result]] = {
       if (self.context.isTest) {
         self.context.testOut(BigTableOutput(projectId, clusterId, zoneId, tableId))(self.internal.asInstanceOf[PCollection[T]])
       } else {
@@ -45,6 +51,8 @@ package object bigtable {
 
         self.asInstanceOf[SCollection[Mutation]].applyInternal(CloudBigtableIO.writeToTable(config))
       }
+      Future.failed(new NotImplementedError("BigTable future not implemented"))
+    }
   }
 
   case class BigTableInput(projectId: String, clusterId: String, zoneId: String, tableId: String)
