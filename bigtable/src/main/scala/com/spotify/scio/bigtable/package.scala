@@ -14,6 +14,8 @@ package object bigtable {
 
   // implicit class BigTableScioContext(private val self: ScioContext) extends AnyVal {
   implicit class BigTableScioContext(val self: ScioContext) {
+
+    /** Get an SCollection for a BigTable table. */
     def bigTable(projectId: String, clusterId: String, zoneId: String, tableId: String, scan: Scan = null): SCollection[Result] =
       if (self.isTest) {
         self.getTestInput[Result](BigTableInput(projectId, clusterId, zoneId, tableId))
@@ -29,10 +31,13 @@ package object bigtable {
 
       self.wrap(self.applyInternal(Read.from(CloudBigtableIO.read(builder.build()))))
     }
+
   }
 
   // implicit class BigTableSCollection[T](private val self: SCollection[T]) extends AnyVal {
   implicit class BigTableSCollection[T](val self: SCollection[T]) {
+
+    /** Save this SCollection as a BigTable table. Note that elements must be of type Mutation. */
     def saveAsBigTable(projectId: String,
                        clusterId: String,
                        zoneId: String,
@@ -53,6 +58,7 @@ package object bigtable {
       }
       Future.failed(new NotImplementedError("BigTable future not implemented"))
     }
+
   }
 
   case class BigTableInput(projectId: String, clusterId: String, zoneId: String, tableId: String)
