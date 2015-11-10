@@ -141,6 +141,7 @@ object ScioBuild extends Build {
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
         "com.google.cloud.bigtable" % "bigtable-hbase-dataflow" % "0.2.1",
+        "org.apache.hadoop" % "hadoop-common" % "2.4.1",
         "org.apache.hbase" % "hbase-common" % "1.0.1"
       )
     )
