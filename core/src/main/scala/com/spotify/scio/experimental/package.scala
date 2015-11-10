@@ -23,7 +23,7 @@ package object experimental {
 
   /** Enhanced version of [[ScioContext]] with experimental features. */
   // TODO: scala 2.11
-  // implicit class ExperimentalDataflowContext(val self: ScioContext) extends AnyVal {
+  // implicit class ExperimentalDataflowContext(private val self: ScioContext) extends AnyVal {
   implicit class ExperimentalDataflowContext(val self: ScioContext) {
 
     /**
@@ -67,7 +67,7 @@ package object experimental {
    * experimental features.
    */
   // TODO: scala 2.11
-  // implicit class ExperimentalSCollection[T](val self: SCollection[T]) extends AnyVal {
+  // implicit class ExperimentalSCollection[T](private val self: SCollection[T]) extends AnyVal {
   implicit class ExperimentalSCollection[T](val self: SCollection[T]) {
 
     /**

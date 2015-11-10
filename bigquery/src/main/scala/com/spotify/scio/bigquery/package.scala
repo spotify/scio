@@ -27,7 +27,7 @@ package object bigquery {
 
   /** Enhanced version of TableRow with typed getters. */
   // TODO: scala 2.11
-  // implicit class RichTableRow(val r: TableRow) extends AnyVal {
+  // implicit class RichTableRow(private val r: TableRow) extends AnyVal {
   implicit class RichTableRow(val r: TableRow) {
 
     def getBoolean(name: AnyRef): Boolean = r.get(name).asInstanceOf[Boolean]

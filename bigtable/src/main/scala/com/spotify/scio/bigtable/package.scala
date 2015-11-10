@@ -9,7 +9,8 @@ import org.apache.hadoop.hbase.client.{Mutation, Result, Scan}
 
 package object bigtable {
 
-  implicit class BigTableScioContext(val self: ScioContext) extends AnyVal {
+  // implicit class BigTableScioContext(private val self: ScioContext) extends AnyVal {
+  implicit class BigTableScioContext(val self: ScioContext) {
     def bigTable(projectId: String, clusterId: String, zoneId: String, tableId: String, scan: Scan = null): SCollection[Result] =
       if (self.isTest) {
         self.getTestInput[Result](BigTableInput(projectId, clusterId, zoneId, tableId))
@@ -27,7 +28,8 @@ package object bigtable {
     }
   }
 
-  implicit class BigTableSCollection[T](val self: SCollection[T]) extends AnyVal {
+  // implicit class BigTableSCollection[T](private val self: SCollection[T]) extends AnyVal {
+  implicit class BigTableSCollection[T](val self: SCollection[T]) {
     def saveAsBigTable(projectId: String, clusterId: String, zoneId: String, tableId: String)(implicit ev: T <:< Mutation): Unit =
       if (self.context.isTest) {
         self.context.testOut(BigTableOutput(projectId, clusterId, zoneId, tableId))(self.internal.asInstanceOf[PCollection[T]])
