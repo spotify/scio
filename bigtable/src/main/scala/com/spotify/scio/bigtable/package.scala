@@ -1,6 +1,6 @@
 package com.spotify.scio
 
-import com.google.cloud.bigtable.dataflow.{CloudBigtableIO, CloudBigtableScanConfiguration}
+import com.google.cloud.bigtable.dataflow.{CloudBigtableIO, CloudBigtableScanConfiguration, CloudBigtableTableConfiguration}
 import com.google.cloud.dataflow.sdk.io.Read
 import com.google.cloud.dataflow.sdk.values.PCollection
 import com.spotify.scio.io.Tap
@@ -20,16 +20,9 @@ package object bigtable {
       if (self.isTest) {
         self.getTestInput[Result](BigTableInput(projectId, clusterId, zoneId, tableId))
       } else {
-      val builder = new CloudBigtableScanConfiguration.Builder()
-        .withProjectId(projectId)
-        .withClusterId(clusterId)
-        .withZoneId(zoneId)
-        .withTableId(tableId)
-      if (scan != null) {
-        builder.withScan(scan)
-      }
-
-      self.wrap(self.applyInternal(Read.from(CloudBigtableIO.read(builder.build()))))
+        val _scan: Scan = if (scan != null) scan else new Scan()
+        val config = new CloudBigtableScanConfiguration(projectId, zoneId, clusterId, tableId, _scan)
+      self.wrap(self.applyInternal(Read.from(CloudBigtableIO.read(config))))
     }
 
   }
@@ -46,14 +39,7 @@ package object bigtable {
         self.context.testOut(BigTableOutput(projectId, clusterId, zoneId, tableId))(self.internal.asInstanceOf[PCollection[T]])
       } else {
         CloudBigtableIO.initializeForWrite(self.context.pipeline)
-
-        val config = new CloudBigtableScanConfiguration.Builder()
-          .withProjectId(projectId)
-          .withClusterId(clusterId)
-          .withZoneId(zoneId)
-          .withTableId(tableId)
-          .build()
-
+        val config = new CloudBigtableTableConfiguration(projectId, zoneId, clusterId, tableId)
         self.asInstanceOf[SCollection[Mutation]].applyInternal(CloudBigtableIO.writeToTable(config))
       }
       Future.failed(new NotImplementedError("BigTable future not implemented"))
