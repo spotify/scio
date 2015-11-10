@@ -171,6 +171,7 @@ object ScioBuild extends Build {
     publishLocal := {}
   ).dependsOn(
     scioCore,
+    scioBigTable,
     scioSchemas,
     scioTest % "test"
   )
