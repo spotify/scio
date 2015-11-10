@@ -5,7 +5,7 @@ import com.spotify.scio._
 /*
 SBT
 runMain
-  com.spotify.scio.examples.TableRowJsonInOut
+  com.spotify.scio.examples.extra.TableRowJsonInOut
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/path/to/staging
   --input=gs://dataflow-samples/wikipedia_edits/wiki_data-*.json
