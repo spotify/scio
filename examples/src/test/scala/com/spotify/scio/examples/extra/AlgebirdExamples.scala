@@ -9,7 +9,7 @@ class AlgebirdExamples extends PipelineSpec {
 
   "SCollection" should "support sum with primitive types" in {
     val s = 1 to 10
-    runWithData(s)(_.sum).head should  (55)
+    runWithData(s)(_.sum).head shouldBe 55
     runWithData(s.map(_.toLong))(_.sum).head shouldBe 55L
     runWithData(s.map(_.toFloat))(_.sum).head shouldBe 55F
     runWithData(s.map(_.toDouble))(_.sum).head shouldBe 55.0
