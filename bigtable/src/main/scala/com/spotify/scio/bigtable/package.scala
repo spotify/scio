@@ -16,14 +16,31 @@ package object bigtable {
   implicit class BigTableScioContext(val self: ScioContext) {
 
     /** Get an SCollection for a BigTable table. */
-    def bigTable(projectId: String, clusterId: String, zoneId: String, tableId: String, scan: Scan = null): SCollection[Result] =
+    def bigTable(projectId: String,
+                 clusterId: String,
+                 zoneId: String,
+                 tableId: String,
+                 scan: Scan = null): SCollection[Result] = self.pipelineOp {
       if (self.isTest) {
         self.getTestInput[Result](BigTableInput(projectId, clusterId, zoneId, tableId))
       } else {
         val _scan: Scan = if (scan != null) scan else new Scan()
         val config = new CloudBigtableScanConfiguration(projectId, zoneId, clusterId, tableId, _scan)
-      self.wrap(self.applyInternal(Read.from(CloudBigtableIO.read(config))))
+        this.read(config)
+      }
     }
+
+    /** Get an SCollection for a BigTable table. */
+    def bigTable(config: CloudBigtableScanConfiguration): SCollection[Result] = self.pipelineOp {
+      if (self.isTest) {
+        self.getTestInput[Result](BigTableInput(config.getProjectId, config.getClusterId, config.getZoneId, config.getTableId))
+      } else {
+        this.read(config)
+      }
+    }
+
+    private def read(config: CloudBigtableScanConfiguration): SCollection[Result] =
+      self.wrap(self.applyInternal(Read.from(CloudBigtableIO.read(config))))
 
   }
 
@@ -36,13 +53,30 @@ package object bigtable {
                        zoneId: String,
                        tableId: String)(implicit ev: T <:< Mutation): Future[Tap[Result]] = {
       if (self.context.isTest) {
-        self.context.testOut(BigTableOutput(projectId, clusterId, zoneId, tableId))(self.internal.asInstanceOf[PCollection[T]])
+        val output = BigTableOutput(projectId, clusterId, zoneId, tableId)
+        self.context.testOut(output)(self.internal.asInstanceOf[PCollection[T]])
       } else {
         CloudBigtableIO.initializeForWrite(self.context.pipeline)
         val config = new CloudBigtableTableConfiguration(projectId, zoneId, clusterId, tableId)
-        self.asInstanceOf[SCollection[Mutation]].applyInternal(CloudBigtableIO.writeToTable(config))
+        this.write(config)
       }
       Future.failed(new NotImplementedError("BigTable future not implemented"))
+    }
+
+    /** Save this SCollection as a BigTable table. Note that elements must be of type Mutation. */
+    def saveAsBigTable(config: CloudBigtableTableConfiguration)(implicit ev: T <:< Mutation): Future[Tap[Result]] = {
+      if (self.context.isTest) {
+        val output = BigTableOutput(config.getProjectId, config.getClusterId, config.getZoneId, config.getTableId)
+        self.context.testOut(output)(self.internal.asInstanceOf[PCollection[T]])
+      } else {
+        this.write(config)
+      }
+      Future.failed(new NotImplementedError("BigTable future not implemented"))
+    }
+
+    private def write(config: CloudBigtableTableConfiguration): Unit = {
+      CloudBigtableIO.initializeForWrite(self.context.pipeline)
+      self.asInstanceOf[SCollection[Mutation]].applyInternal(CloudBigtableIO.writeToTable(config))
     }
 
   }

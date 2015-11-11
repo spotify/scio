@@ -141,7 +141,7 @@ class ScioContext private (cmdlineArgs: Array[String]) {
   def isClosed: Boolean = _isClosed
 
   /* Ensure an operation is called before the pipeline is closed. */
-  private def pipelineOp[U](body: => U): U = {
+  private[scio] def pipelineOp[U](body: => U): U = {
     require(!this.isClosed, "ScioContext already closed")
     body
   }
