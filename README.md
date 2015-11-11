@@ -3,6 +3,8 @@ Scio
 
 Scala API for Google Cloud Dataflow
 
+See the [current API documentation](http://spotify.github.io/scio/) for more information.
+
 # Getting Started
 
 First install the [Google Cloud SDK](https://cloud.google.com/sdk/) and create a [Google Cloud Storage](https://cloud.google.com/storage/) bucket for your project, e.g. `gs://my-bucket`.
