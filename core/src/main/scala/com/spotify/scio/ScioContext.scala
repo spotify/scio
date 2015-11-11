@@ -314,7 +314,7 @@ class ScioContext private (cmdlineArgs: Array[String]) {
    * Get an SCollection for a text file.
    * @group input
    */
-  def textFile[T](path: String): SCollection[String] = pipelineOp {
+  def textFile(path: String): SCollection[String] = pipelineOp {
     if (this.isTest) {
       this.getTestInput(TextIO(path))
     } else {
