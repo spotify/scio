@@ -8,15 +8,9 @@ import com.google.api.services.bigquery.model.TableReference
 import com.google.api.services.datastore.DatastoreV1.{Entity, Query}
 import com.google.cloud.dataflow.sdk.PipelineResult.State
 import com.google.cloud.dataflow.sdk.coders.TableRowJsonCoder
-import com.google.cloud.dataflow.sdk.io.{
-  AvroIO => GAvroIO,
-  BigQueryIO => GBigQueryIO,
-  DatastoreIO => GDatastoreIO,
-  PubsubIO => GPubsubIO,
-  TextIO => GTextIO
-}
+import com.google.cloud.dataflow.sdk.io.{AvroIO => GAvroIO, BigQueryIO => GBigQueryIO, DatastoreIO => GDatastoreIO, PubsubIO => GPubsubIO, TextIO => GTextIO}
 import com.google.cloud.dataflow.sdk.options.PipelineOptions.CheckEnabled
-import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptionsFactory}
+import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptions, PipelineOptionsFactory}
 import com.google.cloud.dataflow.sdk.runners.DataflowPipelineRunner
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
@@ -49,6 +43,7 @@ object ContextAndArgs {
 
 /** Companion object for [[ScioContext]]. */
 object ScioContext {
+
   /**
    * Create a new [[ScioContext]] instance.
    *
@@ -58,6 +53,25 @@ object ScioContext {
    * field `options`. Job specific ones will be parsed as [[Args]] in field `args`.
    */
   def apply(args: Array[String] = Array.empty): ScioContext = new ScioContext(args)
+
+
+  /** Extract PipelineOptions and application arguments from command line arguments. */
+  def extractOptions[T <: PipelineOptions : ClassTag](cmdlineArgs: Array[String]): (T, Array[String]) = {
+    val cls = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
+    val dfPatterns = cls.getMethods.flatMap { m =>
+      val n = m.getName
+      if ((!n.startsWith("get") && !n.startsWith("is")) ||
+        m.getParameterTypes.nonEmpty || m.getReturnType == classOf[Unit]) {
+        None
+      } else {
+        Some(Introspector.decapitalize(n.substring(if (n.startsWith("is")) 2 else 3)))
+      }
+    }.map(s => s"--$s($$|=)".r)
+    val (dfArgs, appArgs) = cmdlineArgs.partition(arg => dfPatterns.exists(_.findFirstIn(arg).isDefined))
+
+    (PipelineOptionsFactory.fromArgs(dfArgs).as(cls), appArgs)
+  }
+
 }
 
 /**
@@ -74,7 +88,12 @@ class ScioContext private (cmdlineArgs: Array[String]) {
 
   import Implicits._
 
-  val (args: Args, options: Option[DataflowPipelineOptions]) = this.parseArgs(cmdlineArgs)
+  val (args: Args, options: DataflowPipelineOptions) = {
+    val (_opts, _rest) = ScioContext.extractOptions[DataflowPipelineOptions](cmdlineArgs)
+
+    _opts.setAppName(CallSites.getAppName)
+    (Args(_rest), _opts)
+  }
 
   /** Dataflow pipeline. */
   val pipeline: Pipeline = this.newPipeline()
@@ -93,34 +112,11 @@ class ScioContext private (cmdlineArgs: Array[String]) {
   // =======================================================================
 
   private lazy val bigQueryClient: BigQueryClient =
-    BigQueryClient(options.get.getProject, options.get.getGcpCredential)
-
-  private def parseArgs(cmdlineArgs: Array[String]): (Args, Option[DataflowPipelineOptions]) = {
-    val dfPatterns = classOf[DataflowPipelineOptions].getMethods.flatMap { m =>
-      val n = m.getName
-      if ((!n.startsWith("get") && !n.startsWith("is")) ||
-        m.getParameterTypes.nonEmpty || m.getReturnType == classOf[Unit]) {
-        None
-      } else {
-        Some(Introspector.decapitalize(n.substring(if (n.startsWith("is")) 2 else 3)))
-      }
-    }.map(s => s"--$s($$|=)".r)
-    val (appArgs, dfArgs) = cmdlineArgs.partition(arg => !dfPatterns.exists(_.findFirstIn(arg).isDefined))
-
-    val args = Args(appArgs)
-    val options = if (args.optional("testId").isDefined) {
-      None
-    } else {
-      val o = PipelineOptionsFactory.fromArgs(dfArgs).as(classOf[DataflowPipelineOptions])
-      o.setAppName(CallSites.getAppName)
-      Some(o)
-    }
-    (args, options)
-  }
+    BigQueryClient(options.getProject, options.getGcpCredential)
 
   private def newPipeline(): Pipeline = {
-    val p = if (options.isDefined) {
-      Pipeline.create(options.get)
+    val p = if (args.optional("testId").isEmpty) {
+      Pipeline.create(options)
     } else {
       TestPipeline.create()
     }
@@ -450,7 +446,7 @@ class ScioContext private (cmdlineArgs: Array[String]) {
     if (this.isTest) {
       new MockDistCache(testDistCache(DistCacheIO(uri)))
     } else {
-      new DistCacheSingle(new URI(uri), initFn, options.get)
+      new DistCacheSingle(new URI(uri), initFn, options)
     }
   }
 
@@ -464,7 +460,7 @@ class ScioContext private (cmdlineArgs: Array[String]) {
     if (this.isTest) {
       new MockDistCache(testDistCache(DistCacheIO(uris.mkString("\t"))))
     } else {
-      new DistCacheMulti(uris.map(new URI(_)), initFn, options.get)
+      new DistCacheMulti(uris.map(new URI(_)), initFn, options)
     }
   }
 

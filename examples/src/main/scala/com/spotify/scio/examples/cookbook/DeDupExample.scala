@@ -18,8 +18,8 @@ object DeDupExample {
 
     val input = args.getOrElse("input", "gs://dataflow-samples/shakespeare/*")
     val output = args.optional("output").getOrElse(
-      if (sc.options.exists(_.getStagingLocation != null)) {
-        GcsPath.fromUri(sc.options.get.getStagingLocation).resolve("deduped.txt").toString
+      if (sc.options.getStagingLocation != null) {
+        GcsPath.fromUri(sc.options.getStagingLocation).resolve("deduped.txt").toString
       } else {
         throw new IllegalArgumentException("Must specify --output or --stagingLocation")
       })
