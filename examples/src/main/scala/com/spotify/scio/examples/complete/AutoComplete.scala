@@ -1,4 +1,3 @@
-// INCOMPLETE
 package com.spotify.scio.examples.complete
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
@@ -10,6 +9,18 @@ import com.spotify.scio.values.SCollection
 import org.joda.time.Duration
 
 import scala.collection.JavaConverters._
+
+/*
+SBT
+runMain
+  com.spotify.scio.examples.complete.AutoComplete
+  --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
+  --stagingLocation=gs://[BUCKET]/dataflow/staging
+  --inputFile=gs://dataflow-samples/shakespeare/kinglear.txt
+  --outputToBigqueryTable=true
+  --outputBigqueryTable=[DATASET].auto_complete
+  --outputToDatastore=true
+*/
 
 object AutoComplete {
 
@@ -27,27 +38,30 @@ object AutoComplete {
     } else {
       val larger = computeTopRecursive(input, minPrefix + 1)
       val small = computeTop(larger(1).flatMap(_._2) ++ input.filter(_._1.length == minPrefix), minPrefix, minPrefix)
-      Seq(larger(0) ++ larger(1), small)
+      Seq(larger.head ++ larger(1), small)
     }
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args, input) = if (cmdlineArgs.exists(_.startsWith("--inputFile"))) {
-      val (sc, args) = ContextAndArgs(cmdlineArgs)
-      (sc, args, sc.textFile(args("inputFile")))
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+
+    // initialize input
+    val input = if (sc.options.isStreaming) {
+      require(args.optional("outputToDatastore").isEmpty, "DatastoreIO is not supported in streaming.")
+      sc.pubsubTopic(args("pubsubTopic")).withSlidingWindows(Duration.standardMinutes(30))
     } else {
-      val (sc, args) = ContextAndArgs(cmdlineArgs :+ "--streaming=true")
-      (sc, args, sc.pubsubTopic(args("inputTopic")).withSlidingWindows(Duration.standardMinutes(30)))
+      sc.textFile(args("inputFile"))
     }
 
+    // compute candidates
     val candidates = input.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty).map(_.toLowerCase)).countByValue()
-
-    val tags = if (args("recursive").toBoolean) {
+    val tags = if (args.getOrElse("recursive", "true").toBoolean) {
       SCollection.unionAll(computeTopRecursive(candidates, 1))
     } else {
       computeTop(candidates, 1)
     }
 
-    if (args.optional("outputBigqueryTable").isDefined) {
+    // write output to BigQuery
+    if (args.getOrElse("outputToBigqueryTable", "true").toBoolean) {
       val tagFields = List(
         new TableFieldSchema().setName("count").setType("INTEGER"),
         new TableFieldSchema().setName("tag").setType("STRING"))
@@ -63,26 +77,24 @@ object AutoComplete {
         .saveAsBigQuery(args("outputBigqueryTable"), schema)
     }
 
-    if (args.optional("outputDataset").isDefined) {
-      val kind = args("kind")
+    // write output to Datastore
+    if (args.getOrElse("outputToDatastore", "true").toBoolean) {
+      val kind = args.getOrElse("kind", "autocomplete-demo")
       tags
         .map { kv =>
-          val ancestorKey = DatastoreHelper.makeKey(kind, "root").build()
-          val key = DatastoreHelper.makeKey(ancestorKey, kv._1).build()
-
+          val key = DatastoreHelper.makeKey(kind, kv._1).build();
           val candidates = kv._2.map { p =>
             DatastoreHelper.makeValue(Entity.newBuilder()
               .addProperty(DatastoreHelper.makeProperty("tag", DatastoreHelper.makeValue(p._1)))
               .addProperty(DatastoreHelper.makeProperty("count", DatastoreHelper.makeValue(p._2)))
-            ).build()
+            ).setIndexed(false).build()
           }
-
           Entity.newBuilder()
             .setKey(key)
             .addProperty(DatastoreHelper.makeProperty("candidates", DatastoreHelper.makeValue(candidates.asJava)))
             .build()
         }
-        .saveAsDatastore(args("outputDataset"))
+        .saveAsDatastore(sc.options.getProject)
     }
 
     sc.close()
