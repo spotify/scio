@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.dataflow.examples;
+package com.google.cloud.dataflow.examples.complete;
 
 import com.google.api.services.bigquery.model.TableFieldSchema;
 import com.google.api.services.bigquery.model.TableReference;
@@ -66,13 +66,13 @@ import java.util.Map;
  * <p>Concepts: The batch and streaming runners, GroupByKey, sliding windows, and
  * Google Cloud Pub/Sub topic injection.
  *
- * <p> This example analyzes traffic sensor data using SlidingWindows. For each window,
+ * <p>This example analyzes traffic sensor data using SlidingWindows. For each window,
  * it calculates the average speed over the window for some small set of predefined 'routes',
  * and looks for 'slowdowns' in those routes. It writes its results to a BigQuery table.
  *
- * <p> In batch mode, the pipeline reads traffic sensor data from {@literal --inputFile}.
+ * <p>In batch mode, the pipeline reads traffic sensor data from {@literal --inputFile}.
  *
- * <p> In streaming mode, the pipeline reads the data from a Pub/Sub topic.
+ * <p>In streaming mode, the pipeline reads the data from a Pub/Sub topic.
  * By default, the example will run a separate pipeline to inject the data from the default
  * {@literal --inputFile} to the Pub/Sub {@literal --pubsubTopic}. It will make it available for
  * the streaming pipeline to process. You may override the default {@literal --inputFile} with the
@@ -82,13 +82,13 @@ import java.util.Map;
  * is provided in
  * <a href="https://github.com/GoogleCloudPlatform/cloud-pubsub-samples-python/tree/master/gce-cmdline-publisher"></a>.
  *
- * <p> The example is configured to use the default Pub/Sub topic and the default BigQuery table
+ * <p>The example is configured to use the default Pub/Sub topic and the default BigQuery table
  * from the example common package (there are no defaults for a general Dataflow pipeline).
  * You can override them by using the {@literal --pubsubTopic}, {@literal --bigQueryDataset}, and
  * {@literal --bigQueryTable} options. If the Pub/Sub topic or the BigQuery table do not exist,
  * the example will try to create them.
  *
- * <p> The example will try to cancel the pipelines on the signal to terminate the process (CTRL-C)
+ * <p>The example will try to cancel the pipelines on the signal to terminate the process (CTRL-C)
  * and then exits.
  */
 
@@ -163,7 +163,6 @@ public class TrafficRoutes {
    * (station, speed info) keyed on route.
    */
   static class ExtractStationSpeedFn extends DoFn<String, KV<String, StationSpeed>> {
-    private static final long serialVersionUID = 0;
     private static final DateTimeFormatter dateTimeFormat =
         DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss");
 
@@ -211,8 +210,6 @@ public class TrafficRoutes {
    */
   static class GatherStats
       extends DoFn<KV<String, Iterable<StationSpeed>>, KV<String, RouteInfo>> {
-    private static final long serialVersionUID = 0;
-
     @Override
     public void processElement(ProcessContext c) throws IOException {
       String route = c.element().getKey();
@@ -256,8 +253,6 @@ public class TrafficRoutes {
    * Format the results of the slowdown calculations to a TableRow, to save to BigQuery.
    */
   static class FormatStatsFn extends DoFn<KV<String, RouteInfo>, TableRow> {
-    private static final long serialVersionUID = 0;
-
     @Override
     public void processElement(ProcessContext c) {
       RouteInfo routeInfo = c.element().getValue();
@@ -290,8 +285,6 @@ public class TrafficRoutes {
    */
   static class TrackSpeed extends
       PTransform<PCollection<KV<String, StationSpeed>>, PCollection<TableRow>> {
-    private static final long serialVersionUID = 0;
-
     @Override
     public PCollection<TableRow> apply(PCollection<KV<String, StationSpeed>> stationSpeed) {
       // Apply a GroupByKey transform to collect a list of all station
@@ -314,7 +307,7 @@ public class TrafficRoutes {
   /**
   * Options supported by {@link TrafficRoutes}.
   *
-  * <p> Inherits standard configuration options.
+  * <p>Inherits standard configuration options.
   */
   private interface TrafficRoutesOptions
       extends DataflowExampleOptions, ExamplePubsubTopicOptions, ExampleBigQueryTableOptions {

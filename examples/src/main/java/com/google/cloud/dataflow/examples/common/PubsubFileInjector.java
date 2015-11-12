@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.dataflow.examples;
+package com.google.cloud.dataflow.examples.common;
 
 import com.google.api.services.pubsub.Pubsub;
 import com.google.api.services.pubsub.model.PublishRequest;
@@ -36,9 +36,9 @@ import java.util.Arrays;
 
 /**
  * A batch Dataflow pipeline for injecting a set of GCS files into
- * a PubSub topic line by line.
+ * a PubSub topic line by line. Empty lines are skipped.
  *
- * <p> This is useful for testing streaming
+ * <p>This is useful for testing streaming
  * pipelines. Note that since batch pipelines might retry chunks, this
  * does _not_ guarantee exactly-once injection of file data. Some lines may
  * be published multiple times.
@@ -69,10 +69,8 @@ public class PubsubFileInjector {
     }
   }
 
-  /** A DoFn that publishes lines to Google Cloud PubSub. */
+  /** A DoFn that publishes non-empty lines to Google Cloud PubSub. */
   public static class Bound extends DoFn<String, Void> {
-    private static final long serialVersionUID = 0;
-
     private final String outputTopic;
     private final String timestampLabelKey;
     public transient Pubsub pubsub;
@@ -91,6 +89,9 @@ public class PubsubFileInjector {
 
     @Override
     public void processElement(ProcessContext c) throws IOException {
+      if (c.element().isEmpty()) {
+        return;
+      }
       PubsubMessage pubsubMessage = new PubsubMessage();
       pubsubMessage.encodeData(c.element().getBytes());
       if (timestampLabelKey != null) {

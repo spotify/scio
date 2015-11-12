@@ -16,8 +16,9 @@ package com.google.cloud.dataflow.examples.common;
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.googleapis.services.AbstractGoogleClientRequest;
-import com.google.api.client.util.Lists;
-import com.google.api.client.util.Sets;
+import com.google.api.client.util.BackOff;
+import com.google.api.client.util.BackOffUtils;
+import com.google.api.client.util.Sleeper;
 import com.google.api.services.bigquery.Bigquery;
 import com.google.api.services.bigquery.Bigquery.Datasets;
 import com.google.api.services.bigquery.Bigquery.Tables;
@@ -29,7 +30,6 @@ import com.google.api.services.bigquery.model.TableSchema;
 import com.google.api.services.dataflow.Dataflow;
 import com.google.api.services.pubsub.Pubsub;
 import com.google.api.services.pubsub.model.Topic;
-import com.google.cloud.dataflow.examples.PubsubFileInjector;
 import com.google.cloud.dataflow.sdk.Pipeline;
 import com.google.cloud.dataflow.sdk.PipelineResult;
 import com.google.cloud.dataflow.sdk.io.TextIO;
@@ -39,8 +39,12 @@ import com.google.cloud.dataflow.sdk.runners.DataflowPipelineJob;
 import com.google.cloud.dataflow.sdk.runners.DataflowPipelineRunner;
 import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner;
 import com.google.cloud.dataflow.sdk.transforms.IntraBundleParallelization;
+import com.google.cloud.dataflow.sdk.util.AttemptBoundedExponentialBackOff;
 import com.google.cloud.dataflow.sdk.util.MonitoringUtil;
 import com.google.cloud.dataflow.sdk.util.Transport;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -54,7 +58,7 @@ import javax.servlet.http.HttpServletResponse;
  * The utility class that sets up and tears down external resources, starts the Google Cloud Pub/Sub
  * injector, and cancels the streaming and the injector pipelines once the program terminates.
  *
- * <p> It is used to run Dataflow examples, such as TrafficMaxLaneFlow and TrafficRoutes.
+ * <p>It is used to run Dataflow examples, such as TrafficMaxLaneFlow and TrafficRoutes.
  */
 public class DataflowExampleUtils {
 
@@ -92,8 +96,23 @@ public class DataflowExampleUtils {
    * @throws IOException if there is a problem setting up the resources
    */
   public void setup() throws IOException {
-    setupPubsubTopic();
-    setupBigQueryTable();
+    Sleeper sleeper = Sleeper.DEFAULT;
+    BackOff backOff = new AttemptBoundedExponentialBackOff(3, 200);
+    Throwable lastException = null;
+    try {
+      do {
+        try {
+          setupPubsubTopic();
+          setupBigQueryTable();
+          return;
+        } catch (GoogleJsonResponseException e) {
+          lastException = e;
+        }
+      } while (BackOffUtils.next(sleeper, backOff));
+    } catch (InterruptedException e) {
+      // Ignore InterruptedException
+    }
+    Throwables.propagate(lastException);
   }
 
   /**
@@ -108,13 +127,11 @@ public class DataflowExampleUtils {
   }
 
   /**
-   * Sets up the BigQuery table with the given schema.
+   * Sets up the Google Cloud Pub/Sub topic.
    *
-   * <p> If the table already exists, the schema has to match the given one. Otherwise, the example
-   * will throw a RuntimeException. If the table doesn't exist, a new table with the given schema
-   * will be created.
+   * <p>If the topic doesn't exist, a new topic with the given name will be created.
    *
-   * @throws IOException if there is a problem setting up the BigQuery table
+   * @throws IOException if there is a problem setting up the Pub/Sub topic
    */
   public void setupPubsubTopic() throws IOException {
     ExamplePubsubTopicOptions pubsubTopicOptions = options.as(ExamplePubsubTopicOptions.class);
@@ -127,11 +144,13 @@ public class DataflowExampleUtils {
   }
 
   /**
-   * Sets up the Google Cloud Pub/Sub topic.
+   * Sets up the BigQuery table with the given schema.
    *
-   * <p> If the topic doesn't exist, a new topic with the given name will be created.
+   * <p>If the table already exists, the schema has to match the given one. Otherwise, the example
+   * will throw a RuntimeException. If the table doesn't exist, a new table with the given schema
+   * will be created.
    *
-   * @throws IOException if there is a problem setting up the Pub/Sub topic
+   * @throws IOException if there is a problem setting up the BigQuery table
    */
   public void setupBigQueryTable() throws IOException {
     ExampleBigQueryTableOptions bigQueryTableOptions =
@@ -267,7 +286,7 @@ public class DataflowExampleUtils {
   /**
    * Runs the batch injector for the streaming pipeline.
    *
-   * <p> The injector pipeline will read from the given text file, and inject data
+   * <p>The injector pipeline will read from the given text file, and inject data
    * into the Google Cloud Pub/Sub topic.
    */
   public void runInjectorPipeline(String inputFile, String topic) {
@@ -275,6 +294,7 @@ public class DataflowExampleUtils {
     copiedOptions.setStreaming(false);
     copiedOptions.setNumWorkers(
         options.as(ExamplePubsubTopicOptions.class).getInjectorNumWorkers());
+    copiedOptions.setJobName(options.getJobName() + "-injector");
     Pipeline injectorPipeline = Pipeline.create(copiedOptions);
     injectorPipeline.apply(TextIO.Read.from(inputFile))
                     .apply(IntraBundleParallelization

@@ -38,9 +38,9 @@ import com.google.cloud.dataflow.sdk.values.TupleTag;
  * It uses a sample of the GDELT 'world event' data (http://goo.gl/OB6oin), joining the event
  * 'action' country code against a table that maps country codes to country names.
  *
- * <p> Concepts: Join operation; multiple input sources.
+ * <p>Concepts: Join operation; multiple input sources.
  *
- * <p> To execute this pipeline locally, specify general pipeline configuration:
+ * <p>To execute this pipeline locally, specify general pipeline configuration:
  * <pre>{@code
  *   --project=YOUR_PROJECT_ID
  * }
@@ -50,7 +50,7 @@ import com.google.cloud.dataflow.sdk.values.TupleTag;
  *   --output=[YOUR_LOCAL_FILE | gs://YOUR_OUTPUT_PREFIX]
  * }</pre>
  *
- * <p> To execute this pipeline using the Dataflow service, specify pipeline configuration:
+ * <p>To execute this pipeline using the Dataflow service, specify pipeline configuration:
  * <pre>{@code
  *   --project=YOUR_PROJECT_ID
  *   --stagingLocation=gs://YOUR_STAGING_DIRECTORY
@@ -98,8 +98,6 @@ public class JoinExamples {
     PCollection<KV<String, String>> finalResultCollection =
       kvpCollection.apply(ParDo.named("Process").of(
         new DoFn<KV<String, CoGbkResult>, KV<String, String>>() {
-          private static final long serialVersionUID = 0;
-
           @Override
           public void processElement(ProcessContext c) {
             KV<String, CoGbkResult> e = c.element();
@@ -117,8 +115,6 @@ public class JoinExamples {
     // write to GCS
     PCollection<String> formattedResults = finalResultCollection
         .apply(ParDo.named("Format").of(new DoFn<KV<String, String>, String>() {
-          private static final long serialVersionUID = 0;
-
           @Override
           public void processElement(ProcessContext c) {
             String outputstring = "Country code: " + c.element().getKey()
@@ -134,8 +130,6 @@ public class JoinExamples {
    * code of the event, and the value a string encoding event information.
    */
   static class ExtractEventDataFn extends DoFn<TableRow, KV<String, String>> {
-    private static final long serialVersionUID = 0;
-
     @Override
     public void processElement(ProcessContext c) {
       TableRow row = c.element();
@@ -154,8 +148,6 @@ public class JoinExamples {
    * code, and the value the country name.
    */
   static class ExtractCountryInfoFn extends DoFn<TableRow, KV<String, String>> {
-    private static final long serialVersionUID = 0;
-
     @Override
     public void processElement(ProcessContext c) {
       TableRow row = c.element();
@@ -168,8 +160,8 @@ public class JoinExamples {
 
   /**
    * Options supported by {@link JoinExamples}.
-   * <p>
-   * Inherits standard configuration options.
+   *
+   * <p>Inherits standard configuration options.
    */
   private static interface Options extends PipelineOptions {
     @Description("Path of the file to write to")

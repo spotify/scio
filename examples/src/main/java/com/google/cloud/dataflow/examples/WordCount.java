@@ -27,40 +27,41 @@ import com.google.cloud.dataflow.sdk.options.PipelineOptionsFactory;
 import com.google.cloud.dataflow.sdk.transforms.Aggregator;
 import com.google.cloud.dataflow.sdk.transforms.Count;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
+import com.google.cloud.dataflow.sdk.transforms.MapElements;
 import com.google.cloud.dataflow.sdk.transforms.PTransform;
 import com.google.cloud.dataflow.sdk.transforms.ParDo;
+import com.google.cloud.dataflow.sdk.transforms.SimpleFunction;
 import com.google.cloud.dataflow.sdk.transforms.Sum;
 import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath;
 import com.google.cloud.dataflow.sdk.values.KV;
 import com.google.cloud.dataflow.sdk.values.PCollection;
 
-import java.io.IOException;
-
 
 /**
  * An example that counts words in Shakespeare and includes Dataflow best practices.
  *
- * <p> This class, {@link WordCount}, is the second in a series of three successively more detailed
- * 'word count' examples. You may first want to take a look at {@link MinimalWordCount}. After
- * you've looked at this example, then see the {@link WindowedWordCount} pipeline, for introduction
- * of additional concepts.
+ * <p>This class, {@link WordCount}, is the second in a series of four successively more detailed
+ * 'word count' examples. You may first want to take a look at {@link MinimalWordCount}.
+ * After you've looked at this example, then see the {@link DebuggingWordCount}
+ * pipeline, for introduction of additional concepts.
  *
- * <p> For a detailed walkthrough of this example, see
+ * <p>For a detailed walkthrough of this example, see
  *   <a href="https://cloud.google.com/dataflow/java-sdk/wordcount-example">
  *   https://cloud.google.com/dataflow/java-sdk/wordcount-example
  *   </a>
  *
- * <p> Basic concepts, also in the MinimalWordCount example:
+ * <p>Basic concepts, also in the MinimalWordCount example:
  * Reading text files; counting a PCollection; writing to GCS.
  *
- * <p> New Concepts:
- * 1. Executing a Pipeline both locally and using the Dataflow service
- * 2. Using ParDo with static DoFns defined out-of-line
- * 3. Creating a custom aggregator
- * 4. Building a composite transform
- * 5. Using command-line arguments to set pipeline options
+ * <p>New Concepts:
+ * <pre>
+ *   1. Executing a Pipeline both locally and using the Dataflow service
+ *   2. Using ParDo with static DoFns defined out-of-line
+ *   3. Building a composite transform
+ *   4. Defining your own pipeline options
+ * </pre>
  *
- * <p> Concept #1: you can execute this pipeline either locally or using the Dataflow service.
+ * <p>Concept #1: you can execute this pipeline either locally or using the Dataflow service.
  * These are now command-line options and not hard-coded as they were in the MinimalWordCount
  * example.
  * To execute this pipeline locally, specify general pipeline configuration:
@@ -73,7 +74,7 @@ import java.io.IOException;
  *   --output=[YOUR_LOCAL_FILE | gs://YOUR_OUTPUT_PREFIX]
  * }</pre>
  *
- * <p> To execute this pipeline using the Dataflow service, specify pipeline configuration:
+ * <p>To execute this pipeline using the Dataflow service, specify pipeline configuration:
  * <pre>{@code
  *   --project=YOUR_PROJECT_ID
  *   --stagingLocation=gs://YOUR_STAGING_DIRECTORY
@@ -85,7 +86,7 @@ import java.io.IOException;
  *   --output=gs://YOUR_OUTPUT_PREFIX
  * }</pre>
  *
- * <p> The input file defaults to {@code gs://dataflow-samples/shakespeare/kinglear.txt} and can be
+ * <p>The input file defaults to {@code gs://dataflow-samples/shakespeare/kinglear.txt} and can be
  * overridden with {@code --inputFile}.
  */
 public class WordCount {
@@ -96,18 +97,11 @@ public class WordCount {
    * pipeline.
    */
   static class ExtractWordsFn extends DoFn<String, String> {
-    private static final long serialVersionUID = 0;
-
-    // Concept #3: A custom aggregator can track values in your pipeline as it runs, and that value
-    // can be displayed in the Dataflow monitoring UI. This aggregator tracks the number of empty
-    // lines that ExtractWordsFn encounters.
     private final Aggregator<Long, Long> emptyLines =
         createAggregator("emptyLines", new Sum.SumLongFn());
 
     @Override
     public void processElement(ProcessContext c) {
-      // Keep track of the number of empty lines. (When using the [Blocking]DataflowPipelineRunner,
-      // Aggregators are shown in the monitoring UI.)
       if (c.element().trim().isEmpty()) {
         emptyLines.addValue(1L);
       }
@@ -124,13 +118,11 @@ public class WordCount {
     }
   }
 
-  /** A DoFn that converts a Word and Count into a printable string. */
-  public static class FormatAsTextFn extends DoFn<KV<String, Long>, String> {
-    private static final long serialVersionUID = 0;
-
+  /** A SimpleFunction that converts a Word and Count into a printable string. */
+  public static class FormatAsTextFn extends SimpleFunction<KV<String, Long>, String> {
     @Override
-    public void processElement(ProcessContext c) {
-      c.output(c.element().getKey() + ": " + c.element().getValue());
+    public String apply(KV<String, Long> input) {
+      return input.getKey() + ": " + input.getValue();
     }
   }
 
@@ -138,14 +130,12 @@ public class WordCount {
    * A PTransform that converts a PCollection containing lines of text into a PCollection of
    * formatted word counts.
    *
-   * <p> Concept #4: This is a custom composite transform that bundles two transforms (ParDo and
+   * <p>Concept #3: This is a custom composite transform that bundles two transforms (ParDo and
    * Count) as a reusable PTransform subclass. Using composite transforms allows for easy reuse,
    * modular testing, and an improved monitoring experience.
    */
   public static class CountWords extends PTransform<PCollection<String>,
       PCollection<KV<String, Long>>> {
-    private static final long serialVersionUID = 0;
-
     @Override
     public PCollection<KV<String, Long>> apply(PCollection<String> lines) {
 
@@ -164,11 +154,11 @@ public class WordCount {
   /**
    * Options supported by {@link WordCount}.
    *
-   * <p> Concept #5: defining your own configuration options. Here, you can add your own args to be
-   * processed by the command-line parser, and specify default values for them. You can then access
-   * the options values in your pipeline code.
+   * <p>Concept #4: Defining your own configuration options. Here, you can add your own arguments
+   * to be processed by the command-line parser, and specify default values for them. You can then
+   * access the options values in your pipeline code.
    *
-   * <p> Inherits standard configuration options.
+   * <p>Inherits standard configuration options.
    */
   public static interface WordCountOptions extends PipelineOptions {
     @Description("Path of the file to read from")
@@ -182,7 +172,7 @@ public class WordCount {
     void setOutput(String value);
 
     /**
-     * Returns gs://${STAGING_LOCATION}/"counts.txt" as the default destination.
+     * Returns "gs://${YOUR_STAGING_DIRECTORY}/counts.txt" as the default destination.
      */
     public static class OutputFactory implements DefaultValueFactory<String> {
       @Override
@@ -199,16 +189,16 @@ public class WordCount {
 
   }
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
     WordCountOptions options = PipelineOptionsFactory.fromArgs(args).withValidation()
       .as(WordCountOptions.class);
     Pipeline p = Pipeline.create(options);
 
-    // Concepts #2 and #4: Our pipeline applies the composite CountWords transform, and passes the
+    // Concepts #2 and #3: Our pipeline applies the composite CountWords transform, and passes the
     // static FormatAsTextFn() to the ParDo transform.
     p.apply(TextIO.Read.named("ReadLines").from(options.getInputFile()))
      .apply(new CountWords())
-     .apply(ParDo.of(new FormatAsTextFn()))
+     .apply(MapElements.via(new FormatAsTextFn()))
      .apply(TextIO.Write.named("WriteCounts").to(options.getOutput()));
 
     p.run();

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.dataflow.examples;
+package com.google.cloud.dataflow.examples.complete;
 
 import com.google.api.services.bigquery.model.TableRow;
 import com.google.cloud.dataflow.sdk.Pipeline;
@@ -49,12 +49,12 @@ import java.util.List;
  * An example that reads Wikipedia edit data from Cloud Storage and computes the user with
  * the longest string of edits separated by no more than an hour within each month.
  *
- * <p> Concepts: Using Windowing to perform time-based aggregations of data.
+ * <p>Concepts: Using Windowing to perform time-based aggregations of data.
  *
- * <p> It is not recommended to execute this pipeline locally, given the size of the default input
+ * <p>It is not recommended to execute this pipeline locally, given the size of the default input
  * data.
  *
- * <p> To execute this pipeline using the Dataflow service, specify pipeline configuration:
+ * <p>To execute this pipeline using the Dataflow service, specify pipeline configuration:
  * <pre>{@code
  *   --project=YOUR_PROJECT_ID
  *   --stagingLocation=gs://YOUR_STAGING_DIRECTORY
@@ -66,10 +66,10 @@ import java.util.List;
  *   --output=gs://YOUR_OUTPUT_PREFIX
  * }</pre>
  *
- * <p> The default input is {@code gs://dataflow-samples/wikipedia_edits/*.json} and can be
+ * <p>The default input is {@code gs://dataflow-samples/wikipedia_edits/*.json} and can be
  * overridden with {@code --input}.
  *
- * <p> The input for this example is large enough that it's a good place to enable (experimental)
+ * <p>The input for this example is large enough that it's a good place to enable (experimental)
  * autoscaling:
  * <pre>{@code
  *   --autoscalingAlgorithm=BASIC
@@ -85,8 +85,6 @@ public class TopWikipediaSessions {
    * Extracts user and timestamp from a TableRow representing a Wikipedia edit.
    */
   static class ExtractUserAndTimestamp extends DoFn<TableRow, String> {
-    private static final long serialVersionUID = 0;
-
     @Override
     public void processElement(ProcessContext c) {
       TableRow row = c.element();
@@ -105,8 +103,6 @@ public class TopWikipediaSessions {
    */
   static class ComputeSessions
       extends PTransform<PCollection<String>, PCollection<KV<String, Long>>> {
-    private static final long serialVersionUID = 0;
-
     @Override
     public PCollection<KV<String, Long>> apply(PCollection<String> actions) {
       return actions
@@ -121,16 +117,12 @@ public class TopWikipediaSessions {
    */
   private static class TopPerMonth
       extends PTransform<PCollection<KV<String, Long>>, PCollection<List<KV<String, Long>>>> {
-    private static final long serialVersionUID = 0;
-
     @Override
     public PCollection<List<KV<String, Long>>> apply(PCollection<KV<String, Long>> sessions) {
       return sessions
         .apply(Window.<KV<String, Long>>into(CalendarWindows.months(1)))
 
           .apply(Top.of(1, new SerializableComparator<KV<String, Long>>() {
-                    private static final long serialVersionUID = 0;
-
                     @Override
                     public int compare(KV<String, Long> o1, KV<String, Long> o2) {
                       return Long.compare(o1.getValue(), o2.getValue());
@@ -142,8 +134,6 @@ public class TopWikipediaSessions {
   static class SessionsToStringsDoFn extends DoFn<KV<String, Long>, KV<String, Long>>
       implements RequiresWindowAccess {
 
-    private static final long serialVersionUID = 0;
-
     @Override
     public void processElement(ProcessContext c) {
       c.output(KV.of(
@@ -153,8 +143,6 @@ public class TopWikipediaSessions {
 
   static class FormatOutputDoFn extends DoFn<List<KV<String, Long>>, String>
       implements RequiresWindowAccess {
-    private static final long serialVersionUID = 0;
-
     @Override
     public void processElement(ProcessContext c) {
       for (KV<String, Long> item : c.element()) {
@@ -166,8 +154,6 @@ public class TopWikipediaSessions {
   }
 
   static class ComputeTopSessions extends PTransform<PCollection<TableRow>, PCollection<String>> {
-
-    private static final long serialVersionUID = 0;
 
     private final double samplingThreshold;
 
@@ -182,8 +168,6 @@ public class TopWikipediaSessions {
 
           .apply(ParDo.named("SampleUsers").of(
               new DoFn<String, String>() {
-                private static final long serialVersionUID = 0;
-
                 @Override
                 public void processElement(ProcessContext c) {
                   if (Math.abs(c.element().hashCode()) <= Integer.MAX_VALUE * samplingThreshold) {
@@ -203,7 +187,7 @@ public class TopWikipediaSessions {
   /**
    * Options supported by this class.
    *
-   * <p> Inherits standard Dataflow configuration options.
+   * <p>Inherits standard Dataflow configuration options.
    */
   private static interface Options extends PipelineOptions {
     @Description(

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.dataflow.examples;
+package com.google.cloud.dataflow.examples.complete;
 
 import com.google.api.services.bigquery.model.TableFieldSchema;
 import com.google.api.services.bigquery.model.TableReference;
@@ -71,10 +71,10 @@ import java.util.regex.Pattern;
  * An example that computes the most popular hash tags
  * for every prefix, which can be used for auto-completion.
  *
- * <p> Concepts: Using the same pipeline in both streaming and batch, combiners,
- *               composite transforms.
+ * <p>Concepts: Using the same pipeline in both streaming and batch, combiners,
+ *              composite transforms.
  *
- * <p> To execute this pipeline using the Dataflow service in batch mode,
+ * <p>To execute this pipeline using the Dataflow service in batch mode,
  * specify pipeline configuration:
  * <pre>{@code
  *   --project=YOUR_PROJECT_ID
@@ -83,7 +83,7 @@ import java.util.regex.Pattern;
  *   --inputFile=gs://path/to/input*.txt
  * }</pre>
  *
- * <p> To execute this pipeline using the Dataflow service in streaming mode,
+ * <p>To execute this pipeline using the Dataflow service in streaming mode,
  * specify pipeline configuration:
  * <pre>{@code
  *   --project=YOUR_PROJECT_ID
@@ -93,7 +93,7 @@ import java.util.regex.Pattern;
  *   --streaming
  * }</pre>
  *
- * <p> This will update the datastore every 10 seconds based on the last
+ * <p>This will update the datastore every 10 seconds based on the last
  * 30 minutes of data received.
  */
 public class AutoComplete {
@@ -104,8 +104,6 @@ public class AutoComplete {
    */
   public static class ComputeTopCompletions
       extends PTransform<PCollection<String>, PCollection<KV<String, List<CompletionCandidate>>>> {
-    private static final long serialVersionUID = 0;
-
     private final int candidatesPerPrefix;
     private final boolean recursive;
 
@@ -127,8 +125,6 @@ public class AutoComplete {
         // Map the KV outputs of Count into our own CompletionCandiate class.
         .apply(ParDo.named("CreateCompletionCandidates").of(
             new DoFn<KV<String, Long>, CompletionCandidate>() {
-              private static final long serialVersionUID = 0;
-
               @Override
               public void processElement(ProcessContext c) {
                 c.output(new CompletionCandidate(c.element().getKey(), c.element().getValue()));
@@ -153,8 +149,6 @@ public class AutoComplete {
   private static class ComputeTopFlat
       extends PTransform<PCollection<CompletionCandidate>,
                          PCollection<KV<String, List<CompletionCandidate>>>> {
-    private static final long serialVersionUID = 0;
-
     private final int candidatesPerPrefix;
     private final int minPrefix;
 
@@ -176,8 +170,6 @@ public class AutoComplete {
     }
 
     private static class HotKeyFanout implements SerializableFunction<String, Integer> {
-      private static final long serialVersionUID = 0;
-
       @Override
       public Integer apply(String input) {
         return (int) Math.pow(4, 5 - input.length());
@@ -188,15 +180,13 @@ public class AutoComplete {
   /**
    * Cheaper but higher latency.
    *
-   * <p> Returns two PCollections, the first is top prefixes of size greater
+   * <p>Returns two PCollections, the first is top prefixes of size greater
    * than minPrefix, and the second is top prefixes of size exactly
    * minPrefix.
    */
   private static class ComputeTopRecursive
       extends PTransform<PCollection<CompletionCandidate>,
                          PCollectionList<KV<String, List<CompletionCandidate>>>> {
-    private static final long serialVersionUID = 0;
-
     private final int candidatesPerPrefix;
     private final int minPrefix;
 
@@ -206,8 +196,6 @@ public class AutoComplete {
     }
 
     private class KeySizePartitionFn implements PartitionFn<KV<String, List<CompletionCandidate>>> {
-      private static final long serialVersionUID = 0;
-
       @Override
       public int partitionFor(KV<String, List<CompletionCandidate>> elem, int numPartitions) {
         return elem.getKey().length() > minPrefix ? 0 : 1;
@@ -216,8 +204,6 @@ public class AutoComplete {
 
     private static class FlattenTops
         extends DoFn<KV<String, List<CompletionCandidate>>, CompletionCandidate> {
-      private static final long serialVersionUID = 0;
-
       @Override
       public void processElement(ProcessContext c) {
         for (CompletionCandidate cc : c.element().getValue()) {
@@ -247,8 +233,6 @@ public class AutoComplete {
             // ...together with those (previously excluded) candidates of length
             // exactly minPrefix...
             .and(input.apply(Filter.by(new SerializableFunction<CompletionCandidate, Boolean>() {
-                    private static final long serialVersionUID = 0;
-
                     @Override
                     public Boolean apply(CompletionCandidate c) {
                       return c.getValue().length() == minPrefix;
@@ -273,8 +257,6 @@ public class AutoComplete {
    */
   private static class AllPrefixes
       extends DoFn<CompletionCandidate, KV<String, CompletionCandidate>> {
-    private static final long serialVersionUID = 0;
-
     private final int minPrefix;
     private final int maxPrefix;
     public AllPrefixes(int minPrefix) {
@@ -354,8 +336,6 @@ public class AutoComplete {
    * Takes as input a set of strings, and emits each #hashtag found therein.
    */
   static class ExtractHashtags extends DoFn<String, String> {
-    private static final long serialVersionUID = 0;
-
     @Override
     public void processElement(ProcessContext c) {
       Matcher m = Pattern.compile("#\\S+").matcher(c.element());
@@ -366,8 +346,6 @@ public class AutoComplete {
   }
 
   static class FormatForBigquery extends DoFn<KV<String, List<CompletionCandidate>>, TableRow> {
-    private static final long serialVersionUID = 0;
-
     @Override
     public void processElement(ProcessContext c) {
       List<TableRow> completions = new ArrayList<>();
@@ -402,8 +380,6 @@ public class AutoComplete {
    * suitable for writing to Datastore.
    */
   static class FormatForDatastore extends DoFn<KV<String, List<CompletionCandidate>>, Entity> {
-    private static final long serialVersionUID = 0;
-
     private String kind;
 
     public FormatForDatastore(String kind) {
@@ -434,7 +410,7 @@ public class AutoComplete {
   /**
    * Options supported by this class.
    *
-   * <p> Inherits standard Dataflow configuration options.
+   * <p>Inherits standard Dataflow configuration options.
    */
   private static interface Options extends ExamplePubsubTopicOptions, ExampleBigQueryTableOptions {
     @Description("Input text file")
