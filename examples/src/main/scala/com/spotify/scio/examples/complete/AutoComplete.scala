@@ -3,8 +3,10 @@ package com.spotify.scio.examples.complete
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.api.services.datastore.DatastoreV1.Entity
 import com.google.api.services.datastore.client.DatastoreHelper
+import com.google.cloud.dataflow.examples.common.DataflowExampleUtils
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
+import com.spotify.scio.examples.common.ExampleOptions
 import com.spotify.scio.values.SCollection
 import org.joda.time.Duration
 
@@ -16,10 +18,12 @@ runMain
   com.spotify.scio.examples.complete.AutoComplete
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/dataflow/staging
+  --streaming=true
+  --pubsubTopic=projects/[PROJECT]/topics/auto_complete
   --inputFile=gs://dataflow-samples/shakespeare/kinglear.txt
   --outputToBigqueryTable=true
   --outputBigqueryTable=[DATASET].auto_complete
-  --outputToDatastore=true
+  --outputToDatastore=false
 */
 
 object AutoComplete {
@@ -42,12 +46,19 @@ object AutoComplete {
     }
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
+    val sc = ScioContext(opts)
+
+    // set up example wiring
+    val dataflowUtils = new DataflowExampleUtils(opts)
+
+    val outputToDatastore = args.getOrElse("outputToDatastore", "false").toBoolean
 
     // initialize input
-    val input = if (sc.options.isStreaming) {
-      require(args.optional("outputToDatastore").isEmpty, "DatastoreIO is not supported in streaming.")
-      sc.pubsubTopic(args("pubsubTopic")).withSlidingWindows(Duration.standardMinutes(30))
+    val input = if (opts.isStreaming) {
+      require(!outputToDatastore, "DatastoreIO is not supported in streaming.")
+      dataflowUtils.setupPubsubTopic()
+      sc.pubsubTopic(opts.getPubsubTopic).withSlidingWindows(Duration.standardMinutes(30))
     } else {
       sc.textFile(args("inputFile"))
     }
@@ -62,6 +73,7 @@ object AutoComplete {
 
     // write output to BigQuery
     if (args.getOrElse("outputToBigqueryTable", "true").toBoolean) {
+      dataflowUtils.setupBigQueryTable()
       val tagFields = List(
         new TableFieldSchema().setName("count").setType("INTEGER"),
         new TableFieldSchema().setName("tag").setType("STRING"))
@@ -78,7 +90,7 @@ object AutoComplete {
     }
 
     // write output to Datastore
-    if (args.getOrElse("outputToDatastore", "true").toBoolean) {
+    if (outputToDatastore) {
       val kind = args.getOrElse("kind", "autocomplete-demo")
       tags
         .map { kv =>
@@ -94,9 +106,19 @@ object AutoComplete {
             .addProperty(DatastoreHelper.makeProperty("candidates", DatastoreHelper.makeValue(candidates.asJava)))
             .build()
         }
-        .saveAsDatastore(sc.options.getProject)
+        .saveAsDatastore(opts.getProject)
     }
 
-    sc.close()
+    val result = sc.close()
+
+    // set up Pubsub topic from input file in an injector pipeline
+    if (opts.isStreaming) {
+      args.optional("inputFile").foreach { inputFile =>
+        dataflowUtils.runInjectorPipeline(inputFile, opts.getPubsubTopic)
+      }
+    }
+
+    // CTRL-C to cancel the streaming pipeline
+    dataflowUtils.waitToFinish(result.internal)
   }
 }
