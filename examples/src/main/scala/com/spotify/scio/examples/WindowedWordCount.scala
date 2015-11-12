@@ -2,8 +2,10 @@
 package com.spotify.scio.examples
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import com.google.cloud.dataflow.examples.common.DataflowExampleUtils
 import com.spotify.scio.bigquery._
 import com.spotify.scio._
+import com.spotify.scio.examples.common.ExampleOptions
 import org.joda.time.{Duration, Instant}
 
 import scala.collection.JavaConverters._
@@ -14,7 +16,9 @@ runMain
   com.spotify.scio.examples.WindowedWordCount
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/dataflow/staging
-  --input=gs://dataflow-samples/shakespeare/kinglear.txt
+  --streaming=true
+  --pubsubTopic=projects/[PROJECT]/topics/windowed_word_count
+  --inputFile=gs://dataflow-samples/shakespeare/kinglear.txt
   --output=[DATASET].windowed_wordcount
 */
 
@@ -24,7 +28,12 @@ object WindowedWordCount {
   val WINDOW_SIZE = 1
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
+    val sc = ScioContext(opts)
+
+    // set up example wiring
+    val dataflowUtils = new DataflowExampleUtils(sc.options)
+    dataflowUtils.setup()
 
     val schema = new TableSchema().setFields(List(
       new TableFieldSchema().setName("word").setType("STRING"),
@@ -32,10 +41,15 @@ object WindowedWordCount {
       new TableFieldSchema().setName("window_timestamp").setType("TIMESTAMP")
     ).asJava)
 
+    val inputFile = args.getOrElse("input", "gs://dataflow-samples/shakespeare/kinglear.txt")
     val windowSize = Duration.standardMinutes(args.optional("windowSize").map(_.toLong).getOrElse(WINDOW_SIZE))
 
-    sc
-      .textFile(args.getOrElse("input", "gs://dataflow-samples/shakespeare/kinglear.txt"))
+    // initialize input
+    val input = if (opts.isStreaming) {
+      sc.pubsubTopic(opts.getPubsubTopic)
+    } else {
+      sc
+      .textFile(inputFile)
       .toWindowed  // convert to WindowedSCollection
       .map { wv =>  // specialized version of map with WindowedValue as argument
         // update timestamp of elements
@@ -43,17 +57,31 @@ object WindowedWordCount {
         wv.copy(value = wv.value, timestamp = new Instant(randomTimestamp))
       }
       .toSCollection  // convert back to normal SCollection
+    }
+
+    input
       .withFixedWindows(windowSize)  // apply windowing logic
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue()
       .toWindowed  // convert to WindowedSCollection
       .map { wv =>
-        wv.copy(value = TableRow("word" -> wv.value._1, "count" -> wv.value._2, "window_timestamp" -> wv.timestamp))
+        wv.copy(value = TableRow(
+          "word" -> wv.value._1,
+          "count" -> wv.value._2,
+          "window_timestamp" -> Timestamp(wv.timestamp)))
       }
       .toSCollection  // convert back to normal SCollection
-      .saveAsBigQuery(args("output"), schema, CREATE_IF_NEEDED, WRITE_TRUNCATE)
+      .saveAsBigQuery(args("output"), schema)
 
-    sc.close()
+    val result = sc.close()
+
+    // set up Pubsub topic from input file in an injector pipeline
+    args.optional("inputFile").foreach { inputFile =>
+      dataflowUtils.runInjectorPipeline(inputFile, opts.getPubsubTopic)
+    }
+
+    // CTRL-C to cancel the streaming pipeline
+    dataflowUtils.waitToFinish(result.internal)
   }
 
 }

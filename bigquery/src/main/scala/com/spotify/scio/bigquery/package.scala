@@ -1,6 +1,8 @@
 package com.spotify.scio
 
 import com.google.api.services.bigquery.model.{TableRow => GTableRow}
+import org.joda.time.Instant
+import org.joda.time.format.DateTimeFormat
 
 /**
  * Main package for BigQuery APIs. Import all.
@@ -41,6 +43,19 @@ package object bigquery {
     def getDouble(name: AnyRef): Double = this.getString(name).toDouble
 
     def getString(name: AnyRef): String = r.get(name).toString
+
+  }
+
+  /** Utility for bigQuery time stamps. */
+  object Timestamp {
+
+    private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS").withZoneUTC()
+
+    /** Convert Instant to BigQuery time stamp string. */
+    def apply(instant: Instant): String = formatter.print(instant) + " UTC"
+
+    /** Convert millisecond instant to BigQuery time stamp string. */
+    def apply(instant: Long): String = formatter.print(instant) + " UTC"
 
   }
 
