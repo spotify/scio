@@ -22,7 +22,7 @@ runMain
 
 object StreamingWordExtract {
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (opts, args) = ScioContext.extractOptions[ExampleOptions](cmdlineArgs)
+    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
     val sc = ScioContext(opts)
 
     // set up example wiring

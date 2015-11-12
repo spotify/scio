@@ -6,8 +6,8 @@ import com.spotify.scio.ScioContext
 /** Utilities for BigTable. */
 object BigTable {
 
-  /** Extract CloudBigtableOptions from command line arguments. */
-  def extractOptions(args: Array[String]): CloudBigtableOptions =
-    ScioContext.extractOptions[CloudBigtableOptions](args)._1
+  /** Parse CloudBigtableOptions from command line arguments. */
+  def parseOptions(args: Array[String]): CloudBigtableOptions =
+    ScioContext.parseArguments[CloudBigtableOptions](args)._1
 
 }

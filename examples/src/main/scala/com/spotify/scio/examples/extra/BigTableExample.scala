@@ -29,7 +29,7 @@ object BigTableWriteExample {
     import BigTableExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val config = CloudBigtableTableConfiguration.fromCBTOptions(BigTable.extractOptions(cmdlineArgs))
+    val config = CloudBigtableTableConfiguration.fromCBTOptions(BigTable.parseOptions(cmdlineArgs))
 
     val input = args.getOrElse("input", "gs://dataflow-samples/shakespeare/kinglear.txt")
     sc.textFile(input)
@@ -62,7 +62,7 @@ object BigTableReadExample {
     import BigTableExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val config = CloudBigtableScanConfiguration.fromCBTOptions(BigTable.extractOptions(cmdlineArgs))
+    val config = CloudBigtableScanConfiguration.fromCBTOptions(BigTable.parseOptions(cmdlineArgs))
 
     sc.bigTable(config)
       .map(r => new String(r.getRow) + ": " + new String(r.getValue(FAMILY, QUALIFIER)))

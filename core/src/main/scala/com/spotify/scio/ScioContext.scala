@@ -36,7 +36,7 @@ import scala.reflect.ClassTag
 object ContextAndArgs {
   /** Create [[ScioContext]] and [[Args]] for command line arguments. */
   def apply(args: Array[String]): (ScioContext, Args) = {
-    val (_opts, _args) = ScioContext.extractOptions[DataflowPipelineOptions](args)
+    val (_opts, _args) = ScioContext.parseArguments[DataflowPipelineOptions](args)
     (new ScioContext(_opts, _args.optional("testId")), _args)
   }
 }
@@ -53,7 +53,7 @@ object ScioContext {
    * field `options`.
    */
   def apply(cmdlineArgs: Array[String]): ScioContext = {
-    val (_opts, _args) = ScioContext.extractOptions[DataflowPipelineOptions](cmdlineArgs)
+    val (_opts, _args) = ScioContext.parseArguments[DataflowPipelineOptions](cmdlineArgs)
     new ScioContext(_opts, _args.optional("testId"))
   }
 
@@ -64,8 +64,8 @@ object ScioContext {
   def apply(options: DataflowPipelineOptions): ScioContext = new ScioContext(options, None)
 
 
-  /** Extract PipelineOptions and application arguments from command line arguments. */
-  def extractOptions[T <: PipelineOptions : ClassTag](cmdlineArgs: Array[String]): (T, Args) = {
+  /** Parse PipelineOptions and application arguments from command line arguments. */
+  def parseArguments[T <: PipelineOptions : ClassTag](cmdlineArgs: Array[String]): (T, Args) = {
     val cls = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
     val dfPatterns = cls.getMethods.flatMap { m =>
       val n = m.getName
