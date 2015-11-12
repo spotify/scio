@@ -164,6 +164,9 @@ object ScioBuild extends Build {
     "scio-examples",
     file("examples"),
     settings = buildSettings ++ Seq(
+      libraryDependencies ++= Seq(
+        "org.hamcrest" % "hamcrest-all" % "1.3"
+      ),
       addCompilerPlugin(paradiseDependency)
     )
   ).settings(
