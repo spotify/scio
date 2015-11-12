@@ -22,7 +22,8 @@ runMain
   --pubsubTopic=projects/[PROJECT]/topics/auto_complete
   --inputFile=gs://dataflow-samples/shakespeare/kinglear.txt
   --outputToBigqueryTable=true
-  --outputBigqueryTable=[DATASET].auto_complete
+  --bigQueryDataset=[DATASET]
+  --bigQueryTable=[TABLE]
   --outputToDatastore=false
 */
 
@@ -52,6 +53,7 @@ object AutoComplete {
     // set up example wiring
     val dataflowUtils = new DataflowExampleUtils(opts)
 
+    val outputToBigqueryTable = args.getOrElse("outputToBigqueryTable", "true").toBoolean
     val outputToDatastore = args.getOrElse("outputToDatastore", "false").toBoolean
 
     // initialize input
@@ -72,7 +74,7 @@ object AutoComplete {
     }
 
     // write output to BigQuery
-    if (args.getOrElse("outputToBigqueryTable", "true").toBoolean) {
+    if (outputToBigqueryTable) {
       dataflowUtils.setupBigQueryTable()
       val tagFields = List(
         new TableFieldSchema().setName("count").setType("INTEGER"),
@@ -86,7 +88,7 @@ object AutoComplete {
           val tags = kv._2.map(p => TableRow("tag" -> p._1, "count" -> p._2))
           TableRow("pre" -> kv._1, "tags" -> tags.toList.asJava)
         }
-        .saveAsBigQuery(args("outputBigqueryTable"), schema)
+        .saveAsBigQuery(ExampleOptions.bigQueryTable(opts), schema)
     }
 
     // write output to Datastore

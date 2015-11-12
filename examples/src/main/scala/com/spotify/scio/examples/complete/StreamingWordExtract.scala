@@ -17,7 +17,8 @@ runMain
   --streaming=true
   --pubsubTopic=projects/[PROJECT]/topics/streaming_word_extract
   --inputFile=gs://dataflow-samples/shakespeare/kinglear.txt
-  --outputBigqueryTable=[DATASET].streaming_word_extract
+  --bigQueryDataset=[DATASET]
+  --bigQueryTable=[TABLE]
 */
 
 object StreamingWordExtract {
@@ -36,7 +37,7 @@ object StreamingWordExtract {
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .map(_.toUpperCase)
       .map(s => TableRow("string_field" -> s))
-      .saveAsBigQuery(args("outputBigqueryTable"), schema)
+      .saveAsBigQuery(ExampleOptions.bigQueryTable(opts), schema)
 
     val result = sc.close()
 

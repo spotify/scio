@@ -19,7 +19,8 @@ runMain
   --streaming=true
   --pubsubTopic=projects/[PROJECT]/topics/windowed_word_count
   --inputFile=gs://dataflow-samples/shakespeare/kinglear.txt
-  --output=[DATASET].windowed_wordcount
+  --bigQueryDataset=[DATASET]
+  --bigQueryTable=[TABLE]
 */
 
 object WindowedWordCount {
@@ -71,7 +72,7 @@ object WindowedWordCount {
           "window_timestamp" -> Timestamp(wv.timestamp)))
       }
       .toSCollection  // convert back to normal SCollection
-      .saveAsBigQuery(args("output"), schema)
+      .saveAsBigQuery(ExampleOptions.bigQueryTable(opts), schema)
 
     val result = sc.close()
 
