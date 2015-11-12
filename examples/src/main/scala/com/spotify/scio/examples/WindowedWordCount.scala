@@ -32,22 +32,25 @@ object WindowedWordCount {
       new TableFieldSchema().setName("window_timestamp").setType("TIMESTAMP")
     ).asJava)
 
+    val windowSize = Duration.standardMinutes(args.optional("windowSize").map(_.toLong).getOrElse(WINDOW_SIZE))
+
     sc
       .textFile(args.getOrElse("input", "gs://dataflow-samples/shakespeare/kinglear.txt"))
-      .toWindowed
-      .map { wv =>
+      .toWindowed  // convert to WindowedSCollection
+      .map { wv =>  // specialized version of map with WindowedValue as argument
+        // update timestamp of elements
         val randomTimestamp = System.currentTimeMillis() - (scala.math.random * RAND_RANGE).toLong
         wv.copy(value = wv.value, timestamp = new Instant(randomTimestamp))
       }
-      .toSCollection
-      .withFixedWindows(Duration.standardMinutes(args.optional("windowSize").map(_.toLong).getOrElse(WINDOW_SIZE)))
+      .toSCollection  // convert back to normal SCollection
+      .withFixedWindows(windowSize)  // apply windowing logic
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue()
-      .toWindowed
+      .toWindowed  // convert to WindowedSCollection
       .map { wv =>
         wv.copy(value = TableRow("word" -> wv.value._1, "count" -> wv.value._2, "window_timestamp" -> wv.timestamp))
       }
-      .toSCollection
+      .toSCollection  // convert back to normal SCollection
       .saveAsBigQuery(args("output"), schema, CREATE_IF_NEEDED, WRITE_TRUNCATE)
 
     sc.close()
