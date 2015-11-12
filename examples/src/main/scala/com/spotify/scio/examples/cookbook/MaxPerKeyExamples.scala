@@ -9,7 +9,7 @@ import scala.collection.JavaConverters._
 /*
 SBT
 runMain
-  com.spotify.scio.examples.BigQueryTornadoes
+  com.spotify.scio.examples.cookbook.MaxPerKeyExamples
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/path/to/staging
   --output=[DATASET].max_per_key_examples

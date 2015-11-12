@@ -13,7 +13,7 @@ import scala.collection.JavaConverters._
 /*
 SBT
 runMain
-  com.spotify.scio.examples.TfIdf
+  com.spotify.scio.examples.complete.TfIdf
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/path/to/staging
   --input=gs://dataflow-samples/shakespeare/?*.txt

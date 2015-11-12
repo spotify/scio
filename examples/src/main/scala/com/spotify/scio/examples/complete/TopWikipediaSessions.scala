@@ -8,7 +8,7 @@ import org.joda.time.{Duration, Instant}
 /*
 SBT
 runMain
-  com.spotify.scio.examples.TopWikipediaSessions
+  com.spotify.scio.examples.complete.TopWikipediaSessions
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/path/to/staging
   --input=gs://dataflow-samples/wikipedia_edits/wiki_data-*.json

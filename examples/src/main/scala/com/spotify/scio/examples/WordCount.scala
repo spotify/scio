@@ -2,6 +2,7 @@ package com.spotify.scio.examples
 
 import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
 import com.spotify.scio._
+
 /*
 SBT
 runMain

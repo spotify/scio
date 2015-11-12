@@ -6,7 +6,7 @@ import com.spotify.scio._
 /*
 SBT
 runMain
-  com.spotify.scio.examples.DeDupExample
+  com.spotify.scio.examples.cookbook.DeDupExample
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/path/to/staging
   --output=gs://[BUCKET]/dataflow/de_dup_example

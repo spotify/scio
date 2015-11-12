@@ -6,7 +6,7 @@ import com.spotify.scio._
 /*
 SBT
 runMain
-  com.spotify.scio.examples.JoinExamples
+  com.spotify.scio.examples.cookbook.JoinExamples
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/path/to/staging
   --output=gs://[BUCKET]/dataflow/join_examples

@@ -11,7 +11,7 @@ case class Record(year: Int, month: Int, day: Int, meanTemp: Double)
 /*
 SBT
 runMain
-  com.spotify.scio.examples.FilterExamples
+  com.spotify.scio.examples.cookbook.FilterExamples
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/path/to/staging
   --output=[DATASET].filter_examples
