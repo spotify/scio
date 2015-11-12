@@ -36,8 +36,8 @@ import scala.reflect.ClassTag
 object ContextAndArgs {
   /** Create [[ScioContext]] and [[Args]] for command line arguments. */
   def apply(args: Array[String]): (ScioContext, Args) = {
-    val context = ScioContext(args)
-    (context, context.args)
+    val (_opts, _args) = ScioContext.extractOptions[DataflowPipelineOptions](args)
+    (new ScioContext(_opts, _args.optional("testId")), _args)
   }
 }
 
@@ -47,16 +47,25 @@ object ScioContext {
   /**
    * Create a new [[ScioContext]] instance.
    *
-   * @param args command line arguments including both Dataflow and job specific ones. Dataflow
-   * specific ones will be parsed as
+   * @param cmdlineArgs command line arguments including both Dataflow and job specific ones.
+   * Dataflow specific ones will be parsed as
    * [[com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions DataflowPipelineOptions]] in
-   * field `options`. Job specific ones will be parsed as [[Args]] in field `args`.
+   * field `options`.
    */
-  def apply(args: Array[String] = Array.empty): ScioContext = new ScioContext(args)
+  def apply(cmdlineArgs: Array[String]): ScioContext = {
+    val (_opts, _args) = ScioContext.extractOptions[DataflowPipelineOptions](cmdlineArgs)
+    new ScioContext(_opts, _args.optional("testId"))
+  }
+
+  /** Create a new [[ScioContext]] instance. */
+  def apply(): ScioContext = ScioContext(Array.empty[String])
+
+  /** Create a new [[ScioContext]] instance. */
+  def apply(options: DataflowPipelineOptions): ScioContext = new ScioContext(options, None)
 
 
   /** Extract PipelineOptions and application arguments from command line arguments. */
-  def extractOptions[T <: PipelineOptions : ClassTag](cmdlineArgs: Array[String]): (T, Array[String]) = {
+  def extractOptions[T <: PipelineOptions : ClassTag](cmdlineArgs: Array[String]): (T, Args) = {
     val cls = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
     val dfPatterns = cls.getMethods.flatMap { m =>
       val n = m.getName
@@ -69,7 +78,7 @@ object ScioContext {
     }.map(s => s"--$s($$|=)".r)
     val (dfArgs, appArgs) = cmdlineArgs.partition(arg => dfPatterns.exists(_.findFirstIn(arg).isDefined))
 
-    (PipelineOptionsFactory.fromArgs(dfArgs).as(cls), appArgs)
+    (PipelineOptionsFactory.fromArgs(dfArgs).as(cls), Args(appArgs))
   }
 
 }
@@ -84,16 +93,11 @@ object ScioContext {
  * @groupname input Input Sources
  * @groupname Ungrouped Other Members
  */
-class ScioContext private (cmdlineArgs: Array[String]) {
+class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: Option[String]) {
 
   import Implicits._
 
-  val (args: Args, options: DataflowPipelineOptions) = {
-    val (_opts, _rest) = ScioContext.extractOptions[DataflowPipelineOptions](cmdlineArgs)
-
-    _opts.setAppName(CallSites.getAppName)
-    (Args(_rest), _opts)
-  }
+  options.setAppName(CallSites.getAppName)
 
   /** Dataflow pipeline. */
   val pipeline: Pipeline = this.newPipeline()
@@ -115,7 +119,7 @@ class ScioContext private (cmdlineArgs: Array[String]) {
     BigQueryClient(options.getProject, options.getGcpCredential)
 
   private def newPipeline(): Pipeline = {
-    val p = if (args.optional("testId").isEmpty) {
+    val p = if (testId.isEmpty) {
       Pipeline.create(options)
     } else {
       TestPipeline.create()
@@ -181,11 +185,11 @@ class ScioContext private (cmdlineArgs: Array[String]) {
 
   private implicit def context: ScioContext = this
 
-  private[scio] def isTest: Boolean = args.optional("testId").isDefined
+  private[scio] def isTest: Boolean = testId.isDefined
 
-  private[scio] def testIn: TestInput = TestDataManager.getInput(args("testId"))
-  private[scio] def testOut: TestOutput = TestDataManager.getOutput(args("testId"))
-  private[scio] def testDistCache: TestDistCache = TestDataManager.getDistCache(args("testId"))
+  private[scio] def testIn: TestInput = TestDataManager.getInput(testId.get)
+  private[scio] def testOut: TestOutput = TestDataManager.getOutput(testId.get)
+  private[scio] def testDistCache: TestDistCache = TestDataManager.getDistCache(testId.get)
 
   private[scio] def getTestInput[T: ClassTag](key: TestIO[T]): SCollection[T] =
     this.parallelize(testIn(key).asInstanceOf[Seq[T]])
