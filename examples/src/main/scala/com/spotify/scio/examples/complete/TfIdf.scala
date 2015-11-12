@@ -1,4 +1,4 @@
-package com.spotify.scio.examples
+package com.spotify.scio.examples.complete
 
 import java.io.File
 import java.net.URI

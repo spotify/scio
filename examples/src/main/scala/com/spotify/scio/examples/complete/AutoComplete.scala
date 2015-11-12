@@ -1,11 +1,11 @@
 // INCOMPLETE
-package com.spotify.scio.examples
+package com.spotify.scio.examples.complete
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.api.services.datastore.DatastoreV1.Entity
 import com.google.api.services.datastore.client.DatastoreHelper
-import com.spotify.scio.bigquery._
 import com.spotify.scio._
+import com.spotify.scio.bigquery._
 import com.spotify.scio.values.SCollection
 import org.joda.time.Duration
 
@@ -39,7 +39,6 @@ object AutoComplete {
       (sc, args, sc.pubsubTopic(args("inputTopic")).withSlidingWindows(Duration.standardMinutes(30)))
     }
 
-//    val candidates = input.flatMap(l => "#\\S+".r.findAllIn(l).map(_.substring(1))).countByValue()
     val candidates = input.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty).map(_.toLowerCase)).countByValue()
 
     val tags = if (args("recursive").toBoolean) {

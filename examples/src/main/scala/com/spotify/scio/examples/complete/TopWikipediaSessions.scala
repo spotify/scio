@@ -1,8 +1,8 @@
-package com.spotify.scio.examples
+package com.spotify.scio.examples.complete
 
 import com.google.cloud.dataflow.sdk.transforms.windowing.IntervalWindow
-import com.spotify.scio.bigquery._
 import com.spotify.scio._
+import com.spotify.scio.bigquery._
 import org.joda.time.{Duration, Instant}
 
 /*
