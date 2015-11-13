@@ -4,6 +4,7 @@ import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.api.services.datastore.DatastoreV1.Entity
 import com.google.api.services.datastore.client.DatastoreHelper
 import com.google.cloud.dataflow.examples.common.DataflowExampleUtils
+import com.google.cloud.dataflow.sdk.runners.DataflowPipelineRunner
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.common.ExampleOptions
@@ -29,6 +30,16 @@ runMain
 
 object AutoComplete {
 
+  val bigQuerySchema: TableSchema = {
+    val tagFields = List(
+      new TableFieldSchema().setName("count").setType("INTEGER"),
+      new TableFieldSchema().setName("tag").setType("STRING"))
+    val fields = List(
+      new TableFieldSchema().setName("pre").setType("STRING"),
+      new TableFieldSchema().setName("tags").setType("RECORD").setMode("REPEATED").setFields(tagFields.asJava))
+    new TableSchema().setFields(fields.asJava)
+  }
+
   def computeTop(input: SCollection[(String, Long)], minPrefix: Int, maxPrefix: Int = Int.MaxValue)
   : SCollection[(String, Iterable[(String, Long)])] =
     input.flatMap { kv =>
@@ -46,15 +57,35 @@ object AutoComplete {
       Seq(larger.head ++ larger(1), small)
     }
 
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
-    val sc = ScioContext(opts)
+  def makeEntity(kind: String, kv: (String, Iterable[(String, Long)])): Entity = {
+    val key = DatastoreHelper.makeKey(kind, kv._1).build();
+    val candidates = kv._2.map { p =>
+      DatastoreHelper.makeValue(Entity.newBuilder()
+        .addProperty(DatastoreHelper.makeProperty("tag", DatastoreHelper.makeValue(p._1)))
+        .addProperty(DatastoreHelper.makeProperty("count", DatastoreHelper.makeValue(p._2)))
+      ).setIndexed(false).build()
+    }
+    Entity.newBuilder()
+      .setKey(key)
+      .addProperty(DatastoreHelper.makeProperty("candidates", DatastoreHelper.makeValue(candidates.asJava)))
+      .build()
+  }
 
+  def main(cmdlineArgs: Array[String]): Unit = {
     // set up example wiring
+    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
+    if (opts.isStreaming) {
+      opts.setRunner(classOf[DataflowPipelineRunner])
+    }
+    opts.setBigQuerySchema(bigQuerySchema)
     val dataflowUtils = new DataflowExampleUtils(opts)
 
+    // arguments
     val outputToBigqueryTable = args.getOrElse("outputToBigqueryTable", "true").toBoolean
     val outputToDatastore = args.getOrElse("outputToDatastore", "false").toBoolean
+    val kind = args.getOrElse("kind", "autocomplete-demo")
+
+    val sc = ScioContext(opts)
 
     // initialize input
     val input = if (opts.isStreaming) {
@@ -73,41 +104,19 @@ object AutoComplete {
       computeTop(candidates, 1)
     }
 
-    // write output to BigQuery
+    // outputs
     if (outputToBigqueryTable) {
       dataflowUtils.setupBigQueryTable()
-      val tagFields = List(
-        new TableFieldSchema().setName("count").setType("INTEGER"),
-        new TableFieldSchema().setName("tag").setType("STRING"))
-      val fields = List(
-        new TableFieldSchema().setName("pre").setType("STRING"),
-        new TableFieldSchema().setName("tags").setType("RECORD").setMode("REPEATED").setFields(tagFields.asJava))
-      val schema = new TableSchema().setFields(fields.asJava)
       tags
         .map { kv =>
           val tags = kv._2.map(p => TableRow("tag" -> p._1, "count" -> p._2))
           TableRow("pre" -> kv._1, "tags" -> tags.toList.asJava)
         }
-        .saveAsBigQuery(ExampleOptions.bigQueryTable(opts), schema)
+        .saveAsBigQuery(ExampleOptions.bigQueryTable(opts), bigQuerySchema)
     }
-
-    // write output to Datastore
     if (outputToDatastore) {
-      val kind = args.getOrElse("kind", "autocomplete-demo")
       tags
-        .map { kv =>
-          val key = DatastoreHelper.makeKey(kind, kv._1).build();
-          val candidates = kv._2.map { p =>
-            DatastoreHelper.makeValue(Entity.newBuilder()
-              .addProperty(DatastoreHelper.makeProperty("tag", DatastoreHelper.makeValue(p._1)))
-              .addProperty(DatastoreHelper.makeProperty("count", DatastoreHelper.makeValue(p._2)))
-            ).setIndexed(false).build()
-          }
-          Entity.newBuilder()
-            .setKey(key)
-            .addProperty(DatastoreHelper.makeProperty("candidates", DatastoreHelper.makeValue(candidates.asJava)))
-            .build()
-        }
+        .map(makeEntity(kind, _))
         .saveAsDatastore(opts.getProject)
     }
 

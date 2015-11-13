@@ -2,6 +2,7 @@ package com.spotify.scio.examples.complete
 
 import com.google.api.services.bigquery.model.{TableSchema, TableFieldSchema}
 import com.google.cloud.dataflow.examples.common.DataflowExampleUtils
+import com.google.cloud.dataflow.sdk.runners.DataflowPipelineRunner
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.common.ExampleOptions
@@ -27,37 +28,44 @@ runMain
 */
 
 object TrafficMaxLaneFlow {
+
+  val schema = new TableSchema().setFields(List(
+    new TableFieldSchema().setName("station_id").setType("STRING"),
+    new TableFieldSchema().setName("direction").setType("STRING"),
+    new TableFieldSchema().setName("freeway").setType("STRING"),
+    new TableFieldSchema().setName("lane_max_flow").setType("INTEGER"),
+    new TableFieldSchema().setName("lane").setType("STRING"),
+    new TableFieldSchema().setName("avg_occ").setType("FLOAT"),
+    new TableFieldSchema().setName("avg_speed").setType("FLOAT"),
+    new TableFieldSchema().setName("total_flow").setType("INTEGER"),
+    new TableFieldSchema().setName("window_timestamp").setType("TIMESTAMP"),
+    new TableFieldSchema().setName("recorded_timestamp").setType("STRING")
+  ).asJava)
+
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
-    val sc = ScioContext(opts)
-
-    val schema = new TableSchema().setFields(List(
-      new TableFieldSchema().setName("station_id").setType("STRING"),
-      new TableFieldSchema().setName("direction").setType("STRING"),
-      new TableFieldSchema().setName("freeway").setType("STRING"),
-      new TableFieldSchema().setName("lane_max_flow").setType("INTEGER"),
-      new TableFieldSchema().setName("lane").setType("STRING"),
-      new TableFieldSchema().setName("avg_occ").setType("FLOAT"),
-      new TableFieldSchema().setName("avg_speed").setType("FLOAT"),
-      new TableFieldSchema().setName("total_flow").setType("INTEGER"),
-      new TableFieldSchema().setName("window_timestamp").setType("TIMESTAMP"),
-      new TableFieldSchema().setName("recorded_timestamp").setType("STRING")).asJava)
-
     // set up example wiring
+    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
+    if (opts.isStreaming) {
+      opts.setRunner(classOf[DataflowPipelineRunner])
+    }
     opts.setBigQuerySchema(schema)
     val dataflowUtils = new DataflowExampleUtils(opts)
     dataflowUtils.setup()
 
+    // arguments
+    val windowDuration = args.getOrElse("windowDuration", "60").toInt
+    val windowSlideEvery = args.getOrElse("windowSlideEvery", "5").toInt
+
+    val sc = ScioContext(opts)
+
+    // initialize input
     val input = if (opts.isStreaming) {
       sc.pubsubTopic(opts.getPubsubTopic)
     } else {
       sc.textFile(args("inputFile"))
     }
 
-    val windowDuration = args.getOrElse("windowDuration", "60").toInt
-    val windowSlideEvery = args.getOrElse("windowSlideEvery", "5").toInt
-
-    input
+    val stream = input
       .flatMap { s =>
         val items = s.split(",")
         try {
@@ -75,7 +83,15 @@ object TrafficMaxLaneFlow {
           case _: Throwable => Seq.empty
         }
       }
-      .timestampBy(v => new Instant(DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss").parseMillis(v._2.recordedTimestamp)))
+
+    val p = if (opts.isStreaming) {
+      stream
+    } else {
+      stream
+        .timestampBy(v => new Instant(DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss").parseMillis(v._2.recordedTimestamp)))
+    }
+
+    p
       .withSlidingWindows(Duration.standardMinutes(windowDuration), Duration.standardMinutes(windowSlideEvery))
       .maxByKey(Ordering.by(_.laneFlow))
       .values
@@ -109,4 +125,5 @@ object TrafficMaxLaneFlow {
     // CTRL-C to cancel the streaming pipeline
     dataflowUtils.waitToFinish(result.internal)
   }
+
 }

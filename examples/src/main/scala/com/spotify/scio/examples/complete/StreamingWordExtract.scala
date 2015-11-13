@@ -23,12 +23,12 @@ runMain
 
 object StreamingWordExtract {
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
-    val sc = ScioContext(opts)
-
     // set up example wiring
-    val dataflowUtils = new DataflowExampleUtils(sc.options)
+    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
+    val dataflowUtils = new DataflowExampleUtils(opts)
     dataflowUtils.setup()
+
+    val sc = ScioContext(opts)
 
     val schema = new TableSchema().setFields(
       List(new TableFieldSchema().setName("string_field").setType("STRING")).asJava)

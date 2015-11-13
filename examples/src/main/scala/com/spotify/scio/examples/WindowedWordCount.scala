@@ -28,19 +28,19 @@ object WindowedWordCount {
   val RAND_RANGE = 7200000
   val WINDOW_SIZE = 1
 
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
-    val sc = ScioContext(opts)
+  val schema = new TableSchema().setFields(List(
+    new TableFieldSchema().setName("word").setType("STRING"),
+    new TableFieldSchema().setName("count").setType("INTEGER"),
+    new TableFieldSchema().setName("window_timestamp").setType("TIMESTAMP")
+  ).asJava)
 
+  def main(cmdlineArgs: Array[String]): Unit = {
     // set up example wiring
-    val dataflowUtils = new DataflowExampleUtils(sc.options)
+    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
+    val dataflowUtils = new DataflowExampleUtils(opts)
     dataflowUtils.setup()
 
-    val schema = new TableSchema().setFields(List(
-      new TableFieldSchema().setName("word").setType("STRING"),
-      new TableFieldSchema().setName("count").setType("INTEGER"),
-      new TableFieldSchema().setName("window_timestamp").setType("TIMESTAMP")
-    ).asJava)
+    val sc = ScioContext(opts)
 
     val inputFile = args.getOrElse("input", "gs://dataflow-samples/shakespeare/kinglear.txt")
     val windowSize = Duration.standardMinutes(args.optional("windowSize").map(_.toLong).getOrElse(WINDOW_SIZE))
@@ -51,13 +51,7 @@ object WindowedWordCount {
     } else {
       sc
       .textFile(inputFile)
-      .toWindowed  // convert to WindowedSCollection
-      .map { wv =>  // specialized version of map with WindowedValue as argument
-        // update timestamp of elements
-        val randomTimestamp = System.currentTimeMillis() - (scala.math.random * RAND_RANGE).toLong
-        wv.copy(value = wv.value, timestamp = new Instant(randomTimestamp))
-      }
-      .toSCollection  // convert back to normal SCollection
+      .timestampBy(_ => new Instant(System.currentTimeMillis() - (scala.math.random * RAND_RANGE).toLong))
     }
 
     input
