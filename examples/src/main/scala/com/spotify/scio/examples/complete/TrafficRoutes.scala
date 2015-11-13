@@ -61,6 +61,7 @@ object TrafficRoutes {
       sc.textFile(inputFile.getOrElse(ExampleData.TRAFFIC))
     }
 
+    lazy val formatter = DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss")
     val stream = input
       .flatMap { s =>
         val items = s.split(",")
@@ -69,7 +70,7 @@ object TrafficRoutes {
           val stationId = items(1)
           if (stationType == "ML" && sdStations.contains(stationId)) {
             val avgSpeed = items(9).toDouble
-            val timestamp = new Instant(DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss").parseMillis(items(0)))
+            val timestamp = new Instant(formatter.parseMillis(items(0)))
             Seq((sdStations(stationId), StationSpeed(stationId, avgSpeed, timestamp.getMillis)))
           } else {
             Seq()

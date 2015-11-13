@@ -88,10 +88,10 @@ object TrafficMaxLaneFlow {
     val p = if (opts.isStreaming) {
       stream
     } else {
+      lazy val formatter = DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss")
       stream
-        .timestampBy(v => new Instant(DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss").parseMillis(v._2.recordedTimestamp)))
+        .timestampBy(v => new Instant(formatter.parseMillis(v._2.recordedTimestamp)))
     }
-
     p
       .withSlidingWindows(Duration.standardMinutes(windowDuration), Duration.standardMinutes(windowSlideEvery))
       .maxByKey(Ordering.by(_.laneFlow))
