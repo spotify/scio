@@ -97,8 +97,6 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
 
   import Implicits._
 
-  options.setAppName(CallSites.getAppName)
-
   /** Dataflow pipeline. */
   val pipeline: Pipeline = this.newPipeline()
 
@@ -119,6 +117,10 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
     BigQueryClient(options.getProject, options.getGcpCredential)
 
   private def newPipeline(): Pipeline = {
+    // override app name and job name
+    options.setAppName(CallSites.getAppName)
+    options.setJobName(new DataflowPipelineOptions.JobNameFactory().create(options))
+
     val p = if (testId.isEmpty) {
       Pipeline.create(options)
     } else {
