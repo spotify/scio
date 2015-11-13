@@ -26,8 +26,7 @@ class TapTest extends PipelineSpec {
   }
 
   it should "update isCompleted with testId" in {
-    val testId = "FutureTest-" + System.currentTimeMillis()
-    val sc = ScioContext(Array(s"--testId=$testId"))
+    val sc = ScioContext.forTest("FutureTest-" + System.currentTimeMillis())
     val f = sc.parallelize(Seq(1, 2, 3))
       .map(newSpecificRecord)
       .saveAsInMemoryTap
@@ -104,13 +103,12 @@ class TapTest extends PipelineSpec {
   }
 
   def runWithInMemoryFuture[T](fn: ScioContext => Future[Tap[T]]): Iterator[T] =
-    runWithFuture(Array(s"--testId=FutureTest-" + System.currentTimeMillis()))(fn)
+    runWithFuture(ScioContext.forTest("FutureTest-" + System.currentTimeMillis()))(fn)
 
   def runWithFileFuture[T](fn: ScioContext => Future[Tap[T]]): Iterator[T] =
-    runWithFuture(Array.empty)(fn)
+    runWithFuture(ScioContext())(fn)
 
-  def runWithFuture[T](args: Array[String])(fn: ScioContext => Future[Tap[T]]): Iterator[T] = {
-    val sc = ScioContext(args)
+  def runWithFuture[T](sc: ScioContext)(fn: ScioContext => Future[Tap[T]]): Iterator[T] = {
     val f = fn(sc)
     sc.close()
     Await.result(f, Duration.Inf).value

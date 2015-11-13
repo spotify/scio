@@ -44,25 +44,14 @@ object ContextAndArgs {
 /** Companion object for [[ScioContext]]. */
 object ScioContext {
 
-  /**
-   * Create a new [[ScioContext]] instance.
-   *
-   * @param cmdlineArgs command line arguments including both Dataflow and job specific ones.
-   * Dataflow specific ones will be parsed as
-   * [[com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions DataflowPipelineOptions]] in
-   * field `options`.
-   */
-  def apply(cmdlineArgs: Array[String]): ScioContext = {
-    val (_opts, _args) = ScioContext.parseArguments[DataflowPipelineOptions](cmdlineArgs)
-    new ScioContext(_opts, _args.optional("testId"))
-  }
-
   /** Create a new [[ScioContext]] instance. */
-  def apply(): ScioContext = ScioContext(Array.empty[String])
+  def apply(): ScioContext = ScioContext(defaultOptions)
 
   /** Create a new [[ScioContext]] instance. */
   def apply(options: DataflowPipelineOptions): ScioContext = new ScioContext(options, None)
 
+  /** Create a new [[ScioContext]] instance for testing. */
+  def forTest(testId: String): ScioContext = new ScioContext(defaultOptions, Some(testId))
 
   /** Parse PipelineOptions and application arguments from command line arguments. */
   def parseArguments[T <: PipelineOptions : ClassTag](cmdlineArgs: Array[String]): (T, Args) = {
@@ -80,6 +69,9 @@ object ScioContext {
 
     (PipelineOptionsFactory.fromArgs(dfArgs).as(cls), Args(appArgs))
   }
+
+  private val defaultOptions: DataflowPipelineOptions =
+    PipelineOptionsFactory.fromArgs(Array.empty).as(classOf[DataflowPipelineOptions])
 
 }
 

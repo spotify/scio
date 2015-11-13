@@ -6,8 +6,7 @@ import com.spotify.scio.testing.PipelineSpec
 class AccumulatorTest extends PipelineSpec {
 
   "Accumulator" should "support accumulatorTotalValue" in {
-    val testId = "PipelineTest-" + System.currentTimeMillis()
-    val sc = ScioContext(Array(s"--testId=$testId"))
+    val sc = ScioContext.forTest("PipelineTest-" + System.currentTimeMillis())
 
     val max = sc.maxAccumulator[Int]("max")
     val min = sc.minAccumulator[Int]("min")
@@ -27,8 +26,7 @@ class AccumulatorTest extends PipelineSpec {
   }
 
   it should "support accumulatorValuesAtSteps" in {
-    val testId = "PipelineTest-" + System.currentTimeMillis()
-    val sc = ScioContext(Array(s"--testId=$testId"))
+    val sc = ScioContext.forTest("PipelineTest-" + System.currentTimeMillis())
 
     val count = sc.sumAccumulator[Int]("count")
     sc.parallelize(1 to 100)
