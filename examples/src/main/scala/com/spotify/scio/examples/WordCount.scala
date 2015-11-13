@@ -2,6 +2,7 @@ package com.spotify.scio.examples
 
 import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
 import com.spotify.scio._
+import com.spotify.scio.examples.common.ExampleData
 
 /*
 SBT
@@ -10,14 +11,14 @@ runMain
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/dataflow/staging
   --input=gs://dataflow-samples/shakespeare/kinglear.txt
-  --output=gs://[BUCKET]/dataflow/wordcount
+  --output=gs://[BUCKET]/[PATH]/wordcount
 */
 
 object WordCount {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    val input = args.getOrElse("input", "gs://dataflow-samples/shakespeare/kinglear.txt")
+    val input = args.getOrElse("input", ExampleData.KING_LEAR)
     val output = args.optional("output").getOrElse(
       if (sc.options.getStagingLocation != null) {
         GcsPath.fromUri(sc.options.getStagingLocation).resolve("counts.txt").toString

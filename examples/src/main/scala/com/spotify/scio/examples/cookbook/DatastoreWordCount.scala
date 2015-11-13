@@ -7,6 +7,7 @@ import com.google.api.services.datastore.client.DatastoreHelper
 import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
 import com.google.cloud.dataflow.sdk.runners.BlockingDataflowPipelineRunner
 import com.spotify.scio._
+import com.spotify.scio.examples.common.ExampleData
 
 import scala.collection.JavaConverters._
 
@@ -14,18 +15,19 @@ import scala.collection.JavaConverters._
 SBT
 runMain
   com.spotify.scio.examples.cookbook.DatastoreWordCount
-  --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
+  --project=[PROJECT] --runner=BlockingDataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/dataflow/staging
   --input=gs://dataflow-samples/shakespeare/kinglear.txt
-  --output=gs://[BUCKET]/dataflow/datastore_wordcount
+  --output=gs://[BUCKET]/[PATH]/datastore_wordcount
   --dataset=[PROJECT]
   --readOnly=false
 */
 
 object DatastoreWordCount {
-
   def main(cmdlineArgs: Array[String]): Unit = {
     val (opts, args) = ScioContext.parseArguments[DataflowPipelineOptions](cmdlineArgs)
+
+    // override runner to ensure sequential execution
     opts.setRunner(classOf[BlockingDataflowPipelineRunner])
 
     val kind = args.getOrElse("kind", "shakespeare-demo")
@@ -40,7 +42,7 @@ object DatastoreWordCount {
 
     def writeToDatastore(): Unit = {
       val sc = ScioContext(opts)
-      sc.textFile(args.getOrElse("input", "gs://dataflow-samples/shakespeare/kinglear.txt"))
+      sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
         .map { s =>
           val k = DatastoreHelper.makeKey(ancestorKey, kind, UUID.randomUUID().toString)
           namespace.foreach(k.getPartitionIdBuilder.setNamespace)
@@ -75,5 +77,4 @@ object DatastoreWordCount {
     }
     readFromDatastore()
   }
-
 }

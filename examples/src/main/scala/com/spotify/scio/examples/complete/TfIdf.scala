@@ -6,6 +6,7 @@ import java.net.URI
 import com.google.cloud.dataflow.sdk.options.GcsOptions
 import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
 import com.spotify.scio._
+import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.values.SCollection
 
 import scala.collection.JavaConverters._
@@ -17,7 +18,7 @@ runMain
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/path/to/staging
   --input=gs://dataflow-samples/shakespeare/?*.txt
-  --output=gs://[BUCKET]/dataflow/tf_idf
+  --output=gs://[BUCKET]/[PATH]/tf_idf
 */
 
 object TfIdf {
@@ -25,7 +26,7 @@ object TfIdf {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val uris = {
-      val baseUri = new URI(args.getOrElse("input", "gs://dataflow-samples/shakespeare/"))
+      val baseUri = new URI(args.getOrElse("input", ExampleData.SHAKESPEARE_PATH))
       val absoluteUri = if (baseUri.getScheme != null) {
         baseUri
       } else {

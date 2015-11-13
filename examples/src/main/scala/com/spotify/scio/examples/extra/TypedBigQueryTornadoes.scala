@@ -8,7 +8,7 @@ import com.spotify.scio.experimental._
 sbt -Dbigquery.secret=/path/to/secret.json -Dbigquery.project=[PROJECT]
 
 runMain
-  com.spotify.scio.examples.TypedBigQueryTornadoes
+  com.spotify.scio.examples.extra.TypedBigQueryTornadoes
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/path/to/staging
   --output=[DATASET].typed_bigquery_tornadoes

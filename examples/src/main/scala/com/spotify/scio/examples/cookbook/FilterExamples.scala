@@ -3,6 +3,7 @@ package com.spotify.scio.examples.cookbook
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.scio.bigquery._
 import com.spotify.scio._
+import com.spotify.scio.examples.common.ExampleData
 
 import scala.collection.JavaConverters._
 
@@ -18,8 +19,6 @@ runMain
 */
 
 object FilterExamples {
-  val WEATHER_SAMPLES_TABLE = "clouddataflow-readonly:samples.weather_stations"
-
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
@@ -30,9 +29,9 @@ object FilterExamples {
       new TableFieldSchema().setName("mean_temp").setType("FLOAT")
     ).asJava)
 
-    val monthFilter = args.getOrElse("monthFilter", "7").toInt
+    val monthFilter = args.int("monthFilter", 7)
 
-    val pipe = sc.bigQueryTable(args.getOrElse("input", WEATHER_SAMPLES_TABLE))
+    val pipe = sc.bigQueryTable(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
       .map { row =>
         val year = row.getInt("year")
         val month = row.getInt("month")
@@ -53,5 +52,4 @@ object FilterExamples {
 
     sc.close()
   }
-
 }

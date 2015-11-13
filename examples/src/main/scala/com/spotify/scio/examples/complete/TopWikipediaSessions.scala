@@ -3,6 +3,7 @@ package com.spotify.scio.examples.complete
 import com.google.cloud.dataflow.sdk.transforms.windowing.IntervalWindow
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
+import com.spotify.scio.examples.common.ExampleData
 import org.joda.time.{Duration, Instant}
 
 /*
@@ -12,20 +13,17 @@ runMain
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/path/to/staging
   --input=gs://dataflow-samples/wikipedia_edits/wiki_data-*.json
-  --output=gs://[BUCKET]/dataflow/top_wikipedia_sessions
+  --output=gs://[BUCKET]/[PATH]/top_wikipedia_sessions
 */
 
 object TopWikipediaSessions {
-
-  val EXPORTED_WIKI_TABLE = "gs://dataflow-samples/wikipedia_edits/*.json"
-
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val samplingThreshold = 0.1
 
     sc
-      .tableRowJsonFile(args.getOrElse("input", EXPORTED_WIKI_TABLE))
+      .tableRowJsonFile(args.getOrElse("input", ExampleData.EXPORTED_WIKI_TABLE))
       .flatMap { row =>
         try Seq((row.getString("contributor_username"), row.getInt("timestamp"))) catch {
           case e: NullPointerException => None
@@ -53,5 +51,4 @@ object TopWikipediaSessions {
 
     sc.close()
   }
-
 }

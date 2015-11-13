@@ -3,7 +3,6 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio._
 
 object AccumulatorExample {
-
   def main(cmdlineArgs: Array[String]): Unit = {
     val sc = ScioContext()
 
@@ -37,5 +36,4 @@ object AccumulatorExample {
     println("Count per step:")
     r.accumulatorValuesAtSteps(count).foreach(kv => println(kv._2 + " @ " + kv._1))
   }
-
 }

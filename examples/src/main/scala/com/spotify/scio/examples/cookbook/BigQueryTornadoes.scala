@@ -3,13 +3,12 @@ package com.spotify.scio.examples.cookbook
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
+import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.experimental._
 
 import scala.collection.JavaConverters._
 
 /*
-sbt -Dbigquery.secret=/path/to/secret.json -Dbigquery.project=[PROJECT]
-
 runMain
   com.spotify.scio.examples.cookbook.BigQueryTornadoes
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
@@ -28,7 +27,7 @@ object BigQueryTornadoes {
     ).asJava)
 
     sc
-      .bigQueryTable(args.getOrElse("input", "clouddataflow-readonly:samples.weather_stations"))
+      .bigQueryTable(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
       .flatMap(r => if (r.getBoolean("tornado")) Seq(r.getInt("month")) else Nil)
       .countByValue()
       .map(kv => TableRow("month" -> kv._1, "tornado_count" -> kv._2))

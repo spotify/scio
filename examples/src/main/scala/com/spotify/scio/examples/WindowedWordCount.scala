@@ -5,7 +5,7 @@ import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.cloud.dataflow.examples.common.DataflowExampleUtils
 import com.spotify.scio.bigquery._
 import com.spotify.scio._
-import com.spotify.scio.examples.common.ExampleOptions
+import com.spotify.scio.examples.common.{ExampleData, ExampleOptions}
 import org.joda.time.{Duration, Instant}
 
 import scala.collection.JavaConverters._
@@ -42,7 +42,7 @@ object WindowedWordCount {
 
     val sc = ScioContext(opts)
 
-    val inputFile = args.getOrElse("input", "gs://dataflow-samples/shakespeare/kinglear.txt")
+    val inputFile = args.optional("inputFile")
     val windowSize = Duration.standardMinutes(args.optional("windowSize").map(_.toLong).getOrElse(WINDOW_SIZE))
 
     // initialize input
@@ -50,7 +50,7 @@ object WindowedWordCount {
       sc.pubsubTopic(opts.getPubsubTopic)
     } else {
       sc
-      .textFile(inputFile)
+      .textFile(inputFile.getOrElse(ExampleData.KING_LEAR))
       .timestampBy(_ => new Instant(System.currentTimeMillis() - (scala.math.random * RAND_RANGE).toLong))
     }
 
@@ -71,8 +71,8 @@ object WindowedWordCount {
     val result = sc.close()
 
     // set up Pubsub topic from input file in an injector pipeline
-    args.optional("inputFile").foreach { inputFile =>
-      dataflowUtils.runInjectorPipeline(inputFile, opts.getPubsubTopic)
+    inputFile.foreach { f =>
+      dataflowUtils.runInjectorPipeline(f, opts.getPubsubTopic)
     }
 
     // CTRL-C to cancel the streaming pipeline

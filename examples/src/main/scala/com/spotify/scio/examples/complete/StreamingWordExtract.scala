@@ -42,8 +42,8 @@ object StreamingWordExtract {
     val result = sc.close()
 
     // set up Pubsub topic from input file in an injector pipeline
-    args.optional("inputFile").foreach { inputFile =>
-      dataflowUtils.runInjectorPipeline(inputFile, opts.getPubsubTopic)
+    args.optional("inputFile").foreach { f =>
+      dataflowUtils.runInjectorPipeline(f, opts.getPubsubTopic)
     }
 
     // CTRL-C to cancel the streaming pipeline

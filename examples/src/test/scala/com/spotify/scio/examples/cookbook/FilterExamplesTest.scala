@@ -1,6 +1,7 @@
 package com.spotify.scio.examples.cookbook
 
 import com.spotify.scio.bigquery._
+import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.testing._
 
 class FilterExamplesTest extends PipelineSpec {
@@ -22,7 +23,7 @@ class FilterExamplesTest extends PipelineSpec {
   "FilterExamples" should "work" in {
     JobTest("com.spotify.scio.examples.cookbook.FilterExamples")
       .args("--output=dataset.table")
-      .input(BigQueryIO(FilterExamples.WEATHER_SAMPLES_TABLE), input)
+      .input(BigQueryIO(ExampleData.WEATHER_SAMPLES_TABLE), input)
       .output(BigQueryIO("dataset.table"))(_ should equalInAnyOrder (expected))
       .run()
   }

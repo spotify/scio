@@ -5,7 +5,7 @@ import com.google.cloud.dataflow.examples.common.DataflowExampleUtils
 import com.google.cloud.dataflow.sdk.runners.DataflowPipelineRunner
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
-import com.spotify.scio.examples.common.ExampleOptions
+import com.spotify.scio.examples.common.{ExampleData, ExampleOptions}
 import org.joda.time.{Duration, Instant}
 import org.joda.time.format.DateTimeFormat
 
@@ -49,6 +49,7 @@ object TrafficRoutes {
     dataflowUtils.setup()
 
     // arguments
+    val inputFile = args.optional("inputFile")
     val windowDuration = args.getOrElse("windowDuration", "3").toInt
     val windowSlideEvery = args.getOrElse("windowSlideEvery", "1").toInt
 
@@ -57,7 +58,7 @@ object TrafficRoutes {
     val input = if(opts.isStreaming) {
       sc.pubsubTopic(opts.getPubsubTopic)
     } else {
-      sc.textFile(args("inputFile"))
+      sc.textFile(inputFile.getOrElse(ExampleData.TRAFFIC))
     }
 
     val stream = input
@@ -125,8 +126,8 @@ object TrafficRoutes {
 
     // set up Pubsub topic from input file in an injector pipeline
     if (opts.isStreaming) {
-      args.optional("inputFile").foreach { inputFile =>
-        dataflowUtils.runInjectorPipeline(inputFile, opts.getPubsubTopic)
+      inputFile.foreach { f =>
+        dataflowUtils.runInjectorPipeline(f, opts.getPubsubTopic)
       }
     }
 

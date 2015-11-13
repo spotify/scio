@@ -1,6 +1,7 @@
 package com.spotify.scio.examples.cookbook
 
 import com.spotify.scio.bigquery._
+import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.testing._
 
 class CombinePerKeyExamplesTest extends PipelineSpec {
@@ -25,7 +26,7 @@ class CombinePerKeyExamplesTest extends PipelineSpec {
   "CombinePerKeyExamples" should "work" in {
     JobTest("com.spotify.scio.examples.cookbook.CombinePerKeyExamples")
       .args("--output=dataset.table")
-      .input(BigQueryIO(CombinePerKeyExamples.SHAKESPEARE_TABLE), input)
+      .input(BigQueryIO(ExampleData.SHAKESPEARE_TABLE), input)
       .output(BigQueryIO("dataset.table"))(_ should equalInAnyOrder (expected))
       .run()
   }

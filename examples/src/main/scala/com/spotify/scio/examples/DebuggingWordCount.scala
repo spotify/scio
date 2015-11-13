@@ -2,6 +2,7 @@ package com.spotify.scio.examples
 
 import com.google.cloud.dataflow.sdk.testing.DataflowAssert
 import com.spotify.scio._
+import com.spotify.scio.examples.common.ExampleData
 
 import scala.collection.JavaConverters._
 
@@ -22,7 +23,7 @@ object DebuggingWordCount {
     val matchedWords = sc.sumAccumulator[Long]("matchedWords")
     val unmatchedWords = sc.sumAccumulator[Long]("unmatchedWords")
 
-    val filteredWords = sc.textFile(args.getOrElse("input", "gs://dataflow-samples/shakespeare/kinglear.txt"))
+    val filteredWords = sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue()
       .withAccumulator(matchedWords, unmatchedWords)

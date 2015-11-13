@@ -7,7 +7,7 @@ import com.google.cloud.dataflow.examples.common.DataflowExampleUtils
 import com.google.cloud.dataflow.sdk.runners.DataflowPipelineRunner
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
-import com.spotify.scio.examples.common.ExampleOptions
+import com.spotify.scio.examples.common.{ExampleData, ExampleOptions}
 import com.spotify.scio.values.SCollection
 import org.joda.time.Duration
 
@@ -81,6 +81,7 @@ object AutoComplete {
     val dataflowUtils = new DataflowExampleUtils(opts)
 
     // arguments
+    val inputFile = args.optional("inputFile")
     val outputToBigqueryTable = args.boolean("outputToBigqueryTable", true)
     val outputToDatastore = args.boolean("outputToDatastore", false)
     val kind = args.getOrElse("kind", "autocomplete-demo")
@@ -93,7 +94,7 @@ object AutoComplete {
       dataflowUtils.setupPubsubTopic()
       sc.pubsubTopic(opts.getPubsubTopic).withSlidingWindows(Duration.standardMinutes(30))
     } else {
-      sc.textFile(args("inputFile"))
+      sc.textFile(inputFile.getOrElse(ExampleData.KING_LEAR))
     }
 
     // compute candidates
@@ -124,8 +125,8 @@ object AutoComplete {
 
     // set up Pubsub topic from input file in an injector pipeline
     if (opts.isStreaming) {
-      args.optional("inputFile").foreach { inputFile =>
-        dataflowUtils.runInjectorPipeline(inputFile, opts.getPubsubTopic)
+      inputFile.foreach { f =>
+        dataflowUtils.runInjectorPipeline(f, opts.getPubsubTopic)
       }
     }
 

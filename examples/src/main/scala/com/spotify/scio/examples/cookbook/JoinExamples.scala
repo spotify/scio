@@ -2,6 +2,7 @@ package com.spotify.scio.examples.cookbook
 
 import com.spotify.scio.bigquery._
 import com.spotify.scio._
+import com.spotify.scio.examples.common.ExampleData
 
 /*
 SBT
@@ -9,13 +10,10 @@ runMain
   com.spotify.scio.examples.cookbook.JoinExamples
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/path/to/staging
-  --output=gs://[BUCKET]/dataflow/join_examples
+  --output=gs://[BUCKET]/[PATH]/join_examples
 */
 
 object JoinUtil {
-
-  val EVENT_TABLE = "clouddataflow-readonly:samples.gdelt_sample"
-  val COUNTRY_TABLE = "gdelt-bq:full.crosswalk_geocountrycodetohuman"
 
   def extractEventInfo(row: TableRow): Seq[(String, String)] = {
     val countryCode = row.getString("ActionGeo_CountryCode")
@@ -44,8 +42,8 @@ object JoinExamples {
 
     import JoinUtil._
 
-    val eventsInfo = sc.bigQueryTable(EVENT_TABLE).flatMap(extractEventInfo)
-    val countryInfo = sc.bigQueryTable(COUNTRY_TABLE).map(extractCountryInfo)
+    val eventsInfo = sc.bigQueryTable(ExampleData.EVENT_TABLE).flatMap(extractEventInfo)
+    val countryInfo = sc.bigQueryTable(ExampleData.COUNTRY_TABLE).map(extractCountryInfo)
 
     eventsInfo
       .leftOuterJoin(countryInfo)
@@ -66,8 +64,8 @@ object SideInputJoinExamples {
 
     import JoinUtil._
 
-    val eventsInfo = sc.bigQueryTable(EVENT_TABLE).flatMap(extractEventInfo)
-    val countryInfo = sc.bigQueryTable(COUNTRY_TABLE).map(extractCountryInfo).asMapSideInput
+    val eventsInfo = sc.bigQueryTable(ExampleData.EVENT_TABLE).flatMap(extractEventInfo)
+    val countryInfo = sc.bigQueryTable(ExampleData.COUNTRY_TABLE).map(extractCountryInfo).asMapSideInput
 
     eventsInfo
       .withSideInputs(countryInfo)
@@ -90,8 +88,8 @@ object HashJoinExamples {
 
     import JoinUtil._
 
-    val eventsInfo = sc.bigQueryTable(EVENT_TABLE).flatMap(extractEventInfo)
-    val countryInfo = sc.bigQueryTable(COUNTRY_TABLE).map(extractCountryInfo)
+    val eventsInfo = sc.bigQueryTable(ExampleData.EVENT_TABLE).flatMap(extractEventInfo)
+    val countryInfo = sc.bigQueryTable(ExampleData.COUNTRY_TABLE).map(extractCountryInfo)
 
     eventsInfo
       .hashLeftJoin(countryInfo)
