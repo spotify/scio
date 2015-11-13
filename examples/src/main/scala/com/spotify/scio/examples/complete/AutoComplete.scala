@@ -81,8 +81,8 @@ object AutoComplete {
     val dataflowUtils = new DataflowExampleUtils(opts)
 
     // arguments
-    val outputToBigqueryTable = args.getOrElse("outputToBigqueryTable", "true").toBoolean
-    val outputToDatastore = args.getOrElse("outputToDatastore", "false").toBoolean
+    val outputToBigqueryTable = args.boolean("outputToBigqueryTable", true)
+    val outputToDatastore = args.boolean("outputToDatastore", false)
     val kind = args.getOrElse("kind", "autocomplete-demo")
 
     val sc = ScioContext(opts)
@@ -98,7 +98,7 @@ object AutoComplete {
 
     // compute candidates
     val candidates = input.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty).map(_.toLowerCase)).countByValue()
-    val tags = if (args.getOrElse("recursive", "true").toBoolean) {
+    val tags = if (args.boolean("recursive", true)) {
       SCollection.unionAll(computeTopRecursive(candidates, 1))
     } else {
       computeTop(candidates, 1)

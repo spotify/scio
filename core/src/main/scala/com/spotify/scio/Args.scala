@@ -85,6 +85,12 @@ class Args private (private val m: Map[String, List[String]]) {
   /** Get value as Double. */
   def double(key: String): Double = get(key, _.toDouble)
 
+  /** Get value as Boolean with a default. */
+  def boolean(key: String, default: Boolean): Boolean = getOrElse(key, default, _.toBoolean)
+
+  /** Get value as Boolean. */
+  def boolean(key: String): Boolean = get(key, _.toBoolean)
+
   private def getOrElse[T](key: String, default: T, f: String => T): T = {
     optional(key).map(value => try f(value) catch {
       case NonFatal(_) => throw new IllegalArgumentException(s"Invalid value '$value' for '$key'")
