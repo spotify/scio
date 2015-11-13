@@ -1,0 +1,137 @@
+package com.spotify.scio.examples.complete
+
+import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import com.google.cloud.dataflow.examples.common.DataflowExampleUtils
+import com.google.cloud.dataflow.sdk.runners.DataflowPipelineRunner
+import com.spotify.scio._
+import com.spotify.scio.bigquery._
+import com.spotify.scio.examples.common.ExampleOptions
+import org.joda.time.{Duration, Instant}
+import org.joda.time.format.DateTimeFormat
+
+import scala.collection.JavaConverters._
+
+case class StationSpeed(stationId: String, avgSpeed: Double, timestamp: Long)
+case class RouteInfo(route: String, avgSpeed: Double, slowdownEvent: Boolean)
+
+/*
+SBT
+runMain
+  com.spotify.scio.examples.complete.TrafficRoutes
+  --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
+  --stagingLocation=gs://[BUCKET]/dataflow/staging
+  --streaming=true
+  --pubsubTopic=projects/[PROJECT]/topics/traffic_routes
+  --inputFile=gs://dataflow-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv
+  --bigQueryDataset=[DATASET]
+  --bigQueryTable=[TABLE]
+*/
+
+object TrafficRoutes {
+
+  val schema = new TableSchema().setFields(List(
+    new TableFieldSchema().setName("route").setType("STRING"),
+    new TableFieldSchema().setName("avg_speed").setType("FLOAT"),
+    new TableFieldSchema().setName("slowdown_event").setType("BOOLEAN"),
+    new TableFieldSchema().setName("window_timestamp").setType("TIMESTAMP")
+  ).asJava)
+
+  val sdStations = Map("1108413" -> "SDRoute1", "1108699" -> "SDRoute2", "1108702" -> "SDRoute3")
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    // set up example wiring
+    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
+    if (opts.isStreaming) {
+      opts.setRunner(classOf[DataflowPipelineRunner])
+    }
+    opts.setBigQuerySchema(schema)
+    val dataflowUtils = new DataflowExampleUtils(opts)
+    dataflowUtils.setup()
+
+    // arguments
+    val windowDuration = args.getOrElse("windowDuration", "3").toInt
+    val windowSlideEvery = args.getOrElse("windowSlideEvery", "1").toInt
+
+    val sc = ScioContext(opts)
+
+    val input = if(opts.isStreaming) {
+      sc.pubsubTopic(opts.getPubsubTopic)
+    } else {
+      sc.textFile(args("inputFile"))
+    }
+
+    val stream = input
+      .flatMap { s =>
+        val items = s.split(",")
+        try {
+          val stationType = items(4)
+          val stationId = items(1)
+          if (stationType == "ML" && sdStations.contains(stationId)) {
+            val avgSpeed = items(9).toDouble
+            val timestamp = new Instant(DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss").parseMillis(items(0)))
+            Seq((sdStations(stationId), StationSpeed(stationId, avgSpeed, timestamp.getMillis)))
+          } else {
+            Seq()
+          }
+        } catch {
+          case _: Throwable => Seq.empty
+        }
+      }
+
+    val p = if (opts.isStreaming) {
+      stream
+    } else {
+      stream.timestampBy(kv => new Instant(kv._2.timestamp))
+    }
+
+    p
+      .withSlidingWindows(Duration.standardMinutes(windowDuration), Duration.standardMinutes(windowSlideEvery))
+      .groupByKey()
+      .map { kv =>
+        var speedSum = 0.0
+        var speedCount = 0
+        var speedups = 0
+        var slowdowns = 0
+        val prevSpeeds = scala.collection.mutable.Map[String, Double]()
+
+        kv._2.toList.sortBy(_.timestamp).foreach { i =>
+          speedSum += i.avgSpeed
+          speedCount += 1
+          prevSpeeds.get(i.stationId).foreach { s =>
+            if (s < i.avgSpeed) {
+              speedups +=1
+            } else {
+              slowdowns += 1
+            }
+          }
+          prevSpeeds(i.stationId) = i.avgSpeed
+        }
+        val speedAvg = speedSum / speedCount
+        val slowdownEvent = slowdowns >= 2 * speedups
+        RouteInfo(kv._1, speedAvg, slowdownEvent)
+      }
+      .withTimestamp()
+      .map { kv =>
+        val (r, ts) = kv
+        TableRow(
+          "avg_speed" -> r.avgSpeed,
+          "slowdown_event" -> r.slowdownEvent,
+          "route" -> r.route,
+          "window_timestamp" -> ts.toString)
+      }
+      .saveAsBigQuery(ExampleOptions.bigQueryTable(opts), schema)
+
+    val result = sc.close()
+
+    // set up Pubsub topic from input file in an injector pipeline
+    if (opts.isStreaming) {
+      args.optional("inputFile").foreach { inputFile =>
+        dataflowUtils.runInjectorPipeline(inputFile, opts.getPubsubTopic)
+      }
+    }
+
+    // CTRL-C to cancel the streaming pipeline
+    dataflowUtils.waitToFinish(result.internal)
+  }
+
+}
