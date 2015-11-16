@@ -1,6 +1,6 @@
 package com.spotify.scio.values
 
-import com.google.cloud.dataflow.sdk.transforms.windowing.{BoundedWindow, Trigger}
+import com.google.cloud.dataflow.sdk.transforms.windowing.{BoundedWindow, PaneInfo, Trigger}
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values.PCollection
 import com.spotify.scio.ScioContext
@@ -13,7 +13,9 @@ case class WindowOptions[W <: BoundedWindow](allowedLateness: Duration = null,
                                              trigger: Trigger[W] = null,
                                              accumulationMode: AccumulationMode = null)
 
-case class WindowedValue[T](value: T, timestamp: Instant, window: BoundedWindow)
+case class WindowedValue[T](value: T, timestamp: Instant, window: BoundedWindow, pane: PaneInfo) {
+  def withValue[U](v: U): WindowedValue[U] = WindowedValue(v, this.timestamp, this.window, this.pane)
+}
 
 class WindowedSCollection[T: ClassTag] private[values] (val internal: PCollection[T],
                                                         private[scio] val context: ScioContext)
