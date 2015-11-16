@@ -292,7 +292,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
       var transform = GPubsubIO.Read.topic(topic)
       if (idLabel != null) transform = transform.idLabel(idLabel)
       if (timestampLabel != null) transform = transform.timestampLabel(timestampLabel)
-      wrap(this.applyInternal(GPubsubIO.Read.topic(topic))).setName(topic)
+      wrap(this.applyInternal(transform)).setName(topic)
     }
   }
 
