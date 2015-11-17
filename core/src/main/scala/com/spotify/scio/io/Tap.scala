@@ -30,25 +30,25 @@ trait Tap[T] {
 /** Tap for text files on local file system or GCS. */
 case class TextTap(path: String) extends Tap[String] {
   override def value: Iterator[String] = FileStorage(path).textFile
-  override def open(sc: ScioContext): SCollection[String] = sc.textFile(path)
+  override def open(sc: ScioContext): SCollection[String] = sc.textFile(path + "/part-*")
 }
 
 /** Tap for generic Avro files on local file system or GCS. */
 case class GenericAvroTap(path: String, schema: Schema) extends Tap[GenericRecord] {
   override def value: Iterator[GenericRecord] = FileStorage(path).genericAvroFile
-  override def open(sc: ScioContext): SCollection[GenericRecord] = sc.avroFile(path, schema)
+  override def open(sc: ScioContext): SCollection[GenericRecord] = sc.avroFile(path + "/part-*", schema)
 }
 
 /** Tap for specific Avro files on local file system or GCS. */
 case class SpecificAvroTap[T: ClassTag](path: String) extends Tap[T] {
   override def value: Iterator[T] = FileStorage(path).specificAvroFile
-  override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path)
+  override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path + "/part-*")
 }
 
 /** Tap for JSON files on local file system or GCS. */
 case class TableRowJsonTap(path: String) extends Tap[TableRow] {
   override def value: Iterator[TableRow] = FileStorage(path).tableRowJsonFile
-  override def open(sc: ScioContext): SCollection[TableRow] = sc.tableRowJsonFile(path)
+  override def open(sc: ScioContext): SCollection[TableRow] = sc.tableRowJsonFile(path + "/part-*")
 }
 
 /** Tap for BigQuery tables. */
@@ -65,7 +65,7 @@ private[scio] case class MaterializedTap[T: ClassTag](path: String) extends Tap[
     storage.delete()
     i
   }
-  override def open(sc: ScioContext): SCollection[T] = sc.textFile(path).map(decode)
+  override def open(sc: ScioContext): SCollection[T] = sc.textFile(path + "/part-*").map(decode)
 }
 
 private[scio] class InMemoryTap[T: ClassTag] extends Tap[T] {

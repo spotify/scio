@@ -676,11 +676,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       saveAsInMemoryTap
     } else {
       val tmpDir = if (context.pipeline.getRunner.isInstanceOf[DirectPipelineRunner]) {
-        new File(sys.props("java.io.tmpdir"))
+        sys.props("java.io.tmpdir")
       } else {
-        new File(context.pipeline.getOptions.asInstanceOf[DataflowPipelineOptions].getTempLocation)
+        context.pipeline.getOptions.asInstanceOf[DataflowPipelineOptions].getTempLocation
       }
-      val path = new File(tmpDir, "scio-materialize-" + UUID.randomUUID().toString).getCanonicalPath
+      val filename = "scio-materialize-" + UUID.randomUUID().toString
+      val path = tmpDir + (if (tmpDir.endsWith("/")) "" else "/") + filename
       this
         .map(CoderUtils.encodeToBase64(KryoAtomicCoder[T], _))
         .saveAsTextFile(path)
