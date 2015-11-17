@@ -7,9 +7,12 @@ import com.google.cloud.dataflow.sdk.transforms.Aggregator
 import com.spotify.scio.values.Accumulator
 
 import scala.collection.JavaConverters._
+import scala.concurrent.Future
 
 /** Represent a Scio pipeline result. */
-class ScioResult private[scio] (val internal: PipelineResult, pipeline: Pipeline) {
+class ScioResult private[scio] (val internal: PipelineResult,
+                                val finalState: Future[State],
+                                private val pipeline: Pipeline) {
 
   private val aggregators: Map[String, Iterable[Aggregator[_, _]]] =
     new AggregatorPipelineExtractor(pipeline)
@@ -21,7 +24,7 @@ class ScioResult private[scio] (val internal: PipelineResult, pipeline: Pipeline
   /** Whether the pipeline is completed. */
   def isCompleted: Boolean = internal.getState.isTerminal
 
-  /** Pipeline result state. */
+  /** Pipeline's current state. */
   def state: State = internal.getState
 
   /** Get the total value of an accumulator. */

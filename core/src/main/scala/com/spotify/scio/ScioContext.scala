@@ -3,6 +3,7 @@ package com.spotify.scio
 import java.beans.Introspector
 import java.io.File
 import java.net.URI
+import java.util.concurrent.TimeUnit
 
 import com.google.api.services.bigquery.model.TableReference
 import com.google.api.services.datastore.DatastoreV1.{Entity, Query}
@@ -11,7 +12,7 @@ import com.google.cloud.dataflow.sdk.coders.TableRowJsonCoder
 import com.google.cloud.dataflow.sdk.io.{AvroIO => GAvroIO, BigQueryIO => GBigQueryIO, DatastoreIO => GDatastoreIO, PubsubIO => GPubsubIO, TextIO => GTextIO}
 import com.google.cloud.dataflow.sdk.options.PipelineOptions.CheckEnabled
 import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptions, PipelineOptionsFactory}
-import com.google.cloud.dataflow.sdk.runners.DataflowPipelineRunner
+import com.google.cloud.dataflow.sdk.runners.{DataflowPipelineJob, DataflowPipelineRunner}
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
 import com.google.cloud.dataflow.sdk.transforms.{Create, PTransform}
@@ -28,7 +29,7 @@ import org.joda.time.Instant
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{ListBuffer, Set => MSet}
-import scala.concurrent.Future
+import scala.concurrent.{Promise, Future}
 import scala.concurrent.duration.{Duration, MINUTES, SECONDS}
 import scala.reflect.ClassTag
 
@@ -94,7 +95,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
 
   /* Mutable members */
   private var _isClosed: Boolean = false
-  private val _callbacks: ListBuffer[State => Any] = ListBuffer.empty
+  private val _promises: ListBuffer[(Promise[AnyRef], AnyRef)] = ListBuffer.empty
   private val _accumulators: MSet[String] = MSet.empty
 
   /** Wrap a [[com.google.cloud.dataflow.sdk.values.PCollection PCollection]]. */
@@ -131,15 +132,34 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
   def close(): ScioResult = {
     _isClosed = true
     val result = this.pipeline.run()
-    this.handleCallbacks(result)
-    new ScioResult(result, pipeline)
+
+    val finalState = result match {
+      // non-blocking runner, handle callbacks asynchronously
+      case job: DataflowPipelineJob =>
+        import scala.concurrent.ExecutionContext.Implicits.global
+        val f = Future {
+          val state = job.waitToFinish(-1, TimeUnit.SECONDS, null)
+          updateFutures(state)
+          state
+        }
+        f.onFailure {
+          case e: Throwable => _promises.foreach(_._1.failure(e))
+        }
+        f
+      // blocking runner, handle callbacks directly
+      case _ =>
+        updateFutures(result.getState)
+        Future.successful(result.getState)
+    }
+
+    new ScioResult(result, finalState, pipeline)
   }
 
   /** Whether the context is closed. */
   def isClosed: Boolean = _isClosed
 
   /* Ensure an operation is called before the pipeline is closed. */
-  private[scio] def pipelineOp[U](body: => U): U = {
+  private[scio] def pipelineOp[T](body: => T): T = {
     require(!this.isClosed, "ScioContext already closed")
     body
   }
@@ -148,28 +168,18 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
   // Futures
   // =======================================================================
 
-  private val MAXIMUM_INTERVAL = Duration(5, MINUTES)
-  private val INITIAL_INTERVAL = Duration(5, SECONDS)
+  /* To be updated once the pipeline completes. */
+  private[scio] def makeFuture[T](value: AnyRef): Future[T] = {
+    val p = Promise[AnyRef]()
+    _promises.append((p, value))
+    p.future.asInstanceOf[Future[T]]
+  }
 
-  private[scio] def onComplete[U](f: State => U): Unit = _callbacks.append(f)
-
-  private def handleCallbacks(result: PipelineResult): Unit = {
-    if (pipeline.getRunner.isInstanceOf[DataflowPipelineRunner]) {
-      // non-blocking runner, handle callbacks asynchronously
-      import scala.concurrent.ExecutionContext.Implicits.global
-      Future {
-        val backOff = new IntervalBoundedExponentialBackOff(
-          MAXIMUM_INTERVAL.toMillis.toInt, INITIAL_INTERVAL.toMillis)
-        while (!result.getState.isTerminal) {
-          Thread.sleep(backOff.nextBackOffMillis())
-        }
-        _callbacks.foreach(_(result.getState))
-        _callbacks.clear()
-      }
+  private def updateFutures(state: State): Unit = _promises.foreach { kv =>
+    if (state == State.DONE || state == State.UPDATED) {
+      kv._1.success(kv._2)
     } else {
-      // blocking runner, handle callbacks directly
-      _callbacks.foreach(_(result.getState))
-      _callbacks.clear()
+      kv._1.failure(new RuntimeException("Dataflow pipeline failed to complete: " + state))
     }
   }
 

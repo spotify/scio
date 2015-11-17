@@ -684,7 +684,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       this
         .map(CoderUtils.encodeToBase64(KryoAtomicCoder[T], _))
         .saveAsTextFile(path)
-      makeFutureTap(MaterializedTap[T](path))
+      context.makeFuture(MaterializedTap[T](path))
     }
 
   private def pathWithShards(path: String) = {
@@ -729,13 +729,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this
       .asInstanceOf[SCollection[GenericRecord]]
       .applyInternal(transform.withSchema(schema))
-    makeFutureTap(GenericAvroTap(path, schema)).asInstanceOf[Future[Tap[T]]]
+    context.makeFuture(GenericAvroTap(path, schema)).asInstanceOf[Future[Tap[T]]]
   }
 
   private def saveAsSpecificAvroFile(path: String, numShards: Int): Future[Tap[T]] = {
     val transform = avroOut(path, numShards)
     this.applyInternal(transform.withSchema(ct.runtimeClass.asInstanceOf[Class[T]]))
-    makeFutureTap(SpecificAvroTap(path))
+    context.makeFuture(SpecificAvroTap(path))
   }
 
   /**
@@ -765,7 +765,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       if (writeDisposition == WriteDisposition.WRITE_APPEND) {
         Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
       } else {
-        makeFutureTap(BigQueryTap(table, context.options))
+        context.makeFuture(BigQueryTap(table, context.options))
       }
     }
   }
@@ -816,7 +816,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       saveAsInMemoryTap.asInstanceOf[Future[Tap[TableRow]]]
     } else {
       this.asInstanceOf[SCollection[TableRow]].applyInternal(tableRowJsonOut(path, numShards))
-      makeFutureTap(TableRowJsonTap(path))
+      context.makeFuture(TableRowJsonTap(path))
     }
 
   /**
@@ -829,25 +829,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       saveAsInMemoryTap.asInstanceOf[Future[Tap[String]]]
     } else {
       this.asInstanceOf[SCollection[String]].applyInternal(textOut(path, suffix, numShards))
-      makeFutureTap(TextTap(path))
+      context.makeFuture(TextTap(path))
     }
-
-  private def makeFutureTap[U](sink: Tap[U]): Future[Tap[U]] = {
-    val p = Promise[Tap[U]]()
-    context.onComplete { s =>
-      if (s == State.DONE || s == State.UPDATED) {
-        p.success(sink)
-      } else {
-        p.failure(new RuntimeException("Dataflow pipeline failed to complete: " + s))
-      }
-    }
-    p.future
-  }
 
   private[scio] def saveAsInMemoryTap: Future[Tap[T]] = {
     val tap = new InMemoryTap[T]
     this.applyInternal(Write.to(new InMemoryDataFlowSink[T](tap.id)))
-    makeFutureTap(tap)
+    context.makeFuture(tap)
   }
 
 }
