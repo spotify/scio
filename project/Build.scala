@@ -44,7 +44,6 @@ object ScioBuild extends Build {
   val sdkVersion = "1.2.1"
 
   val guavaVersion = "18.0"
-  val chillVersion = "0.7.2"
   val macrosVersion = "2.0.1"
   val scalaTestVersion = "2.2.5"
 
@@ -85,8 +84,8 @@ object ScioBuild extends Build {
         "com.google.guava" % "guava" % guavaVersion,
         "com.twitter" %% "algebird-core" % "0.11.0",
         "com.twitter" %% "bijection-avro" % "0.8.1",
-        "com.twitter" %% "chill" % chillVersion,
-        "com.twitter" %% "chill-avro" % chillVersion,
+        "com.twitter" %% "chill" % "0.7.2",
+        "com.twitter" %% "chill-avro" % "0.7.2",
         "commons-io" % "commons-io" % "2.4",
         "org.apache.commons" % "commons-math3" % "3.5"
       )
