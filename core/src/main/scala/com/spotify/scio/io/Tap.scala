@@ -58,8 +58,7 @@ case class BigQueryTap(table: TableReference, opts: DataflowPipelineOptions) ext
 }
 
 private[scio] case class MaterializedTap[T: ClassTag](path: String) extends Tap[T] {
-  private val coder: Coder[T] = KryoAtomicCoder[T]
-  private def decode(s: String) = CoderUtils.decodeFromBase64(coder, s)
+  private def decode(s: String) = CoderUtils.decodeFromBase64(KryoAtomicCoder[T], s)
   override def value: Iterator[T] = {
     val storage = FileStorage(path)
     val i = storage.textFile.map(decode).toList.iterator

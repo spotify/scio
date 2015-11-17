@@ -71,5 +71,12 @@ private[scio] class KryoAtomicCoder extends AtomicCoder[Any] {
 }
 
 private[scio] object KryoAtomicCoder {
-  def apply[T]: Coder[T] = (new KryoAtomicCoder).asInstanceOf[Coder[T]]
+  private var instance: KryoAtomicCoder = null
+
+  def apply[T]: Coder[T] = {
+    if (instance == null) {
+      instance = new KryoAtomicCoder
+    }
+    instance.asInstanceOf[Coder[T]]
+  }
 }
