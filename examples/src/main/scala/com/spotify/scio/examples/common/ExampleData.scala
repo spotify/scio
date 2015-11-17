@@ -5,6 +5,7 @@ object ExampleData {
   val SHAKESPEARE_PATH = "gs://dataflow-samples/shakespeare/"
   val SHAKESPEARE_ALL = "gs://dataflow-samples/shakespeare/*"
   val KING_LEAR = "gs://dataflow-samples/shakespeare/kinglear.txt"
+  val OTHELLO = "gs://dataflow-samples/shakespeare/othello.txt"
 
   val EXPORTED_WIKI_TABLE = "gs://dataflow-samples/wikipedia_edits/*.json"
   val MONTHS = "gs://dataflow-samples/samples/misc/months.txt"
