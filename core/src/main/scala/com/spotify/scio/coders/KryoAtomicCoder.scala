@@ -8,7 +8,7 @@ import com.google.cloud.dataflow.sdk.util.VarInt
 import com.google.common.io.ByteStreams
 import com.twitter.chill._
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecord
+import org.apache.avro.specific.SpecificRecordBase
 
 import scala.collection.convert.Wrappers.JIterableWrapper
 
@@ -22,7 +22,7 @@ private[scio] class KryoAtomicCoder extends AtomicCoder[Any] {
     // Treat it as standard Iterable instead.
     k.register(classOf[JIterableWrapper[_]], new JIterableWrapperSerializer)
 
-    k.forSubclass[SpecificRecord](new SpecificAvroSerializer)
+    k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
     k.forSubclass[GenericRecord](new GenericAvroSerializer)
 
     k.forClass(new KVSerializer)

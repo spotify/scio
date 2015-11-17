@@ -84,6 +84,7 @@ object ScioBuild extends Build {
       libraryDependencies ++= Seq(
         "com.google.guava" % "guava" % guavaVersion,
         "com.twitter" %% "algebird-core" % "0.11.0",
+        "com.twitter" %% "bijection-avro" % "0.8.1",
         "com.twitter" %% "chill" % chillVersion,
         "com.twitter" %% "chill-avro" % chillVersion,
         "commons-io" % "commons-io" % "2.4",
