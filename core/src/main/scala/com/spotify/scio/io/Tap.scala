@@ -3,7 +3,6 @@ package com.spotify.scio.io
 import java.util.UUID
 
 import com.google.api.services.bigquery.model.TableReference
-import com.google.cloud.dataflow.sdk.coders.Coder
 import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
 import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.spotify.scio.ScioContext
@@ -59,12 +58,7 @@ case class BigQueryTap(table: TableReference, opts: DataflowPipelineOptions) ext
 
 private[scio] case class MaterializedTap[T: ClassTag](path: String) extends Tap[T] {
   private def decode(s: String) = CoderUtils.decodeFromBase64(KryoAtomicCoder[T], s)
-  override def value: Iterator[T] = {
-    val storage = FileStorage(path)
-    val i = storage.textFile.map(decode).toList.iterator
-    storage.delete()
-    i
-  }
+  override def value: Iterator[T] = FileStorage(path).textFile.map(decode).toList.iterator
   override def open(sc: ScioContext): SCollection[T] = sc.textFile(path + "/part-*").map(decode)
 }
 
