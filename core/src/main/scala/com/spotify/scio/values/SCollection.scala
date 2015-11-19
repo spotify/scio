@@ -671,22 +671,35 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * pipeline completes successfully.
    * @group output
    */
-  def materialize: Future[Tap[T]] =
+  def materialize: Future[Tap[T]] = {
+    val tmpDir = if (context.pipeline.getRunner.isInstanceOf[DirectPipelineRunner]) {
+      sys.props("java.io.tmpdir")
+    } else {
+      context.pipeline.getOptions.asInstanceOf[DataflowPipelineOptions].getTempLocation
+    }
+    val filename = "scio-materialize-" + UUID.randomUUID().toString
+    val path = tmpDir + (if (tmpDir.endsWith("/")) "" else "/") + filename
+    saveAsObjectFile(path)
+  }
+
+  /**
+   * Save this SCollection as an object file using default serialization.
+   * @group output
+   */
+  def saveAsObjectFile(path: String): Future[Tap[T]] = {
     if (context.isTest) {
       saveAsInMemoryTap
     } else {
-      val tmpDir = if (context.pipeline.getRunner.isInstanceOf[DirectPipelineRunner]) {
-        sys.props("java.io.tmpdir")
-      } else {
-        context.pipeline.getOptions.asInstanceOf[DataflowPipelineOptions].getTempLocation
-      }
-      val filename = "scio-materialize-" + UUID.randomUUID().toString
-      val path = tmpDir + (if (tmpDir.endsWith("/")) "" else "/") + filename
       this
-        .map(CoderUtils.encodeToBase64(KryoAtomicCoder[T], _))
+        .parDo(new DoFn[T, String] {
+          private val coder = KryoAtomicCoder[T]
+          override def processElement(c: DoFn[T, String]#ProcessContext): Unit =
+            c.output(CoderUtils.encodeToBase64(coder, c.element()))
+        })
         .saveAsTextFile(path)
-      context.makeFuture(MaterializedTap[T](path))
+      context.makeFuture(ObjectFileTap[T](path))
     }
+  }
 
   private def pathWithShards(path: String) = {
     if (this.context.pipeline.getRunner.isInstanceOf[DirectPipelineRunner]) {

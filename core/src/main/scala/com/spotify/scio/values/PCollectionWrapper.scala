@@ -32,7 +32,7 @@ private[values] trait PCollectionWrapper[T] {
     context.wrap(this.applyInternal(t))
   }
 
-  private[values] def parDo[U: ClassTag](fn: DoFn[T, U]): SCollection[U] =
+  private[scio] def parDo[U: ClassTag](fn: DoFn[T, U]): SCollection[U] =
     this.apply(ParDo.of(fn)).setCoder(this.getCoder[U])
 
   private[values] def getCoder[U: ClassTag]: Coder[U] = internal.getPipeline.getCoderRegistry.getScalaCoder[U]
