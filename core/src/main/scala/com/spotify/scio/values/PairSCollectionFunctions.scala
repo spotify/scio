@@ -30,7 +30,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   private def toKvTransform = ParDo.of(Functions.mapFn[(K, V), KV[K, V]](kv => KV.of(kv._1, kv._2)))
 
-  private[values] def toKV: SCollection[KV[K, V]] = {
+  private[scio] def toKV: SCollection[KV[K, V]] = {
     val o = self.applyInternal(toKvTransform).setCoder(self.getKvCoder[K, V])
     context.wrap(o)
   }
