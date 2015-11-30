@@ -72,19 +72,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * the list of values for that key in `this` as well as `that`.
    * @group cogroup
    */
-  def coGroup[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Iterable[V], Iterable[W]))] = {
-    val (tagV, tagW) = (new TupleTag[V](), new TupleTag[W]())
-    val keyed = KeyedPCollectionTuple
-      .of(tagV, this.toKV.internal)
-      .and(tagW, that.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-
-    context.wrap(keyed).map { kv =>
-      val (k, r) = (kv.getKey, kv.getValue)
-      val (v, w) = (r.getAll(tagV).asScala, r.getAll(tagW).asScala)
-      (k, (v, w))
-    }
-  }
+  def coGroup[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Iterable[V], Iterable[W]))] =
+    MultiJoin.coGroup(self, that)
 
   /**
    * For each key k in `this` or `that1` or `that2`, return a resulting SCollection that contains
@@ -93,20 +82,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   def coGroup[W1: ClassTag, W2: ClassTag]
   (that1: SCollection[(K, W1)], that2: SCollection[(K, W2)])
-  : SCollection[(K, (Iterable[V], Iterable[W1], Iterable[W2]))] = {
-    val (tagV, tagW1, tagW2) = (new TupleTag[V](), new TupleTag[W1](), new TupleTag[W2]())
-    val keyed = KeyedPCollectionTuple
-      .of(tagV, this.toKV.internal)
-      .and(tagW1, that1.toKV.internal)
-      .and(tagW2, that2.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-
-    context.wrap(keyed).map { kv =>
-      val (k, r) = (kv.getKey, kv.getValue)
-      val (v, w1, w2) = (r.getAll(tagV).asScala, r.getAll(tagW1).asScala, r.getAll(tagW2).asScala)
-      (k, (v, w1, w2))
-    }
-  }
+  : SCollection[(K, (Iterable[V], Iterable[W1], Iterable[W2]))] =
+    MultiJoin.coGroup(self, that1, that2)
 
   /**
    * For each key k in `this` or `that1` or `that2` or `that3`, return a resulting SCollection
@@ -116,22 +93,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   def coGroup[W1: ClassTag, W2: ClassTag, W3: ClassTag]
   (that1: SCollection[(K, W1)], that2: SCollection[(K, W2)], that3: SCollection[(K, W3)])
-  : SCollection[(K, (Iterable[V], Iterable[W1], Iterable[W2], Iterable[W3]))] = {
-    val (tagV, tagW1, tagW2, tagW3) = (new TupleTag[V](), new TupleTag[W1](), new TupleTag[W2](), new TupleTag[W3]())
-    val keyed = KeyedPCollectionTuple
-      .of(tagV, this.toKV.internal)
-      .and(tagW1, that1.toKV.internal)
-      .and(tagW2, that2.toKV.internal)
-      .and(tagW3, that3.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-
-    context.wrap(keyed).map { kv =>
-      val (k, r) = (kv.getKey, kv.getValue)
-      val v = r.getAll(tagV).asScala
-      val (w1, w2, w3) = (r.getAll(tagW1).asScala, r.getAll(tagW2).asScala, r.getAll(tagW3).asScala)
-      (k, (v, w1, w2, w3))
-    }
-  }
+  : SCollection[(K, (Iterable[V], Iterable[W1], Iterable[W2], Iterable[W3]))] =
+    MultiJoin.coGroup(self, that1, that2, that3)
 
   /**
    * Alias for cogroup.
@@ -172,12 +135,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group join
    */
   def fullOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Option[V], Option[W]))] =
-    this.coGroup(that).flatMapValues { t =>
-      for {
-        v <- if (t._1.isEmpty) Iterable(None) else t._1.map(Option(_))
-        w <- if (t._2.isEmpty) Iterable(None) else t._2.map(Option(_))
-      } yield (v, w)
-    }
+    MultiJoin.outer(self, that)
 
   /**
    * Return an SCollection containing all pairs of elements with matching keys in `this` and
@@ -186,9 +144,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group join
    */
   def join[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, W))] =
-    this.coGroup(that).flatMapValues { t =>
-      for (v <- t._1; w <- t._2) yield (v, w)
-    }
+    MultiJoin(self, that)
 
   /**
    * Perform a left outer join of `this` and `that`. For each element (k, v) in `this`, the
@@ -198,12 +154,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group join
    */
   def leftOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, Option[W]))] =
-    this.coGroup(that).flatMapValues { t =>
-      for {
-        v <- t._1
-        w <- if (t._2.isEmpty) Iterable(None) else t._2.map(Option(_))
-      } yield (v, w)
-    }
+    MultiJoin.left(self, that)
 
   /**
    * Perform a right outer join of `this` and `that`. For each element (k, w) in `that`, the
@@ -213,11 +164,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group join
    */
   def rightOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Option[V], W))] =
-    this.coGroup(that).flatMapValues { t =>
+    this.coGroup(that).flatMap { t =>
       for {
-        v <- if (t._1.isEmpty) Iterable(None) else t._1.map(Option(_))
-        w <- t._2
-      } yield (v, w)
+        v <- if (t._2._1.isEmpty) Iterable(None) else t._2._1.map(Option(_))
+        w <- t._2._2
+      } yield (t._1, (v, w))
     }
 
   // =======================================================================
