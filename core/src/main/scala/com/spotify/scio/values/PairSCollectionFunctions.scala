@@ -173,9 +173,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   def fullOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Option[V], Option[W]))] =
     this.coGroup(that).flatMapValues { t =>
-      val lhs = if (t._1.isEmpty) Iterable(null.asInstanceOf[V]) else t._1
-      val rhs = if (t._2.isEmpty) Iterable(null.asInstanceOf[W]) else t._2
-      lhs.flatMap(v => rhs.map(w => (Option(v), Option(w))))
+      for {
+        v <- if (t._1.isEmpty) Iterable(None) else t._1.map(Option(_))
+        w <- if (t._2.isEmpty) Iterable(None) else t._2.map(Option(_))
+      } yield (v, w)
     }
 
   /**
@@ -186,8 +187,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   def join[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, W))] =
     this.coGroup(that).flatMapValues { t =>
-      val (lhs, rhs) = t
-      lhs.flatMap(v => rhs.map(w => (v, w)))
+      for (v <- t._1; w <- t._2) yield (v, w)
     }
 
   /**
@@ -199,9 +199,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   def leftOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, Option[W]))] =
     this.coGroup(that).flatMapValues { t =>
-      val lhs = t._1
-      val rhs = if (t._2.isEmpty) Iterable(null.asInstanceOf[W]) else t._2
-      lhs.flatMap(v => rhs.map(w => (v, Option(w))))
+      for {
+        v <- t._1
+        w <- if (t._2.isEmpty) Iterable(None) else t._2.map(Option(_))
+      } yield (v, w)
     }
 
   /**
@@ -213,9 +214,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   def rightOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Option[V], W))] =
     this.coGroup(that).flatMapValues { t =>
-      val lhs = if (t._1.isEmpty) Iterable(null.asInstanceOf[V]) else t._1
-      val rhs = t._2
-      lhs.flatMap(v => rhs.map(w => (Option(v), w)))
+      for {
+        v <- if (t._1.isEmpty) Iterable(None) else t._1.map(Option(_))
+        w <- t._2
+      } yield (v, w)
     }
 
   // =======================================================================
