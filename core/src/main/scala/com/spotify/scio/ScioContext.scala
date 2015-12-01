@@ -88,10 +88,20 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
 
   import Implicits._
 
+  // Set default name
+  this.setName(CallSites.getAppName)
+
   /** Dataflow pipeline. */
-  val pipeline: Pipeline = this.newPipeline()
+  def pipeline: Pipeline = {
+    if (_pipeline == null) {
+      this.newPipeline()
+      _pipeline = this.newPipeline()
+    }
+    _pipeline
+  }
 
   /* Mutable members */
+  private var _pipeline: Pipeline = null
   private var _isClosed: Boolean = false
   private val _promises: ListBuffer[(Promise[AnyRef], AnyRef)] = ListBuffer.empty
   private val _accumulators: MSet[String] = MSet.empty
@@ -108,10 +118,6 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
     BigQueryClient(options.getProject, options.getGcpCredential)
 
   private def newPipeline(): Pipeline = {
-    // override app name and job name
-    options.setAppName(CallSites.getAppName)
-    options.setJobName(new DataflowPipelineOptions.JobNameFactory().create(options))
-
     val p = if (testId.isEmpty) {
       Pipeline.create(options)
     } else {
@@ -125,6 +131,16 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
   // =======================================================================
   // States
   // =======================================================================
+
+  /** Set name for the context. */
+  def setName(name: String): Unit = {
+    if (_pipeline != null) {
+      throw new RuntimeException("Cannot set name once pipeline is initialized")
+    }
+    // override app name and job name
+    options.setAppName(name)
+    options.setJobName(new DataflowPipelineOptions.JobNameFactory().create(options))
+  }
 
   /** Close the context. No operation can be performed once the context is closed. */
   def close(): ScioResult = {
