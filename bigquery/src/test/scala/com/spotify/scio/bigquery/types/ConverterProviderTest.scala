@@ -1,5 +1,6 @@
 package com.spotify.scio.bigquery.types
 
+import com.google.common.collect.Maps
 import com.spotify.scio.bigquery.TableRow
 import org.joda.time.Instant
 import org.scalatest.{Matchers, FlatSpec}
@@ -12,17 +13,25 @@ class ConverterProviderTest extends FlatSpec with Matchers {
 
   def jl[T](x: T*): java.util.List[T] = new java.util.ArrayList[T](x.asJava)
 
+  def linkedHashMap(pairs: (String, Any)*) =
+    Maps.newLinkedHashMap[String, AnyRef](Map(pairs: _*).asJava.asInstanceOf[java.util.Map[String, AnyRef]])
+
   val NOW = Instant.now()
 
   val t1 = TableRow("f1" -> 1, "f2" -> 10L, "f3" -> 1.2f, "f4" -> 1.23, "f5" -> true, "f6" -> "hello", "f7" -> NOW)
+  val m1 = linkedHashMap("f1" -> 1, "f2" -> 10L, "f3" -> 1.2f, "f4" -> 1.23, "f5" -> true, "f6" -> "hello", "f7" -> NOW)
   val p1 = P1(1, 10L, 1.2f, 1.23, true, "hello", NOW)
 
   val t2a = TableRow("f1" -> 1, "f2" -> 10L, "f3" -> 1.2f, "f4" -> 1.23, "f5" -> true, "f6" -> "hello", "f7" -> NOW)
+  val m2a = linkedHashMap("f1" -> 1, "f2" -> 10L, "f3" -> 1.2f, "f4" -> 1.23, "f5" -> true, "f6" -> "hello", "f7" -> NOW)
   val t2b = TableRow("f1" -> null, "f2" -> null, "f3" -> null, "f4" -> null, "f5" -> null, "f6" -> null, "f7" -> null)
   val p2a = P2(Some(1), Some(10L), Some(1.2f), Some(1.23), Some(true), Some("hello"), Some(NOW))
   val p2b = P2(None, None, None, None, None, None, None)
 
   val t3a = TableRow(
+    "f1" -> jl(1), "f2" -> jl(10L), "f3" -> jl(1.2f), "f4" -> jl(1.23),
+    "f5" -> jl(true), "f6" -> jl("hello"), "f7" -> jl(NOW))
+  val m3a = linkedHashMap(
     "f1" -> jl(1), "f2" -> jl(10L), "f3" -> jl(1.2f), "f4" -> jl(1.23),
     "f5" -> jl(true), "f6" -> jl("hello"), "f7" -> jl(NOW))
   val t3b = TableRow("f1" -> jl(), "f2" -> jl(), "f3" -> jl(), "f4" -> jl(), "f5" -> jl(), "f6" -> jl(), "f7" -> jl())
@@ -60,6 +69,11 @@ class ConverterProviderTest extends FlatSpec with Matchers {
     val r3b = TableRow("f1" -> jl(), "f2" -> jl(), "f3" -> jl())
     BigQueryType.fromTableRow[R3](r3a) should equal (R3(List(p1), List(p2a), List(p3a)))
     BigQueryType.fromTableRow[R3](r3b) should equal (R3(Nil, Nil, Nil))
+  }
+
+  it should "support LinkedHashMap records" in {
+    val r1 = TableRow("f1" -> m1, "f2" -> m2a, "f3" -> m3a)
+    BigQueryType.fromTableRow[R1](r1) should equal (R1(p1, p2a, p3a))
   }
 
   "BigQueryEntity.toTableRow" should "support required primitive types" in {
