@@ -117,8 +117,7 @@ object ScioBuild extends Build {
       libraryDependencies ++= Seq(
         bigQueryDependency,
         "com.google.guava" % "guava" % guavaVersion,
-        "org.slf4j" % "slf4j-api" % "1.7.7",
-        "org.slf4j" % "slf4j-simple" % "1.7.7" % "provided",
+        "org.slf4j" % "slf4j-api" % "1.7.13",
         "joda-time" % "joda-time" % "2.7",
         "org.joda" % "joda-convert" % "1.7",
         "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
@@ -139,8 +138,8 @@ object ScioBuild extends Build {
     file("bigtable"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
-        "com.google.cloud.bigtable" % "bigtable-hbase-dataflow" % "0.2.1",
-        "org.apache.hadoop" % "hadoop-common" % "2.4.1",
+        "com.google.cloud.bigtable" % "bigtable-hbase-dataflow" % "0.2.1" exclude ("org.slf4j", "slf4j-log4j12"),
+        "org.apache.hadoop" % "hadoop-common" % "2.4.1" exclude ("org.slf4j", "slf4j-log4j12"),
         "org.apache.hbase" % "hbase-common" % "1.0.1"
       )
     )
@@ -164,6 +163,7 @@ object ScioBuild extends Build {
     file("examples"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
+        "org.slf4j" % "slf4j-simple" % "1.7.13",
         "org.hamcrest" % "hamcrest-all" % "1.3"
       ),
       addCompilerPlugin(paradiseDependency)
