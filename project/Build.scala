@@ -117,6 +117,7 @@ object ScioBuild extends Build {
       libraryDependencies ++= Seq(
         bigQueryDependency,
         "com.google.guava" % "guava" % guavaVersion,
+        "commons-io" % "commons-io" % "2.4",
         "org.slf4j" % "slf4j-api" % "1.7.13",
         "joda-time" % "joda-time" % "2.7",
         "org.joda" % "joda-convert" % "1.7",

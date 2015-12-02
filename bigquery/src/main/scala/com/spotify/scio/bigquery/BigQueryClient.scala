@@ -16,8 +16,9 @@ import com.google.cloud.dataflow.sdk.util.BigQueryTableRowIterator
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
-import org.joda.time.Instant
-import org.joda.time.format.DateTimeFormat
+import org.apache.commons.io.FileUtils
+import org.joda.time.{Period, Instant}
+import org.joda.time.format.{PeriodFormatterBuilder, DateTimeFormat}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
@@ -64,7 +65,12 @@ class BigQueryClient private (private val projectId: String, credential: Credent
 
   private val TABLE_PREFIX = "dataflow_query"
   private val JOB_ID_PREFIX = "dataflow_query"
-  private val FORMAT = DateTimeFormat.forPattern("yyyyMMddHHmmss")
+  private val TIME_FORMATTER = DateTimeFormat.forPattern("yyyyMMddHHmmss")
+  private val PERIOD_FORMATTER = new PeriodFormatterBuilder()
+    .appendHours().appendSuffix("h")
+    .appendMinutes().appendSuffix("m")
+    .appendSecondsWithOptionalMillis().appendSuffix("s")
+    .toFormatter
 
   private val PRIORITY =
     if (Thread.currentThread().getStackTrace.exists(_.getClassName.startsWith("scala.tools.nsc.interpreter."))) {
@@ -142,6 +148,8 @@ class BigQueryClient private (private val projectId: String, credential: Credent
       Thread.sleep(10000)
     } while (state != "DONE")
 
+    logJobStatistics(pollJob)
+
     destinationTable
   }
 
@@ -168,7 +176,7 @@ class BigQueryClient private (private val projectId: String, credential: Credent
   }
 
   private def temporaryTable(prefix: String): TableReference = {
-    val tableId = prefix + "_" + Instant.now().toString(FORMAT) + "_" + Random.nextInt(Int.MaxValue)
+    val tableId = prefix + "_" + Instant.now().toString(TIME_FORMATTER) + "_" + Random.nextInt(Int.MaxValue)
     new TableReference()
       .setProjectId(projectId)
       .setDatasetId(BigQueryClient.stagingDataset)
@@ -178,6 +186,20 @@ class BigQueryClient private (private val projectId: String, credential: Credent
   private def createJobReference(projectId: String, jobIdPrefix: String): JobReference = {
     val fullJobId = projectId + "-" + UUID.randomUUID().toString
     new JobReference().setProjectId(projectId).setJobId(fullJobId)
+  }
+
+  private def logJobStatistics(job: Job): Unit = {
+    val jobId = job.getJobReference.getJobId
+    val stats = job.getStatistics
+
+    val elapsed = PERIOD_FORMATTER.print(new Period(stats.getEndTime - stats.getCreationTime))
+    val pending = PERIOD_FORMATTER.print(new Period(stats.getStartTime - stats.getCreationTime))
+    val execution = PERIOD_FORMATTER.print(new Period(stats.getEndTime - stats.getStartTime))
+    logger.info(s"Job $jobId: elapsed: $elapsed, pending: $pending, execution: $execution")
+
+    val bytes = FileUtils.byteCountToDisplaySize(stats.getQuery.getTotalBytesProcessed)
+    val cacheHit = stats.getQuery.getCacheHit
+    logger.info(s"Job $jobId: total bytes processed: $bytes, cache hit: $cacheHit")
   }
 
   // =======================================================================
