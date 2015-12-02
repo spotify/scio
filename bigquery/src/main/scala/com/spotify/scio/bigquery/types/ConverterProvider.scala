@@ -55,7 +55,7 @@ private[types] object ConverterProvider {
           // val fn = TermName("r" + t.typeSymbol.name)
           val fn = newTermName("r" + t.typeSymbol.name)
           q"""{
-                val $fn = $tree.asInstanceOf[${p(c, GModel)}.TableRow]
+                val $fn = $tree.asInstanceOf[java.util.Map[String, AnyRef]]
                 ${constructor(t, fn)}
               }
           """
@@ -104,7 +104,7 @@ private[types] object ConverterProvider {
     // TODO: scala 2.11
     // val tn = TermName("r")
     val tn = newTermName("r")
-    q"""(r: ${p(c, GModel)}.TableRow) => {
+    q"""(r: java.util.Map[String, AnyRef]) => {
           import _root_.scala.collection.JavaConverters._
           ${constructor(tpe, tn)}
         }
