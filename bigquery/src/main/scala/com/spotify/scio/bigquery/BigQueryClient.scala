@@ -168,6 +168,7 @@ class BigQueryClient private (private val projectId: String, credential: Credent
           .setDatasetReference(dsRef)
           .setDefaultTableExpirationMs(BigQueryClient.STAGING_DATASET_TABLE_EXPIRATION_MS)
           .setDescription(BigQueryClient.STAGING_DATASET_DESCRIPTION)
+          .setLocation(BigQueryClient.stagingDatasetLocation)
         bigquery
           .datasets()
           .insert(projectId, ds)
@@ -249,6 +250,12 @@ object BigQueryClient {
   /** Default staging dataset. */
   val STAGING_DATASET_DEFAULT: String = "bigquery_staging"
 
+  /** System property key for staging dataset location. */
+  val STAGING_DATASET_LOCATION_KEY: String = "bigquery.staging_dataset.location"
+
+  /** Default staging dataset location. */
+  val STAGING_DATASET_LOCATION_DEFAULT: String = "US"
+
   /** System property key for local schema cache directory. */
   val CACHE_DIRECTORY_KEY: String = "bigquery.cache.directory"
 
@@ -297,7 +304,11 @@ object BigQueryClient {
     BigQueryClient(project, credential)
   }
 
-  private def stagingDataset: String = getPropOrElse(STAGING_DATASET_KEY, STAGING_DATASET_DEFAULT)
+  private def stagingDataset: String =
+    getPropOrElse(STAGING_DATASET_KEY, STAGING_DATASET_DEFAULT + "_" + stagingDatasetLocation.toLowerCase)
+
+  private def stagingDatasetLocation: String =
+    getPropOrElse(STAGING_DATASET_LOCATION_KEY, STAGING_DATASET_LOCATION_DEFAULT)
 
   private def cacheDirectory: String = getPropOrElse(CACHE_DIRECTORY_KEY, CACHE_DIRECTORY_DEFAULT)
 
