@@ -50,7 +50,7 @@ object ScioBuild extends Build {
   lazy val paradiseDependency =
     "org.scalamacros" % "paradise" % macrosVersion cross CrossVersion.full
   lazy val bigQueryDependency =
-    "com.google.apis" % "google-api-services-bigquery" % "v2-rev218-1.20.0" exclude ("com.google.guava", "guava-jdk5")
+    "com.google.apis" % "google-api-services-bigquery" % "v2-rev250-1.20.0" exclude ("com.google.guava", "guava-jdk5")
   lazy val dataflowSdkDependencies = Seq(
     ("com.google.cloud.dataflow" % "google-cloud-dataflow-java-sdk-all" % sdkVersion)
       .exclude("com.google.apis", "google-api-services-bigquery")
