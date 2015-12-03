@@ -104,7 +104,8 @@ class BigQueryClient private (private val projectId: String, credential: Credent
   def getTableRows(tableSpec: String): Iterator[TableRow] = getTableRows(Util.parseTableSpec(tableSpec))
 
   /** Get rows from a table. */
-  def getTableRows(table: TableReference): Iterator[TableRow] = new BigQueryTableRowIterator(bigquery, table).asScala
+  def getTableRows(table: TableReference): Iterator[TableRow] =
+    BigQueryTableRowIterator.fromTable(table, bigquery).asScala
 
   /** Get schema from a table. */
   def getTableSchema(tableSpec: String): TableSchema = getTableSchema(Util.parseTableSpec(tableSpec))
