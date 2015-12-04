@@ -3,14 +3,12 @@ package com.spotify.scio.values
 import java.lang.{Long => JLong}
 
 import com.google.cloud.dataflow.sdk.transforms._
-import com.google.cloud.dataflow.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}
-import com.google.cloud.dataflow.sdk.values.{KV, PCollection, TupleTag}
+import com.google.cloud.dataflow.sdk.values.{KV, PCollection}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 
-import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 /**
@@ -32,19 +30,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   private[scio] def toKV: SCollection[KV[K, V]] = {
     val o = self.applyInternal(toKvTransform).setCoder(self.getKvCoder[K, V])
-    context.wrap(o)
-  }
-
-  private[values] def applyKv[U: ClassTag](t: PTransform[_ >: PCollection[KV[K, V]], PCollection[U]])
-  : SCollection[U] = {
-    val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollection[U]]() {
-      override def apply(input: PCollection[(K, V)]): PCollection[U] =
-        input
-          .apply("TupleToKv", toKvTransform)
-          .setCoder(self.getKvCoder[K, V])
-          .apply(t)
-          .setCoder(self.getCoder[U])
-    })
     context.wrap(o)
   }
 
@@ -297,7 +282,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * Return an SCollection with the keys of each tuple.
    * @group transform
    */
-  def keys: SCollection[K] = this.applyKv(Keys.create[K]())
+  // Scala lambda is simpler and more powerful than transforms.Keys
+  def keys: SCollection[K] = self.map(_._1)
 
   /**
    * Pass each value in the key-value pair SCollection through a map function without changing the
@@ -397,7 +383,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * Return an SCollection with the values of each tuple.
    * @group transform
    */
-  def values: SCollection[V] = this.applyKv(Values.create[V]())
+  // Scala lambda is simpler and more powerful than transforms.Values
+  def values: SCollection[V] = self.map(_._2)
 
   /* Hash operations */
 
