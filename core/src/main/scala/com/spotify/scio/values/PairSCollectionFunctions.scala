@@ -49,6 +49,20 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   }
 
   // =======================================================================
+  // Combine fanout
+  // =======================================================================
+
+  private def withFanout[K, I, O](combine: Combine.PerKey[K, I, O]) = self.fanout match {
+    case None => combine
+    case Some(Left(f)) => combine.withHotKeyFanout(f)
+    case Some(Right(f)) => combine.withHotKeyFanout(Functions.serializableFn(f).asInstanceOf[SerializableFunction[K, java.lang.Integer]])
+  }
+
+  /** Set fanout function combine operations. */
+  def withFanout(fn: K => Int): SCollection[(K, V)] =
+    new SCollectionImpl[(K, V)](self.internal, this.context, Some(Right(fn)))
+
+  // =======================================================================
   // CoGroups
   // =======================================================================
 
@@ -169,7 +183,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group per_key
    */
   def aggregateByKey[U: ClassTag](zeroValue: U)(seqOp: (U, V) => U, combOp: (U, U) => U): SCollection[(K, U)] =
-    this.applyPerKey(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp)), kvToTuple[K, U])
+    this.applyPerKey(withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp))), kvToTuple[K, U])
 
   /**
    * Aggregate the values of each key with [[com.twitter.algebird.Aggregator Aggregator]]. First
@@ -206,7 +220,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   def combineByKey[C: ClassTag](createCombiner: V => C)
                                (mergeValue: (C, V) => C)
                                (mergeCombiners: (C, C) => C): SCollection[(K, C)] =
-    this.applyPerKey(Combine.perKey(Functions.combineFn(createCombiner, mergeValue, mergeCombiners)), kvToTuple[K, C])
+    this.applyPerKey(
+      withFanout(Combine.perKey(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))),
+      kvToTuple[K, C])
 
   /**
    * Count approximate number of distinct values for each key in the SCollection.
@@ -250,7 +266,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group per_key
    */
   def foldByKey(zeroValue: V)(op: (V, V) => V): SCollection[(K, V)] =
-    this.applyPerKey(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op)), kvToTuple[K, V])
+    this.applyPerKey(withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op))), kvToTuple[K, V])
 
   /**
    * Fold by key with [[com.twitter.algebird.Monoid Monoid]], which defines the associative
@@ -259,7 +275,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group per_key
    */
   def foldByKey(implicit mon: Monoid[V]): SCollection[(K, V)] =
-    this.applyPerKey(Combine.perKey(Functions.reduceFn(mon)), kvToTuple[K, V])
+    this.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(mon))), kvToTuple[K, V])
 
   /**
    * Group the values for each key in the SCollection into a single sequence. The ordering of
@@ -315,7 +331,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group per_key
    */
   def reduceByKey(op: (V, V) => V): SCollection[(K, V)] =
-    this.applyPerKey(Combine.perKey(Functions.reduceFn(op)), kvToTuple[K, V])
+    this.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(op))), kvToTuple[K, V])
 
   /**
    * Return a sampled subset of values for each key of this SCollection.
@@ -361,7 +377,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group per_key
    */
   def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] =
-    this.applyPerKey(Combine.perKey(Functions.reduceFn(sg)), kvToTuple[K, V])
+    this.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(sg))), kvToTuple[K, V])
 
   /**
    * Swap the keys with the values.
