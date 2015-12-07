@@ -103,17 +103,24 @@ object BigQueryType {
   /**
    * Macro annotation for a BigQuery SELECT query.
    *
-   * Generate case classes for a BigQuery SELECT query. Note that `schema` must be a string
+   * Generate case classes for a BigQuery SELECT query. Note that `query` must be a string
    * literal of the SELECT query with optional `.stripMargin` at the end. For example:
    *
    * {{{
    * @BigQueryType.fromQuery("SELECT field1, field2 FROM [project:dataset.table]")
    * }}}
    *
+   * String formatting syntax can be used in `query` when additional `args` are supplied. For
+   * example:
+   *
+   * {{{
+   * @BigQueryType.fromQuery("SELECT field1, field2 FROM [%s]", "table")
+   * }}}
+   *
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
-  class fromQuery(query: String) extends StaticAnnotation {
+  class fromQuery(query: String, args: String*) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.queryImpl
   }
 

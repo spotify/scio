@@ -19,7 +19,8 @@ private[types] object TypeProvider {
   def tableImpl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
-    val tableSpec = extractString(c, "Missing table specification")
+    val args = extractStrings(c, "Missing table specification")
+    val tableSpec = formatString(args)
     val schema = bigquery.getTableSchema(tableSpec)
     val traits = List(tq"${p(c, SType)}.HasTable")
     val overrides = List(q"override def table: ${p(c, GModel)}.TableReference = ${p(c, SUtil)}.parseTableSpec($tableSpec)")
@@ -30,7 +31,7 @@ private[types] object TypeProvider {
   // TODO: scala 2.11
   // def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
   def schemaImpl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    val schemaString = extractString(c, "Missing schema")
+    val schemaString = extractStrings(c, "Missing schema").head
     val schema = Util.parseSchema(schemaString)
     schemaToType(c)(schema, annottees, Nil, Nil)
   }
@@ -40,10 +41,11 @@ private[types] object TypeProvider {
   def queryImpl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
-    val query = extractString(c, "Missing query")
+    val args = extractStrings(c, "Missing query")
+    val query = formatString(args)
     val schema = bigquery.getQuerySchema(query)
     val traits = Seq(tq"${p(c, SType)}.HasQuery")
-    val overrides = Seq(q"override def query: _root_.java.lang.String = $query")
+    val overrides = Seq(q"override def query: _root_.java.lang.String = ${args.head}")
 
     schemaToType(c)(schema, annottees, traits, overrides)
   }
@@ -130,21 +132,32 @@ private[types] object TypeProvider {
 
   /** Extract string from annotation. */
   // TODO: scala 2.11
-  // private def extractString(c: blackbox.Context, errorMessage: String): String = {
-  private def extractString(c: Context, errorMessage: String): String = {
+  // private def extractStrings(c: blackbox.Context, errorMessage: String): List[String] = {
+  private def extractStrings(c: Context, errorMessage: String): List[String] = {
     import c.universe._
 
-    c.macroApplication match {
-      // @annotation("string literal")
-      case Apply(Select(Apply(_, List(Literal(Constant(s: String)))), _), _) => s
-      // @annotation("string literal".stripMargin)
+    def str(tree: c.Tree) = tree match {
+      // "string literal"
+      case Literal(Constant(s: String)) => s
+      // "string literal".stripMargin
       // TODO: scala 2.11
-      // case Apply(Select(Apply(_, List(Select(Literal(Constant(s: String)), TermName("stripMargin")))), _), _) =>
-      case Apply(Select(Apply(_, List(Select(Literal(Constant(s: String)), m: TermName))), _), _) if m.toString == "stripMargin" =>
-        s.stripMargin
+      //  case Select(Literal(Constant(s: String)), TermName("stripMargin")) => s.stripMargin
+      case Select(Literal(Constant(s: String)), m: TermName) if m.toString == "stripMargin" => s.stripMargin
+      case _ => c.abort(c.enclosingPosition, errorMessage)
+    }
+
+    c.macroApplication match {
+      case Apply(Select(Apply(_, xs: List[_]), _), _) =>
+        val args = xs.map(str)
+        if (args.isEmpty) {
+          c.abort(c.enclosingPosition, errorMessage)
+        }
+        args
       case _ => c.abort(c.enclosingPosition, errorMessage)
     }
   }
+
+  private def formatString(xs: List[String]): String = if (xs.tail.isEmpty) xs.head else xs.head.format(xs.tail: _*)
 
   /** Generate a case class. */
   // TODO: scala 2.11
