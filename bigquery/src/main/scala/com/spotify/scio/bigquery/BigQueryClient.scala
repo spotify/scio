@@ -137,7 +137,8 @@ class BigQueryClient private (private val projectId: String, credential: Credent
 
     var pollJob: Job = null
     var state: String = null
-    logger.info(s"Executing BigQuery for table ${Util.toTableSpec(destinationTable)}")
+    logger.info(s"Executing BigQuery for query: $sqlQuery")
+    logger.info(s"Destination table: ${Util.toTableSpec(destinationTable)}")
     do {
       pollJob = bigquery.jobs().get(projectId, jobId).execute()
       val error = pollJob.getStatus.getErrorResult
