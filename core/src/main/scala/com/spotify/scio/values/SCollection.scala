@@ -6,7 +6,6 @@ import java.util.UUID
 
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.google.api.services.datastore.DatastoreV1.Entity
-import com.google.cloud.dataflow.sdk.PipelineResult.State
 import com.google.cloud.dataflow.sdk.coders.{Coder, TableRowJsonCoder}
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import com.google.cloud.dataflow.sdk.io.{
@@ -14,7 +13,8 @@ import com.google.cloud.dataflow.sdk.io.{
   BigQueryIO => GBigQueryIO,
   DatastoreIO => GDatastoreIO,
   PubsubIO => GPubsubIO,
-  TextIO => GTextIO
+  TextIO => GTextIO,
+  Write => GWrite
 }
 import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
 import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
@@ -866,7 +866,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   private[scio] def saveAsInMemoryTap: Future[Tap[T]] = {
     val tap = new InMemoryTap[T]
-    this.applyInternal(Write.to(new InMemoryDataFlowSink[T](tap.id)))
+    this.applyInternal(GWrite.to(new InMemoryDataFlowSink[T](tap.id)))
     context.makeFuture(tap)
   }
 
