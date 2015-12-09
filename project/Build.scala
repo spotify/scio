@@ -41,7 +41,7 @@ object ScioBuild extends Build {
   import BuildSettings._
   import SiteSettings._
 
-  val sdkVersion = "1.2.1"
+  val sdkVersion = "1.3.0"
 
   val guavaVersion = "18.0"
   val macrosVersion = "2.0.1"
