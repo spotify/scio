@@ -90,21 +90,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   import TupleFunctions._
 
   // =======================================================================
-  // Combine fanout
-  // =======================================================================
-
-  protected [values] val fanout: Option[Either[Int, _ => Int]]
-
-  private def withFanout[I, O](combine: Combine.Globally[I, O]) = fanout match {
-    case None => combine
-    case Some(Left(f)) => combine.withFanout(f)
-    case Some(Right(f)) => throw new IllegalArgumentException("Fanout function not supported here")
-  }
-
-  /** Set fanout factor for combine operations. */
-  def withFanout(fanout: Int): SCollection[T] = new SCollectionImpl[T](this.internal, this.context, Some(Left(fanout)))
-
-  // =======================================================================
   // Delegations for internal PCollection
   // =======================================================================
 
@@ -178,7 +163,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def aggregate[U: ClassTag](zeroValue: U)(seqOp: (U, T) => U, combOp: (U, U) => U): SCollection[U] =
-    this.apply(withFanout(Combine.globally(Functions.aggregateFn(zeroValue)(seqOp, combOp))))
+    this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(seqOp, combOp)))
 
   /**
    * Aggregate with [[com.twitter.algebird.Aggregator Aggregator]]. First each item T is mapped to
@@ -205,7 +190,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def combine[C: ClassTag](createCombiner: T => C)
                           (mergeValue: (C, T) => C)
                           (mergeCombiners: (C, C) => C): SCollection[C] =
-    this.apply(withFanout(Combine.globally(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))))
+    this.apply(Combine.globally(Functions.combineFn(createCombiner, mergeValue, mergeCombiners)))
 
   /**
    * Count the number of elements in the SCollection.
@@ -266,7 +251,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def fold(zeroValue: T)(op: (T, T) => T): SCollection[T] =
-    this.apply(withFanout(Combine.globally(Functions.aggregateFn(zeroValue)(op, op))))
+    this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(op, op)))
 
   /**
    * Fold with [[com.twitter.algebird.Monoid Monoid]], which defines the associative function and
@@ -274,7 +259,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def fold(implicit mon: Monoid[T]): SCollection[T] =
-    this.apply(withFanout(Combine.globally(Functions.reduceFn(mon))))
+    this.apply(Combine.globally(Functions.reduceFn(mon)))
 
   /**
    * Return an SCollection of grouped items. Each group consists of a key and a sequence of
@@ -375,7 +360,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def reduce(op: (T, T) => T): SCollection[T] =
-    this.apply(withFanout(Combine.globally(Functions.reduceFn(op))))
+    this.apply(Combine.globally(Functions.reduceFn(op)))
 
   /**
    * Return a sampled subset of this SCollection.
@@ -413,7 +398,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def sum(implicit sg: Semigroup[T]): SCollection[T] =
-    this.apply(withFanout(Combine.globally(Functions.reduceFn(sg))))
+    this.apply(Combine.globally(Functions.reduceFn(sg)))
 
   /**
    * Return a sampled subset of any `num` elements of the SCollection.
@@ -875,8 +860,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 // scalastyle:on number.of.methods
 
 private[scio] class SCollectionImpl[T: ClassTag](val internal: PCollection[T],
-                                                 private[scio] val context: ScioContext,
-                                                 override protected[values] val fanout: Option[Either[Int, _ => Int]] = None)
+                                                 private[scio] val context: ScioContext)
   extends SCollection[T] {
   protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
 }
