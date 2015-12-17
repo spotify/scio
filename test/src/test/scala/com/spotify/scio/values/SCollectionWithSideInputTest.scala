@@ -2,6 +2,7 @@ package com.spotify.scio.values
 
 import com.spotify.scio.testing.PipelineSpec
 
+// TODO: refactor tests and cover ListSideInput
 class SCollectionWithSideInputTest extends PipelineSpec {
 
   "SCollectionWithSideInput" should "support filter()" in {

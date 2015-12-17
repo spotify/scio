@@ -1,13 +1,15 @@
 package com.spotify.scio.values
 
 import java.lang.{Iterable => JIterable}
-import java.util.{Map => JMap}
+import java.util.{List => JList, Map => JMap}
 
 import com.google.cloud.dataflow.sdk.transforms.DoFn
 import com.google.cloud.dataflow.sdk.values.PCollectionView
 
 import scala.collection.JavaConverters._
 import scala.collection.breakOut
+
+// TODO: performance problem
 
 /** Encapsulate an SCollection when it is being used as a side input. */
 trait SideInput[T] extends Serializable {
@@ -17,6 +19,10 @@ trait SideInput[T] extends Serializable {
 
 private[values] class SingletonSideInput[T](val view: PCollectionView[T]) extends SideInput[T] {
   override def get[I, O](context: DoFn[I, O]#ProcessContext): T = context.sideInput(view)
+}
+
+private[values] class ListSideInput[T](val view: PCollectionView[JList[T]]) extends SideInput[List[T]] {
+  override def get[I, O](context: DoFn[I, O]#ProcessContext): List[T] = context.sideInput(view).asScala.toList
 }
 
 private[values] class IterableSideInput[T](val view: PCollectionView[JIterable[T]]) extends SideInput[Iterable[T]] {

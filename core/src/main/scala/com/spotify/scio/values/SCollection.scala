@@ -499,6 +499,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def asSingletonSideInput: SideInput[T] = new SingletonSideInput[T](this.applyInternal(View.asSingleton()))
 
   /**
+   * Convert this SCollection to a SideInput of List, to be used with
+   * [[SCollection.withSideInputs]].
+   * @group side
+   */
+  def asListSideInput: SideInput[List[T]] = new ListSideInput[T](this.applyInternal(View.asList()))
+
+  /**
    * Convert this SCollection to a SideInput of Iterable, to be used with
    * [[SCollection.withSideInputs]].
    * @group side
