@@ -67,6 +67,7 @@ object SCollection {
 
 }
 
+// scalastyle:off number.of.methods
 /**
  * A Scala wrapper for [[com.google.cloud.dataflow.sdk.values.PCollection PCollection]], the basic
  * abstraction in Dataflow. Represents an immutable, partitioned collection of elements that can
@@ -871,6 +872,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
 }
+// scalastyle:on number.of.methods
 
 private[scio] class SCollectionImpl[T: ClassTag](val internal: PCollection[T],
                                                  private[scio] val context: ScioContext,

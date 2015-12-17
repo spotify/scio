@@ -11,6 +11,7 @@ import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 
 import scala.reflect.ClassTag
 
+// scalastyle:off number.of.methods
 /**
  * Extra functions available on SCollections of (key, value) pairs through an implicit conversion.
  * @groupname cogroup CoGroup Operations
@@ -449,3 +450,4 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     new MultiMapSideInput[K, V](self.toKV.applyInternal(View.asMultimap()))
 
 }
+// scalastyle:on number.of.methods
