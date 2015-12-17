@@ -107,6 +107,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // =======================================================================
 
   /**
+   * Convert this SCollection to an [[SCollectionWithFanout]] that uses an intermediate node to
+   * combine parts of the data to reduce load on the final global combine step.
+   * @param fanout the number of intermediate keys that will be used
+   */
+  def withFanout(fanout: Int): SCollectionWithFanout[T] = new SCollectionWithFanout[T](internal, context, fanout)
+
+  /**
    * Return the union of this SCollection and another one. Any identical elements will appear
    * multiple times (use `.distinct()` to eliminate them).
    * @group collection

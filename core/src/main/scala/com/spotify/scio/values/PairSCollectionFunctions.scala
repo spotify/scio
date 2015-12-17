@@ -34,8 +34,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     context.wrap(o)
   }
 
-  private def applyPerKey[UI: ClassTag, UO: ClassTag](t: PTransform[PCollection[KV[K, V]], PCollection[KV[K, UI]]],
-                                                      f: KV[K, UI] => (K, UO))
+  private[values] def applyPerKey[UI: ClassTag, UO: ClassTag](t: PTransform[PCollection[KV[K, V]], PCollection[KV[K, UI]]],
+                                                              f: KV[K, UI] => (K, UO))
   : SCollection[(K, UO)] = {
     val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollection[(K, UO)]]() {
       override def apply(input: PCollection[(K, V)]): PCollection[(K, UO)] =
@@ -48,6 +48,24 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     })
     context.wrap(o)
   }
+
+  /**
+   * Convert this SCollection to an [[PairSCollectionWithFanout]] that uses an intermediate node
+   * to combine "hot" keys partially before performing the full combine.
+   * @param hotKeyFanout a function from keys to an integer N, where the key will be spread among
+   * N intermediate nodes for partial combining. If N is less than or equal to 1, this key will
+   * not be sent through an intermediate node.
+   */
+  def withHotKeyFanout(hotKeyFanout: K => Int): PairSCollectionWithFanout[K, V] =
+    new PairSCollectionWithFanout(this, Left(hotKeyFanout))
+
+  /**
+   * Convert this SCollection to an [[PairSCollectionWithFanout]] that uses an intermediate node
+   * to combine "hot" keys partially before performing the full combine.
+   * @param hotKeyFanout constant value for every key
+   */
+  def withHotKeyFanout(hotKeyFanout: Int): PairSCollectionWithFanout[K, V] =
+    new PairSCollectionWithFanout(this, Right(hotKeyFanout))
 
   // =======================================================================
   // CoGroups
