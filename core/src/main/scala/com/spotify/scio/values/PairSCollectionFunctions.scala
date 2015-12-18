@@ -50,22 +50,22 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   }
 
   /**
-   * Convert this SCollection to an [[PairSCollectionWithFanout]] that uses an intermediate node
+   * Convert this SCollection to an [[SCollectionWithHotKeyFanout]] that uses an intermediate node
    * to combine "hot" keys partially before performing the full combine.
    * @param hotKeyFanout a function from keys to an integer N, where the key will be spread among
    * N intermediate nodes for partial combining. If N is less than or equal to 1, this key will
    * not be sent through an intermediate node.
    */
-  def withHotKeyFanout(hotKeyFanout: K => Int): PairSCollectionWithFanout[K, V] =
-    new PairSCollectionWithFanout(this, Left(hotKeyFanout))
+  def withHotKeyFanout(hotKeyFanout: K => Int): SCollectionWithHotKeyFanout[K, V] =
+    new SCollectionWithHotKeyFanout(this, Left(hotKeyFanout))
 
   /**
-   * Convert this SCollection to an [[PairSCollectionWithFanout]] that uses an intermediate node
+   * Convert this SCollection to an [[SCollectionWithHotKeyFanout]] that uses an intermediate node
    * to combine "hot" keys partially before performing the full combine.
    * @param hotKeyFanout constant value for every key
    */
-  def withHotKeyFanout(hotKeyFanout: Int): PairSCollectionWithFanout[K, V] =
-    new PairSCollectionWithFanout(this, Right(hotKeyFanout))
+  def withHotKeyFanout(hotKeyFanout: Int): SCollectionWithHotKeyFanout[K, V] =
+    new SCollectionWithHotKeyFanout(this, Right(hotKeyFanout))
 
   // =======================================================================
   // CoGroups

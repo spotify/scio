@@ -11,10 +11,10 @@ import scala.reflect.ClassTag
 /**
  * An enhanced SCollection that uses an intermediate node to combine "hot" keys partially before performing the full combine.
  */
-class PairSCollectionWithFanout[K: ClassTag, V: ClassTag](val self: PairSCollectionFunctions[K, V],
-                                                          private val fanout: Either[K => Int, Int]) {
+class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag](val self: PairSCollectionFunctions[K, V],
+                                                            private val hotKeyFanout: Either[K => Int, Int]) {
 
-  private def withFanout[K, I, O](combine: Combine.PerKey[K, I, O]): PerKeyWithHotKeyFanout[K, I, O] = this.fanout match {
+  private def withFanout[K, I, O](combine: Combine.PerKey[K, I, O]): PerKeyWithHotKeyFanout[K, I, O] = this.hotKeyFanout match {
     case Left(f) =>
       combine.withHotKeyFanout(Functions.serializableFn(f).asInstanceOf[SerializableFunction[K, java.lang.Integer]])
     case Right(f) =>
