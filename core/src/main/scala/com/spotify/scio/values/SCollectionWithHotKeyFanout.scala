@@ -11,7 +11,7 @@ import scala.reflect.ClassTag
 /**
  * An enhanced SCollection that uses an intermediate node to combine "hot" keys partially before performing the full combine.
  */
-class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag](val self: PairSCollectionFunctions[K, V],
+class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag](private val self: PairSCollectionFunctions[K, V],
                                                             private val hotKeyFanout: Either[K => Int, Int]) {
 
   private def withFanout[K, I, O](combine: Combine.PerKey[K, I, O]): PerKeyWithHotKeyFanout[K, I, O] = this.hotKeyFanout match {
