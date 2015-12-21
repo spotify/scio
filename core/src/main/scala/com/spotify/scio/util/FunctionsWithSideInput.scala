@@ -5,31 +5,34 @@ import com.spotify.scio.values.SideInputContext
 
 private[scio] object FunctionsWithSideInput {
 
-  def filterFn[T](f: (T, SideInputContext[T]) => Boolean): DoFn[T, T] = new DoFn[T, T] {
-    val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
-      // Workaround for type inference limit
-      val ctx = new SideInputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])
-      if (g(c.element(), ctx)) c.output(c.element())
+  trait SideInputDoFn[T, U] extends DoFn[T, U] {
+    private var ctx: SideInputContext[T] = null
+    def sideInputContext(c: DoFn[T, U]#ProcessContext): SideInputContext[T] = {
+      if (ctx == null) {
+        // Workaround for type inference limit
+        ctx = new SideInputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])
+      }
+      ctx
     }
   }
 
-  def flatMapFn[T, U](f: (T, SideInputContext[T]) => TraversableOnce[U]): DoFn[T, U] = new DoFn[T, U] {
+  def filterFn[T](f: (T, SideInputContext[T]) => Boolean): DoFn[T, T] = new SideInputDoFn[T, T] {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-      // Workaround for type inference limit
-      val ctx = new SideInputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])
-      g(c.element(), ctx).foreach(c.output)
-    }
+    override def processElement(c: DoFn[T, T]#ProcessContext): Unit =
+      if (g(c.element(), sideInputContext(c))) {
+        c.output(c.element())
+      }
   }
 
-  def mapFn[T, U](f: (T, SideInputContext[T]) => U): DoFn[T, U] = new DoFn[T, U] {
+  def flatMapFn[T, U](f: (T, SideInputContext[T]) => TraversableOnce[U]): DoFn[T, U] = new SideInputDoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-      // Workaround for type inference limit
-      val ctx = new SideInputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])
-      c.output(g(c.element(), ctx))
-    }
+    override def processElement(c: DoFn[T, U]#ProcessContext): Unit =
+      g(c.element(), sideInputContext(c)).foreach(c.output)
+  }
+
+  def mapFn[T, U](f: (T, SideInputContext[T]) => U): DoFn[T, U] = new SideInputDoFn[T, U] {
+    val g = ClosureCleaner(f)  // defeat closure
+    override def processElement(c: DoFn[T, U]#ProcessContext): Unit = c.output(g(c.element(), sideInputContext(c)))
   }
 
 }

@@ -13,8 +13,20 @@ import scala.collection.breakOut
 
 /** Encapsulate an SCollection when it is being used as a side input. */
 trait SideInput[T] extends Serializable {
-  private[values] def get[I, O](context: DoFn[I, O]#ProcessContext): T
+
+  private var cache: T = null.asInstanceOf[T]
+
+  protected def get[I, O](context: DoFn[I, O]#ProcessContext): T
+
+  private[values] def getCache[I, O](context: DoFn[I, O]#ProcessContext): T = {
+    if (cache == null) {
+      cache = get(context)
+    }
+    cache
+  }
+
   private[values] val view: PCollectionView[_]
+
 }
 
 private[values] class SingletonSideInput[T](val view: PCollectionView[T]) extends SideInput[T] {
@@ -45,5 +57,5 @@ private[values] class MultiMapSideInput[K, V](val view: PCollectionView[JMap[K, 
 // class SideInputContext[T] private[scio] (private val context: DoFn[T, AnyRef]#ProcessContext) extends AnyVal {
 class SideInputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessContext) {
   /** Extract the value of a given [[SideInput]]. */
-  def apply[S](side: SideInput[S]): S = side.get(context)
+  def apply[S](side: SideInput[S]): S = side.getCache(context)
 }
