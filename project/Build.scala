@@ -148,6 +148,7 @@ object ScioBuild extends Build {
         "com.google.guava" % "guava" % "19.0",
         "com.twitter" %% "algebird-core" % "0.11.0",
         "org.scalanlp" %% "breeze" % "0.12",
+        "info.debatty" % "java-lsh" % "0.8",
         "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
       )
     )
