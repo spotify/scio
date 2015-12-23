@@ -5,21 +5,28 @@ import com.spotify.scio.values.SideOutputContext
 
 private[scio] object FunctionsWithSideOutput {
 
-  def mapFn[T, U](f: (T, SideOutputContext[T]) => U): DoFn[T, U] = new DoFn[T, U] {
-    val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-      // Workaround for type inference limit
-      val ctx = new SideOutputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])
-      c.output(g(c.element(), ctx))
+  trait SideOutputFn[T, U] extends DoFn[T, U] {
+    private var ctx: SideOutputContext[T] = null
+    def sideOutputContext(c: DoFn[T, U]#ProcessContext): SideOutputContext[T] = {
+      if (ctx == null) {
+        // Workaround for type inference limit
+        ctx = new SideOutputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])
+      }
+      ctx
     }
   }
 
-  def flatMapFn[T, U](f: (T, SideOutputContext[T]) => TraversableOnce[U]): DoFn[T, U] = new DoFn[T, U] {
+  def mapFn[T, U](f: (T, SideOutputContext[T]) => U): DoFn[T, U] = new SideOutputFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
     override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-      // Workaround for type inference limit
-      val ctx = new SideOutputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])
-      g(c.element(), ctx).foreach(c.output)
+      c.output(g(c.element(), sideOutputContext(c)))
+    }
+  }
+
+  def flatMapFn[T, U](f: (T, SideOutputContext[T]) => TraversableOnce[U]): DoFn[T, U] = new SideOutputFn[T, U] {
+    val g = ClosureCleaner(f)  // defeat closure
+    override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
+      g(c.element(), sideOutputContext(c)).foreach(c.output)
     }
   }
 
