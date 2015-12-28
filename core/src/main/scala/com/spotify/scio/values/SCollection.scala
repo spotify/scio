@@ -704,7 +704,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as an object file using default serialization.
    * @group output
    */
-  def saveAsObjectFile(path: String): Future[Tap[T]] = {
+  def saveAsObjectFile(path: String, suffix: String = ".obj", numShards: Int = 0): Future[Tap[T]] = {
     if (context.isTest) {
       saveAsInMemoryTap
     } else {
@@ -714,7 +714,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
           override def processElement(c: DoFn[T, String]#ProcessContext): Unit =
             c.output(CoderUtils.encodeToBase64(coder, c.element()))
         })
-        .saveAsTextFile(path)
+        .saveAsTextFile(path, suffix, numShards)
       context.makeFuture(ObjectFileTap[T](path))
     }
   }
