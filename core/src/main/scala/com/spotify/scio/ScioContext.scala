@@ -11,7 +11,6 @@ import com.google.cloud.dataflow.sdk.Pipeline
 import com.google.cloud.dataflow.sdk.PipelineResult.State
 import com.google.cloud.dataflow.sdk.coders.TableRowJsonCoder
 import com.google.cloud.dataflow.sdk.io.{AvroIO => GAvroIO, BigQueryIO => GBigQueryIO, DatastoreIO => GDatastoreIO, PubsubIO => GPubsubIO, TextIO => GTextIO}
-import com.google.cloud.dataflow.sdk.options.PipelineOptions.CheckEnabled
 import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptions, PipelineOptionsFactory}
 import com.google.cloud.dataflow.sdk.runners.DataflowPipelineJob
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
@@ -123,7 +122,6 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
     } else {
       TestPipeline.create()
     }
-    p.getOptions.setStableUniqueNames(CheckEnabled.WARNING)
     p.getCoderRegistry.registerScalaCoders()
     p
   }
