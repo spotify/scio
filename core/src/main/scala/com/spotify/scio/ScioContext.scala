@@ -120,7 +120,10 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
     val p = if (testId.isEmpty) {
       Pipeline.create(options)
     } else {
-      TestPipeline.create()
+      val tp = TestPipeline.create()
+      // propagate options
+      tp.getOptions.setStableUniqueNames(options.getStableUniqueNames)
+      tp
     }
     p.getCoderRegistry.registerScalaCoders()
     p
