@@ -29,6 +29,7 @@ private[types] object SchemaProvider {
     s
   }
 
+  // scalastyle:off cyclomatic.complexity
   private def rawType(tpe: Type): (String, Iterable[TableFieldSchema]) = tpe match {
     case t if t =:= typeOf[Int] => ("INTEGER", Iterable.empty)
     case t if t =:= typeOf[Long] => ("INTEGER", Iterable.empty)
@@ -40,6 +41,7 @@ private[types] object SchemaProvider {
     case t if isCaseClass(t) => ("RECORD", toFields(t))
     case _ => throw new RuntimeException(s"Unsupported type: $tpe")
   }
+  // scalastyle:on cyclomatic.complexity
 
   private def toField(symbol: Symbol): TableFieldSchema = {
     // TODO: figure out why there's trailing spaces

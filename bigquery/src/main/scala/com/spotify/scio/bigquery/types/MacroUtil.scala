@@ -2,10 +2,14 @@ package com.spotify.scio.bigquery.types
 
 // TODO: scala 2.11
 // import scala.reflect.macros.blackbox
+import org.slf4j.LoggerFactory
+
 import scala.reflect.macros._
 import scala.reflect.runtime.universe._
 
 private[types] object MacroUtil {
+
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   // Case class helpers for runtime reflection
 
@@ -33,7 +37,7 @@ private[types] object MacroUtil {
 
   def debug(msg: Any): Unit = {
     if (sys.props("bigquery.types.debug") != null && sys.props("bigquery.types.debug").toBoolean) {
-      println(msg.toString)
+      logger.info(msg.toString)
     }
   }
 

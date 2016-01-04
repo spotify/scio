@@ -83,6 +83,7 @@ object ScioContext {
  * @groupname input Input Sources
  * @groupname Ungrouped Other Members
  */
+// scalastyle:off number.of.methods
 class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: Option[String]) {
 
   import Implicits._
@@ -488,3 +489,4 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
   }
 
 }
+// scalastyle:on number.of.methods

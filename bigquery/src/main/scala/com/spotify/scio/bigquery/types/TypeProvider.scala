@@ -68,6 +68,8 @@ private[types] object TypeProvider {
     c.Expr[Any](r)
   }
 
+  // scalastyle:off cyclomatic.complexity
+  // scalastyle:off method.length
   // TODO: scala 2.11
   // private def schemaToType(c: blackbox.Context)
   private def schemaToType(c: Context)
@@ -129,6 +131,8 @@ private[types] object TypeProvider {
     debug(r)
     c.Expr[Any](r)
   }
+  // scalastyle:on cyclomatic.complexity
+  // scalastyle:on method.length
 
   /** Extract string from annotation. */
   // TODO: scala 2.11

@@ -89,6 +89,8 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
   def histogram(buckets: Array[Double], evenBuckets: Boolean = false): SCollection[Array[Long]] =
     histogramImpl(self.context.parallelize(Seq(buckets)), evenBuckets)
 
+  // scalastyle:off cyclomatic.complexity
+  // scalastyle:off method.length
   private def histogramImpl(buckets: SCollection[Array[Double]],
                             evenBuckets: Boolean = false): SCollection[Array[Long]] = {
     // Map buckets into a side input of bucket function
@@ -182,5 +184,7 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
       }
       .toSCollection
   }
+  // scalastyle:on cyclomatic.complexity
+  // scalastyle:on method.length
 
 }

@@ -31,6 +31,8 @@ private[types] object ConverterProvider {
     c.Expr[(T => TableRow)](r)
   }
 
+  // scalastyle:off cyclomatic.complexity
+  // scalastyle:off method.length
   // TODO: scala 2.11
   // private def fromTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
   private def fromTableRowInternal(c: Context)(tpe: c.Type): c.Tree = {
@@ -110,7 +112,11 @@ private[types] object ConverterProvider {
         }
     """
   }
+  // scalastyle:on cyclomatic.complexity
+  // scalastyle:on method.length
 
+  // scalastyle:off cyclomatic.complexity
+  // scalastyle:off method.length
   // TODO: scala 2.11
   // private def toTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
   private def toTableRowInternal(c: Context)(tpe: c.Type): c.Tree = {
@@ -188,5 +194,7 @@ private[types] object ConverterProvider {
         }
     """
   }
+  // scalastyle:on cyclomatic.complexity
+  // scalastyle:on method.length
 
 }
