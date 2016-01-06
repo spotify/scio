@@ -62,14 +62,7 @@ case class ObjectFileTap[T: ClassTag](path: String) extends Tap[T] {
     val coder = KryoAtomicCoder[T]
     FileStorage(path).textFile.map(CoderUtils.decodeFromBase64(coder, _))
   }
-  override def open(sc: ScioContext): SCollection[T] = {
-    sc.textFile(path + "/part-*")
-      .parDo(new DoFn[String, T] {
-        private val coder = KryoAtomicCoder[T]
-        override def processElement(c: DoFn[String, T]#ProcessContext): Unit =
-          c.output(CoderUtils.decodeFromBase64(coder, c.element()))
-      })
-  }
+  override def open(sc: ScioContext): SCollection[T] = sc.objectFile(path + "/part-*")
 }
 
 private[scio] class InMemoryTap[T: ClassTag] extends Tap[T] {

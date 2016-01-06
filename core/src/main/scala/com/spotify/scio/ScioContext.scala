@@ -15,9 +15,11 @@ import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineO
 import com.google.cloud.dataflow.sdk.runners.DataflowPipelineJob
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
-import com.google.cloud.dataflow.sdk.transforms.{Create, PTransform}
+import com.google.cloud.dataflow.sdk.transforms.{DoFn, Create, PTransform}
+import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.cloud.dataflow.sdk.values.{PBegin, PCollection, POutput, TimestampedValue}
 import com.spotify.scio.bigquery._
+import com.spotify.scio.coders.KryoAtomicCoder
 import com.spotify.scio.testing._
 import com.spotify.scio.util.CallSites
 import com.spotify.scio.values._
@@ -220,6 +222,24 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
 
   private[scio] def applyInternal[Output <: POutput](root: PTransform[_ >: PBegin, Output]): Output =
     pipeline.apply(CallSites.getCurrent, root)
+
+  /**
+   * Get an SCollection for an object file.
+   * @group input
+   */
+  def objectFile[T: ClassTag](path: String): SCollection[T] = pipelineOp {
+    if (this.isTest) {
+      this.getTestInput(ObjectFileIO[T](path))
+    } else {
+      this.textFile(path)
+        .parDo(new DoFn[String, T] {
+          private val coder = KryoAtomicCoder[T]
+          override def processElement(c: DoFn[String, T]#ProcessContext): Unit =
+            c.output(CoderUtils.decodeFromBase64(coder, c.element()))
+        })
+        .setName(path)
+    }
+  }
 
   /**
    * Get an SCollection of specific record type for an Avro file.

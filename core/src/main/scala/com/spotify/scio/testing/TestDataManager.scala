@@ -44,6 +44,8 @@ private[scio] object TestDataManager {
 
 class TestIO[+T] private[scio] (val key: String)
 
+case class ObjectFileIO[T](path: String) extends TestIO(path)
+
 case class AvroIO[T](path: String) extends TestIO(path)
 
 case class BigQueryIO(tableSpecOrQuery: String) extends TestIO[TableRow](tableSpecOrQuery)
