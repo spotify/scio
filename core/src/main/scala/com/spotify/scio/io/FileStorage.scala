@@ -93,7 +93,7 @@ private class GcsStorage(protected val path: String) extends FileStorage {
       .setPrefix(prefix)
       .execute()
       .getItems.asScala
-      .filter{ o =>
+      .filter { o =>
         val n = o.getName
         val nDelimiters: Int = n.count(isDelimiter)
         BigInt(o.getSize) > 0 && !isHidden(n) && nDelimiters == pDelimiters && n != prefix
