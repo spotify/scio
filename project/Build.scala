@@ -43,7 +43,7 @@ object ScioBuild extends Build {
 
   val sdkVersion = "1.3.0"
 
-  val guavaVersion = "18.0"
+  val guavaVersion = "19.0"
   val macrosVersion = "2.0.1"
   val scalaTestVersion = "2.2.5"
 
