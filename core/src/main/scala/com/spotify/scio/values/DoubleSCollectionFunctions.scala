@@ -171,7 +171,7 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
 
     // Workaround since hist may be empty
     val bSide = bucketSize.asSingletonSideInput
-    val hSide = hist.asIterableSideInput
+    val hSide = hist.asListSideInput
     self.context.parallelize(Seq(0))
       .withSideInputs(bSide, hSide)
       .map { (z, c) =>

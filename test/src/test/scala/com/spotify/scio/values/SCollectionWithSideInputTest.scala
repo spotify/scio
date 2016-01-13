@@ -63,7 +63,7 @@ class SCollectionWithSideInputTest extends PipelineSpec {
   it should "support flatMap()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "c"))
-      val p2 = sc.parallelize(Seq(1, 2)).asIterableSideInput
+      val p2 = sc.parallelize(Seq(1, 2)).asListSideInput
       val s = p1.withSideInputs(p2).flatMap((x, s) => s(p2).map(x + _))
       s.internal should containInAnyOrder (Seq("a1", "b1", "c1", "a2", "b2", "c2"))
     }
@@ -91,7 +91,7 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "c"))
       val p2 = sc.parallelize(Seq(1)).asSingletonSideInput
-      val p3 = sc.parallelize(Seq(1, 2, 3)).asIterableSideInput
+      val p3 = sc.parallelize(Seq(1, 2, 3)).asListSideInput
       val p4 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3))).asMultiMapSideInput
       val s1 = p1.withSideInputs(p2)
         .filter((x, s) => x == "a")

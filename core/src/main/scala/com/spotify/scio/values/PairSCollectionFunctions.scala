@@ -438,15 +438,16 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   // =======================================================================
 
   /**
-   * Convert this SCollection of (key, value) to a SideInput of Map[key, value], to be used with
-   * [[SCollection.withSideInputs]]. It is required that each key of the input be associated with
-   * a single value.
+   * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a Map[key,
+   * value], to be used with [[SCollection.withSideInputs]]. It is required that each key of the
+   * input be associated with a single value.
    */
   def asMapSideInput: SideInput[Map[K, V]] = new MapSideInput[K, V](self.toKV.applyInternal(View.asMap()))
 
   /**
-   * Convert this SCollection of (key, value) to a SideInput of Map[key, Iterable[value]], to be
-   * used with [[SCollection.withSideInputs]].
+   * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a Map[key,
+   * Iterable[value]], to be used with [[SCollection.withSideInputs]]. It is not required that the
+   * keys in the input collection be unique.
    */
   def asMultiMapSideInput: SideInput[Map[K, Iterable[V]]] =
     new MultiMapSideInput[K, V](self.toKV.applyInternal(View.asMultimap()))

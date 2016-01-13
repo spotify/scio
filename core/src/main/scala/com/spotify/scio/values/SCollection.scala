@@ -432,7 +432,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group hash
    */
   def cross[U: ClassTag](that: SCollection[U]): SCollection[(T, U)] = {
-    val side = that.asIterableSideInput
+    val side = that.asListSideInput
     this
       .withSideInputs(side)
       .flatMap((t, s) => s(side).map((t, _)))
@@ -492,22 +492,26 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // =======================================================================
 
   /**
-   * Convert this SCollection of a single item to a SideInput, to be used with
+   * Convert this SCollection of a single value per window to a SideInput, to be used with
    * [[SCollection.withSideInputs]].
    * @group side
    */
   def asSingletonSideInput: SideInput[T] = new SingletonSideInput[T](this.applyInternal(View.asSingleton()))
 
   /**
-   * Convert this SCollection to a SideInput of List, to be used with
+   * Convert this SCollection to a SideInput, mapping each window to a List, to be used with
    * [[SCollection.withSideInputs]].
    * @group side
    */
   def asListSideInput: SideInput[List[T]] = new ListSideInput[T](this.applyInternal(View.asList()))
 
   /**
-   * Convert this SCollection to a SideInput of Iterable, to be used with
+   * Convert this SCollection to a SideInput, mapping each window to an Iterable, to be used with
    * [[SCollection.withSideInputs]].
+   *
+   * The values of the Iterable for a window are not required to fit in memory, but they may also
+   * not be effectively cached. If it is known that every window fits in memory, and stronger
+   * caching is desired, use [[asListSideInput]].
    * @group side
    */
   def asIterableSideInput: SideInput[Iterable[T]] = new IterableSideInput[T](this.applyInternal(View.asIterable()))
