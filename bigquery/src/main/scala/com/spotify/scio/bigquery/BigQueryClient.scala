@@ -147,25 +147,27 @@ class BigQueryClient private (private val projectId: String, credential: Credent
 
   /** Wait for all jobs to finish. */
   def waitForJobs(jobReferences: JobReference*): Unit = {
-    val ids = jobReferences.map(_.getJobId).toBuffer
-    var allDone: Boolean = false
-    do {
-      val pollJobs = ids.map(bigquery.jobs().get(projectId, _).execute())
-      pollJobs.foreach { j =>
-        val error = j.getStatus.getErrorResult
-        if (error != null) {
-          throw new RuntimeException(s"BigQuery failed: $error")
+    if (jobReferences.nonEmpty) {
+      val ids = jobReferences.map(_.getJobId).toBuffer
+      var allDone: Boolean = false
+      do {
+        val pollJobs = ids.map(bigquery.jobs().get(projectId, _).execute())
+        pollJobs.foreach { j =>
+          val error = j.getStatus.getErrorResult
+          if (error != null) {
+            throw new RuntimeException(s"BigQuery failed: $error")
+          }
         }
-      }
-      val done = pollJobs.count(_.getStatus.getState == "DONE")
-      logger.info(s"BigQuery jobs: $done out of ${pollJobs.size}")
-      allDone = done == pollJobs.size
-      if (allDone) {
-        pollJobs.foreach(logJobStatistics)
-      } else {
-        Thread.sleep(10000)
-      }
-    } while (!allDone)
+        val done = pollJobs.count(_.getStatus.getState == "DONE")
+        logger.info(s"BigQuery jobs: $done out of ${pollJobs.size}")
+        allDone = done == pollJobs.size
+        if (allDone) {
+          pollJobs.foreach(logJobStatistics)
+        } else {
+          Thread.sleep(10000)
+        }
+      } while (!allDone)
+    }
   }
 
   private def prepareStagingDataset(): Unit = {
