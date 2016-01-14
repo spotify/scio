@@ -5,7 +5,7 @@ import java.io.File
 import java.net.URI
 import java.util.concurrent.TimeUnit
 
-import com.google.api.services.bigquery.model.TableReference
+import com.google.api.services.bigquery.model.{JobReference, TableReference}
 import com.google.api.services.datastore.DatastoreV1.{Entity, Query}
 import com.google.cloud.dataflow.sdk.Pipeline
 import com.google.cloud.dataflow.sdk.PipelineResult.State
@@ -28,7 +28,7 @@ import org.apache.avro.generic.GenericRecord
 import org.joda.time.Instant
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.{ListBuffer, Set => MSet}
+import scala.collection.mutable.{Buffer, Set => MSet}
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
 
@@ -105,7 +105,8 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
   /* Mutable members */
   private var _pipeline: Pipeline = null
   private var _isClosed: Boolean = false
-  private val _promises: ListBuffer[(Promise[AnyRef], AnyRef)] = ListBuffer.empty
+  private val _promises: Buffer[(Promise[AnyRef], AnyRef)] = Buffer.empty
+  private val _bigQueryJobs: Buffer[JobReference] = Buffer.empty
   private val _accumulators: MSet[String] = MSet.empty
 
   /** Wrap a [[com.google.cloud.dataflow.sdk.values.PCollection PCollection]]. */
@@ -148,6 +149,8 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
 
   /** Close the context. No operation can be performed once the context is closed. */
   def close(): ScioResult = {
+    bigQueryClient.waitForJobs(_bigQueryJobs: _*)
+
     _isClosed = true
     val result = this.pipeline.run()
 
@@ -275,8 +278,9 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
     if (this.isTest) {
       this.getTestInput(BigQueryIO(sqlQuery))
     } else {
-      val table = this.bigQueryClient.queryIntoTable(sqlQuery)
-      bigQueryTable(table).setName(sqlQuery)
+      val (tableRef, jobRef) = this.bigQueryClient.queryIntoTable(sqlQuery)
+      _bigQueryJobs.append(jobRef)
+      wrap(this.applyInternal(GBigQueryIO.Read.from(tableRef).withoutValidation())).setName(sqlQuery)
     }
   }
 

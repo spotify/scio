@@ -98,7 +98,11 @@ class BigQueryClient private (private val projectId: String, credential: Credent
   }
 
   /** Get rows from a query. */
-  def getQueryRows(sqlQuery: String): Iterator[TableRow] = getTableRows(queryIntoTable(sqlQuery))
+  def getQueryRows(sqlQuery: String): Iterator[TableRow] = {
+    val (tableRef, jobRef) = queryIntoTable(sqlQuery)
+    waitForJobs(jobRef)
+    getTableRows(tableRef)
+  }
 
   /** Get rows from a table. */
   def getTableRows(tableSpec: String): Iterator[TableRow] = getTableRows(Util.parseTableSpec(tableSpec))
@@ -116,10 +120,13 @@ class BigQueryClient private (private val projectId: String, credential: Credent
   }
 
   /** Execute a query and save results into a temporary table. */
-  def queryIntoTable(sqlQuery: String): TableReference = {
+  def queryIntoTable(sqlQuery: String): (TableReference, JobReference) = {
     prepareStagingDataset()
 
     val destinationTable = temporaryTable(TABLE_PREFIX)
+
+    logger.info(s"Executing BigQuery for query: $sqlQuery")
+    logger.info(s"Destination table: ${Util.toTableSpec(destinationTable)}")
 
     val queryConfig: JobConfigurationQuery = new JobConfigurationQuery()
       .setQuery(sqlQuery)
@@ -133,26 +140,32 @@ class BigQueryClient private (private val projectId: String, credential: Credent
     val jobConfig = new JobConfiguration().setQuery(queryConfig)
     val jobReference = createJobReference(projectId, JOB_ID_PREFIX)
     val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
-    val jobId = bigquery.jobs().insert(projectId, job).execute().getJobReference.getJobId
+    val jobRef = bigquery.jobs().insert(projectId, job).execute().getJobReference
 
-    var pollJob: Job = null
-    var state: String = null
-    logger.info(s"Executing BigQuery for query: $sqlQuery")
-    logger.info(s"Destination table: ${Util.toTableSpec(destinationTable)}")
+    (destinationTable, jobRef)
+  }
+
+  /** Wait for all jobs to finish. */
+  def waitForJobs(jobReferences: JobReference*): Unit = {
+    val ids = jobReferences.map(_.getJobId).toBuffer
+    var allDone: Boolean = false
     do {
-      pollJob = bigquery.jobs().get(projectId, jobId).execute()
-      val error = pollJob.getStatus.getErrorResult
-      if (error != null) {
-        throw new RuntimeException(s"BigQuery failed: $error")
+      val pollJobs = ids.map(bigquery.jobs().get(projectId, _).execute())
+      pollJobs.foreach { j =>
+        val error = j.getStatus.getErrorResult
+        if (error != null) {
+          throw new RuntimeException(s"BigQuery failed: $error")
+        }
       }
-      state = pollJob.getStatus.getState
-      logger.info(s"Job $jobId: $state")
-      Thread.sleep(10000)
-    } while (state != "DONE")
-
-    logJobStatistics(pollJob)
-
-    destinationTable
+      val done = pollJobs.count(_.getStatus.getState == "DONE")
+      logger.info(s"BigQuery jobs: $done out of ${pollJobs.size}")
+      allDone = done == pollJobs.size
+      if (allDone) {
+        pollJobs.foreach(logJobStatistics)
+      } else {
+        Thread.sleep(10000)
+      }
+    } while (!allDone)
   }
 
   private def prepareStagingDataset(): Unit = {
