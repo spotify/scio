@@ -87,7 +87,9 @@ object ScioBuild extends Build {
         "com.twitter" %% "chill" % "0.7.2",
         "com.twitter" %% "chill-avro" % "0.7.2",
         "commons-io" % "commons-io" % "2.4",
-        "org.apache.commons" % "commons-math3" % "3.5"
+        "org.apache.commons" % "commons-math3" % "3.5",
+        // TODO: move this and com.spotify.scio.extra to a separate module.
+        "org.scalanlp" %% "breeze" % "0.11.2"
       )
     )
   ).dependsOn(
