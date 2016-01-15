@@ -279,7 +279,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
       this.getTestInput(BigQueryIO(sqlQuery))
     } else {
       val (tableRef, jobRef) = this.bigQueryClient.queryIntoTable(sqlQuery)
-      _bigQueryJobs.append(jobRef)
+      jobRef.foreach(j => _bigQueryJobs.append(j))
       wrap(this.applyInternal(GBigQueryIO.Read.from(tableRef).withoutValidation())).setName(sqlQuery)
     }
   }

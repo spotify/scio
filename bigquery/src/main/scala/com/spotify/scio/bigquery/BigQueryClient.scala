@@ -35,6 +35,7 @@ object Util {
   private val DATASET_TABLE_REGEXP =
     s"((?<PROJECT>$PROJECT_ID_REGEXP):)?(?<DATASET>$DATASET_REGEXP)\\.(?<TABLE>$TABLE_REGEXP)"
   private val TABLE_SPEC = Pattern.compile(DATASET_TABLE_REGEXP)
+  private val QUERY_TABLE_SPEC = Pattern.compile(s"(?<=\\[)$DATASET_REGEXP(?=\\])")
 
   /** Parse a table specification string. */
   def parseTableSpec(tableSpec: String): TableReference = {
@@ -53,6 +54,16 @@ object Util {
   /** Parse a schema string. */
   def parseSchema(schemaString: String): TableSchema =
     new JsonObjectParser(new JacksonFactory).parseAndClose(new StringReader(schemaString), classOf[TableSchema])
+
+  /** Extract tables from a SQL query. */
+  def extractTables(sqlQuery: String): Set[TableReference] = {
+    val matcher = Util.QUERY_TABLE_SPEC.matcher(sqlQuery)
+    val b = Set.newBuilder[TableReference]
+    while (matcher.find()) {
+      b += parseTableSpec(matcher.group())
+    }
+    b.result()
+  }
 
 }
 
@@ -100,7 +111,7 @@ class BigQueryClient private (private val projectId: String, credential: Credent
   /** Get rows from a query. */
   def getQueryRows(sqlQuery: String): Iterator[TableRow] = {
     val (tableRef, jobRef) = queryIntoTable(sqlQuery)
-    waitForJobs(jobRef)
+    jobRef.foreach(j => waitForJobs(j))
     getTableRows(tableRef)
   }
 
@@ -116,33 +127,35 @@ class BigQueryClient private (private val projectId: String, credential: Credent
 
   /** Get schema from a table. */
   def getTableSchema(table: TableReference): TableSchema = withCacheKey(Util.toTableSpec(table)) {
-    bigquery.tables().get(table.getProjectId, table.getDatasetId, table.getTableId).execute().getSchema
+    getTable(table).getSchema
   }
 
   /** Execute a query and save results into a temporary table. */
-  def queryIntoTable(sqlQuery: String): (TableReference, JobReference) = {
+  def queryIntoTable(sqlQuery: String): (TableReference, Option[JobReference]) = {
     prepareStagingDataset()
 
-    val destinationTable = temporaryTable(TABLE_PREFIX)
-
     logger.info(s"Executing BigQuery for query: $sqlQuery")
-    logger.info(s"Destination table: ${Util.toTableSpec(destinationTable)}")
 
-    val queryConfig: JobConfigurationQuery = new JobConfigurationQuery()
-      .setQuery(sqlQuery)
-      .setAllowLargeResults(true)
-      .setFlattenResults(false)
-      .setPriority(PRIORITY)
-      .setCreateDisposition("CREATE_IF_NEEDED")
-      .setWriteDisposition("WRITE_EMPTY")
-      .setDestinationTable(destinationTable)
-
-    val jobConfig = new JobConfiguration().setQuery(queryConfig)
-    val jobReference = createJobReference(projectId, JOB_ID_PREFIX)
-    val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
-    val jobRef = bigquery.jobs().insert(projectId, job).execute().getJobReference
-
-    (destinationTable, jobRef)
+    try {
+      val sourceTimes = Util.extractTables(sqlQuery).map(t => BigInt(getTable(t).getLastModifiedTime))
+      val table = getCacheDestinationTable(sqlQuery).get
+      val time = BigInt(getTable(table).getLastModifiedTime)
+      if (sourceTimes.forall(_ < time)) {
+        logger.info(s"Cache hit, existing destination table: ${Util.toTableSpec(table)}")
+        (table, None)
+      } else {
+        val temp = temporaryTable(TABLE_PREFIX)
+        logger.info(s"Cache invalid, new destination table: ${Util.toTableSpec(temp)}")
+        setCacheDestinationTable(sqlQuery, temp)
+        (temp, Some(makeQuery(sqlQuery, temp)))
+      }
+    } catch {
+      case _: Throwable =>
+        val temp = temporaryTable(TABLE_PREFIX)
+        logger.info(s"Cache miss, new destination table: ${Util.toTableSpec(temp)}")
+        setCacheDestinationTable(sqlQuery, temp)
+        (temp, Some(makeQuery(sqlQuery, temp)))
+    }
   }
 
   /** Wait for all jobs to finish. */
@@ -204,6 +217,22 @@ class BigQueryClient private (private val projectId: String, credential: Credent
     new JobReference().setProjectId(projectId).setJobId(fullJobId)
   }
 
+  private def makeQuery(sqlQuery: String, destinationTable: TableReference): JobReference = {
+    val queryConfig: JobConfigurationQuery = new JobConfigurationQuery()
+      .setQuery(sqlQuery)
+      .setAllowLargeResults(true)
+      .setFlattenResults(false)
+      .setPriority(PRIORITY)
+      .setCreateDisposition("CREATE_IF_NEEDED")
+      .setWriteDisposition("WRITE_EMPTY")
+      .setDestinationTable(destinationTable)
+
+    val jobConfig = new JobConfiguration().setQuery(queryConfig)
+    val jobReference = createJobReference(projectId, JOB_ID_PREFIX)
+    val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
+    bigquery.jobs().insert(projectId, job).execute().getJobReference
+  }
+
   private def logJobStatistics(job: Job): Unit = {
     val jobId = job.getJobReference.getJobId
     val stats = job.getStatistics
@@ -218,8 +247,13 @@ class BigQueryClient private (private val projectId: String, credential: Credent
     logger.info(s"Job $jobId: total bytes processed: $bytes, cache hit: $cacheHit")
   }
 
+  private def getTable(table: TableReference): Table = {
+    val p = if (table.getProjectId == null) this.projectId else table.getProjectId
+    bigquery.tables().get(p, table.getDatasetId, table.getTableId).execute()
+  }
+
   // =======================================================================
-  // Schema caching
+  // Schema and query caching
   // =======================================================================
 
   private def withCacheKey(key: String)(method: => TableSchema): TableSchema = getCacheSchema(key) match {
@@ -231,21 +265,32 @@ class BigQueryClient private (private val projectId: String, credential: Credent
   }
 
   private def setCacheSchema(key: String, schema: TableSchema): Unit =
-    Files.write(schema.toPrettyString, cacheFile(key), Charsets.UTF_8)
+    Files.write(schema.toPrettyString, schemaCacheFile(key), Charsets.UTF_8)
 
   private def getCacheSchema(key: String): Option[TableSchema] = Try {
-    Util.parseSchema(scala.io.Source.fromFile(cacheFile(key)).mkString)
+    Util.parseSchema(scala.io.Source.fromFile(schemaCacheFile(key)).mkString)
   }.toOption
 
-  private def cacheFile(key: String): File = {
+  private def setCacheDestinationTable(key: String, table: TableReference): Unit =
+    Files.write(Util.toTableSpec(table), tableCacheFile(key), Charsets.UTF_8)
+
+  private def getCacheDestinationTable(key: String): Option[TableReference] = Try {
+    Util.parseTableSpec(scala.io.Source.fromFile(tableCacheFile(key)).mkString)
+  }.toOption
+
+  private def cacheFile(key: String, suffix: String): File = {
     val cacheDir = BigQueryClient.cacheDirectory
     val outputFile = new File(cacheDir)
     if (!outputFile.exists()) {
       outputFile.mkdirs()
     }
-    val filename = Hashing.sha1().hashString(key, Charsets.UTF_8).toString.substring(0, 32) + ".json"
+    val filename = Hashing.sha1().hashString(key, Charsets.UTF_8).toString.substring(0, 32) + suffix
     new File(s"$cacheDir/$filename")
   }
+
+  private def schemaCacheFile(key: String): File = cacheFile(key, ".schema.json")
+
+  private def tableCacheFile(key: String): File = cacheFile(key, ".table.txt")
 
 }
 
