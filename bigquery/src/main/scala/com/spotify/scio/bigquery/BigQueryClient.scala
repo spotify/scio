@@ -12,7 +12,8 @@ import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.bigquery.{BigqueryScopes, Bigquery}
 import com.google.api.services.bigquery.model._
-import com.google.cloud.dataflow.sdk.util.BigQueryTableRowIterator
+import com.google.cloud.dataflow.sdk.options.{PipelineOptionsFactory, GcpOptions}
+import com.google.cloud.dataflow.sdk.util.{Credentials, BigQueryTableRowIterator}
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
@@ -331,17 +332,17 @@ object BigQueryClient {
   def apply(project: String, credential: Credential): BigQueryClient = new BigQueryClient(project, credential)
 
   /**
-   * Create a new BigQueryClient instance with project and JSON secret from system properties.
+   * Create a new BigQueryClient instance.
    *
-   * Project and path to JSON secret must be set in `bigquery.project` and `bigquery.secret`
-   * system properties. For example, by adding the following to your job code:
-   *
+   * Project must be set via `bigquery.project` system property.
+   * An optional JSON secret file can be set via `bigquery.secret`.
+   * For example, by adding the following code at the beginning of a job:
    * {{{
    * sys.props("bigquery.project") = "my-project"
    * sys.props("bigquery.secret") = "/path/to/secret.json"
    * }}}
    *
-   * Or you can pass them as SBT command line arguments:
+   * Or by passing them as SBT command line arguments:
    * {{{
    * sbt -Dbigquery.project=my-project -Dbigquery.secret=/path/to/secret.json
    * }}}
@@ -352,14 +353,26 @@ object BigQueryClient {
       throw new RuntimeException(
         s"Property $PROJECT_KEY not set. Use -D$PROJECT_KEY=<BILLING_PROJECT>")
     }
+    BigQueryClient(project)
+  }
+
+  /** Create a new BigQueryClient instance with the given project. */
+  def apply(project: String): BigQueryClient = {
     val secret = sys.props(SECRET_KEY)
     if (secret == null) {
-      throw new RuntimeException(
-        s"Property $SECRET_KEY not set. Use -D$SECRET_KEY=/path/to/secret.json")
+      val opts = PipelineOptionsFactory.fromArgs(Array.empty).as(classOf[GcpOptions])
+      opts.setProject(project)
+      val credential = Credentials.getCredential(opts)
+      BigQueryClient(project, credential)
+    } else {
+      BigQueryClient(project, secret)
     }
+  }
+
+  /** Create a new BigQueryClient instance with the given project and secret file. */
+  def apply(project: String, secret: String): BigQueryClient = {
     val scopes = List(BigqueryScopes.BIGQUERY).asJava
     val credential = GoogleCredential.fromStream(new FileInputStream(new File(secret))).createScoped(scopes)
-
     BigQueryClient(project, credential)
   }
 
