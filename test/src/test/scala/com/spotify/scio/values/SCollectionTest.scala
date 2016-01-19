@@ -232,7 +232,7 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  ignore should "support sample() with replacement" in {
+  it should "support sample() with replacement" in {
     runWithContext { sc =>
       import RandomSamplerUtils._
       verify(sc, true, 0.5, 0.5).internal should containSingleValue (true)
@@ -242,7 +242,7 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  ignore should "support sample() without replacement" in {
+  it should "support sample() without replacement" in {
     runWithContext { sc =>
       import RandomSamplerUtils._
       verify(sc, false, 0.5, 0.5).internal should containSingleValue (true)
