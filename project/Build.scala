@@ -116,6 +116,7 @@ object ScioBuild extends Build {
     "scio-bigquery",
     file("bigquery"),
     settings = buildSettings ++ Seq(
+      libraryDependencies ++= dataflowSdkDependencies,
       libraryDependencies ++= Seq(
         bigQueryDependency,
         "com.google.guava" % "guava" % guavaVersion,

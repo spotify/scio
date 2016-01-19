@@ -50,13 +50,12 @@ Your Cloud Storage location should be entered in the form of `gs://bucket/path/t
 
 # BigQuery Settings
 
-You will need a few extra settings to execute BigQuery queries as pipeline input.
+You may need a few extra settings to use BigQuery queries as pipeline input.
 
 ```
-sbt -Dbigquery.secret=<SECRET.JSON> -Dbigquery.project=<PROJECT-NAME> -Dbigquery.staging_dataset.location=<LOCATION>
+sbt -Dbigquery.project=<PROJECT-NAME> -Dbigquery.staging_dataset.location=<LOCATION>
 ```
 
-- `bigquery.secret`: Secret file for GCP service account. Can be created via Google Developers Console &rarr; Permissions &rarr; Service accounts.
 - `bigquery.project`: GCP project to make BigQuery requests with.
 - `bigquery.staging_dataset.location`: Geographical location for BigQuery staging dataset, e.g. `US`, `EU`, must be the same as source tables and GCS buckets.
 
