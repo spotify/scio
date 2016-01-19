@@ -91,7 +91,7 @@ object AutoComplete {
     // initialize input
     val input = if (opts.isStreaming) {
       require(!outputToDatastore, "DatastoreIO is not supported in streaming.")
-      dataflowUtils.setupPubsubTopic()
+      dataflowUtils.setupPubsub()
       sc.pubsubTopic(opts.getPubsubTopic).withSlidingWindows(Duration.standardMinutes(30))
     } else {
       sc.textFile(inputFile.getOrElse(ExampleData.KING_LEAR))
