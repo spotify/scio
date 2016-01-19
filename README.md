@@ -48,6 +48,18 @@ neville@localhost scio $ sbt
 
 Your Cloud Storage location should be entered in the form of `gs://bucket/path/to/staging/directory`. The Cloud Platform project refers to its name (not number).
 
+# BigQuery Settings
+
+You will need a few extra settings to execute BigQuery queries as pipeline input.
+
+```
+sbt -Dbigquery.secret=<SECRET.JSON> -Dbigquery.project=<PROJECT-NAME> -Dbigquery.staging_dataset.location=<LOCATION>
+```
+
+- `bigquery.secret`: Secret file for GCP service account. Can be created via Google Developers Console &rarr; Permissions &rarr; Service accounts.
+- `bigquery.project`: GCP project to make BigQuery requests with.
+- `bigquery.staging_dataset.location`: Geographical location for BigQuery staging dataset, e.g. `US`, `EU`, must be the same as source tables and GCS buckets.
+
 # Options
 
 More Dataflow pipeline specific options available can be found in [`DataflowPipelineOptions`](https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/options/DataflowPipelineOptions) and super interfaces. Some more useful ones are from [`DataflowPipelineWorkerPoolOptions`](https://cloud.google.com/dataflow/java-sdk/JavaDoc/com/google/cloud/dataflow/sdk/options/DataflowPipelineWorkerPoolOptions):
