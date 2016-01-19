@@ -43,20 +43,13 @@ object ScioBuild extends Build {
 
   val sdkVersion = "1.3.0"
 
-  val guavaVersion = "19.0"
   val macrosVersion = "2.0.1"
-  val scalaTestVersion = "2.2.5"
+  val scalaTestVersion = "2.2.6"
 
   lazy val paradiseDependency =
     "org.scalamacros" % "paradise" % macrosVersion cross CrossVersion.full
-  lazy val bigQueryDependency =
-    "com.google.apis" % "google-api-services-bigquery" % "v2-rev250-1.20.0" exclude ("com.google.guava", "guava-jdk5")
-  lazy val dataflowSdkDependencies = Seq(
-    ("com.google.cloud.dataflow" % "google-cloud-dataflow-java-sdk-all" % sdkVersion)
-      .exclude("com.google.apis", "google-api-services-bigquery")
-      .exclude("com.google.guava", "guava"),
-    bigQueryDependency
-  )
+  lazy val dataflowSdkDependency =
+    "com.google.cloud.dataflow" % "google-cloud-dataflow-java-sdk-all" % sdkVersion
 
   lazy val root: Project = Project(
     "scio",
@@ -79,17 +72,16 @@ object ScioBuild extends Build {
     "scio-core",
     file("core"),
     settings = buildSettings ++ Seq(
-      libraryDependencies ++= dataflowSdkDependencies,
       libraryDependencies ++= Seq(
-        "com.google.guava" % "guava" % guavaVersion,
+        dataflowSdkDependency,
         "com.twitter" %% "algebird-core" % "0.11.0",
         "com.twitter" %% "bijection-avro" % "0.8.1",
         "com.twitter" %% "chill" % "0.7.2",
         "com.twitter" %% "chill-avro" % "0.7.2",
         "commons-io" % "commons-io" % "2.4",
-        "org.apache.commons" % "commons-math3" % "3.5",
+        "org.apache.commons" % "commons-math3" % "3.6",
         // TODO: move this and com.spotify.scio.extra to a separate module.
-        "org.scalanlp" %% "breeze" % "0.11.2"
+        "org.scalanlp" %% "breeze" % "0.12"
       )
     )
   ).dependsOn(
@@ -116,10 +108,8 @@ object ScioBuild extends Build {
     "scio-bigquery",
     file("bigquery"),
     settings = buildSettings ++ Seq(
-      libraryDependencies ++= dataflowSdkDependencies,
       libraryDependencies ++= Seq(
-        bigQueryDependency,
-        "com.google.guava" % "guava" % guavaVersion,
+        dataflowSdkDependency,
         "commons-io" % "commons-io" % "2.4",
         "org.slf4j" % "slf4j-api" % "1.7.13",
         "joda-time" % "joda-time" % "2.7",
