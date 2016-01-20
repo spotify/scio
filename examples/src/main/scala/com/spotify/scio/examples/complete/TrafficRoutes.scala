@@ -38,6 +38,7 @@ object TrafficRoutes {
 
   val sdStations = Map("1108413" -> "SDRoute1", "1108699" -> "SDRoute2", "1108702" -> "SDRoute3")
 
+  // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
     // set up example wiring
     val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
@@ -135,5 +136,6 @@ object TrafficRoutes {
     // CTRL-C to cancel the streaming pipeline
     dataflowUtils.waitToFinish(result.internal)
   }
+  // scalastyle:on method.length
 
 }
