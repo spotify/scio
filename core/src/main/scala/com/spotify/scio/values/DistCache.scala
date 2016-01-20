@@ -5,9 +5,11 @@ import java.net.URI
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.cloud.dataflow.sdk.options.{GcsOptions, PipelineOptions}
+import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
 import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
+import com.spotify.scio.util.Util
 import org.slf4j.{Logger, LoggerFactory}
 
 /** Encapsulate files on Google Cloud Storage that can be distributed to all workers. */
@@ -16,24 +18,25 @@ sealed trait DistCache[F] extends Serializable {
   def apply(): F
 }
 
-private[scio] abstract class GcsDistCache[F](gcsOptions: GcsOptions) extends DistCache[F] {
-
-  private val logger: Logger = LoggerFactory.getLogger(classOf[DistCache[_]])
-
-  protected val json: String = new ObjectMapper().writeValueAsString(gcsOptions)
-
-  protected lazy val data: F = init()
+private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistCache[F] {
 
   override def apply(): F = data
 
   protected def init(): F
 
-  protected def fetch(uri: URI, prefix: String): File = {
+  protected lazy val data: F = init()
+
+  private val logger: Logger = LoggerFactory.getLogger(classOf[DistCache[_]])
+
+  // Serialize options to avoid shipping it with closure
+  private val json: String = new ObjectMapper().writeValueAsString(options)
+  private def opts: GcsOptions = new ObjectMapper().readValue(json, classOf[PipelineOptions]).as(classOf[GcsOptions])
+
+  private def fetchFromGCS(uri: URI, prefix: String): File = {
     val path = prefix + uri.getPath.split("/").last
     val file = new File(path)
 
     if (!file.exists()) {
-      val opts: GcsOptions = new ObjectMapper().readValue(json, classOf[PipelineOptions]).as(classOf[GcsOptions])
       val gcsUtil = opts.getGcsUtil
 
       val fos: FileOutputStream = new FileOutputStream(path)
@@ -52,9 +55,26 @@ private[scio] abstract class GcsDistCache[F](gcsOptions: GcsOptions) extends Dis
     file
   }
 
-  protected def prefix(uris: URI*): String = {
+  private def temporaryPrefix(uris: Seq[URI]): String = {
     val hash = Hashing.sha1().hashString(uris.map(_.toString).mkString("|"), Charsets.UTF_8)
     sys.props("java.io.tmpdir") + "/" + hash.toString.substring(0, 8) + "-"
+  }
+
+  protected def prepareFiles(uris: Seq[URI]): Seq[File] = {
+    if (classOf[DirectPipelineRunner] isAssignableFrom opts.getRunner) {
+      uris.map(u => new File(u.toString))
+    } else {
+      val p = temporaryPrefix(uris)
+      uris.map(fetchFromGCS(_, p))
+    }
+  }
+
+  protected def verifyUri(uri: URI): Unit = {
+    if (classOf[DirectPipelineRunner] isAssignableFrom opts.getRunner) {
+      require(Util.isLocalUri(uri), s"Not a local path $uri")
+    } else {
+      require(Util.isGcsUri(uri), s"Not a GCS path $uri")
+    }
   }
 
 }
@@ -63,12 +83,18 @@ private[scio] class MockDistCache[F](val value: F) extends DistCache[F] {
   override def apply(): F = value
 }
 
-private[scio] class DistCacheSingle[F](val uri: URI, val initFn: File => F, gcsOptions: GcsOptions)
-  extends GcsDistCache[F](gcsOptions) {
-  override protected def init(): F = initFn(fetch(uri, prefix(uri)))
+private[scio] class DistCacheSingle[F](val uri: URI, val initFn: File => F, options: GcsOptions)
+  extends FileDistCache[F](options) {
+
+  verifyUri(uri)
+
+  override protected def init(): F = initFn(prepareFiles(Seq(uri)).head)
 }
 
-private[scio] class DistCacheMulti[F](val uris: Seq[URI], val initFn: Seq[File] => F, gcsOptions: GcsOptions)
-  extends GcsDistCache[F](gcsOptions) {
-  override protected def init(): F = initFn(uris.map(uri => fetch(uri, prefix(uris: _*))))
+private[scio] class DistCacheMulti[F](val uris: Seq[URI], val initFn: Seq[File] => F, options: GcsOptions)
+  extends FileDistCache[F](options) {
+
+  uris.foreach(verifyUri)
+
+  override protected def init(): F = initFn(prepareFiles(uris))
 }
