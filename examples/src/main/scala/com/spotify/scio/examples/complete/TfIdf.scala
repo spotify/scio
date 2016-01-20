@@ -22,6 +22,7 @@ runMain
 */
 
 object TfIdf {
+  // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
@@ -76,4 +77,5 @@ object TfIdf {
 
     sc.close()
   }
+  // scalastyle:on method.length
 }

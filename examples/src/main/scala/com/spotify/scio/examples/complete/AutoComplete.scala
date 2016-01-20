@@ -71,6 +71,7 @@ object AutoComplete {
       .build()
   }
 
+  // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
     // set up example wiring
     val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
@@ -133,4 +134,6 @@ object AutoComplete {
     // CTRL-C to cancel the streaming pipeline
     dataflowUtils.waitToFinish(result.internal)
   }
+  // scalastyle:on method.length
+
 }

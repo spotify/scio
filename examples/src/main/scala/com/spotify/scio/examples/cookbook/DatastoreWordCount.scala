@@ -24,6 +24,7 @@ runMain
 */
 
 object DatastoreWordCount {
+  // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
     val (opts, args) = ScioContext.parseArguments[DataflowPipelineOptions](cmdlineArgs)
 
@@ -77,4 +78,5 @@ object DatastoreWordCount {
     }
     readFromDatastore()
   }
+  // scalastyle:on method.length
 }

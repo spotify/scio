@@ -23,7 +23,7 @@ object WordCountOrchestration {
 
   type FT[T] = Future[Tap[T]]
 
-  def main(cmdlineArgs: Array[String]) = {
+  def main(cmdlineArgs: Array[String]): Unit = {
     val (opts, args) = ScioContext.parseArguments[DataflowPipelineOptions](cmdlineArgs)
     opts.setRunner(classOf[DataflowPipelineRunner])
 
