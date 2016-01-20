@@ -11,6 +11,7 @@ import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.client.util.Charsets
 import com.google.api.services.storage.Storage
 import com.spotify.scio.bigquery.TableRow
+import com.spotify.scio.util.Util
 import org.apache.avro.file.DataFileStream
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 import org.apache.avro.specific.SpecificDatumReader
@@ -27,6 +28,12 @@ private object FileStorage {
 private trait FileStorage {
 
   protected val path: String
+
+  def delete(): Unit
+
+  protected def list: Seq[String]
+
+  protected def getObjectInputStream(path: String): InputStream
 
   def genericAvroFile: Iterator[GenericRecord] = {
     val reader = new GenericDatumReader[GenericRecord]()
@@ -47,20 +54,17 @@ private trait FileStorage {
     textFile.map(mapper.readValue(_, classOf[TableRow]))
   }
 
-  def delete(): Unit
-
   private def getDirectoryInputStream(path: String): InputStream = {
     val inputs = list.map(getObjectInputStream).asJava
     new SequenceInputStream(Collections.enumeration(inputs))
   }
 
-  protected def list: Seq[String]
-
-  protected def getObjectInputStream(path: String): InputStream
-
 }
 
 private class GcsStorage(protected val path: String) extends FileStorage {
+
+  private val uri = new URI(path)
+  require(Util.isGcsUri(uri), s"Not a GCS path: $path")
 
   lazy private val storage = new Storage.Builder(
     GoogleNetHttpTransport.newTrustedTransport(),
@@ -68,8 +72,6 @@ private class GcsStorage(protected val path: String) extends FileStorage {
     GoogleCredential.getApplicationDefault).build()
 
   override def delete(): Unit = {
-    val uri = new URI(path)
-    require(uri.getScheme == "gs", s"Not a GCS path: $path")
     val bucket = uri.getHost
     val prefix = uri.getPath.replaceAll("^/", "") + (if (uri.getPath.endsWith("/")) "" else "/")
     val objects = storage.objects()
@@ -83,8 +85,6 @@ private class GcsStorage(protected val path: String) extends FileStorage {
   }
 
   override protected def list: Seq[String] = {
-    val uri = new URI(path)
-    require(uri.getScheme == "gs", s"Not a GCS path: $path")
     val bucket = uri.getHost
     val prefix = uri.getPath.replaceAll("^/", "") + (if (uri.getPath.endsWith("/")) "" else "/")
     val pDelimiters = prefix.count(isDelimiter)
@@ -116,12 +116,10 @@ private class GcsStorage(protected val path: String) extends FileStorage {
 
 private class LocalStorage(protected val path: String)  extends FileStorage {
 
-  override def delete(): Unit = FileUtils.deleteDirectory(new File(path))
+  private val uri = new URI(path)
+  require(Util.isLocalUri(uri), s"Not a local path: $path")
 
-  def getDirectoryInputStream(path: String): InputStream = {
-    val inputs = list.map(getObjectInputStream).asJava
-    new SequenceInputStream(Collections.enumeration(inputs))
-  }
+  override def delete(): Unit = FileUtils.deleteDirectory(new File(uri))
 
   override protected def list: Seq[String] =
     FileUtils.listFiles(new File(path), null, false).asScala.map(_.getCanonicalPath).toSeq
