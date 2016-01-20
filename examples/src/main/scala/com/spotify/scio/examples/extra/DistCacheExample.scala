@@ -19,7 +19,7 @@ object DistCacheExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    val dc = sc.distCache(ExampleData.MONTHS) { f =>
+    val dc = sc.distCache(args.getOrElse("months", ExampleData.MONTHS)) { f =>
       scala.io.Source.fromFile(f).getLines().map { s =>
         val t = s.split(" ")
         (t(0).toInt, t(1))
