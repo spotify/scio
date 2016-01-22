@@ -157,8 +157,7 @@ object ScioBuild extends Build {
     file("examples"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
-        "org.slf4j" % "slf4j-simple" % "1.7.13",
-        "org.hamcrest" % "hamcrest-all" % "1.3"
+        "org.slf4j" % "slf4j-simple" % "1.7.13"
       ),
       addCompilerPlugin(paradiseDependency)
     )
