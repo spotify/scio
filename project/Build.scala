@@ -64,6 +64,7 @@ object ScioBuild extends Build {
     scioTest,
     scioBigQuery,
     scioBigTable,
+    scioHdfs,
     scioSchemas
   )
 
@@ -134,6 +135,20 @@ object ScioBuild extends Build {
         "com.google.cloud.bigtable" % "bigtable-hbase-dataflow" % "0.2.1" exclude ("org.slf4j", "slf4j-log4j12"),
         "org.apache.hadoop" % "hadoop-common" % "2.7.1" exclude ("org.slf4j", "slf4j-log4j12"),
         "org.apache.hbase" % "hbase-common" % "1.0.1"
+      )
+    )
+  ).dependsOn(
+    scioCore
+  )
+
+  lazy val scioHdfs: Project = Project(
+    "scio-hdfs",
+    file("hdfs"),
+    settings = buildSettings ++ Seq(
+      libraryDependencies ++= Seq(
+        "org.apache.avro" % "avro-mapred" % "1.7.7" classifier("hadoop2"),
+        "org.apache.hadoop" % "hadoop-client" % "2.7.1" exclude ("org.slf4j", "slf4j-log4j12"),
+        "org.hamcrest" % "hamcrest-all" % "1.3" % "test"
       )
     )
   ).dependsOn(
