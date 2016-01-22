@@ -1,0 +1,180 @@
+<?xml version="1.0"?>
+<!-- NOTE:  This file is managed by Puppet. -->
+
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Put site-specific property overrides in this file. -->
+
+<configuration>
+
+  <property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://hadoopha/</value>
+  </property>
+
+  <property>
+    <name>hadoop.tmp.dir</name>
+    <value>/tmp/hadoop/</value>
+  </property>
+
+  <property>
+    <name>io.file.buffer.size</name>
+    <value>65536</value>
+  </property>
+
+  <property>
+    <name>io.compression.codecs</name>
+    <value>org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.DefaultCodec,org.apache.hadoop.io.compress.SnappyCodec,org.apache.hadoop.io.compress.BZip2Codec</value>
+  </property>
+
+  <property>
+    <name>io.serializations</name>
+    <value>org.apache.hadoop.io.serializer.WritableSerialization</value>
+    <description>A list of serialization classes that can be used for
+      obtaining serializers and deserializers.</description>
+  </property>
+
+  <property>
+    <name>fs.trash.interval</name>
+    <value>1440</value>
+  </property>
+
+  <property>
+    <name>fs.trash.checkpoint.interval</name>
+    <value>60</value>
+  </property>
+
+  <property>
+    <name>ipc.client.idlethreshold</name>
+    <value>10000</value>
+  </property>
+
+  <property>
+    <name>ipc.server.listen.queue.size</name>
+    <value>10000</value>
+  </property>
+
+  <property>
+    <name>ipc.maximum.data.length</name>
+    <value>134217728</value>
+  </property>
+
+  <property>
+    <name>topology.script.file.name</name>
+    <value>/etc/hadoop/conf/topo.sh</value>
+  </property>
+
+  <property>
+    <name>ha.failover-controller.new-active.rpc-timeout.ms</name>
+    <value>1200000</value>
+    <description>
+      Timeout that the FC waits for the new active to become active
+    </description>
+  </property>
+
+  <property>
+    <name>ha.failover-controller.cli-check.rpc-timeout.ms</name>
+    <value>600000</value>
+    <description>
+      Timeout that the CLI (manual) FC waits for monitorHealth, getServiceState
+    </description>
+  </property>
+
+  <property>
+    <name>ha.failover-controller.graceful-fence.rpc-timeout.ms</name>
+    <value>30000</value>
+    <description>
+      Timeout that the FC waits for the old active to go to standby
+    </description>
+  </property>
+
+  <property>
+    <name>ha.health-monitor.rpc-timeout.ms</name>
+    <value>420000</value>
+    <description>
+      Timeout for the actual monitorHealth() calls.
+    </description>
+  </property>
+
+  <property>
+    <name>hadoop.rpc.protection</name>
+    <value>authentication</value>
+  </property>
+
+  <property>
+    <name>hadoop.security.authentication</name>
+    <value>simple</value>
+  </property>
+
+  <property>
+    <name>hadoop.security.authorization</name>
+    <value>false</value>
+  </property>
+
+  <property>
+    <name>hadoop.security.auth_to_local</name>
+    <value>
+      RULE:[2:$1@$0]([rn]m@.*)s/.*/yarn/
+      RULE:[2:$1@$0](jhs@.*)s/.*/mapred/
+      RULE:[2:$1@$0]([nd]n@.*)s/.*/hdfs/
+      RULE:[2:$1@$0](hm@.*)s/.*/hbase/
+      RULE:[2:$1@$0](rs@.*)s/.*/hbase/
+      DEFAULT</value>
+  </property>
+
+  <!-- Hue WebHDFS proxy user -->
+  <property>
+    <name>hadoop.proxyuser.hue.hosts</name>
+    <value>*</value>
+  </property>
+  <property>
+    <name>hadoop.proxyuser.hue.groups</name>
+    <value>*</value>
+  </property>
+
+  <property>
+    <name>hadoop.proxyuser.httpfs.hosts</name>
+    <value>*</value>
+  </property>
+  <property>
+    <name>hadoop.proxyuser.httpfs.groups</name>
+    <value>*</value>
+  </property>
+
+  <property>
+    <name>hadoop.proxyuser.hcat.groups</name>
+    <value>*</value>
+  </property>
+  <property>
+    <name>hadoop.proxyuser.hcat.hosts</name>
+    <value>*</value>
+  </property>
+
+  <property>
+    <name>hadoop.proxyuser.hive.groups</name>
+    <value>*</value>
+  </property>
+  <property>
+    <name>hadoop.proxyuser.hive.hosts</name>
+    <value>*</value>
+  </property>
+
+  <property>
+    <name>hadoop.proxyuser.apache_falcon.groups</name>
+    <value>*</value>
+  </property>
+  <property>
+    <name>hadoop.proxyuser.apache_falcon.hosts</name>
+    <value>*</value>
+  </property>
+
+  <property>
+    <name>hadoop.proxyuser.oozie.groups</name>
+    <value>*</value>
+  </property>
+  <property>
+    <name>hadoop.proxyuser.oozie.hosts</name>
+    <value>*</value>
+  </property>
+
+</configuration>
