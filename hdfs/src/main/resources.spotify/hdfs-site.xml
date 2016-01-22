@@ -1,0 +1,215 @@
+<?xml version="1.0"?>
+<!-- NOTE:  This file is managed by Puppet. -->
+
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Put site-specific property overrides in this file. -->
+
+<configuration>
+  <property>
+    <name>dfs.nameservices</name>
+    <value>hadoopha</value>
+  </property>
+
+  <property>
+    <name>dfs.ha.namenodes.hadoopha</name>
+    <value>A,B</value>
+  </property>
+
+
+  <property>
+    <name>dfs.namenode.rpc-address.hadoopha.A</name>
+    <value>lon4-namenode-a2.lon4.spotify.net:54310</value>
+  </property>
+  <property>
+    <name>dfs.namenode.http-address.hadoopha.A</name>
+    <value>lon4-namenode-a2.lon4.spotify.net:50070</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.rpc-address.hadoopha.B</name>
+    <value>lon4-namenode-a1.lon4.spotify.net:54310</value>
+  </property>
+  <property>
+    <name>dfs.namenode.http-address.hadoopha.B</name>
+    <value>lon4-namenode-a1.lon4.spotify.net:50070</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.shared.edits.dir</name>
+    <value>qjournal://lon4-journalnode-a1.lon4.spotify.net:8485;lon4-journalnode-a2.lon4.spotify.net:8485;lon4-journalnode-a3.lon4.spotify.net:8485;lon4-journalnode-a4.lon4.spotify.net:8485;lon4-journalnode-a5.lon4.spotify.net:8485/hadoopha</value>
+  </property>
+
+  <property>
+    <name>dfs.journalnode.edits.dir</name>
+    <value>/var/lib/hadoop-0.20/journal</value>
+  </property>
+
+  <property>
+    <name>dfs.client.failover.proxy.provider.hadoopha</name>
+    <value>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</value>
+  </property>
+
+  <!-- Quorum-based JournalNode HA does not require fencing.
+       In automatic-failover mode we use ssh fencing, but if it fails
+       we proceed with the failover anyway. -->
+  <property>
+    <name>dfs.ha.fencing.methods</name>
+    <value>
+      shell(/bin/true)
+    </value>
+  </property>
+
+  <property>
+    <name>dfs.ha.automatic-failover.enabled</name>
+    <value>false</value>
+  </property>
+
+
+  <property>
+    <name>dfs.image.transfer.timeout</name>
+    <value>2400000</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.checkpoint.txns</name>
+    <value>10000000</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.checkpoint.period</name>
+    <value>7200</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.checkpoint.dir</name>
+    <value>file:///var/lib/hadoop/namesecondary</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.checkpoint.edits.dir</name>
+    <value>${dfs.namenode.checkpoint.dir}</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.name.dir</name>
+    <value>file:///spotify/hadoop-0.20/dfs/name</value>
+  </property>
+
+  <property>
+    <name>dfs.datanode.data.dir</name>
+    <value></value>
+  </property>
+
+  <property>
+    <name>dfs.permissions.enabled</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>dfs.block.size</name>
+    <value>134217728</value>
+  </property>
+
+  <property>
+    <name>dfs.datanode.failed.volumes.tolerated</name>
+    <value>2</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.replication.min</name>
+    <value>1</value>
+  </property>
+
+  <property>
+    <name>dfs.replication</name>
+    <value>3</value>
+  </property>
+
+  <property>
+    <name>dfs.webhdfs.enabled</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>dfs.hosts.exclude</name>
+    <value>/etc/hadoop/conf/hosts.exclude</value>
+    <description>
+      A file that contains a list of DataNodes to exclude.
+      This is useful for decommissioning nodes.
+    </description>
+  </property>
+
+
+  <property>
+    <name>dfs.namenode.handler.count</name>
+    <value>240</value>
+  </property>
+
+  <property>
+    <name>dfs.datanode.handler.count</name>
+    <value>8</value>
+  </property>
+
+  <property>
+    <name>dfs.datanode.balance.bandwidthPerSec</name>
+    <value>20971520</value>
+  </property>
+
+  <property>
+    <name>dfs.blockreport.initialDelay</name>
+    <value>3600</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.safemode.extension</name>
+    <value>240000</value>
+  </property>
+
+  <property>
+    <name>dfs.datanode.max.transfer.threads</name>
+    <value>4096</value>
+  </property>
+
+  <property>
+    <name>dfs.client.read.shortcircuit</name>
+    <value>false</value>
+  </property>
+
+
+  <property>
+    <name>dfs.namenode.heartbeat.recheck-interval</name>
+    <value>300000</value>
+    <description>Formula for time for DN to become expire:
+      2 * heartbeatRecheckInterval + 10 * 1000 * heartbeatIntervalSeconds</description>
+  </property>
+
+  <property>
+    <name>dfs.namenode.name.dir.restore</name>
+    <value>true</value>
+    <description>Set to true to enable NameNode to attempt recovering a
+      previously failed dfs.namenode.name.dir. When enabled, a recovery of any
+      failed directory is attempted during checkpoint.</description>
+  </property>
+
+  <property>
+    <name>dfs.namenode.safemode.threshold-pct</name>
+    <value>0.999f</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.support.allow.format</name>
+    <value>false</value>
+    <description>Does HDFS namenode allow itself to be formatted?</description>
+  </property>
+
+  <property>
+    <name>dfs.blockreport.intervalMsec</name>
+    <value>43200000</value>
+  </property>
+
+  <property>
+    <name>ipc.server.max.response.size</name>
+    <value>5242880</value>
+  </property>
+</configuration>
