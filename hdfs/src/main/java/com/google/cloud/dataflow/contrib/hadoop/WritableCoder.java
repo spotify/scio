@@ -22,6 +22,7 @@ import com.google.cloud.dataflow.sdk.coders.StandardCoder;
 import com.google.cloud.dataflow.sdk.util.CloudObject;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -81,6 +82,10 @@ public class WritableCoder<T extends Writable> extends StandardCoder<T> {
   @Override
   public T decode(InputStream inStream, Context context) throws IOException {
     try {
+      if (type == NullWritable.class) {
+        // NullWritable has no default constructor
+        return (T) NullWritable.get();
+      }
       T t = type.newInstance();
       t.readFields(new DataInputStream(inStream));
       return t;
