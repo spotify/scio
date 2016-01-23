@@ -1,6 +1,8 @@
 package com.google.cloud.dataflow.contrib.hadoop;
 
+import com.google.cloud.dataflow.sdk.coders.AvroCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
+import com.google.cloud.dataflow.sdk.coders.KvCoder;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.cloud.dataflow.sdk.util.CoderUtils;
@@ -15,18 +17,24 @@ import java.io.IOException;
 
 public class AvroHadoopFileSource<T> extends HadoopFileSource<AvroKey<T>, NullWritable> {
 
-  private final Coder<T> avroCoder;
+  private final AvroCoder<T> avroCoder;
 
-  public AvroHadoopFileSource(String filepattern, Coder<T> avroCoder) {
+  public AvroHadoopFileSource(String filepattern, AvroCoder<T> avroCoder) {
     this(filepattern, avroCoder, null);
   }
 
-  public AvroHadoopFileSource(String filepattern, Coder<T> avroCoder, SerializableSplit serializableSplit) {
+  public AvroHadoopFileSource(String filepattern, AvroCoder<T> avroCoder, SerializableSplit serializableSplit) {
     super(filepattern,
         ClassUtil.<AvroKeyInputFormat<T>>castClass(AvroKeyInputFormat.class),
         ClassUtil.<AvroKey<T>>castClass(AvroKey.class),
         NullWritable.class, serializableSplit);
     this.avroCoder = avroCoder;
+  }
+
+  @Override
+  public Coder<KV<AvroKey<T>, NullWritable>> getDefaultOutputCoder() {
+    AvroWrapperCoder<AvroKey<T>, T> keyCoder = AvroWrapperCoder.of(this.getKeyClass(), avroCoder);
+    return KvCoder.of(keyCoder, WritableCoder.of(NullWritable.class));
   }
 
   @Override
