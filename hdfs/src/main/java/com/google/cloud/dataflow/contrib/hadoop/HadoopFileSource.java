@@ -93,11 +93,11 @@ import javax.annotation.Nullable;
 public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
   private static final long serialVersionUID = 0L;
 
-  private final String filepattern;
-  private final Class<? extends FileInputFormat<?, ?>> formatClass;
+  protected final String filepattern;
+  protected final Class<? extends FileInputFormat<?, ?>> formatClass;
   private final Class<K> keyClass;
   private final Class<V> valueClass;
-  private final SerializableSplit serializableSplit;
+  protected final SerializableSplit serializableSplit;
 
   /**
    * Creates a {@code Read} transform that will read from an {@code HadoopFileSource}
@@ -126,7 +126,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
   /**
    * Create a {@code HadoopFileSource} based on a file or a file pattern specification.
    */
-  private HadoopFileSource(String filepattern,
+  protected HadoopFileSource(String filepattern,
       Class<? extends FileInputFormat<?, ?>> formatClass, Class<K> keyClass,
       Class<V> valueClass) {
     this(filepattern, formatClass, keyClass, valueClass, null);
@@ -136,7 +136,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
    * Create a {@code HadoopFileSource} based on a single Hadoop input split, which won't be
    * split up further.
    */
-  private HadoopFileSource(String filepattern,
+  protected HadoopFileSource(String filepattern,
       Class<? extends FileInputFormat<?, ?>> formatClass, Class<K> keyClass,
       Class<V> valueClass, SerializableSplit serializableSplit) {
     this.filepattern = filepattern;
@@ -279,7 +279,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     private List<InputSplit> splits;
     private ListIterator<InputSplit> splitsIterator;
     private Configuration conf;
-    private RecordReader<K, V> currentReader;
+    protected RecordReader<K, V> currentReader;
     private KV<K, V> currentPair;
 
     /**
@@ -364,7 +364,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     }
 
     @SuppressWarnings("unchecked")
-    private KV<K, V> nextPair() throws IOException, InterruptedException {
+    protected KV<K, V> nextPair() throws IOException, InterruptedException {
       K key = currentReader.getCurrentKey();
       V value = currentReader.getCurrentValue();
       // clone Writable objects since they are reused between calls to RecordReader#nextKeyValue
