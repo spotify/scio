@@ -23,7 +23,7 @@ public class AvroHadoopFileSource<T> extends HadoopFileSource<AvroKey<T>, NullWr
     this(filepattern, avroCoder, null);
   }
 
-  public AvroHadoopFileSource(String filepattern, AvroCoder<T> avroCoder, SerializableSplit serializableSplit) {
+  public AvroHadoopFileSource(String filepattern, AvroCoder<T> avroCoder, HadoopFileSource.SerializableSplit serializableSplit) {
     super(filepattern,
         ClassUtil.<AvroKeyInputFormat<T>>castClass(AvroKeyInputFormat.class),
         ClassUtil.<AvroKey<T>>castClass(AvroKey.class),
