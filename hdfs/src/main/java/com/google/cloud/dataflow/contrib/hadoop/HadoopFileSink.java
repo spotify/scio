@@ -23,12 +23,20 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * A {@code Sink} for writing records to a Hadoop filesystem using a Hadoop file-based output format.
+ *
+ * @param <K> The type of keys to be written to the sink.
+ * @param <V> The type of values to be written to the sink.
+ */
 public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
 
   private static final String jtIdentifier = "scio_job";
 
   private final String path;
   private final Class<? extends FileOutputFormat<K, V>> formatClass;
+
+  // workaround to make Configuration serializable
   private final Map<String, String> map;
 
   public HadoopFileSink(String path, Class<? extends FileOutputFormat<K, V>> formatClass) {
@@ -39,6 +47,7 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
 
   public HadoopFileSink(String path, Class<? extends FileOutputFormat<K, V>> formatClass, Configuration conf) {
     this(path, formatClass);
+    // serialize conf to map
     for (Map.Entry<String, String> entry : conf) {
       map.put(entry.getKey(), entry.getValue());
     }
@@ -62,6 +71,7 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
 
   private Job jobInstance() throws IOException {
     Job job = Job.getInstance();
+    // deserialize map to conf
     Configuration conf = job.getConfiguration();
     for (Map.Entry<String, String> entry : map.entrySet()) {
       conf.set(entry.getKey(), entry.getValue());
@@ -78,6 +88,8 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
     private final Sink<KV<K, V>> sink;
     private final String path;
     private final Class<? extends FileOutputFormat<K, V>> formatClass;
+
+    // unique job ID for this sink
     private final int jobId;
 
     public HadoopWriteOperation(Sink<KV<K, V>> sink,
@@ -97,12 +109,13 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
 
     @Override
     public void finalize(Iterable<String> writerResults, PipelineOptions options) throws Exception {
+      // job successful
       Job job = ((HadoopFileSink<K, V>) getSink()).jobInstance();
       JobContext context = new JobContextImpl(job.getConfiguration(), jobID());
       FileOutputCommitter outputCommitter = new FileOutputCommitter(new Path(path), context);
       outputCommitter.commitJob(context);
 
-      Set<String> expected = Sets.newHashSet(writerResults);
+      // get actual output shards
       Set<String> actual = Sets.newHashSet();
       FileSystem fs = FileSystem.get(job.getConfiguration());
       FileStatus[] statuses = fs.listStatus(new Path(path), new PathFilter() {
@@ -112,13 +125,18 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
           return !name.startsWith("_") && !name.startsWith(".");
         }
       });
+
+      // get expected output shards
+      Set<String> expected = Sets.newHashSet(writerResults);
       for (FileStatus s : statuses) {
         String name = s.getPath().getName();
         int pos = name.indexOf('.');
         actual.add(pos > 0 ? name.substring(0, pos) : name);
       }
+
       Preconditions.checkState(actual.equals(expected), "Writer results and output files do not match");
 
+      // rename output shards to Hadoop style, i.e. part-r-00000.txt
       int i = 0;
       for (FileStatus s : statuses) {
         String name = s.getPath().getName();
@@ -160,7 +178,9 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
     private final String path;
     private final Class<? extends FileOutputFormat<K, V>> formatClass;
 
+    // unique hash for each task
     private int hash;
+
     private TaskAttemptContext context;
     private RecordWriter<K, V> recordWriter;
     private FileOutputCommitter outputCommitter;
@@ -180,6 +200,9 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
       Job job = ((HadoopFileSink<K, V>) getWriteOperation().getSink()).jobInstance();
       FileOutputFormat.setOutputPath(job, new Path(path));
 
+      // Each Writer is responsible for writing one bundle of elements and is represented by one
+      // unique Hadoop task based on uId/hash. All tasks share the same job ID. Since Dataflow
+      // handles retrying of failed bundles, each task has one attempt only.
       JobID jobId = ((HadoopWriteOperation) writeOperation).jobID();
       TaskID taskId = new TaskID(jobId, TaskType.REDUCE, hash);
       context = new TaskAttemptContextImpl(job.getConfiguration(), new TaskAttemptID(taskId, 0));
@@ -196,8 +219,11 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
 
     @Override
     public String close() throws Exception {
+      // task/attempt successful
       recordWriter.close(context);
       outputCommitter.commitTask(context);
+
+      // result is prefix of the output file name
       return String.format("part-r-%d", hash);
     }
 
