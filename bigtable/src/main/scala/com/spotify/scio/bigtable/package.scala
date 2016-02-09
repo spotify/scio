@@ -10,8 +10,16 @@ import org.apache.hadoop.hbase.client.{Mutation, Result, Scan}
 
 import scala.concurrent.Future
 
+/**
+ * Main package for BigTable APIs. Import all.
+ *
+ * {{{
+ * import com.spotify.scio.bigtable._
+ * }}}
+ */
 package object bigtable {
 
+  /** Enhanced version of [[ScioContext]] with BigTable methods. */
   // implicit class BigTableScioContext(private val self: ScioContext) extends AnyVal {
   implicit class BigTableScioContext(val self: ScioContext) {
 
@@ -44,6 +52,7 @@ package object bigtable {
 
   }
 
+  /** Enhanced version of [[SCollection]] with BigTable methods. */
   // implicit class BigTableSCollection[T](private val self: SCollection[T]) extends AnyVal {
   implicit class BigTableSCollection[T](val self: SCollection[T]) {
 
