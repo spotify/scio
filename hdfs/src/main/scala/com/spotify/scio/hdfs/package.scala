@@ -23,8 +23,8 @@ import scala.reflect.ClassTag
  * import com.spotify.scio.hdfs._
  * }}}
  *
- * Note that Hadoop configuration files, e.g. core-site.xml, hdfs-site.xml, must be present. They
- * can be packaged in src/main/resources directory.
+ * Note that Hadoop configuration files, e.g. `core-site.xml`, `hdfs-site.xml`, must be present.
+ * They can be packaged in src/main/resources directory.
  */
 package object hdfs {
 
