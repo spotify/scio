@@ -4,6 +4,8 @@ import com.google.api.services.bigquery.model.{TableRow => GTableRow}
 import org.joda.time.Instant
 import org.joda.time.format.DateTimeFormat
 
+import scala.collection.JavaConverters._
+
 /**
  * Main package for BigQuery APIs. Import all.
  *
@@ -32,17 +34,33 @@ package object bigquery {
   // implicit class RichTableRow(private val r: TableRow) extends AnyVal {
   implicit class RichTableRow(val r: TableRow) {
 
-    def getBoolean(name: AnyRef): Boolean = r.get(name).asInstanceOf[Boolean]
+    def getBoolean(name: AnyRef): Boolean = this.getValue(name, _.toString.toBoolean, false)
 
-    def getInt(name: AnyRef): Int = this.getString(name).toInt
+    def getInt(name: AnyRef): Int = this.getValue(name, _.toString.toInt, 0)
 
-    def getLong(name: AnyRef): Long = this.getString(name).toLong
+    def getLong(name: AnyRef): Long = this.getValue(name, _.toString.toLong, 0L)
 
-    def getFloat(name: AnyRef): Float = this.getString(name).toFloat
+    def getFloat(name: AnyRef): Float = this.getValue(name, _.toString.toFloat, 0.0f)
 
-    def getDouble(name: AnyRef): Double = this.getString(name).toDouble
+    def getDouble(name: AnyRef): Double = this.getValue(name, _.toString.toDouble, 0.0)
 
-    def getString(name: AnyRef): String = r.get(name).toString
+    def getString(name: AnyRef): String = this.getValue(name, _.toString, null)
+
+    def getTimestamp(name: AnyRef): Instant = this.getValue(name, v => Timestamp.parse(v.toString), null)
+
+    def getRepeated(name: AnyRef): Seq[AnyRef] =
+      this.getValue(name, _.asInstanceOf[java.util.List[AnyRef]].asScala, null)
+
+    def getRecord(name: AnyRef): TableRow = r.get(name).asInstanceOf[TableRow]
+
+    private def getValue[T](name: AnyRef, fn: AnyRef => T, default: T): T = {
+      val o = r.get(name)
+      if (o == null) {
+        default
+      } else {
+        fn(o)
+      }
+    }
 
   }
 
@@ -56,6 +74,9 @@ package object bigquery {
 
     /** Convert millisecond instant to BigQuery time stamp string. */
     def apply(instant: Long): String = formatter.print(instant) + " UTC"
+
+    /** Convert BigQuery time stamp string to Instant. */
+    def parse(timestamp: String): Instant = formatter.parseDateTime(timestamp.replaceAll(" UTC$", "")).toInstant
 
   }
 
