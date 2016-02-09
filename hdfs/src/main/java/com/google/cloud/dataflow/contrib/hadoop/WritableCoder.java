@@ -79,6 +79,7 @@ public class WritableCoder<T extends Writable> extends StandardCoder<T> {
     value.write(new DataOutputStream(outStream));
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public T decode(InputStream inStream, Context context) throws IOException {
     try {
