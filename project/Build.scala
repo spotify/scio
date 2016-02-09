@@ -18,7 +18,7 @@ object BuildSettings {
     crossScalaVersions := Seq("2.10.6", "2.11.7"),
     scalacOptions      ++= Seq("-target:jvm-1.7", "-deprecation", "-feature", "-unchecked"),
     scalacOptions in (Compile, doc)    ++= Seq("-groups", "-skip-packages", "com.google"),
-    javacOptions in (Compile, compile) ++= Seq("-source", "1.7", "-target", "1.7"),
+    javacOptions in (Compile, compile) ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked"),
 
     // Mappings from dependencies to external ScalaDoc/JavaDoc sites
     apiMappings ++= {
