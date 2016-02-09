@@ -15,6 +15,11 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 
 import java.io.IOException;
 
+/**
+ * A {@code BoundedSource} for reading Avro files resident in a Hadoop filesystem.
+ *
+ * @param <T> The type of the Avro records to be read from the source.
+ */
 public class AvroHadoopFileSource<T> extends HadoopFileSource<AvroKey<T>, NullWritable> {
 
   private final AvroCoder<T> avroCoder;
@@ -68,6 +73,7 @@ public class AvroHadoopFileSource<T> extends HadoopFileSource<AvroKey<T>, NullWr
       AvroKey<T> key = currentReader.getCurrentKey();
       NullWritable value = currentReader.getCurrentValue();
 
+      // clone the record to work around identical element issue due to object reuse
       Coder<T> avroCoder = ((AvroHadoopFileSource<T>) this.getCurrentSource()).avroCoder;
       key = new AvroKey(CoderUtils.clone(avroCoder, key.datum()));
 
