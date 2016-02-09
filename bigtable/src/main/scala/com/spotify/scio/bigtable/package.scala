@@ -52,7 +52,7 @@ package object bigtable {
 
   }
 
-  /** Enhanced version of [[SCollection]] with BigTable methods. */
+  /** Enhanced version of [[com.spotify.scio.values.SCollection]] with BigTable methods. */
   // implicit class BigTableSCollection[T](private val self: SCollection[T]) extends AnyVal {
   implicit class BigTableSCollection[T](val self: SCollection[T]) {
 
