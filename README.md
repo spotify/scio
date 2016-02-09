@@ -7,7 +7,7 @@ See the [current API documentation](http://spotify.github.io/scio/) for more inf
 
 # Getting Started
 
-First install the [Google Cloud SDK](https://cloud.google.com/sdk/) and create a [Google Cloud Storage](https://cloud.google.com/storage/) bucket for your project, e.g. `gs://my-bucket`.
+First install the [Google Cloud SDK](https://cloud.google.com/sdk/) and create a [Google Cloud Storage](https://cloud.google.com/storage/) bucket for your project, e.g. `gs://my-bucket`. Make sure it's in the same region as the BigQuery datasets you want to access and where you want Dataflow to launch workers on GCE.
 
 Then clone this repository and publish artifacts locally.
 
@@ -21,8 +21,10 @@ sbt publish-local
 
 You can execute the examples locally from SBT. By default pipelines will be executed using the `DirectPipelineRunner` and local filesystem will be used for input and output.
 
+The `-Dbigquery.project=<BILLING_PROJECT>` argument is required to compile the typed BigQuery example since it triggers BigQuery requests at compile time.
+
 ```
-neville@localhost scio $ sbt
+neville@localhost scio $ sbt -Dbigquery.project=<BILLING_PROJECT>
 [info] ...
 > project scio-examples
 [info] ...
@@ -31,22 +33,25 @@ neville@localhost scio $ sbt
 --output=<OUTPUT DIRECTORY>
 ```
 
-You can use the `BlockingDataflowPipelineRunner` or `DataflowPipelineRunner` to execute pipelines on Google Cloud Dataflow Service using managed resources in the Google Cloud Platform.
+You can use the `BlockingDataflowPipelineRunner` or `DataflowPipelineRunner` to execute pipelines on Google Cloud Dataflow Service using managed resources in the Google Cloud Platform. `BlockingDataflowPipelineRunner` will block the main process until job completes while `DataflowPipelineRunner` will submit the job and exit immediately.
 
 ```
-neville@localhost scio $ sbt
+neville@localhost scio $ sbt -Dbigquery.project=<BILLING_PROJECT>
 [info] ...
 > project scio-examples
 [info] ...
 > runMain com.spotify.scio.examples.WordCount \
 --project=<YOUR CLOUD PLATFORM PROJECT NAME> \
 --stagingLocation=<YOUR CLOUD STORAGE LOCATION> \
+--zone=<GCE AVAILABILITY ZONE> \
 --runner=BlockingDataflowPipelineRunner \
 --input=<INPUT FILE PATTERN> \
 --output=<OUTPUT DIRECTORY>
 ```
 
 Your Cloud Storage location should be entered in the form of `gs://bucket/path/to/staging/directory`. The Cloud Platform project refers to its name (not number).
+
+GCE availability zone should be in the same region as the BigQuery datasets and GCS bucket.
 
 # BigQuery Settings
 
