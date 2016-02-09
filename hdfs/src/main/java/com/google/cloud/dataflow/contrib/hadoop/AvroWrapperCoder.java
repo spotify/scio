@@ -17,6 +17,13 @@ import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * A {@code AvroWrapperCoder} is a {@link com.google.cloud.dataflow.sdk.coders.Coder} for a Java
+ * class that implements {@link org.apache.avro.mapred.AvroWrapper}.
+ *
+ * @param <W> the type of the wrapper
+ * @param <D> the type of the datum
+ */
 public class AvroWrapperCoder<W extends AvroWrapper<D>, D> extends StandardCoder<W> {
   private static final long serialVersionUID = 0L;
 
@@ -28,6 +35,11 @@ public class AvroWrapperCoder<W extends AvroWrapper<D>, D> extends StandardCoder
     this.datumCoder = datumCoder;
   }
 
+  /**
+   * Return a {@code AvroWrapperCoder} instance for the provided element class.
+   * @param <W> the type of the wrapper
+   * @param <D> the type of the datum
+   */
   public static <W extends AvroWrapper<D>, D>
   AvroWrapperCoder<W, D>of(Class<W> wrapperType, AvroCoder<D> datumCoder) {
     return new AvroWrapperCoder<>(wrapperType, datumCoder);
