@@ -40,7 +40,7 @@ object ScioBuild extends Build {
   import BuildSettings._
   import SiteSettings._
 
-  val sdkVersion = "1.3.0"
+  val sdkVersion = "1.4.0"
 
   val macrosVersion = "2.0.1"
   val scalaTestVersion = "2.2.6"
