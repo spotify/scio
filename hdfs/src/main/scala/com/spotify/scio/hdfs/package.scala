@@ -54,7 +54,7 @@ package object hdfs {
 
   }
 
-  /** Enhanced version of [[com.spotify.scio.values.SCollection]] with HDFS methods. */
+  /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with HDFS methods. */
   // TODO: scala 2.11
   // implicit class HdfsSCollection[T](private val self: SCollection[T]) extends AnyVal {
   implicit class HdfsSCollection[T: ClassTag](val self: SCollection[T]) {
