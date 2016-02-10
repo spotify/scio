@@ -79,8 +79,8 @@ class BigQueryClient private (private val projectId: String, credential: Credent
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[BigQueryClient])
 
-  private val TABLE_PREFIX = "dataflow_query"
-  private val JOB_ID_PREFIX = "dataflow_query"
+  private val TABLE_PREFIX = "scio_query"
+  private val JOB_ID_PREFIX = "scio_query"
   private val TIME_FORMATTER = DateTimeFormat.forPattern("yyyyMMddHHmmss")
   private val PERIOD_FORMATTER = new PeriodFormatterBuilder()
     .appendHours().appendSuffix("h")
