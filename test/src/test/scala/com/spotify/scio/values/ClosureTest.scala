@@ -14,7 +14,7 @@ class ClosureTest extends PipelineSpec {
   it should "support def fn()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3))
-      def fn(x: Int) = x * 10
+      def fn(x: Int): Int = x * 10
       p.map(fn).internal should containInAnyOrder (Seq(10, 20, 30))
     }
   }
@@ -27,7 +27,7 @@ class ClosureTest extends PipelineSpec {
     }
   }
 
-  def classFn(x: Int) = x * 10
+  def classFn(x: Int): Int = x * 10
 
   it should "support class fn" in {
     runWithContext { sc =>
@@ -46,5 +46,5 @@ class ClosureTest extends PipelineSpec {
 }
 
 object ClosureTest {
-  def objectFn(x: Int) = x * 10
+  def objectFn(x: Int): Int = x * 10
 }

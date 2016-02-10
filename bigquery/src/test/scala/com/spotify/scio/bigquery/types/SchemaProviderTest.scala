@@ -7,7 +7,7 @@ class SchemaProviderTest extends FlatSpec with Matchers {
 
   import Schemas._
 
-  def basicFields(mode: String) =
+  private def basicFields(mode: String) =
     s"""
        |"fields": [
        |  {"mode": "$mode", "name": "f1", "type": "INTEGER"},
@@ -32,7 +32,7 @@ class SchemaProviderTest extends FlatSpec with Matchers {
     SchemaProvider.schemaOf[P3] should equal (parseSchema(s"{${basicFields("REPEATED")}}"))
   }
 
-  def recordFields(mode: String) =
+  private def recordFields(mode: String) =
     s"""
        |{
        |  "fields": [

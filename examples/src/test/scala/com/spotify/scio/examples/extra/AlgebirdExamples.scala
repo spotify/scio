@@ -59,7 +59,7 @@ class AlgebirdExamples extends PipelineSpec {
   }
 
   it should "support sum and aggregate with QTree" in {
-    def contains(qt: QTree[Long], p: Double)(v: Long) = {
+    def contains(qt: QTree[Long], p: Double)(v: Long): Boolean = {
       val (l, u) = qt.quantileBounds(p)
       l <= v && v <= u
     }

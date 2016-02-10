@@ -13,11 +13,11 @@ import scala.concurrent.{Await, Future}
 
 class TapTest extends PipelineSpec {
 
-  def makeRecords(sc: ScioContext) =
+  private def makeRecords(sc: ScioContext) =
     sc.parallelize(Seq(1, 2, 3))
       .map(i => (newSpecificRecord(i), newGenericRecord(i)))
 
-  def expectedRecords = Set(1, 2, 3).map(i => (newSpecificRecord(i), newGenericRecord(i)))
+  val expectedRecords = Set(1, 2, 3).map(i => (newSpecificRecord(i), newGenericRecord(i)))
 
   "Future" should "support saveAsInMemoryTap" in {
     runWithInMemoryFuture {
@@ -114,6 +114,6 @@ class TapTest extends PipelineSpec {
     Await.result(f, Duration.Inf).value
   }
 
-  def tmpDir = new File(new File(sys.props("java.io.tmpdir")), "scio-test-" + UUID.randomUUID().toString)
+  def tmpDir: File = new File(new File(sys.props("java.io.tmpdir")), "scio-test-" + UUID.randomUUID().toString)
 
 }

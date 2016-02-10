@@ -11,9 +11,9 @@ class ConverterProviderTest extends FlatSpec with Matchers {
 
   import Schemas._
 
-  def jl[T](x: T*): java.util.List[T] = new java.util.ArrayList[T](x.asJava)
+  private def jl[T](x: T*)= new java.util.ArrayList[T](x.asJava)
 
-  def linkedHashMap(pairs: (String, Any)*) =
+  private def linkedHashMap(pairs: (String, Any)*) =
     Maps.newLinkedHashMap[String, AnyRef](Map(pairs: _*).asJava.asInstanceOf[java.util.Map[String, AnyRef]])
 
   val NOW = Instant.now()

@@ -25,7 +25,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
     }
   }
 
-  def roundTrip[T: ClassTag](value: T) = new RoundTripMatcher[T](value)
+  private def roundTrip[T: ClassTag](value: T) = new RoundTripMatcher[T](value)
 
   "KryoAtomicCoder" should "support Scala collections" in {
     cf should roundTrip (Seq(1, 2, 3))

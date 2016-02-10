@@ -6,7 +6,7 @@ import com.spotify.scio.testing._
 
 class FilterExamplesTest extends PipelineSpec {
 
-  def gsodRow(year: Int, month: Int, day: Int, meanTemp: Double) =
+  private def gsodRow(year: Int, month: Int, day: Int, meanTemp: Double) =
     TableRow("year" -> year, "month" -> month, "day" -> day, "mean_temp" -> meanTemp)
 
   val input = Seq(

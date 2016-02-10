@@ -29,7 +29,7 @@ class RichCoderRegistryTest extends FlatSpec with Matchers {
     }
   }
 
-  def roundTrip[T: ClassTag](value: T) = new RoundTripMatcher[T](value)
+  private def roundTrip[T: ClassTag](value: T) = new RoundTripMatcher[T](value)
 
   "RichCoderRegistry" should "support Scala primitives" in {
     registry should roundTrip (10)
