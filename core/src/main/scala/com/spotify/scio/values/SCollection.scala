@@ -1,3 +1,5 @@
+// scalastyle:off file.size.limit
+
 package com.spotify.scio.values
 
 import java.io.File
@@ -882,3 +884,5 @@ private[scio] class SCollectionImpl[T: ClassTag](val internal: PCollection[T],
   extends SCollection[T] {
   protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
 }
+
+// scalastyle:on file.size.limit
