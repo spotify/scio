@@ -51,7 +51,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Double] => q"$s.toDouble"
         case t if t =:= typeOf[Boolean] => q"$s.toBoolean"
         case t if t =:= typeOf[String] => q"$s"
-        case t if t =:= typeOf[Instant] => q"_root_.org.joda.time.Instant.parse($s)"
+        case t if t =:= typeOf[Instant] => q"_root_.com.spotify.scio.bigquery.Timestamp.parse($s)"
         case t if isCaseClass(c)(t) =>
           // TODO: scala 2.11
           // val fn = TermName("r" + t.typeSymbol.name)
@@ -134,7 +134,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Double] => tree
         case t if t =:= typeOf[Boolean] => tree
         case t if t =:= typeOf[String] => tree
-        case t if t =:= typeOf[Instant] => tree
+        case t if t =:= typeOf[Instant] => q"_root_.com.spotify.scio.bigquery.Timestamp($tree)"
         case t if isCaseClass(c)(t) =>
           // TODO: scala 2.11
           // val fn = TermName("r" + t.typeSymbol.name)
