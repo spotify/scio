@@ -73,6 +73,7 @@ More Dataflow pipeline specific options available can be found in [`DataflowPipe
 - `--maxNumWorkers`: [Experimental] The maximum number of workers to use when using workerpool autoscaling. (default=20)
 - `--diskSizeGb`: Remote worker disk size, in gigabytes, or 0 to use the default size.
 - `--workerMachineType`: Machine type to create Dataflow worker VMs as. See [https://cloud.google.com/compute/docs/machine-types](https://cloud.google.com/compute/docs/machine-types) for a list of valid options. If unset, the Dataflow service will choose a reasonable default.
+- `--network`: GCE network for launching workers.
 
 # Scio vs. Spark
 
@@ -97,3 +98,5 @@ Scio includes the following artifacts:
 - `scio-bigtable`: Add-on for Bigtable
 - `scio-extra`: Extra utilities for working with collections, Breeze, etc.
 - `scio-hdfs`: Add-on for HDFS
+
+To access HDFS from a Scio job, Hadoop configuration files (`core-site.xml`, `hdfs-site.xml`, etc.) must be present in `src/main/resources` and `--network` should be set to one that has access to the Hadoop cluster.
