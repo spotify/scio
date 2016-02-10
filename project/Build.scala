@@ -64,6 +64,7 @@ object ScioBuild extends Build {
     scioTest,
     scioBigQuery,
     scioBigTable,
+    scioExtra,
     scioHdfs,
     scioSchemas
   )
@@ -79,9 +80,7 @@ object ScioBuild extends Build {
         "com.twitter" %% "chill" % "0.7.2",
         "com.twitter" %% "chill-avro" % "0.7.2",
         "commons-io" % "commons-io" % "2.4",
-        "org.apache.commons" % "commons-math3" % "3.6",
-        // TODO: move this and com.spotify.scio.extra to a separate module.
-        "org.scalanlp" %% "breeze" % "0.12"
+        "org.apache.commons" % "commons-math3" % "3.6"
       )
     )
   ).dependsOn(
@@ -139,6 +138,19 @@ object ScioBuild extends Build {
     )
   ).dependsOn(
     scioCore
+  )
+
+  lazy val scioExtra: Project = Project(
+    "scio-extra",
+    file("extra"),
+    settings = buildSettings ++ Seq(
+      libraryDependencies ++= Seq(
+        "com.google.guava" % "guava" % "19.0",
+        "com.twitter" %% "algebird-core" % "0.11.0",
+        "org.scalanlp" %% "breeze" % "0.12",
+        "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+      )
+    )
   )
 
   lazy val scioHdfs: Project = Project(
