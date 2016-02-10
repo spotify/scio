@@ -37,6 +37,7 @@ package object hdfs {
     def hdfsTextFile(path: String): SCollection[String] = {
       val src = HadoopFileSource.from(path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text])
       sc.wrap(sc.applyInternal(Read.from(src)))
+        .setName(path)
         .map(_.getValue.toString)
     }
 
@@ -49,6 +50,7 @@ package object hdfs {
       }
       val src = new AvroHadoopFileSource[T](path, coder)
       sc.wrap(sc.applyInternal(Read.from(src)))
+        .setName(path)
         .map(_.getKey.datum())
     }
 

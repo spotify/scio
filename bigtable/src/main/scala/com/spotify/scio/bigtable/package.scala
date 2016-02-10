@@ -48,7 +48,9 @@ package object bigtable {
     }
 
     private def read(config: CloudBigtableScanConfiguration): SCollection[Result] =
-      self.wrap(self.applyInternal(Read.from(CloudBigtableIO.read(config))))
+      self
+        .wrap(self.applyInternal(Read.from(CloudBigtableIO.read(config))))
+        .setName(s"${config.getProjectId} ${config.getClusterId} ${config.getZoneId} ${config.getTableId}")
 
   }
 
