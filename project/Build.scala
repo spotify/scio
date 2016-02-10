@@ -160,6 +160,7 @@ object ScioBuild extends Build {
       libraryDependencies ++= Seq(
         "org.apache.avro" % "avro-mapred" % "1.7.7" classifier("hadoop2"),
         "org.apache.hadoop" % "hadoop-client" % "2.7.1" exclude ("org.slf4j", "slf4j-log4j12"),
+        "junit" % "junit" % "4.12" % "test",
         "org.hamcrest" % "hamcrest-all" % "1.3" % "test"
       )
     )
@@ -174,8 +175,6 @@ object ScioBuild extends Build {
   ).settings(
     publish := {},
     publishLocal := {}
-  ).dependsOn(
-    scioBigQuery
   )
 
   lazy val scioExamples: Project = Project(
