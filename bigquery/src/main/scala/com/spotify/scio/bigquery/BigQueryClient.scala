@@ -312,7 +312,7 @@ object BigQueryClient {
   val STAGING_DATASET_KEY: String = "bigquery.staging_dataset"
 
   /** Default staging dataset. */
-  val STAGING_DATASET_DEFAULT: String = "bigquery_staging"
+  val STAGING_DATASET_DEFAULT: String = "scio_bigquery_staging"
 
   /** System property key for staging dataset location. */
   val STAGING_DATASET_LOCATION_KEY: String = "bigquery.staging_dataset.location"
