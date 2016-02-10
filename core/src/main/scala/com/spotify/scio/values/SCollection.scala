@@ -348,7 +348,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     val normalizedCumWeights = weights.map(_ / sum).scanLeft(0.0d)(_ + _)
     val m = TreeMap(normalizedCumWeights.zipWithIndex: _*)  // Map[lower bound, split]
 
-    val sides = (1 to weights.length - 1).map(_ => SideOutput[T]())
+    val sides = (1 until weights.length).map(_ => SideOutput[T]())
     val (head, tail) = this
       .withSideOutputs(sides: _*)
       .flatMap { (x, c) =>
