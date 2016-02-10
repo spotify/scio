@@ -10,6 +10,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.services.bigquery.Bigquery.Builder
 import com.google.api.services.bigquery.{BigqueryScopes, Bigquery}
 import com.google.api.services.bigquery.model._
 import com.google.cloud.dataflow.sdk.options.{PipelineOptionsFactory, GcpOptions}
@@ -71,7 +72,10 @@ object Util {
 /** A simple BigQuery client. */
 class BigQueryClient private (private val projectId: String, credential: Credential) {
 
-  private val bigquery: Bigquery = new Bigquery(new NetHttpTransport, new JacksonFactory, credential)
+  private val bigquery: Bigquery =
+    new Builder(new NetHttpTransport, new JacksonFactory, credential)
+      .setApplicationName("scio")
+      .build()
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[BigQueryClient])
 
