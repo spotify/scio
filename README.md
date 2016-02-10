@@ -28,8 +28,8 @@ neville@localhost scio $ sbt -Dbigquery.project=<BILLING_PROJECT>
 [info] ...
 > project scio-examples
 [info] ...
-> runMain com.spotify.scio.examples.WordCount \
---input=<INPUT FILE PATTERN> \
+> runMain com.spotify.scio.examples.WordCount
+--input=<INPUT FILE PATTERN>
 --output=<OUTPUT DIRECTORY>
 ```
 
@@ -40,12 +40,12 @@ neville@localhost scio $ sbt -Dbigquery.project=<BILLING_PROJECT>
 [info] ...
 > project scio-examples
 [info] ...
-> runMain com.spotify.scio.examples.WordCount \
---project=<YOUR CLOUD PLATFORM PROJECT NAME> \
---stagingLocation=<YOUR CLOUD STORAGE LOCATION> \
---zone=<GCE AVAILABILITY ZONE> \
---runner=BlockingDataflowPipelineRunner \
---input=<INPUT FILE PATTERN> \
+> runMain com.spotify.scio.examples.WordCount
+--project=<YOUR CLOUD PLATFORM PROJECT NAME>
+--stagingLocation=<YOUR CLOUD STORAGE LOCATION>
+--zone=<GCE AVAILABILITY ZONE>
+--runner=BlockingDataflowPipelineRunner
+--input=<INPUT FILE PATTERN>
 --output=<OUTPUT DIRECTORY>
 ```
 
