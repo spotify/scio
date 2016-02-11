@@ -9,7 +9,7 @@ import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
 import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
-import com.spotify.scio.util.Util
+import com.spotify.scio.util.ScioUtil
 import org.slf4j.{Logger, LoggerFactory}
 
 /** Encapsulate files on Google Cloud Storage that can be distributed to all workers. */
@@ -71,9 +71,9 @@ private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistC
 
   protected def verifyUri(uri: URI): Unit = {
     if (classOf[DirectPipelineRunner] isAssignableFrom opts.getRunner) {
-      require(Util.isLocalUri(uri), s"Not a local path $uri")
+      require(ScioUtil.isLocalUri(uri), s"Not a local path $uri")
     } else {
-      require(Util.isGcsUri(uri), s"Not a GCS path $uri")
+      require(ScioUtil.isGcsUri(uri), s"Not a GCS path $uri")
     }
   }
 

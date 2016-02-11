@@ -11,7 +11,7 @@ import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.client.util.Charsets
 import com.google.api.services.storage.Storage
 import com.spotify.scio.bigquery.TableRow
-import com.spotify.scio.util.Util
+import com.spotify.scio.util.ScioUtil
 import org.apache.avro.file.DataFileStream
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 import org.apache.avro.specific.SpecificDatumReader
@@ -64,7 +64,7 @@ private trait FileStorage {
 private class GcsStorage(protected val path: String) extends FileStorage {
 
   private val uri = new URI(path)
-  require(Util.isGcsUri(uri), s"Not a GCS path: $path")
+  require(ScioUtil.isGcsUri(uri), s"Not a GCS path: $path")
 
   lazy private val storage = new Storage.Builder(
     GoogleNetHttpTransport.newTrustedTransport(),
@@ -117,7 +117,7 @@ private class GcsStorage(protected val path: String) extends FileStorage {
 private class LocalStorage(protected val path: String)  extends FileStorage {
 
   private val uri = new URI(path)
-  require(Util.isLocalUri(uri), s"Not a local path: $path")
+  require(ScioUtil.isLocalUri(uri), s"Not a local path: $path")
 
   override def delete(): Unit = FileUtils.deleteDirectory(new File(uri))
 
