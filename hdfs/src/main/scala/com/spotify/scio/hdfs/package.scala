@@ -4,6 +4,7 @@ import com.google.cloud.dataflow.contrib.hadoop.{AvroHadoopFileSource, HadoopFil
 import com.google.cloud.dataflow.sdk.coders.AvroCoder
 import com.google.cloud.dataflow.sdk.io.{Read, Write}
 import com.google.cloud.dataflow.sdk.values.KV
+import com.spotify.scio.io.Tap
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
@@ -15,6 +16,7 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
 
+import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 /**
@@ -65,15 +67,17 @@ package object hdfs {
     /** Save this SCollection as a text file on HDFS. Note that elements must be of type String. */
     // TODO: Future[Tap[T]]
     // TODO: numShards
-    def saveAsHdfsTextFile(path: String)(implicit ev: T <:< String): Unit =
+    def saveAsHdfsTextFile(path: String)(implicit ev: T <:< String): Future[Tap[String]] = {
       self
         .map(x => KV.of(NullWritable.get(), new Text(x.asInstanceOf[String])))
         .applyInternal(Write.to(new HadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]])))
+      Future.failed(new NotImplementedError("HDFS future not implemented"))
+    }
 
     /** Save this SCollection as an Avro file on HDFS. Note that elements must be of type IndexedRecord. */
     // TODO: Future[Tap[T]]
     // TODO: numShards
-    def saveAsHdfsAvroFile(path: String, schema: Schema = null)(implicit ev: T <:< IndexedRecord): Unit = {
+    def saveAsHdfsAvroFile(path: String, schema: Schema = null)(implicit ev: T <:< IndexedRecord): Future[Tap[T]] = {
       val job = Job.getInstance()
       if (schema != null) {
         AvroJob.setOutputKeySchema(job, schema)
@@ -84,6 +88,7 @@ package object hdfs {
       self
         .map(x => KV.of(new AvroKey(x), NullWritable.get()))
         .applyInternal(Write.to(new HadoopFileSink(path, classOf[AvroKeyOutputFormat[T]], job.getConfiguration)))
+      Future.failed(new NotImplementedError("HDFS future not implemented"))
     }
 
   }
