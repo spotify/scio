@@ -4,7 +4,7 @@ import java.util.{List => JList}
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.scio.bigquery.types.MacroUtil._
-import com.spotify.scio.bigquery.{BigQueryClient, Util}
+import com.spotify.scio.bigquery.{BigQueryClient, BigQueryUtil}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Map => MMap}
@@ -32,7 +32,7 @@ private[types] object TypeProvider {
   // def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
   def schemaImpl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     val schemaString = extractStrings(c, "Missing schema").head
-    val schema = Util.parseSchema(schemaString)
+    val schema = BigQueryUtil.parseSchema(schemaString)
     schemaToType(c)(schema, annottees, Nil, Nil)
   }
 

@@ -27,7 +27,7 @@ import scala.collection.JavaConverters._
 import scala.util.{Try, Random}
 
 /** Utility for BigQuery data types. */
-object Util {
+object BigQueryUtil {
 
   // Ported from com.google.cloud.dataflow.sdk.io.BigQueryIO
 
@@ -59,7 +59,7 @@ object Util {
 
   /** Extract tables from a SQL query. */
   def extractTables(sqlQuery: String): Set[TableReference] = {
-    val matcher = Util.QUERY_TABLE_SPEC.matcher(sqlQuery)
+    val matcher = BigQueryUtil.QUERY_TABLE_SPEC.matcher(sqlQuery)
     val b = Set.newBuilder[TableReference]
     while (matcher.find()) {
       b += parseTableSpec(matcher.group())
@@ -101,13 +101,13 @@ class BigQueryClient private (private val projectId: String, credential: Credent
 
     // Create temporary table view and get schema
     val table = temporaryTable(TABLE_PREFIX)
-    logger.info(s"Creating temporary view ${Util.toTableSpec(table)}")
+    logger.info(s"Creating temporary view ${BigQueryUtil.toTableSpec(table)}")
     val view = new ViewDefinition().setQuery(sqlQuery)
     val viewTable = new Table().setView(view).setTableReference(table)
     val schema = bigquery.tables().insert(table.getProjectId, table.getDatasetId, viewTable).execute().getSchema
 
     // Delete temporary table
-    logger.info(s"Deleting temporary view ${Util.toTableSpec(table)}")
+    logger.info(s"Deleting temporary view ${BigQueryUtil.toTableSpec(table)}")
     bigquery.tables().delete(table.getProjectId, table.getDatasetId, table.getTableId).execute()
 
     schema
@@ -121,17 +121,17 @@ class BigQueryClient private (private val projectId: String, credential: Credent
   }
 
   /** Get rows from a table. */
-  def getTableRows(tableSpec: String): Iterator[TableRow] = getTableRows(Util.parseTableSpec(tableSpec))
+  def getTableRows(tableSpec: String): Iterator[TableRow] = getTableRows(BigQueryUtil.parseTableSpec(tableSpec))
 
   /** Get rows from a table. */
   def getTableRows(table: TableReference): Iterator[TableRow] =
     BigQueryTableRowIterator.fromTable(table, bigquery).asScala
 
   /** Get schema from a table. */
-  def getTableSchema(tableSpec: String): TableSchema = getTableSchema(Util.parseTableSpec(tableSpec))
+  def getTableSchema(tableSpec: String): TableSchema = getTableSchema(BigQueryUtil.parseTableSpec(tableSpec))
 
   /** Get schema from a table. */
-  def getTableSchema(table: TableReference): TableSchema = withCacheKey(Util.toTableSpec(table)) {
+  def getTableSchema(table: TableReference): TableSchema = withCacheKey(BigQueryUtil.toTableSpec(table)) {
     getTable(table).getSchema
   }
 
@@ -142,22 +142,22 @@ class BigQueryClient private (private val projectId: String, credential: Credent
     logger.info(s"Executing BigQuery for query: $sqlQuery")
 
     try {
-      val sourceTimes = Util.extractTables(sqlQuery).map(t => BigInt(getTable(t).getLastModifiedTime))
+      val sourceTimes = BigQueryUtil.extractTables(sqlQuery).map(t => BigInt(getTable(t).getLastModifiedTime))
       val table = getCacheDestinationTable(sqlQuery).get
       val time = BigInt(getTable(table).getLastModifiedTime)
       if (sourceTimes.forall(_ < time)) {
-        logger.info(s"Cache hit, existing destination table: ${Util.toTableSpec(table)}")
+        logger.info(s"Cache hit, existing destination table: ${BigQueryUtil.toTableSpec(table)}")
         (table, None)
       } else {
         val temp = temporaryTable(TABLE_PREFIX)
-        logger.info(s"Cache invalid, new destination table: ${Util.toTableSpec(temp)}")
+        logger.info(s"Cache invalid, new destination table: ${BigQueryUtil.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
         (temp, Some(makeQuery(sqlQuery, temp)))
       }
     } catch {
       case _: Throwable =>
         val temp = temporaryTable(TABLE_PREFIX)
-        logger.info(s"Cache miss, new destination table: ${Util.toTableSpec(temp)}")
+        logger.info(s"Cache miss, new destination table: ${BigQueryUtil.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
         (temp, Some(makeQuery(sqlQuery, temp)))
     }
@@ -273,14 +273,14 @@ class BigQueryClient private (private val projectId: String, credential: Credent
     Files.write(schema.toPrettyString, schemaCacheFile(key), Charsets.UTF_8)
 
   private def getCacheSchema(key: String): Option[TableSchema] = Try {
-    Util.parseSchema(scala.io.Source.fromFile(schemaCacheFile(key)).mkString)
+    BigQueryUtil.parseSchema(scala.io.Source.fromFile(schemaCacheFile(key)).mkString)
   }.toOption
 
   private def setCacheDestinationTable(key: String, table: TableReference): Unit =
-    Files.write(Util.toTableSpec(table), tableCacheFile(key), Charsets.UTF_8)
+    Files.write(BigQueryUtil.toTableSpec(table), tableCacheFile(key), Charsets.UTF_8)
 
   private def getCacheDestinationTable(key: String): Option[TableReference] = Try {
-    Util.parseTableSpec(scala.io.Source.fromFile(tableCacheFile(key)).mkString)
+    BigQueryUtil.parseTableSpec(scala.io.Source.fromFile(tableCacheFile(key)).mkString)
   }.toOption
 
   private def cacheFile(key: String, suffix: String): File = {

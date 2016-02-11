@@ -46,7 +46,7 @@ private[types] object MacroUtil {
   private val SBQ = "_root_.com.spotify.scio.bigquery"
   val GModel = "_root_.com.google.api.services.bigquery.model"
   val SType = s"$SBQ.types.BigQueryType"
-  val SUtil = s"$SBQ.Util"
+  val SUtil = s"$SBQ.BigQueryUtil"
 
   // TODO: scala 2.11
   // def p(c: blackbox.Context, code: String): c.Tree = c.parse(code)
