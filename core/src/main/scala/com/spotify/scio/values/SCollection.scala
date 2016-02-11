@@ -772,7 +772,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   private def saveAsSpecificAvroFile(path: String, numShards: Int): Future[Tap[T]] = {
     val transform = avroOut(path, numShards)
-    this.applyInternal(transform.withSchema(ct.runtimeClass.asInstanceOf[Class[T]]))
+    this.applyInternal(transform.withSchema(ScioUtil.classOf[T]))
     context.makeFuture(SpecificAvroTap(path))
   }
 

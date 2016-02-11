@@ -15,13 +15,13 @@ import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineO
 import com.google.cloud.dataflow.sdk.runners.DataflowPipelineJob
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
-import com.google.cloud.dataflow.sdk.transforms.{DoFn, Create, PTransform}
+import com.google.cloud.dataflow.sdk.transforms.{Create, DoFn, PTransform}
 import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.cloud.dataflow.sdk.values.{PBegin, PCollection, POutput, TimestampedValue}
 import com.spotify.scio.bigquery._
 import com.spotify.scio.coders.KryoAtomicCoder
 import com.spotify.scio.testing._
-import com.spotify.scio.util.CallSites
+import com.spotify.scio.util.{CallSites, ScioUtil}
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
@@ -55,7 +55,7 @@ object ScioContext {
 
   /** Parse PipelineOptions and application arguments from command line arguments. */
   def parseArguments[T <: PipelineOptions : ClassTag](cmdlineArgs: Array[String]): (T, Args) = {
-    val cls = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
+    val cls = ScioUtil.classOf[T]
     val dfPatterns = cls.getMethods.flatMap { m =>
       val n = m.getName
       if ((!n.startsWith("get") && !n.startsWith("is")) ||
@@ -252,8 +252,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
     if (this.isTest) {
       this.getTestInput(AvroIO[T](path))
     } else {
-      val cls = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
-      val o = this.applyInternal(GAvroIO.Read.from(path).withSchema(cls))
+      val o = this.applyInternal(GAvroIO.Read.from(path).withSchema(ScioUtil.classOf[T]))
       wrap(o).setName(path)
     }
   }

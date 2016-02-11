@@ -4,6 +4,7 @@ import com.google.cloud.dataflow.contrib.hadoop.{AvroHadoopFileSource, HadoopFil
 import com.google.cloud.dataflow.sdk.coders.AvroCoder
 import com.google.cloud.dataflow.sdk.io.{Read, Write}
 import com.google.cloud.dataflow.sdk.values.KV
+import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.generic.IndexedRecord
@@ -44,7 +45,7 @@ package object hdfs {
     /** Get an SCollection of specific record type for an Avro file on HDFS. */
     def hdfsAvroFile[T: ClassTag](path: String, schema: Schema = null): SCollection[T] = {
       val coder: AvroCoder[T] = if (schema == null) {
-        AvroCoder.of(implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]])
+        AvroCoder.of(ScioUtil.classOf[T])
       } else {
         AvroCoder.of(schema).asInstanceOf[AvroCoder[T]]
       }
@@ -77,7 +78,7 @@ package object hdfs {
       if (schema != null) {
         AvroJob.setOutputKeySchema(job, schema)
       } else {
-        val s = implicitly[ClassTag[T]].runtimeClass.getMethod("getClassSchema").invoke(null).asInstanceOf[Schema]
+        val s = ScioUtil.classOf[T].getMethod("getClassSchema").invoke(null).asInstanceOf[Schema]
         AvroJob.setOutputKeySchema(job, s)
       }
       self

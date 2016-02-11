@@ -5,6 +5,7 @@ import java.lang.{Float => JFloat}
 import com.google.cloud.dataflow.sdk.coders._
 import com.google.cloud.dataflow.sdk.values.{KV, TypeDescriptor}
 import com.spotify.scio.coders.KryoAtomicCoder
+import com.spotify.scio.util.ScioUtil
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
@@ -31,8 +32,7 @@ private[scio] object Implicits {
     }
 
     def getScalaCoder[T: ClassTag]: Coder[T] = {
-      val ct = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
-      val tt = TypeDescriptor.of(ct)
+      val tt = TypeDescriptor.of(ScioUtil.classOf[T])
       val coder = try {
         r.getDefaultCoder(tt)
       } catch {

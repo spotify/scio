@@ -41,8 +41,7 @@ private trait FileStorage {
   }
 
   def specificAvroFile[T: ClassTag]: Iterator[T] = {
-    val cls = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
-    val reader = new SpecificDatumReader[T](cls)
+    val reader = new SpecificDatumReader[T](ScioUtil.classOf[T])
     new DataFileStream[T](getDirectoryInputStream(path), reader).iterator().asScala
   }
 

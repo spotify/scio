@@ -3,6 +3,7 @@ package com.spotify.scio.testing
 import java.lang.reflect.InvocationTargetException
 
 import com.google.cloud.dataflow.sdk.values.PCollection
+import com.spotify.scio.util.ScioUtil
 
 import scala.reflect.ClassTag
 
@@ -87,7 +88,7 @@ object JobTest {
 
   /** Create a new JobTest.Builder instance. */
   def apply[T: ClassTag]: Builder = {
-    val className= implicitly[ClassTag[T]].runtimeClass.getName.replaceAll("\\$$", "")
+    val className= ScioUtil.classOf[T].getName.replaceAll("\\$$", "")
     Builder(className, Array(), Map.empty, Map.empty, Map.empty)
   }
 
