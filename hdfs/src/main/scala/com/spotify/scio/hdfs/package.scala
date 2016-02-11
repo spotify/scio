@@ -1,21 +1,31 @@
 package com.spotify.scio
 
+import java.io.{InputStream, SequenceInputStream}
+import java.util.Collections
+
 import com.google.cloud.dataflow.contrib.hadoop.{AvroHadoopFileSource, HadoopFileSink, HadoopFileSource}
 import com.google.cloud.dataflow.sdk.coders.AvroCoder
 import com.google.cloud.dataflow.sdk.io.{Read, Write}
 import com.google.cloud.dataflow.sdk.values.KV
+import com.google.common.base.Charsets
 import com.spotify.scio.io.Tap
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
-import org.apache.avro.generic.IndexedRecord
+import org.apache.avro.file.DataFileStream
+import org.apache.avro.generic.{GenericDatumReader, IndexedRecord}
 import org.apache.avro.mapred.AvroKey
 import org.apache.avro.mapreduce.{AvroJob, AvroKeyOutputFormat}
+import org.apache.avro.specific.{SpecificDatumReader, SpecificRecordBase}
+import org.apache.commons.io.IOUtils
+import org.apache.hadoop.fs.{FileSystem, Path, PathFilter}
+import org.apache.hadoop.io.compress.CompressionCodecFactory
 import org.apache.hadoop.io.{LongWritable, NullWritable, Text}
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
 
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 
@@ -65,17 +75,15 @@ package object hdfs {
   implicit class HdfsSCollection[T: ClassTag](val self: SCollection[T]) {
 
     /** Save this SCollection as a text file on HDFS. Note that elements must be of type String. */
-    // TODO: Future[Tap[T]]
     // TODO: numShards
     def saveAsHdfsTextFile(path: String)(implicit ev: T <:< String): Future[Tap[String]] = {
       self
         .map(x => KV.of(NullWritable.get(), new Text(x.asInstanceOf[String])))
         .applyInternal(Write.to(new HadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]])))
-      Future.failed(new NotImplementedError("HDFS future not implemented"))
+      self.context.makeFuture(HdfsTextTap(path))
     }
 
     /** Save this SCollection as an Avro file on HDFS. Note that elements must be of type IndexedRecord. */
-    // TODO: Future[Tap[T]]
     // TODO: numShards
     def saveAsHdfsAvroFile(path: String, schema: Schema = null)(implicit ev: T <:< IndexedRecord): Future[Tap[T]] = {
       val job = Job.getInstance()
@@ -88,7 +96,65 @@ package object hdfs {
       self
         .map(x => KV.of(new AvroKey(x), NullWritable.get()))
         .applyInternal(Write.to(new HadoopFileSink(path, classOf[AvroKeyOutputFormat[T]], job.getConfiguration)))
-      Future.failed(new NotImplementedError("HDFS future not implemented"))
+      self.context.makeFuture(HdfsAvroTap[T](path, schema))
+    }
+
+  }
+
+  /** Tap for text files on HDFS. */
+  case class HdfsTextTap(path: String) extends Tap[String] {
+    override def value: Iterator[String] = {
+      val job = Job.getInstance()
+      val factory = new CompressionCodecFactory(job.getConfiguration)
+      val fs = FileSystem.get(job.getConfiguration)
+      val streams = fs
+        .listStatus(new Path(path), HdfsUtil.pathFilter)
+        .map { status =>
+          val p = status.getPath
+          val codec = factory.getCodec(p)
+          if (codec != null) {
+            codec.createInputStream(fs.open(p))
+          } else {
+            fs.open(p)
+          }
+        }
+      val stream = new SequenceInputStream(Collections.enumeration(streams.toList.asJava))
+      IOUtils.lineIterator(stream, Charsets.UTF_8).asScala
+    }
+    override def open(sc: ScioContext): SCollection[String] = sc.hdfsTextFile(path + "/part-*")
+  }
+
+  /** Tap for Avro files on HDFS. */
+  case class HdfsAvroTap[T: ClassTag](path: String, schema: Schema = null) extends Tap[T] {
+    override def value: Iterator[T] = {
+      val cls = ScioUtil.classOf[T]
+      val stream = HdfsUtil.getDirectoryInputStream(path)
+      val reader = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+        new SpecificDatumReader[T](cls)
+      } else {
+        new GenericDatumReader[T](schema)
+      }
+      new DataFileStream[T](stream, reader).iterator().asScala
+    }
+    override def open(sc: ScioContext): SCollection[T] = sc.hdfsAvroFile[T](path, schema)
+  }
+
+  private object HdfsUtil {
+
+    val pathFilter = new PathFilter {
+      override def accept(path: Path): Boolean =
+        !path.getName.startsWith("_") && !path.getName.startsWith(".")
+    }
+
+    def getDirectoryInputStream(path: String): InputStream = {
+      val job = Job.getInstance()
+      val fs = FileSystem.get(job.getConfiguration)
+      val streams = fs
+        .listStatus(new Path(path), pathFilter)
+        .map { status =>
+          fs.open(status.getPath)
+        }
+      new SequenceInputStream(Collections.enumeration(streams.toList.asJava))
     }
 
   }
