@@ -87,12 +87,12 @@ package object hdfs {
     // TODO: numShards
     def saveAsHdfsAvroFile(path: String, schema: Schema = null)(implicit ev: T <:< IndexedRecord): Future[Tap[T]] = {
       val job = Job.getInstance()
-      if (schema != null) {
-        AvroJob.setOutputKeySchema(job, schema)
+      val s = if (schema == null) {
+        ScioUtil.classOf[T].getMethod("getClassSchema").invoke(null).asInstanceOf[Schema]
       } else {
-        val s = ScioUtil.classOf[T].getMethod("getClassSchema").invoke(null).asInstanceOf[Schema]
-        AvroJob.setOutputKeySchema(job, s)
+        schema
       }
+      AvroJob.setOutputKeySchema(job, s)
       self
         .map(x => KV.of(new AvroKey(x), NullWritable.get()))
         .applyInternal(Write.to(new HadoopFileSink(path, classOf[AvroKeyOutputFormat[T]], job.getConfiguration)))
