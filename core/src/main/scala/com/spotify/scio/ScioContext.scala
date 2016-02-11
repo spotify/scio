@@ -25,6 +25,7 @@ import com.spotify.scio.util.{CallSites, ScioUtil}
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
+import org.apache.avro.specific.SpecificRecordBase
 import org.joda.time.Instant
 
 import scala.collection.JavaConverters._
@@ -245,27 +246,21 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
   }
 
   /**
-   * Get an SCollection of specific record type for an Avro file.
+   * Get an SCollection for an Avro file.
    * @group input
    */
-  def avroFile[T: ClassTag](path: String): SCollection[T] = pipelineOp {
+  def avroFile[T: ClassTag](path: String, schema: Schema = null): SCollection[T] = pipelineOp {
     if (this.isTest) {
       this.getTestInput(AvroIO[T](path))
     } else {
-      val o = this.applyInternal(GAvroIO.Read.from(path).withSchema(ScioUtil.classOf[T]))
-      wrap(o).setName(path)
-    }
-  }
-
-  /**
-   * Get an SCollection of generic record type for an Avro file.
-   * @group input
-   */
-  def avroFile(path: String, schema: Schema): SCollection[GenericRecord] = pipelineOp {
-    if (this.isTest) {
-      this.getTestInput(AvroIO[GenericRecord](path))
-    } else {
-      wrap(this.applyInternal(GAvroIO.Read.from(path).withSchema(schema))).setName(path)
+      val transform = GAvroIO.Read.from(path)
+      val cls = ScioUtil.classOf[T]
+      val t = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+        transform.withSchema(cls)
+      } else {
+        transform.withSchema(schema).asInstanceOf[GAvroIO.Read.Bound[T]]
+      }
+      wrap(this.applyInternal(t)).setName(path)
     }
   }
 

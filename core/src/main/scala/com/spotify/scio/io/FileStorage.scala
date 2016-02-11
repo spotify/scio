@@ -12,9 +12,10 @@ import com.google.api.client.util.Charsets
 import com.google.api.services.storage.Storage
 import com.spotify.scio.bigquery.TableRow
 import com.spotify.scio.util.ScioUtil
+import org.apache.avro.Schema
 import org.apache.avro.file.DataFileStream
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
-import org.apache.avro.specific.SpecificDatumReader
+import org.apache.avro.specific.{SpecificRecordBase, SpecificDatumReader}
 import org.apache.commons.io.{FileUtils, IOUtils}
 
 import scala.collection.JavaConverters._
@@ -35,13 +36,13 @@ private trait FileStorage {
 
   protected def getObjectInputStream(path: String): InputStream
 
-  def genericAvroFile: Iterator[GenericRecord] = {
-    val reader = new GenericDatumReader[GenericRecord]()
-    new DataFileStream[GenericRecord](getDirectoryInputStream(path), reader).iterator().asScala
-  }
-
-  def specificAvroFile[T: ClassTag]: Iterator[T] = {
-    val reader = new SpecificDatumReader[T](ScioUtil.classOf[T])
+  def avroFile[T: ClassTag](schema: Schema = null): Iterator[T] = {
+    val cls = ScioUtil.classOf[T]
+    val reader = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+      new SpecificDatumReader[T](cls)
+    } else {
+      new GenericDatumReader[T](schema)
+    }
     new DataFileStream[T](getDirectoryInputStream(path), reader).iterator().asScala
   }
 

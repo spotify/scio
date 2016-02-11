@@ -35,6 +35,7 @@ import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericRecord, IndexedRecord}
+import org.apache.avro.specific.SpecificRecordBase
 import org.joda.time.{Duration, Instant}
 
 import scala.collection.JavaConverters._
@@ -750,31 +751,20 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @param schema must be not null if T is of type GenericRecord.
    * @group output
    */
-  def saveAsAvroFile(path: String, numShards: Int = 0, schema: Schema = null)(implicit ev: T <:< IndexedRecord): Future[Tap[T]] =
+  def saveAsAvroFile(path: String, numShards: Int = 0, schema: Schema = null): Future[Tap[T]] =
     if (context.isTest) {
       context.testOut(AvroIO(path))(internal)
       saveAsInMemoryTap
     } else {
-      if (schema != null) {
-        saveAsGenericAvroFile(path, numShards, schema)
+      val transform = avroOut(path, numShards)
+      val cls = ScioUtil.classOf[T]
+      if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+        this.applyInternal(transform.withSchema(cls))
       } else {
-        saveAsSpecificAvroFile(path, numShards)
+        this.applyInternal(transform.withSchema(schema).asInstanceOf[GAvroIO.Write.Bound[T]])
       }
+      context.makeFuture(AvroTap(path, schema))
     }
-
-  private def saveAsGenericAvroFile(path: String, numShards: Int, schema: Schema): Future[Tap[T]] = {
-    val transform = avroOut(path, numShards)
-    this
-      .asInstanceOf[SCollection[GenericRecord]]
-      .applyInternal(transform.withSchema(schema))
-    context.makeFuture(GenericAvroTap(path, schema)).asInstanceOf[Future[Tap[T]]]
-  }
-
-  private def saveAsSpecificAvroFile(path: String, numShards: Int): Future[Tap[T]] = {
-    val transform = avroOut(path, numShards)
-    this.applyInternal(transform.withSchema(ScioUtil.classOf[T]))
-    context.makeFuture(SpecificAvroTap(path))
-  }
 
   /**
    * Save this SCollection as a Bigquery table. Note that elements must be of type TableRow.
