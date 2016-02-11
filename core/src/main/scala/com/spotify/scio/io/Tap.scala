@@ -57,6 +57,7 @@ case class BigQueryTap(table: TableReference, opts: DataflowPipelineOptions) ext
   override def open(sc: ScioContext): SCollection[TableRow] = sc.bigQueryTable(table)
 }
 
+/** Tap for object files on local file system or GCS. */
 case class ObjectFileTap[T: ClassTag](path: String) extends Tap[T] {
   override def value: Iterator[T] = {
     val coder = KryoAtomicCoder[T]
