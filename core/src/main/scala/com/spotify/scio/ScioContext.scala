@@ -179,7 +179,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
   /** Whether the context is closed. */
   def isClosed: Boolean = _isClosed
 
-  /* Ensure an operation is called before the pipeline is closed. */
+  /** Ensure an operation is called before the pipeline is closed. */
   private[scio] def pipelineOp[T](body: => T): T = {
     require(!this.isClosed, "ScioContext already closed")
     body

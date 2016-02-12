@@ -44,25 +44,25 @@ package object hdfs {
   /** Enhanced version of [[ScioContext]] with HDFS methods. */
   // TODO: scala 2.11
   // implicit class HdfsScioContext(private val sc: ScioContext) extends AnyVal {
-  implicit class HdfsScioContext(val sc: ScioContext) {
+  implicit class HdfsScioContext(val self: ScioContext) {
 
     /** Get an SCollection for a text file on HDFS. */
-    def hdfsTextFile(path: String): SCollection[String] = {
+    def hdfsTextFile(path: String): SCollection[String] = self.pipelineOp {
       val src = HadoopFileSource.from(path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text])
-      sc.wrap(sc.applyInternal(Read.from(src)))
+      self.wrap(self.applyInternal(Read.from(src)))
         .setName(path)
         .map(_.getValue.toString)
     }
 
     /** Get an SCollection of specific record type for an Avro file on HDFS. */
-    def hdfsAvroFile[T: ClassTag](path: String, schema: Schema = null): SCollection[T] = {
+    def hdfsAvroFile[T: ClassTag](path: String, schema: Schema = null): SCollection[T] = self.pipelineOp {
       val coder: AvroCoder[T] = if (schema == null) {
         AvroCoder.of(ScioUtil.classOf[T])
       } else {
         AvroCoder.of(schema).asInstanceOf[AvroCoder[T]]
       }
       val src = new AvroHadoopFileSource[T](path, coder)
-      sc.wrap(sc.applyInternal(Read.from(src)))
+      self.wrap(self.applyInternal(Read.from(src)))
         .setName(path)
         .map(_.getKey.datum())
     }
