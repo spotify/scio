@@ -16,29 +16,33 @@
 
 package com.google.cloud.dataflow.contrib.hadoop;
 
+import com.google.cloud.dataflow.sdk.coders.AvroCoder;
 import com.google.cloud.dataflow.sdk.testing.CoderProperties;
-
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.NullWritable;
+import org.apache.avro.mapred.AvroKey;
+import org.apache.avro.mapred.AvroValue;
 import org.junit.Test;
 
 /**
- * Tests for WritableCoder.
+ * Tests for AvroWrapperCoder.
  */
-public class WritableCoderTest {
+public class AvroWrapperCoderTest {
 
   @Test
-  public void testIntWritableEncoding() throws Exception {
-    IntWritable value = new IntWritable(42);
-    WritableCoder<IntWritable> coder = WritableCoder.of(IntWritable.class);
+  public void testAvroKeyEncoding() throws Exception {
+    AvroKey<Integer> value = new AvroKey<>(42);
+    AvroWrapperCoder<AvroKey<Integer>, Integer> coder = AvroWrapperCoder.of(
+        AvroHadoopFileSource.ClassUtil.<AvroKey<Integer>>castClass(AvroKey.class),
+        AvroCoder.of(Integer.class));
 
     CoderProperties.coderDecodeEncodeEqual(coder, value);
   }
 
   @Test
-  public void testNullWritableEncoding() throws Exception {
-    NullWritable value = NullWritable.get();
-    WritableCoder<NullWritable> coder = WritableCoder.of(NullWritable.class);
+  public void testAvroValueEncoding() throws Exception {
+    AvroValue<Integer> value = new AvroValue<>(42);
+    AvroWrapperCoder<AvroValue<Integer>, Integer> coder = AvroWrapperCoder.of(
+        AvroHadoopFileSource.ClassUtil.<AvroValue<Integer>>castClass(AvroValue.class),
+        AvroCoder.of(Integer.class));
 
     CoderProperties.coderDecodeEncodeEqual(coder, value);
   }
