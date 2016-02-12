@@ -96,8 +96,15 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
   /** Dataflow pipeline. */
   def pipeline: Pipeline = {
     if (_pipeline == null) {
-      this.newPipeline()
-      _pipeline = this.newPipeline()
+      _pipeline = if (testId.isEmpty) {
+        Pipeline.create(options)
+      } else {
+        val tp = TestPipeline.create()
+        // propagate options
+        tp.getOptions.setStableUniqueNames(options.getStableUniqueNames)
+        tp
+      }
+      _pipeline.getCoderRegistry.registerScalaCoders()
     }
     _pipeline
   }
@@ -119,19 +126,6 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
 
   private lazy val bigQueryClient: BigQueryClient =
     BigQueryClient(options.getProject, options.getGcpCredential)
-
-  private def newPipeline(): Pipeline = {
-    val p = if (testId.isEmpty) {
-      Pipeline.create(options)
-    } else {
-      val tp = TestPipeline.create()
-      // propagate options
-      tp.getOptions.setStableUniqueNames(options.getStableUniqueNames)
-      tp
-    }
-    p.getCoderRegistry.registerScalaCoders()
-    p
-  }
 
   // =======================================================================
   // States
