@@ -21,7 +21,7 @@ sbt publish-local
 
 You can execute the examples locally from SBT. By default pipelines will be executed using the `DirectPipelineRunner` and local filesystem will be used for input and output.
 
-The `-Dbigquery.project=<BILLING_PROJECT>` argument is required to compile the typed BigQuery example since it triggers BigQuery requests at compile time.
+The `-Dbigquery.project=<BILLING_PROJECT>` argument is required to compile the typed BigQuery example since the underlying macro makes BigQuery requests at compile time.
 
 ```
 neville@localhost scio $ sbt -Dbigquery.project=<BILLING_PROJECT>
@@ -33,7 +33,9 @@ neville@localhost scio $ sbt -Dbigquery.project=<BILLING_PROJECT>
 --output=<OUTPUT DIRECTORY>
 ```
 
-You can use the `BlockingDataflowPipelineRunner` or `DataflowPipelineRunner` to execute pipelines on Google Cloud Dataflow Service using managed resources in the Google Cloud Platform. `BlockingDataflowPipelineRunner` will block the main process until job completes while `DataflowPipelineRunner` will submit the job and exit immediately.
+Note that unlike Hadoop, Scio or Dataflow input should be file patterns and not directories, i.e. `gs://bucket/path/part-*.txt` and not `gs://bucket/path`. Output on the other hand should be directories just like Hadoop, so `gs://bucket/path` will produce files like `gs://bucket/path/part-00000-of-00005.txt`.
+
+Use the `BlockingDataflowPipelineRunner` or `DataflowPipelineRunner` to execute pipelines on Google Cloud Dataflow Service using managed resources in the Google Cloud Platform. `BlockingDataflowPipelineRunner` will block the main process on `ScioContext#close()` until job completes while `DataflowPipelineRunner` will submit the job and return immediately.
 
 ```
 neville@localhost scio $ sbt -Dbigquery.project=<BILLING_PROJECT>
@@ -61,7 +63,7 @@ You may need a few extra settings to use BigQuery queries as pipeline input.
 sbt -Dbigquery.project=<PROJECT-NAME> -Dbigquery.staging_dataset.location=<LOCATION>
 ```
 
-- `bigquery.project`: GCP project to make BigQuery requests with.
+- `bigquery.project`: GCP project to make BigQuery requests with at compile time.
 - `bigquery.staging_dataset.location`: Geographical location for BigQuery staging dataset, e.g. `US`, `EU`, must be the same as source tables and GCS buckets.
 
 # Options
