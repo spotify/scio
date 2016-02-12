@@ -1,10 +1,14 @@
 package com.spotify.scio.util
 
+import scala.collection.mutable.{Map => MMap}
+
 private[scio] object CallSites {
 
   private val ns = "com.spotify.scio."
 
   private val methodMap = Map("$plus$plus" -> "++")
+
+  private val nameCache = MMap.empty[String, Int]
 
   private def isExternalClass(c: String): Boolean =
     // Not in our code base or an interpreter
@@ -28,7 +32,15 @@ private[scio] object CallSites {
     val method = methodMap.getOrElse(k, k)
     val file = stack(p).getFileName
     val line = stack(p).getLineNumber
-    s"$method@{$file:$line}"
+    val name = s"$method@{$file:$line}"
+
+    if (!nameCache.contains(name)) {
+      nameCache(name) = 1
+      name
+    } else {
+      nameCache(name) += 1
+      name + nameCache(name)
+    }
   }
 
 }
