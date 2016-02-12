@@ -24,7 +24,6 @@ import com.spotify.scio.testing._
 import com.spotify.scio.util.{CallSites, ScioUtil}
 import com.spotify.scio.values._
 import org.apache.avro.Schema
-import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.joda.time.Instant
 

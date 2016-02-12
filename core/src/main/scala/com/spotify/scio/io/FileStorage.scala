@@ -14,8 +14,8 @@ import com.spotify.scio.bigquery.TableRow
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
 import org.apache.avro.file.DataFileStream
-import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
-import org.apache.avro.specific.{SpecificRecordBase, SpecificDatumReader}
+import org.apache.avro.generic.GenericDatumReader
+import org.apache.avro.specific.{SpecificDatumReader, SpecificRecordBase}
 import org.apache.commons.io.{FileUtils, IOUtils}
 
 import scala.collection.JavaConverters._

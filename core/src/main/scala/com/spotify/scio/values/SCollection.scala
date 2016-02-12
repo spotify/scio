@@ -34,7 +34,6 @@ import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.Schema
-import org.apache.avro.generic.{GenericRecord, IndexedRecord}
 import org.apache.avro.specific.SpecificRecordBase
 import org.joda.time.{Duration, Instant}
 

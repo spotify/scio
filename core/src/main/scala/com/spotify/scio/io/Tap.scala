@@ -4,14 +4,12 @@ import java.util.UUID
 
 import com.google.api.services.bigquery.model.TableReference
 import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
-import com.google.cloud.dataflow.sdk.transforms.DoFn
 import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
 import com.spotify.scio.coders.KryoAtomicCoder
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
-import org.apache.avro.generic.GenericRecord
 
 import scala.reflect.ClassTag
 
