@@ -56,14 +56,24 @@ object WordCountOrchestration {
     f
   }
 
+  // Split out transform for unit testing
+  def countWords(in: SCollection[String]): SCollection[(String, Long)] = {
+    in.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
+      .countByValue()
+  }
+
   def merge(opts: DataflowPipelineOptions, s: Seq[Tap[(String, Long)]], outputPath: String): FT[String] = {
     val sc = ScioContext(opts)
-    val f = SCollection.unionAll(s.map(_.open(sc)))
-      .sumByKey
+    val f = mergeCounts(s.map(_.open(sc)))
       .map(kv => kv._1 + " " + kv._2)
       .saveAsTextFile(outputPath)
     sc.close()
     f
+  }
+
+  // Split out transform for unit testing
+  def mergeCounts(ins: Seq[SCollection[(String, Long)]]): SCollection[(String, Long)] = {
+    SCollection.unionAll(ins).sumByKey
   }
 
 }
