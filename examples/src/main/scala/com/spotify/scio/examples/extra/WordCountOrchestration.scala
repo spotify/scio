@@ -25,6 +25,8 @@ object WordCountOrchestration {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (opts, args) = ScioContext.parseArguments[DataflowPipelineOptions](cmdlineArgs)
+
+    // Use a non-blocking runner
     opts.setRunner(classOf[DataflowPipelineRunner])
 
     val output = args("output")
@@ -32,7 +34,7 @@ object WordCountOrchestration {
     // Submit count job 1
     val f1 = count(opts, ExampleData.KING_LEAR)
 
-    //Submit count job 2
+    // Submit count job 2
     val f2 = count(opts, ExampleData.OTHELLO)
 
     import scala.concurrent.ExecutionContext.Implicits.global
