@@ -35,7 +35,7 @@ import scala.reflect.ClassTag
  *       .distCache(DistCacheIO("gs://dataflow-samples/samples/misc/months.txt", distCache)
  *
  *       // Verify output
- *       .output(TextIO("out.txt")) { actual => actual should equalInAnyOrder (expected) }
+ *       .output(TextIO("out.txt")) { actual => actual should containInAnyOrder (expected) }
  *
  *       // Run job test
  *       .run()

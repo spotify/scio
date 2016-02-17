@@ -25,8 +25,8 @@ class SCollectionTest extends PipelineSpec {
       val r1 = p1 ++ p2
       val r2 = p1.union(p2)
       val expected = Seq("a", "b", "c", "d", "e", "f")
-      r1.internal should equalInAnyOrder (expected)
-      r2.internal should equalInAnyOrder (expected)
+      r1.internal should containInAnyOrder (expected)
+      r2.internal should containInAnyOrder (expected)
     }
   }
 
@@ -37,8 +37,8 @@ class SCollectionTest extends PipelineSpec {
       val r1 = p1 ++ p2
       val r2 = p1.union(p2)
       val expected = Seq("a", "a", "a", "b", "c", "d", "d", "d", "e", "f")
-      r1.internal should equalInAnyOrder (expected)
-      r2.internal should equalInAnyOrder (expected)
+      r1.internal should containInAnyOrder (expected)
+      r2.internal should containInAnyOrder (expected)
     }
   }
 

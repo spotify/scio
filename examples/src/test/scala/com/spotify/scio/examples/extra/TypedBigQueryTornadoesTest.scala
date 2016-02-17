@@ -10,7 +10,7 @@ class TypedBigQueryTornadoesTest extends PipelineSpec {
     JobTest("com.spotify.scio.examples.extra.TypedBigQueryTornadoes")
       .args("--output=dataset.table")
       .input(BigQueryIO("SELECT tornado, month FROM [publicdata:samples.gsod]"), input)
-      .output(BigQueryIO("dataset.table"))(_ should equalInAnyOrder (expected))
+      .output(BigQueryIO("dataset.table"))(_ should containInAnyOrder (expected))
       .run()
   }
 

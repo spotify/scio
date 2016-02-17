@@ -11,7 +11,7 @@ class WordCountTest extends PipelineSpec {
     JobTest("com.spotify.scio.examples.WordCount")
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), inData)
-      .output(TextIO("out.txt"))(_ should equalInAnyOrder (expected))
+      .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
 
@@ -19,7 +19,7 @@ class WordCountTest extends PipelineSpec {
     JobTest("com.spotify.scio.examples.MinimalWordCount")
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), inData)
-      .output(TextIO("out.txt"))(_ should equalInAnyOrder (expected))
+      .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
 

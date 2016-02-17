@@ -27,7 +27,7 @@ class DistCacheExampleTest extends PipelineSpec {
       .args("--output=out.txt")
       .input(TableRowJsonIO(ExampleData.EXPORTED_WIKI_TABLE), in)
       .distCache(DistCacheIO("gs://dataflow-samples/samples/misc/months.txt"), distCache)
-      .output(TextIO("out.txt"))(_ should equalInAnyOrder (expected))
+      .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
 

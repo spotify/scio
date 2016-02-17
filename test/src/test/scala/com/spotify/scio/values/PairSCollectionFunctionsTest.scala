@@ -19,8 +19,8 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
         ("b", (iterable(2), iterable(12L))),
         ("c", (iterable(3), iterable())),
         ("d", (iterable(), iterable(14L))))
-      r1.internal should equalInAnyOrder (expected)
-      r2.internal should equalInAnyOrder (expected)
+      r1.internal should containInAnyOrder (expected)
+      r2.internal should containInAnyOrder (expected)
     }
   }
 
@@ -36,8 +36,8 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
         ("b", (Set(2), Set(12L, 13L))),
         ("c", (Set(3), Set())),
         ("d", (Set(), Set(14L))))
-      r1.internal should equalInAnyOrder (expected)
-      r2.internal should equalInAnyOrder (expected)
+      r1.internal should containInAnyOrder (expected)
+      r2.internal should containInAnyOrder (expected)
     }
   }
 
@@ -54,8 +54,8 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
         ("c", (iterable(3), iterable(), iterable())),
         ("d", (iterable(), iterable(14L), iterable())),
         ("e", (iterable(), iterable(), iterable(25F))))
-      r1.internal should equalInAnyOrder (expected)
-      r2.internal should equalInAnyOrder (expected)
+      r1.internal should containInAnyOrder (expected)
+      r2.internal should containInAnyOrder (expected)
     }
   }
 
@@ -74,8 +74,8 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
         ("d", (iterable(), iterable(14L), iterable(), iterable())),
         ("e", (iterable(), iterable(), iterable(25F), iterable())),
         ("f", (iterable(), iterable(), iterable(), iterable(36.0))))
-      r1.internal should equalInAnyOrder (expected)
-      r2.internal should equalInAnyOrder (expected)
+      r1.internal should containInAnyOrder (expected)
+      r2.internal should containInAnyOrder (expected)
     }
   }
 

@@ -16,7 +16,7 @@ class MultiJoinTest extends PipelineSpec {
         ("b", (iterable(2), iterable(12L))),
         ("c", (iterable(3), iterable())),
         ("d", (iterable(), iterable(14L))))
-      r.internal should equalInAnyOrder (expected)
+      r.internal should containInAnyOrder (expected)
     }
   }
 
@@ -31,7 +31,7 @@ class MultiJoinTest extends PipelineSpec {
         ("b", (Set(2), Set(12L, 13L))),
         ("c", (Set(3), Set())),
         ("d", (Set(), Set(14L))))
-      r.internal should equalInAnyOrder (expected)
+      r.internal should containInAnyOrder (expected)
     }
   }
 
