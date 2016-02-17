@@ -8,6 +8,7 @@ import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
 import org.apache.hadoop.hbase.client.{Mutation, Result, Scan}
 
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 /**
@@ -62,13 +63,15 @@ package object bigtable {
     def saveAsBigTable(projectId: String,
                        clusterId: String,
                        zoneId: String,
-                       tableId: String)(implicit ev: T <:< Mutation): Future[Tap[Result]] = {
+                       tableId: String,
+                       additionalConfiguration: Map[String, String] = Map.empty)
+                      (implicit ev: T <:< Mutation): Future[Tap[Result]] = {
       if (self.context.isTest) {
         val output = BigTableOutput(projectId, clusterId, zoneId, tableId)
         self.context.testOut(output)(self.internal.asInstanceOf[PCollection[T]])
       } else {
         CloudBigtableIO.initializeForWrite(self.context.pipeline)
-        val config = new CloudBigtableTableConfiguration(projectId, zoneId, clusterId, tableId)
+        val config = new CloudBigtableTableConfiguration(projectId, zoneId, clusterId, tableId, additionalConfiguration.asJava)
         this.write(config)
       }
       Future.failed(new NotImplementedError("BigTable future not implemented"))
