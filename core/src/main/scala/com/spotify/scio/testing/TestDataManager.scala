@@ -2,7 +2,7 @@ package com.spotify.scio.testing
 
 import com.google.api.services.bigquery.model.TableRow
 import com.google.api.services.datastore.DatastoreV1.{Entity, Query}
-import com.google.cloud.dataflow.sdk.values.PCollection
+import com.spotify.scio.values.SCollection
 
 import scala.collection.mutable.{Map => MMap}
 
@@ -12,8 +12,8 @@ private[scio] class TestInput(val m: Map[TestIO[_], Iterable[_]]) {
 }
 
 /* Outputs are lambdas that apply assertions on PCollections */
-private[scio] class TestOutput(val m: Map[TestIO[_], PCollection[_] => Unit]) {
-  def apply[T](key: TestIO[T]): PCollection[T] => Unit = m(key)
+private[scio] class TestOutput(val m: Map[TestIO[_], SCollection[_] => Unit]) {
+  def apply[T](key: TestIO[T]): SCollection[T] => Unit = m(key)
 }
 
 private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {

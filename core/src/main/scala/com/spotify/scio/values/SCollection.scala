@@ -752,7 +752,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def saveAsAvroFile(path: String, numShards: Int = 0, schema: Schema = null): Future[Tap[T]] =
     if (context.isTest) {
-      context.testOut(AvroIO(path))(internal)
+      context.testOut(AvroIO(path))(this)
       saveAsInMemoryTap
     } else {
       val transform = avroOut(path, numShards)
@@ -775,7 +775,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
     val tableSpec = GBigQueryIO.toTableSpec(table)
     if (context.isTest) {
-      context.testOut(BigQueryIO(tableSpec))(internal.asInstanceOf[PCollection[TableRow]])
+      context.testOut(BigQueryIO(tableSpec))(this.asInstanceOf[SCollection[TableRow]])
 
       if (writeDisposition == WriteDisposition.WRITE_APPEND) {
         Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
@@ -813,7 +813,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def saveAsDatastore(datasetId: String)(implicit ev: T <:< Entity): Future[Tap[Entity]] = {
     if (context.isTest) {
-      context.testOut(DatastoreIO(datasetId))(internal.asInstanceOf[PCollection[Entity]])
+      context.testOut(DatastoreIO(datasetId))(this.asInstanceOf[SCollection[Entity]])
     } else {
       this.asInstanceOf[SCollection[Entity]].applyInternal(GDatastoreIO.writeTo(datasetId))
     }
@@ -826,7 +826,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def saveAsPubsub(topic: String)(implicit ev: T <:< String): Future[Tap[String]] = {
     if (context.isTest) {
-      context.testOut(PubsubIO(topic))(internal.asInstanceOf[PCollection[String]])
+      context.testOut(PubsubIO(topic))(this.asInstanceOf[SCollection[String]])
     } else {
       this.asInstanceOf[SCollection[String]].applyInternal(GPubsubIO.Write.topic(topic))
     }
@@ -839,7 +839,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def saveAsTableRowJsonFile(path: String, numShards: Int = 0)(implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
     if (context.isTest) {
-      context.testOut(BigQueryIO(path))(internal.asInstanceOf[PCollection[TableRow]])
+      context.testOut(BigQueryIO(path))(this.asInstanceOf[SCollection[TableRow]])
       saveAsInMemoryTap.asInstanceOf[Future[Tap[TableRow]]]
     } else {
       this.asInstanceOf[SCollection[TableRow]].applyInternal(tableRowJsonOut(path, numShards))
@@ -852,7 +852,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def saveAsTextFile(path: String, suffix: String = ".txt", numShards: Int = 0)(implicit ev: T <:< String): Future[Tap[String]] =
     if (context.isTest) {
-      context.testOut(TextIO(path))(internal.asInstanceOf[PCollection[String]])
+      context.testOut(TextIO(path))(this.asInstanceOf[SCollection[String]])
       saveAsInMemoryTap.asInstanceOf[Future[Tap[String]]]
     } else {
       this.asInstanceOf[SCollection[String]].applyInternal(textOut(path, suffix, numShards))

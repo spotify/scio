@@ -10,8 +10,8 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
       val p2 = sc.parallelize(Seq(sideData)).asSingletonSideInput
-      val s = p1.withSideInputs(p2).map((i, s) => (i, s(p2)))
-      s.internal should containSingleValue ((1, sideData))
+      val s = p1.withSideInputs(p2).map((i, s) => (i, s(p2))).toSCollection
+      s should containSingleValue ((1, sideData))
     }
   }
 
@@ -19,8 +19,8 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
       val p2 = sc.parallelize(sideData).asListSideInput
-      val s = p1.withSideInputs(p2).flatMap((i, s) => s(p2))
-      s.internal should containInAnyOrder (sideData)
+      val s = p1.withSideInputs(p2).flatMap((i, s) => s(p2)).toSCollection
+      s should containInAnyOrder (sideData)
     }
   }
 
@@ -28,8 +28,8 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
       val p2 = sc.parallelize(sideData).asIterableSideInput
-      val s = p1.withSideInputs(p2).flatMap((i, s) => s(p2))
-      s.internal should containInAnyOrder (sideData)
+      val s = p1.withSideInputs(p2).flatMap((i, s) => s(p2)).toSCollection
+      s should containInAnyOrder (sideData)
     }
   }
 
@@ -37,8 +37,8 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
       val p2 = sc.parallelize(sideData).asMapSideInput
-      val s = p1.withSideInputs(p2).flatMap((i, s) => s(p2).toSeq)
-      s.internal should containInAnyOrder (sideData)
+      val s = p1.withSideInputs(p2).flatMap((i, s) => s(p2).toSeq).toSCollection
+      s should containInAnyOrder (sideData)
     }
   }
 
@@ -46,8 +46,8 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
       val p2 = sc.parallelize(sideData ++ sideData.map(kv => (kv._1, kv._2 + 10))).asMultiMapSideInput
-      val s = p1.withSideInputs(p2).flatMap((i, s) => s(p2).mapValues(_.toSet))
-      s.internal should containInAnyOrder (sideData.map(kv => (kv._1, Set(kv._2, kv._2 + 10))))
+      val s = p1.withSideInputs(p2).flatMap((i, s) => s(p2).mapValues(_.toSet)).toSCollection
+      s should containInAnyOrder (sideData.map(kv => (kv._1, Set(kv._2, kv._2 + 10))))
     }
   }
 
@@ -55,8 +55,8 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(1 to 10)
       val p2 = sc.parallelize(Seq(1)).asSingletonSideInput
-      val s = p1.withSideInputs(p2).filter((x, s) => (x + s(p2)) % 2 == 0)
-      s.internal should containInAnyOrder (Seq(1, 3, 5, 7, 9))
+      val s = p1.withSideInputs(p2).filter((x, s) => (x + s(p2)) % 2 == 0).toSCollection
+      s should containInAnyOrder (Seq(1, 3, 5, 7, 9))
     }
   }
 
@@ -64,8 +64,8 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "c"))
       val p2 = sc.parallelize(Seq(1, 2)).asListSideInput
-      val s = p1.withSideInputs(p2).flatMap((x, s) => s(p2).map(x + _))
-      s.internal should containInAnyOrder (Seq("a1", "b1", "c1", "a2", "b2", "c2"))
+      val s = p1.withSideInputs(p2).flatMap((x, s) => s(p2).map(x + _)).toSCollection
+      s should containInAnyOrder (Seq("a1", "b1", "c1", "a2", "b2", "c2"))
     }
   }
 
@@ -73,8 +73,8 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "c"))
       val p2 = sc.parallelize(Seq(1)).asSingletonSideInput
-      val s = p1.withSideInputs(p2).keyBy(_ + _(p2))
-      s.internal should containInAnyOrder (Seq(("a1", "a"), ("b1", "b"), ("c1", "c")))
+      val s = p1.withSideInputs(p2).keyBy(_ + _(p2)).toSCollection
+      s should containInAnyOrder (Seq(("a1", "a"), ("b1", "b"), ("c1", "c")))
     }
   }
 
@@ -82,8 +82,8 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "c"))
       val p2 = sc.parallelize(Seq(1)).asSingletonSideInput
-      val s = p1.withSideInputs(p2).map(_ + _(p2))
-      s.internal should containInAnyOrder (Seq("a1", "b1", "c1"))
+      val s = p1.withSideInputs(p2).map(_ + _(p2)).toSCollection
+      s should containInAnyOrder (Seq("a1", "b1", "c1"))
     }
   }
 
@@ -111,9 +111,9 @@ class SCollectionWithSideInputTest extends PipelineSpec {
         .keyBy((x, s) => "k" + s(p4).values.flatten.sum)
         .map((kv, s) => (kv._1, kv._2, s(p4).values.flatten.sum))
         .toSCollection
-      s1.internal should containInAnyOrder (Seq(("k1", "a1x", 1), ("k1", "a1y", 1)))
-      s2.internal should containInAnyOrder (Seq(("k6", "a6x", 6), ("k6", "a6y", 6)))
-      s3.internal should containInAnyOrder (Seq(("k6", "a1x", 6), ("k6", "a1y", 6)))
+      s1 should containInAnyOrder (Seq(("k1", "a1x", 1), ("k1", "a1y", 1)))
+      s2 should containInAnyOrder (Seq(("k6", "a6x", 6), ("k6", "a6y", 6)))
+      s3 should containInAnyOrder (Seq(("k6", "a1x", 6), ("k6", "a1y", 6)))
     }
   }
 

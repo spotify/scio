@@ -11,7 +11,7 @@ import scala.reflect.ClassTag
 /**
  * Trait for unit testing pipelines.
  */
-trait PipelineSpec extends FlatSpec with Matchers with PCollectionMatcher {
+trait PipelineSpec extends FlatSpec with Matchers with SCollectionMatcher {
 
   /**
    * Test pipeline components with a [[ScioContext]].
@@ -19,7 +19,7 @@ trait PipelineSpec extends FlatSpec with Matchers with PCollectionMatcher {
    *
    * {{{
    * runWithContext { sc =>
-   *   sc.parallelize(Seq(1, 2, 3)).sum.internal should containSingleValue (6)
+   *   sc.parallelize(Seq(1, 2, 3)).sum should containSingleValue (6)
    * }
    * }}}
    */

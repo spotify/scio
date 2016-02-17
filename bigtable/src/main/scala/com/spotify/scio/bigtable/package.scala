@@ -2,7 +2,6 @@ package com.spotify.scio
 
 import com.google.cloud.bigtable.dataflow.{CloudBigtableIO, CloudBigtableScanConfiguration, CloudBigtableTableConfiguration}
 import com.google.cloud.dataflow.sdk.io.Read
-import com.google.cloud.dataflow.sdk.values.PCollection
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
@@ -68,7 +67,7 @@ package object bigtable {
                       (implicit ev: T <:< Mutation): Future[Tap[Result]] = {
       if (self.context.isTest) {
         val output = BigTableOutput(projectId, clusterId, zoneId, tableId)
-        self.context.testOut(output)(self.internal.asInstanceOf[PCollection[T]])
+        self.context.testOut(output)(self)
       } else {
         CloudBigtableIO.initializeForWrite(self.context.pipeline)
         val config = new CloudBigtableTableConfiguration(projectId, zoneId, clusterId, tableId, additionalConfiguration.asJava)
@@ -81,7 +80,7 @@ package object bigtable {
     def saveAsBigTable(config: CloudBigtableTableConfiguration)(implicit ev: T <:< Mutation): Future[Tap[Result]] = {
       if (self.context.isTest) {
         val output = BigTableOutput(config.getProjectId, config.getClusterId, config.getZoneId, config.getTableId)
-        self.context.testOut(output)(self.internal.asInstanceOf[PCollection[T]])
+        self.context.testOut(output)(self)
       } else {
         this.write(config)
       }

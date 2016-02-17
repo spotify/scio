@@ -19,7 +19,7 @@ class WordCountOrchestrationTest extends PipelineSpec {
         "e" -> 1L)
 
       val out = WordCountOrchestration.countWords(sc.parallelize(in))
-      out.internal should containInAnyOrder (expected)
+      out should containInAnyOrder (expected)
     }
   }
 
@@ -31,7 +31,7 @@ class WordCountOrchestrationTest extends PipelineSpec {
       val expected = Seq("a" -> 1L, "b" -> 12L, "c" -> 23L, "d" -> 5L)
 
       val out = WordCountOrchestration.mergeCounts(ins.map(sc.parallelize(_)))
-      out.internal should containInAnyOrder (expected)
+      out should containInAnyOrder (expected)
     }
   }
 

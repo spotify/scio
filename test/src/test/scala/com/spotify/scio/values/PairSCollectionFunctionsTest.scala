@@ -19,8 +19,8 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
         ("b", (iterable(2), iterable(12L))),
         ("c", (iterable(3), iterable())),
         ("d", (iterable(), iterable(14L))))
-      r1.internal should containInAnyOrder (expected)
-      r2.internal should containInAnyOrder (expected)
+      r1 should containInAnyOrder (expected)
+      r2 should containInAnyOrder (expected)
     }
   }
 
@@ -36,8 +36,8 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
         ("b", (Set(2), Set(12L, 13L))),
         ("c", (Set(3), Set())),
         ("d", (Set(), Set(14L))))
-      r1.internal should containInAnyOrder (expected)
-      r2.internal should containInAnyOrder (expected)
+      r1 should containInAnyOrder (expected)
+      r2 should containInAnyOrder (expected)
     }
   }
 
@@ -54,8 +54,8 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
         ("c", (iterable(3), iterable(), iterable())),
         ("d", (iterable(), iterable(14L), iterable())),
         ("e", (iterable(), iterable(), iterable(25F))))
-      r1.internal should containInAnyOrder (expected)
-      r2.internal should containInAnyOrder (expected)
+      r1 should containInAnyOrder (expected)
+      r2 should containInAnyOrder (expected)
     }
   }
 
@@ -74,8 +74,8 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
         ("d", (iterable(), iterable(14L), iterable(), iterable())),
         ("e", (iterable(), iterable(), iterable(25F), iterable())),
         ("f", (iterable(), iterable(), iterable(), iterable(36.0))))
-      r1.internal should containInAnyOrder (expected)
-      r2.internal should containInAnyOrder (expected)
+      r1 should containInAnyOrder (expected)
+      r2 should containInAnyOrder (expected)
     }
   }
 
@@ -84,7 +84,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
       val p = p1.fullOuterJoin(p2)
-      p.internal should containInAnyOrder (Seq(
+      p should containInAnyOrder (Seq(
         ("a", (Some(1), Some(11))),
         ("b", (Some(2), Some(12))),
         ("c", (Some(3), None)),
@@ -97,7 +97,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13), ("d", 14)))
       val p = p1.fullOuterJoin(p2)
-      p.internal should containInAnyOrder (Seq(
+      p should containInAnyOrder (Seq(
         ("a", (Some(1), Some(11))),
         ("a", (Some(2), Some(11))),
         ("b", (Some(3), Some(12))),
@@ -112,7 +112,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
       val p = p1.join(p2)
-      p.internal should containInAnyOrder (Seq(("a", (1, 11)), ("b", (2, 12))))
+      p should containInAnyOrder (Seq(("a", (1, 11)), ("b", (2, 12))))
     }
   }
 
@@ -121,7 +121,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
       val p = p1.leftOuterJoin(p2)
-      p.internal should containInAnyOrder (Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
+      p should containInAnyOrder (Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
     }
   }
 
@@ -130,7 +130,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13), ("d", 14)))
       val p = p1.leftOuterJoin(p2)
-      p.internal should containInAnyOrder (Seq(
+      p should containInAnyOrder (Seq(
         ("a", (1, Some(11))),
         ("a", (2, Some(11))),
         ("b", (3, Some(12))),
@@ -144,7 +144,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
       val p = p1.rightOuterJoin(p2)
-      p.internal should containInAnyOrder (Seq(("a", (Some(1), 11)), ("b", (Some(2), 12)), ("d", (None, 14))))
+      p should containInAnyOrder (Seq(("a", (Some(1), 11)), ("b", (Some(2), 12)), ("d", (None, 14))))
     }
   }
 
@@ -153,7 +153,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13), ("d", 14)))
       val p = p1.rightOuterJoin(p2)
-      p.internal should containInAnyOrder (Seq(
+      p should containInAnyOrder (Seq(
         ("a", (Some(1), 11)),
         ("a", (Some(2), 11)),
         ("b", (Some(3), 12)),
@@ -169,9 +169,9 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val r1 = (p1 ++ p2).aggregateByKey(0.0)(_ + _, _ + _)
       val r2 = (p1 ++ p2).aggregateByKey(Aggregator.max[Int])
       val r3 = (p1 ++ p2).aggregateByKey(Algebird.sortedReverseTake[Int](5))
-      r1.internal should containInAnyOrder (Seq(("a", 5050.0), ("b", 55.0)))
-      r2.internal should containInAnyOrder (Seq(("a", 100), ("b", 10)))
-      r3.internal should containInAnyOrder (Seq(("a", Seq(100, 99, 98, 97, 96)), ("b", Seq(10, 9, 8, 7, 6))))
+      r1 should containInAnyOrder (Seq(("a", 5050.0), ("b", 55.0)))
+      r2 should containInAnyOrder (Seq(("a", 100), ("b", 10)))
+      r3 should containInAnyOrder (Seq(("a", Seq(100, 99, 98, 97, 96)), ("b", Seq(10, 9, 8, 7, 6))))
     }
   }
 
@@ -180,7 +180,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(0 to 100).map(("a", _))
       val p2 = sc.parallelize(0 to 10).map(("b", _))
       val p = (p1 ++ p2).approxQuantilesByKey(3)
-      p.internal should containInAnyOrder (Seq(("a", iterable(0, 50, 100)), ("b", iterable(0, 5, 10))))
+      p should containInAnyOrder (Seq(("a", iterable(0, 50, 100)), ("b", iterable(0, 5, 10))))
     }
   }
 
@@ -189,7 +189,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(1 to 100).map(("a", _))
       val p2 = sc.parallelize(1 to 10).map(("b", _))
       val p = (p1 ++ p2).combineByKey(_.toDouble)(_ + _)(_ + _)
-      p.internal should containInAnyOrder (Seq(("a", 5050.0), ("b", 55.0)))
+      p should containInAnyOrder (Seq(("a", 5050.0), ("b", 55.0)))
     }
   }
 
@@ -198,22 +198,22 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p = sc.parallelize(Seq(("a", 11), ("a", 12), ("b", 21), ("b", 22), ("b", 23)))
       val r1 = p.countApproxDistinctByKey()
       val r2 = p.countApproxDistinctByKey(sampleSize = 10000)
-      r1.internal should containInAnyOrder (Seq(("a", 2L), ("b", 3L)))
-      r2.internal should containInAnyOrder (Seq(("a", 2L), ("b", 3L)))
+      r1 should containInAnyOrder (Seq(("a", 2L), ("b", 3L)))
+      r2 should containInAnyOrder (Seq(("a", 2L), ("b", 3L)))
     }
   }
 
   it should "support countByKey()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 11), ("a", 12), ("b", 21), ("b", 22), ("b", 23))).countByKey()
-      p.internal should containInAnyOrder (Seq(("a", 2L), ("b", 3L)))
+      p should containInAnyOrder (Seq(("a", 2L), ("b", 3L)))
     }
   }
 
   it should "support flatMapValues()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("b", 2))).flatMapValues(v => Seq(v + 10.0, v + 20.0))
-      p.internal should containInAnyOrder (Seq(("a", 11.0), ("a", 21.0), ("b", 12.0), ("b", 22.0)))
+      p should containInAnyOrder (Seq(("a", 11.0), ("a", 21.0), ("b", 12.0), ("b", 22.0)))
     }
   }
 
@@ -223,77 +223,77 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p2 = sc.parallelize(1 to 10).map(("b", _))
       val r1 = (p1 ++ p2).foldByKey(0)(_ + _)
       val r2 = (p1 ++ p2).foldByKey
-      r1.internal should containInAnyOrder (Seq(("a", 5050), ("b", 55)))
-      r2.internal should containInAnyOrder (Seq(("a", 5050), ("b", 55)))
+      r1 should containInAnyOrder (Seq(("a", 5050), ("b", 55)))
+      r2 should containInAnyOrder (Seq(("a", 5050), ("b", 55)))
     }
   }
 
   it should "support groupByKey()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("a", 10), ("b", 2), ("b", 20))).groupByKey().mapValues(_.toSet)
-      p.internal should containInAnyOrder (Seq(("a", Set(1, 10)), ("b", Set(2, 20))))
+      p should containInAnyOrder (Seq(("a", Set(1, 10)), ("b", Set(2, 20))))
     }
   }
 
   it should "support keys()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3))).keys
-      p.internal should containInAnyOrder (Seq("a", "b", "c"))
+      p should containInAnyOrder (Seq("a", "b", "c"))
     }
   }
 
   it should "support mapValues()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("b", 2))).mapValues(_ + 10.0)
-      p.internal should containInAnyOrder (Seq(("a", 11.0), ("b", 12.0)))
+      p should containInAnyOrder (Seq(("a", 11.0), ("b", 12.0)))
     }
   }
 
   it should "support maxByKey()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("a", 10), ("b", 2), ("b", 20))).maxByKey
-      p.internal should containInAnyOrder (Seq(("a", 10), ("b", 20)))
+      p should containInAnyOrder (Seq(("a", 10), ("b", 20)))
     }
   }
 
   it should "support minByKey()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("a", 10), ("b", 2), ("b", 20))).minByKey
-      p.internal should containInAnyOrder (Seq(("a", 1), ("b", 2)))
+      p should containInAnyOrder (Seq(("a", 1), ("b", 2)))
     }
   }
 
   it should "support reduceByKey()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("b", 1), ("b", 2), ("c", 1), ("c", 2), ("c", 3))).reduceByKey(_ + _)
-      p.internal should containInAnyOrder (Seq(("a", 1), ("b", 3), ("c", 6)))
+      p should containInAnyOrder (Seq(("a", 1), ("b", 3), ("c", 6)))
     }
   }
 
   it should "support sampleByKey()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("b", 2), ("b", 2), ("c", 3), ("c", 3), ("c", 3))).sampleByKey(1)
-      p.internal should containInAnyOrder (Seq(("a", iterable(1)), ("b", iterable(2)), ("c", iterable(3))))
+      p should containInAnyOrder (Seq(("a", iterable(1)), ("b", iterable(2)), ("c", iterable(3))))
     }
   }
 
   it should "support sampleByKey() with replacement()" in {
     runWithContext { sc =>
       import RandomSamplerUtils._
-      verifyByKey(sc, true, 0.5, 0.5, 0.9, 0.9).internal should containSingleValue ((true, true))
-      verifyByKey(sc, true, 0.9, 0.9, 0.4, 0.6).internal should containSingleValue ((true, false))
-      verifyByKey(sc, true, 0.4, 0.6, 0.9, 0.9).internal should containSingleValue ((false, true))
-      verifyByKey(sc, true, 0.4, 0.6, 0.4, 0.6).internal should containSingleValue ((false, false))
+      verifyByKey(sc, true, 0.5, 0.5, 0.9, 0.9) should containSingleValue ((true, true))
+      verifyByKey(sc, true, 0.9, 0.9, 0.4, 0.6) should containSingleValue ((true, false))
+      verifyByKey(sc, true, 0.4, 0.6, 0.9, 0.9) should containSingleValue ((false, true))
+      verifyByKey(sc, true, 0.4, 0.6, 0.4, 0.6) should containSingleValue ((false, false))
     }
   }
 
   it should "support sampleByKey() without replacement()" in {
     runWithContext { sc =>
       import RandomSamplerUtils._
-      verifyByKey(sc, false, 0.5, 0.5, 0.9, 0.9).internal should containSingleValue ((true, true))
-      verifyByKey(sc, false, 0.9, 0.9, 0.4, 0.6).internal should containSingleValue ((true, false))
-      verifyByKey(sc, false, 0.4, 0.6, 0.9, 0.9).internal should containSingleValue ((false, true))
-      verifyByKey(sc, false, 0.4, 0.6, 0.4, 0.6).internal should containSingleValue ((false, false))
+      verifyByKey(sc, false, 0.5, 0.5, 0.9, 0.9) should containSingleValue ((true, true))
+      verifyByKey(sc, false, 0.9, 0.9, 0.4, 0.6) should containSingleValue ((true, false))
+      verifyByKey(sc, false, 0.4, 0.6, 0.9, 0.9) should containSingleValue ((false, true))
+      verifyByKey(sc, false, 0.4, 0.6, 0.4, 0.6) should containSingleValue ((false, false))
     }
   }
 
@@ -302,21 +302,21 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("b", 3), ("c", 4), ("c", 5), ("c", 6)))
       val p2 = sc.parallelize(Seq(("a", 10L), ("b", 20L)))
       val p = p1.subtractByKey(p2)
-      p.internal should containInAnyOrder (Seq(("c", 4), ("c", 5), ("c", 6)))
+      p should containInAnyOrder (Seq(("c", 4), ("c", 5), ("c", 6)))
     }
   }
 
   it should "support sumByKey()" in {
     runWithContext { sc =>
       val p = sc.parallelize(List(("a", 1), ("b", 2), ("b", 2)) ++ (1 to 100).map(("c", _))).sumByKey
-      p.internal should containInAnyOrder (Seq(("a", 1), ("b", 4), ("c", 5050)))
+      p should containInAnyOrder (Seq(("a", 1), ("b", 4), ("c", 5050)))
     }
   }
 
   it should "support swap()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3))).swap
-      p.internal should containInAnyOrder (Seq((1, "a"), (2, "b"), (3, "c")))
+      p should containInAnyOrder (Seq((1, "a"), (2, "b"), (3, "c")))
     }
   }
 
@@ -325,15 +325,15 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p = sc.parallelize(Seq(("a", 1), ("b", 11), ("b", 12), ("c", 21), ("c", 22), ("c", 23)))
       val r1 = p.topByKey(1)
       val r2 = p.topByKey(1)(Ordering.by(-_))
-      r1.internal should containInAnyOrder (Seq(("a", iterable(1)), ("b", iterable(12)), ("c", iterable(23))))
-      r2.internal should containInAnyOrder (Seq(("a", iterable(1)), ("b", iterable(11)), ("c", iterable(21))))
+      r1 should containInAnyOrder (Seq(("a", iterable(1)), ("b", iterable(12)), ("c", iterable(23))))
+      r2 should containInAnyOrder (Seq(("a", iterable(1)), ("b", iterable(11)), ("c", iterable(21))))
     }
   }
 
   it should "support values()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3))).values
-      p.internal should containInAnyOrder (Seq(1, 2, 3))
+      p should containInAnyOrder (Seq(1, 2, 3))
     }
   }
 
@@ -342,7 +342,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
       val p = p1.hashJoin(p2)
-      p.internal should containInAnyOrder (Seq(("a", (1, 11)), ("b", (2, 12))))
+      p should containInAnyOrder (Seq(("a", (1, 11)), ("b", (2, 12))))
     }
   }
 
@@ -351,7 +351,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
       val p = p1.hashJoin(p2)
-      p.internal should containInAnyOrder (Seq(("a", (1, 11)), ("a", (2, 11)), ("b", (3, 12)), ("b", (3, 13))))
+      p should containInAnyOrder (Seq(("a", (1, 11)), ("a", (2, 11)), ("b", (3, 12)), ("b", (3, 13))))
     }
   }
 
@@ -360,7 +360,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
       val p = p1.hashLeftJoin(p2)
-      p.internal should containInAnyOrder (Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
+      p should containInAnyOrder (Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
     }
   }
 
@@ -369,7 +369,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
       val p = p1.hashLeftJoin(p2)
-      p.internal should containInAnyOrder (Seq(
+      p should containInAnyOrder (Seq(
         ("a", (1, Some(11))),
         ("a", (2, Some(11))),
         ("b", (3, Some(12))),

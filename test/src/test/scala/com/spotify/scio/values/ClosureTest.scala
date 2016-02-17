@@ -7,7 +7,7 @@ class ClosureTest extends PipelineSpec {
   "SCollection" should "support lambdas" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3))
-      p.map(_ * 10).internal should containInAnyOrder (Seq(10, 20, 30))
+      p.map(_ * 10) should containInAnyOrder (Seq(10, 20, 30))
     }
   }
 
@@ -15,7 +15,7 @@ class ClosureTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3))
       def fn(x: Int): Int = x * 10
-      p.map(fn).internal should containInAnyOrder (Seq(10, 20, 30))
+      p.map(fn) should containInAnyOrder (Seq(10, 20, 30))
     }
   }
 
@@ -23,7 +23,7 @@ class ClosureTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3))
       val fn = (x: Int) => x * 10
-      p.map(fn).internal should containInAnyOrder (Seq(10, 20, 30))
+      p.map(fn) should containInAnyOrder (Seq(10, 20, 30))
     }
   }
 
@@ -32,14 +32,14 @@ class ClosureTest extends PipelineSpec {
   it should "support class fn" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3))
-      p.map(classFn).internal should containInAnyOrder (Seq(10, 20, 30))
+      p.map(classFn) should containInAnyOrder (Seq(10, 20, 30))
     }
   }
 
   it should "support object fn" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3))
-      p.map(ClosureTest.objectFn).internal should containInAnyOrder (Seq(10, 20, 30))
+      p.map(ClosureTest.objectFn) should containInAnyOrder (Seq(10, 20, 30))
     }
   }
 
