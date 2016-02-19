@@ -15,7 +15,6 @@
  * under the License.
  */
 
-// INCOMPLETE
 package com.spotify.scio.examples
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
