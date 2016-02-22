@@ -88,7 +88,7 @@ object ScioBuild extends Build {
 
   lazy val scioCore: Project = Project(
     "scio-core",
-    file("core"),
+    file("scio-core"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
         dataflowSdkDependency,
@@ -106,7 +106,7 @@ object ScioBuild extends Build {
 
   lazy val scioTest: Project = Project(
     "scio-test",
-    file("test"),
+    file("scio-test"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
         "org.scalatest" %% "scalatest" % scalaTestVersion,
@@ -122,7 +122,7 @@ object ScioBuild extends Build {
 
   lazy val scioBigQuery: Project = Project(
     "scio-bigquery",
-    file("bigquery"),
+    file("scio-bigquery"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
         dataflowSdkDependency,
@@ -145,7 +145,7 @@ object ScioBuild extends Build {
 
   lazy val scioBigTable: Project = Project(
     "scio-bigtable",
-    file("bigtable"),
+    file("scio-bigtable"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
         "com.google.cloud.bigtable" % "bigtable-hbase-dataflow" % "0.2.3" exclude ("org.slf4j", "slf4j-log4j12"),
@@ -159,7 +159,7 @@ object ScioBuild extends Build {
 
   lazy val scioExtra: Project = Project(
     "scio-extra",
-    file("extra"),
+    file("scio-extra"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
         "com.google.guava" % "guava" % "19.0",
@@ -173,7 +173,7 @@ object ScioBuild extends Build {
 
   lazy val scioHdfs: Project = Project(
     "scio-hdfs",
-    file("hdfs"),
+    file("scio-hdfs"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
         "org.apache.avro" % "avro-mapred" % "1.7.7" classifier("hadoop2"),
@@ -188,7 +188,7 @@ object ScioBuild extends Build {
 
   lazy val scioSchemas: Project = Project(
     "scio-schemas",
-    file("schemas"),
+    file("scio-schemas"),
     settings = buildSettings ++ sbtavro.SbtAvro.avroSettings
   ).settings(
     publish := {},
@@ -197,7 +197,7 @@ object ScioBuild extends Build {
 
   lazy val scioExamples: Project = Project(
     "scio-examples",
-    file("examples"),
+    file("scio-examples"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
         "org.slf4j" % "slf4j-simple" % "1.7.13"
