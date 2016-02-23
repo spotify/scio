@@ -29,7 +29,6 @@ import xerial.sbt.Sonatype.SonatypeKeys._
 object BuildSettings {
   val buildSettings = Defaults.defaultSettings ++ Sonatype.sonatypeSettings ++ Seq(
     organization       := "com.spotify",
-    version            := "0.1.0-SNAPSHOT",
 
     scalaVersion       := "2.11.7",
     crossScalaVersions := Seq("2.10.6", "2.11.7"),
