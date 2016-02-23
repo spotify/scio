@@ -1,7 +1,7 @@
 Scio
 ====
 
-Scala API for Google Cloud Dataflow
+Scala API for [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK)
 
 See the [current API documentation](http://spotify.github.io/scio/) for more information.
 
@@ -9,7 +9,9 @@ See the [current API documentation](http://spotify.github.io/scio/) for more inf
 
 First install the [Google Cloud SDK](https://cloud.google.com/sdk/) and create a [Google Cloud Storage](https://cloud.google.com/storage/) bucket for your project, e.g. `gs://my-bucket`. Make sure it's in the same region as the BigQuery datasets you want to access and where you want Dataflow to launch workers on GCE.
 
-Then clone this repository and publish artifacts locally.
+# Building Scio
+
+Scio is built using [SBT](http://www.scala-sbt.org/). To build Scio and publish artifacts locally, run:
 
 ```bash
 git clone git@github.com:spotify/scio.git
@@ -102,3 +104,9 @@ Scio includes the following artifacts:
 - `scio-hdfs`: Add-on for HDFS
 
 To access HDFS from a Scio job, Hadoop configuration files (`core-site.xml`, `hdfs-site.xml`, etc.) must be present in `src/main/resources` and `--network` should be set to one that has access to the Hadoop cluster.
+
+# License
+
+Copyright 2016 Spotify AB.
+
+Licensed under the Apache License, Version 2.0: http://www.apache.org/licenses/LICENSE-2.0
