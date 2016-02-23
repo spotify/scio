@@ -48,7 +48,7 @@ object FVSemigroupSpec extends Properties("FloatVectorSemigroup") with BreezeSpe
 }
 
 object DVSemigroupSpec extends Properties("DoubleVectorSemigroup") with BreezeSpec[DenseVector, Double] {
-  val m = Gen.resultOf { _: Int => DenseVector.rand(dimension) }
+  val m = Gen.resultOf { _: Int => DenseVector.rand[Double](dimension) }
   property("plus") = forAll(m, m) { (x, y) =>
     plus(x, y) == x + y
   }
