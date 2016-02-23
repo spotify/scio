@@ -77,7 +77,7 @@ trait NearestNeighborBuilder[K, @specialized(Double, Int, Float, Long) V] extend
     id
   }
 
-  /** Add a key->vector pair. Vector should be normalized. */
+  /** Add a key->vector pair. The vector should be normalized. */
   def add(key: K, vec: DenseVector[V]): Unit
 
   /** Build an immutable NearestNeighbor instance. */
@@ -106,7 +106,7 @@ trait NearestNeighbor[K, @specialized(Double, Int, Float, Long) V] extends Seria
   @inline protected def getKey(id: Int): K = idToKey(id)
   @inline protected def getId(key: K): Int = keyToId(key)
 
-  /** Lookup nearest neighbors of a vector. Vector should be normalized. */
+  /** Lookup nearest neighbors of a vector. The vector should be normalized. */
   def lookup(vec: DenseVector[V], maxResult: Int, minSimilarity: Double = Double.NegativeInfinity): Iterable[(K, Double)]
 
   /** Lookup nearest neighbors of an existing vector. */
@@ -120,7 +120,7 @@ private class MatrixNNBuilder[K: ClassTag, @specialized(Double, Int, Float, Long
   (override val dimension: Int)
   extends NearestNeighborBuilder[K, V] {
 
-  /** Add a key->vector pair. Vector should be normalized. */
+  /** Add a key->vector pair. The vector should be normalized. */
   override def add(key: K, vec: DenseVector[V]): Unit = addVector(key, vec)
 
   /** Build an immutable NearestNeighbor instance. */
@@ -140,7 +140,7 @@ private class MatrixNN[K, @specialized(Double, Int, Float, Long) V: ClassTag : N
   /** Name of the nearest neighbor method. */
   override val name: String = "Matrix"
 
-  /** Lookup nearest neighbors of a vector. Vector should be normalized. */
+  /** Lookup nearest neighbors of a vector. The vector should be normalized. */
   override def lookup(vec: DenseVector[V], maxResult: Int, minSimilarity: Double): Iterable[(K, Double)] = {
     require(vec.length == dimension, s"Vector dimension ${vec.length} != $dimension")
     require(maxResult > 0, s"maxResult must be > 0")
@@ -178,7 +178,7 @@ private class LSHNNBuilder[K: ClassTag, @specialized(Double, Int, Float, Long) V
   private val lsh = new LSHSuperBit(stages, buckets, dimension)
   private val bins = Array.fill(buckets)(ListBuffer[Int]())
 
-  /** Add a key->vector pair. Vector should be normalized. */
+  /** Add a key->vector pair. The vector should be normalized. */
   override def add(key: K, vec: DenseVector[V]): Unit = {
     val id = addVector(key, vec)
 
@@ -210,7 +210,7 @@ private class LSHNN[K, @specialized(Double, Int, Float, Long) V: ClassTag : Nume
   /** Name of the nearest neighbor method. */
   override val name: String = "LSH"
 
-  /** Lookup nearest neighbors of a vector. Vector should be normalized. */
+  /** Lookup nearest neighbors of a vector. The vector should be normalized. */
   override def lookup(vec: DenseVector[V], maxResult: Int, minSimilarity: Double): Iterable[(K, Double)] = {
     require(vec.length == dimension, s"Vector dimension ${vec.length} != $dimension")
     require(maxResult > 0, s"maxResult must be > 0")
