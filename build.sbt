@@ -40,6 +40,7 @@ val buildSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ Seq(
   // Release settings
   releaseCrossBuild             := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+  publishArtifact in Test       := false,
   sonatypeProfileName           := "com.spotify",
   pomExtra                      := {
     <url>https://github.com/spotify/scio</url>
@@ -92,6 +93,7 @@ lazy val root: Project = Project(
   file("."),
   settings = buildSettings ++ siteSettings ++ Seq(run <<= run in Compile in scioExamples)
 ).settings(
+  publishArtifact := false,
   publish := {},
   publishLocal := {},
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
@@ -211,6 +213,7 @@ lazy val scioSchemas: Project = Project(
   file("scio-schemas"),
   settings = buildSettings ++ sbtavro.SbtAvro.avroSettings
 ).settings(
+  sources in doc in Compile := List(),
   publish := {},
   publishLocal := {}
 )
@@ -225,6 +228,7 @@ lazy val scioExamples: Project = Project(
     addCompilerPlugin(paradiseDependency)
   )
 ).settings(
+  sources in doc in Compile := List(),
   publish := {},
   publishLocal := {}
 ).dependsOn(
