@@ -25,7 +25,7 @@ object IteratorsSpec extends Properties("Iterators") {
 
   val maxInterval = 10L
 
-  val timeSeries = Gen.containerOf[List, Long](Gen.choose(0L, maxInterval)).map {
+  val timeSeries = Gen.listOf[Long](Gen.choose(0L, maxInterval)).map {
     case head :: tail => tail.scanLeft(head)(_ + _)
     case Nil => Nil
   }

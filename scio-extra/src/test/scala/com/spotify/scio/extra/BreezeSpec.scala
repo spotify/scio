@@ -32,7 +32,7 @@ trait BreezeSpec[M[_], T] {
   val cols = 10
   val fRand = Rand.uniform.map(_.toFloat)
   val m: Gen[M[T]]
-  def ms: Gen[Seq[M[T]]] = Gen.containerOf[Seq, M[T]](m)
+  def ms: Gen[List[M[T]]] = Gen.listOf[M[T]](m)
   def plus(x: M[T], y: M[T])(implicit sg: Semigroup[M[T]]): M[T] = sg.plus(x, y)
   def sumOption(xs: Iterable[M[T]])(implicit sg: Semigroup[M[T]]): Option[M[T]] = sg.sumOption(xs)
 }
