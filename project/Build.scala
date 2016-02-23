@@ -166,7 +166,6 @@ object ScioBuild extends Build {
         "com.twitter" %% "algebird-core" % "0.11.0",
         "org.scalanlp" %% "breeze" % "0.12",
         "info.debatty" % "java-lsh" % "0.8",
-        "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
         "org.scalacheck" %% "scalacheck" % "1.13.0" % "test"
       )
     )
