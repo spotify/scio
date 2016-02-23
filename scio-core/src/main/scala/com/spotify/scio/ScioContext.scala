@@ -160,7 +160,9 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
 
   /** Close the context. No operation can be performed once the context is closed. */
   def close(): ScioResult = {
-    bigQueryClient.waitForJobs(_bigQueryJobs: _*)
+    if (_bigQueryJobs.nonEmpty) {
+      bigQueryClient.waitForJobs(_bigQueryJobs: _*)
+    }
 
     _isClosed = true
     val result = this.pipeline.run()
