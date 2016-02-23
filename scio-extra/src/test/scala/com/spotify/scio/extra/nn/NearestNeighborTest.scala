@@ -41,7 +41,7 @@ class NearestNeighborTest extends FlatSpec with NearestNeighborBehaviors {
   }
 
   val matrixNN: NearestNeighbor[String, Double] = {
-    val b = NearestNeighbor.newMatrixbuilder[String, Double](dimension)
+    val b = NearestNeighbor.newMatrixBuilder[String, Double](dimension)
     testData.foreach { case (k, v) => b.add(k, v) }
     b.build
   }

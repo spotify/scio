@@ -43,7 +43,7 @@ object NearestNeighbor {
    * Create a new builder for matrix based [[NearestNeighbor]].
    * @param dimension dimension of input vectors
    */
-  def newMatrixbuilder[K: ClassTag, @specialized(Double, Int, Float, Long) V: ClassTag : Numeric : Semiring]
+  def newMatrixBuilder[K: ClassTag, @specialized(Double, Int, Float, Long) V: ClassTag : Numeric : Semiring]
   (dimension: Int): NearestNeighborBuilder[K, V] =
     new MatrixNNBuilder[K, V](dimension)
 
