@@ -1,9 +1,11 @@
 Scio
 ====
 
-Scala API for [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK)
+_Ecclesiastical Latin IPA: /ˈʃi.o/, [ˈʃiː.o], [ˈʃi.i̯o]_
 
-See the [current API documentation](http://spotify.github.io/scio/) for more information.
+_Verb: I can, know, understand, have knowledge._
+
+Scio is a Scala API for [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK), inspired by [Spark](https://github.com/apache/spark) and [Scalding](https://github.com/twitter/scalding). See the [current API documentation](http://spotify.github.io/scio/) for more information.
 
 # Getting Started
 
