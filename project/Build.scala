@@ -36,6 +36,35 @@ object BuildSettings {
     scalacOptions in (Compile, doc)    ++= Seq("-groups", "-skip-packages", "com.google"),
     javacOptions in (Compile, compile) ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked"),
 
+    // Release settings
+    releaseCrossBuild := true,
+    profileName       := "com.spotify",
+    pomExtra          := {
+      <url>https://github.com/spotify/scio</url>
+      <licenses>
+        <license>
+          <name>Apache 2</name>
+          <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+      </licenses>
+      <scm>
+        <url>git@github.com/spotify/scio.git</url>
+        <connection>scm:git:git@github.com:spotify/scio.git</connection>
+      </scm>
+      <developers>
+        <developer>
+          <id>sinisa_lyh</id>
+          <name>Neville Li</name>
+          <url>https://twitter.com/sinisa_lyh</url>
+        </developer>
+        <developer>
+          <id>ravwojdyla</id>
+          <name>Rafal Wojdyla</name>
+          <url>https://twitter.com/ravwojdyla</url>
+        </developer>
+      </developers>
+    }
+
     // Mappings from dependencies to external ScalaDoc/JavaDoc sites
     apiMappings ++= {
       val mappinngFn = (organization: String, name: String, apiUrl: String) => {
