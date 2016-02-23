@@ -35,6 +35,8 @@ val buildSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ Seq(
   javacOptions                    ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked"),
   javacOptions in (Compile, doc)  := Seq("-source", "1.7"),
 
+  fork in Test := true,
+
   // Release settings
   releaseCrossBuild             := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
