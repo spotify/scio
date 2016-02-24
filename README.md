@@ -81,9 +81,9 @@ More Dataflow pipeline specific options available can be found in [`DataflowPipe
 - `--workerMachineType`: Machine type to create Dataflow worker VMs as. See [https://cloud.google.com/compute/docs/machine-types](https://cloud.google.com/compute/docs/machine-types) for a list of valid options. If unset, the Dataflow service will choose a reasonable default.
 - `--network`: GCE network for launching workers.
 
-# Scio vs. Spark
+# Scio, Spark and Scalding
 
-The Scio API is modeled after Spark with some minor differences.
+The Scio API is heavily influenced by Spark but there are some minor differences.
 
 - [`SCollection`](http://spotify.github.io/scio/#com.spotify.scio.values.SCollection) is equivalent to Spark's [`RDD`](https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.RDD).
 - [`PairSCollectionFunctions`](http://spotify.github.io/scio/#com.spotify.scio.values.PairSCollectionFunctions) and [`DoubleSCollectionFunctions`](http://spotify.github.io/scio/#com.spotify.scio.values.DoubleSCollectionFunctions) are specialized versions of `SCollection` and equivalent to Spark's [`PairRDDFunctions`](https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.PairRDDFunctions) and [`DoubleRDDFunctions`](https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.DoubleRDDFunctions).
@@ -92,7 +92,19 @@ The Scio API is modeled after Spark with some minor differences.
 - There is no `DStream` (continuous series of `RDD`s) like in Spark Streaming. Values in a `SCollection` are windowed based on timestamp and windowing operation. The same API works regardless of batch (single global window by default) or streaming mode. Aggregation type _transformations_ that produce `SCollection`s of a single value under global window will produce one value each window when a non-global window is defined.
 - `SCollection` has extra methods for side input, side output, and windowing.
 - `SCollection` can be converted to `SCollectionWithAccumulator` (allowing custom counters similar to those in Hadoop), `SCollectionWithSideInput` (replicating small `SCollection`s to all left-hand side values), `SCollectionWithSideOutput` (allowing multiple outputs), or `WindowedSCollection` (allowing access to window information).
+
+Some features may look familiar to Scalding users.
+
+- [`Args`](http://spotify.github.io/scio/#com.spotify.scio.Args) is a simple command line argument parser similar to the one in Scalding.
+- Powerful transforms are possible with `sum`, `sumByKey`, `aggregate`, `aggregrateByKey` using [Algebird](https://github.com/twitter/algebird) `Semigroup`s and `Aggregator`s.
+- Utility for multi-joins up to 22 sources.
+- `JobTest` for end to end pipeline testing.
+
+Scio also offers some additional features.
+
 - Each worker can pull files from Google Cloud Storage via `DistCache` to be used in transforms locally, similar to Hadoop distributed cache.
+- Type safe BigQuery IO via Scala macros. Case classes and converters are generated at compile time based on BQ schema. This eliminates the error prone process of handling generic JSON objects.
+- Sinks (`saveAs*` methods) return `Future[Tap[T]]` that can be opened either in another pipeline as `SCollection[T]` or directly as `Iterator[T]` once the current pipeline completes. This enables complex pipeline orchestration.
 
 # Artifacts
 
