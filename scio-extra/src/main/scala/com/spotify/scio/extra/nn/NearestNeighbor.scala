@@ -85,7 +85,27 @@ trait NearestNeighborBuilder[K, @specialized(Double, Int, Float, Long) V] extend
 
 }
 
-/** Immutable index for fast nearest neighbor look up. */
+/**
+ * Immutable index for fast nearest neighbor look up.
+ *
+ * {{
+ * import com.spotify.scio.extra.nn._
+ *
+ * // Tuples of (item ID, vector) to look up from
+ * val vectors: Seq[(String, DenseVector[Double])] = // ...
+ *
+ * // Builder for a nearest neighbor index backed by a matrix
+ * val builder = NearestNeighbor.newMatrixBuilder[String, Double](40)
+ * vectors.foreach(kv => builder.addVector(kv._1, kv._2))
+ * val nn = builder.build
+ *
+ * // Candidate to loo up nearest neighbors from
+ * val candidate: DenseVector[Double] = // ...
+ *
+ * // Look up top 10 most similar items
+ * nn.lookup(candidate, 10)
+ * }}
+ */
 trait NearestNeighbor[K, @specialized(Double, Int, Float, Long) V] extends Serializable {
 
   /** Name of the nearest neighbor method. */
