@@ -97,8 +97,8 @@ Some features may look familiar to Scalding users.
 
 - [`Args`](http://spotify.github.io/scio/#com.spotify.scio.Args) is a simple command line argument parser similar to the one in Scalding.
 - Powerful transforms are possible with `sum`, `sumByKey`, `aggregate`, `aggregrateByKey` using [Algebird](https://github.com/twitter/algebird) `Semigroup`s and `Aggregator`s.
-- Utility for multi-joins up to 22 sources.
-- `JobTest` for end to end pipeline testing.
+- [`MultiJoin`](http://spotify.github.io/scio/#com.spotify.scio.util.MultiJoin$) and coGroup of up to 22 sources.
+- [`JobTest`](http://spotify.github.io/scio/#com.spotify.scio.testing.JobTest$) for end to end pipeline testing.
 
 Scio also offers some additional features.
 
