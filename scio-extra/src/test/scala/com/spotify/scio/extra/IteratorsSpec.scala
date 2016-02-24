@@ -46,7 +46,6 @@ object IteratorsSpec extends Properties("Iterators") {
   } yield (size, offset)
 
   property("fixed") = forAll(timeSeries, fixedParams) { case (ts, (size, offset)) =>
-
     val r = ts.iterator.timeSeries(identity).fixed(size, offset).toList
     all(
       "flatten"  |: r.flatten == ts,
