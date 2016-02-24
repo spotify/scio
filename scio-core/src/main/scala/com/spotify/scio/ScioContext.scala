@@ -432,13 +432,19 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
   // In-memory collections
   // =======================================================================
 
+  private def truncate(name: String): String = {
+    val maxLength = 256
+    if (name.length <= maxLength) name else name.substring(0, maxLength - 3) + "..."
+  }
+
   /**
    * Distribute a local Scala Iterable to form an SCollection.
    * @group in_memory
    */
   def parallelize[T: ClassTag](elems: Iterable[T]): SCollection[T] = pipelineOp {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
-    wrap(this.applyInternal(Create.of(elems.asJava).withCoder(coder))).setName(elems.toString())
+    wrap(this.applyInternal(Create.of(elems.asJava).withCoder(coder)))
+      .setName(truncate(elems.toString()))
   }
 
   /**
@@ -448,7 +454,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
   def parallelize[K: ClassTag, V: ClassTag](elems: Map[K, V]): SCollection[(K, V)] = pipelineOp {
     val coder = pipeline.getCoderRegistry.getScalaKvCoder[K, V]
     wrap(this.applyInternal(Create.of(elems.asJava).withCoder(coder))).map(kv => (kv.getKey, kv.getValue))
-      .setName(elems.toString())
+      .setName(truncate(elems.toString()))
   }
 
   /**
@@ -458,7 +464,8 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
   def parallelizeTimestamped[T: ClassTag](elems: Iterable[(T, Instant)]): SCollection[T] = pipelineOp {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     val v = elems.map(t => TimestampedValue.of(t._1, t._2))
-    wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder))).setName(elems.toString())
+    wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder)))
+      .setName(truncate(elems.toString()))
   }
 
   /**
@@ -469,7 +476,8 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
                                           timestamps: Iterable[Instant]): SCollection[T] = pipelineOp {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     val v = elems.zip(timestamps).map(t => TimestampedValue.of(t._1, t._2))
-    wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder))).setName(elems.toString())
+    wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder)))
+      .setName(truncate(elems.toString()))
   }
 
   // =======================================================================
