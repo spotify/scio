@@ -23,7 +23,7 @@ import com.spotify.scio.testing.PipelineSpec
 import scala.concurrent.Future
 
 class ScioResultTest extends PipelineSpec {
-  
+
   "ScioContextResult" should "reflect pipeline state" in {
     val r = runWithContext(_.parallelize(Seq(1, 2, 3)))
     r.isCompleted shouldBe true
