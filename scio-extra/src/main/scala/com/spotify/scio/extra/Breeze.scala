@@ -20,7 +20,18 @@ package com.spotify.scio.extra
 import breeze.linalg._
 import com.twitter.algebird.Semigroup
 
-/** Utilities for Breeze. */
+/**
+ * Utilities for Breeze.
+ *
+ * Includes [[Semigroup]]s for `DenseVector`s and `DenseMatrix`s of `Float` and `Double`.
+ *
+ * {{{
+ * import com.spotify.scio.extra.Breeze._
+ *
+ * val vectors: SCollection[DenseVector[Double]] = // ...
+ * vectors.sum  // implicit Semigroup[T]
+ * }}}
+ */
 object Breeze {
 
   private type FV = DenseVector[Float]

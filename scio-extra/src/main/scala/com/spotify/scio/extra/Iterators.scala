@@ -19,7 +19,29 @@ package com.spotify.scio.extra
 
 import scala.collection.mutable
 
-/** Utilities for Scala iterators. */
+/**
+ * Utilities for Scala iterators.
+ *
+ * Adds a `timeSeries` method to `Iterator[T]` so that it can be windowed with different logic.
+ *
+ * {{{
+ * import com.spotify.scio.extra.Iterators._
+ *
+ * case class Event(user: String, action: String, timestamp: Long)
+ * val i: Iterator[Event] = // ...
+ *
+ * // 60 minutes fixed windows offset by 30 minutes
+ * // E.g. minute [30, 90), [90, 120), [120, 150), [150, 180) ...
+ * i.timeSeries(_.timestamp).fixed(3600000, 1800000)
+ *
+ * // session windows with 60 minute gaps between windows
+ * i.timeSeries(_.timestamp).session(3600000)
+ *
+ * // 60 minutes sliding windows, one every 10 minutes, offset by 5 minutes
+ * // E.g. minute [5, 65), [15, 75), [25, 85), [35, 95) ...
+ * i.timeSeries(_.timestamp).session(3600000, 600000, 300000)
+ * }}}
+ */
 object Iterators {
 
   private[extra] def lowerBound(idx: Long, size: Long, offset: Long): Long =

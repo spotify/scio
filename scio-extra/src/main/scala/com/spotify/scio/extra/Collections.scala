@@ -21,7 +21,20 @@ import com.google.common.collect.MinMaxPriorityQueue
 
 import scala.collection.JavaConverters._
 
-/** Utilities for Scala collection library. */
+/**
+ * Utilities for Scala collection library.
+ *
+ * Adds a `top` method to `Array[T]` and `Iterable[T]` and a `topByKey` method to `Array[(K, V)]`
+ * and `Iterable[(K, V)]`.
+ *
+ * {{{
+ * import com.spotify.scio.extra.Collections._
+ *
+ * val xs: Array[(String, Int)] = // ...
+ * xs.top(5)(Ordering.by(_._2))
+ * xs.topByKey(5)
+ * }}}
+ */
 object Collections {
 
   private def topImpl[T](xs: Iterable[T], num: Int, ord: Ordering[T]): Iterable[T] = {
