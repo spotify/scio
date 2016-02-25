@@ -243,7 +243,8 @@ lazy val scioExamples: Project = Project(
   file("scio-examples"),
   settings = buildSettings ++ Seq(
     libraryDependencies ++= Seq(
-      "org.slf4j" % "slf4j-simple" % slf4jVersion
+      "org.slf4j" % "slf4j-simple" % slf4jVersion,
+      "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
     ),
     addCompilerPlugin(paradiseDependency)
   )
