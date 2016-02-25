@@ -215,7 +215,8 @@ lazy val scioSchemas: Project = Project(
 ).settings(
   sources in doc in Compile := List(),
   publish := {},
-  publishLocal := {}
+  publishLocal := {},
+  javacOptions := Seq("-source", "1.7", "-target", "1.7")
 )
 
 lazy val scioExamples: Project = Project(
