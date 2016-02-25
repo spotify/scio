@@ -22,6 +22,7 @@ import java.net.URI
 import java.nio.channels.Channels
 import java.nio.file.Path
 import java.util.Collections
+import java.util.regex.Pattern
 
 import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.google.api.client.util.Charsets
@@ -39,6 +40,7 @@ import org.apache.commons.io.{FileUtils, IOUtils}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import scala.util.Try
 
 private object FileStorage {
   def apply(path: String): FileStorage =
@@ -49,7 +51,7 @@ private trait FileStorage {
 
   protected val path: String
 
-  protected def list: Seq[Path]
+  protected def listFiles(): Seq[Path]
 
   protected def getObjectInputStream(path: Path): InputStream
 
@@ -71,8 +73,35 @@ private trait FileStorage {
     textFile.map(mapper.readValue(_, classOf[TableRow]))
   }
 
+  def isDone: Boolean = {
+    val partPattern = "([0-9]{5})-of-([0-9]{5})".r
+    val paths = listFiles()
+    val nums = paths.flatMap { p =>
+      val m = partPattern.findAllIn(p.toString)
+      if (m.hasNext) {
+        Some(m.group(1).toInt, m.group(2).toInt)
+      } else {
+        None
+      }
+    }
+
+    if (paths.isEmpty) {
+      // empty list
+      false
+    } else if (nums.nonEmpty) {
+      // found xxxxx-of-yyyyy pattern
+      val parts = nums.map(_._1).sorted
+      val total = nums.map(_._2).toSet
+      paths.size == nums.size &&  // all paths matched
+        total.size == 1 && total.head == parts.size &&  // yyyyy part
+        parts.head == 0 && parts.last + 1 == parts.size // xxxxx part
+    } else {
+      true
+    }
+  }
+
   private def getDirectoryInputStream(path: String): InputStream = {
-    val inputs = list.map(getObjectInputStream).asJava
+    val inputs = listFiles().map(getObjectInputStream).asJava
     new SequenceInputStream(Collections.enumeration(inputs))
   }
 
@@ -85,7 +114,19 @@ private class GcsStorage(protected val path: String) extends FileStorage {
 
   private lazy val gcs = new GcsUtilFactory().create(PipelineOptionsFactory.create())
 
-  override protected def list: Seq[Path] = gcs.expand(GcsPath.fromUri(uri)).asScala
+  private val GLOB_PREFIX = Pattern.compile("(?<PREFIX>[^\\[*?]*)[\\[*?].*")
+
+  override protected def listFiles(): Seq[Path] = {
+    if (GLOB_PREFIX.matcher(path).matches()) {
+      gcs
+        .expand(GcsPath.fromUri(uri))
+        .asScala
+    } else {
+      // not a glob, GcsUtil may return non-existent files
+      val p = GcsPath.fromUri(path)
+      if (Try(gcs.fileSize(p)).isSuccess) Seq(p) else Seq.empty
+    }
+  }
 
   override protected def getObjectInputStream(path: Path): InputStream =
     Channels.newInputStream(gcs.open(GcsPath.fromUri(path.toUri)))
@@ -97,10 +138,20 @@ private class LocalStorage(protected val path: String)  extends FileStorage {
   private val uri = new URI(path)
   require(ScioUtil.isLocalUri(uri), s"Not a local path: $path")
 
-  override protected def list: Seq[Path] = {
+  override protected def listFiles(): Seq[Path] = {
     val p = path.lastIndexOf("/")
+    val (dir, filter) = if (p == 0) {
+      // "/file.ext"
+      (new File("/"), new WildcardFileFilter(path.substring(p + 1)))
+    } else if (p > 0) {
+      // "/path/to/file.ext"
+      (new File(path.substring(0, p)), new WildcardFileFilter(path.substring(p + 1)))
+    } else {
+      // "file.ext"
+      (new File("."), new WildcardFileFilter(path))
+    }
     FileUtils
-      .listFiles(new File(path.substring(0, p)), new WildcardFileFilter(path.substring(p + 1)), null)
+      .listFiles(dir, filter, null)
       .asScala
       .toSeq
       .map(_.toPath)
