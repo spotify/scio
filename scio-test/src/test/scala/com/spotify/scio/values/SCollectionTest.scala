@@ -18,7 +18,6 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.testing.PipelineSpec
-import com.spotify.scio.util.Algebird
 import com.twitter.algebird.{Aggregator, Semigroup}
 import org.joda.time.{Duration, Instant}
 
@@ -90,7 +89,7 @@ class SCollectionTest extends PipelineSpec {
       val p = sc.parallelize(1 to 100)
       val p1 = p.aggregate(0.0)(_ + _, _ + _)
       val p2 = p.aggregate(Aggregator.max[Int])
-      val p3 = p.aggregate(Algebird.sortedReverseTake[Int](5))
+      val p3 = p.aggregate(Aggregator.immutableSortedReverseTake[Int](5))
       p1 should containSingleValue (5050.0)
       p2 should containSingleValue (100)
       p3 should containSingleValue (Seq(100, 99, 98, 97, 96))

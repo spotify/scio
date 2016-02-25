@@ -18,7 +18,6 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.testing.PipelineSpec
-import com.spotify.scio.util.Algebird
 import com.twitter.algebird.Aggregator
 
 class PairSCollectionFunctionsTest extends PipelineSpec {
@@ -185,7 +184,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p2 = sc.parallelize(1 to 10).map(("b", _))
       val r1 = (p1 ++ p2).aggregateByKey(0.0)(_ + _, _ + _)
       val r2 = (p1 ++ p2).aggregateByKey(Aggregator.max[Int])
-      val r3 = (p1 ++ p2).aggregateByKey(Algebird.sortedReverseTake[Int](5))
+      val r3 = (p1 ++ p2).aggregateByKey(Aggregator.immutableSortedReverseTake[Int](5))
       r1 should containInAnyOrder (Seq(("a", 5050.0), ("b", 55.0)))
       r2 should containInAnyOrder (Seq(("a", 100), ("b", 10)))
       r3 should containInAnyOrder (Seq(("a", Seq(100, 99, 98, 97, 96)), ("b", Seq(10, 9, 8, 7, 6))))
