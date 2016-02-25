@@ -47,8 +47,6 @@ private trait FileStorage {
 
   protected val path: String
 
-  def delete(): Unit
-
   protected def list: Seq[String]
 
   protected def getObjectInputStream(path: String): InputStream
@@ -88,19 +86,6 @@ private class GcsStorage(protected val path: String) extends FileStorage {
     JacksonFactory.getDefaultInstance,
     GoogleCredential.getApplicationDefault).build()
 
-  override def delete(): Unit = {
-    val bucket = uri.getHost
-    val prefix = uri.getPath.replaceAll("^/", "") + (if (uri.getPath.endsWith("/")) "" else "/")
-    val objects = storage.objects()
-      .list(bucket)
-      .setPrefix(prefix)
-      .execute()
-      .getItems.asScala
-    objects.foreach { o =>
-      storage.objects().delete(bucket, o.getName).execute()
-    }
-  }
-
   override protected def list: Seq[String] = {
     val bucket = uri.getHost
     val prefix = uri.getPath.replaceAll("^/", "") + (if (uri.getPath.endsWith("/")) "" else "/")
@@ -135,8 +120,6 @@ private class LocalStorage(protected val path: String)  extends FileStorage {
 
   private val uri = new URI(path)
   require(ScioUtil.isLocalUri(uri), s"Not a local path: $path")
-
-  override def delete(): Unit = FileUtils.deleteDirectory(new File(uri))
 
   override protected def list: Seq[String] =
     FileUtils.listFiles(new File(path), null, false).asScala.map(_.getCanonicalPath).toSeq
