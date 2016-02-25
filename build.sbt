@@ -41,7 +41,7 @@ val junitVersion = "4.12"
 val scalaCheckVersion = "1.13.0"
 val scalaMacrosVersion = "2.0.1"
 val scalaTestVersion = "2.2.6"
-val slf4jVersion = "1.7.13"
+val slf4jVersion = "1.7.16"
 
 val buildSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ Seq(
   organization       := "com.spotify",
