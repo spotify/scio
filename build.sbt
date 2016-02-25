@@ -21,9 +21,27 @@ import com.typesafe.sbt.SbtSite.SiteKeys._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import sbtunidoc.Plugin.UnidocKeys._
 
-val sdkVersion = "1.4.0"
-val macrosVersion = "2.0.1"
+val dataflowSdkVersion = "1.4.0"
+val algebirdVersion = "0.11.0"
+val avroVersion = "1.7.7"
+val bigtableVersion = "0.2.3"
+val bijectionVersion = "0.8.1"
+val breezeVersion ="0.12"
+val chillVersion = "0.7.2"
+val commonsIoVersion = "2.4"
+val commonsMath3Version = "3.6"
+val guavaVersion = "19.0"
+val hadoopVersion = "2.7.1"
+val hamcrestVersion = "1.3"
+val hbaseVersion = "1.0.1"
+val javaLshVersion = "0.8"
+val jodaConvertVersion = "1.7"
+val jodaTimeVersion = "2.7"
+val junitVersion = "4.12"
+val scalaCheckVersion = "1.13.0"
+val scalaMacrosVersion = "2.0.1"
 val scalaTestVersion = "2.2.6"
+val slf4jVersion = "1.7.13"
 
 val buildSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ Seq(
   organization       := "com.spotify",
@@ -84,9 +102,9 @@ val buildSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ Seq(
 )
 
 lazy val paradiseDependency =
-  "org.scalamacros" % "paradise" % macrosVersion cross CrossVersion.full
+  "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full
 lazy val dataflowSdkDependency =
-  "com.google.cloud.dataflow" % "google-cloud-dataflow-java-sdk-all" % sdkVersion
+  "com.google.cloud.dataflow" % "google-cloud-dataflow-java-sdk-all" % dataflowSdkVersion
 
 lazy val root: Project = Project(
   "scio",
@@ -114,12 +132,12 @@ lazy val scioCore: Project = Project(
   settings = buildSettings ++ Seq(
     libraryDependencies ++= Seq(
       dataflowSdkDependency,
-      "com.twitter" %% "algebird-core" % "0.11.0",
-      "com.twitter" %% "bijection-avro" % "0.8.1",
-      "com.twitter" %% "chill" % "0.7.2",
-      "com.twitter" %% "chill-avro" % "0.7.2",
-      "commons-io" % "commons-io" % "2.4",
-      "org.apache.commons" % "commons-math3" % "3.6"
+      "com.twitter" %% "algebird-core" % algebirdVersion,
+      "com.twitter" %% "bijection-avro" % bijectionVersion,
+      "com.twitter" %% "chill" % chillVersion,
+      "com.twitter" %% "chill-avro" % chillVersion,
+      "commons-io" % "commons-io" % commonsIoVersion,
+      "org.apache.commons" % "commons-math3" % commonsMath3Version
     )
   )
 ).dependsOn(
@@ -133,8 +151,8 @@ lazy val scioTest: Project = Project(
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % scalaTestVersion,
       // DataFlow testing requires junit and hamcrest
-      "junit" % "junit" % "4.12",
-      "org.hamcrest" % "hamcrest-all" % "1.3"
+      "junit" % "junit" % junitVersion,
+      "org.hamcrest" % "hamcrest-all" % hamcrestVersion
     )
   )
 ).dependsOn(
@@ -148,16 +166,16 @@ lazy val scioBigQuery: Project = Project(
   settings = buildSettings ++ Seq(
     libraryDependencies ++= Seq(
       dataflowSdkDependency,
-      "commons-io" % "commons-io" % "2.4",
-      "org.slf4j" % "slf4j-api" % "1.7.13",
-      "joda-time" % "joda-time" % "2.7",
-      "org.joda" % "joda-convert" % "1.7",
+      "commons-io" % "commons-io" % commonsIoVersion,
+      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "joda-time" % "joda-time" % jodaTimeVersion,
+      "org.joda" % "joda-convert" % jodaConvertVersion,
       "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
     ),
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
     libraryDependencies ++= (
       if (scalaVersion.value.startsWith("2.10"))
-        List("org.scalamacros" %% "quasiquotes" % macrosVersion cross CrossVersion.binary)
+        List("org.scalamacros" %% "quasiquotes" % scalaMacrosVersion cross CrossVersion.binary)
       else
         Nil
     ),
@@ -170,9 +188,9 @@ lazy val scioBigTable: Project = Project(
   file("scio-bigtable"),
   settings = buildSettings ++ Seq(
     libraryDependencies ++= Seq(
-      "com.google.cloud.bigtable" % "bigtable-hbase-dataflow" % "0.2.3" exclude ("org.slf4j", "slf4j-log4j12"),
-      "org.apache.hadoop" % "hadoop-common" % "2.7.1" exclude ("org.slf4j", "slf4j-log4j12"),
-      "org.apache.hbase" % "hbase-common" % "1.0.1"
+      "com.google.cloud.bigtable" % "bigtable-hbase-dataflow" % bigtableVersion exclude ("org.slf4j", "slf4j-log4j12"),
+      "org.apache.hadoop" % "hadoop-common" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12"),
+      "org.apache.hbase" % "hbase-common" % hbaseVersion
     )
   )
 ).dependsOn(
@@ -184,11 +202,11 @@ lazy val scioExtra: Project = Project(
   file("scio-extra"),
   settings = buildSettings ++ Seq(
     libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % "19.0",
-      "com.twitter" %% "algebird-core" % "0.11.0",
-      "org.scalanlp" %% "breeze" % "0.12",
-      "info.debatty" % "java-lsh" % "0.8",
-      "org.scalacheck" %% "scalacheck" % "1.13.0" % "test"
+      "com.google.guava" % "guava" % guavaVersion,
+      "com.twitter" %% "algebird-core" % algebirdVersion,
+      "org.scalanlp" %% "breeze" % breezeVersion,
+      "info.debatty" % "java-lsh" % javaLshVersion,
+      "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
     )
   )
 )
@@ -198,10 +216,10 @@ lazy val scioHdfs: Project = Project(
   file("scio-hdfs"),
   settings = buildSettings ++ Seq(
     libraryDependencies ++= Seq(
-      "org.apache.avro" % "avro-mapred" % "1.7.7" classifier("hadoop2"),
-      "org.apache.hadoop" % "hadoop-client" % "2.7.1" exclude ("org.slf4j", "slf4j-log4j12"),
-      "junit" % "junit" % "4.12" % "test",
-      "org.hamcrest" % "hamcrest-all" % "1.3" % "test"
+      "org.apache.avro" % "avro-mapred" % avroVersion classifier("hadoop2"),
+      "org.apache.hadoop" % "hadoop-client" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12"),
+      "junit" % "junit" % junitVersion % "test",
+      "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test"
     )
   )
 ).dependsOn(
@@ -225,7 +243,7 @@ lazy val scioExamples: Project = Project(
   file("scio-examples"),
   settings = buildSettings ++ Seq(
     libraryDependencies ++= Seq(
-      "org.slf4j" % "slf4j-simple" % "1.7.13"
+      "org.slf4j" % "slf4j-simple" % slf4jVersion
     ),
     addCompilerPlugin(paradiseDependency)
   )
