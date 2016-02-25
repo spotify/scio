@@ -738,7 +738,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
             c.output(CoderUtils.encodeToBase64(coder, c.element()))
         })
         .saveAsTextFile(path, suffix, numShards)
-      context.makeFuture(ObjectFileTap[T](path))
+      context.makeFuture(ObjectFileTap[T](path + "/part-*"))
     }
   }
 
@@ -779,7 +779,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       } else {
         this.applyInternal(transform.withSchema(schema).asInstanceOf[GAvroIO.Write.Bound[T]])
       }
-      context.makeFuture(AvroTap(path, schema))
+      context.makeFuture(AvroTap(path + "/part-*", schema))
     }
 
   /**
@@ -860,7 +860,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       saveAsInMemoryTap.asInstanceOf[Future[Tap[TableRow]]]
     } else {
       this.asInstanceOf[SCollection[TableRow]].applyInternal(tableRowJsonOut(path, numShards))
-      context.makeFuture(TableRowJsonTap(path))
+      context.makeFuture(TableRowJsonTap(path + "/part-*"))
     }
 
   /**
@@ -873,7 +873,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       saveAsInMemoryTap.asInstanceOf[Future[Tap[String]]]
     } else {
       this.asInstanceOf[SCollection[String]].applyInternal(textOut(path, suffix, numShards))
-      context.makeFuture(TextTap(path))
+      context.makeFuture(TextTap(path + "/part-*"))
     }
 
   private[scio] def saveAsInMemoryTap: Future[Tap[T]] = {

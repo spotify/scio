@@ -45,18 +45,18 @@ trait Tap[T] {
 /** Tap for text files on local file system or GCS. */
 case class TextTap(path: String) extends Tap[String] {
   override def value: Iterator[String] = FileStorage(path).textFile
-  override def open(sc: ScioContext): SCollection[String] = sc.textFile(path + "/part-*")
+  override def open(sc: ScioContext): SCollection[String] = sc.textFile(path)
 }
 /** Tap for Avro files on local file system or GCS. */
 case class AvroTap[T: ClassTag](path: String, schema: Schema = null) extends Tap[T] {
   override def value: Iterator[T] = FileStorage(path).avroFile(schema)
-  override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path + "/part-*")
+  override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path)
 }
 
 /** Tap for JSON files on local file system or GCS. */
 case class TableRowJsonTap(path: String) extends Tap[TableRow] {
   override def value: Iterator[TableRow] = FileStorage(path).tableRowJsonFile
-  override def open(sc: ScioContext): SCollection[TableRow] = sc.tableRowJsonFile(path + "/part-*")
+  override def open(sc: ScioContext): SCollection[TableRow] = sc.tableRowJsonFile(path)
 }
 
 /** Tap for BigQuery tables. */
@@ -71,7 +71,7 @@ case class ObjectFileTap[T: ClassTag](path: String) extends Tap[T] {
     val coder = KryoAtomicCoder[T]
     FileStorage(path).textFile.map(CoderUtils.decodeFromBase64(coder, _))
   }
-  override def open(sc: ScioContext): SCollection[T] = sc.objectFile(path + "/part-*")
+  override def open(sc: ScioContext): SCollection[T] = sc.objectFile(path)
 }
 
 private[scio] class InMemoryTap[T: ClassTag] extends Tap[T] {
