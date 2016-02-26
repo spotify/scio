@@ -809,7 +809,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       if (writeDisposition == WriteDisposition.WRITE_APPEND) {
         Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
       } else {
-        context.makeFuture(BigQueryTap(table, context.options))
+        context.makeFuture(BigQueryTap(table))
       }
     }
   }

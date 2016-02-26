@@ -20,7 +20,6 @@ package com.spotify.scio.io
 import java.util.UUID
 
 import com.google.api.services.bigquery.model.TableReference
-import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
 import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
@@ -62,8 +61,8 @@ case class TableRowJsonTap(path: String) extends Tap[TableRow] {
 }
 
 /** Tap for BigQuery tables. */
-case class BigQueryTap(table: TableReference, opts: DataflowPipelineOptions) extends Tap[TableRow] {
-  override def value: Iterator[TableRow] = BigQueryClient(opts.getProject, opts.getGcpCredential).getTableRows(table)
+case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
+  override def value: Iterator[TableRow] = BigQueryClient().getTableRows(table)
   override def open(sc: ScioContext): SCollection[TableRow] = sc.bigQueryTable(table)
 }
 
