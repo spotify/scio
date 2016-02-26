@@ -52,7 +52,7 @@ case class TextTap(path: String) extends Tap[String] {
 /** Tap for Avro files on local file system or GCS. */
 case class AvroTap[T: ClassTag](path: String, schema: Schema = null) extends Tap[T] {
   override def value: Iterator[T] = FileStorage(path).avroFile(schema)
-  override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path)
+  override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path, schema)
 }
 
 /** Tap for JSON files on local file system or GCS. */
