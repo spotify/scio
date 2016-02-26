@@ -40,6 +40,7 @@ trait Tap[T] {
 
   /** Open data set as an SCollection. */
   def open(sc: ScioContext): SCollection[T]
+
 }
 
 /** Tap for text files on local file system or GCS. */
@@ -47,6 +48,7 @@ case class TextTap(path: String) extends Tap[String] {
   override def value: Iterator[String] = FileStorage(path).textFile
   override def open(sc: ScioContext): SCollection[String] = sc.textFile(path)
 }
+
 /** Tap for Avro files on local file system or GCS. */
 case class AvroTap[T: ClassTag](path: String, schema: Schema = null) extends Tap[T] {
   override def value: Iterator[T] = FileStorage(path).avroFile(schema)
