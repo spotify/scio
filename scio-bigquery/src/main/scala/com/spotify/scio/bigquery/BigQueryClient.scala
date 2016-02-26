@@ -349,6 +349,8 @@ object BigQueryClient {
   /** Description for staging dataset. */
   val STAGING_DATASET_DESCRIPTION: String = "Staging dataset for temporary tables"
 
+  private val SCOPES = List(BigqueryScopes.BIGQUERY).asJava
+
   /** Create a new BigQueryClient instance with the given project and credential. */
   def apply(project: String, credential: Credential): BigQueryClient = new BigQueryClient(project, credential)
 
@@ -381,9 +383,7 @@ object BigQueryClient {
   def apply(project: String): BigQueryClient = {
     val secret = sys.props(SECRET_KEY)
     if (secret == null) {
-      val opts = PipelineOptionsFactory.fromArgs(Array.empty).as(classOf[GcpOptions])
-      opts.setProject(project)
-      val credential = Credentials.getCredential(opts)
+      val credential = GoogleCredential.getApplicationDefault.createScoped(SCOPES)
       BigQueryClient(project, credential)
     } else {
       BigQueryClient(project, secret)
@@ -392,8 +392,7 @@ object BigQueryClient {
 
   /** Create a new BigQueryClient instance with the given project and secret file. */
   def apply(project: String, secret: String): BigQueryClient = {
-    val scopes = List(BigqueryScopes.BIGQUERY).asJava
-    val credential = GoogleCredential.fromStream(new FileInputStream(new File(secret))).createScoped(scopes)
+    val credential = GoogleCredential.fromStream(new FileInputStream(new File(secret))).createScoped(SCOPES)
     BigQueryClient(project, credential)
   }
 
