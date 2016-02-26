@@ -38,7 +38,7 @@ trait BreezeSpec[M[_], T] {
 }
 
 object FVSemigroupSpec extends Properties("FloatVectorSemigroup") with BreezeSpec[DenseVector, Float] {
-  val m = Gen.resultOf { _: Int => DenseVector.rand[Float](dimension, fRand) }
+  val m = Gen.const(dimension).map(DenseVector.rand[Float](_, fRand))
   property("plus") = forAll(m, m) { (x, y) =>
     plus(x, y) == x + y
   }
@@ -48,7 +48,7 @@ object FVSemigroupSpec extends Properties("FloatVectorSemigroup") with BreezeSpe
 }
 
 object DVSemigroupSpec extends Properties("DoubleVectorSemigroup") with BreezeSpec[DenseVector, Double] {
-  val m = Gen.resultOf { _: Int => DenseVector.rand[Double](dimension) }
+  val m = Gen.const(dimension).map(DenseVector.rand[Double](_))
   property("plus") = forAll(m, m) { (x, y) =>
     plus(x, y) == x + y
   }
@@ -58,7 +58,7 @@ object DVSemigroupSpec extends Properties("DoubleVectorSemigroup") with BreezeSp
 }
 
 object FMSemigroupSpec extends Properties("FloatMatrixSemigroup") with BreezeSpec[DenseMatrix, Float] {
-  val m = Gen.resultOf { _: Int => DenseMatrix.rand[Float](rows, cols, fRand) }
+  val m = Gen.const((rows, cols)).map { case (r, c) => DenseMatrix.rand[Float](r, c, fRand) }
   property("plus") = forAll(m, m) { (x, y) =>
     plus(x, y) == x + y
   }
@@ -68,7 +68,7 @@ object FMSemigroupSpec extends Properties("FloatMatrixSemigroup") with BreezeSpe
 }
 
 object DMSemigroupSpec extends Properties("DoubleMatrixSemigroup") with BreezeSpec[DenseMatrix, Double] {
-  val m = Gen.resultOf { _: Int => DenseMatrix.rand[Double](rows, cols) }
+  val m = Gen.const((rows, cols)).map { case (r, c) => DenseMatrix.rand[Double](r, c) }
   property("plus") = forAll(m, m) { (x, y) =>
     plus(x, y) == x + y
   }
