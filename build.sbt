@@ -17,6 +17,7 @@
 
 import sbt._
 import Keys._
+import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtSite.SiteKeys._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import sbtunidoc.Plugin.UnidocKeys._
@@ -43,7 +44,7 @@ val scalaMacrosVersion = "2.0.1"
 val scalaTestVersion = "2.2.6"
 val slf4jVersion = "1.7.16"
 
-val buildSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ Seq(
+val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
 
   scalaVersion       := "2.11.7",
@@ -101,6 +102,25 @@ val buildSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ Seq(
   }
 )
 
+lazy val noPublishSettings = Seq(
+  publish := {},
+  publishLocal := {},
+  publishArtifact := false
+)
+
+lazy val assemblySettings = Seq(
+  test in assembly := {},
+  mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
+    case s if s.endsWith("properties") => MergeStrategy.filterDistinctLines
+    case s if s.endsWith("pom.xml") => MergeStrategy.last
+    case s if s.endsWith(".class") => MergeStrategy.last
+    case s if s.endsWith(".xsd") => MergeStrategy.last
+    case s if s.endsWith(".dtd") => MergeStrategy.last
+    case s => old(s)
+  }
+  }
+)
+
 lazy val paradiseDependency =
   "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full
 lazy val dataflowSdkDependency =
@@ -109,13 +129,11 @@ lazy val dataflowSdkDependency =
 lazy val root: Project = Project(
   "scio",
   file("."),
-  settings = buildSettings ++ siteSettings ++ Seq(run <<= run in Compile in scioExamples)
+  settings = commonSettings ++ siteSettings ++ Seq(run <<= run in Compile in scioExamples) ++ noPublishSettings
 ).settings(
-  publishArtifact := false,
-  publish := {},
-  publishLocal := {},
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
-    -- inProjects(scioSchemas) -- inProjects(scioExamples)
+    -- inProjects(scioSchemas) -- inProjects(scioExamples),
+  aggregate in assembly := false
 ).aggregate(
   scioCore,
   scioTest,
@@ -129,7 +147,7 @@ lazy val root: Project = Project(
 lazy val scioCore: Project = Project(
   "scio-core",
   file("scio-core"),
-  settings = buildSettings ++ Seq(
+  settings = commonSettings ++ Seq(
     libraryDependencies ++= Seq(
       dataflowSdkDependency,
       "com.twitter" %% "algebird-core" % algebirdVersion,
@@ -147,7 +165,7 @@ lazy val scioCore: Project = Project(
 lazy val scioTest: Project = Project(
   "scio-test",
   file("scio-test"),
-  settings = buildSettings ++ Seq(
+  settings = commonSettings ++ Seq(
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % scalaTestVersion,
       // DataFlow testing requires junit and hamcrest
@@ -163,7 +181,7 @@ lazy val scioTest: Project = Project(
 lazy val scioBigQuery: Project = Project(
   "scio-bigquery",
   file("scio-bigquery"),
-  settings = buildSettings ++ Seq(
+  settings = commonSettings ++ Seq(
     libraryDependencies ++= Seq(
       dataflowSdkDependency,
       "commons-io" % "commons-io" % commonsIoVersion,
@@ -186,7 +204,7 @@ lazy val scioBigQuery: Project = Project(
 lazy val scioBigTable: Project = Project(
   "scio-bigtable",
   file("scio-bigtable"),
-  settings = buildSettings ++ Seq(
+  settings = commonSettings ++ Seq(
     libraryDependencies ++= Seq(
       "com.google.cloud.bigtable" % "bigtable-hbase-dataflow" % bigtableVersion exclude ("org.slf4j", "slf4j-log4j12"),
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12"),
@@ -200,7 +218,7 @@ lazy val scioBigTable: Project = Project(
 lazy val scioExtra: Project = Project(
   "scio-extra",
   file("scio-extra"),
-  settings = buildSettings ++ Seq(
+  settings = commonSettings ++ Seq(
     libraryDependencies ++= Seq(
       "com.google.guava" % "guava" % guavaVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
@@ -214,7 +232,7 @@ lazy val scioExtra: Project = Project(
 lazy val scioHdfs: Project = Project(
   "scio-hdfs",
   file("scio-hdfs"),
-  settings = buildSettings ++ Seq(
+  settings = commonSettings ++ Seq(
     libraryDependencies ++= Seq(
       "org.apache.avro" % "avro-mapred" % avroVersion classifier("hadoop2"),
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12"),
@@ -229,19 +247,16 @@ lazy val scioHdfs: Project = Project(
 lazy val scioSchemas: Project = Project(
   "scio-schemas",
   file("scio-schemas"),
-  settings = buildSettings ++ sbtavro.SbtAvro.avroSettings
+  settings = commonSettings ++ sbtavro.SbtAvro.avroSettings ++ noPublishSettings
 ).settings(
   sources in doc in Compile := List(),
-  publishArtifact := false,
-  publish := {},
-  publishLocal := {},
   javacOptions := Seq("-source", "1.7", "-target", "1.7")
 )
 
 lazy val scioExamples: Project = Project(
   "scio-examples",
   file("scio-examples"),
-  settings = buildSettings ++ Seq(
+  settings = commonSettings ++ noPublishSettings ++ Seq(
     libraryDependencies ++= Seq(
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
@@ -249,15 +264,26 @@ lazy val scioExamples: Project = Project(
     addCompilerPlugin(paradiseDependency)
   )
 ).settings(
-  sources in doc in Compile := List(),
-  publishArtifact := false,
-  publish := {},
-  publishLocal := {}
+  sources in doc in Compile := List()
 ).dependsOn(
   scioCore,
   scioBigTable,
   scioSchemas,
   scioTest % "test"
+)
+
+lazy val scioAssembly: Project = Project(
+  "scio-assembly",
+  file("scio-assembly"),
+  settings = commonSettings ++ noPublishSettings
+).settings(
+  assemblyJarName in assembly := s"scio-${version.value}-fat.jar"
+).dependsOn(
+  scioCore,
+  scioBigQuery,
+  scioBigTable,
+  scioExtra,
+  scioHdfs
 )
 
 /*****************/
