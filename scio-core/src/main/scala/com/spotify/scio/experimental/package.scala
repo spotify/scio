@@ -18,11 +18,14 @@
 package com.spotify.scio
 
 import com.google.api.services.bigquery.model.TableReference
+import com.google.cloud.dataflow.sdk.io.BigQueryIO
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import com.spotify.scio.bigquery.BigQueryUtil
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
+import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
 
+import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
@@ -94,11 +97,13 @@ package object experimental {
     def saveAsTypedBigQuery(table: TableReference,
                             createDisposition: CreateDisposition,
                             writeDisposition: WriteDisposition)
-                           (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation): Unit = {
+                           (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation): Future[Tap[T]] = {
       val bqt = BigQueryType[T]
+      import scala.concurrent.ExecutionContext.Implicits.global
       self
         .map(bqt.toTableRow)
         .saveAsBigQuery(table, bqt.schema, createDisposition, writeDisposition)
+        .map(_.map(bqt.fromTableRow))
     }
 
     /**
@@ -130,12 +135,8 @@ package object experimental {
     def saveAsTypedBigQuery(tableSpec: String,
                             createDisposition: CreateDisposition = null,
                             writeDisposition: WriteDisposition = null)
-                           (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation): Unit = {
-      val bqt = BigQueryType[T]
-      self
-        .map(bqt.toTableRow)
-        .saveAsBigQuery(tableSpec, bqt.schema, createDisposition, writeDisposition)
-    }
+                           (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation): Future[Tap[T]] =
+      saveAsTypedBigQuery(BigQueryIO.parseTableSpec(tableSpec), createDisposition, writeDisposition)
 
   }
 

@@ -32,13 +32,22 @@ import scala.reflect.ClassTag
 /**
  * Placeholder to an external data set that can be either read into memory or opened as an SCollection.
  */
-trait Tap[T] {
+trait Tap[T] { self =>
 
   /** Read data set into memory. */
   def value: Iterator[T]
 
   /** Open data set as an SCollection. */
   def open(sc: ScioContext): SCollection[T]
+
+  /** Map items from T to U. */
+  def map[U: ClassTag](f: T => U): Tap[U] = new Tap[U] {
+    /** Read data set into memory. */
+    override def value: Iterator[U] = self.value.map(f)
+
+    /** Open data set as an SCollection. */
+    override def open(sc: ScioContext): SCollection[U] = self.open(sc).map(f)
+  }
 
 }
 
