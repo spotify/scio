@@ -21,7 +21,6 @@ import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.common.ExampleData
-import com.spotify.scio.experimental._
 
 import scala.collection.JavaConverters._
 
