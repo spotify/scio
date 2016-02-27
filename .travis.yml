@@ -5,4 +5,5 @@ scala:
 jdk: oraclejdk7
 notifications:
   email:
-    - flatmap-squad@spotify.com
+    - neville@spotify.com
+    - rav@spotify.com
