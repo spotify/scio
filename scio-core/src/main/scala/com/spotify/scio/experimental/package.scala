@@ -20,7 +20,6 @@ package com.spotify.scio
 import com.google.api.services.bigquery.model.TableReference
 import com.google.cloud.dataflow.sdk.io.BigQueryIO
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import com.spotify.scio.bigquery.BigQueryUtil
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
@@ -70,7 +69,7 @@ package object experimental {
       val bqt = BigQueryType[T]
 
       if (bqt.isTable) {
-        val table = if (newSource != null) BigQueryUtil.parseTableSpec(newSource) else bqt.table.get
+        val table = if (newSource != null) BigQueryIO.parseTableSpec(newSource) else bqt.table.get
         self.bigQueryTable(table).map(bqt.fromTableRow)
       } else if (bqt.isQuery) {
         val query = if (newSource != null) newSource else bqt.query.get
