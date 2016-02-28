@@ -29,7 +29,7 @@ import scala.reflect.macros._
 
 private[types] object TypeProvider {
 
-  private lazy val bigquery: BigQueryClient = BigQueryClient()
+  private lazy val bigquery: BigQueryClient = BigQueryClient.defaultInstance()
 
   // TODO: scala 2.11
   // def tableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {

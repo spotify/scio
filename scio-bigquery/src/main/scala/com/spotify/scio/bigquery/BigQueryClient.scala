@@ -339,6 +339,16 @@ object BigQueryClient {
   /** Create a new BigQueryClient instance with the given project and credential. */
   def apply(project: String, credential: Credential): BigQueryClient = new BigQueryClient(project, credential)
 
+  private var instance: BigQueryClient = null
+
+  /** Get the default BigQueryClient instance. */
+  def defaultInstance(): BigQueryClient = {
+    if (instance == null) {
+      instance = BigQueryClient()
+    }
+    instance
+  }
+
   /**
    * Create a new BigQueryClient instance.
    *
