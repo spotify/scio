@@ -55,6 +55,7 @@ val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ ass
   javacOptions in (Compile, doc)  := Seq("-source", "1.7"),
 
   fork in Test := true,
+  coverageExcludedPackages := "com\\.spotify\\.scio\\.util\\.MultiJoin",
 
   // Release settings
   releaseCrossBuild             := true,
