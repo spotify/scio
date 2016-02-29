@@ -3,6 +3,10 @@ scala:
   - "2.10.6"
   - "2.11.7"
 jdk: oraclejdk7
+script:
+  - sbt clean coverage test coverageReport coverageAggregate
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
 notifications:
   email:
     - neville@spotify.com
