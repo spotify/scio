@@ -171,4 +171,3 @@ private[scio] class PoissonValueSampler[K, V](fractions: Map[K, Double])
   override def samples(fraction: Double, rng: IntegerDistribution): Int = if (fraction <= 0.0) 0 else rng.sample()
 
 }
-
