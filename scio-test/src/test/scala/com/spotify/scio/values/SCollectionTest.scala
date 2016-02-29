@@ -248,23 +248,25 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  ignore should "support sample() with replacement" in {
+  it should "support sample() with replacement" in {
     runWithContext { sc =>
       import RandomSamplerUtils._
-      verify(sc, true, 0.5, 0.5) should containSingleValue (true)
-      verify(sc, true, 0.7, 0.7) should containSingleValue (true)
-      verify(sc, true, 0.9, 0.9) should containSingleValue (true)
-      verify(sc, true, 0.4, 0.6) should containSingleValue (false)
+      val population = sc.parallelize(1 to populationSize)
+      verify(population, true, 0.5, 0.5) should containSingleValue (true)
+      verify(population, true, 0.7, 0.7) should containSingleValue (true)
+      verify(population, true, 0.9, 0.9) should containSingleValue (true)
+      verify(population, true, 0.4, 0.6) should containSingleValue (false)
     }
   }
 
-  ignore should "support sample() without replacement" in {
+  it should "support sample() without replacement" in {
     runWithContext { sc =>
       import RandomSamplerUtils._
-      verify(sc, false, 0.5, 0.5) should containSingleValue (true)
-      verify(sc, false, 0.7, 0.7) should containSingleValue (true)
-      verify(sc, false, 0.9, 0.9) should containSingleValue (true)
-      verify(sc, false, 0.4, 0.6) should containSingleValue (false)
+      val population = sc.parallelize(1 to populationSize)
+      verify(population, false, 0.5, 0.5) should containSingleValue (true)
+      verify(population, false, 0.7, 0.7) should containSingleValue (true)
+      verify(population, false, 0.9, 0.9) should containSingleValue (true)
+      verify(population, false, 0.4, 0.6) should containSingleValue (false)
     }
   }
 

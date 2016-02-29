@@ -296,20 +296,22 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
   ignore should "support sampleByKey() with replacement()" in {
     runWithContext { sc =>
       import RandomSamplerUtils._
-      verifyByKey(sc, true, 0.5, 0.5, 0.9, 0.9) should containSingleValue ((true, true))
-      verifyByKey(sc, true, 0.9, 0.9, 0.4, 0.6) should containSingleValue ((true, false))
-      verifyByKey(sc, true, 0.4, 0.6, 0.9, 0.9) should containSingleValue ((false, true))
-      verifyByKey(sc, true, 0.4, 0.6, 0.4, 0.6) should containSingleValue ((false, false))
+      val population = sc.parallelize(1 to populationSize).flatMap(x => Seq(("a", x), ("b", x)))
+      verifyByKey(population, true, 0.5, 0.5, 0.9, 0.9) should containSingleValue ((true, true))
+      verifyByKey(population, true, 0.9, 0.9, 0.4, 0.6) should containSingleValue ((true, false))
+      verifyByKey(population, true, 0.4, 0.6, 0.9, 0.9) should containSingleValue ((false, true))
+      verifyByKey(population, true, 0.4, 0.6, 0.4, 0.6) should containSingleValue ((false, false))
     }
   }
 
   ignore should "support sampleByKey() without replacement()" in {
     runWithContext { sc =>
       import RandomSamplerUtils._
-      verifyByKey(sc, false, 0.5, 0.5, 0.9, 0.9) should containSingleValue ((true, true))
-      verifyByKey(sc, false, 0.9, 0.9, 0.4, 0.6) should containSingleValue ((true, false))
-      verifyByKey(sc, false, 0.4, 0.6, 0.9, 0.9) should containSingleValue ((false, true))
-      verifyByKey(sc, false, 0.4, 0.6, 0.4, 0.6) should containSingleValue ((false, false))
+      val population = sc.parallelize(1 to populationSize).flatMap(x => Seq(("a", x), ("b", x)))
+      verifyByKey(population, false, 0.5, 0.5, 0.9, 0.9) should containSingleValue ((true, true))
+      verifyByKey(population, false, 0.9, 0.9, 0.4, 0.6) should containSingleValue ((true, false))
+      verifyByKey(population, false, 0.4, 0.6, 0.9, 0.9) should containSingleValue ((false, true))
+      verifyByKey(population, false, 0.4, 0.6, 0.4, 0.6) should containSingleValue ((false, false))
     }
   }
 

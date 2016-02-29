@@ -123,16 +123,15 @@ object RandomSamplerUtils extends Serializable {
   val population = 1 to populationSize
   val keyedPopulation = population.map(("a", _)) ++ population.map(("b", _))
   def expectedSamples(withReplacement: Boolean, fraction: Double): Array[Int] = {
-    val s = if (withReplacement) sampleWR(population.iterator, fraction)else sample(population.iterator, fraction)
+    val s = if (withReplacement) sampleWR(population.iterator, fraction) else sample(population.iterator, fraction)
     s.toArray
   }
 
-  def verify(context: ScioContext, withReplacement: Boolean,
+  def verify(population: SCollection[Int], withReplacement: Boolean,
              expectedFraction: Double, actualFraction: Double): SCollection[Boolean] = {
     val expected = expectedSamples(withReplacement, expectedFraction)
 
-    context
-      .parallelize(population)
+    population
       .sample(withReplacement, actualFraction)
       .groupBy(_ => 0)
       .values
@@ -140,15 +139,14 @@ object RandomSamplerUtils extends Serializable {
       .map(actual => medianKSD(gaps(expected), gaps(actual)) < D)
   }
 
-  def verifyByKey(context: ScioContext, withReplacement: Boolean,
+  def verifyByKey(population: SCollection[(String, Int)], withReplacement: Boolean,
                   expectedFraction1: Double, actualFraction1: Double,
                   expectedFraction2: Double, actualFraction2: Double): SCollection[(Boolean, Boolean)] = {
     val expected = Map(
       "a" -> expectedSamples(withReplacement, expectedFraction1),
       "b" -> expectedSamples(withReplacement, expectedFraction2))
 
-    context
-      .parallelize(keyedPopulation)
+    population
       .sampleByKey(withReplacement, Map("a" -> actualFraction1, "b" -> actualFraction2))
       .groupByKey()
       .groupBy(_ => 0)
