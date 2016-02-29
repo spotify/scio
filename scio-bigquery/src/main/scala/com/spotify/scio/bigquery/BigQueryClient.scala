@@ -72,12 +72,20 @@ object BigQueryUtil {
 }
 
 /** A simple BigQuery client. */
-class BigQueryClient private (private val projectId: String, credential: Credential) {
+class BigQueryClient private (private val projectId: String, auth: Option[Either[Credential, String]]) {
 
-  private val bigquery: Bigquery =
+  private val SCOPES = List(BigqueryScopes.BIGQUERY).asJava
+
+  private lazy val bigquery: Bigquery = {
+    val credential = auth match {
+      case Some(Left(c)) => c
+      case Some(Right(s)) => GoogleCredential.fromStream(new FileInputStream(new File(s))).createScoped(SCOPES)
+      case None => GoogleCredential.getApplicationDefault.createScoped(SCOPES)
+    }
     new Builder(new NetHttpTransport, new JacksonFactory, credential)
       .setApplicationName("scio")
       .build()
+  }
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[BigQueryClient])
 
@@ -334,10 +342,7 @@ object BigQueryClient {
   /** Description for staging dataset. */
   val STAGING_DATASET_DESCRIPTION: String = "Staging dataset for temporary tables"
 
-  private val SCOPES = List(BigqueryScopes.BIGQUERY).asJava
 
-  /** Create a new BigQueryClient instance with the given project and credential. */
-  def apply(project: String, credential: Credential): BigQueryClient = new BigQueryClient(project, credential)
 
   private var instance: BigQueryClient = null
 
@@ -378,18 +383,17 @@ object BigQueryClient {
   def apply(project: String): BigQueryClient = {
     val secret = sys.props(SECRET_KEY)
     if (secret == null) {
-      val credential = GoogleCredential.getApplicationDefault.createScoped(SCOPES)
-      BigQueryClient(project, credential)
+      new BigQueryClient(project, None)
     } else {
       BigQueryClient(project, secret)
     }
   }
 
+  /** Create a new BigQueryClient instance with the given project and credential. */
+  def apply(project: String, credential: Credential): BigQueryClient = new BigQueryClient(project, Some(Left(credential)))
+
   /** Create a new BigQueryClient instance with the given project and secret file. */
-  def apply(project: String, secret: String): BigQueryClient = {
-    val credential = GoogleCredential.fromStream(new FileInputStream(new File(secret))).createScoped(SCOPES)
-    BigQueryClient(project, credential)
-  }
+  def apply(project: String, secret: String): BigQueryClient = new BigQueryClient(project, Some(Right(secret)))
 
   private def stagingDataset: String =
     getPropOrElse(STAGING_DATASET_KEY, STAGING_DATASET_DEFAULT + "_" + stagingDatasetLocation.toLowerCase)
