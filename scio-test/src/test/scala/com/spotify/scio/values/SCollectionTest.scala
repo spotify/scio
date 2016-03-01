@@ -34,7 +34,7 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support unionAll" in {
+  it should "support unionAll()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "c"))
       val p2 = sc.parallelize(Seq("d", "e", "f"))
