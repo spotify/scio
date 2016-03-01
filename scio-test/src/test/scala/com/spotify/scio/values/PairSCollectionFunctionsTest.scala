@@ -293,7 +293,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  ignore should "support sampleByKey() with replacement()" in {
+  it should "support sampleByKey() with replacement()" in {
     runWithContext { sc =>
       import RandomSamplerUtils._
       val population = sc.parallelize(1 to populationSize).flatMap(x => Seq(("a", x), ("b", x)))
@@ -304,7 +304,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  ignore should "support sampleByKey() without replacement()" in {
+  it should "support sampleByKey() without replacement()" in {
     runWithContext { sc =>
       import RandomSamplerUtils._
       val population = sc.parallelize(1 to populationSize).flatMap(x => Seq(("a", x), ("b", x)))
