@@ -77,20 +77,19 @@ private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistC
     sys.props("java.io.tmpdir") + "/" + hash.toString.substring(0, 8) + "-"
   }
 
-  protected def prepareFiles(uris: Seq[URI]): Seq[File] = {
-    if (classOf[DirectPipelineRunner] isAssignableFrom opts.getRunner) {
-      uris.map(u => new File(u.toString))
+  protected def prepareFiles(uris: Seq[URI]): Seq[File] = uris.map { u =>
+    if (ScioUtil.isGcsUri(u)) {
+      fetchFromGCS(u, temporaryPrefix(uris))
     } else {
-      val p = temporaryPrefix(uris)
-      uris.map(fetchFromGCS(_, p))
+      new File(u.toString)
     }
   }
 
   protected def verifyUri(uri: URI): Unit = {
     if (classOf[DirectPipelineRunner] isAssignableFrom opts.getRunner) {
-      require(ScioUtil.isLocalUri(uri), s"Not a local path $uri")
+      require(ScioUtil.isLocalUri(uri) || ScioUtil.isGcsUri(uri), s"Unsupported path $uri")
     } else {
-      require(ScioUtil.isGcsUri(uri), s"Not a GCS path $uri")
+      require(ScioUtil.isGcsUri(uri), s"Unsupported path $uri")
     }
   }
 
@@ -102,16 +101,12 @@ private[scio] class MockDistCache[F](val value: F) extends DistCache[F] {
 
 private[scio] class DistCacheSingle[F](val uri: URI, val initFn: File => F, options: GcsOptions)
   extends FileDistCache[F](options) {
-
   verifyUri(uri)
-
   override protected def init(): F = initFn(prepareFiles(Seq(uri)).head)
 }
 
 private[scio] class DistCacheMulti[F](val uris: Seq[URI], val initFn: Seq[File] => F, options: GcsOptions)
   extends FileDistCache[F](options) {
-
   uris.foreach(verifyUri)
-
   override protected def init(): F = initFn(prepareFiles(uris))
 }
