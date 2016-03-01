@@ -131,7 +131,7 @@ lazy val dataflowSdkDependency =
 lazy val root: Project = Project(
   "scio",
   file("."),
-  settings = commonSettings ++ siteSettings ++ Seq(run <<= run in Compile in scioExamples) ++ noPublishSettings
+  settings = commonSettings ++ siteSettings ++ noPublishSettings
 ).settings(
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
     -- inProjects(scioSchemas) -- inProjects(scioExamples),
@@ -143,6 +143,7 @@ lazy val root: Project = Project(
   scioBigTable,
   scioExtra,
   scioHdfs,
+  scioExamples,
   scioSchemas
 )
 
