@@ -74,9 +74,11 @@ object WordCount {
       Thread.sleep(1000)
     }
 
+    // scalastyle:off regex
     // retrieve accumulator values
     println("Max: " + result.accumulatorTotalValue(max))
     println("Min: " + result.accumulatorTotalValue(min))
     println("Sum: " + result.accumulatorTotalValue(sum))
+    // scalastyle:on regex
   }
 }

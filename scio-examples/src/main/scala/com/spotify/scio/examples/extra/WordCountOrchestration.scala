@@ -59,10 +59,12 @@ object WordCountOrchestration {
     // Join futures and submit merge job
     val f = Future.sequence(Seq(f1, f2)).flatMap(merge(opts, _, output))
 
+    // scalastyle:off regex
     // Block process and wait for last future
     val t = Await.result(f, Duration.Inf)
     println("Tap:")
     t.value.take(10).foreach(println)
+    // scalastyle:on regex
   }
 
   def count(opts: DataflowPipelineOptions, inputPath: String): FT[(String, Long)] = {

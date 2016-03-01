@@ -42,6 +42,7 @@ object AccumulatorExample {
 
     val r = sc.close()
 
+    // scalastyle:off regex
     println("Max: " + r.accumulatorTotalValue(max))
     println("Min: " + r.accumulatorTotalValue(min))
     println("Sum: " + r.accumulatorTotalValue(sum))
@@ -52,5 +53,6 @@ object AccumulatorExample {
 
     println("Count per step:")
     r.accumulatorValuesAtSteps(count).foreach(kv => println(kv._2 + " @ " + kv._1))
+    // scalastyle:on regex
   }
 }

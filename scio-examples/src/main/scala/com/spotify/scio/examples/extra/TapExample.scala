@@ -40,9 +40,11 @@ object TapExample {
     val t1 = Await.result(f1, Duration.Inf)
     val t2 = Await.result(f2, Duration.Inf)
 
+    // scalastyle:off regex
     // fetch tap values directly
     println(t1.value.mkString(", "))
     println(t2.value.mkString(", "))
+    // scalastyle:on regex
 
     // second job
     val (sc2, _) = ContextAndArgs(cmdlineArgs)
@@ -51,7 +53,9 @@ object TapExample {
     DataflowAssert.thatSingleton(s.internal).isEqualTo((1 to 10).sum + (1 to 100).sum)
     val result = sc2.close()
 
+    // scalastyle:off regex
     // block main() until second job completes
     println(Await.result(result.finalState, Duration.Inf))
+    // scalastyle:on regex
   }
 }
