@@ -9,6 +9,8 @@ cache:
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot
 
+before_script:
+  - ./scripts/travis.sh
 script:
   - sbt clean coverage test coverageReport coverageAggregate
 after_success:
