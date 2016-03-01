@@ -25,21 +25,35 @@ class AccumulatorTest extends PipelineSpec {
   "Accumulator" should "support accumulatorTotalValue" in {
     val sc = ScioContext.forTest("PipelineTest-" + System.currentTimeMillis())
 
-    val max = sc.maxAccumulator[Int]("max")
-    val min = sc.minAccumulator[Int]("min")
-    val sum = sc.sumAccumulator[Int]("sum")
+    val maxI = sc.maxAccumulator[Int]("maxI")
+    val minI = sc.minAccumulator[Int]("minI")
+    val sumI = sc.sumAccumulator[Int]("sumI")
+    val maxL = sc.maxAccumulator[Long]("maxL")
+    val minL = sc.minAccumulator[Long]("minL")
+    val sumL = sc.sumAccumulator[Long]("sumL")
+    val maxD = sc.maxAccumulator[Double]("maxD")
+    val minD = sc.minAccumulator[Double]("minD")
+    val sumD = sc.sumAccumulator[Double]("sumD")
     sc
       .parallelize(Seq(1, 2, 3))
-      .withAccumulator(max, min, sum)
+      .withAccumulator(maxI, minI, sumI, maxL, minL, sumL, maxD, minD, sumD)
       .map { (i, a) =>
-        a.addValue(max, i).addValue(min, i).addValue(sum, i)
+        a.addValue(maxI, i).addValue(minI, i).addValue(sumI, i)
+        a.addValue(maxL, i.toLong).addValue(minL, i.toLong).addValue(sumL, i.toLong)
+        a.addValue(maxD, i.toDouble).addValue(minD, i.toDouble).addValue(sumD, i.toDouble)
         i
       }
     val r = sc.close()
 
-    r.accumulatorTotalValue(max) shouldBe 3
-    r.accumulatorTotalValue(min) shouldBe 1
-    r.accumulatorTotalValue(sum) shouldBe 6
+    r.accumulatorTotalValue(maxI) shouldBe 3
+    r.accumulatorTotalValue(minI) shouldBe 1
+    r.accumulatorTotalValue(sumI) shouldBe 6
+    r.accumulatorTotalValue(maxL) shouldBe 3L
+    r.accumulatorTotalValue(minL) shouldBe 1L
+    r.accumulatorTotalValue(sumL) shouldBe 6L
+    r.accumulatorTotalValue(maxD) shouldBe 3.0
+    r.accumulatorTotalValue(minD) shouldBe 1.0
+    r.accumulatorTotalValue(sumD) shouldBe 6.0
   }
 
   it should "support accumulatorValuesAtSteps" in {
