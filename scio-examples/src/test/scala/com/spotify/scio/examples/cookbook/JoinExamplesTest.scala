@@ -51,7 +51,7 @@ class JoinExamplesTest extends PipelineSpec {
   ).map((result _).tupled)
 
   "JoinExamples" should "work" in {
-    JobTest("com.spotify.scio.examples.cookbook.JoinExamples")
+    JobTest[com.spotify.scio.examples.cookbook.JoinExamples.type]
       .args("--output=out.txt")
       .input(BigQueryIO(ExampleData.EVENT_TABLE), eventData)
       .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)
@@ -60,7 +60,7 @@ class JoinExamplesTest extends PipelineSpec {
   }
 
   "SideInputJoinExamples" should "work" in {
-    JobTest("com.spotify.scio.examples.cookbook.SideInputJoinExamples")
+    JobTest[com.spotify.scio.examples.cookbook.SideInputJoinExamples.type]
       .args("--output=out.txt")
       .input(BigQueryIO(ExampleData.EVENT_TABLE), eventData)
       .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)
@@ -69,7 +69,7 @@ class JoinExamplesTest extends PipelineSpec {
   }
 
   "HashJoinExamples" should "work" in {
-    JobTest("com.spotify.scio.examples.cookbook.HashJoinExamples")
+    JobTest[com.spotify.scio.examples.cookbook.HashJoinExamples.type]
       .args("--output=out.txt")
       .input(BigQueryIO(ExampleData.EVENT_TABLE), eventData)
       .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)

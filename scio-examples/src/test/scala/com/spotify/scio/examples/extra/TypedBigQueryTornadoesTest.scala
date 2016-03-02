@@ -24,7 +24,7 @@ class TypedBigQueryTornadoesTest extends PipelineSpec {
   import com.spotify.scio.examples.cookbook.BigQueryTornadoesTest._
 
   "TypedBigQueryTornadoes" should "work" in {
-    JobTest("com.spotify.scio.examples.extra.TypedBigQueryTornadoes")
+    JobTest[com.spotify.scio.examples.extra.TypedBigQueryTornadoes.type]
       .args("--output=dataset.table")
       .input(BigQueryIO(TypedBigQueryTornadoes.Row.query), input)
       .output(BigQueryIO("dataset.table"))(_ should containInAnyOrder (expected))

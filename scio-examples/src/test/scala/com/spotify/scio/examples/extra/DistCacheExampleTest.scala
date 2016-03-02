@@ -40,7 +40,7 @@ class DistCacheExampleTest extends PipelineSpec {
   val expected = Seq("Jan 3", "Feb 2", "Mar 1")
 
   "DistCacheExample" should "work" in {
-    JobTest("com.spotify.scio.examples.extra.DistCacheExample")
+    JobTest[com.spotify.scio.examples.extra.DistCacheExample.type]
       .args("--output=out.txt")
       .input(TableRowJsonIO(ExampleData.EXPORTED_WIKI_TABLE), in)
       .distCache(DistCacheIO("gs://dataflow-samples/samples/misc/months.txt"), distCache)

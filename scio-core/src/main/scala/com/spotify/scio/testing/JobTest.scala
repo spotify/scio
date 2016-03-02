@@ -41,6 +41,8 @@ import scala.reflect.ClassTag
  *   // Test specification
  *   "WordCount" should "work" in {
  *     JobTest("com.spotify.scio.examples.WordCount")
+ *     // Or the type safe version
+ *     // JobTest[com.spotify.scio.examples.WordCount.type]
  *
  *       // Command line arguments
  *       .args("--input=in.txt", "--output=out.txt")

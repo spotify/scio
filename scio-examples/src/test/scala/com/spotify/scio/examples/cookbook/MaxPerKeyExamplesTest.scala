@@ -29,7 +29,7 @@ class MaxPerKeyExamplesTest extends PipelineSpec {
   val expected = Seq( (1, 20.0), (2, 18.0), (3, 23.0)).map(kv => TableRow("month" -> kv._1, "max_mean_temp" -> kv._2))
 
   "MaxPerKeyExamples" should "work" in {
-    JobTest("com.spotify.scio.examples.cookbook.MaxPerKeyExamples")
+    JobTest[com.spotify.scio.examples.cookbook.MaxPerKeyExamples.type]
       .args("--output=dataset.table")
       .input(BigQueryIO(ExampleData.WEATHER_SAMPLES_TABLE), input)
       .output(BigQueryIO("dataset.table"))(_ should containInAnyOrder (expected))

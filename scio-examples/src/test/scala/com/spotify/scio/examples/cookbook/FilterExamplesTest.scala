@@ -38,7 +38,7 @@ class FilterExamplesTest extends PipelineSpec {
   ).map((gsodRow _).tupled)
 
   "FilterExamples" should "work" in {
-    JobTest("com.spotify.scio.examples.cookbook.FilterExamples")
+    JobTest[com.spotify.scio.examples.cookbook.FilterExamples.type]
       .args("--output=dataset.table")
       .input(BigQueryIO(ExampleData.WEATHER_SAMPLES_TABLE), input)
       .output(BigQueryIO("dataset.table"))(_ should containInAnyOrder (expected))

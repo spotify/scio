@@ -24,7 +24,7 @@ class DeDupExampleTest extends PipelineSpec {
   val input = Seq("a", "b", "a", "b", "c", "a", "b", "d")
 
   "DeDupExample" should "work" in {
-    JobTest("com.spotify.scio.examples.cookbook.DeDupExample")
+    JobTest[com.spotify.scio.examples.cookbook.DeDupExample.type]
       .args("--output=out.txt", "--n=10")
       .input(TextIO("gs://dataflow-samples/shakespeare/*"), input)
       .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a", "b", "c", "d")))

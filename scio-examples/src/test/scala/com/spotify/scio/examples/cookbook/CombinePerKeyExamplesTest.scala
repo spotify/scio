@@ -41,7 +41,7 @@ class CombinePerKeyExamplesTest extends PipelineSpec {
   ).map(kv => TableRow("word" -> kv._1, "all_plays" -> kv._2))
 
   "CombinePerKeyExamples" should "work" in {
-    JobTest("com.spotify.scio.examples.cookbook.CombinePerKeyExamples")
+    JobTest[com.spotify.scio.examples.cookbook.CombinePerKeyExamples.type]
       .args("--output=dataset.table")
       .input(BigQueryIO(ExampleData.SHAKESPEARE_TABLE), input)
       .output(BigQueryIO("dataset.table"))(_ should containInAnyOrder (expected))

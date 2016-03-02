@@ -40,7 +40,7 @@ class BigQueryTornadoesTest extends PipelineSpec {
   import BigQueryTornadoesTest._
 
   "BigQueryTornadoes" should "work" in {
-    JobTest("com.spotify.scio.examples.cookbook.BigQueryTornadoes")
+    JobTest[com.spotify.scio.examples.cookbook.BigQueryTornadoes.type]
       .args("--input=publicdata:samples.gsod", "--output=dataset.table")
       .input(BigQueryIO("publicdata:samples.gsod"), input)
       .output(BigQueryIO("dataset.table"))(_ should containInAnyOrder (expected))
