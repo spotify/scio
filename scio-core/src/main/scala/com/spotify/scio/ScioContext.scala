@@ -19,7 +19,7 @@ package com.spotify.scio
 
 import java.beans.Introspector
 import java.io.File
-import java.net.URI
+import java.net.{URI, URLClassLoader}
 import java.util.concurrent.TimeUnit
 
 import com.google.api.services.bigquery.model.{JobReference, TableReference}
@@ -29,7 +29,7 @@ import com.google.cloud.dataflow.sdk.PipelineResult.State
 import com.google.cloud.dataflow.sdk.coders.TableRowJsonCoder
 import com.google.cloud.dataflow.sdk.io.{AvroIO => GAvroIO, BigQueryIO => GBigQueryIO, DatastoreIO => GDatastoreIO, PubsubIO => GPubsubIO, TextIO => GTextIO}
 import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptions, PipelineOptionsFactory}
-import com.google.cloud.dataflow.sdk.runners.DataflowPipelineJob
+import com.google.cloud.dataflow.sdk.runners.{DataflowPipelineJob, DataflowPipelineRunner}
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
 import com.google.cloud.dataflow.sdk.transforms.{Create, DoFn, PTransform}
@@ -43,18 +43,20 @@ import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.specific.SpecificRecordBase
 import org.joda.time.Instant
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer, Set => MSet}
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
+import scala.util.Try
 
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
 object ContextAndArgs {
   /** Create [[ScioContext]] and [[Args]] for command line arguments. */
   def apply(args: Array[String]): (ScioContext, Args) = {
     val (_opts, _args) = ScioContext.parseArguments[DataflowPipelineOptions](args)
-    (new ScioContext(_opts, _args.optional("testId")), _args)
+    (new ScioContext(_opts, Nil, _args.optional("testId")), _args)
   }
 }
 
@@ -65,10 +67,17 @@ object ScioContext {
   def apply(): ScioContext = ScioContext(defaultOptions)
 
   /** Create a new [[ScioContext]] instance. */
-  def apply(options: DataflowPipelineOptions): ScioContext = new ScioContext(options, None)
+  def apply(options: DataflowPipelineOptions): ScioContext = new ScioContext(options,  Nil, None)
+
+  /** Create a new [[ScioContext]] instance. */
+  def apply(artifacts: List[String]) = new ScioContext(defaultOptions, artifacts, None)
+
+  /** Create a new [[ScioContext]] instance. */
+  def apply(options: DataflowPipelineOptions, artifacts: List[String]): ScioContext =
+    new ScioContext(options, artifacts, None)
 
   /** Create a new [[ScioContext]] instance for testing. */
-  def forTest(testId: String): ScioContext = new ScioContext(defaultOptions, Some(testId))
+  def forTest(testId: String): ScioContext = new ScioContext(defaultOptions, List[String](), Some(testId))
 
   /** Parse PipelineOptions and application arguments from command line arguments. */
   def parseArguments[T <: PipelineOptions : ClassTag](cmdlineArgs: Array[String]): (T, Args) = {
@@ -103,9 +112,11 @@ object ScioContext {
  * @groupname Ungrouped Other Members
  */
 // scalastyle:off number.of.methods
-class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: Option[String]) {
+class ScioContext private[scio] (val options: DataflowPipelineOptions, private var artifacts: List[String], testId: Option[String]) {
 
   import Implicits._
+
+  private val logger = LoggerFactory.getLogger(ScioContext.getClass)
 
   // Set default name
   this.setName(CallSites.getAppName)
@@ -113,6 +124,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
   /** Dataflow pipeline. */
   def pipeline: Pipeline = {
     if (_pipeline == null) {
+      options.setFilesToStage(getFilesToStage(artifacts).asJava)
       _pipeline = if (testId.isEmpty) {
         Pipeline.create(options)
       } else {
@@ -136,6 +148,39 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, testId: O
   /** Wrap a [[com.google.cloud.dataflow.sdk.values.PCollection PCollection]]. */
   def wrap[T: ClassTag](p: PCollection[T]): SCollection[T] =
     new SCollectionImpl[T](p, this)
+
+  // =======================================================================
+  // Extra artifacts - jars/files etc
+  // =======================================================================
+
+  /** Borrowed from Dataflow */
+  private def detectClassPathResourcesToStage(classLoader: ClassLoader) = {
+    require(classLoader.isInstanceOf[URLClassLoader],
+      "Current ClassLoader is '" + classLoader + "' only URLClassLoaders are supported")
+    classLoader.asInstanceOf[URLClassLoader].getURLs.map{ url =>
+      Try {
+        new File(url.toURI).getAbsolutePath
+      }.getOrElse(throw new IllegalArgumentException("Unable to convert url '" + url + "' to file"))
+    }
+  }
+
+  /** Compute list of files to stage in dataflow */
+  private def getFilesToStage(extraLocalArtifacts: List[String]): List[String] = {
+    val finalLocalArtifacts = detectClassPathResourcesToStage(
+      classOf[DataflowPipelineRunner].getClassLoader) ++ extraLocalArtifacts
+
+    //TODO: add logging, stats
+    finalLocalArtifacts.toList
+  }
+
+  /**
+   * Add artifact to stage in Dataflow - artifact can be jar/text-files etc.
+   * NOTE: currently one can add artifacts only before pipeline object is created
+   */
+  def addArtifacts(extraLocalArtifacts: List[String]): Unit = {
+    require(_pipeline == null, "Pipeline object already created - can't add artifacts anymore!")
+    artifacts ++= extraLocalArtifacts
+  }
 
   // =======================================================================
   // Miscellaneous
