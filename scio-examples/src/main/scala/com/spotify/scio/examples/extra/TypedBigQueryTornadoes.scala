@@ -20,9 +20,8 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio._
 import com.spotify.scio.experimental._
 
-
 /*
-sbt -Dbigquery.secret=/path/to/secret.json -Dbigquery.project=[PROJECT]
+sbt -Dbigquery.project=[PROJECT]
 
 runMain
   com.spotify.scio.examples.extra.TypedBigQueryTornadoes
