@@ -122,3 +122,29 @@ Scio context is available at 'c2'
 
 You can use those in combination with `DataflowPipelineRunner` to run multiple pipelines at the same
  session or pipe them together etc.
+
+## Asynchronously close Scio context
+
+Especially if working in distributed mode one may want to schedule a job and continue experimenting
+in REPL. `DataflowPipelineRunner` is helpful but just the startup of the job can take minutes.
+`asyncClose` can be used to asynchronous close both `BlockingDataflowPipeline` and `DataflowPipeline`
+ runners, for example:
+
+```bash
+$ java -jar -Dorg.slf4j.simpleLogger.logFile=<async-exec-log-file> \
+> scio-repl/target/scala-2.11/scio-repl*-fat.jar \
+> --project=<project-id> \
+> --stagingLocation=<stagin-dir> \
+> --runner=DataflowPipelineRunner
+Starting up ...
+Scio context is available at 'sc'
+Welcome to Scio REPL!
+scio> sc.parallelize(List(1,2,3)).map( _.toString ).saveAsTextFile("gs://<output-dir>")
+scio> val result = sc.asyncClose()
+scio> result.isCompleted
+res3: Boolean = false
+scio> :newScio nextSc
+```
+
+Keep in mind tho that currently `BlockingDataflowPipelineRunner` is still pretty noise on stdout,
+thus, currently, it's recommended to use `DataflowPipelineRunner` with `asyncClose`.
