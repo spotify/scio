@@ -118,6 +118,8 @@ scio> :newScio c1
 Scio context is available at 'c1'
 scio> :newScio c2
 Scio context is available at 'c2'
+scio> :newLocalScio lc
+Scio context is available at 'lc'
 ```
 
 You can use those in combination with `DataflowPipelineRunner` to run multiple pipelines at the same
