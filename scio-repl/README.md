@@ -14,7 +14,7 @@ The easiest way to start with Scio REPL is to assembly jar and run it:
 $ sbt 'project scio-repl' assembly
 $ java -jar scio-repl/target/scala-2.11/scio-repl*-fat.jar
 Starting up ...
-Scio context is available at 'sc'
+Scio context available as 'sc'
 Welcome to Scio REPL!
 scio>
 ```
@@ -39,8 +39,8 @@ I like 3
 I like 1
 ```
 
-To create Scio context connected to Google's Dataflow service pass Scio arguments on REPL startup -
-each `:newScio` will use those arguments for new Scio contexts. For example:
+To create a ScioContext for Google Cloud Dataflow service pass Dataflow pipeline options on
+ REPL startup - each `:newScio` will use those arguments for new Scio contexts. For example:
 
 ```bash
 $ java -jar scio-repl/target/scala-2.11/scio-repl*-fat.jar \
@@ -48,7 +48,7 @@ $ java -jar scio-repl/target/scala-2.11/scio-repl*-fat.jar \
 > --stagingLocation=<stagin-dir> \
 > --runner=BlockingDataflowPipelineRunner
 Starting up ...
-Scio context is available at 'sc'
+Scio context available as 'sc'
 Welcome to Scio REPL!
 scio> sc.parallelize(List(1,2,3)).map( _.toString ).saveAsTextFile("gs://<output-dir>")
 scio> val result = sc.close
@@ -58,7 +58,7 @@ At any point in time you can always create a local Scio context using `:newLocal
 
 ```
 scio> :newLocalScio lsc
-Local Scio context is available at 'lsc'
+Local Scio context available as 'lsc'
 ```
 
 # Tips
@@ -71,8 +71,6 @@ While in the REPL, use `:paste` magic command to past/write multi line code
 scio> :paste
 // Entering paste mode (ctrl-D to finish)
 def myWordFilter(word: String) = word.startsWith("rav")
-val importantNames = sc.parallelize
-parallelize   parallelizeTimestamped
 val importantNames = sc.parallelize(List("ravioli", "rav", "jbx")).filter(myWordFilter)
 // Exiting paste mode, now interpreting.
 myWordFilter: (word: String)Boolean
@@ -83,8 +81,8 @@ scio> sc.close
 
 ## `DataflowPipelineRunner` = more interactive Dataflow service
 
-When using REPL and Dataflow service consider using `DataflowPipelineRunner` to get more
-interactive experience. To start:
+When using REPL and Dataflow service consider using the non-blocking `DataflowPipelineRunner` to get
+more interactive experience. To start:
 
 ```bash
 java -jar scio-repl/target/scala-2.11/scio-repl*-fat.jar \
@@ -92,7 +90,7 @@ java -jar scio-repl/target/scala-2.11/scio-repl*-fat.jar \
 > --stagingLocation=<stagin-dir> \
 > --runner=DataflowPipelineRunner
 Starting up ...
-Scio context is available at 'sc'
+Scio context available as 'sc'
 Welcome to Scio REPL!
 scio> sc.parallelize(List(1,2,3)).map( _.toString ).saveAsTextFile("gs://<output>")
 res1: scala.concurrent.Future[com.spotify.scio.io.Tap[String]] = scala.concurrent.impl.Promise$DefaultPromise@1399ad68
@@ -115,11 +113,11 @@ use magic `:newScio <context name>`, for example:
 
 ```
 scio> :newScio c1
-Scio context is available at 'c1'
+Scio context available as 'c1'
 scio> :newScio c2
-Scio context is available at 'c2'
+Scio context available as 'c2'
 scio> :newLocalScio lc
-Scio context is available at 'lc'
+Scio context available as 'lc'
 ```
 
 You can use those in combination with `DataflowPipelineRunner` to run multiple pipelines at the same
@@ -139,7 +137,7 @@ $ java -jar -Dorg.slf4j.simpleLogger.logFile=<async-exec-log-file> \
 > --stagingLocation=<stagin-dir> \
 > --runner=DataflowPipelineRunner
 Starting up ...
-Scio context is available at 'sc'
+Scio context available as 'sc'
 Welcome to Scio REPL!
 scio> sc.parallelize(List(1,2,3)).map( _.toString ).saveAsTextFile("gs://<output-dir>")
 scio> val result = sc.asyncClose()
@@ -153,13 +151,13 @@ thus, currently, it's recommended to use `DataflowPipelineRunner` with `asyncClo
 
 ## Use BigQuery macros
 
-BigQuery macros allows for typesafe and civilized integration with BigQuery inside Scio. Use it
-inside REPL when possible. For example:
+@BigQueryType annotations enable type safe and. and civilized integration with BigQuery inside Scio.
+Use it inside REPL when possible. For example:
 
 ```bash
 java -jar -Dbigquery.project=<project-id> scio-repl/target/scala-2.11/scio-repl*-fat.jar
 Starting up ...
-Scio context is available at 'sc'
+Scio context available as 'sc'
 Welcome to Scio REPL!
 scio> @BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]") class Row
 defined class Row

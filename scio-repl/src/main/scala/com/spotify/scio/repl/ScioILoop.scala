@@ -69,7 +69,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
       intp.interpret ("val " + scioContextName +
         " = new ReplScioContext(__scio__df__opts__, List(\"" + nextReplJar + "\"), None)")
     })
-    this.echo("Scio context is available at '" + scioContextName + "'")
+    this.echo("Scio context available as '" + scioContextName + "'")
     Result.default
   }
 
