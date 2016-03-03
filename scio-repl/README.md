@@ -23,13 +23,20 @@ all the other goods of REPL to play around in local mode.
 
 # Tutorial
 
-Create new Scio context in REPL:
+Start simple pipeline from
 
 ```
-scio> :newScio myContext
-Scio context is available at 'myContext'
-scio> myContext.parallelize(List(1,2,3))
-res1: com.spotify.scio.values.SCollection[Int] = com.spotify.scio.values.SCollectionImpl@5ab7e997
+scio> val noTwoS = sc.parallelize(List(1,2,3)).filter( _ != 2 ).map( "I like " + _ ).saveAsTextFile("/tmp/hate-2s")
+twoS: scala.concurrent.Future[com.spotify.scio.io.Tap[String]] = scala.concurrent.impl.Promise$DefaultPromise@270ab7bc
+scio> val result = sc.close
+[main] INFO com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner - Executing pipeline using the DirectPipelineRunner.
+[main] INFO com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner - Pipeline execution complete.
+result: com.spotify.scio.ScioResult = com.spotify.scio.ScioResult@220a5163
+scio> result.state
+res20: com.google.cloud.dataflow.sdk.PipelineResult.State = DONE
+scio> noTwoS.waitForIt().value.foreach(println)
+I like 3
+I like 1
 ```
 
 To create Scio context connected to Google's Dataflow service pass Scio arguments on REPL startup -
@@ -74,3 +81,44 @@ scio> importantNames.saveAsTextFile("/tmp/ravs")
 scio> sc.close
 ```
 
+## `DataflowPipelineRunner` = more interactive Dataflow service
+
+When using REPL and Dataflow service consider using `DataflowPipelineRunner` to get more
+interactive experience. To start:
+
+```bash
+java -jar scio-repl/target/scala-2.11/scio-repl*-fat.jar \
+> --project=<project-id> \
+> --stagingLocation=<stagin-dir> \
+> --runner=DataflowPipelineRunner
+Starting up ...
+Scio context is available at 'sc'
+Welcome to Scio REPL!
+scio> sc.parallelize(List(1,2,3)).map( _.toString ).saveAsTextFile("gs://<output>")
+res1: scala.concurrent.Future[com.spotify.scio.io.Tap[String]] = scala.concurrent.impl.Promise$DefaultPromise@1399ad68
+scio> val futureResult = sc.close
+[main] INFO com.google.cloud.dataflow.sdk.runners.DataflowPipelineRunner - Executing pipeline on the Dataflow Service, which will have billing implications related to Google Compute Engine usage and other Google Cloud Services.
+[main] INFO com.google.cloud.dataflow.sdk.util.PackageUtil - Uploading 28 files from PipelineOptions.filesToStage to staging location to prepare for execution.
+[main] INFO com.google.cloud.dataflow.sdk.util.PackageUtil - Uploading PipelineOptions.filesToStage complete: 2 files newly uploaded, 26 files cached
+Dataflow SDK version: 1.4.0
+scio> futureResult.state
+res4: com.google.cloud.dataflow.sdk.PipelineResult.State = RUNNING
+```
+
+When you decide to close the Scio context, you won't have to wait for the job to finish but instead
+get control back in REPL - use futures/taps to check for results, triggers and plumbing.
+
+## Use multiple Scio contexts
+
+You can use multiple Scio context objects to work with multiple pipelines at the same time, simply
+use magic `:newScio <context name>`, for example:
+
+```
+scio> :newScio c1
+Scio context is available at 'c1'
+scio> :newScio c2
+Scio context is available at 'c2'
+```
+
+You can use those in combination with `DataflowPipelineRunner` to run multiple pipelines at the same
+ session or pipe them together etc.
