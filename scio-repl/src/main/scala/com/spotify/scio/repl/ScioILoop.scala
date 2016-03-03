@@ -127,7 +127,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
    *
    * @return a prompt string to use for this REPL
    */
-  override def prompt: String = Console.GREEN + "scio> " + Console.RESET
+  override def prompt: String = Console.GREEN + "\nscio> " + Console.RESET
 
   private[this] def addImports(ids: String*): IR.Result =
     if (ids.isEmpty) IR.Success
