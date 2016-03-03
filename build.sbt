@@ -118,6 +118,9 @@ lazy val assemblySettings = Seq(
     case s if s.endsWith(".class") => MergeStrategy.last
     case s if s.endsWith(".xsd") => MergeStrategy.last
     case s if s.endsWith(".dtd") => MergeStrategy.last
+    case s if s.endsWith("jansi.dll") => MergeStrategy.rename
+    case s if s.endsWith(".jnilib") => MergeStrategy.rename
+    case s if s.endsWith("libjansi.so") => MergeStrategy.rename
     case s => old(s)
   }
   }
@@ -195,7 +198,7 @@ lazy val scioBigQuery: Project = Project(
     ),
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
     libraryDependencies ++= (
-      if (scalaVersion.value.startsWith("2.10"))
+      if (scalaBinaryVersion.value == "2.10")
         List("org.scalamacros" %% "quasiquotes" % scalaMacrosVersion cross CrossVersion.binary)
       else
         Nil
@@ -275,6 +278,30 @@ lazy val scioExamples: Project = Project(
   scioTest % "test"
 )
 
+lazy val scioRepl: Project = Project(
+  "scio-repl",
+  file("scio-repl"),
+  settings = commonSettings ++ Seq(
+    libraryDependencies ++= Seq(
+      "org.slf4j" % "slf4j-simple" % slf4jVersion,
+      "jline" % "jline" % scalaBinaryVersion.value,
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value
+    ),
+    libraryDependencies ++= (
+      if (scalaBinaryVersion.value == "2.10")
+        List("org.scala-lang" % "jline" % scalaVersion.value)
+      else
+        Nil
+    ),
+    addCompilerPlugin(paradiseDependency)
+  )
+).settings(
+  assemblyJarName in assembly := s"scio-repl-${version.value}-fat.jar"
+).dependsOn(
+  scioCore
+)
+
 lazy val scioAssembly: Project = Project(
   "scio-assembly",
   file("scio-assembly"),
@@ -286,7 +313,8 @@ lazy val scioAssembly: Project = Project(
   scioBigQuery,
   scioBigTable,
   scioExtra,
-  scioHdfs
+  scioHdfs,
+  scioRepl
 )
 
 /*****************/
