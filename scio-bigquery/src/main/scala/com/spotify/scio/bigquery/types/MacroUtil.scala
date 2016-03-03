@@ -62,6 +62,7 @@ private[types] object MacroUtil {
 
   private val SBQ = "_root_.com.spotify.scio.bigquery"
   val GModel = "_root_.com.google.api.services.bigquery.model"
+  val GBQIO = "_root_.com.google.cloud.dataflow.sdk.io.BigQueryIO"
   val SType = s"$SBQ.types.BigQueryType"
   val SUtil = s"$SBQ.BigQueryUtil"
 

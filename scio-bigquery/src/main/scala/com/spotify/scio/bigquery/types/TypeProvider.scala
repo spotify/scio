@@ -40,7 +40,7 @@ private[types] object TypeProvider {
     val tableSpec = formatString(args)
     val schema = bigquery.getTableSchema(tableSpec)
     val traits = List(tq"${p(c, SType)}.HasTable")
-    val overrides = List(q"override def table: ${p(c, GModel)}.TableReference = ${p(c, SUtil)}.parseTableSpec($tableSpec)")
+    val overrides = List(q"override def table: ${p(c, GModel)}.TableReference = ${p(c, GBQIO)}.parseTableSpec($tableSpec)")
 
     schemaToType(c)(schema, annottees, traits, overrides)
   }
