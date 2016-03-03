@@ -27,7 +27,7 @@ import scala.concurrent.Future
 class ReplScioContext (options: DataflowPipelineOptions, private var artifacts: List[String], testId: Option[String])
   extends com.spotify.scio.ScioContext (options, artifacts, testId) {
 
-  private val nullout = new PrintStream(new OutputStream() {
+  private lazy val nullout = new PrintStream(new OutputStream() {
     override def write(b: Int) = {}
     override def write(b: Array[Byte]) = {}
     override def write(b: Array[Byte], off: Int, len: Int) = {}
