@@ -150,3 +150,18 @@ scio> :newScio nextSc
 
 Keep in mind tho that currently `BlockingDataflowPipelineRunner` is still pretty noise on stdout,
 thus, currently, it's recommended to use `DataflowPipelineRunner` with `asyncClose`.
+
+## Use BigQuery macros
+
+BigQuery macros allows for typesafe and civilized integration with BigQuery inside Scio. Use it
+inside REPL when possible. For example:
+
+```bash
+java -jar -Dbigquery.project=<project-id> scio-repl/target/scala-2.11/scio-repl*-fat.jar
+Starting up ...
+Scio context is available at 'sc'
+Welcome to Scio REPL!
+scio> @BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]") class Row
+defined class Row
+defined object Row
+```
