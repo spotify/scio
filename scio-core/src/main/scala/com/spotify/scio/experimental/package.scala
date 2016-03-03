@@ -20,6 +20,7 @@ package com.spotify.scio
 import com.google.api.services.bigquery.model.TableReference
 import com.google.cloud.dataflow.sdk.io.BigQueryIO
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import com.spotify.scio.bigquery.BigQueryClient
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
@@ -136,6 +137,46 @@ package object experimental {
                             writeDisposition: WriteDisposition = null)
                            (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation): Future[Tap[T]] =
       saveAsTypedBigQuery(BigQueryIO.parseTableSpec(tableSpec), createDisposition, writeDisposition)
+
+  }
+
+  /** Enhanced version of [[BigQueryClient]] with type-safe features. */
+  implicit class TypedBigQueryClient(self: BigQueryClient) {
+
+    /**
+     * Get a typed iterator for a BigQuery SELECT query or table.
+     *
+     * Note that `T` must be annotated with [[BigQueryType.fromSchema]],
+     * [[BigQueryType.fromTable]], or [[BigQueryType.fromQuery]].
+     *
+     * By default the source (table or query) specified in the annotation will be used, but it can
+     * be overridden with the `newSource` parameter. For example:
+     *
+     * {{{
+     * @BigQueryType.fromTable("publicdata:samples.gsod")
+     * class Row
+     *
+     * // Read from [publicdata:samples.gsod] as specified in the annotation.
+     * bq.getTypedRows[Row]()
+     *
+     * // Read from [myproject:samples.gsod] instead.
+     * bq.getTypedRows[Row]("myproject:samples.gsod")
+     * }}}
+     */
+    def getTypedRows[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null): Iterator[T] = {
+      val bqt = BigQueryType[T]
+      if (bqt.isTable) {
+        val table = if (newSource != null) BigQueryIO.parseTableSpec(newSource) else bqt.table.get
+        self.getTableRows(table).map(bqt.fromTableRow)
+      } else if (bqt.isQuery) {
+        val query = if (newSource != null) newSource else bqt.query.get
+        self.getQueryRows(query).map(bqt.fromTableRow)
+      } else {
+        throw new IllegalArgumentException(s"Missing table or query field in companion")
+      }
+    }
+
+    // TODO: writeTypedRows
 
   }
 
