@@ -34,7 +34,7 @@ scio> val result = sc.close
 result: com.spotify.scio.ScioResult = com.spotify.scio.ScioResult@220a5163
 scio> result.state
 res20: com.google.cloud.dataflow.sdk.PipelineResult.State = DONE
-scio> noTwoS.waitForIt().value.foreach(println)
+scio> noTwoS.waitForResult().value.foreach(println)
 I like 3
 I like 1
 ```

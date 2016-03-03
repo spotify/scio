@@ -29,7 +29,7 @@ import scala.tools.nsc.io._
 
 /** *
   * Class loader with option to lookup classes in REPL classloader.
-  * Some help/code from Twitter Scalding
+  * Some help/code from Twitter Scalding.
   * @param urls classpath urls for URLClassLoader
   * @param parent parent for Scio CL - may be null to close the chain
   */
@@ -45,11 +45,11 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent:
   def setRepl(repl: ILoop): Unit = scioREPL = repl
 
   override def loadClass(name: String): Class[_] = {
-    // if contains $line - means that repl was loaded, so we can lookup
+    // If contains $line - means that repl was loaded, so we can lookup
     // runtime classes
     if (name.contains("$line")) {
       logger.debug("Trying to load " + name)
-      // don't want to use Try{} cause nonFatal handling
+      // Don't want to use Try{} cause nonFatal handling
       val clazz: Class[_] = try {
         scioREPL.classLoader.loadClass(name)
       } catch {
@@ -70,21 +70,22 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent:
   }
 
   def genNextReplCodeJarDir: File = Files.createTempDir()
-
   def getNextReplCodeJarPath: String = new File(nextReplJarDir, replJarName).getAbsolutePath
 
   /**
    * Creates a jar file in a temporary directory containing the code thus far compiled by the REPL.
    *
-   * @return some file for the jar created, or `None` if the REPL is not running.
+   * @return some file for the jar created, or `None` if the REPL is not running
    */
   private[scio] def createReplCodeJar: String = {
     require(scioREPL != null, "scioREPL can't be null - set it first!")
-    //TODO: scala 2.11 : use repl.replOutput.dir
+
+    // TODO: scala 2.11 : use repl.replOutput.dir
     val virtualDirectory = scioREPL.virtualDirectory
+
     val tempJar = new File(nextReplJarDir, replJarName)
 
-     // generate next repl jar dir
+    // Generate next repl jar dir
     nextReplJarDir = genNextReplCodeJarDir
 
     val jarFile = createJar(virtualDirectory.asInstanceOf[VirtualDirectory], tempJar)
@@ -94,7 +95,7 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent:
   /**
    * Creates a jar file from the classes contained in a virtual directory.
    *
-   * @param virtualDirectory containing classes that should be added to the jar.
+   * @param virtualDirectory containing classes that should be added to the jar
    */
   private def createJar(virtualDirectory: VirtualDirectory, jarFile: File): File = {
     val jarStream = new JarOutputStream(new FileOutputStream(jarFile))
@@ -111,9 +112,9 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent:
    * Add the contents of the specified virtual directory to a jar. This method will recursively
    * descend into subdirectories to add their contents.
    *
-   * @param dir is a virtual directory whose contents should be added.
-   * @param entryPath for classes found in the virtual directory.
-   * @param jarStream for writing the jar file.
+   * @param dir is a virtual directory whose contents should be added
+   * @param entryPath for classes found in the virtual directory
+   * @param jarStream for writing the jar file
    */
   private def addVirtualDirectoryToJar( dir: VirtualDirectory,
                                         entryPath: String,
