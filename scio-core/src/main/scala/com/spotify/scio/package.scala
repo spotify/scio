@@ -61,6 +61,6 @@ package object scio {
 
   /** Wait for Tap to be available - and get Tap reference from Future */
   implicit class WaitableFutureTap[T](self: Future[Tap[T]]) {
-    def waitForIt(acceptableWait: Duration = Duration.Inf ) = Await.result(self, acceptableWait)
+    def waitForResult(atMost: Duration = Duration.Inf): Tap[T] = Await.result(self, atMost)
   }
 }

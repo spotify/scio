@@ -23,7 +23,7 @@ import scala.tools.nsc.GenericRunnerSettings
 import scala.tools.nsc.interpreter.{IR, JPrintWriter}
 
 /**
- * ScioILoop - core of Scio REPL
+ * ScioILoop - core of Scio REPL.
  * @param scioClassLoader [[ScioReplClassLoader]] used for runtime/in-memory classloading
  * @param args user arguments for Scio REPL
  */
@@ -47,7 +47,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
   // =======================================================================
 
   /**
-   * Hidden magics/helpers for REPL session jars
+   * Hidden magics/helpers for REPL session jars.
    */
   private val createJarCmd = LoopCommand.nullary("createJar", "creates Scio REPL runtime jar",
     () => { Result.resultFromString(scioClassLoader.createReplCodeJar) } )
@@ -57,7 +57,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
   /**
    * REPL magic to get new Scio context, creates new Scio context based on arguments given
    * to scio REPL for the user. User may specify name of the val holding context, otherwise defaults
-   * to `sc`
+   * to `sc`.
    */
   private def getNewScioContextCmdImpl(scioContextVal: String ) = {
     val nextReplJar = scioClassLoader.getNextReplCodeJarPath
@@ -72,6 +72,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     this.echo("Scio context is available at '" + scioContextName + "'")
     Result.default
   }
+
   private val getNewScioContextCmd = LoopCommand.cmd("newScio",
                                                      "<[scio-context-val-name] | sc>",
                                                      "gets new Scio context",
@@ -79,18 +80,20 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
 
   /**
    * REPL magic to get new __local__ Scio context. User may specify name of the val holding context,
-   * otherwise defaults to `sc`
+   * otherwise defaults to `sc`.
    */
   private def getNewLocalScioContextCmdImpl(scioContextVal: String) = {
     val scioContextName = if (scioContextVal.nonEmpty) scioContextVal else "sc"
     intp.beQuietDuring({
-      /*TODO: pass BQ settings + non distributed settings */
+
+      // TODO: pass BQ settings + non distributed settings
       intp.interpret("val " + scioContextName +
         " = ScioContext()")
     })
     this.echo("Local Scio context is available at '" + scioContextName + "'")
     Result.default
   }
+
   private val getNewLocalScioContextCmd = LoopCommand.cmd("newLocalScio",
                                                           "<[scio-context-val-name] | sc>",
                                                           "gets new local Scio context",
@@ -108,19 +111,21 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     }
     Result.default
   }
+
   private val getResultCmd = LoopCommand.cmd("runScio",
                                              "<[scio-context-val-name] | sc>",
                                              "run Scio pipeline",
                                              getResultCmdImpl)
 
   private val scioCommands = List(getNewScioContextCmd, getNewLocalScioContextCmd)
-  /* TODO: find way to inject those into power commands. For now unused. */
+
+  // TODO: find way to inject those into power commands. For now unused.
   private val scioPowerCommands = List(createJarCmd, getNextJarCmd, getResultCmd)
 
   /**
-   * Change the shell prompt to custom Scio prompt
+   * Change the shell prompt to custom Scio prompt.
    *
-   * @return a prompt string to use for this REPL.
+   * @return a prompt string to use for this REPL
    */
   override def prompt: String = Console.GREEN + "scio> " + Console.RESET
 
@@ -131,12 +136,11 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
   /**
    * Gets the list of commands that this REPL supports.
    *
-   * @return a list of the command supported by this REPL.
+   * @return a list of the command supported by this REPLs
    */
   override def commands = super.commands ++ scioCommands
 
   protected def imports: List[String] = List(
-    //TODO: add implicites etc
     "com.spotify.scio.repl.ReplScioContext",
     "com.spotify.scio._",
     "com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptions, PipelineOptionsFactory}",

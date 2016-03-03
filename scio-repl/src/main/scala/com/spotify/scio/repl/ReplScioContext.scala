@@ -35,7 +35,7 @@ class ReplScioContext (options: DataflowPipelineOptions, private var artifacts: 
 
   /**
    * Async close/run Scio context.
-   * NOTE: by default no std{out,err} is available as feedback
+   * NOTE: by default no std{out,err} is available as feedback.
    * NOTE: to turn off or reduce logging noise - use sl4j properties - for example:
    *  `-Dorg.slf4j.simpleLogger.logFile=/dev/null`
    */
@@ -44,7 +44,7 @@ class ReplScioContext (options: DataflowPipelineOptions, private var artifacts: 
     this.getClass.getClassLoader.asInstanceOf[ {def createReplCodeJar: String} ].createReplCodeJar
     import scala.concurrent.ExecutionContext.Implicits.global
 
-    /* Console.with* affects worker thread - dataflow version/job id manages to get printed still */
+    // Console.with* affects worker thread - dataflow version/job id manages to get printed still
     Future(Console.withOut(stdout){
       Console.withErr(stderr) {
         super.close()
@@ -55,7 +55,8 @@ class ReplScioContext (options: DataflowPipelineOptions, private var artifacts: 
   /** Enhance original close method with dumping REPL session jar */
   override def close(): ScioResult = {
     import scala.language.reflectiveCalls
-    /*TODO: add notification if distributed mode, that it may take minutes for DF to start */
+
+    // TODO: add notification if distributed mode, that it may take minutes for DF to start
     this.getClass.getClassLoader.asInstanceOf[ {def createReplCodeJar: String} ].createReplCodeJar
     super.close()
   }

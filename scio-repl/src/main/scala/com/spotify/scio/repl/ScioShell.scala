@@ -40,8 +40,8 @@ trait BaseScioShell extends MainGenericRunner {
    * for custom functionality, including determining at runtime if the REPL is running,
    * and making custom REPL colon-commands available to the user.
    *
-   * @param args passed from the command line.
-   * @return `true` if execution was successful, `false` otherwise.
+   * @param args passed from the command line
+   * @return `true` if execution was successful, `false` otherwise
    */
   override def process(args: Array[String]): Boolean = {
     // Process command line arguments into a settings object, and use that to start the REPL.
@@ -52,10 +52,10 @@ trait BaseScioShell extends MainGenericRunner {
     command.settings.usejavacp.value = true
     command.settings.classpath.append(System.getProperty("java.class.path"))
 
-    /** Useful settings for for debugging, dumping class files etc: */
-    //command.settings.debug.value = true
-    //command.settings.Yreploutdir.tryToSet(List(""))
-    //command.settings.Ydumpclasses.tryToSet(List(""))
+    // Useful settings for for debugging, dumping class files etc:
+    /* command.settings.debug.value = true
+    command.settings.Yreploutdir.tryToSet(List(""))
+    command.settings.Ydumpclasses.tryToSet(List("")) */
 
     // Force the repl to be synchronous, so all cmds are executed in the same thread
     command.settings.Yreplsync.value = true
@@ -69,18 +69,14 @@ trait BaseScioShell extends MainGenericRunner {
 
     scioClassLoader.setRepl(repl)
 
-    // set classloader chain - expose top level abstract class loader down
+    // Set classloader chain - expose top level abstract class loader down
     // the chain to allow for readObject and latestUserDefinedLoader
     command.settings.embeddedDefaults(scioClassLoader)
 
     repl.process(command.settings)
   }
 
-  /**
-   * Runs an instance of the shell.
-   *
-   * @param args from the command line.
-   */
+  /** Runs an instance of the shell. */
   def main(args: Array[String]) {
     val retVal = process(args)
     if (!retVal) {

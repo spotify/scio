@@ -70,7 +70,7 @@ object ScioContext {
   def apply(options: DataflowPipelineOptions): ScioContext = new ScioContext(options,  Nil, None)
 
   /** Create a new [[ScioContext]] instance. */
-  def apply(artifacts: List[String]) = new ScioContext(defaultOptions, artifacts, None)
+  def apply(artifacts: List[String]): ScioContext = new ScioContext(defaultOptions, artifacts, None)
 
   /** Create a new [[ScioContext]] instance. */
   def apply(options: DataflowPipelineOptions, artifacts: List[String]): ScioContext =
@@ -169,7 +169,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
     val finalLocalArtifacts = detectClassPathResourcesToStage(
       classOf[DataflowPipelineRunner].getClassLoader) ++ extraLocalArtifacts
 
-    //TODO: add logging, stats
+    // TODO: add logging, stats
     finalLocalArtifacts.toList
   }
 
@@ -247,7 +247,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
   // Futures
   // =======================================================================
 
-  /* To be updated once the pipeline completes. */
+  // To be updated once the pipeline completes.
   private[scio] def makeFuture[T](value: AnyRef): Future[T] = {
     val p = Promise[AnyRef]()
     _promises.append((p, value))
