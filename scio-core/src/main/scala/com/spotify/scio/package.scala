@@ -19,7 +19,11 @@ package com.spotify
 
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
+import com.spotify.scio.io.Tap
 import com.spotify.scio.values.{AccumulatorType, DoubleAccumulatorType, IntAccumulatorType, LongAccumulatorType}
+
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 /**
  * Main package for public APIs. Import all.
@@ -55,4 +59,8 @@ package object scio {
   implicit val longAccumulatorType: AccumulatorType[Long] = new LongAccumulatorType
   implicit val doubleAccumulatorType: AccumulatorType[Double] = new DoubleAccumulatorType
 
+  /** Wait for Tap to be available - and get Tap reference from Future */
+  implicit class WaitableFutureTap[T](self: Future[Tap[T]]) {
+    def waitForIt(acceptableWait: Duration = Duration.Inf ) = Await.result(self, acceptableWait)
+  }
 }
