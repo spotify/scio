@@ -52,6 +52,11 @@ trait BaseScioShell extends MainGenericRunner {
     command.settings.usejavacp.value = true
     command.settings.classpath.append(System.getProperty("java.class.path"))
 
+
+    // Repl assembly includes paradise's scalac-plugin.xml - required for BigQuery macro
+    val thisJar = this.getClass.getProtectionDomain.getCodeSource.getLocation.getPath
+    command.settings.plugin.appendToValue(thisJar)
+
     // Useful settings for for debugging, dumping class files etc:
     /* command.settings.debug.value = true
     command.settings.Yreploutdir.tryToSet(List(""))

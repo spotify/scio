@@ -286,15 +286,15 @@ lazy val scioRepl: Project = Project(
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "jline" % "jline" % scalaBinaryVersion.value,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+      paradiseDependency
     ),
     libraryDependencies ++= (
       if (scalaBinaryVersion.value == "2.10")
         List("org.scala-lang" % "jline" % scalaVersion.value)
       else
         Nil
-    ),
-    addCompilerPlugin(paradiseDependency)
+    )
   )
 ).settings(
   assemblyJarName in assembly := s"scio-repl-${version.value}-fat.jar"
