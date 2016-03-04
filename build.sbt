@@ -137,7 +137,7 @@ lazy val root: Project = Project(
   settings = commonSettings ++ siteSettings ++ noPublishSettings
 ).settings(
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
-    -- inProjects(scioSchemas) -- inProjects(scioExamples),
+    -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples),
   aggregate in assembly := false
 ).aggregate(
   scioCore,
@@ -146,6 +146,7 @@ lazy val root: Project = Project(
   scioBigTable,
   scioExtra,
   scioHdfs,
+  scioRepl,
   scioExamples,
   scioSchemas
 )
@@ -281,7 +282,7 @@ lazy val scioExamples: Project = Project(
 lazy val scioRepl: Project = Project(
   "scio-repl",
   file("scio-repl"),
-  settings = commonSettings ++ Seq(
+  settings = commonSettings ++ noPublishSettings ++ Seq(
     libraryDependencies ++= Seq(
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "jline" % "jline" % scalaBinaryVersion.value,
