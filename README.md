@@ -16,9 +16,9 @@ Scio is a Scala API for [Google Cloud Dataflow](https://github.com/GoogleCloudPl
 
 First install the [Google Cloud SDK](https://cloud.google.com/sdk/) and create a [Google Cloud Storage](https://cloud.google.com/storage/) bucket for your project, e.g. `gs://my-bucket`. Make sure it's in the same region as the [BigQuery](https://cloud.google.com/bigquery/) datasets you want to access and where you want Dataflow to launch workers on GCE.
 
-# Documentation and Getting Started
+# Documentation
+* [Getting Started](https://github.com/spotify/scio/wiki#running-the-examples)
 * [Scaladocs](http://spotify.github.com/scio): Generated documentation for current version of Scio.
-* [Running examples](https://github.com/spotify/scio/wiki#running-the-examples): Good place to get started.
 * [Scio REPL](https://github.com/spotify/scio/blob/master/scio-repl/README.md): Interactive learning. This tutorial shows off how to interact with scio via REPL.
 * [BigQuery settings](https://github.com/spotify/scio/wiki#bigquery-settings): BigQuery settings cheat sheet.
 * [Options](https://github.com/spotify/scio/wiki#options): Google Dataflow settings cheat sheet.
