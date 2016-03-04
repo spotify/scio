@@ -16,28 +16,52 @@ $ java -jar scio-repl/target/scala-2.11/scio-repl*-fat.jar
 Loading ...
 Scio context available as 'sc'
 Welcome to Scio REPL!
+
 scio>
 ```
 Scio context is available as `sc`, this is the starting point, use `tab` completion, history and
-all the other goods of REPL to play around in local mode.
+all the other goods of REPL to play around.
 
 # Tutorial
 
-Start simple pipeline from
+## Local pipeline
+
+Let's start with simple local-mode word count example:
 
 ```
-scio> val noTwoS = sc.parallelize(List(1,2,3)).filter( _ != 2 ).map( "I like " + _ ).saveAsTextFile("/tmp/hate-2s")
-twoS: scala.concurrent.Future[com.spotify.scio.io.Tap[String]] = scala.concurrent.impl.Promise$DefaultPromise@270ab7bc
-scio> val result = sc.close
-[main] INFO com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner - Executing pipeline using the DirectPipelineRunner.
-[main] INFO com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner - Pipeline execution complete.
-result: com.spotify.scio.ScioResult = com.spotify.scio.ScioResult@220a5163
-scio> result.state
-res20: com.google.cloud.dataflow.sdk.PipelineResult.State = DONE
-scio> noTwoS.waitForResult().value.foreach(println)
-I like 3
-I like 1
+scio> val wordCount = sc.textFile("README.md").flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty)).countByValue.map(_.toString).saveAsTextFile("/tmp/local_wordcount")
+scio> sc.close
+scio> readme_wc.waitForResult().value.take(3).foreach(println)
+(but,4)
+(via,4)
+(Hadoop,6)
 ```
+
+Make sure to have text file `README.md` in current directory (the directory where you start REPL from).
+ This example counts words in local file using local Dataflow runner and outputs result in local file.
+The pipeline/computation starts on `sc.close`. The last command take 3 lines from results and prints
+ them.
+
+## Local pipeline ++
+
+In the next example we will spice things up a bit - and read data from GCS:
+
+```
+scio> :newScio
+scio> val shakespeare = sc.textFile("gs://dataflow-samples/shakespeare/*")
+scio> val wordCount = shakespeare.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty)).countByValue.map(_.toString).saveAsTextFile("/tmp/gcs-wordcount")
+scio> sc.close
+scio> wordCount.waitForResult().value.take(3).foreach(println)
+(frown'st,1)
+(comfortable,13)
+(diversity,1)
+```
+
+We are still performing computations locally, but data comes from Google Cloud Storage (it might as
+ well be BigTable, BigQuery etc). This example may take a minute or two due to transfer between GCS
+ and your machine.
+
+## Dataflow service pipeline
 
 To create a ScioContext for Google Cloud Dataflow service pass Dataflow pipeline options on
  REPL startup - each `:newScio` will use those arguments for new Scio contexts. For example:
@@ -47,19 +71,61 @@ $ java -jar scio-repl/target/scala-2.11/scio-repl*-fat.jar \
 > --project=<project-id> \
 > --stagingLocation=<stagin-dir> \
 > --runner=BlockingDataflowPipelineRunner
-Starting up ...
+Loading ...
 Scio context available as 'sc'
 Welcome to Scio REPL!
-scio> sc.parallelize(List(1,2,3)).map( _.toString ).saveAsTextFile("gs://<output-dir>")
-scio> val result = sc.close
+
+scio> val shakespeare = sc.textFile("gs://dataflow-samples/shakespeare/*")
+scio> val wordCount = shakespeare.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty)).countByValue.map(_.toString).saveAsTextFile("gs://<gcs-output-dir>")
+scio> sc.close
+scio> wordCount.waitForResult().value.take(3).foreach(println)
+(decreased,1)
+('shall',2)
+(War,4)
 ```
 
-At any point in time you can always create a local Scio context using `:newLocalScio <name>`:
+In this case we are reading data from GCS and performing computation in Dataflow service. Last line
+ is an example fo reading data from GCS file/tap.
+
+## Adhoc local mode
+
+Sometimes you may start in distributed mode get small enough results, and play around the results
+ in local mode. At any point in time you can create a local Scio context using
+ `:newLocalScio <name>` and use it to perform local computations.
 
 ```
 scio> :newLocalScio lsc
 Local Scio context available as 'lsc'
 ```
+
+## BigQuery example
+
+In this example let's try to read some data from BigQuery and massage it in Dataflow. We shall find
+ relationship between months and numbers of detected tornado from public Dataflow dataset:
+
+```bash
+$ java -jar -Dbigquery.project=<project-id> \
+> scio-repl/target/scala-2.11/scio-repl*-fat.jar \
+> --project=<project-id> \
+> --stagingLocation=<stagin-dir> \
+> --runner=BlockingDataflowPipelineRunner
+Loading ...
+Scio context available as 'sc'
+Welcome to Scio REPL!
+
+scio> val tornados = sc.bigQuerySelect("SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]")
+scio> val forcast = tornados.flatMap(r => if (r.getBoolean("tornado")) Seq(r.getInt("month")) else Nil).countByValue().map(kv => TableRow("month" -> kv._1, "tornado_count" -> kv._2))
+scio> val someData = forcast.take(3).materialize
+scio> sc.close
+scio> someData.waitForResult().value.foreach(println)
+{month=4, tornado_count=5}
+{month=3, tornado_count=6}
+{month=5, tornado_count=6}
+```
+
+In this example we combine power of BigQuery and flexibility of Dataflow. We first query BigQuery
+ table, perform a couple of transformations to find out relationship between months and number of
+ torandos. We take (`take(3)`) some data back locally (`materialize`) to check the results.
 
 # Tips
 
@@ -92,6 +158,7 @@ java -jar scio-repl/target/scala-2.11/scio-repl*-fat.jar \
 Loading ...
 Scio context available as 'sc'
 Welcome to Scio REPL!
+
 scio> sc.parallelize(List(1,2,3)).map( _.toString ).saveAsTextFile("gs://<output>")
 res1: scala.concurrent.Future[com.spotify.scio.io.Tap[String]] = scala.concurrent.impl.Promise$DefaultPromise@1399ad68
 scio> val futureResult = sc.close
@@ -139,6 +206,7 @@ $ java -jar -Dorg.slf4j.simpleLogger.logFile=<async-exec-log-file> \
 Loading ...
 Scio context available as 'sc'
 Welcome to Scio REPL!
+
 scio> sc.parallelize(List(1,2,3)).map( _.toString ).saveAsTextFile("gs://<output-dir>")
 scio> val result = sc.asyncClose()
 scio> result.isCompleted
@@ -149,17 +217,22 @@ scio> :newScio nextSc
 Keep in mind tho that currently `BlockingDataflowPipelineRunner` is still pretty noise on stdout,
 thus, currently, it's recommended to use `DataflowPipelineRunner` with `asyncClose`.
 
-## Use BigQuery macros
+## Using BigQuery client
 
-@BigQueryType annotations enable type safe and. and civilized integration with BigQuery inside Scio.
-Use it inside REPL when possible. For example:
+Whenever possible leverage BigQuery! `@BigQueryType` annotations enable type safe and civilized
+ integration with BigQuery inside Scio. Here is example of using `@BigQueryType` annotations and
+ BigQuery client to read typed data.
 
 ```bash
-java -jar -Dbigquery.project=<project-id> scio-repl/target/scala-2.11/scio-repl*-fat.jar
-Starting up ...
+$ java -jar -Dbigquery.project=<project-id> \
+> scio-repl/target/scala-2.11/scio-repl*-fat.jar
+Loading ...
 Scio context available as 'sc'
 Welcome to Scio REPL!
-scio> @BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]") class Row
-defined class Row
-defined object Row
+
+scio> @BigQueryType.fromQuery("SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]") class Row
+scio> val bqc = BigQueryClient()
+scio> val tornados = bqc.getTypedRows[Row]()
+scio> tornados.next.month
+res5: Option[Long] = Some(5)
 ```
