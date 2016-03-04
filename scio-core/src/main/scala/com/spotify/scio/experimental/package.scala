@@ -107,7 +107,7 @@ package object experimental {
     }
 
     /**
-     * Save this SCollection as a Bigquery table. Note that element type `T` must annotated with
+     * Save this SCollection as a Bigquery table. Note that element type `T` must be annotated with
      * [[BigQueryType]].
      *
      * This could be a complete case class with [[BigQueryType.toTable]]. For example:
