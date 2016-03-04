@@ -19,6 +19,8 @@ package com.spotify.scio.repl
 
 import java.io.BufferedReader
 
+import com.spotify.scio.bigquery.BigQueryClient
+
 import scala.tools.nsc.GenericRunnerSettings
 import scala.tools.nsc.interpreter.{IR, JPrintWriter}
 
@@ -129,8 +131,20 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
    */
   override def prompt: String = Console.GREEN + "\nscio> " + Console.RESET
 
-  private[this] def addImports(ids: String*): IR.Result =
+  private def addImports(ids: String*): IR.Result =
     if (ids.isEmpty) IR.Success else intp.interpret("import " + ids.mkString(", "))
+
+  private def createBigQueryClient: IR.Result = {
+    val key = BigQueryClient.PROJECT_KEY
+    if (sys.props(key) == null) {
+      echo(s"System property '$key' not set. BigQueryClient is not available.")
+      echo("Set it with '-D" + key + "=my-project' command line argument.")
+    } else {
+      intp.interpret("val bq = BigQueryClient()")
+      echo(s"BigQuery client available as 'bq'")
+    }
+    IR.Success
+  }
 
   /**
    * Gets the list of commands that this REPL supports.
@@ -151,6 +165,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     this.echo("Loading ... ")
     intp.beQuietDuring {
       addImports(imports: _*)
+      createBigQueryClient
       getNewScioContextCmdImpl("sc")
     }
 
