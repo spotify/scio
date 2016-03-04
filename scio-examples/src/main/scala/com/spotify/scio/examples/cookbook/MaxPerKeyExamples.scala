@@ -46,7 +46,7 @@ object MaxPerKeyExamples {
       .map(row => (row.getInt("month"), row.getDouble("mean_temp")))
       .maxByKey
       .map(kv => TableRow("month" -> kv._1, "max_mean_temp" -> kv._2))
-      .saveAsBigQuery(args("output"), schema, CREATE_IF_NEEDED, WRITE_TRUNCATE)
+      .saveAsBigQuery(args("output"), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
     sc.close()
   }

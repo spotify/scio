@@ -787,8 +787,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group output
    */
   def saveAsBigQuery(table: TableReference, schema: TableSchema,
-                     createDisposition: CreateDisposition,
-                     writeDisposition: WriteDisposition)
+                     writeDisposition: WriteDisposition,
+                     createDisposition: CreateDisposition)
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
     val tableSpec = GBigQueryIO.toTableSpec(table)
     if (context.isTest) {
@@ -819,10 +819,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group output
    */
   def saveAsBigQuery(tableSpec: String, schema: TableSchema = null,
-                     createDisposition: CreateDisposition = null,
-                     writeDisposition: WriteDisposition = null)
+                     writeDisposition: WriteDisposition = null,
+                     createDisposition: CreateDisposition = null)
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
-    saveAsBigQuery(GBigQueryIO.parseTableSpec(tableSpec), schema, createDisposition, writeDisposition)
+    saveAsBigQuery(GBigQueryIO.parseTableSpec(tableSpec), schema, writeDisposition, createDisposition)
 
   /**
    * Save this SCollection as a Datastore dataset. Note that elements must be of type Entity.

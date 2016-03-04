@@ -55,7 +55,7 @@ object CombinePerKeyExamples {
       .aggregateByKey(SortedSet[String]())(_ + _, _ ++ _)
       .mapValues(_.mkString(","))
       .map(kv => TableRow("word" -> kv._1, "all_plays" -> kv._2))
-      .saveAsBigQuery(args("output"), schema, CREATE_IF_NEEDED, WRITE_TRUNCATE)
+      .saveAsBigQuery(args("output"), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
     sc.close()
   }

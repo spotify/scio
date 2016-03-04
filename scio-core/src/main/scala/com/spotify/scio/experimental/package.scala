@@ -95,14 +95,14 @@ package object experimental {
      * annotated with [[BigQueryType.toTable]].
      */
     def saveAsTypedBigQuery(table: TableReference,
-                            createDisposition: CreateDisposition,
-                            writeDisposition: WriteDisposition)
+                            writeDisposition: WriteDisposition,
+                            createDisposition: CreateDisposition)
                            (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation): Future[Tap[T]] = {
       val bqt = BigQueryType[T]
       import scala.concurrent.ExecutionContext.Implicits.global
       self
         .map(bqt.toTableRow)
-        .saveAsBigQuery(table, bqt.schema, createDisposition, writeDisposition)
+        .saveAsBigQuery(table, bqt.schema, writeDisposition, createDisposition)
         .map(_.map(bqt.fromTableRow))
     }
 
@@ -133,10 +133,10 @@ package object experimental {
      * }}}
      */
     def saveAsTypedBigQuery(tableSpec: String,
-                            createDisposition: CreateDisposition = null,
-                            writeDisposition: WriteDisposition = null)
+                            writeDisposition: WriteDisposition = null,
+                            createDisposition: CreateDisposition = null)
                            (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation): Future[Tap[T]] =
-      saveAsTypedBigQuery(BigQueryIO.parseTableSpec(tableSpec), createDisposition, writeDisposition)
+      saveAsTypedBigQuery(BigQueryIO.parseTableSpec(tableSpec), writeDisposition, createDisposition)
 
   }
 

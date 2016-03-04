@@ -55,7 +55,7 @@ object TypedBigQueryTornadoes {
       .countByValue()
       .map(kv => Result(kv._1, kv._2))
       // Convert elements from Result to TableRow and save output to BigQuery.
-      .saveAsTypedBigQuery(args("output"), CREATE_IF_NEEDED, WRITE_TRUNCATE)
+      .saveAsTypedBigQuery(args("output"), WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
     sc.close()
   }

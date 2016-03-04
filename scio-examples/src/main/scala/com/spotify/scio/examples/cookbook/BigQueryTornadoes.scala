@@ -47,7 +47,7 @@ object BigQueryTornadoes {
       .flatMap(r => if (r.getBoolean("tornado")) Seq(r.getInt("month")) else Nil)
       .countByValue()
       .map(kv => TableRow("month" -> kv._1, "tornado_count" -> kv._2))
-      .saveAsBigQuery(args("output"), schema, CREATE_IF_NEEDED, WRITE_TRUNCATE)
+      .saveAsBigQuery(args("output"), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
     sc.close()
   }
