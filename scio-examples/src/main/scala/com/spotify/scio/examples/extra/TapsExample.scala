@@ -43,8 +43,7 @@ object TapsExample {
       out
     }
 
-    val result = Await.result(r.flatMap(identity), Duration.Inf)
-    println(result.value.take(10).toList)
+    println(r.waitForResult().value.take(10).toList)
   }
 
 }

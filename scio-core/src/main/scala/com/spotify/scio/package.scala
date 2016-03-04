@@ -59,8 +59,15 @@ package object scio {
   implicit val longAccumulatorType: AccumulatorType[Long] = new LongAccumulatorType
   implicit val doubleAccumulatorType: AccumulatorType[Double] = new DoubleAccumulatorType
 
-  /** Wait for Tap to be available - and get Tap reference from Future */
+  /** Wait for Tap to be available and get Tap reference from Future. */
   implicit class WaitableFutureTap[T](self: Future[Tap[T]]) {
     def waitForResult(atMost: Duration = Duration.Inf): Tap[T] = Await.result(self, atMost)
   }
+
+  /** Wait for nested Tap to be available, flatten result and get Tap reference from Future. */
+  implicit class WaitableNestedFutureTap[T](self: Future[Future[Tap[T]]]) {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    def waitForResult(atMost: Duration = Duration.Inf): Tap[T] = Await.result(self.flatMap(identity), atMost)
+  }
+
 }
