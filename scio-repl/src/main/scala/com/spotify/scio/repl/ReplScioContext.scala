@@ -40,10 +40,9 @@ class ReplScioContext (options: DataflowPipelineOptions, private var artifacts: 
    *  `-Dorg.slf4j.simpleLogger.logFile=/dev/null`
    */
   def asyncClose(stdout: PrintStream = nullout, stderr: PrintStream = nullout): Future[ScioResult] = {
-    import scala.language.reflectiveCalls
-    this.getClass.getClassLoader.asInstanceOf[ {def createReplCodeJar: String} ].createReplCodeJar
-    import scala.concurrent.ExecutionContext.Implicits.global
+    createJar
 
+    import scala.concurrent.ExecutionContext.Implicits.global
     // Console.with* affects worker thread - dataflow version/job id manages to get printed still
     Future(Console.withOut(stdout){
       Console.withErr(stderr) {
@@ -54,10 +53,16 @@ class ReplScioContext (options: DataflowPipelineOptions, private var artifacts: 
 
   /** Enhance original close method with dumping REPL session jar */
   override def close(): ScioResult = {
-    import scala.language.reflectiveCalls
-
     // TODO: add notification if distributed mode, that it may take minutes for DF to start
-    this.getClass.getClassLoader.asInstanceOf[ {def createReplCodeJar: String} ].createReplCodeJar
+    createJar
     super.close()
   }
+
+  private def createJar: Unit = {
+    // scalastyle:off structural.type
+    import scala.language.reflectiveCalls
+    this.getClass.getClassLoader.asInstanceOf[{def createReplCodeJar: String}].createReplCodeJar
+    // scalastyle:on structural.type
+  }
+
 }

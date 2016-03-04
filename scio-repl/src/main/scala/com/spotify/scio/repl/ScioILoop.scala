@@ -130,15 +130,14 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
   override def prompt: String = Console.GREEN + "\nscio> " + Console.RESET
 
   private[this] def addImports(ids: String*): IR.Result =
-    if (ids.isEmpty) IR.Success
-    else intp.interpret("import " + ids.mkString(", "))
+    if (ids.isEmpty) IR.Success else intp.interpret("import " + ids.mkString(", "))
 
   /**
    * Gets the list of commands that this REPL supports.
    *
    * @return a list of the command supported by this REPLs
    */
-  override def commands = super.commands ++ scioCommands
+  override def commands: List[LoopCommand] = super.commands ++ scioCommands
 
   protected def imports: List[String] = List(
     "com.spotify.scio.repl.ReplScioContext",
