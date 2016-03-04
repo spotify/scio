@@ -90,7 +90,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
       intp.interpret("val " + scioContextName +
         " = ScioContext()")
     })
-    this.echo("Local Scio context is available at '" + scioContextName + "'")
+    this.echo("Local Scio context available as '" + scioContextName + "'")
     Result.default
   }
 
