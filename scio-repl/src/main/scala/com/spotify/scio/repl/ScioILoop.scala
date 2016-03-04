@@ -143,6 +143,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
   protected def imports: List[String] = List(
     "com.spotify.scio.repl.ReplScioContext",
     "com.spotify.scio._",
+    "com.spotify.scio.bigquery._",
     "com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptions, PipelineOptionsFactory}",
     "com.spotify.scio.experimental._")
 
