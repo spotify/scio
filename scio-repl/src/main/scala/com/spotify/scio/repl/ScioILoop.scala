@@ -148,7 +148,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
 
   override def createInterpreter() {
     super.createInterpreter()
-    this.echo("Starting up ... ")
+    this.echo("Loading ... ")
     intp.beQuietDuring {
       addImports(imports: _*)
       getNewScioContextCmdImpl("sc")

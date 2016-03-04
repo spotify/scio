@@ -13,7 +13,7 @@ The easiest way to start with Scio REPL is to assembly jar and run it:
 ```bash
 $ sbt 'project scio-repl' assembly
 $ java -jar scio-repl/target/scala-2.11/scio-repl*-fat.jar
-Starting up ...
+Loading ...
 Scio context available as 'sc'
 Welcome to Scio REPL!
 scio>
@@ -89,7 +89,7 @@ java -jar scio-repl/target/scala-2.11/scio-repl*-fat.jar \
 > --project=<project-id> \
 > --stagingLocation=<stagin-dir> \
 > --runner=DataflowPipelineRunner
-Starting up ...
+Loading ...
 Scio context available as 'sc'
 Welcome to Scio REPL!
 scio> sc.parallelize(List(1,2,3)).map( _.toString ).saveAsTextFile("gs://<output>")
@@ -136,7 +136,7 @@ $ java -jar -Dorg.slf4j.simpleLogger.logFile=<async-exec-log-file> \
 > --project=<project-id> \
 > --stagingLocation=<stagin-dir> \
 > --runner=DataflowPipelineRunner
-Starting up ...
+Loading ...
 Scio context available as 'sc'
 Welcome to Scio REPL!
 scio> sc.parallelize(List(1,2,3)).map( _.toString ).saveAsTextFile("gs://<output-dir>")
