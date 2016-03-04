@@ -17,7 +17,6 @@
 
 package com.spotify.scio.repl
 
-import scala.tools.nsc.interpreter.ILoop
 import scala.tools.nsc.{GenericRunnerCommand, MainGenericRunner}
 
 /**
@@ -25,13 +24,6 @@ import scala.tools.nsc.{GenericRunnerCommand, MainGenericRunner}
  * Scio.
  */
 trait BaseScioShell extends MainGenericRunner {
-
-  /**
-   * An instance of the Scala REPL the user will interact with.
-   */
-  private var scioREPL: Option[ILoop] = None
-  protected def scioREPLProvider(scioClassLoader: ScioReplClassLoader, args: List[String])
-    = new ScioILoop(scioClassLoader, args)
 
   /**
    * The main entry point for executing the REPL.
@@ -52,7 +44,6 @@ trait BaseScioShell extends MainGenericRunner {
     command.settings.usejavacp.value = true
     command.settings.classpath.append(System.getProperty("java.class.path"))
 
-
     // Repl assembly includes paradise's scalac-plugin.xml - required for BigQuery macro
     val thisJar = this.getClass.getProtectionDomain.getCodeSource.getLocation.getPath
     command.settings.plugin.appendToValue(thisJar)
@@ -69,9 +60,7 @@ trait BaseScioShell extends MainGenericRunner {
       null,
       Thread.currentThread.getContextClassLoader)
 
-    val repl = scioREPLProvider(scioClassLoader, args.toList)
-    scioREPL = Some(repl)
-
+    val repl = new ScioILoop(scioClassLoader, args.toList)
     scioClassLoader.setRepl(repl)
 
     // Set classloader chain - expose top level abstract class loader down

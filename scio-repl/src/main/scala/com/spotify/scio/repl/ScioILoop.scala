@@ -43,7 +43,6 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     echo("Welcome to Scio REPL!")
   }
 
-
   // =======================================================================
   // Scio REPL magic commands:
   // =======================================================================
@@ -89,10 +88,9 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     intp.beQuietDuring({
 
       // TODO: pass BQ settings + non distributed settings
-      intp.interpret("val " + scioContextName +
-        " = ScioContext()")
+      intp.interpret(s"val $scioContextName = ScioContext()")
     })
-    this.echo("Local Scio context available as '" + scioContextName + "'")
+    this.echo(s"Local Scio context available as '$scioContextName'")
     Result.default
   }
 
@@ -107,10 +105,8 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
    */
   private def getResultCmdImpl(scioContextVal: String) = {
     scioClassLoader.createReplCodeJar
-    val scioResult = scioContextVal match {
-      case v if !v.isEmpty => intp.interpret(v + ".close")
-      case _ => intp.interpret("sc.close")
-    }
+    val sc = if (scioContextVal.nonEmpty) scioContextVal else "sc"
+    val scioResult = intp.interpret(s"$sc.close()")
     Result.default
   }
 
@@ -131,8 +127,10 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
    */
   override def prompt: String = Console.GREEN + "\nscio> " + Console.RESET
 
-  private def addImports(ids: String*): IR.Result =
-    if (ids.isEmpty) IR.Success else intp.interpret("import " + ids.mkString(", "))
+  private def addImports(ids: String*): IR.Result = {
+    ids.foreach(p => intp.interpret(s"import $p"))
+    IR.Success
+  }
 
   private def createBigQueryClient: IR.Result = {
     val key = BigQueryClient.PROJECT_KEY
@@ -168,6 +166,6 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
       createBigQueryClient
       getNewScioContextCmdImpl("sc")
     }
-
   }
+
 }
