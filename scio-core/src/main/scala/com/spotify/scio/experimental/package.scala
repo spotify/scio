@@ -176,7 +176,24 @@ package object experimental {
       }
     }
 
-    // TODO: writeTypedRows
+    /**
+     * Write a List to a BigQuery table. Note that element type `T` must be annotated with [[BigQueryType]].
+     */
+
+    def writeTypedRows[T <: HasAnnotation : ClassTag : TypeTag](table: TableReference,
+                                                                rows: List[T],
+                                                                writeDisposition: WriteDisposition,
+                                                                createDisposition: CreateDisposition): Unit = {
+
+      val bqt = BigQueryType[T]
+      self.writeTableRows(table, rows.map(bqt.toTableRow), bqt.schema, writeDisposition, createDisposition)
+    }
+
+    def writeTypedRows[T <: HasAnnotation : ClassTag : TypeTag](tableSpec: String,
+                                                                rows: List[T],
+                                                                writeDisposition: WriteDisposition = WRITE_EMPTY,
+                                                                createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =
+      writeTypedRows(BigQueryIO.parseTableSpec(tableSpec), rows, writeDisposition, createDisposition)
 
   }
 

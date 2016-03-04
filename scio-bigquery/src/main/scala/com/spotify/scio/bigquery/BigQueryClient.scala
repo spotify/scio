@@ -31,7 +31,8 @@ import com.google.api.services.bigquery.Bigquery.Builder
 import com.google.api.services.bigquery.model._
 import com.google.api.services.bigquery.{Bigquery, BigqueryScopes}
 import com.google.cloud.dataflow.sdk.io.BigQueryIO
-import com.google.cloud.dataflow.sdk.util.BigQueryTableRowIterator
+import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import com.google.cloud.dataflow.sdk.util.{BigQueryTableInserter, BigQueryTableRowIterator}
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
@@ -172,6 +173,21 @@ class BigQueryClient private (private val projectId: String, auth: Option[Either
         (temp, Some(makeQuery(sqlQuery, temp)))
     }
   }
+
+  /** Write rows to a table. */
+  def writeTableRows(table: TableReference, rows: List[TableRow], schema: TableSchema,
+                     writeDisposition: WriteDisposition,
+                     createDisposition: CreateDisposition): Unit = {
+    val inserter = new BigQueryTableInserter(bigquery)
+    inserter.getOrCreateTable(table, writeDisposition, createDisposition, schema)
+    inserter.insertAll(table, rows.asJava)
+  }
+
+  /** Write rows to a table. */
+  def writeTableRows(tableSpec: String, rows: List[TableRow], schema: TableSchema = null,
+                     writeDisposition: WriteDisposition = WriteDisposition.WRITE_EMPTY,
+                     createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED): Unit =
+    writeTableRows(BigQueryIO.parseTableSpec(tableSpec), rows, schema, writeDisposition, createDisposition)
 
   /** Wait for all jobs to finish. */
   def waitForJobs(jobReferences: JobReference*): Unit = {
