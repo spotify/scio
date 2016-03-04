@@ -37,8 +37,8 @@ object TapExample {
     sc1.close()
 
     // wait for future completion in case job is non-blocking
-    val t1 = Await.result(f1, Duration.Inf)
-    val t2 = Await.result(f2, Duration.Inf)
+    val t1 = f1.waitForResult()
+    val t2 = f2.waitForResult()
 
     // scalastyle:off regex
     // fetch tap values directly

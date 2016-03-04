@@ -61,9 +61,8 @@ object WordCountOrchestration {
 
     // scalastyle:off regex
     // Block process and wait for last future
-    val t = Await.result(f, Duration.Inf)
     println("Tap:")
-    t.value.take(10).foreach(println)
+    f.waitForResult().value.take(10).foreach(println)
     // scalastyle:on regex
   }
 

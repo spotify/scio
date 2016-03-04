@@ -128,7 +128,7 @@ class TapTest extends PipelineSpec {
   def runWithFuture[T](sc: ScioContext)(fn: ScioContext => Future[Tap[T]]): Iterator[T] = {
     val f = fn(sc)
     sc.close()
-    Await.result(f, Duration.Inf).value
+    f.waitForResult().value
   }
 
   def tmpDir: File = new File(new File(sys.props("java.io.tmpdir")), "scio-test-" + UUID.randomUUID().toString)

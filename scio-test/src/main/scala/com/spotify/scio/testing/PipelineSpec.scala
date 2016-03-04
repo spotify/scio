@@ -114,7 +114,7 @@ trait PipelineSpec extends FlatSpec with Matchers with SCollectionMatcher {
     val sc = ScioContext()
     val f = fn(sc).materialize
     sc.close()
-    Await.result(f, Duration.Inf).value.toSeq
+    f.waitForResult().value.toSeq
   }
 
 }
