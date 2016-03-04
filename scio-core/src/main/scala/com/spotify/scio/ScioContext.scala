@@ -116,8 +116,6 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
 
   import Implicits._
 
-  private val logger = LoggerFactory.getLogger(ScioContext.getClass)
-
   // Set default name
   this.setName(CallSites.getAppName)
 
