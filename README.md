@@ -124,7 +124,7 @@ Scio includes the following artifacts:
 
 - `scio-core`: core library
 - `scio-test`: test utilities, add to your project as a "test" dependency
-- `scio-bigquery`: Add-on for Bigquery, included in `scio-core` but can also be used standalone
+- `scio-bigquery`: Add-on for BigQuery, included in `scio-core` but can also be used standalone
 - `scio-bigtable`: Add-on for Bigtable
 - `scio-extra`: Extra utilities for working with collections, Breeze, etc.
 - `scio-hdfs`: Add-on for HDFS

@@ -91,7 +91,7 @@ package object experimental {
   implicit class ExperimentalSCollection[T](val self: SCollection[T]) {
 
     /**
-     * Save this SCollection as a Bigquery table. Note that element type `T` must be a case class
+     * Save this SCollection as a BigQuery table. Note that element type `T` must be a case class
      * annotated with [[BigQueryType.toTable]].
      */
     def saveAsTypedBigQuery(table: TableReference,
@@ -107,7 +107,7 @@ package object experimental {
     }
 
     /**
-     * Save this SCollection as a Bigquery table. Note that element type `T` must be annotated with
+     * Save this SCollection as a BigQuery table. Note that element type `T` must be annotated with
      * [[BigQueryType]].
      *
      * This could be a complete case class with [[BigQueryType.toTable]]. For example:

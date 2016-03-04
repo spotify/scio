@@ -783,7 +783,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     }
 
   /**
-   * Save this SCollection as a Bigquery table. Note that elements must be of type TableRow.
+   * Save this SCollection as a BigQuery table. Note that elements must be of type TableRow.
    * @group output
    */
   def saveAsBigQuery(table: TableReference, schema: TableSchema,
@@ -815,7 +815,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /**
-   * Save this SCollection as a Bigquery table. Note that elements must be of type TableRow.
+   * Save this SCollection as a BigQuery table. Note that elements must be of type TableRow.
    * @group output
    */
   def saveAsBigQuery(tableSpec: String, schema: TableSchema = null,
