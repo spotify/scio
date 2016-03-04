@@ -302,21 +302,6 @@ lazy val scioRepl: Project = Project(
   scioCore
 )
 
-lazy val scioAssembly: Project = Project(
-  "scio-assembly",
-  file("scio-assembly"),
-  settings = commonSettings ++ noPublishSettings
-).settings(
-  assemblyJarName in assembly := s"scio-${version.value}-fat.jar"
-).dependsOn(
-  scioCore,
-  scioBigQuery,
-  scioBigTable,
-  scioExtra,
-  scioHdfs,
-  scioRepl
-)
-
 /*****************/
 /* Site settings */
 /*****************/
