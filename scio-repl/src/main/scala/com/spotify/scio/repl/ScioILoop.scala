@@ -136,7 +136,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     val key = BigQueryClient.PROJECT_KEY
     if (sys.props(key) == null) {
       echo(s"System property '$key' not set. BigQueryClient is not available.")
-      echo("Set it with '-D" + key + "=my-project' command line argument.")
+      echo("Set it with '-D" + key + "=<PROJECT-NAME>' command line argument.")
     } else {
       intp.interpret("val bq = BigQueryClient()")
       echo(s"BigQuery client available as 'bq'")
