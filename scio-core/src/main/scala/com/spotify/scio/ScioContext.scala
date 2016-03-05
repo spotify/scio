@@ -114,6 +114,8 @@ object ScioContext {
 // scalastyle:off number.of.methods
 class ScioContext private[scio] (val options: DataflowPipelineOptions, private var artifacts: List[String], testId: Option[String]) {
 
+  private val logger = LoggerFactory.getLogger(ScioContext.getClass)
+
   import Implicits._
 
   // Set default name
@@ -167,7 +169,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
     val finalLocalArtifacts = detectClassPathResourcesToStage(
       classOf[DataflowPipelineRunner].getClassLoader) ++ extraLocalArtifacts
 
-    // TODO: add logging, stats
+    logger.debug(s"Final list of extra artifacts: ${finalLocalArtifacts.mkString(":")}")
     finalLocalArtifacts.toList
   }
 
