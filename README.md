@@ -6,33 +6,42 @@ Scio
 [![GitHub license](https://img.shields.io/github/license/spotify/scio.svg)]()
 [![Maven Central](https://img.shields.io/maven-central/v/com.spotify/scio-core_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/com.spotify/scio-core_2.11)
 
-_Ecclesiastical Latin IPA: /ˈʃi.o/, [ˈʃiː.o], [ˈʃi.i̯o]_
+> Ecclesiastical Latin IPA: /ˈʃi.o/, [ˈʃiː.o], [ˈʃi.i̯o]
 
-_Verb: I can, know, understand, have knowledge._
+> Verb: I can, know, understand, have knowledge.
 
-Scio is a Scala API for [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK), inspired by [Spark](http://spark.apache.org/) and [Scalding](https://github.com/twitter/scalding). See the [current API documentation](http://spotify.github.io/scio/) for more information.
+Scio is a Scala API for [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) inspired by [Spark](http://spark.apache.org/) and [Scalding](https://github.com/twitter/scalding). See the [current API documentation](http://spotify.github.io/scio/) for more information.
 
-# Getting Started
+# Features
 
-First install the [Google Cloud SDK](https://cloud.google.com/sdk/) and create a [Google Cloud Storage](https://cloud.google.com/storage/) bucket for your project, e.g. `gs://my-bucket`. Make sure it's in the same region as the [BigQuery](https://cloud.google.com/bigquery/) datasets you want to access and where you want Dataflow to launch workers on GCE.
+- Scala API close to that of Spark and Scalding core APIs
+- Fully managed service<sup>*</sup>
+- Unified batch and streaming programming model<sup>*</sup>
+- Integration with Google Cloud products: Cloud Storage, BigQuery, Pub/Sub, Datastore, Bigtable<sup>*</sup>
+- HDFS source/sink
+- Interactive mode with Scio REPL
+- Type safe BigQuery
+- Integration with [Algebird](https://github.com/twitter/algebird) and [Breeze](https://github.com/scalanlp/breeze)
+- Pipeline orchestration with [Scala Futures](http://docs.scala-lang.org/overviews/core/futures.html).
+- Distributed cache
 
-# Documentation
-* [Getting Started](https://github.com/spotify/scio/wiki#running-the-examples)
-* [Scaladocs](http://spotify.github.com/scio): Generated documentation for current version of Scio.
-* [Scio REPL](https://github.com/spotify/scio/blob/master/scio-repl/README.md): Interactive learning. This tutorial shows off how to interact with scio via REPL.
-* [BigQuery settings](https://github.com/spotify/scio/wiki#bigquery-settings): BigQuery settings cheat sheet.
-* [Options](https://github.com/spotify/scio/wiki#options): Google Dataflow settings cheat sheet.
-* [Scio, Spark and Scalding](https://github.com/spotify/scio/wiki#scio-spark-and-scalding)
+<sup>*</sup> provided by Google Cloud Dataflow
 
-# Building Scio
+# Quick Start
 
-Scio is built using [SBT](http://www.scala-sbt.org/). To build Scio and publish artifacts locally, run:
+The ubiquitous word count example can be run directly with SBT in local mode, using `README.md` as input.
 
 ```bash
-git clone git@github.com:spotify/scio.git
-cd scio
-sbt publish-local
+sbt "project scio-examples" "run-main com.spotify.scio.examples.WordCount --input=README.md --output=wc"
+cat wc/part-00000-of-00001.txt
 ```
+
+# Documentation
+
+- [Scio Wiki](https://github.com/spotify/scio/wiki) - wiki page
+- [ScalaDocs](http://spotify.github.com/scio) - current API documentation
+- [Scio REPL](https://github.com/spotify/scio/wiki/Scio-REPL) - tutorial for the interactive Scio REPL
+- [Scio, Spark and Scalding](https://github.com/spotify/scio/wiki/Scio,-Scalding-and-Spark) - comparison of these frameworks
 
 # Artifacts
 
