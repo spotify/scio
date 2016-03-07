@@ -17,12 +17,10 @@
 
 package com.spotify.scio.testing
 
+import com.spotify.scio._
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.{ScioContext, ScioResult}
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
 /**
