@@ -260,25 +260,19 @@ class SCollectionTest extends PipelineSpec {
   }
 
   it should "support sample() with replacement" in {
-    runWithContext { sc =>
-      import RandomSamplerUtils._
-      val population = sc.parallelize(1 to populationSize)
-      verify(population, true, 0.5, 0.5) should containSingleValue (true)
-      verify(population, true, 0.7, 0.7) should containSingleValue (true)
-      verify(population, true, 0.9, 0.9) should containSingleValue (true)
-      verify(population, true, 0.4, 0.6) should containSingleValue (false)
-    }
+    import RandomSamplerUtils._
+    runWithData(population)(medianKSD(_, true, 0.5, 0.5)).head should be < D
+    runWithData(population)(medianKSD(_, true, 0.7, 0.7)).head should be < D
+    runWithData(population)(medianKSD(_, true, 0.9, 0.9)).head should be < D
+    runWithData(population)(medianKSD(_, true, 0.4, 0.6)).head should be >= D
   }
 
   it should "support sample() without replacement" in {
-    runWithContext { sc =>
-      import RandomSamplerUtils._
-      val population = sc.parallelize(1 to populationSize)
-      verify(population, false, 0.5, 0.5) should containSingleValue (true)
-      verify(population, false, 0.7, 0.7) should containSingleValue (true)
-      verify(population, false, 0.9, 0.9) should containSingleValue (true)
-      verify(population, false, 0.4, 0.6) should containSingleValue (false)
-    }
+    import RandomSamplerUtils._
+    runWithData(population)(medianKSD(_, false, 0.5, 0.5)).head should be < D
+    runWithData(population)(medianKSD(_, false, 0.7, 0.7)).head should be < D
+    runWithData(population)(medianKSD(_, false, 0.9, 0.9)).head should be < D
+    runWithData(population)(medianKSD(_, false, 0.4, 0.6)).head should be >= D
   }
 
   it should "support subtract()" in {

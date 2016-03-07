@@ -127,8 +127,8 @@ object RandomSamplerUtils extends Serializable {
     s.toArray
   }
 
-  def verify(population: SCollection[Int], withReplacement: Boolean,
-             expectedFraction: Double, actualFraction: Double): SCollection[Boolean] = {
+  def medianKSD(population: SCollection[Int], withReplacement: Boolean,
+                expectedFraction: Double, actualFraction: Double): SCollection[Double] = {
     val expected = expectedSamples(withReplacement, expectedFraction)
 
     population
@@ -136,7 +136,7 @@ object RandomSamplerUtils extends Serializable {
       .groupBy(_ => 0)
       .values
       .map { v => val a = v.toArray; scala.util.Sorting.quickSort(a); a }
-      .map(actual => medianKSD(gaps(expected), gaps(actual)) < D)
+      .map(actual => medianKSD(gaps(expected), gaps(actual)))
   }
 
   def verifyByKey(population: SCollection[(String, Int)], withReplacement: Boolean,
