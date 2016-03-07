@@ -57,6 +57,14 @@ class TypeProviderTest extends FlatSpec with Matchers {
     r.f1 shouldBe 1L
   }
 
+  @BigQueryType.fromSchema("""{"fields": [{"name": "f1", "type": "INTEGER"}]}""")
+  class MissingMode
+
+  it should "support missing mode" in {
+    val r = MissingMode(Some(1))
+    r.f1 should equal (Some(1))
+  }
+
   @BigQueryType.fromSchema(
     """
       |{

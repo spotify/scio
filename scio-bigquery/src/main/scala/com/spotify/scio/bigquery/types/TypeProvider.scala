@@ -112,7 +112,7 @@ private[types] object TypeProvider {
     def getFieldType(tfs: TableFieldSchema): (Tree, Seq[Tree]) = {
       val (t, r) = getRawType(tfs)
       val ft = tfs.getMode match {
-        case "NULLABLE" => tq"_root_.scala.Option[$t]"
+        case "NULLABLE" | null => tq"_root_.scala.Option[$t]"
         case "REQUIRED" => t
         case "REPEATED" => tq"_root_.scala.List[$t]"
         case m => c.abort(c.enclosingPosition, s"mode: $m not supported")
