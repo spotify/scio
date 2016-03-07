@@ -294,25 +294,43 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
   }
 
   it should "support sampleByKey() with replacement()" in {
-    runWithContext { sc =>
-      import RandomSamplerUtils._
-      val population = sc.parallelize(1 to populationSize).flatMap(x => Seq(("a", x), ("b", x)))
-      verifyByKey(population, true, 0.5, 0.5, 0.9, 0.9) should containSingleValue ((true, true))
-      verifyByKey(population, true, 0.9, 0.9, 0.4, 0.6) should containSingleValue ((true, false))
-      verifyByKey(population, true, 0.4, 0.6, 0.9, 0.9) should containSingleValue ((false, true))
-      verifyByKey(population, true, 0.4, 0.6, 0.4, 0.6) should containSingleValue ((false, false))
-    }
+    import RandomSamplerUtils._
+
+    val r1 = runWithData(keyedPopulation)(medianKSDByKey(_, true, 0.5, 0.5, 0.9, 0.9)).head
+    r1._1 should be < D
+    r1._2 should be < D
+
+    val r2 = runWithData(keyedPopulation)(medianKSDByKey(_, true, 0.9, 0.9, 0.4, 0.6)).head
+    r2._1 should be < D
+    r2._2 should be >= D
+
+    val r3 = runWithData(keyedPopulation)(medianKSDByKey(_, true, 0.4, 0.6, 0.9, 0.9)).head
+    r3._1 should be >= D
+    r3._2 should be < D
+
+    val r4 = runWithData(keyedPopulation)(medianKSDByKey(_, true, 0.4, 0.6, 0.4, 0.6)).head
+    r4._1 should be >= D
+    r4._2 should be >= D
   }
 
   it should "support sampleByKey() without replacement()" in {
-    runWithContext { sc =>
-      import RandomSamplerUtils._
-      val population = sc.parallelize(1 to populationSize).flatMap(x => Seq(("a", x), ("b", x)))
-      verifyByKey(population, false, 0.5, 0.5, 0.9, 0.9) should containSingleValue ((true, true))
-      verifyByKey(population, false, 0.9, 0.9, 0.4, 0.6) should containSingleValue ((true, false))
-      verifyByKey(population, false, 0.4, 0.6, 0.9, 0.9) should containSingleValue ((false, true))
-      verifyByKey(population, false, 0.4, 0.6, 0.4, 0.6) should containSingleValue ((false, false))
-    }
+    import RandomSamplerUtils._
+
+    val r1 = runWithData(keyedPopulation)(medianKSDByKey(_, false, 0.5, 0.5, 0.9, 0.9)).head
+    r1._1 should be < D
+    r1._2 should be < D
+
+    val r2 = runWithData(keyedPopulation)(medianKSDByKey(_, false, 0.9, 0.9, 0.4, 0.6)).head
+    r2._1 should be < D
+    r2._2 should be >= D
+
+    val r3 = runWithData(keyedPopulation)(medianKSDByKey(_, false, 0.4, 0.6, 0.9, 0.9)).head
+    r3._1 should be >= D
+    r3._2 should be < D
+
+    val r4 = runWithData(keyedPopulation)(medianKSDByKey(_, false, 0.4, 0.6, 0.4, 0.6)).head
+    r4._1 should be >= D
+    r4._2 should be >= D
   }
 
   it should "support subtractByKey()" in {

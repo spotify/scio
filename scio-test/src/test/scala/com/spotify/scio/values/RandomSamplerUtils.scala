@@ -139,9 +139,9 @@ object RandomSamplerUtils extends Serializable {
       .map(actual => medianKSD(gaps(expected), gaps(actual)))
   }
 
-  def verifyByKey(population: SCollection[(String, Int)], withReplacement: Boolean,
-                  expectedFraction1: Double, actualFraction1: Double,
-                  expectedFraction2: Double, actualFraction2: Double): SCollection[(Boolean, Boolean)] = {
+  def medianKSDByKey(population: SCollection[(String, Int)], withReplacement: Boolean,
+                     expectedFraction1: Double, actualFraction1: Double,
+                     expectedFraction2: Double, actualFraction2: Double): SCollection[(Double, Double)] = {
     val expected = Map(
       "a" -> expectedSamples(withReplacement, expectedFraction1),
       "b" -> expectedSamples(withReplacement, expectedFraction2))
@@ -160,9 +160,9 @@ object RandomSamplerUtils extends Serializable {
         r
       }
       .map { actual =>
-        val b1 = medianKSD(gaps(expected("a")), gaps(actual("a"))) < D
-        val b2 = medianKSD(gaps(expected("b")), gaps(actual("b"))) < D
-        (b1, b2)
+        val k1 = medianKSD(gaps(expected("a")), gaps(actual("a")))
+        val k2 = medianKSD(gaps(expected("b")), gaps(actual("b")))
+        (k1, k2)
       }
   }
 
