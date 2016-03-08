@@ -55,7 +55,8 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
 
   override def prompt: String = Console.GREEN + "\nscio> " + Console.RESET
 
-  var scioOpts = args.toArray
+  // Options for creating new Scio contexts
+  private var scioOpts: Array[String] = args.toArray
 
   // =======================================================================
   // Scio REPL magic commands:
@@ -118,6 +119,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
         echo("Scio options updated. Use :newScio to get a new Scio context.")
       }
     } else {
+      // show options
       if (scioOpts.isEmpty) {
         echo("Scio options is empty")
       } else {
@@ -152,6 +154,10 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
 
   override def commands: List[LoopCommand] = super.commands ++ scioCommands
 
+  // =======================================================================
+  // Initialization
+  // =======================================================================
+
   private def updateOpts(args: Array[String]): IR.Result = {
     intp.beQuietDuring {
       intp.interpret("val __scio__opts__ = " + args.mkString("Array(\"", "\", \"", "\")"))
@@ -165,7 +171,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
       "com.spotify.scio.repl.ReplScioContext",
       "com.spotify.scio._",
       "com.spotify.scio.bigquery._",
-      "com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptions, PipelineOptionsFactory}",
+      "com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptionsFactory}",
       "com.spotify.scio.experimental._")
     imports.foreach(p => intp.interpret(s"import $p"))
     IR.Success
@@ -183,7 +189,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     IR.Success
   }
 
-  override def createInterpreter() {
+  override def createInterpreter(): Unit = {
     super.createInterpreter()
     this.echo("Loading ... ")
     intp.beQuietDuring {
