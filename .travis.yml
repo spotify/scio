@@ -12,7 +12,7 @@ cache:
 before_script:
   - ./scripts/travis.sh
 script:
-  - sbt -Dbigquery.project=dummy-project clean coverage test coverageReport coverageAggregate
+  - sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean coverage test coverageReport coverageAggregate
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 
