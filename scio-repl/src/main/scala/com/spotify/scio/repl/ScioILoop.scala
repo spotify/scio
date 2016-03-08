@@ -37,103 +37,131 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
 
   def this(scioCL: ScioReplClassLoader, args: List[String]) = this(scioCL, args, None, new JPrintWriter(Console.out, true))
 
-  settings = new GenericRunnerSettings({ s => echo(s) })
+  settings = new GenericRunnerSettings(echo)
 
   override def printWelcome() {
     echo("Welcome to Scio REPL!")
   }
 
+  override def prompt: String = Console.GREEN + "\nscio> " + Console.RESET
+
+  var scioOpts = args.toArray
+
   // =======================================================================
   // Scio REPL magic commands:
   // =======================================================================
 
-  /**
-   * Hidden magics/helpers for REPL session jars.
-   */
-  private val createJarCmd = LoopCommand.nullary("createJar", "creates Scio REPL runtime jar",
+  // Hidden magics/helpers for REPL session jars.
+
+  private val createJarCmd = LoopCommand.nullary(
+    "createJar", "create a Scio REPL runtime jar",
     () => { Result.resultFromString(scioClassLoader.createReplCodeJar) } )
-  private val getNextJarCmd = LoopCommand.nullary("nextJar", "gets next path of Scio REPL jar",
+
+  private val getNextJarCmd = LoopCommand.nullary(
+    "nextJar", "get the path of the next Scio REPL runtime jar",
     () => { Result.resultFromString(scioClassLoader.getNextReplCodeJarPath) } )
 
   /**
-   * REPL magic to get new Scio context, creates new Scio context based on arguments given
-   * to scio REPL for the user. User may specify name of the val holding context, otherwise defaults
-   * to `sc`.
+   * REPL magic to get a new Scio context using arguments from the command line or :scioOpts.
+   * User may specify a name for the context val, default is `sc`.
    */
-  private def getNewScioContextCmdImpl(scioContextVal: String ) = {
+  private def newScioCmdImpl(name: String) = {
+    updateOpts(scioOpts)
+
     val nextReplJar = scioClassLoader.getNextReplCodeJarPath
-    val scioContextName = if (scioContextVal.nonEmpty) scioContextVal else "sc"
-    intp.beQuietDuring({
-      intp.interpret("val __scio__opts__ = " + args.map('"' + _ + '"'))
-      intp.interpret("val __scio__df__opts__ = PipelineOptionsFactory.fromArgs(__scio__opts__.toArray).as(classOf[DataflowPipelineOptions])")
-
-      intp.interpret ("val " + scioContextName +
-        " = new ReplScioContext(__scio__df__opts__, List(\"" + nextReplJar + "\"), None)")
-      intp.interpret(scioContextName + ".setName(\"sciorepl\")")
-    })
-    this.echo("Scio context available as '" + scioContextName + "'")
+    val sc = if (name.nonEmpty) name else "sc"
+    intp.beQuietDuring {
+      intp.interpret ("val " + sc + " = new ReplScioContext(__scio__df__opts__, List(\"" + nextReplJar + "\"), None)")
+      intp.interpret(sc + ".setName(\"sciorepl\")")
+    }
+    this.echo("Scio context available as '" + sc + "'")
     Result.default
   }
 
-  private val getNewScioContextCmd = LoopCommand.cmd("newScio",
-                                                     "<[scio-context-val-name] | sc>",
-                                                     "gets new Scio context",
-                                                     getNewScioContextCmdImpl)
+  private val newScioCmd = LoopCommand.cmd(
+    "newScio", "<[context-name] | sc>", "get a new Scio context", newScioCmdImpl)
 
   /**
-   * REPL magic to get new __local__ Scio context. User may specify name of the val holding context,
-   * otherwise defaults to `sc`.
+   * REPL magic to get a new __local__ Scio context.
+   * User may specify a name for the context val, default is `sc`.
    */
-  private def getNewLocalScioContextCmdImpl(scioContextVal: String) = {
-    val scioContextName = if (scioContextVal.nonEmpty) scioContextVal else "sc"
-    intp.beQuietDuring({
-
+  private def newLocalScioCmdImpl(name: String) = {
+    val sc = if (name.nonEmpty) name else "sc"
+    intp.beQuietDuring {
       // TODO: pass BQ settings + non distributed settings
-      intp.interpret(s"val $scioContextName = ScioContext()")
-    })
-    this.echo(s"Local Scio context available as '$scioContextName'")
+      intp.interpret(s"val $sc = ScioContext()")
+    }
+    this.echo(s"Local Scio context available as '$sc'")
     Result.default
   }
 
-  private val getNewLocalScioContextCmd = LoopCommand.cmd("newLocalScio",
-                                                          "<[scio-context-val-name] | sc>",
-                                                          "gets new local Scio context",
-                                                          getNewLocalScioContextCmdImpl)
+  private val newLocalScioCmd = LoopCommand.cmd(
+    "newLocalScio", "<[context-name] | sc>", "get a new local Scio context", newLocalScioCmdImpl)
+
+  /** REPL magic to show or update Scio options. */
+  private def scioOptsCmdImpl(args: String) = {
+    if (args.trim.nonEmpty) {
+      // update options
+      val newOpts = args.split("\\s+")
+      if (updateOpts(newOpts) == IR.Success) {
+        scioOpts = newOpts
+        echo("Scio options updated. Use :newScio to get a new Scio context.")
+      }
+    } else {
+      if (scioOpts.isEmpty) {
+        echo("Scio options is empty")
+      } else {
+        echo("Scio options: " + scioOpts.mkString(" "))
+      }
+    }
+    Result.default
+  }
+
+  private val scioOptsCmd = LoopCommand.cmd(
+    "scioOpts", "<[opts]>", "show or update Scio options", scioOptsCmdImpl)
 
   /**
-   * REPL magic to run Scio context given it's value name (defaults to `sc`). It will take care of
-   * dumping in-memory classes to local jar.
+   * REPL magic to run a Scio context.
+   * User may specify a name for the context val, default is `sc`.
+   * It will take care of dumping in-memory classes to local jar.
    */
-  private def getResultCmdImpl(scioContextVal: String) = {
+  private def runScioCmdImpl(name: String) = {
     scioClassLoader.createReplCodeJar
-    val sc = if (scioContextVal.nonEmpty) scioContextVal else "sc"
+    val sc = if (name.nonEmpty) name else "sc"
     val scioResult = intp.interpret(s"$sc.close()")
     Result.default
   }
 
-  private val getResultCmd = LoopCommand.cmd("runScio",
-                                             "<[scio-context-val-name] | sc>",
-                                             "run Scio pipeline",
-                                             getResultCmdImpl)
+  private val runScioCmd = LoopCommand.cmd(
+    "runScio", "<[context-name] | sc>", "run Scio pipeline", runScioCmdImpl)
 
-  private val scioCommands = List(getNewScioContextCmd, getNewLocalScioContextCmd)
+  private val scioCommands = List(newScioCmd, newLocalScioCmd, scioOptsCmd)
 
   // TODO: find way to inject those into power commands. For now unused.
-  private val scioPowerCommands = List(createJarCmd, getNextJarCmd, getResultCmd)
+  private val scioPowerCommands = List(createJarCmd, getNextJarCmd, runScioCmd)
 
-  /**
-   * Change the shell prompt to custom Scio prompt.
-   *
-   * @return a prompt string to use for this REPL
-   */
-  override def prompt: String = Console.GREEN + "\nscio> " + Console.RESET
+  override def commands: List[LoopCommand] = super.commands ++ scioCommands
 
-  private def addImports(ids: String*): IR.Result = {
-    ids.foreach(p => intp.interpret(s"import $p"))
+  private def updateOpts(args: Array[String]): IR.Result = {
+    intp.beQuietDuring {
+      intp.interpret("val __scio__opts__ = " + args.mkString("Array(\"", "\", \"", "\")"))
+      intp.interpret("val __scio__df__opts__ = " +
+        "PipelineOptionsFactory.fromArgs(__scio__opts__).as(classOf[DataflowPipelineOptions])")
+    }
+  }
+
+  private def addImports(): IR.Result = {
+    val imports = List(
+      "com.spotify.scio.repl.ReplScioContext",
+      "com.spotify.scio._",
+      "com.spotify.scio.bigquery._",
+      "com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptions, PipelineOptionsFactory}",
+      "com.spotify.scio.experimental._")
+    imports.foreach(p => intp.interpret(s"import $p"))
     IR.Success
   }
 
-  private def createBigQueryClient: IR.Result = {
+  private def createBigQueryClient(): IR.Result = {
     val key = BigQueryClient.PROJECT_KEY
     if (sys.props(key) == null) {
       echo(s"System property '$key' not set. BigQueryClient is not available.")
@@ -145,27 +173,13 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     IR.Success
   }
 
-  /**
-   * Gets the list of commands that this REPL supports.
-   *
-   * @return a list of the command supported by this REPLs
-   */
-  override def commands: List[LoopCommand] = super.commands ++ scioCommands
-
-  protected def imports: List[String] = List(
-    "com.spotify.scio.repl.ReplScioContext",
-    "com.spotify.scio._",
-    "com.spotify.scio.bigquery._",
-    "com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptions, PipelineOptionsFactory}",
-    "com.spotify.scio.experimental._")
-
   override def createInterpreter() {
     super.createInterpreter()
     this.echo("Loading ... ")
     intp.beQuietDuring {
-      addImports(imports: _*)
-      createBigQueryClient
-      getNewScioContextCmdImpl("sc")
+      addImports()
+      createBigQueryClient()
+      newScioCmdImpl("sc")
     }
   }
 
