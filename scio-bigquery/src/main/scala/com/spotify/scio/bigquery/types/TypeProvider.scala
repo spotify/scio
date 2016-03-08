@@ -195,8 +195,8 @@ private[types] object TypeProvider {
                        (name: c.TypeName, traits: Seq[c.Tree], methods: Seq[c.Tree], numFields: Int): c.Tree = {
     import c.universe._
     // TODO: scala 2.11
-    // val tupled = if (numFields > 1) Seq(q"def tupled = (${TermName(name.toString)}.apply _).tupled") else Nil
-    val tupled = if (numFields > 1) Seq(q"def tupled = (${newTermName(name.toString)}.apply _).tupled") else Nil
+    // val tupled = if (numFields > 1 && numFields <= 22) Seq(q"def tupled = (${TermName(name.toString)}.apply _).tupled") else Nil
+    val tupled = if (numFields > 1 && numFields <= 22) Seq(q"def tupled = (${newTermName(name.toString)}.apply _).tupled") else Nil
     val m = converters(c)(name) ++ tupled ++ methods
     // TODO: scala 2.11
     // val tn = TermName(name.toString)
