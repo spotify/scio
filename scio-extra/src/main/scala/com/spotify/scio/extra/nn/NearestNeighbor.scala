@@ -23,7 +23,7 @@ import com.google.common.collect.MinMaxPriorityQueue
 import info.debatty.java.lsh.LSHSuperBit
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.{Set => MSet, ListBuffer, Map => MMap}
+import scala.collection.mutable.{Buffer => MBuffer, Map => MMap, Set => MSet}
 import scala.reflect.ClassTag
 
 /** Utilities for creating [[NearestNeighborBuilder]] instances. */
@@ -59,10 +59,10 @@ trait NearestNeighborBuilder[K, @specialized(Double, Int, Float, Long) V] extend
   protected val keyToId = MMap.empty[K, Int]
 
   /** Numeric id to item key mapping. */
-  protected val idToKey = ListBuffer.empty[K]
+  protected val idToKey = MBuffer.empty[K]
 
   /** Raw item vectors. */
-  protected val vectors = ListBuffer.empty[DenseVector[V]]
+  protected val vectors = MBuffer.empty[DenseVector[V]]
 
   /** Add a key->vector pair to common storage. */
   protected def addVector(key: K, vec: DenseVector[V]): Int = {

@@ -46,7 +46,7 @@ import org.joda.time.Instant
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.{Buffer, Set => MSet}
+import scala.collection.mutable.{Buffer => MBuffer, Set => MSet}
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
 
@@ -140,8 +140,8 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
   /* Mutable members */
   private var _pipeline: Pipeline = null
   private var _isClosed: Boolean = false
-  private val _promises: Buffer[(Promise[AnyRef], AnyRef)] = Buffer.empty
-  private val _bigQueryJobs: Buffer[JobReference] = Buffer.empty
+  private val _promises: MBuffer[(Promise[AnyRef], AnyRef)] = MBuffer.empty
+  private val _bigQueryJobs: MBuffer[JobReference] = MBuffer.empty
   private val _accumulators: MSet[String] = MSet.empty
 
   /** Wrap a [[com.google.cloud.dataflow.sdk.values.PCollection PCollection]]. */
