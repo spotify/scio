@@ -19,6 +19,7 @@ package com.spotify.scio.repl
 
 import java.io.BufferedReader
 
+import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptionsFactory}
 import com.spotify.scio.bigquery.BigQueryClient
 
 import scala.tools.nsc.GenericRunnerSettings
@@ -36,6 +37,15 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
   extends ILoopCompat(in, out) {
 
   def this(scioCL: ScioReplClassLoader, args: List[String]) = this(scioCL, args, None, new JPrintWriter(Console.out, true))
+
+  // Fail fast for illegal arguments
+  try {
+    PipelineOptionsFactory.fromArgs(args.toArray).as(classOf[DataflowPipelineOptions])
+  } catch {
+    case e: Throwable =>
+      echo(e.getMessage)
+      sys.exit(1)
+  }
 
   settings = new GenericRunnerSettings(echo)
 
