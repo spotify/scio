@@ -49,7 +49,6 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer, Set => MSet}
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
-import scala.util.Try
 
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
 object ContextAndArgs {
@@ -154,14 +153,19 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
   // =======================================================================
 
   /** Borrowed from Dataflow */
-  private def detectClassPathResourcesToStage(classLoader: ClassLoader) = {
+  private def detectClassPathResourcesToStage(classLoader: ClassLoader): List[String] = {
     require(classLoader.isInstanceOf[URLClassLoader],
       "Current ClassLoader is '" + classLoader + "' only URLClassLoaders are supported")
-    classLoader.asInstanceOf[URLClassLoader].getURLs.map{ url =>
-      Try {
-        new File(url.toURI).getAbsolutePath
-      }.getOrElse(throw new IllegalArgumentException("Unable to convert url '" + url + "' to file"))
-    }
+
+    // exclude jars from JAVA_HOME and files from current directory
+    val javaHome = new File(sys.props("java.home")).getCanonicalPath
+    val userDir = new File(sys.props("user.dir")).getCanonicalPath
+
+    classLoader.asInstanceOf[URLClassLoader]
+      .getURLs
+      .map(url => new File(url.toURI).getCanonicalPath)
+      .filter(p => !p.startsWith(javaHome) && p != userDir)
+      .toList
   }
 
   /** Compute list of files to stage in dataflow */
@@ -170,7 +174,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
       classOf[DataflowPipelineRunner].getClassLoader) ++ extraLocalArtifacts
 
     logger.debug(s"Final list of extra artifacts: ${finalLocalArtifacts.mkString(":")}")
-    finalLocalArtifacts.toList
+    finalLocalArtifacts
   }
 
   /**
@@ -178,7 +182,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
    * NOTE: currently one can add artifacts only before pipeline object is created
    */
   def addArtifacts(extraLocalArtifacts: List[String]): Unit = {
-    require(_pipeline == null, "Pipeline object already created - can't add artifacts anymore!")
+    require(_pipeline == null, "Cannot add artifacts once pipeline is initialized")
     artifacts ++= extraLocalArtifacts
   }
 
