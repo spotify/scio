@@ -77,13 +77,15 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
    * User may specify a name for the context val, default is `sc`.
    */
   private def newScioCmdImpl(name: String) = {
-    updateOpts(scioOpts)
 
-    val nextReplJar = scioClassLoader.getNextReplCodeJarPath
     val sc = if (name.nonEmpty) name else "sc"
+    val opts = optsFromArgs(scioOpts)
+    val nextReplJar = scioClassLoader.getNextReplCodeJarPath
     intp.beQuietDuring {
-      intp.interpret ("val " + sc + " = new ReplScioContext(__scio__df__opts__, List(\"" + nextReplJar + "\"), None)")
-      intp.interpret(sc + ".setName(\"sciorepl\")")
+      intp.interpret(
+        s"""val $sc = new ReplScioContext($opts, List("$nextReplJar"), None)
+           |$sc.setName("sciorepl")
+         """.stripMargin)
     }
     this.echo("Scio context available as '" + sc + "'")
     Result.default
@@ -114,7 +116,10 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     if (args.trim.nonEmpty) {
       // update options
       val newOpts = args.split("\\s+")
-      if (updateOpts(newOpts) == IR.Success) {
+      val result = intp.beQuietDuring {
+        intp.interpret(optsFromArgs(newOpts))
+      }
+      if (result == IR.Success) {
         scioOpts = newOpts
         echo("Scio options updated. Use :newScio to get a new Scio context.")
       }
@@ -158,24 +163,19 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
   // Initialization
   // =======================================================================
 
-  private def updateOpts(args: Array[String]): IR.Result = {
-    intp.beQuietDuring {
-      intp.interpret("val __scio__opts__ = " + args.mkString("Array(\"", "\", \"", "\")"))
-      intp.interpret("val __scio__df__opts__ = " +
-        "PipelineOptionsFactory.fromArgs(__scio__opts__).as(classOf[DataflowPipelineOptions])")
-    }
+  private def optsFromArgs(args: Array[String]): String = {
+    val ns = "com.google.cloud.dataflow.sdk.options"
+    val argsStr = args.mkString("Array(\"", "\", \"", "\")")
+    s"""$ns.PipelineOptionsFactory.fromArgs($argsStr).as(classOf[$ns.DataflowPipelineOptions])"""
   }
 
-  private def addImports(): IR.Result = {
-    val imports = List(
-      "com.spotify.scio.repl.ReplScioContext",
-      "com.spotify.scio._",
-      "com.spotify.scio.bigquery._",
-      "com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptionsFactory}",
-      "com.spotify.scio.experimental._")
-    imports.foreach(p => intp.interpret(s"import $p"))
-    IR.Success
-  }
+  private def addImports(): IR.Result =
+    intp.interpret(
+      """import com.spotify.scio.repl.ReplScioContext
+        |import com.spotify.scio._
+        |import com.spotify.scio.bigquery._
+        |import com.spotify.scio.experimental._
+      """.stripMargin)
 
   private def createBigQueryClient(): IR.Result = {
     val key = BigQueryClient.PROJECT_KEY
