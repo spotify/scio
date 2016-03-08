@@ -196,7 +196,7 @@ private class LSHNNBuilder[K: ClassTag, @specialized(Double, Int, Float, Long) V
   require(dimension > 0, "dimension must be > 0")
 
   private val lsh = new LSHSuperBit(stages, buckets, dimension)
-  private val bins = Array.fill(buckets)(ListBuffer[Int]())
+  private val bins = Array.fill(buckets)(MBuffer.empty[Int])
 
   /** Add a key->vector pair. The vector should be normalized. */
   override def add(key: K, vec: DenseVector[V]): Unit = {
