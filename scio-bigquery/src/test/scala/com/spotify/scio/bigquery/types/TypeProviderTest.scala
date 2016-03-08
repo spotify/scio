@@ -281,54 +281,12 @@ class TypeProviderTest extends FlatSpec with Matchers {
   @BigQueryType.fromSchema(
     """
       |{
-      |  "fields": [
-      |    {"mode": "REQUIRED", "name": "f1", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f2", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f3", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f4", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f5", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f6", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f7", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f8", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f9", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f10", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f11", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f12", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f13", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f14", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f15", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f16", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f17", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f18", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f19", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f20", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f21", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f22", "type": "INTEGER"},
-      |    {"mode": "REQUIRED", "name": "f23", "type": "INTEGER"}
-      |  ]
-      |}
-    """.stripMargin)
-  class ArtisenalMoreThan22Fields
-
-  it should "support .schema in companion object with more than 22 fields" in {
-    val r = ArtisenalMoreThan22Fields(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23)
-    ArtisenalMoreThan22Fields.schema should not be null
-  }
-
-  it should "companion object with more than 22 fields must not provide .tupled method" in {
-    ArtisenalMoreThan22Fields.getClass.getMethods.map(_.getName) should not contain ("tupled")
-  }
-
-
-  @BigQueryType.fromSchema(
-    """
-      |{
       |  "fields": [ {"mode": "REQUIRED", "name": "f1", "type": "INTEGER"} ]
       |}
     """.stripMargin)
-    class Artisenal1Field
+    class Artisanal1Field
 
   it should "single field companion object must not provide .tupled method" in {
-    Artisenal1Field.getClass.getMethods.map(_.getName) should not contain ("tupled")
+    Artisanal1Field.getClass.getMethods.map(_.getName) should not contain ("tupled")
   }
 }
