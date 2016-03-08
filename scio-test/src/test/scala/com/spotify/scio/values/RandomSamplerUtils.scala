@@ -90,31 +90,31 @@ object RandomSamplerUtils extends Serializable {
   // Returns the cumulative distribution from a histogram
   def cumulativeDist(hist: Array[Int]): Array[Double] = {
     val n = hist.sum.toDouble
-    scala.Predef.assert(n > 0.0)
+    assert(n > 0.0)
     hist.scanLeft(0)(_ + _).drop(1).map { _.toDouble / n }
   }
 
   // Returns aligned cumulative distributions from two arrays of data
   def cumulants(d1: Array[Int], d2: Array[Int], ss: Int = sampleSize): (Array[Double], Array[Double]) = {
-    scala.Predef.assert(math.min(d1.length, d2.length) > 0)
-    scala.Predef.assert(math.min(d1.min, d2.min)  >=  0)
+    assert(math.min(d1.length, d2.length) > 0)
+    assert(math.min(d1.min, d2.min)  >=  0)
     val m = 1 + math.max(d1.max, d2.max)
     val h1 = Array.fill[Int](m)(0)
     val h2 = Array.fill[Int](m)(0)
     for (v <- d1) { h1(v) += 1 }
     for (v <- d2) { h2(v) += 1 }
-    scala.Predef.assert(h1.sum == h2.sum)
-    scala.Predef.assert(h1.sum == ss)
+    assert(h1.sum == h2.sum)
+    assert(h1.sum == ss)
     (cumulativeDist(h1), cumulativeDist(h2))
   }
 
   // Computes the Kolmogorov-Smirnov 'D' statistic from two cumulative distributions
   def KSD(cdf1: Array[Double], cdf2: Array[Double]): Double = {
-    scala.Predef.assert(cdf1.length == cdf2.length)
+    assert(cdf1.length == cdf2.length)
     val n = cdf1.length
-    scala.Predef.assert(n > 0)
-    scala.Predef.assert(cdf1(n-1) == 1.0)
-    scala.Predef.assert(cdf2(n-1) == 1.0)
+    assert(n > 0)
+    assert(cdf1(n-1) == 1.0)
+    assert(cdf2(n-1) == 1.0)
     cdf1.zip(cdf2).map { x => Math.abs(x._1 - x._2) }.max
   }
 
