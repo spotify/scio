@@ -56,12 +56,12 @@ class TypeProviderTestScala211 extends FlatSpec with Matchers {
     """.stripMargin)
   class ArtisanalMoreThan22Fields
 
-  it should "support .schema in companion object with more than 22 fields" in {
-    val r = ArtisanalMoreThan22Fields(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23)
+  "BigQueryType.fromSchema" should "support .schema in companion object with more than 22 fields" in {
+    ArtisanalMoreThan22Fields(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23)
     ArtisanalMoreThan22Fields.schema should not be null
   }
 
-  it should "companion object with more than 22 fields must not provide .tupled method" in {
-    ArtisanalMoreThan22Fields.getClass.getMethods.map(_.getName) should not contain ("tupled")
+  it should "not provide .tupled in companion object with more than 22 fields" in {
+    ArtisanalMoreThan22Fields.getClass.getMethods.map(_.getName) should not contain "tupled"
   }
 }

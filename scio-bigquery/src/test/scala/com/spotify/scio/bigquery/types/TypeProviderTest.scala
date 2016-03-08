@@ -42,7 +42,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
     """.stripMargin)
   class S3
 
-  "BigQueryEntity.fromSchema" should "support string literal" in {
+  "BigQueryType.fromSchema" should "support string literal" in {
     val r = S1(1L)
     r.f1 shouldBe 1L
   }
@@ -88,10 +88,22 @@ class TypeProviderTest extends FlatSpec with Matchers {
     r.f5 shouldBe NOW
   }
 
-  it should "support .tupled in companion" in {
+  it should "support .tupled in companion object" in {
     val r1 = RecordWithRequiredPrimitives(1L, 1.5, true, "hello", NOW)
     val r2 = RecordWithRequiredPrimitives.tupled((1L, 1.5, true, "hello", NOW))
     r1 should equal (r2)
+  }
+
+  @BigQueryType.fromSchema(
+    """
+      |{
+      |  "fields": [ {"mode": "REQUIRED", "name": "f1", "type": "INTEGER"} ]
+      |}
+    """.stripMargin)
+  class Artisanal1Field
+
+  it should "not provide .tupled in companion object with single field" in {
+    Artisanal1Field.getClass.getMethods.map(_.getName) should not contain "tupled"
   }
 
   it should "support .schema in companion object" in {
@@ -256,11 +268,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
   @BigQueryType.toTable()
   case class ToTable(f1: Long, f2: Double, f3: Boolean, f4: String, f5: Instant)
 
-  "BigQueryEntity.toTable" should "support provide .tupled method in companion object" in {
-    ToTable.getClass.getMethods.map(_.getName) should contain("tupled")
-  }
-
-  "BigQueryEntity.toTable" should "support .tupled in companion object" in {
+  "BigQueryType.toTable" should "support .tupled in companion object" in {
     val r1 = ToTable(1L, 1.5, true, "hello", NOW)
     val r2 = ToTable.tupled((1L, 1.5, true, "hello", NOW))
     r1 should equal (r2)
@@ -278,15 +286,4 @@ class TypeProviderTest extends FlatSpec with Matchers {
     (classOf[(ToTable => TableRow)] isAssignableFrom ToTable.toTableRow.getClass) shouldBe true
   }
 
-  @BigQueryType.fromSchema(
-    """
-      |{
-      |  "fields": [ {"mode": "REQUIRED", "name": "f1", "type": "INTEGER"} ]
-      |}
-    """.stripMargin)
-    class Artisanal1Field
-
-  it should "single field companion object must not provide .tupled method" in {
-    Artisanal1Field.getClass.getMethods.map(_.getName) should not contain ("tupled")
-  }
 }

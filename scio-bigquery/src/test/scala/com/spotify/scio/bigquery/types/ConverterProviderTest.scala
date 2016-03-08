@@ -56,7 +56,7 @@ class ConverterProviderTest extends FlatSpec with Matchers {
   val p3a = P3(List(1), List(10L), List(1.2f), List(1.23), List(true), List("hello"), List(NOW))
   val p3b = P3(Nil, Nil, Nil, Nil, Nil, Nil, Nil)
 
-  "BigQueryEntity.fromTableRow" should "support required primitive types" in {
+  "BigQueryType.fromTableRow" should "support required primitive types" in {
     BigQueryType.fromTableRow[P1](t1) should equal (p1)
   }
 
@@ -94,7 +94,7 @@ class ConverterProviderTest extends FlatSpec with Matchers {
     BigQueryType.fromTableRow[R1](r1) should equal (R1(p1, p2a, p3a))
   }
 
-  "BigQueryEntity.toTableRow" should "support required primitive types" in {
+  "BigQueryType.toTableRow" should "support required primitive types" in {
     BigQueryType.toTableRow[P1](p1) should equal (t1)
   }
 
