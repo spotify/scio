@@ -58,15 +58,23 @@ object RandomSamplerUtils extends Serializable {
   val sampleSize = 1000
   val D = 0.0544280747619
 
+  // I'm not a big fan of fixing seeds, but unit testing based on running statistical tests
+  // will always fail with some nonzero probability, so I'll fix the seed to prevent these
+  // tests from generating random failure noise in CI testing, etc.
+  val rngSeed: Random = RandomSampler.newDefaultRNG
+  rngSeed.setSeed(235711)
+
   // Reference implementation of sampling without replacement (bernoulli)
   def sample[T](data: Iterator[T], f: Double): Iterator[T] = {
     val rng: Random = RandomSampler.newDefaultRNG
+    rng.setSeed(rngSeed.nextLong)
     data.filter(_ => rng.nextDouble <= f)
   }
 
   // Reference implementation of sampling with replacement
   def sampleWR[T](data: Iterator[T], f: Double): Iterator[T] = {
     val rng = new PoissonDistribution(f)
+    rng.reseedRandomGenerator(rngSeed.nextLong)
     data.flatMap { v =>
       val rep = rng.sample()
       if (rep == 0) Iterator.empty else Iterator.fill(rep)(v)
