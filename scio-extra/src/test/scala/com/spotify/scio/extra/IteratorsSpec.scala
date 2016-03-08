@@ -71,7 +71,7 @@ object IteratorsSpec extends Properties("Iterators") {
     period <- Gen.choose(offset + 1L, maxInterval)
   } yield (size, period, offset)
 
-  property("sliding") = Prop.forAllNoShrink(timeSeries, slidingParams) { case (ts, (size, period, offset)) =>
+  property("sliding") = Prop.forAll(timeSeries, slidingParams) { case (ts, (size, period, offset)) =>
     val r = ts.iterator.timeSeries(identity).sliding(size, period, offset).toList
     all(
       "nonEmpty" |: r.forall(_.nonEmpty),
