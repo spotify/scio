@@ -53,7 +53,7 @@ val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ ass
   scalacOptions in (Compile, doc) ++= Seq("-groups", "-skip-packages", "com.google"),
   javacOptions                    ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked"),
   javacOptions in (Compile, doc)  := Seq("-source", "1.7"),
-  javaOptions                     ++= Seq("-Xmx1G"),
+  javaOptions in Test             ++= Seq("-Xmx1G"),
 
   fork in Test := true,
   coverageExcludedPackages := "com\\.spotify\\.scio\\.util\\.MultiJoin;com\\.spotify\\.scio\\.examples\\..*",
