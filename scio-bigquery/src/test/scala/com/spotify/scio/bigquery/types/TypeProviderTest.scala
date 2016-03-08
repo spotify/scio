@@ -318,4 +318,17 @@ class TypeProviderTest extends FlatSpec with Matchers {
   it should "companion object with more than 22 fields must not provide .tupled method" in {
     ArtisenalMoreThan22Fields.getClass.getMethods.map(_.getName) should not contain ("tupled")
   }
+
+
+  @BigQueryType.fromSchema(
+    """
+      |{
+      |  "fields": [ {"mode": "REQUIRED", "name": "f1", "type": "INTEGER"} ]
+      |}
+    """.stripMargin)
+    class Artisenal1Field
+
+  it should "single field companion object must not provide .tupled method" in {
+    Artisenal1Field.getClass.getMethods.map(_.getName) should not contain ("tupled")
+  }
 }
