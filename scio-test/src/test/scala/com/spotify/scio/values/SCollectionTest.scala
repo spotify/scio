@@ -261,18 +261,20 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support sample() with replacement" in {
     import RandomSamplerUtils._
-    runWithData(population)(medianKSD(_, true, 0.5, 0.5)).head should be < D
-    runWithData(population)(medianKSD(_, true, 0.7, 0.7)).head should be < D
-    runWithData(population)(medianKSD(_, true, 0.9, 0.9)).head should be < D
-    runWithData(population)(medianKSD(_, true, 0.4, 0.6)).head should be >= D
+    for (fraction <- List(0.05, 0.2, 1.0)) {
+      val sample = runWithData(population)(_.sample(true, fraction))
+      (sample.size.toDouble / populationSize) should be (fraction +- 0.05)
+      sample.toSet.size should be < sample.size
+    }
   }
 
   it should "support sample() without replacement" in {
     import RandomSamplerUtils._
-    runWithData(population)(medianKSD(_, false, 0.5, 0.5)).head should be < D
-    runWithData(population)(medianKSD(_, false, 0.7, 0.7)).head should be < D
-    runWithData(population)(medianKSD(_, false, 0.9, 0.9)).head should be < D
-    runWithData(population)(medianKSD(_, false, 0.4, 0.6)).head should be >= D
+    for (fraction <- List(0.05, 0.2, 1.0)) {
+      val sample = runWithData(population)(_.sample(false, fraction))
+      (sample.size.toDouble / populationSize) should be (fraction +- 0.05)
+      sample.toSet.size shouldBe sample.size
+    }
   }
 
   it should "support subtract()" in {

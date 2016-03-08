@@ -293,44 +293,26 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support sampleByKey() with replacement()" in {
+  it should "support sampleByKey() with replacement" in {
     import RandomSamplerUtils._
-
-    val r1 = runWithData(keyedPopulation)(medianKSDByKey(_, true, 0.5, 0.5, 0.9, 0.9)).head
-    r1._1 should be < D
-    r1._2 should be < D
-
-    val r2 = runWithData(keyedPopulation)(medianKSDByKey(_, true, 0.9, 0.9, 0.4, 0.6)).head
-    r2._1 should be < D
-    r2._2 should be >= D
-
-    val r3 = runWithData(keyedPopulation)(medianKSDByKey(_, true, 0.4, 0.6, 0.9, 0.9)).head
-    r3._1 should be >= D
-    r3._2 should be < D
-
-    val r4 = runWithData(keyedPopulation)(medianKSDByKey(_, true, 0.4, 0.6, 0.4, 0.6)).head
-    r4._1 should be >= D
-    r4._2 should be >= D
+    for (fraction <- List(0.05, 0.2, 1.0)) {
+      val sample = runWithData(keyedPopulation)(_.sampleByKey(true, Map("a" -> fraction, "b" -> fraction)))
+      sample.groupBy(_._1).values.foreach { s =>
+        (s.size.toDouble / populationSize) should be (fraction +- 0.05)
+        s.toSet.size should be < sample.size
+      }
+    }
   }
 
-  it should "support sampleByKey() without replacement()" in {
+  it should "support sampleByKey() without replacement" in {
     import RandomSamplerUtils._
-
-    val r1 = runWithData(keyedPopulation)(medianKSDByKey(_, false, 0.5, 0.5, 0.9, 0.9)).head
-    r1._1 should be < D
-    r1._2 should be < D
-
-    val r2 = runWithData(keyedPopulation)(medianKSDByKey(_, false, 0.9, 0.9, 0.4, 0.6)).head
-    r2._1 should be < D
-    r2._2 should be >= D
-
-    val r3 = runWithData(keyedPopulation)(medianKSDByKey(_, false, 0.4, 0.6, 0.9, 0.9)).head
-    r3._1 should be >= D
-    r3._2 should be < D
-
-    val r4 = runWithData(keyedPopulation)(medianKSDByKey(_, false, 0.4, 0.6, 0.4, 0.6)).head
-    r4._1 should be >= D
-    r4._2 should be >= D
+    for (fraction <- List(0.05, 0.2, 1.0)) {
+      val sample = runWithData(keyedPopulation)(_.sampleByKey(false, Map("a" -> fraction, "b" -> fraction)))
+      sample.groupBy(_._1).values.foreach { s =>
+        (s.size.toDouble / populationSize) should be (fraction +- 0.05)
+        s.toSet.size should be < sample.size
+      }
+    }
   }
 
   it should "support subtractByKey()" in {

@@ -19,11 +19,8 @@ package com.spotify.scio.values
 
 import java.util.Random
 
-import com.spotify.scio.ScioContext
 import com.spotify.scio.util.random.RandomSampler
 import org.apache.commons.math3.distribution.PoissonDistribution
-
-import scala.collection.breakOut
 
 // Ported from org.apache.spark.util.random.RandomSamplerSuite
 object RandomSamplerUtils extends Serializable {
@@ -133,45 +130,6 @@ object RandomSamplerUtils extends Serializable {
   def expectedSamples(withReplacement: Boolean, fraction: Double): Array[Int] = {
     val s = if (withReplacement) sampleWR(population.iterator, fraction) else sample(population.iterator, fraction)
     s.toArray
-  }
-
-  def medianKSD(population: SCollection[Int], withReplacement: Boolean,
-                expectedFraction: Double, actualFraction: Double): SCollection[Double] = {
-    val expected = expectedSamples(withReplacement, expectedFraction)
-
-    population
-      .sample(withReplacement, actualFraction)
-      .groupBy(_ => 0)
-      .values
-      .map { v => val a = v.toArray; scala.util.Sorting.quickSort(a); a }
-      .map(actual => medianKSD(gaps(expected), gaps(actual)))
-  }
-
-  def medianKSDByKey(population: SCollection[(String, Int)], withReplacement: Boolean,
-                     expectedFraction1: Double, actualFraction1: Double,
-                     expectedFraction2: Double, actualFraction2: Double): SCollection[(Double, Double)] = {
-    val expected = Map(
-      "a" -> expectedSamples(withReplacement, expectedFraction1),
-      "b" -> expectedSamples(withReplacement, expectedFraction2))
-
-    population
-      .sampleByKey(withReplacement, Map("a" -> actualFraction1, "b" -> actualFraction2))
-      .groupByKey()
-      .groupBy(_ => 0)
-      .values
-      .map { v =>
-        val r: Map[String, Array[Int]] = v.map { kv =>
-          val a = kv._2.toArray
-          scala.util.Sorting.quickSort(a)
-          (kv._1, a)
-        }(breakOut)
-        r
-      }
-      .map { actual =>
-        val k1 = medianKSD(gaps(expected("a")), gaps(actual("a")))
-        val k2 = medianKSD(gaps(expected("b")), gaps(actual("b")))
-        (k1, k2)
-      }
   }
 
 }
