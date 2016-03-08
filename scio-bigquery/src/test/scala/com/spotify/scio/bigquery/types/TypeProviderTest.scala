@@ -256,6 +256,10 @@ class TypeProviderTest extends FlatSpec with Matchers {
   @BigQueryType.toTable()
   case class ToTable(f1: Long, f2: Double, f3: Boolean, f4: String, f5: Instant)
 
+  "BigQueryEntity.toTable" should "support provide .tupled method in companion object" in {
+    ToTable.getClass.getMethods.map(_.getName) should contain("tupled")
+  }
+
   "BigQueryEntity.toTable" should "support .tupled in companion object" in {
     val r1 = ToTable(1L, 1.5, true, "hello", NOW)
     val r2 = ToTable.tupled((1L, 1.5, true, "hello", NOW))
@@ -309,5 +313,9 @@ class TypeProviderTest extends FlatSpec with Matchers {
   it should "support .schema in companion object with more than 22 fields" in {
     val r = ArtisenalMoreThan22Fields(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23)
     ArtisenalMoreThan22Fields.schema should not be null
+  }
+
+  it should "companion object with more than 22 fields must not provide .tupled method" in {
+    ArtisenalMoreThan22Fields.getClass.getMethods.map(_.getName) should not contain ("tupled")
   }
 }
