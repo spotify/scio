@@ -27,12 +27,14 @@ object TapsExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val taps = Taps()
+    val taps = Taps()  // entry point to acquire taps
 
     val r = for {
+      // extract Tap[T]s from two Future[Tap[T]]s
       t1 <- taps.textFile("kinglear.txt")
       t2 <- taps.textFile("macbeth.txt")
     } yield {
+      // execution logic when both taps are available
       val (sc, args) = ContextAndArgs(cmdlineArgs)
       val out = (t1.open(sc) ++ t2.open(sc))
         .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))

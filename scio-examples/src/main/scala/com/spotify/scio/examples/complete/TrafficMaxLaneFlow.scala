@@ -110,12 +110,13 @@ object TrafficMaxLaneFlow {
       stream
         .timestampBy(v => new Instant(formatter.parseMillis(v._2.recordedTimestamp)))
     }
+
     p
       .withSlidingWindows(Duration.standardMinutes(windowDuration), Duration.standardMinutes(windowSlideEvery))
       .maxByKey(Ordering.by(_.laneFlow))
       .values
       .withTimestamp()
-      .map { kv =>
+      .map { kv =>  // (lane flow, timestamp)
         val (l, ts) = kv
         TableRow(
           "station_id" -> l.stationId,
@@ -130,7 +131,6 @@ object TrafficMaxLaneFlow {
           "window_timestamp" -> ts.toString)
       }
       .saveAsBigQuery(ExampleOptions.bigQueryTable(opts), schema)
-
 
     val result = sc.close()
 

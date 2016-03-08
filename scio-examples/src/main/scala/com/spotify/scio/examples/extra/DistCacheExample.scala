@@ -36,6 +36,7 @@ object DistCacheExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
+    // declare a file to be distributed to all workers and logic to load the file
     val dc = sc.distCache(args.getOrElse("months", ExampleData.MONTHS)) { f =>
       scala.io.Source.fromFile(f).getLines().map { s =>
         val t = s.split(" ")
@@ -47,7 +48,7 @@ object DistCacheExample {
       .tableRowJsonFile(args.getOrElse("input", ExampleData.EXPORTED_WIKI_TABLE))
       .map(row => new Instant(row.getLong("timestamp") * 1000L).toDateTime.getMonthOfYear)
       .countByValue()
-      .map(kv => dc().getOrElse(kv._1, "unknown") + " " + kv._2)
+      .map(kv => dc().getOrElse(kv._1, "unknown") + " " + kv._2)  // distributed cache avaiable inside a transform
       .saveAsTextFile(args("output"))
 
     sc.close()

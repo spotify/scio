@@ -58,6 +58,7 @@ object DatastoreWordCount {
       k.build()
     }
 
+    // pipeline that writes to Datastore
     def writeToDatastore(): Unit = {
       val sc = ScioContext(opts)
       sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
@@ -73,6 +74,7 @@ object DatastoreWordCount {
       sc.close()
     }
 
+    // pipeline that reads from Datastore
     def readFromDatastore(): Unit = {
       val query = {
         val q = Query.newBuilder()

@@ -23,14 +23,16 @@ object AccumulatorExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val sc = ScioContext()
 
+    // create accumulators to be updated inside the pipeline
     val max = sc.maxAccumulator[Int]("max")
     val min = sc.minAccumulator[Int]("min")
     val sum = sc.sumAccumulator[Int]("sum")
     val count = sc.sumAccumulator[Int]("count")
 
     sc.parallelize(1 to 100)
-      .withAccumulator(max, min, sum, count)
-      .filter { (i, c) =>
+      .withAccumulator(max, min, sum, count)  // accumulators to be used in the next transform
+      .filter { (i, c) =>  // accumulators available via the second argument AccumulatorContext
+        // update accumulators via the context
         c.addValue(max, i).addValue(min, i).addValue(sum, i).addValue(count, 1)
         i <= 50
       }
@@ -42,6 +44,7 @@ object AccumulatorExample {
 
     val r = sc.close()
 
+    // access accumulator values after job is submitted
     // scalastyle:off regex
     println("Max: " + r.accumulatorTotalValue(max))
     println("Min: " + r.accumulatorTotalValue(min))

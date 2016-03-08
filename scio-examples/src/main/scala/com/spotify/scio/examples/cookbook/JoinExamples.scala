@@ -63,7 +63,7 @@ object JoinExamples {
     val countryInfo = sc.bigQueryTable(ExampleData.COUNTRY_TABLE).map(extractCountryInfo)
 
     eventsInfo
-      .leftOuterJoin(countryInfo)
+      .leftOuterJoin(countryInfo)  // regular left outer join
       .map { t =>
         val (countryCode, (eventInfo, countryNameOpt)) = t
         val countryName = countryNameOpt.getOrElse("none")
@@ -85,7 +85,7 @@ object SideInputJoinExamples {
     val countryInfo = sc.bigQueryTable(ExampleData.COUNTRY_TABLE).map(extractCountryInfo).asMapSideInput
 
     eventsInfo
-      .withSideInputs(countryInfo)
+      .withSideInputs(countryInfo)  // replicate right hand side to all workers as side input
       .map { (kv, side) =>
         val (countryCode, eventInfo) = kv
         val m = side(countryInfo)
@@ -109,7 +109,7 @@ object HashJoinExamples {
     val countryInfo = sc.bigQueryTable(ExampleData.COUNTRY_TABLE).map(extractCountryInfo)
 
     eventsInfo
-      .hashLeftJoin(countryInfo)
+      .hashLeftJoin(countryInfo)  // shortcut for side input join
       .map { t =>
         val (countryCode, (eventInfo, countryNameOpt)) = t
         val countryName = countryNameOpt.getOrElse("none")

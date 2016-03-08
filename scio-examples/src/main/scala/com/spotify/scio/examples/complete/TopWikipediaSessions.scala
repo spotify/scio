@@ -46,24 +46,25 @@ object TopWikipediaSessions {
           case e: NullPointerException => None
         }
       }
-      .timestampBy(kv => new Instant(kv._2 * 1000L))
+      .timestampBy(kv => new Instant(kv._2 * 1000L))  // add timestamp to values
       .map(_._1)
       .sample(withReplacement = false, fraction = samplingThreshold)
       .withSessionWindows(Duration.standardHours(1))
       .countByValue()
-      .toWindowed
+      .toWindowed  // enable access to underlying window info
       .map(wv => wv.copy((wv.value._1 + " : " + wv.window, wv.value._2)))
-      .toSCollection
+      .toSCollection  // end of windowed operation
       .windowByMonths(1)
       .top(1)(Ordering.by(_._2))
-      .toWindowed
+      .toWindowed  // enable access to underlying window info
       .flatMap { wv =>
         wv.value.map { kv =>
+          // expose window info through value
           val o = kv._1 + " : " + kv._2 + " : " + wv.window.asInstanceOf[IntervalWindow].start()
           wv.copy(value = o)
         }
       }
-      .toSCollection
+      .toSCollection  // end of windowed operation
       .saveAsTextFile(args("output"))
 
     sc.close()
