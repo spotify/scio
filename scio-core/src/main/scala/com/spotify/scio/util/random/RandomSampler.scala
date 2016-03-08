@@ -57,6 +57,8 @@ private[scio] abstract class RandomSampler[T, R] extends DoFn[T, T] {
 
   def samples(): Int
 
+  def setSeed(seed: Long): Unit
+
 }
 
 /**
@@ -85,6 +87,8 @@ private[scio] class BernoulliSampler[T](fraction: Double) extends RandomSampler[
     }
   }
 
+  override def setSeed(seed: Long): Unit = rng.setSeed(seed)
+
 }
 
 /**
@@ -106,6 +110,7 @@ private[scio] class PoissonSampler[T](fraction: Double) extends RandomSampler[T,
 
   override def samples(): Int = if (fraction <= 0.0) 0 else rng.sample()
 
+  override def setSeed(seed: Long): Unit = rng.reseedRandomGenerator(seed)
 }
 
 private[scio] abstract class RandomValueSampler[K, V, R](fractions: Map[K, Double]) extends DoFn[(K, V), (K, V)] {
@@ -113,7 +118,9 @@ private[scio] abstract class RandomValueSampler[K, V, R](fractions: Map[K, Doubl
   protected var rngs: Map[K, R] = null.asInstanceOf[Map[K, R]]
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
-  override def startBundle(c: DoFn[(K, V), (K, V)]#Context): Unit = { rngs = fractions.mapValues(init) }
+  override def startBundle(c: DoFn[(K, V), (K, V)]#Context): Unit = {
+    rngs = fractions.mapValues(init).map(identity)  // workaround for serialization issue
+  }
 
   override def processElement(c: DoFn[(K, V), (K, V)]#ProcessContext): Unit = {
     val (key, value) = c.element()
@@ -128,6 +135,8 @@ private[scio] abstract class RandomValueSampler[K, V, R](fractions: Map[K, Doubl
   def init(fraction: Double): R
 
   def samples(fraction: Double, rng: R): Int
+
+  def setSeed(seed: Long): Unit
 
 }
 
@@ -154,6 +163,8 @@ private[scio] class BernoulliValueSampler[K, V](fractions: Map[K, Double])
     }
   }
 
+  override def setSeed(seed: Long): Unit = rngs.foreach(_._2.setSeed(seed))
+
 }
 
 private[scio] class PoissonValueSampler[K, V](fractions: Map[K, Double])
@@ -169,5 +180,7 @@ private[scio] class PoissonValueSampler[K, V](fractions: Map[K, Double])
     new PoissonDistribution(if (fraction > 0.0) fraction else 1.0)
 
   override def samples(fraction: Double, rng: IntegerDistribution): Int = if (fraction <= 0.0) 0 else rng.sample()
+
+  override def setSeed(seed: Long): Unit = rngs.foreach(_._2.reseedRandomGenerator(seed))
 
 }
