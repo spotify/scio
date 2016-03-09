@@ -20,9 +20,6 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio._
 import com.spotify.scio.io.Taps
 
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-
 object TapsExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
