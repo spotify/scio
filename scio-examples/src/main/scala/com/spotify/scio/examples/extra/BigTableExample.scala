@@ -21,11 +21,13 @@ import com.google.cloud.bigtable.dataflow.{CloudBigtableScanConfiguration, Cloud
 import com.spotify.scio._
 import com.spotify.scio.bigtable._
 import com.spotify.scio.examples.common.ExampleData
-import org.apache.hadoop.hbase.client.Put
+import org.apache.hadoop.hbase.client.{Result, Put}
 
 object BigTableExample {
   val FAMILY = "count".getBytes
   val QUALIFIER = "long".getBytes
+  def put(key: String, value: Long): Put = new Put(key.getBytes).addColumn(FAMILY, QUALIFIER, value.toString.getBytes)
+  def result(r: Result): String = new String(r.getRow) + ": " + new String(r.getValue(FAMILY, QUALIFIER))
 }
 
 /*
@@ -43,7 +45,6 @@ runMain
 
 object BigTableWriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
-    import BigTableExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val config = CloudBigtableTableConfiguration.fromCBTOptions(BigTable.parseOptions(cmdlineArgs))
@@ -51,7 +52,7 @@ object BigTableWriteExample {
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue()
-      .map(kv => new Put(kv._1.getBytes).addColumn(FAMILY, QUALIFIER, kv._2.toString.getBytes))
+      .map(kv => BigTableExample.put(kv._1, kv._2))
       .saveAsBigTable(config)
 
     sc.close()
@@ -73,13 +74,12 @@ runMain
 
 object BigTableReadExample {
   def main(cmdlineArgs: Array[String]): Unit = {
-    import BigTableExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val config = CloudBigtableScanConfiguration.fromCBTOptions(BigTable.parseOptions(cmdlineArgs))
 
     sc.bigTable(config)
-      .map(r => new String(r.getRow) + ": " + new String(r.getValue(FAMILY, QUALIFIER)))
+      .map(BigTableExample.result)
       .saveAsTextFile(args("output"))
 
     sc.close()
