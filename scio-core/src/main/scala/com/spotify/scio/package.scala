@@ -70,4 +70,11 @@ package object scio {
     def waitForResult(atMost: Duration = Duration.Inf): Tap[T] = Await.result(self.flatMap(identity), atMost)
   }
 
+  /** Get Scio version from scio-core/src/main/resources/version.sbt. */
+  def scioVersion: String = {
+    val stream = this.getClass.getResourceAsStream("/version.sbt")
+    val line = scala.io.Source.fromInputStream(stream).getLines().next()
+    """version in .+"([^"]+)"""".r.findFirstMatchIn(line).get.group(1)
+  }
+
 }
