@@ -168,17 +168,18 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
   }
 
   private def welcome(): Unit = {
+    val ascii = """Welcome to
+                  |                 _____
+                  |    ________________(_)_____
+                  |    __  ___/  ___/_  /_  __ \
+                  |    _(__  )/ /__ _  / / /_/ /
+                  |    /____/ \___/ /_/  \____/""".stripMargin + "   version " + com.spotify.scio.scioVersion + "\n"
+    echo(ascii)
+
     val p = scala.util.Properties
-    val version = "Using Scala %s (%s, Java %s)".format(p.versionString, p.javaVmName, p.javaVersion)
-    echo(
-      """Welcome to
-        |                 _____
-        |    ________________(_)_____
-        |    __  ___/  ___/_  /_  __ \
-        |    _(__  )/ /__ _  / / /_/ /
-        |    /____/ \___/ /_/  \____/
-        |""".stripMargin)
-    echo(version)
+    val scalaVersion = "Using Scala %s (%s, Java %s)".format(p.versionString, p.javaVmName, p.javaVersion)
+    echo(scalaVersion)
+
     echo(
       """Type in expressions to have them evaluated.
         |Type :help for more information.
