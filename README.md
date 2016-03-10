@@ -40,8 +40,8 @@ To use Scio in your SBT project, add the following to `build.sbt`. The compiler 
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.spotify" %% "scio-core" % "0.1.1",
-  "com.spotify" %% "scio-test" % "0.1.1" % "test"
+  "com.spotify" %% "scio-core" % "0.1.2",
+  "com.spotify" %% "scio-test" % "0.1.2" % "test"
 )
 
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
