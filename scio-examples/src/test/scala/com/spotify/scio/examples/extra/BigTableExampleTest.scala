@@ -22,6 +22,8 @@ import com.spotify.scio.testing._
 import org.apache.hadoop.hbase.client.{Put, Result}
 import org.apache.hadoop.hbase.{CellUtil, HConstants, KeyValue}
 
+import scala.collection.JavaConverters._
+
 class BigTableExampleTest extends PipelineSpec {
 
   val bigtableOptions = Seq(
@@ -34,13 +36,33 @@ class BigTableExampleTest extends PipelineSpec {
   val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
   val expectedPut = wordCount.map(kv => BigTableExample.put(kv._1, kv._2))
 
+  // convert Put to basic comparable types
+  private def comparablePut(p: Put): (String, Map[String, Seq[(String, String)]]) = {
+    def encode(b: Array[Byte], offset: Int = 0, length: Int = Int.MaxValue) =
+      new String(b, offset, scala.math.min(length, b.length))
+
+    val row = encode(p.getRow)
+    val map = p.getFamilyCellMap.asScala.map { case (k, v) =>
+      val family = encode(k)
+      val cells = v.asScala.map { c =>
+        val qualifier = encode(c.getQualifierArray, c.getQualifierOffset, c.getQualifierLength)
+        val value = encode(c.getValueArray, c.getValueOffset, c.getValueLength)
+        (qualifier, value)
+      }
+      .toSeq
+      (family, cells)
+    }.toMap
+    (row, map)
+  }
+
   "BigTableWriteExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.BigTableWriteExample.type]
       .args(bigtableOptions :+ "--input=in.txt": _*)
       .input(TextIO("in.txt"), textIn)
       .output(BigTableOutput[Put]("my-project", "my-cluster", "us-east1-a", "my-table")) {
-        _ should containInAnyOrder (expectedPut)
+        _.map(comparablePut) should containInAnyOrder (expectedPut.map(comparablePut))
       }
+      .run()
   }
 
   def result(key: String, value: Long): Result = {
@@ -58,6 +80,7 @@ class BigTableExampleTest extends PipelineSpec {
       .args(bigtableOptions :+ "--output=out.txt": _*)
       .input(BigTableInput("my-project", "my-cluster", "us-east1-a", "my-table"), resultIn)
       .output(TextIO("out.txt"))(_ should containInAnyOrder (expectedText))
+      .run()
   }
 
 }
