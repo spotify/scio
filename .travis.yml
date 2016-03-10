@@ -6,13 +6,16 @@ jdk: oraclejdk7
 
 cache:
   directories:
-    - $HOME/.ivy2/cache
     - $HOME/.sbt/boot
+    - $HOME/.ivy2/cache
 
 before_script:
   - ./scripts/travis.sh
 script:
   - sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean coverage test coverageReport coverageAggregate
+  # Tricks to avoid unnecessary cache updates
+  - find $HOME/.sbt -name "*.lock" | xargs rm
+  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 
