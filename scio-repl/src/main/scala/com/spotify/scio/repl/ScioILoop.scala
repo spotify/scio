@@ -83,7 +83,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     val nextReplJar = scioClassLoader.getNextReplCodeJarPath
     intp.beQuietDuring {
       intp.interpret(
-        s"""val $sc = new ReplScioContext($opts, List("$nextReplJar"), None)
+        s"""val $sc: ScioContext = new com.spotify.scio.repl.ReplScioContext($opts, List("$nextReplJar"), None)
            |$sc.setName("sciorepl")
          """.stripMargin)
     }
@@ -171,8 +171,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
 
   private def addImports(): IR.Result =
     intp.interpret(
-      """import com.spotify.scio.repl.ReplScioContext
-        |import com.spotify.scio._
+      """import com.spotify.scio._
         |import com.spotify.scio.bigquery._
         |import com.spotify.scio.experimental._
         |import scala.concurrent.ExecutionContext.Implicits.global
