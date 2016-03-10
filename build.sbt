@@ -32,7 +32,7 @@ val chillVersion = "0.8.0"
 val commonsIoVersion = "2.4"
 val commonsMath3Version = "3.6"
 val guavaVersion = "19.0"
-val hadoopVersion = "2.7.1"
+val hadoopVersion = "2.7.2"
 val hamcrestVersion = "1.3"
 val hbaseVersion = "1.0.1"
 val javaLshVersion = "0.8"
@@ -42,7 +42,7 @@ val junitVersion = "4.12"
 val scalaCheckVersion = "1.13.0"
 val scalaMacrosVersion = "2.1.0"
 val scalaTestVersion = "2.2.6"
-val slf4jVersion = "1.7.16"
+val slf4jVersion = "1.7.18"
 
 val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
