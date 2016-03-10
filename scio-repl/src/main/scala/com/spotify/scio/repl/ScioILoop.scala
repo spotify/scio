@@ -49,9 +49,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
 
   settings = new GenericRunnerSettings(echo)
 
-  override def printWelcome() {
-    echo("Welcome to Scio REPL!")
-  }
+  override def printWelcome() {}
 
   override def prompt: String = Console.GREEN + "\nscio> " + Console.RESET
 
@@ -169,6 +167,24 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     s"""$ns.PipelineOptionsFactory.fromArgs($argsStr).as(classOf[$ns.DataflowPipelineOptions])"""
   }
 
+  private def welcome(): Unit = {
+    val p = scala.util.Properties
+    val version = "Using Scala %s (%s, Java %s)".format(p.versionString, p.javaVmName, p.javaVersion)
+    echo(
+      """Welcome to
+        |                 _____
+        |    ________________(_)_____
+        |    __  ___/  ___/_  /_  __ \
+        |    _(__  )/ /__ _  / / /_/ /
+        |    /____/ \___/ /_/  \____/
+        |""".stripMargin)
+    echo(version)
+    echo(
+      """Type in expressions to have them evaluated.
+        |Type :help for more information.
+      """.stripMargin)
+  }
+
   private def addImports(): IR.Result =
     intp.interpret(
       """import com.spotify.scio._
@@ -182,16 +198,17 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     if (sys.props(key) == null) {
       echo(s"System property '$key' not set. BigQueryClient is not available.")
       echo("Set it with '-D" + key + "=<PROJECT-NAME>' command line argument.")
+      IR.Success
     } else {
-      intp.interpret("val bq = BigQueryClient()")
+      val r = intp.interpret("val bq = BigQueryClient()")
       echo(s"BigQuery client available as 'bq'")
+      r
     }
-    IR.Success
   }
 
   override def createInterpreter(): Unit = {
     super.createInterpreter()
-    this.echo("Loading ... ")
+    welcome()
     intp.beQuietDuring {
       addImports()
       createBigQueryClient()
