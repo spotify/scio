@@ -23,3 +23,15 @@ notifications:
   email:
     - neville@spotify.com
     - rav@spotify.com
+
+before_deploy: sbt ++$TRAVIS_SCALA_VERSION "project scio-repl" assembly
+deploy:
+  provider: releases
+  api_key:
+    secure: NiV4bqbGd36AvUqZR0HWTyJ2NhH4Lb9dMpw53nLygn+uA8nsyzl9a6f0mNYtNFWztofJ2V8oXG1Iy3a9SOvMXppv/z7vYaFSsepJzDPq4b5mb0iQoVlVYbhbNum36sucvxMaVFp57HjDDa+2wf8pt98Wmi7+aj7xmoEfJouW+Nu+EWjoFQ7fY2QV2Wm6r1/VWFDP8RT1ldtYpNkZA4dxSA3tXUXtcmOW5+CKjJD8/aiQozhZQ5glrmqPl6bD0cxB/Ag74WJWJoSJYT+cHzt5Crvrz+aRmvpbtEQMVOn7m464EBpeJKSariJeuWbie4HiGX+cZwtYJOuChERawIDiN5WANCQM6SkRTFVSOYrtZUC8XFphJUkYiFWTKtuxi5vcbAfXzU9DOgBYZBfSzVL6ezmiqI7G0NUfospjfqSkU2FqdNIonxRnAqbzQN8xEZQ61D2IylQRUVRpAWunsYNUMvVp0eEyPQACWuv0uMO7BHTETniJgymEoyt8pkwf54hhl2/Sgl9eXGeGnmnW/ldQ+1fqhKiZHlwtjsJK0ppXpNwrVgBs+xB/IvBbXcGsJZVbYpVD31pUvjMizNlpxeMeEzMfOU9mK4cx5Vu9m+hFXZTTq1Xl6YMOomrPKbqVaQa5j8US4qpbF2KyoA7DHGQ2pYl32ERMbLVLNShYckHzpPA=
+  file_glob: true
+  file: "scio-repl/target/scala-*/scio-repl-*.jar"
+  skip_cleanup: true
+  on:
+    scala: 2.11.8
+    tags: true
