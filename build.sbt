@@ -40,15 +40,15 @@ val jodaConvertVersion = "1.8.1"
 val jodaTimeVersion = "2.9.2"
 val junitVersion = "4.12"
 val scalaCheckVersion = "1.13.0"
-val scalaMacrosVersion = "2.0.1"
+val scalaMacrosVersion = "2.1.0"
 val scalaTestVersion = "2.2.6"
 val slf4jVersion = "1.7.16"
 
 val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
 
-  scalaVersion       := "2.11.7",
-  crossScalaVersions := Seq("2.10.6", "2.11.7"),
+  scalaVersion       := "2.11.8",
+  crossScalaVersions := Seq("2.10.6", "2.11.8"),
   scalacOptions                   ++= Seq("-target:jvm-1.7", "-deprecation", "-feature", "-unchecked"),
   scalacOptions in (Compile, doc) ++= Seq("-groups", "-skip-packages", "com.google"),
   javacOptions                    ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked"),
