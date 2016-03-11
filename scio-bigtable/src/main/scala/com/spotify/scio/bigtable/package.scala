@@ -19,6 +19,8 @@ package com.spotify.scio
 
 import com.google.cloud.bigtable.dataflow.{CloudBigtableIO, CloudBigtableScanConfiguration, CloudBigtableTableConfiguration}
 import com.google.cloud.dataflow.sdk.io.Read
+import com.google.cloud.dataflow.sdk.transforms.PTransform
+import com.google.cloud.dataflow.sdk.values.{PDone, PCollection}
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
@@ -82,15 +84,9 @@ package object bigtable {
                        tableId: String,
                        additionalConfiguration: Map[String, String] = Map.empty)
                       (implicit ev: T <:< Mutation): Future[Tap[Result]] = {
-      if (self.context.isTest) {
-        val output = BigTableOutput(projectId, clusterId, zoneId, tableId)
-        self.context.testOut(output)(self)
-      } else {
-        CloudBigtableIO.initializeForWrite(self.context.pipeline)
-        val config = new CloudBigtableTableConfiguration(projectId, zoneId, clusterId, tableId, additionalConfiguration.asJava)
-        this.write(config)
-      }
-      Future.failed(new NotImplementedError("BigTable future not implemented"))
+      val config = new CloudBigtableTableConfiguration(
+        projectId, zoneId, clusterId, tableId, additionalConfiguration.asJava)
+      this.saveAsBigTable(config)
     }
 
     /** Save this SCollection as a BigTable table. Note that elements must be of type Mutation. */
@@ -99,14 +95,11 @@ package object bigtable {
         val output = BigTableOutput(config.getProjectId, config.getClusterId, config.getZoneId, config.getTableId)
         self.context.testOut(output)(self)
       } else {
-        this.write(config)
+        CloudBigtableIO.initializeForWrite(self.context.pipeline)
+        val transform = CloudBigtableIO.writeToTable(config)
+        self.asInstanceOf[SCollection[Mutation]].applyInternal(transform)
       }
       Future.failed(new NotImplementedError("BigTable future not implemented"))
-    }
-
-    private def write(config: CloudBigtableTableConfiguration): Unit = {
-      CloudBigtableIO.initializeForWrite(self.context.pipeline)
-      self.asInstanceOf[SCollection[Mutation]].applyInternal(CloudBigtableIO.writeToTable(config))
     }
 
   }
