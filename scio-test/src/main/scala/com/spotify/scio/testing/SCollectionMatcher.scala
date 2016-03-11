@@ -44,4 +44,9 @@ private[scio] trait SCollectionMatcher {
       MatchResult(tryAssert(() => DataflowAssert.thatSingleton(left.internal).isEqualTo(value)), "", "")
   }
 
+  val beEmpty = new Matcher[SCollection[_]] {
+    override def apply(left: SCollection[_]): MatchResult =
+      MatchResult(tryAssert(() => DataflowAssert.that(left.internal).empty()), "", "")
+  }
+
 }

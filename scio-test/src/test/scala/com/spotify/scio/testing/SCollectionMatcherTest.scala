@@ -57,4 +57,16 @@ class SCollectionMatcherTest extends PipelineSpec {
     }
   }
 
+  it should "support beEmpty" in {
+    runWithContext {
+      _.parallelize(Seq.empty[Int]) should beEmpty
+    }
+
+    intercept[AssertionError] {
+      runWithContext {
+        _.parallelize(1 to 10) should beEmpty
+      }
+    }
+  }
+
 }
