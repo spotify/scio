@@ -22,6 +22,7 @@ import com.spotify.scio.values.SCollection
 import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.collection.JavaConverters._
+import scala.reflect.ClassTag
 
 private[scio] trait SCollectionMatcher {
 
@@ -48,5 +49,14 @@ private[scio] trait SCollectionMatcher {
     override def apply(left: SCollection[_]): MatchResult =
       MatchResult(tryAssert(() => DataflowAssert.that(left.internal).empty()), "", "")
   }
+
+  def equalToMap[K: ClassTag, V: ClassTag](value: Map[K, V]): Matcher[SCollection[(K, V)]] = new Matcher[SCollection[(K, V)]] {
+    override def apply(left: SCollection[(K, V)]): MatchResult = {
+      val kv = SCollection.makePairSCollectionFunctions(left).toKV.internal
+      MatchResult(tryAssert(() => DataflowAssert.thatMap(kv).isEqualTo(value.asJava)), "", "")
+    }
+  }
+
+  // TODO: investigate why multi-map doesn't work
 
 }

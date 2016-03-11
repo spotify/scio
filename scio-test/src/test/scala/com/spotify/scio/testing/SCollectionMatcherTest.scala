@@ -69,4 +69,42 @@ class SCollectionMatcherTest extends PipelineSpec {
     }
   }
 
+  it should "support equalToMap" in {
+    val s = Seq("a" -> 1, "b" -> 2, "c" -> 3)
+    runWithContext { sc =>
+      sc.parallelize(s) should equalToMap (s.toMap)
+      sc.parallelize(Seq.empty[(String, Int)]) should equalToMap (Map.empty[String, Int])
+    }
+
+    intercept[AssertionError] {
+      runWithContext {
+        _.parallelize(s) should equalToMap ((s :+ "d" -> 4).toMap)
+      }
+    }
+
+    intercept[AssertionError] {
+      runWithContext {
+        _.parallelize(s) should equalToMap (s.toMap - "a")
+      }
+    }
+
+    intercept[AssertionError] {
+      runWithContext {
+        _.parallelize(s) should equalToMap (s.toMap - "a" + ("a" -> 10))
+      }
+    }
+
+    intercept[AssertionError] {
+      runWithContext {
+        _.parallelize(s) should equalToMap (Map.empty[String, Int])
+      }
+    }
+
+    intercept[AssertionError] {
+      runWithContext {
+        _.parallelize(Seq.empty[(String, Int)]) should equalToMap (s.toMap)
+      }
+    }
+  }
+
 }
