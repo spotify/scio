@@ -96,4 +96,20 @@ class SCollectionMatcherTest extends PipelineSpec {
     }
   }
 
+  it should "support satisfyForAll" in {
+    runWithContext { _.parallelize(1 to 100) should forAll[Int] (_ > 0)}
+
+    intercept[AssertionError] {
+      runWithContext { _.parallelize(1 to 100) should forAll[Int] (_ > 10)}
+    }
+  }
+
+  it should "support satisfyForAny" in {
+    runWithContext { _.parallelize(1 to 100) should exist[Int] (_ > 99)}
+
+    intercept[AssertionError] {
+      runWithContext { _.parallelize(1 to 100) should exist[Int] (_ > 100)}
+    }
+  }
+
 }

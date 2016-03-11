@@ -17,7 +17,11 @@
 
 package com.spotify.scio.testing
 
+import java.lang.{Iterable => JIterable}
+
 import com.google.cloud.dataflow.sdk.testing.DataflowAssert
+import com.google.cloud.dataflow.sdk.transforms.SerializableFunction
+import com.spotify.scio.util.ClosureCleaner
 import com.spotify.scio.values.SCollection
 import org.scalatest.matchers.{MatchResult, Matcher}
 
@@ -58,5 +62,31 @@ private[scio] trait SCollectionMatcher {
   }
 
   // TODO: investigate why multi-map doesn't work
+
+  def forAll[T](predicate: T => Boolean): Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
+    override def apply(left: SCollection[T]): MatchResult = {
+      val f = ClosureCleaner(predicate)
+      val g = new SerializableFunction[JIterable[T], Void] {
+        override def apply(input: JIterable[T]): Void = {
+          assert(input.asScala.forall(f))
+          null
+        }
+      }
+      MatchResult(tryAssert(() => DataflowAssert.that(left.internal).satisfies(g)), "", "")
+    }
+  }
+
+  def exist[T](predicate: T => Boolean): Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
+    override def apply(left: SCollection[T]): MatchResult = {
+      val f = ClosureCleaner(predicate)
+      val g = new SerializableFunction[JIterable[T], Void] {
+        override def apply(input: JIterable[T]): Void = {
+          assert(input.asScala.exists(f))
+          null
+        }
+      }
+      MatchResult(tryAssert(() => DataflowAssert.that(left.internal).satisfies(g)), "", "")
+    }
+  }
 
 }
