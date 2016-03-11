@@ -20,7 +20,7 @@ package com.spotify.scio
 import com.google.cloud.bigtable.dataflow.{CloudBigtableIO, CloudBigtableScanConfiguration, CloudBigtableTableConfiguration}
 import com.google.cloud.dataflow.sdk.io.Read
 import com.google.cloud.dataflow.sdk.transforms.PTransform
-import com.google.cloud.dataflow.sdk.values.{PDone, PCollection}
+import com.google.cloud.dataflow.sdk.values.{KV, PDone, PCollection}
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
@@ -104,10 +104,50 @@ package object bigtable {
 
   }
 
+  /**
+    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] for writing to
+    * multiple BigTable tables.
+    *
+    * Keys are table IDs and values are collections of Mutations.
+    */
+  // implicit class PairBigTableSCollection[K, V](private val self: SCollection[(K, Iterable[V])]) extends AnyVal {
+  implicit class PairBigTableSCollection[T](val self: SCollection[(String, Iterable[T])]) {
+
+    /** Save this SCollection as multiple BigTable tables. Note that value elements must be of type Mutation. */
+    def saveAsMultipleBigTable(projectId: String,
+                               clusterId: String,
+                               zoneId: String,
+                               tableId: String,
+                               additionalConfiguration: Map[String, String] = Map.empty)
+                              (implicit ev: T <:< Mutation): Future[Tap[(String, Iterable[Result])]] = {
+      val config = new CloudBigtableTableConfiguration(
+        projectId, zoneId, clusterId, tableId, additionalConfiguration.asJava)
+      this.saveAsMultipleBigTable(config)
+    }
+
+    /** Save this SCollection as multiple BigTable tables. Note that value elements must be of type Mutation. */
+    def saveAsMultipleBigTable(config: CloudBigtableTableConfiguration)(implicit ev: T <:< Mutation): Future[Tap[(String, Iterable[Result])]] = {
+      if (self.context.isTest) {
+        val output = MultipleBigTableOutput(config.getProjectId, config.getClusterId, config.getZoneId, config.getTableId)
+        self.context.testOut(output.asInstanceOf[TestIO[(String, Iterable[T])]])(self)
+      } else {
+        CloudBigtableIO.writeToMultipleTables(config)
+        val transform = CloudBigtableIO.writeToMultipleTables(config)
+        self
+          .map(kv => KV.of(kv._1, kv._2.asJava.asInstanceOf[java.lang.Iterable[Mutation]]))
+          .applyInternal(transform)
+      }
+      Future.failed(new NotImplementedError("BigTable future not implemented"))
+    }
+  }
+
   case class BigTableInput(projectId: String, clusterId: String, zoneId: String, tableId: String)
     extends TestIO[Result](s"$projectId\t$clusterId\t$zoneId\t$tableId")
 
   case class BigTableOutput[T <: Mutation](projectId: String, clusterId: String, zoneId: String, tableId: String)
     extends TestIO[T](s"$projectId\t$clusterId\t$zoneId\t$tableId")
+
+  case class MultipleBigTableOutput[T <: Mutation](projectId: String, clusterId: String, zoneId: String, tableId: String)
+    extends TestIO[(String, Iterable[T])](s"$projectId\t$clusterId\t$zoneId\t$tableId")
 
 }
