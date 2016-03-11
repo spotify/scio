@@ -181,14 +181,16 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     echo(scalaVersion)
 
     echo(
-      """Type in expressions to have them evaluated.
+      """
+        |Type in expressions to have them evaluated.
         |Type :help for more information.
       """.stripMargin)
   }
 
   private def addImports(): IR.Result =
     intp.interpret(
-      """import com.spotify.scio._
+      """
+        |import com.spotify.scio._
         |import com.spotify.scio.bigquery._
         |import com.spotify.scio.experimental._
         |import scala.concurrent.ExecutionContext.Implicits.global
@@ -198,7 +200,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     val key = BigQueryClient.PROJECT_KEY
     if (sys.props(key) == null) {
       echo(s"System property '$key' not set. BigQueryClient is not available.")
-      echo("Set it with '-D" + key + "=<PROJECT-NAME>' command line argument.")
+      echo(s"Set it with '-D$key=<PROJECT-NAME>' command line argument.")
       IR.Success
     } else {
       val r = intp.interpret("val bq = BigQueryClient()")
