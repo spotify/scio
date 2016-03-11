@@ -36,17 +36,6 @@ sbt "project scio-examples" "run-main com.spotify.scio.examples.WordCount --inpu
 cat wc/part-00000-of-00001.txt
 ```
 
-To use Scio in your SBT project, add the following to `build.sbt`. The compiler plugin dependency is only needed for the type safe BigQuery API.
-
-```scala
-libraryDependencies ++= Seq(
-  "com.spotify" %% "scio-core" % "0.1.2",
-  "com.spotify" %% "scio-test" % "0.1.2" % "test"
-)
-
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
-```
-
 # Documentation
 
 - [Scio Wiki](https://github.com/spotify/scio/wiki) - wiki page
