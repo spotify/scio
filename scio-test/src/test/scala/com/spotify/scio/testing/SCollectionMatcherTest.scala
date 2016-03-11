@@ -27,15 +27,10 @@ class SCollectionMatcherTest extends PipelineSpec {
     }
 
     intercept[AssertionError] {
-      runWithContext {
-        _.parallelize(1 to 200) should containInAnyOrder (1 to 100)
-      }
+      runWithContext { _.parallelize(1 to 200) should containInAnyOrder (1 to 100) }
     }
-
     intercept[AssertionError] {
-      runWithContext {
-        _.parallelize(1 to 50) should containInAnyOrder (1 to 100)
-      }
+      runWithContext { _.parallelize(1 to 100) should containInAnyOrder (1 to 200) }
     }
   }
 
@@ -45,15 +40,11 @@ class SCollectionMatcherTest extends PipelineSpec {
     }
 
     intercept[PipelineExecutionException] {
-      runWithContext {
-        _.parallelize(1 to 10) should containSingleValue (1)
-      }
+      runWithContext { _.parallelize(1 to 10) should containSingleValue (1) }
     }
 
     intercept[PipelineExecutionException] {
-      runWithContext {
-        _.parallelize(Seq.empty[Int]) should containSingleValue (1)
-      }
+      runWithContext { _.parallelize(Seq.empty[Int]) should containSingleValue (1) }
     }
   }
 
@@ -77,33 +68,31 @@ class SCollectionMatcherTest extends PipelineSpec {
     }
 
     intercept[AssertionError] {
-      runWithContext {
-        _.parallelize(s) should equalToMap ((s :+ "d" -> 4).toMap)
-      }
+      runWithContext { _.parallelize(s) should equalToMap ((s :+ "d" -> 4).toMap) }
+    }
+    intercept[AssertionError] {
+      runWithContext { _.parallelize(s :+ "d" -> 4) should equalToMap (s.toMap) }
     }
 
     intercept[AssertionError] {
-      runWithContext {
-        _.parallelize(s) should equalToMap (s.toMap - "a")
-      }
+      runWithContext { _.parallelize(s) should equalToMap (s.tail.toMap) }
+    }
+    intercept[AssertionError] {
+      runWithContext { _.parallelize(s.tail) should equalToMap (s.toMap) }
     }
 
     intercept[AssertionError] {
-      runWithContext {
-        _.parallelize(s) should equalToMap (s.toMap - "a" + ("a" -> 10))
-      }
+      runWithContext { _.parallelize(s) should equalToMap (s.toMap + ("a" -> 10)) }
+    }
+    intercept[AssertionError] {
+      runWithContext { _.parallelize(s.tail :+ ("a" -> 10)) should equalToMap (s.toMap) }
     }
 
     intercept[AssertionError] {
-      runWithContext {
-        _.parallelize(s) should equalToMap (Map.empty[String, Int])
-      }
+      runWithContext { _.parallelize(s) should equalToMap (Map.empty[String, Int]) }
     }
-
     intercept[AssertionError] {
-      runWithContext {
-        _.parallelize(Seq.empty[(String, Int)]) should equalToMap (s.toMap)
-      }
+      runWithContext { _.parallelize(Seq.empty[(String, Int)]) should equalToMap (s.toMap) }
     }
   }
 
