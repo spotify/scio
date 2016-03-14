@@ -23,13 +23,20 @@ import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.cloud.dataflow.sdk.util.CoderUtils;
 import com.google.cloud.dataflow.sdk.values.KV;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import org.apache.avro.Schema;
 import org.apache.avro.mapred.AvroKey;
+import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * A {@code BoundedSource} for reading Avro files resident in a Hadoop filesystem.
@@ -39,6 +46,7 @@ import java.io.IOException;
 public class AvroHadoopFileSource<T> extends HadoopFileSource<AvroKey<T>, NullWritable> {
 
   private final AvroCoder<T> avroCoder;
+  private final String schemaStr;
 
   public AvroHadoopFileSource(String filepattern, AvroCoder<T> avroCoder) {
     this(filepattern, avroCoder, null);
@@ -50,6 +58,7 @@ public class AvroHadoopFileSource<T> extends HadoopFileSource<AvroKey<T>, NullWr
         ClassUtil.<AvroKey<T>>castClass(AvroKey.class),
         NullWritable.class, serializableSplit);
     this.avroCoder = avroCoder;
+    this.schemaStr = avroCoder.getSchema().toString();
   }
 
   @Override
@@ -59,32 +68,50 @@ public class AvroHadoopFileSource<T> extends HadoopFileSource<AvroKey<T>, NullWr
   }
 
   @Override
+  public List<AvroHadoopFileSource<T>> splitIntoBundles(long desiredBundleSizeBytes,
+                                                                  PipelineOptions options) throws Exception {
+    if (serializableSplit == null) {
+      return Lists.transform(computeSplits(desiredBundleSizeBytes),
+              new Function<InputSplit, AvroHadoopFileSource<T>>() {
+                @Nullable
+                @Override
+                public AvroHadoopFileSource<T> apply(@Nullable InputSplit inputSplit) {
+                  return new AvroHadoopFileSource<T>(filepattern, avroCoder, new SerializableSplit(inputSplit));
+                }
+              });
+    } else {
+      return ImmutableList.of(this);
+    }
+  }
+
+  @Override
   public BoundedReader<KV<AvroKey<T>, NullWritable>> createReader(PipelineOptions options) throws IOException {
     this.validate();
 
+    Schema schema = new Schema.Parser().parse(schemaStr);
     if (serializableSplit == null) {
-      return new AvroHadoopFileReader<>(this, filepattern, formatClass);
+      return new AvroHadoopFileReader<>(this, filepattern, formatClass, schema);
     } else {
-      return new AvroHadoopFileReader<>(this, filepattern, formatClass,
-          serializableSplit.getSplit());
+      return new AvroHadoopFileReader<>(this, filepattern, formatClass, schema, serializableSplit.getSplit());
     }
   }
 
   static class AvroHadoopFileReader<T> extends HadoopFileReader<AvroKey<T>, NullWritable> {
-
     public AvroHadoopFileReader(BoundedSource<KV<AvroKey<T>, NullWritable>> source,
-                                String filepattern, Class<? extends FileInputFormat<?, ?>> formatClass) {
-      super(source, filepattern, formatClass);
+                                String filepattern, Class<? extends FileInputFormat<?, ?>> formatClass,
+                                Schema schema) throws IOException {
+      this(source, filepattern, formatClass, schema, null);
     }
 
     public AvroHadoopFileReader(BoundedSource<KV<AvroKey<T>, NullWritable>> source,
                                 String filepattern, Class<? extends FileInputFormat<?, ?>> formatClass,
-                                InputSplit split) {
+                                Schema schema, InputSplit split) throws IOException {
       super(source, filepattern, formatClass, split);
+      AvroJob.setInputKeySchema(job, schema);
     }
 
-
     @SuppressWarnings("unchecked")
+    @Override
     protected KV<AvroKey<T>, NullWritable> nextPair() throws IOException, InterruptedException {
       AvroKey<T> key = currentReader.getCurrentKey();
       NullWritable value = currentReader.getCurrentValue();

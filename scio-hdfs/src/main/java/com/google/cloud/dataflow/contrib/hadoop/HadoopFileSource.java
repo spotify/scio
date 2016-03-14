@@ -198,7 +198,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     return formatClass.newInstance();
   }
 
-  private List<InputSplit> computeSplits(long desiredBundleSizeBytes) throws IOException,
+  protected List<InputSplit> computeSplits(long desiredBundleSizeBytes) throws IOException,
       IllegalAccessException, InstantiationException {
     Job job = Job.getInstance();
     FileInputFormat.setMinInputSplitSize(job, desiredBundleSizeBytes);
@@ -273,12 +273,13 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     private final BoundedSource<KV<K, V>> source;
     private final String filepattern;
     private final Class formatClass;
+    private final Configuration conf;
+    protected final Job job;
 
     private FileInputFormat<?, ?> format;
     private TaskAttemptContext attemptContext;
     private List<InputSplit> splits;
     private ListIterator<InputSplit> splitsIterator;
-    private Configuration conf;
     protected RecordReader<K, V> currentReader;
     private KV<K, V> currentPair;
 
@@ -286,7 +287,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
      * Create a {@code HadoopFileReader} based on a file or a file pattern specification.
      */
     public HadoopFileReader(BoundedSource<KV<K, V>> source, String filepattern,
-        Class<? extends FileInputFormat<?, ?>> formatClass) {
+        Class<? extends FileInputFormat<?, ?>> formatClass) throws IOException {
       this(source, filepattern, formatClass, null);
     }
 
@@ -294,7 +295,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
      * Create a {@code HadoopFileReader} based on a single Hadoop input split.
      */
     public HadoopFileReader(BoundedSource<KV<K, V>> source, String filepattern,
-        Class<? extends FileInputFormat<?, ?>> formatClass, InputSplit split) {
+        Class<? extends FileInputFormat<?, ?>> formatClass, InputSplit split) throws IOException {
       this.source = source;
       this.filepattern = filepattern;
       this.formatClass = formatClass;
@@ -302,11 +303,12 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
         this.splits = ImmutableList.of(split);
         this.splitsIterator = splits.listIterator();
       }
+      this.job = Job.getInstance(); // new instance
+      this.conf = job.getConfiguration();
     }
 
     @Override
     public boolean start() throws IOException {
-      Job job = Job.getInstance(); // new instance
       Path path = new Path(filepattern);
       FileInputFormat.addInputPath(job, path);
 
@@ -324,7 +326,6 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
         this.splits = format.getSplits(job);
         this.splitsIterator = splits.listIterator();
       }
-      this.conf = job.getConfiguration();
       return advance();
     }
 
