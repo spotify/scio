@@ -28,7 +28,8 @@ private[scio] object TupleFunctions {
 
   def kvToTuple[K, V](kv: KV[K, V]): (K, V) = (kv.getKey, kv.getValue)
 
-  def kvIterableToTuple[K, V](kv: KV[K, JIterable[V]]): (K, Iterable[V]) = (kv.getKey, kv.getValue.asScala)
+  def kvIterableToTuple[K, V](kv: KV[K, JIterable[V]]): (K, Iterable[V]) =
+    (kv.getKey, kv.getValue.asScala)
 
   def kvListToTuple[K, V](kv: KV[K, JList[V]]): (K, Iterable[V]) =
     (kv.getKey, kv.getValue.asInstanceOf[JIterable[V]].asScala)
