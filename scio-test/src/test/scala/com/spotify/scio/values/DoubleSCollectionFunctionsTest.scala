@@ -23,15 +23,16 @@ import com.spotify.scio.util.StatCounter
 class DoubleSCollectionFunctionsTest extends PipelineSpec {
 
   val ints = 1 to 100
-  val longs = (1 to 100).map(_.toLong)
-  val floats = (1 to 100).map(_.toFloat)
-  val doubles = (1 to 100).map(_.toDouble)
-  val expected = StatCounter((1 to 100).map(_.toDouble): _*)
+  val longs = ints.map(_.toLong)
+  val floats = ints.map(_.toFloat)
+  val doubles = ints.map(_.toDouble)
+  val expected = StatCounter(ints.map(_.toDouble): _*)
 
   def test(s: Seq[Double], e: Double): Unit = {
     s.size shouldBe 1L
     s.head shouldBe e +- 1e-10
   }
+
 
   "DoubleSCollection" should "support sampleStdev()" in {
     val e = expected.sampleStdev
