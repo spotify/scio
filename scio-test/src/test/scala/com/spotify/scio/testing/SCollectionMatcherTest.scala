@@ -60,39 +60,39 @@ class SCollectionMatcherTest extends PipelineSpec {
     }
   }
 
-  it should "support equalToMap" in {
+  it should "support equalMapOf" in {
     val s = Seq("a" -> 1, "b" -> 2, "c" -> 3)
     runWithContext { sc =>
-      sc.parallelize(s) should equalToMap (s.toMap)
-      sc.parallelize(Seq.empty[(String, Int)]) should equalToMap (Map.empty[String, Int])
+      sc.parallelize(s) should equalMapOf (s.toMap)
+      sc.parallelize(Seq.empty[(String, Int)]) should equalMapOf (Map.empty[String, Int])
     }
 
     intercept[AssertionError] {
-      runWithContext { _.parallelize(s) should equalToMap ((s :+ "d" -> 4).toMap) }
+      runWithContext { _.parallelize(s) should equalMapOf ((s :+ "d" -> 4).toMap) }
     }
     intercept[AssertionError] {
-      runWithContext { _.parallelize(s :+ "d" -> 4) should equalToMap (s.toMap) }
-    }
-
-    intercept[AssertionError] {
-      runWithContext { _.parallelize(s) should equalToMap (s.tail.toMap) }
-    }
-    intercept[AssertionError] {
-      runWithContext { _.parallelize(s.tail) should equalToMap (s.toMap) }
+      runWithContext { _.parallelize(s :+ "d" -> 4) should equalMapOf (s.toMap) }
     }
 
     intercept[AssertionError] {
-      runWithContext { _.parallelize(s) should equalToMap (s.toMap + ("a" -> 10)) }
+      runWithContext { _.parallelize(s) should equalMapOf (s.tail.toMap) }
     }
     intercept[AssertionError] {
-      runWithContext { _.parallelize(s.tail :+ ("a" -> 10)) should equalToMap (s.toMap) }
+      runWithContext { _.parallelize(s.tail) should equalMapOf (s.toMap) }
     }
 
     intercept[AssertionError] {
-      runWithContext { _.parallelize(s) should equalToMap (Map.empty[String, Int]) }
+      runWithContext { _.parallelize(s) should equalMapOf (s.toMap + ("a" -> 10)) }
     }
     intercept[AssertionError] {
-      runWithContext { _.parallelize(Seq.empty[(String, Int)]) should equalToMap (s.toMap) }
+      runWithContext { _.parallelize(s.tail :+ ("a" -> 10)) should equalMapOf (s.toMap) }
+    }
+
+    intercept[AssertionError] {
+      runWithContext { _.parallelize(s) should equalMapOf (Map.empty[String, Int]) }
+    }
+    intercept[AssertionError] {
+      runWithContext { _.parallelize(Seq.empty[(String, Int)]) should equalMapOf (s.toMap) }
     }
   }
 

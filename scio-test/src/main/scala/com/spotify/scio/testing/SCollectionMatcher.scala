@@ -54,7 +54,7 @@ private[scio] trait SCollectionMatcher {
       MatchResult(tryAssert(() => DataflowAssert.that(left.internal).empty()), "", "")
   }
 
-  def equalToMap[K: ClassTag, V: ClassTag](value: Map[K, V]): Matcher[SCollection[(K, V)]] = new Matcher[SCollection[(K, V)]] {
+  def equalMapOf[K: ClassTag, V: ClassTag](value: Map[K, V]): Matcher[SCollection[(K, V)]] = new Matcher[SCollection[(K, V)]] {
     override def apply(left: SCollection[(K, V)]): MatchResult = {
       val kv = SCollection.makePairSCollectionFunctions(left).toKV.internal
       MatchResult(tryAssert(() => DataflowAssert.thatMap(kv).isEqualTo(value.asJava)), "", "")
