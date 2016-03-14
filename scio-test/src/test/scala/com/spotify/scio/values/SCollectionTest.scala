@@ -116,8 +116,7 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support count()" in {
     runWithContext { sc =>
-      val p = sc.parallelize(Seq("a", "b", "c")).count()
-      p should containSingleValue (3L)
+      sc.parallelize(Seq("a", "b", "c")) should haveSize (3)
     }
   }
 
@@ -309,10 +308,8 @@ class SCollectionTest extends PipelineSpec {
   it should "support take()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5))
-      val r1 = p.take(1).count()
-      val r2 = p.take(2).count()
-      r1 should containSingleValue (1L)
-      r2 should containSingleValue (2L)
+      p.take(1) should haveSize (1)
+      p.take(2) should haveSize (2)
     }
   }
 
