@@ -20,13 +20,12 @@ package com.spotify.scio.io
 import java.io.File
 import java.util.UUID
 
-import com.spotify.scio.ScioContext
+import com.spotify.scio._
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.testing.TestingUtils._
 import org.apache.commons.io.FileUtils
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 class TapTest extends PipelineSpec {
 
