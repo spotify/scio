@@ -54,6 +54,19 @@ private[scio] trait SCollectionMatcher {
       MatchResult(tryAssert(() => DataflowAssert.that(left.internal).empty()), "", "")
   }
 
+  def haveSize(size: Int): Matcher[SCollection[_]] = new Matcher[SCollection[_]] {
+    override def apply(left: SCollection[_]): MatchResult = {
+      val g = new SerializableFunction[java.lang.Iterable[Any], Void] {
+        val s = size  // defeat closure
+        override def apply(input: JIterable[Any]): Void = {
+          assert(input.asScala.size == s)
+          null
+        }
+      }
+      MatchResult(tryAssert(() => DataflowAssert.that(left.asInstanceOf[SCollection[Any]].internal).satisfies(g)), "", "")
+    }
+  }
+
   def equalMapOf[K: ClassTag, V: ClassTag](value: Map[K, V]): Matcher[SCollection[(K, V)]] = new Matcher[SCollection[(K, V)]] {
     override def apply(left: SCollection[(K, V)]): MatchResult = {
       val kv = SCollection.makePairSCollectionFunctions(left).toKV.internal

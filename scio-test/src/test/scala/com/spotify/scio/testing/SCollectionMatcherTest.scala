@@ -35,28 +35,40 @@ class SCollectionMatcherTest extends PipelineSpec {
   }
 
   it should "support containSingleValue" in {
-    runWithContext {
-      _.parallelize(Seq(1)) should containSingleValue (1)
-    }
+    runWithContext { _.parallelize(Seq(1)) should containSingleValue (1) }
 
+    intercept[AssertionError] {
+      runWithContext { _.parallelize(Seq(1)) should containSingleValue (10) }
+    }
     intercept[PipelineExecutionException] {
       runWithContext { _.parallelize(1 to 10) should containSingleValue (1) }
     }
-
     intercept[PipelineExecutionException] {
       runWithContext { _.parallelize(Seq.empty[Int]) should containSingleValue (1) }
     }
   }
 
   it should "support beEmpty" in {
-    runWithContext {
-      _.parallelize(Seq.empty[Int]) should beEmpty
-    }
+    runWithContext { _.parallelize(Seq.empty[Int]) should beEmpty }
 
     intercept[AssertionError] {
-      runWithContext {
-        _.parallelize(1 to 10) should beEmpty
-      }
+      runWithContext { _.parallelize(1 to 10) should beEmpty }
+    }
+  }
+
+  it should "support haveSize" in {
+    runWithContext { _.parallelize(Seq.empty[Int]) should haveSize (0) }
+    runWithContext { _.parallelize(Seq(1)) should haveSize (1) }
+    runWithContext { _.parallelize(1 to 10) should haveSize (10) }
+
+    intercept[AssertionError] {
+      runWithContext { _.parallelize(Seq.empty[Int]) should haveSize(1) }
+    }
+    intercept[AssertionError] {
+      runWithContext { _.parallelize(Seq(1)) should haveSize(0) }
+    }
+    intercept[AssertionError] {
+      runWithContext { _.parallelize(1 to 10) should haveSize (20) }
     }
   }
 
