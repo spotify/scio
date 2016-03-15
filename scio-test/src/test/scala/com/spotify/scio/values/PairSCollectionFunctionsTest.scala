@@ -24,11 +24,11 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
 
   import com.spotify.scio.testing.TestingUtils._
 
-  "PairSCollection" should "support coGroup()" in {
+  "PairSCollection" should "support cogroup()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11L), ("b", 12L), ("d", 14L)))
-      val r1 = p1.coGroup(p2)
+      val r1 = p1.cogroup(p2)
       val r2 = p1.groupWith(p2)
       val expected = Seq(
         ("a", (iterable(1), iterable(11L))),
@@ -40,12 +40,12 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support coGroup() with duplicate keys" in {
+  it should "support cogroup() with duplicate keys" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11L), ("b", 12L), ("b", 13L), ("d", 14L)))
       def fn = (t: (String, (Iterable[Int], Iterable[Long]))) => (t._1, (t._2._1.toSet, t._2._2.toSet))
-      val r1 = p1.coGroup(p2).map(fn)
+      val r1 = p1.cogroup(p2).map(fn)
       val r2 = p1.groupWith(p2).map(fn)
       val expected = Seq[(String, (Set[Int], Set[Long]))](
         ("a", (Set(1, 2), Set(11L))),
@@ -57,12 +57,12 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support 3-way coGroup()" in {
+  it should "support 3-way cogroup()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11L), ("b", 12L), ("d", 14L)))
       val p3 = sc.parallelize(Seq(("a", 21F), ("b", 22F), ("e", 25F)))
-      val r1 = p1.coGroup(p2, p3)
+      val r1 = p1.cogroup(p2, p3)
       val r2 = p1.groupWith(p2, p3)
       val expected = Seq(
         ("a", (iterable(1), iterable(11L), iterable(21F))),
@@ -75,13 +75,13 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support 4-way coGroup()" in {
+  it should "support 4-way cogroup()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11L), ("b", 12L), ("d", 14L)))
       val p3 = sc.parallelize(Seq(("a", 21F), ("b", 22F), ("e", 25F)))
       val p4 = sc.parallelize(Seq(("a", 31.0), ("b", 32.0), ("f", 36.0)))
-      val r1 = p1.coGroup(p2, p3, p4)
+      val r1 = p1.cogroup(p2, p3, p4)
       val r2 = p1.groupWith(p2, p3, p4)
       val expected = Seq(
         ("a", (iterable(1), iterable(11L), iterable(21F), iterable(31.0))),

@@ -50,7 +50,7 @@ def mkFnRetVal(n, aWrapper=None, otherWrapper=None):
 def cogroup(out, n):
     vals = mkVals(n)
 
-    print >> out, '  def coGroup[%s](%s): %s = {' % (
+    print >> out, '  def cogroup[%s](%s): %s = {' % (
         mkClassTags(n), mkFnArgs(n), mkFnRetVal(n, 'Iterable', 'Iterable'))
 
     print >> out, '    val (%s) = (%s)' % (
@@ -74,7 +74,7 @@ def cogroup(out, n):
 def join(out, n):
     print >> out, '  def apply[%s](%s): %s = {' % (
         mkClassTags(n), mkFnArgs(n), mkFnRetVal(n))
-    print >> out, '    coGroup(%s)' % mkArgs(n)
+    print >> out, '    cogroup(%s)' % mkArgs(n)
     print >> out, '      .flatMap { kv =>'
     print >> out, '        for {'
     for (i, x) in enumerate(mkVals(n)):
@@ -88,7 +88,7 @@ def join(out, n):
 def left(out, n):
     print >> out, '  def left[%s](%s): %s = {' % (
         mkClassTags(n), mkFnArgs(n), mkFnRetVal(n, None, 'Option'))
-    print >> out, '    coGroup(%s)' % mkArgs(n)
+    print >> out, '    cogroup(%s)' % mkArgs(n)
     print >> out, '      .flatMap { kv =>'
     print >> out, '        for {'
     for (i, x) in enumerate(mkVals(n)):
@@ -108,7 +108,7 @@ def left(out, n):
 def outer(out, n):
     print >> out, '  def outer[%s](%s): %s = {' % (
         mkClassTags(n), mkFnArgs(n), mkFnRetVal(n, 'Option', 'Option'))
-    print >> out, '    coGroup(%s)' % mkArgs(n)
+    print >> out, '    cogroup(%s)' % mkArgs(n)
     print >> out, '      .flatMap { kv =>'
     print >> out, '        for {'
     for (i, x) in enumerate(mkVals(n)):

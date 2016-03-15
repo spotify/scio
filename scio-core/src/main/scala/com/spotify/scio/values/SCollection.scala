@@ -159,7 +159,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group collection
    */
   def intersection(that: SCollection[T]): SCollection[T] =
-    this.map((_, 1)).coGroup(that.map((_, 1))).flatMap { t =>
+    this.map((_, 1)).cogroup(that.map((_, 1))).flatMap { t =>
       if (t._2._1.nonEmpty && t._2._2.nonEmpty) Seq(t._1) else Seq.empty
     }
 
@@ -414,7 +414,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def subtract(that: SCollection[T]): SCollection[T] =
-    this.map((_, 1)).coGroup(that.map((_, 1))).flatMap { t =>
+    this.map((_, 1)).cogroup(that.map((_, 1))).flatMap { t =>
       if (t._2._1.nonEmpty && t._2._2.isEmpty) Seq(t._1) else Seq.empty
     }
 

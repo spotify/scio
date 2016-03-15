@@ -93,18 +93,18 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * the list of values for that key in `this` as well as `that`.
    * @group cogroup
    */
-  def coGroup[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Iterable[V], Iterable[W]))] =
-    MultiJoin.coGroup(self, that)
+  def cogroup[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Iterable[V], Iterable[W]))] =
+    MultiJoin.cogroup(self, that)
 
   /**
    * For each key k in `this` or `that1` or `that2`, return a resulting SCollection that contains
    * a tuple with the list of values for that key in `this`, `that1` and `that2`.
    * @group cogroup
    */
-  def coGroup[W1: ClassTag, W2: ClassTag]
+  def cogroup[W1: ClassTag, W2: ClassTag]
   (that1: SCollection[(K, W1)], that2: SCollection[(K, W2)])
   : SCollection[(K, (Iterable[V], Iterable[W1], Iterable[W2]))] =
-    MultiJoin.coGroup(self, that1, that2)
+    MultiJoin.cogroup(self, that1, that2)
 
   /**
    * For each key k in `this` or `that1` or `that2` or `that3`, return a resulting SCollection
@@ -112,17 +112,17 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * `that3`.
    * @group cogroup
    */
-  def coGroup[W1: ClassTag, W2: ClassTag, W3: ClassTag]
+  def cogroup[W1: ClassTag, W2: ClassTag, W3: ClassTag]
   (that1: SCollection[(K, W1)], that2: SCollection[(K, W2)], that3: SCollection[(K, W3)])
   : SCollection[(K, (Iterable[V], Iterable[W1], Iterable[W2], Iterable[W3]))] =
-    MultiJoin.coGroup(self, that1, that2, that3)
+    MultiJoin.cogroup(self, that1, that2, that3)
 
   /**
    * Alias for cogroup.
    * @group cogroup
    */
   def groupWith[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Iterable[V], Iterable[W]))] =
-    this.coGroup(that)
+    this.cogroup(that)
 
   /**
    * Alias for cogroup.
@@ -131,7 +131,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   def groupWith[W1: ClassTag, W2: ClassTag]
   (that1: SCollection[(K, W1)], that2: SCollection[(K, W2)])
   : SCollection[(K, (Iterable[V], Iterable[W1], Iterable[W2]))] =
-    this.coGroup(that1, that2)
+    this.cogroup(that1, that2)
 
   /**
    * Alias for cogroup.
@@ -140,7 +140,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   def groupWith[W1: ClassTag, W2: ClassTag, W3: ClassTag]
   (that1: SCollection[(K, W1)], that2: SCollection[(K, W2)], that3: SCollection[(K, W3)])
   : SCollection[(K, (Iterable[V], Iterable[W1], Iterable[W2], Iterable[W3]))] =
-    this.coGroup(that1, that2, that3)
+    this.cogroup(that1, that2, that3)
 
   // =======================================================================
   // Joins
@@ -185,7 +185,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group join
    */
   def rightOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Option[V], W))] =
-    this.coGroup(that).flatMap { t =>
+    this.cogroup(that).flatMap { t =>
       for {
         v <- if (t._2._1.isEmpty) Iterable(None) else t._2._1.map(Option(_))
         w <- t._2._2
@@ -387,7 +387,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group per_key
    */
   def subtractByKey[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, V)] =
-    this.coGroup(that).flatMap { t =>
+    this.cogroup(that).flatMap { t =>
       if (t._2._1.nonEmpty && t._2._2.isEmpty) t._2._1.map((t._1, _)) else  Seq.empty
     }
 
