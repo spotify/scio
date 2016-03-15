@@ -37,6 +37,7 @@ import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.cloud.dataflow.sdk.values.{PBegin, PCollection, POutput, TimestampedValue}
 import com.spotify.scio.bigquery._
 import com.spotify.scio.coders.KryoAtomicCoder
+import com.spotify.scio.io.Tap
 import com.spotify.scio.testing._
 import com.spotify.scio.util.{CallSites, ScioUtil}
 import com.spotify.scio.values._
@@ -140,7 +141,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
   /* Mutable members */
   private var _pipeline: Pipeline = null
   private var _isClosed: Boolean = false
-  private val _promises: MBuffer[(Promise[AnyRef], AnyRef)] = MBuffer.empty
+  private val _promises: MBuffer[(Promise[Tap[_]], Tap[_])] = MBuffer.empty
   private val _bigQueryJobs: MBuffer[JobReference] = MBuffer.empty
   private val _accumulators: MSet[String] = MSet.empty
 
@@ -252,10 +253,10 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
   // =======================================================================
 
   // To be updated once the pipeline completes.
-  private[scio] def makeFuture[T](value: AnyRef): Future[T] = {
-    val p = Promise[AnyRef]()
-    _promises.append((p, value))
-    p.future.asInstanceOf[Future[T]]
+  private[scio] def makeFuture[T](value: Tap[T]): Future[Tap[T]] = {
+    val p = Promise[Tap[T]]()
+    _promises.append((p.asInstanceOf[Promise[Tap[_]]], value.asInstanceOf[Tap[_]]))
+    p.future
   }
 
   private def updateFutures(state: State): Unit = _promises.foreach { kv =>
