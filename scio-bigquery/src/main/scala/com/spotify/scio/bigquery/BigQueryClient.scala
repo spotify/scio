@@ -136,34 +136,28 @@ class BigQueryClient private (private val projectId: String, auth: Option[Either
 
   /** Get rows from a table. */
   def getTableRows(table: TableReference): Iterator[TableRow] = new Iterator[TableRow] {
-    private val i = BigQueryTableRowIterator.fromTable(table, bigquery)
-    private var isOpen = false
+    private val iterator = BigQueryTableRowIterator.fromTable(table, bigquery)
+    private var _isOpen = false
     private var _hasNext = false
-
+    private def init(): Unit = if (!_isOpen) {
+      iterator.open()
+      _isOpen = true
+      _hasNext = iterator.advance()
+    }
     override def hasNext: Boolean = {
-      if (!isOpen) {
-        isOpen = true
-        i.open()
-        _hasNext = i.advance()
-      }
+      init()
       _hasNext
     }
-
     override def next(): TableRow = {
-      if (!isOpen) {
-        isOpen = true
-        i.open()
-        _hasNext = i.advance()
-      }
+      init()
       if (_hasNext) {
-        val r = i.getCurrent
-        _hasNext = i.advance()
+        val r = iterator.getCurrent
+        _hasNext = iterator.advance()
         r
       } else {
         throw new NoSuchElementException
       }
     }
-
   }
 
   /** Get schema from a table. */
