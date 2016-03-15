@@ -22,7 +22,7 @@ Scio is a Scala API for [Google Cloud Dataflow](https://github.com/GoogleCloudPl
 - Interactive mode with Scio REPL
 - Type safe BigQuery
 - Integration with [Algebird](https://github.com/twitter/algebird) and [Breeze](https://github.com/scalanlp/breeze)
-- Pipeline orchestration with [Scala Futures](http://docs.scala-lang.org/overviews/core/futures.html).
+- Pipeline orchestration with [Scala Futures](http://docs.scala-lang.org/overviews/core/futures.html)
 - Distributed cache
 
 <sup>*</sup> provided by Google Cloud Dataflow
@@ -54,8 +54,6 @@ Scio includes the following artifacts:
 - `scio-bigtable`: Add-on for Bigtable
 - `scio-extra`: Extra utilities for working with collections, Breeze, etc.
 - `scio-hdfs`: Add-on for HDFS
-
-To access HDFS from a Scio job, Hadoop configuration files (`core-site.xml`, `hdfs-site.xml`, etc.) must be present in `src/main/resources` and `--network` should be set to one that has access to the Hadoop cluster.
 
 # License
 
