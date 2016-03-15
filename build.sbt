@@ -155,7 +155,7 @@ lazy val scioCore: Project = Project(
   "scio-core",
   file("scio-core"),
   settings = commonSettings ++ Seq(
-    name := "Scio - A Scala API for Google Cloud Dataflow",
+    description := "Scio - A Scala API for Google Cloud Dataflow",
     libraryDependencies ++= Seq(
       dataflowSdkDependency,
       "com.twitter" %% "algebird-core" % algebirdVersion,
@@ -174,7 +174,7 @@ lazy val scioTest: Project = Project(
   "scio-test",
   file("scio-test"),
   settings = commonSettings ++ Seq(
-    name := "Scio helpers for ScalaTest",
+    description := "Scio helpers for ScalaTest",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % scalaTestVersion,
       // DataFlow testing requires junit and hamcrest
@@ -191,7 +191,7 @@ lazy val scioBigQuery: Project = Project(
   "scio-bigquery",
   file("scio-bigquery"),
   settings = commonSettings ++ Seq(
-    name := "Scio add-on for Google BigQuery",
+    description := "Scio add-on for Google BigQuery",
     libraryDependencies ++= Seq(
       dataflowSdkDependency,
       "commons-io" % "commons-io" % commonsIoVersion,
@@ -215,7 +215,7 @@ lazy val scioBigTable: Project = Project(
   "scio-bigtable",
   file("scio-bigtable"),
   settings = commonSettings ++ Seq(
-    name := "Scio add-on for Google Cloud Bigtable",
+    description := "Scio add-on for Google Cloud Bigtable",
     libraryDependencies ++= Seq(
       "com.google.cloud.bigtable" % "bigtable-hbase-dataflow" % bigtableVersion exclude ("org.slf4j", "slf4j-log4j12"),
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12"),
@@ -230,7 +230,7 @@ lazy val scioExtra: Project = Project(
   "scio-extra",
   file("scio-extra"),
   settings = commonSettings ++ Seq(
-    name := "Scio extra utilities",
+    description := "Scio extra utilities",
     libraryDependencies ++= Seq(
       "com.google.guava" % "guava" % guavaVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
@@ -245,7 +245,7 @@ lazy val scioHdfs: Project = Project(
   "scio-hdfs",
   file("scio-hdfs"),
   settings = commonSettings ++ Seq(
-    name := "Scio add-on for HDFS",
+    description := "Scio add-on for HDFS",
     libraryDependencies ++= Seq(
       "org.apache.avro" % "avro-mapred" % avroVersion classifier("hadoop2"),
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12"),
