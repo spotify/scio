@@ -135,8 +135,36 @@ class BigQueryClient private (private val projectId: String, auth: Option[Either
   def getTableRows(tableSpec: String): Iterator[TableRow] = getTableRows(BigQueryIO.parseTableSpec(tableSpec))
 
   /** Get rows from a table. */
-  def getTableRows(table: TableReference): Iterator[TableRow] =
-    BigQueryTableRowIterator.fromTable(table, bigquery).asScala
+  def getTableRows(table: TableReference): Iterator[TableRow] = new Iterator[TableRow] {
+    private val i = BigQueryTableRowIterator.fromTable(table, bigquery)
+    private var isOpen = false
+    private var _hasNext = false
+
+    override def hasNext: Boolean = {
+      if (!isOpen) {
+        isOpen = true
+        i.open()
+        _hasNext = i.advance()
+      }
+      _hasNext
+    }
+
+    override def next(): TableRow = {
+      if (!isOpen) {
+        isOpen = true
+        i.open()
+        _hasNext = i.advance()
+      }
+      if (_hasNext) {
+        val r = i.getCurrent
+        _hasNext = i.advance()
+        r
+      } else {
+        throw new NoSuchElementException
+      }
+    }
+
+  }
 
   /** Get schema from a table. */
   def getTableSchema(tableSpec: String): TableSchema = getTableSchema(BigQueryIO.parseTableSpec(tableSpec))
