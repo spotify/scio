@@ -17,7 +17,7 @@
 
 package com.spotify.scio.examples.extra
 
-import com.spotify.scio.bigtable.{BigTableInput, BigTableOutput}
+import com.spotify.scio.bigtable._
 import com.spotify.scio.testing._
 import org.apache.hadoop.hbase.client.{Put, Result}
 import org.apache.hadoop.hbase.{CellUtil, HConstants, KeyValue}
@@ -25,6 +25,8 @@ import org.apache.hadoop.hbase.{CellUtil, HConstants, KeyValue}
 import scala.collection.JavaConverters._
 
 class BigTableExampleTest extends PipelineSpec {
+
+  import BigTableExampleTest._
 
   val bigtableOptions = Seq(
     "--bigtableProjectId=my-project",
@@ -35,25 +37,6 @@ class BigTableExampleTest extends PipelineSpec {
   val textIn = Seq("a b c d e", "a b a b")
   val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
   val expectedPut = wordCount.map(kv => BigTableExample.put(kv._1, kv._2))
-
-  // convert Put to basic comparable types
-  private def comparablePut(p: Put): (String, Map[String, Seq[(String, String)]]) = {
-    def encode(b: Array[Byte], offset: Int = 0, length: Int = Int.MaxValue) =
-      new String(b, offset, scala.math.min(length, b.length))
-
-    val row = encode(p.getRow)
-    val map = p.getFamilyCellMap.asScala.map { case (k, v) =>
-      val family = encode(k)
-      val cells = v.asScala.map { c =>
-        val qualifier = encode(c.getQualifierArray, c.getQualifierOffset, c.getQualifierLength)
-        val value = encode(c.getValueArray, c.getValueOffset, c.getValueLength)
-        (qualifier, value)
-      }
-      .toSeq
-      (family, cells)
-    }.toMap
-    (row, map)
-  }
 
   "BigTableWriteExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.BigTableWriteExample.type]
@@ -83,4 +66,43 @@ class BigTableExampleTest extends PipelineSpec {
       .run()
   }
 
+  val kingLear = Seq("a b", "a b c")
+  val othello = Seq("b c ", "b c d")
+  val expectedMultiple = Seq(
+    "kinglear" -> Iterable("a" -> 2L, "b" -> 2L, "c" -> 1L).map(kv => BigTableExample.put(kv._1, kv._2)),
+    "othello" -> Iterable("b" -> 2L, "c" -> 2L, "d" -> 1L).map(kv => BigTableExample.put(kv._1, kv._2))
+  )
+
+  "BigTableMultipleWriteExample" should "work" in {
+    JobTest[com.spotify.scio.examples.extra.MultipleBigTableWriteExample.type]
+      .args(bigtableOptions ++ Seq("--kinglear=k.txt", "--othello=o.txt"): _*)
+      .input(TextIO("k.txt"), kingLear)
+      .input(TextIO("o.txt"), othello)
+      .output(MultipleBigTableOutput[Put]("my-project", "my-cluster", "us-east1-a")) {
+        _.mapValues(_.map(comparablePut).toSet) should containInAnyOrder (expectedMultiple.map(kv => (kv._1, kv._2.map(comparablePut).toSet)))
+      }
+      .run()
+  }
+
+}
+
+object BigTableExampleTest {
+  // convert Put to basic comparable types
+  def comparablePut(p: Put): (String, Map[String, Seq[(String, String)]]) = {
+    def encode(b: Array[Byte], offset: Int = 0, length: Int = Int.MaxValue) =
+      new String(b, offset, scala.math.min(length, b.length))
+
+    val row = encode(p.getRow)
+    val map = p.getFamilyCellMap.asScala.map { case (k, v) =>
+      val family = encode(k)
+      val cells = v.asScala.map { c =>
+        val qualifier = encode(c.getQualifierArray, c.getQualifierOffset, c.getQualifierLength)
+        val value = encode(c.getValueArray, c.getValueOffset, c.getValueLength)
+        (qualifier, value)
+      }
+        .toSeq
+      (family, cells)
+    }.toMap
+    (row, map)
+  }
 }

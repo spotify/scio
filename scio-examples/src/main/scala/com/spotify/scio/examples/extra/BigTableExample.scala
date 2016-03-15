@@ -21,6 +21,7 @@ import com.google.cloud.bigtable.dataflow.{CloudBigtableScanConfiguration, Cloud
 import com.spotify.scio._
 import com.spotify.scio.bigtable._
 import com.spotify.scio.examples.common.ExampleData
+import com.spotify.scio.values.SCollection
 import org.apache.hadoop.hbase.client.{Result, Put}
 
 object BigTableExample {
@@ -81,6 +82,42 @@ object BigTableReadExample {
     sc.bigTable(config)
       .map(BigTableExample.result)
       .saveAsTextFile(args("output"))
+
+    sc.close()
+  }
+}
+
+/*
+SBT
+runMain
+  com.spotify.scio.examples.extra.MultipleBigTableWriteExample
+  --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
+  --stagingLocation=gs://[BUCKET]/path/to/staging
+  --input=gs://dataflow-samples/shakespeare/kinglear.txt
+  --bigtableProjectId=[BIG_TABLE_PROJECT_ID]
+  --bigtableClusterId=[BIG_TABLE_CLUSTER_ID]
+  --bigtableZoneId=[BIG_TABLE_ZONE_ID]
+  --bigtableTableId=[BIG_TABLE_TABLE_ID]
+*/
+
+object MultipleBigTableWriteExample {
+  def main(cmdlineArgs: Array[String]): Unit = {
+
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val config = CloudBigtableTableConfiguration.fromCBTOptions(BigTable.parseOptions(cmdlineArgs))
+
+    def wordCount(name: String, in: SCollection[String]): SCollection[(String, Iterable[Put])] =
+      in.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
+        .countByValue()
+        .map(kv => BigTableExample.put(kv._1, kv._2))
+        .groupBy(_ => Unit)
+        .map(kv => (name, kv._2))
+
+    val kingLear = sc.textFile(args.getOrElse("kinglear", ExampleData.KING_LEAR))
+    val othello = sc.textFile(args.getOrElse("othello", ExampleData.OTHELLO))
+
+    (wordCount("kinglear", kingLear) ++ wordCount("othello", othello))
+      .saveAsMultipleBigTable(config)
 
     sc.close()
   }
