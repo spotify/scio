@@ -62,7 +62,7 @@ object BigTableWriteExample {
 /*
 SBT
 runMain
-  com.spotify.scio.examples.extra.BigTableWriteExample
+  com.spotify.scio.examples.extra.BigTableReadExample
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/path/to/staging
   --bigtableProjectId=[BIG_TABLE_PROJECT_ID]
