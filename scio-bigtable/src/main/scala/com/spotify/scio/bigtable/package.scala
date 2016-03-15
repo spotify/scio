@@ -117,18 +117,17 @@ package object bigtable {
     def saveAsMultipleBigTable(projectId: String,
                                clusterId: String,
                                zoneId: String,
-                               tableId: String,
                                additionalConfiguration: Map[String, String] = Map.empty)
                               (implicit ev: T <:< Mutation): Future[Tap[(String, Iterable[Result])]] = {
       val config = new CloudBigtableTableConfiguration(
-        projectId, zoneId, clusterId, tableId, additionalConfiguration.asJava)
+        projectId, zoneId, clusterId, null, additionalConfiguration.asJava)
       this.saveAsMultipleBigTable(config)
     }
 
     /** Save this SCollection as multiple BigTable tables. Note that value elements must be of type Mutation. */
     def saveAsMultipleBigTable(config: CloudBigtableTableConfiguration)(implicit ev: T <:< Mutation): Future[Tap[(String, Iterable[Result])]] = {
       if (self.context.isTest) {
-        val output = MultipleBigTableOutput(config.getProjectId, config.getClusterId, config.getZoneId, config.getTableId)
+        val output = MultipleBigTableOutput(config.getProjectId, config.getClusterId, config.getZoneId)
         self.context.testOut(output.asInstanceOf[TestIO[(String, Iterable[T])]])(self)
       } else {
         CloudBigtableIO.writeToMultipleTables(config)
@@ -147,7 +146,7 @@ package object bigtable {
   case class BigTableOutput[T <: Mutation](projectId: String, clusterId: String, zoneId: String, tableId: String)
     extends TestIO[T](s"$projectId\t$clusterId\t$zoneId\t$tableId")
 
-  case class MultipleBigTableOutput[T <: Mutation](projectId: String, clusterId: String, zoneId: String, tableId: String)
-    extends TestIO[(String, Iterable[T])](s"$projectId\t$clusterId\t$zoneId\t$tableId")
+  case class MultipleBigTableOutput[T <: Mutation](projectId: String, clusterId: String, zoneId: String)
+    extends TestIO[(String, Iterable[T])](s"$projectId\t$clusterId\t$zoneId")
 
 }
