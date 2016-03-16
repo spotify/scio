@@ -50,6 +50,8 @@ private[scio] object Implicits {
 
     def getScalaCoder[T: ClassTag]: Coder[T] = {
       val coder = try {
+        // This may fail in come cases, i.e. Malformed class name in REPL
+        // Always fall back to Kryo
         r.getDefaultCoder(TypeDescriptor.of(ScioUtil.classOf[T]))
       } catch {
         case _: Throwable => null
