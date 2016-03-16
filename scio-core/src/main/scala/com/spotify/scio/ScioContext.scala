@@ -142,7 +142,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
   private var _pipeline: Pipeline = null
   private var _isClosed: Boolean = false
   private val _promises: MBuffer[(Promise[Tap[_]], Tap[_])] = MBuffer.empty
-  private val _bigQueryJobs: MBuffer[JobReference] = MBuffer.empty
+  private val _queryJobs: MBuffer[QueryJob] = MBuffer.empty
   private val _accumulators: MSet[String] = MSet.empty
 
   /** Wrap a [[com.google.cloud.dataflow.sdk.values.PCollection PCollection]]. */
@@ -210,8 +210,8 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
 
   /** Close the context. No operation can be performed once the context is closed. */
   def close(): ScioResult = {
-    if (_bigQueryJobs.nonEmpty) {
-      bigQueryClient.waitForJobs(_bigQueryJobs: _*)
+    if (_queryJobs.nonEmpty) {
+      bigQueryClient.waitForJobs(_queryJobs: _*)
     }
 
     _isClosed = true
@@ -334,9 +334,9 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
     if (this.isTest) {
       this.getTestInput(BigQueryIO(sqlQuery))
     } else {
-      val (tableRef, jobRef) = this.bigQueryClient.queryIntoTable(sqlQuery)
-      jobRef.foreach(j => _bigQueryJobs.append(j))
-      wrap(this.applyInternal(GBigQueryIO.Read.from(tableRef).withoutValidation())).setName(sqlQuery)
+      val queryJob = this.bigQueryClient.queryIntoTable(sqlQuery)
+      _queryJobs.append(queryJob)
+      wrap(this.applyInternal(GBigQueryIO.Read.from(queryJob.table).withoutValidation())).setName(sqlQuery)
     }
   }
 
