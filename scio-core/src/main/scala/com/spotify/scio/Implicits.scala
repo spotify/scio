@@ -45,15 +45,7 @@ private[scio] object Implicits {
 
       // Fall back to Kryo
       r.setFallbackCoderProvider(new CoderProvider {
-        override def getCoder[T](tpe: TypeDescriptor[T]): Coder[T] = {
-          val cls = tpe.getRawType.asInstanceOf[Class[T]]
-          if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-            // TODO: what about GenericRecord?
-            AvroCoder.of(cls)
-          } else {
-            KryoAtomicCoder[T]
-          }
-        }
+        override def getCoder[T](tpe: TypeDescriptor[T]): Coder[T] = KryoAtomicCoder[T]
       })
     }
 
