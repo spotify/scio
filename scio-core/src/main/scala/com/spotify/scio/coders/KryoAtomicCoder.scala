@@ -29,7 +29,7 @@ import org.apache.avro.specific.SpecificRecordBase
 
 import scala.collection.convert.Wrappers.JIterableWrapper
 
-private[scio] class KryoAtomicCoder extends AtomicCoder[Any] {
+private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
 
   @transient
   private lazy val kryo: Kryo = {
@@ -50,7 +50,7 @@ private[scio] class KryoAtomicCoder extends AtomicCoder[Any] {
     k
   }
 
-  override def encode(value: Any, outStream: OutputStream, context: Context): Unit = {
+  override def encode(value: T, outStream: OutputStream, context: Context): Unit = {
     if (value == null) {
       throw new CoderException("cannot encode a null value")
     }
@@ -70,8 +70,8 @@ private[scio] class KryoAtomicCoder extends AtomicCoder[Any] {
     }
   }
 
-  override def decode(inStream: InputStream, context: Context): Any = {
-    if (context.isWholeStream) {
+  override def decode(inStream: InputStream, context: Context): T = {
+    val o = if (context.isWholeStream) {
       kryo.readClassAndObject(new Input(inStream))
     } else {
       val length = VarInt.decodeInt(inStream)
@@ -83,10 +83,11 @@ private[scio] class KryoAtomicCoder extends AtomicCoder[Any] {
       ByteStreams.readFully(inStream, value)
       kryo.readClassAndObject(new Input(value))
     }
+    o.asInstanceOf[T]
   }
 
 }
 
 private[scio] object KryoAtomicCoder {
-  def apply[T]: Coder[T] = (new KryoAtomicCoder).asInstanceOf[Coder[T]]
+  def apply[T]: Coder[T] = new KryoAtomicCoder[T]
 }

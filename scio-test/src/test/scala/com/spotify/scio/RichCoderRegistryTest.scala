@@ -19,15 +19,15 @@ package com.spotify.scio
 
 import com.google.cloud.dataflow.sdk.coders.CoderRegistry
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
-import com.spotify.scio.avro.TestRecord
+import com.spotify.scio.avro.{Account, TestRecord}
 import com.spotify.scio.coders.CoderTestUtils._
+import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.testing.TestingUtils._
 import org.scalatest.matchers.{MatchResult, Matcher}
-import org.scalatest.{FlatSpec, Matchers}
 
 import scala.reflect.ClassTag
 
-class RichCoderRegistryTest extends FlatSpec with Matchers {
+class RichCoderRegistryTest extends PipelineSpec {
 
   import Implicits._
 
@@ -35,7 +35,7 @@ class RichCoderRegistryTest extends FlatSpec with Matchers {
   val registry = pipeline.getCoderRegistry
   registry.registerScalaCoders()
 
-  class RoundTripMatcher[T: ClassTag](value: T) extends Matcher[CoderRegistry] {
+  private def roundTrip[T: ClassTag](value: T) = new Matcher[CoderRegistry] {
     override def apply(left: CoderRegistry): MatchResult = {
       val coder = left.getScalaCoder[T]
       coder shouldNot be (null)
@@ -45,8 +45,6 @@ class RichCoderRegistryTest extends FlatSpec with Matchers {
         s"CoderRegistry did round trip $value")
     }
   }
-
-  private def roundTrip[T: ClassTag](value: T) = new RoundTripMatcher[T](value)
 
   "RichCoderRegistry" should "support Scala primitives" in {
     registry should roundTrip (10)
@@ -77,6 +75,22 @@ class RichCoderRegistryTest extends FlatSpec with Matchers {
     registry should roundTrip (r)
     registry should roundTrip (("key", r))
     registry should roundTrip (CaseClassWithSpecificRecord("record", 10, r))
+  }
+
+  it should "support Avro SpecificRecord in joins" in {
+    val expected = Seq(
+      new Account(1, "checking", "Alice", 1000.0),
+      new Account(2, "checking", "Bob", 2000.0))
+
+    runWithContext { sc =>
+      val lhs = sc.parallelize(1 to 10).map(i => new Account(i, "checking", "user_" + i, i * 1000.0))
+      val rhs = sc.parallelize(Seq(1 -> "Alice", 2 -> "Bob"))
+      lhs
+        .keyBy(_.getId.toInt)
+        .join(rhs)
+        .mapValues { case (account, name) => Account.newBuilder(account).setName(name).build() }
+        .values should containInAnyOrder (expected)
+    }
   }
 
 }

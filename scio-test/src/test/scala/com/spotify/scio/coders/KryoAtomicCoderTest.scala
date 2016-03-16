@@ -31,18 +31,16 @@ class KryoAtomicCoderTest extends PipelineSpec {
   import com.spotify.scio.testing.TestingUtils._
 
   type CoderFactory = () => Coder[Any]
-  val cf = () => new KryoAtomicCoder
+  val cf = () => KryoAtomicCoder[Any]
 
-  class RoundTripMatcher[T: ClassTag](value: T) extends Matcher[CoderFactory] {
+  private def roundTrip[T: ClassTag](value: T) = new Matcher[CoderFactory] {
     override def apply(left: CoderFactory): MatchResult = {
       MatchResult(
         testRoundTrip(left(), left(), value),
-        s"CoderRegistry did not round trip $value",
-        s"CoderRegistry did round trip $value")
+        s"Coder did not round trip $value",
+        s"Coder did round trip $value")
     }
   }
-
-  private def roundTrip[T: ClassTag](value: T) = new RoundTripMatcher[T](value)
 
   "KryoAtomicCoder" should "support Scala collections" in {
     cf should roundTrip (Seq(1, 2, 3))
