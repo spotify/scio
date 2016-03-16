@@ -26,7 +26,6 @@ val dataflowSdkVersion = "1.5.0"
 val algebirdVersion = "0.12.0"
 val avroVersion = "1.7.7"
 val bigtableVersion = "0.2.3"
-val bijectionVersion = "0.9.2"
 val breezeVersion ="0.12"
 val chillVersion = "0.8.0"
 val commonsIoVersion = "2.4"
@@ -159,7 +158,6 @@ lazy val scioCore: Project = Project(
     libraryDependencies ++= Seq(
       dataflowSdkDependency,
       "com.twitter" %% "algebird-core" % algebirdVersion,
-      "com.twitter" %% "bijection-avro" % bijectionVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" %% "chill-avro" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,

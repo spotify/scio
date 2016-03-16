@@ -19,27 +19,24 @@ package com.spotify.scio.coders
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
+import com.google.cloud.dataflow.sdk.coders.AvroCoder
+import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.common.collect.{BiMap, HashBiMap}
-import com.twitter.bijection.Injection
-import com.twitter.bijection.avro.{GenericAvroCodecs, SpecificAvroCodecs}
 import com.twitter.chill.KSerializer
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 
 import scala.collection.mutable.{Map => MMap}
-import scala.reflect.ClassTag
 
 private class GenericAvroSerializer extends KSerializer[GenericRecord] {
 
-  private type AvroInjection = Injection[GenericRecord, Array[Byte]]
-
-  private lazy val cache: MMap[Int, AvroInjection] = MMap()
+  private lazy val cache: MMap[Int, AvroCoder[GenericRecord]] = MMap()
   private lazy val ids: BiMap[Int, Schema] = HashBiMap.create()
 
-  private def getInjection(id: Int): AvroInjection = this.getInjection(id, ids.get(id))
-  private def getInjection(id: Int, schema: Schema): AvroInjection =
-    cache.getOrElseUpdate(id, GenericAvroCodecs.withSnappyCompression[GenericRecord](schema))
+  private def getCoder(id: Int): AvroCoder[GenericRecord] = this.getCoder(id, ids.get(id))
+  private def getCoder(id: Int, schema: Schema): AvroCoder[GenericRecord] =
+    cache.getOrElseUpdate(id, AvroCoder.of(schema))
 
   private def getId(schema: Schema): Int =
     if (ids.containsValue(schema)) {
@@ -52,8 +49,8 @@ private class GenericAvroSerializer extends KSerializer[GenericRecord] {
 
   override def write(kryo: Kryo, out: Output, obj: GenericRecord): Unit = {
     val id = this.getId(obj.getSchema)
-    val injection = this.getInjection(id)
-    val bytes = injection(obj)
+    val coder = this.getCoder(id)
+    val bytes = CoderUtils.encodeToByteArray(coder, obj)
 
     out.writeInt(id)
     // write schema before every record in case it's not in reader serializer's cache
@@ -65,27 +62,24 @@ private class GenericAvroSerializer extends KSerializer[GenericRecord] {
 
   override def read(kryo: Kryo, in: Input, cls: Class[GenericRecord]): GenericRecord = {
     val id = in.readInt()
-    val injection = this.getInjection(id, new Schema.Parser().parse(in.readString()))
+    val coder = this.getCoder(id, new Schema.Parser().parse(in.readString()))
 
     val bytes = Array.ofDim[Byte](in.readInt())
     in.readBytes(bytes)
-    injection.invert(bytes).get
+    CoderUtils.decodeFromByteArray(coder, bytes)
   }
 
 }
 
 private class SpecificAvroSerializer[T <: SpecificRecordBase] extends KSerializer[T] {
 
-  private type AvroInjection = Injection[T, Array[Byte]]
+  private lazy val cache: MMap[Class[T], AvroCoder[T]] = MMap()
 
-  private lazy val cache: MMap[Class[_], AvroInjection] = MMap()
-
-  private def getInjection(cls: Class[T]): AvroInjection =
-    cache.getOrElseUpdate(cls, SpecificAvroCodecs.withSnappyCompression[T](ClassTag(cls)))
+  private def getCoder(cls: Class[T]): AvroCoder[T] = cache.getOrElseUpdate(cls, AvroCoder.of(cls))
 
   override def write(kser: Kryo, out: Output, obj: T): Unit = {
-    val injection = this.getInjection(obj.getClass.asInstanceOf[Class[T]])
-    val bytes = injection(obj)
+    val coder = this.getCoder(obj.getClass.asInstanceOf[Class[T]])
+    val bytes = CoderUtils.encodeToByteArray(coder, obj)
 
     out.writeInt(bytes.length)
     out.writeBytes(bytes)
@@ -93,11 +87,11 @@ private class SpecificAvroSerializer[T <: SpecificRecordBase] extends KSerialize
   }
 
   override def read(kser: Kryo, in: Input, cls: Class[T]): T = {
-    val injection = this.getInjection(cls)
-
+    val coder = this.getCoder(cls)
     val bytes = Array.ofDim[Byte](in.readInt())
+
     in.readBytes(bytes)
-    injection.invert(bytes).get
+    CoderUtils.decodeFromByteArray(coder, bytes)
   }
 
 }
