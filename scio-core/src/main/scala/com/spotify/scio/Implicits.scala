@@ -49,14 +49,7 @@ private[scio] object Implicits {
       })
     }
 
-    def getScalaCoder[T: ClassTag]: Coder[T] = {
-      val tt = TypeDescriptor.of(ScioUtil.classOf[T])
-      try {
-        r.getDefaultCoder(tt)
-      } catch {
-        case e: Throwable=> null
-      }
-    }
+    def getScalaCoder[T: ClassTag]: Coder[T] = r.getDefaultCoder(TypeDescriptor.of(ScioUtil.classOf[T]))
 
     def getScalaKvCoder[K: ClassTag, V: ClassTag]: Coder[KV[K, V]] = KvCoder.of(getScalaCoder[K], getScalaCoder[V])
 
