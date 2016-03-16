@@ -23,6 +23,7 @@ import com.google.cloud.dataflow.sdk.coders._
 import com.google.cloud.dataflow.sdk.values.{KV, TypeDescriptor}
 import com.spotify.scio.coders.KryoAtomicCoder
 import com.spotify.scio.util.ScioUtil
+import org.apache.avro.specific.SpecificRecordBase
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
@@ -44,25 +45,24 @@ private[scio] object Implicits {
 
       // Fall back to Kryo
       r.setFallbackCoderProvider(new CoderProvider {
-        override def getCoder[T](`type`: TypeDescriptor[T]): Coder[T] = KryoAtomicCoder[T]
+        override def getCoder[T](tpe: TypeDescriptor[T]): Coder[T] = {
+          val cls = tpe.getRawType.asInstanceOf[Class[T]]
+          if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+            // TODO: what about GenericRecord?
+            AvroCoder.of(cls)
+          } else {
+            KryoAtomicCoder[T]
+          }
+        }
       })
     }
 
     def getScalaCoder[T: ClassTag]: Coder[T] = {
       val tt = TypeDescriptor.of(ScioUtil.classOf[T])
-      val coder = try {
+      try {
         r.getDefaultCoder(tt)
       } catch {
         case e: Throwable=> null
-      }
-
-      // For classes not registered in CoderRegistry, it returns
-      // SerializableCoder if the class extends Serializable or null otherwise.
-      // Override both cases with KryoAtomicCoder.
-      if (coder == null || coder.getClass == classOf[SerializableCoder[T]]) {
-        KryoAtomicCoder[T]
-      } else {
-        coder
       }
     }
 
