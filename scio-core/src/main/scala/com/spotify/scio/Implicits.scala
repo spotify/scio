@@ -23,7 +23,6 @@ import com.google.cloud.dataflow.sdk.coders._
 import com.google.cloud.dataflow.sdk.values.{KV, TypeDescriptor}
 import com.spotify.scio.coders.KryoAtomicCoder
 import com.spotify.scio.util.ScioUtil
-import org.apache.avro.specific.SpecificRecordBase
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
@@ -45,11 +44,23 @@ private[scio] object Implicits {
 
       // Fall back to Kryo
       r.setFallbackCoderProvider(new CoderProvider {
-        override def getCoder[T](tpe: TypeDescriptor[T]): Coder[T] = KryoAtomicCoder[T]
+        override def getCoder[T](`type`: TypeDescriptor[T]): Coder[T] = KryoAtomicCoder[T]
       })
     }
 
-    def getScalaCoder[T: ClassTag]: Coder[T] = r.getDefaultCoder(TypeDescriptor.of(ScioUtil.classOf[T]))
+    def getScalaCoder[T: ClassTag]: Coder[T] = {
+      val coder = try {
+        r.getDefaultCoder(TypeDescriptor.of(ScioUtil.classOf[T]))
+      } catch {
+        case _: Throwable => null
+      }
+
+      if (coder == null || coder.getClass == classOf[SerializableCoder[T]]) {
+        KryoAtomicCoder[T]
+      } else {
+        coder
+      }
+    }
 
     def getScalaKvCoder[K: ClassTag, V: ClassTag]: Coder[KV[K, V]] = KvCoder.of(getScalaCoder[K], getScalaCoder[V])
 
