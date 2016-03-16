@@ -21,6 +21,7 @@ import java.io.BufferedReader
 
 import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptionsFactory}
 import com.spotify.scio.bigquery.BigQueryClient
+import com.spotify.scio.util.GCloudConfigUtils
 
 import scala.tools.nsc.GenericRunnerSettings
 import scala.tools.nsc.interpreter.{IR, JPrintWriter}
@@ -196,16 +197,29 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
         |import scala.concurrent.ExecutionContext.Implicits.global
       """.stripMargin)
 
+  private def _createBQClient(): IR.Result = {
+    val r = intp.interpret("val bq = BigQueryClient()")
+    echo(s"BigQuery client available as 'bq'")
+    r
+  }
+
   private def createBigQueryClient(): IR.Result = {
     val key = BigQueryClient.PROJECT_KEY
+
     if (sys.props(key) == null) {
-      echo(s"System property '$key' not set. BigQueryClient is not available.")
-      echo(s"Set it with '-D$key=<PROJECT-NAME>' command line argument.")
-      IR.Success
+      val project = GCloudConfigUtils.getGCloudProjectId
+      project match {
+        case Some(project_id) =>
+          echo(s"Using '$project_id' as your BigQuery project.")
+          sys.props(key) = project_id
+          _createBQClient()
+        case None =>
+          echo(s"System property '$key' not set. BigQueryClient is not available.")
+          echo(s"Set it with '-D$key=<PROJECT-NAME>' command line argument.")
+          IR.Success
+      }
     } else {
-      val r = intp.interpret("val bq = BigQueryClient()")
-      echo(s"BigQuery client available as 'bq'")
-      r
+      _createBQClient()
     }
   }
 

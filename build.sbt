@@ -42,6 +42,7 @@ val scalaCheckVersion = "1.13.0"
 val scalaMacrosVersion = "2.1.0"
 val scalaTestVersion = "2.2.6"
 val slf4jVersion = "1.7.18"
+val ini4jVersion = "0.5.4"
 
 val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
@@ -161,7 +162,8 @@ lazy val scioCore: Project = Project(
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" %% "chill-avro" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
-      "org.apache.commons" % "commons-math3" % commonsMath3Version
+      "org.apache.commons" % "commons-math3" % commonsMath3Version,
+      "org.ini4j" % "ini4j" % ini4jVersion
     )
   )
 ).dependsOn(
