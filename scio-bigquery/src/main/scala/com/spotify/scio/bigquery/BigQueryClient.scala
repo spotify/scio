@@ -292,6 +292,7 @@ class BigQueryClient private (private val projectId: String, auth: Option[Either
   private def makeBigQueryJob(sqlQuery: String, destinationTable: TableReference): QueryJob = new QueryJob {
     override def waitForResult(): Unit = self.waitForJobs(this)
     override lazy val jobReference: Option[JobReference] = {
+      prepareStagingDataset()
       logger.info(s"Executing query: $sqlQuery")
       val queryConfig: JobConfigurationQuery = new JobConfigurationQuery()
         .setQuery(sqlQuery)
