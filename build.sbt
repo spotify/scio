@@ -116,10 +116,6 @@ lazy val assemblySettings = Seq(
     case s if s.endsWith("properties") => MergeStrategy.filterDistinctLines
     case s if s.endsWith("pom.xml") => MergeStrategy.last
     case s if s.endsWith(".class") => MergeStrategy.last
-    case s if s.endsWith(".xsd") => MergeStrategy.last
-    case s if s.endsWith(".dtd") => MergeStrategy.last
-    case s if s.endsWith("jansi.dll") => MergeStrategy.rename
-    case s if s.endsWith("libjansi.so") => MergeStrategy.rename
     case s => old(s)
   }
   }
