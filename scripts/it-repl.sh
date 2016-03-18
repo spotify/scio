@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 SCALA_VERSION=${1?"provide scala version as first argument"}
 
