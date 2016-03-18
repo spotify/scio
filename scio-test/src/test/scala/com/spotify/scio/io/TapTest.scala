@@ -38,9 +38,8 @@ class TapTest extends PipelineSpec {
   val expectedRecords = Set(1, 2, 3).map(i => (newSpecificRecord(i), newGenericRecord(i)))
 
   "Future" should "support saveAsInMemoryTap" in {
-    runWithInMemoryFuture {
-      makeRecords(_).saveAsInMemoryTap
-    }.toSet should equal (expectedRecords)
+    val t = runWithInMemoryFuture { makeRecords(_).saveAsInMemoryTap }
+    verifyTap(t, expectedRecords)
   }
 
   it should "update isCompleted with testId" in {
@@ -66,81 +65,93 @@ class TapTest extends PipelineSpec {
   }
 
   it should "support materialize" in {
-    runWithInMemoryFuture {
+    val t1 = runWithInMemoryFuture {
       makeRecords(_).materialize
-    }.toSet should equal (expectedRecords)
+    }
+    verifyTap(t1, expectedRecords)
 
-    runWithFileFuture {
-      makeRecords(_).materialize
-    }.toSet should equal (expectedRecords)
+    val t2 = runWithFileFuture { makeRecords(_).materialize }
+    verifyTap(t2, expectedRecords)
   }
 
   it should "support saveAsAvroFile with SpecificRecord" in {
     val dir = tmpDir
-    runWithFileFuture {
+    val t = runWithFileFuture {
       _
         .parallelize(Seq(1, 2, 3))
         .map(newSpecificRecord)
         .saveAsAvroFile(dir.getPath)
-    }.toSet should equal (Set(1, 2, 3).map(newSpecificRecord))
+    }
+    verifyTap(t, Set(1, 2, 3).map(newSpecificRecord))
     FileUtils.deleteDirectory(dir)
   }
 
   it should "support saveAsAvroFile with GenericRecord" in {
     val dir = tmpDir
-    runWithFileFuture {
+    val t = runWithFileFuture {
       _
         .parallelize(Seq(1, 2, 3))
         .map(newGenericRecord)
         .saveAsAvroFile(dir.getPath, schema = newGenericRecord(1).getSchema)
-    }.toSet should equal (Set(1, 2, 3).map(newGenericRecord))
+    }
+    verifyTap(t, Set(1, 2, 3).map(newGenericRecord))
     FileUtils.deleteDirectory(dir)
   }
 
   it should "support saveAsAvroFile with reflect record" in {
     val dir = tmpDir
-    runWithFileFuture {
+    val t = runWithFileFuture {
       _
         .parallelize(Seq("a", "b", "c"))
         .map(s => ByteBuffer.wrap(s.getBytes))
         .saveAsAvroFile(dir.getPath, schema = new Schema.Parser().parse("\"bytes\""))
-    }.map(b => new String(b.array())).toSet should equal (Set("a", "b", "c"))
+    }.map(b => new String(b.array()))
+    verifyTap(t, Set("a", "b", "c"))
     FileUtils.deleteDirectory(dir)
   }
 
   it should "support saveAsTableRowJsonFile" in {
     val dir = tmpDir
     // Compare .toString versions since TableRow may not round trip
-    runWithFileFuture {
+    val t = runWithFileFuture {
       _
         .parallelize(Seq(1, 2, 3))
         .map(newTableRow)
         .saveAsTableRowJsonFile(dir.getPath)
-    }.map(_.toString).toSet should equal (Set(1, 2, 3).map(i => newTableRow(i).toString))
+    }.map(_.toString)
+    verifyTap(t, Set(1, 2, 3).map(i => newTableRow(i).toString))
     FileUtils.deleteDirectory(dir)
   }
 
   it should "support saveAsTextFile" in {
     val dir = tmpDir
-    runWithFileFuture {
+    val t = runWithFileFuture {
       _
         .parallelize(Seq(1, 2, 3))
         .map(i => newTableRow(i).toString)
         .saveAsTextFile(dir.getPath)
-    }.toSet should equal (Set(1, 2, 3).map(i => newTableRow(i).toString))
+    }
+    verifyTap(t, Set(1, 2, 3).map(i => newTableRow(i).toString))
     FileUtils.deleteDirectory(dir)
   }
 
-  def runWithInMemoryFuture[T](fn: ScioContext => Future[Tap[T]]): Iterator[T] =
+  def runWithInMemoryFuture[T](fn: ScioContext => Future[Tap[T]]): Tap[T] =
     runWithFuture(ScioContext.forTest("FutureTest-" + System.currentTimeMillis()))(fn)
 
-  def runWithFileFuture[T](fn: ScioContext => Future[Tap[T]]): Iterator[T] =
+  def runWithFileFuture[T](fn: ScioContext => Future[Tap[T]]): Tap[T] =
     runWithFuture(ScioContext())(fn)
 
-  def runWithFuture[T](sc: ScioContext)(fn: ScioContext => Future[Tap[T]]): Iterator[T] = {
+  def runWithFuture[T](sc: ScioContext)(fn: ScioContext => Future[Tap[T]]): Tap[T] = {
     val f = fn(sc)
     sc.close()
-    f.waitForResult().value
+    f.waitForResult()
+  }
+
+  def verifyTap[T](tap: Tap[T], expected: Set[T]): Unit = {
+    tap.value.toSet should equal (expected)
+    val sc = ScioContext()
+    tap.open(sc) should containInAnyOrder (expected)
+    sc.close()
   }
 
   def tmpDir: File = new File(new File(sys.props("java.io.tmpdir")), "scio-test-" + UUID.randomUUID().toString)
