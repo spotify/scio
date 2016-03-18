@@ -93,9 +93,9 @@ package object hdfs {
 
     /** Save this SCollection as a text file on HDFS. Note that elements must be of type String. */
     // TODO: numShards
-    def saveAsHdfsTextFile(path: String)(implicit ev: T <:< String): Future[Tap[String]] = {
+    def saveAsHdfsTextFile(path: String): Future[Tap[String]] = {
       self
-        .map(x => KV.of(NullWritable.get(), new Text(x.asInstanceOf[String])))
+        .map(x => KV.of(NullWritable.get(), new Text(x.toString)))
         .applyInternal(Write.to(new HadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]])))
       self.context.makeFuture(HdfsTextTap(path))
     }

@@ -867,14 +867,20 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as a text file. Note that elements must be of type String.
    * @group output
    */
-  def saveAsTextFile(path: String, suffix: String = ".txt", numShards: Int = 0)(implicit ev: T <:< String): Future[Tap[String]] =
-    if (context.isTest) {
-      context.testOut(TextIO(path))(this.asInstanceOf[SCollection[String]])
-      saveAsInMemoryTap.asInstanceOf[Future[Tap[String]]]
+  def saveAsTextFile(path: String, suffix: String = ".txt", numShards: Int = 0): Future[Tap[String]] = {
+    val s = if (classOf[String] isAssignableFrom this.ct.runtimeClass) {
+      this.asInstanceOf[SCollection[String]]
     } else {
-      this.asInstanceOf[SCollection[String]].applyInternal(textOut(path, suffix, numShards))
+      this.map(_.toString)
+    }
+    if (context.isTest) {
+      context.testOut(TextIO(path))(s)
+      s.saveAsInMemoryTap
+    } else {
+      s.applyInternal(textOut(path, suffix, numShards))
       context.makeFuture(TextTap(path + "/part-*"))
     }
+  }
 
   private[scio] def saveAsInMemoryTap: Future[Tap[T]] = {
     val tap = new InMemoryTap[T]
