@@ -30,7 +30,7 @@ import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.file.DataFileStream
-import org.apache.avro.generic.{GenericDatumReader, IndexedRecord}
+import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.mapred.AvroKey
 import org.apache.avro.mapreduce.{AvroJob, AvroKeyOutputFormat}
 import org.apache.avro.specific.{SpecificDatumReader, SpecificRecordBase}
@@ -102,7 +102,7 @@ package object hdfs {
 
     /** Save this SCollection as an Avro file on HDFS. Note that elements must be of type IndexedRecord. */
     // TODO: numShards
-    def saveAsHdfsAvroFile(path: String, schema: Schema = null)(implicit ev: T <:< IndexedRecord): Future[Tap[T]] = {
+    def saveAsHdfsAvroFile(path: String, schema: Schema = null): Future[Tap[T]] = {
       val job = Job.getInstance()
       val s = if (schema == null) {
         ScioUtil.classOf[T].getMethod("getClassSchema").invoke(null).asInstanceOf[Schema]
