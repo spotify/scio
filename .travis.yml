@@ -14,7 +14,7 @@ before_script:
 script:
   - sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean coverage test coverageReport coverageAggregate
   # Test REPL:
-  - scripts/it-repl.sh $TRAVIS_SCALA_VERSION
+  - ./scripts/it-repl.sh $TRAVIS_SCALA_VERSION
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" | xargs rm
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
