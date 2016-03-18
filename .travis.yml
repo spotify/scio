@@ -13,6 +13,8 @@ before_script:
   - ./scripts/travis.sh
 script:
   - sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean coverage test coverageReport coverageAggregate
+  # Test REPL:
+  - scripts/it-repl.sh $TRAVIS_SCALA_VERSION
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" | xargs rm
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
@@ -24,7 +26,7 @@ notifications:
     - neville@spotify.com
     - rav@spotify.com
 
-before_deploy: sbt ++$TRAVIS_SCALA_VERSION "project scio-repl" assembly
+before_deploy: sbt ++$TRAVIS_SCALA_VERSION "project scio-repl" clean assembly
 deploy:
   provider: releases
   api_key:
