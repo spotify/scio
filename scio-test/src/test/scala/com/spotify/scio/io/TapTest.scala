@@ -18,11 +18,13 @@
 package com.spotify.scio.io
 
 import java.io.File
+import java.nio.ByteBuffer
 import java.util.UUID
 
 import com.spotify.scio._
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.testing.TestingUtils._
+import org.apache.avro.Schema
 import org.apache.commons.io.FileUtils
 
 import scala.concurrent.Future
@@ -92,6 +94,17 @@ class TapTest extends PipelineSpec {
         .map(newGenericRecord)
         .saveAsAvroFile(dir.getPath, schema = newGenericRecord(1).getSchema)
     }.toSet should equal (Set(1, 2, 3).map(newGenericRecord))
+    FileUtils.deleteDirectory(dir)
+  }
+
+  it should "support saveAsAvroFile with reflect record" in {
+    val dir = tmpDir
+    runWithFileFuture {
+      _
+        .parallelize(Seq("a", "b", "c"))
+        .map(s => ByteBuffer.wrap(s.getBytes))
+        .saveAsAvroFile(dir.getPath, schema = new Schema.Parser().parse("\"bytes\""))
+    }.map(b => new String(b.array())).toSet should equal (Set("a", "b", "c"))
     FileUtils.deleteDirectory(dir)
   }
 
