@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCALA_VERSION=${1?"provide scala version as first argument"}
+SCALA_VERSION=${1}
 
 echo "Will test scio REPL for scala ${SCALA_VERSION}"
 
