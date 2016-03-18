@@ -116,6 +116,7 @@ lazy val assemblySettings = Seq(
     case s if s.endsWith("properties") => MergeStrategy.filterDistinctLines
     case s if s.endsWith("pom.xml") => MergeStrategy.last
     case s if s.endsWith(".class") => MergeStrategy.last
+    case PathList("META-INF", "native", "osx", "libjansi.jnilib") => MergeStrategy.last
     case s => old(s)
   }
   }
