@@ -42,7 +42,9 @@ object TapsExample {
       out
     }
 
+    // scalastyle:off regex
     println(r.waitForResult().value.take(10).toList)
+    // scalastyle:on regex
   }
 
 }
