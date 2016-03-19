@@ -483,9 +483,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * `that` to all workers. The right side should be tiny and fit in memory.
    * @group hash
    */
-  def hashLookup[V: ClassTag](that: SCollection[(T, V)]): SCollection[(T, Iterable[V])] = {
+  def hashLookup[V: ClassTag](that: SCollection[(T, V)]): SCollection[(T, Iterable[V])] = this.transform { in =>
     val side = that.asMultiMapSideInput
-    this
+    in
       .withSideInputs(side)
       .map((t, s) => (t, s(side).getOrElse(t, Iterable())))
       .toSCollection
