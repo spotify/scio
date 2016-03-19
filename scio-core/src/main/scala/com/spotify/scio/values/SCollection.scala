@@ -260,8 +260,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Count of each unique value in this SCollection as an SCollection of (value, count) pairs.
    * @group transform
    */
-  def countByValue(): SCollection[(T, Long)] =
-    this.apply(Count.perElement[T]()).map(kvToTuple).asInstanceOf[SCollection[(T, Long)]]
+  def countByValue(): SCollection[(T, Long)] = this.transform {
+    _.apply(Count.perElement[T]()).map(kvToTuple).asInstanceOf[SCollection[(T, Long)]]
+  }
 
   /**
    * Return a new SCollection containing the distinct elements in this SCollection.
