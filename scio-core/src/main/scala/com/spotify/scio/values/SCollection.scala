@@ -470,9 +470,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * right side should be tiny and fit in memory.
    * @group hash
    */
-  def cross[U: ClassTag](that: SCollection[U]): SCollection[(T, U)] = {
+  def cross[U: ClassTag](that: SCollection[U]): SCollection[(T, U)] = this.transform { in =>
     val side = that.asListSideInput
-    this
+    in
       .withSideInputs(side)
       .flatMap((t, s) => s(side).map((t, _)))
       .toSCollection
