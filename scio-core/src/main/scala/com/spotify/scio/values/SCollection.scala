@@ -102,7 +102,6 @@ object SCollection {
  * @groupname side Side Input and Output Operations
  * @groupname transform Transformations
  * @groupname window Windowing Operations
- * @groupname Ungrouped Other Operations
  */
 sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
