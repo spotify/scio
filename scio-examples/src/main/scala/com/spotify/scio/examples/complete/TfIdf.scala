@@ -80,7 +80,6 @@ object TfIdf {
       .countByValue()  // ((d, t), tf)
       .map(t => (t._1._1, (t._1._2, t._2)))  // (d, (t, tf))
 
-
     val wordToDf = uriToWords.distinct().values.countByValue()  // (t, df)
       .cross(uriToContent.keys.distinct().count())  // N
       .map { case ((t, df), numDocs) => (t, df.toDouble / numDocs) }  // (t, df/N)
