@@ -411,8 +411,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * samples
    * @group transform
    */
-  def sample(sampleSize: Int): SCollection[Iterable[T]] =
-    this.apply(Sample.fixedSizeGlobally(sampleSize)).map(_.asScala)
+  def sample(sampleSize: Int): SCollection[Iterable[T]] = this.transform {
+    _.apply(Sample.fixedSizeGlobally(sampleSize)).map(_.asScala)
+  }
 
   /**
    * Return a sampled subset of this SCollection.
