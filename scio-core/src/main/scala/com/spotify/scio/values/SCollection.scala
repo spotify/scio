@@ -313,10 +313,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * [[PairSCollectionFunctions.reduceByKey]] will provide much better performance.
    * @group transform
    */
-  def groupBy[K: ClassTag](f: T => K): SCollection[(K, Iterable[T])] =
-    this
+  def groupBy[K: ClassTag](f: T => K): SCollection[(K, Iterable[T])] = this.transform {
+    _
       .apply(WithKeys.of(Functions.serializableFn(f))).setCoder(this.getKvCoder[K, T])
       .apply(GroupByKey.create[K, T]()).map(kvIterableToTuple)
+  }
 
   /**
    * Create tuples of the elements in this SCollection by applying `f`.
