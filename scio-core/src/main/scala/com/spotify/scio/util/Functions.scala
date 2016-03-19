@@ -115,7 +115,6 @@ private[scio] object Functions {
       }
     }
 
-    // TODO: maybe unsafe if addInput is never called?
     override def extractOutput(accumulator: (Option[C], JList[T])): C = foldOption(accumulator).get
 
     override def mergeAccumulators(accumulators: JIterable[(Option[C], JList[T])]): (Option[C], JList[T]) = {
