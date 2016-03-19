@@ -328,12 +328,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @return a new SCollection with the mean of elements
    * @group transform
    */
-  def mean(implicit ev: Numeric[T]): SCollection[Double] = {
-    val o = this
+  def mean(implicit ev: Numeric[T]): SCollection[Double] =
+    this
       .map(ev.toDouble).asInstanceOf[SCollection[JDouble]]
-      .applyInternal(Mean.globally()).asInstanceOf[PCollection[Double]]
-    context.wrap(o)
-  }
+      .apply(Mean.globally()).asInstanceOf[SCollection[Double]]
 
   /**
    * Return the min of this SCollection as defined by the implicit Ordering[T].
