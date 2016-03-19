@@ -170,10 +170,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Note that this method performs a shuffle internally.
    * @group collection
    */
-  def intersection(that: SCollection[T]): SCollection[T] =
-    this.map((_, 1)).cogroup(that.map((_, 1))).flatMap { t =>
+  def intersection(that: SCollection[T]): SCollection[T] = this.transform {
+    _.map((_, 1)).cogroup(that.map((_, 1))).flatMap { t =>
       if (t._2._1.nonEmpty && t._2._2.nonEmpty) Seq(t._1) else Seq.empty
     }
+  }
 
   /**
    * Partition this SCollection with the provided function.
