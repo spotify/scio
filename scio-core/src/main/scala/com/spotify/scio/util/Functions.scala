@@ -86,13 +86,10 @@ private[scio] object Functions {
     val mv = ClosureCleaner(mergeValue)
     val mc = ClosureCleaner(mergeCombiners)
 
-    private def foldOption(accumulator: (Option[C], JList[T])): Option[C] = {
-      val (a, l) = accumulator
-      if (a.isDefined) {
-        Some(l.asScala.foldLeft(a.get)(mv))
-      } else if (l.isEmpty) {
-        None
-      } else {
+    private def foldOption(accumulator: (Option[C], JList[T])): Option[C] = accumulator match {
+      case (Some(a), l) => Some(l.asScala.foldLeft(a)(mv))
+      case (None, l) if l.isEmpty => None
+      case (None, l) =>
         var c = cc(l.get(0))
         var i = 1
         while (i < l.size) {
@@ -100,7 +97,6 @@ private[scio] object Functions {
           i += 1
         }
         Some(c)
-      }
     }
 
     override def createAccumulator(): (Option[C], JList[T]) = (None, Lists.newArrayList())
