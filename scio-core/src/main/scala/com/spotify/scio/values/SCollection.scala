@@ -364,10 +364,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * the elements
    * @group transform
    */
-  def quantilesApprox(numQuantiles: Int)(implicit ord: Ordering[T]): SCollection[Iterable[T]] =
-    this
+  def quantilesApprox(numQuantiles: Int)(implicit ord: Ordering[T]): SCollection[Iterable[T]] = this.transform {
+    _
       .apply(ApproximateQuantiles.globally(numQuantiles, ord))
       .map(_.asInstanceOf[JIterable[T]].asScala)
+  }
 
   /**
    * Randomly splits this SCollection with the provided weights.
