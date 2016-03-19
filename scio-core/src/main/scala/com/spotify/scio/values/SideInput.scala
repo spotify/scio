@@ -26,8 +26,6 @@ import com.google.cloud.dataflow.sdk.values.PCollectionView
 import scala.collection.JavaConverters._
 import scala.collection.breakOut
 
-// TODO: performance problem
-
 /** Encapsulate an SCollection when it is being used as a side input. */
 trait SideInput[T] extends Serializable {
 
