@@ -25,6 +25,17 @@ import scala.reflect.ClassTag
 
 /**
  * Trait for unit testing pipelines.
+ *
+ * A simple test might look like this:
+ * {{{
+ * class SimplePipelineTest extends PipelineSpec {
+ *   "A simple pipeline" should "sum integers" in {
+ *     runWithContext { sc =>
+ *       sc.parallelize(Seq(1, 2, 3)).sum should containSingleValue (6)
+ *     }
+ *   }
+ * }
+ * }}}
  */
 trait PipelineSpec extends FlatSpec with Matchers with SCollectionMatcher {
 
@@ -46,8 +57,12 @@ trait PipelineSpec extends FlatSpec with Matchers with SCollectionMatcher {
 
   /**
    * Test pipeline components with in-memory data.
+   *
+   * Input data is passed to `fn` as an [[SCollection]] and the result [[SCollection]] from `fn`
+   * is extracted and to be verified.
+   *
    * @param data input data
-   * @param fn code that tests the components by feeding input and extracting output
+   * @param fn transform to be tested
    * @return output data
    *
    * {{{
@@ -62,9 +77,13 @@ trait PipelineSpec extends FlatSpec with Matchers with SCollectionMatcher {
 
   /**
    * Test pipeline components with in-memory data.
+   *
+   * Input data is passed to `fn` as [[SCollection]]s and the result [[SCollection]] from `fn` is
+   * extracted and to be verified.
+   *
    * @param data1 input data
    * @param data2 input data
-   * @param fn code that tests the components by feeding input and extracting output
+   * @param fn transform to be tested
    * @return output data
    */
   def runWithData[T1: ClassTag, T2: ClassTag, U: ClassTag]
@@ -77,10 +96,14 @@ trait PipelineSpec extends FlatSpec with Matchers with SCollectionMatcher {
 
   /**
    * Test pipeline components with in-memory data.
+   *
+   * Input data is passed to `fn` as [[SCollection]]s and the result [[SCollection]] from `fn` is
+   * extracted and to be verified.
+   *
    * @param data1 input data
    * @param data2 input data
    * @param data3 input data
-   * @param fn code that tests the components by feeding input and extracting output
+   * @param fn transform to be tested
    * @return output data
    */
   def runWithData[T1: ClassTag, T2: ClassTag, T3: ClassTag, U: ClassTag]
@@ -93,11 +116,15 @@ trait PipelineSpec extends FlatSpec with Matchers with SCollectionMatcher {
 
   /**
    * Test pipeline components with in-memory data.
+   *
+   * Input data is passed to `fn` as [[SCollection]]s and the result [[SCollection]] from `fn` is
+   * extracted and to be verified.
+   *
    * @param data1 input data
    * @param data2 input data
    * @param data3 input data
    * @param data4 input data
-   * @param fn code that tests the components by feeding input and extracting output
+   * @param fn transform to be tested
    * @return output data
    */
   def runWithData[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, U: ClassTag]
