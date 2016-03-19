@@ -17,10 +17,11 @@
 
 package com.spotify.scio.values
 
-import java.lang.{Long => JLong}
+import java.lang.{Iterable => JIterable, Long => JLong}
+import java.util.{Map => JMap}
 
 import com.google.cloud.dataflow.sdk.transforms._
-import com.google.cloud.dataflow.sdk.values.{KV, PCollection}
+import com.google.cloud.dataflow.sdk.values.{PCollectionView, KV, PCollection}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
@@ -184,8 +185,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * partition the output SCollection.
    * @group join
    */
-  def rightOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Option[V], W))] =
-    MultiJoin.left(that, self).mapValues(kv => (kv._2, kv._1))
+  def rightOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Option[V], W))] = self.transform {
+    MultiJoin.left(that, _).mapValues(kv => (kv._2, kv._1))
+  }
 
   // =======================================================================
   // Transformations
@@ -211,7 +213,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group per_key
    */
   def aggregateByKey[A: ClassTag, U: ClassTag](aggregator: Aggregator[V, A, U]): SCollection[(K, U)] =
-    this.mapValues(aggregator.prepare).sumByKey(aggregator.semigroup).mapValues(aggregator.present)
+    self.transform { in =>
+      val a = aggregator  // defeat closure
+      in.mapValues(a.prepare).sumByKey(a.semigroup).mapValues(a.present)
+    }
 
   /**
    * For each key, compute the values' data distribution using approximate `N`-tiles.
@@ -268,7 +273,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @return a new SCollection of (key, count) pairs
    * @group per_key
    */
-  def countByKey(): SCollection[(K, Long)] = this.keys.countByValue()
+  def countByKey(): SCollection[(K, Long)] = self.transform(_.keys.countByValue())
 
   /**
    * Pass each value in the key-value pair SCollection through a flatMap function without changing
@@ -385,10 +390,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * Return an SCollection with the pairs from `this` whose keys are not in `other`.
    * @group per_key
    */
-  def subtractByKey[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, V)] =
-    this.cogroup(that).flatMap { t =>
+  def subtractByKey[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, V)] = self.transform {
+    _.cogroup(that).flatMap { t =>
       if (t._2._1.nonEmpty && t._2._2.isEmpty) t._2._1.map((t._1, _)) else  Seq.empty
     }
+  }
 
   /**
    * Reduce by key with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful
@@ -428,9 +434,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * fit in memory.
    * @group transform
    */
-  def hashJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, W))] = {
+  def hashJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, W))] = self.transform { in =>
     val side = that.asMultiMapSideInput
-    self.withSideInputs(side).flatMap[(K, (V, W))] { (kv, s) =>
+    in.withSideInputs(side).flatMap[(K, (V, W))] { (kv, s) =>
       s(side).getOrElse(kv._1, Iterable()).toSeq.map(w => (kv._1, (kv._2, w)))
     }.toSCollection
   }
@@ -440,9 +446,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * and fit in memory.
    * @group transform
    */
-  def hashLeftJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, Option[W]))] = {
+  def hashLeftJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, Option[W]))] = self.transform { in =>
     val side = that.asMultiMapSideInput
-    self.withSideInputs(side).flatMap[(K, (V, Option[W]))] { (kv, s) =>
+    in.withSideInputs(side).flatMap[(K, (V, Option[W]))] { (kv, s) =>
       val (k, v) = kv
       val m = s(side)
       if (m.contains(k)) m(k).map(w => (k, (v, Some(w)))) else Seq((k, (v, None)))
@@ -458,16 +464,28 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * value], to be used with [[SCollection.withSideInputs]]. It is required that each key of the
    * input be associated with a single value.
    */
-  def asMapSideInput: SideInput[Map[K, V]] =
-    new MapSideInput[K, V](self.toKV.applyInternal(View.asMap()))
+  def asMapSideInput: SideInput[Map[K, V]] = {
+    val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, V]]]() {
+      override def apply(input: PCollection[(K, V)]): PCollectionView[JMap[K, V]] = {
+        input.apply(toKvTransform).setCoder(self.getKvCoder[K, V]).apply(View.asMap())
+      }
+    })
+    new MapSideInput[K, V](o)
+  }
 
   /**
    * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a Map[key,
    * Iterable[value]], to be used with [[SCollection.withSideInputs]]. It is not required that the
    * keys in the input collection be unique.
    */
-  def asMultiMapSideInput: SideInput[Map[K, Iterable[V]]] =
-    new MultiMapSideInput[K, V](self.toKV.applyInternal(View.asMultimap()))
+  def asMultiMapSideInput: SideInput[Map[K, Iterable[V]]] = {
+    val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, JIterable[V]]]]() {
+      override def apply(input: PCollection[(K, V)]): PCollectionView[JMap[K, JIterable[V]]] = {
+        input.apply(toKvTransform).setCoder(self.getKvCoder[K, V]).apply(View.asMultimap())
+      }
+    })
+    new MultiMapSideInput[K, V](o)
+  }
 
 }
 // scalastyle:on number.of.methods
