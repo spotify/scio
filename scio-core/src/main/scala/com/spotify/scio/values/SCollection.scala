@@ -122,6 +122,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /** Assign a name to this SCollection. */
   def setName(name: String): SCollection[T] = context.wrap(internal.setName(name))
 
+  /** Apply a transform. */
+  private[values] def transform[U: ClassTag](f: SCollection[T] => SCollection[U]): SCollection[U] = {
+    val o = internal.apply(CallSites.getCurrent, new PTransform[PCollection[T], PCollection[U]]() {
+      override def apply(input: PCollection[T]): PCollection[U] = {
+        f(context.wrap(input)).internal
+      }
+    })
+    context.wrap(o)
+  }
+
   // =======================================================================
   // Collection operations
   // =======================================================================

@@ -34,6 +34,12 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support transform()" in {
+    runWithContext {
+      _.parallelize(1 to 10).transform(_.map(_ * 10).sum) should containSingleValue (550)
+    }
+  }
+
   it should "support unionAll()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "c"))
