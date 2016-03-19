@@ -431,10 +431,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Return an SCollection with the elements from `this` that are not in `other`.
    * @group transform
    */
-  def subtract(that: SCollection[T]): SCollection[T] =
-    this.map((_, 1)).cogroup(that.map((_, 1))).flatMap { t =>
+  def subtract(that: SCollection[T]): SCollection[T] = this.transform {
+    _.map((_, 1)).cogroup(that.map((_, 1))).flatMap { t =>
       if (t._2._1.nonEmpty && t._2._2.isEmpty) Seq(t._1) else Seq.empty
     }
+  }
 
   /**
    * Reduce with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful and
