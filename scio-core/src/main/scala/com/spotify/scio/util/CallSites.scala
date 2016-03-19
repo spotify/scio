@@ -21,7 +21,8 @@ import scala.collection.mutable.{Map => MMap}
 
 private[scio] object CallSites {
 
-  private val ns = "com.spotify.scio."
+  private val scioNs = "com.spotify.scio."
+  private val dfNs = "com.google.cloud.dataflow.sdk."
 
   private val methodMap = Map("$plus$plus" -> "++")
 
@@ -29,9 +30,12 @@ private[scio] object CallSites {
 
   private def isExternalClass(c: String): Boolean =
     // Not in our code base or an interpreter
-    (!c.startsWith(ns) && !c.startsWith("scala.")) ||
-      c.startsWith(ns + "examples.") || // unless if it's in examples
-      c.startsWith(ns + "values.AccumulatorTest") // or this test
+    (!c.startsWith(scioNs) && !c.startsWith("scala.") && !c.startsWith(dfNs)) ||
+      c.startsWith(scioNs + "examples.") || // unless if it's in examples
+      c.startsWith(scioNs + "values.AccumulatorTest") // or this test
+
+  private def isTransform(e: StackTraceElement): Boolean =
+    e.getClassName == scioNs + "values.SCollectionImpl" && e.getMethodName == "transform"
 
   def getAppName: String = {
     Thread.currentThread().getStackTrace
@@ -43,12 +47,23 @@ private[scio] object CallSites {
 
   def getCurrent: String = {
     val stack = new Exception().getStackTrace.drop(1)
-    val p = stack.indexWhere(e => isExternalClass(e.getClassName))
 
-    val k = stack(p - 1).getMethodName
+    // find first stack outside of Scio or Dataflow
+    var pExt = stack.indexWhere(e => isExternalClass(e.getClassName))
+
+    val pTransform = stack.indexWhere(isTransform)
+    if (pTransform < pExt && pTransform > 0) {
+      val m = stack(pExt - 1).getMethodName  // method implemented with transform
+      val _p = stack.take(pTransform).indexWhere(e => e.getClassName.contains(m))
+      if (_p > 0) {
+        pExt = _p
+      }
+    }
+
+    val k = stack(pExt - 1).getMethodName
     val method = methodMap.getOrElse(k, k)
-    val file = stack(p).getFileName
-    val line = stack(p).getLineNumber
+    val file = stack(pExt).getFileName
+    val line = stack(pExt).getLineNumber
     val name = s"$method@{$file:$line}"
 
     if (!nameCache.contains(name)) {
