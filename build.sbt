@@ -259,6 +259,7 @@ lazy val scioSchemas: Project = Project(
   file("scio-schemas"),
   settings = commonSettings ++ sbtavro.SbtAvro.avroSettings ++ noPublishSettings
 ).settings(
+  // suppress warnings
   sources in doc in Compile := List(),
   javacOptions := Seq("-source", "1.7", "-target", "1.7")
 )
