@@ -22,8 +22,9 @@ import java.nio.ByteBuffer
 import java.util.UUID
 
 import com.spotify.scio._
+import com.spotify.scio.avro.AvroUtils._
+import com.spotify.scio.bigquery._
 import com.spotify.scio.testing.PipelineSpec
-import com.spotify.scio.testing.TestingUtils._
 import org.apache.avro.Schema
 import org.apache.commons.io.FileUtils
 
@@ -111,6 +112,14 @@ class TapTest extends PipelineSpec {
   }
 
   it should "support saveAsTableRowJsonFile" in {
+    def newTableRow(i: Int): TableRow = TableRow(
+      "int_field" -> 1 * i,
+      "long_field" -> 1L * i,
+      "float_field" -> 1F * i,
+      "double_field" -> 1.0 * i,
+      "boolean_field" -> "true",
+      "string_field" -> "hello")
+
     val dir = tmpDir
     // Compare .toString versions since TableRow may not round trip
     val t = runWithFileFuture {
@@ -127,11 +136,10 @@ class TapTest extends PipelineSpec {
     val dir = tmpDir
     val t = runWithFileFuture {
       _
-        .parallelize(Seq(1, 2, 3))
-        .map(i => newTableRow(i).toString)
+        .parallelize(Seq("a", "b", "c"))
         .saveAsTextFile(dir.getPath)
     }
-    verifyTap(t, Set(1, 2, 3).map(i => newTableRow(i).toString))
+    verifyTap(t, Set("a", "b", "c"))
     FileUtils.deleteDirectory(dir)
   }
 

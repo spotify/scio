@@ -22,15 +22,12 @@ import java.nio.ByteBuffer
 import java.util.UUID
 
 import com.spotify.scio._
-import com.spotify.scio.avro.TestRecord
-import com.spotify.scio.bigquery._
+import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.avro.Schema
-import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.commons.io.FileUtils
 
-import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 class HdfsTapTest extends PipelineSpec {
@@ -75,11 +72,10 @@ class HdfsTapTest extends PipelineSpec {
     val dir = tmpDir
     val t = runWithFileFuture {
       _
-        .parallelize(Seq(1, 2, 3))
-        .map(i => newTableRow(i).toString)
+        .parallelize(Seq("a", "b", "c"))
         .saveAsHdfsTextFile(dir.getPath)
     }
-    verifyTap(t, Set(1, 2, 3).map(i => newTableRow(i).toString))
+    verifyTap(t, Set("a", "b", "c"))
     FileUtils.deleteDirectory(dir)
   }
 
@@ -100,42 +96,5 @@ class HdfsTapTest extends PipelineSpec {
   }
 
   def tmpDir: File = new File(new File(sys.props("java.io.tmpdir")), "scio-test-" + UUID.randomUUID().toString)
-
-  def newGenericRecord(i: Int): GenericRecord = {
-    def f(name: String, tpe: Schema.Type) =
-      new Schema.Field(
-        name,
-        Schema.createUnion(List(Schema.create(Schema.Type.NULL), Schema.create(tpe)).asJava),
-        null, null)
-
-    val schema = Schema.createRecord("GenericTestRecord", null, null, false)
-    schema.setFields(List(
-      f("int_field", Schema.Type.INT),
-      f("long_field", Schema.Type.LONG),
-      f("float_field", Schema.Type.FLOAT),
-      f("double_field", Schema.Type.DOUBLE),
-      f("boolean_field", Schema.Type.BOOLEAN),
-      f("string_field", Schema.Type.STRING)
-    ).asJava)
-
-    val r = new GenericData.Record(schema)
-    r.put("int_field", 1 * i)
-    r.put("long_field", 1L * i)
-    r.put("float_field", 1F * i)
-    r.put("double_field", 1.0 * i)
-    r.put("boolean_field", true)
-    r.put("string_field", "hello")
-    r
-  }
-
-  def newSpecificRecord(i: Int): TestRecord = new TestRecord(i, i.toLong, i.toFloat, i.toDouble, true, "hello")
-
-  def newTableRow(i: Int): TableRow = TableRow(
-    "int_field" -> 1 * i,
-    "long_field" -> 1L * i,
-    "float_field" -> 1F * i,
-    "double_field" -> 1.0 * i,
-    "boolean_field" -> "true",
-    "string_field" -> "hello")
 
 }
