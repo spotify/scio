@@ -271,7 +271,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
   // Test wiring
   // =======================================================================
 
-  private implicit def context: ScioContext = this
+  private implicit val context: ScioContext = this
 
   private[scio] def isTest: Boolean = testId.isDefined
 
