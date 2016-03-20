@@ -210,8 +210,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * be more powerful and better optimized in some cases.
    * @group transform
    */
-  def aggregate[A: ClassTag, U: ClassTag](aggregator: Aggregator[T, A, U]): SCollection[U] =
-    this.map(aggregator.prepare).sum(aggregator.semigroup).map(aggregator.present)
+  def aggregate[A: ClassTag, U: ClassTag](aggregator: Aggregator[T, A, U]): SCollection[U] = this.transform { in =>
+    val a = aggregator  // defeat closure
+    in.map(a.prepare).sum(a.semigroup).map(a.present)
+  }
 
   /**
    * Generic function to combine the elements using a custom set of aggregation functions. Turns
@@ -345,10 +347,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @return a new SCollection with the mean of elements
    * @group transform
    */
-  def mean(implicit ev: Numeric[T]): SCollection[Double] =
-    this
-      .map(ev.toDouble).asInstanceOf[SCollection[JDouble]]
+  def mean(implicit ev: Numeric[T]): SCollection[Double] = this.transform { in =>
+    val e = ev  // defeat closure
+    in
+      .map(e.toDouble).asInstanceOf[SCollection[JDouble]]
       .apply(Mean.globally()).asInstanceOf[SCollection[Double]]
+  }
+
 
   /**
    * Return the min of this SCollection as defined by the implicit Ordering[T].
