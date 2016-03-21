@@ -37,6 +37,13 @@ class ReplScioContext(options: DataflowPipelineOptions, artifacts: List[String],
     super.close()
   }
 
+  /** Ensure an operation is called before the pipeline is closed. */
+  override private[scio] def pipelineOp[T](body: => T): T = {
+    require(!this.isClosed,
+      "ScioContext already closed, use :newScio <[context-name] | sc> to create new context")
+    super.pipelineOp(body)
+  }
+
   private def createJar(): Unit = {
     // scalastyle:off structural.type
     import scala.language.reflectiveCalls
