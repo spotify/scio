@@ -143,6 +143,44 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support countMinSketch() on Longs" in {
+    runWithContext { sc => {
+        import com.twitter.algebird.CMSHasherImplicits.CMSHasherLong
+        import com.twitter.algebird._
+        val delta = 1.0E-10D
+        val eps = 0.001D
+        val seed = 1
+        val heavy_hitters: Double = 0.01
+        val cmsMonoid = TopPctCMS.monoid[Long](eps, delta, seed, heavy_hitters)
+
+        val data = Seq(1L, 1L, 2L, 1L)
+        val expected = cmsMonoid.create(data)
+
+        val p = sc.parallelize(data).countMinSketch(cmsMonoid)
+        p should containSingleValue(expected)
+      }
+    }
+  }
+
+  it should "support countMinSketch() on Strings" in {
+    runWithContext { sc => {
+        import com.twitter.algebird.CMSHasherImplicits.CMSHasherString
+        import com.twitter.algebird._
+        val delta = 1.0E-10D
+        val eps = 0.001D
+        val seed = 1
+        val heavy_hitters: Double = 0.01
+        val cmsMonoid = TopPctCMS.monoid[String](eps, delta, seed, heavy_hitters)
+
+        val data = Seq("a", "b", "b", "c", "c", "c")
+        val expected = cmsMonoid.create(data)
+
+        val p = sc.parallelize(data).countMinSketch(cmsMonoid)
+        p should containSingleValue(expected)
+      }
+    }
+  }
+
   it should "support distinct()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq("a", "b", "b", "c", "c", "c")).distinct()
