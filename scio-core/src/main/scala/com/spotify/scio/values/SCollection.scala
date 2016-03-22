@@ -49,7 +49,7 @@ import com.spotify.scio.io._
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
-import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
+import com.twitter.algebird.{Aggregator, Monoid, Semigroup, TopCMS, TopCMSMonoid}
 import org.apache.avro.Schema
 import org.apache.avro.specific.SpecificRecordBase
 import org.joda.time.{Duration, Instant}
@@ -265,6 +265,18 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def countByValue(): SCollection[(T, Long)] = this.transform {
     _.apply(Count.perElement[T]()).map(kvToTuple).asInstanceOf[SCollection[(T, Long)]]
   }
+
+
+  /**
+    * Estimate the frequencies of elements using [[com.twitter.algebird.TopCMSMonoid TopCMSMonoid]]
+    * @param cmsMon [[com.twitter.algebird.TopCMSMonoid TopCMSMonoid]] used for the estimation
+    * @group transform
+    */
+  def countMinSketch(cmsMon: TopCMSMonoid[T]): SCollection[TopCMS[T]] =
+    this.apply(Combine.globally(
+      Functions.combineFn((v: T) => cmsMon.create(v),
+                          (c: TopCMS[T], v: T) => cmsMon.plus(c, cmsMon.create(v)),
+                          (c1: TopCMS[T], c2: TopCMS[T]) => cmsMon.plus(c1, c2))))
 
   /**
    * Return a new SCollection containing the distinct elements in this SCollection.
