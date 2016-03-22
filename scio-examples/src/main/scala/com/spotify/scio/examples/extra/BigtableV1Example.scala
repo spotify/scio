@@ -24,11 +24,20 @@ import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.values.SCollection
 import org.apache.hadoop.hbase.client.{Result, Put}
 
-object BigtableExample {
+/**
+ * Bigtable V1 examples.
+ *
+ * This depends on APIs from `scio-bigtable` and imports from `com.spotify.scio.bigtable._`.
+ * It also depends on an early release of `com.google.cloud.bigtable:bigtable-hbase-dataflow`
+ * and may change in the future.
+ */
+object BigtableV1Example {
   val FAMILY = "count".getBytes
   val QUALIFIER = "long".getBytes
-  def put(key: String, value: Long): Put = new Put(key.getBytes).addColumn(FAMILY, QUALIFIER, value.toString.getBytes)
-  def result(r: Result): String = new String(r.getRow) + ": " + new String(r.getValue(FAMILY, QUALIFIER))
+  def put(key: String, value: Long): Put =
+    new Put(key.getBytes).addColumn(FAMILY, QUALIFIER, value.toString.getBytes)
+  def result(r: Result): String =
+    new String(r.getRow) + ": " + new String(r.getValue(FAMILY, QUALIFIER))
 }
 
 /*
@@ -44,16 +53,15 @@ runMain
   --bigtableTableId=[BIG_TABLE_TABLE_ID]
 */
 
-object BigtableWriteExample {
+object BigtableV1WriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
-
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val config = CloudBigtableTableConfiguration.fromCBTOptions(Bigtable.parseOptions(cmdlineArgs))
 
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue()
-      .map(kv => BigtableExample.put(kv._1, kv._2))
+      .map(kv => BigtableV1Example.put(kv._1, kv._2))
       .saveAsBigtable(config)
 
     sc.close()
@@ -73,14 +81,13 @@ runMain
   --output=gs://[BUCKET]/[PATH]/wordcount
 */
 
-object BigtableReadExample {
+object BigtableV1ReadExample {
   def main(cmdlineArgs: Array[String]): Unit = {
-
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val config = CloudBigtableScanConfiguration.fromCBTOptions(Bigtable.parseOptions(cmdlineArgs))
 
     sc.bigTable(config)
-      .map(BigtableExample.result)
+      .map(BigtableV1Example.result)
       .saveAsTextFile(args("output"))
 
     sc.close()
@@ -100,16 +107,15 @@ runMain
   --bigtableTableId=[BIG_TABLE_TABLE_ID]
 */
 
-object MultipleBigtableWriteExample {
+object BigtableV1MultipleWriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
-
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val config = CloudBigtableTableConfiguration.fromCBTOptions(Bigtable.parseOptions(cmdlineArgs))
 
     def wordCount(name: String, in: SCollection[String]): SCollection[(String, Iterable[Put])] =
       in.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
         .countByValue()
-        .map(kv => BigtableExample.put(kv._1, kv._2))
+        .map(kv => BigtableV1Example.put(kv._1, kv._2))
         .groupBy(_ => Unit)
         .map(kv => (name, kv._2))
 
