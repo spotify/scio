@@ -96,8 +96,8 @@ package object bigtable {
         self.context.testOut(output)(self)
       } else {
         CloudBigtableIO.initializeForWrite(self.context.pipeline)
-        val transform = CloudBigtableIO.writeToTable(config)
-        self.asInstanceOf[SCollection[Mutation]].applyInternal(transform)
+        val sink = CloudBigtableIO.writeToTable(config)
+        self.asInstanceOf[SCollection[Mutation]].applyInternal(sink)
       }
       Future.failed(new NotImplementedError("Bigtable future not implemented"))
     }
