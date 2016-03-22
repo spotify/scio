@@ -78,7 +78,8 @@ object ScioContext {
     new ScioContext(options, artifacts, None)
 
   /** Create a new [[ScioContext]] instance for testing. */
-  def forTest(testId: String): ScioContext = new ScioContext(defaultOptions, List[String](), Some(testId))
+  def forTest(testId: String): ScioContext =
+    new ScioContext(defaultOptions, List[String](), Some(testId))
 
   /** Parse PipelineOptions and application arguments from command line arguments. */
   def parseArguments[T <: PipelineOptions : ClassTag](cmdlineArgs: Array[String]): (T, Args) = {
@@ -92,7 +93,8 @@ object ScioContext {
         Some(Introspector.decapitalize(n.substring(if (n.startsWith("is")) 2 else 3)))
       }
     }.map(s => s"--$s($$|=)".r)
-    val (dfArgs, appArgs) = cmdlineArgs.partition(arg => dfPatterns.exists(_.findFirstIn(arg).isDefined))
+    val (dfArgs, appArgs) =
+      cmdlineArgs.partition(arg => dfPatterns.exists(_.findFirstIn(arg).isDefined))
 
     (PipelineOptionsFactory.fromArgs(dfArgs).as(cls), Args(appArgs))
   }
@@ -113,7 +115,9 @@ object ScioContext {
  * @groupname Ungrouped Other Members
  */
 // scalastyle:off number.of.methods
-class ScioContext private[scio] (val options: DataflowPipelineOptions, private var artifacts: List[String], testId: Option[String]) {
+class ScioContext private[scio] (val options: DataflowPipelineOptions,
+                                 private var artifacts: List[String],
+                                 testId: Option[String]) {
 
   private val logger = LoggerFactory.getLogger(ScioContext.getClass)
 
@@ -377,7 +381,9 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
    * Get an SCollection for a Pub/Sub subscription.
    * @group input
    */
-  def pubsubSubscription(sub: String, idLabel: String = null, timestampLabel: String = null): SCollection[String] = pipelineOp {
+  def pubsubSubscription(sub: String,
+                         idLabel: String = null,
+                         timestampLabel: String = null): SCollection[String] = pipelineOp {
     if (this.isTest) {
       this.getTestInput(PubsubIO(sub))
     } else {
@@ -392,7 +398,9 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
    * Get an SCollection for a Pub/Sub topic.
    * @group input
    */
-  def pubsubTopic(topic: String, idLabel: String = null, timestampLabel: String = null): SCollection[String] = pipelineOp {
+  def pubsubTopic(topic: String,
+                  idLabel: String = null,
+                  timestampLabel: String = null): SCollection[String] = pipelineOp {
     if (this.isTest) {
       this.getTestInput(PubsubIO(topic))
     } else {
