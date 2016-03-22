@@ -52,7 +52,8 @@ object Collections {
     }
   }
 
-  private def topByKeyImpl[K, V](xs: Iterable[(K, V)], num: Int, ord: Ordering[V]): Map[K, Iterable[V]] = {
+  private def topByKeyImpl[K, V](xs: Iterable[(K, V)], num: Int,
+                                 ord: Ordering[V]): Map[K, Iterable[V]] = {
     require(num > 0, "num must be > 0")
     val size = math.min(num, xs.size)
 
@@ -85,12 +86,14 @@ object Collections {
 
   /** Enhance Array by adding a `topByKey` method. */
   implicit class TopByKeyArray[K, V](self: Array[(K, V)]) {
-    def topByKey(num: Int)(implicit ord: Ordering[V]): Map[K, Iterable[V]] = topByKeyImpl(self, num, ord)
+    def topByKey(num: Int)(implicit ord: Ordering[V]): Map[K, Iterable[V]] =
+      topByKeyImpl(self, num, ord)
   }
 
   /** Enhance Iterable by adding a `topByKey` method. */
   implicit class TopByKeyIterable[K, V](self: Iterable[(K, V)]) {
-    def topByKey(num: Int)(implicit ord: Ordering[V]): Map[K, Iterable[V]] = topByKeyImpl(self, num, ord)
+    def topByKey(num: Int)(implicit ord: Ordering[V]): Map[K, Iterable[V]] =
+      topByKeyImpl(self, num, ord)
   }
 
 }

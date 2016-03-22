@@ -129,7 +129,8 @@ object Iterators {
   }
 
   /** Iterator for time series data. */
-  class TimeSeriesIterator[T] private[extra] (private val self: Iterator[T], private val timestampFn: T => Long) {
+  class TimeSeriesIterator[T] private[extra] (private val self: Iterator[T],
+                                              private val timestampFn: T => Long) {
 
     /**
       * Iterator of fixed-size timestamp-based windows.
@@ -172,7 +173,8 @@ object Iterators {
       * Convert this iterator to a [[TimeSeriesIterator]].
       * @param timestampFn function to extract timestamp.
       */
-    def timeSeries(timestampFn: T => Long): TimeSeriesIterator[T] = new TimeSeriesIterator(self, timestampFn)
+    def timeSeries(timestampFn: T => Long): TimeSeriesIterator[T] =
+      new TimeSeriesIterator(self, timestampFn)
   }
 
 }
