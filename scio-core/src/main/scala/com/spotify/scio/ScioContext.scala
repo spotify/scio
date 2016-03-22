@@ -22,7 +22,7 @@ import java.io.File
 import java.net.{URI, URLClassLoader}
 import java.util.concurrent.TimeUnit
 
-import com.google.api.services.bigquery.model.{JobReference, TableReference}
+import com.google.api.services.bigquery.model.TableReference
 import com.google.api.services.datastore.DatastoreV1.{Entity, Query}
 import com.google.cloud.dataflow.sdk.Pipeline
 import com.google.cloud.dataflow.sdk.PipelineResult.State
@@ -50,6 +50,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer, Set => MSet}
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
+import scala.util.control.NonFatal
 
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
 object ContextAndArgs {
@@ -227,7 +228,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions, private v
           state
         }
         f.onFailure {
-          case e: Throwable => _promises.foreach(_._1.failure(e))
+          case NonFatal(e) => _promises.foreach(_._1.failure(e))
         }
         f
       // blocking runner, handle callbacks directly

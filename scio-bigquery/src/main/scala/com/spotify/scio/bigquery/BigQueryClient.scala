@@ -42,6 +42,7 @@ import org.joda.time.{Instant, Period}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
+import scala.util.control.NonFatal
 import scala.util.{Random, Try}
 
 /** Utility for BigQuery data types. */
@@ -199,7 +200,7 @@ class BigQueryClient private (private val projectId: String, auth: Option[Either
         makeBigQueryJob(sqlQuery, temp)
       }
     } catch {
-      case _: Throwable =>
+      case NonFatal(_) =>
         val temp = temporaryTable(TABLE_PREFIX)
         logger.info(s"Cache miss for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
@@ -272,7 +273,7 @@ class BigQueryClient private (private val projectId: String, auth: Option[Either
           .datasets()
           .insert(projectId, ds)
           .execute()
-      case e: Throwable => throw e
+      case NonFatal(e) => throw e
     }
   }
 

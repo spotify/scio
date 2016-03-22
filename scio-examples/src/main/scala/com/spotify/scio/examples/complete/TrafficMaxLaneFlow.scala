@@ -27,6 +27,7 @@ import org.joda.time.format.DateTimeFormat
 import org.joda.time.{Duration, Instant}
 
 import scala.collection.JavaConverters._
+import scala.util.control.NonFatal
 
 case class LaneInfo(stationId: String, lane: String, direction: String, freeway: String, recordedTimestamp: String,
                     laneFlow: Int, laneAO: Double, laneAS: Double, totalFlow: Int)
@@ -99,7 +100,7 @@ object TrafficMaxLaneFlow {
               laneFlow, laneAvgOccupancy, laneAvgSpeed, totalFlow))
           }
         } catch {
-          case _: Throwable => Seq.empty
+          case NonFatal(_) => Seq.empty
         }
       }
 

@@ -27,6 +27,7 @@ import org.joda.time.{Duration, Instant}
 import org.joda.time.format.DateTimeFormat
 
 import scala.collection.JavaConverters._
+import scala.util.control.NonFatal
 
 case class StationSpeed(stationId: String, avgSpeed: Double, timestamp: Long)
 case class RouteInfo(route: String, avgSpeed: Double, slowdownEvent: Boolean)
@@ -94,7 +95,7 @@ object TrafficRoutes {
             Seq()
           }
         } catch {
-          case _: Throwable => Seq.empty
+          case NonFatal(_) => Seq.empty
         }
       }
 

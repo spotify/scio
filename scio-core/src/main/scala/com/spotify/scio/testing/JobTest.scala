@@ -23,6 +23,7 @@ import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 
 import scala.reflect.ClassTag
+import scala.util.control.NonFatal
 
 /**
  * Set up a Dataflow job for unit testing.
@@ -92,7 +93,7 @@ object JobTest {
       } catch {
         // InvocationTargetException stacktrace is noisy and useless
         case e: InvocationTargetException => throw e.getCause
-        case e: Throwable => throw e
+        case NonFatal(e) => throw e
       }
 
       TestDataManager.unsetInput(testId)

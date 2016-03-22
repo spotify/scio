@@ -27,6 +27,7 @@ import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import scala.util.control.NonFatal
 
 private[scio] trait SCollectionMatcher {
 
@@ -35,7 +36,7 @@ private[scio] trait SCollectionMatcher {
       f()
       true
     } catch {
-      case e: Throwable => false
+      case NonFatal(_) => false
     }
   }
 

@@ -26,6 +26,7 @@ import com.spotify.scio.util.ScioUtil
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
+import scala.util.control.NonFatal
 
 private[scio] object Implicits {
 
@@ -54,7 +55,7 @@ private[scio] object Implicits {
         // Always fall back to Kryo
         r.getDefaultCoder(TypeDescriptor.of(ScioUtil.classOf[T]))
       } catch {
-        case _: Throwable => null
+        case NonFatal(_) => null
       }
 
       if (coder == null || coder.getClass == classOf[SerializableCoder[T]]) {
