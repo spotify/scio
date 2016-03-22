@@ -64,7 +64,9 @@ object SCollection {
 
   /** Create a union of multiple SCollections */
   def unionAll[T: ClassTag](scs: Iterable[SCollection[T]]): SCollection[T] = {
-    val o = PCollectionList.of(scs.map(_.internal).asJava).apply(CallSites.getCurrent, Flatten.pCollections())
+    val o = PCollectionList
+      .of(scs.map(_.internal).asJava)
+      .apply(CallSites.getCurrent, Flatten.pCollections())
     new SCollectionImpl(o, scs.head.context)
   }
 
@@ -129,7 +131,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * combine parts of the data to reduce load on the final global combine step.
    * @param fanout the number of intermediate keys that will be used
    */
-  def withFanout(fanout: Int): SCollectionWithFanout[T] = new SCollectionWithFanout[T](internal, context, fanout)
+  def withFanout(fanout: Int): SCollectionWithFanout[T] =
+    new SCollectionWithFanout[T](internal, context, fanout)
 
   /**
    * Return the union of this SCollection and another one. Any identical elements will appear
@@ -267,7 +270,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * this SCollection, and then flattening the results.
    * @group transform
    */
-  def flatMap[U: ClassTag](f: T => TraversableOnce[U]): SCollection[U] = this.parDo(Functions.flatMapFn(f))
+  def flatMap[U: ClassTag](f: T => TraversableOnce[U]): SCollection[U] =
+    this.parDo(Functions.flatMapFn(f))
 
   /**
    * Aggregate the elements using a given associative function and a neutral "zero value". The
@@ -348,7 +352,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def quantilesApprox(numQuantiles: Int)(implicit ord: Ordering[T]): SCollection[Iterable[T]] =
-    this.apply(ApproximateQuantiles.globally(numQuantiles, ord)).map(_.asInstanceOf[JIterable[T]].asScala)
+    this
+      .apply(ApproximateQuantiles.globally(numQuantiles, ord))
+      .map(_.asInstanceOf[JIterable[T]].asScala)
 
   /**
    * Randomly splits this SCollection with the provided weights.
@@ -608,7 +614,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       !(options.trigger == null ^ options.accumulationMode == null),
       "Both trigger and accumulationMode must be null or set")
     var transform = Window.into(fn).asInstanceOf[Window.Bound[T]]
-    if (options.allowedLateness != null) transform = transform.withAllowedLateness(options.allowedLateness)
+    if (options.allowedLateness != null) {
+      transform = transform.withAllowedLateness(options.allowedLateness)
+    }
     if (options.trigger != null && options.accumulationMode != null) {
       val t = transform.triggering(options.trigger)
       transform = if (options.accumulationMode == AccumulationMode.ACCUMULATING_FIRED_PANES) {
@@ -760,7 +768,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     textOut(path, ".json", numShards).withCoder(TableRowJsonCoder.of())
 
   /**
-   * Save this SCollection as an Avro file. Note that elements must be of type IndexedRecord.
+   * Save this SCollection as an Avro file.
    * @param schema must be not null if T is of type GenericRecord.
    * @group output
    */
@@ -835,7 +843,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /**
-   * Save this SCollection as a Pub/Sub topic. Note that elements must be of type String.
+   * Save this SCollection as a Pub/Sub topic.
    * @group output
    */
   def saveAsPubsub(topic: String)(implicit ev: T <:< String): Future[Tap[String]] = {
