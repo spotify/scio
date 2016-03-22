@@ -19,8 +19,7 @@ package com.spotify.scio
 
 import com.google.cloud.bigtable.dataflow.{CloudBigtableIO, CloudBigtableScanConfiguration, CloudBigtableTableConfiguration}
 import com.google.cloud.dataflow.sdk.io.Read
-import com.google.cloud.dataflow.sdk.transforms.PTransform
-import com.google.cloud.dataflow.sdk.values.{KV, PDone, PCollection}
+import com.google.cloud.dataflow.sdk.values.KV
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
