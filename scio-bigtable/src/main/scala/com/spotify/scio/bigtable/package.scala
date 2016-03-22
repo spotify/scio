@@ -48,32 +48,32 @@ package object bigtable {
                  zoneId: String,
                  tableId: String,
                  scan: Scan = null): SCollection[Result] = self.pipelineOp {
-      if (self.isTest) {
-        self.getTestInput[Result](BigTableInput(projectId, clusterId, zoneId, tableId))
-      } else {
-        val _scan: Scan = if (scan != null) scan else new Scan()
-        val config = new CloudBigtableScanConfiguration(projectId, zoneId, clusterId, tableId, _scan)
-        this.read(config)
-      }
+      val _scan: Scan = if (scan != null) scan else new Scan()
+      val config = new CloudBigtableScanConfiguration(projectId, zoneId, clusterId, tableId, _scan)
+      this.bigTable(config)
+
     }
 
     /** Get an SCollection for a BigTable table. */
     def bigTable(config: CloudBigtableScanConfiguration): SCollection[Result] = self.pipelineOp {
       if (self.isTest) {
-        self.getTestInput[Result](BigTableInput(config.getProjectId, config.getClusterId, config.getZoneId, config.getTableId))
+        val input = BigTableInput(
+          config.getProjectId, config.getClusterId, config.getZoneId, config.getTableId)
+        self.getTestInput[Result](input)
       } else {
-        this.read(config)
+        self
+          .wrap(self.applyInternal(Read.from(CloudBigtableIO.read(config))))
+          .setName(
+            s"${config.getProjectId} ${config.getClusterId} " +
+            s"${config.getZoneId} ${config.getTableId}")
       }
     }
 
-    private def read(config: CloudBigtableScanConfiguration): SCollection[Result] =
-      self
-        .wrap(self.applyInternal(Read.from(CloudBigtableIO.read(config))))
-        .setName(s"${config.getProjectId} ${config.getClusterId} ${config.getZoneId} ${config.getTableId}")
-
   }
 
-  /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with BigTable methods. */
+  /**
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with BigTable methods.
+   */
   // implicit class BigTableSCollection[T](private val self: SCollection[T]) extends AnyVal {
   implicit class BigTableSCollection[T](val self: SCollection[T]) {
 
@@ -90,9 +90,11 @@ package object bigtable {
     }
 
     /** Save this SCollection as a BigTable table. Note that elements must be of type Mutation. */
-    def saveAsBigTable(config: CloudBigtableTableConfiguration)(implicit ev: T <:< Mutation): Future[Tap[Result]] = {
+    def saveAsBigTable(config: CloudBigtableTableConfiguration)
+                      (implicit ev: T <:< Mutation): Future[Tap[Result]] = {
       if (self.context.isTest) {
-        val output = BigTableOutput(config.getProjectId, config.getClusterId, config.getZoneId, config.getTableId)
+        val output = BigTableOutput(
+          config.getProjectId, config.getClusterId, config.getZoneId, config.getTableId)
         self.context.testOut(output)(self)
       } else {
         CloudBigtableIO.initializeForWrite(self.context.pipeline)
@@ -105,15 +107,18 @@ package object bigtable {
   }
 
   /**
-    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] for writing to
-    * multiple BigTable tables.
-    *
-    * Keys are table IDs and values are collections of Mutations.
-    */
-  // implicit class PairBigTableSCollection[K, V](private val self: SCollection[(K, Iterable[V])]) extends AnyVal {
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] for writing to
+   * multiple BigTable tables.
+   *
+   * Keys are table IDs and values are collections of Mutations.
+   */
+  // implicit class PairBigTableSCollection[T](private val self: SCollection[(String, Iterable[T])]) extends AnyVal {
   implicit class PairBigTableSCollection[T](val self: SCollection[(String, Iterable[T])]) {
 
-    /** Save this SCollection as multiple BigTable tables. Note that value elements must be of type Mutation. */
+    /**
+     * Save this SCollection as multiple BigTable tables. Note that value elements must be of type
+     * Mutation.
+     */
     def saveAsMultipleBigTable(projectId: String,
                                clusterId: String,
                                zoneId: String,
@@ -124,8 +129,12 @@ package object bigtable {
       this.saveAsMultipleBigTable(config)
     }
 
-    /** Save this SCollection as multiple BigTable tables. Note that value elements must be of type Mutation. */
-    def saveAsMultipleBigTable(config: CloudBigtableTableConfiguration)(implicit ev: T <:< Mutation): Future[Tap[(String, Iterable[Result])]] = {
+    /**
+     * Save this SCollection as multiple BigTable tables. Note that value elements must be of type
+     * Mutation.
+     */
+    def saveAsMultipleBigTable(config: CloudBigtableTableConfiguration)
+                              (implicit ev: T <:< Mutation): Future[Tap[(String, Iterable[Result])]] = {
       if (self.context.isTest) {
         val output = MultipleBigTableOutput(config.getProjectId, config.getClusterId, config.getZoneId)
         self.context.testOut(output.asInstanceOf[TestIO[(String, Iterable[T])]])(self)
