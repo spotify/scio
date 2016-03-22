@@ -31,28 +31,24 @@ import scala.util.control.NonFatal
 
 private[scio] trait SCollectionMatcher {
 
-  private def tryAssert(f: () => Any): Boolean = {
-    try {
-      f()
-      true
-    } catch {
-      case NonFatal(_) => false
-    }
+  private def m(f: () => Any): MatchResult = {
+    val r = try { f(); true } catch { case NonFatal(_) => false }
+    MatchResult(r, "", "")
   }
 
   def containInAnyOrder[T](value: Iterable[T]): Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
     override def apply(left: SCollection[T]): MatchResult =
-      MatchResult(tryAssert(() => DataflowAssert.that(left.internal).containsInAnyOrder(value.asJava)), "", "")
+      m(() => DataflowAssert.that(left.internal).containsInAnyOrder(value.asJava))
   }
 
   def containSingleValue[T](value: T): Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
     override def apply(left: SCollection[T]): MatchResult =
-      MatchResult(tryAssert(() => DataflowAssert.thatSingleton(left.internal).isEqualTo(value)), "", "")
+      m(() => DataflowAssert.thatSingleton(left.internal).isEqualTo(value))
   }
 
   val beEmpty = new Matcher[SCollection[_]] {
     override def apply(left: SCollection[_]): MatchResult =
-      MatchResult(tryAssert(() => DataflowAssert.that(left.internal).empty()), "", "")
+      m(() => DataflowAssert.that(left.internal).empty())
   }
 
   def haveSize(size: Int): Matcher[SCollection[_]] = new Matcher[SCollection[_]] {
@@ -64,14 +60,13 @@ private[scio] trait SCollectionMatcher {
           null
         }
       }
-      MatchResult(tryAssert(() => DataflowAssert.that(left.asInstanceOf[SCollection[Any]].internal).satisfies(g)), "", "")
+      m(() => DataflowAssert.that(left.asInstanceOf[SCollection[Any]].internal).satisfies(g))
     }
   }
 
   def equalMapOf[K: ClassTag, V: ClassTag](value: Map[K, V]): Matcher[SCollection[(K, V)]] = new Matcher[SCollection[(K, V)]] {
     override def apply(left: SCollection[(K, V)]): MatchResult = {
-      val kv = SCollection.makePairSCollectionFunctions(left).toKV.internal
-      MatchResult(tryAssert(() => DataflowAssert.thatMap(kv).isEqualTo(value.asJava)), "", "")
+      m(() => DataflowAssert.thatMap(left.toKV.internal).isEqualTo(value.asJava))
     }
   }
 
@@ -86,7 +81,7 @@ private[scio] trait SCollectionMatcher {
           null
         }
       }
-      MatchResult(tryAssert(() => DataflowAssert.that(left.internal).satisfies(g)), "", "")
+      m(() => DataflowAssert.that(left.internal).satisfies(g))
     }
   }
 
@@ -99,7 +94,7 @@ private[scio] trait SCollectionMatcher {
           null
         }
       }
-      MatchResult(tryAssert(() => DataflowAssert.that(left.internal).satisfies(g)), "", "")
+      m(() => DataflowAssert.that(left.internal).satisfies(g))
     }
   }
 
