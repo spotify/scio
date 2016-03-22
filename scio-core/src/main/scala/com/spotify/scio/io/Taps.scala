@@ -31,7 +31,8 @@ trait Taps {
     mkTap(s"BigQuery Table: $table", () => tableExists(table), () => BigQueryTap(table))
 
   /** Get a `Future[Tap[T]]` for BigQuery table. */
-  def bigQueryTable(tableSpec: String): Future[Tap[TableRow]] = bigQueryTable(BigQueryIO.parseTableSpec(tableSpec))
+  def bigQueryTable(tableSpec: String): Future[Tap[TableRow]] =
+    bigQueryTable(BigQueryIO.parseTableSpec(tableSpec))
 
   /** Get a `Future[Tap[T]]` of TableRow for a JSON file. */
   def tableRowJsonFile(path: String): Future[Tap[TableRow]] =
@@ -43,7 +44,8 @@ trait Taps {
 
   private def isPathDone(path: String): Boolean = FileStorage(path).isDone
 
-  private def isQueryDone(sqlQuery: String): Boolean = BigQueryUtil.extractTables(sqlQuery).forall(tableExists)
+  private def isQueryDone(sqlQuery: String): Boolean =
+    BigQueryUtil.extractTables(sqlQuery).forall(tableExists)
 
   private def tableExists(table: TableReference): Boolean =
     Try(BigQueryClient.defaultInstance().getTableSchema(table)).isSuccess
@@ -68,19 +70,26 @@ trait Taps {
 
 /** Taps implementation that fails immediately if tap not available. */
 private class ImmediateTaps extends Taps {
-  override protected def mkTap[T](name: String, readyFn: () => Boolean, tapFn: () => Tap[T]): Future[Tap[T]] =
+  override protected def mkTap[T](name: String,
+                                  readyFn: () => Boolean,
+                                  tapFn: () => Tap[T]): Future[Tap[T]] =
     if (readyFn()) Future.successful(tapFn()) else Future.failed(new TapNotAvailableException(name))
 }
 
 /** Taps implementation that polls for tap availability in the background. */
 private class PollingTaps(private val backOff: BackOff) extends Taps {
 
-  private case class Poll(name: String, readyFn: () => Boolean, tapFn: () => Tap[Any], promise: Promise[AnyRef])
+  case class Poll(name: String,
+                  readyFn: () => Boolean,
+                  tapFn: () => Tap[Any],
+                  promise: Promise[AnyRef])
 
   private var polls: List[Poll] = null
   private val logger: Logger = LoggerFactory.getLogger(classOf[PollingTaps])
 
-  override protected def mkTap[T](name: String, readyFn: () => Boolean, tapFn: () => Tap[T]): Future[Tap[T]] = this.synchronized {
+  override protected def mkTap[T](name: String,
+                                  readyFn: () => Boolean,
+                                  tapFn: () => Tap[T]): Future[Tap[T]] = this.synchronized {
     val p = Promise[AnyRef]()
     val init = if (polls == null) {
       polls = Nil
@@ -138,7 +147,10 @@ object Taps extends {
   /** Default polling taps initial interval. */
   val POLLING_INITIAL_INTERVAL_DEFAULT = "10000"
 
-  /** System property key for polling taps maximum number of attempts, unlimited if <= 0. Default is 0 */
+  /**
+   * System property key for polling taps maximum number of attempts, unlimited if <= 0. Default is
+   * 0.
+   */
   val POLLING_MAXIMUM_ATTEMPTS_KEY = "taps.polling.maximum_attempts"
 
   /** Default polling taps maximum number of attempts. */
@@ -162,10 +174,13 @@ object Taps extends {
     getPropOrElse(ALGORITHM_KEY, ALGORITHM_DEFAULT) match {
       case "immediate" => new ImmediateTaps
       case "polling" =>
-        val maxAttempts = getPropOrElse(POLLING_MAXIMUM_ATTEMPTS_KEY, POLLING_MAXIMUM_ATTEMPTS_DEFAULT).toInt
-        val initInterval = getPropOrElse(POLLING_INITIAL_INTERVAL_KEY, POLLING_INITIAL_INTERVAL_DEFAULT).toLong
+        val maxAttempts =
+          getPropOrElse(POLLING_MAXIMUM_ATTEMPTS_KEY, POLLING_MAXIMUM_ATTEMPTS_DEFAULT).toInt
+        val initInterval =
+          getPropOrElse(POLLING_INITIAL_INTERVAL_KEY, POLLING_INITIAL_INTERVAL_DEFAULT).toLong
         val backOff = if (maxAttempts <= 0) {
-          val maxInterval = getPropOrElse(POLLING_MAXIMUM_INTERVAL_KEY, POLLING_MAXIMUM_INTERVAL_DEFAULT).toInt
+          val maxInterval =
+            getPropOrElse(POLLING_MAXIMUM_INTERVAL_KEY, POLLING_MAXIMUM_INTERVAL_DEFAULT).toInt
           new IntervalBoundedExponentialBackOff(maxInterval, initInterval)
         } else {
           new AttemptBoundedExponentialBackOff(maxAttempts, initInterval)

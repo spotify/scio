@@ -157,6 +157,7 @@ private class LocalStorage(protected val path: String)  extends FileStorage {
       .map(_.toPath)
   }
 
-  override protected def getObjectInputStream(path: Path): InputStream = new FileInputStream(path.toFile)
+  override protected def getObjectInputStream(path: Path): InputStream =
+    new FileInputStream(path.toFile)
 
 }

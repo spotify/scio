@@ -31,7 +31,8 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}
 
 private[scio] class InMemoryDataFlowSink[T](private val id: String) extends Sink[T] {
-  override def createWriteOperation(options: PipelineOptions): WriteOperation[T, MBuffer[Array[Byte]]] =
+  override def createWriteOperation(options: PipelineOptions)
+  : WriteOperation[T, MBuffer[Array[Byte]]] =
     new InMemoryWriteOperation(this, id)
 
   override def validate(options: PipelineOptions): Unit = {
@@ -46,15 +47,18 @@ private class InMemoryWriteOperation[T](private val sink: Sink[T], private val i
 
   private val coder: Coder[T] = KryoAtomicCoder[T]
 
-  override def finalize(writerResults: Iterable[MBuffer[Array[Byte]]], options: PipelineOptions): Unit =
+  override def finalize(writerResults: Iterable[MBuffer[Array[Byte]]],
+                        options: PipelineOptions): Unit =
     writerResults.asScala.foreach { lb =>
       InMemorySinkManager.put(id, lb.map(CoderUtils.decodeFromByteArray(coder, _)))
     }
   override def initialize(options: PipelineOptions): Unit = {}
   override def getSink: Sink[T] = sink
-  override def createWriter(options: PipelineOptions): Writer[T, MBuffer[Array[Byte]]] = new InMemoryWriter(this)
+  override def createWriter(options: PipelineOptions): Writer[T, MBuffer[Array[Byte]]] =
+    new InMemoryWriter(this)
 
-  override def getWriterResultCoder: Coder[MBuffer[Array[Byte]]] = KryoAtomicCoder[MBuffer[Array[Byte]]]
+  override def getWriterResultCoder: Coder[MBuffer[Array[Byte]]] =
+    KryoAtomicCoder[MBuffer[Array[Byte]]]
 
 }
 

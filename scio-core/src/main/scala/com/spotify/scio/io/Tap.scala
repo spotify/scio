@@ -30,7 +30,8 @@ import org.apache.avro.Schema
 import scala.reflect.ClassTag
 
 /**
- * Placeholder to an external data set that can be either read into memory or opened as an SCollection.
+ * Placeholder to an external data set that can either be load into memory as an iterator or opened
+ * in a new ScioContext as an SCollection.
  */
 trait Tap[T] { self =>
 
@@ -87,5 +88,6 @@ case class ObjectFileTap[T: ClassTag](path: String) extends Tap[T] {
 private[scio] class InMemoryTap[T: ClassTag] extends Tap[T] {
   private[scio] val id: String = UUID.randomUUID().toString
   override def value: Iterator[T] = InMemorySinkManager.get(id).iterator
-  override def open(sc: ScioContext): SCollection[T] = sc.parallelize[T](InMemorySinkManager.get(id))
+  override def open(sc: ScioContext): SCollection[T] =
+    sc.parallelize[T](InMemorySinkManager.get(id))
 }
