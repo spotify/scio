@@ -21,6 +21,7 @@ import java.io.BufferedReader
 
 import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptionsFactory}
 import com.spotify.scio.bigquery.BigQueryClient
+import com.spotify.scio.scioVersion
 import com.spotify.scio.util.GCloudConfigUtils
 
 import scala.tools.nsc.GenericRunnerSettings
@@ -174,7 +175,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
                   |    ________________(_)_____
                   |    __  ___/  ___/_  /_  __ \
                   |    _(__  )/ /__ _  / / /_/ /
-                  |    /____/ \___/ /_/  \____/""".stripMargin + "   version " + com.spotify.scio.scioVersion + "\n"
+                  |    /____/ \___/ /_/  \____/""".stripMargin + "   version " + scioVersion + "\n"
     echo(ascii)
 
     val p = scala.util.Properties
