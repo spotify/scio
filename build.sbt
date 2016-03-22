@@ -145,7 +145,7 @@ lazy val root: Project = Project(
   scioCore,
   scioTest,
   scioBigQuery,
-  scioBigTable,
+  scioBigtable,
   scioExtra,
   scioHdfs,
   scioRepl,
@@ -212,7 +212,7 @@ lazy val scioBigQuery: Project = Project(
   )
 )
 
-lazy val scioBigTable: Project = Project(
+lazy val scioBigtable: Project = Project(
   "scio-bigtable",
   file("scio-bigtable"),
   settings = commonSettings ++ Seq(
@@ -282,7 +282,7 @@ lazy val scioExamples: Project = Project(
   sources in doc in Compile := List()
 ).dependsOn(
   scioCore,
-  scioBigTable,
+  scioBigtable,
   scioSchemas,
   scioTest % "test"
 )
