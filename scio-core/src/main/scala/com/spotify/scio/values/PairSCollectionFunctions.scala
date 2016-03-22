@@ -185,12 +185,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group join
    */
   def rightOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Option[V], W))] =
-    this.cogroup(that).flatMap { t =>
-      for {
-        v <- if (t._2._1.isEmpty) Iterable(None) else t._2._1.map(Option(_))
-        w <- t._2._2
-      } yield (t._1, (v, w))
-    }
+    MultiJoin.left(that, self).mapValues(kv => (kv._2, kv._1))
 
   // =======================================================================
   // Transformations
@@ -205,7 +200,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group per_key
    */
   def aggregateByKey[U: ClassTag](zeroValue: U)(seqOp: (U, V) => U, combOp: (U, U) => U): SCollection[(K, U)] =
-    this.applyPerKey(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp)), kvToTuple[K, U])
+    this.applyPerKey(
+      Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp)),
+      kvToTuple[K, U])
 
   /**
    * Aggregate the values of each key with [[com.twitter.algebird.Aggregator Aggregator]]. First
@@ -242,7 +239,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   def combineByKey[C: ClassTag](createCombiner: V => C)
                                (mergeValue: (C, V) => C)
                                (mergeCombiners: (C, C) => C): SCollection[(K, C)] =
-    this.applyPerKey(Combine.perKey(Functions.combineFn(createCombiner, mergeValue, mergeCombiners)), kvToTuple[K, C])
+    this.applyPerKey(
+      Combine.perKey(Functions.combineFn(createCombiner, mergeValue, mergeCombiners)),
+      kvToTuple[K, C])
 
   /**
    * Count approximate number of distinct values for each key in the SCollection.
@@ -459,7 +458,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * value], to be used with [[SCollection.withSideInputs]]. It is required that each key of the
    * input be associated with a single value.
    */
-  def asMapSideInput: SideInput[Map[K, V]] = new MapSideInput[K, V](self.toKV.applyInternal(View.asMap()))
+  def asMapSideInput: SideInput[Map[K, V]] =
+    new MapSideInput[K, V](self.toKV.applyInternal(View.asMap()))
 
   /**
    * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a Map[key,
