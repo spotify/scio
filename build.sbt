@@ -311,9 +311,9 @@ lazy val scioRepl: Project = Project(
   scioCore
 )
 
-/*****************/
-/* Site settings */
-/*****************/
+// =======================================================================
+// Site settings
+// =======================================================================
 
 // ScalaDoc links look like http://site/index.html#my.package.MyClass while JavaDoc links look
 // like http://site/my/package/MyClass.html. Therefore we need to fix links to external JavaDoc
@@ -348,9 +348,9 @@ lazy val siteSettings = site.settings ++ ghpages.settings ++ unidocSettings ++ S
   makeSite <<= makeSite dependsOn fixJavaDocLinksTask
 )
 
-/****************/
-/* API mappings */
-/****************/
+// =======================================================================
+// API mappings
+// =======================================================================
 
 val javaMappings = Seq(
   ("com.google.cloud.dataflow", "google-cloud-dataflow-java-sdk-all",
