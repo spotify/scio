@@ -91,16 +91,17 @@ package object hdfs {
   // implicit class HdfsSCollection[T](private val self: SCollection[T]) extends AnyVal {
   implicit class HdfsSCollection[T: ClassTag](val self: SCollection[T]) {
 
-    /** Save this SCollection as a text file on HDFS. Note that elements must be of type String. */
+    /** Save this SCollection as a text file on HDFS. */
     // TODO: numShards
     def saveAsHdfsTextFile(path: String): Future[Tap[String]] = {
+      val sink = new HadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]])
       self
         .map(x => KV.of(NullWritable.get(), new Text(x.toString)))
-        .applyInternal(Write.to(new HadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]])))
+        .applyInternal(Write.to(sink))
       self.context.makeFuture(HdfsTextTap(path))
     }
 
-    /** Save this SCollection as an Avro file on HDFS. Note that elements must be of type IndexedRecord. */
+    /** Save this SCollection as an Avro file on HDFS. */
     // TODO: numShards
     def saveAsHdfsAvroFile(path: String, schema: Schema = null): Future[Tap[T]] = {
       val job = Job.getInstance()
@@ -110,9 +111,10 @@ package object hdfs {
         schema
       }
       AvroJob.setOutputKeySchema(job, s)
+      val sink = new HadoopFileSink(path, classOf[AvroKeyOutputFormat[T]], job.getConfiguration)
       self
         .map(x => KV.of(new AvroKey(x), NullWritable.get()))
-        .applyInternal(Write.to(new HadoopFileSink(path, classOf[AvroKeyOutputFormat[T]], job.getConfiguration)))
+        .applyInternal(Write.to(sink))
       self.context.makeFuture(HdfsAvroTap[T](path, schema))
     }
 
