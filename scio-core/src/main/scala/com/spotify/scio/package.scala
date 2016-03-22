@@ -67,7 +67,8 @@ package object scio {
   /** Wait for nested Tap to be available, flatten result and get Tap reference from Future. */
   implicit class WaitableNestedFutureTap[T](self: Future[Future[Tap[T]]]) {
     import scala.concurrent.ExecutionContext.Implicits.global
-    def waitForResult(atMost: Duration = Duration.Inf): Tap[T] = Await.result(self.flatMap(identity), atMost)
+    def waitForResult(atMost: Duration = Duration.Inf): Tap[T] =
+      Await.result(self.flatMap(identity), atMost)
   }
 
   /** Get Scio version from scio-core/src/main/resources/version.sbt. */

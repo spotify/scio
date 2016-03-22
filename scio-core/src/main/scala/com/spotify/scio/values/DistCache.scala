@@ -47,7 +47,9 @@ private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistC
 
   // Serialize options to avoid shipping it with closure
   private val json: String = new ObjectMapper().writeValueAsString(options)
-  private def opts: GcsOptions = new ObjectMapper().readValue(json, classOf[PipelineOptions]).as(classOf[GcsOptions])
+  private def opts: GcsOptions = new ObjectMapper()
+    .readValue(json, classOf[PipelineOptions])
+    .as(classOf[GcsOptions])
 
   private def fetchFromGCS(uri: URI, prefix: String): File = {
     val path = prefix + uri.getPath.split("/").last
@@ -105,7 +107,9 @@ private[scio] class DistCacheSingle[F](val uri: URI, val initFn: File => F, opti
   override protected def init(): F = initFn(prepareFiles(Seq(uri)).head)
 }
 
-private[scio] class DistCacheMulti[F](val uris: Seq[URI], val initFn: Seq[File] => F, options: GcsOptions)
+private[scio] class DistCacheMulti[F](val uris: Seq[URI],
+                                      val initFn: Seq[File] => F,
+                                      options: GcsOptions)
   extends FileDistCache[F](options) {
   uris.foreach(verifyUri)
   override protected def init(): F = initFn(prepareFiles(uris))

@@ -65,7 +65,8 @@ private[scio] object Implicits {
       }
     }
 
-    def getScalaKvCoder[K: ClassTag, V: ClassTag]: Coder[KV[K, V]] = KvCoder.of(getScalaCoder[K], getScalaCoder[V])
+    def getScalaKvCoder[K: ClassTag, V: ClassTag]: Coder[KV[K, V]] =
+      KvCoder.of(getScalaCoder[K], getScalaCoder[V])
 
   }
 
