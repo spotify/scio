@@ -3,7 +3,10 @@ package com.spotify.scio.io
 import com.google.api.client.util.{BackOffUtils, Sleeper, BackOff}
 import com.google.api.services.bigquery.model.TableReference
 import com.google.cloud.dataflow.sdk.io.BigQueryIO
-import com.google.cloud.dataflow.sdk.util.{AttemptBoundedExponentialBackOff, IntervalBoundedExponentialBackOff}
+import com.google.cloud.dataflow.sdk.util.{
+  AttemptBoundedExponentialBackOff,
+  IntervalBoundedExponentialBackOff
+}
 import com.spotify.scio.bigquery.{BigQueryClient, BigQueryUtil, TableRow}
 import org.apache.avro.Schema
 import org.slf4j.{LoggerFactory, Logger}
