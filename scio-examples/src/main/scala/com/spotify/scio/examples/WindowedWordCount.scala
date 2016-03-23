@@ -59,7 +59,8 @@ object WindowedWordCount {
     val sc = ScioContext(opts)
 
     val inputFile = args.optional("inputFile")
-    val windowSize = Duration.standardMinutes(args.optional("windowSize").map(_.toLong).getOrElse(WINDOW_SIZE))
+    val windowSize = Duration.standardMinutes(
+      args.optional("windowSize").map(_.toLong).getOrElse(WINDOW_SIZE))
 
     // initialize input
     val input = if (opts.isStreaming) {
@@ -67,7 +68,9 @@ object WindowedWordCount {
     } else {
       sc
       .textFile(inputFile.getOrElse(ExampleData.KING_LEAR))
-      .timestampBy(_ => new Instant(System.currentTimeMillis() - (scala.math.random * RAND_RANGE).toLong))
+      .timestampBy {
+        _ => new Instant(System.currentTimeMillis() - (scala.math.random * RAND_RANGE).toLong)
+      }
     }
 
     input
