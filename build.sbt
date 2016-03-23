@@ -123,6 +123,8 @@ lazy val assemblySettings = Seq(
     case s if s.endsWith("libjansi.jnilib") => MergeStrategy.last
     case s if s.endsWith("jansi.dll") => MergeStrategy.rename
     case s if s.endsWith("libjansi.so") => MergeStrategy.rename
+    case s if s.endsWith(".dtd") => MergeStrategy.rename
+    case s if s.endsWith(".xsd") => MergeStrategy.rename
     case s => old(s)
   }
   }
