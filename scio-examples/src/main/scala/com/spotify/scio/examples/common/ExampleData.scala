@@ -26,7 +26,8 @@ object ExampleData {
 
   val EXPORTED_WIKI_TABLE = "gs://dataflow-samples/wikipedia_edits/*.json"
   val MONTHS = "gs://dataflow-samples/samples/misc/months.txt"
-  val TRAFFIC = "gs://dataflow-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv"
+  val TRAFFIC =
+    "gs://dataflow-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv"
 
   val WEATHER_SAMPLES_TABLE = "clouddataflow-readonly:samples.weather_stations"
   val SHAKESPEARE_TABLE = "publicdata:samples.shakespeare"
