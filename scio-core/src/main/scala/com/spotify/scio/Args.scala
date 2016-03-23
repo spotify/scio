@@ -30,7 +30,9 @@ object Args {
   /** Parse arguments. */
   def apply(args: Array[String]): Args = {
     val (properties, booleans) = args.map { arg =>
-      if (!arg.startsWith("--")) throw new IllegalArgumentException(s"Argument '$arg' does not begin with '--'")
+      if (!arg.startsWith("--")) {
+        throw new IllegalArgumentException(s"Argument '$arg' does not begin with '--'")
+      }
       arg.substring(2)
     }.partition(_.contains("="))
 
