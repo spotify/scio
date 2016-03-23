@@ -71,7 +71,8 @@ trait PipelineSpec extends FlatSpec with Matchers with SCollectionMatcher {
    * } should equal (Seq(6))
    * }}}
    */
-  def runWithData[T: ClassTag, U: ClassTag](data: Iterable[T])(fn: SCollection[T] => SCollection[U]): Seq[U] = {
+  def runWithData[T: ClassTag, U: ClassTag](data: Iterable[T])
+                                           (fn: SCollection[T] => SCollection[U]): Seq[U] = {
     runWithLocalOutput { sc => fn(sc.parallelize(data)) }
   }
 
@@ -129,7 +130,8 @@ trait PipelineSpec extends FlatSpec with Matchers with SCollectionMatcher {
    */
   def runWithData[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, U: ClassTag]
   (data1: Iterable[T1], data2: Iterable[T2], data3: Iterable[T3], data4: Iterable[T4])
-  (fn: (SCollection[T1], SCollection[T2], SCollection[T3], SCollection[T4]) => SCollection[U]): Seq[U] = {
+  (fn: (SCollection[T1], SCollection[T2], SCollection[T3], SCollection[T4]) => SCollection[U])
+  : Seq[U] = {
     runWithLocalOutput { sc =>
       fn(sc.parallelize(data1), sc.parallelize(data2), sc.parallelize(data3), sc.parallelize(data4))
     }
