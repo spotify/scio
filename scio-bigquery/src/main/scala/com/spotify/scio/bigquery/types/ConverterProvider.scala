@@ -82,7 +82,8 @@ private[types] object ConverterProvider {
       }
     }
 
-    def option(tree: Tree, tpe: Type): Tree = q"if ($tree == null) None else Some(${cast(tree, tpe)})"
+    def option(tree: Tree, tpe: Type): Tree =
+      q"if ($tree == null) None else Some(${cast(tree, tpe)})"
 
     def list(tree: Tree, tpe: Type): Tree = {
       val jl = tq"_root_.java.util.List[AnyRef]"
@@ -165,7 +166,8 @@ private[types] object ConverterProvider {
       }
     }
 
-    def option(tree: Tree, tpe: Type): Tree = q"if ($tree.isDefined) ${cast(q"$tree.get", tpe)} else null"
+    def option(tree: Tree, tpe: Type): Tree =
+      q"if ($tree.isDefined) ${cast(q"$tree.get", tpe)} else null"
 
     def list(tree: Tree, tpe: Type): Tree = q"$tree.map(x => ${cast(q"x", tpe)}).asJava"
 
