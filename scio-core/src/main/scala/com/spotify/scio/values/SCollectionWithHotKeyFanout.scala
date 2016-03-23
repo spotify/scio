@@ -26,14 +26,18 @@ import com.twitter.algebird.{Semigroup, Monoid}
 import scala.reflect.ClassTag
 
 /**
- * An enhanced SCollection that uses an intermediate node to combine "hot" keys partially before performing the full combine.
+ * An enhanced SCollection that uses an intermediate node to combine "hot" keys partially before
+ * performing the full combine.
  */
-class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag](private val self: PairSCollectionFunctions[K, V],
-                                                            private val hotKeyFanout: Either[K => Int, Int]) {
+class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag]
+(private val self: PairSCollectionFunctions[K, V],
+ private val hotKeyFanout: Either[K => Int, Int]) {
 
-  private def withFanout[K, I, O](combine: Combine.PerKey[K, I, O]): PerKeyWithHotKeyFanout[K, I, O] = this.hotKeyFanout match {
+  private def withFanout[K, I, O](combine: Combine.PerKey[K, I, O])
+  : PerKeyWithHotKeyFanout[K, I, O] = this.hotKeyFanout match {
     case Left(f) =>
-      combine.withHotKeyFanout(Functions.serializableFn(f).asInstanceOf[SerializableFunction[K, java.lang.Integer]])
+      combine.withHotKeyFanout(
+        Functions.serializableFn(f).asInstanceOf[SerializableFunction[K, java.lang.Integer]])
     case Right(f) =>
       combine.withHotKeyFanout(f)
   }
@@ -45,8 +49,11 @@ class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag](private val self: Pa
    * merging two U's. To avoid memory allocation, both of these functions are allowed to modify
    * and return their first argument instead of creating a new U.
    */
-  def aggregateByKey[U: ClassTag](zeroValue: U)(seqOp: (U, V) => U, combOp: (U, U) => U): SCollection[(K, U)] =
-    self.applyPerKey(withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp))), kvToTuple[K, U])
+  def aggregateByKey[U: ClassTag](zeroValue: U)(seqOp: (U, V) => U,
+                                                combOp: (U, U) => U): SCollection[(K, U)] =
+    self.applyPerKey(
+      withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp))),
+      kvToTuple[K, U])
 
   /**
    * Generic function to combine the elements for each key using a custom set of aggregation
@@ -64,7 +71,9 @@ class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag](private val self: Pa
   def combineByKey[C: ClassTag](createCombiner: V => C)
                                (mergeValue: (C, V) => C)
                                (mergeCombiners: (C, C) => C): SCollection[(K, C)] =
-    self.applyPerKey(withFanout(Combine.perKey(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))), kvToTuple[K, C])
+    self.applyPerKey(
+      withFanout(Combine.perKey(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))),
+      kvToTuple[K, C])
 
   /**
    * Merge the values for each key using an associative function and a neutral "zero value" which
@@ -73,7 +82,9 @@ class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag](private val self: Pa
    * @group per_key
    */
   def foldByKey(zeroValue: V)(op: (V, V) => V): SCollection[(K, V)] =
-    self.applyPerKey(withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op))), kvToTuple[K, V])
+    self.applyPerKey(
+      withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op))),
+      kvToTuple[K, V])
 
   /**
    * Fold by key with [[com.twitter.algebird.Monoid Monoid]], which defines the associative
