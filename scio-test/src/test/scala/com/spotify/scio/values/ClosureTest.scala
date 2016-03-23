@@ -21,7 +21,7 @@ import com.spotify.scio.testing.PipelineSpec
 
 class ClosureTest extends PipelineSpec {
 
-  "SCollection" should "support lambdas" in {
+  "SCollection" should "support lambda" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3))
       p.map(_ * 10) should containInAnyOrder (Seq(10, 20, 30))
@@ -60,8 +60,49 @@ class ClosureTest extends PipelineSpec {
     }
   }
 
+  it should "support lambda with val from closure" in {
+    runWithContext { sc =>
+      val x = 10
+      val p = sc.parallelize(Seq(1, 2, 3))
+      p.map(_ * x) should containInAnyOrder (Seq(10, 20, 30))
+    }
+  }
+
+  it should "support lambda with param from closure" in {
+    runWithContext { sc =>
+      def bar(in: SCollection[Int], x: Int): SCollection[Int] = in.map(_ * x)
+      val p = sc.parallelize(Seq(1, 2, 3))
+      bar(p, 10) should containInAnyOrder (Seq(10, 20, 30))
+    }
+  }
+
+  it should "support lambda with object member from closure" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq(1, 2, 3))
+      Foo.bar(p) should containInAnyOrder (Seq(10, 20, 30))
+    }
+  }
+
+  it should "support lambda with class member from closure" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq(1, 2, 3))
+      val r = new Foo().bar(p)
+      r should containInAnyOrder (Seq(10, 20, 30))
+    }
+  }
+
 }
 
 object ClosureTest {
   def objectFn(x: Int): Int = x * 10
+}
+
+object Foo extends Serializable {
+  val x = 10
+  def bar(in: SCollection[Int]): SCollection[Int] = in.map(_ * x)
+}
+
+class Foo extends Serializable {
+  val x = 10
+  def bar(in: SCollection[Int]): SCollection[Int] = in.map(_ * x)
 }

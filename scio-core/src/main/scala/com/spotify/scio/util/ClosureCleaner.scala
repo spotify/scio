@@ -17,9 +17,20 @@
 
 package com.spotify.scio.util
 
+import java.io.NotSerializableException
+
+import com.google.cloud.dataflow.sdk.util.SerializableUtils
+
 private[scio] object ClosureCleaner {
   def apply[T <: AnyRef](obj: T): T = {
-    com.twitter.chill.ClosureCleaner(obj)
+    try {
+      SerializableUtils.serializeToByteArray(obj.asInstanceOf[Serializable])
+    } catch {
+      case e: IllegalArgumentException if e.getCause.isInstanceOf[NotSerializableException] =>
+        com.twitter.chill.ClosureCleaner(obj)
+      case e: ClassCastException =>
+        com.twitter.chill.ClosureCleaner(obj)
+    }
     obj
   }
 }
