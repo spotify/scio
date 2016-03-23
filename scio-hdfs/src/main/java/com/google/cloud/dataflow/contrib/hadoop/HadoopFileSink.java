@@ -49,8 +49,8 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
 
   private static final String jtIdentifier = "scio_job";
 
-  private final String path;
-  private final Class<? extends FileOutputFormat<K, V>> formatClass;
+  protected final String path;
+  protected final Class<? extends FileOutputFormat<K, V>> formatClass;
 
   // workaround to make Configuration serializable
   private final Map<String, String> map;
@@ -102,8 +102,8 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
   public static class HadoopWriteOperation<K, V> extends WriteOperation<KV<K, V>, String> {
 
     private final Sink<KV<K, V>> sink;
-    private final String path;
-    private final Class<? extends FileOutputFormat<K, V>> formatClass;
+    protected final String path;
+    protected final Class<? extends FileOutputFormat<K, V>> formatClass;
 
     // unique job ID for this sink
     private final int jobId;

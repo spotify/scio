@@ -20,7 +20,7 @@ package com.spotify.scio
 import java.io.{InputStream, SequenceInputStream}
 import java.util.Collections
 
-import com.google.cloud.dataflow.contrib.hadoop.{AvroHadoopFileSource, HadoopFileSink, HadoopFileSource}
+import com.google.cloud.dataflow.contrib.hadoop._
 import com.google.cloud.dataflow.sdk.coders.AvroCoder
 import com.google.cloud.dataflow.sdk.io.{Read, Write}
 import com.google.cloud.dataflow.sdk.values.KV
@@ -93,8 +93,12 @@ package object hdfs {
 
     /** Save this SCollection as a text file on HDFS. */
     // TODO: numShards
-    def saveAsHdfsTextFile(path: String): Future[Tap[String]] = {
-      val sink = new HadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]])
+    def saveAsHdfsTextFile(path: String, user: String = null): Future[Tap[String]] = {
+      val sink = if (user != null) {
+        new SimpleAuthHadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]], user)
+      } else {
+        new HadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]])
+      }
       self
         .map(x => KV.of(NullWritable.get(), new Text(x.toString)))
         .applyInternal(Write.to(sink))
@@ -103,7 +107,9 @@ package object hdfs {
 
     /** Save this SCollection as an Avro file on HDFS. */
     // TODO: numShards
-    def saveAsHdfsAvroFile(path: String, schema: Schema = null): Future[Tap[T]] = {
+    def saveAsHdfsAvroFile(path: String,
+                           schema: Schema = null,
+                           user: String = null): Future[Tap[T]] = {
       val job = Job.getInstance()
       val s = if (schema == null) {
         ScioUtil.classOf[T].getMethod("getClassSchema").invoke(null).asInstanceOf[Schema]
@@ -111,13 +117,21 @@ package object hdfs {
         schema
       }
       AvroJob.setOutputKeySchema(job, s)
-      val sink = new HadoopFileSink(path, classOf[AvroKeyOutputFormat[T]], job.getConfiguration)
+      val sink = if (user != null) {
+        new SimpleAuthHadoopFileSink(path,
+                                     classOf[AvroKeyOutputFormat[T]],
+                                     user,
+                                     job.getConfiguration)
+      } else {
+        new HadoopFileSink(path,
+                           classOf[AvroKeyOutputFormat[T]],
+                           job.getConfiguration)
+      }
       self
         .map(x => KV.of(new AvroKey(x), NullWritable.get()))
         .applyInternal(Write.to(sink))
       self.context.makeFuture(HdfsAvroTap[T](path, schema))
     }
-
   }
 
   /** Tap for text files on HDFS. */
