@@ -61,7 +61,8 @@ object BigQueryUtil {
 
   /** Parse a schema string. */
   def parseSchema(schemaString: String): TableSchema =
-    new JsonObjectParser(new JacksonFactory).parseAndClose(new StringReader(schemaString), classOf[TableSchema])
+    new JsonObjectParser(new JacksonFactory)
+      .parseAndClose(new StringReader(schemaString), classOf[TableSchema])
 
   /** Extract tables from a SQL query. */
   def extractTables(sqlQuery: String): Set[TableReference] = {
@@ -182,9 +183,10 @@ class BigQueryClient private (private val projectId: String,
     getTableSchema(BigQueryIO.parseTableSpec(tableSpec))
 
   /** Get schema from a table. */
-  def getTableSchema(table: TableReference): TableSchema = withCacheKey(BigQueryIO.toTableSpec(table)) {
-    getTable(table).getSchema
-  }
+  def getTableSchema(table: TableReference): TableSchema =
+    withCacheKey(BigQueryIO.toTableSpec(table)) {
+      getTable(table).getSchema
+    }
 
   /** Execute a query and save results into a temporary table. */
   def queryIntoTable(sqlQuery: String): QueryJob = {
