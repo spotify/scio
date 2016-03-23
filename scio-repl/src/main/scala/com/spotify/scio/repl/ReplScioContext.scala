@@ -22,7 +22,9 @@ import java.io.{OutputStream, PrintStream}
 import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
 import com.spotify.scio.{ScioContext, ScioResult}
 
-class ReplScioContext(options: DataflowPipelineOptions, artifacts: List[String], testId: Option[String])
+class ReplScioContext(options: DataflowPipelineOptions,
+                      artifacts: List[String],
+                      testId: Option[String])
   extends ScioContext(options, artifacts, testId) {
 
   private lazy val nullout = new PrintStream(new OutputStream() {
