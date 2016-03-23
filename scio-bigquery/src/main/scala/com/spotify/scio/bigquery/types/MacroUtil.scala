@@ -30,8 +30,11 @@ private[types] object MacroUtil {
 
   // Case class helpers for runtime reflection
 
-  def isCaseClass(t: Type): Boolean = !t.toString.startsWith("scala.") &&
-    List(typeOf[Product], typeOf[Serializable], typeOf[Equals]).forall(b => t.baseClasses.contains(b.typeSymbol))
+  def isCaseClass(t: Type): Boolean =
+    !t.toString.startsWith("scala.") &&
+      List(typeOf[Product], typeOf[Serializable], typeOf[Equals])
+        .forall(b => t.baseClasses.contains(b.typeSymbol))
+
   def isField(s: Symbol): Boolean = !s.isSynthetic && s.isTerm && s.isPrivate
   def getFields(t: Type): Iterable[Symbol] = t.declarations.filter(isField)
 
@@ -42,11 +45,14 @@ private[types] object MacroUtil {
   def isCaseClass(c: Context)(t: c.Type): Boolean = {
     import c.universe._
     !t.toString.startsWith("scala.") &&
-      List(typeOf[Product], typeOf[Serializable], typeOf[Equals]).forall(b => t.baseClasses.contains(b.typeSymbol))
+      List(typeOf[Product], typeOf[Serializable], typeOf[Equals])
+        .forall(b => t.baseClasses.contains(b.typeSymbol))
   }
   // TODO: scala 2.11
-  // def isField(c: blackbox.Context)(s: c.Symbol): Boolean = !s.isSynthetic && s.isTerm && s.isPrivate
-  // def getFields(c: blackbox.Context)(t: c.Type): Iterable[c.Symbol] = t.decls.filter(isField(c))
+  // def isField(c: blackbox.Context)(s: c.Symbol): Boolean =
+  //   !s.isSynthetic && s.isTerm && s.isPrivate
+  // def getFields(c: blackbox.Context)(t: c.Type): Iterable[c.Symbol] =
+  //   t.decls.filter(isField(c))
   def isField(c: Context)(s: c.Symbol): Boolean = !s.isSynthetic && s.isTerm && s.isPrivate
   def getFields(c: Context)(t: c.Type): Iterable[c.Symbol] = t.declarations.filter(isField(c))
 
