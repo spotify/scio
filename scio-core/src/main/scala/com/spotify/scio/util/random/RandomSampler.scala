@@ -97,7 +97,8 @@ private[scio] class BernoulliSampler[T](fraction: Double) extends RandomSampler[
  * @param fraction the sampling fraction (with replacement)
  * @tparam T item type
  */
-private[scio] class PoissonSampler[T](fraction: Double) extends RandomSampler[T, IntegerDistribution] {
+private[scio] class PoissonSampler[T](fraction: Double)
+  extends RandomSampler[T, IntegerDistribution] {
 
   /** Epsilon slop to avoid failure from floating point jitter. */
   require(
@@ -106,14 +107,16 @@ private[scio] class PoissonSampler[T](fraction: Double) extends RandomSampler[T,
 
   // PoissonDistribution throws an exception when fraction <= 0
   // If fraction is <= 0, 0 is used below, so we can use any placeholder value.
-  override def init(): IntegerDistribution = new PoissonDistribution(if (fraction > 0.0) fraction else 1.0)
+  override def init(): IntegerDistribution =
+    new PoissonDistribution(if (fraction > 0.0) fraction else 1.0)
 
   override def samples(): Int = if (fraction <= 0.0) 0 else rng.sample()
 
   override def setSeed(seed: Long): Unit = rng.reseedRandomGenerator(seed)
 }
 
-private[scio] abstract class RandomValueSampler[K, V, R](fractions: Map[K, Double]) extends DoFn[(K, V), (K, V)] {
+private[scio] abstract class RandomValueSampler[K, V, R](fractions: Map[K, Double])
+  extends DoFn[(K, V), (K, V)] {
 
   protected var rngs: Map[K, R] = null.asInstanceOf[Map[K, R]]
 
@@ -179,7 +182,8 @@ private[scio] class PoissonValueSampler[K, V](fractions: Map[K, Double])
   override def init(fraction: Double): IntegerDistribution =
     new PoissonDistribution(if (fraction > 0.0) fraction else 1.0)
 
-  override def samples(fraction: Double, rng: IntegerDistribution): Int = if (fraction <= 0.0) 0 else rng.sample()
+  override def samples(fraction: Double, rng: IntegerDistribution): Int =
+    if (fraction <= 0.0) 0 else rng.sample()
 
   override def setSeed(seed: Long): Unit = rngs.foreach(_._2.reseedRandomGenerator(seed))
 
