@@ -147,16 +147,26 @@ object TriggerExample {
     compute("speculative",
       WindowOptions(
         allowedLateness = ONE_DAY,
-        trigger = Repeatedly.forever(AfterProcessingTime.pastFirstElementInPane().plusDelayOf(ONE_MINUTE)),
+        trigger = Repeatedly.forever(
+          AfterProcessingTime
+            .pastFirstElementInPane()
+            .plusDelayOf(ONE_MINUTE)),
         accumulationMode = ACCUMULATING_FIRED_PANES))
 
     compute("sequential",
       WindowOptions(
         allowedLateness = ONE_DAY,
         trigger = AfterEach.inOrder(
-          Repeatedly.forever(AfterProcessingTime.pastFirstElementInPane().plusDelayOf(ONE_MINUTE))
-            .orFinally(AfterWatermark.pastEndOfWindow()),
-          Repeatedly.forever(AfterProcessingTime.pastFirstElementInPane().plusDelayOf(FIVE_MINUTES))),
+          Repeatedly.forever(
+            AfterProcessingTime
+              .pastFirstElementInPane()
+              .plusDelayOf(ONE_MINUTE))
+            .orFinally(
+              AfterWatermark.pastEndOfWindow()),
+          Repeatedly.forever(
+            AfterProcessingTime
+              .pastFirstElementInPane()
+              .plusDelayOf(FIVE_MINUTES))),
         accumulationMode = ACCUMULATING_FIRED_PANES))
 
     val result = sc.close()
