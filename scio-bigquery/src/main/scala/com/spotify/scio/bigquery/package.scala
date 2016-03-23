@@ -40,7 +40,8 @@ package object bigquery {
    * }}}
    */
   object TableRow {
-    def apply(fields: (String, _)*): TableRow = fields.foldLeft(new GTableRow())((r, kv) => r.set(kv._1, kv._2))
+    def apply(fields: (String, _)*): TableRow =
+      fields.foldLeft(new GTableRow())((r, kv) => r.set(kv._1, kv._2))
   }
 
   /** Alias for BigQuery TableRow. */
@@ -63,7 +64,8 @@ package object bigquery {
 
     def getString(name: AnyRef): String = this.getValue(name, _.toString, null)
 
-    def getTimestamp(name: AnyRef): Instant = this.getValue(name, v => Timestamp.parse(v.toString), null)
+    def getTimestamp(name: AnyRef): Instant =
+      this.getValue(name, v => Timestamp.parse(v.toString), null)
 
     def getRepeated(name: AnyRef): Seq[AnyRef] =
       this.getValue(name, _.asInstanceOf[java.util.List[AnyRef]].asScala, null)
@@ -93,7 +95,8 @@ package object bigquery {
     def apply(instant: Long): String = formatter.print(instant) + " UTC"
 
     /** Convert BigQuery time stamp string to Instant. */
-    def parse(timestamp: String): Instant = formatter.parseDateTime(timestamp.replaceAll(" UTC$", "")).toInstant
+    def parse(timestamp: String): Instant =
+      formatter.parseDateTime(timestamp.replaceAll(" UTC$", "")).toInstant
 
   }
 
