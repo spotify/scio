@@ -66,7 +66,8 @@ package object experimental {
      * sc.typedBigQuery[Row]("myproject:samples.gsod")
      * }}}
      */
-    def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null): SCollection[T] = {
+    def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null)
+    : SCollection[T] = {
       val bqt = BigQueryType[T]
 
       if (bqt.isTable) {
@@ -97,7 +98,8 @@ package object experimental {
     def saveAsTypedBigQuery(table: TableReference,
                             writeDisposition: WriteDisposition,
                             createDisposition: CreateDisposition)
-                           (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation): Future[Tap[T]] = {
+                           (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
+    : Future[Tap[T]] = {
       val bqt = BigQueryType[T]
       import scala.concurrent.ExecutionContext.Implicits.global
       self
@@ -135,7 +137,8 @@ package object experimental {
     def saveAsTypedBigQuery(tableSpec: String,
                             writeDisposition: WriteDisposition = null,
                             createDisposition: CreateDisposition = null)
-                           (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation): Future[Tap[T]] =
+                           (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
+    : Future[Tap[T]] =
       saveAsTypedBigQuery(BigQueryIO.parseTableSpec(tableSpec), writeDisposition, createDisposition)
 
   }
@@ -163,7 +166,8 @@ package object experimental {
      * bq.getTypedRows[Row]("myproject:samples.gsod")
      * }}}
      */
-    def getTypedRows[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null): Iterator[T] = {
+    def getTypedRows[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null)
+    : Iterator[T] = {
       val bqt = BigQueryType[T]
       if (bqt.isTable) {
         val table = if (newSource != null) BigQueryIO.parseTableSpec(newSource) else bqt.table.get
@@ -177,23 +181,30 @@ package object experimental {
     }
 
     /**
-     * Write a List to a BigQuery table. Note that element type `T` must be annotated with [[BigQueryType]].
+     * Write a List of rows to a BigQuery table. Note that element type `T` must be annotated with
+     * [[BigQueryType]].
      */
-
-    def writeTypedRows[T <: HasAnnotation : ClassTag : TypeTag](table: TableReference,
-                                                                rows: List[T],
-                                                                writeDisposition: WriteDisposition,
-                                                                createDisposition: CreateDisposition): Unit = {
-
+    def writeTypedRows[T <: HasAnnotation : ClassTag : TypeTag]
+    (table: TableReference, rows: List[T],
+     writeDisposition: WriteDisposition,
+     createDisposition: CreateDisposition): Unit = {
       val bqt = BigQueryType[T]
-      self.writeTableRows(table, rows.map(bqt.toTableRow), bqt.schema, writeDisposition, createDisposition)
+      self.writeTableRows(
+        table, rows.map(bqt.toTableRow), bqt.schema,
+        writeDisposition, createDisposition)
     }
 
-    def writeTypedRows[T <: HasAnnotation : ClassTag : TypeTag](tableSpec: String,
-                                                                rows: List[T],
-                                                                writeDisposition: WriteDisposition = WRITE_EMPTY,
-                                                                createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =
-      writeTypedRows(BigQueryIO.parseTableSpec(tableSpec), rows, writeDisposition, createDisposition)
+    /**
+     * Write a List of rows to a BigQuery table. Note that element type `T` must be annotated with
+     * [[BigQueryType]].
+     */
+    def writeTypedRows[T <: HasAnnotation : ClassTag : TypeTag]
+    (tableSpec: String, rows: List[T],
+     writeDisposition: WriteDisposition = WRITE_EMPTY,
+     createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =
+      writeTypedRows(
+        BigQueryIO.parseTableSpec(tableSpec), rows,
+        writeDisposition, createDisposition)
 
   }
 
