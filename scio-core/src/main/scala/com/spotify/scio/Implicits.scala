@@ -26,7 +26,6 @@ import com.spotify.scio.util.ScioUtil
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
-import scala.util.control.NonFatal
 
 private[scio] object Implicits {
 
@@ -55,7 +54,8 @@ private[scio] object Implicits {
         // Always fall back to Kryo
         r.getDefaultCoder(TypeDescriptor.of(ScioUtil.classOf[T]))
       } catch {
-        case NonFatal(_) => null
+        // Malformed class name is a `java.lang.InternalError` and cannot be caught by NonFatal
+        case _: Throwable => null
       }
 
       if (coder == null || coder.getClass == classOf[SerializableCoder[T]]) {
