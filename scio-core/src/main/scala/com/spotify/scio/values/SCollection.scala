@@ -123,7 +123,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def setName(name: String): SCollection[T] = context.wrap(internal.setName(name))
 
   /** Apply a transform. */
-  private[values] def transform[U: ClassTag](f: SCollection[T] => SCollection[U]): SCollection[U] = {
+  private[values] def transform[U: ClassTag](f: SCollection[T] => SCollection[U])
+  : SCollection[U] = {
     val o = internal.apply(CallSites.getCurrent, new PTransform[PCollection[T], PCollection[U]]() {
       override def apply(input: PCollection[T]): PCollection[U] = {
         f(context.wrap(input)).internal
@@ -201,7 +202,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * a new U to avoid memory allocation.
    * @group transform
    */
-  def aggregate[U: ClassTag](zeroValue: U)(seqOp: (U, T) => U, combOp: (U, U) => U): SCollection[U] =
+  def aggregate[U: ClassTag](zeroValue: U)(seqOp: (U, T) => U,
+                                           combOp: (U, U) => U): SCollection[U] =
     this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(seqOp, combOp)))
 
   /**
@@ -210,7 +212,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * be more powerful and better optimized in some cases.
    * @group transform
    */
-  def aggregate[A: ClassTag, U: ClassTag](aggregator: Aggregator[T, A, U]): SCollection[U] = this.transform { in =>
+  def aggregate[A: ClassTag, U: ClassTag](aggregator: Aggregator[T, A, U])
+  : SCollection[U] = this.transform { in =>
     val a = aggregator  // defeat closure
     in.map(a.prepare).sum(a.semigroup).map(a.present)
   }
@@ -256,7 +259,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def countApproxDistinct(maximumEstimationError: Double = 0.02): SCollection[Long] =
-    this.apply(ApproximateUnique.globally[T](maximumEstimationError)).asInstanceOf[SCollection[Long]]
+    this
+      .apply(ApproximateUnique.globally[T](maximumEstimationError))
+      .asInstanceOf[SCollection[Long]]
 
   /**
    * Count of each unique value in this SCollection as an SCollection of (value, count) pairs.
@@ -369,7 +374,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * the elements
    * @group transform
    */
-  def quantilesApprox(numQuantiles: Int)(implicit ord: Ordering[T]): SCollection[Iterable[T]] = this.transform {
+  def quantilesApprox(numQuantiles: Int)
+                     (implicit ord: Ordering[T]): SCollection[Iterable[T]] = this.transform {
     _
       .apply(ApproximateQuantiles.globally(numQuantiles, ord))
       .map(_.asInstanceOf[JIterable[T]].asScala)
@@ -488,7 +494,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * `that` to all workers. The right side should be tiny and fit in memory.
    * @group hash
    */
-  def hashLookup[V: ClassTag](that: SCollection[(T, V)]): SCollection[(T, Iterable[V])] = this.transform { in =>
+  def hashLookup[V: ClassTag](that: SCollection[(T, V)])
+  : SCollection[(T, Iterable[V])] = this.transform { in =>
     val side = that.asMultiMapSideInput
     in
       .withSideInputs(side)
@@ -540,14 +547,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * [[SCollection.withSideInputs]].
    * @group side
    */
-  def asSingletonSideInput: SideInput[T] = new SingletonSideInput[T](this.applyInternal(View.asSingleton()))
+  def asSingletonSideInput: SideInput[T] =
+    new SingletonSideInput[T](this.applyInternal(View.asSingleton()))
 
   /**
    * Convert this SCollection to a SideInput, mapping each window to a List, to be used with
    * [[SCollection.withSideInputs]].
    * @group side
    */
-  def asListSideInput: SideInput[List[T]] = new ListSideInput[T](this.applyInternal(View.asList()))
+  def asListSideInput: SideInput[List[T]] =
+    new ListSideInput[T](this.applyInternal(View.asList()))
 
   /**
    * Convert this SCollection to a SideInput, mapping each window to an Iterable, to be used with
@@ -558,7 +567,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * caching is desired, use [[asListSideInput]].
    * @group side
    */
-  def asIterableSideInput: SideInput[Iterable[T]] = new IterableSideInput[T](this.applyInternal(View.asIterable()))
+  def asIterableSideInput: SideInput[Iterable[T]] =
+    new IterableSideInput[T](this.applyInternal(View.asIterable()))
 
   /**
    * Convert this SCollection to an [[SCollectionWithSideInput]] with one or more [[SideInput]]s,
@@ -631,7 +641,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group window
    */
   def withWindowFn[W <: BoundedWindow](fn: WindowFn[AnyRef, W],
-                                       options: WindowOptions[W] = WindowOptions()): SCollection[T] = {
+                                       options: WindowOptions[W] = WindowOptions())
+  : SCollection[T] = {
     require(
       !(options.trigger == null ^ options.accumulationMode == null),
       "Both trigger and accumulationMode must be null or set")
@@ -690,14 +701,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Window values into by years.
    * @group window
    */
-  def windowByYears(number: Int, options: WindowOptions[IntervalWindow] = WindowOptions()): SCollection[T] =
+  def windowByYears(number: Int,
+                    options: WindowOptions[IntervalWindow] = WindowOptions()): SCollection[T] =
     this.withWindowFn(CalendarWindows.years(number), options)
 
   /**
    * Window values into by months.
    * @group window
    */
-  def windowByMonths(number: Int, options: WindowOptions[IntervalWindow] = WindowOptions()): SCollection[T] =
+  def windowByMonths(number: Int,
+                     options: WindowOptions[IntervalWindow] = WindowOptions()): SCollection[T] =
     this.withWindowFn(CalendarWindows.months(number), options)
 
   /**
@@ -712,7 +725,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Window values into by days.
    * @group window
    */
-  def windowByDays(number: Int, options: WindowOptions[IntervalWindow] = WindowOptions()): SCollection[T] =
+  def windowByDays(number: Int,
+                   options: WindowOptions[IntervalWindow] = WindowOptions()): SCollection[T] =
     this.withWindowFn(CalendarWindows.days(number), options)
 
   /**
@@ -728,7 +742,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Assign timestamps to values.
    * @group window
    */
-  def timestampBy(f: T => Instant): SCollection[T] = this.parDo(FunctionsWithWindowedValue.timestampFn(f))
+  def timestampBy(f: T => Instant): SCollection[T] =
+    this.parDo(FunctionsWithWindowedValue.timestampFn(f))
 
   // =======================================================================
   // Write operations
@@ -754,7 +769,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as an object file using default serialization.
    * @group output
    */
-  def saveAsObjectFile(path: String, suffix: String = ".obj", numShards: Int = 0): Future[Tap[T]] = {
+  def saveAsObjectFile(path: String,
+                       suffix: String = ".obj", numShards: Int = 0): Future[Tap[T]] = {
     if (context.isTest) {
       saveAsInMemoryTap
     } else {
@@ -849,7 +865,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                      writeDisposition: WriteDisposition = null,
                      createDisposition: CreateDisposition = null)
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
-    saveAsBigQuery(GBigQueryIO.parseTableSpec(tableSpec), schema, writeDisposition, createDisposition)
+    saveAsBigQuery(
+      GBigQueryIO.parseTableSpec(tableSpec), schema, writeDisposition, createDisposition)
 
   /**
    * Save this SCollection as a Datastore dataset. Note that elements must be of type Entity.
@@ -881,7 +898,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as a JSON text file. Note that elements must be of type TableRow.
    * @group output
    */
-  def saveAsTableRowJsonFile(path: String, numShards: Int = 0)(implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
+  def saveAsTableRowJsonFile(path: String, numShards: Int = 0)
+                            (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
     if (context.isTest) {
       context.testOut(BigQueryIO(path))(this.asInstanceOf[SCollection[TableRow]])
       saveAsInMemoryTap.asInstanceOf[Future[Tap[TableRow]]]
@@ -894,7 +912,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as a text file. Note that elements must be of type String.
    * @group output
    */
-  def saveAsTextFile(path: String, suffix: String = ".txt", numShards: Int = 0): Future[Tap[String]] = {
+  def saveAsTextFile(path: String,
+                     suffix: String = ".txt", numShards: Int = 0): Future[Tap[String]] = {
     val s = if (classOf[String] isAssignableFrom this.ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
     } else {
