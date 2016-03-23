@@ -29,7 +29,8 @@ import org.joda.time.{Duration, Instant}
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
 
-case class LaneInfo(stationId: String, lane: String, direction: String, freeway: String, recordedTimestamp: String,
+case class LaneInfo(stationId: String, lane: String, direction: String, freeway: String,
+                    recordedTimestamp: String,
                     laneFlow: Int, laneAO: Double, laneAS: Double, totalFlow: Int)
 
 /*
@@ -113,7 +114,9 @@ object TrafficMaxLaneFlow {
     }
 
     p
-      .withSlidingWindows(Duration.standardMinutes(windowDuration), Duration.standardMinutes(windowSlideEvery))
+      .withSlidingWindows(
+        Duration.standardMinutes(windowDuration),
+        Duration.standardMinutes(windowSlideEvery))
       .maxByKey(Ordering.by(_.laneFlow))
       .values
       .withTimestamp()
