@@ -38,7 +38,8 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
                 out: JPrintWriter)
   extends ILoopCompat(in, out) {
 
-  def this(scioCL: ScioReplClassLoader, args: List[String]) = this(scioCL, args, None, new JPrintWriter(Console.out, true))
+  def this(scioCL: ScioReplClassLoader, args: List[String]) =
+    this(scioCL, args, None, new JPrintWriter(Console.out, true))
 
   // Fail fast for illegal arguments
   try {
@@ -79,11 +80,12 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
   private def newScioCmdImpl(name: String) = {
 
     val sc = if (name.nonEmpty) name else "sc"
+    val rsc = "com.spotify.scio.repl.ReplScioContext"
     val opts = optsFromArgs(scioOpts)
     val nextReplJar = scioClassLoader.getNextReplCodeJarPath
     intp.beQuietDuring {
       intp.interpret(
-        s"""val $sc: ScioContext = new com.spotify.scio.repl.ReplScioContext($opts, List("$nextReplJar"), None)
+        s"""val $sc: ScioContext = new $rsc($opts, List("$nextReplJar"), None)
            |$sc.setName("sciorepl")
          """.stripMargin)
     }
@@ -179,7 +181,8 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     echo(ascii)
 
     val p = scala.util.Properties
-    val scalaVersion = "Using Scala %s (%s, Java %s)".format(p.versionString, p.javaVmName, p.javaVersion)
+    val scalaVersion =
+      "Using Scala %s (%s, Java %s)".format(p.versionString, p.javaVmName, p.javaVersion)
     echo(scalaVersion)
 
     echo(
