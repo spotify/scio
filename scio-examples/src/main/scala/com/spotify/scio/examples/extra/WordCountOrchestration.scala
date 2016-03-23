@@ -82,7 +82,9 @@ object WordCountOrchestration {
       .countByValue()
   }
 
-  def merge(opts: DataflowPipelineOptions, s: Seq[Tap[(String, Long)]], outputPath: String): FT[String] = {
+  def merge(opts: DataflowPipelineOptions,
+            s: Seq[Tap[(String, Long)]],
+            outputPath: String): FT[String] = {
     val sc = ScioContext(opts)
     val f = mergeCounts(s.map(_.open(sc)))
       .map(kv => kv._1 + " " + kv._2)
