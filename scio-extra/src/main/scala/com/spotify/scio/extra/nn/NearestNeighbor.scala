@@ -25,6 +25,7 @@ import info.debatty.java.lsh.LSHSuperBit
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer, Map => MMap, Set => MSet}
 import scala.reflect.ClassTag
+import scala.{specialized => sp}
 
 /** Utilities for creating [[NearestNeighborBuilder]] instances. */
 object NearestNeighbor {
@@ -35,7 +36,7 @@ object NearestNeighbor {
    * @param stages number of times a vector is bucketed
    * @param buckets number of buckets per stage
    */
-  def newLSHBuilder[K: ClassTag, @specialized(Double, Int, Float, Long) V: ClassTag : Numeric : Semiring]
+  def newLSHBuilder[K: ClassTag, @sp(Double, Int, Float, Long) V: ClassTag : Numeric : Semiring]
   (dimension: Int, stages: Int, buckets: Int): NearestNeighborBuilder[K, V] =
     new LSHNNBuilder[K, V](dimension, stages, buckets)
 
@@ -43,14 +44,14 @@ object NearestNeighbor {
    * Create a new builder for matrix based [[NearestNeighbor]].
    * @param dimension dimension of input vectors
    */
-  def newMatrixBuilder[K: ClassTag, @specialized(Double, Int, Float, Long) V: ClassTag : Numeric : Semiring]
+  def newMatrixBuilder[K: ClassTag, @sp(Double, Int, Float, Long) V: ClassTag : Numeric : Semiring]
   (dimension: Int): NearestNeighborBuilder[K, V] =
     new MatrixNNBuilder[K, V](dimension)
 
 }
 
 /** Builder for immutable [[NearestNeighbor]] instances. */
-trait NearestNeighborBuilder[K, @specialized(Double, Int, Float, Long) V] extends Serializable {
+trait NearestNeighborBuilder[K, @sp(Double, Int, Float, Long) V] extends Serializable {
 
   /** Dimension of item vectors. */
   protected val dimension: Int
@@ -106,7 +107,7 @@ trait NearestNeighborBuilder[K, @specialized(Double, Int, Float, Long) V] extend
  * nn.lookup(candidate, 10)
  * }}
  */
-trait NearestNeighbor[K, @specialized(Double, Int, Float, Long) V] extends Serializable {
+trait NearestNeighbor[K, @sp(Double, Int, Float, Long) V] extends Serializable {
 
   /** Name of the nearest neighbor method. */
   val name: String
@@ -127,16 +128,19 @@ trait NearestNeighbor[K, @specialized(Double, Int, Float, Long) V] extends Seria
   @inline protected def getId(key: K): Int = keyToId(key)
 
   /** Lookup nearest neighbors of a vector. The vector should be normalized. */
-  def lookup(vec: DenseVector[V], maxResult: Int, minSimilarity: Double = Double.NegativeInfinity): Iterable[(K, Double)]
+  def lookup(vec: DenseVector[V], maxResult: Int,
+             minSimilarity: Double = Double.NegativeInfinity): Iterable[(K, Double)]
 
   /** Lookup nearest neighbors of an existing vector. */
-  def lookupKey(key: K, maxResult: Int, minSimilarity: Double = Double.NegativeInfinity): Iterable[(K, Double)] =
+  def lookupKey(key: K, maxResult: Int,
+                minSimilarity: Double = Double.NegativeInfinity): Iterable[(K, Double)] =
     lookup(vectors(getId(key)), maxResult, minSimilarity)
 
 }
 
 /** Builder for [[MatrixNN]]. */
-private class MatrixNNBuilder[K: ClassTag, @specialized(Double, Int, Float, Long) V: ClassTag : Numeric : Semiring]
+private class
+MatrixNNBuilder[K: ClassTag, @sp(Double, Int, Float, Long) V: ClassTag : Numeric : Semiring]
   (override val dimension: Int)
   extends NearestNeighborBuilder[K, V] {
 
@@ -145,11 +149,13 @@ private class MatrixNNBuilder[K: ClassTag, @specialized(Double, Int, Float, Long
 
   /** Build an immutable NearestNeighbor instance. */
   override def build: NearestNeighbor[K, V] =
-    new MatrixNN(dimension, keyToId.toMap, idToKey.toArray, vectors.toArray, DenseMatrix(vectors.map(_.toArray): _*))
+    new MatrixNN(
+      dimension, keyToId.toMap, idToKey.toArray, vectors.toArray,
+      DenseMatrix(vectors.map(_.toArray): _*))
 }
 
 /** Nearest neighbor using vector dot product via matrix multiplication. */
-private class MatrixNN[K, @specialized(Double, Int, Float, Long) V: ClassTag : Numeric : Semiring]
+private class MatrixNN[K, @sp(Double, Int, Float, Long) V: ClassTag : Numeric : Semiring]
   (override protected val dimension: Int,
    override protected val keyToId: Map[K, Int],
    override protected val idToKey: Array[K],
@@ -161,7 +167,8 @@ private class MatrixNN[K, @specialized(Double, Int, Float, Long) V: ClassTag : N
   override val name: String = "Matrix"
 
   /** Lookup nearest neighbors of a vector. The vector should be normalized. */
-  override def lookup(vec: DenseVector[V], maxResult: Int, minSimilarity: Double): Iterable[(K, Double)] = {
+  override def lookup(vec: DenseVector[V], maxResult: Int,
+                      minSimilarity: Double): Iterable[(K, Double)] = {
     require(vec.length == dimension, s"Vector dimension ${vec.length} != $dimension")
     require(maxResult > 0, s"maxResult must be > 0")
 
@@ -187,7 +194,8 @@ private class MatrixNN[K, @specialized(Double, Int, Float, Long) V: ClassTag : N
 }
 
 /** Builder for [[LSHNN]]. */
-private class LSHNNBuilder[K: ClassTag, @specialized(Double, Int, Float, Long) V: ClassTag : Numeric : Semiring]
+private class
+LSHNNBuilder[K: ClassTag, @sp(Double, Int, Float, Long) V: ClassTag : Numeric : Semiring]
   (override val dimension: Int, val stages: Int, val buckets: Int)
   extends NearestNeighborBuilder[K, V] {
 
@@ -218,7 +226,7 @@ private class LSHNNBuilder[K: ClassTag, @specialized(Double, Int, Float, Long) V
 }
 
 /** Nearest neighbor using Locality Sensitive Hashing. */
-private class LSHNN[K, @specialized(Double, Int, Float, Long) V: ClassTag : Numeric : Semiring]
+private class LSHNN[K, @sp(Double, Int, Float, Long) V: ClassTag : Numeric : Semiring]
   (override protected val dimension: Int,
    override protected val keyToId: Map[K, Int],
    override protected val idToKey: Array[K],
@@ -231,7 +239,8 @@ private class LSHNN[K, @specialized(Double, Int, Float, Long) V: ClassTag : Nume
   override val name: String = "LSH"
 
   /** Lookup nearest neighbors of a vector. The vector should be normalized. */
-  override def lookup(vec: DenseVector[V], maxResult: Int, minSimilarity: Double): Iterable[(K, Double)] = {
+  override def lookup(vec: DenseVector[V], maxResult: Int,
+                      minSimilarity: Double): Iterable[(K, Double)] = {
     require(vec.length == dimension, s"Vector dimension ${vec.length} != $dimension")
     require(maxResult > 0, s"maxResult must be > 0")
 
