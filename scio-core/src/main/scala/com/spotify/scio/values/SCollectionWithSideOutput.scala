@@ -31,9 +31,10 @@ import scala.reflect.ClassTag
  * [[SCollection]]s of the [[SideOutput]]s are accessed via the additional
  * [[SideOutputCollections]] return value.
  */
-class SCollectionWithSideOutput[T: ClassTag] private[values] (val internal: PCollection[T],
-                                                              private[scio] val context: ScioContext,
-                                                              sides: Iterable[SideOutput[_]])
+class SCollectionWithSideOutput[T: ClassTag] private[values]
+(val internal: PCollection[T],
+ private[scio] val context: ScioContext,
+ sides: Iterable[SideOutput[_]])
   extends PCollectionWrapper[T] {
 
   protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
@@ -47,7 +48,8 @@ class SCollectionWithSideOutput[T: ClassTag] private[values] (val internal: PCol
   def flatMap[U: ClassTag](f: (T, SideOutputContext[T]) => TraversableOnce[U])
   : (SCollection[U], SideOutputCollections) = {
     val mainTag = new TupleTag[U]
-    val tuple = this.applyInternal(ParDo.withOutputTags(mainTag, sideTags).of(FunctionsWithSideOutput.flatMapFn(f)))
+    val tuple = this.applyInternal(
+      ParDo.withOutputTags(mainTag, sideTags).of(FunctionsWithSideOutput.flatMapFn(f)))
 
     val main = tuple.get(mainTag).setCoder(this.getCoder[U])
     (context.wrap(main), new SideOutputCollections(tuple, context))
@@ -57,9 +59,11 @@ class SCollectionWithSideOutput[T: ClassTag] private[values] (val internal: PCol
    * [[SCollection.map]] with an additional SideOutputContext argument and additional
    * SideOutputCollections return value.
    */
-  def map[U: ClassTag](f: (T, SideOutputContext[T]) => U): (SCollection[U], SideOutputCollections) = {
+  def map[U: ClassTag](f: (T, SideOutputContext[T]) => U)
+  : (SCollection[U], SideOutputCollections) = {
     val mainTag = new TupleTag[U]
-    val tuple = this.applyInternal(ParDo.withOutputTags(mainTag, sideTags).of(FunctionsWithSideOutput.mapFn(f)))
+    val tuple = this.applyInternal(
+      ParDo.withOutputTags(mainTag, sideTags).of(FunctionsWithSideOutput.mapFn(f)))
 
     val main = tuple.get(mainTag).setCoder(this.getCoder[U])
     (context.wrap(main), new SideOutputCollections(tuple, context))
