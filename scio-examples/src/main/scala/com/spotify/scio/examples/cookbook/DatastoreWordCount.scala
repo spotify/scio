@@ -84,7 +84,9 @@ object DatastoreWordCount {
 
       val sc = ScioContext(opts)
       sc.datastore(dataset, query)
-        .flatMap(e => DatastoreHelper.getPropertyMap(e).asScala.get("content").map(_.getStringValue).toSeq)
+        .flatMap { e =>
+          DatastoreHelper.getPropertyMap(e).asScala.get("content").map(_.getStringValue).toSeq
+        }
         .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
         .countByValue()
         .map(t => t._1 + ": " + t._2)
