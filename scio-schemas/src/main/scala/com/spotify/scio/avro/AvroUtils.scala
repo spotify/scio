@@ -51,6 +51,7 @@ object AvroUtils {
     r
   }
 
-  def newSpecificRecord(i: Int): TestRecord = new TestRecord(i, i.toLong, i.toFloat, i.toDouble, true, "hello")
+  def newSpecificRecord(i: Int): TestRecord =
+    new TestRecord(i, i.toLong, i.toFloat, i.toDouble, true, "hello")
 
 }
