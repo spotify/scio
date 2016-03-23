@@ -65,14 +65,16 @@ package object hdfs {
 
     /** Get an SCollection for a text file on HDFS. */
     def hdfsTextFile(path: String): SCollection[String] = self.pipelineOp {
-      val src = HadoopFileSource.from(path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text])
+      val src = HadoopFileSource.from(
+        path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text])
       self.wrap(self.applyInternal(Read.from(src)))
         .setName(path)
         .map(_.getValue.toString)
     }
 
     /** Get an SCollection of specific record type for an Avro file on HDFS. */
-    def hdfsAvroFile[T: ClassTag](path: String, schema: Schema = null): SCollection[T] = self.pipelineOp {
+    def hdfsAvroFile[T: ClassTag](path: String,
+                                  schema: Schema = null): SCollection[T] = self.pipelineOp {
       val coder: AvroCoder[T] = if (schema == null) {
         AvroCoder.of(ScioUtil.classOf[T])
       } else {
