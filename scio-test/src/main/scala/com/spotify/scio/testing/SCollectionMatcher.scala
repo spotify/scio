@@ -36,7 +36,8 @@ private[scio] trait SCollectionMatcher {
     MatchResult(r, "", "")
   }
 
-  def containInAnyOrder[T](value: Iterable[T]): Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
+  def containInAnyOrder[T](value: Iterable[T])
+  : Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
     override def apply(left: SCollection[T]): MatchResult =
       m(() => DataflowAssert.that(left.internal).containsInAnyOrder(value.asJava))
   }
@@ -64,7 +65,8 @@ private[scio] trait SCollectionMatcher {
     }
   }
 
-  def equalMapOf[K: ClassTag, V: ClassTag](value: Map[K, V]): Matcher[SCollection[(K, V)]] = new Matcher[SCollection[(K, V)]] {
+  def equalMapOf[K: ClassTag, V: ClassTag](value: Map[K, V])
+  : Matcher[SCollection[(K, V)]] = new Matcher[SCollection[(K, V)]] {
     override def apply(left: SCollection[(K, V)]): MatchResult = {
       m(() => DataflowAssert.thatMap(left.toKV.internal).isEqualTo(value.asJava))
     }
