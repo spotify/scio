@@ -82,7 +82,8 @@ object SideInputJoinExamples {
     import JoinUtil._
 
     val eventsInfo = sc.bigQueryTable(ExampleData.EVENT_TABLE).flatMap(extractEventInfo)
-    val countryInfo = sc.bigQueryTable(ExampleData.COUNTRY_TABLE).map(extractCountryInfo).asMapSideInput
+    val countryInfo = sc.bigQueryTable(ExampleData.COUNTRY_TABLE).map(extractCountryInfo)
+      .asMapSideInput
 
     eventsInfo
       .withSideInputs(countryInfo)  // replicate right hand side to all workers as side input
