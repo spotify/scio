@@ -44,21 +44,27 @@ trait SideInput[T] extends Serializable {
 
 }
 
-private[values] class SingletonSideInput[T](val view: PCollectionView[T]) extends SideInput[T] {
+private[values] class SingletonSideInput[T](val view: PCollectionView[T])
+  extends SideInput[T] {
   override def get[I, O](context: DoFn[I, O]#ProcessContext): T = context.sideInput(view)
 }
 
-private[values] class ListSideInput[T](val view: PCollectionView[JList[T]]) extends SideInput[List[T]] {
-  override def get[I, O](context: DoFn[I, O]#ProcessContext): List[T] = context.sideInput(view).asScala.toList
+private[values] class ListSideInput[T](val view: PCollectionView[JList[T]])
+  extends SideInput[List[T]] {
+  override def get[I, O](context: DoFn[I, O]#ProcessContext): List[T] =
+    context.sideInput(view).asScala.toList
 }
 
-private[values] class IterableSideInput[T](val view: PCollectionView[JIterable[T]]) extends SideInput[Iterable[T]] {
-  override def get[I, O](context: DoFn[I, O]#ProcessContext): Iterable[T] = context.sideInput(view).asScala
+private[values] class IterableSideInput[T](val view: PCollectionView[JIterable[T]])
+  extends SideInput[Iterable[T]] {
+  override def get[I, O](context: DoFn[I, O]#ProcessContext): Iterable[T] =
+    context.sideInput(view).asScala
 }
 
 private[values] class MapSideInput[K, V](val view: PCollectionView[JMap[K, V]])
   extends SideInput[Map[K, V]] {
-  override def get[I, O](context: DoFn[I, O]#ProcessContext): Map[K, V] = context.sideInput(view).asScala.toMap
+  override def get[I, O](context: DoFn[I, O]#ProcessContext): Map[K, V] =
+    context.sideInput(view).asScala.toMap
 }
 
 private[values] class MultiMapSideInput[K, V](val view: PCollectionView[JMap[K, JIterable[V]]])
@@ -69,7 +75,8 @@ private[values] class MultiMapSideInput[K, V](val view: PCollectionView[JMap[K, 
 
 /** Encapsulate context of one or more [[SideInput]]s in an [[SCollectionWithSideInput]]. */
 // TODO: scala 2.11
-// class SideInputContext[T] private[scio] (private val context: DoFn[T, AnyRef]#ProcessContext) extends AnyVal {
+// class SideInputContext[T] private[scio] (private val context: DoFn[T, AnyRef]#ProcessContext)
+//   extends AnyVal {
 class SideInputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessContext) {
   /** Extract the value of a given [[SideInput]]. */
   def apply[S](side: SideInput[S]): S = side.getCache(context)
