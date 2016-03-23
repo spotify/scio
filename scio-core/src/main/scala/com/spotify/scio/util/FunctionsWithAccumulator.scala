@@ -43,15 +43,19 @@ private[scio] object FunctionsWithAccumulator {
   }
 
   def flatMapFn[T, U: ClassTag](f: (T, AccumulatorContext) => TraversableOnce[U],
-                                acc: Seq[Accumulator[_]]): DoFn[T, U] = new DoFnWithAccumulator[T, U](acc) {
+                                acc: Seq[Accumulator[_]])
+  : DoFn[T, U] = new DoFnWithAccumulator[T, U](acc) {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, U]#ProcessContext): Unit = g(c.element(), this.context).foreach(c.output)
+    override def processElement(c: DoFn[T, U]#ProcessContext): Unit =
+      g(c.element(), this.context).foreach(c.output)
   }
 
   def mapFn[T, U: ClassTag](f: (T, AccumulatorContext) => U,
-                            acc: Seq[Accumulator[_]]): DoFn[T, U] = new DoFnWithAccumulator[T, U](acc) {
+                            acc: Seq[Accumulator[_]])
+  : DoFn[T, U] = new DoFnWithAccumulator[T, U](acc) {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, U]#ProcessContext): Unit = c.output(g(c.element(), this.context))
+    override def processElement(c: DoFn[T, U]#ProcessContext): Unit =
+      c.output(g(c.element(), this.context))
   }
 
 }
