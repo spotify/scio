@@ -27,9 +27,8 @@ import scala.reflect.ClassTag
  * An enhanced SCollection that provides access to one or more [[Accumulator]]s for some
  * transforms. [[Accumulator]]s are accessed via the additional [[AccumulatorContext]] argument.
  */
-class SCollectionWithAccumulator[T: ClassTag] private[values] (val internal: PCollection[T],
-                                                               private[scio] val context: ScioContext,
-                                                               acc: Seq[Accumulator[_]])
+class SCollectionWithAccumulator[T: ClassTag] private[values]
+(val internal: PCollection[T], private[scio] val context: ScioContext, acc: Seq[Accumulator[_]])
   extends PCollectionWrapper[T] {
 
   protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
@@ -41,7 +40,8 @@ class SCollectionWithAccumulator[T: ClassTag] private[values] (val internal: PCo
   }
 
   /** [[SCollection.flatMap]] with an additional AccumulatorContext argument. */
-  def flatMap[U: ClassTag](f: (T, AccumulatorContext) => TraversableOnce[U]): SCollectionWithAccumulator[U] = {
+  def flatMap[U: ClassTag](f: (T, AccumulatorContext) => TraversableOnce[U])
+  : SCollectionWithAccumulator[U] = {
     val o = this.parDo(FunctionsWithAccumulator.flatMapFn(f, acc))
     new SCollectionWithAccumulator[U](o.internal, context, acc)
   }
