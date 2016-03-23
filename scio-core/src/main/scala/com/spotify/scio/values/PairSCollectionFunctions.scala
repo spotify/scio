@@ -52,8 +52,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     context.wrap(o)
   }
 
-  private[values] def applyPerKey[UI: ClassTag, UO: ClassTag](t: PTransform[PCollection[KV[K, V]], PCollection[KV[K, UI]]],
-                                                              f: KV[K, UI] => (K, UO))
+  private[values] def applyPerKey[UI: ClassTag, UO: ClassTag]
+  (t: PTransform[PCollection[KV[K, V]], PCollection[KV[K, UI]]], f: KV[K, UI] => (K, UO))
   : SCollection[(K, UO)] = {
     val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollection[(K, UO)]]() {
       override def apply(input: PCollection[(K, V)]): PCollection[(K, UO)] =
@@ -94,7 +94,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * the list of values for that key in `this` as well as `that`.
    * @group cogroup
    */
-  def cogroup[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Iterable[V], Iterable[W]))] =
+  def cogroup[W: ClassTag](that: SCollection[(K, W)])
+  : SCollection[(K, (Iterable[V], Iterable[W]))] =
     MultiJoin.cogroup(self, that)
 
   /**
@@ -122,7 +123,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * Alias for cogroup.
    * @group cogroup
    */
-  def groupWith[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Iterable[V], Iterable[W]))] =
+  def groupWith[W: ClassTag](that: SCollection[(K, W)])
+  : SCollection[(K, (Iterable[V], Iterable[W]))] =
     this.cogroup(that)
 
   /**
@@ -156,7 +158,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * `this` have key k. Uses the given Partitioner to partition the output SCollection.
    * @group join
    */
-  def fullOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Option[V], Option[W]))] =
+  def fullOuterJoin[W: ClassTag](that: SCollection[(K, W)])
+  : SCollection[(K, (Option[V], Option[W]))] =
     MultiJoin.outer(self, that)
 
   /**
@@ -185,7 +188,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * partition the output SCollection.
    * @group join
    */
-  def rightOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (Option[V], W))] = self.transform {
+  def rightOuterJoin[W: ClassTag](that: SCollection[(K, W)])
+  : SCollection[(K, (Option[V], W))] = self.transform {
     MultiJoin.left(that, _).mapValues(kv => (kv._2, kv._1))
   }
 
@@ -201,7 +205,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * and return their first argument instead of creating a new U.
    * @group per_key
    */
-  def aggregateByKey[U: ClassTag](zeroValue: U)(seqOp: (U, V) => U, combOp: (U, U) => U): SCollection[(K, U)] =
+  def aggregateByKey[U: ClassTag](zeroValue: U)(seqOp: (U, V) => U,
+                                                combOp: (U, U) => U): SCollection[(K, U)] =
     this.applyPerKey(
       Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp)),
       kvToTuple[K, U])
@@ -212,11 +217,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * the results as U. This could be more powerful and better optimized in some cases.
    * @group per_key
    */
-  def aggregateByKey[A: ClassTag, U: ClassTag](aggregator: Aggregator[V, A, U]): SCollection[(K, U)] =
-    self.transform { in =>
-      val a = aggregator  // defeat closure
-      in.mapValues(a.prepare).sumByKey(a.semigroup).mapValues(a.present)
-    }
+  def aggregateByKey[A: ClassTag, U: ClassTag](aggregator: Aggregator[V, A, U])
+  : SCollection[(K, U)] = self.transform { in =>
+    val a = aggregator  // defeat closure
+    in.mapValues(a.prepare).sumByKey(a.semigroup).mapValues(a.present)
+  }
 
   /**
    * For each key, compute the values' data distribution using approximate `N`-tiles.
@@ -224,8 +229,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * the elements.
    * @group per_key
    */
-  def approxQuantilesByKey(numQuantiles: Int)(implicit ord: Ordering[V]): SCollection[(K, Iterable[V])] =
-    this.applyPerKey(ApproximateQuantiles.perKey(numQuantiles, ord), kvListToTuple[K, V])
+  def approxQuantilesByKey(numQuantiles: Int)(implicit ord: Ordering[V])
+  : SCollection[(K, Iterable[V])] =
+    this.applyPerKey(
+      ApproximateQuantiles.perKey(numQuantiles, ord),
+      kvListToTuple[K, V])
 
   /**
    * Generic function to combine the elements for each key using a custom set of aggregation
@@ -434,7 +442,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * fit in memory.
    * @group transform
    */
-  def hashJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, W))] = self.transform { in =>
+  def hashJoin[W: ClassTag](that: SCollection[(K, W)])
+  : SCollection[(K, (V, W))] = self.transform { in =>
     val side = that.asMultiMapSideInput
     in.withSideInputs(side).flatMap[(K, (V, W))] { (kv, s) =>
       s(side).getOrElse(kv._1, Iterable()).toSeq.map(w => (kv._1, (kv._2, w)))
@@ -446,7 +455,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * and fit in memory.
    * @group transform
    */
-  def hashLeftJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, Option[W]))] = self.transform { in =>
+  def hashLeftJoin[W: ClassTag](that: SCollection[(K, W)])
+  : SCollection[(K, (V, Option[W]))] = self.transform { in =>
     val side = that.asMultiMapSideInput
     in.withSideInputs(side).flatMap[(K, (V, Option[W]))] { (kv, s) =>
       val (k, v) = kv
@@ -465,11 +475,12 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * input be associated with a single value.
    */
   def asMapSideInput: SideInput[Map[K, V]] = {
-    val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, V]]]() {
-      override def apply(input: PCollection[(K, V)]): PCollectionView[JMap[K, V]] = {
-        input.apply(toKvTransform).setCoder(self.getKvCoder[K, V]).apply(View.asMap())
-      }
-    })
+    val o = self.applyInternal(
+      new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, V]]]() {
+        override def apply(input: PCollection[(K, V)]): PCollectionView[JMap[K, V]] = {
+          input.apply(toKvTransform).setCoder(self.getKvCoder[K, V]).apply(View.asMap())
+        }
+      })
     new MapSideInput[K, V](o)
   }
 
@@ -479,11 +490,12 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * keys in the input collection be unique.
    */
   def asMultiMapSideInput: SideInput[Map[K, Iterable[V]]] = {
-    val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, JIterable[V]]]]() {
-      override def apply(input: PCollection[(K, V)]): PCollectionView[JMap[K, JIterable[V]]] = {
-        input.apply(toKvTransform).setCoder(self.getKvCoder[K, V]).apply(View.asMultimap())
-      }
-    })
+    val o = self.applyInternal(
+      new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, JIterable[V]]]]() {
+        override def apply(input: PCollection[(K, V)]): PCollectionView[JMap[K, JIterable[V]]] = {
+          input.apply(toKvTransform).setCoder(self.getKvCoder[K, V]).apply(View.asMultimap())
+        }
+      })
     new MultiMapSideInput[K, V](o)
   }
 
