@@ -64,7 +64,9 @@ object FilterExamples {
       .cross(globalMeanTemp)
       .filter(kv => kv._1.meanTemp < kv._2)
       .keys
-      .map(r => TableRow("year" -> r.year, "month" -> r.month, "day" -> r.day, "mean_temp" -> r.meanTemp))
+      .map { r =>
+        TableRow("year" -> r.year, "month" -> r.month, "day" -> r.day, "mean_temp" -> r.meanTemp)
+      }
       .saveAsBigQuery(args("output"), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
     sc.close()
