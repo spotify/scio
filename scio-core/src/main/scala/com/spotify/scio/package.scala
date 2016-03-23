@@ -20,7 +20,12 @@ package com.spotify
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.spotify.scio.io.Tap
-import com.spotify.scio.values.{AccumulatorType, DoubleAccumulatorType, IntAccumulatorType, LongAccumulatorType}
+import com.spotify.scio.values.{
+  AccumulatorType,
+  DoubleAccumulatorType,
+  IntAccumulatorType,
+  LongAccumulatorType
+}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
