@@ -31,7 +31,8 @@ case class WindowOptions[W <: BoundedWindow](allowedLateness: Duration = null,
                                              accumulationMode: AccumulationMode = null)
 
 case class WindowedValue[T](value: T, timestamp: Instant, window: BoundedWindow, pane: PaneInfo) {
-  def withValue[U](v: U): WindowedValue[U] = WindowedValue(v, this.timestamp, this.window, this.pane)
+  def withValue[U](v: U): WindowedValue[U] =
+    WindowedValue(v, this.timestamp, this.window, this.pane)
 }
 
 class WindowedSCollection[T: ClassTag] private[values] (val internal: PCollection[T],
@@ -43,7 +44,8 @@ class WindowedSCollection[T: ClassTag] private[values] (val internal: PCollectio
   def filter(f: WindowedValue[T] => Boolean): WindowedSCollection[T] =
     new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.filterFn(f)).internal, context)
 
-  def flatMap[U: ClassTag](f: WindowedValue[T] => TraversableOnce[WindowedValue[U]]): WindowedSCollection[U] =
+  def flatMap[U: ClassTag](f: WindowedValue[T] => TraversableOnce[WindowedValue[U]])
+  : WindowedSCollection[U] =
     new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.flatMapFn(f)).internal, context)
 
   def keyBy[K: ClassTag](f: WindowedValue[T] => K): WindowedSCollection[(K, T)] =
