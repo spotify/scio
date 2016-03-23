@@ -43,7 +43,8 @@ class SCollectionWithFanout[T: ClassTag] private[values] (val internal: PCollect
    * of these functions are allowed to modify and return their first argument instead of creating
    * a new U to avoid memory allocation.
    */
-  def aggregate[U: ClassTag](zeroValue: U)(seqOp: (U, T) => U, combOp: (U, U) => U): SCollection[U] =
+  def aggregate[U: ClassTag](zeroValue: U)(seqOp: (U, T) => U,
+                                           combOp: (U, U) => U): SCollection[U] =
     this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(seqOp, combOp)).withFanout(fanout))
 
   /**
@@ -61,7 +62,10 @@ class SCollectionWithFanout[T: ClassTag] private[values] (val internal: PCollect
   def combine[C: ClassTag](createCombiner: T => C)
                           (mergeValue: (C, T) => C)
                           (mergeCombiners: (C, C) => C): SCollection[C] =
-    this.apply(Combine.globally(Functions.combineFn(createCombiner, mergeValue, mergeCombiners)).withFanout(fanout))
+    this.apply(
+      Combine
+        .globally(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))
+        .withFanout(fanout))
 
   /**
    * Aggregate the elements using a given associative function and a neutral "zero value". The
