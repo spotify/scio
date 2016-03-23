@@ -53,7 +53,8 @@ object AutoComplete {
       new TableFieldSchema().setName("tag").setType("STRING"))
     val fields = List(
       new TableFieldSchema().setName("pre").setType("STRING"),
-      new TableFieldSchema().setName("tags").setType("RECORD").setMode("REPEATED").setFields(tagFields.asJava))
+      new TableFieldSchema().setName("tags").setType("RECORD").setMode("REPEATED")
+        .setFields(tagFields.asJava))
     new TableSchema().setFields(fields.asJava)
   }
 
@@ -61,7 +62,8 @@ object AutoComplete {
   : SCollection[(String, Iterable[(String, Long)])] =
     input.flatMap { kv =>
       val (word, count) = kv
-      (minPrefix to Math.min(word.length, maxPrefix)).map(i => (word.substring(0, i), (word, count)))
+      (minPrefix to Math.min(word.length, maxPrefix))
+        .map(i => (word.substring(0, i), (word, count)))
     }.topByKey(10)(Ordering.by(_._2))
 
   def computeTopRecursive(input: SCollection[(String, Long)], minPrefix: Int)
@@ -70,7 +72,8 @@ object AutoComplete {
       computeTop(input, minPrefix).partition(2, t => if (t._1.length > minPrefix) 0 else 1)
     } else {
       val larger = computeTopRecursive(input, minPrefix + 1)
-      val small = computeTop(larger(1).flatMap(_._2) ++ input.filter(_._1.length == minPrefix), minPrefix, minPrefix)
+      val small = computeTop(
+        larger(1).flatMap(_._2) ++ input.filter(_._1.length == minPrefix), minPrefix, minPrefix)
       Seq(larger.head ++ larger(1), small)
     }
 
@@ -84,7 +87,8 @@ object AutoComplete {
     }
     Entity.newBuilder()
       .setKey(key)
-      .addProperty(DatastoreHelper.makeProperty("candidates", DatastoreHelper.makeValue(candidates.asJava)))
+      .addProperty(
+        DatastoreHelper.makeProperty("candidates", DatastoreHelper.makeValue(candidates.asJava)))
       .build()
   }
 
@@ -116,7 +120,9 @@ object AutoComplete {
     }
 
     // compute candidates
-    val candidates = input.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty).map(_.toLowerCase)).countByValue()
+    val candidates = input
+      .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty).map(_.toLowerCase))
+      .countByValue()
     val tags = if (args.boolean("recursive", true)) {
       SCollection.unionAll(computeTopRecursive(candidates, 1))
     } else {
