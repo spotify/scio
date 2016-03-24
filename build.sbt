@@ -125,7 +125,7 @@ lazy val assemblySettings = Seq(
     case s if s.endsWith("libjansi.so") => MergeStrategy.rename
     case s if s.endsWith(".dtd") => MergeStrategy.rename
     case s if s.endsWith(".xsd") => MergeStrategy.rename
-    case PathList("META-INF", "services", "org.apache.hadoop.fs.FileSystem") => MergeStrategy.concat
+    case PathList("META-INF", "services", "org.apache.hadoop.fs.FileSystem") => MergeStrategy.filterDistinctLines
     case s => old(s)
   }
   }
