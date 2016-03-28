@@ -34,6 +34,7 @@ val guavaVersion = "19.0"
 val hadoopVersion = "2.7.2"
 val hamcrestVersion = "1.3"
 val hbaseVersion = "1.0.1"
+val ini4jVersion = "0.5.4"
 val javaLshVersion = "0.8"
 val jodaConvertVersion = "1.8.1"
 val jodaTimeVersion = "2.9.2"
@@ -42,7 +43,6 @@ val scalaCheckVersion = "1.13.0"
 val scalaMacrosVersion = "2.1.0"
 val scalaTestVersion = "2.2.6"
 val slf4jVersion = "1.7.18"
-val ini4jVersion = "0.5.4"
 
 val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
