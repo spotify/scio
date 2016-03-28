@@ -12,7 +12,7 @@ cache:
 before_script:
   - ./scripts/travis.sh
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean coverage test coverageReport coverageAggregate
+  - sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean scalastyle coverage test coverageReport coverageAggregate
   # Test REPL:
   - ./scripts/it-repl.sh $TRAVIS_SCALA_VERSION
   # Tricks to avoid unnecessary cache updates
