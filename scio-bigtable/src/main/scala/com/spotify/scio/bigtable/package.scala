@@ -110,7 +110,8 @@ package object bigtable {
    *
    * Keys are table IDs and values are collections of Mutations.
    */
-  // implicit class PairBigtableSCollection[T](private val self: SCollection[(String, Iterable[T])]) extends AnyVal {
+  // implicit class PairBigtableSCollection[T](private val self: SCollection[(String, Iterable[T])])
+  //   extends AnyVal {
   implicit class PairBigtableSCollection[T](val self: SCollection[(String, Iterable[T])]) {
 
     /**
@@ -132,9 +133,11 @@ package object bigtable {
      * Mutation.
      */
     def saveAsMultipleBigtable(config: CloudBigtableTableConfiguration)
-                              (implicit ev: T <:< Mutation): Future[Tap[(String, Iterable[Result])]] = {
+                              (implicit ev: T <:< Mutation)
+    : Future[Tap[(String, Iterable[Result])]] = {
       if (self.context.isTest) {
-        val output = MultipleBigtableOutput(config.getProjectId, config.getClusterId, config.getZoneId)
+        val output = MultipleBigtableOutput(
+          config.getProjectId, config.getClusterId, config.getZoneId)
         self.context.testOut(output.asInstanceOf[TestIO[(String, Iterable[T])]])(self)
       } else {
         CloudBigtableIO.writeToMultipleTables(config)
@@ -150,10 +153,15 @@ package object bigtable {
   case class BigtableInput(projectId: String, clusterId: String, zoneId: String, tableId: String)
     extends TestIO[Result](s"$projectId\t$clusterId\t$zoneId\t$tableId")
 
-  case class BigtableOutput[T <: Mutation](projectId: String, clusterId: String, zoneId: String, tableId: String)
+  case class BigtableOutput[T <: Mutation](projectId: String,
+                                           clusterId: String,
+                                           zoneId: String,
+                                           tableId: String)
     extends TestIO[T](s"$projectId\t$clusterId\t$zoneId\t$tableId")
 
-  case class MultipleBigtableOutput[T <: Mutation](projectId: String, clusterId: String, zoneId: String)
+  case class MultipleBigtableOutput[T <: Mutation](projectId: String,
+                                                   clusterId: String,
+                                                   zoneId: String)
     extends TestIO[(String, Iterable[T])](s"$projectId\t$clusterId\t$zoneId")
 
 }
