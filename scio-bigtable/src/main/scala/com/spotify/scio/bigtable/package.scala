@@ -17,7 +17,9 @@
 
 package com.spotify.scio
 
-import com.google.cloud.bigtable.dataflow.{CloudBigtableIO, CloudBigtableScanConfiguration, CloudBigtableTableConfiguration}
+import com.google.cloud.bigtable.dataflow.{
+  CloudBigtableIO, CloudBigtableScanConfiguration, CloudBigtableTableConfiguration
+}
 import com.google.cloud.dataflow.sdk.io.Read
 import com.google.cloud.dataflow.sdk.values.KV
 import com.spotify.scio.io.Tap
@@ -122,7 +124,8 @@ package object bigtable {
                                clusterId: String,
                                zoneId: String,
                                additionalConfiguration: Map[String, String] = Map.empty)
-                              (implicit ev: T <:< Mutation): Future[Tap[(String, Iterable[Result])]] = {
+                              (implicit ev: T <:< Mutation)
+    : Future[Tap[(String, Iterable[Result])]] = {
       val config = new CloudBigtableTableConfiguration(
         projectId, zoneId, clusterId, null, additionalConfiguration.asJava)
       this.saveAsMultipleBigtable(config)
