@@ -52,7 +52,8 @@ private[scio] object TestDataManager {
 
   def setInput(testId: String, input: TestInput): Unit = inputs += (testId -> input)
   def setOutput(testId: String, output: TestOutput): Unit = outputs += (testId -> output)
-  def setDistCache(testId: String, distCache: TestDistCache): Unit = distCaches += (testId -> distCache)
+  def setDistCache(testId: String, distCache: TestDistCache): Unit =
+    distCaches += (testId -> distCache)
 
   def unsetInput(testId: String): Unit = inputs -= testId
   def unsetOutput(testId: String): Unit = outputs -= testId
