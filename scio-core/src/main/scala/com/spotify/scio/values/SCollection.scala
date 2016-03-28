@@ -154,7 +154,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * multiple times (use `.distinct()` to eliminate them).
    * @group collection
    */
+  // scalastyle:off method.name
   def ++(that: SCollection[T]): SCollection[T] = this.union(that)
+  // scalastyle:on method.name
 
   /**
    * Return the union of this SCollection and another one. Any identical elements will appear
