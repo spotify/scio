@@ -17,7 +17,10 @@
 
 package com.spotify.scio.examples.extra
 
-import com.google.cloud.bigtable.dataflow.{CloudBigtableScanConfiguration, CloudBigtableTableConfiguration}
+import com.google.cloud.bigtable.dataflow.{
+  CloudBigtableScanConfiguration,
+  CloudBigtableTableConfiguration
+}
 import com.spotify.scio._
 import com.spotify.scio.bigtable._
 import com.spotify.scio.examples.common.ExampleData
