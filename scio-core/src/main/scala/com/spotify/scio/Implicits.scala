@@ -19,10 +19,14 @@ package com.spotify.scio
 
 import java.lang.{Float => JFloat}
 
+import com.google.bigtable.v1.Row
 import com.google.cloud.dataflow.sdk.coders._
+import com.google.cloud.dataflow.sdk.coders.protobuf.ProtoCoder
 import com.google.cloud.dataflow.sdk.values.{KV, TypeDescriptor}
+import com.google.protobuf.Message
 import com.spotify.scio.coders.KryoAtomicCoder
 import com.spotify.scio.util.ScioUtil
+import org.apache.avro.specific.SpecificRecord
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
@@ -44,7 +48,17 @@ private[scio] object Implicits {
 
       // Fall back to Kryo
       r.setFallbackCoderProvider(new CoderProvider {
-        override def getCoder[T](`type`: TypeDescriptor[T]): Coder[T] = KryoAtomicCoder[T]
+        override def getCoder[T](`type`: TypeDescriptor[T]): Coder[T] = {
+          val cls = `type`.getRawType
+          if (classOf[SpecificRecord] isAssignableFrom cls) {
+            // TODO: what about GenericRecord?
+            AvroCoder.of(cls).asInstanceOf[Coder[T]]
+          } else if (classOf[Message] isAssignableFrom cls) {
+            ProtoCoder.of(cls.asSubclass(classOf[Message])).asInstanceOf[Coder[T]]
+          } else {
+            KryoAtomicCoder[T]
+          }
+        }
       })
     }
 

@@ -25,8 +25,11 @@ import java.util.UUID
 
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.google.api.services.datastore.DatastoreV1.Entity
+import com.google.bigtable.v1.Mutation
+import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.cloud.dataflow.sdk.coders.{Coder, TableRowJsonCoder}
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import com.google.cloud.dataflow.sdk.io.bigtable.BigtableIO
 import com.google.cloud.dataflow.sdk.io.{
   AvroIO => GAvroIO,
   BigQueryIO => GBigQueryIO,
@@ -42,6 +45,7 @@ import com.google.cloud.dataflow.sdk.transforms.windowing._
 import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values._
+import com.google.protobuf.ByteString
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.TableRow
 import com.spotify.scio.coders.KryoAtomicCoder
@@ -867,6 +871,28 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
     saveAsBigQuery(
       GBigQueryIO.parseTableSpec(tableSpec), schema, writeDisposition, createDisposition)
+
+  /**
+   * Save this SCollection as a Bigtable table.
+   *
+   * Note that elements must be of type (ByteString, Iterable[Mutation]), , where the [[ByteString]]
+   * is the key of the row being mutated, and each [[Mutation]] represents an idempotent
+   * transformation to that row.
+   *
+   * @group output
+   */
+  def saveAsBigtable(tableId: String, bigtableOptions: BigtableOptions)
+                    (implicit ev: T <:< (ByteString, Iterable[Mutation]))
+  : Future[Tap[(ByteString, Iterable[Mutation])]] = {
+    val self = this.asInstanceOf[SCollection[(ByteString, Iterable[Mutation])]]
+    if (context.isTest) {
+      context.testOut(BigtableOutput(tableId, bigtableOptions))(self)
+    } else {
+      val sink = BigtableIO.write().withTableId(tableId).withBigtableOptions(bigtableOptions)
+      self.map(kv => KV.of(kv._1, kv._2.asJava)).applyInternal(sink)
+    }
+    Future.failed(new NotImplementedError("Bigtable future not implemented"))
+  }
 
   /**
    * Save this SCollection as a Datastore dataset. Note that elements must be of type Entity.

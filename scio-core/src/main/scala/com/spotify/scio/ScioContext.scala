@@ -24,9 +24,12 @@ import java.util.concurrent.TimeUnit
 
 import com.google.api.services.bigquery.model.TableReference
 import com.google.api.services.datastore.DatastoreV1.{Entity, Query}
+import com.google.bigtable.v1.Row
+import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.cloud.dataflow.sdk.Pipeline
 import com.google.cloud.dataflow.sdk.PipelineResult.State
 import com.google.cloud.dataflow.sdk.coders.TableRowJsonCoder
+import com.google.cloud.dataflow.sdk.io.bigtable.BigtableIO
 import com.google.cloud.dataflow.sdk.io.{AvroIO => GAvroIO, BigQueryIO => GBigQueryIO, DatastoreIO => GDatastoreIO, PubsubIO => GPubsubIO, TextIO => GTextIO}
 import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptions, PipelineOptionsFactory}
 import com.google.cloud.dataflow.sdk.runners.{DataflowPipelineJob, DataflowPipelineRunner}
@@ -364,6 +367,19 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
    */
   def bigQueryTable(tableSpec: String): SCollection[TableRow] =
     this.bigQueryTable(GBigQueryIO.parseTableSpec(tableSpec))
+
+  /**
+   * Get an SCollection for a Bigtable table.
+   * @group input
+   */
+  def bigtable(tableId: String, bigtableOptions: BigtableOptions): SCollection[Row] = pipelineOp {
+    if (this.isTest) {
+      this.getTestInput(BigtableInput(tableId, bigtableOptions))
+    } else {
+      val source = BigtableIO.read().withTableId(tableId).withBigtableOptions(bigtableOptions)
+      wrap(this.applyInternal(source).setName(tableId))
+    }
+  }
 
   /**
    * Get an SCollection for a Datastore query.
