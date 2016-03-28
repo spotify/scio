@@ -40,10 +40,6 @@ cat wc/part-00000-of-00001.txt
 
 - [Scio Wiki](https://github.com/spotify/scio/wiki) - wiki page
 - [ScalaDocs](http://spotify.github.com/scio) - current API documentation
-- [Scio REPL](https://github.com/spotify/scio/wiki/Scio-REPL) - tutorial for the interactive Scio REPL
-- [Scio, Spark and Scalding](https://github.com/spotify/scio/wiki/Scio,-Scalding-and-Spark) - comparison of these frameworks
-- [Type safe BigQuery](https://github.com/spotify/scio/wiki/Type-Safe-BigQuery) - tutorial for the type safe BigQuery API
-- [HDFS](https://github.com/spotify/scio/wiki/HDFS) - using Scio with HDFS files
 
 # Artifacts
 
