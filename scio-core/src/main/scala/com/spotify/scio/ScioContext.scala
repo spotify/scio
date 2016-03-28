@@ -30,8 +30,16 @@ import com.google.cloud.dataflow.sdk.Pipeline
 import com.google.cloud.dataflow.sdk.PipelineResult.State
 import com.google.cloud.dataflow.sdk.coders.TableRowJsonCoder
 import com.google.cloud.dataflow.sdk.io.bigtable.BigtableIO
-import com.google.cloud.dataflow.sdk.io.{AvroIO => GAvroIO, BigQueryIO => GBigQueryIO, DatastoreIO => GDatastoreIO, PubsubIO => GPubsubIO, TextIO => GTextIO}
-import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptions, PipelineOptionsFactory}
+import com.google.cloud.dataflow.sdk.io.{
+  AvroIO => GAvroIO,
+  BigQueryIO => GBigQueryIO,
+  DatastoreIO => GDatastoreIO,
+  PubsubIO => GPubsubIO,
+  TextIO => GTextIO
+}
+import com.google.cloud.dataflow.sdk.options.{
+  DataflowPipelineOptions, PipelineOptions, PipelineOptionsFactory
+}
 import com.google.cloud.dataflow.sdk.runners.{DataflowPipelineJob, DataflowPipelineRunner}
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
@@ -294,7 +302,8 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
   // Read operations
   // =======================================================================
 
-  private[scio] def applyInternal[Output <: POutput](root: PTransform[_ >: PBegin, Output]): Output =
+  private[scio] def applyInternal[Output <: POutput](root: PTransform[_ >: PBegin, Output])
+  : Output =
     pipeline.apply(CallSites.getCurrent, root)
 
   /**
@@ -344,7 +353,8 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
     } else {
       val queryJob = this.bigQueryClient.queryIntoTable(sqlQuery)
       _queryJobs.append(queryJob)
-      wrap(this.applyInternal(GBigQueryIO.Read.from(queryJob.table).withoutValidation())).setName(sqlQuery)
+      wrap(this.applyInternal(GBigQueryIO.Read.from(queryJob.table).withoutValidation()))
+        .setName(sqlQuery)
     }
   }
 
@@ -435,7 +445,8 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
     if (this.isTest) {
       this.getTestInput(TableRowJsonIO(path))
     } else {
-      wrap(this.applyInternal(GTextIO.Read.from(path).withCoder(TableRowJsonCoder.of()))).setName(path)
+      wrap(this.applyInternal(GTextIO.Read.from(path).withCoder(TableRowJsonCoder.of())))
+        .setName(path)
     }
   }
 
@@ -528,7 +539,8 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
    */
   def parallelize[K: ClassTag, V: ClassTag](elems: Map[K, V]): SCollection[(K, V)] = pipelineOp {
     val coder = pipeline.getCoderRegistry.getScalaKvCoder[K, V]
-    wrap(this.applyInternal(Create.of(elems.asJava).withCoder(coder))).map(kv => (kv.getKey, kv.getValue))
+    wrap(this.applyInternal(Create.of(elems.asJava).withCoder(coder)))
+      .map(kv => (kv.getKey, kv.getValue))
       .setName(truncate(elems.toString()))
   }
 
@@ -536,7 +548,8 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
    * Distribute a local Scala Iterable with timestamps to form an SCollection.
    * @group in_memory
    */
-  def parallelizeTimestamped[T: ClassTag](elems: Iterable[(T, Instant)]): SCollection[T] = pipelineOp {
+  def parallelizeTimestamped[T: ClassTag](elems: Iterable[(T, Instant)])
+  : SCollection[T] = pipelineOp {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     val v = elems.map(t => TimestampedValue.of(t._1, t._2))
     wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder)))
@@ -547,8 +560,8 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
    * Distribute a local Scala Iterable with timestamps to form an SCollection.
    * @group in_memory
    */
-  def parallelizeTimestamped[T: ClassTag](elems: Iterable[T],
-                                          timestamps: Iterable[Instant]): SCollection[T] = pipelineOp {
+  def parallelizeTimestamped[T: ClassTag](elems: Iterable[T], timestamps: Iterable[Instant])
+  : SCollection[T] = pipelineOp {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     val v = elems.zip(timestamps).map(t => TimestampedValue.of(t._1, t._2))
     wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder)))
