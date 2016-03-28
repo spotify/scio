@@ -192,7 +192,7 @@ def main(out):
         object MultiJoin {
 
           def toOptions[T](xs: Iterable[T]): Iterable[Option[T]] = if (xs.isEmpty) Iterable(None) else xs.map(Option(_))
-        ''').replace('  # NOQA', '')
+        ''').replace('  # NOQA', '').lstrip('\n')
 
     N = 4
     for i in xrange(2, N + 1):
