@@ -27,6 +27,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.{Map => MMap}
 import scala.reflect.macros._
 
+// scalastyle:off line.size.limit
 private[types] object TypeProvider {
 
   private lazy val bigquery: BigQueryClient = BigQueryClient.defaultInstance()
@@ -217,6 +218,7 @@ private[types] object TypeProvider {
   }
 
 }
+// scalastyle:on line.size.limit
 
 private[types] object NameProvider {
 
