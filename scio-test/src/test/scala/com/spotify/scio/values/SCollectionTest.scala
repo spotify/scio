@@ -198,7 +198,7 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support max()" in {
     runWithContext { sc =>
-      def max[T: ClassTag : Numeric](elems: T*) = sc.parallelize(elems).max
+      def max[T: ClassTag : Numeric](elems: T*): SCollection[T] = sc.parallelize(elems).max
       max(1, 2, 3) should containSingleValue (3)
       max(1L, 2L, 3L) should containSingleValue (3L)
       max(1F, 2F, 3F) should containSingleValue (3F)
@@ -208,7 +208,7 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support mean()" in {
     runWithContext { sc =>
-      def mean[T: ClassTag : Numeric](elems: T*) = sc.parallelize(elems).mean
+      def mean[T: ClassTag : Numeric](elems: T*): SCollection[Double] = sc.parallelize(elems).mean
       mean(1, 2, 3) should containSingleValue (2.0)
       mean(1L, 2L, 3L) should containSingleValue (2.0)
       mean(1F, 2F, 3F) should containSingleValue (2.0)
@@ -218,7 +218,7 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support min()" in {
     runWithContext { sc =>
-      def min[T: ClassTag : Numeric](elems: T*) = sc.parallelize(elems).min
+      def min[T: ClassTag : Numeric](elems: T*): SCollection[T] = sc.parallelize(elems).min
       min(1, 2, 3) should containSingleValue (1)
       min(1L, 2L, 3L) should containSingleValue (1L)
       min(1F, 2F, 3F) should containSingleValue (1F)
@@ -303,7 +303,7 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support sum()" in {
     runWithContext { sc =>
-      def sum[T: ClassTag : Semigroup](elems: T*) = sc.parallelize(elems).sum
+      def sum[T: ClassTag : Semigroup](elems: T*): SCollection[T] = sc.parallelize(elems).sum
       sum(1, 2, 3) should containSingleValue (6)
       sum(1L, 2L, 3L) should containSingleValue (6L)
       sum(1F, 2F, 3F) should containSingleValue (6F)
@@ -353,7 +353,8 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support withFixedWindows()" in {
     runWithContext { sc =>
-      val p = sc.parallelizeTimestamped(Seq("a", "b", "c", "d", "e", "f"), (0 to 5).map(new Instant(_)))
+      val p = sc.parallelizeTimestamped(
+        Seq("a", "b", "c", "d", "e", "f"), (0 to 5).map(new Instant(_)))
       val r = p.withFixedWindows(Duration.millis(3)).top(10).map(_.toSet)
       r should containInAnyOrder (Seq(Set("a", "b", "c"), Set("d", "e", "f")))
     }
@@ -361,7 +362,8 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support withSlidingWindows()" in {
     runWithContext { sc =>
-      val p = sc.parallelizeTimestamped(Seq("a", "b", "c", "d", "e", "f"), (0 to 5).map(new Instant(_)))
+      val p = sc.parallelizeTimestamped(
+        Seq("a", "b", "c", "d", "e", "f"), (0 to 5).map(new Instant(_)))
       val r = p.withSlidingWindows(Duration.millis(2), Duration.millis(3)).top(10).map(_.toSet)
       r should containInAnyOrder (Seq(Set("a", "b"), Set("d", "e")))
     }
@@ -369,7 +371,8 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support withSessionWindows()" in {
     runWithContext { sc =>
-      val p = sc.parallelizeTimestamped(Seq("a", "b", "c", "d", "e"), Seq(0, 5, 10, 44, 55).map(new Instant(_)))
+      val p = sc.parallelizeTimestamped(
+        Seq("a", "b", "c", "d", "e"), Seq(0, 5, 10, 44, 55).map(new Instant(_)))
       val r = p
         .withSessionWindows(Duration.millis(10)).top(10).map(_.toSet)
       r should containInAnyOrder (Seq(Set("a", "b", "c"), Set("d"), Set("e")))
@@ -378,7 +381,8 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support withGlobalWindow()" in {
     runWithContext { sc =>
-      val p = sc.parallelizeTimestamped(Seq("a", "b", "c", "d", "e", "f"), (0 to 5).map(new Instant(_)))
+      val p = sc.parallelizeTimestamped(
+        Seq("a", "b", "c", "d", "e", "f"), (0 to 5).map(new Instant(_)))
       val r = p.withFixedWindows(Duration.millis(3)).withGlobalWindow().top(10).map(_.toSet)
       r should containInAnyOrder (Seq(Set("a", "b", "c", "d", "e", "f")))
     }
