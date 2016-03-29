@@ -17,6 +17,8 @@
 
 package com.spotify.scio.values
 
+import com.google.cloud.dataflow.sdk.transforms.windowing.{GlobalWindow, PaneInfo}
+import com.google.cloud.dataflow.sdk.transforms.windowing.PaneInfo.Timing
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.random.RandomSamplerUtils
 import com.twitter.algebird.{Aggregator, Semigroup}
@@ -388,11 +390,29 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support withPaneInfo()"  in {
+    runWithContext { sc =>
+      val pane = PaneInfo.createPane(true, true, Timing.UNKNOWN, 0, 0)
+      val p = sc.parallelizeTimestamped(Seq("a", "b", "c"), Seq(1, 2, 3).map(new Instant(_)))
+      val r = p.withPaneInfo().map(kv => (kv._1, kv._2))
+      r should containInAnyOrder (Seq(("a", pane), ("b", pane), ("c", pane)))
+    }
+  }
+
   it should "support withTimestamp()"  in {
     runWithContext { sc =>
       val p = sc.parallelizeTimestamped(Seq("a", "b", "c"), Seq(1, 2, 3).map(new Instant(_)))
       val r = p.withTimestamp().map(kv => (kv._1, kv._2.getMillis))
       r should containInAnyOrder (Seq(("a", 1L), ("b", 2L), ("c", 3L)))
+    }
+  }
+
+  it should "support withWindow()"  in {
+    runWithContext { sc =>
+      val w = classOf[GlobalWindow].getSimpleName
+      val p = sc.parallelizeTimestamped(Seq("a", "b", "c"), Seq(1, 2, 3).map(new Instant(_)))
+      val r = p.withWindow().map(kv => (kv._1, kv._2.getClass.getSimpleName))
+      r should containInAnyOrder (Seq(("a", w), ("b", w), ("c", w)))
     }
   }
 

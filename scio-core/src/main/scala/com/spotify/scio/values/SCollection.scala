@@ -736,6 +736,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.withWindowFn(CalendarWindows.days(number), options)
 
   /**
+   * Convert values into pairs of (value, window).
+   * @group window
+   */
+  def withPaneInfo(): SCollection[(T, PaneInfo)] = this.parDo(new DoFn[T, (T, PaneInfo)] {
+    override def processElement(c: DoFn[T, (T, PaneInfo)]#ProcessContext): Unit =
+      c.output((c.element(), c.pane()))
+  })
+
+  /**
    * Convert values into pairs of (value, timestamp).
    * @group window
    */
@@ -743,6 +752,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     override def processElement(c: DoFn[T, (T, Instant)]#ProcessContext): Unit =
       c.output((c.element(), c.timestamp()))
   })
+
+  /**
+   * Convert values into pairs of (value, window).
+   * @group window
+   */
+  def withWindow(): SCollection[(T, BoundedWindow)] = this.parDo(
+    new DoFn[T, (T, BoundedWindow)] with DoFn.RequiresWindowAccess {
+      override def processElement(c: DoFn[T, (T, BoundedWindow)]#ProcessContext): Unit =
+        c.output((c.element(), c.window()))
+    })
 
   /**
    * Assign timestamps to values.
