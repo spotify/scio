@@ -382,6 +382,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
    * Get an SCollection for a Bigtable table.
    * @group input
    */
+  // TODO: add row filter support
   def bigtable(tableId: String, bigtableOptions: BigtableOptions): SCollection[Row] = pipelineOp {
     if (this.isTest) {
       this.getTestInput(BigtableInput(tableId, bigtableOptions))
