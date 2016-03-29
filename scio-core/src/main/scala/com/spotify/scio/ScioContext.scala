@@ -415,8 +415,12 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
       this.getTestInput(PubsubIO(sub))
     } else {
       var transform = GPubsubIO.Read.subscription(sub)
-      if (idLabel != null) transform = transform.idLabel(idLabel)
-      if (timestampLabel != null) transform = transform.timestampLabel(timestampLabel)
+      if (idLabel != null) {
+        transform = transform.idLabel(idLabel)
+      }
+      if (timestampLabel != null) {
+        transform = transform.timestampLabel(timestampLabel)
+      }
       wrap(this.applyInternal(transform)).setName(sub)
     }
   }
@@ -432,8 +436,12 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
       this.getTestInput(PubsubIO(topic))
     } else {
       var transform = GPubsubIO.Read.topic(topic)
-      if (idLabel != null) transform = transform.idLabel(idLabel)
-      if (timestampLabel != null) transform = transform.timestampLabel(timestampLabel)
+      if (idLabel != null) {
+        transform = transform.idLabel(idLabel)
+      }
+      if (timestampLabel != null) {
+        transform = transform.timestampLabel(timestampLabel)
+      }
       wrap(this.applyInternal(transform)).setName(topic)
     }
   }
