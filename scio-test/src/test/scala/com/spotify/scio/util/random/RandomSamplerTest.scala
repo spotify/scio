@@ -36,7 +36,6 @@ class RandomSamplerTest extends PipelineSpec {
     } else {
       new BernoulliSampler[Int](actualFraction)
     }
-    sampler.setSeed(fixedSeed)
 
     val actual = DoFnTester.of(sampler).processBatch(population.asJava).asScala.toArray
     scala.util.Sorting.quickSort(actual)
@@ -71,7 +70,6 @@ class RandomSamplerTest extends PipelineSpec {
     } else {
       new BernoulliValueSampler[String, Int](fractions)
     }
-    sampler.setSeed(fixedSeed)
 
     val actual = DoFnTester.of(sampler).processBatch(keyedPopulation.asJava).asScala
       .groupBy(_._1)
