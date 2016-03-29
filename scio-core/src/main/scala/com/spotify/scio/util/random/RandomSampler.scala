@@ -41,6 +41,7 @@ private[scio] object RandomSampler {
 private[scio] abstract class RandomSampler[T, R] extends DoFn[T, T] {
 
   protected var rng: R = null.asInstanceOf[R]
+  protected var seed: Long = -1
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
   override def startBundle(c: DoFn[T, T]#Context): Unit = { rng = init() }
@@ -56,10 +57,8 @@ private[scio] abstract class RandomSampler[T, R] extends DoFn[T, T] {
   }
 
   def init(): R
-
   def samples(): Int
-
-  def setSeed(seed: Long): Unit
+  def setSeed(seed: Long): Unit = this.seed = seed
 
 }
 
@@ -77,7 +76,13 @@ private[scio] class BernoulliSampler[T](fraction: Double) extends RandomSampler[
       && fraction <= (1.0 + RandomSampler.roundingEpsilon),
     s"Sampling fraction ($fraction) must be on interval [0, 1]")
 
-  override def init(): JRandom = RandomSampler.newDefaultRNG
+  override def init(): JRandom = {
+    val r = RandomSampler.newDefaultRNG
+    if (seed > 0) {
+      r.setSeed(seed)
+    }
+    r
+  }
 
   override def samples(): Int = {
     if (fraction <= 0.0) {
@@ -88,8 +93,6 @@ private[scio] class BernoulliSampler[T](fraction: Double) extends RandomSampler[
       if (rng.nextDouble() <= fraction) 1 else 0
     }
   }
-
-  override def setSeed(seed: Long): Unit = rng.setSeed(seed)
 
 }
 
@@ -109,18 +112,22 @@ private[scio] class PoissonSampler[T](fraction: Double)
 
   // PoissonDistribution throws an exception when fraction <= 0
   // If fraction is <= 0, 0 is used below, so we can use any placeholder value.
-  override def init(): IntegerDistribution =
-    new PoissonDistribution(if (fraction > 0.0) fraction else 1.0)
+  override def init(): IntegerDistribution = {
+    val r = new PoissonDistribution(if (fraction > 0.0) fraction else 1.0)
+    if (seed > 0) {
+      r.reseedRandomGenerator(seed)
+    }
+    r
+  }
 
   override def samples(): Int = if (fraction <= 0.0) 0 else rng.sample()
-
-  override def setSeed(seed: Long): Unit = rng.reseedRandomGenerator(seed)
 }
 
 private[scio] abstract class RandomValueSampler[K, V, R](fractions: Map[K, Double])
   extends DoFn[(K, V), (K, V)] {
 
   protected var rngs: Map[K, R] = null.asInstanceOf[Map[K, R]]
+  protected var seed: Long = -1
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
   override def startBundle(c: DoFn[(K, V), (K, V)]#Context): Unit = {
@@ -138,10 +145,8 @@ private[scio] abstract class RandomValueSampler[K, V, R](fractions: Map[K, Doubl
   }
 
   def init(fraction: Double): R
-
   def samples(fraction: Double, rng: R): Int
-
-  def setSeed(seed: Long): Unit
+  def setSeed(seed: Long): Unit = this.seed = seed
 
 }
 
@@ -156,7 +161,13 @@ private[scio] class BernoulliValueSampler[K, V](fractions: Map[K, Double])
     s"Sampling fractions must be on interval [0, 1]")
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
-  override def init(fraction: Double): JRandom = RandomSampler.newDefaultRNG
+  override def init(fraction: Double): JRandom = {
+    val r = RandomSampler.newDefaultRNG
+    if (seed > 0) {
+      r.setSeed(seed)
+    }
+    r
+  }
 
   override def samples(fraction: Double, rng: JRandom): Int = {
     if (fraction <= 0.0) {
@@ -167,8 +178,6 @@ private[scio] class BernoulliValueSampler[K, V](fractions: Map[K, Double])
       if (rng.nextDouble() <= fraction) 1 else 0
     }
   }
-
-  override def setSeed(seed: Long): Unit = rngs.foreach(_._2.setSeed(seed))
 
 }
 
@@ -181,12 +190,15 @@ private[scio] class PoissonValueSampler[K, V](fractions: Map[K, Double])
     s"Sampling fractions must be >= 0")
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
-  override def init(fraction: Double): IntegerDistribution =
-    new PoissonDistribution(if (fraction > 0.0) fraction else 1.0)
+  override def init(fraction: Double): IntegerDistribution = {
+    val r = new PoissonDistribution(if (fraction > 0.0) fraction else 1.0)
+    if (seed > 0) {
+      r.reseedRandomGenerator(seed)
+    }
+    r
+  }
 
   override def samples(fraction: Double, rng: IntegerDistribution): Int =
     if (fraction <= 0.0) 0 else rng.sample()
-
-  override def setSeed(seed: Long): Unit = rngs.foreach(_._2.reseedRandomGenerator(seed))
 
 }

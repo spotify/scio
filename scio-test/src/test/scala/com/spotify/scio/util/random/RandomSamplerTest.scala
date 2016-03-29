@@ -26,7 +26,9 @@ class RandomSamplerTest extends PipelineSpec {
 
   import RandomSamplerUtils._
 
-  def testSampler(withReplacement: Boolean, expectedFraction: Double, actualFraction: Double): Double = {
+  def testSampler(withReplacement: Boolean,
+                  expectedFraction: Double, actualFraction: Double): Double = {
+    rngSeed.setSeed(fixedSeed)
     val expected = expectedSamples(withReplacement, expectedFraction)
 
     val sampler = if (withReplacement) {
@@ -34,8 +36,7 @@ class RandomSamplerTest extends PipelineSpec {
     } else {
       new BernoulliSampler[Int](actualFraction)
     }
-    sampler.startBundle(null)
-    sampler.setSeed(rngSeed.nextLong())
+    sampler.setSeed(fixedSeed)
 
     val actual = DoFnTester.of(sampler).processBatch(population.asJava).asScala.toArray
     scala.util.Sorting.quickSort(actual)
@@ -59,6 +60,7 @@ class RandomSamplerTest extends PipelineSpec {
   def testValueSampler(withReplacement: Boolean,
                        expectedFraction1: Double, actualFraction1: Double,
                        expectedFraction2: Double, actualFraction2: Double): (Double, Double) = {
+    rngSeed.setSeed(fixedSeed)
     val expected = Map(
       "a" -> expectedSamples(withReplacement, expectedFraction1),
       "b" -> expectedSamples(withReplacement, expectedFraction2))
@@ -69,8 +71,7 @@ class RandomSamplerTest extends PipelineSpec {
     } else {
       new BernoulliValueSampler[String, Int](fractions)
     }
-    sampler.startBundle(null)
-    sampler.setSeed(rngSeed.nextLong())
+    sampler.setSeed(fixedSeed)
 
     val actual = DoFnTester.of(sampler).processBatch(keyedPopulation.asJava).asScala
       .groupBy(_._1)
