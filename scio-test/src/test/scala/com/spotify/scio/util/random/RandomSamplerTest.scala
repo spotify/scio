@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Spotify AB.
+ * Copyright 2016 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  * under the License.
  */
 
-package com.spotify.scio.values
+package com.spotify.scio.util.random
 
 import com.google.cloud.dataflow.sdk.transforms.DoFnTester
 import com.spotify.scio.testing.PipelineSpec
-import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler, BernoulliSampler, PoissonSampler}
 
 import scala.collection.JavaConverters._
 
