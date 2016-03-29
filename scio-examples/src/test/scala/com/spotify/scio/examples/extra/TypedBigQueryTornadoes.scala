@@ -42,7 +42,7 @@ object TypedBigQueryTornadoes {
   // Annotate output case class.
   // Note that the case class is already defined and will not be expanded. Only the companion
   // object will be generated to provide easy access to TableSchema and converter methods.
-  @BigQueryType.toTable()
+  @BigQueryType.toTable
   case class Result(month: Long, tornado_count: Long)
 
   def main(cmdlineArgs: Array[String]): Unit = {

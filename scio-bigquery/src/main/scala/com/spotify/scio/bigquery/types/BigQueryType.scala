@@ -152,12 +152,12 @@ object BigQueryType {
    * example:
    *
    * {{{
-   * @BigQueryType.toTable()
+   * @BigQueryType.toTable
    * case class Result(name: String, score: Double)
    * }}}
    * @group annotation
    */
-  class toTable() extends StaticAnnotation {
+  class toTable extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.toTableImpl
   }
 

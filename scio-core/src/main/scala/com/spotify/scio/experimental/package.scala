@@ -115,7 +115,7 @@ package object experimental {
      * This could be a complete case class with [[BigQueryType.toTable]]. For example:
      *
      * {{{
-     * @BigQueryType.toTable()
+     * @BigQueryType.toTable
      * case class Result(name: String, score: Double)
      *
      * val p: SCollection[Result] = // process data and convert elements to Result

@@ -265,7 +265,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
     r.f3 should equal (List(F3$3(List(1L, 2L))))
   }
 
-  @BigQueryType.toTable()
+  @BigQueryType.toTable
   case class ToTable(f1: Long, f2: Double, f3: Boolean, f4: String, f5: Instant)
 
   "BigQueryType.toTable" should "support .tupled in companion object" in {
