@@ -39,9 +39,9 @@ private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistC
 
   override def apply(): F = data
 
-  protected def init(): F
+  protected def init: F
 
-  protected lazy val data: F = init()
+  protected lazy val data: F = init
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[DistCache[_]])
 
@@ -104,7 +104,7 @@ private[scio] class MockDistCache[F](val value: F) extends DistCache[F] {
 private[scio] class DistCacheSingle[F](val uri: URI, val initFn: File => F, options: GcsOptions)
   extends FileDistCache[F](options) {
   verifyUri(uri)
-  override protected def init(): F = initFn(prepareFiles(Seq(uri)).head)
+  override protected def init: F = initFn(prepareFiles(Seq(uri)).head)
 }
 
 private[scio] class DistCacheMulti[F](val uris: Seq[URI],
@@ -112,5 +112,5 @@ private[scio] class DistCacheMulti[F](val uris: Seq[URI],
                                       options: GcsOptions)
   extends FileDistCache[F](options) {
   uris.foreach(verifyUri)
-  override protected def init(): F = initFn(prepareFiles(uris))
+  override protected def init: F = initFn(prepareFiles(uris))
 }
