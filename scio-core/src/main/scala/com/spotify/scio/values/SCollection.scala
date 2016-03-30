@@ -126,6 +126,21 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /** Assign a name to this SCollection. */
   def setName(name: String): SCollection[T] = context.wrap(internal.setName(name))
 
+  /**
+   * Apply a [[com.google.cloud.dataflow.sdk.transforms.PTransform PTransform]] and wrap the output
+   * in an [[SCollection]].
+   */
+  def applyTransform[U: ClassTag](transform: PTransform[_ >: PCollection[T], PCollection[U]])
+  : SCollection[U] =
+    this.apply(transform)
+
+  /**
+   * Apply a [[com.google.cloud.dataflow.sdk.transforms.PTransform PTransform]] with [[PDone]]
+   * output.
+   */
+  def applyOutputTransform(transform: PTransform[_ >: PCollection[T], PDone]): PDone =
+    this.applyInternal(transform)
+
   /** Apply a transform. */
   private[values] def transform[U: ClassTag](f: SCollection[T] => SCollection[U])
   : SCollection[U] = {

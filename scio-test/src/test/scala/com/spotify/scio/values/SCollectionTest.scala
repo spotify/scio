@@ -17,8 +17,11 @@
 
 package com.spotify.scio.values
 
+import com.google.cloud.dataflow.sdk.io.Write
+import com.google.cloud.dataflow.sdk.transforms.Count
 import com.google.cloud.dataflow.sdk.transforms.windowing.{GlobalWindow, PaneInfo}
 import com.google.cloud.dataflow.sdk.transforms.windowing.PaneInfo.Timing
+import com.spotify.scio.io.{InMemoryDataFlowSink, InMemorySinkManager}
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.random.RandomSamplerUtils
 import com.twitter.algebird.{Aggregator, Semigroup}
@@ -35,6 +38,22 @@ class SCollectionTest extends PipelineSpec {
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).setName("MySCollection")
       p.name shouldBe "MySCollection"
     }
+  }
+
+  it should "support applyTransform()" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).applyTransform(Count.globally())
+      p should containSingleValue (5L.asInstanceOf[java.lang.Long])
+    }
+  }
+
+  it should "support applyOutputTransform()" in {
+    val id = System.currentTimeMillis().toString
+    runWithContext { sc =>
+      sc.parallelize(Seq(1, 2, 3, 4, 5))
+        .applyOutputTransform(Write.to(new InMemoryDataFlowSink[Int](id)))
+    }
+    InMemorySinkManager.get[Int](id).toSet should equal (Set(1, 2, 3, 4, 5))
   }
 
   it should "support transform()" in {
