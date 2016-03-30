@@ -59,7 +59,7 @@ object BigtableV2WriteExample {
 
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-      .countByValue()
+      .countByValue
       .map(BigtableV2Example.kvToSetCell)
       .saveAsBigtable(args("bigtableTableId"), BigtableV2Example.bigtableOptions(args))
 

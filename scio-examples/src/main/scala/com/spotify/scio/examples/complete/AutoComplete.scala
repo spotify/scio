@@ -122,7 +122,7 @@ object AutoComplete {
     // compute candidates
     val candidates = input
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty).map(_.toLowerCase))
-      .countByValue()
+      .countByValue
     val tags = if (args.boolean("recursive", true)) {
       SCollection.unionAll(computeTopRecursive(candidates, 1))
     } else {

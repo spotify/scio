@@ -119,7 +119,7 @@ object TrafficMaxLaneFlow {
         Duration.standardMinutes(windowSlideEvery))
       .maxByKey(Ordering.by(_.laneFlow))
       .values
-      .withTimestamp()
+      .withTimestamp
       .map { kv =>  // (lane flow, timestamp)
         val (l, ts) = kv
         TableRow(

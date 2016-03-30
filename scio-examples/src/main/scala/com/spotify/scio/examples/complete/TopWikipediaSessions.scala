@@ -50,7 +50,7 @@ object TopWikipediaSessions {
       .map(_._1)
       .sample(withReplacement = false, fraction = samplingThreshold)
       .withSessionWindows(Duration.standardHours(1))
-      .countByValue()
+      .countByValue
       .toWindowed  // enable access to underlying window info
       .map(wv => wv.copy((wv.value._1 + " : " + wv.window, wv.value._2)))
       .toSCollection  // end of windowed operation

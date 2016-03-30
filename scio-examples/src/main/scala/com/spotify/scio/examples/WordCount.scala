@@ -63,7 +63,7 @@ object WordCount {
       }
       .toSCollection  // convert back to normal SCollection
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-      .countByValue()
+      .countByValue
       .map(t => t._1 + ": " + t._2)
       .saveAsTextFile(output)
 

@@ -76,7 +76,7 @@ object WindowedWordCount {
     input
       .withFixedWindows(windowSize)  // apply windowing logic
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-      .countByValue()
+      .countByValue
       .toWindowed  // convert to WindowedSCollection
       .map { wv =>
         wv.copy(value = TableRow(

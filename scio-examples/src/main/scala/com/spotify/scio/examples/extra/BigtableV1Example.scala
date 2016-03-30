@@ -63,7 +63,7 @@ object BigtableV1WriteExample {
 
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-      .countByValue()
+      .countByValue
       .map(kv => BigtableV1Example.put(kv._1, kv._2))
       .saveAsBigtable(config)
 
@@ -117,7 +117,7 @@ object BigtableV1MultipleWriteExample {
 
     def wordCount(name: String, in: SCollection[String]): SCollection[(String, Iterable[Put])] =
       in.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-        .countByValue()
+        .countByValue
         .map(kv => BigtableV1Example.put(kv._1, kv._2))
         .groupBy(_ => Unit)
         .map(kv => (name, kv._2))

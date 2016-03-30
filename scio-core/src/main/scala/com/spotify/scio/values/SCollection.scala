@@ -247,7 +247,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @return a new SCollection with the count
    * @group transform
    */
-  def count(): SCollection[Long] = this.apply(Count.globally[T]()).asInstanceOf[SCollection[Long]]
+  def count: SCollection[Long] = this.apply(Count.globally[T]()).asInstanceOf[SCollection[Long]]
 
   /**
    * Count approximate number of distinct elements in the SCollection.
@@ -273,7 +273,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Count of each unique value in this SCollection as an SCollection of (value, count) pairs.
    * @group transform
    */
-  def countByValue(): SCollection[(T, Long)] = this.transform {
+  def countByValue: SCollection[(T, Long)] = this.transform {
     _.apply(Count.perElement[T]()).map(kvToTuple).asInstanceOf[SCollection[(T, Long)]]
   }
 
@@ -281,7 +281,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Return a new SCollection containing the distinct elements in this SCollection.
    * @group transform
    */
-  def distinct(): SCollection[T] = this.apply(RemoveDuplicates.create[T]())
+  def distinct: SCollection[T] = this.apply(RemoveDuplicates.create[T]())
 
   /**
    * Return a new SCollection containing only the elements that satisfy a predicate.
@@ -745,7 +745,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Convert values into pairs of (value, window).
    * @group window
    */
-  def withPaneInfo(): SCollection[(T, PaneInfo)] = this.parDo(new DoFn[T, (T, PaneInfo)] {
+  def withPaneInfo: SCollection[(T, PaneInfo)] = this.parDo(new DoFn[T, (T, PaneInfo)] {
     override def processElement(c: DoFn[T, (T, PaneInfo)]#ProcessContext): Unit =
       c.output((c.element(), c.pane()))
   })
@@ -754,7 +754,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Convert values into pairs of (value, timestamp).
    * @group window
    */
-  def withTimestamp(): SCollection[(T, Instant)] = this.parDo(new DoFn[T, (T, Instant)] {
+  def withTimestamp: SCollection[(T, Instant)] = this.parDo(new DoFn[T, (T, Instant)] {
     override def processElement(c: DoFn[T, (T, Instant)]#ProcessContext): Unit =
       c.output((c.element(), c.timestamp()))
   })
@@ -763,7 +763,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Convert values into pairs of (value, window).
    * @group window
    */
-  def withWindow(): SCollection[(T, BoundedWindow)] = this.parDo(
+  def withWindow: SCollection[(T, BoundedWindow)] = this.parDo(
     new DoFn[T, (T, BoundedWindow)] with DoFn.RequiresWindowAccess {
       override def processElement(c: DoFn[T, (T, BoundedWindow)]#ProcessContext): Unit =
         c.output((c.element(), c.window()))

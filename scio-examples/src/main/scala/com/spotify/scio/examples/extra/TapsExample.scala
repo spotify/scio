@@ -35,7 +35,7 @@ object TapsExample {
       val (sc, args) = ContextAndArgs(cmdlineArgs)
       val out = (t1.open(sc) ++ t2.open(sc))
         .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-        .countByValue()
+        .countByValue
         .map(kv => kv._1 + "\t" + kv._2)
         .materialize
       sc.close()

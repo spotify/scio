@@ -174,7 +174,7 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
         bucketFunction(x).iterator
       }
       .toSCollection
-      .countByValue()  // Count occurrences of each bucket
+      .countByValue  // Count occurrences of each bucket
       .cross(bucketSize)  // Replicate bucket size
       .map { case ((bin, count), size) =>
         val b = Array.fill(size)(0L)

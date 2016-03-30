@@ -42,7 +42,7 @@ object DebuggingWordCount {
 
     val filteredWords = sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-      .countByValue()
+      .countByValue
       .withAccumulator(matchedWords, unmatchedWords)
       .filter { (kv, c) =>
         val b = Set("Flourish", "stomach").contains(kv._1)

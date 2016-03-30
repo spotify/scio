@@ -70,7 +70,7 @@ object WordCountOrchestration {
     val sc = ScioContext(opts)
     val f = sc.textFile(inputPath)
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-      .countByValue()
+      .countByValue
       .materialize
     sc.close()
     f
@@ -79,7 +79,7 @@ object WordCountOrchestration {
   // Split out transform for unit testing
   def countWords(in: SCollection[String]): SCollection[(String, Long)] = {
     in.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-      .countByValue()
+      .countByValue
   }
 
   def merge(opts: DataflowPipelineOptions,

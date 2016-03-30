@@ -133,7 +133,7 @@ object TrafficRoutes {
         val slowdownEvent = slowdowns >= 2 * speedups
         RouteInfo(kv._1, speedAvg, slowdownEvent)
       }
-      .withTimestamp()  // explose internal timestamp
+      .withTimestamp  // explose internal timestamp
       .map { kv =>
         val (r, ts) = kv
         TableRow(

@@ -78,14 +78,14 @@ object TfIdf {
     }  // (d, t)
 
     val uriToWordAndCount = uriToWords
-      .countByValue()  // ((d, t), tf)
+      .countByValue  // ((d, t), tf)
       .map(t => (t._1._1, (t._1._2, t._2)))  // (d, (t, tf))
 
-    val wordToDf = uriToWords.distinct().values.countByValue()  // (t, df)
-      .cross(uriToContent.keys.distinct().count())  // N
+    val wordToDf = uriToWords.distinct.values.countByValue  // (t, df)
+      .cross(uriToContent.keys.distinct.count)  // N
       .map { case ((t, df), numDocs) => (t, df.toDouble / numDocs) }  // (t, df/N)
 
-    uriToWords.keys.countByValue()  // (d, |d|)
+    uriToWords.keys.countByValue  // (d, |d|)
       .join(uriToWordAndCount)  // (d, (|d|, (t, tf)))
       .map { case (d, (dl, (t, tf))) => (t, (d, tf.toDouble / dl)) }  // (t, (d, tf/|d|))
       .join(wordToDf)  // (t, ((d, tf/|d|), df/N))

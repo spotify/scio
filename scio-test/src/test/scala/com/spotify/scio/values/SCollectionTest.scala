@@ -123,9 +123,9 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support count()" in {
+  it should "support count" in {
     runWithContext { sc =>
-      sc.parallelize(Seq("a", "b", "c")) should haveSize (3)
+      sc.parallelize(Seq("a", "b", "c")).count should containSingleValue (3L)
     }
   }
 
@@ -139,16 +139,16 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support countByValue()" in {
+  it should "support countByValue" in {
     runWithContext { sc =>
-      val p = sc.parallelize(Seq("a", "b", "b", "c", "c", "c")).countByValue()
+      val p = sc.parallelize(Seq("a", "b", "b", "c", "c", "c")).countByValue
       p should containInAnyOrder (Seq(("a", 1L), ("b", 2L), ("c", 3L)))
     }
   }
 
-  it should "support distinct()" in {
+  it should "support distinct" in {
     runWithContext { sc =>
-      val p = sc.parallelize(Seq("a", "b", "b", "c", "c", "c")).distinct()
+      val p = sc.parallelize(Seq("a", "b", "b", "c", "c", "c")).distinct
       p should containInAnyOrder (Seq("a", "b", "c"))
     }
   }
@@ -198,7 +198,7 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support max()" in {
+  it should "support max" in {
     runWithContext { sc =>
       def max[T: ClassTag : Numeric](elems: T*): SCollection[T] = sc.parallelize(elems).max
       max(1, 2, 3) should containSingleValue (3)
@@ -208,7 +208,7 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support mean()" in {
+  it should "support mean" in {
     runWithContext { sc =>
       def mean[T: ClassTag : Numeric](elems: T*): SCollection[Double] = sc.parallelize(elems).mean
       mean(1, 2, 3) should containSingleValue (2.0)
@@ -218,7 +218,7 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support min()" in {
+  it should "support min" in {
     runWithContext { sc =>
       def min[T: ClassTag : Numeric](elems: T*): SCollection[T] = sc.parallelize(elems).min
       min(1, 2, 3) should containSingleValue (1)
@@ -242,11 +242,11 @@ class SCollectionTest extends PipelineSpec {
       val p2 = sc.parallelize(0 to 1000).randomSplit(Array(0.2, 0.3, 0.5))
       p1.length shouldBe 2
       p2.length shouldBe 3
-      p1(0).count().map(round) should containSingleValue (300L)
-      p1(1).count().map(round) should containSingleValue (700L)
-      p2(0).count().map(round) should containSingleValue (200L)
-      p2(1).count().map(round) should containSingleValue (300L)
-      p2(2).count().map(round) should containSingleValue (500L)
+      p1(0).count.map(round) should containSingleValue (300L)
+      p1(1).count.map(round) should containSingleValue (700L)
+      p2(0).count.map(round) should containSingleValue (200L)
+      p2(1).count.map(round) should containSingleValue (300L)
+      p2(2).count.map(round) should containSingleValue (500L)
     }
   }
 
@@ -303,7 +303,7 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support sum()" in {
+  it should "support sum" in {
     runWithContext { sc =>
       def sum[T: ClassTag : Semigroup](elems: T*): SCollection[T] = sc.parallelize(elems).sum
       sum(1, 2, 3) should containSingleValue (6)
@@ -390,28 +390,28 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support withPaneInfo()"  in {
+  it should "support withPaneInfo"  in {
     runWithContext { sc =>
       val pane = PaneInfo.createPane(true, true, Timing.UNKNOWN, 0, 0)
       val p = sc.parallelizeTimestamped(Seq("a", "b", "c"), Seq(1, 2, 3).map(new Instant(_)))
-      val r = p.withPaneInfo().map(kv => (kv._1, kv._2))
+      val r = p.withPaneInfo.map(kv => (kv._1, kv._2))
       r should containInAnyOrder (Seq(("a", pane), ("b", pane), ("c", pane)))
     }
   }
 
-  it should "support withTimestamp()"  in {
+  it should "support withTimestamp"  in {
     runWithContext { sc =>
       val p = sc.parallelizeTimestamped(Seq("a", "b", "c"), Seq(1, 2, 3).map(new Instant(_)))
-      val r = p.withTimestamp().map(kv => (kv._1, kv._2.getMillis))
+      val r = p.withTimestamp.map(kv => (kv._1, kv._2.getMillis))
       r should containInAnyOrder (Seq(("a", 1L), ("b", 2L), ("c", 3L)))
     }
   }
 
-  it should "support withWindow()"  in {
+  it should "support withWindow"  in {
     runWithContext { sc =>
       val w = classOf[GlobalWindow].getSimpleName
       val p = sc.parallelizeTimestamped(Seq("a", "b", "c"), Seq(1, 2, 3).map(new Instant(_)))
-      val r = p.withWindow().map(kv => (kv._1, kv._2.getClass.getSimpleName))
+      val r = p.withWindow.map(kv => (kv._1, kv._2.getClass.getSimpleName))
       r should containInAnyOrder (Seq(("a", w), ("b", w), ("c", w)))
     }
   }
@@ -419,7 +419,7 @@ class SCollectionTest extends PipelineSpec {
   it should "support timestampBy()"  in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3))
-      val r = p.timestampBy(new Instant(_)).withTimestamp().map(kv => (kv._1, kv._2.getMillis))
+      val r = p.timestampBy(new Instant(_)).withTimestamp.map(kv => (kv._1, kv._2.getMillis))
       r should containInAnyOrder (Seq((1, 1L), (2, 2L), (3, 3L)))
     }
   }

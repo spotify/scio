@@ -281,7 +281,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @return a new SCollection of (key, count) pairs
    * @group per_key
    */
-  def countByKey(): SCollection[(K, Long)] = self.transform(_.keys.countByValue())
+  def countByKey(): SCollection[(K, Long)] = self.transform(_.keys.countByValue)
 
   /**
    * Pass each value in the key-value pair SCollection through a flatMap function without changing

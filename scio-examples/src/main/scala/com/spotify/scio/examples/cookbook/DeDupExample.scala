@@ -43,7 +43,7 @@ object DeDupExample {
       })
 
     sc.textFile(input)
-      .distinct()
+      .distinct
       .saveAsTextFile(output)
 
     sc.close()

@@ -88,7 +88,7 @@ object DatastoreWordCount {
           DatastoreHelper.getPropertyMap(e).asScala.get("content").map(_.getStringValue).toSeq
         }
         .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-        .countByValue()
+        .countByValue
         .map(t => t._1 + ": " + t._2)
         .saveAsTextFile(args("output"))
       sc.close()
