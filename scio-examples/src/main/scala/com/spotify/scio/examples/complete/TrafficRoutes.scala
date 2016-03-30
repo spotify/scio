@@ -109,7 +109,7 @@ object TrafficRoutes {
       .withSlidingWindows(
         Duration.standardMinutes(windowDuration),
         Duration.standardMinutes(windowSlideEvery))
-      .groupByKey()
+      .groupByKey
       .map { kv =>
         var speedSum = 0.0
         var speedCount = 0

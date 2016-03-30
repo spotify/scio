@@ -101,7 +101,7 @@ object TriggerExample {
     def compute(triggerType: String, windowOptions: WindowOptions[IntervalWindow]): Unit = {
       flowInfo
         .withFixedWindows(Duration.standardMinutes(windowDuration), options = windowOptions)
-        .groupByKey()
+        .groupByKey
         .toWindowed
         .map { wv =>
           val (key, values) = wv.value

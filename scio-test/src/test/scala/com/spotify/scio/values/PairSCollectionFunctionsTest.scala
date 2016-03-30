@@ -222,7 +222,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
 
   it should "support countByKey()" in {
     runWithContext { sc =>
-      val p = sc.parallelize(Seq(("a", 11), ("a", 12), ("b", 21), ("b", 22), ("b", 23))).countByKey()
+      val p = sc.parallelize(Seq(("a", 11), ("a", 12), ("b", 21), ("b", 22), ("b", 23))).countByKey
       p should containInAnyOrder (Seq(("a", 2L), ("b", 3L)))
     }
   }
@@ -245,9 +245,9 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support groupByKey()" in {
+  it should "support groupByKey" in {
     runWithContext { sc =>
-      val p = sc.parallelize(Seq(("a", 1), ("a", 10), ("b", 2), ("b", 20))).groupByKey().mapValues(_.toSet)
+      val p = sc.parallelize(Seq(("a", 1), ("a", 10), ("b", 2), ("b", 20))).groupByKey.mapValues(_.toSet)
       p should containInAnyOrder (Seq(("a", Set(1, 10)), ("b", Set(2, 20))))
     }
   }
