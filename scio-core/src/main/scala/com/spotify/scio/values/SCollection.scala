@@ -649,22 +649,28 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def withWindowFn[W <: BoundedWindow](fn: WindowFn[AnyRef, W],
                                        options: WindowOptions[W] = WindowOptions())
   : SCollection[T] = {
-    require(
-      !(options.trigger == null ^ options.accumulationMode == null),
-      "Both trigger and accumulationMode must be null or set")
     var transform = Window.into(fn).asInstanceOf[Window.Bound[T]]
-    if (options.allowedLateness != null) {
-      transform = transform.withAllowedLateness(options.allowedLateness)
+    if (options.trigger != null) {
+      transform = transform.triggering(options.trigger)
     }
-    if (options.trigger != null && options.accumulationMode != null) {
-      val t = transform.triggering(options.trigger)
-      transform = if (options.accumulationMode == AccumulationMode.ACCUMULATING_FIRED_PANES) {
-        t.accumulatingFiredPanes()
+    if (options.accumulationMode != null) {
+      if (options.accumulationMode == AccumulationMode.ACCUMULATING_FIRED_PANES) {
+        transform = transform.accumulatingFiredPanes()
       } else if (options.accumulationMode == AccumulationMode.DISCARDING_FIRED_PANES) {
-        t.discardingFiredPanes()
+        transform = transform.discardingFiredPanes()
       } else {
         throw new RuntimeException(s"Unsupported accumulation mode ${options.accumulationMode}")
       }
+    }
+    if (options.allowedLateness != null) {
+      transform = if (options.closingBehavior == null) {
+        transform.withAllowedLateness(options.allowedLateness)
+      } else {
+        transform.withAllowedLateness(options.allowedLateness, options.closingBehavior)
+      }
+    }
+    if (options.outputTimeFn != null) {
+      transform = transform.withOutputTimeFn(options.outputTimeFn)
     }
     this.apply(transform)
   }

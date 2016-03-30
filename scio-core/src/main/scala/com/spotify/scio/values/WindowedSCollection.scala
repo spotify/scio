@@ -17,7 +17,10 @@
 
 package com.spotify.scio.values
 
-import com.google.cloud.dataflow.sdk.transforms.windowing.{BoundedWindow, PaneInfo, Trigger}
+import com.google.cloud.dataflow.sdk.transforms.windowing.Window.ClosingBehavior
+import com.google.cloud.dataflow.sdk.transforms.windowing.{
+  BoundedWindow, OutputTimeFn, PaneInfo, TriggerBuilder
+}
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values.PCollection
 import com.spotify.scio.ScioContext
@@ -26,9 +29,11 @@ import org.joda.time.{Duration, Instant}
 
 import scala.reflect.ClassTag
 
-case class WindowOptions[W <: BoundedWindow](allowedLateness: Duration = null,
-                                             trigger: Trigger[W] = null,
-                                             accumulationMode: AccumulationMode = null)
+case class WindowOptions[W <: BoundedWindow](trigger: TriggerBuilder[W] = null,
+                                             accumulationMode: AccumulationMode = null,
+                                             allowedLateness: Duration = null,
+                                             closingBehavior: ClosingBehavior = null,
+                                             outputTimeFn: OutputTimeFn[BoundedWindow] = null)
 
 case class WindowedValue[T](value: T, timestamp: Instant, window: BoundedWindow, pane: PaneInfo) {
   def withValue[U](v: U): WindowedValue[U] =
