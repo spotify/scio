@@ -36,34 +36,34 @@ class DoubleSCollectionFunctionsTest extends PipelineSpec {
 
   "DoubleSCollection" should "support sampleStdev()" in {
     val e = expected.sampleStdev
-    test(runWithData(ints)(_.sampleStdev()), e)
-    test(runWithData(longs)(_.sampleStdev()), e)
-    test(runWithData(floats)(_.sampleStdev()), e)
-    test(runWithData(doubles)(_.sampleStdev()), e)
+    test(runWithData(ints)(_.sampleStdev), e)
+    test(runWithData(longs)(_.sampleStdev), e)
+    test(runWithData(floats)(_.sampleStdev), e)
+    test(runWithData(doubles)(_.sampleStdev), e)
   }
 
   it should "support sampleVariance()" in {
     val e = expected.sampleVariance
-    test(runWithData(ints)(_.sampleVariance()), e)
-    test(runWithData(longs)(_.sampleVariance()), e)
-    test(runWithData(floats)(_.sampleVariance()), e)
-    test(runWithData(doubles)(_.sampleVariance()), e)
+    test(runWithData(ints)(_.sampleVariance), e)
+    test(runWithData(longs)(_.sampleVariance), e)
+    test(runWithData(floats)(_.sampleVariance), e)
+    test(runWithData(doubles)(_.sampleVariance), e)
   }
 
   it should "support stdev()" in {
     val e = expected.stdev
-    test(runWithData(ints)(_.stdev()), e)
-    test(runWithData(longs)(_.stdev()), e)
-    test(runWithData(floats)(_.stdev()), e)
-    test(runWithData(doubles)(_.stdev()), e)
+    test(runWithData(ints)(_.stdev), e)
+    test(runWithData(longs)(_.stdev), e)
+    test(runWithData(floats)(_.stdev), e)
+    test(runWithData(doubles)(_.stdev), e)
   }
 
   it should "support variance()" in {
     val e = expected.variance
-    test(runWithData(ints)(_.variance()), e)
-    test(runWithData(longs)(_.variance()), e)
-    test(runWithData(floats)(_.variance()), e)
-    test(runWithData(doubles)(_.variance()), e)
+    test(runWithData(ints)(_.variance), e)
+    test(runWithData(longs)(_.variance), e)
+    test(runWithData(floats)(_.variance), e)
+    test(runWithData(doubles)(_.variance), e)
   }
 
 }

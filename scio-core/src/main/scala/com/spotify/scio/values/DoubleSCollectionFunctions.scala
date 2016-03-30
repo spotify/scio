@@ -29,31 +29,31 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
    * StatCounter]] object that captures the mean, variance and count of the SCollection's elements
    * in one operation.
    */
-  def stats(): SCollection[StatCounter] = self.combine(StatCounter(_))(_.merge(_))(_.merge(_))
+  def stats: SCollection[StatCounter] = self.combine(StatCounter(_))(_.merge(_))(_.merge(_))
 
   // Implemented in SCollection
-  // def mean(): SCollection[Double] = this.stats().map(_.mean)
+  // def mean: SCollection[Double] = this.stats().map(_.mean)
 
   // Implemented in SCollection
-  // def sum(): SCollection[Double] = this.stats().map(_.sum)
+  // def sum: SCollection[Double] = this.stats().map(_.sum)
 
   /** Compute the standard deviation of this SCollection's elements. */
-  def stdev(): SCollection[Double] = self.transform(_.stats().map(_.stdev))
+  def stdev: SCollection[Double] = self.transform(_.stats.map(_.stdev))
 
   /** Compute the variance of this SCollection's elements. */
-  def variance(): SCollection[Double] = self.transform(_.stats().map(_.variance))
+  def variance: SCollection[Double] = self.transform(_.stats.map(_.variance))
 
   /**
    * Compute the sample standard deviation of this SCollection's elements (which corrects for bias
    * in estimating the standard deviation by dividing by N-1 instead of N).
    */
-  def sampleStdev(): SCollection[Double] = self.transform(_.stats().map(_.sampleStdev))
+  def sampleStdev: SCollection[Double] = self.transform(_.stats.map(_.sampleStdev))
 
   /**
    * Compute the sample variance of this SCollection's elements (which corrects for bias in
    * estimating the variance by dividing by N-1 instead of N).
    */
-  def sampleVariance(): SCollection[Double] = self.transform(_.stats().map(_.sampleVariance))
+  def sampleVariance: SCollection[Double] = self.transform(_.stats.map(_.sampleVariance))
 
   // Ported from org.apache.spark.rdd.DoubleRDDFunctions
 
