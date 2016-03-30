@@ -51,7 +51,7 @@ private trait FileStorage {
 
   protected val path: String
 
-  protected def listFiles(): Seq[Path]
+  protected def listFiles: Seq[Path]
 
   protected def getObjectInputStream(path: Path): InputStream
 
@@ -75,7 +75,7 @@ private trait FileStorage {
 
   def isDone: Boolean = {
     val partPattern = "([0-9]{5})-of-([0-9]{5})".r
-    val paths = listFiles()
+    val paths = listFiles
     val nums = paths.flatMap { p =>
       val m = partPattern.findAllIn(p.toString)
       if (m.hasNext) {
@@ -101,7 +101,7 @@ private trait FileStorage {
   }
 
   private def getDirectoryInputStream(path: String): InputStream = {
-    val inputs = listFiles().map(getObjectInputStream).asJava
+    val inputs = listFiles.map(getObjectInputStream).asJava
     new SequenceInputStream(Collections.enumeration(inputs))
   }
 
@@ -116,7 +116,7 @@ private class GcsStorage(protected val path: String) extends FileStorage {
 
   private val GLOB_PREFIX = Pattern.compile("(?<PREFIX>[^\\[*?]*)[\\[*?].*")
 
-  override protected def listFiles(): Seq[Path] = {
+  override protected def listFiles: Seq[Path] = {
     if (GLOB_PREFIX.matcher(path).matches()) {
       gcs
         .expand(GcsPath.fromUri(uri))
@@ -138,7 +138,7 @@ private class LocalStorage(protected val path: String)  extends FileStorage {
   private val uri = new URI(path)
   require(ScioUtil.isLocalUri(uri), s"Not a local path: $path")
 
-  override protected def listFiles(): Seq[Path] = {
+  override protected def listFiles: Seq[Path] = {
     val p = path.lastIndexOf("/")
     val (dir, filter) = if (p == 0) {
       // "/file.ext"
