@@ -28,36 +28,36 @@ sealed trait AccumulatorType[T] {
   type CF = CombineFn[T, Array[T], T]
   type BCF = Combine.BinaryCombineFn[T]
 
-  protected def sumFnImpl(): CombineFn[_, _, _]
-  protected def minFnImpl(): Combine.BinaryCombineFn[_]
-  protected def maxFnImpl(): Combine.BinaryCombineFn[_]
+  protected def sumFnImpl: CombineFn[_, _, _]
+  protected def minFnImpl: Combine.BinaryCombineFn[_]
+  protected def maxFnImpl: Combine.BinaryCombineFn[_]
 
   /** CombineFn for computing sum of the underlying values. */
-  def sumFn(): CF = sumFnImpl().asInstanceOf[CF]
+  def sumFn(): CF = sumFnImpl.asInstanceOf[CF]
 
   /** BinaryCombineFn for computing maximum of the underlying values. */
-  def minFn(): BCF = minFnImpl().asInstanceOf[BCF]
+  def minFn(): BCF = minFnImpl.asInstanceOf[BCF]
 
   /** BinaryCombineFn for computing minimum of the underlying values. */
-  def maxFn(): BCF = maxFnImpl().asInstanceOf[BCF]
+  def maxFn(): BCF = maxFnImpl.asInstanceOf[BCF]
 }
 
 private[scio] class IntAccumulatorType extends AccumulatorType[Int] {
-  override protected def sumFnImpl() = new SumIntegerFn()
-  override protected def minFnImpl() = new MinIntegerFn()
-  override protected def maxFnImpl() = new MaxIntegerFn()
+  override protected def sumFnImpl = new SumIntegerFn()
+  override protected def minFnImpl = new MinIntegerFn()
+  override protected def maxFnImpl = new MaxIntegerFn()
 }
 
 private[scio] class LongAccumulatorType extends AccumulatorType[Long] {
-  override protected def sumFnImpl() = new SumLongFn()
-  override protected def minFnImpl() = new MinLongFn()
-  override protected def maxFnImpl() = new MaxLongFn()
+  override protected def sumFnImpl = new SumLongFn()
+  override protected def minFnImpl = new MinLongFn()
+  override protected def maxFnImpl = new MaxLongFn()
 }
 
 private[scio] class DoubleAccumulatorType extends AccumulatorType[Double] {
-  override protected def sumFnImpl() =  new SumDoubleFn()
-  override protected def minFnImpl() = new MinDoubleFn()
-  override protected def maxFnImpl() = new MaxDoubleFn()
+  override protected def sumFnImpl =  new SumDoubleFn()
+  override protected def minFnImpl = new MinDoubleFn()
+  override protected def maxFnImpl = new MaxDoubleFn()
 }
 
 /** Encapsulate an accumulator, similar to Hadoop counters. */
