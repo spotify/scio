@@ -44,11 +44,11 @@ private[scio] abstract class RandomSampler[T, R] extends DoFn[T, T] {
   protected var seed: Long = -1
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
-  override def startBundle(c: DoFn[T, T]#Context): Unit = { rng = init() }
+  override def startBundle(c: DoFn[T, T]#Context): Unit = { rng = init }
 
   override def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
     val element = c.element()
-    val count = samples()
+    val count = samples
     var i = 0
     while (i < count) {
       c.output(element)
@@ -56,8 +56,8 @@ private[scio] abstract class RandomSampler[T, R] extends DoFn[T, T] {
     }
   }
 
-  def init(): R
-  def samples(): Int
+  def init: R
+  def samples: Int
   def setSeed(seed: Long): Unit = this.seed = seed
 
 }
@@ -76,7 +76,7 @@ private[scio] class BernoulliSampler[T](fraction: Double) extends RandomSampler[
       && fraction <= (1.0 + RandomSampler.roundingEpsilon),
     s"Sampling fraction ($fraction) must be on interval [0, 1]")
 
-  override def init(): JRandom = {
+  override def init: JRandom = {
     val r = RandomSampler.newDefaultRNG
     if (seed > 0) {
       r.setSeed(seed)
@@ -84,7 +84,7 @@ private[scio] class BernoulliSampler[T](fraction: Double) extends RandomSampler[
     r
   }
 
-  override def samples(): Int = {
+  override def samples: Int = {
     if (fraction <= 0.0) {
       0
     } else if (fraction >= 1.0) {
@@ -112,7 +112,7 @@ private[scio] class PoissonSampler[T](fraction: Double)
 
   // PoissonDistribution throws an exception when fraction <= 0
   // If fraction is <= 0, 0 is used below, so we can use any placeholder value.
-  override def init(): IntegerDistribution = {
+  override def init: IntegerDistribution = {
     val r = new PoissonDistribution(if (fraction > 0.0) fraction else 1.0)
     if (seed > 0) {
       r.reseedRandomGenerator(seed)
@@ -120,7 +120,7 @@ private[scio] class PoissonSampler[T](fraction: Double)
     r
   }
 
-  override def samples(): Int = if (fraction <= 0.0) 0 else rng.sample()
+  override def samples: Int = if (fraction <= 0.0) 0 else rng.sample()
 }
 
 private[scio] abstract class RandomValueSampler[K, V, R](fractions: Map[K, Double])
