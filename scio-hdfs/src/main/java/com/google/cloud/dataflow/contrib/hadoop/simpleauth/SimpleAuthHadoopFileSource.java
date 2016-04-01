@@ -55,7 +55,7 @@ public class SimpleAuthHadoopFileSource<K, V> extends HadoopFileSource<K, V> {
   }
 
   /**
-   * Create a {@code HadoopFileSource} based on a file or a file pattern specification,
+   * Create a {@code SimpleAuthHadoopFileSource} based on a file or a file pattern specification,
    * {@param username} is used for Simple Authentication with Hadoop.
    */
   protected SimpleAuthHadoopFileSource(String filepattern,
