@@ -65,9 +65,14 @@ package object hdfs {
   implicit class HdfsScioContext(val self: ScioContext) {
 
     /** Get an SCollection for a text file on HDFS. */
-    def hdfsTextFile(path: String): SCollection[String] = self.pipelineOp {
-      val src = HadoopFileSource.from(
-        path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text])
+    def hdfsTextFile(path: String, user: String = null): SCollection[String] = self.pipelineOp {
+      val src = if (user != null) {
+        SimpleAuthHadoopFileSource.from(
+          path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text], user)
+      } else {
+        HadoopFileSource.from(
+          path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text])
+      }
       self.wrap(self.applyInternal(Read.from(src)))
         .setName(path)
         .map(_.getValue.toString)
