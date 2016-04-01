@@ -21,7 +21,7 @@ import java.io.{InputStream, SequenceInputStream}
 import java.util.Collections
 
 import com.google.cloud.dataflow.contrib.hadoop._
-import com.google.cloud.dataflow.contrib.hadoop.simpleauth.{SimpleAuthHadoopFileSink, SimpleAuthHadoopFileSource}
+import com.google.cloud.dataflow.contrib.hadoop.simpleauth.{SimpleAuthAvroHadoopFileSource, SimpleAuthHadoopFileSink, SimpleAuthHadoopFileSource}
 import com.google.cloud.dataflow.sdk.coders.AvroCoder
 import com.google.cloud.dataflow.sdk.io.{Read, Write}
 import com.google.cloud.dataflow.sdk.values.KV
@@ -80,13 +80,19 @@ package object hdfs {
 
     /** Get an SCollection of specific record type for an Avro file on HDFS. */
     def hdfsAvroFile[T: ClassTag](path: String,
-                                  schema: Schema = null): SCollection[T] = self.pipelineOp {
+                                  schema: Schema = null,
+                                  username: String = null): SCollection[T] = self.pipelineOp {
       val coder: AvroCoder[T] = if (schema == null) {
         AvroCoder.of(ScioUtil.classOf[T])
       } else {
         AvroCoder.of(schema).asInstanceOf[AvroCoder[T]]
       }
-      val src = new AvroHadoopFileSource[T](path, coder)
+      val src = if (username != null) {
+        new SimpleAuthAvroHadoopFileSource[T](path, coder, username)
+      } else {
+        new AvroHadoopFileSource[T](path, coder)
+      }
+
       self.wrap(self.applyInternal(Read.from(src)))
         .setName(path)
         .map(_.getKey.datum())
