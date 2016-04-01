@@ -95,8 +95,8 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
 
   protected final String filepattern;
   protected final Class<? extends FileInputFormat<?, ?>> formatClass;
-  private final Class<K> keyClass;
-  private final Class<V> valueClass;
+  protected final Class<K> keyClass;
+  protected final Class<V> valueClass;
   protected final SerializableSplit serializableSplit;
 
   /**
