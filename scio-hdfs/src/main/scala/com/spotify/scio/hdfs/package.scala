@@ -65,10 +65,10 @@ package object hdfs {
   implicit class HdfsScioContext(val self: ScioContext) {
 
     /** Get an SCollection for a text file on HDFS. */
-    def hdfsTextFile(path: String, user: String = null): SCollection[String] = self.pipelineOp {
-      val src = if (user != null) {
+    def hdfsTextFile(path: String, username: String = null): SCollection[String] = self.pipelineOp {
+      val src = if (username != null) {
         SimpleAuthHadoopFileSource.from(
-          path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text], user)
+          path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text], username)
       } else {
         HadoopFileSource.from(
           path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text])
@@ -101,9 +101,9 @@ package object hdfs {
 
     /** Save this SCollection as a text file on HDFS. */
     // TODO: numShards
-    def saveAsHdfsTextFile(path: String, user: String = null): Future[Tap[String]] = {
-      val sink = if (user != null) {
-        new SimpleAuthHadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]], user)
+    def saveAsHdfsTextFile(path: String, username: String = null): Future[Tap[String]] = {
+      val sink = if (username != null) {
+        new SimpleAuthHadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]], username)
       } else {
         new HadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]])
       }
@@ -117,7 +117,7 @@ package object hdfs {
     // TODO: numShards
     def saveAsHdfsAvroFile(path: String,
                            schema: Schema = null,
-                           user: String = null): Future[Tap[T]] = {
+                           username: String = null): Future[Tap[T]] = {
       val job = Job.getInstance()
       val s = if (schema == null) {
         ScioUtil.classOf[T].getMethod("getClassSchema").invoke(null).asInstanceOf[Schema]
@@ -125,11 +125,11 @@ package object hdfs {
         schema
       }
       AvroJob.setOutputKeySchema(job, s)
-      val sink = if (user != null) {
+      val sink = if (username != null) {
         new SimpleAuthHadoopFileSink(path,
                                      classOf[AvroKeyOutputFormat[T]],
                                      job.getConfiguration,
-                                     user)
+                                     username)
       } else {
         new HadoopFileSink(path,
                            classOf[AvroKeyOutputFormat[T]],
