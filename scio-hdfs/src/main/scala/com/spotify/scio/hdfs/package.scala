@@ -21,7 +21,9 @@ import java.io.{InputStream, SequenceInputStream}
 import java.util.Collections
 
 import com.google.cloud.dataflow.contrib.hadoop._
-import com.google.cloud.dataflow.contrib.hadoop.simpleauth.{SimpleAuthAvroHadoopFileSource, SimpleAuthHadoopFileSink, SimpleAuthHadoopFileSource}
+import com.google.cloud.dataflow.contrib.hadoop.simpleauth.{SimpleAuthAvroHadoopFileSource,
+                                                            SimpleAuthHadoopFileSink,
+                                                            SimpleAuthHadoopFileSource}
 import com.google.cloud.dataflow.sdk.coders.AvroCoder
 import com.google.cloud.dataflow.sdk.io.{Read, Write}
 import com.google.cloud.dataflow.sdk.values.KV
