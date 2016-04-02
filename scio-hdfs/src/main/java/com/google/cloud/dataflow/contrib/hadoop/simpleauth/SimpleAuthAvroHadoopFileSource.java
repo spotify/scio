@@ -1,6 +1,7 @@
 package com.google.cloud.dataflow.contrib.hadoop.simpleauth;
 
 import com.google.cloud.dataflow.contrib.hadoop.AvroHadoopFileSource;
+import com.google.cloud.dataflow.contrib.hadoop.HadoopFileSource;
 import com.google.cloud.dataflow.contrib.hadoop.HadoopUserUtils;
 import com.google.cloud.dataflow.sdk.coders.AvroCoder;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
@@ -38,7 +39,7 @@ public class SimpleAuthAvroHadoopFileSource<T> extends AvroHadoopFileSource<T>{
    */
   public SimpleAuthAvroHadoopFileSource(String filepattern,
                                         AvroCoder<T> avroCoder,
-                                        SerializableSplit serializableSplit,
+                                        HadoopFileSource.SerializableSplit serializableSplit,
                                         String username) {
     super(filepattern, avroCoder, serializableSplit);
     user.setSimpleAuthUser(username);
@@ -55,7 +56,7 @@ public class SimpleAuthAvroHadoopFileSource<T> extends AvroHadoopFileSource<T>{
             public AvroHadoopFileSource<T> apply(@Nullable InputSplit inputSplit) {
               return new SimpleAuthAvroHadoopFileSource<>(filepattern,
                                                     avroCoder,
-                                                    new SerializableSplit(inputSplit),
+                                                    new HadoopFileSource.SerializableSplit(inputSplit),
                                                     user.getSimpleAuthUser());
             }
           });

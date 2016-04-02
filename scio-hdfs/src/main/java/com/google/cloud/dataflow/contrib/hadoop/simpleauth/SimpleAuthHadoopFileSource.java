@@ -48,7 +48,7 @@ public class SimpleAuthHadoopFileSource<K, V> extends HadoopFileSource<K, V> {
                                        Class<? extends FileInputFormat<?, ?>> formatClass,
                                        Class<K> keyClass,
                                        Class<V> valueClass,
-                                       SerializableSplit serializableSplit,
+                                       HadoopFileSource.SerializableSplit serializableSplit,
                                        String username) {
     super(filepattern, formatClass, keyClass, valueClass, serializableSplit);
     user.setSimpleAuthUser(username);
@@ -111,7 +111,8 @@ public class SimpleAuthHadoopFileSource<K, V> extends HadoopFileSource<K, V> {
             @Override
             public BoundedSource<KV<K, V>> apply(@Nullable InputSplit inputSplit) {
               return new SimpleAuthHadoopFileSource<>(filepattern, formatClass, keyClass,
-                  valueClass, new SerializableSplit(inputSplit), user.getSimpleAuthUser());
+                  valueClass, new HadoopFileSource.SerializableSplit(inputSplit),
+                  user.getSimpleAuthUser());
             }
           });
     } else {
