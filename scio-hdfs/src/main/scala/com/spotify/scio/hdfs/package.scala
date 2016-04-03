@@ -21,6 +21,9 @@ import java.io.{InputStream, SequenceInputStream}
 import java.util.Collections
 
 import com.google.cloud.dataflow.contrib.hadoop._
+import com.google.cloud.dataflow.contrib.hadoop.simpleauth.{SimpleAuthAvroHadoopFileSource,
+                                                            SimpleAuthHadoopFileSink,
+                                                            SimpleAuthHadoopFileSource}
 import com.google.cloud.dataflow.sdk.coders.AvroCoder
 import com.google.cloud.dataflow.sdk.io.{Read, Write}
 import com.google.cloud.dataflow.sdk.values.KV
@@ -64,9 +67,14 @@ package object hdfs {
   implicit class HdfsScioContext(val self: ScioContext) {
 
     /** Get an SCollection for a text file on HDFS. */
-    def hdfsTextFile(path: String): SCollection[String] = self.pipelineOp {
-      val src = HadoopFileSource.from(
-        path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text])
+    def hdfsTextFile(path: String, username: String = null): SCollection[String] = self.pipelineOp {
+      val src = if (username != null) {
+        SimpleAuthHadoopFileSource.from(
+          path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text], username)
+      } else {
+        HadoopFileSource.from(
+          path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text])
+      }
       self.wrap(self.applyInternal(Read.from(src)))
         .setName(path)
         .map(_.getValue.toString)
@@ -74,13 +82,19 @@ package object hdfs {
 
     /** Get an SCollection of specific record type for an Avro file on HDFS. */
     def hdfsAvroFile[T: ClassTag](path: String,
-                                  schema: Schema = null): SCollection[T] = self.pipelineOp {
+                                  schema: Schema = null,
+                                  username: String = null): SCollection[T] = self.pipelineOp {
       val coder: AvroCoder[T] = if (schema == null) {
         AvroCoder.of(ScioUtil.classOf[T])
       } else {
         AvroCoder.of(schema).asInstanceOf[AvroCoder[T]]
       }
-      val src = new AvroHadoopFileSource[T](path, coder)
+      val src = if (username != null) {
+        new SimpleAuthAvroHadoopFileSource[T](path, coder, username)
+      } else {
+        new AvroHadoopFileSource[T](path, coder)
+      }
+
       self.wrap(self.applyInternal(Read.from(src)))
         .setName(path)
         .map(_.getKey.datum())
@@ -95,9 +109,9 @@ package object hdfs {
 
     /** Save this SCollection as a text file on HDFS. */
     // TODO: numShards
-    def saveAsHdfsTextFile(path: String, user: String = null): Future[Tap[String]] = {
-      val sink = if (user != null) {
-        new SimpleAuthHadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]], user)
+    def saveAsHdfsTextFile(path: String, username: String = null): Future[Tap[String]] = {
+      val sink = if (username != null) {
+        new SimpleAuthHadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]], username)
       } else {
         new HadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]])
       }
@@ -111,7 +125,7 @@ package object hdfs {
     // TODO: numShards
     def saveAsHdfsAvroFile(path: String,
                            schema: Schema = null,
-                           user: String = null): Future[Tap[T]] = {
+                           username: String = null): Future[Tap[T]] = {
       val job = Job.getInstance()
       val s = if (schema == null) {
         ScioUtil.classOf[T].getMethod("getClassSchema").invoke(null).asInstanceOf[Schema]
@@ -119,11 +133,11 @@ package object hdfs {
         schema
       }
       AvroJob.setOutputKeySchema(job, s)
-      val sink = if (user != null) {
+      val sink = if (username != null) {
         new SimpleAuthHadoopFileSink(path,
                                      classOf[AvroKeyOutputFormat[T]],
-                                     user,
-                                     job.getConfiguration)
+                                     job.getConfiguration,
+                                     username)
       } else {
         new HadoopFileSink(path,
                            classOf[AvroKeyOutputFormat[T]],

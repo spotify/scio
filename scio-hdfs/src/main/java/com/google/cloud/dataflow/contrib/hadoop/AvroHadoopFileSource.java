@@ -45,7 +45,7 @@ import java.util.List;
  */
 public class AvroHadoopFileSource<T> extends HadoopFileSource<AvroKey<T>, NullWritable> {
 
-  private final AvroCoder<T> avroCoder;
+  protected final AvroCoder<T> avroCoder;
   private final String schemaStr;
 
   public AvroHadoopFileSource(String filepattern, AvroCoder<T> avroCoder) {
@@ -68,7 +68,7 @@ public class AvroHadoopFileSource<T> extends HadoopFileSource<AvroKey<T>, NullWr
   }
 
   @Override
-  public List<AvroHadoopFileSource<T>> splitIntoBundles(long desiredBundleSizeBytes,
+  public List<? extends AvroHadoopFileSource<T>> splitIntoBundles(long desiredBundleSizeBytes,
                                                                   PipelineOptions options) throws Exception {
     if (serializableSplit == null) {
       return Lists.transform(computeSplits(desiredBundleSizeBytes),
