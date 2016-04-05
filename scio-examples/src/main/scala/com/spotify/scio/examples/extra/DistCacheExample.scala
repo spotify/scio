@@ -32,6 +32,7 @@ runMain
   --output=gs://[BUCKET]/[PATH]/dist_cache_example
 */
 
+// Use distributed cache inside a job
 object DistCacheExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -48,7 +49,7 @@ object DistCacheExample {
       .tableRowJsonFile(args.getOrElse("input", ExampleData.EXPORTED_WIKI_TABLE))
       .map(row => new Instant(row.getLong("timestamp") * 1000L).toDateTime.getMonthOfYear)
       .countByValue
-      // distributed cache avaiable inside a transform
+      // distributed cache available inside a transform
       .map(kv => dc().getOrElse(kv._1, "unknown") + " " + kv._2)
       .saveAsTextFile(args("output"))
 

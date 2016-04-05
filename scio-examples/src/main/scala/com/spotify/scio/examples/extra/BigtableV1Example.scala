@@ -27,7 +27,7 @@ import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.values.SCollection
 import org.apache.hadoop.hbase.client.{Result, Put}
 
-/**
+/*
  * Bigtable V1 examples.
  *
  * This depends on APIs from `scio-bigtable` and imports from `com.spotify.scio.bigtable._`.
@@ -56,6 +56,7 @@ runMain
   --bigtableTableId=[BIG_TABLE_TABLE_ID]
 */
 
+// Count words and save result to Bigtable
 object BigtableV1WriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -84,6 +85,7 @@ runMain
   --output=gs://[BUCKET]/[PATH]/wordcount
 */
 
+// Read word count result back from Bigtable
 object BigtableV1ReadExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -110,6 +112,7 @@ runMain
   --bigtableTableId=[BIG_TABLE_TABLE_ID]
 */
 
+// Count words and save result to multiple Bigtable tables
 object BigtableV1MultipleWriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)

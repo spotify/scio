@@ -20,14 +20,16 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio._
 import com.spotify.scio.io.Taps
 
+// Use Futures and Taps to wait for resources
+// Set -Dtaps.algorithm=polling to wait for the resources to become available
+// Set -Dtaps.algorithm=immediate to fail immediately if a resource is not available
 object TapsExample {
-
   def main(cmdlineArgs: Array[String]): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
     val taps = Taps()  // entry point to acquire taps
 
+    // extract Tap[T]s from two Future[Tap[T]]s
     val r = for {
-      // extract Tap[T]s from two Future[Tap[T]]s
       t1 <- taps.textFile("kinglear.txt")
       t2 <- taps.textFile("macbeth.txt")
     } yield {
@@ -46,5 +48,4 @@ object TapsExample {
     println(r.waitForResult().value.take(10).toList)
     // scalastyle:on regex
   }
-
 }

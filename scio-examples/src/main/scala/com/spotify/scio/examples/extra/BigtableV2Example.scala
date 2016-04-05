@@ -23,7 +23,7 @@ import com.google.protobuf.ByteString
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
 
-/**
+/*
  * Bigtable V2 examples.
  *
  * This depends on native APIs in `scio-core` and `BigtableIO` form Dataflow Java SDK 1.5.0+.
@@ -53,6 +53,7 @@ object BigtableV2Example {
     .build()
 }
 
+// Count words and save result to Bigtable
 object BigtableV2WriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -67,6 +68,7 @@ object BigtableV2WriteExample {
   }
 }
 
+// Read word count result back from Bigtable
 object BigtableV2ReadExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)

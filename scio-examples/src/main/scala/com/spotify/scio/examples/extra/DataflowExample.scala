@@ -31,7 +31,7 @@ import com.spotify.scio.avro.Account
 import com.spotify.scio.values.SCollection
 import org.joda.time.Duration
 
-// Example for combining native Dataflow Java SDK code with Scio
+// Use native Dataflow Java SDK code inside a Scio job
 object DataflowExample {
 
   // A native Dataflow source PTransform

@@ -25,6 +25,7 @@ import org.apache.avro.generic.{GenericData, GenericRecord}
 
 import scala.collection.JavaConverters._
 
+// Read and write specific and generic Avro records
 object AvroExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {

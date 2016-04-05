@@ -19,6 +19,7 @@ package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
 
+// Update accumulators inside a job and retrieve values later
 object AccumulatorExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val sc = ScioContext()

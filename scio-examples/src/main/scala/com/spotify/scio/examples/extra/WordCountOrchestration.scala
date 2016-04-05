@@ -36,6 +36,7 @@ runMain
   --output=gs://[BUCKET]/[PATH]/wordcount
 */
 
+// Use Futures and Taps to orchestrate multiple jobs with dependencies
 object WordCountOrchestration {
 
   type FT[T] = Future[Tap[T]]
@@ -56,8 +57,11 @@ object WordCountOrchestration {
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
-    // Join futures and submit merge job
-    val f = Future.sequence(Seq(f1, f2)).flatMap(merge(opts, _, output))
+    // extract Tap[T]s from two Future[Tap[T]]s
+    val f = for {
+      t1 <- f1
+      t2 <- f2
+    } yield merge(opts, Seq(t1, t2), output)
 
     // scalastyle:off regex
     // Block process and wait for last future

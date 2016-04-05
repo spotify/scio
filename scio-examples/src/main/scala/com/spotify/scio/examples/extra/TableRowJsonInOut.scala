@@ -30,6 +30,7 @@ runMain
   --output=gs://[BUCKET]/[PATH]/wikipedia
 */
 
+// Read and write TableRowJson records
 object TableRowJsonInOut {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)

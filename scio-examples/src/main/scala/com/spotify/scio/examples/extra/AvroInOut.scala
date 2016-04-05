@@ -20,6 +20,7 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio._
 import com.spotify.scio.avro.{Account, TestRecord}
 
+// Read and write specific Avro records
 object AvroInOut {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)

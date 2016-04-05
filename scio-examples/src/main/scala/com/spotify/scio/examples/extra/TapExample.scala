@@ -23,7 +23,9 @@ import com.spotify.scio._
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
+// Chain two jobs together with Futures and Taps
 object TapExample {
+  // scalastyle:off regex
   def main(cmdlineArgs: Array[String]): Unit = {
     // first job
     val (sc1, args) = ContextAndArgs(cmdlineArgs)
@@ -40,11 +42,9 @@ object TapExample {
     val t1 = f1.waitForResult()
     val t2 = f2.waitForResult()
 
-    // scalastyle:off regex
     // fetch tap values directly
     println(t1.value.mkString(", "))
     println(t2.value.mkString(", "))
-    // scalastyle:on regex
 
     // second job
     val (sc2, _) = ContextAndArgs(cmdlineArgs)
@@ -53,9 +53,8 @@ object TapExample {
     DataflowAssert.thatSingleton(s.internal).isEqualTo((1 to 10).sum + (1 to 100).sum)
     val result = sc2.close()
 
-    // scalastyle:off regex
     // block main() until second job completes
     println(Await.result(result.finalState, Duration.Inf))
-    // scalastyle:on regex
   }
+  // scalastyle:on regex
 }
