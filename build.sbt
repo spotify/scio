@@ -90,6 +90,11 @@ val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ ass
         <name>Rafal Wojdyla</name>
         <url>https://twitter.com/ravwojdyla</url>
       </developer>
+      <developer>
+        <id>andrewsmartin</id>
+        <name>Andrew Martin</name>
+        <url>https://github.com/andrewsmartin</url>
+      </developer>
     </developers>
   },
 
