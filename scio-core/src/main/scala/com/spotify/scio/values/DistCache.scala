@@ -35,6 +35,8 @@ sealed trait DistCache[F] extends Serializable {
   def apply(): F
 }
 
+private[scio] object FileDistCache
+
 private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistCache[F] {
 
   override def apply(): F = data
@@ -55,23 +57,37 @@ private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistC
     val path = prefix + uri.getPath.split("/").last
     val file = new File(path)
 
-    if (!file.exists()) {
+    // There can be multiple DoFns/Threads trying to fetch the same data/files on the same
+    // worker. To prevent from situation where some workers see incomplete data, and keep the
+    // solution simple - let's synchronize on FileDistCache companion object (which is a singleton).
+    // There is a downside - more specifically we might have to wait a bit longer then in more
+    // optimal solution, but, simplicity > performance.
+    FileDistCache.synchronized {
       val gcsUtil = opts.getGcsUtil
-
-      val fos: FileOutputStream = new FileOutputStream(path)
-      val dst = fos.getChannel
       val src = gcsUtil.open(GcsPath.fromUri(uri))
 
-      val size = dst.transferFrom(src, 0, src.size())
-      logger.info(s"DistCache $uri fetched to $path, size: $size")
+      if (file.exists() && src.size() != file.length()) {
+        // File exists but has different size then source file, most likely there was an issue
+        // on previous Thread, let's remove invalid file, and download it again
+        file.delete()
+      }
 
-      dst.close()
-      fos.close()
-    } else {
-      logger.info(s"DistCache $uri already fetched ")
+      if (!file.exists()) {
+        val fos: FileOutputStream = new FileOutputStream(path)
+        val dst = fos.getChannel
+        val src = gcsUtil.open(GcsPath.fromUri(uri))
+
+        val size = dst.transferFrom(src, 0, src.size())
+        logger.info(s"DistCache $uri fetched to $path, size: $size")
+
+        dst.close()
+        fos.close()
+      } else {
+        logger.info(s"DistCache $uri already fetched ")
+      }
+
+      file
     }
-
-    file
   }
 
   private def temporaryPrefix(uris: Seq[URI]): String = {
