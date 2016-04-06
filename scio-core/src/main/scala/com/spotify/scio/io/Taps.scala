@@ -84,15 +84,17 @@ trait Taps {
    * @param readyFn function to check if the tap is ready
    * @param tapFn function to create the tap
    */
-  protected def mkTap[T](name: String, readyFn: () => Boolean, tapFn: () => Tap[T]): Future[Tap[T]]
+  private[scio] def mkTap[T](name: String,
+                             readyFn: () => Boolean,
+                             tapFn: () => Tap[T]): Future[Tap[T]]
 
 }
 
 /** Taps implementation that fails immediately if tap not available. */
 private class ImmediateTaps extends Taps {
-  override protected def mkTap[T](name: String,
-                                  readyFn: () => Boolean,
-                                  tapFn: () => Tap[T]): Future[Tap[T]] =
+  override private[scio] def mkTap[T](name: String,
+                                      readyFn: () => Boolean,
+                                      tapFn: () => Tap[T]): Future[Tap[T]] =
     if (readyFn()) Future.successful(tapFn()) else Future.failed(new TapNotAvailableException(name))
 }
 
@@ -107,9 +109,9 @@ private class PollingTaps(private val backOff: BackOff) extends Taps {
   private var polls: List[Poll] = null
   private val logger: Logger = LoggerFactory.getLogger(classOf[PollingTaps])
 
-  override protected def mkTap[T](name: String,
-                                  readyFn: () => Boolean,
-                                  tapFn: () => Tap[T]): Future[Tap[T]] = this.synchronized {
+  override private[scio] def mkTap[T](name: String,
+                                      readyFn: () => Boolean,
+                                      tapFn: () => Tap[T]): Future[Tap[T]] = this.synchronized {
     val p = Promise[AnyRef]()
     val init = if (polls == null) {
       polls = Nil

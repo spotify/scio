@@ -21,14 +21,14 @@ import java.io.{InputStream, SequenceInputStream}
 import java.util.Collections
 
 import com.google.cloud.dataflow.contrib.hadoop._
-import com.google.cloud.dataflow.contrib.hadoop.simpleauth.{SimpleAuthAvroHadoopFileSource,
-                                                            SimpleAuthHadoopFileSink,
-                                                            SimpleAuthHadoopFileSource}
+import com.google.cloud.dataflow.contrib.hadoop.simpleauth.{
+  SimpleAuthAvroHadoopFileSource, SimpleAuthHadoopFileSink, SimpleAuthHadoopFileSource
+}
 import com.google.cloud.dataflow.sdk.coders.AvroCoder
 import com.google.cloud.dataflow.sdk.io.{Read, Write}
 import com.google.cloud.dataflow.sdk.values.KV
 import com.google.common.base.Charsets
-import com.spotify.scio.io.Tap
+import com.spotify.scio.io.{Tap, Taps}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
@@ -148,6 +148,27 @@ package object hdfs {
         .applyInternal(Write.to(sink))
       self.context.makeFuture(HdfsAvroTap[T](path, schema))
     }
+  }
+
+  /** Enhanced version of [[com.spotify.scio.io.Taps]] with HDFS methods. */
+  // TODO: scala 2.11
+  // implicit class HdfsTaps(private val self: Taps) extends AnyVal {
+  implicit class HdfsTaps(val self: Taps) {
+
+    /** Get a `Future[Tap[T]]` for a text file on HDFS. */
+    def hdfsTextFile(path: String): Future[Tap[String]] =
+      self.mkTap(s"Text: $path", () => isPathDone(path), () => HdfsTextTap(path))
+
+    /** Get a `Future[Tap[T]]` for a Avro file on HDFS. */
+    def hdfsAvroFile[T: ClassTag](path: String, schema: Schema = null): Future[Tap[T]] =
+      self.mkTap(s"Avro: $path", () => isPathDone(path), () => HdfsAvroTap(path, schema))
+
+    private def isPathDone(path: String): Boolean = {
+      val job = Job.getInstance()
+      val fs = FileSystem.get(job.getConfiguration)
+      fs.exists(new Path(path, "_SUCCESS"))
+    }
+
   }
 
   /** Tap for text files on HDFS. */
