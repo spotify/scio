@@ -38,6 +38,7 @@ import org.apache.avro.mapred.AvroKey
 import org.apache.avro.mapreduce.{AvroJob, AvroKeyOutputFormat}
 import org.apache.avro.specific.{SpecificDatumReader, SpecificRecordBase}
 import org.apache.commons.io.IOUtils
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path, PathFilter}
 import org.apache.hadoop.io.compress.CompressionCodecFactory
 import org.apache.hadoop.io.{LongWritable, NullWritable, Text}
@@ -127,6 +128,7 @@ package object hdfs {
                            schema: Schema = null,
                            username: String = null): Future[Tap[T]] = {
       val job = Job.getInstance()
+      val conf = job.getConfiguration
       val s = if (schema == null) {
         ScioUtil.classOf[T].getMethod("getClassSchema").invoke(null).asInstanceOf[Schema]
       } else {
@@ -134,14 +136,11 @@ package object hdfs {
       }
       AvroJob.setOutputKeySchema(job, s)
       val sink = if (username != null) {
-        new SimpleAuthHadoopFileSink(path,
-                                     classOf[AvroKeyOutputFormat[T]],
-                                     job.getConfiguration,
-                                     username)
+        new SimpleAuthHadoopFileSink(
+          path, classOf[AvroKeyOutputFormat[T]], conf, username)
       } else {
-        new HadoopFileSink(path,
-                           classOf[AvroKeyOutputFormat[T]],
-                           job.getConfiguration)
+        new HadoopFileSink(
+          path, classOf[AvroKeyOutputFormat[T]], conf)
       }
       self
         .map(x => KV.of(new AvroKey(x), NullWritable.get()))
@@ -164,8 +163,8 @@ package object hdfs {
       self.mkTap(s"Avro: $path", () => isPathDone(path), () => HdfsAvroTap(path, schema))
 
     private def isPathDone(path: String): Boolean = {
-      val job = Job.getInstance()
-      val fs = FileSystem.get(job.getConfiguration)
+      val conf = new Configuration()
+      val fs = FileSystem.get(conf)
       fs.exists(new Path(path, "_SUCCESS"))
     }
 
@@ -174,9 +173,9 @@ package object hdfs {
   /** Tap for text files on HDFS. */
   case class HdfsTextTap(path: String) extends Tap[String] {
     override def value: Iterator[String] = {
-      val job = Job.getInstance()
-      val factory = new CompressionCodecFactory(job.getConfiguration)
-      val fs = FileSystem.get(job.getConfiguration)
+      val conf = new Configuration()
+      val factory = new CompressionCodecFactory(conf)
+      val fs = FileSystem.get(conf)
       val streams = fs
         .listStatus(new Path(path), HdfsUtil.pathFilter)
         .map { status =>
@@ -217,8 +216,8 @@ package object hdfs {
     }
 
     def getDirectoryInputStream(path: String): InputStream = {
-      val job = Job.getInstance()
-      val fs = FileSystem.get(job.getConfiguration)
+      val conf = new Configuration()
+      val fs = FileSystem.get(conf)
       val streams = fs
         .listStatus(new Path(path), pathFilter)
         .map { status =>
