@@ -67,8 +67,8 @@ private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistC
       val src = gcsUtil.open(GcsPath.fromUri(uri))
 
       if (file.exists() && src.size() != file.length()) {
-        // File exists but has different size then source file, most likely there was an issue
-        // on previous Thread, let's remove invalid file, and download it again
+        // File exists but has different size than source file, most likely there was an issue
+        // on previous thread, let's remove invalid file, and download it again.
         file.delete()
       }
 
