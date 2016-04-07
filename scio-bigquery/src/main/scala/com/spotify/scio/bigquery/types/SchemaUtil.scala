@@ -47,9 +47,9 @@ private object SchemaUtil {
                            before: String = "", after: String = ""): String = {
     val t = getRawType(tfs, indent, level)
     tfs.getMode match {
-      case "NULLABLE" | null => getRawType(tfs, indent, level, "Option[", "]")
+      case "NULLABLE" | null => "Option[" + t + "]"
       case "REQUIRED" => t
-      case "REPEATED" => getRawType(tfs, indent, level, "List[", "]")
+      case "REPEATED" => "List[" + t + "]"
     }
   }
 
