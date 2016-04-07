@@ -481,10 +481,13 @@ object BigQueryClient {
     new BigQueryClient(project, Some(Right(secret)))
 
   private def stagingDataset: String =
-    getPropOrElse(STAGING_DATASET_KEY, STAGING_DATASET_DEFAULT + "_" + stagingDatasetLocation)
+    getPropOrElse(
+      STAGING_DATASET_KEY,
+      STAGING_DATASET_DEFAULT + "_" + stagingDatasetLocation.toLowerCase)
 
+  // Location in create dataset request must be upper case, e.g. US, EU
   private def stagingDatasetLocation: String =
-    getPropOrElse(STAGING_DATASET_LOCATION_KEY, STAGING_DATASET_LOCATION_DEFAULT).toLowerCase
+    getPropOrElse(STAGING_DATASET_LOCATION_KEY, STAGING_DATASET_LOCATION_DEFAULT).toUpperCase
 
   private def cacheDirectory: String = getPropOrElse(CACHE_DIRECTORY_KEY, CACHE_DIRECTORY_DEFAULT)
 
