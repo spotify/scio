@@ -73,8 +73,36 @@ object AlgebirdSpec extends Properties("Algebird")  {
   } yield (i, d, s)
 
   property("sum of tuples") = forAll(Gen.nonEmptyListOf(tupleGen)) { xs =>
-    xs.algebirdSum == xs.reduce((a, b) => (a._1 + b._1, a._2 + b._2, a._3 ++ b._3))
+    xs.algebirdSum == (xs.map(_._1).sum, xs.map(_._2).sum, xs.map(_._3).reduce(_ ++ _))
   }
+
+  property("sum of tuples with custom Semigroup") = forAll { xs: List[(Double, Double, Double)] =>
+    xs.nonEmpty ==> {
+      // Apply sum, max, and min operation on the 3 columns
+      val sumOp = Semigroup.doubleSemigroup
+      val maxOp = MaxAggregator[Double].semigroup
+      val minOp = MinAggregator[Double].semigroup
+      // Combine 3 Semigroup[Double] into 1 Semigroup[(Double, Double, Double)]
+      val colSg = Semigroup.semigroup3(sumOp, maxOp, minOp)
+      xs.algebirdSum(colSg) == (xs.map(_._1).sum, xs.map(_._2).max, xs.map(_._3).min)
+    }
+  }
+
+  property("aggregate of tuples with custom Aggregator") =
+    forAll { xs: List[(Double, Double, Double, Double)] =>
+      xs.nonEmpty ==> {
+        type C = (Double, Double, Double, Double)
+        // Apply sum, max, min, and average operation on the 4 columns
+        val sumOp = Aggregator.prepareMonoid[C, Double](_._1)
+        val maxOp = Aggregator.maxBy[C, Double](_._2)
+        val minOp = Aggregator.minBy[C, Double](_._3)
+        val avgOp = AveragedValue.aggregator.composePrepare[C](_._4)
+        // Combine 4 Aggregator[C, Double, Double] into 1 Aggregator[C, C, C]
+        val colAgg = MultiAggregator(sumOp, maxOp, minOp, avgOp)
+        xs.algebirdAggregate(colAgg) ==
+          (xs.map(_._1).sum, xs.map(_._2).max, xs.map(_._3).min, xs.map(_._4).sum / xs.size)
+      }
+    }
 
   case class Record(i: Int, d: Double, s: Set[String])
 
