@@ -17,9 +17,9 @@
 
 package com.spotify.scio.bigquery.types
 
-import com.spotify.scio.bigquery.TableRow
+import com.google.api.services.bigquery.model.TableRow
 import org.joda.time.Instant
-import org.scalatest.{Matchers, FlatSpec}
+import org.scalatest.{FlatSpec, Matchers}
 
 // TODO: figure out how to make IntelliJ happy
 // TODO: mock BigQueryClient for fromTable and fromQuery

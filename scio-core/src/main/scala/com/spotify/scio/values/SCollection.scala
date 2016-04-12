@@ -23,7 +23,7 @@ import java.io.File
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.UUID
 
-import com.google.api.services.bigquery.model.{TableReference, TableSchema}
+import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
 import com.google.api.services.datastore.DatastoreV1.Entity
 import com.google.bigtable.v1.Mutation
 import com.google.cloud.bigtable.config.BigtableOptions
@@ -47,7 +47,6 @@ import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values._
 import com.google.protobuf.ByteString
 import com.spotify.scio.ScioContext
-import com.spotify.scio.bigquery.TableRow
 import com.spotify.scio.coders.KryoAtomicCoder
 import com.spotify.scio.io._
 import com.spotify.scio.testing._
