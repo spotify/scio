@@ -79,7 +79,7 @@ private[types] object TypeProvider {
         q"""${caseClass(c)(name, fields, body)}
             ${companion(c)(name, Nil, Seq(defSchema), fields.asInstanceOf[Seq[Tree]].size)}
         """
-      case _ => c.abort(c.enclosingPosition, "Invalid annotation")
+      case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
     debug(s"TypeProvider.toTableImpl:")
     debug(r)
@@ -143,7 +143,7 @@ private[types] object TypeProvider {
             ${companion(c)(name, traits, Seq(defSchema) ++ overrides, fields.size)}
             ..$records
         """
-      case _ => c.abort(c.enclosingPosition, "Invalid annotation")
+      case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
     debug(s"TypeProvider.schemaToType[$schema]:")
     debug(r)
