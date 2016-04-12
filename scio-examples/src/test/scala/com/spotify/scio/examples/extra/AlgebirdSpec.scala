@@ -73,7 +73,7 @@ object AlgebirdSpec extends Properties("Algebird")  {
   } yield (i, d, s)
 
   property("sum of tuples") = forAll(Gen.nonEmptyListOf(tupleGen)) { xs =>
-    xs.algebirdSum == xs.reduce((a, b) => (a._1 + b._1, a._2 + b._2, a._3 ++ b._3))
+    xs.algebirdSum == (xs.map(_._1).sum, xs.map(_._2).sum, xs.map(_._3).reduce(_ ++ _))
   }
 
   case class Record(i: Int, d: Double, s: Set[String])
