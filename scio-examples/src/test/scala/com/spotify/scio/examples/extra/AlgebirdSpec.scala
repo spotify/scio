@@ -18,196 +18,260 @@
 package com.spotify.scio.examples.extra
 
 import com.twitter.algebird._
-import org.scalacheck.Prop.{BooleanOperators, forAll}
+import org.scalacheck.Prop.forAll
 import org.scalacheck._
 
-object AlgebirdSpec extends Properties("Algebird")  {
+object AlgebirdSpec extends Properties("Algebird") {
 
-  /** Add Algebird support for Iterable[T]. */
-  implicit class AlgebirdIterable[T](self: Iterable[T]) {
+  // =======================================================================
+  // Utilities
+  // =======================================================================
+
+  /**
+   * Mimic an SCollection using standard List.
+   *
+   * This is faster and more readable than creating ScioContext and SCollection repeatedly in
+   * ScalaCheck properties.
+   */
+  class SColl[T](val internal: List[T]) {
 
     /** Sum with an implicit Semigroup. */
-    def algebirdSum(implicit sg: Semigroup[T]): T = self.reduce(sg.plus)
+    def sum(implicit sg: Semigroup[T]): T = internal.reduce(sg.plus)
 
     /**
      * Aggregate with an implicit Aggregator.
+     *
      * @tparam A intermediate type that can be summed with a Semigroup
      * @tparam U result type
      */
-    def algebirdAggregate[A, U](aggregator: Aggregator[T, A, U]): U = {
-      val a = self
+    def aggregate[A, U](aggregator: Aggregator[T, A, U]): U = {
+      val a = internal
         .map(aggregator.prepare)
-        .algebirdSum(aggregator.semigroup)
+        .reduce(aggregator.semigroup.plus)
       aggregator.present(a)
     }
 
+    def map[U](f: T => U): SColl[U] = new SColl(internal.map(f))
+
   }
 
-  // Properties using arbitrary generators and conditionals
+  // Generator for non-empty SColl[T]
+  def sCollOf[T](g: => Gen[T]): Gen[SColl[T]] = Gen.nonEmptyListOf(g).map(new SColl(_))
 
-  property("sum of Int") = forAll { xs: List[Int] =>
-    xs.nonEmpty ==> (xs.algebirdSum == xs.sum)
+  // Arbitrary for non-empty SColl[T]
+  implicit def arbSColl[T](implicit a: Arbitrary[T]): Arbitrary[SColl[T]] =
+    Arbitrary(sCollOf(a.arbitrary))
+
+  // =======================================================================
+  // Basic examples
+  // =======================================================================
+
+  property("sum of Int") = forAll { xs: SColl[Int] =>
+    xs.sum == xs.internal.sum
   }
 
-  property("sum of Long") = forAll { xs: List[Long] =>
-    xs.nonEmpty ==> (xs.algebirdSum == xs.sum)
+  property("sum of Long") = forAll { xs: SColl[Long] =>
+    xs.sum == xs.internal.sum
   }
 
-  property("sum of Float") = forAll { xs: List[Float] =>
-    xs.nonEmpty ==> (xs.algebirdSum == xs.sum)
+  property("sum of Float") = forAll { xs: SColl[Float] =>
+    xs.sum == xs.internal.sum
   }
 
-  property("sum of Double") = forAll { xs: List[Double] =>
-    xs.nonEmpty ==> (xs.algebirdSum == xs.sum)
+  property("sum of Double") = forAll { xs: SColl[Double] =>
+    xs.sum == xs.internal.sum
   }
 
-  property("sum of Set") = forAll { xs: List[Set[String]] =>
-    xs.nonEmpty ==> (xs.algebirdSum == xs.reduce(_ ++ _))
+  property("sum of Set") = forAll { xs: SColl[Set[String]] =>
+    xs.sum == xs.internal.reduce(_ ++ _)
   }
 
-  // Compose a tuple generator from existing arbitrary generators
-  val tupleGen = for {
-    i <- Arbitrary.arbitrary[Int]
-    d <- Arbitrary.arbitrary[Double]
-    s <- Arbitrary.arbitrary[Set[String]]
-  } yield (i, d, s)
-
-  property("sum of tuples") = forAll(Gen.nonEmptyListOf(tupleGen)) { xs =>
-    xs.algebirdSum == (xs.map(_._1).sum, xs.map(_._2).sum, xs.map(_._3).reduce(_ ++ _))
+  // Sum fields of tuples individually
+  property("sum of tuples") = forAll { xs: SColl[(Int, Double, Set[String])] =>
+    val expected = (
+      xs.internal.map(_._1).sum,
+      xs.internal.map(_._2).sum,
+      xs.internal.map(_._3).reduce(_ ++ _))
+    xs.sum == expected
   }
 
-  property("sum of tuples with custom Semigroup") = forAll { xs: List[(Double, Double, Double)] =>
-    xs.nonEmpty ==> {
+  property("sum of tuples with custom Semigroup") =
+    forAll { xs: SColl[(Double, Double, Double)] =>
       // Apply sum, max, and min operation on the 3 columns
       val sumOp = Semigroup.doubleSemigroup
       val maxOp = MaxAggregator[Double].semigroup
       val minOp = MinAggregator[Double].semigroup
       // Combine 3 Semigroup[Double] into 1 Semigroup[(Double, Double, Double)]
       val colSg = Semigroup.semigroup3(sumOp, maxOp, minOp)
-      xs.algebirdSum(colSg) == (xs.map(_._1).sum, xs.map(_._2).max, xs.map(_._3).min)
+
+      val expected = (
+        xs.internal.map(_._1).sum,
+        xs.internal.map(_._2).max,
+        xs.internal.map(_._3).min)
+      xs.sum(colSg) == expected
     }
-  }
+
+  def error(x: Double, y: Double): Double = math.abs(x - y) / math.max(x, y)
 
   property("aggregate of tuples with custom Aggregator") =
-    forAll { xs: List[(Double, Double, Double, Double)] =>
-      xs.nonEmpty ==> {
-        type C = (Double, Double, Double, Double)
-        // Apply sum, max, min, and average operation on the 4 columns
-        val sumOp = Aggregator.prepareMonoid[C, Double](_._1)
-        val maxOp = Aggregator.maxBy[C, Double](_._2)
-        val minOp = Aggregator.minBy[C, Double](_._3)
-        val avgOp = AveragedValue.aggregator.composePrepare[C](_._4)
-        // Combine 4 Aggregator[C, Double, Double] into 1 Aggregator[C, C, C]
-        val colAgg = MultiAggregator(sumOp, maxOp, minOp, avgOp)
-        xs.algebirdAggregate(colAgg) ==
-          (xs.map(_._1).sum, xs.map(_._2).max, xs.map(_._3).min, xs.map(_._4).sum / xs.size)
-      }
+    forAll { xs: SColl[(Double, Double, Double, Double)] =>
+      type C = (Double, Double, Double, Double)
+      // Apply sum, max, min, and average operation on the 4 columns
+      // Average cannot be performed as a Semigroup
+      val sumOp = Aggregator.prepareMonoid[C, Double](_._1)
+      val maxOp = Aggregator.max[Double].composePrepare[C](_._2)
+      val minOp = Aggregator.min[Double].composePrepare[C](_._3)
+      val avgOp = AveragedValue.aggregator.composePrepare[C](_._4)
+      // Combine 4 Aggregator[C, Double, Double] into 1 Aggregator[C, C, C]
+      val colAgg = MultiAggregator(sumOp, maxOp, minOp, avgOp)
+
+      val expected = (
+        xs.internal.map(_._1).sum,
+        xs.internal.map(_._2).max,
+        xs.internal.map(_._3).min,
+        xs.internal.map(_._4).sum / xs.internal.size)
+      val actual = xs.aggregate(colAgg)
+      actual._1 == expected._1 &&
+        actual._2 == expected._2 &&
+        actual._3 == expected._3  &&
+        error(actual._4, expected._4) <= 1e-10  // double arithmetic error
     }
 
   case class Record(i: Int, d: Double, s: Set[String])
 
-  // Map a tuple generator to a case class generator
-  val recordGen = tupleGen.map(Record.tupled)
+  // Compose a Record generator from existing arbitrary generators
+  val recordGen = for {
+    i <- Arbitrary.arbitrary[Int]
+    d <- Arbitrary.arbitrary[Double]
+    s <- Arbitrary.arbitrary[Set[String]]
+  } yield Record(i, d, s)
 
   // Semigroup for a case class
   val recordSg = Semigroup(Record.apply _, Record.unapply _)
 
-  property("sum of case classes") = forAll(Gen.nonEmptyListOf(recordGen)) { xs =>
-    xs.algebirdSum(recordSg) == xs.reduce((a, b) => Record(a.i + b.i, a.d + b.d, a.s ++ b.s))
+  property("sum of case classes") = forAll(sCollOf(recordGen)) { xs =>
+    val expected = Record(
+      xs.internal.map(_.i).sum,
+      xs.internal.map(_.d).sum,
+      xs.internal.map(_.s).reduce(_ ++ _))
+    xs.sum(recordSg) == expected
   }
 
+  // =======================================================================
   // HyperLogLog for approximate distinct count
+  // =======================================================================
 
-  property("sum with HyperLogLog") = forAll(Gen.nonEmptyListOf(Gen.alphaStr)) { xs =>
+  property("sum with HyperLogLog") = forAll(sCollOf(Gen.alphaStr)) { xs =>
     val m = new HyperLogLogMonoid(10)
     xs.map(i => m.create(i.getBytes))
-      .algebirdSum(m)
+      .sum(m)
       .approximateSize
-      .boundsContain(xs.toSet.size)
+      // approximate bounds should contain exact distinct count
+      .boundsContain(xs.internal.toSet.size)
   }
 
-  property("aggregate with HyperLogLog") = forAll(Gen.nonEmptyListOf(Gen.alphaStr)) { xs =>
-    xs.algebirdAggregate(HyperLogLogAggregator(10).composePrepare(_.getBytes))
-      .approximateSize.boundsContain(xs.toSet.size)
+  property("aggregate with HyperLogLog") = forAll(sCollOf(Gen.alphaStr)) { xs =>
+    xs.aggregate(HyperLogLogAggregator(10).composePrepare(_.getBytes))
+      .approximateSize
+      // approximate bounds should contain exact distinct count
+      .boundsContain(xs.internal.toSet.size)
   }
 
+  // =======================================================================
   // BloomFilter for approximate set membership
+  // =======================================================================
 
-  property("sum with BloomFilter") = forAll { xs: List[String] =>
-    xs.nonEmpty ==> {
-      val m = BloomFilter(1000, 0.01)
-      val bf = xs
-        .map(m.create)
-        .algebirdSum(m)
-      xs.forall(bf.contains(_).isTrue)
-    }
+  property("sum with BloomFilter") = forAll { xs: SColl[String] =>
+    val m = BloomFilter(1000, 0.01)
+    val bf = xs
+      .map(m.create)
+      .sum(m)
+    // BF should test positive for all members
+    xs.internal.forall(bf.contains(_).isTrue)
   }
 
-  property("aggregator with BloomFilter") = forAll { xs: List[String] =>
-    xs.nonEmpty ==> {
-      val width = BloomFilter.optimalWidth(1000, 0.01)
-      val numHashes = BloomFilter.optimalNumHashes(1000, width)
-      val m = BloomFilter(1000, 0.01)
-      val bf = xs.algebirdAggregate(BloomFilterAggregator(numHashes, width))
-      xs.forall(bf.contains(_).isTrue)
-    }
+  property("aggregator with BloomFilter") = forAll { xs: SColl[String] =>
+    val width = BloomFilter.optimalWidth(1000, 0.01)
+    val numHashes = BloomFilter.optimalNumHashes(1000, width)
+    val m = BloomFilter(1000, 0.01)
+    val bf = xs.aggregate(BloomFilterAggregator(numHashes, width))
+    // BF should test positive for all members
+    xs.internal.forall(bf.contains(_).isTrue)
   }
 
+  // =======================================================================
   // QTree for approximate quantiles
+  // =======================================================================
 
-  property("sum with QTree") = forAll(Gen.listOfN(1000, Gen.posNum[Int])) { xs =>
+  // Generator for SColl[Int]
+  val posInts = Gen.listOfN(1000, Gen.posNum[Int]).map(new SColl(_))
+
+  property("sum with QTree") = forAll(posInts) { xs =>
     val qt = xs
       .map(QTree(_))
-      .algebirdSum(new QTreeSemigroup[Long](10))
-    val l = xs.length
+      .sum(new QTreeSemigroup[Long](10))
+    val l = xs.internal.length
     val bounds = Seq(0.25, 0.50, 0.75).map(qt.quantileBounds)
-    val expected = Seq(l / 4, l / 2, l / 4 * 3).map(xs.sorted)
+    val expected = Seq(l / 4, l / 2, l / 4 * 3).map(xs.internal.sorted)
+    // approximate bounds should contain exact 25, 50 and 75 percentile
     bounds.zip(expected).forall { case ((lower, upper), x) =>
       lower <= x && x <= upper
     }
   }
 
-  property("aggregate with QTree") = forAll(Gen.listOfN(1000, Gen.posNum[Int])) { xs =>
-    val l = xs.length
-    val s = xs.sorted
-    val bounds = Seq(0.25, 0.50, 0.75).map(p => xs.algebirdAggregate(QTreeAggregator(p, 10)))
-    val expected = Seq(l / 4, l / 2, l / 4 * 3).map(xs.sorted)
+  property("aggregate with QTree") = forAll(posInts) { xs =>
+    val l = xs.internal.length
+    val s = xs.internal.sorted
+    val bounds = Seq(0.25, 0.50, 0.75).map(p => xs.aggregate(QTreeAggregator(p, 10)))
+    val expected = Seq(l / 4, l / 2, l / 4 * 3).map(s)
+    // approximate bounds should contain exact 25, 50 and 75 percentile
     bounds.zip(expected).forall { case (b, x) => b.contains(x) }
   }
 
+  // =======================================================================
   // CountMinSketch for approximate frequency
+  // =======================================================================
 
-  property("sum with CountMinSketch") = forAll(Gen.listOfN(1000, Gen.alphaStr)) { xs =>
+  // Generator for SColl[String]
+  val alphaStrs = Gen.listOfN(1000, Gen.alphaStr).map(new SColl(_))
+
+  property("sum with CountMinSketch") = forAll(alphaStrs) { xs =>
     import CMSHasherImplicits._
     val m = CMS.monoid[String](0.001, 1e-10, 1)
-    val cms = xs.map(m.create).algebirdSum(m)
-    val expected = xs.groupBy(identity).mapValues(_.size)
+    val cms = xs.map(m.create).sum(m)
+    val expected = xs.internal.groupBy(identity).mapValues(_.size)
     expected.forall { case (item, freq) =>
-      cms.frequency(item).contains(freq).isTrue
+      // approximate bounds of each item should contain exact frequency
+      cms.frequency(item).boundsContain(freq)
     }
   }
 
-  property("aggregate with CountMinSketch") = forAll(Gen.listOfN(1000, Gen.alphaStr)) { xs =>
+  property("aggregate with CountMinSketch") = forAll(alphaStrs) { xs =>
     import CMSHasherImplicits._
-    val cms = xs.algebirdAggregate(CMS.aggregator(0.01, 1e-10, 1))
-    val expected = xs.groupBy(identity).mapValues(_.size)
+    val cms = xs.aggregate(CMS.aggregator(0.01, 1e-10, 1))
+    val expected = xs.internal.groupBy(identity).mapValues(_.size)
     expected.forall { case (item, freq) =>
-      cms.frequency(item).contains(freq).isTrue
+      // approximate bounds of each item should contain exact frequency
+      cms.frequency(item).boundsContain(freq)
     }
   }
 
+  // =======================================================================
   // DecayedValue for moving average
+  // =======================================================================
 
-  val timeSeries = Gen.listOfN(1000, Gen.posNum[Double]).map(_.zipWithIndex)
+  // Genetor for SColl[(Double, Int)]
+  val timeSeries = Gen.listOfN(1000, Gen.posNum[Double]).map(_.zipWithIndex).map(new SColl(_))
 
   property("sum with DecayedValue") = forAll(timeSeries) { xs =>
     val halfLife = 10.0
     val decayFactor = math.exp(math.log(0.5) / halfLife)
     val normalization = halfLife / math.log(2)
-    val expected = xs.map(_._1).reduce(_ * decayFactor + _) / normalization
+    val expected = xs.internal.map(_._1).reduce(_ * decayFactor + _) / normalization
     val actual = xs.map { case (v, t) => DecayedValue.build(v, t, halfLife) }
-      .algebirdSum(DecayedValue.monoidWithEpsilon(1e-3))
+      .sum(DecayedValue.monoidWithEpsilon(1e-3))
       .average(halfLife)
+    // approximate decayed value should be close to exact value
     math.abs(actual - expected) <= 1e-3
   }
 
@@ -215,12 +279,13 @@ object AlgebirdSpec extends Properties("Algebird")  {
     val halfLife = 10.0
     val decayFactor = math.exp(math.log(0.5) / halfLife)
     val normalization = halfLife / math.log(2)
-    val expected = xs.map(_._1).reduce(_ * decayFactor + _) / normalization
-    val actual = xs.algebirdAggregate(
+    val expected = xs.internal.map(_._1).reduce(_ * decayFactor + _) / normalization
+    val actual = xs.aggregate(
       Aggregator
         .fromMonoid(DecayedValue.monoidWithEpsilon(1e-3))
         .composePrepare { case (v, t) => DecayedValue.build(v, t, halfLife) })
       .average(halfLife)
+    // approximate decayed value should be close to exact value
     math.abs(actual - expected) <= 1e-3
   }
 
