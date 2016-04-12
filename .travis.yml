@@ -25,6 +25,7 @@ notifications:
   email:
     - neville@spotify.com
     - rav@spotify.com
+    - amartin@spotify.com
 
 before_deploy: sbt ++$TRAVIS_SCALA_VERSION "project scio-repl" clean assembly
 deploy:
