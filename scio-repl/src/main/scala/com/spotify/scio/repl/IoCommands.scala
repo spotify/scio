@@ -18,6 +18,7 @@
 package com.spotify.scio.repl
 
 import java.io._
+import java.net.URI
 import java.nio.channels.Channels
 
 import com.google.cloud.dataflow.sdk.options.PipelineOptions
@@ -30,27 +31,27 @@ import org.apache.avro.file.{DataFileStream, DataFileWriter}
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
 import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter, SpecificRecordBase}
 import org.apache.commons.io.{Charsets, IOUtils}
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 /** Commands for simple file I/O in the REPL. */
-// scalastyle:off regex
 class IoCommands(options: PipelineOptions) {
+
+  private val logger: Logger = LoggerFactory.getLogger(classOf[IoCommands])
 
   private val TEXT = "text/plain"
   private val BINARY = "application/octet-stream"
 
+  // TODO: figure out how to support HDFS without messing up dependencies
   private val gcsUtil: GcsUtil = new GcsUtilFactory().create(options)
-  private val fs = FileSystem.get(new Configuration())
 
   // =======================================================================
   // Read operations
   // =======================================================================
 
-  /** Read from an Avro file on local filesystem, GCS, or HDFS. */
+  /** Read from an Avro file on local filesystem or GCS. */
   def readAvro[T : ClassTag](path: String): Iterator[T] = {
     val cls = ScioUtil.classOf[T]
     val reader = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
@@ -61,11 +62,11 @@ class IoCommands(options: PipelineOptions) {
     new DataFileStream[T](inputStream(path), reader).iterator().asScala
   }
 
-  /** Read from a text file on local filesystem, GCS, or HDFS. */
+  /** Read from a text file on local filesystem or GCS. */
   def readText(path: String): Iterator[String] =
     IOUtils.lineIterator(inputStream(path), Charsets.UTF_8).asScala
 
-  /** Read from a CSV file on local filesystem, GCS, or HDFS. */
+  /** Read from a CSV file on local filesystem or GCS. */
   def readCsv[T: RowDecoder](path: String,
                              sep: Char = ',',
                              header: Boolean = false): Iterator[T] = {
@@ -74,7 +75,7 @@ class IoCommands(options: PipelineOptions) {
     inputStream(path).asUnsafeCsvReader[T](sep, header).toIterator
   }
 
-  /** Read from a TSV file on local filesystem, GCS, or HDFS. */
+  /** Read from a TSV file on local filesystem or GCS. */
   def readTsv[T: RowDecoder](path: String,
                              sep: Char = '\t',
                              header: Boolean = false): Iterator[T] = {
@@ -89,7 +90,7 @@ class IoCommands(options: PipelineOptions) {
 
   private def plural[T](data: Seq[T]): String = if (data.size > 1) "s" else ""
 
-  /** Write to an Avro file on local filesystem, GCS, or HDFS. */
+  /** Write to an Avro file on local filesystem or GCS. */
   def writeAvro[T: ClassTag](path: String, data: Seq[T]): Unit = {
     val cls = ScioUtil.classOf[T]
     val (writer, schema) = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
@@ -100,52 +101,57 @@ class IoCommands(options: PipelineOptions) {
     val fileWriter = new DataFileWriter[T](writer).create(schema, outputStream(path, BINARY))
     data.foreach(fileWriter.append)
     fileWriter.close()
-    println(s"${data.size} record${plural(data)} written to $path")
+    logger.info("{} record{} written to {}", Array(data.size, plural(data), path))
   }
 
-  /** Write to a text file on local filesystem, GCS, or HDFS. */
+  /** Write to a text file on local filesystem or GCS. */
   def writeText(path: String, data: Seq[String]): Unit = {
     IOUtils.writeLines(data.asJava, IOUtils.LINE_SEPARATOR, outputStream(path, TEXT))
-    println(s"${data.size} line${plural(data)} written to $path")
+    logger.info("{} line{} written to {}", Array(data.size, plural(data), path))
   }
 
-  /** Write to a CSV file on local filesystem, GCS, or HDFS. */
+  /** Write to a CSV file on local filesystem or GCS. */
   def writeCsv[T: RowEncoder](path: String, data: Seq[T],
                               sep: Char = ',',
                               header: Seq[String] = Seq.empty): Unit = {
     import kantan.csv.ops._
     IOUtils.write(data.asCsv(sep, header), outputStream(path, TEXT))
+    logger.info("{} line{} written to {}", Array(data.size, plural(data), path))
   }
 
-  /** Write to a TSV file on local filesystem, GCS, or HDFS. */
+  /** Write to a TSV file on local filesystem or GCS. */
   def writeTsv[T: RowEncoder](path: String, data: Seq[T],
                               sep: Char = '\t',
                               header: Seq[String] = Seq.empty): Unit = {
     import kantan.csv.ops._
     IOUtils.write(data.asCsv(sep, header), outputStream(path, TEXT))
+    logger.info("{} line{} written to {}", Array(data.size, plural(data), path))
   }
 
   // =======================================================================
   // Utilities
   // =======================================================================
 
-  private def inputStream(path: String): InputStream =
-    if (path.startsWith("hdfs://")) {
-      fs.open(new Path(path))
-    } else if (path.startsWith("gs://")) {
-      Channels.newInputStream(gcsUtil.open(GcsPath.fromUri(path)))
-    } else {
+  private def inputStream(path: String): InputStream = {
+    val uri = new URI(path)
+    if (ScioUtil.isGcsUri(uri)) {
+      Channels.newInputStream(gcsUtil.open(GcsPath.fromUri(uri)))
+    } else if (ScioUtil.isLocalUri(uri)) {
       new FileInputStream(path)
-    }
-
-  private def outputStream(path: String, contentType: String): OutputStream =
-    if (path.startsWith("hdfs://")) {
-      fs.create(new Path(path), false)
-    } else if (path.startsWith("gs://")) {
-      Channels.newOutputStream(gcsUtil.create(GcsPath.fromUri(path), contentType))
     } else {
-      new FileOutputStream(path)
+      throw new IllegalArgumentException(s"Unsupported path $path")
     }
+  }
+
+  private def outputStream(path: String, contentType: String): OutputStream = {
+    val uri = new URI(path)
+    if (ScioUtil.isGcsUri(uri)) {
+      Channels.newOutputStream(gcsUtil.create(GcsPath.fromUri(uri), contentType))
+    } else if (ScioUtil.isLocalUri(uri)) {
+      new FileOutputStream(path)
+    } else {
+      throw new IllegalArgumentException(s"Unsupported path $path")
+    }
+  }
 
 }
-// scalastyle:on regex
