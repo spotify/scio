@@ -33,6 +33,8 @@ import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -44,6 +46,8 @@ import java.util.List;
  * @param <T> The type of the Avro records to be read from the source.
  */
 public class AvroHadoopFileSource<T> extends HadoopFileSource<AvroKey<T>, NullWritable> {
+  private static final Logger LOG = LoggerFactory.getLogger(AvroHadoopFileSource.class);
+  private static final long serialVersionUID = 0L;
 
   protected final AvroCoder<T> avroCoder;
   private final String schemaStr;
@@ -71,6 +75,8 @@ public class AvroHadoopFileSource<T> extends HadoopFileSource<AvroKey<T>, NullWr
   public List<? extends AvroHadoopFileSource<T>> splitIntoBundles(long desiredBundleSizeBytes,
                                                                   PipelineOptions options) throws Exception {
     if (serializableSplit == null) {
+      LOG.info("Splitting '" + filepattern + "' with desired bundle size " +
+          desiredBundleSizeBytes + " bytes.");
       return Lists.transform(computeSplits(desiredBundleSizeBytes),
               new Function<InputSplit, AvroHadoopFileSource<T>>() {
                 @Nullable

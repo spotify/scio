@@ -40,6 +40,9 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -91,6 +94,7 @@ import javax.annotation.Nullable;
  * @param <V> The type of values to be read from the source.
  */
 public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
+  private static final Logger LOG = LoggerFactory.getLogger(HadoopFileSource.class);
   private static final long serialVersionUID = 0L;
 
   protected final String filepattern;
@@ -178,6 +182,8 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
   public List<? extends BoundedSource<KV<K, V>>> splitIntoBundles(long desiredBundleSizeBytes,
       PipelineOptions options) throws Exception {
     if (serializableSplit == null) {
+      LOG.info("Splitting '" + filepattern + "' with desired bundle size " +
+          desiredBundleSizeBytes + " bytes.");
       return Lists.transform(computeSplits(desiredBundleSizeBytes),
           new Function<InputSplit, BoundedSource<KV<K, V>>>() {
         @Nullable @Override
@@ -203,7 +209,10 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     Job job = Job.getInstance();
     FileInputFormat.setMinInputSplitSize(job, desiredBundleSizeBytes);
     FileInputFormat.setMaxInputSplitSize(job, desiredBundleSizeBytes);
-    return createFormat(job).getSplits(job);
+    List<InputSplit> splits = createFormat(job).getSplits(job);
+    LOG.info("Split '" + filepattern + "' into " + splits.size() +
+        " splits, with desired split size of " + desiredBundleSizeBytes + " bytes.");
+    return splits;
   }
 
   @Override
