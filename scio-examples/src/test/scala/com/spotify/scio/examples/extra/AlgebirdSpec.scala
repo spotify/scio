@@ -260,7 +260,7 @@ object AlgebirdSpec extends Properties("Algebird") {
   // DecayedValue for moving average
   // =======================================================================
 
-  // Genetor for SColl[(Double, Int)]
+  // Generator for SColl[(Double, Int)]
   val timeSeries = Gen.listOfN(1000, Gen.posNum[Double]).map(_.zipWithIndex).map(new SColl(_))
 
   property("sum with DecayedValue") = forAll(timeSeries) { xs =>
