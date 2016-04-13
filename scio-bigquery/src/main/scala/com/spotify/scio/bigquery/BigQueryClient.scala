@@ -24,10 +24,10 @@ import java.util.regex.Pattern
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
+import com.google.api.client.http.{HttpRequest, HttpRequestInitializer}
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.jackson2.JacksonFactory
-import com.google.api.services.bigquery.Bigquery.Builder
 import com.google.api.services.bigquery.model._
 import com.google.api.services.bigquery.{Bigquery, BigqueryScopes}
 import com.google.cloud.dataflow.sdk.io.BigQueryIO
@@ -97,7 +97,16 @@ class BigQueryClient private (private val projectId: String,
         GoogleCredential.fromStream(new FileInputStream(new File(s))).createScoped(SCOPES)
       case None => GoogleCredential.getApplicationDefault.createScoped(SCOPES)
     }
-    new Builder(new NetHttpTransport, new JacksonFactory, credential)
+    val requestInitializer = new HttpRequestInitializer {
+      override def initialize(request: HttpRequest): Unit = {
+        BigQueryClient.connectTimeoutMs.foreach(request.setConnectTimeout)
+        BigQueryClient.readTimeoutMs.foreach(request.setReadTimeout)
+        // Credential also implements HttpRequestInitializer
+        credential.initialize(request)
+      }
+    }
+    new Bigquery.Builder(new NetHttpTransport, new JacksonFactory, credential)
+      .setHttpRequestInitializer(requestInitializer)
       .setApplicationName("scio")
       .build()
   }
@@ -419,13 +428,23 @@ object BigQueryClient {
   /** Default cache directory. */
   val CACHE_DIRECTORY_DEFAULT: String = sys.props("user.dir") + "/.bigquery"
 
+  /**
+   * System property key for timeout in milliseconds to establish a connection.
+   * Default is 20000 (20 seconds). 0 for an infinite timeout.
+   */
+  val CONNECT_TIMEOUT_MS_KEY: String = "bigquery.connect_timeout"
+
+  /**
+   * System property key for timeout in milliseconds to read data from an established connection.
+   * Default is 20000 (20 seconds). 0 for an infinite timeout.
+   */
+  val READ_TIMEOUT_MS_KEY: String = "bigquery.read_timeout"
+
   /** Table expiration in milliseconds for staging dataset. */
   val STAGING_DATASET_TABLE_EXPIRATION_MS: Long = 86400000L
 
   /** Description for staging dataset. */
   val STAGING_DATASET_DESCRIPTION: String = "Staging dataset for temporary tables"
-
-
 
   private var instance: BigQueryClient = null
 
@@ -490,6 +509,10 @@ object BigQueryClient {
     getPropOrElse(STAGING_DATASET_LOCATION_KEY, STAGING_DATASET_LOCATION_DEFAULT).toUpperCase
 
   private def cacheDirectory: String = getPropOrElse(CACHE_DIRECTORY_KEY, CACHE_DIRECTORY_DEFAULT)
+
+  private def connectTimeoutMs: Option[Int] = Option(sys.props(CONNECT_TIMEOUT_MS_KEY)).map(_.toInt)
+
+  private def readTimeoutMs: Option[Int] = Option(sys.props(READ_TIMEOUT_MS_KEY)).map(_.toInt)
 
   private def getPropOrElse(key: String, default: String): String = {
     val value = sys.props(key)
