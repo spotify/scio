@@ -34,17 +34,17 @@ import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.file.DataFileStream
 import org.apache.avro.generic.GenericDatumReader
-import org.apache.avro.mapred.AvroKey
+import org.apache.avro.mapred.{AvroKey, AvroOutputFormat}
 import org.apache.avro.mapreduce.{AvroJob, AvroKeyOutputFormat}
 import org.apache.avro.specific.{SpecificDatumReader, SpecificRecordBase}
 import org.apache.commons.io.IOUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path, PathFilter}
-import org.apache.hadoop.io.compress.CompressionCodecFactory
+import org.apache.hadoop.io.compress.{CompressionCodecFactory, DefaultCodec, DeflateCodec}
 import org.apache.hadoop.io.{LongWritable, NullWritable, Text}
-import org.apache.hadoop.mapreduce.Job
+import org.apache.hadoop.mapreduce.{Job, MRConfig, MRJobConfig}
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
+import org.apache.hadoop.mapreduce.lib.output.{FileOutputFormat, TextOutputFormat}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -110,11 +110,28 @@ package object hdfs {
 
     /** Save this SCollection as a text file on HDFS. */
     // TODO: numShards
-    def saveAsHdfsTextFile(path: String, username: String = null): Future[Tap[String]] = {
+    def saveAsHdfsTextFile(path: String,
+                           username: String = null,
+                           conf: Configuration = null): Future[Tap[String]] = {
+      val _conf = Option(conf).getOrElse {
+        val newConf = new Configuration()
+        // Writing to remote HDFS might be slow without compression.
+        // Deflate level can be between [1-9], higher means better compression but lower speed
+        // and 6 is a good compromise.
+        newConf.setBoolean(FileOutputFormat.COMPRESS, true)
+        newConf.set(FileOutputFormat.COMPRESS_CODEC, classOf[DefaultCodec].getName)
+        newConf.set(FileOutputFormat.COMPRESS_TYPE, "BLOCK")
+        newConf.setInt(AvroOutputFormat.DEFLATE_LEVEL_KEY, 6)
+        newConf
+      }
+
       val sink = if (username != null) {
-        new SimpleAuthHadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]], username)
+        new SimpleAuthHadoopFileSink(path,
+                                     classOf[TextOutputFormat[NullWritable, Text]],
+                                     _conf,
+                                     username)
       } else {
-        new HadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]])
+        new HadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]], _conf)
       }
       self
         .map(x => KV.of(NullWritable.get(), new Text(x.toString)))
@@ -126,9 +143,21 @@ package object hdfs {
     // TODO: numShards
     def saveAsHdfsAvroFile(path: String,
                            schema: Schema = null,
-                           username: String = null): Future[Tap[T]] = {
-      val job = Job.getInstance()
-      val conf = job.getConfiguration
+                           username: String = null,
+                           conf: Configuration = null): Future[Tap[T]] =
+    {
+      val _conf = Option(conf).getOrElse{
+        val newConf = new Configuration()
+        // Writing to remote HDFS might be slow without compression.
+        // Deflate level can be between [1-9], higher means better compression but lower speed
+        // and 6 is a good compromise.
+        newConf.setBoolean(FileOutputFormat.COMPRESS, true)
+        newConf.setInt(AvroOutputFormat.DEFLATE_LEVEL_KEY, 6)
+        newConf
+      }
+
+      val job = Job.getInstance(_conf)
+      val jobConf = job.getConfiguration
       val s = if (schema == null) {
         ScioUtil.classOf[T].getMethod("getClassSchema").invoke(null).asInstanceOf[Schema]
       } else {
@@ -136,11 +165,9 @@ package object hdfs {
       }
       AvroJob.setOutputKeySchema(job, s)
       val sink = if (username != null) {
-        new SimpleAuthHadoopFileSink(
-          path, classOf[AvroKeyOutputFormat[T]], conf, username)
+        new SimpleAuthHadoopFileSink(path, classOf[AvroKeyOutputFormat[T]], jobConf, username)
       } else {
-        new HadoopFileSink(
-          path, classOf[AvroKeyOutputFormat[T]], conf)
+        new HadoopFileSink(path, classOf[AvroKeyOutputFormat[T]], jobConf)
       }
       self
         .map(x => KV.of(new AvroKey(x), NullWritable.get()))
