@@ -26,7 +26,11 @@ import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.avro.Schema
+import org.apache.avro.file.DataFileReader
+import org.apache.avro.specific.SpecificDatumReader
+import org.apache.avro.test.TestRecord
 import org.apache.commons.io.FileUtils
+import org.apache.hadoop.conf.Configuration
 
 import scala.concurrent.Future
 
@@ -43,6 +47,21 @@ class HdfsTapTest extends PipelineSpec {
     verifyTap(t, Set(1, 2, 3).map(newSpecificRecord))
     FileUtils.deleteDirectory(dir)
   }
+
+  it should "support default compression with saveAsHdfsAvroFile" in {
+    val dir = tmpDir
+    val t = runWithFileFuture {
+      _
+        .parallelize(Seq(1, 2, 3))
+        .map(newSpecificRecord)
+        .saveAsHdfsAvroFile(dir.getPath)
+    }
+    val avroFile = new File(dir, "part-r-00000.avro")
+    val dataFileReader = new DataFileReader(avroFile, new SpecificDatumReader[TestRecord])
+    new String(dataFileReader.getMeta("avro.codec")) shouldBe "deflate"
+    FileUtils.deleteDirectory(dir)
+  }
+
 
   it should "support saveAsHdfsAvroFile with GenericRecord" in {
     val dir = tmpDir
@@ -68,6 +87,22 @@ class HdfsTapTest extends PipelineSpec {
     FileUtils.deleteDirectory(dir)
   }
 
+  it should "support user conf with saveAsHdfsAvroFile" in {
+    val dir = tmpDir
+    // create empty configuration (no compresion)
+    val conf = new Configuration(false)
+    val t = runWithFileFuture {
+      _
+        .parallelize(Seq(1, 2, 3))
+        .map(newSpecificRecord)
+        .saveAsHdfsAvroFile(dir.getPath, conf=conf)
+    }
+    val avroFile = new File(dir, "part-r-00000.avro")
+    val dataFileReader = new DataFileReader(avroFile, new SpecificDatumReader[TestRecord])
+    new String(dataFileReader.getMeta("avro.codec")) shouldBe "null"
+    FileUtils.deleteDirectory(dir)
+  }
+
   it should "support saveAsHdfsTextFile" in {
     val dir = tmpDir
     val t = runWithFileFuture {
@@ -76,6 +111,32 @@ class HdfsTapTest extends PipelineSpec {
         .saveAsHdfsTextFile(dir.getPath)
     }
     verifyTap(t, Set("a", "b", "c"))
+    FileUtils.deleteDirectory(dir)
+  }
+
+  it should "support default compression with saveAsHdfsTextFile" in {
+    val dir = tmpDir
+    val t = runWithFileFuture {
+      _
+        .parallelize(Seq("a", "b", "c"))
+        .saveAsHdfsTextFile(dir.getPath)
+    }
+    new File(dir, "part-r-00000") should not (exist)
+    new File(dir, "part-r-00000.deflate") should exist
+    FileUtils.deleteDirectory(dir)
+  }
+
+  it should "support user conf with saveAsHdfsTextFile" in {
+    val dir = tmpDir
+    // create empty configuration (no compresion)
+    val conf = new Configuration(false)
+    val t =  runWithFileFuture {
+      _
+        .parallelize(Seq("a", "b", "c", "d"))
+        .saveAsHdfsTextFile(dir.getPath, conf = conf)
+    }
+    new File(dir, "part-r-00000") should exist
+    new File(dir, "part-r-00000.deflate") should not (exist)
     FileUtils.deleteDirectory(dir)
   }
 
