@@ -151,8 +151,8 @@ class BigQueryClient private (private val projectId: String,
   }
 
   /** Get rows from a query. */
-  def getQueryRows(sqlQuery: String): Iterator[TableRow] = {
-    val queryJob = queryIntoTable(sqlQuery)
+  def getQueryRows(sqlQuery: String, flattenResults: Boolean = false): Iterator[TableRow] = {
+    val queryJob = queryIntoTable(sqlQuery, flattenResults)
     queryJob.waitForResult()
     getTableRows(queryJob.table)
   }
@@ -198,7 +198,7 @@ class BigQueryClient private (private val projectId: String,
     }
 
   /** Execute a query and save results into a temporary table. */
-  def queryIntoTable(sqlQuery: String): QueryJob = {
+  def queryIntoTable(sqlQuery: String, flattenResults: Boolean): QueryJob = {
     try {
       val sourceTimes =
         BigQueryUtil.extractTables(sqlQuery).map(t => BigInt(getTable(t).getLastModifiedTime))
@@ -218,7 +218,7 @@ class BigQueryClient private (private val projectId: String,
         logger.info(s"Cache invalid for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
-        makeQueryJob(sqlQuery, temp)
+        makeQueryJob(sqlQuery, temp, flattenResults)
       }
     } catch {
       case NonFatal(_) =>
@@ -226,7 +226,7 @@ class BigQueryClient private (private val projectId: String,
         logger.info(s"Cache miss for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
-        makeQueryJob(sqlQuery, temp)
+        makeQueryJob(sqlQuery, temp, flattenResults)
     }
   }
 
@@ -314,7 +314,8 @@ class BigQueryClient private (private val projectId: String,
   }
 
   private def makeQueryJob(sqlQuery: String,
-                           destinationTable: TableReference): QueryJob = new QueryJob {
+                           destinationTable: TableReference,
+                           flattenResults: Boolean): QueryJob = new QueryJob {
     override def waitForResult(): Unit = self.waitForJobs(this)
     override lazy val jobReference: Option[JobReference] = {
       prepareStagingDataset()
@@ -322,7 +323,7 @@ class BigQueryClient private (private val projectId: String,
       val queryConfig: JobConfigurationQuery = new JobConfigurationQuery()
         .setQuery(sqlQuery)
         .setAllowLargeResults(true)
-        .setFlattenResults(false)
+        .setFlattenResults(flattenResults)
         .setPriority(PRIORITY)
         .setCreateDisposition("CREATE_IF_NEEDED")
         .setWriteDisposition("WRITE_EMPTY")
