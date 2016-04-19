@@ -359,7 +359,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
     if (this.isTest) {
       this.getTestInput(BigQueryIO(sqlQuery))
     } else {
-      val queryJob = this.bigQueryClient.queryIntoTable(sqlQuery, flattenResults)
+      val queryJob = this.bigQueryClient.newQueryJob(sqlQuery, flattenResults)
       _queryJobs.append(queryJob)
       wrap(this.applyInternal(GBigQueryIO.Read.from(queryJob.table).withoutValidation()))
         .setName(sqlQuery)

@@ -152,7 +152,7 @@ class BigQueryClient private (private val projectId: String,
 
   /** Get rows from a query. */
   def getQueryRows(sqlQuery: String, flattenResults: Boolean = false): Iterator[TableRow] = {
-    val queryJob = queryIntoTable(sqlQuery, flattenResults)
+    val queryJob = newQueryJob(sqlQuery, flattenResults)
     queryJob.waitForResult()
     getTableRows(queryJob.table)
   }
@@ -197,8 +197,29 @@ class BigQueryClient private (private val projectId: String,
       getTable(table).getSchema
     }
 
-  /** Execute a query and save results into a temporary table. */
-  def queryIntoTable(sqlQuery: String, flattenResults: Boolean): QueryJob = {
+  /** Make a query and save results to a destination table. */
+  def queryIntoTable(sqlQuery: String,
+                     destinationTable: TableReference,
+                     flattenResults: Boolean): Job = {
+    val queryJob = makeQueryJob(sqlQuery, destinationTable, flattenResults)
+    queryJob.waitForResult()
+    val jobRef = queryJob.jobReference.get
+    bigquery.jobs().get(projectId, jobRef.getJobId).execute()
+  }
+
+  /** Make a query and save results to a destination table. */
+  def queryIntoTable(sqlQuery: String,
+                     destinationTable: String,
+                     flattenResults: Boolean = false): Job =
+    queryIntoTable(sqlQuery, BigQueryIO.parseTableSpec(destinationTable), flattenResults)
+
+  /**
+   * Create a new query job and save results into a temporary table.
+   *
+   * No query will be executed if a cached table exists. Query execution is delayed until
+   * `waitForResult` is called on the result `QueryJob`.
+   */
+  def newQueryJob(sqlQuery: String, flattenResults: Boolean): QueryJob = {
     try {
       val sourceTimes =
         BigQueryUtil.extractTables(sqlQuery).map(t => BigInt(getTable(t).getLastModifiedTime))

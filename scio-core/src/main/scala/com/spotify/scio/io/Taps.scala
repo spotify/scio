@@ -75,7 +75,7 @@ trait Taps {
 
   private def bigQueryTap(sqlQuery: String, flattenResults: Boolean): BigQueryTap = {
     val bq = BigQueryClient.defaultInstance()
-    val queryJob = bq.queryIntoTable(sqlQuery, flattenResults)
+    val queryJob = bq.newQueryJob(sqlQuery, flattenResults)
     queryJob.waitForResult()
     BigQueryTap(queryJob.table)
   }
