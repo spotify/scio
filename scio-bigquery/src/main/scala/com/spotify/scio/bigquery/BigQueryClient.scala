@@ -77,7 +77,7 @@ object BigQueryUtil {
 }
 
 /** A query job that may delay execution. */
-trait QueryJob {
+private[scio] trait QueryJob {
   def waitForResult(): Unit
   val jobReference: Option[JobReference]
   val query: String
@@ -151,8 +151,8 @@ class BigQueryClient private (private val projectId: String,
   }
 
   /** Get rows from a query. */
-  def getQueryRows(sqlQuery: String): Iterator[TableRow] = {
-    val queryJob = queryIntoTable(sqlQuery)
+  def getQueryRows(sqlQuery: String, flattenResults: Boolean = false): Iterator[TableRow] = {
+    val queryJob = newQueryJob(sqlQuery, flattenResults)
     queryJob.waitForResult()
     getTableRows(queryJob.table)
   }
@@ -197,38 +197,25 @@ class BigQueryClient private (private val projectId: String,
       getTable(table).getSchema
     }
 
-  /** Execute a query and save results into a temporary table. */
-  def queryIntoTable(sqlQuery: String): QueryJob = {
-    try {
-      val sourceTimes =
-        BigQueryUtil.extractTables(sqlQuery).map(t => BigInt(getTable(t).getLastModifiedTime))
-      val temp = getCacheDestinationTable(sqlQuery).get
-      val time = BigInt(getTable(temp).getLastModifiedTime)
-      if (sourceTimes.forall(_ < time)) {
-        logger.info(s"Cache hit for query: $sqlQuery")
-        logger.info(s"Existing destination table: ${BigQueryIO.toTableSpec(temp)}")
-        new QueryJob {
-          override def waitForResult(): Unit = {}
-          override val jobReference: Option[JobReference] = None
-          override val query: String = sqlQuery
-          override val table: TableReference = temp
-        }
-      } else {
-        val temp = temporaryTable(TABLE_PREFIX)
-        logger.info(s"Cache invalid for query: $sqlQuery")
-        logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
-        setCacheDestinationTable(sqlQuery, temp)
-        makeQueryJob(sqlQuery, temp)
-      }
-    } catch {
-      case NonFatal(_) =>
-        val temp = temporaryTable(TABLE_PREFIX)
-        logger.info(s"Cache miss for query: $sqlQuery")
-        logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
-        setCacheDestinationTable(sqlQuery, temp)
-        makeQueryJob(sqlQuery, temp)
+  /**
+   * Make a query and save results to a destination table.
+   *
+   * A temporary table will be created if `destinationTable` is `null` and a cached table will be
+   * returned instead if one exists.
+   */
+  def query(sqlQuery: String,
+            destinationTable: String = null,
+            flattenResults: Boolean = false): TableReference =
+    if (destinationTable != null) {
+      val tableRef = BigQueryIO.parseTableSpec(destinationTable)
+      val queryJob = delayedQueryJob(sqlQuery, tableRef, flattenResults)
+      queryJob.waitForResult()
+      tableRef
+    } else {
+      val queryJob = newQueryJob(sqlQuery, flattenResults)
+      queryJob.waitForResult()
+      queryJob.table
     }
-  }
 
   /** Write rows to a table. */
   def writeTableRows(table: TableReference, rows: List[TableRow], schema: TableSchema,
@@ -276,6 +263,42 @@ class BigQueryClient private (private val projectId: String,
     }
   }
 
+  // =======================================================================
+  // Job execution
+  // =======================================================================
+
+  private[scio] def newQueryJob(sqlQuery: String, flattenResults: Boolean): QueryJob = {
+    try {
+      val sourceTimes =
+        BigQueryUtil.extractTables(sqlQuery).map(t => BigInt(getTable(t).getLastModifiedTime))
+      val temp = getCacheDestinationTable(sqlQuery).get
+      val time = BigInt(getTable(temp).getLastModifiedTime)
+      if (sourceTimes.forall(_ < time)) {
+        logger.info(s"Cache hit for query: $sqlQuery")
+        logger.info(s"Existing destination table: ${BigQueryIO.toTableSpec(temp)}")
+        new QueryJob {
+          override def waitForResult(): Unit = {}
+          override val jobReference: Option[JobReference] = None
+          override val query: String = sqlQuery
+          override val table: TableReference = temp
+        }
+      } else {
+        val temp = temporaryTable(TABLE_PREFIX)
+        logger.info(s"Cache invalid for query: $sqlQuery")
+        logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
+        setCacheDestinationTable(sqlQuery, temp)
+        delayedQueryJob(sqlQuery, temp, flattenResults)
+      }
+    } catch {
+      case NonFatal(_) =>
+        val temp = temporaryTable(TABLE_PREFIX)
+        logger.info(s"Cache miss for query: $sqlQuery")
+        logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
+        setCacheDestinationTable(sqlQuery, temp)
+        delayedQueryJob(sqlQuery, temp, flattenResults)
+    }
+  }
+
   private def prepareStagingDataset(): Unit = {
     // Create staging dataset if it does not already exist
     val datasetId = BigQueryClient.stagingDataset
@@ -313,8 +336,9 @@ class BigQueryClient private (private val projectId: String,
     new JobReference().setProjectId(projectId).setJobId(fullJobId)
   }
 
-  private def makeQueryJob(sqlQuery: String,
-                           destinationTable: TableReference): QueryJob = new QueryJob {
+  private def delayedQueryJob(sqlQuery: String,
+                              destinationTable: TableReference,
+                              flattenResults: Boolean): QueryJob = new QueryJob {
     override def waitForResult(): Unit = self.waitForJobs(this)
     override lazy val jobReference: Option[JobReference] = {
       prepareStagingDataset()
@@ -322,7 +346,7 @@ class BigQueryClient private (private val projectId: String,
       val queryConfig: JobConfigurationQuery = new JobConfigurationQuery()
         .setQuery(sqlQuery)
         .setAllowLargeResults(true)
-        .setFlattenResults(false)
+        .setFlattenResults(flattenResults)
         .setPriority(PRIORITY)
         .setCreateDisposition("CREATE_IF_NEEDED")
         .setWriteDisposition("WRITE_EMPTY")
