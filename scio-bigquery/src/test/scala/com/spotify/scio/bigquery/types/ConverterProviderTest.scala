@@ -31,18 +31,25 @@ class ConverterProviderTest extends FlatSpec with Matchers {
   private def jl[T](x: T*)= new java.util.ArrayList[T](x.asJava)
 
   private def linkedHashMap(pairs: (String, Any)*) =
-    Maps.newLinkedHashMap[String, AnyRef](Map(pairs: _*).asJava.asInstanceOf[java.util.Map[String, AnyRef]])
+    Maps.newLinkedHashMap[String, AnyRef](
+      Map(pairs: _*).asJava.asInstanceOf[java.util.Map[String, AnyRef]])
 
   val NOW = Instant.now()
   val NOWS = Timestamp(NOW)
 
-  val t1 = TableRow("f1" -> 1, "f2" -> 10L, "f3" -> 1.2f, "f4" -> 1.23, "f5" -> true, "f6" -> "hello", "f7" -> NOWS)
-  val m1 = linkedHashMap("f1" -> 1, "f2" -> 10L, "f3" -> 1.2f, "f4" -> 1.23, "f5" -> true, "f6" -> "hello", "f7" -> NOWS)
+  val t1 = TableRow(
+    "f1" -> 1, "f2" -> 10L, "f3" -> 1.2f, "f4" -> 1.23, "f5" -> true, "f6" -> "hello", "f7" -> NOWS)
+  val m1 = linkedHashMap(
+    "f1" -> 1, "f2" -> 10L, "f3" -> 1.2f, "f4" -> 1.23, "f5" -> true, "f6" -> "hello", "f7" -> NOWS)
   val p1 = P1(1, 10L, 1.2f, 1.23, true, "hello", NOW)
 
-  val t2a = TableRow("f1" -> 1, "f2" -> 10L, "f3" -> 1.2f, "f4" -> 1.23, "f5" -> true, "f6" -> "hello", "f7" -> NOWS)
-  val m2a = linkedHashMap("f1" -> 1, "f2" -> 10L, "f3" -> 1.2f, "f4" -> 1.23, "f5" -> true, "f6" -> "hello", "f7" -> NOWS)
-  val t2b = TableRow("f1" -> null, "f2" -> null, "f3" -> null, "f4" -> null, "f5" -> null, "f6" -> null, "f7" -> null)
+  val t2a = TableRow(
+    "f1" -> 1, "f2" -> 10L, "f3" -> 1.2f, "f4" -> 1.23, "f5" -> true, "f6" -> "hello", "f7" -> NOWS)
+  val m2a = linkedHashMap(
+    "f1" -> 1, "f2" -> 10L, "f3" -> 1.2f, "f4" -> 1.23, "f5" -> true, "f6" -> "hello", "f7" -> NOWS)
+  val t2b = TableRow(
+    "f1" -> null, "f2" -> null, "f3" -> null, "f4" -> null, "f5" -> null, "f6" -> null,
+    "f7" -> null)
   val p2a = P2(Some(1), Some(10L), Some(1.2f), Some(1.23), Some(true), Some("hello"), Some(NOW))
   val p2b = P2(None, None, None, None, None, None, None)
 
@@ -52,7 +59,9 @@ class ConverterProviderTest extends FlatSpec with Matchers {
   val m3a = linkedHashMap(
     "f1" -> jl(1), "f2" -> jl(10L), "f3" -> jl(1.2f), "f4" -> jl(1.23),
     "f5" -> jl(true), "f6" -> jl("hello"), "f7" -> jl(NOWS))
-  val t3b = TableRow("f1" -> jl(), "f2" -> jl(), "f3" -> jl(), "f4" -> jl(), "f5" -> jl(), "f6" -> jl(), "f7" -> jl())
+  val t3b = TableRow(
+    "f1" -> jl(), "f2" -> jl(), "f3" -> jl(), "f4" -> jl(), "f5" -> jl(), "f6" -> jl(),
+    "f7" -> jl())
   val p3a = P3(List(1), List(10L), List(1.2f), List(1.23), List(true), List("hello"), List(NOW))
   val p3b = P3(Nil, Nil, Nil, Nil, Nil, Nil, Nil)
 
