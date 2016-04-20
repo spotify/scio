@@ -30,7 +30,6 @@ val breezeVersion ="0.12"
 val chillVersion = "0.8.0"
 val commonsIoVersion = "2.4"
 val commonsMath3Version = "3.6"
-val csvVersion = "0.1.8"
 val guavaVersion = "19.0"
 val hadoopVersion = "2.7.2"
 val hamcrestVersion = "1.3"
@@ -308,7 +307,6 @@ lazy val scioRepl: Project = Project(
       "jline" % "jline" % scalaBinaryVersion.value,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "com.nrinaudo" %% "kantan.csv" % csvVersion,
       paradiseDependency
     ),
     libraryDependencies ++= (

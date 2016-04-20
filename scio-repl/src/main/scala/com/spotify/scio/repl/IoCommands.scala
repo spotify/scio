@@ -26,7 +26,6 @@ import com.google.cloud.dataflow.sdk.util.GcsUtil
 import com.google.cloud.dataflow.sdk.util.GcsUtil.GcsUtilFactory
 import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
 import com.spotify.scio.util.ScioUtil
-import kantan.csv.{RowDecoder, RowEncoder}
 import org.apache.avro.file.{DataFileStream, DataFileWriter}
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
 import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter, SpecificRecordBase}
@@ -66,24 +65,6 @@ class IoCommands(options: PipelineOptions) {
   def readText(path: String): Iterator[String] =
     IOUtils.lineIterator(inputStream(path), Charsets.UTF_8).asScala
 
-  /** Read from a CSV file on local filesystem or GCS. */
-  def readCsv[T: RowDecoder](path: String,
-                             sep: Char = ',',
-                             header: Boolean = false): Iterator[T] = {
-    import kantan.csv.ops._
-    implicit val codec = scala.io.Codec.UTF8
-    inputStream(path).asUnsafeCsvReader[T](sep, header).toIterator
-  }
-
-  /** Read from a TSV file on local filesystem or GCS. */
-  def readTsv[T: RowDecoder](path: String,
-                             sep: Char = '\t',
-                             header: Boolean = false): Iterator[T] = {
-    import kantan.csv.ops._
-    implicit val codec = scala.io.Codec.UTF8
-    inputStream(path).asUnsafeCsvReader[T](sep, header).toIterator
-  }
-
   // =======================================================================
   // Write operations
   // =======================================================================
@@ -107,24 +88,6 @@ class IoCommands(options: PipelineOptions) {
   /** Write to a text file on local filesystem or GCS. */
   def writeText(path: String, data: Seq[String]): Unit = {
     IOUtils.writeLines(data.asJava, IOUtils.LINE_SEPARATOR, outputStream(path, TEXT))
-    logger.info("{} line{} written to {}", Array(data.size, plural(data), path))
-  }
-
-  /** Write to a CSV file on local filesystem or GCS. */
-  def writeCsv[T: RowEncoder](path: String, data: Seq[T],
-                              sep: Char = ',',
-                              header: Seq[String] = Seq.empty): Unit = {
-    import kantan.csv.ops._
-    IOUtils.write(data.asCsv(sep, header), outputStream(path, TEXT))
-    logger.info("{} line{} written to {}", Array(data.size, plural(data), path))
-  }
-
-  /** Write to a TSV file on local filesystem or GCS. */
-  def writeTsv[T: RowEncoder](path: String, data: Seq[T],
-                              sep: Char = '\t',
-                              header: Seq[String] = Seq.empty): Unit = {
-    import kantan.csv.ops._
-    IOUtils.write(data.asCsv(sep, header), outputStream(path, TEXT))
     logger.info("{} line{} written to {}", Array(data.size, plural(data), path))
   }
 
