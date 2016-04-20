@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit
 
 import com.google.api.services.bigquery.model.TableReference
 import com.google.api.services.datastore.DatastoreV1.{Entity, Query}
-import com.google.bigtable.v1.Row
+import com.google.bigtable.v1.{Row, RowFilter}
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.cloud.dataflow.sdk.Pipeline
 import com.google.cloud.dataflow.sdk.PipelineResult.State
@@ -390,12 +390,16 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
    * Get an SCollection for a Bigtable table.
    * @group input
    */
-  // TODO: add row filter support
-  def bigtable(tableId: String, bigtableOptions: BigtableOptions): SCollection[Row] = pipelineOp {
+  def bigtable(tableId: String,
+               bigtableOptions: BigtableOptions,
+               rowFilter: RowFilter = null): SCollection[Row] = pipelineOp {
     if (this.isTest) {
       this.getTestInput(BigtableInput(tableId, bigtableOptions))
     } else {
-      val source = BigtableIO.read().withTableId(tableId).withBigtableOptions(bigtableOptions)
+      var source = BigtableIO.read().withTableId(tableId).withBigtableOptions(bigtableOptions)
+      if (rowFilter != null) {
+        source = source.withRowFilter(rowFilter)
+      }
       wrap(this.applyInternal(source).setName(tableId))
     }
   }
