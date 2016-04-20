@@ -24,9 +24,13 @@ class WindowedSCollectionTest extends PipelineSpec {
 
   "WindowedSCollection" should "support filter()"  in {
     runWithContext { sc =>
-      val p = sc.parallelizeTimestamped(Seq("a", "b", "c", "d"), Seq(1, 2, 3, 4).map(new Instant(_)))
+      val p = sc.parallelizeTimestamped(
+        Seq("a", "b", "c", "d"), Seq(1, 2, 3, 4).map(new Instant(_)))
       val r = p.toWindowed
-        .filter(v => v.timestamp.getMillis % 2 == 0).toSCollection.withTimestamp.map(kv => (kv._1, kv._2.getMillis))
+        .filter(v => v.timestamp.getMillis % 2 == 0)
+        .toSCollection
+        .withTimestamp
+        .map(kv => (kv._1, kv._2.getMillis))
       r should containInAnyOrder (Seq(("b", 2L), ("d", 4L)))
     }
   }
