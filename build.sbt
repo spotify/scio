@@ -22,7 +22,7 @@ import com.typesafe.sbt.SbtSite.SiteKeys._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import sbtunidoc.Plugin.UnidocKeys._
 
-val dataflowSdkVersion = "1.5.0"
+val dataflowSdkVersion = "1.5.1"
 val algebirdVersion = "0.12.0"
 val avroVersion = "1.7.7"
 val bigtableVersion = "0.2.3"
