@@ -83,7 +83,7 @@ class RichCoderRegistryTest extends PipelineSpec {
       new Account(2, "checking", "Bob", 2000.0))
 
     runWithContext { sc =>
-      val lhs = sc.parallelize(1 to 10).map(i => new Account(i, "checking", "user_" + i, i * 1000.0))
+      val lhs = sc.parallelize(1 to 10).map(i => new Account(i, "checking", "u" + i, i * 1000.0))
       val rhs = sc.parallelize(Seq(1 -> "Alice", 2 -> "Bob"))
       lhs
         .keyBy(_.getId.toInt)
