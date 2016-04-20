@@ -93,7 +93,8 @@ object RandomSamplerUtils extends Serializable {
   }
 
   // Returns aligned cumulative distributions from two arrays of data
-  def cumulants(d1: Array[Int], d2: Array[Int], ss: Int = sampleSize): (Array[Double], Array[Double]) = {
+  def cumulants(d1: Array[Int], d2: Array[Int],
+                ss: Int = sampleSize): (Array[Double], Array[Double]) = {
     assert(math.min(d1.length, d2.length) > 0)
     assert(math.min(d1.min, d2.min)  >=  0)
     val m = 1 + math.max(d1.max, d2.max)
@@ -107,7 +108,7 @@ object RandomSamplerUtils extends Serializable {
   }
 
   // Computes the Kolmogorov-Smirnov 'D' statistic from two cumulative distributions
-  def KSD(cdf1: Array[Double], cdf2: Array[Double]): Double = {
+  def ksd(cdf1: Array[Double], cdf2: Array[Double]): Double = {
     assert(cdf1.length == cdf2.length)
     val n = cdf1.length
     assert(n > 0)
@@ -120,7 +121,7 @@ object RandomSamplerUtils extends Serializable {
   def medianKSD(data1: => Array[Int], data2: => Array[Int], m: Int = 5): Double = {
     val t = Array.fill[Double](m) {
       val (c1, c2) = cumulants(data1.take(sampleSize), data2.take(sampleSize))
-      KSD(c1, c2)
+      ksd(c1, c2)
     }.sorted
     // return the median KS statistic
     t(m / 2)
@@ -129,7 +130,8 @@ object RandomSamplerUtils extends Serializable {
   val population = 1 to populationSize
   val keyedPopulation = population.map(("a", _)) ++ population.map(("b", _))
   def expectedSamples(withReplacement: Boolean, fraction: Double): Array[Int] = {
-    val s = if (withReplacement) sampleWR(population.iterator, fraction) else sample(population.iterator, fraction)
+    val i = population.iterator
+    val s = if (withReplacement) sampleWR(i, fraction) else sample(i, fraction)
     s.toArray
   }
 
