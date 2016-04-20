@@ -30,16 +30,8 @@ import com.google.cloud.dataflow.sdk.Pipeline
 import com.google.cloud.dataflow.sdk.PipelineResult.State
 import com.google.cloud.dataflow.sdk.coders.TableRowJsonCoder
 import com.google.cloud.dataflow.sdk.io.bigtable.BigtableIO
-import com.google.cloud.dataflow.sdk.io.{
-  AvroIO => GAvroIO,
-  BigQueryIO => GBigQueryIO,
-  DatastoreIO => GDatastoreIO,
-  PubsubIO => GPubsubIO,
-  TextIO => GTextIO
-}
-import com.google.cloud.dataflow.sdk.options.{
-  DataflowPipelineOptions, PipelineOptions, PipelineOptionsFactory
-}
+import com.google.cloud.dataflow.sdk.{io => gio}
+import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptions}
 import com.google.cloud.dataflow.sdk.runners.{DataflowPipelineJob, DataflowPipelineRunner}
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
@@ -74,6 +66,8 @@ object ContextAndArgs {
 
 /** Companion object for [[ScioContext]]. */
 object ScioContext {
+
+  import com.google.cloud.dataflow.sdk.options.PipelineOptionsFactory
 
   /** Create a new [[ScioContext]] instance. */
   def apply(): ScioContext = ScioContext(defaultOptions)
@@ -339,12 +333,12 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
     if (this.isTest) {
       this.getTestInput(AvroIO[T](path))
     } else {
-      val transform = GAvroIO.Read.from(path)
+      val transform = gio.AvroIO.Read.from(path)
       val cls = ScioUtil.classOf[T]
       val t = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
         transform.withSchema(cls)
       } else {
-        transform.withSchema(schema).asInstanceOf[GAvroIO.Read.Bound[T]]
+        transform.withSchema(schema).asInstanceOf[gio.AvroIO.Read.Bound[T]]
       }
       wrap(this.applyInternal(t)).setName(path)
     }
@@ -361,7 +355,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
     } else {
       val queryJob = this.bigQueryClient.newQueryJob(sqlQuery, flattenResults)
       _queryJobs.append(queryJob)
-      wrap(this.applyInternal(GBigQueryIO.Read.from(queryJob.table).withoutValidation()))
+      wrap(this.applyInternal(gio.BigQueryIO.Read.from(queryJob.table).withoutValidation()))
         .setName(sqlQuery)
     }
   }
@@ -371,11 +365,11 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
    * @group input
    */
   def bigQueryTable(table: TableReference): SCollection[TableRow] = pipelineOp {
-    val tableSpec: String = GBigQueryIO.toTableSpec(table)
+    val tableSpec: String = gio.BigQueryIO.toTableSpec(table)
     if (this.isTest) {
       this.getTestInput(BigQueryIO(tableSpec))
     } else {
-      wrap(this.applyInternal(GBigQueryIO.Read.from(table))).setName(tableSpec)
+      wrap(this.applyInternal(gio.BigQueryIO.Read.from(table))).setName(tableSpec)
     }
   }
 
@@ -384,7 +378,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
    * @group input
    */
   def bigQueryTable(tableSpec: String): SCollection[TableRow] =
-    this.bigQueryTable(GBigQueryIO.parseTableSpec(tableSpec))
+    this.bigQueryTable(gio.BigQueryIO.parseTableSpec(tableSpec))
 
   /**
    * Get an SCollection for a Bigtable table.
@@ -408,7 +402,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
     if (this.isTest) {
       this.getTestInput(DatastoreIO(datasetId, query))
     } else {
-      wrap(this.applyInternal(GDatastoreIO.readFrom(datasetId, query)))
+      wrap(this.applyInternal(gio.DatastoreIO.readFrom(datasetId, query)))
     }
   }
 
@@ -422,7 +416,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
     if (this.isTest) {
       this.getTestInput(PubsubIO(sub))
     } else {
-      var transform = GPubsubIO.Read.subscription(sub)
+      var transform = gio.PubsubIO.Read.subscription(sub)
       if (idLabel != null) {
         transform = transform.idLabel(idLabel)
       }
@@ -443,7 +437,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
     if (this.isTest) {
       this.getTestInput(PubsubIO(topic))
     } else {
-      var transform = GPubsubIO.Read.topic(topic)
+      var transform = gio.PubsubIO.Read.topic(topic)
       if (idLabel != null) {
         transform = transform.idLabel(idLabel)
       }
@@ -462,7 +456,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
     if (this.isTest) {
       this.getTestInput(TableRowJsonIO(path))
     } else {
-      wrap(this.applyInternal(GTextIO.Read.from(path).withCoder(TableRowJsonCoder.of())))
+      wrap(this.applyInternal(gio.TextIO.Read.from(path).withCoder(TableRowJsonCoder.of())))
         .setName(path)
     }
   }
@@ -475,7 +469,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
     if (this.isTest) {
       this.getTestInput(TextIO(path))
     } else {
-      wrap(this.applyInternal(GTextIO.Read.from(path))).setName(path)
+      wrap(this.applyInternal(gio.TextIO.Read.from(path))).setName(path)
     }
   }
 
