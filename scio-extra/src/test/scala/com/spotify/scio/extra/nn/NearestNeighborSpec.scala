@@ -27,18 +27,20 @@ object NearestNeighborSpec extends Properties("NearestNeighbor") {
   val dimension = 40
   private def randVec = DenseVector.rand[Double](dimension)
   val vector = Gen.resultOf { _: Int => randVec }
-  val vectors = Gen.nonEmptyListOf(vector).map(_.zipWithIndex.map(kv => ("key" + kv._2, kv._1)))
+  val vecs = Gen.nonEmptyListOf(vector).map(_.zipWithIndex.map(kv => ("key" + kv._2, kv._1)))
   val maxResult = Gen.posNum[Int]
-  val minSimilarity = Gen.chooseNum[Double](-1.0, 1.0)
+  val minSims = Gen.chooseNum[Double](-1.0, 1.0)
 
-  property("MatrixNN") = forAll(vectors, maxResult, minSimilarity) { (vectors, maxResult, minSimilarity) =>
+  property("MatrixNN") = forAll(vecs, maxResult, minSims) { (vectors, maxResult, minSimilarity) =>
     val b = NearestNeighbor.newMatrixBuilder[String, Double](dimension)
     verify(b, vectors, maxResult, minSimilarity, 1.0, 1.0, 1.0)
   }
 
-  property("LSHNN") = forAll(vectors, maxResult, minSimilarity) { (vectors, maxResult, minSimilarity) =>
+  property("LSHNN") = forAll(vecs, maxResult, minSims) { (vectors, maxResult, minSimilarity) =>
     // TODO: figure out stage, bucket settings and coverage expectation
-    val b = NearestNeighbor.newLSHBuilder[String, Double](dimension, 10, max(vectors.size / 100, 10))
+    val stages = 10
+    val buckets = max(vectors.size / 100, 10)
+    val b = NearestNeighbor.newLSHBuilder[String, Double](dimension, stages, buckets)
     verify(b, vectors, maxResult, minSimilarity, 0.5, 0.5, 0.5)
   }
 

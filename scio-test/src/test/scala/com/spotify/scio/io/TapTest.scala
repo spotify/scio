@@ -162,6 +162,8 @@ class TapTest extends PipelineSpec {
     sc.close()
   }
 
-  def tmpDir: File = new File(new File(sys.props("java.io.tmpdir")), "scio-test-" + UUID.randomUUID().toString)
+  def tmpDir: File = new File(
+    new File(sys.props("java.io.tmpdir")),
+    "scio-test-" + UUID.randomUUID().toString)
 
 }

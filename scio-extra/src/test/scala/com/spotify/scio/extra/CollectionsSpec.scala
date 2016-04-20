@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Spotify AB.
+ * Copyright 2016 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,11 @@ import org.scalacheck._
 
 object CollectionsSpec extends Properties("Collections") {
 
-  property("top") = forAll(Arbitrary.arbitrary[List[Int]], Gen.posNum[Int]) { (xs, num) =>
+  val posInts = Gen.posNum[Int]
+  val intLists = Arbitrary.arbitrary[List[Int]]
+  val tupleLists = Arbitrary.arbitrary[List[(String, Int)]]
+
+  property("top") = forAll(intLists, posInts) { (xs, num) =>
     val maxExpected = xs.sorted.reverse.take(num).sorted
     val minExpected = xs.sorted.take(num).sorted
     def verify(actual: Iterable[Int], expected: List[Int]): Boolean =
@@ -41,7 +45,7 @@ object CollectionsSpec extends Properties("Collections") {
     )
   }
 
-  property("topByKey") = forAll(Arbitrary.arbitrary[List[(String, Int)]], Gen.posNum[Int]) { (xs, num) =>
+  property("topByKey") = forAll(tupleLists, posInts) { (xs, num) =>
     val maxExpected = xs.groupBy(_._1).mapValues(_.map(_._2).sorted.reverse.take(num).sorted)
     val minExpected = xs.groupBy(_._1).mapValues(_.map(_._2).sorted.take(num).sorted)
     def verify(actual: Map[String, Iterable[Int]], expected: Map[String, List[Int]]): Boolean =

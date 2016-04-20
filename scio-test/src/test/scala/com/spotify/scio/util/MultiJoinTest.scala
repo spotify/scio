@@ -41,7 +41,8 @@ class MultiJoinTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11L), ("b", 12L), ("b", 13L), ("d", 14L)))
-      val fn = (t: (String, (Iterable[Int], Iterable[Long]))) => (t._1, (t._2._1.toSet, t._2._2.toSet))
+      val fn =
+        (t: (String, (Iterable[Int], Iterable[Long]))) => (t._1, (t._2._1.toSet, t._2._2.toSet))
       val r = MultiJoin.cogroup(p1, p2).map(fn)
       val expected = Seq[(String, (Set[Int], Set[Long]))](
         ("a", (Set(1, 2), Set(11L))),

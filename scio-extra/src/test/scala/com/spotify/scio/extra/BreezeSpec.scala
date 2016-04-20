@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Spotify AB.
+ * Copyright 2016 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ trait BreezeSpec[M[_], T] {
   def sumOption(xs: Iterable[M[T]])(implicit sg: Semigroup[M[T]]): Option[M[T]] = sg.sumOption(xs)
 }
 
-object FVSemigroupSpec extends Properties("FloatVectorSemigroup") with BreezeSpec[DenseVector, Float] {
+object FVSpec extends Properties("FloatVectorSemigroup") with BreezeSpec[DenseVector, Float] {
   val m = Gen.const(dimension).map(DenseVector.rand[Float](_, fRand))
   property("plus") = forAll(m, m) { (x, y) =>
     plus(x, y) == x + y
@@ -47,7 +47,7 @@ object FVSemigroupSpec extends Properties("FloatVectorSemigroup") with BreezeSpe
   }
 }
 
-object DVSemigroupSpec extends Properties("DoubleVectorSemigroup") with BreezeSpec[DenseVector, Double] {
+object DVSpec extends Properties("DoubleVectorSemigroup") with BreezeSpec[DenseVector, Double] {
   val m = Gen.const(dimension).map(DenseVector.rand[Double](_))
   property("plus") = forAll(m, m) { (x, y) =>
     plus(x, y) == x + y
@@ -57,7 +57,7 @@ object DVSemigroupSpec extends Properties("DoubleVectorSemigroup") with BreezeSp
   }
 }
 
-object FMSemigroupSpec extends Properties("FloatMatrixSemigroup") with BreezeSpec[DenseMatrix, Float] {
+object FMSpec extends Properties("FloatMatrixSemigroup") with BreezeSpec[DenseMatrix, Float] {
   val m = Gen.const((rows, cols)).map { case (r, c) => DenseMatrix.rand[Float](r, c, fRand) }
   property("plus") = forAll(m, m) { (x, y) =>
     plus(x, y) == x + y
@@ -67,7 +67,7 @@ object FMSemigroupSpec extends Properties("FloatMatrixSemigroup") with BreezeSpe
   }
 }
 
-object DMSemigroupSpec extends Properties("DoubleMatrixSemigroup") with BreezeSpec[DenseMatrix, Double] {
+object DMSpec extends Properties("DoubleMatrixSemigroup") with BreezeSpec[DenseMatrix, Double] {
   val m = Gen.const((rows, cols)).map { case (r, c) => DenseMatrix.rand[Double](r, c) }
   property("plus") = forAll(m, m) { (x, y) =>
     plus(x, y) == x + y

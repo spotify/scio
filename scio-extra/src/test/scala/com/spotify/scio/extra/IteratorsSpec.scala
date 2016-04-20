@@ -71,14 +71,17 @@ object IteratorsSpec extends Properties("Iterators") {
     period <- Gen.choose(offset + 1L, maxInterval)
   } yield (size, period, offset)
 
-  property("sliding") = Prop.forAll(timeSeries, slidingParams) { case (ts, (size, period, offset)) =>
+  property("sliding") = Prop.forAll(timeSeries, slidingParams) { case (ts, params) =>
+    val (size, period, offset) = params
     val r = ts.iterator.timeSeries(identity).sliding(size, period, offset).toList
+    val lowers = r.map(w => lowerBound(w.head, period, offset)).pairs
+    val uppers = r.map(w => upperBound(w.head, period, offset)).pairs
     all(
       "nonEmpty" |: r.forall(_.nonEmpty),
       "size"     |: r.forall(windowSize(_)< size),
       "bounds"   |: r.forall(isWithinBounds(_, size, offset)),
-      "lower"    |: r.map(w => lowerBound(w.head, period, offset)).pairs.forall(p => p._2 - p._1 >= period),
-      "upper"    |: r.map(w => upperBound(w.head, period, offset)).pairs.forall(p => p._2 - p._1 >= period)
+      "lower"    |: lowers.forall(p => p._2 - p._1 >= period),
+      "upper"    |: uppers.forall(p => p._2 - p._1 >= period)
     )
   }
 

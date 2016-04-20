@@ -30,14 +30,7 @@ import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.cloud.dataflow.sdk.coders.{Coder, TableRowJsonCoder}
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import com.google.cloud.dataflow.sdk.io.bigtable.BigtableIO
-import com.google.cloud.dataflow.sdk.io.{
-  AvroIO => GAvroIO,
-  BigQueryIO => GBigQueryIO,
-  DatastoreIO => GDatastoreIO,
-  PubsubIO => GPubsubIO,
-  TextIO => GTextIO,
-  Write => GWrite
-}
+import com.google.cloud.dataflow.sdk.{io => gio}
 import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
 import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
 import com.google.cloud.dataflow.sdk.transforms._
@@ -842,10 +835,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   private def avroOut(path: String, numShards: Int) =
-    GAvroIO.Write.to(pathWithShards(path)).withNumShards(numShards).withSuffix(".avro")
+    gio.AvroIO.Write.to(pathWithShards(path)).withNumShards(numShards).withSuffix(".avro")
 
   private def textOut(path: String, suffix: String, numShards: Int) =
-    GTextIO.Write.to(pathWithShards(path)).withNumShards(numShards).withSuffix(suffix)
+    gio.TextIO.Write.to(pathWithShards(path)).withNumShards(numShards).withSuffix(suffix)
 
   private def tableRowJsonOut(path: String, numShards: Int) =
     textOut(path, ".json", numShards).withCoder(TableRowJsonCoder.of())
@@ -865,7 +858,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       if (classOf[SpecificRecordBase] isAssignableFrom cls) {
         this.applyInternal(transform.withSchema(cls))
       } else {
-        this.applyInternal(transform.withSchema(schema).asInstanceOf[GAvroIO.Write.Bound[T]])
+        this.applyInternal(transform.withSchema(schema).asInstanceOf[gio.AvroIO.Write.Bound[T]])
       }
       context.makeFuture(AvroTap(path + "/part-*", schema))
     }
@@ -878,7 +871,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                      writeDisposition: WriteDisposition,
                      createDisposition: CreateDisposition)
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
-    val tableSpec = GBigQueryIO.toTableSpec(table)
+    val tableSpec = gio.BigQueryIO.toTableSpec(table)
     if (context.isTest) {
       context.testOut(BigQueryIO(tableSpec))(this.asInstanceOf[SCollection[TableRow]])
 
@@ -888,7 +881,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         saveAsInMemoryTap.asInstanceOf[Future[Tap[TableRow]]]
       }
     } else {
-      var transform = GBigQueryIO.Write.to(table)
+      var transform = gio.BigQueryIO.Write.to(table)
       if (schema != null) transform = transform.withSchema(schema)
       if (createDisposition != null) transform = transform.withCreateDisposition(createDisposition)
       if (writeDisposition != null) transform = transform.withWriteDisposition(writeDisposition)
@@ -911,7 +904,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                      createDisposition: CreateDisposition = null)
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
     saveAsBigQuery(
-      GBigQueryIO.parseTableSpec(tableSpec), schema, writeDisposition, createDisposition)
+      gio.BigQueryIO.parseTableSpec(tableSpec), schema, writeDisposition, createDisposition)
 
   /**
    * Save this SCollection as a Bigtable table.
@@ -943,7 +936,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (context.isTest) {
       context.testOut(DatastoreIO(datasetId))(this.asInstanceOf[SCollection[Entity]])
     } else {
-      this.asInstanceOf[SCollection[Entity]].applyInternal(GDatastoreIO.writeTo(datasetId))
+      this.asInstanceOf[SCollection[Entity]].applyInternal(gio.DatastoreIO.writeTo(datasetId))
     }
     Future.failed(new NotImplementedError("Datastore future not implemented"))
   }
@@ -956,7 +949,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (context.isTest) {
       context.testOut(PubsubIO(topic))(this.asInstanceOf[SCollection[String]])
     } else {
-      this.asInstanceOf[SCollection[String]].applyInternal(GPubsubIO.Write.topic(topic))
+      this.asInstanceOf[SCollection[String]].applyInternal(gio.PubsubIO.Write.topic(topic))
     }
     Future.failed(new NotImplementedError("Pubsub future not implemented"))
   }
@@ -997,7 +990,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   private[scio] def saveAsInMemoryTap: Future[Tap[T]] = {
     val tap = new InMemoryTap[T]
-    this.applyInternal(GWrite.to(new InMemoryDataFlowSink[T](tap.id)))
+    this.applyInternal(gio.Write.to(new InMemoryDataFlowSink[T](tap.id)))
     context.makeFuture(tap)
   }
 

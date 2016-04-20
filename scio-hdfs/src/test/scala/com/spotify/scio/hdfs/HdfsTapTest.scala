@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Spotify AB.
+ * Copyright 2016 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,6 +156,8 @@ class HdfsTapTest extends PipelineSpec {
     sc.close()
   }
 
-  def tmpDir: File = new File(new File(sys.props("java.io.tmpdir")), "scio-test-" + UUID.randomUUID().toString)
+  def tmpDir: File = new File(
+    new File(sys.props("java.io.tmpdir")),
+    "scio-test-" + UUID.randomUUID().toString)
 
 }
