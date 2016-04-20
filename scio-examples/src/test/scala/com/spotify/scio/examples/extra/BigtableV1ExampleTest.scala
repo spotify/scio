@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Spotify AB.
+ * Copyright 2016 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.bigtable._
+import com.spotify.scio.{bigtable => bt}
 import com.spotify.scio.testing._
 import org.apache.hadoop.hbase.client.{Put, Result}
 import org.apache.hadoop.hbase.{CellUtil, HConstants, KeyValue}
@@ -62,7 +63,7 @@ class BigtableV1ExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.BigtableV1WriteExample.type]
       .args(bigtableOptions :+ "--input=in.txt": _*)
       .input(TextIO("in.txt"), textIn)
-      .output(com.spotify.scio.bigtable.BigtableOutput[Put]("my-project", "my-cluster", "us-east1-a", "my-table")) {
+      .output(bt.BigtableOutput[Put]("my-project", "my-cluster", "us-east1-a", "my-table")) {
         _.map(comparablePut) should containInAnyOrder (expectedPuts.map(comparablePut))
       }
       .run()
@@ -81,7 +82,7 @@ class BigtableV1ExampleTest extends PipelineSpec {
   "BigtableV1ReadExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.BigtableV1ReadExample.type]
       .args(bigtableOptions :+ "--output=out.txt": _*)
-      .input(com.spotify.scio.bigtable.BigtableInput("my-project", "my-cluster", "us-east1-a", "my-table"), resultIn)
+      .input(bt.BigtableInput("my-project", "my-cluster", "us-east1-a", "my-table"), resultIn)
       .output(TextIO("out.txt"))(_ should containInAnyOrder (expectedText))
       .run()
   }
@@ -89,8 +90,10 @@ class BigtableV1ExampleTest extends PipelineSpec {
   val kingLear = Seq("a b", "a b c")
   val othello = Seq("b c ", "b c d")
   val expectedMultiple = Seq(
-    "kinglear" -> Iterable("a" -> 2L, "b" -> 2L, "c" -> 1L).map(kv => BigtableV1Example.put(kv._1, kv._2)),
-    "othello" -> Iterable("b" -> 2L, "c" -> 2L, "d" -> 1L).map(kv => BigtableV1Example.put(kv._1, kv._2))
+    "kinglear" ->
+      Iterable("a" -> 2L, "b" -> 2L, "c" -> 1L).map(kv => BigtableV1Example.put(kv._1, kv._2)),
+    "othello" ->
+      Iterable("b" -> 2L, "c" -> 2L, "d" -> 1L).map(kv => BigtableV1Example.put(kv._1, kv._2))
   )
 
   "BigtableV1MultipleWriteExample" should "work" in {
@@ -98,8 +101,9 @@ class BigtableV1ExampleTest extends PipelineSpec {
       .args(bigtableOptions ++ Seq("--kinglear=k.txt", "--othello=o.txt"): _*)
       .input(TextIO("k.txt"), kingLear)
       .input(TextIO("o.txt"), othello)
-      .output(MultipleBigtableOutput[Put]("my-project", "my-cluster", "us-east1-a")) {
-        _.mapValues(_.map(comparablePut).toSet) should containInAnyOrder (expectedMultiple.map(kv => (kv._1, kv._2.map(comparablePut).toSet)))
+      .output(bt.MultipleBigtableOutput[Put]("my-project", "my-cluster", "us-east1-a")) {
+        _.mapValues(_.map(comparablePut).toSet) should containInAnyOrder (
+          expectedMultiple.map(kv => (kv._1, kv._2.map(comparablePut).toSet)))
       }
       .run()
   }
