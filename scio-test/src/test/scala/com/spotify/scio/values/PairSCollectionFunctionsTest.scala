@@ -45,7 +45,8 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11L), ("b", 12L), ("b", 13L), ("d", 14L)))
-      def fn = (t: (String, (Iterable[Int], Iterable[Long]))) => (t._1, (t._2._1.toSet, t._2._2.toSet))
+      val fn = (t: (String, (Iterable[Int], Iterable[Long]))) =>
+        (t._1, (t._2._1.toSet, t._2._2.toSet))
       val r1 = p1.cogroup(p2).map(fn)
       val r2 = p1.groupWith(p2).map(fn)
       val expected = Seq[(String, (Set[Int], Set[Long]))](
@@ -161,7 +162,8 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
       val p = p1.rightOuterJoin(p2)
-      p should containInAnyOrder (Seq(("a", (Some(1), 11)), ("b", (Some(2), 12)), ("d", (None, 14))))
+      p should
+        containInAnyOrder (Seq(("a", (Some(1), 11)), ("b", (Some(2), 12)), ("d", (None, 14))))
     }
   }
 
@@ -247,7 +249,10 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
 
   it should "support groupByKey" in {
     runWithContext { sc =>
-      val p = sc.parallelize(Seq(("a", 1), ("a", 10), ("b", 2), ("b", 20))).groupByKey.mapValues(_.toSet)
+      val p = sc
+        .parallelize(Seq(("a", 1), ("a", 10), ("b", 2), ("b", 20)))
+        .groupByKey
+        .mapValues(_.toSet)
       p should containInAnyOrder (Seq(("a", Set(1, 10)), ("b", Set(2, 20))))
     }
   }
@@ -282,14 +287,18 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
 
   it should "support reduceByKey()" in {
     runWithContext { sc =>
-      val p = sc.parallelize(Seq(("a", 1), ("b", 1), ("b", 2), ("c", 1), ("c", 2), ("c", 3))).reduceByKey(_ + _)
+      val p = sc
+        .parallelize(Seq(("a", 1), ("b", 1), ("b", 2), ("c", 1), ("c", 2), ("c", 3)))
+        .reduceByKey(_ + _)
       p should containInAnyOrder (Seq(("a", 1), ("b", 3), ("c", 6)))
     }
   }
 
   it should "support sampleByKey()" in {
     runWithContext { sc =>
-      val p = sc.parallelize(Seq(("a", 1), ("b", 2), ("b", 2), ("c", 3), ("c", 3), ("c", 3))).sampleByKey(1)
+      val p = sc
+        .parallelize(Seq(("a", 1), ("b", 2), ("b", 2), ("c", 3), ("c", 3), ("c", 3)))
+        .sampleByKey(1)
       p should containInAnyOrder (Seq(("a", iterable(1)), ("b", iterable(2)), ("c", iterable(3))))
     }
   }
@@ -297,7 +306,9 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
   it should "support sampleByKey() with replacement" in {
     import RandomSamplerUtils._
     for (fraction <- List(0.05, 0.2, 1.0)) {
-      val sample = runWithData(keyedPopulation)(_.sampleByKey(true, Map("a" -> fraction, "b" -> fraction)))
+      val sample = runWithData(keyedPopulation) {
+        _.sampleByKey(true, Map("a" -> fraction, "b" -> fraction))
+      }
       sample.groupBy(_._1).values.foreach { s =>
         (s.size.toDouble / populationSize) should be (fraction +- 0.05)
         s.toSet.size should be < sample.size
@@ -308,7 +319,9 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
   it should "support sampleByKey() without replacement" in {
     import RandomSamplerUtils._
     for (fraction <- List(0.05, 0.2, 1.0)) {
-      val sample = runWithData(keyedPopulation)(_.sampleByKey(false, Map("a" -> fraction, "b" -> fraction)))
+      val sample = runWithData(keyedPopulation) {
+        _.sampleByKey(false, Map("a" -> fraction, "b" -> fraction))
+      }
       sample.groupBy(_._1).values.foreach { s =>
         (s.size.toDouble / populationSize) should be (fraction +- 0.05)
         s.toSet.size should be < sample.size
@@ -327,7 +340,9 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
 
   it should "support sumByKey()" in {
     runWithContext { sc =>
-      val p = sc.parallelize(List(("a", 1), ("b", 2), ("b", 2)) ++ (1 to 100).map(("c", _))).sumByKey
+      val p = sc
+        .parallelize(List(("a", 1), ("b", 2), ("b", 2)) ++ (1 to 100).map(("c", _)))
+        .sumByKey
       p should containInAnyOrder (Seq(("a", 1), ("b", 4), ("c", 5050)))
     }
   }
@@ -344,8 +359,10 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p = sc.parallelize(Seq(("a", 1), ("b", 11), ("b", 12), ("c", 21), ("c", 22), ("c", 23)))
       val r1 = p.topByKey(1)
       val r2 = p.topByKey(1)(Ordering.by(-_))
-      r1 should containInAnyOrder (Seq(("a", iterable(1)), ("b", iterable(12)), ("c", iterable(23))))
-      r2 should containInAnyOrder (Seq(("a", iterable(1)), ("b", iterable(11)), ("c", iterable(21))))
+      r1 should
+        containInAnyOrder (Seq(("a", iterable(1)), ("b", iterable(12)), ("c", iterable(23))))
+      r2 should
+        containInAnyOrder (Seq(("a", iterable(1)), ("b", iterable(11)), ("c", iterable(21))))
     }
   }
 
@@ -370,7 +387,8 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
       val p = p1.hashJoin(p2)
-      p should containInAnyOrder (Seq(("a", (1, 11)), ("a", (2, 11)), ("b", (3, 12)), ("b", (3, 13))))
+      p should
+        containInAnyOrder (Seq(("a", (1, 11)), ("a", (2, 11)), ("b", (3, 12)), ("b", (3, 13))))
     }
   }
 
