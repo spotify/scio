@@ -96,21 +96,26 @@ class HistogramTest extends PipelineSpec {
 
   it should "work mixed range with four uneven buckets" in {
     runWithContext { sc =>
-      val p = sc.parallelize(Seq(-0.01, 0.0, 1.0, 2.0, 3.0, 5.0, 6.0, 11.1, 12.0, 199.0, 200.0, 200.1))
-      p.histogram(Array(0.0, 5.0, 11.0, 12.0, 200.0)) should containSingleValue (Array(4L, 2L, 1L, 3L))
+      val p = sc.parallelize(
+        Seq(-0.01, 0.0, 1.0, 2.0, 3.0, 5.0, 6.0, 11.1, 12.0, 199.0, 200.0, 200.1))
+      p.histogram(Array(0.0, 5.0, 11.0, 12.0, 200.0)) should
+        containSingleValue (Array(4L, 2L, 1L, 3L))
     }
   }
 
   it should "work mixed range with four uneven buckets and NaN" in {
     runWithContext { sc =>
-      val p = sc.parallelize(Seq(-0.01, 0.0, 1.0, 2.0, 3.0, 5.0, 6.0, 11.1, 12.0, 199.0, 200.0, 200.1, Double.NaN))
-      p.histogram(Array(0.0, 5.0, 11.0, 12.0, 200.0)) should containSingleValue (Array(4L, 2L, 1L, 3L))
+      val p = sc.parallelize(
+        Seq(-0.01, 0.0, 1.0, 2.0, 3.0, 5.0, 6.0, 11.1, 12.0, 199.0, 200.0, 200.1, Double.NaN))
+      p.histogram(Array(0.0, 5.0, 11.0, 12.0, 200.0)) should
+        containSingleValue (Array(4L, 2L, 1L, 3L))
     }
   }
 
   it should "work mixed range with four uneven buckets, NaN and NaN range" in {
     runWithContext { sc =>
-      val p = sc.parallelize(Seq(-0.01, 0.0, 1.0, 2.0, 3.0, 5.0, 6.0, 11.1, 12.0, 199.0, 200.0, 200.1, Double.NaN))
+      val p = sc.parallelize(
+        Seq(-0.01, 0.0, 1.0, 2.0, 3.0, 5.0, 6.0, 11.1, 12.0, 199.0, 200.0, 200.1, Double.NaN))
       val buckets = Array(0.0, 5.0, 11.0, 12.0, 200.0, Double.NaN)
       p.histogram(buckets) should containSingleValue (Array(4L, 2L, 1L, 2L, 3L))
     }
@@ -192,7 +197,8 @@ class HistogramTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1.0, 2.0))
       val (buckets, histogram) = p.histogram(10)
-      buckets should containSingleValue (Array(1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0))
+      buckets should
+        containSingleValue (Array(1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0))
       histogram should containSingleValue (Array(1L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 1L))
     }
   }
@@ -201,7 +207,8 @@ class HistogramTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize((6 to 99).map(_.toDouble))
       val (buckets, histogram) = p.histogram(8)
-      buckets should containSingleValue (Array(6.0, 17.625, 29.25, 40.875, 52.5, 64.125, 75.75, 87.375, 99.0))
+      buckets should
+        containSingleValue (Array(6.0, 17.625, 29.25, 40.875, 52.5, 64.125, 75.75, 87.375, 99.0))
       histogram should containSingleValue (Array(12L, 12L, 11L, 12L, 12L, 11L, 12L, 12L))
     }
   }
@@ -223,7 +230,8 @@ class HistogramTest extends PipelineSpec {
       histogram.map(_(0)) should containSingleValue (1L)
       histogram.map(_(1)) should containSingleValue (1L)
       histogram.map(_.last) should containSingleValue (1L)
-      histogram.map(h => (2 to h.length - 2).forall(i => h(i) == 0)) should containSingleValue (true)
+      histogram.map(h => (2 to h.length - 2).forall(i => h(i) == 0)) should
+        containSingleValue (true)
     }
   }
 
