@@ -17,9 +17,7 @@
 
 package com.spotify.scio
 
-import com.google.cloud.bigtable.dataflow.{
-  CloudBigtableIO, CloudBigtableScanConfiguration, CloudBigtableTableConfiguration
-}
+import com.google.cloud.bigtable.{dataflow => bt}
 import com.google.cloud.dataflow.sdk.io.Read
 import com.google.cloud.dataflow.sdk.values.KV
 import com.spotify.scio.io.Tap
@@ -50,19 +48,20 @@ package object bigtable {
                  tableId: String,
                  scan: Scan = null): SCollection[Result] = self.pipelineOp {
       val _scan: Scan = if (scan != null) scan else new Scan()
-      val config = new CloudBigtableScanConfiguration(projectId, zoneId, clusterId, tableId, _scan)
+      val config = new bt.CloudBigtableScanConfiguration(
+        projectId, zoneId, clusterId, tableId, _scan)
       this.bigTable(config)
     }
 
     /** Get an SCollection for a Bigtable table. */
-    def bigTable(config: CloudBigtableScanConfiguration): SCollection[Result] = self.pipelineOp {
+    def bigTable(config: bt.CloudBigtableScanConfiguration): SCollection[Result] = self.pipelineOp {
       if (self.isTest) {
         val input = BigtableInput(
           config.getProjectId, config.getClusterId, config.getZoneId, config.getTableId)
         self.getTestInput[Result](input)
       } else {
         self
-          .wrap(self.applyInternal(Read.from(CloudBigtableIO.read(config))))
+          .wrap(self.applyInternal(Read.from(bt.CloudBigtableIO.read(config))))
           .setName(
             s"${config.getProjectId} ${config.getClusterId} " +
             s"${config.getZoneId} ${config.getTableId}")
@@ -84,21 +83,21 @@ package object bigtable {
                        tableId: String,
                        additionalConfiguration: Map[String, String] = Map.empty)
                       (implicit ev: T <:< Mutation): Future[Tap[Result]] = {
-      val config = new CloudBigtableTableConfiguration(
+      val config = new bt.CloudBigtableTableConfiguration(
         projectId, zoneId, clusterId, tableId, additionalConfiguration.asJava)
       this.saveAsBigtable(config)
     }
 
     /** Save this SCollection as a Bigtable table. Note that elements must be of type Mutation. */
-    def saveAsBigtable(config: CloudBigtableTableConfiguration)
+    def saveAsBigtable(config: bt.CloudBigtableTableConfiguration)
                       (implicit ev: T <:< Mutation): Future[Tap[Result]] = {
       if (self.context.isTest) {
         val output = BigtableOutput(
           config.getProjectId, config.getClusterId, config.getZoneId, config.getTableId)
         self.context.testOut(output)(self)
       } else {
-        CloudBigtableIO.initializeForWrite(self.context.pipeline)
-        val sink = CloudBigtableIO.writeToTable(config)
+        bt.CloudBigtableIO.initializeForWrite(self.context.pipeline)
+        val sink = bt.CloudBigtableIO.writeToTable(config)
         self.asInstanceOf[SCollection[Mutation]].applyInternal(sink)
       }
       Future.failed(new NotImplementedError("Bigtable future not implemented"))
@@ -126,7 +125,7 @@ package object bigtable {
                                additionalConfiguration: Map[String, String] = Map.empty)
                               (implicit ev: T <:< Mutation)
     : Future[Tap[(String, Iterable[Result])]] = {
-      val config = new CloudBigtableTableConfiguration(
+      val config = new bt.CloudBigtableTableConfiguration(
         projectId, zoneId, clusterId, null, additionalConfiguration.asJava)
       this.saveAsMultipleBigtable(config)
     }
@@ -135,7 +134,7 @@ package object bigtable {
      * Save this SCollection as multiple Bigtable tables. Note that value elements must be of type
      * Mutation.
      */
-    def saveAsMultipleBigtable(config: CloudBigtableTableConfiguration)
+    def saveAsMultipleBigtable(config: bt.CloudBigtableTableConfiguration)
                               (implicit ev: T <:< Mutation)
     : Future[Tap[(String, Iterable[Result])]] = {
       if (self.context.isTest) {
@@ -143,8 +142,8 @@ package object bigtable {
           config.getProjectId, config.getClusterId, config.getZoneId)
         self.context.testOut(output.asInstanceOf[TestIO[(String, Iterable[T])]])(self)
       } else {
-        CloudBigtableIO.writeToMultipleTables(config)
-        val transform = CloudBigtableIO.writeToMultipleTables(config)
+        bt.CloudBigtableIO.writeToMultipleTables(config)
+        val transform = bt.CloudBigtableIO.writeToMultipleTables(config)
         self
           .map(kv => KV.of(kv._1, kv._2.asJava.asInstanceOf[java.lang.Iterable[Mutation]]))
           .applyInternal(transform)

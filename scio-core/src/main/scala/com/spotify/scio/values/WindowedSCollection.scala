@@ -18,9 +18,7 @@
 package com.spotify.scio.values
 
 import com.google.cloud.dataflow.sdk.transforms.windowing.Window.ClosingBehavior
-import com.google.cloud.dataflow.sdk.transforms.windowing.{
-  BoundedWindow, OutputTimeFn, PaneInfo, TriggerBuilder
-}
+import com.google.cloud.dataflow.sdk.transforms.windowing._
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values.PCollection
 import com.spotify.scio.ScioContext
