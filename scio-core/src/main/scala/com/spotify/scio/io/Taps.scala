@@ -20,10 +20,6 @@ package com.spotify.scio.io
 import com.google.api.client.util.{BackOffUtils, Sleeper, BackOff}
 import com.google.api.services.bigquery.model.TableReference
 import com.google.cloud.dataflow.sdk.io.BigQueryIO
-import com.google.cloud.dataflow.sdk.util.{
-  AttemptBoundedExponentialBackOff,
-  IntervalBoundedExponentialBackOff
-}
 import com.spotify.scio.bigquery.{BigQueryClient, BigQueryUtil, TableRow}
 import org.apache.avro.Schema
 import org.slf4j.{LoggerFactory, Logger}
@@ -195,6 +191,7 @@ object Taps extends {
    * - `taps.polling.maximum_attempts`: maximum number of attempts, unlimited if <= 0. Default is 0.
    */
   def apply(): Taps = {
+    import com.google.cloud.dataflow.sdk.util
     getPropOrElse(ALGORITHM_KEY, ALGORITHM_DEFAULT) match {
       case "immediate" => new ImmediateTaps
       case "polling" =>
@@ -204,10 +201,10 @@ object Taps extends {
           getPropOrElse(POLLING_INITIAL_INTERVAL_KEY, POLLING_INITIAL_INTERVAL_DEFAULT).toLong
         val backOff = if (maxAttempts <= 0) {
           val maxInterval =
-            getPropOrElse(POLLING_MAXIMUM_INTERVAL_KEY, POLLING_MAXIMUM_INTERVAL_DEFAULT).toInt
-          new IntervalBoundedExponentialBackOff(maxInterval, initInterval)
+            getPropOrElse(POLLING_MAXIMUM_INTERVAL_KEY, POLLING_MAXIMUM_INTERVAL_DEFAULT).toLong
+          new util.IntervalBoundedExponentialBackOff(maxInterval, initInterval)
         } else {
-          new AttemptBoundedExponentialBackOff(maxAttempts, initInterval)
+          new util.AttemptBoundedExponentialBackOff(maxAttempts, initInterval)
         }
         new PollingTaps(backOff)
       case t => throw new IllegalArgumentException(s"Unsupported Taps $t")

@@ -20,12 +20,7 @@ package com.spotify
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.spotify.scio.io.Tap
-import com.spotify.scio.values.{
-  AccumulatorType,
-  DoubleAccumulatorType,
-  IntAccumulatorType,
-  LongAccumulatorType
-}
+import com.spotify.scio.values.AccumulatorType
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -60,9 +55,10 @@ package object scio {
   /** Alias for WindowingStrategy AccumulationMode.DISCARDING_FIRED_PANES. */
   val DISCARDING_FIRED_PANES = AccumulationMode.DISCARDING_FIRED_PANES
 
-  implicit val intAccumulatorType: AccumulatorType[Int] = new IntAccumulatorType
-  implicit val longAccumulatorType: AccumulatorType[Long] = new LongAccumulatorType
-  implicit val doubleAccumulatorType: AccumulatorType[Double] = new DoubleAccumulatorType
+  import com.spotify.scio.values
+  implicit val intAccumulatorType: AccumulatorType[Int] = new values.IntAccumulatorType
+  implicit val longAccumulatorType: AccumulatorType[Long] = new values.LongAccumulatorType
+  implicit val doubleAccumulatorType: AccumulatorType[Double] = new values.DoubleAccumulatorType
 
   /** Wait for Tap to be available and get Tap reference from Future. */
   implicit class WaitableFutureTap[T](self: Future[Tap[T]]) {

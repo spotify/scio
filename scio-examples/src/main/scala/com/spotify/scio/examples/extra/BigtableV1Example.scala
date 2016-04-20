@@ -17,15 +17,12 @@
 
 package com.spotify.scio.examples.extra
 
-import com.google.cloud.bigtable.dataflow.{
-  CloudBigtableScanConfiguration,
-  CloudBigtableTableConfiguration
-}
+import com.google.cloud.bigtable.{dataflow => bt}
 import com.spotify.scio._
 import com.spotify.scio.bigtable._
 import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.values.SCollection
-import org.apache.hadoop.hbase.client.{Result, Put}
+import org.apache.hadoop.hbase.client.{Put, Result}
 
 /*
  * Bigtable V1 examples.
@@ -60,7 +57,8 @@ runMain
 object BigtableV1WriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val config = CloudBigtableTableConfiguration.fromCBTOptions(Bigtable.parseOptions(cmdlineArgs))
+    val btOptions = Bigtable.parseOptions(cmdlineArgs)
+    val config = bt.CloudBigtableTableConfiguration.fromCBTOptions(btOptions )
 
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
@@ -89,7 +87,8 @@ runMain
 object BigtableV1ReadExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val config = CloudBigtableScanConfiguration.fromCBTOptions(Bigtable.parseOptions(cmdlineArgs))
+    val btOptions = Bigtable.parseOptions(cmdlineArgs)
+    val config = bt.CloudBigtableScanConfiguration.fromCBTOptions(btOptions)
 
     sc.bigTable(config)
       .map(BigtableV1Example.result)
@@ -116,7 +115,8 @@ runMain
 object BigtableV1MultipleWriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val config = CloudBigtableTableConfiguration.fromCBTOptions(Bigtable.parseOptions(cmdlineArgs))
+    val btOptions = Bigtable.parseOptions(cmdlineArgs)
+    val config = bt.CloudBigtableTableConfiguration.fromCBTOptions(btOptions)
 
     def wordCount(name: String, in: SCollection[String]): SCollection[(String, Iterable[Put])] =
       in.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))

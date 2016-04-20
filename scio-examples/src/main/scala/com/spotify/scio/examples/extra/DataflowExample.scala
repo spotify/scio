@@ -21,9 +21,7 @@ import com.google.cloud.dataflow.sdk.{Pipeline, PipelineResult}
 import com.google.cloud.dataflow.sdk.coders.{AvroCoder, DoubleCoder, KvCoder, StringUtf8Coder}
 import com.google.cloud.dataflow.sdk.io.PubsubIO
 import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
-import com.google.cloud.dataflow.sdk.transforms.windowing.{
-  AfterProcessingTime, AfterWatermark, FixedWindows, Window
-}
+import com.google.cloud.dataflow.sdk.transforms.windowing._
 import com.google.cloud.dataflow.sdk.transforms.{PTransform, Sum}
 import com.google.cloud.dataflow.sdk.values._
 import com.spotify.scio._
