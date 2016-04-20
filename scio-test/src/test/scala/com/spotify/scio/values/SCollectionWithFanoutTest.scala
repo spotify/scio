@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Spotify AB.
+ * Copyright 2016 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,8 @@ class SCollectionWithFanoutTest extends PipelineSpec {
 
   it should "support sum()" in {
     runWithContext { sc =>
-      def sum[T: ClassTag : Semigroup](elems: T*) = sc.parallelize(elems).withFanout(10).sum
+      def sum[T: ClassTag : Semigroup](elems: T*): SCollection[T] =
+        sc.parallelize(elems).withFanout(10).sum
       sum(1, 2, 3) should containSingleValue (6)
       sum(1L, 2L, 3L) should containSingleValue (6L)
       sum(1F, 2F, 3F) should containSingleValue (6F)
