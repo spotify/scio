@@ -23,16 +23,21 @@ import com.spotify.scio.testing._
 
 class JoinExamplesTest extends PipelineSpec {
 
-  def eventRow(countryCode: String, sqlDate: String, actor1Name: String, sourceUrl: String) = TableRow(
-    "ActionGeo_CountryCode" -> countryCode,
-    "SQLDATE" -> sqlDate,
-    "Actor1Name" -> actor1Name,
-    "SOURCEURL" -> sourceUrl)
+  private def eventRow(countryCode: String, sqlDate: String, actor1Name: String,
+                       sourceUrl: String) =
+    TableRow(
+      "ActionGeo_CountryCode" -> countryCode,
+      "SQLDATE" -> sqlDate,
+      "Actor1Name" -> actor1Name,
+      "SOURCEURL" -> sourceUrl)
 
-  def countryRow(fipscc: String, humanName: String) = TableRow("FIPSCC" -> fipscc, "HumanName" -> humanName)
+  private def countryRow(fipscc: String, humanName: String) =
+    TableRow("FIPSCC" -> fipscc, "HumanName" -> humanName)
 
-  def result(countryCode: String, countryName: String, date: String, actor1: String, url: String) =
-    s"Country code: $countryCode, Country name: $countryName, Event info: Date: $date, Actor1: $actor1, url: $url"
+  private def result(countryCode: String, countryName: String,
+                     date: String, actor1: String, url: String) =
+    s"Country code: $countryCode, Country name: $countryName, " +
+      s"Event info: Date: $date, Actor1: $actor1, url: $url"
 
   val eventData = Seq(
     ("US", "2015-01-01", "Alice", "URL1"),
@@ -41,7 +46,8 @@ class JoinExamplesTest extends PipelineSpec {
     ("SE", "2015-01-04", "Dan", "URL4")
   ).map((eventRow _).tupled)
 
-  val countryData = Seq(("US", "United States"), ("UK", "United Kingdom")).map((countryRow _).tupled)
+  val countryData = Seq(("US", "United States"), ("UK", "United Kingdom"))
+    .map((countryRow _).tupled)
 
   val expected = Seq(
     ("US", "United States", "2015-01-01", "Alice", "URL1"),
