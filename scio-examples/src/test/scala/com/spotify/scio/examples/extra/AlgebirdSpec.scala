@@ -111,7 +111,23 @@ object AlgebirdSpec extends Properties("Algebird") {
       xs.sum(colSg) == expected
     }
 
-  def error(x: Double, y: Double): Double = math.abs(x - y) / math.max(x, y)
+  def mean(xs: List[Double]): Double = xs.sum / xs.size
+
+  def stddev(xs: List[Double]): Double =
+    if (xs.size > 1) {
+      val mean = xs.sum / xs.size
+      math.sqrt(xs.map(x => math.pow(x - mean, 2)).sum / xs.size)
+    } else {
+      Double.NaN
+    }
+
+  // x or y could be NaN, Infinity or NegativeInfinity
+  def error(x: Double, y: Double): Double =
+    if (x.isWhole() && y.isWhole()) {
+      math.abs(x - y) / math.max(x, y)
+    } else {
+      0.0
+    }
 
   property("aggregate of tuples with custom Aggregator") =
     forAll { xs: SColl[(Double, Double, Double, Double)] =>
@@ -129,13 +145,33 @@ object AlgebirdSpec extends Properties("Algebird") {
         xs.internal.map(_._1).sum,
         xs.internal.map(_._2).max,
         xs.internal.map(_._3).min,
-        xs.internal.map(_._4).sum / xs.internal.size)
+        mean(xs.internal.map(_._4)))
       val actual = xs.aggregate(colAgg)
       actual._1 == expected._1 &&
         actual._2 == expected._2 &&
         actual._3 == expected._3  &&
         error(actual._4, expected._4) <= 1e-10  // double arithmetic error
     }
+
+  property("aggregate of Double with multiple aggregators") = forAll { xs: SColl[Double] =>
+    // Apply max, min, and moments aggregator on the same Double
+    val maxOp = Aggregator.max[Double]
+    val minOp = Aggregator.min[Double]
+    val momentsOp = Moments.aggregator
+    val colAgg = MultiAggregator(maxOp, minOp, momentsOp)
+      .andThenPresent { case (max, min, moments) =>
+        // Present mean and stddev in Moments
+        (max, min, moments.mean, moments.stddev)
+      }
+
+    val expected = (xs.internal.max, xs.internal.min, mean(xs.internal), stddev(xs.internal))
+    val actual = xs.aggregate(colAgg)
+    actual._1 == expected._1 &&
+      actual._2 == expected._2 &&
+      // double arithmetic error
+      error(actual._3, expected._3) <= 1e-10 &&
+      error(actual._4, expected._4) <= 1e-10
+  }
 
   case class Record(i: Int, d: Double, s: Set[String])
 
