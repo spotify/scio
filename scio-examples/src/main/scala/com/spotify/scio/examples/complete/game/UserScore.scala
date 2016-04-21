@@ -23,6 +23,14 @@ import com.spotify.scio.experimental._
 
 import scala.util.Try
 
+/**
+ * Example of running:
+ *
+ * {{{
+ * runMain com.spotify.scio.examples.complete.game.UserScore
+ *   --output=<table-spec>
+ * }}}
+ */
 object UserScore {
 
   case class GameActionInfo(user: String, team: String, score: Int, timestamp: Long)

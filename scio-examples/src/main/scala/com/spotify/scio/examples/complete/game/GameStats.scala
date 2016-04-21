@@ -27,6 +27,21 @@ import com.spotify.scio.values.WindowOptions
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTimeZone, Duration, Instant}
 
+/**
+ * Note - this pipeline requires PubSub topic to be present.
+ * Testing PubSub topic doc: [[com.google.cloud.dataflow.examples.complete.game.injector.Injector]]
+ *
+ * {{{
+ * runMain com.spotify.scio.examples.complete.game.GameStats
+ *   --topic=projects/<project-id>/topics/<topic-id>
+ *   --output=<table-spec>
+ *   --project=<project-id>
+ *   --zone=<zone-id>
+ *   --stagingLocation=<bucket-url>
+ *   --runner=BlockingDataflowPipelineRunner
+ *   --streaming
+ * }}}
+ */
 object GameStats {
 
   @BigQueryType.toTable
