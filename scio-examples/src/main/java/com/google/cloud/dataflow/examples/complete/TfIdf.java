@@ -231,7 +231,7 @@ public class TfIdf {
                   URI uri = c.element().getKey();
                   String line = c.element().getValue();
                   for (String word : line.split("\\W+")) {
-                    // Log INFO messages when the word "love" is found.
+                    // Log INFO messages when the word “love” is found.
                     if (word.toLowerCase().equals("love")) {
                       LOG.info("Found {}", word.toLowerCase());
                     }

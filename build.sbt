@@ -45,6 +45,8 @@ val scalaMacrosVersion = "2.1.0"
 val scalaTestVersion = "2.2.6"
 val slf4jVersion = "1.7.18"
 
+val java8 = sys.props("java.version").startsWith("1.8.")
+
 val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
 
@@ -291,7 +293,16 @@ lazy val scioExamples: Project = Project(
     addCompilerPlugin(paradiseDependency)
   )
 ).settings(
-  sources in doc in Compile := List()
+  sources in doc in Compile := List(),
+  javacOptions := {
+    if (java8)
+      Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked")
+    else
+      javacOptions.value
+  },
+  unmanagedSourceDirectories in Compile ++= {
+    if (java8) Seq(baseDirectory.value / "src/main/java8") else Nil
+  }
 ).dependsOn(
   scioCore,
   scioBigtable,
