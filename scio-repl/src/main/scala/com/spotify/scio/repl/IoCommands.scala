@@ -45,7 +45,7 @@ class IoCommands(options: PipelineOptions) {
   private val BINARY = "application/octet-stream"
 
   // TODO: figure out how to support HDFS without messing up dependencies
-  private val gcsUtil: GcsUtil = new GcsUtilFactory().create(options)
+  private lazy val gcsUtil: GcsUtil = new GcsUtilFactory().create(options)
 
   // =======================================================================
   // Read operations
