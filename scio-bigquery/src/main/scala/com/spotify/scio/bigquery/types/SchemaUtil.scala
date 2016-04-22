@@ -25,63 +25,63 @@ import scala.collection.JavaConverters._
 
 private object SchemaUtil {
 
-  def toPrettyString(schema: TableSchema, indent: Int = 0): String = {
-    getFields(schema.getFields, indent, 0, "(", ")")
+  def toPrettyString(schema: TableSchema, name: String, indent: Int): String = {
+    getCaseClass(schema.getFields, name, indent)
   }
 
-  private def getRawType(tfs: TableFieldSchema,
-                         indent: Int = 0, level: Int = 0,
-                         before: String = "", after: String = ""): String = tfs.getType match {
-    case "INTEGER" => "Int"
-    case "FLOAT" => "Double"
-    case "BOOLEAN" => "Boolean"
-    case "STRING" => "String"
-    case "TIMESTAMP" => "Instant"
-    case "RECORD" =>
-      getFields(tfs.getFields, indent, level + 1, before + "(", ")" + after)
-    case t => throw new IllegalArgumentException(s"Type: $t not supported")
+  private def getRawType(tfs: TableFieldSchema, indent: Int): (String, Seq[String]) = {
+    val name = tfs.getType match {
+      case "INTEGER" => "Int"
+      case "FLOAT" => "Double"
+      case "BOOLEAN" => "Boolean"
+      case "STRING" => "String"
+      case "TIMESTAMP" => "Instant"
+      case "RECORD" => NameProvider.getUniqueName(tfs.getName)
+      case t => throw new IllegalArgumentException(s"Type: $t not supported")
+    }
+    if (tfs.getType == "RECORD") {
+      val nested = getCaseClass(tfs.getFields, name, indent)
+      (name, Seq(nested))
+    } else {
+      (name, Seq.empty)
+    }
   }
 
   private def getFieldType(tfs: TableFieldSchema,
-                           indent: Int = 0, level: Int = 0,
-                           before: String = "", after: String = ""): String = {
-    val t = getRawType(tfs, indent, level)
-    tfs.getMode match {
-      case "NULLABLE" | null => "Option[" + t + "]"
-      case "REQUIRED" => t
-      case "REPEATED" => "List[" + t + "]"
+                           indent: Int): (String, Seq[String]) = {
+    val (rawType, nested) = getRawType(tfs, indent)
+    val fieldType = tfs.getMode match {
+      case "NULLABLE" | null => "Option[" + rawType + "]"
+      case "REQUIRED" => rawType
+      case "REPEATED" => "List[" + rawType + "]"
     }
+    (fieldType, nested)
   }
 
-  private def getFields(fields: JList[TableFieldSchema],
-                        indent: Int = 0, level: Int = 0,
-                        before: String = "", after: String = ""): String = {
-    val lines = fields.asScala
-      .map(f => f.getName + ": " + getFieldType(f, indent, level, before, after))
-    indentLines(lines, indent, level + 1, before, after)
-  }
-
-  private def indentLines(lines: Seq[String],
-                          indent: Int = 0, level: Int = 0,
-                          before: String = "", after: String = ""): String = {
-    val sb = StringBuilder.newBuilder
-    if (before.nonEmpty) {
-      sb.append(before)
-      if (indent > 0) {
-        sb.append("\n")
+  private def getCaseClass(fields: JList[TableFieldSchema], name: String,
+                           indent: Int): String = {
+    val xs = fields.asScala
+      .map { f =>
+        val (fieldType, nested) = getFieldType(f, indent)
+        (f.getName + ": " + fieldType, nested)
       }
+    val lines = xs.map(_._1)
+    val nested = xs.flatMap(_._2)
+
+    val sb = StringBuilder.newBuilder
+    sb.append(s"case class $name(")
+    if (indent > 0) {
+      sb.append("\n")
     }
     val body = if (indent > 0) {
-      val w = " " * indent * level
+      val w = " " * indent
       lines.map(w + _).mkString(",\n")
     } else {
       lines.mkString(", ")
     }
     sb.append(body)
-    if (after.nonEmpty) {
-      sb.append(after)
-    }
-    sb.toString()
+    sb.append(")")
+    (sb.toString() +: nested).mkString("\n")
   }
 
 }

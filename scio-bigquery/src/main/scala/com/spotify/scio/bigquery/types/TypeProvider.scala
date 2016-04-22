@@ -230,7 +230,7 @@ private[types] object NameProvider {
    * field names.
    */
   def getUniqueName(name: String): String = m.synchronized {
-    val cName = camelCase(name) + '$'
+    val cName = toPascalCase(name) + '$'
     if (m.contains(cName)) {
       m(cName) += 1
       cName + m(cName)
@@ -240,6 +240,7 @@ private[types] object NameProvider {
     }
   }
 
-  private def camelCase(s: String): String =
+  private def toPascalCase(s: String): String =
     s.split('_').filter(_.nonEmpty).map(t => t(0).toUpper + t.drop(1).toLowerCase).mkString("")
+
 }

@@ -58,7 +58,8 @@ object BigQueryType {
     def toTableRow: (T => TableRow)
 
     /** Get a pretty string representation of the schema. */
-    def toPrettyString(indent: Int = 0): String = SchemaUtil.toPrettyString(schema, indent)
+    def toPrettyString(indent: Int = 0)(implicit ct: ClassTag[T]): String =
+      SchemaUtil.toPrettyString(schema, ct.runtimeClass.getName, indent)
   }
 
   /**
