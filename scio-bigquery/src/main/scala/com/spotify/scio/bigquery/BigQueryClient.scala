@@ -86,26 +86,27 @@ private[scio] trait QueryJob {
 
 /** A simple BigQuery client. */
 class BigQueryClient private (private val projectId: String,
-                              auth: Option[Either[Credential, String]]) { self =>
+                              credential: Credential = null) { self =>
 
-  private val SCOPES = List(BigqueryScopes.BIGQUERY).asJava
+  def this(projectId: String, secretFile: File) =
+    this(
+      projectId,
+      GoogleCredential
+        .fromStream(new FileInputStream(secretFile))
+        .createScoped(BigQueryClient.SCOPES))
 
   private lazy val bigquery: Bigquery = {
-    val credential = auth match {
-      case Some(Left(c)) => c
-      case Some(Right(s)) =>
-        GoogleCredential.fromStream(new FileInputStream(new File(s))).createScoped(SCOPES)
-      case None => GoogleCredential.getApplicationDefault.createScoped(SCOPES)
-    }
+    val c = Option(credential).getOrElse(
+      GoogleCredential.getApplicationDefault.createScoped(BigQueryClient.SCOPES))
     val requestInitializer = new HttpRequestInitializer {
       override def initialize(request: HttpRequest): Unit = {
         BigQueryClient.connectTimeoutMs.foreach(request.setConnectTimeout)
         BigQueryClient.readTimeoutMs.foreach(request.setReadTimeout)
         // Credential also implements HttpRequestInitializer
-        credential.initialize(request)
+        c.initialize(request)
       }
     }
-    new Bigquery.Builder(new NetHttpTransport, new JacksonFactory, credential)
+    new Bigquery.Builder(new NetHttpTransport, new JacksonFactory, c)
       .setHttpRequestInitializer(requestInitializer)
       .setApplicationName("scio")
       .build()
@@ -470,18 +471,12 @@ object BigQueryClient {
   /** Description for staging dataset. */
   val STAGING_DATASET_DESCRIPTION: String = "Staging dataset for temporary tables"
 
+  private val SCOPES = List(BigqueryScopes.BIGQUERY).asJava
+
   private var instance: BigQueryClient = null
 
-  /** Get the default BigQueryClient instance. */
-  def defaultInstance(): BigQueryClient = {
-    if (instance == null) {
-      instance = BigQueryClient()
-    }
-    instance
-  }
-
   /**
-   * Create a new BigQueryClient instance.
+   * Get the default BigQueryClient instance.
    *
    * Project must be set via `bigquery.project` system property.
    * An optional JSON secret file can be set via `bigquery.secret`.
@@ -496,32 +491,35 @@ object BigQueryClient {
    * sbt -Dbigquery.project=my-project -Dbigquery.secret=/path/to/secret.json
    * }}}
    */
-  def apply(): BigQueryClient = {
-    val project = sys.props(PROJECT_KEY)
-    if (project == null) {
-      throw new RuntimeException(
-        s"Property $PROJECT_KEY not set. Use -D$PROJECT_KEY=<BILLING_PROJECT>")
+  def defaultInstance(): BigQueryClient = {
+    if (instance == null) {
+      val project = sys.props(PROJECT_KEY)
+      if (project == null) {
+        throw new RuntimeException(
+          s"Property $PROJECT_KEY not set. Use -D$PROJECT_KEY=<BILLING_PROJECT>")
+      }
+      instance = BigQueryClient(project)
     }
-    BigQueryClient(project)
+    instance
   }
 
   /** Create a new BigQueryClient instance with the given project. */
   def apply(project: String): BigQueryClient = {
     val secret = sys.props(SECRET_KEY)
     if (secret == null) {
-      new BigQueryClient(project, None)
+      new BigQueryClient(project)
     } else {
-      BigQueryClient(project, secret)
+      BigQueryClient(project, new File(secret))
     }
   }
 
   /** Create a new BigQueryClient instance with the given project and credential. */
   def apply(project: String, credential: Credential): BigQueryClient =
-    new BigQueryClient(project, Some(Left(credential)))
+    new BigQueryClient(project, credential)
 
   /** Create a new BigQueryClient instance with the given project and secret file. */
-  def apply(project: String, secret: String): BigQueryClient =
-    new BigQueryClient(project, Some(Right(secret)))
+  def apply(project: String, secretFile: File): BigQueryClient =
+    new BigQueryClient(project, secretFile)
 
   private def stagingDataset: String =
     getPropOrElse(
