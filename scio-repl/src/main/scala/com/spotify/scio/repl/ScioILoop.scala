@@ -203,8 +203,8 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
       """.stripMargin)
 
   private def createBigQueryClient(): IR.Result = {
-    def create(): IR.Result = {
-      val r = intp.interpret("val bq = BigQueryClient()")
+    def create(projectId: String): IR.Result = {
+      val r = intp.interpret(s"""val bq = BigQueryClient("$projectId")""")
       echo(s"BigQuery client available as 'bq'")
       r
     }
@@ -217,14 +217,14 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
         case Some(project_id) =>
           echo(s"Using '$project_id' as your BigQuery project.")
           sys.props(key) = project_id
-          create()
+          create(project_id)
         case None =>
           echo(s"System property '$key' not set. BigQueryClient is not available.")
           echo(s"Set it with '-D$key=<PROJECT-NAME>' command line argument.")
           IR.Success
       }
     } else {
-      create()
+      create(sys.props(key))
     }
   }
 
