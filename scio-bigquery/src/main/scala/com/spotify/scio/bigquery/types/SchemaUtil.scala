@@ -26,6 +26,7 @@ import scala.collection.JavaConverters._
 private object SchemaUtil {
 
   def toPrettyString(schema: TableSchema, name: String, indent: Int): String = {
+    "@BigQueryType.toTable\n" +
     getCaseClass(schema.getFields, name, indent)
   }
 

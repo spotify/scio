@@ -77,7 +77,12 @@ package object experimental {
         val query = if (newSource != null) newSource else bqt.query.get
         self.bigQuerySelect(query).map(bqt.fromTableRow)
       } else {
-        throw new IllegalArgumentException(s"Missing table or query field in companion")
+        if (newSource != null) {
+          self.bigQuerySelect(newSource).map(bqt.fromTableRow)
+        } else {
+          throw new IllegalArgumentException(
+            s"Missing table or query field in companion object and newSource == null")
+        }
       }
     }
 
@@ -176,7 +181,12 @@ package object experimental {
         val query = if (newSource != null) newSource else bqt.query.get
         self.getQueryRows(query).map(bqt.fromTableRow)
       } else {
-        throw new IllegalArgumentException(s"Missing table or query field in companion")
+        if (newSource != null) {
+          self.getQueryRows(newSource).map(bqt.fromTableRow)
+        } else {
+          throw new IllegalArgumentException(
+            s"Missing table or query field in companion object and newSource == null")
+        }
       }
     }
 
