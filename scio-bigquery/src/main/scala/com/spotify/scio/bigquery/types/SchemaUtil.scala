@@ -23,8 +23,10 @@ import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 
 import scala.collection.JavaConverters._
 
-private object SchemaUtil {
+/** Utility for BigQuery schemas. */
+object SchemaUtil {
 
+  /** Convert schema to case class definitions. */
   def toPrettyString(schema: TableSchema, name: String, indent: Int): String = {
     "@BigQueryType.toTable\n" +
     getCaseClass(schema.getFields, name, indent)
