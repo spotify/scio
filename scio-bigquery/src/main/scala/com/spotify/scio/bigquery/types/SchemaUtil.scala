@@ -34,7 +34,7 @@ object SchemaUtil {
 
   private def getRawType(tfs: TableFieldSchema, indent: Int): (String, Seq[String]) = {
     val name = tfs.getType match {
-      case "INTEGER" => "Int"
+      case "INTEGER" => "Long"
       case "FLOAT" => "Double"
       case "BOOLEAN" => "Boolean"
       case "STRING" => "String"
