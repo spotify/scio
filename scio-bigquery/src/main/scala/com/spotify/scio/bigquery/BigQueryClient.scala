@@ -132,23 +132,10 @@ class BigQueryClient private (private val projectId: String,
   private val PRIORITY = if (inConsole) "INTERACTIVE" else "BATCH"
 
   /** Get schema for a query without executing it. */
-  def getQuerySchema(sqlQuery: String): TableSchema = withCacheKey(sqlQuery) {
-    prepareStagingDataset()
-
-    // Create temporary table view and get schema
-    val table = temporaryTable(TABLE_PREFIX)
-    logger.info(s"Creating temporary view ${BigQueryIO.toTableSpec(table)}")
-    val view = new ViewDefinition().setQuery(sqlQuery)
-    val viewTable = new Table().setView(view).setTableReference(table)
-    val schema = bigquery
-      .tables().insert(table.getProjectId, table.getDatasetId, viewTable)
-      .execute().getSchema
-
-    // Delete temporary table
-    logger.info(s"Deleting temporary view ${BigQueryIO.toTableSpec(table)}")
-    bigquery.tables().delete(table.getProjectId, table.getDatasetId, table.getTableId).execute()
-
-    schema
+  def getQuerySchema(sqlQuery: String,
+                     flattenResults: Boolean = false): TableSchema = withCacheKey(sqlQuery) {
+    val job = makeQuery(sqlQuery, null, flattenResults, dryRun = true)
+    job.getStatistics.getQuery.getSchema
   }
 
   /** Get rows from a query. */
@@ -284,7 +271,7 @@ class BigQueryClient private (private val projectId: String,
           override val table: TableReference = temp
         }
       } else {
-        val temp = temporaryTable(TABLE_PREFIX)
+        val temp = temporaryTable()
         logger.info(s"Cache invalid for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
@@ -292,7 +279,7 @@ class BigQueryClient private (private val projectId: String,
       }
     } catch {
       case NonFatal(_) =>
-        val temp = temporaryTable(TABLE_PREFIX)
+        val temp = temporaryTable()
         logger.info(s"Cache miss for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
@@ -323,9 +310,9 @@ class BigQueryClient private (private val projectId: String,
     }
   }
 
-  private def temporaryTable(prefix: String): TableReference = {
+  private def temporaryTable(): TableReference = {
     val now = Instant.now().toString(TIME_FORMATTER)
-    val tableId = prefix + "_" + now + "_" + Random.nextInt(Int.MaxValue)
+    val tableId = TABLE_PREFIX + "_" + now + "_" + Random.nextInt(Int.MaxValue)
     new TableReference()
       .setProjectId(projectId)
       .setDatasetId(BigQueryClient.stagingDataset)
@@ -344,22 +331,33 @@ class BigQueryClient private (private val projectId: String,
     override lazy val jobReference: Option[JobReference] = {
       prepareStagingDataset()
       logger.info(s"Executing query: $sqlQuery")
-      val queryConfig: JobConfigurationQuery = new JobConfigurationQuery()
-        .setQuery(sqlQuery)
-        .setAllowLargeResults(true)
-        .setFlattenResults(flattenResults)
-        .setPriority(PRIORITY)
-        .setCreateDisposition("CREATE_IF_NEEDED")
-        .setWriteDisposition("WRITE_EMPTY")
-        .setDestinationTable(destinationTable)
-
-      val jobConfig = new JobConfiguration().setQuery(queryConfig)
-      val jobReference = createJobReference(projectId, JOB_ID_PREFIX)
-      val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
-      Some(bigquery.jobs().insert(projectId, job).execute().getJobReference)
+      Some(makeQuery(sqlQuery, destinationTable, flattenResults, dryRun = false).getJobReference)
     }
     override val query: String = sqlQuery
     override val table: TableReference = destinationTable
+  }
+
+  private def makeQuery(sqlQuery: String,
+                        destinationTable: TableReference,
+                        flattenResults: Boolean,
+                        dryRun: Boolean): Job = {
+    var queryConfig: JobConfigurationQuery = new JobConfigurationQuery()
+      .setQuery(sqlQuery)
+      .setFlattenResults(flattenResults)
+      .setPriority(PRIORITY)
+      .setUseLegacySql(false)
+      .setCreateDisposition("CREATE_IF_NEEDED")
+      .setWriteDisposition("WRITE_EMPTY")
+    if (destinationTable != null) {
+      queryConfig = queryConfig
+        .setAllowLargeResults(true)
+        .setDestinationTable(destinationTable)
+    }
+
+    val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(dryRun)
+    val jobReference = createJobReference(projectId, JOB_ID_PREFIX)
+    val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
+    bigquery.jobs().insert(projectId, job).execute()
   }
 
   private def logJobStatistics(sqlQuery: String, job: Job): Unit = {
