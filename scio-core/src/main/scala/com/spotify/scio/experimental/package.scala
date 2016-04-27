@@ -50,7 +50,7 @@ package object experimental {
      * Get a typed SCollection for a BigQuery SELECT query or table.
      *
      * Note that `T` must be annotated with [[BigQueryType.fromSchema]],
-     * [[BigQueryType.fromTable]], or [[BigQueryType.fromQuery]].
+     * [[BigQueryType.fromTable]], [[BigQueryType.fromQuery]], or [[BigQueryType.toTable]].
      *
      * By default the source (table or query) specified in the annotation will be used, but it can
      * be overridden with the `newSource` parameter. For example:
@@ -64,21 +64,33 @@ package object experimental {
      *
      * // Read from [myproject:samples.gsod] instead.
      * sc.typedBigQuery[Row]("myproject:samples.gsod")
+     *
+     * // Read from a query instead.
+     * sc.typedBigQuery[Row]("SELECT * FROM [publicdata:samples.gsod] LIMIT 1000")
      * }}}
      */
     def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null)
     : SCollection[T] = {
       val bqt = BigQueryType[T]
-
-      if (bqt.isTable) {
-        val table = if (newSource != null) BigQueryIO.parseTableSpec(newSource) else bqt.table.get
-        self.bigQueryTable(table).map(bqt.fromTableRow)
-      } else if (bqt.isQuery) {
-        val query = if (newSource != null) newSource else bqt.query.get
-        self.bigQuerySelect(query).map(bqt.fromTableRow)
+      val rows = if (newSource == null) {
+        // newSource is missing, T's companion object must have either table or query
+        if (bqt.isTable) {
+          self.bigQueryTable(bqt.table.get)
+        } else if (bqt.isQuery) {
+          self.bigQuerySelect(bqt.query.get)
+        } else {
+          throw new IllegalArgumentException(s"Missing table or query field in companion object")
+        }
       } else {
-        throw new IllegalArgumentException(s"Missing table or query field in companion")
+        // newSource can be either table or query
+        val table = scala.util.Try(BigQueryIO.parseTableSpec(newSource)).toOption
+        if (table.isDefined) {
+          self.bigQueryTable(table.get)
+        } else {
+          self.bigQuerySelect(newSource)
+        }
       }
+      rows.map(bqt.fromTableRow)
     }
 
   }
@@ -150,7 +162,7 @@ package object experimental {
      * Get a typed iterator for a BigQuery SELECT query or table.
      *
      * Note that `T` must be annotated with [[BigQueryType.fromSchema]],
-     * [[BigQueryType.fromTable]], or [[BigQueryType.fromQuery]].
+     * [[BigQueryType.fromTable]], [[BigQueryType.fromQuery]], or [[BigQueryType.toTable]].
      *
      * By default the source (table or query) specified in the annotation will be used, but it can
      * be overridden with the `newSource` parameter. For example:
@@ -164,20 +176,33 @@ package object experimental {
      *
      * // Read from [myproject:samples.gsod] instead.
      * bq.getTypedRows[Row]("myproject:samples.gsod")
+     *
+     * // Read from a query instead.
+     * sc.getTypedRows[Row]("SELECT * FROM [publicdata:samples.gsod] LIMIT 1000")
      * }}}
      */
     def getTypedRows[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null)
     : Iterator[T] = {
       val bqt = BigQueryType[T]
-      if (bqt.isTable) {
-        val table = if (newSource != null) BigQueryIO.parseTableSpec(newSource) else bqt.table.get
-        self.getTableRows(table).map(bqt.fromTableRow)
-      } else if (bqt.isQuery) {
-        val query = if (newSource != null) newSource else bqt.query.get
-        self.getQueryRows(query).map(bqt.fromTableRow)
+      val rows = if (newSource == null) {
+        // newSource is missing, T's companion object must have either table or query
+        if (bqt.isTable) {
+          self.getTableRows(bqt.table.get)
+        } else if (bqt.isQuery) {
+          self.getQueryRows(bqt.query.get)
+        } else {
+          throw new IllegalArgumentException(s"Missing table or query field in companion object")
+        }
       } else {
-        throw new IllegalArgumentException(s"Missing table or query field in companion")
+        // newSource can be either table or query
+        val table = scala.util.Try(BigQueryIO.parseTableSpec(newSource)).toOption
+        if (table.isDefined) {
+          self.getTableRows(table.get)
+        } else {
+          self.getQueryRows(newSource)
+        }
       }
+      rows.map(bqt.fromTableRow)
     }
 
     /**

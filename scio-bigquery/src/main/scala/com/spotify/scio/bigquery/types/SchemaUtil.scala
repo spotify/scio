@@ -23,15 +23,18 @@ import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 
 import scala.collection.JavaConverters._
 
-private object SchemaUtil {
+/** Utility for BigQuery schemas. */
+object SchemaUtil {
 
+  /** Convert schema to case class definitions. */
   def toPrettyString(schema: TableSchema, name: String, indent: Int): String = {
+    "@BigQueryType.toTable\n" +
     getCaseClass(schema.getFields, name, indent)
   }
 
   private def getRawType(tfs: TableFieldSchema, indent: Int): (String, Seq[String]) = {
     val name = tfs.getType match {
-      case "INTEGER" => "Int"
+      case "INTEGER" => "Long"
       case "FLOAT" => "Double"
       case "BOOLEAN" => "Boolean"
       case "STRING" => "String"
