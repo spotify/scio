@@ -76,8 +76,9 @@ private[types] object TypeProvider {
     val r = annottees.map(_.tree) match {
       case List(q"case class $name(..$fields) { ..$body }") =>
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SType)}.schemaOf[$name]"
+        val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${name.toString}, indent)"
         q"""${caseClass(c)(name, fields, body)}
-            ${companion(c)(name, Nil, Seq(defSchema), fields.asInstanceOf[Seq[Tree]].size)}
+            ${companion(c)(name, Nil, Seq(defSchema, defToPrettyString), fields.asInstanceOf[Seq[Tree]].size)}
         """
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
@@ -139,8 +140,10 @@ private[types] object TypeProvider {
     val r = annottees.map(_.tree) match {
       case List(q"class $name") =>
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SUtil)}.parseSchema(${schema.toString})"
+        val s = name.toString()
+        val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${name.toString}, indent)"
         q"""${caseClass(c)(name, fields, Nil)}
-            ${companion(c)(name, traits, Seq(defSchema) ++ overrides, fields.size)}
+            ${companion(c)(name, traits, Seq(defSchema, defToPrettyString) ++ overrides, fields.size)}
             ..$records
         """
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
