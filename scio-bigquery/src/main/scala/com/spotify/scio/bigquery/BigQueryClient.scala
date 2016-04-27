@@ -17,7 +17,7 @@
 
 package com.spotify.scio.bigquery
 
-import java.io.{File, FileInputStream, StringReader}
+import java.io.{File, FileInputStream, InputStream, StringReader}
 import java.util.UUID
 import java.util.regex.Pattern
 
@@ -70,12 +70,10 @@ private[scio] trait QueryJob {
 class BigQueryClient private (private val projectId: String,
                               credential: Credential = null) { self =>
 
-  def this(projectId: String, secretFile: File) =
-    this(
-      projectId,
-      GoogleCredential
-        .fromStream(new FileInputStream(secretFile))
-        .createScoped(BigQueryClient.SCOPES))
+  def this(projectId: String, secretStream: InputStream) =
+    this(projectId, GoogleCredential.fromStream(secretStream).createScoped(BigQueryClient.SCOPES))
+
+  def this(projectId: String, secretFile: File) = this(projectId, new FileInputStream(secretFile))
 
   private lazy val bigquery: Bigquery = {
     val c = Option(credential).getOrElse(
