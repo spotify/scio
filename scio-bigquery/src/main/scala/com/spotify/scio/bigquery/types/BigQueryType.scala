@@ -188,7 +188,7 @@ object BigQueryType {
  *
  * This decouples generated fields and methods from macro expansion to keep core macro free.
  */
-class BigQueryType[T: TypeTag] {
+class BigQueryType[T: ClassTag : TypeTag] {
 
   // TODO: scala 2.11
   // private val bases = typeOf[T].companion.baseClasses
@@ -197,6 +197,8 @@ class BigQueryType[T: TypeTag] {
     //.reflectModule(typeOf[T].typeSymbol.companion.asModule)
     .reflectModule(typeOf[T].typeSymbol.companionSymbol.asModule)
     .instance
+
+  private val cls = implicitly[ClassTag[T]].runtimeClass
 
   private def getField(key: String) = instance.getClass.getMethod(key).invoke(instance)
 
@@ -224,5 +226,8 @@ class BigQueryType[T: TypeTag] {
 
   /** TableSchema of `T`. */
   def schema: TableSchema = BigQueryType.schemaOf[T]
+
+  def flattenResults: Boolean =
+    Option(cls.getAnnotation(classOf[BigQueryOption.flattenResults])).exists(_.value)
 
 }
