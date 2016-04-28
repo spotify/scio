@@ -25,6 +25,7 @@ import com.spotify.scio.bigquery.{BigQueryClient, BigQueryUtil}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Map => MMap}
+import scala.reflect.ClassTag
 import scala.reflect.macros._
 
 // scalastyle:off line.size.limit
@@ -60,8 +61,9 @@ private[types] object TypeProvider {
     import c.universe._
 
     val args = extractStrings(c, "Missing query")
+    val opts = extractOptions(c)(annottees)
     val query = formatString(args)
-    val schema = bigquery.getQuerySchema(query)
+    val schema = bigquery.getQuerySchema(query, opts.flattenResults)
     val traits = Seq(tq"${p(c, SType)}.HasQuery")
     val overrides = Seq(q"override def query: _root_.java.lang.String = ${args.head}")
 
@@ -138,11 +140,17 @@ private[types] object TypeProvider {
     val (fields, records) = toFields(schema.getFields)
 
     val r = annottees.map(_.tree) match {
-      case List(q"class $name") =>
+      case List(q"$modifiers class $name") =>
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SUtil)}.parseSchema(${schema.toString})"
         val s = name.toString()
         val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${name.toString}, indent)"
-        q"""${caseClass(c)(name, fields, Nil)}
+
+        // Quasiquotes doesn't support modifiers, copy manually so that annotations are passed on
+        val clsDef = q"""${caseClass(c)(name, fields, Nil)}""".asInstanceOf[ClassDef]
+        val mods = clsDef.mods.mapAnnotations(_ ++ modifiers.asInstanceOf[Modifiers].annotations)
+        val clsDefMods = ClassDef(mods, clsDef.name, clsDef.tparams, clsDef.impl)
+
+        q"""$clsDefMods
             ${companion(c)(name, traits, Seq(defSchema, defToPrettyString) ++ overrides, fields.size)}
             ..$records
         """
@@ -183,6 +191,41 @@ private[types] object TypeProvider {
   }
 
   private def formatString(xs: List[String]): String = if (xs.tail.isEmpty) xs.head else xs.head.format(xs.tail: _*)
+
+  case class BigQueryOptions(flattenResults: Boolean = false)
+
+  // TODO: scala 2.11
+  // private def extractOptions(c: blackbox.Context)(annottees: c.Expr[Any]*) = {
+  private def extractOptions(c: Context)(annottees: Seq[c.Expr[Any]]): BigQueryOptions = {
+    import c.universe._
+
+    def value[T <: java.lang.annotation.Annotation : ClassTag](tree: Seq[Tree]): String = {
+      val cls = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
+      val default = cls.getMethod("value").getDefaultValue.toString
+      tree match {
+        case Seq(q"value = $v") => v.toString()
+        case Seq(q"$v") => v.toString()
+        case Nil => default
+        case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
+      }
+    }
+
+    var opts = BigQueryOptions()
+    annottees.map(_.tree) match {
+      case List(q"$modifiers class $name") =>
+        modifiers.asInstanceOf[Modifiers].annotations foreach { a =>
+          val Apply(name, params) = a
+          name match {
+            case q"new BigQueryOption.flattenResults" =>
+              val v = value[BigQueryOption.flattenResults](params).toBoolean
+              opts = opts.copy(flattenResults = v)
+            case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
+          }
+        }
+      case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
+    }
+    opts
+  }
 
   /** Generate a case class. */
   // TODO: scala 2.11
