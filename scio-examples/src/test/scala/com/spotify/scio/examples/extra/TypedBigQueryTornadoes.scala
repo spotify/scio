@@ -51,7 +51,7 @@ object TypedBigQueryTornadoes {
     // Get input from BigQuery and convert elements from TableRow to Row.
     // SELECT query from the original annotation is used by default.
     sc.typedBigQuery[Row]()
-      .flatMap(r => if (r.tornado.getOrElse(false)) Seq(r.month) else Nil)
+      .flatMap(r => if (r.tornado.getOrElse(false)) Seq(r.month.get) else Nil)
       .countByValue
       .map(kv => Result(kv._1, kv._2))
       // Convert elements from Result to TableRow and save output to BigQuery.
