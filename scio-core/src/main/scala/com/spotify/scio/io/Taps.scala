@@ -64,7 +64,7 @@ trait Taps {
   private def isPathDone(path: String): Boolean = FileStorage(path).isDone
 
   private def isQueryDone(sqlQuery: String): Boolean =
-    BigQueryUtil.extractTables(sqlQuery).forall(tableExists)
+    BigQueryClient.defaultInstance().getQueryTables(sqlQuery).forall(tableExists)
 
   private def tableExists(table: TableReference): Boolean =
     Try(BigQueryClient.defaultInstance().getTableSchema(table)).isSuccess
