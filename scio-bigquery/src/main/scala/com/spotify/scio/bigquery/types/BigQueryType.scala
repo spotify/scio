@@ -127,14 +127,14 @@ object BigQueryType {
    * literal of the SELECT query with optional `.stripMargin` at the end. For example:
    *
    * {{{
-   * @BigQueryType.fromQuery("SELECT field1, field2 FROM [project:dataset.table]")
+   * @BigQueryType.fromQuery("SELECT field1, field2 FROM `project.dataset.table`")
    * }}}
    *
    * String formatting syntax can be used in `query` when additional `args` are supplied. For
    * example:
    *
    * {{{
-   * @BigQueryType.fromQuery("SELECT field1, field2 FROM [%s]", "table")
+   * @BigQueryType.fromQuery("SELECT field1, field2 FROM `%s`", "table")
    * }}}
    *
    * Also generate a companion object with convenience methods.
