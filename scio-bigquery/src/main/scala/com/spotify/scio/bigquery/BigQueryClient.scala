@@ -513,7 +513,8 @@ object BigQueryClient {
   private def stagingDatasetLocation: String =
     getPropOrElse(STAGING_DATASET_LOCATION_KEY, STAGING_DATASET_LOCATION_DEFAULT).toUpperCase
 
-  private def cacheDirectory: String = getPropOrElse(CACHE_DIRECTORY_KEY, CACHE_DIRECTORY_DEFAULT)
+  private def cacheDirectory: String =
+    getPropOrElse(CACHE_DIRECTORY_KEY, CACHE_DIRECTORY_DEFAULT) + "/" + scioVersion
 
   private def connectTimeoutMs: Option[Int] = Option(sys.props(CONNECT_TIMEOUT_MS_KEY)).map(_.toInt)
 
@@ -522,6 +523,13 @@ object BigQueryClient {
   private def getPropOrElse(key: String, default: String): String = {
     val value = sys.props(key)
     if (value == null) default else value
+  }
+
+  /** Get Scio version from scio-bigquery/src/main/resources/version.sbt. */
+  private def scioVersion: String = {
+    val stream = this.getClass.getResourceAsStream("/version.sbt")
+    val line = scala.io.Source.fromInputStream(stream).getLines().next()
+    """version in .+"([^"]+)"""".r.findFirstMatchIn(line).get.group(1)
   }
 
 }
