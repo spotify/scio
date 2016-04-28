@@ -66,7 +66,7 @@ package object experimental {
      * sc.typedBigQuery[Row]("myproject:samples.gsod")
      *
      * // Read from a query instead.
-     * sc.typedBigQuery[Row]("SELECT * FROM [publicdata:samples.gsod] LIMIT 1000")
+     * sc.typedBigQuery[Row]("SELECT * FROM `publicdata.samples.gsod` LIMIT 1000")
      * }}}
      */
     def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null)
@@ -178,7 +178,7 @@ package object experimental {
      * bq.getTypedRows[Row]("myproject:samples.gsod")
      *
      * // Read from a query instead.
-     * sc.getTypedRows[Row]("SELECT * FROM [publicdata:samples.gsod] LIMIT 1000")
+     * sc.getTypedRows[Row]("SELECT * FROM `publicdata.samples.gsod` LIMIT 1000")
      * }}}
      */
     def getTypedRows[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null)
