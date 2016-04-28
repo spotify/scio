@@ -41,15 +41,4 @@ class BigQueryUtilTest extends FlatSpec with Matchers {
     BigQueryUtil.parseSchema(schema.toString) should equal (schema)
   }
 
-  "extractTables" should "work" in {
-    val t1 = BigQueryIO.parseTableSpec("my-project:dataset_a.table_a")
-    val t2 = BigQueryIO.parseTableSpec("dataset_b.table_b")
-    BigQueryUtil.extractTables(
-      """
-        |SELECT col1, col2
-        |FROM [my-project:dataset_a.table_a] JOIN [dataset_b.table_b]
-        |GROUP BY col1
-      """.stripMargin) should equal (Set(t1, t2))
-  }
-
 }
