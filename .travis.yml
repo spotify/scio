@@ -9,13 +9,11 @@ cache:
     - $HOME/.sbt/boot
     - $HOME/.ivy2/cache
 
-before_script:
-  - ./scripts/travis.sh
 script:
   - if [[ "${TRAVIS_SCALA_VERSION%.*}" == "2.10" ]]; then
-      sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean test;
+      sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=scio-bigquery -Dbigquery.secret=scio-bigquery/src/test/resources/scio-bigquery-f519b8001e82.json clean test;
     else
-      sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean scalastyle coverage test coverageReport coverageAggregate;
+      sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=scio-bigquery -Dbigquery.secret=scio-bigquery/src/test/resources/scio-bigquery-f519b8001e82.json clean scalastyle coverage test coverageReport coverageAggregate;
     fi
 
   # Test REPL:
