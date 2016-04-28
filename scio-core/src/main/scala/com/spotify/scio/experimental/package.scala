@@ -77,7 +77,7 @@ package object experimental {
         if (bqt.isTable) {
           self.bigQueryTable(bqt.table.get)
         } else if (bqt.isQuery) {
-          self.bigQuerySelect(bqt.query.get)
+          self.bigQuerySelect(bqt.query.get, bqt.flattenResults)
         } else {
           throw new IllegalArgumentException(s"Missing table or query field in companion object")
         }
@@ -87,7 +87,7 @@ package object experimental {
         if (table.isDefined) {
           self.bigQueryTable(table.get)
         } else {
-          self.bigQuerySelect(newSource)
+          self.bigQuerySelect(newSource, bqt.flattenResults)
         }
       }
       rows.map(bqt.fromTableRow)
@@ -189,7 +189,7 @@ package object experimental {
         if (bqt.isTable) {
           self.getTableRows(bqt.table.get)
         } else if (bqt.isQuery) {
-          self.getQueryRows(bqt.query.get)
+          self.getQueryRows(bqt.query.get, bqt.flattenResults)
         } else {
           throw new IllegalArgumentException(s"Missing table or query field in companion object")
         }
@@ -199,7 +199,7 @@ package object experimental {
         if (table.isDefined) {
           self.getTableRows(table.get)
         } else {
-          self.getQueryRows(newSource)
+          self.getQueryRows(newSource, bqt.flattenResults)
         }
       }
       rows.map(bqt.fromTableRow)
