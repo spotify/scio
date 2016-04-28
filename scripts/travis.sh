@@ -2,14 +2,14 @@
 
 # Cached schema for BigQueryType.fromQuery in TypedBigQueryTornadoes
 mkdir -p .bigquery
-cat << EOF > .bigquery/cbe0eb9cf213ecff2092964f3859ee81.schema.json
+cat << EOF > .bigquery/19c90907ad1509de8cd1707e0270a87c.schema.json
 {
   "fields" : [ {
     "mode" : "NULLABLE",
     "name" : "tornado",
     "type" : "BOOLEAN"
   }, {
-    "mode" : "REQUIRED",
+    "mode" : "NULLABLE",
     "name" : "month",
     "type" : "INTEGER"
   } ]
