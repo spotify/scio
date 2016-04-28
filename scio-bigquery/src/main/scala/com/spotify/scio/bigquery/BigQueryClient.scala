@@ -95,6 +95,10 @@ class BigQueryClient private (private val projectId: String,
 
   private val TABLE_PREFIX = "scio_query"
   private val JOB_ID_PREFIX = "scio_query"
+  private val STAGING_DATASET_PREFIX = "scio_bigquery_staging_"
+  private val STAGING_DATASET_TABLE_EXPIRATION_MS: Long = 86400000L
+  private val STAGING_DATASET_DESCRIPTION: String = "Scio staging dataset for temporary tables"
+
   private val TIME_FORMATTER = DateTimeFormat.forPattern("yyyyMMddHHmmss")
   private val PERIOD_FORMATTER = new PeriodFormatterBuilder()
     .appendHours().appendSuffix("h")
@@ -255,7 +259,7 @@ class BigQueryClient private (private val projectId: String,
           override val table: TableReference = temp
         }
       } else {
-        val temp = temporaryTable()
+        val temp = temporaryTable(sqlQuery, flattenResults)
         logger.info(s"Cache invalid for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
@@ -263,7 +267,7 @@ class BigQueryClient private (private val projectId: String,
       }
     } catch {
       case NonFatal(_) =>
-        val temp = temporaryTable()
+        val temp = temporaryTable(sqlQuery, flattenResults)
         logger.info(s"Cache miss for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
@@ -271,9 +275,21 @@ class BigQueryClient private (private val projectId: String,
     }
   }
 
-  private def prepareStagingDataset(): Unit = {
+  private def getQueryLocation(sqlQuery: String, flattenResults: Boolean): String = {
+    val locations = getQueryTables(sqlQuery, flattenResults)
+      .map(t => (t.getProjectId, t.getDatasetId))
+      .toSet[(String, String)]
+      .map(kv => bigquery.datasets().get(kv._1, kv._2).execute().getLocation)
+    if (locations.size == 1) {
+      locations.head.toLowerCase
+    } else {
+      throw new IllegalArgumentException("Invalid query locations: " + locations.mkString(", "))
+    }
+  }
+
+  private def prepareStagingDataset(location: String): String = {
     // Create staging dataset if it does not already exist
-    val datasetId = BigQueryClient.stagingDataset
+    val datasetId = STAGING_DATASET_PREFIX + location
     try {
       bigquery.datasets().get(projectId, datasetId).execute()
       logger.info(s"Staging dataset $projectId:$datasetId already exists")
@@ -283,23 +299,27 @@ class BigQueryClient private (private val projectId: String,
         val dsRef = new DatasetReference().setProjectId(projectId).setDatasetId(datasetId)
         val ds = new Dataset()
           .setDatasetReference(dsRef)
-          .setDefaultTableExpirationMs(BigQueryClient.STAGING_DATASET_TABLE_EXPIRATION_MS)
-          .setDescription(BigQueryClient.STAGING_DATASET_DESCRIPTION)
-          .setLocation(BigQueryClient.stagingDatasetLocation)
+          .setDefaultTableExpirationMs(STAGING_DATASET_TABLE_EXPIRATION_MS)
+          .setDescription(STAGING_DATASET_DESCRIPTION)
+          .setLocation(location)
         bigquery
           .datasets()
           .insert(projectId, ds)
           .execute()
       case NonFatal(e) => throw e
     }
+    datasetId
   }
 
-  private def temporaryTable(): TableReference = {
+  private def temporaryTable(sqlQuery: String, flattenResults: Boolean): TableReference = {
+    val location = getQueryLocation(sqlQuery, flattenResults)
+    val datasetId = prepareStagingDataset(location)
+
     val now = Instant.now().toString(TIME_FORMATTER)
     val tableId = TABLE_PREFIX + "_" + now + "_" + Random.nextInt(Int.MaxValue)
     new TableReference()
       .setProjectId(projectId)
-      .setDatasetId(BigQueryClient.stagingDataset)
+      .setDatasetId(datasetId)
       .setTableId(tableId)
   }
 
@@ -313,7 +333,6 @@ class BigQueryClient private (private val projectId: String,
                               flattenResults: Boolean): QueryJob = new QueryJob {
     override def waitForResult(): Unit = self.waitForJobs(this)
     override lazy val jobReference: Option[JobReference] = {
-      prepareStagingDataset()
       logger.info(s"Executing query: $sqlQuery")
       Some(makeQuery(sqlQuery, destinationTable, flattenResults, dryRun = false).getJobReference)
     }
@@ -418,18 +437,6 @@ object BigQueryClient {
   /** System property key for JSON secret path. */
   val SECRET_KEY: String = "bigquery.secret"
 
-  /** System property key for staging dataset. */
-  val STAGING_DATASET_KEY: String = "bigquery.staging_dataset"
-
-  /** Default staging dataset. */
-  val STAGING_DATASET_DEFAULT: String = "scio_bigquery_staging"
-
-  /** System property key for staging dataset location. */
-  val STAGING_DATASET_LOCATION_KEY: String = "bigquery.staging_dataset.location"
-
-  /** Default staging dataset location. */
-  val STAGING_DATASET_LOCATION_DEFAULT: String = "US"
-
   /** System property key for local schema cache directory. */
   val CACHE_DIRECTORY_KEY: String = "bigquery.cache.directory"
 
@@ -447,12 +454,6 @@ object BigQueryClient {
    * Default is 20000 (20 seconds). 0 for an infinite timeout.
    */
   val READ_TIMEOUT_MS_KEY: String = "bigquery.read_timeout"
-
-  /** Table expiration in milliseconds for staging dataset. */
-  val STAGING_DATASET_TABLE_EXPIRATION_MS: Long = 86400000L
-
-  /** Description for staging dataset. */
-  val STAGING_DATASET_DESCRIPTION: String = "Staging dataset for temporary tables"
 
   private val SCOPES = List(BigqueryScopes.BIGQUERY).asJava
 
@@ -503,15 +504,6 @@ object BigQueryClient {
   /** Create a new BigQueryClient instance with the given project and secret file. */
   def apply(project: String, secretFile: File): BigQueryClient =
     new BigQueryClient(project, secretFile)
-
-  private def stagingDataset: String =
-    getPropOrElse(
-      STAGING_DATASET_KEY,
-      STAGING_DATASET_DEFAULT + "_" + stagingDatasetLocation.toLowerCase)
-
-  // Location in create dataset request must be upper case, e.g. US, EU
-  private def stagingDatasetLocation: String =
-    getPropOrElse(STAGING_DATASET_LOCATION_KEY, STAGING_DATASET_LOCATION_DEFAULT).toUpperCase
 
   private def cacheDirectory: String =
     getPropOrElse(CACHE_DIRECTORY_KEY, CACHE_DIRECTORY_DEFAULT) + "/" + scioVersion
