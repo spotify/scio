@@ -19,7 +19,6 @@ package com.spotify.scio.bigquery
 
 import java.io.{File, FileInputStream, StringReader}
 import java.util.UUID
-import java.util.regex.Pattern
 
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
@@ -50,29 +49,10 @@ import scala.util.{Random, Try}
 /** Utility for BigQuery data types. */
 object BigQueryUtil {
 
-  // Ported from com.google.cloud.dataflow.sdk.io.BigQueryIO
-
-  private val PROJECT_ID_REGEXP = "[a-z][-a-z0-9:.]{4,61}[a-z0-9]"
-  private val DATASET_REGEXP = "[-\\w.]{1,1024}"
-  private val TABLE_REGEXP = "[-\\w$@]{1,1024}"
-  private val DATASET_TABLE_REGEXP =
-    s"((?<PROJECT>$PROJECT_ID_REGEXP):)?(?<DATASET>$DATASET_REGEXP)\\.(?<TABLE>$TABLE_REGEXP)"
-  private val QUERY_TABLE_SPEC = Pattern.compile(s"(?<=\\[)$DATASET_TABLE_REGEXP(?=\\])")
-
   /** Parse a schema string. */
   def parseSchema(schemaString: String): TableSchema =
     new JsonObjectParser(new JacksonFactory)
       .parseAndClose(new StringReader(schemaString), classOf[TableSchema])
-
-  /** Extract tables from a SQL query. */
-  def extractTables(sqlQuery: String): Set[TableReference] = {
-    val matcher = BigQueryUtil.QUERY_TABLE_SPEC.matcher(sqlQuery)
-    val b = Set.newBuilder[TableReference]
-    while (matcher.find()) {
-      b += BigQueryIO.parseTableSpec(matcher.group())
-    }
-    b.result()
-  }
 
 }
 
@@ -84,6 +64,7 @@ private[scio] trait QueryJob {
   val table: TableReference
 }
 
+// scalastyle:off number.of.methods
 /** A simple BigQuery client. */
 class BigQueryClient private (private val projectId: String,
                               credential: Credential = null) { self =>
@@ -130,6 +111,12 @@ class BigQueryClient private (private val projectId: String,
       .exists(_.getClassName.startsWith("scala.tools.nsc.interpreter."))
 
   private val PRIORITY = if (inConsole) "INTERACTIVE" else "BATCH"
+
+  /** Get tables referenced in a query. */
+  def getQueryTables(sqlQuery: String, flattenResults: Boolean = false): Seq[TableReference] = {
+    val job = makeQuery(sqlQuery, null, flattenResults, dryRun = true)
+    job.getStatistics.getQuery.getReferencedTables.asScala
+  }
 
   /** Get schema for a query without executing it. */
   def getQuerySchema(sqlQuery: String,
@@ -257,8 +244,7 @@ class BigQueryClient private (private val projectId: String,
 
   private[scio] def newQueryJob(sqlQuery: String, flattenResults: Boolean): QueryJob = {
     try {
-      val sourceTimes =
-        BigQueryUtil.extractTables(sqlQuery).map(t => BigInt(getTable(t).getLastModifiedTime))
+      val sourceTimes = getQueryTables(sqlQuery).map(t => BigInt(getTable(t).getLastModifiedTime))
       val temp = getCacheDestinationTable(sqlQuery).get
       val time = BigInt(getTable(temp).getLastModifiedTime)
       if (sourceTimes.forall(_ < time)) {
@@ -423,6 +409,7 @@ class BigQueryClient private (private val projectId: String,
   private def tableCacheFile(key: String): File = cacheFile(key, ".table.txt")
 
 }
+// scalastyle:on number.of.methods
 
 /** Companion object for [[BigQueryClient]]. */
 object BigQueryClient {
