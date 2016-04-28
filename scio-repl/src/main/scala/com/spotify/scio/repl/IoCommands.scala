@@ -20,6 +20,7 @@ package com.spotify.scio.repl
 import java.io._
 import java.net.URI
 import java.nio.channels.Channels
+import java.nio.charset.StandardCharsets
 
 import com.google.cloud.dataflow.sdk.options.PipelineOptions
 import com.google.cloud.dataflow.sdk.util.GcsUtil
@@ -30,7 +31,7 @@ import kantan.csv.{RowDecoder, RowEncoder}
 import org.apache.avro.file.{DataFileStream, DataFileWriter}
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
 import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter, SpecificRecordBase}
-import org.apache.commons.io.{Charsets, IOUtils}
+import org.apache.commons.io.IOUtils
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
@@ -64,7 +65,7 @@ class IoCommands(options: PipelineOptions) {
 
   /** Read from a text file on local filesystem or GCS. */
   def readText(path: String): Iterator[String] =
-    IOUtils.lineIterator(inputStream(path), Charsets.UTF_8).asScala
+    IOUtils.lineIterator(inputStream(path), StandardCharsets.UTF_8).asScala
 
   /** Read from a CSV file on local filesystem or GCS. */
   def readCsv[T: RowDecoder](path: String,
@@ -106,7 +107,8 @@ class IoCommands(options: PipelineOptions) {
 
   /** Write to a text file on local filesystem or GCS. */
   def writeText(path: String, data: Seq[String]): Unit = {
-    IOUtils.writeLines(data.asJava, IOUtils.LINE_SEPARATOR, outputStream(path, TEXT))
+    IOUtils.writeLines(
+      data.asJava, IOUtils.LINE_SEPARATOR, outputStream(path, TEXT), StandardCharsets.UTF_8)
     logger.info("{} line{} written to {}", Array(data.size, plural(data), path))
   }
 
@@ -115,7 +117,7 @@ class IoCommands(options: PipelineOptions) {
                               sep: Char = ',',
                               header: Seq[String] = Seq.empty): Unit = {
     import kantan.csv.ops._
-    IOUtils.write(data.asCsv(sep, header), outputStream(path, TEXT))
+    IOUtils.write(data.asCsv(sep, header), outputStream(path, TEXT), StandardCharsets.UTF_8)
     logger.info("{} line{} written to {}", Array(data.size, plural(data), path))
   }
 
@@ -124,7 +126,7 @@ class IoCommands(options: PipelineOptions) {
                               sep: Char = '\t',
                               header: Seq[String] = Seq.empty): Unit = {
     import kantan.csv.ops._
-    IOUtils.write(data.asCsv(sep, header), outputStream(path, TEXT))
+    IOUtils.write(data.asCsv(sep, header), outputStream(path, TEXT), StandardCharsets.UTF_8)
     logger.info("{} line{} written to {}", Array(data.size, plural(data), path))
   }
 
