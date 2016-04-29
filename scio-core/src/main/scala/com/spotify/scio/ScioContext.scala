@@ -348,12 +348,11 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
    * Get an SCollection for a BigQuery SELECT query.
    * @group input
    */
-  def bigQuerySelect(sqlQuery: String,
-                     flattenResults: Boolean = false): SCollection[TableRow] = pipelineOp {
+  def bigQuerySelect(sqlQuery: String): SCollection[TableRow] = pipelineOp {
     if (this.isTest) {
       this.getTestInput(BigQueryIO(sqlQuery))
     } else {
-      val queryJob = this.bigQueryClient.newQueryJob(sqlQuery, flattenResults)
+      val queryJob = this.bigQueryClient.newQueryJob(sqlQuery)
       _queryJobs.append(queryJob)
       wrap(this.applyInternal(gio.BigQueryIO.Read.from(queryJob.table).withoutValidation()))
         .setName(sqlQuery)

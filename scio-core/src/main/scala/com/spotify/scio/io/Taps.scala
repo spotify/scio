@@ -39,11 +39,9 @@ trait Taps {
     mkTap(s"Avro: $path", () => isPathDone(path), () => AvroTap[T](path, schema))
 
   /** Get a `Future[Tap[T]]` for BigQuery SELECT query. */
-  def bigQuerySelect(sqlQuery: String, flattenResults: Boolean = false): Future[Tap[TableRow]] =
+  def bigQuerySelect(sqlQuery: String): Future[Tap[TableRow]] =
     mkTap(
-      s"BigQuery SELECT: $sqlQuery",
-      () => isQueryDone(sqlQuery),
-      () => bigQueryTap(sqlQuery, flattenResults))
+      s"BigQuery SELECT: $sqlQuery", () => isQueryDone(sqlQuery), () => bigQueryTap(sqlQuery))
 
   /** Get a `Future[Tap[T]]` for BigQuery table. */
   def bigQueryTable(table: TableReference): Future[Tap[TableRow]] =
@@ -69,9 +67,9 @@ trait Taps {
   private def tableExists(table: TableReference): Boolean =
     Try(BigQueryClient.defaultInstance().getTableSchema(table)).isSuccess
 
-  private def bigQueryTap(sqlQuery: String, flattenResults: Boolean): BigQueryTap = {
+  private def bigQueryTap(sqlQuery: String): BigQueryTap = {
     val bq = BigQueryClient.defaultInstance()
-    val table = bq.query(sqlQuery, flattenResults = flattenResults)
+    val table = bq.query(sqlQuery)
     BigQueryTap(table)
   }
 

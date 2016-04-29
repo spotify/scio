@@ -115,21 +115,20 @@ class BigQueryClient private (private val projectId: String,
   private val PRIORITY = if (inConsole) "INTERACTIVE" else "BATCH"
 
   /** Get tables referenced in a query. */
-  def getQueryTables(sqlQuery: String, flattenResults: Boolean = false): Seq[TableReference] = {
-    val job = makeQuery(sqlQuery, null, flattenResults, dryRun = true)
+  def getQueryTables(sqlQuery: String): Seq[TableReference] = {
+    val job = makeQuery(sqlQuery, null, dryRun = true)
     job.getStatistics.getQuery.getReferencedTables.asScala
   }
 
   /** Get schema for a query without executing it. */
-  def getQuerySchema(sqlQuery: String,
-                     flattenResults: Boolean = false): TableSchema = withCacheKey(sqlQuery) {
-    val job = makeQuery(sqlQuery, null, flattenResults, dryRun = true)
+  def getQuerySchema(sqlQuery: String): TableSchema = withCacheKey(sqlQuery) {
+    val job = makeQuery(sqlQuery, null, dryRun = true)
     job.getStatistics.getQuery.getSchema
   }
 
   /** Get rows from a query. */
-  def getQueryRows(sqlQuery: String, flattenResults: Boolean = false): Iterator[TableRow] = {
-    val queryJob = newQueryJob(sqlQuery, flattenResults)
+  def getQueryRows(sqlQuery: String): Iterator[TableRow] = {
+    val queryJob = newQueryJob(sqlQuery)
     queryJob.waitForResult()
     getTableRows(queryJob.table)
   }
@@ -180,16 +179,14 @@ class BigQueryClient private (private val projectId: String,
    * A temporary table will be created if `destinationTable` is `null` and a cached table will be
    * returned instead if one exists.
    */
-  def query(sqlQuery: String,
-            destinationTable: String = null,
-            flattenResults: Boolean = false): TableReference =
+  def query(sqlQuery: String, destinationTable: String = null): TableReference =
     if (destinationTable != null) {
       val tableRef = BigQueryIO.parseTableSpec(destinationTable)
-      val queryJob = delayedQueryJob(sqlQuery, tableRef, flattenResults)
+      val queryJob = delayedQueryJob(sqlQuery, tableRef)
       queryJob.waitForResult()
       tableRef
     } else {
-      val queryJob = newQueryJob(sqlQuery, flattenResults)
+      val queryJob = newQueryJob(sqlQuery)
       queryJob.waitForResult()
       queryJob.table
     }
@@ -244,7 +241,7 @@ class BigQueryClient private (private val projectId: String,
   // Job execution
   // =======================================================================
 
-  private[scio] def newQueryJob(sqlQuery: String, flattenResults: Boolean): QueryJob = {
+  private[scio] def newQueryJob(sqlQuery: String): QueryJob = {
     try {
       val sourceTimes = getQueryTables(sqlQuery).map(t => BigInt(getTable(t).getLastModifiedTime))
       val temp = getCacheDestinationTable(sqlQuery).get
@@ -259,24 +256,24 @@ class BigQueryClient private (private val projectId: String,
           override val table: TableReference = temp
         }
       } else {
-        val temp = temporaryTable(sqlQuery, flattenResults)
+        val temp = temporaryTable(sqlQuery)
         logger.info(s"Cache invalid for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
-        delayedQueryJob(sqlQuery, temp, flattenResults)
+        delayedQueryJob(sqlQuery, temp)
       }
     } catch {
       case NonFatal(_) =>
-        val temp = temporaryTable(sqlQuery, flattenResults)
+        val temp = temporaryTable(sqlQuery)
         logger.info(s"Cache miss for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
-        delayedQueryJob(sqlQuery, temp, flattenResults)
+        delayedQueryJob(sqlQuery, temp)
     }
   }
 
-  private def getQueryLocation(sqlQuery: String, flattenResults: Boolean): String = {
-    val locations = getQueryTables(sqlQuery, flattenResults)
+  private def getQueryLocation(sqlQuery: String): String = {
+    val locations = getQueryTables(sqlQuery)
       .map(t => (t.getProjectId, t.getDatasetId))
       .toSet[(String, String)]
       .map(kv => bigquery.datasets().get(kv._1, kv._2).execute().getLocation)
@@ -311,8 +308,8 @@ class BigQueryClient private (private val projectId: String,
     datasetId
   }
 
-  private def temporaryTable(sqlQuery: String, flattenResults: Boolean): TableReference = {
-    val location = getQueryLocation(sqlQuery, flattenResults)
+  private def temporaryTable(sqlQuery: String): TableReference = {
+    val location = getQueryLocation(sqlQuery)
     val datasetId = prepareStagingDataset(location)
 
     val now = Instant.now().toString(TIME_FORMATTER)
@@ -329,12 +326,11 @@ class BigQueryClient private (private val projectId: String,
   }
 
   private def delayedQueryJob(sqlQuery: String,
-                              destinationTable: TableReference,
-                              flattenResults: Boolean): QueryJob = new QueryJob {
+                              destinationTable: TableReference): QueryJob = new QueryJob {
     override def waitForResult(): Unit = self.waitForJobs(this)
     override lazy val jobReference: Option[JobReference] = {
       logger.info(s"Executing query: $sqlQuery")
-      Some(makeQuery(sqlQuery, destinationTable, flattenResults, dryRun = false).getJobReference)
+      Some(makeQuery(sqlQuery, destinationTable, dryRun = false).getJobReference)
     }
     override val query: String = sqlQuery
     override val table: TableReference = destinationTable
@@ -342,11 +338,9 @@ class BigQueryClient private (private val projectId: String,
 
   private def makeQuery(sqlQuery: String,
                         destinationTable: TableReference,
-                        flattenResults: Boolean,
                         dryRun: Boolean): Job = {
     var queryConfig: JobConfigurationQuery = new JobConfigurationQuery()
       .setQuery(sqlQuery)
-      .setFlattenResults(flattenResults)
       .setPriority(PRIORITY)
       .setUseLegacySql(false)
       .setCreateDisposition("CREATE_IF_NEEDED")
