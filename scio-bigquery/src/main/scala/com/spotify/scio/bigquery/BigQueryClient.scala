@@ -43,6 +43,7 @@ import org.joda.time.{Instant, Period}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
+import scala.io.Source
 import scala.util.control.NonFatal
 import scala.util.{Random, Try}
 
@@ -122,10 +123,11 @@ class BigQueryClient private (private val projectId: String,
 
   /** Get schema for a query without executing it. */
   def getQuerySchema(sqlQuery: String,
-                     flattenResults: Boolean = false): TableSchema = withCacheKey(sqlQuery) {
-    val job = makeQuery(sqlQuery, null, flattenResults, dryRun = true)
-    job.getStatistics.getQuery.getSchema
-  }
+                     flattenResults: Boolean = false): TableSchema =
+    withCacheKey(qKey(sqlQuery, flattenResults)) {
+      val job = makeQuery(sqlQuery, null, flattenResults, dryRun = true)
+      job.getStatistics.getQuery.getSchema
+    }
 
   /** Get rows from a query. */
   def getQueryRows(sqlQuery: String, flattenResults: Boolean = false): Iterator[TableRow] = {
@@ -247,7 +249,7 @@ class BigQueryClient private (private val projectId: String,
   private[scio] def newQueryJob(sqlQuery: String, flattenResults: Boolean): QueryJob = {
     try {
       val sourceTimes = getQueryTables(sqlQuery).map(t => BigInt(getTable(t).getLastModifiedTime))
-      val temp = getCacheDestinationTable(sqlQuery).get
+      val temp = getCacheDestinationTable(sqlQuery, flattenResults).get
       val time = BigInt(getTable(temp).getLastModifiedTime)
       if (sourceTimes.forall(_ < time)) {
         logger.info(s"Cache hit for query: $sqlQuery")
@@ -262,7 +264,7 @@ class BigQueryClient private (private val projectId: String,
         val temp = temporaryTable(sqlQuery, flattenResults)
         logger.info(s"Cache invalid for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
-        setCacheDestinationTable(sqlQuery, temp)
+        setCacheDestinationTable(sqlQuery, flattenResults, temp)
         delayedQueryJob(sqlQuery, temp, flattenResults)
       }
     } catch {
@@ -270,7 +272,7 @@ class BigQueryClient private (private val projectId: String,
         val temp = temporaryTable(sqlQuery, flattenResults)
         logger.info(s"Cache miss for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
-        setCacheDestinationTable(sqlQuery, temp)
+        setCacheDestinationTable(sqlQuery, flattenResults, temp)
         delayedQueryJob(sqlQuery, temp, flattenResults)
     }
   }
@@ -388,27 +390,36 @@ class BigQueryClient private (private val projectId: String,
   // Schema and query caching
   // =======================================================================
 
+  private def qKey(sqlQuery: String, flattenResults: Boolean): String =
+    sqlQuery + "\t" + flattenResults.toString
+
   private def withCacheKey(key: String)
-                          (method: => TableSchema): TableSchema = getCacheSchema(key) match {
-    case Some(schema) => schema
-    case None =>
-      val schema = method
-      setCacheSchema(key, schema)
-      schema
+                          (method: => TableSchema): TableSchema = {
+    val cachedSchema = Try {
+      BigQueryUtil.parseSchema(Source.fromFile(schemaCacheFile(key)).mkString)
+    }.toOption
+
+    cachedSchema match {
+      case Some(schema) => schema
+      case None =>
+        val schema = method
+        Files.write(schema.toPrettyString, schemaCacheFile(key), Charsets.UTF_8)
+        schema
+    }
   }
 
-  private def setCacheSchema(key: String, schema: TableSchema): Unit =
-    Files.write(schema.toPrettyString, schemaCacheFile(key), Charsets.UTF_8)
+  private def setCacheDestinationTable(sqlQuery: String,
+                                       flattenResults: Boolean,
+                                       table: TableReference): Unit =
+    Files.write(
+      BigQueryIO.toTableSpec(table),
+      tableCacheFile(qKey(sqlQuery, flattenResults)),
+      Charsets.UTF_8)
 
-  private def getCacheSchema(key: String): Option[TableSchema] = Try {
-    BigQueryUtil.parseSchema(scala.io.Source.fromFile(schemaCacheFile(key)).mkString)
-  }.toOption
-
-  private def setCacheDestinationTable(key: String, table: TableReference): Unit =
-    Files.write(BigQueryIO.toTableSpec(table), tableCacheFile(key), Charsets.UTF_8)
-
-  private def getCacheDestinationTable(key: String): Option[TableReference] = Try {
-    BigQueryIO.parseTableSpec(scala.io.Source.fromFile(tableCacheFile(key)).mkString)
+  private def getCacheDestinationTable(sqlQuery: String,
+                                       flattenResults: Boolean): Option[TableReference] = Try {
+    val tableSpec = Source.fromFile(tableCacheFile(qKey(sqlQuery, flattenResults))).mkString
+    BigQueryIO.parseTableSpec(tableSpec)
   }.toOption
 
   private def cacheFile(key: String, suffix: String): File = {
@@ -520,7 +531,7 @@ object BigQueryClient {
   /** Get Scio version from scio-bigquery/src/main/resources/version.sbt. */
   private def scioVersion: String = {
     val stream = this.getClass.getResourceAsStream("/version.sbt")
-    val line = scala.io.Source.fromInputStream(stream).getLines().next()
+    val line = Source.fromInputStream(stream).getLines().next()
     """version in .+"([^"]+)"""".r.findFirstMatchIn(line).get.group(1)
   }
 
