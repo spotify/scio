@@ -346,9 +346,7 @@ class BigQueryClient private (private val projectId: String,
       .setCreateDisposition("CREATE_IF_NEEDED")
       .setWriteDisposition("WRITE_EMPTY")
     if (destinationTable != null) {
-      queryConfig = queryConfig
-        .setAllowLargeResults(true)
-        .setDestinationTable(destinationTable)
+      queryConfig = queryConfig.setDestinationTable(destinationTable)
     }
 
     val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(dryRun)
