@@ -18,6 +18,7 @@
 package com.spotify.scio.util
 
 import com.google.cloud.dataflow.sdk.transforms.DoFn
+import com.google.cloud.dataflow.sdk.values.{TupleTag, TupleTagList}
 import com.spotify.scio.values.SideInputContext
 
 private[scio] object FunctionsWithSideInput {
@@ -52,6 +53,25 @@ private[scio] object FunctionsWithSideInput {
     val g = ClosureCleaner(f)  // defeat closure
     override def processElement(c: DoFn[T, U]#ProcessContext): Unit =
       c.output(g(c.element(), sideInputContext(c)))
+  }
+
+  def partitionFn[T](partitions: TupleTagList, f: (T, Int, SideInputContext[T]) => Int)
+  : DoFn[T, T] = new SideInputDoFn[T, T] {
+    val g = ClosureCleaner(f)  // defeat closure
+
+    val numPartitions = partitions.size()
+
+    override def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
+      val elem = c.element()
+      val partition = g(elem, numPartitions, sideInputContext(c))
+
+      if(0 > partition || partition >= numPartitions) {
+        throw new IndexOutOfBoundsException(
+          s"Partition function returned out of bounds index: $partition not in [0..$numPartitions)")
+      }
+
+      c.sideOutput(partitions.get(partition).asInstanceOf[TupleTag[T]], elem)
+    }
   }
 
 }
