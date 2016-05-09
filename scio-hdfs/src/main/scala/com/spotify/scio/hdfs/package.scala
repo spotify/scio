@@ -79,6 +79,10 @@ package object hdfs {
         .map(_.getValue.toString)
     }
 
+    /** Get an SCollection of specific record type for a list of text files on HDFS. */
+    def hdfsMultipleAvroFile(paths: List[String], username: String = null): SCollection[String] =
+      SCollection.unionAll(paths.map(path => hdfsTextFile(path, username)))
+
     /** Get an SCollection of specific record type for an Avro file on HDFS. */
     def hdfsAvroFile[T: ClassTag](path: String,
                                   schema: Schema = null,
@@ -98,6 +102,12 @@ package object hdfs {
         .setName(path)
         .map(_.getKey.datum())
     }
+
+    /** Get an SCollection of specific record type for a list of Avro files on HDFS. */
+    def hdfsMultipleAvroFile[T: ClassTag](paths: List[String],
+                                          schema: Schema = null,
+                                          username: String = null): SCollection[T] =
+      SCollection.unionAll(paths.map(path => hdfsAvroFile[T](path, schema, username)))
 
   }
 
