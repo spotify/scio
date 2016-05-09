@@ -78,8 +78,4 @@ package object scio {
     val line = scala.io.Source.fromInputStream(stream).getLines().next()
     """version in .+"([^"]+)"""".r.findFirstMatchIn(line).get.group(1)
   }
-
-  /** Alias for SideOutput class/obj */
-  type SPartition[T] = SideOutput[T]
-  def SPartition[T](): SPartition[T] = SideOutput[T]()
 }

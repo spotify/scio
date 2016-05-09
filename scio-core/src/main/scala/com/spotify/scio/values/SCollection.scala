@@ -39,7 +39,7 @@ import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values._
 import com.google.protobuf.ByteString
-import com.spotify.scio.{SPartition, ScioContext}
+import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.KryoAtomicCoder
 import com.spotify.scio.io._
 import com.spotify.scio.testing._
@@ -202,12 +202,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def partition(numPartitions: Int, f: T => Int): Seq[SCollection[T]] =
     this.applyInternal(Partition.of[T](numPartitions, Functions.partitionFn[T](numPartitions, f)))
       .getAll.asScala.map(p => context.wrap(p))
-
-  /**
-   * TODO
-   * @return
-   */
-  def defPartition(): SPartition[T] = SPartition[T]()
 
   // =======================================================================
   // Transformations

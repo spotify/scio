@@ -19,8 +19,9 @@ package com.spotify.scio.values
 
 import com.google.cloud.dataflow.sdk.transforms.ParDo
 import com.google.cloud.dataflow.sdk.values.{TupleTag, _}
-import com.spotify.scio.{SPartition, ScioContext}
+import com.spotify.scio.ScioContext
 import com.spotify.scio.util.{CallSites, FunctionsWithSideInput}
+import com.spotify.scio.values.SPartition.SPartition
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -73,8 +74,8 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
  *
    *  @return map of partition to side output [[SCollection]]
    * */
-  def partition(partitions: Seq[SPartition[T]], f: (T, Seq[SPartition[T]], SideInputContext[T]) => SPartition[T])
-  : Map[SPartition[T], SCollection[T]] = {
+  def partition(partitions: Seq[SPartition[T]], f: (T, Seq[SPartition[T]], SideInputContext[T])
+    => SPartition[T]): Map[SPartition[T], SCollection[T]] = {
 
     val tagToSide = partitions.map(e => e.tupleTag.getId -> e).toMap
     val sideTags = TupleTagList.of(partitions.map(e => e.tupleTag.asInstanceOf[TupleTag[_]]).asJava)
@@ -83,7 +84,7 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
       .withOutputTags(new TupleTag[T](), sideTags)
       .of(FunctionsWithSideInput.partitionFn[T](partitions, f))
 
-    // Main tag is  ignored
+    // Main tag is ignored
     val pCollectionWrapper = this.internal.apply(CallSites.getCurrent, transform)
     pCollectionWrapper.getAll.asScala
       .mapValues(context.wrap(_).asInstanceOf[SCollection[T]].setCoder(internal.getCoder))

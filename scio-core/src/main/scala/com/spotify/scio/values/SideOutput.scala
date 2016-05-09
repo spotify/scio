@@ -32,7 +32,7 @@ trait SideOutput[T] extends Serializable {
 /** Companion object for [[SideOutput]]. */
 object SideOutput {
   /** Create a new [[SideOutput]] instance. */
-  def apply[T](): SideOutput[T] = new SideOutput[T] {
+  def apply[T](sCollection: PCollectionWrapper[T] = null): SideOutput[T] = new SideOutput[T] {
     override private[scio] val tupleTag: TupleTag[T] = new TupleTag[T]()
   }
 }
