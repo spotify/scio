@@ -26,14 +26,14 @@ import scala.reflect.ClassTag
 
 /** Encapsulate a side output for a transform. */
 trait SideOutput[T] extends Serializable {
-  private[values] val tupleTag: TupleTag[T]
+  private[scio] val tupleTag: TupleTag[T]
 }
 
 /** Companion object for [[SideOutput]]. */
 object SideOutput {
   /** Create a new [[SideOutput]] instance. */
-  def apply[T](): SideOutput[T] = new SideOutput[T] {
-    override private[values] val tupleTag: TupleTag[T] = new TupleTag[T]()
+  def apply[T](sCollection: PCollectionWrapper[T] = null): SideOutput[T] = new SideOutput[T] {
+    override private[scio] val tupleTag: TupleTag[T] = new TupleTag[T]()
   }
 }
 

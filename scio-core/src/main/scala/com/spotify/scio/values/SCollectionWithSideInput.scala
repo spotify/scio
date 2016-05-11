@@ -18,12 +18,14 @@
 package com.spotify.scio.values
 
 import com.google.cloud.dataflow.sdk.transforms.ParDo
-import com.google.cloud.dataflow.sdk.values.PCollection
+import com.google.cloud.dataflow.sdk.values.{TupleTag, _}
 import com.spotify.scio.ScioContext
-import com.spotify.scio.util.FunctionsWithSideInput
+import com.spotify.scio.util.{CallSites, FunctionsWithSideInput}
+import com.spotify.scio.values.SPartition.SPartition
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import scala.util.Try
 
 /**
  * An enhanced SCollection that provides access to one or more [[SideInput]]s for some transforms.
@@ -65,6 +67,29 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
       .apply(parDo.of(FunctionsWithSideInput.mapFn(f)))
       .internal.setCoder(this.getCoder[U])
     new SCollectionWithSideInput[U](o, context, sides)
+  }
+
+  /**
+   * [[SCollection.partition]] with an additional SideInputContext argument.
+ *
+   *  @return map of partition to side output [[SCollection]]
+   * */
+  def partition(partitions: Seq[SPartition[T]], f: (T, Seq[SPartition[T]], SideInputContext[T])
+    => SPartition[T]): Map[SPartition[T], SCollection[T]] = {
+
+    val tagToSide = partitions.map(e => e.tupleTag.getId -> e).toMap
+    val sideTags = TupleTagList.of(partitions.map(e => e.tupleTag.asInstanceOf[TupleTag[_]]).asJava)
+
+    val transform = parDo
+      .withOutputTags(new TupleTag[T](), sideTags)
+      .of(FunctionsWithSideInput.partitionFn[T](partitions, f))
+
+    // Main tag is ignored
+    val pCollectionWrapper = this.internal.apply(CallSites.getCurrent, transform)
+    pCollectionWrapper.getAll.asScala
+      .mapValues(context.wrap(_).asInstanceOf[SCollection[T]].setCoder(internal.getCoder))
+      .flatMap{ case(tt, col) => Try{ tagToSide(tt.getId) -> col}.toOption}
+      .toMap
   }
 
   /** Convert back to a basic SCollection. */

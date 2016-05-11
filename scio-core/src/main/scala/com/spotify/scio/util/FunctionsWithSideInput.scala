@@ -18,6 +18,7 @@
 package com.spotify.scio.util
 
 import com.google.cloud.dataflow.sdk.transforms.DoFn
+import com.spotify.scio.values.SPartition.SPartition
 import com.spotify.scio.values.SideInputContext
 
 private[scio] object FunctionsWithSideInput {
@@ -52,6 +53,23 @@ private[scio] object FunctionsWithSideInput {
     val g = ClosureCleaner(f)  // defeat closure
     override def processElement(c: DoFn[T, U]#ProcessContext): Unit =
       c.output(g(c.element(), sideInputContext(c)))
+  }
+
+  def partitionFn[T](partitions: Seq[SPartition[T]], f: (T, Seq[SPartition[T]], SideInputContext[T])
+    => SPartition[T]): DoFn[T, T] = new SideInputDoFn[T, T] {
+    val g = ClosureCleaner(f)  // defeat closure
+
+    override def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
+      val elem = c.element()
+      val partition = g(elem, partitions, sideInputContext(c))
+      if (!partitions.exists(_.tupleTag == partition.tupleTag)) {
+        throw new IllegalStateException(
+          s"""${partition.tupleTag.getId} is not part of
+            ${partitions.map(_.tupleTag.getId).mkString}""")
+      }
+
+      c.sideOutput(partition.tupleTag, elem)
+    }
   }
 
 }

@@ -20,7 +20,7 @@ package com.spotify
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.spotify.scio.io.Tap
-import com.spotify.scio.values.AccumulatorType
+import com.spotify.scio.values.{AccumulatorType, SideOutput}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -78,5 +78,4 @@ package object scio {
     val line = scala.io.Source.fromInputStream(stream).getLines().next()
     """version in .+"([^"]+)"""".r.findFirstMatchIn(line).get.group(1)
   }
-
 }
