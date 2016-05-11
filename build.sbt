@@ -68,6 +68,7 @@ val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ ass
   // Release settings
   releaseCrossBuild             := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+  publishMavenStyle             := true,
   publishArtifact in Test       := false,
   sonatypeProfileName           := "com.spotify",
   pomExtra                      := {
@@ -100,6 +101,16 @@ val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ ass
       </developer>
     </developers>
   },
+
+  credentials ++= (for {
+    username <- sys.env.get("SONATYPE_USERNAME")
+    password <- sys.env.get("SONATYPE_PASSWORD")
+  } yield
+  Credentials(
+    "Sonatype Nexus Repository Manager",
+    "oss.sonatype.org",
+    username,
+    password)).toSeq,
 
   // Mappings from dependencies to external ScalaDoc/JavaDoc sites
   apiMappings ++= {
