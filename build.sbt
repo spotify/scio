@@ -68,6 +68,7 @@ val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ ass
   // Release settings
   releaseCrossBuild             := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+  publishMavenStyle             := true,
   publishArtifact in Test       := false,
   sonatypeProfileName           := "com.spotify",
   pomExtra                      := {
