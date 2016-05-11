@@ -344,7 +344,8 @@ lazy val scioRepl: Project = Project(
 ).settings(
   assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
 ).dependsOn(
-  scioCore
+  scioCore,
+  scioExtra
 )
 
 // =======================================================================
