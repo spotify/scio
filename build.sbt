@@ -102,6 +102,16 @@ val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ ass
     </developers>
   },
 
+  credentials ++= (for {
+    username <- sys.env.get("SONATYPE_USERNAME")
+    password <- sys.env.get("SONATYPE_PASSWORD")
+  } yield
+  Credentials(
+    "Sonatype Nexus Repository Manager",
+    "oss.sonatype.org",
+    username,
+    password)).toSeq,
+
   // Mappings from dependencies to external ScalaDoc/JavaDoc sites
   apiMappings ++= {
     val mappinngFn = (organization: String, name: String, apiUrl: String) => {
