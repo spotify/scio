@@ -25,6 +25,7 @@ script:
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+  - "[[ $TRAVIS_BRANCH == \"master\" ]] && grep -q SNAPSHOT version.sbt && sbt ++$TRAVIS_SCALA_VERSION publish"
 
 notifications:
   email:
