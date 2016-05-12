@@ -193,6 +193,36 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     MultiJoin.left(that, _).mapValues(kv => (kv._2, kv._1))
   }
 
+  /* Hash operations */
+
+  /**
+   * Perform an inner join by replicating `that` to all workers. The right side should be tiny and
+   * fit in memory.
+   * @group transform
+   */
+  def hashJoin[W: ClassTag](that: SCollection[(K, W)])
+  : SCollection[(K, (V, W))] = self.transform { in =>
+    val side = that.asMultiMapSideInput
+    in.withSideInputs(side).flatMap[(K, (V, W))] { (kv, s) =>
+      s(side).getOrElse(kv._1, Iterable()).toSeq.map(w => (kv._1, (kv._2, w)))
+    }.toSCollection
+  }
+
+  /**
+   * Perform a left outer join by replicating `that` to all workers. The right side should be tiny
+   * and fit in memory.
+   * @group transform
+   */
+  def hashLeftJoin[W: ClassTag](that: SCollection[(K, W)])
+  : SCollection[(K, (V, Option[W]))] = self.transform { in =>
+    val side = that.asMultiMapSideInput
+    in.withSideInputs(side).flatMap[(K, (V, Option[W]))] { (kv, s) =>
+      val (k, v) = kv
+      val m = s(side)
+      if (m.contains(k)) m(k).map(w => (k, (v, Some(w)))) else Seq((k, (v, None)))
+    }.toSCollection
+  }
+
   // =======================================================================
   // Transformations
   // =======================================================================
@@ -434,36 +464,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   // Scala lambda is simpler and more powerful than transforms.Values
   def values: SCollection[V] = self.map(_._2)
-
-  /* Hash operations */
-
-  /**
-   * Perform an inner join by replicating `that` to all workers. The right side should be tiny and
-   * fit in memory.
-   * @group transform
-   */
-  def hashJoin[W: ClassTag](that: SCollection[(K, W)])
-  : SCollection[(K, (V, W))] = self.transform { in =>
-    val side = that.asMultiMapSideInput
-    in.withSideInputs(side).flatMap[(K, (V, W))] { (kv, s) =>
-      s(side).getOrElse(kv._1, Iterable()).toSeq.map(w => (kv._1, (kv._2, w)))
-    }.toSCollection
-  }
-
-  /**
-   * Perform a left outer join by replicating `that` to all workers. The right side should be tiny
-   * and fit in memory.
-   * @group transform
-   */
-  def hashLeftJoin[W: ClassTag](that: SCollection[(K, W)])
-  : SCollection[(K, (V, Option[W]))] = self.transform { in =>
-    val side = that.asMultiMapSideInput
-    in.withSideInputs(side).flatMap[(K, (V, Option[W]))] { (kv, s) =>
-      val (k, v) = kv
-      val m = s(side)
-      if (m.contains(k)) m(k).map(w => (k, (v, Some(w)))) else Seq((k, (v, None)))
-    }.toSCollection
-  }
 
   // =======================================================================
   // Side input operations
