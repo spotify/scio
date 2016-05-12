@@ -199,7 +199,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * Perform an inner join by replicating `that` to all workers. The right side should be tiny and
    * fit in memory.
-   * @group transform
+   *
+   * @group join
    */
   def hashJoin[W: ClassTag](that: SCollection[(K, W)])
   : SCollection[(K, (V, W))] = self.transform { in =>
@@ -212,7 +213,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * Perform a left outer join by replicating `that` to all workers. The right side should be tiny
    * and fit in memory.
-   * @group transform
+   *
+   * @group join
    */
   def hashLeftJoin[W: ClassTag](that: SCollection[(K, W)])
   : SCollection[(K, (V, Option[W]))] = self.transform { in =>
