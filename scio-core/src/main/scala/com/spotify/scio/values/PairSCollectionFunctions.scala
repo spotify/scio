@@ -21,17 +21,18 @@ import java.lang.{Iterable => JIterable, Long => JLong}
 import java.util.{Map => JMap}
 
 import com.google.cloud.dataflow.sdk.transforms._
-import com.google.cloud.dataflow.sdk.values.{PCollectionView, KV, PCollection}
+import com.google.cloud.dataflow.sdk.values.{KV, PCollection, PCollectionView}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
-import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
+import com.twitter.algebird.{Aggregator, CMSHasher, Monoid, Semigroup}
 
 import scala.reflect.ClassTag
 
 // scalastyle:off number.of.methods
 /**
  * Extra functions available on SCollections of (key, value) pairs through an implicit conversion.
+ *
  * @groupname cogroup CoGroup Operations
  * @groupname join Join Operations
  * @groupname per_key Per Key Aggregations
@@ -221,6 +222,77 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
       val m = s(side)
       if (m.contains(k)) m(k).map(w => (k, (v, Some(w)))) else Seq((k, (v, None)))
     }.toSCollection
+  }
+
+  /**
+   * N to 1 skewproof flavor of [[PairSCollectionFunctions.join()]].
+   *
+   * This flavor of join will try to reduce the skewness by performing two step join, on hot keys,
+   * and the rest. Number of values for a given key is estimated, with `1 - delta` probability,
+   * and the estimate is within `eps * N` of the true frequency
+   * (i.e., `true frequency <= estimate <= true frequency + eps * N`), where N is the total size of
+   * the left hand side stream so far.
+   *
+   * @note Make sure to import [[com.twitter.algebird.CMSHasherImplicits]] before using this join
+   *
+   * @example {{{
+   * // Implicits that enabling CMS-hashing
+   * import com.twitter.algebird.CMSHasherImplicits._
+   *
+   * val p = logs.skewedN1Join(logMetadata, hotKeyThreshold = 9000)
+   *
+   * }}}
+   *
+   * Read more about CMS -> [[com.twitter.algebird.CMSMonoid]]
+   *
+   * @group join
+   *
+   * @param hotKeyThreshold key with `hotKeyThreshold` values will be considered hot
+   * @param eps One-sided error bound on the error of each point query, i.e. frequency estimate.
+   *            Must lie in (0, 1).
+   * @param seed A seed to initialize the random number generator used to create the pairwise
+   *             independent hash functions.
+   * @param delta A bound on the probability that a query estimate does not lie within some small
+   *              interval (an interval that depends on `eps`) around the truth. Must lie in (0, 1).
+   */
+  def skewedJoin[W: ClassTag](that: SCollection[(K, W)],
+                              hotKeyThreshold: Long,
+                              eps: Double,
+                              seed: Int,
+                              delta: Double = 1E-10)(implicit hasher: CMSHasher[K])
+  : SCollection[(K, (V, W))] = {
+    import com.twitter.algebird._
+
+    // Count k->#values:
+    val keyAggregator = CMS.aggregator[K](eps, delta, seed)
+
+    // scalastyle:off line.size.limit
+    // Use asIterableSideInput as workaround for:
+    // http://stackoverflow.com/questions/37126729/ismsinkwriter-expects-keys-to-be-written-in-strictly-increasing-order
+    // scalastyle:on line.size.limit
+    val keyCMS = self.keys.aggregate(keyAggregator).asIterableSideInput
+
+    val (hotSelf, chillSelf) = (SideOutput[(K,V)](), SideOutput[(K,V)]())
+    val partitionedSelf = self
+      .withSideInputs(keyCMS)
+      .transformWithSideOutputs(Seq(hotSelf, chillSelf), (e, c) =>
+        if (c(keyCMS).head.frequency(e._1).estimate >= hotKeyThreshold) hotSelf else chillSelf
+      )
+
+    val (hotThat, chillThat) = (SideOutput[(K,W)](), SideOutput[(K,W)]())
+    val partitionedThat = that
+      .withSideInputs(keyCMS)
+      .transformWithSideOutputs(Seq(hotThat, chillThat), (e, c) =>
+        if (c(keyCMS).head.frequency(e._1).estimate >= hotKeyThreshold) hotThat else chillThat
+      )
+
+    // Use hash join for hot keys
+    val hotJoined = partitionedSelf(hotSelf).hashJoin(partitionedThat(hotThat))
+
+    // Use regular join for the rest of the keys
+    val chillJoined = partitionedSelf(chillSelf).join(partitionedThat(chillThat))
+
+    hotJoined ++ chillJoined
   }
 
   // =======================================================================

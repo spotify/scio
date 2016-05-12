@@ -414,5 +414,4 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
         ("c", (4, None))))
     }
   }
-
 }
