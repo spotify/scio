@@ -17,13 +17,15 @@
 
 package com.spotify.scio.values
 
-import com.google.cloud.dataflow.sdk.transforms.ParDo
-import com.google.cloud.dataflow.sdk.values.PCollection
+import com.google.cloud.dataflow.sdk.transforms.{DoFn, ParDo}
+import com.google.cloud.dataflow.sdk.values.{PCollection, TupleTag, TupleTagList}
 import com.spotify.scio.ScioContext
-import com.spotify.scio.util.FunctionsWithSideInput
+import com.spotify.scio.util.FunctionsWithSideInput.SideInputDoFn
+import com.spotify.scio.util.{CallSites, ClosureCleaner, FunctionsWithSideInput}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import scala.util.Try
 
 /**
  * An enhanced SCollection that provides access to one or more [[SideInput]]s for some transforms.
@@ -65,6 +67,49 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
       .apply(parDo.of(FunctionsWithSideInput.mapFn(f)))
       .internal.setCoder(this.getCoder[U])
     new SCollectionWithSideInput[U](o, context, sides)
+  }
+
+  /**
+   * Allows multiple outputs from [[SCollectionWithSideInput]]
+   *
+   * @return map of side output to [[SCollection]]
+   */
+  private[values] def transformWithSideOutputs(sideOutputs: Seq[SideOutput[T]],
+                                             f: (T, SideInputContext[T]) => SideOutput[T],
+                                             mainOutput: SideOutput[T] = null)
+  : Map[SideOutput[T], SCollection[T]] = {
+    val _mainTag = Option(mainOutput).getOrElse(SideOutput[T]())
+    val tagToSide = sideOutputs.map(e => e.tupleTag.getId -> e).toMap +
+      (_mainTag.tupleTag.getId -> _mainTag)
+
+    val sideTags = TupleTagList.of(sideOutputs.map(e =>
+      e.tupleTag.asInstanceOf[TupleTag[_]]).asJava)
+
+    def transformWithSideOutputsFn(partitions: Seq[SideOutput[T]], f: (T, SideInputContext[T])
+      => SideOutput[T]): DoFn[T, T] = new SideInputDoFn[T, T] {
+      val g = ClosureCleaner(f) // defeat closure
+
+      override def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
+        val elem = c.element()
+        val partition = g(elem, sideInputContext(c))
+        if (!partitions.exists(_.tupleTag == partition.tupleTag)) {
+          throw new IllegalStateException(s"""${partition.tupleTag.getId} is not part of
+            ${partitions.map(_.tupleTag.getId).mkString}""")
+        }
+
+        c.sideOutput(partition.tupleTag, elem)
+      }
+    }
+
+    val transform = parDo
+      .withOutputTags(_mainTag.tupleTag, sideTags)
+      .of(transformWithSideOutputsFn(sideOutputs, f))
+
+    val pCollectionWrapper = this.internal.apply(CallSites.getCurrent, transform)
+    pCollectionWrapper.getAll.asScala
+      .mapValues(context.wrap(_).asInstanceOf[SCollection[T]].setCoder(internal.getCoder))
+      .flatMap{ case(tt, col) => Try{tagToSide(tt.getId) -> col}.toOption }
+      .toMap
   }
 
   /** Convert back to a basic SCollection. */
