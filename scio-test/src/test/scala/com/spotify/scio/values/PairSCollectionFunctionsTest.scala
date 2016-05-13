@@ -414,4 +414,40 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
         ("c", (4, None))))
     }
   }
+
+  val (skewSeed, skewEps) = (42, 0.001D)
+
+  it should "support skewedJoin() without hotkeys and no duplicate keys" in {
+    import com.twitter.algebird.CMSHasherImplicits._
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
+      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
+      val p = p1.skewedJoin(p2, Long.MaxValue, skewEps, skewSeed)
+      p should
+        containInAnyOrder (Seq(("a", (1, 11)), ("b", (2, 12)), ("b", (2, 13))))
+    }
+  }
+
+  it should "support skewedJoin() without hotkeys" in {
+    import com.twitter.algebird.CMSHasherImplicits._
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
+      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
+      val p = p1.skewedJoin(p2, Long.MaxValue, skewEps, skewSeed)
+      p should
+        containInAnyOrder (Seq(("a", (1, 11)), ("a", (2, 11)), ("b", (3, 12)), ("b", (3, 13))))
+    }
+  }
+
+  it should "support skewedJoin() with hotkey" in {
+    import com.twitter.algebird.CMSHasherImplicits._
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
+      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
+      // set threshold to 2, to hash join on "a"
+      val p = p1.skewedJoin(p2, 2, skewEps, skewSeed)
+      p should
+        containInAnyOrder (Seq(("a", (1, 11)), ("a", (2, 11)), ("b", (3, 12)), ("b", (3, 13))))
+    }
+  }
 }
