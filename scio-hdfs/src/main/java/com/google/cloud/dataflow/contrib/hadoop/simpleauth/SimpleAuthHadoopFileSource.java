@@ -18,7 +18,6 @@
 package com.google.cloud.dataflow.contrib.hadoop.simpleauth;
 
 import com.google.cloud.dataflow.contrib.hadoop.HadoopFileSource;
-import com.google.cloud.dataflow.contrib.hadoop.HadoopUserUtils;
 import com.google.cloud.dataflow.sdk.io.BoundedSource;
 import com.google.cloud.dataflow.sdk.io.Read;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
@@ -37,9 +36,7 @@ import java.util.List;
  * Allows to set arbitrary username as HDFS user, which is used for reading from HDFS.
  */
 public class SimpleAuthHadoopFileSource<K, V> extends HadoopFileSource<K, V> {
-  // keep this field to pass Hadoop user between workers
-  private final HadoopUserUtils user = new HadoopUserUtils();
-
+  private final String username;
   /**
    * Create a {@code SimpleAuthHadoopFileSource} based on a single Hadoop input split, which won't be
    * split up further, {@param username} is used for Simple Authentication with Hadoop.
@@ -51,7 +48,7 @@ public class SimpleAuthHadoopFileSource<K, V> extends HadoopFileSource<K, V> {
                                        HadoopFileSource.SerializableSplit serializableSplit,
                                        String username) {
     super(filepattern, formatClass, keyClass, valueClass, serializableSplit);
-    user.setSimpleAuthUser(username);
+    this.username = username;
   }
 
   /**
@@ -64,7 +61,7 @@ public class SimpleAuthHadoopFileSource<K, V> extends HadoopFileSource<K, V> {
                                        Class<V> valueClass,
                                        String username) {
     super(filepattern, formatClass, keyClass, valueClass);
-    user.setSimpleAuthUser(username);
+    this.username = username;
   }
 
   /**
@@ -112,7 +109,7 @@ public class SimpleAuthHadoopFileSource<K, V> extends HadoopFileSource<K, V> {
             public BoundedSource<KV<K, V>> apply(@Nullable InputSplit inputSplit) {
               return new SimpleAuthHadoopFileSource<>(filepattern, formatClass, keyClass,
                   valueClass, new HadoopFileSource.SerializableSplit(inputSplit),
-                  user.getSimpleAuthUser());
+                  username);
             }
           });
     } else {

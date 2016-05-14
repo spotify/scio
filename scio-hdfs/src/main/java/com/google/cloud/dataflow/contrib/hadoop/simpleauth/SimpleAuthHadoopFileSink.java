@@ -22,13 +22,10 @@ import com.google.cloud.dataflow.sdk.io.Sink;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.cloud.dataflow.sdk.values.KV;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapreduce.*;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 import org.apache.hadoop.security.UserGroupInformation;
 
+import java.lang.reflect.Method;
 import java.security.PrivilegedExceptionAction;
 
 /**
@@ -67,9 +64,12 @@ public class SimpleAuthHadoopFileSink<K, V> extends HadoopFileSink<K, V> {
     public void finalize(Iterable<String> writerResults, PipelineOptions options) throws Exception {
       final Iterable<String> results = writerResults;
       final PipelineOptions opts = options;
+      final SimpleAuthHadoopWriteOperation op = this;
+
       UserGroupInformation.createRemoteUser(username).doAs(new PrivilegedExceptionAction<Void>() {
         @Override
         public Void run() throws Exception {
+//          HadoopWriteOperation.class.getMethod("finalize").invoke(op, results, opts);
           _finalize(results, opts);
           return null;
         }
@@ -84,85 +84,76 @@ public class SimpleAuthHadoopFileSink<K, V> extends HadoopFileSink<K, V> {
     public Writer<KV<K, V>, String> createWriter(PipelineOptions options) throws Exception {
       return new SimpleAuthHadoopWriter<>(this, path, formatClass, username);
     }
-
-    private JobID jobID() {
-      return new JobID(jtIdentifier, jobId);
-    }
   }
 
-  public static class SimpleAuthHadoopWriter<K, V> extends Writer<KV<K, V>, String> {
-    private final SimpleAuthHadoopWriteOperation<K, V> writeOperation;
-    private final String path;
-    private final Class<? extends FileOutputFormat<K, V>> formatClass;
-
-    // unique hash for each task
-    private int hash;
-
-    private TaskAttemptContext context;
-    private RecordWriter<K, V> recordWriter;
-    private FileOutputCommitter outputCommitter;
-
+  public static class SimpleAuthHadoopWriter<K, V> extends HadoopWriter<K, V> {
     private final UserGroupInformation ugi;
 
     public SimpleAuthHadoopWriter(SimpleAuthHadoopWriteOperation<K, V> writeOperation,
-                        String path,
-                        Class<? extends FileOutputFormat<K, V>> formatClass,
+                                  String path,
+                                  Class<? extends FileOutputFormat<K, V>> formatClass,
                                   String username) {
-      this.writeOperation = writeOperation;
-      this.path = path;
-      this.formatClass = formatClass;
+      super(writeOperation, path, formatClass);
       ugi = UserGroupInformation.createRemoteUser(username);
     }
 
+//    @Override
+//    public void open(String uId) throws Exception {
+//      ugi.doAs(new SimpleAuthHadoopAction<String>(this, HadoopWriter.class.getDeclaredMethod("open"), uId));
+//    }
+
     @Override
     public void open(String uId) throws Exception {
-      this.hash = uId.hashCode();
-
+      final String uid = uId;
       ugi.doAs(new PrivilegedExceptionAction<Void>() {
         @Override
         public Void run() throws Exception {
-          Job job = ((SimpleAuthHadoopFileSink<K, V>) getWriteOperation().getSink()).jobInstance();
-          FileOutputFormat.setOutputPath(job, new Path(path));
-
-          // Each Writer is responsible for writing one bundle of elements and is represented by one
-          // unique Hadoop task based on uId/hash. All tasks share the same job ID. Since Dataflow
-          // handles retrying of failed bundles, each task has one attempt only.
-          JobID jobId = ((SimpleAuthHadoopWriteOperation) writeOperation).jobID();
-          TaskID taskId = new TaskID(jobId, TaskType.REDUCE, hash);
-          context = new TaskAttemptContextImpl(job.getConfiguration(), new TaskAttemptID(taskId, 0));
-          FileOutputFormat<K, V> outputFormat = formatClass.newInstance();
-          recordWriter = outputFormat.getRecordWriter(context);
-          outputCommitter = (FileOutputCommitter) outputFormat.getOutputCommitter(context);
+          _open(uid);
           return null;
         }
       });
     }
 
-    @Override
-    public void write(KV<K, V> value) throws Exception {
-      recordWriter.write(value.getKey(), value.getValue());
+    private void _open(String uId) throws Exception {
+      super.open(uId);
     }
+
+//    @Override
+//    public String close() throws Exception {
+//      return ugi.doAs(new SimpleAuthHadoopAction<String>(this, HadoopWriter.class.getDeclaredMethod("close"), null));
+//    }
 
     @Override
     public String close() throws Exception {
-      ugi.doAs(new PrivilegedExceptionAction<Void>() {
+      return ugi.doAs(new PrivilegedExceptionAction<String>() {
         @Override
-        public Void run() throws Exception {
-          // task/attempt successful
-          recordWriter.close(context);
-          outputCommitter.commitTask(context);
-          return null;
+        public String run() throws Exception {
+          return _close();
         }
         });
-      // result is prefix of the output file name
-      return String.format("part-r-%d", hash);
+    }
+
+    private String _close() throws Exception {
+      return super.close();
+    }
+
+  }
+
+  public static class SimpleAuthHadoopAction<T> implements PrivilegedExceptionAction<T> {
+    private final Object obj;
+    private final Method method;
+    private final Object[] args;
+
+    public SimpleAuthHadoopAction(Object obj, Method method, Object... args) {
+      this.obj = obj;
+      this.method = method;
+      this.args = args;
     }
 
     @Override
-    public WriteOperation<KV<K, V>, String> getWriteOperation() {
-      return writeOperation;
+    public T run() throws Exception {
+      return ((T) method.invoke(obj, args));
     }
-
   }
 
 }
