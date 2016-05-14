@@ -200,6 +200,7 @@ package object hdfs {
       }
 
       val sink = if (username != null) {
+        _conf.set("hadoop.job.ugi", username)
         new SimpleAuthHadoopFileSink(path,
                                      classOf[TextOutputFormat[NullWritable, Text]],
                                      _conf,
@@ -239,6 +240,7 @@ package object hdfs {
       }
       AvroJob.setOutputKeySchema(job, s)
       val sink = if (username != null) {
+        jobConf.set("hadoop.job.ugi", username);
         new SimpleAuthHadoopFileSink(path, classOf[AvroKeyOutputFormat[T]], jobConf, username)
       } else {
         new HadoopFileSink(path, classOf[AvroKeyOutputFormat[T]], jobConf)

@@ -19,32 +19,27 @@ package com.google.cloud.dataflow.contrib.hadoop;
 
 import com.google.common.base.Preconditions;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 /**
  * Utils for Hadoop/HDFS Authentication. It's externalizable so that we can pass it around
  * as part of Source/Bundles.
  */
-public class HadoopUserUtils implements Externalizable {
-  private static String user;
-
-  private static final String DEFAULT_USERNAME = "default_username";
+public class HadoopUserUtils {
+//  private static String user;
+//
+//  private static final String DEFAULT_USERNAME = "default_username";
   private static final String HADOOP_USER_NAME_KEY = "HADOOP_USER_NAME";
 
-  static {
-    String localUser = System.getProperty("user.name");
-    if (localUser == null || localUser.isEmpty()) {
-      user = DEFAULT_USERNAME;
-    } else {
-      user = localUser;
-    }
-  }
+//  static {
+//    String localUser = System.getProperty("user.name");
+//    if (localUser == null || localUser.isEmpty()) {
+//      user = DEFAULT_USERNAME;
+//    } else {
+//      user = localUser;
+//    }
+//  }
 
   public static String getSimpleAuthUser() {
-    return user;
+    return "";
   }
 
   public static void setSimpleAuthUser(String user) {
@@ -53,18 +48,18 @@ public class HadoopUserUtils implements Externalizable {
 
     // Keep in mind that this has to happen before Filesystem object is created.
     System.setProperty(HADOOP_USER_NAME_KEY, user);
-    HadoopUserUtils.user = user;
+//    HadoopUserUtils.user = user;
   }
 
-  @Override
-  public void writeExternal(ObjectOutput out) throws IOException {
-    out.writeUTF(user);
-  }
-
-  @Override
-  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-    HadoopUserUtils.user = in.readUTF();
-    // set property on deserialization to keep jvm up to date
-    System.setProperty(HADOOP_USER_NAME_KEY, user);
-  }
+//  @Override
+//  public void writeExternal(ObjectOutput out) throws IOException {
+//    out.writeUTF(user);
+//  }
+//
+//  @Override
+//  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+//    HadoopUserUtils.user = in.readUTF();
+//    // set property on deserialization to keep jvm up to date
+//    System.setProperty(HADOOP_USER_NAME_KEY, user);
+//  }
 }
