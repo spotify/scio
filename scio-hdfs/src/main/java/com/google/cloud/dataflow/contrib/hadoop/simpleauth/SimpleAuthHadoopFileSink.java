@@ -25,7 +25,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.security.UserGroupInformation;
 
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
 import java.security.PrivilegedExceptionAction;
 
 /**
@@ -64,12 +64,10 @@ public class SimpleAuthHadoopFileSink<K, V> extends HadoopFileSink<K, V> {
     public void finalize(Iterable<String> writerResults, PipelineOptions options) throws Exception {
       final Iterable<String> results = writerResults;
       final PipelineOptions opts = options;
-      final SimpleAuthHadoopWriteOperation op = this;
 
       UserGroupInformation.createRemoteUser(username).doAs(new PrivilegedExceptionAction<Void>() {
         @Override
         public Void run() throws Exception {
-//          HadoopWriteOperation.class.getMethod("finalize").invoke(op, results, opts);
           _finalize(results, opts);
           return null;
         }
@@ -97,11 +95,6 @@ public class SimpleAuthHadoopFileSink<K, V> extends HadoopFileSink<K, V> {
       ugi = UserGroupInformation.createRemoteUser(username);
     }
 
-//    @Override
-//    public void open(String uId) throws Exception {
-//      ugi.doAs(new SimpleAuthHadoopAction<String>(this, HadoopWriter.class.getDeclaredMethod("open"), uId));
-//    }
-
     @Override
     public void open(String uId) throws Exception {
       final String uid = uId;
@@ -118,11 +111,6 @@ public class SimpleAuthHadoopFileSink<K, V> extends HadoopFileSink<K, V> {
       super.open(uId);
     }
 
-//    @Override
-//    public String close() throws Exception {
-//      return ugi.doAs(new SimpleAuthHadoopAction<String>(this, HadoopWriter.class.getDeclaredMethod("close"), null));
-//    }
-
     @Override
     public String close() throws Exception {
       return ugi.doAs(new PrivilegedExceptionAction<String>() {
@@ -137,22 +125,46 @@ public class SimpleAuthHadoopFileSink<K, V> extends HadoopFileSink<K, V> {
       return super.close();
     }
 
+//    @Override
+//    public void open(String uId) throws Exception {
+//      ugi.doAs(new SimpleAuthHadoopAction<Void>(
+//              MethodHandles.lookup().findSpecial(HadoopWriter.class, "open", MethodType.methodType(Void.class, String.class).unwrap(), this.getClass()),
+//              uId));
+//    }
+//
+//    @Override
+//    public String close() throws Exception {
+//      return ugi.doAs(new SimpleAuthHadoopAction<String>(
+//              MethodHandles.lookup().findSpecial(HadoopWriter.class, "close", MethodType.methodType(Void.class).unwrap(), this.getClass()),
+//              null));
+//    }
+
   }
 
   public static class SimpleAuthHadoopAction<T> implements PrivilegedExceptionAction<T> {
-    private final Object obj;
-    private final Method method;
+    private final MethodHandle method;
     private final Object[] args;
 
-    public SimpleAuthHadoopAction(Object obj, Method method, Object... args) {
-      this.obj = obj;
-      this.method = method;
+    public SimpleAuthHadoopAction(MethodHandle method, Object... args) {
+      this.method = method.asType(method.type().wrap());
       this.args = args;
     }
 
     @Override
     public T run() throws Exception {
-      return ((T) method.invoke(obj, args));
+      try {
+        if (method.type().returnType().equals(Void.class)) {
+          method.invoke(args);
+          return null;
+        }
+        else {
+          return (T) method.invoke(args);
+        }
+
+      }
+      catch (Throwable throwable) {
+        return null;
+      }
     }
   }
 
