@@ -89,7 +89,7 @@ object BigQueryType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
-  class fromTable(tableSpec: String) extends StaticAnnotation {
+  class fromTable(tableSpec: String, args: String*) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.tableImpl
   }
 
