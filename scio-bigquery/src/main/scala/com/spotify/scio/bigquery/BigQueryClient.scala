@@ -17,9 +17,8 @@
 
 package com.spotify.scio.bigquery
 
-import java.io.{File, FileInputStream, StringReader}
+import java.io.{File, FileInputStream, InputStream, StringReader}
 import java.util.UUID
-import java.util.regex.Pattern
 
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
@@ -50,29 +49,10 @@ import scala.util.{Random, Try}
 /** Utility for BigQuery data types. */
 object BigQueryUtil {
 
-  // Ported from com.google.cloud.dataflow.sdk.io.BigQueryIO
-
-  private val PROJECT_ID_REGEXP = "[a-z][-a-z0-9:.]{4,61}[a-z0-9]"
-  private val DATASET_REGEXP = "[-\\w.]{1,1024}"
-  private val TABLE_REGEXP = "[-\\w$@]{1,1024}"
-  private val DATASET_TABLE_REGEXP =
-    s"((?<PROJECT>$PROJECT_ID_REGEXP):)?(?<DATASET>$DATASET_REGEXP)\\.(?<TABLE>$TABLE_REGEXP)"
-  private val QUERY_TABLE_SPEC = Pattern.compile(s"(?<=\\[)$DATASET_TABLE_REGEXP(?=\\])")
-
   /** Parse a schema string. */
   def parseSchema(schemaString: String): TableSchema =
     new JsonObjectParser(new JacksonFactory)
       .parseAndClose(new StringReader(schemaString), classOf[TableSchema])
-
-  /** Extract tables from a SQL query. */
-  def extractTables(sqlQuery: String): Set[TableReference] = {
-    val matcher = BigQueryUtil.QUERY_TABLE_SPEC.matcher(sqlQuery)
-    val b = Set.newBuilder[TableReference]
-    while (matcher.find()) {
-      b += BigQueryIO.parseTableSpec(matcher.group())
-    }
-    b.result()
-  }
 
 }
 
@@ -84,16 +64,15 @@ private[scio] trait QueryJob {
   val table: TableReference
 }
 
+// scalastyle:off number.of.methods
 /** A simple BigQuery client. */
 class BigQueryClient private (private val projectId: String,
                               credential: Credential = null) { self =>
 
-  def this(projectId: String, secretFile: File) =
-    this(
-      projectId,
-      GoogleCredential
-        .fromStream(new FileInputStream(secretFile))
-        .createScoped(BigQueryClient.SCOPES))
+  def this(projectId: String, secretStream: InputStream) =
+    this(projectId, GoogleCredential.fromStream(secretStream).createScoped(BigQueryClient.SCOPES))
+
+  def this(projectId: String, secretFile: File) = this(projectId, new FileInputStream(secretFile))
 
   private lazy val bigquery: Bigquery = {
     val c = Option(credential).getOrElse(
@@ -116,6 +95,10 @@ class BigQueryClient private (private val projectId: String,
 
   private val TABLE_PREFIX = "scio_query"
   private val JOB_ID_PREFIX = "scio_query"
+  private val STAGING_DATASET_PREFIX = "scio_bigquery_staging_"
+  private val STAGING_DATASET_TABLE_EXPIRATION_MS: Long = 86400000L
+  private val STAGING_DATASET_DESCRIPTION: String = "Scio staging dataset for temporary tables"
+
   private val TIME_FORMATTER = DateTimeFormat.forPattern("yyyyMMddHHmmss")
   private val PERIOD_FORMATTER = new PeriodFormatterBuilder()
     .appendHours().appendSuffix("h")
@@ -131,29 +114,21 @@ class BigQueryClient private (private val projectId: String,
 
   private val PRIORITY = if (inConsole) "INTERACTIVE" else "BATCH"
 
+  /** Get tables referenced in a query. */
+  def getQueryTables(sqlQuery: String): Seq[TableReference] = {
+    val job = makeQuery(sqlQuery, null, dryRun = true)
+    job.getStatistics.getQuery.getReferencedTables.asScala
+  }
+
   /** Get schema for a query without executing it. */
   def getQuerySchema(sqlQuery: String): TableSchema = withCacheKey(sqlQuery) {
-    prepareStagingDataset()
-
-    // Create temporary table view and get schema
-    val table = temporaryTable(TABLE_PREFIX)
-    logger.info(s"Creating temporary view ${BigQueryIO.toTableSpec(table)}")
-    val view = new ViewDefinition().setQuery(sqlQuery)
-    val viewTable = new Table().setView(view).setTableReference(table)
-    val schema = bigquery
-      .tables().insert(table.getProjectId, table.getDatasetId, viewTable)
-      .execute().getSchema
-
-    // Delete temporary table
-    logger.info(s"Deleting temporary view ${BigQueryIO.toTableSpec(table)}")
-    bigquery.tables().delete(table.getProjectId, table.getDatasetId, table.getTableId).execute()
-
-    schema
+    val job = makeQuery(sqlQuery, null, dryRun = true)
+    job.getStatistics.getQuery.getSchema
   }
 
   /** Get rows from a query. */
-  def getQueryRows(sqlQuery: String, flattenResults: Boolean = false): Iterator[TableRow] = {
-    val queryJob = newQueryJob(sqlQuery, flattenResults)
+  def getQueryRows(sqlQuery: String): Iterator[TableRow] = {
+    val queryJob = newQueryJob(sqlQuery)
     queryJob.waitForResult()
     getTableRows(queryJob.table)
   }
@@ -204,16 +179,14 @@ class BigQueryClient private (private val projectId: String,
    * A temporary table will be created if `destinationTable` is `null` and a cached table will be
    * returned instead if one exists.
    */
-  def query(sqlQuery: String,
-            destinationTable: String = null,
-            flattenResults: Boolean = false): TableReference =
+  def query(sqlQuery: String, destinationTable: String = null): TableReference =
     if (destinationTable != null) {
       val tableRef = BigQueryIO.parseTableSpec(destinationTable)
-      val queryJob = delayedQueryJob(sqlQuery, tableRef, flattenResults)
+      val queryJob = delayedQueryJob(sqlQuery, tableRef)
       queryJob.waitForResult()
       tableRef
     } else {
-      val queryJob = newQueryJob(sqlQuery, flattenResults)
+      val queryJob = newQueryJob(sqlQuery)
       queryJob.waitForResult()
       queryJob.table
     }
@@ -268,10 +241,9 @@ class BigQueryClient private (private val projectId: String,
   // Job execution
   // =======================================================================
 
-  private[scio] def newQueryJob(sqlQuery: String, flattenResults: Boolean): QueryJob = {
+  private[scio] def newQueryJob(sqlQuery: String): QueryJob = {
     try {
-      val sourceTimes =
-        BigQueryUtil.extractTables(sqlQuery).map(t => BigInt(getTable(t).getLastModifiedTime))
+      val sourceTimes = getQueryTables(sqlQuery).map(t => BigInt(getTable(t).getLastModifiedTime))
       val temp = getCacheDestinationTable(sqlQuery).get
       val time = BigInt(getTable(temp).getLastModifiedTime)
       if (sourceTimes.forall(_ < time)) {
@@ -284,25 +256,37 @@ class BigQueryClient private (private val projectId: String,
           override val table: TableReference = temp
         }
       } else {
-        val temp = temporaryTable(TABLE_PREFIX)
+        val temp = temporaryTable(sqlQuery)
         logger.info(s"Cache invalid for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
-        delayedQueryJob(sqlQuery, temp, flattenResults)
+        delayedQueryJob(sqlQuery, temp)
       }
     } catch {
       case NonFatal(_) =>
-        val temp = temporaryTable(TABLE_PREFIX)
+        val temp = temporaryTable(sqlQuery)
         logger.info(s"Cache miss for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
-        delayedQueryJob(sqlQuery, temp, flattenResults)
+        delayedQueryJob(sqlQuery, temp)
     }
   }
 
-  private def prepareStagingDataset(): Unit = {
+  private def getQueryLocation(sqlQuery: String): String = {
+    val locations = getQueryTables(sqlQuery)
+      .map(t => (t.getProjectId, t.getDatasetId))
+      .toSet[(String, String)]
+      .map(kv => bigquery.datasets().get(kv._1, kv._2).execute().getLocation)
+    if (locations.size == 1) {
+      locations.head.toLowerCase
+    } else {
+      throw new IllegalArgumentException("Invalid query locations: " + locations.mkString(", "))
+    }
+  }
+
+  private def prepareStagingDataset(location: String): String = {
     // Create staging dataset if it does not already exist
-    val datasetId = BigQueryClient.stagingDataset
+    val datasetId = STAGING_DATASET_PREFIX + location
     try {
       bigquery.datasets().get(projectId, datasetId).execute()
       logger.info(s"Staging dataset $projectId:$datasetId already exists")
@@ -312,23 +296,27 @@ class BigQueryClient private (private val projectId: String,
         val dsRef = new DatasetReference().setProjectId(projectId).setDatasetId(datasetId)
         val ds = new Dataset()
           .setDatasetReference(dsRef)
-          .setDefaultTableExpirationMs(BigQueryClient.STAGING_DATASET_TABLE_EXPIRATION_MS)
-          .setDescription(BigQueryClient.STAGING_DATASET_DESCRIPTION)
-          .setLocation(BigQueryClient.stagingDatasetLocation)
+          .setDefaultTableExpirationMs(STAGING_DATASET_TABLE_EXPIRATION_MS)
+          .setDescription(STAGING_DATASET_DESCRIPTION)
+          .setLocation(location)
         bigquery
           .datasets()
           .insert(projectId, ds)
           .execute()
       case NonFatal(e) => throw e
     }
+    datasetId
   }
 
-  private def temporaryTable(prefix: String): TableReference = {
+  private def temporaryTable(sqlQuery: String): TableReference = {
+    val location = getQueryLocation(sqlQuery)
+    val datasetId = prepareStagingDataset(location)
+
     val now = Instant.now().toString(TIME_FORMATTER)
-    val tableId = prefix + "_" + now + "_" + Random.nextInt(Int.MaxValue)
+    val tableId = TABLE_PREFIX + "_" + now + "_" + Random.nextInt(Int.MaxValue)
     new TableReference()
       .setProjectId(projectId)
-      .setDatasetId(BigQueryClient.stagingDataset)
+      .setDatasetId(datasetId)
       .setTableId(tableId)
   }
 
@@ -338,28 +326,33 @@ class BigQueryClient private (private val projectId: String,
   }
 
   private def delayedQueryJob(sqlQuery: String,
-                              destinationTable: TableReference,
-                              flattenResults: Boolean): QueryJob = new QueryJob {
+                              destinationTable: TableReference): QueryJob = new QueryJob {
     override def waitForResult(): Unit = self.waitForJobs(this)
     override lazy val jobReference: Option[JobReference] = {
-      prepareStagingDataset()
       logger.info(s"Executing query: $sqlQuery")
-      val queryConfig: JobConfigurationQuery = new JobConfigurationQuery()
-        .setQuery(sqlQuery)
-        .setAllowLargeResults(true)
-        .setFlattenResults(flattenResults)
-        .setPriority(PRIORITY)
-        .setCreateDisposition("CREATE_IF_NEEDED")
-        .setWriteDisposition("WRITE_EMPTY")
-        .setDestinationTable(destinationTable)
-
-      val jobConfig = new JobConfiguration().setQuery(queryConfig)
-      val jobReference = createJobReference(projectId, JOB_ID_PREFIX)
-      val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
-      Some(bigquery.jobs().insert(projectId, job).execute().getJobReference)
+      Some(makeQuery(sqlQuery, destinationTable, dryRun = false).getJobReference)
     }
     override val query: String = sqlQuery
     override val table: TableReference = destinationTable
+  }
+
+  private def makeQuery(sqlQuery: String,
+                        destinationTable: TableReference,
+                        dryRun: Boolean): Job = {
+    var queryConfig: JobConfigurationQuery = new JobConfigurationQuery()
+      .setQuery(sqlQuery)
+      .setPriority(PRIORITY)
+      .setUseLegacySql(false)
+      .setCreateDisposition("CREATE_IF_NEEDED")
+      .setWriteDisposition("WRITE_EMPTY")
+    if (destinationTable != null) {
+      queryConfig = queryConfig.setDestinationTable(destinationTable)
+    }
+
+    val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(dryRun)
+    val jobReference = createJobReference(projectId, JOB_ID_PREFIX)
+    val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
+    bigquery.jobs().insert(projectId, job).execute()
   }
 
   private def logJobStatistics(sqlQuery: String, job: Job): Unit = {
@@ -425,6 +418,7 @@ class BigQueryClient private (private val projectId: String,
   private def tableCacheFile(key: String): File = cacheFile(key, ".table.txt")
 
 }
+// scalastyle:on number.of.methods
 
 /** Companion object for [[BigQueryClient]]. */
 object BigQueryClient {
@@ -434,18 +428,6 @@ object BigQueryClient {
 
   /** System property key for JSON secret path. */
   val SECRET_KEY: String = "bigquery.secret"
-
-  /** System property key for staging dataset. */
-  val STAGING_DATASET_KEY: String = "bigquery.staging_dataset"
-
-  /** Default staging dataset. */
-  val STAGING_DATASET_DEFAULT: String = "scio_bigquery_staging"
-
-  /** System property key for staging dataset location. */
-  val STAGING_DATASET_LOCATION_KEY: String = "bigquery.staging_dataset.location"
-
-  /** Default staging dataset location. */
-  val STAGING_DATASET_LOCATION_DEFAULT: String = "US"
 
   /** System property key for local schema cache directory. */
   val CACHE_DIRECTORY_KEY: String = "bigquery.cache.directory"
@@ -464,12 +446,6 @@ object BigQueryClient {
    * Default is 20000 (20 seconds). 0 for an infinite timeout.
    */
   val READ_TIMEOUT_MS_KEY: String = "bigquery.read_timeout"
-
-  /** Table expiration in milliseconds for staging dataset. */
-  val STAGING_DATASET_TABLE_EXPIRATION_MS: Long = 86400000L
-
-  /** Description for staging dataset. */
-  val STAGING_DATASET_DESCRIPTION: String = "Staging dataset for temporary tables"
 
   private val SCOPES = List(BigqueryScopes.BIGQUERY).asJava
 
@@ -521,16 +497,8 @@ object BigQueryClient {
   def apply(project: String, secretFile: File): BigQueryClient =
     new BigQueryClient(project, secretFile)
 
-  private def stagingDataset: String =
-    getPropOrElse(
-      STAGING_DATASET_KEY,
-      STAGING_DATASET_DEFAULT + "_" + stagingDatasetLocation.toLowerCase)
-
-  // Location in create dataset request must be upper case, e.g. US, EU
-  private def stagingDatasetLocation: String =
-    getPropOrElse(STAGING_DATASET_LOCATION_KEY, STAGING_DATASET_LOCATION_DEFAULT).toUpperCase
-
-  private def cacheDirectory: String = getPropOrElse(CACHE_DIRECTORY_KEY, CACHE_DIRECTORY_DEFAULT)
+  private def cacheDirectory: String =
+    getPropOrElse(CACHE_DIRECTORY_KEY, CACHE_DIRECTORY_DEFAULT) + "/" + scioVersion
 
   private def connectTimeoutMs: Option[Int] = Option(sys.props(CONNECT_TIMEOUT_MS_KEY)).map(_.toInt)
 
@@ -539,6 +507,13 @@ object BigQueryClient {
   private def getPropOrElse(key: String, default: String): String = {
     val value = sys.props(key)
     if (value == null) default else value
+  }
+
+  /** Get Scio version from scio-bigquery/src/main/resources/version.sbt. */
+  private def scioVersion: String = {
+    val stream = this.getClass.getResourceAsStream("/version.sbt")
+    val line = scala.io.Source.fromInputStream(stream).getLines().next()
+    """version in .+"([^"]+)"""".r.findFirstMatchIn(line).get.group(1)
   }
 
 }

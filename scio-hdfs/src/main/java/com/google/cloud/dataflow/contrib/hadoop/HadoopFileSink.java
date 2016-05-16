@@ -46,8 +46,7 @@ import java.util.Set;
  * @param <V> The type of values to be written to the sink.
  */
 public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
-
-  private static final String jtIdentifier = "scio_job";
+  protected static final String jtIdentifier = "scio_job";
 
   protected final String path;
   protected final Class<? extends FileOutputFormat<K, V>> formatClass;
@@ -85,7 +84,7 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
     return new HadoopWriteOperation<>(this, path, formatClass);
   }
 
-  private Job jobInstance() throws IOException {
+  protected Job jobInstance() throws IOException {
     Job job = Job.getInstance();
     // deserialize map to conf
     Configuration conf = job.getConfiguration();
@@ -100,13 +99,12 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
   // =======================================================================
 
   public static class HadoopWriteOperation<K, V> extends WriteOperation<KV<K, V>, String> {
-
     private final Sink<KV<K, V>> sink;
     protected final String path;
     protected final Class<? extends FileOutputFormat<K, V>> formatClass;
 
     // unique job ID for this sink
-    private final int jobId;
+    protected final int jobId;
 
     public HadoopWriteOperation(Sink<KV<K, V>> sink,
                                 String path,
@@ -189,7 +187,6 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
   // =======================================================================
 
   public static class HadoopWriter<K, V> extends Writer<KV<K, V>, String> {
-
     private final HadoopWriteOperation<K, V> writeOperation;
     private final String path;
     private final Class<? extends FileOutputFormat<K, V>> formatClass;
