@@ -2,7 +2,6 @@ package com.google.cloud.dataflow.contrib.hadoop.simpleauth;
 
 import com.google.cloud.dataflow.contrib.hadoop.AvroHadoopFileSource;
 import com.google.cloud.dataflow.contrib.hadoop.HadoopFileSource;
-import com.google.cloud.dataflow.contrib.hadoop.HadoopUserUtils;
 import com.google.cloud.dataflow.sdk.coders.AvroCoder;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.common.base.Function;
@@ -20,7 +19,7 @@ import java.util.List;
  */
 public class SimpleAuthAvroHadoopFileSource<T> extends AvroHadoopFileSource<T>{
   // keep this field to pass Hadoop user between workers
-  private final HadoopUserUtils user = new HadoopUserUtils();
+  private final String username;
 
   /**
    * Create a {@code SimpleAuthAvroHadoopFileSource} based on a file or a file pattern specification,
@@ -30,7 +29,7 @@ public class SimpleAuthAvroHadoopFileSource<T> extends AvroHadoopFileSource<T>{
                                         AvroCoder<T> avroCoder,
                                         String username) {
     super(filepattern, avroCoder);
-    user.setSimpleAuthUser(username);
+    this.username = username;
   }
 
   /**
@@ -42,7 +41,7 @@ public class SimpleAuthAvroHadoopFileSource<T> extends AvroHadoopFileSource<T>{
                                         HadoopFileSource.SerializableSplit serializableSplit,
                                         String username) {
     super(filepattern, avroCoder, serializableSplit);
-    user.setSimpleAuthUser(username);
+    this.username = username;
   }
 
   @Override
@@ -57,7 +56,7 @@ public class SimpleAuthAvroHadoopFileSource<T> extends AvroHadoopFileSource<T>{
               return new SimpleAuthAvroHadoopFileSource<>(filepattern,
                                                     avroCoder,
                                                     new HadoopFileSource.SerializableSplit(inputSplit),
-                                                    user.getSimpleAuthUser());
+                                                    username);
             }
           });
     } else {
