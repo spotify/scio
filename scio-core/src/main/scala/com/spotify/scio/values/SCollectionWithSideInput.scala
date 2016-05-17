@@ -85,8 +85,9 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
     val sideTags = TupleTagList.of(sideOutputs.map(e =>
       e.tupleTag.asInstanceOf[TupleTag[_]]).asJava)
 
-    def transformWithSideOutputsFn(partitions: Seq[SideOutput[T]], f: (T, SideInputContext[T])
-      => SideOutput[T]): DoFn[T, T] = new SideInputDoFn[T, T] {
+    def transformWithSideOutputsFn(partitions: Seq[SideOutput[T]],
+                                   f: (T, SideInputContext[T]) => SideOutput[T])
+    : DoFn[T, T] = new SideInputDoFn[T, T] {
       val g = ClosureCleaner(f) // defeat closure
 
       override def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
