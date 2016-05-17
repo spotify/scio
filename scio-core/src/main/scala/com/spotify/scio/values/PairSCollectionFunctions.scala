@@ -25,7 +25,7 @@ import com.google.cloud.dataflow.sdk.values.{KV, PCollection, PCollectionView}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
-import com.twitter.algebird.{Aggregator, CMSHasher, Monoid, Semigroup}
+import com.twitter.algebird.{Aggregator, _}
 
 import scala.reflect.ClassTag
 
@@ -229,59 +229,106 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * N to 1 skewproof flavor of [[PairSCollectionFunctions.join()]].
    *
-   * This flavor of join will try to reduce the skewness by performing two step join, on hot keys,
-   * and the rest. Number of values for a given key is estimated, with `1 - delta` probability,
-   * and the estimate is within `eps * N` of the true frequency
-   * (i.e., `true frequency <= estimate <= true frequency + eps * N`), where N is the total size of
+   * Perform a skewed join where some keys on the left hand may be hot, i.e. appear more than
+   * `hotKeyThreshold` times. Frequency of a key is estimated with `1 - delta` probability, and the
+   * estimate is within `eps * N` of the true frequency.
+   * `true frequency <= estimate <= true frequency + eps * N`, where N is the total size of
    * the left hand side stream so far.
    *
    * @note Make sure to import [[com.twitter.algebird.CMSHasherImplicits]] before using this join
-   *
    * @example {{{
    * // Implicits that enabling CMS-hashing
    * import com.twitter.algebird.CMSHasherImplicits._
    *
-   * val p = logs.skewedN1Join(logMetadata, hotKeyThreshold = 9000)
+   * val p = logs.skewedJoin(logMetadata, hotKeyThreshold = 8500, eps=0.0005, seed=1)
    *
    * }}}
    *
    * Read more about CMS -> [[com.twitter.algebird.CMSMonoid]]
-   *
    * @group join
-   *
-   * @param hotKeyThreshold key with `hotKeyThreshold` values will be considered hot
+   * @param hotKeyThreshold key with `hotKeyThreshold` values will be considered hot. In Dataflow
+   *                        service - there is optimization bottleneck in GBK, for groups bigger
+   *                        than 10K. Thus it is recommended to set `hotKeyThreshold` to <10K, keep
+   *                        upper estimation error in mind.
    * @param eps One-sided error bound on the error of each point query, i.e. frequency estimate.
    *            Must lie in (0, 1).
    * @param seed A seed to initialize the random number generator used to create the pairwise
    *             independent hash functions.
    * @param delta A bound on the probability that a query estimate does not lie within some small
    *              interval (an interval that depends on `eps`) around the truth. Must lie in (0, 1).
+   * @param sampleFraction left side sample fracation. Default is `1.0` - no sampling.
+   * @param withReplacement whether to use sampling with replacement, see [[SCollection.sample()]]
    */
   def skewedJoin[W: ClassTag](that: SCollection[(K, W)],
                               hotKeyThreshold: Long,
                               eps: Double,
                               seed: Int,
-                              delta: Double = 1E-10)(implicit hasher: CMSHasher[K])
+                              delta: Double = 1E-10,
+                              sampleFraction: Double = 1.0,
+                              withReplacement: Boolean = true)(implicit hasher: CMSHasher[K])
   : SCollection[(K, (V, W))] = {
-    import com.twitter.algebird._
+    require(sampleFraction <= 1.0 && sampleFraction > 0.0,
+      "Sample fraction has to be between (0.0, 1.0] - default is 1.0")
 
-    // Count k->#values:
+    import com.twitter.algebird._
+    // Key aggregator for `k->#values`
     val keyAggregator = CMS.aggregator[K](eps, delta, seed)
 
+    val leftSideKeys = if (sampleFraction < 1.0) {
+      self.sample(withReplacement, sampleFraction).keys
+    } else {
+      self.keys
+    }
+
+    val cms = leftSideKeys.aggregate(keyAggregator)
+    self.skewedJoin(that, hotKeyThreshold, cms)
+  }
+
+  /**
+   * N to 1 skewproof flavor of [[PairSCollectionFunctions.join()]].
+   *
+   * Perform a skewed join where some keys on the left hand may be hot, i.e. appear more than
+   * `hotKeyThreshold` times. Frequency of a key is estimated with `1 - delta` probability, and the
+   * estimate is within `eps * N` of the true frequency.
+   * `true frequency <= estimate <= true frequency + eps * N`, where N is the total size of
+   * the left hand side stream so far.
+   *
+   * @note Make sure to import [[com.twitter.algebird.CMSHasherImplicits]] before using this join
+   * @example {{{
+   * // Implicits that enabling CMS-hashing
+   * import com.twitter.algebird.CMSHasherImplicits._
+   *
+   * val keyAggregator = CMS.aggregator[K](eps, delta, seed)
+   * val hotKeyCMS = self.keys.aggregate(keyAggregator)
+   * val p = logs.skewedJoin(logMetadata, hotKeyThreshold = 8500, cms=hotKeyCMS)
+   *
+   * }}}
+   *
+   * Read more about CMS -> [[com.twitter.algebird.CMSMonoid]]
+   * @group join
+   * @param hotKeyThreshold key with `hotKeyThreshold` values will be considered hot. In Dataflow
+   *                        service - there is optimization bottleneck in GBK, for groups bigger
+   *                        than 10K. Thus it is recommended to set `hotKeyThreshold` to <10K, keep
+   *                        upper estimation error in mind.
+   * @param cms left hand side key [[com.twitter.algebird.CMSMonoid]]
+   */
+  def skewedJoin[W: ClassTag](that: SCollection[(K, W)],
+                              hotKeyThreshold: Long,
+                              cms: SCollection[CMS[K]])
+  : SCollection[(K, (V, W))] = {
+    val (hotSelf, chillSelf) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
     // scalastyle:off line.size.limit
     // Use asIterableSideInput as workaround for:
     // http://stackoverflow.com/questions/37126729/ismsinkwriter-expects-keys-to-be-written-in-strictly-increasing-order
     // scalastyle:on line.size.limit
-    val keyCMS = self.keys.aggregate(keyAggregator).asIterableSideInput
+    val keyCMS = cms.asIterableSideInput
 
-    val (hotSelf, chillSelf) = (SideOutput[(K,V)](), SideOutput[(K,V)]())
     val partitionedSelf = self
-      .withSideInputs(keyCMS)
-      .transformWithSideOutputs(Seq(hotSelf, chillSelf), (e, c) =>
+      .withSideInputs(keyCMS).transformWithSideOutputs(Seq(hotSelf, chillSelf), (e, c) =>
         if (c(keyCMS).head.frequency(e._1).estimate >= hotKeyThreshold) hotSelf else chillSelf
       )
 
-    val (hotThat, chillThat) = (SideOutput[(K,W)](), SideOutput[(K,W)]())
+    val (hotThat, chillThat) = (SideOutput[(K, W)](), SideOutput[(K, W)]())
     val partitionedThat = that
       .withSideInputs(keyCMS)
       .transformWithSideOutputs(Seq(hotThat, chillThat), (e, c) =>
