@@ -47,7 +47,7 @@ class BigQueryClientTest extends FlatSpec with Matchers {
                      |JOIN `bigquery-public-data.hacker_news.comments` AS c
                      |ON s.`by` = c.`by`
                    """.stripMargin
-    bq.getQueryTables(sqlQuery).map(BigQueryIO.toTableSpec) should equal (Seq(
+    bq.getQueryTables(sqlQuery).map(BigQueryIO.toTableSpec).toSet should equal (Set(
       "bigquery-public-data:hacker_news.stories",
       "bigquery-public-data:hacker_news.comments"
     ))
