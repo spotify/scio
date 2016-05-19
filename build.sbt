@@ -40,6 +40,7 @@ val javaLshVersion = "0.8"
 val jodaConvertVersion = "1.8.1"
 val jodaTimeVersion = "2.9.3"
 val junitVersion = "4.12"
+val nettyTcNativeVersion = "1.1.33.Fork15"
 val scalaCheckVersion = "1.13.0"
 val scalaMacrosVersion = "2.1.0"
 val scalaTestVersion = "2.2.6"
@@ -245,7 +246,9 @@ lazy val scioBigtable: Project = Project(
     libraryDependencies ++= Seq(
       "com.google.cloud.bigtable" % "bigtable-hbase-dataflow" % bigtableVersion exclude ("org.slf4j", "slf4j-log4j12"),
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12"),
-      "org.apache.hbase" % "hbase-common" % hbaseVersion
+      "org.apache.hbase" % "hbase-common" % hbaseVersion,
+      "io.netty" % "netty-tcnative" % nettyTcNativeVersion classifier "linux-x86_64",
+      "io.netty" % "netty-tcnative" % nettyTcNativeVersion classifier "osx-x86_64"
     )
   )
 ).dependsOn(
