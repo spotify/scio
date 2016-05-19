@@ -995,7 +995,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   private[scio] def saveAsInMemoryTap: Future[Tap[T]] = {
     val tap = new InMemoryTap[T]
-    this.applyInternal(gio.Write.to(new InMemoryDataFlowSink[T](tap.id)))
+    this.applyInternal(gio.Write.to(new InMemorySink[T](tap.id)))
     context.makeFuture(tap)
   }
 
