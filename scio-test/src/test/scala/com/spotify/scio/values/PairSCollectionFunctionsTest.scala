@@ -415,4 +415,85 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  val (skewSeed, skewEps) = (42, 0.001D)
+
+  it should "support skewedJoin() without hotkeys and no duplicate keys" in {
+    import com.twitter.algebird.CMSHasherImplicits._
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
+      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
+      val p = p1.skewedJoin(p2, Long.MaxValue, skewEps, skewSeed)
+      p should
+        containInAnyOrder (Seq(("a", (1, 11)), ("b", (2, 12)), ("b", (2, 13))))
+    }
+  }
+
+  it should "support skewedJoin() without hotkeys" in {
+    import com.twitter.algebird.CMSHasherImplicits._
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
+      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
+      val p = p1.skewedJoin(p2, Long.MaxValue, skewEps, skewSeed)
+      p should
+        containInAnyOrder (Seq( ("a", (1, 11)),
+                                ("a", (2, 11)),
+                                ("b", (3, 12)),
+                                ("b", (3, 13))))
+    }
+  }
+
+  it should "support skewedJoin() with hotkey" in {
+    import com.twitter.algebird.CMSHasherImplicits._
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
+      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
+      // set threshold to 2, to hash join on "a"
+      val p = p1.skewedJoin(p2, 2, skewEps, skewSeed)
+      p should
+        containInAnyOrder (Seq( ("a", (1, 11)),
+                                ("a", (2, 11)),
+                                ("b", (3, 12)),
+                                ("b", (3, 13))))
+    }
+  }
+
+  it should "support skewedJoin() with 0.5 sample" in {
+    import com.twitter.algebird.CMSHasherImplicits._
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("a", 3), ("b", 3)))
+      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
+
+      // set threshold to 3, given 0.5 fraction for sample - "a" should not be hash joined
+      val p = p1.skewedJoin(p2, 3, skewEps, skewSeed, sampleFraction = 0.5)
+      p should
+        containInAnyOrder (Seq( ("a", (1, 11)),
+                                ("a", (2, 11)),
+                                ("a", (3, 11)),
+                                ("b", (3, 12)),
+                                ("b", (3, 13))))
+    }
+  }
+
+  it should "support skewJoin() with empty key count (no hash join)" in {
+    import com.twitter.algebird.CMSHasherImplicits._
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2)))
+      val p2 = sc.parallelize(Seq(("a", 11)))
+
+      // set threshold to 3, given 0.5 fraction for sample - "a" should not be hash joined
+      val p = p1.skewedJoin(p2, 3, skewEps, skewSeed, sampleFraction = 0.01)
+      p should
+        containInAnyOrder (Seq(("a", (2, 11)),
+                               ("a", (1, 11))))
+    }
+  }
+
+  it should "support join() of empty SCollections" in {
+    runWithContext { sc =>
+      val lhs = sc.parallelize(Seq[(String, Unit)]())
+      val rhs = sc.parallelize(Seq[(String, Unit)]())
+      val result = lhs.join(rhs)
+      result should beEmpty
+    }
+  }
 }
