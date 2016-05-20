@@ -30,7 +30,7 @@ import com.spotify.scio.coders.KryoAtomicCoder
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}
 
-private[scio] class InMemoryDataFlowSink[T](private val id: String) extends Sink[T] {
+private[scio] class InMemorySink[T](private val id: String) extends Sink[T] {
   override def createWriteOperation(options: PipelineOptions)
   : WriteOperation[T, MBuffer[Array[Byte]]] =
     new InMemoryWriteOperation(this, id)

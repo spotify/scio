@@ -21,7 +21,7 @@ import com.google.cloud.dataflow.sdk.io.Write
 import com.google.cloud.dataflow.sdk.transforms.Count
 import com.google.cloud.dataflow.sdk.transforms.windowing.{GlobalWindow, PaneInfo}
 import com.google.cloud.dataflow.sdk.transforms.windowing.PaneInfo.Timing
-import com.spotify.scio.io.{InMemoryDataFlowSink, InMemorySinkManager}
+import com.spotify.scio.io.{InMemorySink, InMemorySinkManager}
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.random.RandomSamplerUtils
 import com.twitter.algebird.{Aggregator, Semigroup}
@@ -51,7 +51,7 @@ class SCollectionTest extends PipelineSpec {
     val id = System.currentTimeMillis().toString
     runWithContext { sc =>
       sc.parallelize(Seq(1, 2, 3, 4, 5))
-        .applyOutputTransform(Write.to(new InMemoryDataFlowSink[Int](id)))
+        .applyOutputTransform(Write.to(new InMemorySink[Int](id)))
     }
     InMemorySinkManager.get[Int](id).toSet should equal (Set(1, 2, 3, 4, 5))
   }

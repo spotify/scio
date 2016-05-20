@@ -43,8 +43,8 @@ package object experimental {
 
   /** Enhanced version of [[ScioContext]] with experimental features. */
   // TODO: scala 2.11
-  // implicit class ExperimentalDataflowContext(private val self: ScioContext) extends AnyVal {
-  implicit class ExperimentalDataflowContext(val self: ScioContext) {
+  // implicit class ExperimentalScioContext(private val self: ScioContext) extends AnyVal {
+  implicit class ExperimentalScioContext(val self: ScioContext) {
 
     /**
      * Get a typed SCollection for a BigQuery SELECT query or table.
