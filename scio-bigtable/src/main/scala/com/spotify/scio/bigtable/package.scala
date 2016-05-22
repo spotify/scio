@@ -142,8 +142,7 @@ package object bigtable {
           config.getProjectId, config.getClusterId, config.getZoneId)
         self.context.testOut(output.asInstanceOf[TestIO[(String, Iterable[T])]])(self)
       } else {
-        bt.CloudBigtableIO.writeToMultipleTables(config)
-        val transform = bt.CloudBigtableIO.writeToMultipleTables(config)
+        val transform = BigtableMultiTableWrite.writeToMultipleTables(config)
         self
           .map(kv => KV.of(kv._1, kv._2.asJava.asInstanceOf[java.lang.Iterable[Mutation]]))
           .applyInternal(transform)
