@@ -198,6 +198,16 @@ class BigQueryClient private (private val projectId: String,
       getTable(table).getSchema
     }
 
+  /** Get table metadata **/
+  def getTable(tableSpec: String): Table =
+    getTable(BigQueryIO.parseTableSpec(tableSpec))
+
+  /** Get table metadata **/
+  def getTable(table: TableReference): Table = {
+    val p = if (table.getProjectId == null) this.projectId else table.getProjectId
+    bigquery.tables().get(p, table.getDatasetId, table.getTableId).execute()
+  }
+
   /**
    * Make a query and save results to a destination table.
    *
@@ -376,11 +386,6 @@ class BigQueryClient private (private val projectId: String,
     val bytes = FileUtils.byteCountToDisplaySize(stats.getQuery.getTotalBytesProcessed)
     val cacheHit = stats.getQuery.getCacheHit
     logger.info(s"Total bytes processed: $bytes, cache hit: $cacheHit")
-  }
-
-  private def getTable(table: TableReference): Table = {
-    val p = if (table.getProjectId == null) this.projectId else table.getProjectId
-    bigquery.tables().get(p, table.getDatasetId, table.getTableId).execute()
   }
 
   // =======================================================================
