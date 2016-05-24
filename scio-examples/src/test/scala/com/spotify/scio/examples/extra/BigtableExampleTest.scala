@@ -17,7 +17,6 @@
 
 package com.spotify.scio.examples.extra
 
-import com.spotify.scio.bigtable._
 import com.spotify.scio.{bigtable => bt}
 import com.spotify.scio.testing._
 import org.apache.hadoop.hbase.client.{Put, Result}
@@ -25,7 +24,7 @@ import org.apache.hadoop.hbase.{CellUtil, HConstants, KeyValue}
 
 import scala.collection.JavaConverters._
 
-object BigtableV1ExampleTest {
+object BigtableExampleTest {
   // convert Put to basic comparable types
   def comparablePut(p: Put): (String, Map[String, Seq[(String, String)]]) = {
     def encode(b: Array[Byte], offset: Int = 0, length: Int = Int.MaxValue) =
@@ -45,9 +44,9 @@ object BigtableV1ExampleTest {
   }
 }
 
-class BigtableV1ExampleTest extends PipelineSpec {
+class BigtableExampleTest extends PipelineSpec {
 
-  import BigtableV1ExampleTest._
+  import BigtableExampleTest._
 
   val bigtableOptions = Seq(
     "--bigtableProjectId=my-project",
@@ -57,10 +56,10 @@ class BigtableV1ExampleTest extends PipelineSpec {
 
   val textIn = Seq("a b c d e", "a b a b")
   val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
-  val expectedPuts = wordCount.map(kv => BigtableV1Example.put(kv._1, kv._2))
+  val expectedPuts = wordCount.map(kv => BigtableExample.put(kv._1, kv._2))
 
   "BigtableV1WriteExample" should "work" in {
-    JobTest[com.spotify.scio.examples.extra.BigtableV1WriteExample.type]
+    JobTest[com.spotify.scio.examples.extra.BigtableWriteExample.type]
       .args(bigtableOptions :+ "--input=in.txt": _*)
       .input(TextIO("in.txt"), textIn)
       .output(bt.BigtableOutput[Put]("my-project", "my-cluster", "us-east1-a", "my-table")) {
@@ -71,7 +70,7 @@ class BigtableV1ExampleTest extends PipelineSpec {
 
   def result(key: String, value: Long): Result = {
     val cell = CellUtil.createCell(
-      key.getBytes, BigtableV1Example.FAMILY, BigtableV1Example.QUALIFIER,
+      key.getBytes, BigtableExample.FAMILY, BigtableExample.QUALIFIER,
       HConstants.LATEST_TIMESTAMP, KeyValue.Type.Maximum.getCode, value.toString.getBytes)
     Result.create(Array(cell))
   }
@@ -79,8 +78,8 @@ class BigtableV1ExampleTest extends PipelineSpec {
   val resultIn = wordCount.map(kv => result(kv._1, kv._2))
   val expectedText = wordCount.map(kv => kv._1 + ": " + kv._2)
 
-  "BigtableV1ReadExample" should "work" in {
-    JobTest[com.spotify.scio.examples.extra.BigtableV1ReadExample.type]
+  "BigtableReadExample" should "work" in {
+    JobTest[com.spotify.scio.examples.extra.BigtableReadExample.type]
       .args(bigtableOptions :+ "--output=out.txt": _*)
       .input(bt.BigtableInput("my-project", "my-cluster", "us-east1-a", "my-table"), resultIn)
       .output(TextIO("out.txt"))(_ should containInAnyOrder (expectedText))
@@ -91,13 +90,13 @@ class BigtableV1ExampleTest extends PipelineSpec {
   val othello = Seq("b c ", "b c d")
   val expectedMultiple = Seq(
     "kinglear" ->
-      Iterable("a" -> 2L, "b" -> 2L, "c" -> 1L).map(kv => BigtableV1Example.put(kv._1, kv._2)),
+      Iterable("a" -> 2L, "b" -> 2L, "c" -> 1L).map(kv => BigtableExample.put(kv._1, kv._2)),
     "othello" ->
-      Iterable("b" -> 2L, "c" -> 2L, "d" -> 1L).map(kv => BigtableV1Example.put(kv._1, kv._2))
+      Iterable("b" -> 2L, "c" -> 2L, "d" -> 1L).map(kv => BigtableExample.put(kv._1, kv._2))
   )
 
-  "BigtableV1MultipleWriteExample" should "work" in {
-    JobTest[com.spotify.scio.examples.extra.BigtableV1MultipleWriteExample.type]
+  "BigtableMultipleWriteExample" should "work" in {
+    JobTest[com.spotify.scio.examples.extra.BigtableMultipleWriteExample.type]
       .args(bigtableOptions ++ Seq("--kinglear=k.txt", "--othello=o.txt"): _*)
       .input(TextIO("k.txt"), kingLear)
       .input(TextIO("o.txt"), othello)

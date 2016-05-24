@@ -25,13 +25,13 @@ import com.spotify.scio.values.SCollection
 import org.apache.hadoop.hbase.client.{Put, Result}
 
 /*
- * Bigtable V1 examples.
+ * Bigtable examples.
  *
  * This depends on APIs from `scio-bigtable` and imports from `com.spotify.scio.bigtable._`.
  * It also depends on an early release of `com.google.cloud.bigtable:bigtable-hbase-dataflow`
  * and may change in the future.
  */
-object BigtableV1Example {
+object BigtableExample {
   val FAMILY = "count".getBytes
   val QUALIFIER = "long".getBytes
   def put(key: String, value: Long): Put =
@@ -54,7 +54,7 @@ runMain
 */
 
 // Count words and save result to Bigtable
-object BigtableV1WriteExample {
+object BigtableWriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val btOptions = Bigtable.parseOptions(cmdlineArgs)
@@ -63,7 +63,7 @@ object BigtableV1WriteExample {
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
-      .map(kv => BigtableV1Example.put(kv._1, kv._2))
+      .map(kv => BigtableExample.put(kv._1, kv._2))
       .saveAsBigtable(config)
 
     sc.close()
@@ -84,14 +84,14 @@ runMain
 */
 
 // Read word count result back from Bigtable
-object BigtableV1ReadExample {
+object BigtableReadExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val btOptions = Bigtable.parseOptions(cmdlineArgs)
     val config = bt.CloudBigtableScanConfiguration.fromCBTOptions(btOptions)
 
     sc.bigTable(config)
-      .map(BigtableV1Example.result)
+      .map(BigtableExample.result)
       .saveAsTextFile(args("output"))
 
     sc.close()
@@ -112,7 +112,7 @@ runMain
 */
 
 // Count words and save result to multiple Bigtable tables
-object BigtableV1MultipleWriteExample {
+object BigtableMultipleWriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val btOptions = Bigtable.parseOptions(cmdlineArgs)
@@ -121,7 +121,7 @@ object BigtableV1MultipleWriteExample {
     def wordCount(name: String, in: SCollection[String]): SCollection[(String, Iterable[Put])] =
       in.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
         .countByValue
-        .map(kv => BigtableV1Example.put(kv._1, kv._2))
+        .map(kv => BigtableExample.put(kv._1, kv._2))
         .groupBy(_ => Unit)
         .map(kv => (name, kv._2))
 
