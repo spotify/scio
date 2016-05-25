@@ -46,7 +46,7 @@ public class BigtableMultiTableWrite {
   public static class CloudBigtableMultiTableBufferedWriteFn
           extends AbstractCloudBigtableTableDoFn<KV<String, Iterable<Mutation>>, Void> {
     private static final long serialVersionUID = 2L;
-    private transient Map<String, BufferedMutator> mutators;
+    private Map<String, BufferedMutator> mutators;
 
     // Stats
     private final Aggregator<Long, Long> mutationsCounter;
@@ -56,6 +56,10 @@ public class BigtableMultiTableWrite {
       super(config);
       mutationsCounter = createAggregator("mutations", new Sum.SumLongFn());
       exceptionsCounter = createAggregator("exceptions", new Sum.SumLongFn());
+    }
+
+    @Override
+    public void startBundle(Context context) throws Exception {
       mutators = Maps.newConcurrentMap();
     }
 
