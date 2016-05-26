@@ -96,7 +96,7 @@ package object hdfs {
       val coder: AvroCoder[T] = if (schema == null) {
         AvroCoder.of(ScioUtil.classOf[T])
       } else {
-        AvroCoder.of(schema).asInstanceOf[AvroCoder[T]]
+        AvroCoder.of(ScioUtil.classOf[T], schema)
       }
       val src = if (username != null) {
         new SimpleAuthAvroHadoopFileSource[T](path, coder, username)
