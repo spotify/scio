@@ -125,8 +125,10 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
 
   import Implicits._
 
-  // Set default name
-  this.setName(CallSites.getAppName)
+  // Set default name if no app name specified by user
+  if (options.getAppName == null) {
+    this.setName(CallSites.getAppName)
+  }
 
   /** Dataflow pipeline. */
   def pipeline: Pipeline = {
