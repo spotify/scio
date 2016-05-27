@@ -41,6 +41,7 @@ cat wc/part-00000-of-00001.txt
 
 - [Scio Wiki](https://github.com/spotify/scio/wiki) - wiki page
 - [ScalaDocs](http://spotify.github.com/scio) - current API documentation
+- [Big Data Rosetta Code](https://github.com/spotify/big-data-rosetta-code) - comparison of code snippets in Scio, Scalding and Saprk
 
 # Artifacts
 
