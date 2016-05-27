@@ -126,7 +126,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
   import Implicits._
 
   // Set default name if no app name specified by user
-  if (options.getAppName == null) {
+  if (options.getAppName == null || options.getAppName.startsWith("ScioContext$")) {
     this.setName(CallSites.getAppName)
   }
 
