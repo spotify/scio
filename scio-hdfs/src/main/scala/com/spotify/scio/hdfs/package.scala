@@ -121,41 +121,58 @@ package object hdfs {
     def hadoopDistCache[F](path: String,
                            conf: Configuration = null,
                            username: String = null)
-                          (initFn: File => F): DistCache[F] = self.pipelineOp {
+                          (initFn: File => F): DistCache[F] =
+      hadoopDistCacheMulti(Seq(path), conf, username) {fs: Seq[File] => initFn(fs.head)}
+
+    /**
+     * Create a new [[com.spotify.scio.values.DistCache DistCache]] instance for a list of
+     * files on Hadoop/HDFS.
+     *
+     * @param paths Sequence of paths to the Hadoop/HDFS artifacts
+     * @param conf optional custom Hadoop configuration
+     * @param username optional Hadoop Simple Authentication remote username
+     */
+    def hadoopDistCacheMulti[F](paths: Seq[String],
+                                conf: Configuration = null,
+                                username: String = null)
+                               (initFn: Seq[File] => F): DistCache[F] = self.pipelineOp {
       if (self.isTest) {
-        self.distCache(path)(initFn)
+        self.distCache(paths)(initFn)
       } else {
         //TODO: should upload be asynchronous, blocking on context close
         val dfOptions = self.options.as(classOf[DataflowPipelineOptions])
         require(dfOptions.getStagingLocation != null,
           "Staging directory not set - use `--stagingLocation`!")
-        require(path != null, "Artifact path can't be null")
+        require(!paths.contains(null), "Artifact path can't be null")
 
         val _conf = Option(conf).getOrElse(new Configuration())
 
-        //TODO: should we add checksums on both src and GCS to reuse uploaded artifacts?
-        // to keep it simple, for now we upload each artifact, thus artifacts should be
-        // relatively small.
-        val pathHash = Hashing.sha1().hashString(path, Charsets.UTF_8)
-        val targetHash = pathHash.toString.substring(0, 8)
+        val targetPaths = paths.map { path =>
+          //TODO: should we add checksums on both src and GCS to reuse uploaded artifacts?
+          // to keep it simple, for now we upload each artifact, thus artifacts should be
+          // relatively small.
+          val pathHash = Hashing.sha1().hashString(path, Charsets.UTF_8)
+          val targetHash = pathHash.toString.substring(0, 8)
+          logger.debug(s"Add '$path' (hash: '$pathHash') to dist cache")
 
-        logger.debug(s"Add '$path' (hash: '$pathHash') to dist cache")
+          val targetDistCache = new Path("distcache", s"$targetHash-${path.split("/").last}")
 
-        val targetDistCache = new Path("distcache", s"$targetHash-${path.split("/").last}")
+          val target = new Path(dfOptions.getStagingLocation, targetDistCache)
 
-        val target = new Path(dfOptions.getStagingLocation, targetDistCache)
+          if (username != null) {
+            UserGroupInformation.createRemoteUser(username).doAs(new PrivilegedAction[Unit] {
+              override def run(): Unit = {
+                hadoopDistCacheCopy(new Path(path), target.toUri, _conf)
+              }
+            })
+          } else {
+            hadoopDistCacheCopy(new Path(path), target.toUri, _conf)
+          }
 
-        if (username != null) {
-          UserGroupInformation.createRemoteUser(username).doAs(new PrivilegedAction[Unit] {
-            override def run(): Unit = {
-              hadoopDistCacheCopy(new Path(path), target.toUri, _conf)
-            }
-          })
-        } else {
-          hadoopDistCacheCopy(new Path(path), target.toUri, _conf)
+          target
         }
 
-        self.distCache(target.toString)(initFn)
+        self.distCache(targetPaths.map(_.toString))(initFn)
       }
     }
 
