@@ -125,15 +125,22 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
 
     @Override
     public void finalize(Iterable<String> writerResults, PipelineOptions options) throws Exception {
-      // job successful
       Job job = ((HadoopFileSink<K, V>) getSink()).jobInstance();
+      FileSystem fs = FileSystem.get(job.getConfiguration());
+
+      // If there are 0 output shards, just create output folder.
+      if (!writerResults.iterator().hasNext()) {
+        fs.mkdirs(new Path(path));
+        return;
+      }
+
+      // job successful
       JobContext context = new JobContextImpl(job.getConfiguration(), jobID());
       FileOutputCommitter outputCommitter = new FileOutputCommitter(new Path(path), context);
       outputCommitter.commitJob(context);
 
       // get actual output shards
       Set<String> actual = Sets.newHashSet();
-      FileSystem fs = FileSystem.get(job.getConfiguration());
       FileStatus[] statuses = fs.listStatus(new Path(path), new PathFilter() {
         @Override
         public boolean accept(Path path) {
