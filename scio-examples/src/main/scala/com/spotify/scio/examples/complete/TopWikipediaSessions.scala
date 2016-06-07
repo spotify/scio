@@ -42,7 +42,7 @@ object TopWikipediaSessions {
     sc
       .tableRowJsonFile(args.getOrElse("input", ExampleData.EXPORTED_WIKI_TABLE))
       .flatMap { row =>
-        try Seq((row.getString("contributor_username"), row.getInt("timestamp"))) catch {
+        try Seq((row.getString("contributor_username"), row.getLong("timestamp"))) catch {
           case e: NullPointerException => None
         }
       }

@@ -24,7 +24,7 @@ import com.spotify.scio.examples.common.ExampleData
 
 import scala.collection.JavaConverters._
 
-case class Record(year: Int, month: Int, day: Int, meanTemp: Double)
+case class Record(year: Long, month: Long, day: Long, meanTemp: Double)
 
 /*
 SBT
@@ -50,9 +50,9 @@ object FilterExamples {
 
     val pipe = sc.bigQueryTable(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
       .map { row =>
-        val year = row.getInt("year")
-        val month = row.getInt("month")
-        val day = row.getInt("day")
+        val year = row.getLong("year")
+        val month = row.getLong("month")
+        val day = row.getLong("day")
         val meanTemp = row.getDouble("mean_temp")
         Record(year, month, day, meanTemp)
       }
