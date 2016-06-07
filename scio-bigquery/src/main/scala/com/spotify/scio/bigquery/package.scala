@@ -54,11 +54,7 @@ package object bigquery {
 
     def getBoolean(name: AnyRef): Boolean = this.getValue(name, _.toString.toBoolean, false)
 
-    def getInt(name: AnyRef): Int = this.getValue(name, _.toString.toInt, 0)
-
     def getLong(name: AnyRef): Long = this.getValue(name, _.toString.toLong, 0L)
-
-    def getFloat(name: AnyRef): Float = this.getValue(name, _.toString.toFloat, 0.0f)
 
     def getDouble(name: AnyRef): Double = this.getValue(name, _.toString.toDouble, 0.0)
 

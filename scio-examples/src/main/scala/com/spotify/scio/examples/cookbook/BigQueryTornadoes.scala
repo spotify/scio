@@ -44,7 +44,7 @@ object BigQueryTornadoes {
 
     sc
       .bigQueryTable(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
-      .flatMap(r => if (r.getBoolean("tornado")) Seq(r.getInt("month")) else Nil)
+      .flatMap(r => if (r.getBoolean("tornado")) Seq(r.getLong("month")) else Nil)
       .countByValue
       .map(kv => TableRow("month" -> kv._1, "tornado_count" -> kv._2))
       .saveAsBigQuery(args("output"), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
