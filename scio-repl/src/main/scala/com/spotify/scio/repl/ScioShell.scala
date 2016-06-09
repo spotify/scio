@@ -40,9 +40,15 @@ trait BaseScioShell extends MainGenericRunner {
     // We ignore params we don't care about - hence error function is empty
     val command = new GenericRunnerCommand(args.toList, _ => ())
 
-    // if running from the assembly, need to explicitly tell it to use java classpath
-    command.settings.usejavacp.value = true
-    command.settings.classpath.append(System.getProperty("java.class.path"))
+    def classLoaderURLs(cl: ClassLoader): Array[java.net.URL] = cl match {
+      case null => Array()
+      case u: java.net.URLClassLoader => u.getURLs ++ classLoaderURLs(cl.getParent)
+      case _ => classLoaderURLs(cl.getParent)
+    }
+
+    classLoaderURLs(Thread.currentThread().getContextClassLoader).foreach(
+      u => command.settings.classpath.append(u.getPath)
+    )
 
     // Repl assembly includes paradise's scalac-plugin.xml - required for BigQuery macro
     val thisJar = this.getClass.getProtectionDomain.getCodeSource.getLocation.getPath
@@ -56,7 +62,8 @@ trait BaseScioShell extends MainGenericRunner {
     // Force the repl to be synchronous, so all cmds are executed in the same thread
     command.settings.Yreplsync.value = true
 
-    val scioClassLoader = new ScioReplClassLoader(command.settings.classpathURLs.toArray,
+    val scioClassLoader = new ScioReplClassLoader(
+      classLoaderURLs(Thread.currentThread().getContextClassLoader),
       null,
       Thread.currentThread.getContextClassLoader)
 
