@@ -166,6 +166,7 @@ lazy val root: Project = Project(
 ).settings(
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
     -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples),
+  run <<= run in Compile in scioRepl,
   aggregate in assembly := false
 ).aggregate(
   scioCore,
