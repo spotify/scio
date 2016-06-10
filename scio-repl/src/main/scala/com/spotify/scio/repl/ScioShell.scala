@@ -17,6 +17,8 @@
 
 package com.spotify.scio.repl
 
+import scala.reflect.io.File
+import scala.tools.nsc.util.ClassPath
 import scala.tools.nsc.{GenericRunnerCommand, MainGenericRunner}
 
 /**
@@ -50,9 +52,19 @@ trait BaseScioShell extends MainGenericRunner {
       u => command.settings.classpath.append(u.getPath)
     )
 
+    // We have to make sure that scala macros are expandable. paradise plugin has to be added to
+    // -Xplugin paths. In case of assembly - paradise is included in assembly jar - thus we add
+    // itself to -Xplugin. If shell is started from sbt or classpath, paradise jar has to be in
+    // classpath, we find it and add it to -Xplugin.
+
     // Repl assembly includes paradise's scalac-plugin.xml - required for BigQuery macro
+    // There should be no harm if we keep this for sbt launch.
     val thisJar = this.getClass.getProtectionDomain.getCodeSource.getLocation.getPath
     command.settings.plugin.appendToValue(thisJar)
+
+    ClassPath.split(command.settings.classpath.value)
+      .find(File(_).name.startsWith("paradise_"))
+      .foreach(command.settings.plugin.appendToValue)
 
     // Useful settings for for debugging, dumping class files etc:
     /* command.settings.debug.value = true
