@@ -37,10 +37,17 @@ trait BaseScioShell extends MainGenericRunner {
    * @param args passed from the command line
    * @return `true` if execution was successful, `false` otherwise
    */
+  // scalastyle:off method.length
   override def process(args: Array[String]): Boolean = {
     // Process command line arguments into a settings object, and use that to start the REPL.
     // We ignore params we don't care about - hence error function is empty
     val command = new GenericRunnerCommand(args.toList, _ => ())
+
+    // For scala 2.10 - usejavacp
+    if (scala.util.Properties.versionString.contains("2.10.")) {
+      command.settings.classpath.append(System.getProperty("java.class.path"))
+      command.settings.usejavacp.value = true
+    }
 
     def classLoaderURLs(cl: ClassLoader): Array[java.net.URL] = cl match {
       case null => Array()
@@ -48,9 +55,8 @@ trait BaseScioShell extends MainGenericRunner {
       case _ => classLoaderURLs(cl.getParent)
     }
 
-    classLoaderURLs(Thread.currentThread().getContextClassLoader).foreach(
-      u => command.settings.classpath.append(u.getPath)
-    )
+    classLoaderURLs(Thread.currentThread().getContextClassLoader)
+      .foreach(u => command.settings.classpath.append(u.getPath))
 
     // We have to make sure that scala macros are expandable. paradise plugin has to be added to
     // -Xplugin paths. In case of assembly - paradise is included in assembly jar - thus we add
@@ -75,7 +81,8 @@ trait BaseScioShell extends MainGenericRunner {
     command.settings.Yreplsync.value = true
 
     val scioClassLoader = new ScioReplClassLoader(
-      classLoaderURLs(Thread.currentThread().getContextClassLoader),
+      command.settings.classpathURLs.toArray ++
+        classLoaderURLs(Thread.currentThread().getContextClassLoader),
       null,
       Thread.currentThread.getContextClassLoader)
 
@@ -84,10 +91,12 @@ trait BaseScioShell extends MainGenericRunner {
 
     // Set classloader chain - expose top level abstract class loader down
     // the chain to allow for readObject and latestUserDefinedLoader
+    // See https://gist.github.com/harrah/404272
     command.settings.embeddedDefaults(scioClassLoader)
 
     repl.process(command.settings)
   }
+  // scalastyle:on method.length
 
   /** Runs an instance of the shell. */
   def main(args: Array[String]) {
