@@ -346,6 +346,16 @@ lazy val scioRepl: Project = Project(
     )
   )
 ).settings(
+    mainClass in (Compile,run) := {
+      if (scalaVersion.value.startsWith("2.10")) {
+        throw new UnsupportedOperationException(
+          "\n\n\tERROR: Can't start Scio REPL in SBT for scala 2.10.x. " +
+            "Upgrade to 2.11.x. or build REPL assembly jar.\n" +
+            "\tMore info https://github.com/spotify/scio/wiki/Scio-REPL\n\n")
+      }
+      Some("com.spotify.scio.repl.ScioShell")
+    }
+).settings(
   assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
 ).dependsOn(
   scioCore,
