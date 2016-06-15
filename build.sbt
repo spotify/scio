@@ -336,7 +336,7 @@ val sbtReplScalaVersionCheck = Def.task {
 lazy val scioRepl: Project = Project(
   "scio-repl",
   file("scio-repl"),
-  settings = commonSettings ++ noPublishSettings ++ Seq(
+  settings = commonSettings ++ Seq(
     libraryDependencies ++= Seq(
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "jline" % "jline" % scalaBinaryVersion.value,
