@@ -19,7 +19,6 @@ package com.spotify.scio
 
 import java.lang.{Float => JFloat}
 
-import com.google.bigtable.v1.Row
 import com.google.cloud.dataflow.sdk.coders._
 import com.google.cloud.dataflow.sdk.coders.protobuf.ProtoCoder
 import com.google.cloud.dataflow.sdk.values.{KV, TypeDescriptor}
