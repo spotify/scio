@@ -144,6 +144,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   /** Dataflow pipeline. */
   def pipeline: Pipeline = {
     if (_pipeline == null) {
+      // TODO: make sure this works for other PipelineOptions
       dfOptions.foreach(_.setFilesToStage(getFilesToStage(artifacts).asJava))
       _pipeline = if (testId.isEmpty) {
         Pipeline.create(options)
