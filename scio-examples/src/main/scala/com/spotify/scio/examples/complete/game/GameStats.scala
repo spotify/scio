@@ -20,6 +20,7 @@ package com.spotify.scio.examples.complete.game
 import java.util.TimeZone
 
 import com.google.cloud.dataflow.examples.common.DataflowExampleUtils
+import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
 import com.google.cloud.dataflow.sdk.transforms.windowing.{IntervalWindow, OutputTimeFns}
 import com.spotify.scio._
 import com.spotify.scio.experimental._
@@ -54,7 +55,7 @@ object GameStats {
   // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val dataflowUtils = new DataflowExampleUtils(sc.options)
+    val dataflowUtils = new DataflowExampleUtils(sc.options.as(classOf[DataflowPipelineOptions]))
 
     def fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
       .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))

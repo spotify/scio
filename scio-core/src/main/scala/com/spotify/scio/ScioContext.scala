@@ -50,6 +50,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer, Set => MSet}
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
+import scala.util.{Failure, Try}
 import scala.util.control.NonFatal
 
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
@@ -70,13 +71,13 @@ object ScioContext {
   def apply(): ScioContext = ScioContext(defaultOptions)
 
   /** Create a new [[ScioContext]] instance. */
-  def apply(options: DataflowPipelineOptions): ScioContext = new ScioContext(options,  Nil, None)
+  def apply(options: PipelineOptions): ScioContext = new ScioContext(options,  Nil, None)
 
   /** Create a new [[ScioContext]] instance. */
   def apply(artifacts: List[String]): ScioContext = new ScioContext(defaultOptions, artifacts, None)
 
   /** Create a new [[ScioContext]] instance. */
-  def apply(options: DataflowPipelineOptions, artifacts: List[String]): ScioContext =
+  def apply(options: PipelineOptions, artifacts: List[String]): ScioContext =
     new ScioContext(options, artifacts, None)
 
   /** Create a new [[ScioContext]] instance for testing. */
@@ -101,7 +102,7 @@ object ScioContext {
     (PipelineOptionsFactory.fromArgs(dfArgs).as(cls), Args(appArgs))
   }
 
-  private val defaultOptions: DataflowPipelineOptions =
+  private val defaultOptions: PipelineOptions =
     PipelineOptionsFactory.fromArgs(Array.empty).as(classOf[DataflowPipelineOptions])
 
 }
@@ -117,7 +118,7 @@ object ScioContext {
  * @groupname Ungrouped Other Members
  */
 // scalastyle:off number.of.methods
-class ScioContext private[scio] (val options: DataflowPipelineOptions,
+class ScioContext private[scio] (val options: PipelineOptions,
                                  private var artifacts: List[String],
                                  testId: Option[String]) {
 
@@ -125,15 +126,25 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
 
   import Implicits._
 
+  // TODO: decouple DataflowPipelineOptions
+  private def dfOptions: Try[DataflowPipelineOptions] = Try {
+    options.as(classOf[DataflowPipelineOptions])
+  }.orElse {
+    val name = options.getClass.getSimpleName
+    Failure(new RuntimeException(s"$name is not DataflowPipelineOptions"))
+  }
+
   // Set default name if no app name specified by user
-  if (options.getAppName == null || options.getAppName.startsWith("ScioContext$")) {
-    this.setName(CallSites.getAppName)
+  dfOptions.foreach { o =>
+    if (o.getAppName == null || o.getAppName.startsWith("ScioContext$")) {
+      this.setName(CallSites.getAppName)
+    }
   }
 
   /** Dataflow pipeline. */
   def pipeline: Pipeline = {
     if (_pipeline == null) {
-      options.setFilesToStage(getFilesToStage(artifacts).asJava)
+      dfOptions.foreach(_.setFilesToStage(getFilesToStage(artifacts).asJava))
       _pipeline = if (testId.isEmpty) {
         Pipeline.create(options)
       } else {
@@ -201,7 +212,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
   // =======================================================================
 
   private lazy val bigQueryClient: BigQueryClient =
-    BigQueryClient(options.getProject, options.getGcpCredential)
+    BigQueryClient(dfOptions.get.getProject, dfOptions.get.getGcpCredential)
 
   // =======================================================================
   // States
@@ -213,8 +224,10 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
       throw new RuntimeException("Cannot set name once pipeline is initialized")
     }
     // override app name and job name
-    options.setAppName(name)
-    options.setJobName(new DataflowPipelineOptions.JobNameFactory().create(options))
+    dfOptions.foreach { o =>
+      o.setAppName(name)
+      o.setJobName(new DataflowPipelineOptions.JobNameFactory().create(options))
+    }
   }
 
   /** Close the context. No operation can be performed once the context is closed. */
@@ -592,7 +605,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
     if (this.isTest) {
       new MockDistCache(testDistCache(DistCacheIO(uri)))
     } else {
-      new DistCacheSingle(new URI(uri), initFn, options)
+      new DistCacheSingle(new URI(uri), initFn, dfOptions.get)
     }
   }
 
@@ -606,7 +619,7 @@ class ScioContext private[scio] (val options: DataflowPipelineOptions,
     if (this.isTest) {
       new MockDistCache(testDistCache(DistCacheIO(uris.mkString("\t"))))
     } else {
-      new DistCacheMulti(uris.map(new URI(_)), initFn, options)
+      new DistCacheMulti(uris.map(new URI(_)), initFn, dfOptions.get)
     }
   }
 
