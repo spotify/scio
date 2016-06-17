@@ -17,6 +17,7 @@
 
 package com.spotify.scio.examples.cookbook
 
+import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
 import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
@@ -33,11 +34,12 @@ runMain
 object DeDupExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val dfOptions = sc.options.as(classOf[DataflowPipelineOptions])
 
     val input = args.getOrElse("input", ExampleData.SHAKESPEARE_ALL)
     val output = args.optional("output").getOrElse(
-      if (sc.options.getStagingLocation != null) {
-        GcsPath.fromUri(sc.options.getStagingLocation).resolve("deduped.txt").toString
+      if (dfOptions.getStagingLocation != null) {
+        GcsPath.fromUri(dfOptions.getStagingLocation).resolve("deduped.txt").toString
       } else {
         throw new IllegalArgumentException("Must specify --output or --stagingLocation")
       })

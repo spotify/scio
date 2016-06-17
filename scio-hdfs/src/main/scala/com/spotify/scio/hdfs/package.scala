@@ -28,6 +28,7 @@ import com.google.cloud.dataflow.contrib.hadoop._
 import com.google.cloud.dataflow.contrib.hadoop.simpleauth._
 import com.google.cloud.dataflow.sdk.coders.AvroCoder
 import com.google.cloud.dataflow.sdk.io.{Read, Write}
+import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
 import com.google.cloud.dataflow.sdk.util.MimeTypes
 import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
 import com.google.cloud.dataflow.sdk.values.KV
@@ -125,7 +126,8 @@ package object hdfs {
         self.distCache(path)(initFn)
       } else {
         //TODO: should upload be asynchronous, blocking on context close
-        require(self.options.getStagingLocation != null,
+        val dfOptions = self.options.as(classOf[DataflowPipelineOptions])
+        require(dfOptions.getStagingLocation != null,
           "Staging directory not set - use `--stagingLocation`!")
         require(path != null, "Artifact path can't be null")
 
@@ -141,7 +143,7 @@ package object hdfs {
 
         val targetDistCache = new Path("distcache", s"$targetHash-${path.split("/").last}")
 
-        val target = new Path(self.options.getStagingLocation, targetDistCache)
+        val target = new Path(dfOptions.getStagingLocation, targetDistCache)
 
         if (username != null) {
           UserGroupInformation.createRemoteUser(username).doAs(new PrivilegedAction[Unit] {
@@ -164,8 +166,9 @@ package object hdfs {
       val inStream = fs.open(src)
 
       //TODO: Should we attempt to detect the Mime type rather than always using MimeTypes.BINARY?
+      val dfOptions = self.options.as(classOf[DataflowPipelineOptions])
       val outChannel = Channels.newOutputStream(
-        self.options.getGcsUtil.create(GcsPath.fromUri(target), MimeTypes.BINARY))
+        dfOptions.getGcsUtil.create(GcsPath.fromUri(target), MimeTypes.BINARY))
 
       try {
         ByteStreams.copy(inStream, outChannel)

@@ -17,6 +17,7 @@
 
 package com.spotify.scio.examples
 
+import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
 import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
@@ -34,11 +35,12 @@ runMain
 object WordCount {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val dfOptions = sc.options.as(classOf[DataflowPipelineOptions])
 
     val input = args.getOrElse("input", ExampleData.KING_LEAR)
     val output = args.optional("output").getOrElse(
-      if (sc.options.getStagingLocation != null) {
-        GcsPath.fromUri(sc.options.getStagingLocation).resolve("counts.txt").toString
+      if (dfOptions.getStagingLocation != null) {
+        GcsPath.fromUri(dfOptions.getStagingLocation).resolve("counts.txt").toString
       } else {
         throw new IllegalArgumentException("Must specify --output or --stagingLocation")
       })
