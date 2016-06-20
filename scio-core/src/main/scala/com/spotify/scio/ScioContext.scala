@@ -120,14 +120,14 @@ object ScioContext {
 // scalastyle:off number.of.methods
 class ScioContext private[scio] (val options: PipelineOptions,
                                  private var artifacts: List[String],
-                                 testId: Option[String]) {
+                                 private[scio] val testId: Option[String]) {
 
   private val logger = LoggerFactory.getLogger(ScioContext.getClass)
 
   import Implicits._
 
   // TODO: decouple DataflowPipelineOptions
-  private def dfOptions: Try[DataflowPipelineOptions] = Try {
+  private[scio] def dfOptions: Try[DataflowPipelineOptions] = Try {
     options.as(classOf[DataflowPipelineOptions])
   }.orElse {
     val name = options.getClass.getSimpleName
@@ -578,9 +578,13 @@ class ScioContext private[scio] (val options: PipelineOptions,
       .setName(truncate(elems.toString()))
   }
 
-  // =======================================================================
-  // Distributed cache
-  // =======================================================================
+}
+// scalastyle:on number.of.methods
+
+/** An enhanced ScioContext with distributed cache features. */
+class DistCacheScioContext private[scio] (self: ScioContext) {
+
+  private[scio] def testDistCache: TestDistCache = TestDataManager.getDistCache(self.testId.get)
 
   /**
    * Create a new [[com.spotify.scio.values.DistCache DistCache]] instance.
@@ -602,11 +606,11 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * }}}
    * @group dist_cache
    */
-  def distCache[F](uri: String)(initFn: File => F): DistCache[F] = pipelineOp {
-    if (this.isTest) {
+  def distCache[F](uri: String)(initFn: File => F): DistCache[F] = self.pipelineOp {
+    if (self.isTest) {
       new MockDistCache(testDistCache(DistCacheIO(uri)))
     } else {
-      new DistCacheSingle(new URI(uri), initFn, dfOptions.get)
+      new DistCacheSingle(new URI(uri), initFn, self.dfOptions.get)
     }
   }
 
@@ -616,13 +620,12 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @param initFn function to initialized the distributed files
    * @group dist_cache
    */
-  def distCache[F](uris: Seq[String])(initFn: Seq[File] => F): DistCache[F] = pipelineOp {
-    if (this.isTest) {
+  def distCache[F](uris: Seq[String])(initFn: Seq[File] => F): DistCache[F] = self.pipelineOp {
+    if (self.isTest) {
       new MockDistCache(testDistCache(DistCacheIO(uris.mkString("\t"))))
     } else {
-      new DistCacheMulti(uris.map(new URI(_)), initFn, dfOptions.get)
+      new DistCacheMulti(uris.map(new URI(_)), initFn, self.dfOptions.get)
     }
   }
 
 }
-// scalastyle:on number.of.methods
