@@ -21,6 +21,7 @@ package com.spotify.scio.values
 
 import java.io.File
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
+import java.net.URI
 import java.util.UUID
 
 import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
@@ -825,7 +826,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   private def pathWithShards(path: String) = {
-    if (this.context.pipeline.getRunner.isInstanceOf[runners.DirectPipelineRunner]) {
+    if (this.context.pipeline.getRunner.isInstanceOf[runners.DirectPipelineRunner] &&
+      ScioUtil.isLocalUri(new URI(path))) {
+      // Create output directory when running locally with local file system
       val f = new File(path)
       if (f.exists()) {
         throw new RuntimeException(s"Output directory $path already exists")
