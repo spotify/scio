@@ -1,22 +1,23 @@
 /*
- * Copyright (C) 2015 Google Inc.
+ * Copyright 2016 Spotify AB.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 
 /* Ported com.google.cloud.dataflow.sdk.coders.DoubleCoder */
 
-package com.spotify.scio;
+package com.spotify.scio.coders;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
@@ -33,15 +34,14 @@ import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
 import com.google.cloud.dataflow.sdk.coders.CoderException;
 
 /**
- * A FloatCoder encodes Floats in 4 bytes.
+ * A {@link FloatCoder} encodes {@link Float} values in 4 bytes using Java serialization.
  */
-@SuppressWarnings("serial")
-class FloatCoder extends AtomicCoder<Float> {
+public class FloatCoder extends AtomicCoder<Float> {
+
   @JsonCreator
   public static FloatCoder of() {
     return INSTANCE;
   }
-
 
   /////////////////////////////////////////////////////////////////////////////
 
@@ -53,7 +53,7 @@ class FloatCoder extends AtomicCoder<Float> {
   public void encode(Float value, OutputStream outStream, Context context)
       throws IOException, CoderException {
     if (value == null) {
-      throw new CoderException("cannot encode a null Float");
+      throw new CoderException("cannot encode a null float");
     }
     new DataOutputStream(outStream).writeFloat(value);
   }
@@ -70,6 +70,14 @@ class FloatCoder extends AtomicCoder<Float> {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @throws NonDeterministicException always.
+   *         Floating-point operations are not guaranteed to be deterministic, even
+   *         if the storage format might be, so floating point representations are not
+   *         recommended for use in operations that require deterministic inputs.
+   */
   @Override
   public void verifyDeterministic() throws NonDeterministicException {
     throw new NonDeterministicException(this,
@@ -77,19 +85,36 @@ class FloatCoder extends AtomicCoder<Float> {
   }
 
   /**
-   * Returns true since registerByteSizeObserver() runs in constant time.
+   * {@inheritDoc}
+   *
+   * @return {@code true}. This coder is injective.
+   */
+  @Override
+  public boolean consistentWithEquals() {
+    return true;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @return {@code true}. {@link FloatCoder#getEncodedElementByteSize} returns a constant.
    */
   @Override
   public boolean isRegisterByteSizeObserverCheap(Float value, Context context) {
     return true;
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @return {@code 8}, the byte size of a {@link Float} encoded using Java serialization.
+   */
   @Override
   protected long getEncodedElementByteSize(Float value, Context context)
       throws Exception {
     if (value == null) {
       throw new CoderException("cannot encode a null Float");
     }
-    return 4;
+    return 8;
   }
 }

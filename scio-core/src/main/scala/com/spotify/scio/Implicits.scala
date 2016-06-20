@@ -23,7 +23,7 @@ import com.google.cloud.dataflow.sdk.coders._
 import com.google.cloud.dataflow.sdk.coders.protobuf.ProtoCoder
 import com.google.cloud.dataflow.sdk.values.{KV, TypeDescriptor}
 import com.google.protobuf.Message
-import com.spotify.scio.coders.KryoAtomicCoder
+import com.spotify.scio.coders.{FloatCoder, KryoAtomicCoder}
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.specific.SpecificRecord
 
