@@ -31,6 +31,7 @@ import java.io.UTFDataFormatException;
 
 // package hack
 import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
+import com.google.cloud.dataflow.sdk.coders.Coder.Context;
 import com.google.cloud.dataflow.sdk.coders.CoderException;
 
 /**
