@@ -122,6 +122,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
                                  private var artifacts: List[String],
                                  private[scio] val testId: Option[String]) {
 
+  private implicit val context: ScioContext = this
+
   private val logger = LoggerFactory.getLogger(ScioContext.getClass)
 
   import Implicits._
@@ -293,8 +295,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
   // =======================================================================
   // Test wiring
   // =======================================================================
-
-  private implicit val context: ScioContext = this
 
   private[scio] def isTest: Boolean = testId.isDefined
 
