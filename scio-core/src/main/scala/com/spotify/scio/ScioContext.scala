@@ -28,7 +28,7 @@ import com.google.cloud.dataflow.sdk.Pipeline
 import com.google.cloud.dataflow.sdk.PipelineResult.State
 import com.google.cloud.dataflow.sdk.coders.TableRowJsonCoder
 import com.google.cloud.dataflow.sdk.{io => gio}
-import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptions}
+import com.google.cloud.dataflow.sdk.options._
 import com.google.cloud.dataflow.sdk.runners.{DataflowPipelineJob, DataflowPipelineRunner}
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
@@ -50,7 +50,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer, Set => MSet}
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
-import scala.util.{Failure, Try}
+import scala.util.Try
 import scala.util.control.NonFatal
 
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
@@ -131,34 +131,31 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   import Implicits._
 
-  // TODO: decouple DataflowPipelineOptions
-  private[scio] def dfOptions: Try[DataflowPipelineOptions] = Try {
-    options.as(classOf[DataflowPipelineOptions])
-  }.orElse {
-    val name = options.getClass.getSimpleName
-    Failure(new RuntimeException(s"$name is not DataflowPipelineOptions"))
-  }
+  /** Get PipelineOptions as a more specific sub-type. */
+  def optionsAs[T <: PipelineOptions : ClassTag]: T = options.as(ScioUtil.classOf[T])
 
   // Set default name if no app name specified by user
-  dfOptions.foreach { o =>
+  Try(optionsAs[ApplicationNameOptions]).foreach { o =>
     if (o.getAppName == null || o.getAppName.startsWith("ScioContext$")) {
       this.setName(CallSites.getAppName)
     }
   }
 
-  private[scio] val testId: Option[String] = dfOptions.toOption.flatMap { o =>
-    if ("JobTest-[0-9]+".r.pattern.matcher(o.getAppName).matches()) {
-      Some(o.getAppName)
-    } else {
-      None
+  private[scio] val testId: Option[String] =
+    Try(optionsAs[ApplicationNameOptions]).toOption.flatMap { o =>
+      if ("JobTest-[0-9]+".r.pattern.matcher(o.getAppName).matches()) {
+        Some(o.getAppName)
+      } else {
+        None
+      }
     }
-  }
 
   /** Dataflow pipeline. */
   def pipeline: Pipeline = {
     if (_pipeline == null) {
       // TODO: make sure this works for other PipelineOptions
-      dfOptions.foreach(_.setFilesToStage(getFilesToStage(artifacts).asJava))
+      Try(optionsAs[DataflowPipelineWorkerPoolOptions])
+        .foreach(_.setFilesToStage(getFilesToStage(artifacts).asJava))
       _pipeline = if (testId.isEmpty) {
         Pipeline.create(options)
       } else {
@@ -225,8 +222,10 @@ class ScioContext private[scio] (val options: PipelineOptions,
   // Miscellaneous
   // =======================================================================
 
-  private lazy val bigQueryClient: BigQueryClient =
-    BigQueryClient(dfOptions.get.getProject, dfOptions.get.getGcpCredential)
+  private lazy val bigQueryClient: BigQueryClient = {
+    val o = optionsAs[GcpOptions]
+    BigQueryClient(o.getProject, o.getGcpCredential)
+  }
 
   // =======================================================================
   // States
@@ -238,10 +237,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
       throw new RuntimeException("Cannot set name once pipeline is initialized")
     }
     // override app name and job name
-    dfOptions.foreach { o =>
-      o.setAppName(name)
-      o.setJobName(new DataflowPipelineOptions.JobNameFactory().create(options))
-    }
+    Try(optionsAs[ApplicationNameOptions]).foreach(_.setAppName(name))
+    Try(optionsAs[DataflowPipelineOptions])
+      .foreach(_.setJobName(new DataflowPipelineOptions.JobNameFactory().create(options)))
   }
 
   /** Close the context. No operation can be performed once the context is closed. */
@@ -621,7 +619,7 @@ class DistCacheScioContext private[scio] (self: ScioContext) {
     if (self.isTest) {
       new MockDistCache(testDistCache(DistCacheIO(uri)))
     } else {
-      new DistCacheSingle(new URI(uri), initFn, self.dfOptions.get)
+      new DistCacheSingle(new URI(uri), initFn, self.optionsAs[GcsOptions])
     }
   }
 
@@ -635,7 +633,7 @@ class DistCacheScioContext private[scio] (self: ScioContext) {
     if (self.isTest) {
       new MockDistCache(testDistCache(DistCacheIO(uris.mkString("\t"))))
     } else {
-      new DistCacheMulti(uris.map(new URI(_)), initFn, self.dfOptions.get)
+      new DistCacheMulti(uris.map(new URI(_)), initFn, self.optionsAs[GcsOptions])
     }
   }
 

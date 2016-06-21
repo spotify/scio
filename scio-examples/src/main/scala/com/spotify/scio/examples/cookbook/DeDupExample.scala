@@ -34,7 +34,7 @@ runMain
 object DeDupExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val dfOptions = sc.options.as(classOf[DataflowPipelineOptions])
+    val dfOptions = sc.optionsAs[DataflowPipelineOptions]
 
     val input = args.getOrElse("input", ExampleData.SHAKESPEARE_ALL)
     val output = args.optional("output").getOrElse(
