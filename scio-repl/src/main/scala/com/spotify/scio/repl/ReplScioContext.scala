@@ -23,9 +23,8 @@ import com.google.cloud.dataflow.sdk.options.PipelineOptions
 import com.spotify.scio.{ScioContext, ScioResult}
 
 class ReplScioContext(options: PipelineOptions,
-                      artifacts: List[String],
-                      testId: Option[String])
-  extends ScioContext(options, artifacts, testId) {
+                      artifacts: List[String])
+  extends ScioContext(options, artifacts) {
 
   private lazy val nullout = new PrintStream(new OutputStream() {
     override def write(b: Int) = {}
