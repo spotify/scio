@@ -24,6 +24,7 @@ import com.spotify.scio.values.AccumulatorType
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+import scala.language.implicitConversions
 
 /**
  * Main package for public APIs. Import all.
@@ -59,6 +60,9 @@ package object scio {
   implicit val intAccumulatorType: AccumulatorType[Int] = new values.IntAccumulatorType
   implicit val longAccumulatorType: AccumulatorType[Long] = new values.LongAccumulatorType
   implicit val doubleAccumulatorType: AccumulatorType[Double] = new values.DoubleAccumulatorType
+
+  implicit def makeDistCacheScioContext(self: ScioContext): DistCacheScioContext =
+    new DistCacheScioContext(self)
 
   /** Wait for Tap to be available and get Tap reference from Future. */
   implicit class WaitableFutureTap[T](self: Future[Tap[T]]) {
