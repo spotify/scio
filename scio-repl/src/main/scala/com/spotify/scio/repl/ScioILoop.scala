@@ -85,7 +85,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     val nextReplJar = scioClassLoader.getNextReplCodeJarPath
     intp.beQuietDuring {
       intp.interpret(
-        s"""val $sc: ScioContext = new $rsc($opts, List("$nextReplJar"), None)
+        s"""val $sc: ScioContext = new $rsc($opts, List("$nextReplJar"))
            |$sc.setName("sciorepl")
          """.stripMargin)
     }

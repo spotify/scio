@@ -83,7 +83,7 @@ object JobTest {
       this.copy(distCaches = this.distCaches + (key -> value))
 
     def run(): Unit = {
-      val testId = className + "-" + System.currentTimeMillis()
+      val testId = "JobTest-" + System.currentTimeMillis()
       TestDataManager.setInput(testId, new TestInput(inputs))
       TestDataManager.setOutput(testId, new TestOutput(outputs))
       TestDataManager.setDistCache(testId, new TestDistCache(distCaches))
@@ -92,7 +92,7 @@ object JobTest {
         Class
           .forName(className)
           .getMethod("main", classOf[Array[String]])
-          .invoke(null, cmdlineArgs :+ s"--testId=$testId")
+          .invoke(null, cmdlineArgs :+ s"--appName=$testId")
       } catch {
         // InvocationTargetException stacktrace is noisy and useless
         case e: InvocationTargetException => throw e.getCause

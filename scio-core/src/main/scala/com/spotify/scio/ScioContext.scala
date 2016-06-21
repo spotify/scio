@@ -58,7 +58,7 @@ object ContextAndArgs {
   /** Create [[ScioContext]] and [[Args]] for command line arguments. */
   def apply(args: Array[String]): (ScioContext, Args) = {
     val (_opts, _args) = ScioContext.parseArguments[DataflowPipelineOptions](args)
-    (new ScioContext(_opts, Nil, _args.optional("testId")), _args)
+    (new ScioContext(_opts, Nil), _args)
   }
 }
 
@@ -71,18 +71,22 @@ object ScioContext {
   def apply(): ScioContext = ScioContext(defaultOptions)
 
   /** Create a new [[ScioContext]] instance. */
-  def apply(options: PipelineOptions): ScioContext = new ScioContext(options,  Nil, None)
+  def apply(options: PipelineOptions): ScioContext = new ScioContext(options,  Nil)
 
   /** Create a new [[ScioContext]] instance. */
-  def apply(artifacts: List[String]): ScioContext = new ScioContext(defaultOptions, artifacts, None)
+  def apply(artifacts: List[String]): ScioContext = new ScioContext(defaultOptions, artifacts)
 
   /** Create a new [[ScioContext]] instance. */
   def apply(options: PipelineOptions, artifacts: List[String]): ScioContext =
-    new ScioContext(options, artifacts, None)
+    new ScioContext(options, artifacts)
 
   /** Create a new [[ScioContext]] instance for testing. */
-  def forTest(testId: String): ScioContext =
-    new ScioContext(defaultOptions, List[String](), Some(testId))
+  def forTest(): ScioContext = {
+    val opts = PipelineOptionsFactory
+      .fromArgs(Array("--appName=JobTest-" + System.currentTimeMillis()))
+      .as(classOf[ApplicationNameOptions])
+    new ScioContext(opts, List[String]())
+  }
 
   /** Parse PipelineOptions and application arguments from command line arguments. */
   def parseArguments[T <: PipelineOptions : ClassTag](cmdlineArgs: Array[String]): (T, Args) = {
@@ -119,8 +123,7 @@ object ScioContext {
  */
 // scalastyle:off number.of.methods
 class ScioContext private[scio] (val options: PipelineOptions,
-                                 private var artifacts: List[String],
-                                 private[scio] val testId: Option[String]) {
+                                 private var artifacts: List[String]) {
 
   private implicit val context: ScioContext = this
 
@@ -140,6 +143,14 @@ class ScioContext private[scio] (val options: PipelineOptions,
   dfOptions.foreach { o =>
     if (o.getAppName == null || o.getAppName.startsWith("ScioContext$")) {
       this.setName(CallSites.getAppName)
+    }
+  }
+
+  private[scio] val testId: Option[String] = dfOptions.toOption.flatMap { o =>
+    if ("JobTest-[0-9]+".r.pattern.matcher(o.getAppName).matches()) {
+      Some(o.getAppName)
+    } else {
+      None
     }
   }
 
