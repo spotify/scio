@@ -241,15 +241,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * import com.twitter.algebird.CMSHasherImplicits._
    *
    * val p = logs.skewedJoin(logMetadata, hotKeyThreshold = 8500, eps=0.0005, seed=1)
-   *
    * }}}
    *
    * Read more about CMS -> [[com.twitter.algebird.CMSMonoid]]
    * @group join
-   * @param hotKeyThreshold key with `hotKeyThreshold` values will be considered hot. In Dataflow
-   *                        service - there is optimization bottleneck in GBK, for groups bigger
-   *                        than 10K. Thus it is recommended to set `hotKeyThreshold` to <10K, keep
-   *                        upper estimation error in mind.
+   * @param hotKeyThreshold key with `hotKeyThreshold` values will be considered hot. Some runners
+   *                        have inefficient GroupByKey implementation for groups with more than 10K
+   *                        values. Thus it is recommended to set `hotKeyThreshold` to below 10K,
+   *                        keep upper estimation error in mind.
    * @param eps One-sided error bound on the error of each point query, i.e. frequency estimate.
    *            Must lie in (0, 1).
    * @param seed A seed to initialize the random number generator used to create the pairwise
@@ -301,15 +300,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * val keyAggregator = CMS.aggregator[K](eps, delta, seed)
    * val hotKeyCMS = self.keys.aggregate(keyAggregator)
    * val p = logs.skewedJoin(logMetadata, hotKeyThreshold = 8500, cms=hotKeyCMS)
-   *
    * }}}
    *
    * Read more about CMS -> [[com.twitter.algebird.CMSMonoid]]
    * @group join
-   * @param hotKeyThreshold key with `hotKeyThreshold` values will be considered hot. In Dataflow
-   *                        service - there is optimization bottleneck in GBK, for groups bigger
-   *                        than 10K. Thus it is recommended to set `hotKeyThreshold` to <10K, keep
-   *                        upper estimation error in mind.
+   * @param hotKeyThreshold key with `hotKeyThreshold` values will be considered hot. Some runners
+   *                        have inefficient GroupByKey implementation for groups with more than 10K
+   *                        values. Thus it is recommended to set `hotKeyThreshold` to below 10K,
+   *                        keep upper estimation error in mind.
    * @param cms left hand side key [[com.twitter.algebird.CMSMonoid]]
    */
   def skewedJoin[W: ClassTag](that: SCollection[(K, W)],

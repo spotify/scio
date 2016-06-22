@@ -26,7 +26,7 @@ import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
 /**
- * Set up a Dataflow job for unit testing.
+ * Set up a Scio job for end-to-end unit testing.
  * To be used in a [[com.spotify.scio.testing.PipelineSpec PipelineSpec]]. For example:
  *
  * {{{

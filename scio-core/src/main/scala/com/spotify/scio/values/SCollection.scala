@@ -83,13 +83,12 @@ object SCollection {
 
 // scalastyle:off number.of.methods
 /**
- * A Scala wrapper for [[com.google.cloud.dataflow.sdk.values.PCollection PCollection]], the basic
- * abstraction in Dataflow. Represents an immutable, partitioned collection of elements that can
- * be operated on in parallel. This class contains the basic operations available on all
- * SCollections, such as `map`, `filter`, and `persist`. In addition, [[PairSCollectionFunctions]]
- * contains operations available only on SCollections of key-value pairs, such as `groupByKey` and
- * `join`; [[DoubleSCollectionFunctions]] contains operations available only on SCollections of
- * Doubles.
+ * A Scala wrapper for [[com.google.cloud.dataflow.sdk.values.PCollection PCollection]].
+ * Represents an immutable, partitioned collection of elements that can be operated on in
+ * parallel. This class contains the basic operations available on all SCollections, such as
+ * `map`, `filter`, and `persist`. In addition, [[PairSCollectionFunctions]] contains operations
+ * available only on SCollections of key-value pairs, such as `groupByKey` and `join`;
+ * [[DoubleSCollectionFunctions]] contains operations available only on SCollections of Doubles.
  *
  * @groupname collection Collection Operations
  * @groupname hash Hash Operations
