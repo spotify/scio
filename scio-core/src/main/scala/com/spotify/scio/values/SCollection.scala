@@ -789,17 +789,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group output
    */
   def materialize: Future[Tap[T]] = {
-    val runner = context.pipeline.getRunner
-    // TODO: BEAM how to handle runner dependencies here?
-    val tmpDir = runner match {
-      case _: runners.DirectPipelineRunner =>
-        sys.props("java.io.tmpdir")
-      case _: runners.DataflowPipelineRunner | _: runners.BlockingDataflowPipelineRunner =>
-        context.pipeline.getOptions.asInstanceOf[DataflowPipelineOptions].getTempLocation
-      case _ =>
-        throw new RuntimeException(s"Unsupported runner $runner")
-    }
     val filename = "scio-materialize-" + UUID.randomUUID().toString
+    val tmpDir = if (context.options.getTempLocation == null) {
+      sys.props("java.io.tmpdir")
+    } else {
+      context.options.getTempLocation
+    }
     val path = tmpDir + (if (tmpDir.endsWith("/")) "" else "/") + filename
     saveAsObjectFile(path)
   }
