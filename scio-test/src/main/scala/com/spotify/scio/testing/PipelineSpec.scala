@@ -50,7 +50,7 @@ trait PipelineSpec extends FlatSpec with Matchers with SCollectionMatcher {
    * }}}
    */
   def runWithContext[T](fn: ScioContext => T): ScioResult = {
-    val sc = ScioContext.forTest("PipelineTest-" + System.currentTimeMillis())
+    val sc = ScioContext.forTest()
     fn(sc)
     sc.close()
   }

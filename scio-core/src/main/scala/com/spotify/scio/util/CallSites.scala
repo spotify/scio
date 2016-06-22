@@ -48,7 +48,7 @@ private[scio] object CallSites {
   def getCurrent: String = {
     val stack = new Exception().getStackTrace.drop(1)
 
-    // find first stack outside of Scio or Dataflow
+    // find first stack outside of Scio or SDK
     var pExt = stack.indexWhere(e => isExternalClass(e.getClassName))
 
     val pTransform = stack.indexWhere(isTransform)

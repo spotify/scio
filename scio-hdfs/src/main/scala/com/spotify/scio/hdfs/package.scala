@@ -140,7 +140,7 @@ package object hdfs {
         self.distCache(paths)(initFn)
       } else {
         //TODO: should upload be asynchronous, blocking on context close
-        val dfOptions = self.options.as(classOf[DataflowPipelineOptions])
+        val dfOptions = self.optionsAs[DataflowPipelineOptions]
         require(dfOptions.getStagingLocation != null,
           "Staging directory not set - use `--stagingLocation`!")
         require(!paths.contains(null), "Artifact path can't be null")
@@ -183,7 +183,7 @@ package object hdfs {
       val inStream = fs.open(src)
 
       //TODO: Should we attempt to detect the Mime type rather than always using MimeTypes.BINARY?
-      val dfOptions = self.options.as(classOf[DataflowPipelineOptions])
+      val dfOptions = self.optionsAs[DataflowPipelineOptions]
       val outChannel = Channels.newOutputStream(
         dfOptions.getGcsUtil.create(GcsPath.fromUri(target), MimeTypes.BINARY))
 

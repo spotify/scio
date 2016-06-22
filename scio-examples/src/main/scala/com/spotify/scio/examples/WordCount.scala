@@ -35,7 +35,7 @@ runMain
 object WordCount {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val dfOptions = sc.options.as(classOf[DataflowPipelineOptions])
+    val dfOptions = sc.optionsAs[DataflowPipelineOptions]
 
     val input = args.getOrElse("input", ExampleData.KING_LEAR)
     val output = args.optional("output").getOrElse(

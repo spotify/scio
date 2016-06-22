@@ -55,7 +55,7 @@ object GameStats {
   // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val dataflowUtils = new DataflowExampleUtils(sc.options.as(classOf[DataflowPipelineOptions]))
+    val dataflowUtils = new DataflowExampleUtils(sc.optionsAs[DataflowPipelineOptions])
 
     def fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
       .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
