@@ -19,11 +19,11 @@ package com.google.cloud.dataflow.contrib.hadoop.simpleauth;
 
 import com.google.cloud.dataflow.contrib.hadoop.AvroHadoopFileSource;
 import com.google.cloud.dataflow.contrib.hadoop.HadoopFileSource;
-import com.google.cloud.dataflow.sdk.coders.AvroCoder;
-import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import org.apache.beam.sdk.coders.AvroCoder;
+import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.hadoop.mapreduce.InputSplit;
 
 import javax.annotation.Nullable;
