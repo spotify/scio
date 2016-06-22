@@ -17,9 +17,9 @@
 
 package com.spotify.scio.examples
 
-import com.google.cloud.dataflow.sdk.testing.DataflowAssert
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
+import org.apache.beam.sdk.testing.PAssert
 
 import scala.collection.JavaConverters._
 
@@ -52,7 +52,7 @@ object DebuggingWordCount {
       .toSCollection
 
     // verify internal PCollection
-    DataflowAssert.that(filteredWords.internal)
+    PAssert.that(filteredWords.internal)
       .containsInAnyOrder(List(("Flourish", 3L), ("stomach", 1L)).asJava)
 
     val result = sc.close()

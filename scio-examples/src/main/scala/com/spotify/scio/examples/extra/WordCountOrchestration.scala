@@ -17,12 +17,12 @@
 
 package com.spotify.scio.examples.extra
 
-import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
-import com.google.cloud.dataflow.sdk.runners.DataflowPipelineRunner
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
+import org.apache.beam.runners.dataflow.DataflowPipelineRunner
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}

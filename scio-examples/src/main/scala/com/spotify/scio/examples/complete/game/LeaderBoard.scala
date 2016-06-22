@@ -19,12 +19,12 @@ package com.spotify.scio.examples.complete.game
 
 import java.util.TimeZone
 
-import com.google.cloud.dataflow.examples.common.DataflowExampleUtils
-import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
-import com.google.cloud.dataflow.sdk.transforms.windowing._
+import org.apache.beam.examples.common.DataflowExampleUtils
 import com.spotify.scio._
 import com.spotify.scio.experimental._
 import com.spotify.scio.values.WindowOptions
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import org.apache.beam.sdk.transforms.windowing._
 import org.joda.time.{DateTimeZone, Duration, Instant}
 import org.joda.time.format.DateTimeFormat
 
