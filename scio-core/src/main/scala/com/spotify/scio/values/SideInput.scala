@@ -20,8 +20,8 @@ package com.spotify.scio.values
 import java.lang.{Iterable => JIterable}
 import java.util.{List => JList, Map => JMap}
 
-import com.google.cloud.dataflow.sdk.transforms.DoFn
-import com.google.cloud.dataflow.sdk.values.PCollectionView
+import org.apache.beam.sdk.transforms.DoFn
+import org.apache.beam.sdk.values.PCollectionView
 
 import scala.collection.JavaConverters._
 import scala.collection.breakOut

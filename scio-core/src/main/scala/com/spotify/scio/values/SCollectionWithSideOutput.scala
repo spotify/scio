@@ -17,10 +17,10 @@
 
 package com.spotify.scio.values
 
-import com.google.cloud.dataflow.sdk.transforms.ParDo
-import com.google.cloud.dataflow.sdk.values.{PCollection, TupleTag, TupleTagList}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util.FunctionsWithSideOutput
+import org.apache.beam.sdk.transforms.ParDo
+import org.apache.beam.sdk.values.{PCollection, TupleTag, TupleTagList}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag

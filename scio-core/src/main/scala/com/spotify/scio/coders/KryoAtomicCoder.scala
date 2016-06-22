@@ -19,13 +19,13 @@ package com.spotify.scio.coders
 
 import java.io.{ByteArrayOutputStream, IOException, InputStream, OutputStream}
 
-import com.google.cloud.dataflow.sdk.coders.Coder.Context
-import com.google.cloud.dataflow.sdk.coders.{AtomicCoder, Coder, CoderException}
-import com.google.cloud.dataflow.sdk.util.VarInt
 import com.google.common.io.ByteStreams
 import com.twitter.chill._
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
+import org.apache.beam.sdk.coders.Coder.Context
+import org.apache.beam.sdk.coders.{AtomicCoder, Coder, CoderException}
+import org.apache.beam.sdk.util.VarInt
 
 import scala.collection.convert.Wrappers.JIterableWrapper
 

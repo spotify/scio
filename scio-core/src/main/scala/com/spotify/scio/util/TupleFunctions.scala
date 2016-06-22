@@ -20,7 +20,7 @@ package com.spotify.scio.util
 import java.lang.{Iterable => JIterable}
 import java.util.{List => JList}
 
-import com.google.cloud.dataflow.sdk.values.KV
+import org.apache.beam.sdk.values.KV
 
 import scala.collection.JavaConverters._
 

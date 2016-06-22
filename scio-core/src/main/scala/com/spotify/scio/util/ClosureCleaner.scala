@@ -19,7 +19,7 @@ package com.spotify.scio.util
 
 import java.io.NotSerializableException
 
-import com.google.cloud.dataflow.sdk.util.SerializableUtils
+import org.apache.beam.sdk.util.SerializableUtils
 
 private[scio] object ClosureCleaner {
   def apply[T <: AnyRef](obj: T): T = {

@@ -21,12 +21,12 @@ import java.io.{File, FileOutputStream}
 import java.net.URI
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.google.cloud.dataflow.sdk.options.{GcsOptions, PipelineOptions}
-import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
-import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.spotify.scio.util.ScioUtil
+import org.apache.beam.sdk.options.{GcsOptions, PipelineOptions}
+import org.apache.beam.sdk.runners.DirectPipelineRunner
+import org.apache.beam.sdk.util.gcsfs.GcsPath
 import org.slf4j.{Logger, LoggerFactory}
 
 /** Encapsulate files on Google Cloud Storage that can be distributed to all workers. */

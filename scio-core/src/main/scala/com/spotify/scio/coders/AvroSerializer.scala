@@ -19,13 +19,13 @@ package com.spotify.scio.coders
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
-import com.google.cloud.dataflow.sdk.coders.AvroCoder
-import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.common.collect.{BiMap, HashBiMap}
 import com.twitter.chill.KSerializer
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
+import org.apache.beam.sdk.coders.AvroCoder
+import org.apache.beam.sdk.util.CoderUtils
 
 import scala.collection.mutable.{Map => MMap}
 

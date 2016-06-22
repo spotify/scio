@@ -19,13 +19,13 @@ package com.spotify.scio.io
 
 import java.lang.Iterable
 
-import com.google.cloud.dataflow.sdk.coders.Coder
-import com.google.cloud.dataflow.sdk.io.Sink
-import com.google.cloud.dataflow.sdk.io.Sink.{WriteOperation, Writer}
-import com.google.cloud.dataflow.sdk.options.PipelineOptions
-import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
-import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.spotify.scio.coders.KryoAtomicCoder
+import org.apache.beam.sdk.coders.Coder
+import org.apache.beam.sdk.io.Sink
+import org.apache.beam.sdk.io.Sink.{WriteOperation, Writer}
+import org.apache.beam.sdk.options.PipelineOptions
+import org.apache.beam.sdk.runners.DirectPipelineRunner
+import org.apache.beam.sdk.util.CoderUtils
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}

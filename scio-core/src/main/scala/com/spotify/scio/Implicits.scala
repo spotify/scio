@@ -19,13 +19,13 @@ package com.spotify.scio
 
 import java.lang.{Float => JFloat}
 
-import com.google.cloud.dataflow.sdk.coders._
-import com.google.cloud.dataflow.sdk.coders.protobuf.ProtoCoder
-import com.google.cloud.dataflow.sdk.values.{KV, TypeDescriptor}
 import com.google.protobuf.Message
 import com.spotify.scio.coders.{FloatCoder, KryoAtomicCoder}
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.specific.SpecificRecord
+import org.apache.beam.sdk.coders._
+import org.apache.beam.sdk.coders.protobuf.ProtoCoder
+import org.apache.beam.sdk.values.{KV, TypeDescriptor}
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag

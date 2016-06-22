@@ -30,9 +30,9 @@ import java.io.OutputStream;
 import java.io.UTFDataFormatException;
 
 // package hack
-import com.google.cloud.dataflow.sdk.coders.AtomicCoder;
-import com.google.cloud.dataflow.sdk.coders.Coder.Context;
-import com.google.cloud.dataflow.sdk.coders.CoderException;
+import org.apache.beam.sdk.coders.AtomicCoder;
+import org.apache.beam.sdk.coders.Coder.Context;
+import org.apache.beam.sdk.coders.CoderException;
 
 /**
  * A {@link FloatCoder} encodes {@link Float} values in 4 bytes using Java serialization.

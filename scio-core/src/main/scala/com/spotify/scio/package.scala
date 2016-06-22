@@ -17,11 +17,11 @@
 
 package com.spotify
 
-import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write
-import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.AccumulatorType
 import com.twitter.algebird.Semigroup
+import org.apache.beam.sdk.io.BigQueryIO.Write
+import org.apache.beam.sdk.util.WindowingStrategy.AccumulationMode
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
