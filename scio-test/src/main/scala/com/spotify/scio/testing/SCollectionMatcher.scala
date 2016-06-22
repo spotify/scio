@@ -19,10 +19,10 @@ package com.spotify.scio.testing
 
 import java.lang.{Iterable => JIterable}
 
-import com.google.cloud.dataflow.sdk.testing.DataflowAssert
-import com.google.cloud.dataflow.sdk.transforms.SerializableFunction
 import com.spotify.scio.util.ClosureCleaner
 import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.testing.PAssert
+import org.apache.beam.sdk.transforms.SerializableFunction
 import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.collection.JavaConverters._
@@ -39,17 +39,17 @@ private[scio] trait SCollectionMatcher {
   def containInAnyOrder[T](value: Iterable[T])
   : Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
     override def apply(left: SCollection[T]): MatchResult =
-      m(() => DataflowAssert.that(left.internal).containsInAnyOrder(value.asJava))
+      m(() => PAssert.that(left.internal).containsInAnyOrder(value.asJava))
   }
 
   def containSingleValue[T](value: T): Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
     override def apply(left: SCollection[T]): MatchResult =
-      m(() => DataflowAssert.thatSingleton(left.internal).isEqualTo(value))
+      m(() => PAssert.thatSingleton(left.internal).isEqualTo(value))
   }
 
   val beEmpty = new Matcher[SCollection[_]] {
     override def apply(left: SCollection[_]): MatchResult =
-      m(() => DataflowAssert.that(left.internal).empty())
+      m(() => PAssert.that(left.internal).empty())
   }
 
   def haveSize(size: Int): Matcher[SCollection[_]] = new Matcher[SCollection[_]] {
@@ -61,14 +61,14 @@ private[scio] trait SCollectionMatcher {
           null
         }
       }
-      m(() => DataflowAssert.that(left.asInstanceOf[SCollection[Any]].internal).satisfies(g))
+      m(() => PAssert.that(left.asInstanceOf[SCollection[Any]].internal).satisfies(g))
     }
   }
 
   def equalMapOf[K: ClassTag, V: ClassTag](value: Map[K, V])
   : Matcher[SCollection[(K, V)]] = new Matcher[SCollection[(K, V)]] {
     override def apply(left: SCollection[(K, V)]): MatchResult = {
-      m(() => DataflowAssert.thatMap(left.toKV.internal).isEqualTo(value.asJava))
+      m(() => PAssert.thatMap(left.toKV.internal).isEqualTo(value.asJava))
     }
   }
 
@@ -83,7 +83,7 @@ private[scio] trait SCollectionMatcher {
           null
         }
       }
-      m(() => DataflowAssert.that(left.internal).satisfies(g))
+      m(() => PAssert.that(left.internal).satisfies(g))
     }
   }
 
@@ -96,7 +96,7 @@ private[scio] trait SCollectionMatcher {
           null
         }
       }
-      m(() => DataflowAssert.that(left.internal).satisfies(g))
+      m(() => PAssert.that(left.internal).satisfies(g))
     }
   }
 

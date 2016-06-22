@@ -17,8 +17,8 @@
 
 package com.spotify.scio.util.random
 
-import com.google.cloud.dataflow.sdk.transforms.DoFnTester
 import com.spotify.scio.testing.PipelineSpec
+import org.apache.beam.sdk.transforms.DoFnTester
 
 import scala.collection.JavaConverters._
 

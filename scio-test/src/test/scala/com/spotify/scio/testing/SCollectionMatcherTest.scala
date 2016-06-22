@@ -17,7 +17,7 @@
 
 package com.spotify.scio.testing
 
-import com.google.cloud.dataflow.sdk.Pipeline.PipelineExecutionException
+import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 
 class SCollectionMatcherTest extends PipelineSpec {
 
