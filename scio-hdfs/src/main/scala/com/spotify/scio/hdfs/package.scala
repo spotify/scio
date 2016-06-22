@@ -26,12 +26,6 @@ import java.util.Collections
 import com.google.api.client.util.ByteStreams
 import com.google.cloud.dataflow.contrib.hadoop._
 import com.google.cloud.dataflow.contrib.hadoop.simpleauth._
-import com.google.cloud.dataflow.sdk.coders.AvroCoder
-import com.google.cloud.dataflow.sdk.io.{Read, Write}
-import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
-import com.google.cloud.dataflow.sdk.util.MimeTypes
-import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
-import com.google.cloud.dataflow.sdk.values.KV
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.spotify.scio.io.{Tap, Taps}
@@ -43,6 +37,12 @@ import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.mapred.{AvroKey, AvroOutputFormat}
 import org.apache.avro.mapreduce.{AvroJob, AvroKeyOutputFormat}
 import org.apache.avro.specific.{SpecificDatumReader, SpecificRecordBase}
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import org.apache.beam.sdk.coders.AvroCoder
+import org.apache.beam.sdk.io.{Read, Write}
+import org.apache.beam.sdk.util.MimeTypes
+import org.apache.beam.sdk.util.gcsfs.GcsPath
+import org.apache.beam.sdk.values.KV
 import org.apache.commons.io.IOUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path, PathFilter}
