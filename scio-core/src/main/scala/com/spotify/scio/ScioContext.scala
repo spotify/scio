@@ -112,8 +112,8 @@ object ScioContext {
 }
 
 /**
- * Main entry point for Dataflow functionality. A ScioContext represents a Dataflow pipeline,
- * and can be used to create SCollections and distributed caches on that cluster.
+ * Main entry point for Scio functionality. A ScioContext represents a pipeline and can be used to
+ * create SCollections and distributed caches on that cluster.
  *
  * @groupname accumulator Accumulators
  * @groupname dist_cache Distributed Cache
@@ -150,7 +150,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
       }
     }
 
-  /** Dataflow pipeline. */
+  /** Underlying pipeline. */
   def pipeline: Pipeline = {
     if (_pipeline == null) {
       // TODO: make sure this works for other PipelineOptions
@@ -184,7 +184,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   // Extra artifacts - jars/files etc
   // =======================================================================
 
-  /** Borrowed from Dataflow */
+  /** Borrowed from DataflowPipelineRunner. */
   private def detectClassPathResourcesToStage(classLoader: ClassLoader): List[String] = {
     require(classLoader.isInstanceOf[URLClassLoader],
       "Current ClassLoader is '" + classLoader + "' only URLClassLoaders are supported")
@@ -200,7 +200,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
       .toList
   }
 
-  /** Compute list of files to stage in dataflow */
+  /** Compute list of local files to make available to workers. */
   private def getFilesToStage(extraLocalArtifacts: List[String]): List[String] = {
     val finalLocalArtifacts = detectClassPathResourcesToStage(
       classOf[DataflowPipelineRunner].getClassLoader) ++ extraLocalArtifacts
@@ -210,8 +210,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
   }
 
   /**
-   * Add artifact to stage in Dataflow - artifact can be jar/text-files etc.
-   * NOTE: currently one can add artifacts only before pipeline object is created
+   * Add artifact to stage in workers. Artifact can be jar/text-files etc.
+   * NOTE: currently one can only add artifacts before pipeline object is created.
    */
   def addArtifacts(extraLocalArtifacts: List[String]): Unit = {
     require(_pipeline == null, "Cannot add artifacts once pipeline is initialized")
@@ -297,7 +297,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (state == State.DONE || state == State.UPDATED) {
       kv._1.success(kv._2)
     } else {
-      kv._1.failure(new RuntimeException("Dataflow pipeline failed to complete: " + state))
+      kv._1.failure(new RuntimeException("Pipeline failed to complete: " + state))
     }
   }
 
