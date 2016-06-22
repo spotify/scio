@@ -19,8 +19,6 @@ package com.spotify.scio.testing
 
 import com.google.api.services.bigquery.model.TableRow
 import com.google.api.services.datastore.DatastoreV1.{Entity, Query}
-import com.google.bigtable.v1.{Mutation, Row}
-import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
 import com.spotify.scio.values.SCollection
 
@@ -70,12 +68,6 @@ case class ObjectFileIO[T](path: String) extends TestIO(path)
 case class AvroIO[T](path: String) extends TestIO(path)
 
 case class BigQueryIO(tableSpecOrQuery: String) extends TestIO[TableRow](tableSpecOrQuery)
-
-case class BigtableInput(tableId: String, bigtableOptions: BigtableOptions)
-  extends TestIO[Row](s"$tableId\t$bigtableOptions")
-
-case class BigtableOutput(tableId: String, bigtableOptions: BigtableOptions)
-  extends TestIO[(ByteString, Iterable[Mutation])](s"$tableId\t$bigtableOptions")
 
 case class DatastoreIO(datasetId: String, query: Query = null)
   extends TestIO[Entity](s"$datasetId\t$query")
