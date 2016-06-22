@@ -17,10 +17,10 @@
 
 package com.spotify.scio
 
-import com.google.cloud.dataflow.sdk.testing.DataflowAssert
-import com.google.cloud.dataflow.sdk.transforms.Create
 import com.google.common.collect.Lists
 import com.spotify.scio.testing.PipelineSpec
+import org.apache.beam.sdk.testing.PAssert
+import org.apache.beam.sdk.transforms.Create
 
 import scala.collection.JavaConverters._
 
@@ -35,7 +35,7 @@ class ScioContextTest extends PipelineSpec {
   it should "support pipeline" in {
     val pipeline = ScioContext().pipeline
     val p = pipeline.apply(Create.of(Lists.newArrayList(1, 2, 3)))
-    DataflowAssert.that(p).containsInAnyOrder(Lists.newArrayList(1, 2, 3))
+    PAssert.that(p).containsInAnyOrder(Lists.newArrayList(1, 2, 3))
     pipeline.run()
   }
 

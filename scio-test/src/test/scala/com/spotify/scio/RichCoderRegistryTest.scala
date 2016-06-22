@@ -17,12 +17,12 @@
 
 package com.spotify.scio
 
-import com.google.cloud.dataflow.sdk.coders.CoderRegistry
-import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.avro.{Account, TestRecord}
 import com.spotify.scio.coders.CoderTestUtils._
 import com.spotify.scio.testing.PipelineSpec
+import org.apache.beam.sdk.coders.CoderRegistry
+import org.apache.beam.sdk.testing.TestPipeline
 import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.reflect.ClassTag
