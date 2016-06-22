@@ -30,14 +30,14 @@ import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.bigquery.model._
 import com.google.api.services.bigquery.{Bigquery, BigqueryScopes}
-import com.google.cloud.dataflow.sdk.io.BigQueryIO
-import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.CreateDisposition._
-import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.WriteDisposition._
-import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import com.google.cloud.dataflow.sdk.util.{BigQueryTableInserter, BigQueryTableRowIterator}
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
+import org.apache.beam.sdk.io.BigQueryIO
+import org.apache.beam.sdk.io.BigQueryIO.Write.CreateDisposition._
+import org.apache.beam.sdk.io.BigQueryIO.Write.WriteDisposition._
+import org.apache.beam.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.util.{BigQueryTableInserter, BigQueryTableRowIterator}
 import org.apache.commons.io.FileUtils
 import org.joda.time.format.{DateTimeFormat, PeriodFormatterBuilder}
 import org.joda.time.{Instant, Period}
