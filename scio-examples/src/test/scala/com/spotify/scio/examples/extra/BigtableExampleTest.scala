@@ -17,6 +17,7 @@
 
 package com.spotify.scio.examples.extra
 
+/*
 import com.spotify.scio.{bigtable => bt}
 import com.spotify.scio.testing._
 import org.apache.hadoop.hbase.client.{Put, Result}
@@ -108,3 +109,4 @@ class BigtableExampleTest extends PipelineSpec {
   }
 
 }
+*/

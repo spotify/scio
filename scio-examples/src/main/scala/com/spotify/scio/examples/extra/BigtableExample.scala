@@ -17,12 +17,12 @@
 
 package com.spotify.scio.examples.extra
 
-import com.google.cloud.bigtable.{dataflow => bt}
-import com.spotify.scio._
-import com.spotify.scio.bigtable._
-import com.spotify.scio.examples.common.ExampleData
-import com.spotify.scio.values.SCollection
-import org.apache.hadoop.hbase.client.{Put, Result}
+//import com.google.cloud.bigtable.{dataflow => bt}
+//import com.spotify.scio._
+//import com.spotify.scio.bigtable._
+//import com.spotify.scio.examples.common.ExampleData
+//import com.spotify.scio.values.SCollection
+//import org.apache.hadoop.hbase.client.{Put, Result}
 
 /*
  * Bigtable examples.
@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.client.{Put, Result}
  * It also depends on an early release of `com.google.cloud.bigtable:bigtable-hbase-dataflow`
  * and may change in the future.
  */
+/*
 object BigtableExample {
   val FAMILY = "count".getBytes
   val QUALIFIER = "long".getBytes
@@ -39,6 +40,7 @@ object BigtableExample {
   def result(r: Result): String =
     new String(r.getRow) + ": " + new String(r.getValue(FAMILY, QUALIFIER))
 }
+*/
 
 /*
 SBT
@@ -54,6 +56,7 @@ runMain
 */
 
 // Count words and save result to Bigtable
+/*
 object BigtableWriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -69,6 +72,7 @@ object BigtableWriteExample {
     sc.close()
   }
 }
+*/
 
 /*
 SBT
@@ -84,6 +88,7 @@ runMain
 */
 
 // Read word count result back from Bigtable
+/*
 object BigtableReadExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -97,6 +102,7 @@ object BigtableReadExample {
     sc.close()
   }
 }
+*/
 
 /*
 SBT
@@ -112,6 +118,7 @@ runMain
 */
 
 // Count words and save result to multiple Bigtable tables
+/*
 object BigtableMultipleWriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -134,3 +141,4 @@ object BigtableMultipleWriteExample {
     sc.close()
   }
 }
+*/
