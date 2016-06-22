@@ -18,11 +18,11 @@
 package com.spotify.scio
 
 import com.google.cloud.bigtable.{dataflow => bt}
-import com.google.cloud.dataflow.sdk.io.Read
-import com.google.cloud.dataflow.sdk.values.KV
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.io.Read
+import org.apache.beam.sdk.values.KV
 import org.apache.hadoop.hbase.client.{Mutation, Result, Scan}
 
 import scala.collection.JavaConverters._
