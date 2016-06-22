@@ -26,15 +26,6 @@ import java.util.UUID
 
 import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
 import com.google.api.services.datastore.DatastoreV1.Entity
-import com.google.cloud.dataflow.sdk.coders.{Coder, TableRowJsonCoder}
-import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import com.google.cloud.dataflow.sdk.{io => gio}
-import com.google.cloud.dataflow.sdk.runners
-import com.google.cloud.dataflow.sdk.transforms._
-import com.google.cloud.dataflow.sdk.transforms.windowing._
-import com.google.cloud.dataflow.sdk.util.CoderUtils
-import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
-import com.google.cloud.dataflow.sdk.values._
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.KryoAtomicCoder
 import com.spotify.scio.io._
@@ -44,6 +35,15 @@ import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.Schema
 import org.apache.avro.specific.SpecificRecordBase
+import org.apache.beam.sdk.coders.{Coder, TableRowJsonCoder}
+import org.apache.beam.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.{io => gio}
+import org.apache.beam.sdk.runners.DirectPipelineRunner
+import org.apache.beam.sdk.transforms._
+import org.apache.beam.sdk.transforms.windowing._
+import org.apache.beam.sdk.util.CoderUtils
+import org.apache.beam.sdk.util.WindowingStrategy.AccumulationMode
+import org.apache.beam.sdk.values._
 import org.joda.time.{Duration, Instant}
 
 import scala.collection.JavaConverters._
@@ -82,11 +82,11 @@ object SCollection {
 
 // scalastyle:off number.of.methods
 /**
- * A Scala wrapper for [[com.google.cloud.dataflow.sdk.values.PCollection PCollection]].
- * Represents an immutable, partitioned collection of elements that can be operated on in
- * parallel. This class contains the basic operations available on all SCollections, such as
- * `map`, `filter`, and `persist`. In addition, [[PairSCollectionFunctions]] contains operations
- * available only on SCollections of key-value pairs, such as `groupByKey` and `join`;
+ * A Scala wrapper for [[org.apache.beam.sdk.values.PCollection PCollection]]. Represents an
+ * immutable, partitioned collection of elements that can be operated on in parallel. This class
+ * contains the basic operations available on all SCollections, such as `map`, `filter`, and
+ * `persist`. In addition, [[PairSCollectionFunctions]] contains operations available only on
+ * SCollections of key-value pairs, such as `groupByKey` and `join`;
  * [[DoubleSCollectionFunctions]] contains operations available only on SCollections of Doubles.
  *
  * @groupname collection Collection Operations
@@ -114,16 +114,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def setName(name: String): SCollection[T] = context.wrap(internal.setName(name))
 
   /**
-   * Apply a [[com.google.cloud.dataflow.sdk.transforms.PTransform PTransform]] and wrap the output
-   * in an [[SCollection]].
+   * Apply a [[org.apache.beam.sdk.transforms.PTransform PTransform]] and wrap the output in an
+   * [[SCollection]].
    */
   def applyTransform[U: ClassTag](transform: PTransform[_ >: PCollection[T], PCollection[U]])
   : SCollection[U] =
     this.apply(transform)
 
   /**
-   * Apply a [[com.google.cloud.dataflow.sdk.transforms.PTransform PTransform]] with [[PDone]]
-   * output.
+   * Apply a [[org.apache.beam.sdk.transforms.PTransform PTransform]] with [[PDone]] output.
    */
   def applyOutputTransform(transform: PTransform[_ >: PCollection[T], PDone]): PDone =
     this.applyInternal(transform)
@@ -819,7 +818,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   private def pathWithShards(path: String) = {
-    if (this.context.pipeline.getRunner.isInstanceOf[runners.DirectPipelineRunner] &&
+    if (this.context.pipeline.getRunner.isInstanceOf[DirectPipelineRunner] &&
       ScioUtil.isLocalUri(new URI(path))) {
       // Create output directory when running locally with local file system
       val f = new File(path)

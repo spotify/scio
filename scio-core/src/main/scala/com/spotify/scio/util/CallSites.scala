@@ -22,7 +22,7 @@ import scala.collection.mutable.{Map => MMap}
 private[scio] object CallSites {
 
   private val scioNs = "com.spotify.scio."
-  private val dfNs = "com.google.cloud.dataflow.sdk."
+  private val dfNs = "org.apache.beam.sdk."
 
   private val methodMap = Map("$plus$plus" -> "++")
 

@@ -17,11 +17,11 @@
 
 package com.spotify.scio.values
 
-import com.google.cloud.dataflow.sdk.coders.Coder
-import com.google.cloud.dataflow.sdk.transforms.{Combine, DoFn, PTransform, ParDo}
-import com.google.cloud.dataflow.sdk.values.{KV, PCollection, POutput}
 import com.spotify.scio.util.CallSites
 import com.spotify.scio.{Implicits, ScioContext}
+import org.apache.beam.sdk.coders.Coder
+import org.apache.beam.sdk.transforms.{Combine, DoFn, PTransform, ParDo}
+import org.apache.beam.sdk.values.{KV, PCollection, POutput}
 
 import scala.reflect.ClassTag
 

@@ -19,9 +19,9 @@ package com.spotify.scio.io
 
 import com.google.api.client.util.{BackOffUtils, Sleeper, BackOff}
 import com.google.api.services.bigquery.model.TableReference
-import com.google.cloud.dataflow.sdk.io.BigQueryIO
 import com.spotify.scio.bigquery.{BigQueryClient, BigQueryUtil, TableRow}
 import org.apache.avro.Schema
+import org.apache.beam.sdk.io.BigQueryIO
 import org.slf4j.{LoggerFactory, Logger}
 
 import scala.concurrent.{Future, Promise}
@@ -191,7 +191,7 @@ object Taps extends {
    * - `taps.polling.maximum_attempts`: maximum number of attempts, unlimited if <= 0. Default is 0.
    */
   def apply(): Taps = {
-    import com.google.cloud.dataflow.sdk.util
+    import org.apache.beam.sdk.util
     getPropOrElse(ALGORITHM_KEY, ALGORITHM_DEFAULT) match {
       case "immediate" => new ImmediateTaps
       case "polling" =>

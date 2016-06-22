@@ -17,7 +17,7 @@
 
 package com.spotify.scio.util
 
-import com.google.cloud.dataflow.sdk.transforms.DoFn
+import org.apache.beam.sdk.transforms.DoFn
 import com.spotify.scio.values.SideOutputContext
 
 private[scio] object FunctionsWithSideOutput {

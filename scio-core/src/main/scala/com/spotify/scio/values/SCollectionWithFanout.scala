@@ -17,11 +17,11 @@
 
 package com.spotify.scio.values
 
-import com.google.cloud.dataflow.sdk.transforms.Combine
-import com.google.cloud.dataflow.sdk.values.PCollection
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util.Functions
 import com.twitter.algebird.{Semigroup, Monoid}
+import org.apache.beam.sdk.transforms.Combine
+import org.apache.beam.sdk.values.PCollection
 
 import scala.reflect.ClassTag
 

@@ -17,11 +17,11 @@
 
 package com.spotify.scio.values
 
-import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
-import com.google.cloud.dataflow.sdk.transforms.Max.{MaxDoubleFn, MaxIntegerFn, MaxLongFn}
-import com.google.cloud.dataflow.sdk.transforms.Min.{MinDoubleFn, MinIntegerFn, MinLongFn}
-import com.google.cloud.dataflow.sdk.transforms.Sum.{SumDoubleFn, SumIntegerFn, SumLongFn}
-import com.google.cloud.dataflow.sdk.transforms.{Aggregator, Combine}
+import org.apache.beam.sdk.transforms.Combine.CombineFn
+import org.apache.beam.sdk.transforms.Max.{MaxDoubleFn, MaxIntegerFn, MaxLongFn}
+import org.apache.beam.sdk.transforms.Min.{MinDoubleFn, MinIntegerFn, MinLongFn}
+import org.apache.beam.sdk.transforms.Sum.{SumDoubleFn, SumIntegerFn, SumLongFn}
+import org.apache.beam.sdk.transforms.{Aggregator, Combine}
 
 /** Type class for `T` that can be used in an [[Accumulator]]. */
 sealed trait AccumulatorType[T] {

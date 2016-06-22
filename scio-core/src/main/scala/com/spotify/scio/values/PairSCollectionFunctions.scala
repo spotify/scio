@@ -20,12 +20,12 @@ package com.spotify.scio.values
 import java.lang.{Iterable => JIterable, Long => JLong}
 import java.util.{Map => JMap}
 
-import com.google.cloud.dataflow.sdk.transforms._
-import com.google.cloud.dataflow.sdk.values.{KV, PCollection, PCollectionView}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.twitter.algebird.{Aggregator, _}
+import org.apache.beam.sdk.transforms._
+import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
 
 import scala.reflect.ClassTag
 

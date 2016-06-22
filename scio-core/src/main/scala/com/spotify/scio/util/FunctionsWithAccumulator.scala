@@ -17,8 +17,8 @@
 
 package com.spotify.scio.util
 
-import com.google.cloud.dataflow.sdk.transforms.{Aggregator, DoFn}
 import com.spotify.scio.values.{Accumulator, AccumulatorContext}
+import org.apache.beam.sdk.transforms.{Aggregator, DoFn}
 
 import scala.reflect.ClassTag
 

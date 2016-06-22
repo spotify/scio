@@ -17,11 +17,11 @@
 
 package com.spotify.scio
 
-import com.google.cloud.dataflow.sdk.PipelineResult.State
-import com.google.cloud.dataflow.sdk.runners.{AggregatorValues, AggregatorPipelineExtractor}
-import com.google.cloud.dataflow.sdk.{Pipeline, PipelineResult}
-import com.google.cloud.dataflow.sdk.transforms.Aggregator
 import com.spotify.scio.values.Accumulator
+import org.apache.beam.sdk.PipelineResult.State
+import org.apache.beam.sdk.runners.{AggregatorValues, AggregatorPipelineExtractor}
+import org.apache.beam.sdk.{Pipeline, PipelineResult}
+import org.apache.beam.sdk.transforms.Aggregator
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
