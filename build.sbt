@@ -22,7 +22,7 @@ import com.typesafe.sbt.SbtSite.SiteKeys._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import sbtunidoc.Plugin.UnidocKeys._
 
-val dataflowSdkVersion = "1.6.0"
+val beamVersion = "0.1.0-incubating"
 val algebirdVersion = "0.12.0"
 val avroVersion = "1.7.7"
 val bigtableVersion = "0.3.0"
@@ -156,8 +156,10 @@ lazy val assemblySettings = Seq(
 
 lazy val paradiseDependency =
   "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full
-lazy val dataflowSdkDependency =
-  "com.google.cloud.dataflow" % "google-cloud-dataflow-java-sdk-all" % dataflowSdkVersion
+lazy val beamDependencies = Seq(
+  "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+  "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion
+)
 
 lazy val root: Project = Project(
   "scio",
@@ -185,8 +187,8 @@ lazy val scioCore: Project = Project(
   file("scio-core"),
   settings = commonSettings ++ Seq(
     description := "Scio - A Scala API for Google Cloud Dataflow",
+    libraryDependencies ++= beamDependencies,
     libraryDependencies ++= Seq(
-      dataflowSdkDependency,
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "com.twitter" %% "chill" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
@@ -220,8 +222,8 @@ lazy val scioBigQuery: Project = Project(
   file("scio-bigquery"),
   settings = commonSettings ++ Seq(
     description := "Scio add-on for Google BigQuery",
+    libraryDependencies ++= beamDependencies,
     libraryDependencies ++= Seq(
-      dataflowSdkDependency,
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
@@ -245,7 +247,7 @@ lazy val scioBigtable: Project = Project(
   settings = commonSettings ++ Seq(
     description := "Scio add-on for Google Cloud Bigtable",
     libraryDependencies ++= Seq(
-      "com.google.cloud.bigtable" % "bigtable-hbase-dataflow" % bigtableVersion exclude ("org.slf4j", "slf4j-log4j12"),
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12"),
       "org.apache.hbase" % "hbase-common" % hbaseVersion,
       "io.netty" % "netty-tcnative" % nettyTcNativeVersion classifier "linux-x86_64",
