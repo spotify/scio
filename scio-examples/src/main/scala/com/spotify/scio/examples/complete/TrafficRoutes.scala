@@ -18,8 +18,8 @@
 package com.spotify.scio.examples.complete
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
-import com.google.cloud.dataflow.examples.common.DataflowExampleUtils
-import com.google.cloud.dataflow.sdk.runners.DataflowPipelineRunner
+import org.apache.beam.examples.common.DataflowExampleUtils
+import org.apache.beam.runners.dataflow.DataflowPipelineRunner
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.common.{ExampleData, ExampleOptions}

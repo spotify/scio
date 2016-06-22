@@ -17,8 +17,8 @@
 
 package com.spotify.scio.examples.extra
 
-import com.google.cloud.dataflow.sdk.testing.DataflowAssert
 import com.spotify.scio._
+import org.apache.beam.sdk.testing.PAssert
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -50,7 +50,7 @@ object TapExample {
     val (sc2, _) = ContextAndArgs(cmdlineArgs)
     // re-open taps in new context
     val s = (t1.open(sc2) ++ t2.open(sc2).map(_.toInt)).sum
-    DataflowAssert.thatSingleton(s.internal).isEqualTo((1 to 10).sum + (1 to 100).sum)
+    PAssert.thatSingleton(s.internal).isEqualTo((1 to 10).sum + (1 to 100).sum)
     val result = sc2.close()
 
     // block main() until second job completes

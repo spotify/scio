@@ -19,10 +19,10 @@ package com.spotify.scio.examples.complete.game
 
 import java.util.TimeZone
 
-import com.google.cloud.dataflow.sdk.transforms.windowing.IntervalWindow
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.experimental._
+import org.apache.beam.sdk.transforms.windowing.IntervalWindow
 import org.joda.time.{DateTimeZone, Duration, Instant}
 import org.joda.time.format.DateTimeFormat
 
