@@ -22,10 +22,10 @@ import java.net.URI
 import java.nio.channels.Channels
 import java.nio.charset.StandardCharsets
 
-import com.google.cloud.dataflow.sdk.options.PipelineOptions
-import com.google.cloud.dataflow.sdk.util.GcsUtil
-import com.google.cloud.dataflow.sdk.util.GcsUtil.GcsUtilFactory
-import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
+import org.apache.beam.sdk.options.PipelineOptions
+import org.apache.beam.sdk.util.GcsUtil
+import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
+import org.apache.beam.sdk.util.gcsfs.GcsPath
 import com.spotify.scio.util.ScioUtil
 import kantan.csv.{RowDecoder, RowEncoder}
 import org.apache.avro.file.{DataFileStream, DataFileWriter}
