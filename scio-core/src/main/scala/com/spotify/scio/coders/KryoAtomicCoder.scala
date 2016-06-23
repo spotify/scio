@@ -56,12 +56,16 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
     }
     if (context.isWholeStream) {
       val output = new Output(outStream)
-      kryo.writeClassAndObject(output, value)
+      kryo.synchronized {
+        kryo.writeClassAndObject(output, value)
+      }
       output.flush()
     } else {
       val s = new ByteArrayOutputStream()
       val output = new Output(s)
-      kryo.writeClassAndObject(output, value)
+      kryo.synchronized {
+        kryo.writeClassAndObject(output, value)
+      }
       output.flush()
       s.close()
 
@@ -72,7 +76,9 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
 
   override def decode(inStream: InputStream, context: Context): T = {
     val o = if (context.isWholeStream) {
-      kryo.readClassAndObject(new Input(inStream))
+      kryo.synchronized {
+        kryo.readClassAndObject(new Input(inStream))
+      }
     } else {
       val length = VarInt.decodeInt(inStream)
       if (length < 0) {
@@ -81,7 +87,9 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
 
       val value = Array.ofDim[Byte](length)
       ByteStreams.readFully(inStream, value)
-      kryo.readClassAndObject(new Input(value))
+      kryo.synchronized {
+        kryo.readClassAndObject(new Input(value))
+      }
     }
     o.asInstanceOf[T]
   }
