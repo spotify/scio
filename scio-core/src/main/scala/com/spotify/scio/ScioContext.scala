@@ -106,8 +106,7 @@ object ScioContext {
     (PipelineOptionsFactory.fromArgs(dfArgs).as(cls), Args(appArgs))
   }
 
-  private val defaultOptions: PipelineOptions =
-    PipelineOptionsFactory.fromArgs(Array.empty).as(classOf[DataflowPipelineOptions])
+  private val defaultOptions: PipelineOptions = PipelineOptionsFactory.create()
 
 }
 
