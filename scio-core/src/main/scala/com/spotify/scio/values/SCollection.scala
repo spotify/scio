@@ -22,7 +22,6 @@ package com.spotify.scio.values
 import java.io.File
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.net.URI
-import java.nio.ByteBuffer
 import java.util.UUID
 
 import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
