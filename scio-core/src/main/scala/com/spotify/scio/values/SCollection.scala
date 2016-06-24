@@ -537,8 +537,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *     val t = l.strip()
    *     c.addValue(maxLineLength, t.length).addValue(minLineLength, t.length)
    *     val b = t.isEmpty
-        if (b) c.addValue(emptyLines, 1L)
-        !b
+   *     if (b) c.addValue(emptyLines, 1L)
+   *     !b
    *   }
    *   .toSCollection
    * }}}
