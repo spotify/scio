@@ -34,15 +34,15 @@ import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.testing.TestPipeline
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
-import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values.{PBegin, PCollection, POutput, TimestampedValue}
 import com.spotify.scio.bigquery._
-import com.spotify.scio.coders.KryoAtomicCoder
+import com.spotify.scio.coders.{KryoAtomicCoder, AvroBytesUtil}
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing._
 import com.spotify.scio.util.{CallSites, ScioUtil}
 import com.spotify.scio.values._
 import org.apache.avro.Schema
+import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.joda.time.Instant
 import org.slf4j.LoggerFactory
@@ -338,11 +338,12 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (this.isTest) {
       this.getTestInput(ObjectFileIO[T](path))
     } else {
-      this.textFile(path)
-        .parDo(new DoFn[String, T] {
+      this.avroFile[GenericRecord](path, AvroBytesUtil.schema)
+        .parDo(new DoFn[GenericRecord, T] {
           private val coder = KryoAtomicCoder[T]
-          override def processElement(c: DoFn[String, T]#ProcessContext): Unit =
-            c.output(CoderUtils.decodeFromBase64(coder, c.element()))
+          override def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit = {
+            c.output(AvroBytesUtil.decode(coder, c.element()))
+          }
         })
         .setName(path)
     }
