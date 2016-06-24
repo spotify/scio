@@ -42,7 +42,6 @@ import org.apache.beam.sdk.{io => gio}
 import org.apache.beam.sdk.runners.DirectPipelineRunner
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
-import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.util.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
 import org.joda.time.{Duration, Instant}
