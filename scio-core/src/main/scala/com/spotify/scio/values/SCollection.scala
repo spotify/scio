@@ -32,7 +32,6 @@ import com.google.cloud.dataflow.sdk.{io => gio}
 import com.google.cloud.dataflow.sdk.runners
 import com.google.cloud.dataflow.sdk.transforms._
 import com.google.cloud.dataflow.sdk.transforms.windowing._
-import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values._
 import com.spotify.scio.ScioContext
