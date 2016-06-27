@@ -37,6 +37,7 @@ import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 /**
@@ -47,7 +48,9 @@ import java.util.Set;
  */
 public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
 
-  private static final String jtIdentifier = "scio_job";
+  private static final JobID jobId = new JobID(
+      Long.toString(System.currentTimeMillis()),
+      new Random().nextInt(Integer.MAX_VALUE));
 
   protected final String path;
   protected final Class<? extends FileOutputFormat<K, V>> formatClass;
@@ -92,6 +95,7 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
     for (Map.Entry<String, String> entry : map.entrySet()) {
       conf.set(entry.getKey(), entry.getValue());
     }
+    job.setJobID(jobId);
     return job;
   }
 
@@ -105,16 +109,12 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
     protected final String path;
     protected final Class<? extends FileOutputFormat<K, V>> formatClass;
 
-    // unique job ID for this sink
-    private final int jobId;
-
     public HadoopWriteOperation(Sink<KV<K, V>> sink,
                                 String path,
                                 Class<? extends FileOutputFormat<K, V>> formatClass) {
       this.sink = sink;
       this.path = path;
       this.formatClass = formatClass;
-      this.jobId = (int) (System.currentTimeMillis() / 1000);
     }
 
     @Override
@@ -135,7 +135,7 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
       }
 
       // job successful
-      JobContext context = new JobContextImpl(job.getConfiguration(), jobID());
+      JobContext context = new JobContextImpl(job.getConfiguration(), job.getJobID());
       FileOutputCommitter outputCommitter = new FileOutputCommitter(new Path(path), context);
       outputCommitter.commitJob(context);
 
@@ -185,10 +185,6 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
       return StringUtf8Coder.of();
     }
 
-    private JobID jobID() {
-      return new JobID(jtIdentifier, jobId);
-    }
-
   }
 
   // =======================================================================
@@ -226,7 +222,7 @@ public class HadoopFileSink<K, V> extends Sink<KV<K, V>> {
       // Each Writer is responsible for writing one bundle of elements and is represented by one
       // unique Hadoop task based on uId/hash. All tasks share the same job ID. Since Dataflow
       // handles retrying of failed bundles, each task has one attempt only.
-      JobID jobId = ((HadoopWriteOperation) writeOperation).jobID();
+      JobID jobId = job.getJobID();
       TaskID taskId = new TaskID(jobId, TaskType.REDUCE, hash);
       context = new TaskAttemptContextImpl(job.getConfiguration(), new TaskAttemptID(taskId, 0));
 
