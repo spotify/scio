@@ -23,7 +23,7 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import sbtunidoc.Plugin.UnidocKeys._
 
 val beamVersion = "0.1.0-incubating"
-val algebirdVersion = "0.12.0"
+val algebirdVersion = "0.12.1"
 val avroVersion = "1.7.7"
 val bigtableVersion = "0.3.0"
 val breezeVersion ="0.12"
