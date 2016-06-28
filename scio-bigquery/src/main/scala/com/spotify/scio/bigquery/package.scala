@@ -93,7 +93,10 @@ package object bigquery {
 
     private val hasMillisRx = """\.[0-9]+$""".r
 
-    private def tryParse(timestamp: String, priorException: Option[Throwable] = None): Try[Instant] = {
+    private def tryParse(
+      timestamp: String,
+      priorException: Option[Throwable] = None
+    ): Try[Instant] = {
       // try to parse with DateTime formatter; if failure, check timestamp
       // for missing fractional seconds and potentially try again
       Try(formatter.parseDateTime(timestamp).toInstant).recoverWith {
