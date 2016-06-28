@@ -35,6 +35,7 @@ import org.apache.beam.sdk.testing.TestPipeline
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
 import org.apache.beam.sdk.values.{PBegin, PCollection, POutput, TimestampedValue}
+import com.google.protobuf.Message
 import com.spotify.scio.bigquery._
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io.Tap
@@ -366,6 +367,13 @@ class ScioContext private[scio] (val options: PipelineOptions,
       wrap(this.applyInternal(t)).setName(path)
     }
   }
+
+  /**
+   * Get an SCollection for a Protobuf file.
+   * @group input
+   */
+  def protobufFile[T: ClassTag](path: String)(implicit ev: T <:< Message): SCollection[T] =
+    objectFile(path)
 
   /**
    * Get an SCollection for a BigQuery SELECT query.

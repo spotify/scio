@@ -26,6 +26,7 @@ import java.util.UUID
 
 import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
 import com.google.api.services.datastore.DatastoreV1.Entity
+import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io._
@@ -858,6 +859,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       }
       context.makeFuture(AvroTap(path + "/part-*", schema))
     }
+
+  /**
+   * Save this SCollection as a Protobuf file.
+   * @group output
+   */
+  def saveAsProtobufFile(path: String, numShards: Int = 0)
+                        (implicit ev: T <:< Message): Future[Tap[T]] =
+    this.saveAsObjectFile(path, numShards)
 
   /**
    * Save this SCollection as a BigQuery table. Note that elements must be of type TableRow.
