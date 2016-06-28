@@ -191,6 +191,7 @@ lazy val scioCore: Project = Project(
     libraryDependencies ++= Seq(
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "com.twitter" %% "chill" % chillVersion,
+      "com.twitter" % "chill-protobuf" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.apache.commons" % "commons-math3" % commonsMath3Version,
       "org.ini4j" % "ini4j" % ini4jVersion
