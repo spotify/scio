@@ -45,7 +45,8 @@ class SCollectionWithFanout[T: ClassTag] private[values] (val internal: PCollect
    */
   def aggregate[U: ClassTag](zeroValue: U)(seqOp: (U, T) => U,
                                            combOp: (U, U) => U): SCollection[U] =
-    this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(seqOp, combOp)).withFanout(fanout))
+    this.pApply(
+      Combine.globally(Functions.aggregateFn(zeroValue)(seqOp, combOp)).withFanout(fanout))
 
   /**
    * Generic function to combine the elements using a custom set of aggregation functions. Turns
@@ -62,7 +63,7 @@ class SCollectionWithFanout[T: ClassTag] private[values] (val internal: PCollect
   def combine[C: ClassTag](createCombiner: T => C)
                           (mergeValue: (C, T) => C)
                           (mergeCombiners: (C, C) => C): SCollection[C] =
-    this.apply(
+    this.pApply(
       Combine
         .globally(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))
         .withFanout(fanout))
@@ -73,27 +74,27 @@ class SCollectionWithFanout[T: ClassTag] private[values] (val internal: PCollect
    * allocation; however, it should not modify t2.
    */
   def fold(zeroValue: T)(op: (T, T) => T): SCollection[T] =
-    this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(op, op)).withFanout(fanout))
+    this.pApply(Combine.globally(Functions.aggregateFn(zeroValue)(op, op)).withFanout(fanout))
 
   /**
    * Fold with [[com.twitter.algebird.Monoid Monoid]], which defines the associative function and
    * "zero value" for T. This could be more powerful and better optimized in some cases.
    */
   def fold(implicit mon: Monoid[T]): SCollection[T] =
-    this.apply(Combine.globally(Functions.reduceFn(mon)).withFanout(fanout))
+    this.pApply(Combine.globally(Functions.reduceFn(mon)).withFanout(fanout))
 
   /**
    * Reduce the elements of this SCollection using the specified commutative and associative
    * binary operator.
    */
   def reduce(op: (T, T) => T): SCollection[T] =
-    this.apply(Combine.globally(Functions.reduceFn(op)).withFanout(fanout))
+    this.pApply(Combine.globally(Functions.reduceFn(op)).withFanout(fanout))
 
   /**
    * Reduce with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful and
    * better optimized in some cases.
    */
   def sum(implicit sg: Semigroup[T]): SCollection[T] =
-    this.apply(Combine.globally(Functions.reduceFn(sg)).withFanout(fanout))
+    this.pApply(Combine.globally(Functions.reduceFn(sg)).withFanout(fanout))
 
 }

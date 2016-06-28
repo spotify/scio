@@ -43,7 +43,7 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
   /** [[SCollection.filter]] with an additional SideInputContext argument. */
   def filter(f: (T, SideInputContext[T]) => Boolean): SCollectionWithSideInput[T] = {
     val o = this
-      .apply(parDo.of(FunctionsWithSideInput.filterFn(f)))
+      .pApply(parDo.of(FunctionsWithSideInput.filterFn(f)))
       .internal.setCoder(this.getCoder[T])
     new SCollectionWithSideInput[T](o, context, sides)
   }
@@ -52,7 +52,7 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
   def flatMap[U: ClassTag](f: (T, SideInputContext[T]) => TraversableOnce[U])
   : SCollectionWithSideInput[U] = {
     val o = this
-      .apply(parDo.of(FunctionsWithSideInput.flatMapFn(f)))
+      .pApply(parDo.of(FunctionsWithSideInput.flatMapFn(f)))
       .internal.setCoder(this.getCoder[U])
     new SCollectionWithSideInput[U](o, context, sides)
   }
@@ -64,7 +64,7 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
   /** [[SCollection.map]] with an additional SideInputContext argument. */
   def map[U: ClassTag](f: (T, SideInputContext[T]) => U): SCollectionWithSideInput[U] = {
     val o = this
-      .apply(parDo.of(FunctionsWithSideInput.mapFn(f)))
+      .pApply(parDo.of(FunctionsWithSideInput.mapFn(f)))
       .internal.setCoder(this.getCoder[U])
     new SCollectionWithSideInput[U](o, context, sides)
   }
