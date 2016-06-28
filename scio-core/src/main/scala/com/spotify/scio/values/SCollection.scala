@@ -34,6 +34,7 @@ import com.google.cloud.dataflow.sdk.transforms._
 import com.google.cloud.dataflow.sdk.transforms.windowing._
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values._
+import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io._
@@ -859,6 +860,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       }
       context.makeFuture(AvroTap(path + "/part-*", schema))
     }
+
+  /**
+   * Save this SCollection as a Protobuf file.
+   * @group output
+   */
+  def saveAsProtobufFile(path: String, numShards: Int = 0)
+                        (implicit ev: T <:< Message): Future[Tap[T]] =
+    this.saveAsObjectFile(path, numShards)
 
   /**
    * Save this SCollection as a BigQuery table. Note that elements must be of type TableRow.

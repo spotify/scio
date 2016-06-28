@@ -34,6 +34,7 @@ import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
 import com.google.cloud.dataflow.sdk.transforms.{Create, DoFn, PTransform}
 import com.google.cloud.dataflow.sdk.values.{PBegin, PCollection, POutput, TimestampedValue}
+import com.google.protobuf.Message
 import com.spotify.scio.bigquery._
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io.Tap
@@ -365,6 +366,13 @@ class ScioContext private[scio] (val options: PipelineOptions,
       wrap(this.applyInternal(t)).setName(path)
     }
   }
+
+  /**
+   * Get an SCollection for a Protobuf file.
+   * @group input
+   */
+  def protobufFile[T: ClassTag](path: String)(implicit ev: T <:< Message): SCollection[T] =
+    objectFile(path)
 
   /**
    * Get an SCollection for a BigQuery SELECT query.
