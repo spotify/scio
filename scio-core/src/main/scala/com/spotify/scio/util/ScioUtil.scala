@@ -19,6 +19,8 @@ package com.spotify.scio.util
 
 import java.net.URI
 
+import org.apache.beam.sdk.coders.{Coder, CoderRegistry}
+
 import scala.reflect.ClassTag
 
 private[scio] object ScioUtil {
@@ -29,4 +31,13 @@ private[scio] object ScioUtil {
 
   def classOf[T: ClassTag]: Class[T] = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
 
+  def getScalaCoder[T: ClassTag]: Coder[T] = {
+    import com.spotify.scio.Implicits._
+
+    val coderRegistry = new CoderRegistry()
+    coderRegistry.registerStandardCoders()
+    coderRegistry.registerScalaCoders()
+
+    coderRegistry.getScalaCoder[T]
+  }
 }
