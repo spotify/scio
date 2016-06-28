@@ -17,20 +17,12 @@
 
 package com.spotify.scio.repl
 
-import java.io.{OutputStream, PrintStream}
-
 import com.google.cloud.dataflow.sdk.options.PipelineOptions
 import com.spotify.scio.{ScioContext, ScioResult}
 
 class ReplScioContext(options: PipelineOptions,
                       artifacts: List[String])
   extends ScioContext(options, artifacts) {
-
-  private lazy val nullout = new PrintStream(new OutputStream() {
-    override def write(b: Int) = {}
-    override def write(b: Array[Byte]) = {}
-    override def write(b: Array[Byte], off: Int, len: Int) = {}
-  })
 
   /** Enhanced version that dumps REPL session jar. */
   override def close(): ScioResult = {
