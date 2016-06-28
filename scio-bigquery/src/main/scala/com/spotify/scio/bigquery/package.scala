@@ -22,6 +22,7 @@ import org.joda.time.Instant
 import org.joda.time.format.DateTimeFormat
 
 import scala.collection.JavaConverters._
+import scala.util.{Try, Failure}
 
 /**
  * Main package for BigQuery APIs. Import all.
@@ -90,9 +91,35 @@ package object bigquery {
     /** Convert millisecond instant to BigQuery time stamp string. */
     def apply(instant: Long): String = formatter.print(instant) + " UTC"
 
+    private val hasMillisRx = """\.[0-9]+$""".r
+
+    private def tryParse(timestamp: String, priorException: Option[Throwable] = None): Try[Instant] = {
+      // try to parse with DateTime formatter; if failure, check timestamp
+      // for missing fractional seconds and potentially try again
+      Try(formatter.parseDateTime(timestamp).toInstant).recoverWith {
+        case _ if priorException.isDefined =>
+          // Pass original exception for the unmodified timestamp, since its error
+          // string will reflect the raw timestamp in the user's data
+          Failure(priorException.get)
+
+        case ex: IllegalArgumentException if hasMillisRx.findFirstIn(timestamp).isEmpty =>
+          // Failure due to missing fractional seconds can be retried,
+          // given that we've already checked for earlier failures.  Pass the
+          // current exception to be thrown if we fail again, in which case it
+          // likely reflects some failure other than missing fractional seconds.
+          tryParse(timestamp.stripSuffix(".") + ".000", Some(ex))
+
+        case ex =>
+          // Unknown cause, so get out of here
+          Failure(ex)
+      }
+    }
+
     /** Convert BigQuery time stamp string to Instant. */
-    def parse(timestamp: String): Instant =
-      formatter.parseDateTime(timestamp.replaceAll(" UTC$", "")).toInstant
+    def parse(timestamp: String): Instant = {
+      // Erase trailing ' UTC' before parsing
+      tryParse(timestamp.stripSuffix(" UTC")).get
+    }
 
   }
 
