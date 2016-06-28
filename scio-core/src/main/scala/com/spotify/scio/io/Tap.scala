@@ -22,10 +22,12 @@ import java.util.UUID
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
-import com.spotify.scio.coders.{KryoAtomicCoder, AvroBytesUtil}
+import com.spotify.scio.coders.AvroBytesUtil
+import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.coders.Coder
 
 import scala.reflect.ClassTag
 
@@ -79,9 +81,9 @@ case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
 /** Tap for object files on local file system or GCS. */
 case class ObjectFileTap[T: ClassTag](path: String) extends Tap[T] {
   override def value: Iterator[T] = {
-    val coder = KryoAtomicCoder[T]
+    val elemCoder = ScioUtil.getScalaCoder[T]
     FileStorage(path).avroFile[GenericRecord](AvroBytesUtil.schema).map { r =>
-      AvroBytesUtil.decode(coder, r)
+      AvroBytesUtil.decode(elemCoder, r)
     }
   }
   override def open(sc: ScioContext): SCollection[T] = sc.objectFile(path)

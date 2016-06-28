@@ -27,7 +27,7 @@ import java.util.UUID
 import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
 import com.google.api.services.datastore.DatastoreV1.Entity
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.{KryoAtomicCoder, AvroBytesUtil}
+import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io._
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
@@ -805,11 +805,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (context.isTest) {
       saveAsInMemoryTap
     } else {
+      val elemCoder = this.getCoder[T]
       this
         .parDo(new DoFn[T, GenericRecord] {
-          private val coder = KryoAtomicCoder[T]
           override def processElement(c: DoFn[T, GenericRecord]#ProcessContext): Unit = {
-            c.output(AvroBytesUtil.encode(coder, c.element()))
+            c.output(AvroBytesUtil.encode(elemCoder, c.element()))
           }
         })
         .saveAsAvroFile(path, numShards, AvroBytesUtil.schema)
