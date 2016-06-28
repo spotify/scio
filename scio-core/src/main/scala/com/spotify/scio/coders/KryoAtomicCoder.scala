@@ -23,7 +23,9 @@ import com.google.cloud.dataflow.sdk.coders.Coder.Context
 import com.google.cloud.dataflow.sdk.coders.{AtomicCoder, Coder, CoderException}
 import com.google.cloud.dataflow.sdk.util.VarInt
 import com.google.common.io.ByteStreams
+import com.google.protobuf.Message
 import com.twitter.chill._
+import com.twitter.chill.protobuf.ProtobufSerializer
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 
@@ -41,6 +43,7 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
 
     k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
     k.forSubclass[GenericRecord](new GenericAvroSerializer)
+    k.forSubclass[Message](new ProtobufSerializer)
 
     k.forClass(new KVSerializer)
     // TODO:
