@@ -17,12 +17,14 @@
 
 package com.spotify.scio.io
 
-import com.google.api.client.util.{BackOffUtils, Sleeper, BackOff}
+import com.google.api.client.util.{BackOff, BackOffUtils, Sleeper}
 import com.google.api.services.bigquery.model.TableReference
+import com.google.cloud.dataflow.sdk.coders.Coder
 import com.google.cloud.dataflow.sdk.io.BigQueryIO
+import com.google.protobuf.Message
 import com.spotify.scio.bigquery.{BigQueryClient, BigQueryUtil, TableRow}
 import org.apache.avro.Schema
-import org.slf4j.{LoggerFactory, Logger}
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
@@ -60,6 +62,11 @@ trait Taps {
   /** Get a `Future[Tap[T]]` for a text file. */
   def textFile(path: String): Future[Tap[String]] =
     mkTap(s"Text: $path", () => isPathDone(path), () => TextTap(path))
+
+  /** Get a `Future[Tap[T]]` of a Protobuf file. */
+  def protobufFile[T: ClassTag](path: String)(implicit ev: T <:< Message)
+  : Future[Tap[T]] =
+    mkTap(s"Protobuf: $path", () => isPathDone(path), () => ObjectFileTap[T](path))
 
   private def isPathDone(path: String): Boolean = FileStorage(path).isDone
 

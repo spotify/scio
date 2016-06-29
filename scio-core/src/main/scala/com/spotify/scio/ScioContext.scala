@@ -34,8 +34,9 @@ import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
 import com.google.cloud.dataflow.sdk.transforms.{Create, DoFn, PTransform}
 import com.google.cloud.dataflow.sdk.values.{PBegin, PCollection, POutput, TimestampedValue}
+import com.google.protobuf.Message
 import com.spotify.scio.bigquery._
-import com.spotify.scio.coders.{KryoAtomicCoder, AvroBytesUtil}
+import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing._
 import com.spotify.scio.util.{CallSites, ScioUtil}
@@ -336,9 +337,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (this.isTest) {
       this.getTestInput(ObjectFileIO[T](path))
     } else {
+      val coder = pipeline.getCoderRegistry.getScalaCoder[T]
       this.avroFile[GenericRecord](path, AvroBytesUtil.schema)
         .parDo(new DoFn[GenericRecord, T] {
-          private val coder = KryoAtomicCoder[T]
           override def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit = {
             c.output(AvroBytesUtil.decode(coder, c.element()))
           }
@@ -365,6 +366,13 @@ class ScioContext private[scio] (val options: PipelineOptions,
       wrap(this.applyInternal(t)).setName(path)
     }
   }
+
+  /**
+   * Get an SCollection for a Protobuf file.
+   * @group input
+   */
+  def protobufFile[T: ClassTag](path: String)(implicit ev: T <:< Message): SCollection[T] =
+    objectFile(path)
 
   /**
    * Get an SCollection for a BigQuery SELECT query.

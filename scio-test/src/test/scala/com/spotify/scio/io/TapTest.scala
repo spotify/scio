@@ -24,6 +24,8 @@ import java.util.UUID
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.bigquery._
+import com.spotify.scio.proto.SimpleV2.{SimplePB => SimplePBV2}
+import com.spotify.scio.proto.SimpleV3.{SimplePB => SimplePBV3}
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.avro.Schema
 import org.apache.commons.io.FileUtils
@@ -140,6 +142,44 @@ class TapTest extends PipelineSpec {
         .saveAsTextFile(dir.getPath)
     }
     verifyTap(t, Set("a", "b", "c"))
+    FileUtils.deleteDirectory(dir)
+  }
+
+  it should "support saveAsProtobuf proto version 2" in {
+    val dir = tmpDir
+    val data = Seq(("a", 1), ("b", 2), ("c", 3))
+    // use java protos otherwise we would have to pull in pb-scala
+    def mkProto(t: (String, Int)): SimplePBV2 = SimplePBV2.newBuilder()
+                                                          .setPlays(t._2)
+                                                          .setTrackId(t._1)
+                                                          .build()
+    val t = runWithFileFuture {
+      _
+        .parallelize(data)
+        .map(mkProto)
+        .saveAsProtobufFile(dir.getPath)
+    }
+    val expected = data.map(mkProto).toSet
+    verifyTap(t, expected)
+    FileUtils.deleteDirectory(dir)
+  }
+
+  it should "support saveAsProtobuf proto version 3" in {
+    val dir = tmpDir
+    val data = Seq(("a", 1), ("b", 2), ("c", 3))
+    // use java protos otherwise we would have to pull in pb-scala
+    def mkProto(t: (String, Int)): SimplePBV3 = SimplePBV3.newBuilder()
+                                                          .setPlays(t._2)
+                                                          .setTrackId(t._1)
+                                                          .build()
+    val t = runWithFileFuture {
+      _
+        .parallelize(data)
+        .map(mkProto)
+        .saveAsProtobufFile(dir.getPath)
+    }
+    val expected = data.map(mkProto).toSet
+    verifyTap(t, expected)
     FileUtils.deleteDirectory(dir)
   }
 

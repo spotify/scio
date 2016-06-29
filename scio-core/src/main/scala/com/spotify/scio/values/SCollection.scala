@@ -34,8 +34,9 @@ import com.google.cloud.dataflow.sdk.transforms._
 import com.google.cloud.dataflow.sdk.transforms.windowing._
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values._
+import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.{KryoAtomicCoder, AvroBytesUtil}
+import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io._
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
@@ -806,11 +807,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (context.isTest) {
       saveAsInMemoryTap
     } else {
+      val elemCoder = this.getCoder[T]
       this
         .parDo(new DoFn[T, GenericRecord] {
-          private val coder = KryoAtomicCoder[T]
           override def processElement(c: DoFn[T, GenericRecord]#ProcessContext): Unit = {
-            c.output(AvroBytesUtil.encode(coder, c.element()))
+            c.output(AvroBytesUtil.encode(elemCoder, c.element()))
           }
         })
         .saveAsAvroFile(path, numShards, AvroBytesUtil.schema)
@@ -859,6 +860,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       }
       context.makeFuture(AvroTap(path + "/part-*", schema))
     }
+
+  /**
+   * Save this SCollection as a Protobuf file.
+   * @group output
+   */
+  def saveAsProtobufFile(path: String, numShards: Int = 0)
+                        (implicit ev: T <:< Message): Future[Tap[T]] =
+    this.saveAsObjectFile(path, numShards)
 
   /**
    * Save this SCollection as a BigQuery table. Note that elements must be of type TableRow.

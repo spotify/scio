@@ -21,6 +21,7 @@ import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtSite.SiteKeys._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import sbtunidoc.Plugin.UnidocKeys._
+import com.trueaccord.scalapb.{ScalaPbPlugin => PB}
 
 val dataflowSdkVersion = "1.6.0"
 val algebirdVersion = "0.12.1"
@@ -43,6 +44,7 @@ val junitVersion = "4.12"
 val nettyTcNativeVersion = "1.1.33.Fork13"
 val scalaCheckVersion = "1.13.0"
 val scalaMacrosVersion = "2.1.0"
+val scalapbVersion = "0.5.19" // inner protobuf-java version must match beam/dataflow-sdk one
 val scalaTestVersion = "2.2.6"
 val slf4jVersion = "1.7.21"
 
@@ -189,6 +191,7 @@ lazy val scioCore: Project = Project(
       dataflowSdkDependency,
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "com.twitter" %% "chill" % chillVersion,
+      "com.twitter" % "chill-protobuf" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.apache.commons" % "commons-math3" % commonsMath3Version,
       "org.ini4j" % "ini4j" % ini4jVersion
@@ -290,11 +293,25 @@ lazy val scioHdfs: Project = Project(
 lazy val scioSchemas: Project = Project(
   "scio-schemas",
   file("scio-schemas"),
-  settings = commonSettings ++ sbtavro.SbtAvro.avroSettings ++ noPublishSettings
+  settings = commonSettings ++
+             sbtavro.SbtAvro.avroSettings ++
+             noPublishSettings ++
+             PB.protobufSettings ++ Seq(
+    description := "Avro/Proto schemas for testing",
+    libraryDependencies ++= Seq(
+      "com.github.os72" % "protoc-jar" % "3.0.0-b1"
+    )
+  )
 ).settings(
   // suppress warnings
   sources in doc in Compile := List(),
-  javacOptions := Seq("-source", "1.7", "-target", "1.7")
+  javacOptions := Seq("-source", "1.7", "-target", "1.7"),
+  compileOrder := CompileOrder.JavaThenScala,
+  PB.javaConversions in PB.protobufConfig := true,
+  PB.grpc := false,
+  PB.runProtoc in PB.protobufConfig := (args =>
+    com.github.os72.protocjar.Protoc.runProtoc("-v300" +: args.toArray)
+  )
 )
 
 lazy val scioExamples: Project = Project(
