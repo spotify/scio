@@ -1,0 +1,8 @@
+syntax = "proto2";
+
+option java_package = "com.spotify.scio.proto";
+option optimize_for = SPEED;
+
+message TrackPB {
+  required string trackId = 1;
+}
