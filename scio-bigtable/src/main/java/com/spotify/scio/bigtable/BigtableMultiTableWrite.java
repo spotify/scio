@@ -144,7 +144,6 @@ public class BigtableMultiTableWrite {
 
   private static void validateConfig(CloudBigtableConfiguration configuration) {
     checkNotNullOrEmpty(configuration.getProjectId(), "projectId");
-    checkNotNullOrEmpty(configuration.getZoneId(), "zoneId");
-    checkNotNullOrEmpty(configuration.getClusterId(), "clusterId");
+    checkNotNullOrEmpty(configuration.getInstanceId(), "instanceId");
   }
 }

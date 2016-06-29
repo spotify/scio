@@ -50,8 +50,7 @@ runMain
   --stagingLocation=gs://[BUCKET]/path/to/staging
   --input=gs://dataflow-samples/shakespeare/kinglear.txt
   --bigtableProjectId=[BIG_TABLE_PROJECT_ID]
-  --bigtableClusterId=[BIG_TABLE_CLUSTER_ID]
-  --bigtableZoneId=[BIG_TABLE_ZONE_ID]
+  --bigtableInstanceId=[BIG_TABLE_INSTANCE_ID]
   --bigtableTableId=[BIG_TABLE_TABLE_ID]
 */
 
@@ -81,8 +80,7 @@ runMain
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/path/to/staging
   --bigtableProjectId=[BIG_TABLE_PROJECT_ID]
-  --bigtableClusterId=[BIG_TABLE_CLUSTER_ID]
-  --bigtableZoneId=[BIG_TABLE_ZONE_ID]
+  --bigtableInstanceId=[BIG_TABLE_INSTANCE_ID]
   --bigtableTableId=[BIG_TABLE_TABLE_ID]
   --output=gs://[BUCKET]/[PATH]/wordcount
 */
@@ -112,8 +110,7 @@ runMain
   --stagingLocation=gs://[BUCKET]/path/to/staging
   --input=gs://dataflow-samples/shakespeare/kinglear.txt
   --bigtableProjectId=[BIG_TABLE_PROJECT_ID]
-  --bigtableClusterId=[BIG_TABLE_CLUSTER_ID]
-  --bigtableZoneId=[BIG_TABLE_ZONE_ID]
+  --bigtableInstanceId=[BIG_TABLE_INSTANCE_ID]
   --bigtableTableId=[BIG_TABLE_TABLE_ID]
 */
 

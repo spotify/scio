@@ -51,8 +51,7 @@ class BigtableExampleTest extends PipelineSpec {
 
   val bigtableOptions = Seq(
     "--bigtableProjectId=my-project",
-    "--bigtableClusterId=my-cluster",
-    "--bigtableZoneId=us-east1-a",
+    "--bigtableInstanceId=my-instance",
     "--bigtableTableId=my-table")
 
   val textIn = Seq("a b c d e", "a b a b")
@@ -63,7 +62,7 @@ class BigtableExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.BigtableWriteExample.type]
       .args(bigtableOptions :+ "--input=in.txt": _*)
       .input(TextIO("in.txt"), textIn)
-      .output(bt.BigtableOutput[Put]("my-project", "my-cluster", "us-east1-a", "my-table")) {
+      .output(bt.BigtableOutput[Put]("my-project", "my-instance", "my-table")) {
         _.map(comparablePut) should containInAnyOrder (expectedPuts.map(comparablePut))
       }
       .run()
@@ -82,7 +81,7 @@ class BigtableExampleTest extends PipelineSpec {
   "BigtableReadExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.BigtableReadExample.type]
       .args(bigtableOptions :+ "--output=out.txt": _*)
-      .input(bt.BigtableInput("my-project", "my-cluster", "us-east1-a", "my-table"), resultIn)
+      .input(bt.BigtableInput("my-project", "my-instance", "my-table"), resultIn)
       .output(TextIO("out.txt"))(_ should containInAnyOrder (expectedText))
       .run()
   }
@@ -101,7 +100,7 @@ class BigtableExampleTest extends PipelineSpec {
       .args(bigtableOptions ++ Seq("--kinglear=k.txt", "--othello=o.txt"): _*)
       .input(TextIO("k.txt"), kingLear)
       .input(TextIO("o.txt"), othello)
-      .output(bt.MultipleBigtableOutput[Put]("my-project", "my-cluster", "us-east1-a")) {
+      .output(bt.MultipleBigtableOutput[Put]("my-project", "my-instance")) {
         _.mapValues(_.map(comparablePut).toSet) should containInAnyOrder (
           expectedMultiple.map(kv => (kv._1, kv._2.map(comparablePut).toSet)))
       }
