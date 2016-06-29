@@ -25,7 +25,7 @@ import sbtunidoc.Plugin.UnidocKeys._
 val dataflowSdkVersion = "1.6.0"
 val algebirdVersion = "0.12.1"
 val avroVersion = "1.7.7"
-val bigtableVersion = "0.3.0"
+val bigtableVersion = "0.9.0"
 val breezeVersion ="0.12"
 val chillVersion = "0.8.0"
 val commonsIoVersion = "2.5"
