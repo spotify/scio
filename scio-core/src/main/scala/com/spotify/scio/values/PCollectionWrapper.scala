@@ -40,7 +40,7 @@ private[values] trait PCollectionWrapper[T] {
   (transform: PTransform[_ >: PCollection[T], Output]): Output =
     internal.apply(CallSites.getCurrent, transform)
 
-  protected def apply[U: ClassTag]
+  protected def pApply[U: ClassTag]
   (transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {
     val t = if (classOf[Combine.Globally[T, U]] isAssignableFrom transform.getClass) {
       // In case PCollection is windowed
@@ -52,7 +52,7 @@ private[values] trait PCollectionWrapper[T] {
   }
 
   private[scio] def parDo[U: ClassTag](fn: DoFn[T, U]): SCollection[U] =
-    this.apply(ParDo.of(fn)).setCoder(this.getCoder[U])
+    this.pApply(ParDo.of(fn)).setCoder(this.getCoder[U])
 
   private[values] def getCoder[U: ClassTag]: Coder[U] =
     internal.getPipeline.getCoderRegistry.getScalaCoder[U]
