@@ -119,7 +119,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def applyTransform[U: ClassTag](transform: PTransform[_ >: PCollection[T], PCollection[U]])
   : SCollection[U] =
-    this.apply(transform)
+    this.pApply(transform)
 
   /**
    * Apply a [[org.apache.beam.sdk.transforms.PTransform PTransform]] with [[PDone]] output.
@@ -211,7 +211,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def aggregate[U: ClassTag](zeroValue: U)(seqOp: (U, T) => U,
                                            combOp: (U, U) => U): SCollection[U] =
-    this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(seqOp, combOp)))
+    this.pApply(Combine.globally(Functions.aggregateFn(zeroValue)(seqOp, combOp)))
 
   /**
    * Aggregate with [[com.twitter.algebird.Aggregator Aggregator]]. First each item T is mapped to
@@ -241,14 +241,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def combine[C: ClassTag](createCombiner: T => C)
                           (mergeValue: (C, T) => C)
                           (mergeCombiners: (C, C) => C): SCollection[C] =
-    this.apply(Combine.globally(Functions.combineFn(createCombiner, mergeValue, mergeCombiners)))
+    this.pApply(Combine.globally(Functions.combineFn(createCombiner, mergeValue, mergeCombiners)))
 
   /**
    * Count the number of elements in the SCollection.
    * @return a new SCollection with the count
    * @group transform
    */
-  def count: SCollection[Long] = this.apply(Count.globally[T]()).asInstanceOf[SCollection[Long]]
+  def count: SCollection[Long] = this.pApply(Count.globally[T]()).asInstanceOf[SCollection[Long]]
 
   /**
    * Count approximate number of distinct elements in the SCollection.
@@ -257,7 +257,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def countApproxDistinct(sampleSize: Int): SCollection[Long] =
-    this.apply(ApproximateUnique.globally[T](sampleSize)).asInstanceOf[SCollection[Long]]
+    this.pApply(ApproximateUnique.globally[T](sampleSize)).asInstanceOf[SCollection[Long]]
 
   /**
    * Count approximate number of distinct elements in the SCollection.
@@ -267,7 +267,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def countApproxDistinct(maximumEstimationError: Double = 0.02): SCollection[Long] =
     this
-      .apply(ApproximateUnique.globally[T](maximumEstimationError))
+      .pApply(ApproximateUnique.globally[T](maximumEstimationError))
       .asInstanceOf[SCollection[Long]]
 
   /**
@@ -275,21 +275,21 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def countByValue: SCollection[(T, Long)] = this.transform {
-    _.apply(Count.perElement[T]()).map(kvToTuple).asInstanceOf[SCollection[(T, Long)]]
+    _.pApply(Count.perElement[T]()).map(kvToTuple).asInstanceOf[SCollection[(T, Long)]]
   }
 
   /**
    * Return a new SCollection containing the distinct elements in this SCollection.
    * @group transform
    */
-  def distinct: SCollection[T] = this.apply(RemoveDuplicates.create[T]())
+  def distinct: SCollection[T] = this.pApply(RemoveDuplicates.create[T]())
 
   /**
    * Return a new SCollection containing only the elements that satisfy a predicate.
    * @group transform
    */
   def filter(f: T => Boolean): SCollection[T] =
-    this.apply(Filter.byPredicate(Functions.serializableFn(f.asInstanceOf[T => JBoolean])))
+    this.pApply(Filter.byPredicate(Functions.serializableFn(f.asInstanceOf[T => JBoolean])))
 
   /**
    * Return a new SCollection by first applying a function to all elements of
@@ -306,7 +306,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def fold(zeroValue: T)(op: (T, T) => T): SCollection[T] =
-    this.apply(Combine.globally(Functions.aggregateFn(zeroValue)(op, op)))
+    this.pApply(Combine.globally(Functions.aggregateFn(zeroValue)(op, op)))
 
   /**
    * Fold with [[com.twitter.algebird.Monoid Monoid]], which defines the associative function and
@@ -314,7 +314,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def fold(implicit mon: Monoid[T]): SCollection[T] =
-    this.apply(Combine.globally(Functions.reduceFn(mon)))
+    this.pApply(Combine.globally(Functions.reduceFn(mon)))
 
   /**
    * Return an SCollection of grouped items. Each group consists of a key and a sequence of
@@ -329,8 +329,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def groupBy[K: ClassTag](f: T => K): SCollection[(K, Iterable[T])] = this.transform {
     _
-      .apply(WithKeys.of(Functions.serializableFn(f))).setCoder(this.getKvCoder[K, T])
-      .apply(GroupByKey.create[K, T]()).map(kvIterableToTuple)
+      .pApply(WithKeys.of(Functions.serializableFn(f))).setCoder(this.getKvCoder[K, T])
+      .pApply(GroupByKey.create[K, T]()).map(kvIterableToTuple)
   }
 
   /**
@@ -363,7 +363,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     val e = ev  // defeat closure
     in
       .map(e.toDouble).asInstanceOf[SCollection[JDouble]]
-      .apply(Mean.globally()).asInstanceOf[SCollection[Double]]
+      .pApply(Mean.globally()).asInstanceOf[SCollection[Double]]
   }
 
 
@@ -384,7 +384,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def quantilesApprox(numQuantiles: Int)
                      (implicit ord: Ordering[T]): SCollection[Iterable[T]] = this.transform {
     _
-      .apply(ApproximateQuantiles.globally(numQuantiles, ord))
+      .pApply(ApproximateQuantiles.globally(numQuantiles, ord))
       .map(_.asInstanceOf[JIterable[T]].asScala)
   }
 
@@ -421,7 +421,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def reduce(op: (T, T) => T): SCollection[T] =
-    this.apply(Combine.globally(Functions.reduceFn(op)))
+    this.pApply(Combine.globally(Functions.reduceFn(op)))
 
   /**
    * Return a sampled subset of this SCollection.
@@ -430,7 +430,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def sample(sampleSize: Int): SCollection[Iterable[T]] = this.transform {
-    _.apply(Sample.fixedSizeGlobally(sampleSize)).map(_.asScala)
+    _.pApply(Sample.fixedSizeGlobally(sampleSize)).map(_.asScala)
   }
 
   /**
@@ -461,13 +461,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def sum(implicit sg: Semigroup[T]): SCollection[T] =
-    this.apply(Combine.globally(Functions.reduceFn(sg)))
+    this.pApply(Combine.globally(Functions.reduceFn(sg)))
 
   /**
    * Return a sampled subset of any `num` elements of the SCollection.
    * @group transform
    */
-  def take(num: Long): SCollection[T] = this.apply(Sample.any(num))
+  def take(num: Long): SCollection[T] = this.pApply(Sample.any(num))
 
   /**
    * Return the top k (largest) elements from this SCollection as defined by the specified
@@ -476,7 +476,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def top(num: Int)(implicit ord: Ordering[T]): SCollection[Iterable[T]] = this.transform {
-    _.apply(Top.of(num, ord)).map(_.asInstanceOf[JIterable[T]].asScala)
+    _.pApply(Top.of(num, ord)).map(_.asInstanceOf[JIterable[T]].asScala)
   }
 
   // =======================================================================
@@ -673,7 +673,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (options.outputTimeFn != null) {
       transform = transform.withOutputTimeFn(options.outputTimeFn)
     }
-    this.apply(transform)
+    this.pApply(transform)
   }
 
   /**
