@@ -43,13 +43,16 @@ package object bigtable {
 
     /** Get an SCollection for a Bigtable table. */
     def bigTable(projectId: String,
-                 clusterId: String,
-                 zoneId: String,
+                 instanceId: String,
                  tableId: String,
                  scan: Scan = null): SCollection[Result] = self.pipelineOp {
       val _scan: Scan = if (scan != null) scan else new Scan()
-      val config = new bt.CloudBigtableScanConfiguration(
-        projectId, zoneId, clusterId, tableId, _scan)
+      val config = new bt.CloudBigtableScanConfiguration.Builder()
+        .withProjectId(projectId)
+        .withInstanceId(instanceId)
+        .withTableId(tableId)
+        .withScan(_scan)
+        .build
       this.bigTable(config)
     }
 
@@ -57,14 +60,12 @@ package object bigtable {
     def bigTable(config: bt.CloudBigtableScanConfiguration): SCollection[Result] = self.pipelineOp {
       if (self.isTest) {
         val input = BigtableInput(
-          config.getProjectId, config.getClusterId, config.getZoneId, config.getTableId)
+          config.getProjectId, config.getInstanceId, config.getTableId)
         self.getTestInput[Result](input)
       } else {
         self
           .wrap(self.applyInternal(Read.from(bt.CloudBigtableIO.read(config))))
-          .setName(
-            s"${config.getProjectId} ${config.getClusterId} " +
-            s"${config.getZoneId} ${config.getTableId}")
+          .setName(s"${config.getProjectId} ${config.getInstanceId} ${config.getTableId}")
       }
     }
 
@@ -78,13 +79,12 @@ package object bigtable {
 
     /** Save this SCollection as a Bigtable table. Note that elements must be of type Mutation. */
     def saveAsBigtable(projectId: String,
-                       clusterId: String,
-                       zoneId: String,
+                       instanceId: String,
                        tableId: String,
                        additionalConfiguration: Map[String, String] = Map.empty)
                       (implicit ev: T <:< Mutation): Future[Tap[Result]] = {
       val config = new bt.CloudBigtableTableConfiguration(
-        projectId, zoneId, clusterId, tableId, additionalConfiguration.asJava)
+        projectId, instanceId, tableId, additionalConfiguration.asJava)
       this.saveAsBigtable(config)
     }
 
@@ -93,7 +93,7 @@ package object bigtable {
                       (implicit ev: T <:< Mutation): Future[Tap[Result]] = {
       if (self.context.isTest) {
         val output = BigtableOutput(
-          config.getProjectId, config.getClusterId, config.getZoneId, config.getTableId)
+          config.getProjectId, config.getInstanceId, config.getTableId)
         self.context.testOut(output)(self)
       } else {
         bt.CloudBigtableIO.initializeForWrite(self.context.pipeline)
@@ -120,13 +120,12 @@ package object bigtable {
      * Mutation.
      */
     def saveAsMultipleBigtable(projectId: String,
-                               clusterId: String,
-                               zoneId: String,
+                               instanceId: String,
                                additionalConfiguration: Map[String, String] = Map.empty)
                               (implicit ev: T <:< Mutation)
     : Future[Tap[(String, Iterable[Result])]] = {
       val config = new bt.CloudBigtableTableConfiguration(
-        projectId, zoneId, clusterId, null, additionalConfiguration.asJava)
+        projectId, instanceId, null, additionalConfiguration.asJava)
       this.saveAsMultipleBigtable(config)
     }
 
@@ -139,7 +138,7 @@ package object bigtable {
     : Future[Tap[(String, Iterable[Result])]] = {
       if (self.context.isTest) {
         val output = MultipleBigtableOutput(
-          config.getProjectId, config.getClusterId, config.getZoneId)
+          config.getProjectId, config.getInstanceId)
         self.context.testOut(output.asInstanceOf[TestIO[(String, Iterable[T])]])(self)
       } else {
         val transform = BigtableMultiTableWrite.writeToMultipleTables(config)
@@ -151,18 +150,16 @@ package object bigtable {
     }
   }
 
-  case class BigtableInput(projectId: String, clusterId: String, zoneId: String, tableId: String)
-    extends TestIO[Result](s"$projectId\t$clusterId\t$zoneId\t$tableId")
+  case class BigtableInput(projectId: String, instanceId: String, tableId: String)
+    extends TestIO[Result](s"$projectId\t$instanceId\t$tableId")
 
   case class BigtableOutput[T <: Mutation](projectId: String,
-                                           clusterId: String,
-                                           zoneId: String,
+                                           instanceId: String,
                                            tableId: String)
-    extends TestIO[T](s"$projectId\t$clusterId\t$zoneId\t$tableId")
+    extends TestIO[T](s"$projectId\t$instanceId\t$tableId")
 
   case class MultipleBigtableOutput[T <: Mutation](projectId: String,
-                                                   clusterId: String,
-                                                   zoneId: String)
-    extends TestIO[(String, Iterable[T])](s"$projectId\t$clusterId\t$zoneId")
+                                                   instanceId: String)
+    extends TestIO[(String, Iterable[T])](s"$projectId\t$instanceId")
 
 }
