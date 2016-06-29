@@ -310,7 +310,10 @@ lazy val scioSchemas: Project = Project(
   javacOptions := Seq("-source", "1.7", "-target", "1.7"),
   compileOrder := CompileOrder.JavaThenScala,
   PB.javaConversions in PB.protobufConfig := true,
-  PB.grpc := false
+  PB.grpc := false,
+  PB.runProtoc in PB.protobufConfig := (args =>
+    com.github.os72.protocjar.Protoc.runProtoc("-v300" +: args.toArray)
+  )
 )
 
 lazy val scioExamples: Project = Project(
