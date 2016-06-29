@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package proto3;
+
+option java_package = "com.spotify.scio.proto";
+
+message SimplePB {
+  string trackId = 1;
+  int64 plays = 2;
+}
