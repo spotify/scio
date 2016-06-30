@@ -17,8 +17,14 @@
 
 package com.spotify.scio.bigtable
 
-import com.google.cloud.bigtable.dataflow.CloudBigtableOptions
+import java.util.concurrent.TimeUnit
+
+import com.google.bigtable.repackaged.com.google.com.google.bigtable.admin.v2.{BigtableInstanceAdminGrpc, Cluster, ListClustersRequest}
+import com.google.cloud.bigtable.dataflow.{CloudBigtableConfiguration, CloudBigtableOptions}
 import com.spotify.scio.ScioContext
+import org.joda.time.Duration
+
+import scala.collection.JavaConverters._
 
 /** Utilities for Bigtable. */
 object Bigtable {
@@ -26,5 +32,43 @@ object Bigtable {
   /** Parse CloudBigtableOptions from command line arguments. */
   def parseOptions(args: Array[String]): CloudBigtableOptions =
     ScioContext.parseArguments[CloudBigtableOptions](args)._1
+
+  /**
+    * Updates all clusters within the specified Bigtable Instance to have a specified number
+    * of nodes. Useful for increasing the number of nodes at the start of the job and decreasing
+    * it at the end to lower costs yet still get high throughput during bulk ingests/dumps.
+    *
+    * @param cloudBigtableConfiguration Configuration of Bigtable Instance
+    * @param numberOfNodes Number of nodes to make cluster
+    * @param sleepDuration How long to sleep after updating the number of nodes. Google recommends
+    *                      at least 20 minutes before the new nodes are fully functional
+    */
+  def updateNumberOfBigtableNodes(cloudBigtableConfiguration: CloudBigtableConfiguration,
+                                  numberOfNodes: Int,
+                                  sleepDuration: Duration = Duration.standardMinutes(20)): Unit = {
+    val bigtableOptions = cloudBigtableConfiguration.toBigtableOptions
+    val channel = ChannelPoolCreator.createPool(bigtableOptions.getClusterAdminHost)
+    val adminGrpc = BigtableInstanceAdminGrpc.newBlockingStub(channel)
+
+    val instanceName = bigtableOptions.getInstanceName.toString
+
+    // Fetch clusters in Bigtable instance
+    val clustersRequest = ListClustersRequest.newBuilder().setParent(instanceName).build()
+    val clustersResponse = adminGrpc.listClusters(clustersRequest)
+
+    // For each cluster update the number of nodes
+    clustersResponse.getClustersList.asScala.foreach(cluster => {
+      val updatedCluster = Cluster.newBuilder()
+        .setName(cluster.getName)
+        .setServeNodes(numberOfNodes)
+        .build
+      adminGrpc.updateCluster(updatedCluster)
+    })
+
+    // Wait for the new nodes to be provisioned
+    Thread.sleep(TimeUnit.SECONDS.toMillis(sleepDuration.getStandardSeconds))
+
+    channel.shutdownNow()
+  }
 
 }
