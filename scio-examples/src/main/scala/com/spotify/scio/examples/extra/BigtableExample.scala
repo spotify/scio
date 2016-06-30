@@ -23,6 +23,7 @@ import com.spotify.scio.bigtable._
 import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.values.SCollection
 import org.apache.hadoop.hbase.client.{Put, Result}
+import org.joda.time.Duration
 
 /*
  * Bigtable examples.
@@ -59,6 +60,9 @@ object BigtableWriteExample {
     val btOptions = Bigtable.parseOptions(cmdlineArgs)
     val config = bt.CloudBigtableTableConfiguration.fromCBTOptions(btOptions )
 
+    // bump up the number of bigtable nodes before writing
+    sc.updateNumberOfBigtableNodes(config, 15)
+
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
@@ -66,6 +70,10 @@ object BigtableWriteExample {
       .saveAsBigtable(config)
 
     sc.close()
+
+    // Bring down the number of nodes after the job ends.
+    // There is no need to wait after bumping the nodes down.
+    sc.updateNumberOfBigtableNodes(config, 3, Duration.ZERO)
   }
 }
 
@@ -88,11 +96,18 @@ object BigtableReadExample {
     val btOptions = Bigtable.parseOptions(cmdlineArgs)
     val config = bt.CloudBigtableScanConfiguration.fromCBTOptions(btOptions)
 
+    // bump up the number of bigtable nodes before writing
+    sc.updateNumberOfBigtableNodes(config, 15)
+
     sc.bigTable(config)
       .map(BigtableExample.result)
       .saveAsTextFile(args("output"))
 
     sc.close()
+
+    // Bring down the number of nodes after the job ends.
+    // There is no need to wait after bumping the nodes down.
+    sc.updateNumberOfBigtableNodes(config, 3, Duration.ZERO)
   }
 }
 
