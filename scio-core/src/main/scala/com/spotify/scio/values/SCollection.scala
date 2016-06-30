@@ -803,7 +803,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as an object file using default serialization.
    * @group output
    */
-  def saveAsObjectFile(path: String, numShards: Int = 0): Future[Tap[T]] = {
+  def saveAsObjectFile(path: String, numShards: Int = 0, suffix: String = ".obj")
+  : Future[Tap[T]] = {
     if (context.isTest) {
       saveAsInMemoryTap
     } else {
@@ -814,7 +815,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
             c.output(AvroBytesUtil.encode(elemCoder, c.element()))
           }
         })
-        .saveAsAvroFile(path, numShards, AvroBytesUtil.schema)
+        .saveAsAvroFile(path, numShards, AvroBytesUtil.schema, suffix)
       context.makeFuture(ObjectFileTap[T](path + "/part-*"))
     }
   }
@@ -846,12 +847,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @param schema must be not null if T is of type GenericRecord.
    * @group output
    */
-  def saveAsAvroFile(path: String, numShards: Int = 0, schema: Schema = null): Future[Tap[T]] =
+  def saveAsAvroFile(path: String, numShards: Int = 0, schema: Schema = null, suffix: String = "")
+  : Future[Tap[T]] =
     if (context.isTest) {
       context.testOut(AvroIO(path))(this)
       saveAsInMemoryTap
     } else {
-      val transform = avroOut(path, numShards)
+      val transform = avroOut(path, numShards).withSuffix(suffix + ".avro")
       val cls = ScioUtil.classOf[T]
       if (classOf[SpecificRecordBase] isAssignableFrom cls) {
         this.applyInternal(transform.withSchema(cls))
@@ -867,7 +869,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def saveAsProtobufFile(path: String, numShards: Int = 0)
                         (implicit ev: T <:< Message): Future[Tap[T]] =
-    this.saveAsObjectFile(path, numShards)
+    this.saveAsObjectFile(path, numShards, ".protobuf")
 
   /**
    * Save this SCollection as a BigQuery table. Note that elements must be of type TableRow.
