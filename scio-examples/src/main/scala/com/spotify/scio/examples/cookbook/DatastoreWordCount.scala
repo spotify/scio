@@ -21,7 +21,7 @@ import java.util.UUID
 
 import com.google.api.services.datastore.DatastoreV1.{Query, Entity}
 import com.google.api.services.datastore.client.DatastoreHelper
-import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
+import com.google.cloud.dataflow.sdk.options.PipelineOptions
 import com.google.cloud.dataflow.sdk.runners.BlockingDataflowPipelineRunner
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
@@ -43,7 +43,7 @@ runMain
 object DatastoreWordCount {
   // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (opts, args) = ScioContext.parseArguments[DataflowPipelineOptions](cmdlineArgs)
+    val (opts, args) = ScioContext.parseArguments[PipelineOptions](cmdlineArgs)
 
     // override runner to ensure sequential execution
     opts.setRunner(classOf[BlockingDataflowPipelineRunner])
