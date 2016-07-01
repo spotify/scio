@@ -60,7 +60,7 @@ import scala.util.control.NonFatal
 object ContextAndArgs {
   /** Create [[ScioContext]] and [[Args]] for command line arguments. */
   def apply(args: Array[String]): (ScioContext, Args) = {
-    val (_opts, _args) = ScioContext.parseArguments[DataflowPipelineOptions](args)
+    val (_opts, _args) = ScioContext.parseArguments[PipelineOptions](args)
     (new ScioContext(_opts, Nil), _args)
   }
 }
@@ -92,21 +92,29 @@ object ScioContext {
   }
 
   /** Parse PipelineOptions and application arguments from command line arguments. */
-  def parseArguments[T <: PipelineOptions : ClassTag](cmdlineArgs: Array[String]): (T, Args) = {
-    val cls = ScioUtil.classOf[T]
-    val dfPatterns = cls.getMethods.flatMap { m =>
-      val n = m.getName
-      if ((!n.startsWith("get") && !n.startsWith("is")) ||
-        m.getParameterTypes.nonEmpty || m.getReturnType == classOf[Unit]) {
-        None
-      } else {
-        Some(Introspector.decapitalize(n.substring(if (n.startsWith("is")) 2 else 3)))
-      }
-    }.map(s => s"--$s($$|=)".r)
-    val (dfArgs, appArgs) =
-      cmdlineArgs.partition(arg => dfPatterns.exists(_.findFirstIn(arg).isDefined))
+  def parseArguments[T <: PipelineOptions : ClassTag](cmdlineArgs: Array[String])
+  : (T, Args) = {
+    val optClass = ScioUtil.classOf[T]
 
-    (PipelineOptionsFactory.fromArgs(dfArgs).as(cls), Args(appArgs))
+    // Extract --pattern of all registered derived types of PipelineOptions
+    PipelineOptionsFactory.register(optClass)
+    val optPatterns = PipelineOptionsFactory.getRegisteredOptions.asScala.flatMap { cls =>
+      cls.getMethods.flatMap { m =>
+        val n = m.getName
+        if ((!n.startsWith("get") && !n.startsWith("is")) ||
+          m.getParameterTypes.nonEmpty || m.getReturnType == classOf[Unit]) {
+          None
+        } else {
+          Some(Introspector.decapitalize(n.substring(if (n.startsWith("is")) 2 else 3)))
+        }
+      }.map(s => s"--$s($$|=)".r)
+    }
+
+    // Split cmdlineArgs into 2 parts, optArgs for PipelineOptions and appArgs for Args
+    val (optArgs, appArgs) =
+      cmdlineArgs.partition(arg => optPatterns.exists(_.findFirstIn(arg).isDefined))
+
+    (PipelineOptionsFactory.fromArgs(optArgs).as(optClass), Args(appArgs))
   }
 
   private val defaultOptions: PipelineOptions = PipelineOptionsFactory.create()
