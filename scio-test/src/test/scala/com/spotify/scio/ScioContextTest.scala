@@ -19,8 +19,14 @@ package com.spotify.scio
 
 import com.google.common.collect.Lists
 import com.spotify.scio.testing.PipelineSpec
+import org.apache.beam.runners.dataflow.DataflowPipelineRunner
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import org.apache.beam.runners.direct.InProcessPipelineRunner
+import org.apache.beam.sdk.options.PipelineOptionsFactory
+import org.apache.beam.sdk.runners.DirectPipelineRunner
 import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.transforms.Create
+import org.apache.commons.lang.exception.ExceptionUtils
 
 import scala.collection.JavaConverters._
 
@@ -37,6 +43,44 @@ class ScioContextTest extends PipelineSpec {
     val p = pipeline.apply(Create.of(Lists.newArrayList(1, 2, 3)))
     PAssert.that(p).containsInAnyOrder(Lists.newArrayList(1, 2, 3))
     pipeline.run()
+  }
+
+  it should "have temp directory for default runner" in {
+    val pipeline = ScioContext().pipeline
+    pipeline.getOptions.getTempLocation should not be null
+  }
+
+  it should "have temp directory for default InProcessPipelineRunner" in {
+    val opts = PipelineOptionsFactory.create()
+    opts.setRunner(classOf[InProcessPipelineRunner])
+    val pipeline = ScioContext(opts).pipeline
+    pipeline.getOptions.getTempLocation should not be null
+  }
+
+  it should "have temp directory for default DirectPipelineRunner" in {
+    val opts = PipelineOptionsFactory.create()
+    opts.setRunner(classOf[DirectPipelineRunner])
+    val pipeline = ScioContext(opts).pipeline
+    pipeline.getOptions.getTempLocation should not be null
+  }
+
+  it should "use user specified temp directory" in {
+    val expected = "/expected"
+    val opts = PipelineOptionsFactory.create()
+    opts.setTempLocation(expected)
+    val pipeline = ScioContext(opts).pipeline
+    pipeline.getOptions.getTempLocation shouldEqual expected
+  }
+
+  it should "fail without temp/staging dir for DataflowPipelineRunner " in {
+    val opts = PipelineOptionsFactory.create()
+    opts.setRunner(classOf[DataflowPipelineRunner])
+    val dfOpts = opts.as(classOf[DataflowPipelineOptions])
+    dfOpts.setProject("foobar")
+    val sc = ScioContext(dfOpts)
+    val e = intercept[RuntimeException] { sc.pipeline }
+    ExceptionUtils.getFullStackTrace(e) should
+      include ("at least one of tempLocation or stagingLocation must be set.")
   }
 
 }
