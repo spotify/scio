@@ -20,6 +20,7 @@ package com.spotify.scio
 import java.beans.Introspector
 import java.io.File
 import java.net.{URI, URLClassLoader}
+import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
 import com.google.api.services.bigquery.model.TableReference
@@ -158,6 +159,13 @@ class ScioContext private[scio] (val options: PipelineOptions,
       Try(optionsAs[DataflowPipelineWorkerPoolOptions])
         .foreach(_.setFilesToStage(getFilesToStage(artifacts).asJava))
       _pipeline = if (testId.isEmpty) {
+        // if in local runner, temp location may be needed, but is not currently required by
+        // the runner, which may end up with NPE. If not set but user generate new temp dir
+        if (ScioUtil.isLocalRunner(options) && options.getTempLocation == null) {
+          val tmpDir = Files.createTempDirectory("scio-temp-")
+          logger.debug(s"New temp directory at $tmpDir")
+          options.setTempLocation(tmpDir.toString)
+        }
         Pipeline.create(options)
       } else {
         val tp = TestPipeline.create()

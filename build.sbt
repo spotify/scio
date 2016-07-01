@@ -159,6 +159,7 @@ lazy val paradiseDependency =
   "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full
 lazy val beamDependencies = Seq(
   "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+  "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
   "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion
 )
 
