@@ -39,7 +39,6 @@ val hbaseVersion = "1.0.2"
 val ini4jVersion = "0.5.4"
 val javaLshVersion = "0.9"
 val jodaConvertVersion = "1.8.1"
-val jodaTimeVersion = "2.9.4"
 val junitVersion = "4.12"
 val nettyTcNativeVersion = "1.1.33.Fork13"
 val scalaCheckVersion = "1.13.1"
@@ -229,7 +228,6 @@ lazy val scioBigQuery: Project = Project(
     libraryDependencies ++= Seq(
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "joda-time" % "joda-time" % jodaTimeVersion,
       "org.joda" % "joda-convert" % jodaConvertVersion,
       "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
     ),
