@@ -20,6 +20,9 @@ package com.spotify.scio.util
 import java.net.URI
 
 import com.google.cloud.dataflow.sdk.coders.{Coder, CoderRegistry}
+import com.google.cloud.dataflow.sdk.options.PipelineOptions
+import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
+import com.google.cloud.dataflow.sdk.runners.inprocess.InProcessPipelineRunner
 
 import scala.reflect.ClassTag
 
@@ -39,5 +42,14 @@ private[scio] object ScioUtil {
     coderRegistry.registerScalaCoders()
 
     coderRegistry.getScalaCoder[T]
+  }
+
+  def isLocalRunner(options: PipelineOptions): Boolean = {
+    val runner = options.getRunner
+
+    require(runner != null, "Pipeline runner not set!")
+
+    runner.isAssignableFrom(classOf[DirectPipelineRunner]) ||
+      runner.isAssignableFrom(classOf[InProcessPipelineRunner])
   }
 }
