@@ -101,7 +101,7 @@ package object scio {
     extends Semigroup[Array[T]]{
     private val num = implicitly[Numeric[T]]
     private def plusI(l: Array[T], r: Array[T]): Array[T] = {
-      require(l.length == r.length, "array lengths do not match")
+      require(l.length == r.length, "Array lengths do not match")
       import num.mkNumericOps
       var i = 0
       while (i < l.length) {
