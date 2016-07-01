@@ -22,7 +22,7 @@ import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
 import org.apache.beam.runners.dataflow.DataflowPipelineRunner
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import org.apache.beam.sdk.options.PipelineOptions
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -42,7 +42,7 @@ object WordCountOrchestration {
   type FT[T] = Future[Tap[T]]
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (opts, args) = ScioContext.parseArguments[DataflowPipelineOptions](cmdlineArgs)
+    val (opts, args) = ScioContext.parseArguments[PipelineOptions](cmdlineArgs)
 
     // Use a non-blocking runner
     opts.setRunner(classOf[DataflowPipelineRunner])
@@ -70,7 +70,7 @@ object WordCountOrchestration {
     // scalastyle:on regex
   }
 
-  def count(opts: DataflowPipelineOptions, inputPath: String): FT[(String, Long)] = {
+  def count(opts: PipelineOptions, inputPath: String): FT[(String, Long)] = {
     val sc = ScioContext(opts)
     val f = sc.textFile(inputPath)
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
@@ -86,7 +86,7 @@ object WordCountOrchestration {
       .countByValue
   }
 
-  def merge(opts: DataflowPipelineOptions,
+  def merge(opts: PipelineOptions,
             s: Seq[Tap[(String, Long)]],
             outputPath: String): FT[String] = {
     val sc = ScioContext(opts)

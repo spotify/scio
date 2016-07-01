@@ -17,10 +17,10 @@
 
 package com.spotify.scio.examples.extra
 
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.{Pipeline, PipelineResult}
 import org.apache.beam.sdk.coders.{AvroCoder, DoubleCoder, KvCoder, StringUtf8Coder}
 import org.apache.beam.sdk.io.PubsubIO
+import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.transforms.{PTransform, Sum}
 import org.apache.beam.sdk.values._
@@ -68,9 +68,9 @@ object DataflowExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     // Parse command line arguments and create Dataflow specific options plus application specific
     // arguments.
-    // opts: DataflowPipelineOptions - Dataflow specific options
+    // opts: PipelineOptions - Dataflow PipelineOptions
     // args: Args - application specific arguments
-    val (opts, args) = ScioContext.parseArguments[DataflowPipelineOptions](cmdlineArgs)
+    val (opts, args) = ScioContext.parseArguments[PipelineOptions](cmdlineArgs)
 
     val sc = ScioContext.apply(opts)
 
