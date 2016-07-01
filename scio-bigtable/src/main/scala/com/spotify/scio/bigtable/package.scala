@@ -17,6 +17,7 @@
 
 package com.spotify.scio
 
+import com.google.cloud.bigtable.dataflow.CloudBigtableConfiguration
 import com.google.cloud.bigtable.{dataflow => bt}
 import com.google.cloud.dataflow.sdk.io.Read
 import com.google.cloud.dataflow.sdk.values.KV
@@ -24,6 +25,7 @@ import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
 import org.apache.hadoop.hbase.client.{Mutation, Result, Scan}
+import org.joda.time.Duration
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -40,6 +42,8 @@ package object bigtable {
   /** Enhanced version of [[ScioContext]] with Bigtable methods. */
   // implicit class BigtableScioContext(private val self: ScioContext) extends AnyVal {
   implicit class BigtableScioContext(val self: ScioContext) {
+
+    private val DEFAULT_SLEEP_DURATION = Duration.standardMinutes(20);
 
     /** Get an SCollection for a Bigtable table. */
     def bigTable(projectId: String,
@@ -66,6 +70,21 @@ package object bigtable {
         self
           .wrap(self.applyInternal(Read.from(bt.CloudBigtableIO.read(config))))
           .setName(s"${config.getProjectId} ${config.getInstanceId} ${config.getTableId}")
+      }
+    }
+
+    /** Wrapper around update number of Bigtable nodes function to allow for testing. */
+    def updateNumberOfBigtableNodes(cloudBigtableConfiguration: CloudBigtableConfiguration,
+                                    numberOfNodes: Int,
+                                    sleepDuration: Duration = DEFAULT_SLEEP_DURATION): Unit = {
+      if (self.isTest) {
+        // No need to update the number of nodes in a test
+      } else {
+        BigtableUtil.updateNumberOfBigtableNodes(
+          cloudBigtableConfiguration,
+          numberOfNodes,
+          sleepDuration
+        )
       }
     }
 
