@@ -96,8 +96,8 @@ object ScioContext {
     val optClass = ScioUtil.classOf[T]
 
     // Extract --pattern of all registered derived types of PipelineOptions
-    PipelineOptionsFactory.register(optClass)
-    val optPatterns = PipelineOptionsFactory.getRegisteredOptions.asScala.flatMap { cls =>
+    val classes = PipelineOptionsFactory.getRegisteredOptions.asScala + optClass
+    val optPatterns = classes.flatMap { cls =>
       cls.getMethods.flatMap { m =>
         val n = m.getName
         if ((!n.startsWith("get") && !n.startsWith("is")) ||
