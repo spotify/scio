@@ -24,8 +24,8 @@ import java.security.PrivilegedAction
 import java.util.Collections
 
 import com.google.api.client.util.ByteStreams
-import com.google.cloud.dataflow.contrib.hadoop._
-import com.google.cloud.dataflow.contrib.hadoop.simpleauth._
+import com.google.cloud.dataflow.sdk.io.hdfs._
+import com.google.cloud.dataflow.sdk.io.hdfs.simpleauth._
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.spotify.scio.io.{Tap, Taps}
@@ -79,10 +79,10 @@ package object hdfs {
     /** Get an SCollection for a text file on HDFS. */
     def hdfsTextFile(path: String, username: String = null): SCollection[String] = self.pipelineOp {
       val src = if (username != null) {
-        SimpleAuthHadoopFileSource.from(
+        SimpleAuthHDFSFileSource.from(
           path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text], username)
       } else {
-        HadoopFileSource.from(
+        HDFSFileSource.from(
           path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text])
       }
       self.wrap(self.applyInternal(Read.from(src)))
@@ -100,9 +100,9 @@ package object hdfs {
         AvroCoder.of(ScioUtil.classOf[T], schema)
       }
       val src = if (username != null) {
-        new SimpleAuthAvroHadoopFileSource[T](path, coder, username)
+        new SimpleAuthAvroHDFSFileSource[T](path, coder, username)
       } else {
-        new AvroHadoopFileSource[T](path, coder)
+        new AvroHDFSFileSource[T](path, coder)
       }
 
       self.wrap(self.applyInternal(Read.from(src)))
@@ -220,12 +220,12 @@ package object hdfs {
       }
 
       val sink = if (username != null) {
-        new SimpleAuthHadoopFileSink(path,
+        new SimpleAuthHDFSFileSink(path,
                                      classOf[TextOutputFormat[NullWritable, Text]],
                                      _conf,
                                      username)
       } else {
-        new HadoopFileSink(path, classOf[TextOutputFormat[NullWritable, Text]], _conf)
+        new HDFSFileSink(path, classOf[TextOutputFormat[NullWritable, Text]], _conf)
       }
       self
         .map(x => KV.of(NullWritable.get(), new Text(x.toString)))
@@ -259,9 +259,9 @@ package object hdfs {
       }
       AvroJob.setOutputKeySchema(job, s)
       val sink = if (username != null) {
-        new SimpleAuthHadoopFileSink(path, classOf[AvroKeyOutputFormat[T]], jobConf, username)
+        new SimpleAuthHDFSFileSink(path, classOf[AvroKeyOutputFormat[T]], jobConf, username)
       } else {
-        new HadoopFileSink(path, classOf[AvroKeyOutputFormat[T]], jobConf)
+        new HDFSFileSink(path, classOf[AvroKeyOutputFormat[T]], jobConf)
       }
       self
         .map(x => KV.of(new AvroKey(x), NullWritable.get()))
