@@ -1,20 +1,21 @@
 /*
- * Copyright (C) 2015 The Google Cloud Dataflow Hadoop Library Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
-package com.google.cloud.dataflow.contrib.hadoop;
+package com.google.cloud.dataflow.sdk.io.hdfs;
 
 import static org.apache.beam.sdk.testing.SourceTestUtils.readFromSource;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -48,9 +49,9 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Tests for HadoopFileSource.
+ * Tests for HDFSFileSource.
  */
-public class HadoopFileSourceTest {
+public class HDFSFileSourceTest {
 
   Random random = new Random(0L);
 
@@ -63,8 +64,8 @@ public class HadoopFileSourceTest {
     List<KV<IntWritable, Text>> expectedResults = createRandomRecords(3, 10, 0);
     File file = createFileWithData("tmp.seq", expectedResults);
 
-    HadoopFileSource<IntWritable, Text> source =
-        HadoopFileSource.from(file.toString(), SequenceFileInputFormat.class,
+    HDFSFileSource<IntWritable, Text> source =
+        HDFSFileSource.from(file.toString(), SequenceFileInputFormat.class,
             IntWritable.class, Text.class);
 
     assertEquals(file.length(), source.getEstimatedSizeBytes(null));
@@ -87,8 +88,8 @@ public class HadoopFileSourceTest {
     List<KV<IntWritable, Text>> data4 = createRandomRecords(3, 10, 30);
     createFileWithData("otherfile", data4);
 
-    HadoopFileSource<IntWritable, Text> source =
-        HadoopFileSource.from(new File(file1.getParent(), "file*").toString(),
+    HDFSFileSource<IntWritable, Text> source =
+        HDFSFileSource.from(new File(file1.getParent(), "file*").toString(),
             SequenceFileInputFormat.class, IntWritable.class, Text.class);
     List<KV<IntWritable, Text>> expectedResults = new ArrayList<>();
     expectedResults.addAll(data1);
@@ -112,8 +113,8 @@ public class HadoopFileSourceTest {
     List<KV<IntWritable, Text>> data4 = createRandomRecords(3, 10, 30);
     createFileWithData("otherfile", data4);
 
-    HadoopFileSource<IntWritable, Text> source =
-        HadoopFileSource.from(new File(file1.getParent(), "file*").toString(),
+    HDFSFileSource<IntWritable, Text> source =
+        HDFSFileSource.from(new File(file1.getParent(), "file*").toString(),
             SequenceFileInputFormat.class, IntWritable.class, Text.class);
     Source.Reader<KV<IntWritable, Text>> reader = source.createReader(options);
     // Closing an unstarted FilePatternReader should not throw an exception.
@@ -131,8 +132,8 @@ public class HadoopFileSourceTest {
     List<KV<IntWritable, Text>> expectedResults = createRandomRecords(3, 10000, 0);
     File file = createFileWithData("tmp.avro", expectedResults);
 
-    HadoopFileSource<IntWritable, Text> source =
-        HadoopFileSource.from(file.toString(), SequenceFileInputFormat.class,
+    HDFSFileSource<IntWritable, Text> source =
+        HDFSFileSource.from(file.toString(), SequenceFileInputFormat.class,
             IntWritable.class, Text.class);
 
     // Assert that the source produces the expected records

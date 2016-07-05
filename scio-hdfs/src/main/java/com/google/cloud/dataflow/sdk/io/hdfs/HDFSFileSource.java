@@ -1,23 +1,23 @@
 /*
- * Copyright (C) 2015 The Google Cloud Dataflow Hadoop Library Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
-package com.google.cloud.dataflow.contrib.hadoop;
+package com.google.cloud.dataflow.sdk.io.hdfs;
 
 import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.beam.sdk.coders.Coder;
@@ -40,8 +40,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -54,33 +52,36 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
- * A {@code BoundedSource} for reading files resident in a Hadoop filesystem using a
+ * A {@code BoundedSource} for reading files resident in a Hadoop filesystem (HDFS) using a
  * Hadoop file-based input format.
  *
  * <p>To read a {@link com.google.cloud.dataflow.sdk.values.PCollection} of
  * {@link com.google.cloud.dataflow.sdk.values.KV} key-value pairs from one or more
- * Hadoop files, use {@link HadoopFileSource#from} to specify the path(s) of the files to
+ * Hadoop files, use {@link HDFSFileSource#from} to specify the path(s) of the files to
  * read, the Hadoop {@link org.apache.hadoop.mapreduce.lib.input.FileInputFormat}, the
  * key class and the value class.
  *
- * <p>A {@code HadoopFileSource} can be read from using the
+ * <p>A {@code HDFSFileSource} can be read from using the
  * {@link com.google.cloud.dataflow.sdk.io.Read} transform. For example:
  *
  * <pre>
  * {@code
- * HadoopFileSource<K, V> source = HadoopFileSource.from(path, MyInputFormat.class,
+ * HDFSFileSource<K, V> source = HDFSFileSource.from(path, MyInputFormat.class,
  *   MyKey.class, MyValue.class);
  * PCollection<KV<MyKey, MyValue>> records = Read.from(mySource);
  * }
  * </pre>
  *
- * <p>The {@link HadoopFileSource#readFrom} method is a convenience method
+ * <p>The {@link HDFSFileSource#readFrom} method is a convenience method
  * that returns a read transform. For example:
  *
  * <pre>
  * {@code
- * PCollection<KV<MyKey, MyValue>> records = HadoopFileSource.readFrom(path,
+ * PCollection<KV<MyKey, MyValue>> records = HDFSFileSource.readFrom(path,
  *   MyInputFormat.class, MyKey.class, MyValue.class);
  * }
  * </pre>
@@ -93,8 +94,7 @@ import javax.annotation.Nullable;
  * @param <K> The type of keys to be read from the source.
  * @param <V> The type of values to be read from the source.
  */
-public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
-  private static final Logger LOG = LoggerFactory.getLogger(HadoopFileSource.class);
+public class HDFSFileSource<K, V> extends BoundedSource<KV<K, V>> {
   private static final long serialVersionUID = 0L;
 
   protected final String filepattern;
@@ -104,7 +104,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
   protected final SerializableSplit serializableSplit;
 
   /**
-   * Creates a {@code Read} transform that will read from an {@code HadoopFileSource}
+   * Creates a {@code Read} transform that will read from an {@code HDFSFileSource}
    * with the given file name or pattern ("glob") using the given Hadoop
    * {@link org.apache.hadoop.mapreduce.lib.input.FileInputFormat},
    * with key-value types specified by the given key class and value class.
@@ -115,34 +115,34 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
   }
 
   /**
-   * Creates a {@code HadoopFileSource} that reads from the given file name or pattern ("glob")
+   * Creates a {@code HDFSFileSource} that reads from the given file name or pattern ("glob")
    * using the given Hadoop {@link org.apache.hadoop.mapreduce.lib.input.FileInputFormat},
    * with key-value types specified by the given key class and value class.
    */
-  public static <K, V, T extends FileInputFormat<K, V>> HadoopFileSource<K, V> from(
+  public static <K, V, T extends FileInputFormat<K, V>> HDFSFileSource<K, V> from(
       String filepattern, Class<T> formatClass, Class<K> keyClass, Class<V> valueClass) {
     @SuppressWarnings("unchecked")
-    HadoopFileSource<K, V> source = (HadoopFileSource<K, V>)
-        new HadoopFileSource(filepattern, formatClass, keyClass, valueClass);
+    HDFSFileSource<K, V> source = (HDFSFileSource<K, V>)
+        new HDFSFileSource(filepattern, formatClass, keyClass, valueClass);
     return source;
   }
 
   /**
-   * Create a {@code HadoopFileSource} based on a file or a file pattern specification.
+   * Create a {@code HDFSFileSource} based on a file or a file pattern specification.
    */
-  protected HadoopFileSource(String filepattern,
-      Class<? extends FileInputFormat<?, ?>> formatClass, Class<K> keyClass,
-      Class<V> valueClass) {
+  protected HDFSFileSource(String filepattern,
+                           Class<? extends FileInputFormat<?, ?>> formatClass, Class<K> keyClass,
+                           Class<V> valueClass) {
     this(filepattern, formatClass, keyClass, valueClass, null);
   }
 
   /**
-   * Create a {@code HadoopFileSource} based on a single Hadoop input split, which won't be
+   * Create a {@code HDFSFileSource} based on a single Hadoop input split, which won't be
    * split up further.
    */
-  protected HadoopFileSource(String filepattern,
-      Class<? extends FileInputFormat<?, ?>> formatClass, Class<K> keyClass,
-      Class<V> valueClass, SerializableSplit serializableSplit) {
+  protected HDFSFileSource(String filepattern,
+                           Class<? extends FileInputFormat<?, ?>> formatClass, Class<K> keyClass,
+                           Class<V> valueClass, SerializableSplit serializableSplit) {
     this.filepattern = filepattern;
     this.formatClass = formatClass;
     this.keyClass = keyClass;
@@ -168,27 +168,21 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
 
   @Override
   public void validate() {
-    Preconditions.checkNotNull(filepattern,
-        "need to set the filepattern of a HadoopFileSource");
-    Preconditions.checkNotNull(formatClass,
-        "need to set the format class of a HadoopFileSource");
-    Preconditions.checkNotNull(keyClass,
-        "need to set the key class of a HadoopFileSource");
-    Preconditions.checkNotNull(valueClass,
-        "need to set the value class of a HadoopFileSource");
+    checkNotNull(filepattern, "need to set the filepattern of a HDFSFileSource");
+    checkNotNull(formatClass, "need to set the format class of a HDFSFileSource");
+    checkNotNull(keyClass, "need to set the key class of a HDFSFileSource");
+    checkNotNull(valueClass, "need to set the value class of a HDFSFileSource");
   }
 
   @Override
   public List<? extends BoundedSource<KV<K, V>>> splitIntoBundles(long desiredBundleSizeBytes,
       PipelineOptions options) throws Exception {
     if (serializableSplit == null) {
-      LOG.info("Splitting '" + filepattern + "' with desired bundle size " +
-          desiredBundleSizeBytes + " bytes.");
       return Lists.transform(computeSplits(desiredBundleSizeBytes),
           new Function<InputSplit, BoundedSource<KV<K, V>>>() {
-        @Nullable @Override
+        @Override
         public BoundedSource<KV<K, V>> apply(@Nullable InputSplit inputSplit) {
-          return new HadoopFileSource<K, V>(filepattern, formatClass, keyClass,
+          return new HDFSFileSource<>(filepattern, formatClass, keyClass,
               valueClass, new SerializableSplit(inputSplit));
         }
       });
@@ -209,10 +203,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     Job job = Job.getInstance();
     FileInputFormat.setMinInputSplitSize(job, desiredBundleSizeBytes);
     FileInputFormat.setMaxInputSplitSize(job, desiredBundleSizeBytes);
-    List<InputSplit> splits = createFormat(job).getSplits(job);
-    LOG.info("Split '" + filepattern + "' into " + splits.size() +
-        " splits, with desired split size of " + desiredBundleSizeBytes + " bytes.");
-    return splits;
+    return createFormat(job).getSplits(job);
   }
 
   @Override
@@ -220,9 +211,9 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     this.validate();
 
     if (serializableSplit == null) {
-      return new HadoopFileReader<>(this, filepattern, formatClass);
+      return new HDFSFileReader<>(this, filepattern, formatClass);
     } else {
-      return new HadoopFileReader<>(this, filepattern, formatClass,
+      return new HDFSFileReader<>(this, filepattern, formatClass,
           serializableSplit.getSplit());
     }
   }
@@ -277,34 +268,36 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     return false;
   }
 
-  static class HadoopFileReader<K, V> extends BoundedSource.BoundedReader<KV<K, V>> {
+  static class HDFSFileReader<K, V> extends BoundedSource.BoundedReader<KV<K, V>> {
 
     private final BoundedSource<KV<K, V>> source;
     private final String filepattern;
     private final Class formatClass;
-    private final Configuration conf;
-    protected final Job job;
+    protected Job job;
 
     private FileInputFormat<?, ?> format;
     private TaskAttemptContext attemptContext;
     private List<InputSplit> splits;
     private ListIterator<InputSplit> splitsIterator;
+    private Configuration conf;
     protected RecordReader<K, V> currentReader;
     private KV<K, V> currentPair;
+    private volatile boolean done = false;
 
     /**
-     * Create a {@code HadoopFileReader} based on a file or a file pattern specification.
+     * Create a {@code HDFSFileReader} based on a file or a file pattern specification.
      */
-    public HadoopFileReader(BoundedSource<KV<K, V>> source, String filepattern,
-        Class<? extends FileInputFormat<?, ?>> formatClass) throws IOException {
+    public HDFSFileReader(BoundedSource<KV<K, V>> source, String filepattern,
+                          Class<? extends FileInputFormat<?, ?>> formatClass) throws IOException {
       this(source, filepattern, formatClass, null);
     }
 
     /**
-     * Create a {@code HadoopFileReader} based on a single Hadoop input split.
+     * Create a {@code HDFSFileReader} based on a single Hadoop input split.
      */
-    public HadoopFileReader(BoundedSource<KV<K, V>> source, String filepattern,
-        Class<? extends FileInputFormat<?, ?>> formatClass, InputSplit split) throws IOException {
+    public HDFSFileReader(BoundedSource<KV<K, V>> source, String filepattern,
+                          Class<? extends FileInputFormat<?, ?>> formatClass, InputSplit split)
+            throws IOException {
       this.source = source;
       this.filepattern = filepattern;
       this.formatClass = formatClass;
@@ -313,7 +306,6 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
         this.splitsIterator = splits.listIterator();
       }
       this.job = Job.getInstance(); // new instance
-      this.conf = job.getConfiguration();
     }
 
     @Override
@@ -335,6 +327,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
         this.splits = format.getSplits(job);
         this.splitsIterator = splits.listIterator();
       }
+      this.conf = job.getConfiguration();
       return advance();
     }
 
@@ -365,6 +358,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
           }
           // either no next split or all readers were empty
           currentPair = null;
+          done = true;
           return false;
         }
       } catch (InterruptedException e) {
@@ -442,6 +436,16 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     }
 
     @Override
+    public final long getSplitPointsRemaining() {
+      if (done) {
+        return 0;
+      }
+      // This source does not currently support dynamic work rebalancing, so remaining
+      // parallelism is always 1.
+      return 1;
+    }
+
+    @Override
     public BoundedSource<KV<K, V>> splitAtFraction(double fraction) {
       // Not yet supported. To implement this, the sizes of the splits should be used to
       // calculate the remaining splits that constitute the given fraction, then a
@@ -464,8 +468,7 @@ public class HadoopFileSource<K, V> extends BoundedSource<KV<K, V>> {
     }
 
     public SerializableSplit(InputSplit split) {
-      Preconditions.checkArgument(split instanceof Writable, "Split is not writable: "
-          + split);
+      checkArgument(split instanceof Writable, "Split is not writable: %s", split);
       this.split = split;
     }
 
