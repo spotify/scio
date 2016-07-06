@@ -33,7 +33,7 @@ import scala.reflect.ClassTag
  */
 class SCollectionWithSideOutput[T: ClassTag] private[values]
 (val internal: PCollection[T],
- private[scio] val context: ScioContext,
+ val context: ScioContext,
  sides: Iterable[SideOutput[_]])
   extends PCollectionWrapper[T] {
 
