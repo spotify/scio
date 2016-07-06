@@ -11,14 +11,16 @@ Scio
 
 > Verb: I can, know, understand, have knowledge.
 
-Scio is a Scala API for [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) inspired by [Spark](http://spark.apache.org/) and [Scalding](https://github.com/twitter/scalding). See the [current API documentation](http://spotify.github.io/scio/) for more information.
+Scio is a Scala API for [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) and [Apache Beam](http://beam.incubator.apache.org/) inspired by [Spark](http://spark.apache.org/) and [Scalding](https://github.com/twitter/scalding). See the [current API documentation](http://spotify.github.io/scio/) for more information.
+
+Scio is being donated to Apache Beam as a Scala DSL ([BEAM-302](https://issues.apache.org/jira/browse/BEAM-302)).
 
 # Features
 
 - Scala API close to that of Spark and Scalding core APIs
-- Fully managed service<sup>*</sup>
-- Unified batch and streaming programming model<sup>*</sup>
-- Integration with Google Cloud products: Cloud Storage, BigQuery, Pub/Sub, Datastore, Bigtable<sup>*</sup>
+- Unified batch and streaming programming model<sup>1, 2</sup>
+- Fully managed service<sup>2</sup>
+- Integration with Google Cloud products: Cloud Storage, BigQuery, Pub/Sub, Datastore, Bigtable<sup>2</sup>
 - HDFS source/sink
 - Interactive mode with Scio REPL
 - Type safe BigQuery
@@ -26,7 +28,9 @@ Scio is a Scala API for [Google Cloud Dataflow](https://github.com/GoogleCloudPl
 - Pipeline orchestration with [Scala Futures](http://docs.scala-lang.org/overviews/core/futures.html)
 - Distributed cache
 
-<sup>*</sup> provided by Google Cloud Dataflow
+<sup>1</sup> provided by Apache Beam
+
+<sup>2</sup> provided by Google Cloud Dataflow
 
 # Quick Start
 
