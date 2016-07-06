@@ -32,7 +32,8 @@ private[values] trait PCollectionWrapper[T] {
   /** The PCollection being wrapped internally. */
   val internal: PCollection[T]
 
-  private[scio] val context: ScioContext
+  /** The ScioContext associated with this PCollection. */
+  val context: ScioContext
 
   implicit protected val ct: ClassTag[T]
 

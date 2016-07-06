@@ -39,7 +39,7 @@ case class WindowedValue[T](value: T, timestamp: Instant, window: BoundedWindow,
 }
 
 class WindowedSCollection[T: ClassTag] private[values] (val internal: PCollection[T],
-                                                        private[scio] val context: ScioContext)
+                                                        val context: ScioContext)
   extends PCollectionWrapper[T] {
 
   protected val ct: ClassTag[T] = implicitly[ClassTag[T]]

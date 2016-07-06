@@ -30,7 +30,7 @@ import scala.reflect.ClassTag
  * load on the final global combine step.
  */
 class SCollectionWithFanout[T: ClassTag] private[values] (val internal: PCollection[T],
-                                                          private[scio] val context: ScioContext,
+                                                          val context: ScioContext,
                                                           private val fanout: Int)
   extends PCollectionWrapper[T] {
 

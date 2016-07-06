@@ -32,7 +32,7 @@ import scala.util.Try
  * [[SideInput]]s are accessed via the additional [[SideInputContext]] argument.
  */
 class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PCollection[T],
-                                                             private[scio] val context: ScioContext,
+                                                             val context: ScioContext,
                                                              sides: Iterable[SideInput[_]])
   extends PCollectionWrapper[T] {
 
