@@ -27,8 +27,8 @@ object ProtobufExample {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     sc.protobufFile[SimplePB](args("input"))
-      .map(p => TrackPB.newBuilder().setTrackId(p.getTrackId))
-      .saveAsTextFile(args("output"))
+      .map(p => TrackPB.newBuilder().setTrackId(p.getTrackId).build())
+      .saveAsProtobufFile(args("output"))
 
     sc.close()
   }
