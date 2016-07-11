@@ -36,7 +36,6 @@ val guavaVersion = "19.0"
 val hadoopVersion = "2.7.2"
 val hamcrestVersion = "1.3"
 val hbaseVersion = "1.0.2"
-val ini4jVersion = "0.5.4"
 val javaLshVersion = "0.9"
 val jodaConvertVersion = "1.8.1"
 val junitVersion = "4.12"
@@ -192,8 +191,7 @@ lazy val scioCore: Project = Project(
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" % "chill-protobuf" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
-      "org.apache.commons" % "commons-math3" % commonsMath3Version,
-      "org.ini4j" % "ini4j" % ini4jVersion
+      "org.apache.commons" % "commons-math3" % commonsMath3Version
     )
   )
 ).dependsOn(
