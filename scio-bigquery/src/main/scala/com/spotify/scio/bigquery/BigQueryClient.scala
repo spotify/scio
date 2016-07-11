@@ -37,6 +37,7 @@ import org.apache.beam.sdk.io.BigQueryIO
 import org.apache.beam.sdk.io.BigQueryIO.Write.CreateDisposition._
 import org.apache.beam.sdk.io.BigQueryIO.Write.WriteDisposition._
 import org.apache.beam.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.util.{BigQueryTableInserter, BigQueryTableRowIterator}
 import org.apache.commons.io.FileUtils
 import org.joda.time.format.{DateTimeFormat, PeriodFormatterBuilder}
@@ -498,12 +499,17 @@ object BigQueryClient {
    */
   def defaultInstance(): BigQueryClient = {
     if (instance == null) {
-      val project = sys.props(PROJECT_KEY)
-      if (project == null) {
-        throw new RuntimeException(
-          s"Property $PROJECT_KEY not set. Use -D$PROJECT_KEY=<BILLING_PROJECT>")
+      instance = if (sys.props(PROJECT_KEY) != null) {
+        BigQueryClient(sys.props(PROJECT_KEY))
+      } else {
+        val project = new DefaultProjectFactory().create(null)
+        if (project != null) {
+          BigQueryClient(project)
+        } else {
+          throw new RuntimeException(
+            s"Property $PROJECT_KEY not set. Use -D$PROJECT_KEY=<BILLING_PROJECT>")
+        }
       }
-      instance = BigQueryClient(project)
     }
     instance
   }
