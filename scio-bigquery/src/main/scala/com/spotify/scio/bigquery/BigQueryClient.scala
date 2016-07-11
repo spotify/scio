@@ -34,6 +34,7 @@ import com.google.cloud.dataflow.sdk.io.BigQueryIO
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.CreateDisposition._
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.WriteDisposition._
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import com.google.cloud.dataflow.sdk.options.GcpOptions.DefaultProjectFactory
 import com.google.cloud.dataflow.sdk.util.{BigQueryTableInserter, BigQueryTableRowIterator}
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
@@ -498,12 +499,17 @@ object BigQueryClient {
    */
   def defaultInstance(): BigQueryClient = {
     if (instance == null) {
-      val project = sys.props(PROJECT_KEY)
-      if (project == null) {
-        throw new RuntimeException(
-          s"Property $PROJECT_KEY not set. Use -D$PROJECT_KEY=<BILLING_PROJECT>")
+      instance = if (sys.props(PROJECT_KEY) != null) {
+        BigQueryClient(sys.props(PROJECT_KEY))
+      } else {
+        val project = new DefaultProjectFactory().create(null)
+        if (project != null) {
+          BigQueryClient(project)
+        } else {
+          throw new RuntimeException(
+            s"Property $PROJECT_KEY not set. Use -D$PROJECT_KEY=<BILLING_PROJECT>")
+        }
       }
-      instance = BigQueryClient(project)
     }
     instance
   }
