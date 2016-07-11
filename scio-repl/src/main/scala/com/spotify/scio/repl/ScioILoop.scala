@@ -20,10 +20,10 @@ package com.spotify.scio.repl
 import java.io.BufferedReader
 
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import org.apache.beam.sdk.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import com.spotify.scio.bigquery.BigQueryClient
 import com.spotify.scio.scioVersion
-import com.spotify.scio.util.GCloudConfigUtils
 
 import scala.tools.nsc.GenericRunnerSettings
 import scala.tools.nsc.interpreter.{IR, JPrintWriter}
@@ -213,20 +213,18 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
 
     val key = BigQueryClient.PROJECT_KEY
 
-    if (sys.props(key) == null) {
-      val project = GCloudConfigUtils.getGCloudProjectId
-      project match {
-        case Some(project_id) =>
-          echo(s"Using '$project_id' as your BigQuery project.")
-          sys.props(key) = project_id
-          create(project_id)
-        case None =>
-          echo(s"System property '$key' not set. BigQueryClient is not available.")
-          echo(s"Set it with '-D$key=<PROJECT-NAME>' command line argument.")
-          IR.Success
-      }
-    } else {
+    if (sys.props(key) != null) {
       create(sys.props(key))
+    } else {
+      val defaultProject = new DefaultProjectFactory().create(null)
+      if (defaultProject != null) {
+        echo(s"Using '$defaultProject' as your BigQuery project.")
+        create(defaultProject)
+      } else {
+        echo(s"System property '$key' not set. BigQueryClient is not available.")
+        echo(s"Set it with '-D$key=<PROJECT-NAME>' command line argument.")
+        IR.Success
+      }
     }
   }
 
