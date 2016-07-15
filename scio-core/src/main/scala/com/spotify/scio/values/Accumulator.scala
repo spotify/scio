@@ -65,7 +65,7 @@ trait Accumulator[T] extends Serializable {
 
   private[scio] val combineFn: CombineFn[T, _, T]
 
-  private[scio] val name: String
+  val name: String
 
 }
 
