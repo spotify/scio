@@ -54,6 +54,15 @@ class AccumulatorTest extends PipelineSpec {
     r.accumulatorTotalValue(maxD) shouldBe 3.0
     r.accumulatorTotalValue(minD) shouldBe 1.0
     r.accumulatorTotalValue(sumD) shouldBe 6.0
+    maxI.name shouldBe "maxI"
+    minI.name shouldBe "minI"
+    sumI.name shouldBe "sumI"
+    maxL.name shouldBe "maxL"
+    minL.name shouldBe "minL"
+    sumL.name shouldBe "sumL"
+    maxD.name shouldBe "maxD"
+    minD.name shouldBe "minD"
+    sumD.name shouldBe "sumD"
   }
 
   it should "support accumulatorValuesAtSteps" in {
