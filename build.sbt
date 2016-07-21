@@ -26,7 +26,7 @@ import com.trueaccord.scalapb.{ScalaPbPlugin => PB}
 val dataflowSdkVersion = "1.6.0"
 val algebirdVersion = "0.12.1"
 val avroVersion = "1.7.7"
-val bigtableVersion = "0.9.0"
+val bigtableVersion = "0.9.1"
 val breezeVersion ="0.12"
 val chillVersion = "0.8.0"
 val commonsIoVersion = "2.5"
@@ -39,7 +39,7 @@ val hbaseVersion = "1.0.2"
 val javaLshVersion = "0.9"
 val jodaConvertVersion = "1.8.1"
 val junitVersion = "4.12"
-val nettyTcNativeVersion = "1.1.33.Fork13"
+val nettyTcNativeVersion = "1.1.33.Fork18"
 val scalaCheckVersion = "1.13.1"
 val scalaMacrosVersion = "2.1.0"
 val scalapbVersion = "0.5.19" // inner protobuf-java version must match beam/dataflow-sdk one
@@ -247,8 +247,7 @@ lazy val scioBigtable: Project = Project(
       "com.google.cloud.bigtable" % "bigtable-hbase-dataflow" % bigtableVersion exclude ("org.slf4j", "slf4j-log4j12"),
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12"),
       "org.apache.hbase" % "hbase-common" % hbaseVersion,
-      "io.netty" % "netty-tcnative" % nettyTcNativeVersion classifier "linux-x86_64",
-      "io.netty" % "netty-tcnative" % nettyTcNativeVersion classifier "osx-x86_64"
+      "io.netty" % "netty-tcnative-boringssl-static" % nettyTcNativeVersion
     )
   )
 ).dependsOn(
