@@ -28,6 +28,7 @@ import com.google.api.client.util.ByteStreams
 import com.google.cloud.dataflow.sdk.coders.AvroCoder
 import com.google.cloud.dataflow.sdk.io.hdfs._
 import com.google.cloud.dataflow.sdk.io.hdfs.simpleauth._
+import com.google.cloud.dataflow.sdk.io.hdfs.skipvalidation.SkipValidationHDFSFileSink
 import com.google.cloud.dataflow.sdk.io.{Read, Write}
 import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
 import com.google.cloud.dataflow.sdk.util.MimeTypes
@@ -207,7 +208,8 @@ package object hdfs {
     // TODO: numShards
     def saveAsHdfsTextFile(path: String,
                            username: String = null,
-                           conf: Configuration = null): Future[Tap[String]] = {
+                           conf: Configuration = null,
+                           skipValidation: Boolean = false): Future[Tap[String]] = {
       val _conf = Option(conf).getOrElse {
         val newConf = new Configuration()
         // Writing to remote HDFS might be slow without compression.
@@ -220,13 +222,17 @@ package object hdfs {
         newConf
       }
 
-      val sink = if (username != null) {
-        new SimpleAuthHDFSFileSink(path,
-                                     classOf[TextOutputFormat[NullWritable, Text]],
-                                     _conf,
-                                     username)
+      val sink = if (skipValidation) {
+        new SkipValidationHDFSFileSink(path, classOf[TextOutputFormat[NullWritable, Text]], _conf)
       } else {
-        new HDFSFileSink(path, classOf[TextOutputFormat[NullWritable, Text]], _conf)
+        if (username != null) {
+          new SimpleAuthHDFSFileSink(path,
+            classOf[TextOutputFormat[NullWritable, Text]],
+            _conf,
+            username)
+        } else {
+          new HDFSFileSink(path, classOf[TextOutputFormat[NullWritable, Text]], _conf)
+        }
       }
       self
         .map(x => KV.of(NullWritable.get(), new Text(x.toString)))
