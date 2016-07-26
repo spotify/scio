@@ -493,6 +493,16 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   def keys: SCollection[K] = self.map(_._1)
 
   /**
+   * Return an SCollection with the pairs from `this` whose keys are in `that`.
+   * @group per_key
+   */
+  def intersectByKey(that: SCollection[K]): SCollection[(K, V)] = self.transform {
+    _.cogroup(that.map((_, ()))).flatMap { t =>
+      if (t._2._1.nonEmpty && t._2._2.nonEmpty) t._2._1.map((t._1, _)) else Seq.empty
+    }
+  }
+
+  /**
    * Pass each value in the key-value pair SCollection through a map function without changing the
    * keys.
    * @group transform
