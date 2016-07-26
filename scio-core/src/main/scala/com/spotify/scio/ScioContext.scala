@@ -22,6 +22,7 @@ import java.io.File
 import java.net.{URI, URLClassLoader}
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
+import java.util.jar.{Attributes, JarFile}
 
 import com.google.api.services.bigquery.model.TableReference
 import com.google.api.services.datastore.DatastoreV1.{Entity, Query}
@@ -210,11 +211,33 @@ class ScioContext private[scio] (val options: PipelineOptions,
     val javaHome = new File(sys.props("java.home")).getCanonicalPath
     val userDir = new File(sys.props("user.dir")).getCanonicalPath
 
-    classLoader.asInstanceOf[URLClassLoader]
+    val classPathJars = classLoader.asInstanceOf[URLClassLoader]
       .getURLs
       .map(url => new File(url.toURI).getCanonicalPath)
       .filter(p => !p.startsWith(javaHome) && p != userDir)
       .toList
+
+    // fetch jars from classpath jar's manifest Class-Path if present
+    val manifestJars =  classPathJars
+      .filter(_.endsWith(".jar"))
+      .map(p => (p, new JarFile(p).getManifest))
+      .filter { case (p, manifest) =>
+        manifest != null && manifest.getMainAttributes.containsKey(Attributes.Name.CLASS_PATH)}
+      .map { case (p, manifest) => (new File(p).getParentFile,
+        manifest.getMainAttributes.getValue(Attributes.Name.CLASS_PATH).split(" ")) }
+      .flatMap { case (parent, jars) => jars.map(jar =>
+        if (jar.startsWith("/")) {
+          jar // accept absolute path as is
+        } else {
+          new File(parent, jar).getCanonicalPath  // relative path
+        })
+      }
+
+    logger.debug(s"Classpath jars: ${classPathJars.mkString(":")}")
+    logger.debug(s"Manifest jars: ${manifestJars.mkString(":")}")
+
+    // no need to care about duplicates here - should be solved by the SDK uploader
+    classPathJars ++ manifestJars
   }
 
   /** Compute list of local files to make available to workers. */
