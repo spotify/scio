@@ -53,7 +53,7 @@ import java.util.Random;
  */
 public class HDFSFileSourceTest {
 
-  Random random = new Random(0L);
+  private Random random = new Random(0L);
 
   @Rule
   public TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -64,9 +64,9 @@ public class HDFSFileSourceTest {
     List<KV<IntWritable, Text>> expectedResults = createRandomRecords(3, 10, 0);
     File file = createFileWithData("tmp.seq", expectedResults);
 
-    HDFSFileSource<IntWritable, Text> source =
-        HDFSFileSource.from(file.toString(), SequenceFileInputFormat.class,
-            IntWritable.class, Text.class);
+    HDFSFileSource<KV<IntWritable, Text>, IntWritable, Text> source =
+        HDFSFileSource.from(
+            file.toString(), SequenceFileInputFormat.class, IntWritable.class, Text.class);
 
     assertEquals(file.length(), source.getEstimatedSizeBytes(null));
 
@@ -88,13 +88,16 @@ public class HDFSFileSourceTest {
     List<KV<IntWritable, Text>> data4 = createRandomRecords(3, 10, 30);
     createFileWithData("otherfile", data4);
 
-    HDFSFileSource<IntWritable, Text> source =
-        HDFSFileSource.from(new File(file1.getParent(), "file*").toString(),
-            SequenceFileInputFormat.class, IntWritable.class, Text.class);
     List<KV<IntWritable, Text>> expectedResults = new ArrayList<>();
     expectedResults.addAll(data1);
     expectedResults.addAll(data2);
     expectedResults.addAll(data3);
+
+    HDFSFileSource<KV<IntWritable, Text>, IntWritable, Text> source =
+        HDFSFileSource.from(
+            new File(file1.getParent(), "file*").toString(), SequenceFileInputFormat.class,
+            IntWritable.class, Text.class);
+
     assertThat(expectedResults, containsInAnyOrder(readFromSource(source, options).toArray()));
   }
 
@@ -113,10 +116,12 @@ public class HDFSFileSourceTest {
     List<KV<IntWritable, Text>> data4 = createRandomRecords(3, 10, 30);
     createFileWithData("otherfile", data4);
 
-    HDFSFileSource<IntWritable, Text> source =
-        HDFSFileSource.from(new File(file1.getParent(), "file*").toString(),
+    HDFSFileSource<KV<IntWritable, Text>, IntWritable, Text> source =
+        HDFSFileSource.from(
+            new File(file1.getParent(), "file*").toString(),
             SequenceFileInputFormat.class, IntWritable.class, Text.class);
     Source.Reader<KV<IntWritable, Text>> reader = source.createReader(options);
+
     // Closing an unstarted FilePatternReader should not throw an exception.
     try {
       reader.close();
@@ -130,11 +135,11 @@ public class HDFSFileSourceTest {
     PipelineOptions options = PipelineOptionsFactory.create();
 
     List<KV<IntWritable, Text>> expectedResults = createRandomRecords(3, 10000, 0);
-    File file = createFileWithData("tmp.avro", expectedResults);
+    File file = createFileWithData("tmp.seq", expectedResults);
 
-    HDFSFileSource<IntWritable, Text> source =
-        HDFSFileSource.from(file.toString(), SequenceFileInputFormat.class,
-            IntWritable.class, Text.class);
+    HDFSFileSource<KV<IntWritable, Text>, IntWritable, Text> source =
+        HDFSFileSource.from(
+            file.toString(), SequenceFileInputFormat.class, IntWritable.class, Text.class);
 
     // Assert that the source produces the expected records
     assertEquals(expectedResults, readFromSource(source, options));
