@@ -521,11 +521,14 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection for a text file.
    * @group input
    */
-  def textFile(path: String): SCollection[String] = pipelineOp {
+  def textFile(path: String,
+               compressionType: gio.TextIO.CompressionType = gio.TextIO.CompressionType.AUTO)
+  : SCollection[String] = pipelineOp {
     if (this.isTest) {
       this.getTestInput(TextIO(path))
     } else {
-      wrap(this.applyInternal(gio.TextIO.Read.from(path))).setName(path)
+      wrap(this.applyInternal(gio.TextIO.Read.from(path)
+        .withCompressionType(compressionType))).setName(path)
     }
   }
 
