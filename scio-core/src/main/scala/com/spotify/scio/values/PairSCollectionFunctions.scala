@@ -486,13 +486,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     this.applyPerKey(GroupByKey.create[K, V](), kvIterableToTuple[K, V])
 
   /**
-   * Return an SCollection with the keys of each tuple.
-   * @group transform
-   */
-  // Scala lambda is simpler and more powerful than transforms.Keys
-  def keys: SCollection[K] = self.map(_._1)
-
-  /**
    * Return an SCollection with the pairs from `this` whose keys are in `that`.
    * @group per_key
    */
@@ -501,6 +494,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
       if (t._2._1.nonEmpty && t._2._2.nonEmpty) t._2._1.map((t._1, _)) else Seq.empty
     }
   }
+
+  /**
+   * Return an SCollection with the keys of each tuple.
+   * @group transform
+   */
+  // Scala lambda is simpler and more powerful than transforms.Keys
+  def keys: SCollection[K] = self.map(_._1)
 
   /**
    * Pass each value in the key-value pair SCollection through a map function without changing the

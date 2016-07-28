@@ -257,6 +257,42 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  it should "support intersectByKey()" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
+      val p2 = sc.parallelize(Seq("a", "b", "d"))
+      val p = p1.intersectByKey(p2)
+      p should containInAnyOrder (Seq(("a", 1), ("b", 2)))
+    }
+  }
+
+  it should "support intersectByKey() with duplicate keys" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
+      val p2 = sc.parallelize(Seq("a", "b", "b", "d"))
+      val p = p1.intersectByKey(p2)
+      p should containInAnyOrder (Seq(("a", 1), ("b", 2), ("b", 4)))
+    }
+  }
+
+  it should "support intersectByKey() with empty LHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq[(String, Any)]())
+      val p2 = sc.parallelize(Seq("a", "b", "d"))
+      val p = p1.intersectByKey(p2)
+      p should beEmpty
+    }
+  }
+
+  it should "support intersectByKey() with empty RHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
+      val p2 = sc.parallelize(Seq[String]())
+      val p = p1.intersectByKey(p2)
+      p should beEmpty
+    }
+  }
+
   it should "support keys()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3))).keys
@@ -497,39 +533,4 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support intersectByKey()" in {
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
-      val p2 = sc.parallelize(Seq("a", "b", "d"))
-      val p = p1.intersectByKey(p2)
-      p should containInAnyOrder (Seq(("a", 1), ("b", 2)))
-    }
-  }
-
-  it should "support intersectByKey() with duplicate keys" in {
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
-      val p2 = sc.parallelize(Seq("a", "b", "b", "d"))
-      val p = p1.intersectByKey(p2)
-      p should containInAnyOrder (Seq(("a", 1), ("b", 2), ("b", 4)))
-    }
-  }
-
-  it should "support intersectByKey() with empty LHS" in {
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq[(String, Any)]())
-      val p2 = sc.parallelize(Seq("a", "b", "d"))
-      val p = p1.intersectByKey(p2)
-      p should beEmpty
-    }
-  }
-
-  it should "support intersectByKey() with empty RHS" in {
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
-      val p2 = sc.parallelize(Seq[String]())
-      val p = p1.intersectByKey(p2)
-      p should beEmpty
-    }
-  }
 }
