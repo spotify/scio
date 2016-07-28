@@ -368,9 +368,36 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
   it should "support subtractByKey()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("b", 3), ("c", 4), ("c", 5), ("c", 6)))
-      val p2 = sc.parallelize(Seq(("a", 10L), ("b", 20L)))
+      val p2 = sc.parallelize(Seq("a", "b", "d"))
       val p = p1.subtractByKey(p2)
       p should containInAnyOrder (Seq(("c", 4), ("c", 5), ("c", 6)))
+    }
+  }
+
+  it should "support subtractByKey() with duplicate keys" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("b", 3), ("c", 4), ("c", 5), ("c", 6)))
+      val p2 = sc.parallelize(Seq("a", "b", "b", "d"))
+      val p = p1.subtractByKey(p2)
+      p should containInAnyOrder (Seq(("c", 4), ("c", 5), ("c", 6)))
+    }
+  }
+
+  it should "support subtrackByKey() with empty LHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq[(String, Any)]())
+      val p2 = sc.parallelize(Seq("a", "b", "d"))
+      val p = p1.subtractByKey(p2)
+      p should beEmpty
+    }
+  }
+
+  it should "support subtrackByKey() with empty RHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
+      val p2 = sc.parallelize(Seq[String]())
+      val p = p1.subtractByKey(p2)
+      p should containInAnyOrder (Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
     }
   }
 
