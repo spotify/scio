@@ -24,22 +24,23 @@ import scala.collection.JavaConverters._
 
 object AvroUtils {
 
-  def newGenericRecord(i: Int): GenericRecord = {
-    def f(name: String, tpe: Schema.Type) =
-      new Schema.Field(
-        name,
-        Schema.createUnion(List(Schema.create(Schema.Type.NULL), Schema.create(tpe)).asJava),
-        null, null)
+  private def f(name: String, tpe: Schema.Type) =
+    new Schema.Field(
+      name,
+      Schema.createUnion(List(Schema.create(Schema.Type.NULL), Schema.create(tpe)).asJava),
+      null, null)
 
-    val schema = Schema.createRecord("GenericTestRecord", null, null, false)
-    schema.setFields(List(
-      f("int_field", Schema.Type.INT),
-      f("long_field", Schema.Type.LONG),
-      f("float_field", Schema.Type.FLOAT),
-      f("double_field", Schema.Type.DOUBLE),
-      f("boolean_field", Schema.Type.BOOLEAN),
-      f("string_field", Schema.Type.STRING)
-    ).asJava)
+  val schema = Schema.createRecord("GenericTestRecord", null, null, false)
+  schema.setFields(List(
+    f("int_field", Schema.Type.INT),
+    f("long_field", Schema.Type.LONG),
+    f("float_field", Schema.Type.FLOAT),
+    f("double_field", Schema.Type.DOUBLE),
+    f("boolean_field", Schema.Type.BOOLEAN),
+    f("string_field", Schema.Type.STRING)
+  ).asJava)
+
+  def newGenericRecord(i: Int): GenericRecord = {
 
     val r = new GenericData.Record(schema)
     r.put("int_field", 1 * i)
