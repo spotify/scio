@@ -40,10 +40,10 @@ val javaLshVersion = "0.9"
 val jodaConvertVersion = "1.8.1"
 val junitVersion = "4.12"
 val nettyTcNativeVersion = "1.1.33.Fork18"
-val scalaCheckVersion = "1.13.1"
+val scalaCheckVersion = "1.13.2"
 val scalaMacrosVersion = "2.1.0"
 val scalapbVersion = "0.5.19" // inner protobuf-java version must match beam/dataflow-sdk one
-val scalaTestVersion = "2.2.6"
+val scalaTestVersion = "3.0.0"
 val slf4jVersion = "1.7.21"
 
 val java8 = sys.props("java.version").startsWith("1.8.")
