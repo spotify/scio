@@ -70,11 +70,12 @@ class ArgsTest extends FlatSpec with Matchers {
   }
 
   it should "support boolean" in {
-    val args = Args("--key1=true --key2=false".split(" "))
+    val args = Args("--key1=true --key2=false --key3".split(" "))
     args.boolean("key1") shouldBe true
     args.boolean("key2") shouldBe false
-    args.boolean("key3", true) shouldBe true
-    args.boolean("key4", false) shouldBe false
+    args.boolean("key3") shouldBe true
+    args.boolean("key4", true) shouldBe true
+    args.boolean("key5", false) shouldBe false
   }
 
 }
