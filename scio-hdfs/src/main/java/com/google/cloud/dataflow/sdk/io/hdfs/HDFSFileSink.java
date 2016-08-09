@@ -37,6 +37,8 @@ import org.apache.hadoop.mapreduce.task.JobContextImpl;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -81,9 +83,9 @@ public class HDFSFileSink<K, V> extends Sink<KV<K, V>> {
   public void validate(PipelineOptions options) {
     try {
       Job job = jobInstance();
-      FileSystem fs = FileSystem.get(job.getConfiguration());
+      FileSystem fs = FileSystem.get(new URI(path), job.getConfiguration());
       checkState(!fs.exists(new Path(path)), "Output path " + path + " already exists");
-    } catch (IOException e) {
+    } catch (IOException | URISyntaxException e) {
       throw new RuntimeException(e);
     }
   }
@@ -132,7 +134,7 @@ public class HDFSFileSink<K, V> extends Sink<KV<K, V>> {
     @Override
     public void finalize(Iterable<String> writerResults, PipelineOptions options) throws Exception {
       Job job = ((HDFSFileSink<K, V>) getSink()).jobInstance();
-      FileSystem fs = FileSystem.get(job.getConfiguration());
+      FileSystem fs = FileSystem.get(new URI(path), job.getConfiguration());
 
       // If there are 0 output shards, just create output folder.
       if (!writerResults.iterator().hasNext()) {
