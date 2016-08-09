@@ -285,7 +285,7 @@ package object hdfs {
 
     private def isPathDone(path: String): Boolean = {
       val conf = new Configuration()
-      val fs = FileSystem.get(conf)
+      val fs = FileSystem.get(new URI(path), conf)
       fs.exists(new Path(path, "_SUCCESS"))
     }
 
@@ -296,7 +296,7 @@ package object hdfs {
     override def value: Iterator[String] = {
       val conf = new Configuration()
       val factory = new CompressionCodecFactory(conf)
-      val fs = FileSystem.get(conf)
+      val fs = FileSystem.get(new URI(path), conf)
       val streams = fs
         .listStatus(new Path(path), HdfsUtil.pathFilter)
         .map { status =>
@@ -338,7 +338,7 @@ package object hdfs {
 
     def getDirectoryInputStream(path: String): InputStream = {
       val conf = new Configuration()
-      val fs = FileSystem.get(conf)
+      val fs = FileSystem.get(new URI(path), conf)
       val streams = fs
         .listStatus(new Path(path), pathFilter)
         .map { status =>
