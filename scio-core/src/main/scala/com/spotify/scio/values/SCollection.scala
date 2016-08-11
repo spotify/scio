@@ -947,7 +947,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def saveAsTableRowJsonFile(path: String, numShards: Int = 0)
                             (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
     if (context.isTest) {
-      context.testOut(BigQueryIO(path))(this.asInstanceOf[SCollection[TableRow]])
+      context.testOut(TableRowJsonIO(path))(this.asInstanceOf[SCollection[TableRow]])
       saveAsInMemoryTap.asInstanceOf[Future[Tap[TableRow]]]
     } else {
       this.asInstanceOf[SCollection[TableRow]].applyInternal(tableRowJsonOut(path, numShards))
