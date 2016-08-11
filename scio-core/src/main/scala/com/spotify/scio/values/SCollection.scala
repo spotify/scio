@@ -805,6 +805,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def saveAsObjectFile(path: String, numShards: Int = 0, suffix: String = ".obj")
   : Future[Tap[T]] = {
     if (context.isTest) {
+      context.testOut(ObjectFileIO(path))(this)
       saveAsInMemoryTap
     } else {
       val elemCoder = this.getCoder[T]
