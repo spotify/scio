@@ -19,7 +19,6 @@ package com.spotify.scio.testing
 
 import com.google.api.services.bigquery.model.TableRow
 import com.google.api.services.datastore.DatastoreV1.{Entity, Query}
-import com.google.protobuf.ByteString
 import com.spotify.scio.values.SCollection
 
 import scala.collection.mutable.{Map => MMap}
