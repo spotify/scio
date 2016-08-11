@@ -68,13 +68,8 @@ class TapTest extends PipelineSpec {
   }
 
   it should "support materialize" in {
-    val t1 = runWithInMemoryFuture {
-      makeRecords(_).materialize
-    }
-    verifyTap(t1, expectedRecords)
-
-    val t2 = runWithFileFuture { makeRecords(_).materialize }
-    verifyTap(t2, expectedRecords)
+    val t = runWithFileFuture { makeRecords(_).materialize }
+    verifyTap(t, expectedRecords)
   }
 
   it should "support saveAsAvroFile with SpecificRecord" in {
