@@ -21,20 +21,44 @@ import com.google.api.services.bigquery.model.TableRow
 import com.google.api.services.datastore.DatastoreV1.{Entity, Query}
 import com.spotify.scio.values.SCollection
 
-import scala.collection.mutable.{Map => MMap}
+import scala.collection.mutable.{Map => MMap, Set => MSet}
 
 /* Inputs are Scala Iterables to be parallelized for TestPipeline */
 private[scio] class TestInput(val m: Map[TestIO[_], Iterable[_]]) {
-  def apply[T](key: TestIO[T]): Iterable[T] = m(key).asInstanceOf[Iterable[T]]
+  val s: MSet[TestIO[_]] = MSet.empty
+  def apply[T](key: TestIO[T]): Iterable[T] = {
+    s.add(key)
+    m(key).asInstanceOf[Iterable[T]]
+  }
+  def validate(): Unit = {
+    val d = m.keySet -- s
+    require(d.isEmpty, "Unmatched test input: " + d.mkString(" "))
+  }
 }
 
 /* Outputs are lambdas that apply assertions on PCollections */
 private[scio] class TestOutput(val m: Map[TestIO[_], SCollection[_] => Unit]) {
-  def apply[T](key: TestIO[T]): SCollection[T] => Unit = m(key)
+  val s: MSet[TestIO[_]] = MSet.empty
+  def apply[T](key: TestIO[T]): SCollection[T] => Unit = {
+    s.add(key)
+    m(key)
+  }
+  def validate(): Unit = {
+    val d = m.keySet -- s
+    require(d.isEmpty, "Unmatched test output: " + d.mkString(" "))
+  }
 }
 
 private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {
-  def apply[T](key: DistCacheIO[T]): T = m(key).asInstanceOf[T]
+  val s: MSet[DistCacheIO[_]] = MSet.empty
+  def apply[T](key: DistCacheIO[T]): T = {
+    s.add(key)
+    m(key).asInstanceOf[T]
+  }
+  def validate(): Unit = {
+    val d = m.keySet -- s
+    require(d.isEmpty, "Unmatched test dist cache: " + d.mkString(" "))
+  }
 }
 
 private[scio] object TestDataManager {
@@ -52,9 +76,18 @@ private[scio] object TestDataManager {
   def setDistCache(testId: String, distCache: TestDistCache): Unit =
     distCaches += (testId -> distCache)
 
-  def unsetInput(testId: String): Unit = inputs -= testId
-  def unsetOutput(testId: String): Unit = outputs -= testId
-  def unsetDistCache(testId: String): Unit = distCaches -= testId
+  def unsetInput(testId: String): Unit = {
+    inputs(testId).validate()
+    inputs -= testId
+  }
+  def unsetOutput(testId: String): Unit = {
+    outputs(testId).validate()
+    outputs -= testId
+  }
+  def unsetDistCache(testId: String): Unit = {
+    distCaches(testId).validate()
+    distCaches -= testId
+  }
 
 }
 
