@@ -24,6 +24,7 @@ import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro.{AvroUtils, TestRecord}
 import com.spotify.scio.bigquery._
 import org.apache.avro.generic.GenericRecord
+import org.apache.commons.lang.exception.ExceptionUtils
 
 import scala.io.Source
 
@@ -274,6 +275,45 @@ class JobTestTest extends PipelineSpec {
   it should "fail incorrect DistCacheIO" in {
     intercept[AssertionError] { testDistCacheJob("a1", "a2", "b1") }
     intercept[AssertionError] { testDistCacheJob("a1", "a2", "b1", "b2", "c3", "d4") }
+  }
+
+  it should "fail unmatched test input" in {
+    val e = intercept[IllegalArgumentException] {
+      JobTest[DistCacheJob.type]
+        .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
+        .input(TextIO("in.txt"), Seq("a", "b"))
+        .input(TextIO("unmatched.txt"), Seq("X", "Y"))
+        .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
+        .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .run()
+    }
+    ExceptionUtils.getFullStackTrace(e) should include ("Unmatched test input")
+  }
+
+  it should "fail unmatched test output" in {
+    val e = intercept[IllegalArgumentException] {
+      JobTest[DistCacheJob.type]
+        .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
+        .input(TextIO("in.txt"), Seq("a", "b"))
+        .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
+        .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .output[String](TextIO("unmatched.txt"))(_ should containInAnyOrder (Seq("X", "Y")))
+        .run()
+    }
+    ExceptionUtils.getFullStackTrace(e) should include ("Unmatched test output")
+  }
+
+  it should "fail unmatched test dist cache" in {
+    val e = intercept[IllegalArgumentException] {
+      JobTest[DistCacheJob.type]
+        .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
+        .input(TextIO("in.txt"), Seq("a", "b"))
+        .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
+        .distCache(DistCacheIO("unmatched.txt"), Seq("X", "Y"))
+        .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .run()
+    }
+    ExceptionUtils.getFullStackTrace(e) should include ("Unmatched test dist cache")
   }
 
 }
