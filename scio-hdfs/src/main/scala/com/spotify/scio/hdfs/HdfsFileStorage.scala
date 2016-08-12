@@ -27,7 +27,6 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, PathFilter}
 import org.apache.hadoop.io.compress.CompressionCodecFactory
 
-
 object HdfsFileStorage {
   def apply(path: String): FileStorage = new HdfsFileStorage(path)
 }

@@ -29,7 +29,6 @@ import org.apache.avro.test.TestRecord
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 
-
 class HdfsTapTest extends TapSpec {
 
   "Future" should "support saveAsHdfsAvroFile with SpecificRecord" in {
