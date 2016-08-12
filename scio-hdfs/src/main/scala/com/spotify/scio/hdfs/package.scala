@@ -24,15 +24,12 @@ import java.security.PrivilegedAction
 import java.util.Collections
 
 import com.google.api.client.util.ByteStreams
-
 import com.google.cloud.dataflow.sdk.coders.AvroCoder
 import com.google.cloud.dataflow.sdk.io.hdfs._
-import com.google.cloud.dataflow.sdk.io.hdfs.simpleauth._
 import com.google.cloud.dataflow.sdk.io.{Read, Write}
 import com.google.cloud.dataflow.sdk.options.DataflowPipelineOptions
 import com.google.cloud.dataflow.sdk.util.MimeTypes
 import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
-import com.google.cloud.dataflow.sdk.values.KV
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.spotify.scio.io.{Tap, Taps}
@@ -41,17 +38,15 @@ import com.spotify.scio.values.{DistCache, SCollection}
 import org.apache.avro.Schema
 import org.apache.avro.file.DataFileStream
 import org.apache.avro.generic.GenericDatumReader
-import org.apache.avro.mapred.{AvroKey, AvroOutputFormat}
-import org.apache.avro.mapreduce.{AvroJob, AvroKeyOutputFormat}
+import org.apache.avro.mapred.AvroOutputFormat
+import org.apache.avro.mapreduce.AvroJob
 import org.apache.avro.specific.{SpecificDatumReader, SpecificRecordBase}
 import org.apache.commons.io.IOUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path, PathFilter}
 import org.apache.hadoop.io.compress.{CompressionCodecFactory, DefaultCodec}
-import org.apache.hadoop.io.{LongWritable, NullWritable, Text}
 import org.apache.hadoop.mapreduce.Job
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat
-import org.apache.hadoop.mapreduce.lib.output.{FileOutputFormat, TextOutputFormat}
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
 import org.apache.hadoop.security.UserGroupInformation
 import org.slf4j.LoggerFactory
 
@@ -79,16 +74,8 @@ package object hdfs {
 
     /** Get an SCollection for a text file on HDFS. */
     def hdfsTextFile(path: String, username: String = null): SCollection[String] = self.pipelineOp {
-      val src = if (username != null) {
-        SimpleAuthHDFSFileSource.from(
-          path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text], username)
-      } else {
-        HDFSFileSource.from(
-          path, classOf[TextInputFormat], classOf[LongWritable], classOf[Text])
-      }
+      val src = HDFSFileSource.fromText(path)
       self.wrap(self.applyInternal(Read.from(src)))
-        .setName(path)
-        .map(_.getValue.toString)
     }
 
     /** Get an SCollection of specific record type for an Avro file on HDFS. */
@@ -100,15 +87,8 @@ package object hdfs {
       } else {
         AvroCoder.of(ScioUtil.classOf[T], schema)
       }
-      val src = if (username != null) {
-        new SimpleAuthAvroHDFSFileSource[T](path, coder, username)
-      } else {
-        new AvroHDFSFileSource[T](path, coder)
-      }
-
-      self.wrap(self.applyInternal(Read.from(src)))
-        .setName(path)
-        .map(_.getKey.datum())
+      val src = HDFSFileSource.fromAvro(path, coder)
+      self.wrap(self.applyInternal(Read.from(src))).setName(path)
     }
 
     /**
@@ -216,21 +196,12 @@ package object hdfs {
         newConf.setBoolean(FileOutputFormat.COMPRESS, true)
         newConf.set(FileOutputFormat.COMPRESS_CODEC, classOf[DefaultCodec].getName)
         newConf.set(FileOutputFormat.COMPRESS_TYPE, "BLOCK")
-        newConf.setInt(AvroOutputFormat.DEFLATE_LEVEL_KEY, 6)
         newConf
       }
 
-      val sink = if (username != null) {
-        new SimpleAuthHDFSFileSink(path,
-                                     classOf[TextOutputFormat[NullWritable, Text]],
-                                     _conf,
-                                     username)
-      } else {
-        new HDFSFileSink(path, classOf[TextOutputFormat[NullWritable, Text]], _conf)
-      }
-      self
-        .map(x => KV.of(NullWritable.get(), new Text(x.toString)))
-        .applyInternal(Write.to(sink))
+      val sink = HDFSFileSink.toText[T](path).withConfiguration(_conf).withUsername(username)
+      self.applyInternal(Write.to(sink))
+
       self.context.makeFuture(HdfsTextTap(path))
     }
 
@@ -252,21 +223,15 @@ package object hdfs {
       }
 
       val job = Job.getInstance(_conf)
-      val jobConf = job.getConfiguration
       val s = if (schema == null) {
         ScioUtil.classOf[T].getMethod("getClassSchema").invoke(null).asInstanceOf[Schema]
       } else {
         schema
       }
       AvroJob.setOutputKeySchema(job, s)
-      val sink = if (username != null) {
-        new SimpleAuthHDFSFileSink(path, classOf[AvroKeyOutputFormat[T]], jobConf, username)
-      } else {
-        new HDFSFileSink(path, classOf[AvroKeyOutputFormat[T]], jobConf)
-      }
-      self
-        .map(x => KV.of(new AvroKey(x), NullWritable.get()))
-        .applyInternal(Write.to(sink))
+      val jobConf = job.getConfiguration
+      val sink = HDFSFileSink.toAvro[T](path).withConfiguration(jobConf).withUsername(username)
+      self.applyInternal(Write.to(sink))
       self.context.makeFuture(HdfsAvroTap[T](path, schema))
     }
   }
