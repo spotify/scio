@@ -547,7 +547,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group accumulator
    */
   def maxAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] = pipelineOp {
-    require(!_accumulators.contains(n), s"Accumulator $n already exists")
+    require(!_accumulators.contains(n), s"Accumulator '$n' already exists")
     _accumulators.add(n)
     new Accumulator[T] {
       override val name: String = n
@@ -563,7 +563,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group accumulator
    */
   def minAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] = pipelineOp {
-    require(!_accumulators.contains(n), s"Accumulator $n already exists")
+    require(!_accumulators.contains(n), s"Accumulator '$n' already exists")
     _accumulators.add(n)
     new Accumulator[T] {
       override val name: String = n
@@ -579,7 +579,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group accumulator
    */
   def sumAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] = pipelineOp {
-    require(!_accumulators.contains(n), s"Accumulator $n already exists")
+    require(!_accumulators.contains(n), s"Accumulator '$n' already exists")
     _accumulators.add(n)
     new Accumulator[T] {
       override val name: String = n
