@@ -139,15 +139,19 @@ class HistogramTest extends PipelineSpec {
     }
   }
 
-  it should "throw exception on invalid bucket array" in {
-    intercept[RuntimeException] {
+  // scalastyle:off no.whitespace.before.left.bracket
+  it should "fail on invalid bucket array" in {
+    val msg = "java.lang.IllegalArgumentException: requirement failed: " +
+      "buckets array must have at least two elements"
+    the [RuntimeException] thrownBy {
       runWithContext { _.parallelize(Seq(1.0)).histogram(Array.empty[Double]) }
-    }
+    } should have message msg
 
-    intercept[RuntimeException] {
+    the [RuntimeException] thrownBy {
       runWithContext { _.parallelize(Seq(1.0)).histogram(Array(1.0)) }
-    }
+    } should have message msg
   }
+  // scalastyle:on no.whitespace.before.left.bracket
 
   it should "work without buckets, basic" in {
     runWithContext { sc =>
@@ -235,18 +239,23 @@ class HistogramTest extends PipelineSpec {
     }
   }
 
-  it should "throw exception on invalid SCollections" in {
-    intercept[RuntimeException] {
+  // scalastyle:off no.whitespace.before.left.bracket
+  it should "fail on invalid SCollections" in {
+    val msg = "java.lang.UnsupportedOperationException: " +
+      "Histogram on either an empty SCollection or SCollection containing +/-infinity or NaN"
+    the [RuntimeException] thrownBy {
       runWithContext { _.parallelize(Seq(1.0, Double.PositiveInfinity)).histogram(1) }
-    }
+    } should have message msg
 
-    intercept[RuntimeException] {
+    the [RuntimeException] thrownBy {
       runWithContext { _.parallelize(Seq(1.0, Double.NaN)).histogram(1) }
-    }
+    } should have message msg
 
-    intercept[RuntimeException] {
+    the [RuntimeException] thrownBy {
       runWithContext { _.parallelize[Double](Seq.empty).histogram(1) }
-    }
+    } should have message
+      "java.util.NoSuchElementException: Empty PCollection accessed as a singleton view."
   }
+  // scalastyle:on no.whitespace.before.left.bracket
 
 }
