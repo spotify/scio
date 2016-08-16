@@ -24,7 +24,6 @@ import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro.{AvroUtils, TestRecord}
 import com.spotify.scio.bigquery._
 import org.apache.avro.generic.GenericRecord
-import org.apache.commons.lang.exception.ExceptionUtils
 
 import scala.io.Source
 
@@ -114,6 +113,7 @@ object DistCacheJob {
   }
 }
 
+// scalastyle:off no.whitespace.before.left.bracket
 class JobTestTest extends PipelineSpec {
 
   def testObjectFileJob(xs: Int*): Unit = {
@@ -129,8 +129,8 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail incorrect ObjectFileIO" in {
-    intercept[AssertionError] { testObjectFileJob(10, 20) }
-    intercept[AssertionError] { testObjectFileJob(10, 20, 30, 40) }
+    an [AssertionError] should be thrownBy { testObjectFileJob(10, 20) }
+    an [AssertionError] should be thrownBy { testObjectFileJob(10, 20, 30, 40) }
   }
 
   def testSpecificAvroFileJob(xs: Seq[TestRecord]): Unit = {
@@ -146,8 +146,12 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail incorrect specific AvroFileIO" in {
-    intercept[AssertionError] { testSpecificAvroFileJob((1 to 2).map(newSpecificRecord)) }
-    intercept[AssertionError] { testSpecificAvroFileJob((1 to 4).map(newSpecificRecord)) }
+    an [AssertionError] should be thrownBy {
+      testSpecificAvroFileJob((1 to 2).map(newSpecificRecord))
+    }
+    an [AssertionError] should be thrownBy {
+      testSpecificAvroFileJob((1 to 4).map(newSpecificRecord))
+    }
   }
 
   def testGenericAvroFileJob(xs: Seq[GenericRecord]): Unit = {
@@ -163,8 +167,12 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail incorrect generic AvroFileIO" in {
-    intercept[AssertionError] { testGenericAvroFileJob((1 to 2).map(newGenericRecord)) }
-    intercept[AssertionError] { testGenericAvroFileJob((1 to 4).map(newGenericRecord)) }
+    an [AssertionError] should be thrownBy {
+      testGenericAvroFileJob((1 to 2).map(newGenericRecord))
+    }
+    an [AssertionError] should be thrownBy {
+      testGenericAvroFileJob((1 to 4).map(newGenericRecord))
+    }
   }
 
   def newTableRow(i: Int): TableRow = TableRow("int_field" -> i)
@@ -182,8 +190,8 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail incorrect BigQueryJob" in {
-    intercept[AssertionError] { testBigQuery((1 to 2).map(newTableRow)) }
-    intercept[AssertionError] { testBigQuery((1 to 4).map(newTableRow)) }
+    an [AssertionError] should be thrownBy { testBigQuery((1 to 2).map(newTableRow)) }
+    an [AssertionError] should be thrownBy { testBigQuery((1 to 4).map(newTableRow)) }
   }
 
   def newEntity(i: Int): Entity = Entity.newBuilder()
@@ -204,8 +212,8 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail incorrect DatastoreJob" in {
-    intercept[AssertionError] { testDatastore((1 to 2).map(newEntity)) }
-    intercept[AssertionError] { testDatastore((1 to 4).map(newEntity)) }
+    an [AssertionError] should be thrownBy { testDatastore((1 to 2).map(newEntity)) }
+    an [AssertionError] should be thrownBy { testDatastore((1 to 4).map(newEntity)) }
   }
 
   def testPubsubJob(xs: String*): Unit = {
@@ -221,8 +229,8 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail incorrect PubsubIO" in {
-    intercept[AssertionError] { testTextFileJob("aX", "bX") }
-    intercept[AssertionError] { testTextFileJob("aX", "bX", "cX", "dX") }
+    an [AssertionError] should be thrownBy { testTextFileJob("aX", "bX") }
+    an [AssertionError] should be thrownBy { testTextFileJob("aX", "bX", "cX", "dX") }
   }
 
   def testTableRowJson(xs: Seq[TableRow]): Unit = {
@@ -238,8 +246,8 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail incorrect TableRowJsonIO" in {
-    intercept[AssertionError] { testTableRowJson((1 to 2).map(newTableRow)) }
-    intercept[AssertionError] { testTableRowJson((1 to 4).map(newTableRow)) }
+    an [AssertionError] should be thrownBy { testTableRowJson((1 to 2).map(newTableRow)) }
+    an [AssertionError] should be thrownBy { testTableRowJson((1 to 4).map(newTableRow)) }
   }
 
   def testTextFileJob(xs: String*): Unit = {
@@ -255,8 +263,8 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail incorrect TextFileIO" in {
-    intercept[AssertionError] { testTextFileJob("aX", "bX") }
-    intercept[AssertionError] { testTextFileJob("aX", "bX", "cX", "dX") }
+    an [AssertionError] should be thrownBy { testTextFileJob("aX", "bX") }
+    an [AssertionError] should be thrownBy { testTextFileJob("aX", "bX", "cX", "dX") }
   }
 
   def testDistCacheJob(xs: String*): Unit = {
@@ -273,12 +281,12 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail incorrect DistCacheIO" in {
-    intercept[AssertionError] { testDistCacheJob("a1", "a2", "b1") }
-    intercept[AssertionError] { testDistCacheJob("a1", "a2", "b1", "b2", "c3", "d4") }
+    an [AssertionError] should be thrownBy { testDistCacheJob("a1", "a2", "b1") }
+    an [AssertionError] should be thrownBy { testDistCacheJob("a1", "a2", "b1", "b2", "c3", "d4") }
   }
 
   it should "fail unmatched test input" in {
-    val e = intercept[IllegalArgumentException] {
+    the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type]
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
         .input(TextIO("in.txt"), Seq("a", "b"))
@@ -286,12 +294,11 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
-    }
-    ExceptionUtils.getFullStackTrace(e) should include ("Unmatched test input")
+    } should have message "requirement failed: Unmatched test input: TextIO(unmatched.txt)"
   }
 
   it should "fail unmatched test output" in {
-    val e = intercept[IllegalArgumentException] {
+    the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type]
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
         .input(TextIO("in.txt"), Seq("a", "b"))
@@ -299,12 +306,11 @@ class JobTestTest extends PipelineSpec {
         .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .output[String](TextIO("unmatched.txt"))(_ should containInAnyOrder (Seq("X", "Y")))
         .run()
-    }
-    ExceptionUtils.getFullStackTrace(e) should include ("Unmatched test output")
+    } should have message "requirement failed: Unmatched test output: TextIO(unmatched.txt)"
   }
 
   it should "fail unmatched test dist cache" in {
-    val e = intercept[IllegalArgumentException] {
+    the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type]
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
         .input(TextIO("in.txt"), Seq("a", "b"))
@@ -312,8 +318,9 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("unmatched.txt"), Seq("X", "Y"))
         .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
-    }
-    ExceptionUtils.getFullStackTrace(e) should include ("Unmatched test dist cache")
+    } should have message
+      "requirement failed: Unmatched test dist cache: DistCacheIO(unmatched.txt)"
   }
 
 }
+// scalastyle:on no.whitespace.before.left.bracket
