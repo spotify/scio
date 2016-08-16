@@ -45,42 +45,42 @@ class ScioContextTest extends PipelineSpec {
     pipeline.run()
   }
 
-  it should "have temp directory for default runner" in {
+  it should "have temp location for default runner" in {
     val pipeline = ScioContext().pipeline
     pipeline.getOptions.getTempLocation should not be null
   }
 
-  it should "have temp directory for default InProcessPipelineRunner" in {
+  it should "have temp location for InProcessPipelineRunner" in {
     val opts = PipelineOptionsFactory.create()
     opts.setRunner(classOf[InProcessPipelineRunner])
     val pipeline = ScioContext(opts).pipeline
     pipeline.getOptions.getTempLocation should not be null
   }
 
-  it should "have temp directory for default DirectPipelineRunner" in {
+  it should "have temp location for DirectPipelineRunner" in {
     val opts = PipelineOptionsFactory.create()
     opts.setRunner(classOf[DirectPipelineRunner])
     val pipeline = ScioContext(opts).pipeline
     pipeline.getOptions.getTempLocation should not be null
   }
 
-  it should "use user specified temp directory" in {
+  it should "support user defined temp location" in {
     val expected = "/expected"
     val opts = PipelineOptionsFactory.create()
     opts.setTempLocation(expected)
     val pipeline = ScioContext(opts).pipeline
-    pipeline.getOptions.getTempLocation shouldEqual expected
+    pipeline.getOptions.getTempLocation shouldBe expected
   }
 
-  it should "fail without temp/staging dir for DataflowPipelineRunner " in {
-    val opts = PipelineOptionsFactory.create()
+  // scalastyle:off no.whitespace.before.left.bracket
+  it should "fail on missing temp or staging location for DataflowPipelineRunner" in {
+    val opts = PipelineOptionsFactory.create().as(classOf[DataflowPipelineOptions])
     opts.setRunner(classOf[DataflowPipelineRunner])
-    val dfOpts = opts.as(classOf[DataflowPipelineOptions])
-    dfOpts.setProject("foobar")
-    val sc = ScioContext(dfOpts)
-    val e = intercept[RuntimeException] { sc.pipeline }
-    ExceptionUtils.getFullStackTrace(e) should
-      include ("at least one of tempLocation or stagingLocation must be set.")
+    val sc = ScioContext(opts)
+    val e = the [RuntimeException] thrownBy { sc.pipeline }
+    ExceptionUtils.getRootCause(e) should have message
+      "Missing required value: at least one of tempLocation or stagingLocation must be set."
   }
+  // scalastyle:on no.whitespace.before.left.bracket
 
 }
