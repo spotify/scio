@@ -40,10 +40,22 @@ class ArgsTest extends FlatSpec with Matchers {
   }
 
   it should "support required" in {
-    val args = Args("--key1=value1".split(" "))
-    args.required("key1") shouldBe "value1"
-    intercept[IllegalArgumentException] { args.required("key2") }
+    Args("--key=value".split(" ")).required("key") shouldBe "value"
   }
+
+  // scalastyle:off no.whitespace.before.left.bracket
+  it should "fail required with missing value" in {
+    the[IllegalArgumentException] thrownBy {
+      Args(Array.empty).required("key")
+    } should have message "Missing value for property 'key'"
+  }
+
+  it should "fail required with multiple values" in {
+    the [IllegalArgumentException] thrownBy {
+      Args("--key=value1 --key=value2".split(" ")).required("key")
+    } should have message "Multiple values for property 'key'"
+  }
+  // scalastyle:on no.whitespace.before.left.bracket
 
   it should "support int" in {
     val args = Args("--key1=10".split(" "))
