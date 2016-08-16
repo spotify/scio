@@ -113,9 +113,7 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
                             evenBuckets: Boolean = false): SCollection[Array[Long]] = {
     // Map buckets into a side input of bucket function
     val side = buckets.map { b =>
-      if (b.length < 2) {
-        throw new IllegalArgumentException("buckets array must have at least two elements")
-      }
+      require(b.length >= 2, "buckets array must have at least two elements")
       // Basic bucket function. This works using Java's built in Array
       // binary search. Takes log(size(buckets))
       def basicBucketFunction(e: Double): Option[Int] = {
