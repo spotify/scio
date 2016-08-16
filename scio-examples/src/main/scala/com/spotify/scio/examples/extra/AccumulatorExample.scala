@@ -18,6 +18,8 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
+import com.spotify.scio.accumulators._
+import com.spotify.scio.values.Accumulator
 
 // Update accumulators inside a job and retrieve values later
 object AccumulatorExample {
@@ -57,6 +59,49 @@ object AccumulatorExample {
 
     println("Count per step:")
     r.accumulatorValuesAtSteps(count).foreach(kv => println(kv._2 + " @ " + kv._1))
+    // scalastyle:on regex
+  }
+}
+
+// Simplified version using helpers from com.spotify.scio.accumulators._
+object SimpleAccumulatorExample {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val sc = ScioContext()
+
+    // create accumulators to be updated inside the pipeline
+    val max = sc.maxAccumulator[Int]("max")
+    val min = sc.minAccumulator[Int]("min")
+    val sum = sc.sumAccumulator[Int]("sum")
+
+    sc.parallelize(1 to 100)
+      .accumulate(max, min, sum)
+      .accumulateCount
+      .accumulateCountFilter(_ <= 50)
+      .accumulate(sum)
+      .accumulateCount
+
+    val r = sc.close()
+
+    // access accumulator values after job is submitted
+    // scalastyle:off regex
+    println("Max: " + r.accumulatorTotalValue(max))
+    println("Min: " + r.accumulatorTotalValue(min))
+    println("Sum: " + r.accumulatorTotalValue(sum))
+
+    println("Sum per step:")
+    r.accumulatorValuesAtSteps(sum).foreach(kv => println(kv._2 + " @ " + kv._1))
+
+    println("Count:")
+    r.accumulators.filter(_.name.startsWith("accumulateCount")).foreach { a =>
+      val v = r.accumulatorTotalValue(a.asInstanceOf[Accumulator[Long]])
+      println(v + " @ " + a.name)
+    }
+
+    println("Filter:")
+    r.accumulators.filter(_.name.contains("accumulateCountFilter")).foreach { a =>
+      val v = r.accumulatorTotalValue(a.asInstanceOf[Accumulator[Long]])
+      println(v + " @ " + a.name)
+    }
     // scalastyle:on regex
   }
 }
