@@ -32,7 +32,8 @@ private[scio] object CallSites {
     // Not in our code base or an interpreter
     (!c.startsWith(scioNs) && !c.startsWith("scala.") && !c.startsWith(dfNs)) ||
       c.startsWith(scioNs + "examples.") || // unless if it's in examples
-      c.startsWith(scioNs + "values.AccumulatorTest") // or this test
+      c.startsWith(scioNs + "values.AccumulatorTest") || // or this test
+      c.startsWith(scioNs + "accumulators.AccumulatorSCollectionTest") // or this test
 
   private def isTransform(e: StackTraceElement): Boolean =
     e.getClassName == scioNs + "values.SCollectionImpl" && e.getMethodName == "transform"
