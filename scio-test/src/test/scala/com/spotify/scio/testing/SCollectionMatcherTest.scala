@@ -19,6 +19,7 @@ package com.spotify.scio.testing
 
 import com.google.cloud.dataflow.sdk.Pipeline.PipelineExecutionException
 
+// scalastyle:off no.whitespace.before.left.bracket
 class SCollectionMatcherTest extends PipelineSpec {
 
   "SCollectionMatch" should "support containInAnyOrder" in {
@@ -26,10 +27,10 @@ class SCollectionMatcherTest extends PipelineSpec {
       _.parallelize(1 to 100) should containInAnyOrder (1 to 100)
     }
 
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(1 to 200) should containInAnyOrder (1 to 100) }
     }
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(1 to 100) should containInAnyOrder (1 to 200) }
     }
   }
@@ -37,13 +38,13 @@ class SCollectionMatcherTest extends PipelineSpec {
   it should "support containSingleValue" in {
     runWithContext { _.parallelize(Seq(1)) should containSingleValue (1) }
 
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(Seq(1)) should containSingleValue (10) }
     }
-    intercept[PipelineExecutionException] {
+    an [PipelineExecutionException] should be thrownBy {
       runWithContext { _.parallelize(1 to 10) should containSingleValue (1) }
     }
-    intercept[PipelineExecutionException] {
+    an [PipelineExecutionException] should be thrownBy {
       runWithContext { _.parallelize(Seq.empty[Int]) should containSingleValue (1) }
     }
   }
@@ -51,7 +52,7 @@ class SCollectionMatcherTest extends PipelineSpec {
   it should "support beEmpty" in {
     runWithContext { _.parallelize(Seq.empty[Int]) should beEmpty }
 
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(1 to 10) should beEmpty }
     }
   }
@@ -61,13 +62,13 @@ class SCollectionMatcherTest extends PipelineSpec {
     runWithContext { _.parallelize(Seq(1)) should haveSize (1) }
     runWithContext { _.parallelize(1 to 10) should haveSize (10) }
 
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(Seq.empty[Int]) should haveSize(1) }
     }
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(Seq(1)) should haveSize(0) }
     }
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(1 to 10) should haveSize (20) }
     }
   }
@@ -79,31 +80,31 @@ class SCollectionMatcherTest extends PipelineSpec {
       sc.parallelize(Seq.empty[(String, Int)]) should equalMapOf (Map.empty[String, Int])
     }
 
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(s) should equalMapOf ((s :+ "d" -> 4).toMap) }
     }
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(s :+ "d" -> 4) should equalMapOf (s.toMap) }
     }
 
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(s) should equalMapOf (s.tail.toMap) }
     }
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(s.tail) should equalMapOf (s.toMap) }
     }
 
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(s) should equalMapOf (s.toMap + ("a" -> 10)) }
     }
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(s.tail :+ ("a" -> 10)) should equalMapOf (s.toMap) }
     }
 
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(s) should equalMapOf (Map.empty[String, Int]) }
     }
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(Seq.empty[(String, Int)]) should equalMapOf (s.toMap) }
     }
   }
@@ -111,7 +112,7 @@ class SCollectionMatcherTest extends PipelineSpec {
   it should "support forAll" in {
     runWithContext { _.parallelize(1 to 100) should forAll[Int] (_ > 0)}
 
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(1 to 100) should forAll[Int] (_ > 10)}
     }
   }
@@ -119,9 +120,10 @@ class SCollectionMatcherTest extends PipelineSpec {
   it should "support exist" in {
     runWithContext { _.parallelize(1 to 100) should exist[Int] (_ > 99)}
 
-    intercept[AssertionError] {
+    an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(1 to 100) should exist[Int] (_ > 100)}
     }
   }
 
 }
+// scalastyle:on no.whitespace.before.left.bracket
