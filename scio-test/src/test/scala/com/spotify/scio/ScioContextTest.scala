@@ -74,6 +74,7 @@ class ScioContextTest extends PipelineSpec {
   it should "fail on missing temp or staging location for DataflowPipelineRunner" in {
     val opts = PipelineOptionsFactory.create().as(classOf[DataflowPipelineOptions])
     opts.setRunner(classOf[DataflowPipelineRunner])
+    opts.setProject("foobar")
     val sc = ScioContext(opts)
     val e = the [RuntimeException] thrownBy { sc.pipeline }
     ExceptionUtils.getRootCause(e) should have message
