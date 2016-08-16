@@ -51,7 +51,7 @@ import org.joda.time.Instant
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.{Buffer => MBuffer, Set => MSet}
+import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
 import scala.util.Try
@@ -192,7 +192,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   private var _isClosed: Boolean = false
   private val _promises: MBuffer[(Promise[Tap[_]], Tap[_])] = MBuffer.empty
   private val _queryJobs: MBuffer[QueryJob] = MBuffer.empty
-  private val _accumulators: MSet[String] = MSet.empty
+  private val _accumulators: MMap[String, Accumulator[_]] = MMap.empty
 
   /** Wrap a [[org.apache.beam.sdk.values.PCollection PCollection]]. */
   def wrap[T: ClassTag](p: PCollection[T]): SCollection[T] =
@@ -310,7 +310,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
         Future.successful(result.getState)
     }
 
-    new ScioResult(result, finalState, pipeline)
+    new ScioResult(result, finalState, _accumulators.values.toSeq, pipeline)
   }
 
   /** Whether the context is closed. */
@@ -545,11 +545,12 @@ class ScioContext private[scio] (val options: PipelineOptions,
    */
   def maxAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] = pipelineOp {
     require(!_accumulators.contains(n), s"Accumulator '$n' already exists")
-    _accumulators.add(n)
-    new Accumulator[T] {
+    val acc = new Accumulator[T] {
       override val name: String = n
       override val combineFn: CombineFn[T, _, T] = at.maxFn()
     }
+    _accumulators.put(n, acc)
+    acc
   }
 
   /**
@@ -561,11 +562,12 @@ class ScioContext private[scio] (val options: PipelineOptions,
    */
   def minAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] = pipelineOp {
     require(!_accumulators.contains(n), s"Accumulator '$n' already exists")
-    _accumulators.add(n)
-    new Accumulator[T] {
+    val acc = new Accumulator[T] {
       override val name: String = n
       override val combineFn: CombineFn[T, _, T] = at.minFn()
     }
+    _accumulators.put(n, acc)
+    acc
   }
 
   /**
@@ -577,11 +579,12 @@ class ScioContext private[scio] (val options: PipelineOptions,
    */
   def sumAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] = pipelineOp {
     require(!_accumulators.contains(n), s"Accumulator '$n' already exists")
-    _accumulators.add(n)
-    new Accumulator[T] {
+    val acc = new Accumulator[T] {
       override val name: String = n
       override val combineFn: CombineFn[T, _, T] = at.sumFn()
     }
+    _accumulators.put(n, acc)
+    acc
   }
 
   // =======================================================================
