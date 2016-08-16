@@ -29,6 +29,7 @@ import scala.concurrent.Future
 /** Represent a Scio pipeline result. */
 class ScioResult private[scio] (val internal: PipelineResult,
                                 val finalState: Future[State],
+                                val accumulators: Seq[Accumulator[_]],
                                 private val pipeline: Pipeline) {
 
   private val aggregators: Map[String, Iterable[Aggregator[_, _]]] =
