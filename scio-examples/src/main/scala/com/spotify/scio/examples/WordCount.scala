@@ -20,6 +20,7 @@ package com.spotify.scio.examples
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 import com.spotify.scio._
+import com.spotify.scio.accumulators._
 import com.spotify.scio.examples.common.ExampleData
 
 /*
@@ -48,22 +49,13 @@ object WordCount {
     // initialize accumulators
     val max = sc.maxAccumulator[Int]("maxLineLength")
     val min = sc.minAccumulator[Int]("minLineLength")
-    val sum = sc.sumAccumulator[Long]("emptyLines")
+    val sumNonEmpty = sc.sumAccumulator[Long]("nonEmptyLines")
+    val sumEmpty = sc.sumAccumulator[Long]("emptyLines")
 
     sc.textFile(input)
-      .withAccumulator(max, min, sum)  // convert to SCollectionWithAccumulator
-      // specialized version of filter with AccumulatorContext as second argument
-      .filter { (l, c) =>
-        val t = l.trim
-
-        // update accumulators "max" and "min"
-        c.addValue(max, t.length).addValue(min, t.length)
-
-        val b = t.isEmpty
-        if (b) c.addValue(sum, 1L) // update accumulator "sum"
-        !b
-      }
-      .toSCollection  // convert back to normal SCollection
+      .map(_.trim)
+      .accumulateBy(max, min)(_.length)
+      .accumulateCountFilter(sumNonEmpty, sumEmpty)(_.nonEmpty)
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
       .map(t => t._1 + ": " + t._2)
@@ -80,7 +72,8 @@ object WordCount {
     // retrieve accumulator values
     println("Max: " + result.accumulatorTotalValue(max))
     println("Min: " + result.accumulatorTotalValue(min))
-    println("Sum: " + result.accumulatorTotalValue(sum))
+    println("Sum non-empty: " + result.accumulatorTotalValue(sumNonEmpty))
+    println("Sum empty: " + result.accumulatorTotalValue(sumEmpty))
     // scalastyle:on regex
   }
 }

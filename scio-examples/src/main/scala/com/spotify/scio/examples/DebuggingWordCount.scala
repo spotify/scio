@@ -18,6 +18,7 @@
 package com.spotify.scio.examples
 
 import com.spotify.scio._
+import com.spotify.scio.accumulators._
 import com.spotify.scio.examples.common.ExampleData
 import org.apache.beam.sdk.testing.PAssert
 
@@ -43,13 +44,9 @@ object DebuggingWordCount {
     val filteredWords = sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
-      .withAccumulator(matchedWords, unmatchedWords)
-      .filter { (kv, c) =>
-        val b = Set("Flourish", "stomach").contains(kv._1)
-        c.addValue(if (b) matchedWords else unmatchedWords, 1L)
-        b
+      .accumulateCountFilter(matchedWords, unmatchedWords) { kv =>
+        Set("Flourish", "stomach").contains(kv._1)
       }
-      .toSCollection
 
     // verify internal PCollection
     PAssert.that(filteredWords.internal)
