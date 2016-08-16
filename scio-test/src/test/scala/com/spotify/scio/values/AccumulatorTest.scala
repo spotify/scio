@@ -93,13 +93,28 @@ class AccumulatorTest extends PipelineSpec {
     av.find(_._1.startsWith("flatMap@")).map(_._2) should equal (Some(50))
   }
 
-  it should "detect duplicate accumulator names" in {
-    intercept[IllegalArgumentException] {
+  // scalastyle:off no.whitespace.before.left.bracket
+  it should "fail on duplicate accumulator names" in {
+    val msg = "requirement failed: Accumulator 'acc' already exists"
+    the [IllegalArgumentException] thrownBy {
       runWithContext { sc =>
-         sc.maxAccumulator[Int]("acc")
-         sc.minAccumulator[Int]("acc")
+        sc.maxAccumulator[Int]("acc")
+        sc.maxAccumulator[Int]("acc")
       }
-    }
+    } should have message msg
+    the [IllegalArgumentException] thrownBy {
+      runWithContext { sc =>
+        sc.minAccumulator[Int]("acc")
+        sc.minAccumulator[Int]("acc")
+      }
+    } should have message msg
+    the [IllegalArgumentException] thrownBy {
+      runWithContext { sc =>
+        sc.sumAccumulator[Int]("acc")
+        sc.sumAccumulator[Int]("acc")
+      }
+    } should have message msg
   }
+  // scalastyle:on no.whitespace.before.left.bracket
 
 }
