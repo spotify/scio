@@ -86,6 +86,7 @@ private[scio] trait QueryJob {
 }
 
 /** A simple BigQuery client. */
+// scalastyle:off number.of.methods
 class BigQueryClient private (private val projectId: String,
                               credential: Credential = null) { self =>
 
@@ -438,6 +439,7 @@ class BigQueryClient private (private val projectId: String,
   private def tableCacheFile(key: String): File = cacheFile(key, ".table.txt")
 
 }
+// scalastyle:on number.of.methods
 
 /** Companion object for [[BigQueryClient]]. */
 object BigQueryClient {
