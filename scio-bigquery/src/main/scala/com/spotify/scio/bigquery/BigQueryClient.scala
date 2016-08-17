@@ -137,7 +137,7 @@ class BigQueryClient private (private val projectId: String,
     prepareStagingDataset()
 
     // Create temporary table view and get schema
-    val table = temporaryTable(TABLE_PREFIX)
+    val table = temporaryTable
     logger.info(s"Creating temporary view ${BigQueryIO.toTableSpec(table)}")
     val view = new ViewDefinition().setQuery(sqlQuery)
     val viewTable = new Table().setView(view).setTableReference(table)
@@ -295,7 +295,7 @@ class BigQueryClient private (private val projectId: String,
           override val table: TableReference = temp
         }
       } else {
-        val temp = temporaryTable(TABLE_PREFIX)
+        val temp = temporaryTable
         logger.info(s"Cache invalid for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
@@ -303,7 +303,7 @@ class BigQueryClient private (private val projectId: String,
       }
     } catch {
       case NonFatal(_) =>
-        val temp = temporaryTable(TABLE_PREFIX)
+        val temp = temporaryTable
         logger.info(s"Cache miss for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
@@ -334,9 +334,9 @@ class BigQueryClient private (private val projectId: String,
     }
   }
 
-  private def temporaryTable(prefix: String): TableReference = {
+  private def temporaryTable: TableReference = {
     val now = Instant.now().toString(TIME_FORMATTER)
-    val tableId = prefix + "_" + now + "_" + Random.nextInt(Int.MaxValue)
+    val tableId = TABLE_PREFIX + "_" + now + "_" + Random.nextInt(Int.MaxValue)
     new TableReference()
       .setProjectId(projectId)
       .setDatasetId(BigQueryClient.stagingDataset)
