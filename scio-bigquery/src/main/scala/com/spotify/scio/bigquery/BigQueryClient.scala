@@ -348,6 +348,20 @@ class BigQueryClient private (private val projectId: String,
     new JobReference().setProjectId(projectId).setJobId(fullJobId)
   }
 
+  private def createJobConfigurationQuery(sqlQuery: String,
+                                          destinationTable: TableReference,
+                                          flattenResults: Boolean,
+                                          useLegacySql: Boolean): JobConfigurationQuery =
+    new JobConfigurationQuery()
+      .setQuery(sqlQuery)
+      .setUseLegacySql(useLegacySql)
+      .setAllowLargeResults(true)
+      .setFlattenResults(flattenResults)
+      .setPriority(PRIORITY)
+      .setCreateDisposition("CREATE_IF_NEEDED")
+      .setWriteDisposition("WRITE_EMPTY")
+      .setDestinationTable(destinationTable)
+
   private def delayedQueryJob(sqlQuery: String,
                               destinationTable: TableReference,
                               flattenResults: Boolean): QueryJob = new QueryJob {
@@ -355,15 +369,8 @@ class BigQueryClient private (private val projectId: String,
     override lazy val jobReference: Option[JobReference] = {
       prepareStagingDataset()
       logger.info(s"Executing query: $sqlQuery")
-      val queryConfig: JobConfigurationQuery = new JobConfigurationQuery()
-        .setQuery(sqlQuery)
-        .setAllowLargeResults(true)
-        .setFlattenResults(flattenResults)
-        .setPriority(PRIORITY)
-        .setCreateDisposition("CREATE_IF_NEEDED")
-        .setWriteDisposition("WRITE_EMPTY")
-        .setDestinationTable(destinationTable)
-
+      val queryConfig = createJobConfigurationQuery(
+        sqlQuery, destinationTable, flattenResults, useLegacySql = true)
       val jobConfig = new JobConfiguration().setQuery(queryConfig)
       val jobReference = createJobReference(projectId, JOB_ID_PREFIX)
       val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
