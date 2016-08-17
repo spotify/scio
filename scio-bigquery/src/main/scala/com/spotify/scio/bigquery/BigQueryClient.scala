@@ -18,6 +18,7 @@
 package com.spotify.scio.bigquery
 
 import java.io.{File, FileInputStream, StringReader}
+import java.lang.{Boolean => JBoolean}
 import java.util.UUID
 import java.util.regex.Pattern
 
@@ -31,6 +32,7 @@ import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.bigquery.model._
 import com.google.api.services.bigquery.{Bigquery, BigqueryScopes}
 import com.google.common.base.Charsets
+import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import org.apache.beam.sdk.io.BigQueryIO
@@ -395,6 +397,42 @@ class BigQueryClient private (private val projectId: String,
     val bytes = FileUtils.byteCountToDisplaySize(stats.getQuery.getTotalBytesProcessed)
     val cacheHit = stats.getQuery.getCacheHit
     logger.info(s"Total bytes processed: $bytes, cache hit: $cacheHit")
+  }
+
+  // =======================================================================
+  // Legacy vs SQL 2011
+  // =======================================================================
+
+  private val isLegacySqlCache: LoadingCache[(String, Boolean), JBoolean] = CacheBuilder
+    .newBuilder()
+    .build(new CacheLoader[(String, Boolean), JBoolean] {
+      override def load(key: (String, Boolean)): JBoolean =
+        new JBoolean(isLegacySqlImpl(key._1, key._2))
+    })
+
+  private def isLegacySql(sqlQuery: String, flattenResults: Boolean): Boolean =
+    isLegacySqlCache.get((sqlQuery, flattenResults))
+
+  private def isLegacySqlImpl(sqlQuery: String, flattenResults: Boolean): Boolean = {
+    def run(useLegacySql: Boolean) = {
+      val queryConfig = createJobConfigurationQuery(
+        sqlQuery, temporaryTable, flattenResults, useLegacySql)
+      val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(true)
+      val job = new Job().setConfiguration(jobConfig)
+      bigquery.jobs().insert(projectId, job).execute()
+    }
+    try {
+      run(false)
+      false
+    } catch {
+      case e: GoogleJsonResponseException =>
+        if (e.getDetails.getErrors.get(0).getReason == "invalidQuery") {
+          run(true)
+          true
+        } else {
+          throw e
+        }
+    }
   }
 
   // =======================================================================
