@@ -26,7 +26,8 @@ import com.trueaccord.scalapb.{ScalaPbPlugin => PB}
 val beamVersion = "0.2.0-incubating"
 val algebirdVersion = "0.12.1"
 val avroVersion = "1.7.7"
-val bigtableVersion = "0.9.0"
+val bigQueryVersion = "v2-rev317-1.22.0"
+val bigtableVersion = "0.9.1"
 val breezeVersion ="0.12"
 val chillVersion = "0.8.0"
 val commonsIoVersion = "2.5"
@@ -225,6 +226,7 @@ lazy val scioBigQuery: Project = Project(
     description := "Scio add-on for Google BigQuery",
     libraryDependencies ++= beamDependencies,
     libraryDependencies ++= Seq(
+      "com.google.apis" % "google-api-services-bigquery" % bigQueryVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.joda" % "joda-convert" % jodaConvertVersion,
