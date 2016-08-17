@@ -137,22 +137,34 @@ class BigQueryClient private (private val projectId: String,
 
   /** Get schema for a query without executing it. */
   def getQuerySchema(sqlQuery: String): TableSchema = withCacheKey(sqlQuery) {
-    prepareStagingDataset()
+    if (isLegacySql(sqlQuery, flattenResults = false)) {
+      // Dry-run not supported for legacy query, using view as a work around
+      logger.info("Getting legacy query schema with dry-run")
+      prepareStagingDataset()
 
-    // Create temporary table view and get schema
-    val table = temporaryTable
-    logger.info(s"Creating temporary view ${BigQueryIO.toTableSpec(table)}")
-    val view = new ViewDefinition().setQuery(sqlQuery)
-    val viewTable = new Table().setView(view).setTableReference(table)
-    val schema = bigquery
-      .tables().insert(table.getProjectId, table.getDatasetId, viewTable)
-      .execute().getSchema
+      // Create temporary table view and get schema
+      val table = temporaryTable
+      logger.info(s"Creating temporary view ${BigQueryIO.toTableSpec(table)}")
+      val view = new ViewDefinition().setQuery(sqlQuery)
+      val viewTable = new Table().setView(view).setTableReference(table)
+      val schema = bigquery
+        .tables().insert(table.getProjectId, table.getDatasetId, viewTable)
+        .execute().getSchema
 
-    // Delete temporary table
-    logger.info(s"Deleting temporary view ${BigQueryIO.toTableSpec(table)}")
-    bigquery.tables().delete(table.getProjectId, table.getDatasetId, table.getTableId).execute()
+      // Delete temporary table
+      logger.info(s"Deleting temporary view ${BigQueryIO.toTableSpec(table)}")
+      bigquery.tables().delete(table.getProjectId, table.getDatasetId, table.getTableId).execute()
 
-    schema
+      schema
+    } else {
+      // Get query schema via dry-run
+      logger.info("Getting SQL query schema with dry-run")
+      val queryConfig = createJobConfigurationQuery(
+        sqlQuery, temporaryTable, flattenResults = false, useLegacySql = false)
+      val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(true)
+      val job = new Job().setConfiguration(jobConfig)
+      bigquery.jobs().insert(projectId, job).execute().getStatistics.getQuery.getSchema
+    }
   }
 
   /** Get rows from a query. */
@@ -371,9 +383,14 @@ class BigQueryClient private (private val projectId: String,
     override def waitForResult(): Unit = self.waitForJobs(this)
     override lazy val jobReference: Option[JobReference] = {
       prepareStagingDataset()
-      logger.info(s"Executing query: $sqlQuery")
+      val isLegacy = isLegacySql(sqlQuery, flattenResults)
+      if (isLegacy) {
+        logger.info(s"Executing legacy query: $sqlQuery")
+      } else {
+        logger.info(s"Executing SQL query: $sqlQuery")
+      }
       val queryConfig = createJobConfigurationQuery(
-        sqlQuery, destinationTable, flattenResults, useLegacySql = true)
+        sqlQuery, destinationTable, flattenResults, isLegacy)
       val jobConfig = new JobConfiguration().setQuery(queryConfig)
       val jobReference = createJobReference(projectId, JOB_ID_PREFIX)
       val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
