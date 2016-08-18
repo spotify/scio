@@ -206,6 +206,7 @@ lazy val scioTest: Project = Project(
     description := "Scio helpers for ScalaTest",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % scalaTestVersion,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test",
       // DataFlow testing requires junit and hamcrest
       "junit" % "junit" % junitVersion,
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion
@@ -225,8 +226,9 @@ lazy val scioBigQuery: Project = Project(
       dataflowSdkDependency,
       "com.google.apis" % "google-api-services-bigquery" % bigQueryVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.joda" % "joda-convert" % jodaConvertVersion,
+      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalaTestVersion % "test,it"
     ),
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
