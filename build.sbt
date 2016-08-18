@@ -219,7 +219,7 @@ lazy val scioTest: Project = Project(
 lazy val scioBigQuery: Project = Project(
   "scio-bigquery",
   file("scio-bigquery"),
-  settings = commonSettings ++ Seq(
+  settings = commonSettings ++ Defaults.itSettings ++ Seq(
     description := "Scio add-on for Google BigQuery",
     libraryDependencies ++= Seq(
       dataflowSdkDependency,
@@ -227,7 +227,7 @@ lazy val scioBigQuery: Project = Project(
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.joda" % "joda-convert" % jodaConvertVersion,
-      "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+      "org.scalatest" %% "scalatest" % scalaTestVersion % "test,it"
     ),
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
     libraryDependencies ++= (
@@ -238,7 +238,7 @@ lazy val scioBigQuery: Project = Project(
     ),
     addCompilerPlugin(paradiseDependency)
   )
-)
+).configs(IntegrationTest)
 
 lazy val scioBigtable: Project = Project(
   "scio-bigtable",
