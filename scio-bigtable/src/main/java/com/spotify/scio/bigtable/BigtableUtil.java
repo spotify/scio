@@ -56,25 +56,28 @@ public final class BigtableUtil {
 
     final ChannelPool channelPool = ChannelPoolCreator.createPool(bigtableOptions.getInstanceAdminHost());
 
-    final BigtableInstanceClient bigtableInstanceClient = new BigtableInstanceGrpcClient(channelPool);
+    try {
+      final BigtableInstanceClient bigtableInstanceClient = new BigtableInstanceGrpcClient(channelPool);
 
-    final String instanceName = bigtableOptions.getInstanceName().toString();
+      final String instanceName = bigtableOptions.getInstanceName().toString();
 
-    // Fetch clusters in Bigtable instance
-    final ListClustersRequest clustersRequest = ListClustersRequest.newBuilder().setParent(instanceName).build();
-    final ListClustersResponse clustersResponse = bigtableInstanceClient.listCluster(clustersRequest);
+      // Fetch clusters in Bigtable instance
+      final ListClustersRequest clustersRequest = ListClustersRequest.newBuilder().setParent(instanceName).build();
+      final ListClustersResponse clustersResponse = bigtableInstanceClient.listCluster(clustersRequest);
 
-    // For each cluster update the number of nodes
-    for (Cluster cluster : clustersResponse.getClustersList()) {
-      final Cluster updatedCluster = Cluster.newBuilder()
-              .setName(cluster.getName())
-              .setServeNodes(numberOfNodes)
-              .build();
-      bigtableInstanceClient.updateCluster(updatedCluster);
+      // For each cluster update the number of nodes
+      for (Cluster cluster : clustersResponse.getClustersList()) {
+        final Cluster updatedCluster = Cluster.newBuilder()
+            .setName(cluster.getName())
+            .setServeNodes(numberOfNodes)
+            .build();
+        bigtableInstanceClient.updateCluster(updatedCluster);
+      }
+
+      // Wait for the new nodes to be provisioned
+      Thread.sleep(TimeUnit.SECONDS.toMillis(sleepDuration.getStandardSeconds()));
+    } finally {
+      channelPool.shutdownNow();
     }
-
-    // Wait for the new nodes to be provisioned
-    Thread.sleep(TimeUnit.SECONDS.toMillis(sleepDuration.getStandardSeconds()));
-    channelPool.shutdownNow();
   }
 }
