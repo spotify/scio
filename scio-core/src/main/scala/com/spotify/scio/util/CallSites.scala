@@ -32,7 +32,8 @@ private[scio] object CallSites {
     // Not in our code base or an interpreter
     (!c.startsWith(scioNs) && !c.startsWith("scala.") && !c.startsWith(dfNs)) ||
       c.startsWith(scioNs + "examples.") || // unless if it's in examples
-      c.startsWith(scioNs + "values.AccumulatorTest") // or this test
+      c.startsWith(scioNs + "values.AccumulatorTest") || // or this test
+      c.startsWith(scioNs + "accumulators.AccumulatorSCollectionTest") // or this test
 
   private def isTransform(e: StackTraceElement): Boolean =
     e.getClassName == scioNs + "values.SCollectionImpl" && e.getMethodName == "transform"
@@ -45,7 +46,21 @@ private[scio] object CallSites {
       .split("\\.").last.replaceAll("\\$$", "")
   }
 
+  /** Get a unique identifier for the current call site. */
   def getCurrent: String = {
+    val name = getCurrentName
+
+    if (!nameCache.contains(name)) {
+      nameCache(name) = 1
+      name
+    } else {
+      nameCache(name) += 1
+      name + nameCache(name)
+    }
+  }
+
+  /** Get current call site name in the form of "method@{file:line}". */
+  def getCurrentName: String = {
     val stack = new Exception().getStackTrace.drop(1)
 
     // find first stack outside of Scio or SDK
@@ -64,15 +79,7 @@ private[scio] object CallSites {
     val method = methodMap.getOrElse(k, k)
     val file = stack(pExt).getFileName
     val line = stack(pExt).getLineNumber
-    val name = s"$method@{$file:$line}"
-
-    if (!nameCache.contains(name)) {
-      nameCache(name) = 1
-      name
-    } else {
-      nameCache(name) += 1
-      name + nameCache(name)
-    }
+    s"$method@{$file:$line}"
   }
 
 }
