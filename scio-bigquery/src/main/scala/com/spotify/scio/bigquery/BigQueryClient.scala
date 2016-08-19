@@ -427,8 +427,14 @@ class BigQueryClient private (private val projectId: String,
         new JBoolean(isLegacySqlImpl(key._1, key._2))
     })
 
-  private def isLegacySql(sqlQuery: String, flattenResults: Boolean): Boolean =
-    isLegacySqlCache.get((sqlQuery, flattenResults))
+  private def isLegacySql(sqlQuery: String, flattenResults: Boolean): Boolean = {
+    val r = isLegacySqlCache.get((sqlQuery, flattenResults))
+    if (r) {
+      logger.warn("Legacy syntax is deprecated, use SQL syntax instead. " +
+        "See https://cloud.google.com/bigquery/sql-reference/")
+    }
+    r
+  }
 
   private def isLegacySqlImpl(sqlQuery: String, flattenResults: Boolean): Boolean = {
     def run(useLegacySql: Boolean) = {
