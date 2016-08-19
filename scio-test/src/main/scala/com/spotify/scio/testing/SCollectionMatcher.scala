@@ -57,7 +57,8 @@ private[scio] trait SCollectionMatcher {
       val g = new SerializableFunction[java.lang.Iterable[Any], Void] {
         val s = size  // defeat closure
         override def apply(input: JIterable[Any]): Void = {
-          assert(input.asScala.size == s)
+          val inputSize = input.asScala.size
+          assert(inputSize == s, s"SCollection had size $inputSize instead of expected size $s")
           null
         }
       }
