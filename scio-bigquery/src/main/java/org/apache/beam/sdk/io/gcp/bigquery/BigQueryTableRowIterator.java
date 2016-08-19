@@ -70,7 +70,7 @@ import javax.annotation.Nullable;
 /**
  * Iterates over all rows in a table.
  */
-class BigQueryTableRowIterator implements AutoCloseable {
+public class BigQueryTableRowIterator implements AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(BigQueryTableRowIterator.class);
 
   @Nullable private TableReference ref;
