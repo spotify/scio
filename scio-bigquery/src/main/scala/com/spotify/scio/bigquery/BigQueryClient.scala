@@ -37,6 +37,7 @@ import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.WriteDisposition._
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import com.google.cloud.dataflow.sdk.options.GcpOptions.DefaultProjectFactory
 import com.google.cloud.dataflow.sdk.util.{BigQueryTableInserter, BigQueryTableRowIterator}
+import com.google.cloud.hadoop.util.ApiErrorExtractor
 import com.google.common.base.Charsets
 import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
 import com.google.common.hash.Hashing
@@ -333,7 +334,7 @@ class BigQueryClient private (private val projectId: String,
       bigquery.datasets().get(projectId, datasetId).execute()
       logger.info(s"Staging dataset $projectId:$datasetId already exists")
     } catch {
-      case e: GoogleJsonResponseException if e.getStatusCode == 404 =>
+      case e: GoogleJsonResponseException if new ApiErrorExtractor().itemNotFound(e) =>
         logger.info(s"Creating staging dataset $projectId:$datasetId")
         val dsRef = new DatasetReference().setProjectId(projectId).setDatasetId(datasetId)
         val ds = new Dataset()
