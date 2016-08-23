@@ -67,8 +67,8 @@ object BigQueryUtil {
     new JsonObjectParser(new JacksonFactory)
       .parseAndClose(new StringReader(schemaString), classOf[TableSchema])
 
-  /** Extract tables from a SQL query. */
-  def extractTables(sqlQuery: String): Set[TableReference] = {
+  /** Extract tables from a legacy query. */
+  def extractLegacyTables(sqlQuery: String): Set[TableReference] = {
     val matcher = BigQueryUtil.QUERY_TABLE_SPEC.matcher(sqlQuery)
     val b = Set.newBuilder[TableReference]
     while (matcher.find()) {
@@ -299,8 +299,7 @@ class BigQueryClient private (private val projectId: String,
 
   private[scio] def newQueryJob(sqlQuery: String, flattenResults: Boolean): QueryJob = {
     try {
-      val sourceTimes =
-        BigQueryUtil.extractTables(sqlQuery).map(t => BigInt(getTable(t).getLastModifiedTime))
+      val sourceTimes = extractTables(sqlQuery).map(t => BigInt(getTable(t).getLastModifiedTime))
       val temp = getCacheDestinationTable(sqlQuery).get
       val time = BigInt(getTable(temp).getLastModifiedTime)
       if (sourceTimes.forall(_ < time)) {
@@ -454,6 +453,16 @@ class BigQueryClient private (private val projectId: String,
           case Failure(f) => throw f
         }
       case Failure(e) => throw e
+    }
+  }
+
+  /** Extract tables touched by a query. */
+  def extractTables(sqlQuery: String): Set[TableReference] = {
+    if (isLegacySql(sqlQuery, flattenResults = false)) {
+      BigQueryUtil.extractLegacyTables(sqlQuery)
+    } else {
+      val job = dryRunCache.get((sqlQuery, false, false)).get
+      job.getStatistics.getQuery.getReferencedTables.asScala.toSet
     }
   }
 
