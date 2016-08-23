@@ -31,6 +31,7 @@ import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.bigquery.model._
 import com.google.api.services.bigquery.{Bigquery, BigqueryScopes}
+import com.google.cloud.hadoop.util.ApiErrorExtractor
 import com.google.common.base.Charsets
 import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
 import com.google.common.hash.Hashing
@@ -333,7 +334,7 @@ class BigQueryClient private (private val projectId: String,
       bigquery.datasets().get(projectId, datasetId).execute()
       logger.info(s"Staging dataset $projectId:$datasetId already exists")
     } catch {
-      case e: GoogleJsonResponseException if e.getStatusCode == 404 =>
+      case e: GoogleJsonResponseException if new ApiErrorExtractor().itemNotFound(e) =>
         logger.info(s"Creating staging dataset $projectId:$datasetId")
         val dsRef = new DatasetReference().setProjectId(projectId).setDatasetId(datasetId)
         val ds = new Dataset()
