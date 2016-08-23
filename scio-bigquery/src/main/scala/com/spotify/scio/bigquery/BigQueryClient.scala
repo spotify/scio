@@ -18,6 +18,7 @@
 package com.spotify.scio.bigquery
 
 import java.io.{File, FileInputStream, StringReader}
+import java.lang.{Boolean => JBoolean}
 import java.util.UUID
 import java.util.regex.Pattern
 
@@ -37,6 +38,7 @@ import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, Wri
 import com.google.cloud.dataflow.sdk.options.GcpOptions.DefaultProjectFactory
 import com.google.cloud.dataflow.sdk.util.{BigQueryTableInserter, BigQueryTableRowIterator}
 import com.google.common.base.Charsets
+import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import org.apache.commons.io.FileUtils
@@ -86,6 +88,7 @@ private[scio] trait QueryJob {
 }
 
 /** A simple BigQuery client. */
+// scalastyle:off number.of.methods
 class BigQueryClient private (private val projectId: String,
                               credential: Credential = null) { self =>
 
@@ -134,22 +137,34 @@ class BigQueryClient private (private val projectId: String,
 
   /** Get schema for a query without executing it. */
   def getQuerySchema(sqlQuery: String): TableSchema = withCacheKey(sqlQuery) {
-    prepareStagingDataset()
+    if (isLegacySql(sqlQuery, flattenResults = false)) {
+      // Dry-run not supported for legacy query, using view as a work around
+      logger.info("Getting legacy query schema with dry-run")
+      prepareStagingDataset()
 
-    // Create temporary table view and get schema
-    val table = temporaryTable(TABLE_PREFIX)
-    logger.info(s"Creating temporary view ${BigQueryIO.toTableSpec(table)}")
-    val view = new ViewDefinition().setQuery(sqlQuery)
-    val viewTable = new Table().setView(view).setTableReference(table)
-    val schema = bigquery
-      .tables().insert(table.getProjectId, table.getDatasetId, viewTable)
-      .execute().getSchema
+      // Create temporary table view and get schema
+      val table = temporaryTable
+      logger.info(s"Creating temporary view ${BigQueryIO.toTableSpec(table)}")
+      val view = new ViewDefinition().setQuery(sqlQuery)
+      val viewTable = new Table().setView(view).setTableReference(table)
+      val schema = bigquery
+        .tables().insert(table.getProjectId, table.getDatasetId, viewTable)
+        .execute().getSchema
 
-    // Delete temporary table
-    logger.info(s"Deleting temporary view ${BigQueryIO.toTableSpec(table)}")
-    bigquery.tables().delete(table.getProjectId, table.getDatasetId, table.getTableId).execute()
+      // Delete temporary table
+      logger.info(s"Deleting temporary view ${BigQueryIO.toTableSpec(table)}")
+      bigquery.tables().delete(table.getProjectId, table.getDatasetId, table.getTableId).execute()
 
-    schema
+      schema
+    } else {
+      // Get query schema via dry-run
+      logger.info("Getting SQL query schema with dry-run")
+      val queryConfig = createJobConfigurationQuery(
+        sqlQuery, temporaryTable, flattenResults = false, useLegacySql = false)
+      val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(true)
+      val job = new Job().setConfiguration(jobConfig)
+      bigquery.jobs().insert(projectId, job).execute().getStatistics.getQuery.getSchema
+    }
   }
 
   /** Get rows from a query. */
@@ -295,7 +310,7 @@ class BigQueryClient private (private val projectId: String,
           override val table: TableReference = temp
         }
       } else {
-        val temp = temporaryTable(TABLE_PREFIX)
+        val temp = temporaryTable
         logger.info(s"Cache invalid for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
@@ -303,7 +318,7 @@ class BigQueryClient private (private val projectId: String,
       }
     } catch {
       case NonFatal(_) =>
-        val temp = temporaryTable(TABLE_PREFIX)
+        val temp = temporaryTable
         logger.info(s"Cache miss for query: $sqlQuery")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
@@ -334,9 +349,9 @@ class BigQueryClient private (private val projectId: String,
     }
   }
 
-  private def temporaryTable(prefix: String): TableReference = {
+  private def temporaryTable: TableReference = {
     val now = Instant.now().toString(TIME_FORMATTER)
-    val tableId = prefix + "_" + now + "_" + Random.nextInt(Int.MaxValue)
+    val tableId = TABLE_PREFIX + "_" + now + "_" + Random.nextInt(Int.MaxValue)
     new TableReference()
       .setProjectId(projectId)
       .setDatasetId(BigQueryClient.stagingDataset)
@@ -348,22 +363,34 @@ class BigQueryClient private (private val projectId: String,
     new JobReference().setProjectId(projectId).setJobId(fullJobId)
   }
 
+  private def createJobConfigurationQuery(sqlQuery: String,
+                                          destinationTable: TableReference,
+                                          flattenResults: Boolean,
+                                          useLegacySql: Boolean): JobConfigurationQuery =
+    new JobConfigurationQuery()
+      .setQuery(sqlQuery)
+      .setUseLegacySql(useLegacySql)
+      .setAllowLargeResults(true)
+      .setFlattenResults(flattenResults)
+      .setPriority(PRIORITY)
+      .setCreateDisposition("CREATE_IF_NEEDED")
+      .setWriteDisposition("WRITE_EMPTY")
+      .setDestinationTable(destinationTable)
+
   private def delayedQueryJob(sqlQuery: String,
                               destinationTable: TableReference,
                               flattenResults: Boolean): QueryJob = new QueryJob {
     override def waitForResult(): Unit = self.waitForJobs(this)
     override lazy val jobReference: Option[JobReference] = {
       prepareStagingDataset()
-      logger.info(s"Executing query: $sqlQuery")
-      val queryConfig: JobConfigurationQuery = new JobConfigurationQuery()
-        .setQuery(sqlQuery)
-        .setAllowLargeResults(true)
-        .setFlattenResults(flattenResults)
-        .setPriority(PRIORITY)
-        .setCreateDisposition("CREATE_IF_NEEDED")
-        .setWriteDisposition("WRITE_EMPTY")
-        .setDestinationTable(destinationTable)
-
+      val isLegacy = isLegacySql(sqlQuery, flattenResults)
+      if (isLegacy) {
+        logger.info(s"Executing legacy query: $sqlQuery")
+      } else {
+        logger.info(s"Executing SQL query: $sqlQuery")
+      }
+      val queryConfig = createJobConfigurationQuery(
+        sqlQuery, destinationTable, flattenResults, isLegacy)
       val jobConfig = new JobConfiguration().setQuery(queryConfig)
       val jobReference = createJobReference(projectId, JOB_ID_PREFIX)
       val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
@@ -387,6 +414,48 @@ class BigQueryClient private (private val projectId: String,
     val bytes = FileUtils.byteCountToDisplaySize(stats.getQuery.getTotalBytesProcessed)
     val cacheHit = stats.getQuery.getCacheHit
     logger.info(s"Total bytes processed: $bytes, cache hit: $cacheHit")
+  }
+
+  // =======================================================================
+  // Legacy vs SQL 2011
+  // =======================================================================
+
+  private val isLegacySqlCache: LoadingCache[(String, Boolean), JBoolean] = CacheBuilder
+    .newBuilder()
+    .build(new CacheLoader[(String, Boolean), JBoolean] {
+      override def load(key: (String, Boolean)): JBoolean =
+        new JBoolean(isLegacySqlImpl(key._1, key._2))
+    })
+
+  private def isLegacySql(sqlQuery: String, flattenResults: Boolean): Boolean = {
+    val r = isLegacySqlCache.get((sqlQuery, flattenResults))
+    if (r) {
+      logger.warn("Legacy syntax is deprecated, use SQL syntax instead. " +
+        "See https://cloud.google.com/bigquery/sql-reference/")
+    }
+    r
+  }
+
+  private def isLegacySqlImpl(sqlQuery: String, flattenResults: Boolean): Boolean = {
+    def run(useLegacySql: Boolean) = {
+      val queryConfig = createJobConfigurationQuery(
+        sqlQuery, temporaryTable, flattenResults, useLegacySql)
+      val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(true)
+      val job = new Job().setConfiguration(jobConfig)
+      bigquery.jobs().insert(projectId, job).execute()
+    }
+    try {
+      run(false)
+      false
+    } catch {
+      case e: GoogleJsonResponseException =>
+        if (e.getDetails.getErrors.get(0).getReason == "invalidQuery") {
+          run(true)
+          true
+        } else {
+          throw e
+        }
+    }
   }
 
   // =======================================================================
@@ -431,6 +500,7 @@ class BigQueryClient private (private val projectId: String,
   private def tableCacheFile(key: String): File = cacheFile(key, ".table.txt")
 
 }
+// scalastyle:on number.of.methods
 
 /** Companion object for [[BigQueryClient]]. */
 object BigQueryClient {

@@ -26,6 +26,7 @@ import com.trueaccord.scalapb.{ScalaPbPlugin => PB}
 val dataflowSdkVersion = "1.6.1"
 val algebirdVersion = "0.12.1"
 val avroVersion = "1.7.7"
+val bigQueryVersion = "v2-rev317-1.22.0"
 val bigtableVersion = "0.9.1"
 val breezeVersion ="0.12"
 val chillVersion = "0.8.0"
@@ -205,6 +206,7 @@ lazy val scioTest: Project = Project(
     description := "Scio helpers for ScalaTest",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % scalaTestVersion,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test",
       // DataFlow testing requires junit and hamcrest
       "junit" % "junit" % junitVersion,
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion
@@ -218,14 +220,16 @@ lazy val scioTest: Project = Project(
 lazy val scioBigQuery: Project = Project(
   "scio-bigquery",
   file("scio-bigquery"),
-  settings = commonSettings ++ Seq(
+  settings = commonSettings ++ Defaults.itSettings ++ Seq(
     description := "Scio add-on for Google BigQuery",
     libraryDependencies ++= Seq(
       dataflowSdkDependency,
+      "com.google.apis" % "google-api-services-bigquery" % bigQueryVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.joda" % "joda-convert" % jodaConvertVersion,
-      "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
+      "org.scalatest" %% "scalatest" % scalaTestVersion % "test,it"
     ),
     libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
     libraryDependencies ++= (
@@ -236,7 +240,7 @@ lazy val scioBigQuery: Project = Project(
     ),
     addCompilerPlugin(paradiseDependency)
   )
-)
+).configs(IntegrationTest)
 
 lazy val scioBigtable: Project = Project(
   "scio-bigtable",
