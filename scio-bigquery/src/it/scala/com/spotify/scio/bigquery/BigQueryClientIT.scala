@@ -17,6 +17,7 @@
 
 package com.spotify.scio.bigquery
 
+import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -46,6 +47,20 @@ class BigQueryClientIT extends FlatSpec with Matchers {
     ).asJava)
     bq.getQuerySchema(sqlQuery) should equal (expected)
   }
+
+  // scalastyle:off no.whitespace.before.left.bracket
+  it should "fail invalid legacy syntax" in {
+    (the [GoogleJsonResponseException] thrownBy {
+      bq.getQuerySchema("SELECT word, count FROM [bigquery-public-data:samples.shakespeare]")
+    }).getDetails.getCode should be (400)
+  }
+
+  it should "fail invalid SQL syntax" in {
+    (the [GoogleJsonResponseException] thrownBy {
+      bq.getQuerySchema("SELECT word, count FROM `bigquery-public-data.samples.shakespeare`")
+    }).getDetails.getCode should be (400)
+  }
+  // scalastyle:on no.whitespace.before.left.bracket
 
   "getQueryRows" should "work with legacy syntax" in {
     val rows = bq.getQueryRows(legacyQuery).toList
