@@ -9,17 +9,21 @@ cache:
     - $HOME/.sbt/boot
     - $HOME/.ivy2/cache
 
-before_script:
-  - ./scripts/travis.sh
+# GCP credentials for integration test
+before_install:
+  - openssl aes-256-cbc -K $encrypted_1d86b5bcde73_key -iv $encrypted_1d86b5bcde73_iv -in scripts/data-integration-test-421ab9f796e8.json.enc -out scripts/data-integration-test-421ab9f796e8.json -d
+
 script:
   - if [[ "${TRAVIS_SCALA_VERSION%.*}" == "2.10" ]]; then
+      ./scripts/travis.sh;
       sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean test;
     else
-      sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean scalastyle coverage test coverageReport coverageAggregate;
+      sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=data-integration-test -Dbigquery.secret=scripts/data-integration-test-421ab9f796e8.json clean scalastyle coverage test it:test coverageReport coverageAggregate;
     fi
 
-  # Test REPL:
+  # Test REPL
   - ./scripts/it-repl.sh $TRAVIS_SCALA_VERSION
+
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" | xargs rm
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
@@ -45,6 +49,7 @@ deploy:
     scala: 2.11.8
     tags: true
 
+# Sonatype credentials
 env:
   global:
   - secure: ptfQvlANdAWkOt7dDWvrHBh4cKVbtbMlZvcelLpdH1xJe1p/bqtKyye6/UC9mN33SIkRpn4DsDKltPlGrwwWEhxBVHelIX4Csmdwxg7Rg+/4G4LTpuiOtjsxh+dsqEBTRGIoF4HI1ioZSbGEetTg8h4RHv8DAyLWAaDZnu8tsTHyo/LJIiejlNQ9ILke8zcJvaNp59O0Vq9IkqtNZLGkR2MF1zNpF/FZYKLcoXJEc9QBkiOBOJYgPlTLXEZnt8oAGYl0XriUtapKUAt6lmHPsJ07UKmiVc6W4Rkj4KRqna3kjv12Cu8EuzTz4Rzw2h3QmyJMfee/AtVvQDNJI4Ww+3rSgdihzEWFe5jM75rxEOMT1HNDK38U/nt8oXQPcoUzOyp8B+IGyP5X1+DeybzQHklPbhllmc+cyowQF/AvGoEt1Urfat87daxHcEt7so0/gdo0QetoRGkVyrGIjD2R99Rond5Ug29HNvoBOFNE6CknogdGXurwC3NhDIxkx5CUUh1jUnx5FoLMq3FEBZqfv/8XRx21fMVG6b46h+aW2TDV56g9okhhYc72pSUCvrzURdE5VD/mgjYgnjPZEP/14zTmISAhiaU8KZQQbFUAXX+MeZwMU2LZqhSis9iN583pXV+JprkbsXZ2XO/tHks1BsemDtp+J9J1lHLJsCZuhRo=
