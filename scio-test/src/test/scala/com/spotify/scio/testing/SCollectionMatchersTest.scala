@@ -20,7 +20,7 @@ package com.spotify.scio.testing
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 
 // scalastyle:off no.whitespace.before.left.bracket
-class SCollectionMatcherTest extends PipelineSpec {
+class SCollectionMatchersTest extends PipelineSpec {
 
   "SCollectionMatch" should "support containInAnyOrder" in {
     runWithContext {
