@@ -303,7 +303,7 @@ class BigQueryClient private (private val projectId: String,
       val temp = getCacheDestinationTable(sqlQuery).get
       val time = BigInt(getTable(temp).getLastModifiedTime)
       if (sourceTimes.forall(_ < time)) {
-        logger.info(s"Cache hit for query: $sqlQuery")
+        logger.info(s"Cache hit for query: `$sqlQuery`")
         logger.info(s"Existing destination table: ${BigQueryIO.toTableSpec(temp)}")
         new QueryJob {
           override def waitForResult(): Unit = {}
@@ -313,7 +313,7 @@ class BigQueryClient private (private val projectId: String,
         }
       } else {
         val temp = temporaryTable
-        logger.info(s"Cache invalid for query: $sqlQuery")
+        logger.info(s"Cache invalid for query: `$sqlQuery`")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
         delayedQueryJob(sqlQuery, temp, flattenResults)
@@ -321,7 +321,7 @@ class BigQueryClient private (private val projectId: String,
     } catch {
       case NonFatal(_) =>
         val temp = temporaryTable
-        logger.info(s"Cache miss for query: $sqlQuery")
+        logger.info(s"Cache miss for query: `$sqlQuery`")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
         delayedQueryJob(sqlQuery, temp, flattenResults)
@@ -387,9 +387,9 @@ class BigQueryClient private (private val projectId: String,
       prepareStagingDataset()
       val isLegacy = isLegacySql(sqlQuery, flattenResults)
       if (isLegacy) {
-        logger.info(s"Executing legacy query: $sqlQuery")
+        logger.info(s"Executing legacy query: `$sqlQuery`")
       } else {
-        logger.info(s"Executing SQL query: $sqlQuery")
+        logger.info(s"Executing SQL query: `$sqlQuery`")
       }
       val queryConfig = createJobConfigurationQuery(
         sqlQuery, destinationTable, flattenResults, isLegacy)
@@ -406,7 +406,7 @@ class BigQueryClient private (private val projectId: String,
     val jobId = job.getJobReference.getJobId
     val stats = job.getStatistics
     logger.info(s"Query completed: jobId: $jobId")
-    logger.info(s"Query: $sqlQuery")
+    logger.info(s"Query: `$sqlQuery`")
 
     val elapsed = PERIOD_FORMATTER.print(new Period(stats.getEndTime - stats.getCreationTime))
     val pending = PERIOD_FORMATTER.print(new Period(stats.getStartTime - stats.getCreationTime))
