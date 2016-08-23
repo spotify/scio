@@ -18,15 +18,14 @@
 package com.spotify.scio.bigquery
 
 import java.io.{File, FileInputStream, StringReader}
-import java.lang.{Boolean => JBoolean}
 import java.util.UUID
 import java.util.regex.Pattern
 
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
-import com.google.api.client.http.{HttpRequest, HttpRequestInitializer}
 import com.google.api.client.http.javanet.NetHttpTransport
+import com.google.api.client.http.{HttpRequest, HttpRequestInitializer}
 import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.bigquery.model._
@@ -49,7 +48,7 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
-import scala.util.{Random, Try}
+import scala.util.{Failure, Random, Success, Try}
 
 /** Utility for BigQuery data types. */
 object BigQueryUtil {
@@ -421,41 +420,37 @@ class BigQueryClient private (private val projectId: String,
   // Legacy vs SQL 2011
   // =======================================================================
 
-  private val isLegacySqlCache: LoadingCache[(String, Boolean), JBoolean] = CacheBuilder
+  private val dryRunCache: LoadingCache[(String, Boolean, Boolean), Try[Job]] = CacheBuilder
     .newBuilder()
-    .build(new CacheLoader[(String, Boolean), JBoolean] {
-      override def load(key: (String, Boolean)): JBoolean =
-        new JBoolean(isLegacySqlImpl(key._1, key._2))
+    .build(new CacheLoader[(String, Boolean, Boolean), Try[Job]] {
+      override def load(key: (String, Boolean, Boolean)): Try[Job] = Try {
+        val (sqlQuery, flattenResults, useLegacySql) = key
+        val queryConfig = createJobConfigurationQuery(
+          sqlQuery, temporaryTable, flattenResults, useLegacySql)
+        val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(true)
+        val job = new Job().setConfiguration(jobConfig)
+        bigquery.jobs().insert(projectId, job).execute()
+      }
     })
 
   private def isLegacySql(sqlQuery: String, flattenResults: Boolean): Boolean = {
-    val r = isLegacySqlCache.get((sqlQuery, flattenResults))
-    if (r) {
-      logger.warn("Legacy syntax is deprecated, use SQL syntax instead. " +
-        "See https://cloud.google.com/bigquery/sql-reference/")
-    }
-    r
-  }
+    def isInvalidQuery(e: GoogleJsonResponseException): Boolean =
+      e.getDetails.getErrors.get(0).getReason == "invalidQuery"
 
-  private def isLegacySqlImpl(sqlQuery: String, flattenResults: Boolean): Boolean = {
-    def run(useLegacySql: Boolean) = {
-      val queryConfig = createJobConfigurationQuery(
-        sqlQuery, temporaryTable, flattenResults, useLegacySql)
-      val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(true)
-      val job = new Job().setConfiguration(jobConfig)
-      bigquery.jobs().insert(projectId, job).execute()
-    }
-    try {
-      run(false)
-      false
-    } catch {
-      case e: GoogleJsonResponseException =>
-        if (e.getDetails.getErrors.get(0).getReason == "invalidQuery") {
-          run(true)
-          true
-        } else {
-          throw e
+    // dry run with SQL syntax first
+    dryRunCache.get((sqlQuery, flattenResults, false)) match {
+      case Success(_) => false
+      case Failure(e: GoogleJsonResponseException) if isInvalidQuery(e) =>
+        // dry run with legacy syntax next
+        dryRunCache.get((sqlQuery, flattenResults, true)) match {
+          case Success(_) =>
+            logger.warn("Legacy syntax is deprecated, use SQL syntax instead. " +
+              "See https://cloud.google.com/bigquery/sql-reference/")
+            logger.warn(s"Legacy query: `$sqlQuery`")
+            true
+          case Failure(f) => throw f
         }
+      case Failure(e) => throw e
     }
   }
 
