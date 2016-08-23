@@ -127,13 +127,16 @@ class BigQueryClient private (private val projectId: String,
     .appendSecondsWithOptionalMillis().appendSuffix("s")
     .toFormatter
 
-  private def inConsole =
+  private def isInteractive =
     Thread
       .currentThread()
       .getStackTrace
-      .exists(_.getClassName.startsWith("scala.tools.nsc.interpreter."))
+      .exists { e =>
+        e.getClassName.startsWith("scala.tools.nsc.interpreter.") ||
+          e.getClassName.startsWith("org.scalatest.tools.")
+      }
 
-  private val PRIORITY = if (inConsole) "INTERACTIVE" else "BATCH"
+  private val PRIORITY = if (isInteractive) "INTERACTIVE" else "BATCH"
 
   /** Get schema for a query without executing it. */
   def getQuerySchema(sqlQuery: String): TableSchema = withCacheKey(sqlQuery) {
