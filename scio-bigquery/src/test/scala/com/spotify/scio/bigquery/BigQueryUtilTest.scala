@@ -44,7 +44,7 @@ class BigQueryUtilTest extends FlatSpec with Matchers {
   "extractTables" should "work" in {
     val t1 = BigQueryIO.parseTableSpec("my-project:dataset_a.table_a")
     val t2 = BigQueryIO.parseTableSpec("dataset_b.table_b")
-    BigQueryUtil.extractTables(
+    BigQueryUtil.extractLegacyTables(
       """
         |SELECT col1, col2
         |FROM [my-project:dataset_a.table_a] JOIN [dataset_b.table_b]
