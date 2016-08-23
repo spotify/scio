@@ -29,7 +29,8 @@ import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
-private[scio] trait SCollectionMatcher {
+/** Trait with ScalaTest [[Matcher]]s for [[SCollection]]s. */
+trait SCollectionMatchers {
 
   private def m(f: () => Any): MatchResult = {
     val r = try { f(); true } catch { case NonFatal(_) => false }

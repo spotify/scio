@@ -22,13 +22,8 @@ import com.spotify.scio.values.SCollection
 
 import scala.reflect.ClassTag
 
-/**
- * Trait with helper methods for unit testing pipelines.
- *
- * @see com.spotify.scio.testing.PipelineSpec for a examples
- *
- */
-trait PipelineSpecHelper extends SCollectionMatcher {
+/** Trait with utility methods for unit testing pipelines. */
+trait PipelineTestUtils {
 
   /**
    * Test pipeline components with a [[ScioContext]].
