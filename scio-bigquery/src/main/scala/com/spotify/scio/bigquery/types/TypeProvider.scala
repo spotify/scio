@@ -77,17 +77,20 @@ private[types] object TypeProvider {
     import c.universe._
     checkMacroEnclosed(c)
 
-    val r = annottees.map(_.tree) match {
+    val (r, name) = annottees.map(_.tree) match {
       case List(q"case class $name(..$fields) { ..$body }") =>
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SType)}.schemaOf[$name]"
         val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${name.toString}, indent)"
-        q"""${caseClass(c)(name, fields, body)}
+        (q"""${caseClass(c)(name, fields, body)}
             ${companion(c)(name, Nil, Seq(defSchema, defToPrettyString), fields.asInstanceOf[Seq[Tree]].size)}
-        """
+        """, name)
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
     debug(s"TypeProvider.toTableImpl:")
     debug(r)
+
+    if(isRunningInIntelliJ) dumpPrettyTreeCode(c)(r, s"$name.scala")
+
     c.Expr[Any](r)
   }
 
