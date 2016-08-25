@@ -496,12 +496,10 @@ class BigQueryClient private (private val projectId: String,
 
   private def cacheFile(key: String, suffix: String): File = {
     val cacheDir = BigQueryClient.cacheDirectory
-    val outputFile = new File(cacheDir)
-    if (!outputFile.exists()) {
-      outputFile.mkdirs()
-    }
-    val filename = Hashing.sha1().hashString(key, Charsets.UTF_8).toString.substring(0, 32) + suffix
-    new File(s"$cacheDir/$filename")
+    val filename = Hashing.murmur3_128().hashString(key, Charsets.UTF_8).toString + suffix
+    val cacheFile = new File(s"$cacheDir/$filename")
+    Files.createParentDirs(cacheFile)
+    cacheFile
   }
 
   private def schemaCacheFile(key: String): File = cacheFile(key, ".schema.json")
