@@ -11,14 +11,21 @@ cache:
 
 # GCP credentials for integration test
 before_install:
-  - openssl aes-256-cbc -K $encrypted_1d86b5bcde73_key -iv $encrypted_1d86b5bcde73_iv -in scripts/data-integration-test-421ab9f796e8.json.enc -out scripts/data-integration-test-421ab9f796e8.json -d
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+      openssl aes-256-cbc -K $encrypted_1d86b5bcde73_key -iv $encrypted_1d86b5bcde73_iv -in scripts/data-integration-test-421ab9f796e8.json.enc -out scripts/data-integration-test-421ab9f796e8.json -d;
+    fi
 
 script:
   - if [[ "${TRAVIS_SCALA_VERSION%.*}" == "2.10" ]]; then
       ./scripts/travis.sh;
       sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean test;
     else
-      sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=data-integration-test -Dbigquery.secret=scripts/data-integration-test-421ab9f796e8.json clean scalastyle coverage test it:test coverageReport coverageAggregate;
+      if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+        sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=data-integration-test -Dbigquery.secret=scripts/data-integration-test-421ab9f796e8.json clean scalastyle coverage test it:test coverageReport coverageAggregate;
+      else
+        ./scripts/travis.sh;
+        sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean scalastyle coverage test coverageReport coverageAggregate;
+      fi
     fi
 
   # Test REPL
