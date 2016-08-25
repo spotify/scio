@@ -2,7 +2,7 @@
 
 # Cached schema for BigQueryType.fromQuery in TypedBigQueryTornadoes
 mkdir -p .bigquery
-cat << EOF > .bigquery/cbe0eb9cf213ecff2092964f3859ee81.schema.json
+cat << EOF > .bigquery/07fe023d0e229e12f83b3e39c0acf54a.schema.json
 {
   "fields" : [ {
     "mode" : "NULLABLE",
