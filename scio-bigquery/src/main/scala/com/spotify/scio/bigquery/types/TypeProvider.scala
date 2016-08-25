@@ -20,8 +20,11 @@ package com.spotify.scio.bigquery.types
 import java.util.{List => JList}
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import com.google.common.base.Charsets
+import com.google.common.io.Files
 import com.spotify.scio.bigquery.types.MacroUtil._
 import com.spotify.scio.bigquery.{BigQueryClient, BigQueryUtil}
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Map => MMap}
@@ -29,7 +32,7 @@ import scala.reflect.macros._
 
 // scalastyle:off line.size.limit
 private[types] object TypeProvider {
-
+  private val logger = LoggerFactory.getLogger(TypeProvider.getClass)
   private lazy val bigquery: BigQueryClient = BigQueryClient.defaultInstance()
 
   // TODO: scala 2.11
@@ -139,19 +142,22 @@ private[types] object TypeProvider {
 
     val (fields, records) = toFields(schema.getFields)
 
-    val r = annottees.map(_.tree) match {
+    val (r, name) = annottees.map(_.tree) match {
       case List(q"class $name") =>
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SUtil)}.parseSchema(${schema.toString})"
         val s = name.toString()
         val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${name.toString}, indent)"
-        q"""${caseClass(c)(name, fields, Nil)}
+        (q"""${caseClass(c)(name, fields, Nil)}
             ${companion(c)(name, traits, Seq(defSchema, defToPrettyString) ++ overrides, fields.size)}
             ..$records
-        """
+        """, s)
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
     debug(s"TypeProvider.schemaToType[$schema]:")
     debug(r)
+
+    if(isRunningInIntelliJ) dumpPrettyTreeCode(c)(r, s"$name.scala")
+
     c.Expr[Any](r)
   }
   // scalastyle:on cyclomatic.complexity
@@ -233,6 +239,38 @@ private[types] object TypeProvider {
       c.abort(c.enclosingPosition, s"@BigQueryType declaration must be inside a class or object.")
     }
   }
+
+  /**
+   * Check if code is running in IntelliJ IDEA. It may return false positives.
+   *
+   * This is used to mitigate lack of support for Scala macros in IntelliJ.
+   */
+  private def isRunningInIntelliJ = {
+    val classPath = sys.props("java.class.path")
+    classPath.contains("IntelliJ IDEA")
+  }
+
+  private def getBQClassCacheDir = {
+    //TODO: add this as key/value settings with default etc
+    if (sys.props("bigquery.class.cache.directory") != null) {
+      sys.props("bigquery.class.cache.directory")
+    } else {
+      sys.props("java.io.tmpdir") + "bigquery-classes"
+    }
+  }
+
+  private def dumpPrettyTreeCode(c: Context)(tree: c.Tree, fileName: String) = {
+    import c.universe._
+    val code = showCode(tree)
+
+    val classCacheDir = getBQClassCacheDir
+    val classFile = new java.io.File(s"$classCacheDir/$fileName")
+    logger.debug(s"Dumping $classFile")
+
+    Files.createParentDirs(classFile)
+    Files.write(code, classFile, Charsets.UTF_8)
+  }
+
 }
 // scalastyle:on line.size.limit
 
