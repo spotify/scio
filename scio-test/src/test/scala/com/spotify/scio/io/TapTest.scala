@@ -140,6 +140,17 @@ class TapTest extends PipelineSpec {
     FileUtils.deleteDirectory(dir)
   }
 
+  it should "support saveAsTextFile with custom parameters" in {
+    val dir = tmpDir
+    val t = runWithFileFuture {
+      _
+        .parallelize(Seq("a", "b", "c"))
+        .saveAsTextFileWithOptions(dir.getPath)(b => b.withNumShards(1))
+    }
+    verifyTap(t, Set("a", "b", "c"))
+    FileUtils.deleteDirectory(dir)
+  }
+
   it should "support saveAsProtobuf proto version 2" in {
     val dir = tmpDir
     val data = Seq(("a", 1), ("b", 2), ("c", 3))
