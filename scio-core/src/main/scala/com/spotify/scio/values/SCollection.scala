@@ -28,6 +28,7 @@ import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSc
 import com.google.api.services.datastore.DatastoreV1.Entity
 import com.google.cloud.dataflow.sdk.coders.{Coder, TableRowJsonCoder}
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import com.google.cloud.dataflow.sdk.io.TextIO.Write.Bound
 import com.google.cloud.dataflow.sdk.{io => gio}
 import com.google.cloud.dataflow.sdk.runners
 import com.google.cloud.dataflow.sdk.transforms._
@@ -840,6 +841,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   private def textOut(path: String, suffix: String, numShards: Int) =
     gio.TextIO.Write.to(pathWithShards(path)).withNumShards(numShards).withSuffix(suffix)
 
+  private def textOut(path: String)(f: Bound[String] => Bound[String]) =
+    f(gio.TextIO.Write.to(pathWithShards(path)))
+
   private def tableRowJsonOut(path: String, numShards: Int) =
     textOut(path, ".json", numShards).withCoder(TableRowJsonCoder.of())
 
@@ -961,6 +965,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def saveAsTextFile(path: String,
                      suffix: String = ".txt", numShards: Int = 0): Future[Tap[String]] = {
+    saveAsTextFileWithOptions(path) { b =>
+      b.withSuffix(suffix).withNumShards(numShards)
+    }
+  }
+
+  def saveAsTextFileWithOptions(path: String)
+                               (f: Bound[String] => Bound[String]): Future[Tap[String]] = {
     val s = if (classOf[String] isAssignableFrom this.ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
     } else {
@@ -970,7 +981,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       context.testOut(TextIO(path))(s)
       s.saveAsInMemoryTap
     } else {
-      s.applyInternal(textOut(path, suffix, numShards))
+      s.applyInternal(textOut(path)(f))
       context.makeFuture(TextTap(path + "/part-*"))
     }
   }
