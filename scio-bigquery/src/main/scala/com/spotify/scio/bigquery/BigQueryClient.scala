@@ -38,7 +38,6 @@ import com.google.cloud.dataflow.sdk.options.GcpOptions.DefaultProjectFactory
 import com.google.cloud.dataflow.sdk.util.{BigQueryTableInserter, BigQueryTableRowIterator}
 import com.google.cloud.hadoop.util.ApiErrorExtractor
 import com.google.common.base.Charsets
-import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import org.apache.commons.io.FileUtils
@@ -46,6 +45,7 @@ import org.joda.time.format.{DateTimeFormat, PeriodFormatterBuilder}
 import org.joda.time.{Instant, Period}
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.collection.mutable.{Map => MMap}
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
 import scala.util.{Failure, Random, Success, Try}
@@ -66,16 +66,6 @@ object BigQueryUtil {
   def parseSchema(schemaString: String): TableSchema =
     new JsonObjectParser(new JacksonFactory)
       .parseAndClose(new StringReader(schemaString), classOf[TableSchema])
-
-  /** Extract tables from a legacy query. */
-  def extractLegacyTables(sqlQuery: String): Set[TableReference] = {
-    val matcher = BigQueryUtil.QUERY_TABLE_SPEC.matcher(sqlQuery)
-    val b = Set.newBuilder[TableReference]
-    while (matcher.find()) {
-      b += BigQueryIO.parseTableSpec(matcher.group())
-    }
-    b.result()
-  }
 
 }
 
@@ -119,13 +109,16 @@ class BigQueryClient private (private val projectId: String,
   private val logger: Logger = LoggerFactory.getLogger(classOf[BigQueryClient])
 
   private val TABLE_PREFIX = "scio_query"
-  private val JOB_ID_PREFIX = "scio_query"
   private val TIME_FORMATTER = DateTimeFormat.forPattern("yyyyMMddHHmmss")
   private val PERIOD_FORMATTER = new PeriodFormatterBuilder()
     .appendHours().appendSuffix("h")
     .appendMinutes().appendSuffix("m")
     .appendSecondsWithOptionalMillis().appendSuffix("s")
     .toFormatter
+
+  private val STAGING_DATASET_PREFIX = "scio_bigquery_staging_"
+  private val STAGING_DATASET_TABLE_EXPIRATION_MS = 86400000L
+  private val STAGING_DATASET_DESCRIPTION = "Staging dataset for temporary tables"
 
   private def isInteractive =
     Thread
@@ -142,31 +135,31 @@ class BigQueryClient private (private val projectId: String,
   def getQuerySchema(sqlQuery: String): TableSchema = withCacheKey(sqlQuery) {
     if (isLegacySql(sqlQuery, flattenResults = false)) {
       // Dry-run not supported for legacy query, using view as a work around
-      logger.info("Getting legacy query schema with dry-run")
-      prepareStagingDataset()
+      logger.info("Getting legacy query schema with view")
+      val location = extractLocation(sqlQuery)
+      prepareStagingDataset(location)
+      val temp = temporaryTable(location)
 
       // Create temporary table view and get schema
-      val table = temporaryTable
-      logger.info(s"Creating temporary view ${BigQueryIO.toTableSpec(table)}")
+      logger.info(s"Creating temporary view ${BigQueryIO.toTableSpec(temp)}")
       val view = new ViewDefinition().setQuery(sqlQuery)
-      val viewTable = new Table().setView(view).setTableReference(table)
+      val viewTable = new Table().setView(view).setTableReference(temp)
       val schema = bigquery
-        .tables().insert(table.getProjectId, table.getDatasetId, viewTable)
+        .tables().insert(temp.getProjectId, temp.getDatasetId, viewTable)
         .execute().getSchema
 
       // Delete temporary table
-      logger.info(s"Deleting temporary view ${BigQueryIO.toTableSpec(table)}")
-      bigquery.tables().delete(table.getProjectId, table.getDatasetId, table.getTableId).execute()
+      logger.info(s"Deleting temporary view ${BigQueryIO.toTableSpec(temp)}")
+      bigquery.tables().delete(temp.getProjectId, temp.getDatasetId, temp.getTableId).execute()
 
       schema
     } else {
       // Get query schema via dry-run
       logger.info("Getting SQL query schema with dry-run")
-      val queryConfig = createJobConfigurationQuery(
-        sqlQuery, temporaryTable, flattenResults = false, useLegacySql = false)
-      val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(true)
-      val job = new Job().setConfiguration(jobConfig)
-      bigquery.jobs().insert(projectId, job).execute().getStatistics.getQuery.getSchema
+      runQuery(
+        sqlQuery, null,
+        flattenResults = false, useLegacySql = false, dryRun = true)
+        .get.getStatistics.getQuery.getSchema
     }
   }
 
@@ -312,7 +305,6 @@ class BigQueryClient private (private val projectId: String,
           override val table: TableReference = temp
         }
       } else {
-        val temp = temporaryTable
         logger.info(s"Cache invalid for query: `$sqlQuery`")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
@@ -320,7 +312,7 @@ class BigQueryClient private (private val projectId: String,
       }
     } catch {
       case NonFatal(_) =>
-        val temp = temporaryTable
+        val temp = temporaryTable(extractLocation(sqlQuery))
         logger.info(s"Cache miss for query: `$sqlQuery`")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
@@ -328,9 +320,8 @@ class BigQueryClient private (private val projectId: String,
     }
   }
 
-  private def prepareStagingDataset(): Unit = {
-    // Create staging dataset if it does not already exist
-    val datasetId = BigQueryClient.stagingDataset
+  private def prepareStagingDataset(location: String): Unit = {
+    val datasetId = STAGING_DATASET_PREFIX + location.toLowerCase
     try {
       bigquery.datasets().get(projectId, datasetId).execute()
       logger.info(s"Staging dataset $projectId:$datasetId already exists")
@@ -340,9 +331,9 @@ class BigQueryClient private (private val projectId: String,
         val dsRef = new DatasetReference().setProjectId(projectId).setDatasetId(datasetId)
         val ds = new Dataset()
           .setDatasetReference(dsRef)
-          .setDefaultTableExpirationMs(BigQueryClient.STAGING_DATASET_TABLE_EXPIRATION_MS)
-          .setDescription(BigQueryClient.STAGING_DATASET_DESCRIPTION)
-          .setLocation(BigQueryClient.stagingDatasetLocation)
+          .setDefaultTableExpirationMs(STAGING_DATASET_TABLE_EXPIRATION_MS)
+          .setDescription(STAGING_DATASET_DESCRIPTION)
+          .setLocation(location)
         bigquery
           .datasets()
           .insert(projectId, ds)
@@ -351,52 +342,30 @@ class BigQueryClient private (private val projectId: String,
     }
   }
 
-  private def temporaryTable: TableReference = {
+  private def temporaryTable(location: String): TableReference = {
     val now = Instant.now().toString(TIME_FORMATTER)
     val tableId = TABLE_PREFIX + "_" + now + "_" + Random.nextInt(Int.MaxValue)
     new TableReference()
       .setProjectId(projectId)
-      .setDatasetId(BigQueryClient.stagingDataset)
+      .setDatasetId(STAGING_DATASET_PREFIX + location.toLowerCase)
       .setTableId(tableId)
   }
-
-  private def createJobReference(projectId: String, jobIdPrefix: String): JobReference = {
-    val fullJobId = projectId + "-" + UUID.randomUUID().toString
-    new JobReference().setProjectId(projectId).setJobId(fullJobId)
-  }
-
-  private def createJobConfigurationQuery(sqlQuery: String,
-                                          destinationTable: TableReference,
-                                          flattenResults: Boolean,
-                                          useLegacySql: Boolean): JobConfigurationQuery =
-    new JobConfigurationQuery()
-      .setQuery(sqlQuery)
-      .setUseLegacySql(useLegacySql)
-      .setAllowLargeResults(true)
-      .setFlattenResults(flattenResults)
-      .setPriority(PRIORITY)
-      .setCreateDisposition("CREATE_IF_NEEDED")
-      .setWriteDisposition("WRITE_EMPTY")
-      .setDestinationTable(destinationTable)
 
   private def delayedQueryJob(sqlQuery: String,
                               destinationTable: TableReference,
                               flattenResults: Boolean): QueryJob = new QueryJob {
     override def waitForResult(): Unit = self.waitForJobs(this)
     override lazy val jobReference: Option[JobReference] = {
-      prepareStagingDataset()
+      val location = extractLocation(sqlQuery)
+      prepareStagingDataset(location)
       val isLegacy = isLegacySql(sqlQuery, flattenResults)
       if (isLegacy) {
         logger.info(s"Executing legacy query: `$sqlQuery`")
       } else {
         logger.info(s"Executing SQL query: `$sqlQuery`")
       }
-      val queryConfig = createJobConfigurationQuery(
-        sqlQuery, destinationTable, flattenResults, isLegacy)
-      val jobConfig = new JobConfiguration().setQuery(queryConfig)
-      val jobReference = createJobReference(projectId, JOB_ID_PREFIX)
-      val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
-      Some(bigquery.jobs().insert(projectId, job).execute().getJobReference)
+      val tryRun = runQuery(sqlQuery, destinationTable, flattenResults, isLegacy, dryRun = false)
+      Some(tryRun.get.getJobReference)
     }
     override val query: String = sqlQuery
     override val table: TableReference = destinationTable
@@ -419,32 +388,53 @@ class BigQueryClient private (private val projectId: String,
   }
 
   // =======================================================================
-  // Legacy vs SQL 2011
+  // Query handling
   // =======================================================================
 
-  private val dryRunCache: LoadingCache[(String, Boolean, Boolean), Try[Job]] = CacheBuilder
-    .newBuilder()
-    .build(new CacheLoader[(String, Boolean, Boolean), Try[Job]] {
-      override def load(key: (String, Boolean, Boolean)): Try[Job] = Try {
-        val (sqlQuery, flattenResults, useLegacySql) = key
-        val queryConfig = createJobConfigurationQuery(
-          sqlQuery, temporaryTable, flattenResults, useLegacySql)
-        val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(true)
-        val job = new Job().setConfiguration(jobConfig)
-        bigquery.jobs().insert(projectId, job).execute()
+  private val dryRunCache: MMap[(String, Boolean, Boolean), Try[Job]] = MMap.empty
+
+  private def runQuery(sqlQuery: String,
+                       destinationTable: TableReference,
+                       flattenResults: Boolean,
+                       useLegacySql: Boolean,
+                       dryRun: Boolean): Try[Job] = {
+    def run = Try {
+      val queryConfig = new JobConfigurationQuery()
+        .setQuery(sqlQuery)
+        .setUseLegacySql(useLegacySql)
+        .setFlattenResults(flattenResults)
+        .setPriority(PRIORITY)
+        .setCreateDisposition("CREATE_IF_NEEDED")
+        .setWriteDisposition("WRITE_EMPTY")
+      if (!dryRun) {
+        queryConfig.setAllowLargeResults(true).setDestinationTable(destinationTable)
       }
-    })
+      val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(dryRun)
+      val fullJobId = projectId + "-" + UUID.randomUUID().toString
+      val jobReference = new JobReference().setProjectId(projectId).setJobId(fullJobId)
+      val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
+      bigquery.jobs().insert(projectId, job).execute()
+    }
+
+    if (dryRun) {
+      dryRunCache.getOrElseUpdate((sqlQuery, flattenResults, useLegacySql), run)
+    } else {
+      run
+    }
+  }
 
   private def isLegacySql(sqlQuery: String, flattenResults: Boolean): Boolean = {
     def isInvalidQuery(e: GoogleJsonResponseException): Boolean =
       e.getDetails.getErrors.get(0).getReason == "invalidQuery"
+    def dryRunQuery(useLegacySql: Boolean): Try[Job] =
+      runQuery(sqlQuery, null, flattenResults, useLegacySql, dryRun = true)
 
     // dry run with SQL syntax first
-    dryRunCache.get((sqlQuery, flattenResults, false)) match {
+    dryRunQuery(false) match {
       case Success(_) => false
       case Failure(e: GoogleJsonResponseException) if isInvalidQuery(e) =>
         // dry run with legacy syntax next
-        dryRunCache.get((sqlQuery, flattenResults, true)) match {
+        dryRunQuery(true) match {
           case Success(_) =>
             logger.warn("Legacy syntax is deprecated, use SQL syntax instead. " +
               "See https://cloud.google.com/bigquery/sql-reference/")
@@ -456,14 +446,23 @@ class BigQueryClient private (private val projectId: String,
     }
   }
 
-  /** Extract tables touched by a query. */
+  /** Extract tables to be accessed by a query. */
   def extractTables(sqlQuery: String): Set[TableReference] = {
-    if (isLegacySql(sqlQuery, flattenResults = false)) {
-      BigQueryUtil.extractLegacyTables(sqlQuery)
-    } else {
-      val job = dryRunCache.get((sqlQuery, false, false)).get
-      job.getStatistics.getQuery.getReferencedTables.asScala.toSet
-    }
+    val isLegacy = isLegacySql(sqlQuery, flattenResults = false)
+    val tryJob = runQuery(sqlQuery, null, flattenResults = false, isLegacy, dryRun = true)
+    tryJob.get.getStatistics.getQuery.getReferencedTables.asScala.toSet
+  }
+
+  /** Extract locations of tables to be access by a query. */
+  def extractLocation(sqlQuery: String): String = {
+    val locations = extractTables(sqlQuery)
+      .map(t => (t.getProjectId, t.getDatasetId))
+      .map { case (pId, dId) =>
+        val l = bigquery.datasets().get(pId, dId).execute().getLocation
+        if (l != null) l else "US"
+      }
+    require(locations.size == 1, "Tables in the query must be in the same location")
+    locations.head
   }
 
   // =======================================================================
@@ -517,18 +516,6 @@ object BigQueryClient {
   /** System property key for JSON secret path. */
   val SECRET_KEY: String = "bigquery.secret"
 
-  /** System property key for staging dataset. */
-  val STAGING_DATASET_KEY: String = "bigquery.staging_dataset"
-
-  /** Default staging dataset. */
-  val STAGING_DATASET_DEFAULT: String = "scio_bigquery_staging"
-
-  /** System property key for staging dataset location. */
-  val STAGING_DATASET_LOCATION_KEY: String = "bigquery.staging_dataset.location"
-
-  /** Default staging dataset location. */
-  val STAGING_DATASET_LOCATION_DEFAULT: String = "US"
-
   /** System property key for local schema cache directory. */
   val CACHE_DIRECTORY_KEY: String = "bigquery.cache.directory"
 
@@ -546,12 +533,6 @@ object BigQueryClient {
    * Default is 20000 (20 seconds). 0 for an infinite timeout.
    */
   val READ_TIMEOUT_MS_KEY: String = "bigquery.read_timeout"
-
-  /** Table expiration in milliseconds for staging dataset. */
-  val STAGING_DATASET_TABLE_EXPIRATION_MS: Long = 86400000L
-
-  /** Description for staging dataset. */
-  val STAGING_DATASET_DESCRIPTION: String = "Staging dataset for temporary tables"
 
   private val SCOPES = List(BigqueryScopes.BIGQUERY).asJava
 
@@ -607,15 +588,6 @@ object BigQueryClient {
   /** Create a new BigQueryClient instance with the given project and secret file. */
   def apply(project: String, secretFile: File): BigQueryClient =
     new BigQueryClient(project, secretFile)
-
-  private def stagingDataset: String =
-    getPropOrElse(
-      STAGING_DATASET_KEY,
-      STAGING_DATASET_DEFAULT + "_" + stagingDatasetLocation.toLowerCase)
-
-  // Location in create dataset request must be upper case, e.g. US, EU
-  private def stagingDatasetLocation: String =
-    getPropOrElse(STAGING_DATASET_LOCATION_KEY, STAGING_DATASET_LOCATION_DEFAULT).toUpperCase
 
   private def cacheDirectory: String = getPropOrElse(CACHE_DIRECTORY_KEY, CACHE_DIRECTORY_DEFAULT)
 
