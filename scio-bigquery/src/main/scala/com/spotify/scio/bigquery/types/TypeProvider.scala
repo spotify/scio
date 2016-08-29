@@ -72,6 +72,7 @@ private[types] object TypeProvider {
   // def toTableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
   def toTableImpl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
+    checkMacroEnclosed(c)
 
     val r = annottees.map(_.tree) match {
       case List(q"case class $name(..$fields) { ..$body }") =>
@@ -95,6 +96,7 @@ private[types] object TypeProvider {
                           (schema: TableSchema, annottees: Seq[c.Expr[Any]],
                            traits: Seq[c.Tree], overrides: Seq[c.Tree]): c.Expr[Any] = {
     import c.universe._
+    checkMacroEnclosed(c)
 
     // Returns: (raw type, e.g. Int, String, NestedRecord, nested case class definitions)
     def getRawType(tfs: TableFieldSchema): (Tree, Seq[Tree]) = tfs.getType match {
@@ -220,6 +222,17 @@ private[types] object TypeProvider {
       q"override def toTableRow: ($name => ${p(c, GModel)}.TableRow) = ${p(c, SType)}.toTableRow[$name]")
   }
 
+  /** Enforce that the macro is not enclosed by a package, but a class or object instead. */
+  private def checkMacroEnclosed(c: Context): Unit = {
+    // TODO: scala 2.11
+    //if (!c.internal.enclosingOwner.isClass) {
+    // c.abort(c.enclosingPosition,
+    //  "Invalid macro application - must be applied within class/object.")
+    // }
+    if (c.enclosingClass.isEmpty) {
+      c.abort(c.enclosingPosition, s"@BigQueryType declaration must be inside a class or object.")
+    }
+  }
 }
 // scalastyle:on line.size.limit
 
