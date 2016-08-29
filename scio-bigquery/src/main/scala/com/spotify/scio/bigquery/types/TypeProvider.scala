@@ -21,6 +21,7 @@ import java.util.{List => JList}
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.common.base.Charsets
+import com.google.common.hash.{HashCode, Hashing}
 import com.google.common.io.Files
 import com.spotify.scio.bigquery.types.MacroUtil._
 import com.spotify.scio.bigquery.{BigQueryClient, BigQueryUtil}
@@ -84,19 +85,13 @@ private[types] object TypeProvider {
         val caseClassTree = q"""${caseClass(c)(name, fields, body)}"""
         (q"""$caseClassTree
             ${companion(c)(name, Nil, Seq(defSchema, defToPrettyString), fields.asInstanceOf[Seq[Tree]].size)}
-        """, caseClassTree, name)
+        """, caseClassTree, name.toString())
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
     debug(s"TypeProvider.toTableImpl:")
     debug(r)
 
-    if(isRunningInIntelliJ) {
-      // TODO scala 2.11
-      // import c.universe._
-      // showCode(r)
-      val prettyCode = pShowCode(c)(Seq.empty, caseClassTree).mkString("\n")
-      dumpCode(prettyCode, s"$name.scala")
-    }
+    if(isRunningInIntelliJ) dumpCodeForScalaPlugin(c)(Seq.empty, caseClassTree, name)
 
     c.Expr[Any](r)
   }
@@ -155,26 +150,19 @@ private[types] object TypeProvider {
     val (r, caseClassTree, name) = annottees.map(_.tree) match {
       case List(q"class $name") =>
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SUtil)}.parseSchema(${schema.toString})"
-        val s = name.toString()
         val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${name.toString}, indent)"
 
         val caseClassTree = q"""${caseClass(c)(name, fields, Nil)}"""
         (q"""$caseClassTree
             ${companion(c)(name, traits, Seq(defSchema, defToPrettyString) ++ overrides, fields.size)}
             ..$records
-        """, caseClassTree, s)
+        """, caseClassTree, name.toString())
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
     debug(s"TypeProvider.schemaToType[$schema]:")
     debug(r)
 
-    if(isRunningInIntelliJ) {
-      // TODO scala 2.11
-      // import c.universe._
-      // showCode(r)
-      val prettyCode = pShowCode(c)(records, caseClassTree).mkString("\n")
-      dumpCode(prettyCode, s"$name.scala")
-    }
+    if(isRunningInIntelliJ) dumpCodeForScalaPlugin(c)(records, caseClassTree, name)
 
     c.Expr[Any](r)
   }
@@ -290,13 +278,40 @@ private[types] object TypeProvider {
     }
   }
 
-  private def dumpCode(code: String, fileName: String): Unit = {
-    val classCacheDir = getBQClassCacheDir
-    val classFile = new java.io.File(s"$classCacheDir/$fileName")
-    logger.info(s"Dumping $classFile")
+  private def genHashForMacro(owner: String, srcFile: String): String = {
+    Hashing.murmur3_32().newHasher()
+      .putString(owner, Charsets.UTF_8)
+      .putString(srcFile, Charsets.UTF_8)
+      .hash().toString
+  }
 
-    Files.createParentDirs(classFile)
-    Files.write(code, classFile, Charsets.UTF_8)
+  private def dumpCodeForScalaPlugin(c: Context)(records: Seq[c.universe.Tree],
+                                                 caseClassTree: c.universe.Tree,
+                                                 name: String): Unit = {
+    // TODO: scala 2.11
+    // val owner = c.internal.enclosingOwner.fullName
+    import  c.universe._
+    val owner = c.enclosingClass.collect {
+      case m: ModuleDef => m.symbol.fullName
+      case c: ClassDef => c.symbol.fullName
+    }.headOption.getOrElse {
+      c.abort(c.enclosingPosition,
+        "Invalid macro application - must be applied within class/object.")
+    }
+    val srcFile = c.macroApplication.pos.source.path
+    val hash = genHashForMacro(owner, srcFile)
+
+    // TODO scala 2.11
+    // import c.universe._
+    // showCode(r)
+    val prettyCode = pShowCode(c)(records, caseClassTree).mkString("\n")
+    val classCacheDir = getBQClassCacheDir
+    val genSrcFile = new java.io.File(s"$classCacheDir/$name-$hash.scala")
+
+    logger.info(s"Will dump generated $name of $owner from $srcFile to $genSrcFile")
+
+    Files.createParentDirs(genSrcFile)
+    Files.write(prettyCode, genSrcFile, Charsets.UTF_8)
   }
 
 }
