@@ -175,6 +175,20 @@ class JobTestTest extends PipelineSpec {
     }
   }
 
+  def testEmptyAvroFileJob(): Unit = {
+    JobTest[GenericAvroFileJob.type]
+      .args("--input=in.avro", "--output=out.avro")
+      .input(AvroIO(""), (1 to 3).map(newGenericRecord))
+      .output[GenericRecord](AvroIO("out.avro"))(_ should haveSize(0))
+      .run()
+  }
+
+  it should "handle empty Avro file" in {
+    an [AssertionError] should not be thrownBy {
+      testEmptyAvroFileJob()
+    }
+  }
+
   def newTableRow(i: Int): TableRow = TableRow("int_field" -> i)
 
   def testBigQuery(xs: Seq[TableRow]): Unit = {

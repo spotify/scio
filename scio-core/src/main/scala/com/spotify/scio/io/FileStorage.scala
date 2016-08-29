@@ -62,7 +62,9 @@ private trait FileStorage {
     } else {
       new GenericDatumReader[T](schema)
     }
-    new DataFileStream[T](getDirectoryInputStream(path), reader).iterator().asScala
+    Try(
+      new DataFileStream[T](getDirectoryInputStream(path), reader).iterator().asScala
+    ).getOrElse(Iterator[T]())
   }
 
   def textFile: Iterator[String] =
