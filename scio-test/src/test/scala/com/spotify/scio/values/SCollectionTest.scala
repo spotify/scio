@@ -443,4 +443,13 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support timestampBy() with skew"  in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq(1, 2, 3))
+      val r = p.timestampBy(new Instant(_), Duration.millis(1))
+        .withTimestamp.map(kv => (kv._1, kv._2.getMillis))
+      r should containInAnyOrder (Seq((1, 1L), (2, 2L), (3, 3L)))
+    }
+  }
+
 }
