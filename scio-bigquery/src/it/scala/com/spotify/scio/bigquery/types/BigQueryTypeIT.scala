@@ -23,21 +23,25 @@ import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.JavaConverters._
 
-@BigQueryType.fromQuery(
-  "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] WHERE word = 'Romeo'")
-class LegacyT
+object BigQueryTypeIT {
+  @BigQueryType.fromQuery(
+    "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] WHERE word = 'Romeo'")
+  class LegacyT
 
-@BigQueryType.fromQuery(
-  "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` WHERE word = 'Romeo'")
-class SqlT
+  @BigQueryType.fromQuery(
+    "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` WHERE word = 'Romeo'")
+  class SqlT
 
-@BigQueryType.fromTable("bigquery-public-data:samples.shakespeare")
-class FromTableT
+  @BigQueryType.fromTable("bigquery-public-data:samples.shakespeare")
+  class FromTableT
 
-@BigQueryType.toTable
-case class ToTableT(word: String, word_count: Int)
+  @BigQueryType.toTable
+  case class ToTableT(word: String, word_count: Int)
+}
 
 class BigQueryTypeIT extends FlatSpec with Matchers {
+
+  import BigQueryTypeIT._
 
   val bq = BigQueryClient.defaultInstance()
 
