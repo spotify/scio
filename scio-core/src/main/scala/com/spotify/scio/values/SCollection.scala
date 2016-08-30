@@ -774,10 +774,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /**
    * Assign timestamps to values.
+   * With a optional skew
    * @group window
    */
-  def timestampBy(f: T => Instant): SCollection[T] =
-    this.parDo(FunctionsWithWindowedValue.timestampFn(f))
+  def timestampBy(f: T => Instant, allowedTimestampSkew: Duration = Duration.ZERO): SCollection[T] =
+    this.applyTransform(WithTimestamps.of(Functions.serializableFn(f))
+      .withAllowedTimestampSkew(allowedTimestampSkew))
 
   // =======================================================================
   // Write operations

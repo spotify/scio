@@ -51,12 +51,4 @@ private[scio] object FunctionsWithWindowedValue {
     }
   }
 
-  def timestampFn[T](f: T => Instant): DoFn[T, T] = new WindowDoFn[T, T] {
-    val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
-      val t = c.element()
-      c.outputWithTimestamp(t, g(t))
-    }
-  }
-
 }
