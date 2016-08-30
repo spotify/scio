@@ -19,6 +19,7 @@ package com.spotify.scio.bigquery
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import com.google.cloud.dataflow.sdk.io.BigQueryIO
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.JavaConverters._
@@ -31,6 +32,28 @@ class BigQueryClientIT extends FlatSpec with Matchers {
     "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] LIMIT 10"
   val sqlQuery =
     "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` LIMIT 10"
+
+  "extractLocation" should "work with legacy syntax" in {
+    val query = "SELECT word FROM [data-integration-test:samples_%s.shakespeare]"
+    bq.extractLocation(query.format("us")) should equal ("US")
+    bq.extractLocation(query.format("eu")) should equal ("EU")
+  }
+
+  it should "work with SQL syntax" in {
+    val query = "SELECT word FROM `data-integration-test.samples_%s.shakespeare`"
+    bq.extractLocation(query.format("us")) should equal ("US")
+    bq.extractLocation(query.format("eu")) should equal ("EU")
+  }
+
+  "extractTables" should "work with legacy syntax" in {
+    val tableSpec = BigQueryIO.parseTableSpec("bigquery-public-data:samples.shakespeare")
+    bq.extractTables(legacyQuery) should equal (Set(tableSpec))
+  }
+
+  it should "work with SQL syntax" in {
+    val tableSpec = BigQueryIO.parseTableSpec("bigquery-public-data:samples.shakespeare")
+    bq.extractTables(sqlQuery) should equal (Set(tableSpec))
+  }
 
   "getQuerySchema" should "work with legacy syntax" in {
     val expected = new TableSchema().setFields(List(
