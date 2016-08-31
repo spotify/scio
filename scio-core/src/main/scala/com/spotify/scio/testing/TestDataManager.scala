@@ -101,8 +101,8 @@ case class AvroIO[T](path: String) extends TestIO(path)
 
 case class BigQueryIO(tableSpecOrQuery: String) extends TestIO[TableRow](tableSpecOrQuery)
 
-case class DatastoreIO(datasetId: String, query: Query = null)
-  extends TestIO[Entity](s"$datasetId\t$query")
+case class DatastoreIO(datasetId: String, namespace: String = null, query: Query = null)
+  extends TestIO[Entity](s"$datasetId:$namespace\t$query")
 
 case class PubsubIO(topic: String) extends TestIO[String](topic)
 

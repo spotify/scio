@@ -457,13 +457,26 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection for a Datastore query.
    * @group input
    */
-  def datastore(datasetId: String, query: Query): SCollection[Entity] = pipelineOp {
-    if (this.isTest) {
-      this.getTestInput(DatastoreIO(datasetId, query))
-    } else {
-      wrap(this.applyInternal(gio.DatastoreIO.readFrom(datasetId, query)))
+  def datastore(datasetId: String, query: Query): SCollection[Entity] =
+    datastore(datasetId, null, query)
+
+  /**
+   * Get an SCollection for a Datastore query.
+   * @group input
+   */
+  def datastore(datasetId: String, namespace: String, query: Query): SCollection[Entity] =
+    pipelineOp {
+      if (this.isTest) {
+        this.getTestInput(DatastoreIO(datasetId, namespace, query))
+      } else {
+        wrap(this.applyInternal(
+          gio.Read.from(
+            gio.DatastoreIO.source()
+              .withDataset(datasetId)
+              .withNamespace(namespace)
+              .withQuery(query))))
+      }
     }
-  }
 
   /**
    * Get an SCollection for a Pub/Sub subscription.
