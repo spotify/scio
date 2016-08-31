@@ -454,13 +454,13 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection for a Datastore query.
    * @group input
    */
-  def datastore(projectId: String, namespace: String, query: Query)
+  def datastore(datasetId: String, query: Query, namespace: String = null)
   : SCollection[Entity] = pipelineOp {
     if (this.isTest) {
-      this.getTestInput(DatastoreIO(projectId, namespace, query))
+      this.getTestInput(DatastoreIO(datasetId, query, namespace))
     } else {
       val transform = dsio.DatastoreIO.v1beta3().read()
-        .withProjectId(projectId)
+        .withProjectId(datasetId)
         .withNamespace(namespace)
         .withQuery(query)
       wrap(this.applyInternal(transform))
