@@ -91,7 +91,7 @@ private[types] object TypeProvider {
     debug(s"TypeProvider.toTableImpl:")
     debug(r)
 
-    if (isRunningInIntelliJ) { dumpCodeForScalaPlugin(c)(Seq.empty, caseClassTree, name) }
+    if (shouldDumpClassesForPlugin) { dumpCodeForScalaPlugin(c)(Seq.empty, caseClassTree, name) }
 
     c.Expr[Any](r)
   }
@@ -162,7 +162,7 @@ private[types] object TypeProvider {
     debug(s"TypeProvider.schemaToType[$schema]:")
     debug(r)
 
-    if (isRunningInIntelliJ) { dumpCodeForScalaPlugin(c)(records, caseClassTree, name) }
+    if (shouldDumpClassesForPlugin) { dumpCodeForScalaPlugin(c)(records, caseClassTree, name) }
 
     c.Expr[Any](r)
   }
@@ -247,15 +247,16 @@ private[types] object TypeProvider {
   }
 
   /**
-   * Check if code is running in IntelliJ IDEA. It may return false positives.
+   * Check if compiler should dump generated code for Scio IDEA plugin.
    *
    * This is used to mitigate lack of support for Scala macros in IntelliJ.
    */
-  private def isRunningInIntelliJ = {
+  private def shouldDumpClassesForPlugin = {
     val classPath = sys.props("java.class.path")
     classPath.contains("IntelliJ IDEA") ||
-      classPath.contains("idea-IC")  ||
-      classPath.contains("idea-IU")
+      classPath.contains("idea-IC") ||
+      classPath.contains("idea-IU") ||
+      (sys.props("bigquery.plugin.dump") != null && sys.props("bigquery.plugin.dump").toBoolean)
   }
 
   private def getBQClassCacheDir = {
