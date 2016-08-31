@@ -91,7 +91,7 @@ private[types] object TypeProvider {
     debug(s"TypeProvider.toTableImpl:")
     debug(r)
 
-    if(isRunningInIntelliJ) dumpCodeForScalaPlugin(c)(Seq.empty, caseClassTree, name)
+    if (isRunningInIntelliJ) { dumpCodeForScalaPlugin(c)(Seq.empty, caseClassTree, name) }
 
     c.Expr[Any](r)
   }
@@ -162,7 +162,7 @@ private[types] object TypeProvider {
     debug(s"TypeProvider.schemaToType[$schema]:")
     debug(r)
 
-    if(isRunningInIntelliJ) dumpCodeForScalaPlugin(c)(records, caseClassTree, name)
+    if (isRunningInIntelliJ) { dumpCodeForScalaPlugin(c)(records, caseClassTree, name) }
 
     c.Expr[Any](r)
   }
@@ -253,7 +253,9 @@ private[types] object TypeProvider {
    */
   private def isRunningInIntelliJ = {
     val classPath = sys.props("java.class.path")
-    classPath.contains("IntelliJ IDEA")
+    classPath.contains("IntelliJ IDEA") ||
+      classPath.contains("idea-IC")  ||
+      classPath.contains("idea-IU")
   }
 
   private def getBQClassCacheDir = {
@@ -261,7 +263,7 @@ private[types] object TypeProvider {
     if (sys.props("bigquery.class.cache.directory") != null) {
       sys.props("bigquery.class.cache.directory")
     } else {
-      sys.props("java.io.tmpdir") + "bigquery-classes"
+      sys.props("java.io.tmpdir") + "/bigquery-classes"
     }
   }
 
