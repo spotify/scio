@@ -181,7 +181,7 @@ package object experimental {
      * sc.getTypedRows[Row]("SELECT * FROM [publicdata:samples.gsod] LIMIT 1000")
      * }}}
      */
-    def getTypedRows[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null)
+    def getTypedRows[T <: HasAnnotation : TypeTag](newSource: String = null)
     : Iterator[T] = {
       val bqt = BigQueryType[T]
       val rows = if (newSource == null) {
@@ -209,7 +209,7 @@ package object experimental {
      * Write a List of rows to a BigQuery table. Note that element type `T` must be annotated with
      * [[BigQueryType]].
      */
-    def writeTypedRows[T <: HasAnnotation : ClassTag : TypeTag]
+    def writeTypedRows[T <: HasAnnotation : TypeTag]
     (table: TableReference, rows: List[T],
      writeDisposition: WriteDisposition,
      createDisposition: CreateDisposition): Unit = {
@@ -223,7 +223,7 @@ package object experimental {
      * Write a List of rows to a BigQuery table. Note that element type `T` must be annotated with
      * [[BigQueryType]].
      */
-    def writeTypedRows[T <: HasAnnotation : ClassTag : TypeTag]
+    def writeTypedRows[T <: HasAnnotation : TypeTag]
     (tableSpec: String, rows: List[T],
      writeDisposition: WriteDisposition = WRITE_EMPTY,
      createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =

@@ -179,7 +179,7 @@ object BigQueryType {
   def toTableRow[T]: (T => TableRow) = macro ConverterProvider.toTableRowImpl[T]
 
   /** Create a new BigQueryType instance. */
-  def apply[T: ClassTag : TypeTag]: BigQueryType[T] = new BigQueryType[T]
+  def apply[T: TypeTag]: BigQueryType[T] = new BigQueryType[T]
 
 }
 
