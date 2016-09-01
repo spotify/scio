@@ -218,11 +218,12 @@ lazy val scioTest: Project = Project(
     "junit" % "junit" % junitVersion,
     "com.novocode" % "junit-interface" % junitInterfaceVersion,
     "org.hamcrest" % "hamcrest-all" % hamcrestVersion
-  )
+  ),
+  addCompilerPlugin(paradiseDependency)
 ).dependsOn(
   scioCore,
   scioSchemas % "test"
-)
+).configs(IntegrationTest)
 
 lazy val scioBigQuery: Project = Project(
   "scio-bigquery",
