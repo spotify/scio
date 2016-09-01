@@ -252,11 +252,8 @@ private[types] object TypeProvider {
    * This is used to mitigate lack of support for Scala macros in IntelliJ.
    */
   private def shouldDumpClassesForPlugin = {
-    val classPath = sys.props("java.class.path")
-    classPath.contains("IntelliJ IDEA") ||
-      classPath.contains("idea-IC") ||
-      classPath.contains("idea-IU") ||
-      (sys.props("bigquery.plugin.dump") != null && sys.props("bigquery.plugin.dump").toBoolean)
+    sys.props("bigquery.plugin.disable.dump") == null ||
+      !sys.props("bigquery.plugin.disable.dump").toBoolean
   }
 
   private def getBQClassCacheDir = {
