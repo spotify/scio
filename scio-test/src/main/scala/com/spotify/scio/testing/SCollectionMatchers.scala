@@ -74,6 +74,13 @@ trait SCollectionMatchers {
     }
   }
 
+  def notEqualMapOf[K: ClassTag, V: ClassTag](value: Map[K, V])
+  : Matcher[SCollection[(K, V)]] = new Matcher[SCollection[(K, V)]] {
+    override def apply(left: SCollection[(K, V)]): MatchResult = {
+      m(() => PAssert.thatMap(left.toKV.internal).notEqualTo(value.asJava))
+    }
+  }
+
   // TODO: investigate why multi-map doesn't work
 
   def satisfy[T](predicate: Iterable[T] => Boolean)
