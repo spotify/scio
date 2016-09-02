@@ -37,7 +37,7 @@ Scio is being donated to Apache Beam as a Scala DSL ([BEAM-302](https://issues.a
 The ubiquitous word count example can be run directly with SBT in local mode, using `README.md` as input.
 
 ```bash
-sbt "project scio-examples" "run-main com.spotify.scio.examples.WordCount --input=README.md --output=wc"
+sbt "scio-examples/run-main com.spotify.scio.examples.WordCount --input=README.md --output=wc"
 cat wc/part-00000-of-00001.txt
 ```
 
