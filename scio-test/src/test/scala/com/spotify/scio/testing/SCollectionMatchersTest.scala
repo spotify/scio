@@ -109,6 +109,31 @@ class SCollectionMatchersTest extends PipelineSpec {
     }
   }
 
+  it should "support notEqualMapOf" in {
+    val s = Seq("a" -> 1, "b" -> 2, "c" -> 3)
+    runWithContext { sc =>
+      sc.parallelize(s) should notEqualMapOf (s.toMap + ("d" -> 4))
+      sc.parallelize(Seq.empty[(String, Int)]) should notEqualMapOf (Map("a" -> 1))
+    }
+
+    an [AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(s) should notEqualMapOf (s.toMap) }
+    }
+    an [AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(Seq.empty[(String, Int)]) should notEqualMapOf (Map.empty[String, Int])
+      }
+    }
+  }
+
+  it should "support satisfy" in {
+    runWithContext { _.parallelize(1 to 100) should satisfy[Int] (_.sum == 5050) }
+
+    an [AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(1 to 100) should satisfy[Int] (_.sum == 100) }
+    }
+  }
+
   it should "support forAll" in {
     runWithContext { _.parallelize(1 to 100) should forAll[Int] (_ > 0)}
 

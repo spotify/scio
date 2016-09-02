@@ -74,14 +74,22 @@ trait SCollectionMatchers {
     }
   }
 
+  def notEqualMapOf[K: ClassTag, V: ClassTag](value: Map[K, V])
+  : Matcher[SCollection[(K, V)]] = new Matcher[SCollection[(K, V)]] {
+    override def apply(left: SCollection[(K, V)]): MatchResult = {
+      m(() => DataflowAssert.thatMap(left.toKV.internal).notEqualTo(value.asJava))
+    }
+  }
+
   // TODO: investigate why multi-map doesn't work
 
-  def forAll[T](predicate: T => Boolean): Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
+  def satisfy[T](predicate: Iterable[T] => Boolean)
+  : Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
     override def apply(left: SCollection[T]): MatchResult = {
       val f = ClosureCleaner(predicate)
       val g = new SerializableFunction[JIterable[T], Void] {
         override def apply(input: JIterable[T]): Void = {
-          assert(input.asScala.forall(f))
+          assert(f(input.asScala))
           null
         }
       }
@@ -89,17 +97,8 @@ trait SCollectionMatchers {
     }
   }
 
-  def exist[T](predicate: T => Boolean): Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
-    override def apply(left: SCollection[T]): MatchResult = {
-      val f = ClosureCleaner(predicate)
-      val g = new SerializableFunction[JIterable[T], Void] {
-        override def apply(input: JIterable[T]): Void = {
-          assert(input.asScala.exists(f))
-          null
-        }
-      }
-      m(() => DataflowAssert.that(left.internal).satisfies(g))
-    }
-  }
+  def forAll[T](predicate: T => Boolean): Matcher[SCollection[T]] = satisfy(_.forall(predicate))
+
+  def exist[T](predicate: T => Boolean): Matcher[SCollection[T]] = satisfy(_.exists(predicate))
 
 }
