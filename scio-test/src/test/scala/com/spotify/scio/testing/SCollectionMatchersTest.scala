@@ -109,6 +109,14 @@ class SCollectionMatchersTest extends PipelineSpec {
     }
   }
 
+  it should "support satisfy" in {
+    runWithContext { _.parallelize(1 to 100) should satisfy[Int] (_.sum == 5050) }
+
+    an [AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(1 to 100) should satisfy[Int] (_.sum == 100) }
+    }
+  }
+
   it should "support forAll" in {
     runWithContext { _.parallelize(1 to 100) should forAll[Int] (_ > 0)}
 
