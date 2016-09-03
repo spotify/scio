@@ -82,9 +82,10 @@ private[types] object TypeProvider {
       case List(q"case class $name(..$fields) { ..$body }") =>
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SType)}.schemaOf[$name]"
         val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${name.toString}, indent)"
+        val fnTrait = tq"${newTypeName(s"Function${fields.size}")}[..${fields.flatMap(_.children)}, $name]"
         val caseClassTree = q"""${caseClass(c)(name, fields, body)}"""
         (q"""$caseClassTree
-            ${companion(c)(name, Nil, Seq(defSchema, defToPrettyString), fields.asInstanceOf[Seq[Tree]].size)}
+            ${companion(c)(name, Seq(fnTrait), Seq(defSchema, defToPrettyString), fields.asInstanceOf[Seq[Tree]].size)}
         """, caseClassTree, name.toString())
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
@@ -212,9 +213,12 @@ private[types] object TypeProvider {
   private def companion(c: Context)
                        (name: c.TypeName, traits: Seq[c.Tree], methods: Seq[c.Tree], numFields: Int): c.Tree = {
     import c.universe._
+
+    val overrideFlag = if (traits.exists(_.toString().contains("Function"))) Flag.OVERRIDE else NoFlags
     // TODO: scala 2.11
-    // val tupled = if (numFields > 1 && numFields <= 22) Seq(q"def tupled = (${TermName(name.toString)}.apply _).tupled") else Nil
-    val tupled = if (numFields > 1 && numFields <= 22) Seq(q"def tupled = (${newTermName(name.toString)}.apply _).tupled") else Nil
+    // val tupled = if (numFields > 1 && numFields <= 22) Seq(q"$overrideFlag def tupled = (${TermName(name.toString)}.apply _).tupled") else Nil
+    val tupled = if (numFields > 1 && numFields <= 22) Seq(q"$overrideFlag def tupled = (${newTermName(name.toString)}.apply _).tupled") else Nil
+
     val m = converters(c)(name) ++ tupled ++ methods
     // TODO: scala 2.11
     // val tn = TermName(name.toString)
