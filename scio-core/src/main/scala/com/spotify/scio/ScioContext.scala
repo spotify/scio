@@ -77,7 +77,7 @@ object ScioContext {
   def apply(): ScioContext = ScioContext(defaultOptions)
 
   /** Create a new [[ScioContext]] instance. */
-  def apply(options: PipelineOptions): ScioContext = new ScioContext(options,  Nil)
+  def apply(options: PipelineOptions): ScioContext = new ScioContext(options, Nil)
 
   /** Create a new [[ScioContext]] instance. */
   def apply(artifacts: List[String]): ScioContext = new ScioContext(defaultOptions, artifacts)
