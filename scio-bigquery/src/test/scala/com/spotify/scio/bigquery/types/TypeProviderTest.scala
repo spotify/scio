@@ -272,6 +272,9 @@ class TypeProviderTest extends FlatSpec with Matchers {
   @BigQueryType.toTable
   case class ToTable(f1: Long, f2: Double, f3: Boolean, f4: String, f5: Instant)
 
+  @BigQueryType.toTable
+  case class Record(f1: Int, f2: String)
+
   "BigQueryType.toTable" should "support .tupled in companion object" in {
     val r1 = ToTable(1L, 1.5, true, "hello", NOW)
     val r2 = ToTable.tupled((1L, 1.5, true, "hello", NOW))
@@ -288,6 +291,18 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   it should "support .toTableRow in companion object" in {
     (classOf[(ToTable => TableRow)] isAssignableFrom ToTable.toTableRow.getClass) shouldBe true
+  }
+
+  it should "create companion object that is a Function subtype" in {
+    (classOf[Function5[Long, Double, Boolean, String, Instant, ToTable]] isAssignableFrom ToTable.getClass) shouldBe true
+    (classOf[Function2[Int, String, Record]] isAssignableFrom Record.getClass) shouldBe true
+  }
+
+  it should "create companion object that is functionally equal to its apply method" in {
+    def doApply(f: (Int, String) => Record)(x: (Int, String)): Record = f(x._1, x._2)
+
+    doApply(Record.apply _)((3, "a")) shouldEqual doApply(Record)((3, "a"))
+    doApply(Record)((3, "a")) shouldEqual Record(3, "a")
   }
 
 }
