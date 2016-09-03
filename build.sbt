@@ -206,7 +206,6 @@ lazy val scioTest: Project = Project(
     description := "Scio helpers for ScalaTest",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % scalaTestVersion,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test",
       // DataFlow testing requires junit and hamcrest
       "junit" % "junit" % junitVersion,
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion
