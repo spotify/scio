@@ -19,10 +19,13 @@ package com.spotify.scio.testing
 
 import java.lang.reflect.InvocationTargetException
 
+import com.google.common.base.Charsets
+import com.google.common.hash.Hashing
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 
 import scala.reflect.ClassTag
+import scala.util.Random
 import scala.util.control.NonFatal
 
 /**
@@ -65,6 +68,17 @@ import scala.util.control.NonFatal
  */
 object JobTest {
 
+  def newTestId: String = newTestId("TestClass" + Random.nextInt(Int.MaxValue))
+
+  def newTestId(className: String): String = {
+    val hash = Hashing.murmur3_128().hashString(className, Charsets.UTF_8).toString.substring(0, 8)
+    val time = System.currentTimeMillis()
+    s"JobTest-$hash-$time"
+  }
+
+  def isTestId(appName: String): Boolean =
+    "JobTest-[0-9a-f]+-[0-9]+".r.pattern.matcher(appName).matches()
+
   case class Builder(className: String, cmdlineArgs: Array[String],
                      inputs: Map[TestIO[_], Iterable[_]],
                      outputs: Map[TestIO[_], SCollection[_] => Unit],
@@ -83,7 +97,7 @@ object JobTest {
       this.copy(distCaches = this.distCaches + (key -> value))
 
     def run(): Unit = {
-      val testId = "JobTest-" + System.currentTimeMillis()
+      val testId = newTestId(className)
       TestDataManager.setInput(testId, new TestInput(inputs))
       TestDataManager.setOutput(testId, new TestOutput(outputs))
       TestDataManager.setDistCache(testId, new TestDistCache(distCaches))

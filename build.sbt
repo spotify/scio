@@ -60,7 +60,6 @@ val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ ass
   javacOptions in (Compile, doc)  := Seq("-source", "1.7"),
   javaOptions in Test             ++= Seq("-Xmx1G"),
 
-  fork in Test := true,
   coverageExcludedPackages := Seq(
     "com\\.spotify\\.scio\\.examples\\..*",
     "com\\.spotify\\.scio\\.repl\\..*",
