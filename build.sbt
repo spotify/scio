@@ -58,7 +58,6 @@ val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ ass
   scalacOptions in (Compile, doc) ++= Seq("-groups", "-skip-packages", "com.google"),
   javacOptions                    ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked"),
   javacOptions in (Compile, doc)  := Seq("-source", "1.7"),
-  javaOptions in Test             ++= Seq("-Xmx1G"),
 
   coverageExcludedPackages := Seq(
     "com\\.spotify\\.scio\\.examples\\..*",
