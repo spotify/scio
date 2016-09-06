@@ -53,6 +53,8 @@ object AlgebirdSpec extends Properties("Algebird") {
 
     def map[U](f: T => U): SColl[U] = new SColl(internal.map(f))
 
+    override def toString: String = internal.mkString("[", ", ", "]")
+
   }
 
   // Generator for non-empty SColl[T]
