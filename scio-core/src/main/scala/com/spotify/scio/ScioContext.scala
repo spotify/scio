@@ -87,7 +87,7 @@ object ScioContext {
   /** Create a new [[ScioContext]] instance for testing. */
   def forTest(): ScioContext = {
     val opts = PipelineOptionsFactory
-      .fromArgs(Array("--appName=JobTest-" + System.currentTimeMillis()))
+      .fromArgs(Array("--appName=" + JobTest.newTestId))
       .as(classOf[ApplicationNameOptions])
     new ScioContext(opts, List[String]())
   }
@@ -154,7 +154,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   private[scio] val testId: Option[String] =
     Try(optionsAs[ApplicationNameOptions]).toOption.flatMap { o =>
-      if ("JobTest-[0-9]+".r.pattern.matcher(o.getAppName).matches()) {
+      if (JobTest.isTestId(o.getAppName)) {
         Some(o.getAppName)
       } else {
         None
