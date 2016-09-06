@@ -18,14 +18,12 @@
 package com.spotify.scio.testing
 
 import java.lang.reflect.InvocationTargetException
+import java.util.UUID
 
-import com.google.common.base.Charsets
-import com.google.common.hash.Hashing
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 
 import scala.reflect.ClassTag
-import scala.util.Random
 import scala.util.control.NonFatal
 
 /**
@@ -68,16 +66,13 @@ import scala.util.control.NonFatal
  */
 object JobTest {
 
-  def newTestId: String = newTestId("TestClass" + Random.nextInt(Int.MaxValue))
-
-  def newTestId(className: String): String = {
-    val hash = Hashing.murmur3_128().hashString(className, Charsets.UTF_8).toString.substring(0, 8)
-    val time = System.currentTimeMillis()
-    s"JobTest-$hash-$time"
+  def newTestId(className: String = "TestClass"): String = {
+    val uuid = UUID.randomUUID().toString.replaceAll("-", "")
+    s"JobTest-$className-$uuid"
   }
 
   def isTestId(appName: String): Boolean =
-    "JobTest-[0-9a-f]+-[0-9]+".r.pattern.matcher(appName).matches()
+    "JobTest-[^-]+-[a-z0-9]+".r.pattern.matcher(appName).matches()
 
   case class Builder(className: String, cmdlineArgs: Array[String],
                      inputs: Map[TestIO[_], Iterable[_]],
