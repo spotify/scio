@@ -20,7 +20,7 @@ package com.spotify.scio.coders
 import java.io.{ByteArrayOutputStream, IOException, InputStream, OutputStream}
 
 import com.google.cloud.dataflow.sdk.coders.Coder.Context
-import com.google.cloud.dataflow.sdk.coders.{AtomicCoder, Coder, CoderException}
+import com.google.cloud.dataflow.sdk.coders.{AtomicCoder, Coder, CoderException, TableRowJsonCoder}
 import com.google.cloud.dataflow.sdk.util.VarInt
 import com.google.common.io.ByteStreams
 import com.google.protobuf.Message
@@ -36,6 +36,8 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
   @transient
   private lazy val kryo: Kryo = {
     val k = KryoSerializer.registered.newKryo()
+
+    k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
 
     // java.lang.Iterable.asScala returns JIterableWrapper which causes problem.
     // Treat it as standard Iterable instead.

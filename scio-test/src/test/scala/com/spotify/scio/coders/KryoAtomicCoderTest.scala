@@ -17,8 +17,10 @@
 
 package com.spotify.scio.coders
 
+import com.google.api.services.bigquery.model.TableRow
 import com.google.cloud.dataflow.sdk.coders.Coder
 import com.google.cloud.dataflow.sdk.values.KV
+import com.google.common.collect.ImmutableList
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.avro.TestRecord
 import com.spotify.scio.coders.CoderTestUtils._
@@ -83,6 +85,11 @@ class KryoAtomicCoderTest extends PipelineSpec {
     cf should roundTrip (KV.of("key", (10, 10.0)))
     cf should roundTrip (KV.of("key", newSpecificRecord(1)))
     cf should roundTrip (KV.of("key", newGenericRecord(1)))
+  }
+
+  it should "support TableRow" in {
+    val r = new TableRow().set("repeated_field", ImmutableList.of("a", "b"))
+    cf should roundTrip (r)
   }
 
 }
