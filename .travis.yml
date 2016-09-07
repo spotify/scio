@@ -15,6 +15,10 @@ before_install:
       openssl aes-256-cbc -K $encrypted_1d86b5bcde73_key -iv $encrypted_1d86b5bcde73_iv -in scripts/data-integration-test-421ab9f796e8.json.enc -out scripts/data-integration-test-421ab9f796e8.json -d;
     fi
 
+before_script:
+  - "echo Current JAVA_OPTS=`$JAVA_OPTS`"
+  - "export JAVA_OPTS=-Xmx5g"
+
 script:
   - if [[ "${TRAVIS_SCALA_VERSION%.*}" == "2.10" ]]; then
       ./scripts/travis.sh;
