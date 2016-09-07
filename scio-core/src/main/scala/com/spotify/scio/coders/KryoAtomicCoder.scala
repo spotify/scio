@@ -26,7 +26,7 @@ import com.twitter.chill.protobuf.ProtobufSerializer
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.coders.Coder.Context
-import org.apache.beam.sdk.coders.{AtomicCoder, Coder, CoderException}
+import org.apache.beam.sdk.coders.{AtomicCoder, Coder, CoderException, TableRowJsonCoder}
 import org.apache.beam.sdk.util.VarInt
 
 import scala.collection.convert.Wrappers.JIterableWrapper
@@ -36,6 +36,8 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
   @transient
   private lazy val kryo: Kryo = {
     val k = KryoSerializer.registered.newKryo()
+
+    k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
 
     // java.lang.Iterable.asScala returns JIterableWrapper which causes problem.
     // Treat it as standard Iterable instead.
