@@ -25,6 +25,7 @@ import com.spotify.scio.coders.CoderTestUtils._
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.values.KV
+import org.joda.time.Instant
 import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.reflect.ClassTag
@@ -87,6 +88,9 @@ class KryoAtomicCoderTest extends PipelineSpec {
     cf should roundTrip (KV.of("key", newGenericRecord(1)))
   }
 
+  it should "support Instant" in {
+    cf should roundTrip (Instant.now())
+  }
   it should "support TableRow" in {
     val r = new TableRow().set("repeated_field", ImmutableList.of("a", "b"))
     cf should roundTrip (r)
