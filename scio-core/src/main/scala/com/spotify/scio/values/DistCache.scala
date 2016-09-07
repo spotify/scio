@@ -22,7 +22,6 @@ import java.net.URI
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.cloud.dataflow.sdk.options.{GcsOptions, PipelineOptions}
-import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
 import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
@@ -104,7 +103,7 @@ private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistC
   }
 
   protected def verifyUri(uri: URI): Unit = {
-    if (classOf[DirectPipelineRunner] isAssignableFrom opts.getRunner) {
+    if (ScioUtil.isLocalRunner(opts)) {
       require(ScioUtil.isLocalUri(uri) || ScioUtil.isGcsUri(uri), s"Unsupported path $uri")
     } else {
       require(ScioUtil.isGcsUri(uri), s"Unsupported path $uri")

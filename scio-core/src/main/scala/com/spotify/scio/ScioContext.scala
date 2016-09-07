@@ -31,6 +31,7 @@ import com.google.cloud.dataflow.sdk.PipelineResult.State
 import com.google.cloud.dataflow.sdk.coders.TableRowJsonCoder
 import com.google.cloud.dataflow.sdk.{io => gio}
 import com.google.cloud.dataflow.sdk.options._
+import com.google.cloud.dataflow.sdk.runners.inprocess.InProcessPipelineRunner
 import com.google.cloud.dataflow.sdk.runners.{DataflowPipelineJob, DataflowPipelineRunner}
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
@@ -88,6 +89,8 @@ object ScioContext {
     val opts = PipelineOptionsFactory
       .fromArgs(Array("--appName=" + JobTest.newTestId()))
       .as(classOf[ApplicationNameOptions])
+
+    opts.setRunner(classOf[InProcessPipelineRunner])
     new ScioContext(opts, List[String]())
   }
 
@@ -176,10 +179,11 @@ class ScioContext private[scio] (val options: PipelineOptions,
         }
         Pipeline.create(options)
       } else {
-        val tp = TestPipeline.create()
+        val testOpts = TestPipeline.testingPipelineOptions()
         // propagate options
-        tp.getOptions.setStableUniqueNames(options.getStableUniqueNames)
-        tp
+        testOpts.setRunner(options.getRunner)
+        testOpts.setStableUniqueNames(options.getStableUniqueNames)
+        TestPipeline.fromOptions(testOpts)
       }
       _pipeline.getCoderRegistry.registerScalaCoders()
     }

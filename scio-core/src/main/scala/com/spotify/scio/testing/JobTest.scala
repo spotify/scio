@@ -20,6 +20,7 @@ package com.spotify.scio.testing
 import java.lang.reflect.InvocationTargetException
 import java.util.UUID
 
+import com.google.cloud.dataflow.sdk.runners.inprocess.InProcessPipelineRunner
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 
@@ -101,7 +102,8 @@ object JobTest {
         Class
           .forName(className)
           .getMethod("main", classOf[Array[String]])
-          .invoke(null, cmdlineArgs :+ s"--appName=$testId")
+          .invoke(null, cmdlineArgs :+ s"--appName=$testId"
+            :+ s"--runner=${classOf[InProcessPipelineRunner].getSimpleName}")
       } catch {
         // InvocationTargetException stacktrace is noisy and useless
         case e: InvocationTargetException => throw e.getCause
