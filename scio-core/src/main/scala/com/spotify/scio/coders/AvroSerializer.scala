@@ -64,8 +64,7 @@ private class GenericAvroSerializer extends KSerializer[GenericRecord] {
     val id = in.readInt()
     val coder = this.getCoder(id, new Schema.Parser().parse(in.readString()))
 
-    val bytes = Array.ofDim[Byte](in.readInt())
-    in.readBytes(bytes)
+    val bytes = in.readBytes(in.readInt())
     CoderUtils.decodeFromByteArray(coder, bytes)
   }
 
@@ -88,9 +87,7 @@ private class SpecificAvroSerializer[T <: SpecificRecordBase] extends KSerialize
 
   override def read(kser: Kryo, in: Input, cls: Class[T]): T = {
     val coder = this.getCoder(cls)
-    val bytes = Array.ofDim[Byte](in.readInt())
-
-    in.readBytes(bytes)
+    val bytes = in.readBytes(in.readInt())
     CoderUtils.decodeFromByteArray(coder, bytes)
   }
 
