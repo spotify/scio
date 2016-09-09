@@ -23,9 +23,9 @@ import com.google.cloud.dataflow.sdk.coders.Coder
 import com.google.cloud.dataflow.sdk.io.Sink
 import com.google.cloud.dataflow.sdk.io.Sink.{WriteOperation, Writer}
 import com.google.cloud.dataflow.sdk.options.PipelineOptions
-import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
 import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.spotify.scio.coders.KryoAtomicCoder
+import com.spotify.scio.util.ScioUtil
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}
@@ -36,9 +36,8 @@ private[scio] class InMemorySink[T](private val id: String) extends Sink[T] {
     new InMemoryWriteOperation(this, id)
 
   override def validate(options: PipelineOptions): Unit = {
-    require(
-      classOf[DirectPipelineRunner] isAssignableFrom  options.getRunner,
-      "InMemoryDataFlowSink can only be used with DirectPipelineRunner")
+    require(ScioUtil.isLocalRunner(options),
+      "InMemoryDataFlowSink can only be used with InProcessPipelineRunner or DirectPipelineRunner")
   }
 }
 

@@ -29,7 +29,6 @@ import com.google.api.services.datastore.DatastoreV1.Entity
 import com.google.cloud.dataflow.sdk.coders.{Coder, TableRowJsonCoder}
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import com.google.cloud.dataflow.sdk.{io => gio}
-import com.google.cloud.dataflow.sdk.runners
 import com.google.cloud.dataflow.sdk.transforms._
 import com.google.cloud.dataflow.sdk.transforms.windowing._
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
@@ -824,7 +823,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   private def pathWithShards(path: String) = {
-    if (this.context.pipeline.getRunner.isInstanceOf[runners.DirectPipelineRunner] &&
+    if (ScioUtil.isLocalRunner(this.context.pipeline.getOptions) &&
       ScioUtil.isLocalUri(new URI(path))) {
       // Create output directory when running locally with local file system
       val f = new File(path)
