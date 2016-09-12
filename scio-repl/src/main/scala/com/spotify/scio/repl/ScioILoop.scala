@@ -21,6 +21,7 @@ import java.io.BufferedReader
 
 import com.google.cloud.dataflow.sdk.options.GcpOptions.DefaultProjectFactory
 import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptionsFactory}
+import com.google.cloud.dataflow.sdk.runners.inprocess.InProcessPipelineRunner
 import com.spotify.scio.bigquery.BigQueryClient
 import com.spotify.scio.scioVersion
 
@@ -57,7 +58,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
   override def prompt: String = Console.GREEN + "\nscio> " + Console.RESET
 
   // Options for creating new Scio contexts
-  private var scioOpts: Array[String] = args.toArray
+  private var scioOpts: Array[String] = useInProcessRunnerByDefault(args.toArray)
 
   // =======================================================================
   // Scio REPL magic commands:
@@ -114,10 +115,19 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     "newLocalScio", "<[context-name] | sc>", "get a new local Scio context", newLocalScioCmdImpl)
 
   /** REPL magic to show or update Scio options. */
+
+  private def useInProcessRunnerByDefault(args: Array[String]): Array[String] = {
+    if (args.exists(_.contains("--runner="))) {
+      args
+    } else {
+      args :+ s"--runner=${classOf[InProcessPipelineRunner].getSimpleName}"
+    }
+  }
+
   private def scioOptsCmdImpl(args: String) = {
     if (args.trim.nonEmpty) {
       // update options
-      val newOpts = args.split("\\s+")
+      val newOpts = useInProcessRunnerByDefault(args.split("\\s+"))
       val result = intp.beQuietDuring {
         intp.interpret(optsFromArgs(newOpts))
       }
