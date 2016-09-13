@@ -19,7 +19,7 @@
 
 package com.spotify.scio.values
 
-import java.io.File
+import java.io.{File, PrintStream}
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.net.URI
 import java.util.UUID
@@ -510,6 +510,19 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .map((t, s) => (t, s(side).getOrElse(t, Iterable())))
       .toSCollection
   }
+
+  /**
+   * Print content of a SCollection to `out()`.
+   * @group debug
+   */
+  def debug(out: () => PrintStream = () => Console.out, prefix: String = ""): SCollection[T] =
+    this.filter(e => {
+      // scalastyle:off regex
+      out().println(s"""$prefix${e.toString}""")
+      // scalastyle:on regex
+      // filter that never removes
+      true
+    })
 
   // =======================================================================
   // Accumulators
