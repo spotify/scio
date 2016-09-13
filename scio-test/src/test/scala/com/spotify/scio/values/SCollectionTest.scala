@@ -17,8 +17,13 @@
 
 package com.spotify.scio.values
 
+import java.io.PrintStream
+import java.nio.file.Files
+
+import com.google.api.client.util.Charsets
 import com.spotify.scio.io.{InMemorySink, InMemorySinkManager}
 import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.util.MockedPrintStream
 import com.spotify.scio.util.random.RandomSamplerUtils
 import com.twitter.algebird.{Aggregator, Semigroup}
 import org.apache.beam.sdk.io.Write
@@ -409,7 +414,7 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support withPaneInfo"  in {
+  it should "support withPaneInfo" in {
     runWithContext { sc =>
       val pane = PaneInfo.createPane(true, true, Timing.UNKNOWN, 0, 0)
       val p = sc.parallelizeTimestamped(Seq("a", "b", "c"), Seq(1, 2, 3).map(new Instant(_)))
@@ -418,7 +423,7 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support withTimestamp"  in {
+  it should "support withTimestamp" in {
     runWithContext { sc =>
       val p = sc.parallelizeTimestamped(Seq("a", "b", "c"), Seq(1, 2, 3).map(new Instant(_)))
       val r = p.withTimestamp.map(kv => (kv._1, kv._2.getMillis))
@@ -426,7 +431,7 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support withWindow"  in {
+  it should "support withWindow" in {
     runWithContext { sc =>
       val w = classOf[GlobalWindow].getSimpleName
       val p = sc.parallelizeTimestamped(Seq("a", "b", "c"), Seq(1, 2, 3).map(new Instant(_)))
@@ -435,7 +440,7 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support timestampBy()"  in {
+  it should "support timestampBy()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3))
       val r = p.timestampBy(new Instant(_)).withTimestamp.map(kv => (kv._1, kv._2.getMillis))
@@ -443,7 +448,7 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support timestampBy() with skew"  in {
+  it should "support timestampBy() with skew" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3))
       val r = p.timestampBy(new Instant(_), Duration.millis(1))
@@ -452,4 +457,48 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support debug to the stdout" in {
+    val stdOutMock = new MockedPrintStream
+    Console.withOut(stdOutMock){
+      runWithContext { sc =>
+        val r = sc.parallelize(1 to 3).debug()
+        r should containInAnyOrder(Seq(1, 2, 3))
+      }
+    }
+    stdOutMock.message should contain only("1", "2", "3")
+  }
+
+  it should "support debug to the stdout with prefix" in {
+    val stdOutMock = new MockedPrintStream
+    Console.withOut(stdOutMock) {
+      runWithContext { sc =>
+        val r = sc.parallelize(1 to 3).debug(prefix = "===")
+        r should containInAnyOrder(Seq(1, 2, 3))
+      }
+    }
+    stdOutMock.message should contain only ("===1", "===2", "===3")
+  }
+
+  it should "support debug to the stderr" in {
+    val stdErrMock = new MockedPrintStream
+    Console.withErr(stdErrMock){
+      runWithContext { sc =>
+        val r = sc.parallelize(1 to 3).debug(() => Console.err)
+        r should containInAnyOrder(Seq(1, 2, 3))
+      }
+    }
+    stdErrMock.message should contain only("1", "2", "3")
+  }
+
+  it should "support debug to a file" in {
+    val outFile = Files.createTempFile("debug_test", "txt")
+    val fileStream = new PrintStream(outFile.toFile)
+    Console.withOut(fileStream){
+      runWithContext { sc =>
+        val r = sc.parallelize(1 to 3).debug()
+        r should containInAnyOrder(Seq(1, 2, 3))
+      }
+    }
+    Files.readAllLines(outFile, Charsets.UTF_8) should contain only("1", "2", "3")
+  }
 }
