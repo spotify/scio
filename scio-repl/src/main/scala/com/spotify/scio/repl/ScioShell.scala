@@ -100,7 +100,7 @@ trait BaseScioShell extends MainGenericRunner {
 
   /** Runs an instance of the shell. */
   def main(args: Array[String]) {
-    sys.props("bigquery.plugin.disable.dump")="true"
+    sys.props("bigquery.plugin.disable.dump") = "true"
     val retVal = process(args)
     if (!retVal) {
       sys.exit(1)
