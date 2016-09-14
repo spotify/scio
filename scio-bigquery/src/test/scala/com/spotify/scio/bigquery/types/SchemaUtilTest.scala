@@ -74,10 +74,10 @@ class SchemaUtilTest extends FlatSpec with Matchers {
     SchemaUtil.toPrettyString(schema, "Row", 0) should equal (
       """
         |@BigQueryType.toTable
-        |case class Row(r1: R1$, r2: Option[R2$], r3: List[R3$])
-        |case class R1$(f1: Long, f2: Double)
-        |case class R2$(f1: Long, f2: Double)
-        |case class R3$(f1: Long, f2: Double)
+        |case class Row(r1: R1$1, r2: Option[R2$1], r3: List[R3$1])
+        |case class R1$1(f1: Long, f2: Double)
+        |case class R2$1(f1: Long, f2: Double)
+        |case class R3$1(f1: Long, f2: Double)
       """.stripMargin.trim)
   }
 
