@@ -17,6 +17,7 @@
 
 package com.spotify.scio.bigquery.types
 
+import com.google.api.services.bigquery.model.TableRow
 import org.scalatest.{FlatSpec, Matchers}
 
 /**
@@ -63,5 +64,26 @@ class TypeProviderTestScala211 extends FlatSpec with Matchers {
 
   it should "not provide .tupled in companion object with more than 22 fields" in {
     ArtisanalMoreThan22Fields.getClass.getMethods.map(_.getName) should not contain "tupled"
+  }
+
+  @BigQueryType.toTable
+  case class TwentyThree(a1:Int,a2:Int,a3:Int,a4:Int,a5:Int,a6:Int,a7:Int,a8:Int,a9:Int,a10:Int,
+                         a11:Int,a12:Int,a13:Int,a14:Int,a15:Int,a16:Int,a17:Int,a18:Int,a19:Int,
+                         a20:Int,a21:Int,a22:Int,a23:Int)
+
+  "BigQueryType.toTable" should "not provide .tupled in companion object with more than 22 fields" in {
+    TwentyThree.getClass.getMethods.map(_.getName) should not contain "tupled"
+  }
+
+  it should "support .schema in companion object with more than 22 fields" in {
+    TwentyThree.schema should not be null
+  }
+
+  it should "support .fromTableRow in companion object" in {
+    (classOf[(TableRow => TwentyThree)] isAssignableFrom TwentyThree.fromTableRow.getClass) shouldBe true
+  }
+
+  it should "support .toTableRow in companion object" in {
+    (classOf[(TwentyThree => TableRow)] isAssignableFrom TwentyThree.toTableRow.getClass) shouldBe true
   }
 }
