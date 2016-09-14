@@ -205,7 +205,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
   class RecordWithRequiredRecords
 
   it should "support required records" in {
-    val r = RecordWithRequiredRecords(F1$(1L), F2$(Some(1L)), F3$(List(1L, 2L)))
+    val r = RecordWithRequiredRecords(F1$1(1L), F2$1(Some(1L)), F3$1(List(1L, 2L)))
     r.f1.g should equal (1L)
     r.f2.g should equal (Some(1L))
     r.f3.g should equal (List(1L, 2L))

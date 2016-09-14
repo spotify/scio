@@ -323,7 +323,7 @@ private[types] object TypeProvider {
 
 private[types] object NameProvider {
 
-  private val m = MMap.empty[String, Int]
+  private val m = MMap.empty[String, Int].withDefaultValue(0)
 
   /**
    * Generate a unique name for a nested record.
@@ -332,13 +332,8 @@ private[types] object NameProvider {
    */
   def getUniqueName(name: String): String = m.synchronized {
     val cName = toPascalCase(name) + '$'
-    if (m.contains(cName)) {
-      m(cName) += 1
-      cName + m(cName)
-    } else {
-      m.put(cName, 1)
-      cName
-    }
+    m(cName) += 1
+    cName + m(cName)
   }
 
   private def toPascalCase(s: String): String =
