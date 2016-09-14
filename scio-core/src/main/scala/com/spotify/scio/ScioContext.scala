@@ -428,9 +428,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     } else {
       val queryJob = this.bigQueryClient.newQueryJob(sqlQuery, flattenResults)
       _queryJobs.append(queryJob)
-      //DATAFLOW SDK BUG FIX:
-      //wrap(this.applyInternal(gio.BigQueryIO.Read.from(queryJob.table).withoutValidation()))
-      wrap(this.applyInternal(gio.PatchedBigQueryIO.Read.from(queryJob.table).withoutValidation()))
+      wrap(this.applyInternal(gio.BigQueryIO.Read.from(queryJob.table).withoutValidation()))
         .setName(sqlQuery)
     }
   }
@@ -444,9 +442,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (this.isTest) {
       this.getTestInput(BigQueryIO(tableSpec))
     } else {
-      //DATAFLOW SDK BUG FIX:
-      //wrap(this.applyInternal(gio.BigQueryIO.Read.from(table))).setName(tableSpec)
-      wrap(this.applyInternal(gio.PatchedBigQueryIO.Read.from(table))).setName(tableSpec)
+      wrap(this.applyInternal(gio.BigQueryIO.Read.from(table))).setName(tableSpec)
     }
   }
 
