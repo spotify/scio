@@ -83,9 +83,10 @@ private[types] object TypeProvider {
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SType)}.schemaOf[$name]"
         val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${name.toString}, indent)"
         val fnTrait = tq"${newTypeName(s"Function${fields.size}")}[..${fields.flatMap(_.children)}, $name]"
+        val traits = if (fields.size <= 22) Seq(fnTrait) else Seq()
         val caseClassTree = q"""${caseClass(c)(name, fields, body)}"""
         (q"""$caseClassTree
-            ${companion(c)(name, Seq(fnTrait), Seq(defSchema, defToPrettyString), fields.asInstanceOf[Seq[Tree]].size)}
+            ${companion(c)(name, traits, Seq(defSchema, defToPrettyString), fields.asInstanceOf[Seq[Tree]].size)}
         """, caseClassTree, name.toString())
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
