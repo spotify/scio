@@ -17,16 +17,17 @@
 
 package com.spotify.scio.examples.complete
 
+import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
-import com.google.api.services.datastore.DatastoreV1.Entity
-import com.google.api.services.datastore.client.DatastoreHelper
 import com.google.cloud.dataflow.examples.common.DataflowExampleUtils
 import com.google.cloud.dataflow.sdk.runners.DataflowPipelineRunner
+import com.google.datastore.v1.Entity
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.common.{ExampleData, ExampleOptions}
 import com.spotify.scio.values.SCollection
 import org.joda.time.Duration
+import com.google.common.collect.ImmutableMap
 
 import scala.collection.JavaConverters._
 
@@ -78,17 +79,17 @@ object AutoComplete {
     }
 
   def makeEntity(kind: String, kv: (String, Iterable[(String, Long)])): Entity = {
-    val key = DatastoreHelper.makeKey(kind, kv._1).build();
+    val key = makeKey(kind, kv._1).build()
     val candidates = kv._2.map { p =>
-      DatastoreHelper.makeValue(Entity.newBuilder()
-        .addProperty(DatastoreHelper.makeProperty("tag", DatastoreHelper.makeValue(p._1)))
-        .addProperty(DatastoreHelper.makeProperty("count", DatastoreHelper.makeValue(p._2)))
-      ).setIndexed(false).build()
+      makeValue(Entity.newBuilder()
+        .putAllProperties(ImmutableMap.of(
+          "tag", makeValue(p._1).build(),
+          "count", makeValue(p._2).build()))
+      ).build()
     }
     Entity.newBuilder()
       .setKey(key)
-      .addProperty(
-        DatastoreHelper.makeProperty("candidates", DatastoreHelper.makeValue(candidates.asJava)))
+      .putAllProperties(ImmutableMap.of("candidates", makeValue(candidates.asJava).build()))
       .build()
   }
 

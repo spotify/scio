@@ -19,10 +19,11 @@ package com.spotify.scio.examples.cookbook
 
 import java.util.UUID
 
-import com.google.api.services.datastore.DatastoreV1.{Query, Entity}
-import com.google.api.services.datastore.client.DatastoreHelper
-import com.google.cloud.dataflow.sdk.options.PipelineOptions
+import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
+import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptions}
 import com.google.cloud.dataflow.sdk.runners.BlockingDataflowPipelineRunner
+import com.google.common.collect.ImmutableMap
+import com.google.datastore.v1.{Entity, Query}
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
 
@@ -45,17 +46,18 @@ object DatastoreWordCount {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (opts, args) = ScioContext.parseArguments[PipelineOptions](cmdlineArgs)
 
-    // override runner to ensure sequential execution
+    // enforce sequential execution for this example, since we don't want
+    // read pipeline to start before write pipeline has finished
     opts.setRunner(classOf[BlockingDataflowPipelineRunner])
 
     val kind = args.getOrElse("kind", "shakespeare-demo")
     val namespace = args.optional("namespace")
-    val dataset = args("dataset")
+    val project = opts.as(classOf[DataflowPipelineOptions]).getProject
 
     val ancestorKey = {
-      val k = DatastoreHelper.makeKey(kind, "root")
-      namespace.foreach(k.getPartitionIdBuilder.setNamespace)
-      k.build()
+      val key = makeKey(kind, "root")
+      namespace.foreach(key.getPartitionIdBuilder.setNamespaceId)
+      key.build()
     }
 
     // pipeline that writes to Datastore
@@ -63,14 +65,14 @@ object DatastoreWordCount {
       val sc = ScioContext(opts)
       sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
         .map { s =>
-          val k = DatastoreHelper.makeKey(ancestorKey, kind, UUID.randomUUID().toString)
-          namespace.foreach(k.getPartitionIdBuilder.setNamespace)
+          val key = makeKey(ancestorKey, kind, UUID.randomUUID().toString)
+          namespace.foreach(key.getPartitionIdBuilder.setNamespaceId)
           Entity.newBuilder()
-            .setKey(k.build())
-            .addProperty(DatastoreHelper.makeProperty("content", DatastoreHelper.makeValue(s)))
+            .setKey(key.build())
+            .putAllProperties(ImmutableMap.of("content", makeValue(s).build()))
             .build()
         }
-        .saveAsDatastore(dataset)
+        .saveAsDatastore(project)
       sc.close()
     }
 
@@ -83,9 +85,9 @@ object DatastoreWordCount {
       }
 
       val sc = ScioContext(opts)
-      sc.datastore(dataset, query)
+      sc.datastore(project, query)
         .flatMap { e =>
-          DatastoreHelper.getPropertyMap(e).asScala.get("content").map(_.getStringValue).toSeq
+          e.getProperties.asScala.get("content").map(_.getStringValue).toSeq
         }
         .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
         .countByValue

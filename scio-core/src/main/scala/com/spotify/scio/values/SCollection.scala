@@ -25,14 +25,14 @@ import java.net.URI
 import java.util.UUID
 
 import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
-import com.google.api.services.datastore.DatastoreV1.Entity
 import com.google.cloud.dataflow.sdk.coders.{Coder, TableRowJsonCoder}
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import com.google.cloud.dataflow.sdk.{io => gio}
 import com.google.cloud.dataflow.sdk.transforms._
 import com.google.cloud.dataflow.sdk.transforms.windowing._
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.google.cloud.dataflow.sdk.values._
+import com.google.cloud.dataflow.sdk.{io => gio}
+import com.google.datastore.v1.Entity
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.AvroBytesUtil
@@ -933,11 +933,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as a Datastore dataset. Note that elements must be of type Entity.
    * @group output
    */
-  def saveAsDatastore(datasetId: String)(implicit ev: T <:< Entity): Future[Tap[Entity]] = {
+  def saveAsDatastore(projectId: String)(implicit ev: T <:< Entity): Future[Tap[Entity]] = {
     if (context.isTest) {
-      context.testOut(DatastoreIO(datasetId))(this.asInstanceOf[SCollection[Entity]])
+      context.testOut(DatastoreIO(projectId))(this.asInstanceOf[SCollection[Entity]])
     } else {
-      this.asInstanceOf[SCollection[Entity]].applyInternal(gio.DatastoreIO.writeTo(datasetId))
+      this.asInstanceOf[SCollection[Entity]].applyInternal(
+        gio.datastore.DatastoreIO.v1.write.withProjectId(projectId))
     }
     Future.failed(new NotImplementedError("Datastore future not implemented"))
   }

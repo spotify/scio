@@ -16,23 +16,11 @@
 
 package com.google.cloud.dataflow.examples.cookbook;
 
-import static com.google.api.services.datastore.client.DatastoreHelper.getPropertyMap;
-import static com.google.api.services.datastore.client.DatastoreHelper.getString;
-import static com.google.api.services.datastore.client.DatastoreHelper.makeFilter;
-import static com.google.api.services.datastore.client.DatastoreHelper.makeKey;
-import static com.google.api.services.datastore.client.DatastoreHelper.makeValue;
-
-import com.google.api.services.datastore.DatastoreV1.Entity;
-import com.google.api.services.datastore.DatastoreV1.Key;
-import com.google.api.services.datastore.DatastoreV1.Property;
-import com.google.api.services.datastore.DatastoreV1.PropertyFilter;
-import com.google.api.services.datastore.DatastoreV1.Query;
-import com.google.api.services.datastore.DatastoreV1.Value;
 import com.google.cloud.dataflow.examples.WordCount;
 import com.google.cloud.dataflow.sdk.Pipeline;
-import com.google.cloud.dataflow.sdk.io.DatastoreIO;
-import com.google.cloud.dataflow.sdk.io.Read;
 import com.google.cloud.dataflow.sdk.io.TextIO;
+import com.google.cloud.dataflow.sdk.io.datastore.DatastoreIO;
+import com.google.cloud.dataflow.sdk.io.datastore.DatastoreV1;
 import com.google.cloud.dataflow.sdk.options.Default;
 import com.google.cloud.dataflow.sdk.options.Description;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
@@ -41,11 +29,21 @@ import com.google.cloud.dataflow.sdk.options.Validation;
 import com.google.cloud.dataflow.sdk.transforms.DoFn;
 import com.google.cloud.dataflow.sdk.transforms.MapElements;
 import com.google.cloud.dataflow.sdk.transforms.ParDo;
+import com.google.datastore.v1.Entity;
+import com.google.datastore.v1.Key;
+import com.google.datastore.v1.PropertyFilter;
+import com.google.datastore.v1.Query;
+import com.google.datastore.v1.Value;
 
 import java.util.Map;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
+
+import static com.google.datastore.v1.client.DatastoreHelper.getString;
+import static com.google.datastore.v1.client.DatastoreHelper.makeFilter;
+import static com.google.datastore.v1.client.DatastoreHelper.makeKey;
+import static com.google.datastore.v1.client.DatastoreHelper.makeValue;
 
 /**
  * A WordCount example using DatastoreIO.
@@ -62,7 +60,6 @@ import javax.annotation.Nullable;
  * <p>To run this pipeline locally, the following options must be provided:
  * <pre>{@code
  *   --project=YOUR_PROJECT_ID
- *   --dataset=YOUR_DATASET_ID
  *   --output=[YOUR_LOCAL_FILE | gs://YOUR_OUTPUT_PATH]
  * }</pre>
  *
@@ -87,7 +84,7 @@ public class DatastoreWordCount {
   static class GetContentFn extends DoFn<Entity, String> {
     @Override
     public void processElement(ProcessContext c) {
-      Map<String, Value> props = getPropertyMap(c.element());
+      Map<String, Value> props = c.element().getProperties();
       Value value = props.get("content");
       if (value != null) {
         c.output(getString(value));
@@ -104,7 +101,7 @@ public class DatastoreWordCount {
   static Key makeAncestorKey(@Nullable String namespace, String kind) {
     Key.Builder keyBuilder = makeKey(kind, "root");
     if (namespace != null) {
-      keyBuilder.getPartitionIdBuilder().setNamespace(namespace);
+      keyBuilder.getPartitionIdBuilder().setNamespaceId(namespace);
     }
     return keyBuilder.build();
   }
@@ -134,12 +131,11 @@ public class DatastoreWordCount {
       // we must set the namespace on keyBuilder. TODO: Once partitionId inheritance is added,
       // we can simplify this code.
       if (namespace != null) {
-        keyBuilder.getPartitionIdBuilder().setNamespace(namespace);
+        keyBuilder.getPartitionIdBuilder().setNamespaceId(namespace);
       }
 
       entityBuilder.setKey(keyBuilder.build());
-      entityBuilder.addProperty(Property.newBuilder().setName("content")
-          .setValue(Value.newBuilder().setStringValue(content)));
+      entityBuilder.getProperties().put("content", makeValue(content).build());
       return entityBuilder.build();
     }
 
@@ -165,10 +161,10 @@ public class DatastoreWordCount {
     String getOutput();
     void setOutput(String value);
 
-    @Description("Dataset ID to read from datastore")
+    @Description("Project ID to read from datastore")
     @Validation.Required
-    String getDataset();
-    void setDataset(String value);
+    String getProject();
+    void setProject(String value);
 
     @Description("Dataset entity kind")
     @Default.String("shakespeare-demo")
@@ -194,12 +190,12 @@ public class DatastoreWordCount {
    * text input.  Forces use of DirectPipelineRunner for local execution mode.
    */
   public static void writeDataToDatastore(Options options) {
-      Pipeline p = Pipeline.create(options);
-      p.apply(TextIO.Read.named("ReadLines").from(options.getInput()))
-       .apply(ParDo.of(new CreateEntityFn(options.getNamespace(), options.getKind())))
-       .apply(DatastoreIO.writeTo(options.getDataset()));
+    Pipeline p = Pipeline.create(options);
+    p.apply(TextIO.Read.named("ReadLines").from(options.getInput()))
+        .apply(ParDo.of(new CreateEntityFn(options.getNamespace(), options.getKind())))
+        .apply(DatastoreIO.v1().write().withProjectId(options.getProject()));
 
-      p.run();
+    p.run();
   }
 
   /**
@@ -227,14 +223,14 @@ public class DatastoreWordCount {
   public static void readDataFromDatastore(Options options) {
     Query query = makeAncestorKindQuery(options);
 
-    // For Datastore sources, the read namespace can be set on the entire query.
-    DatastoreIO.Source source = DatastoreIO.source()
-        .withDataset(options.getDataset())
+    // For Datastore, the read namespace can be set on the entire query.
+    DatastoreV1.Read read = DatastoreIO.v1().read()
+        .withProjectId(options.getProject())
         .withQuery(query)
         .withNamespace(options.getNamespace());
 
     Pipeline p = Pipeline.create(options);
-    p.apply("ReadShakespeareFromDatastore", Read.from(source))
+    p.apply("ReadShakespeareFromDatastore", read)
         .apply("StringifyEntity", ParDo.of(new GetContentFn()))
         .apply("CountWords", new WordCount.CountWords())
         .apply("PrintWordCount", MapElements.via(new WordCount.FormatAsTextFn()))
