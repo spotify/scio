@@ -966,8 +966,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (context.isTest) {
       context.testOut(DatastoreIO(projectId))(this.asInstanceOf[SCollection[Entity]])
     } else {
-      val transform = dsio.DatastoreIO.v1().write().withProjectId(projectId)
-      this.asInstanceOf[SCollection[Entity]].applyInternal(transform)
+      this.asInstanceOf[SCollection[Entity]].applyInternal(
+        dsio.DatastoreIO.v1.write.withProjectId(projectId))
     }
     Future.failed(new NotImplementedError("Datastore future not implemented"))
   }

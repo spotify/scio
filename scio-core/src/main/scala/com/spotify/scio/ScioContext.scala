@@ -467,18 +467,18 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection for a Datastore query.
    * @group input
    */
-  def datastore(datasetId: String, query: Query, namespace: String = null)
-  : SCollection[Entity] = requireNotClosed {
-    if (this.isTest) {
-      this.getTestInput(DatastoreIO(datasetId, query, namespace))
-    } else {
-      val transform = dsio.DatastoreIO.v1().read()
-        .withProjectId(datasetId)
-        .withNamespace(namespace)
-        .withQuery(query)
-      wrap(this.applyInternal(transform))
+  def datastore(projectId: String, query: Query, namespace: String = null): SCollection[Entity] =
+    requireNotClosed {
+      if (this.isTest) {
+        this.getTestInput(DatastoreIO(projectId, query, namespace))
+      } else {
+        wrap(this.applyInternal(
+          dsio.DatastoreIO.v1().read()
+            .withProjectId(projectId)
+            .withNamespace(namespace)
+            .withQuery(query)))
+      }
     }
-  }
 
   /**
    * Get an SCollection for a Pub/Sub subscription.
