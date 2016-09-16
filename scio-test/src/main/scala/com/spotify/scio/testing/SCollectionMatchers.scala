@@ -23,6 +23,7 @@ import com.spotify.scio.util.ClosureCleaner
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.transforms.SerializableFunction
+import org.apache.beam.sdk.util.CoderUtils
 import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.collection.JavaConverters._
@@ -37,15 +38,24 @@ trait SCollectionMatchers {
     MatchResult(r, "", "")
   }
 
-  def containInAnyOrder[T](value: Iterable[T])
-  : Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
-    override def apply(left: SCollection[T]): MatchResult =
-      m(() => PAssert.that(left.internal).containsInAnyOrder(value.asJava))
+  // Due to  https://github.com/GoogleCloudPlatform/DataflowJavaSDK/issues/434
+  // SerDe cycle on each element to keep consistent with values on the expected side
+  private def serDeCycle[T: ClassTag](scollection: SCollection[T]): SCollection[T] = {
+    val coder = scollection.internal.getCoder
+    scollection
+      .map(e => CoderUtils.decodeFromByteArray(coder, CoderUtils.encodeToByteArray(coder, e)))
   }
 
-  def containSingleValue[T](value: T): Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
+  def containInAnyOrder[T: ClassTag](value: Iterable[T])
+  : Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
     override def apply(left: SCollection[T]): MatchResult =
-      m(() => PAssert.thatSingleton(left.internal).isEqualTo(value))
+      m(() => PAssert.that(serDeCycle(left).internal).containsInAnyOrder(value.asJava))
+  }
+
+  def containSingleValue[T: ClassTag](value: T)
+  : Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
+    override def apply(left: SCollection[T]): MatchResult =
+      m(() => PAssert.thatSingleton(serDeCycle(left).internal).isEqualTo(value))
   }
 
   val beEmpty = new Matcher[SCollection[_]] {
@@ -70,20 +80,20 @@ trait SCollectionMatchers {
   def equalMapOf[K: ClassTag, V: ClassTag](value: Map[K, V])
   : Matcher[SCollection[(K, V)]] = new Matcher[SCollection[(K, V)]] {
     override def apply(left: SCollection[(K, V)]): MatchResult = {
-      m(() => PAssert.thatMap(left.toKV.internal).isEqualTo(value.asJava))
+      m(() => PAssert.thatMap(serDeCycle(left).toKV.internal).isEqualTo(value.asJava))
     }
   }
 
   def notEqualMapOf[K: ClassTag, V: ClassTag](value: Map[K, V])
   : Matcher[SCollection[(K, V)]] = new Matcher[SCollection[(K, V)]] {
     override def apply(left: SCollection[(K, V)]): MatchResult = {
-      m(() => PAssert.thatMap(left.toKV.internal).notEqualTo(value.asJava))
+      m(() => PAssert.thatMap(serDeCycle(left).toKV.internal).notEqualTo(value.asJava))
     }
   }
 
   // TODO: investigate why multi-map doesn't work
 
-  def satisfy[T](predicate: Iterable[T] => Boolean)
+  def satisfy[T: ClassTag](predicate: Iterable[T] => Boolean)
   : Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
     override def apply(left: SCollection[T]): MatchResult = {
       val f = ClosureCleaner(predicate)
@@ -93,12 +103,14 @@ trait SCollectionMatchers {
           null
         }
       }
-      m(() => PAssert.that(left.internal).satisfies(g))
+      m(() => PAssert.that(serDeCycle(left).internal).satisfies(g))
     }
   }
 
-  def forAll[T](predicate: T => Boolean): Matcher[SCollection[T]] = satisfy(_.forall(predicate))
+  def forAll[T: ClassTag](predicate: T => Boolean): Matcher[SCollection[T]] =
+    satisfy(_.forall(predicate))
 
-  def exist[T](predicate: T => Boolean): Matcher[SCollection[T]] = satisfy(_.exists(predicate))
+  def exist[T: ClassTag](predicate: T => Boolean): Matcher[SCollection[T]] =
+    satisfy(_.exists(predicate))
 
 }

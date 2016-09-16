@@ -33,6 +33,7 @@ import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 
 import scala.concurrent.Future
+import scala.reflect.ClassTag
 
 class HdfsTapTest extends PipelineSpec {
 
@@ -149,7 +150,7 @@ class HdfsTapTest extends PipelineSpec {
     f.waitForResult()
   }
 
-  def verifyTap[T](tap: Tap[T], expected: Set[T]): Unit = {
+  def verifyTap[T: ClassTag](tap: Tap[T], expected: Set[T]): Unit = {
     tap.value.toSet should equal (expected)
     val sc = ScioContext()
     tap.open(sc) should containInAnyOrder (expected)
