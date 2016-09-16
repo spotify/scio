@@ -30,15 +30,13 @@ import com.spotify.scio.examples.common.ExampleData
 import scala.collection.JavaConverters._
 
 /*
-SBT
-runMain
-  com.spotify.scio.examples.cookbook.DatastoreWordCount
+sbt "scio-examples/runMain com.spotify.scio.examples.cookbook.DatastoreWordCount
   --project=[PROJECT] --runner=BlockingDataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/dataflow/staging
   --input=gs://dataflow-samples/shakespeare/kinglear.txt
   --output=gs://[BUCKET]/[PATH]/datastore_wordcount
   --dataset=[PROJECT]
-  --readOnly=false
+  --readOnly=false"
 */
 
 object DatastoreWordCount {
