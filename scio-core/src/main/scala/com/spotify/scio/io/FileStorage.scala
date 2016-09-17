@@ -29,7 +29,7 @@ import com.google.api.client.util.Charsets
 import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
-import org.apache.avro.file.DataFileStream
+import org.apache.avro.file.DataFileReader
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.specific.{SpecificDatumReader, SpecificRecordBase}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
@@ -62,7 +62,8 @@ private trait FileStorage {
     } else {
       new GenericDatumReader[T](schema)
     }
-    new DataFileStream[T](getDirectoryInputStream(path), reader).iterator().asScala
+    listFiles.map(f => DataFileReader.openReader(f.toFile, reader))
+      .map(_.iterator().asScala).reduce(_ ++ _)
   }
 
   def textFile: Iterator[String] =
