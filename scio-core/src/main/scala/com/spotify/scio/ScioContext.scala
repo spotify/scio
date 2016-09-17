@@ -29,6 +29,7 @@ import com.google.api.services.bigquery.model.TableReference
 import com.google.cloud.dataflow.sdk.Pipeline
 import com.google.cloud.dataflow.sdk.PipelineResult.State
 import com.google.cloud.dataflow.sdk.coders.TableRowJsonCoder
+import com.google.cloud.dataflow.sdk.io.PatchedAvroIO
 import com.google.cloud.dataflow.sdk.{io => gio}
 import com.google.cloud.dataflow.sdk.options._
 import com.google.cloud.dataflow.sdk.runners.inprocess.InProcessPipelineRunner
@@ -399,12 +400,12 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (this.isTest) {
       this.getTestInput(AvroIO[T](path))
     } else {
-      val transform = gio.AvroIO.Read.from(path)
+      val transform = gio.PatchedAvroIO.Read.from(path)
       val cls = ScioUtil.classOf[T]
       val t = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
         transform.withSchema(cls)
       } else {
-        transform.withSchema(schema).asInstanceOf[gio.AvroIO.Read.Bound[T]]
+        transform.withSchema(schema).asInstanceOf[PatchedAvroIO.Read.Bound[T]]
       }
       wrap(this.applyInternal(t)).setName(path)
     }
