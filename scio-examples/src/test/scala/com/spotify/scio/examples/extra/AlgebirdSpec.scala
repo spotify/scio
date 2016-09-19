@@ -60,6 +60,9 @@ object AlgebirdSpec extends Properties("Algebird") {
   // Generator for non-empty SColl[T]
   def sCollOf[T](g: => Gen[T]): Gen[SColl[T]] = Gen.nonEmptyListOf(g).map(new SColl(_))
 
+  // Generator for SColl[T] of given length
+  def sCollOfN[T](n: Int, g: => Gen[T]): Gen[SColl[T]] = Gen.listOfN(n, g).map(new SColl(_))
+
   // Arbitrary for non-empty SColl[T]
   implicit def arbSColl[T](implicit a: Arbitrary[T]): Arbitrary[SColl[T]] =
     Arbitrary(sCollOf(a.arbitrary))
@@ -197,7 +200,7 @@ object AlgebirdSpec extends Properties("Algebird") {
   // HyperLogLog for approximate distinct count
   // =======================================================================
 
-  property("sum with HyperLogLog") = forAll(sCollOf(Gen.alphaStr)) { xs =>
+  property("sum with HyperLogLog") = forAll(sCollOfN(1000, Gen.alphaStr)) { xs =>
     val m = new HyperLogLogMonoid(10)
     xs.map(i => m.create(i.getBytes))
       .sum(m)
@@ -206,7 +209,7 @@ object AlgebirdSpec extends Properties("Algebird") {
       .boundsContain(xs.internal.toSet.size)
   }
 
-  property("aggregate with HyperLogLog") = forAll(sCollOf(Gen.alphaStr)) { xs =>
+  property("aggregate with HyperLogLog") = forAll(sCollOfN(1000, Gen.alphaStr)) { xs =>
     xs.aggregate(HyperLogLogAggregator(10).composePrepare(_.getBytes))
       .approximateSize
       // approximate bounds should contain exact distinct count
@@ -268,10 +271,7 @@ object AlgebirdSpec extends Properties("Algebird") {
   // CountMinSketch for approximate frequency
   // =======================================================================
 
-  // Generator for SColl[String]
-  val alphaStrs = Gen.listOfN(1000, Gen.alphaStr).map(new SColl(_))
-
-  property("sum with CountMinSketch") = forAll(alphaStrs) { xs =>
+  property("sum with CountMinSketch") = forAll(sCollOfN(1000, Gen.alphaStr)) { xs =>
     import CMSHasherImplicits._
     val m = CMS.monoid[String](0.001, 1e-10, 1)
     val cms = xs.map(m.create).sum(m)
@@ -282,7 +282,7 @@ object AlgebirdSpec extends Properties("Algebird") {
     }
   }
 
-  property("aggregate with CountMinSketch") = forAll(alphaStrs) { xs =>
+  property("aggregate with CountMinSketch") = forAll(sCollOfN(1000, Gen.alphaStr)) { xs =>
     import CMSHasherImplicits._
     val cms = xs.aggregate(CMS.aggregator(0.01, 1e-10, 1))
     val expected = xs.internal.groupBy(identity).mapValues(_.size)
