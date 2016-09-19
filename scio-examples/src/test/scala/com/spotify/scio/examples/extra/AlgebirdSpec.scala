@@ -124,12 +124,10 @@ object AlgebirdSpec extends Properties("Algebird") {
     }
 
   // x or y could be NaN, Infinity or NegativeInfinity
-  def error(x: Double, y: Double): Double =
-    if (x.isWhole() && y.isWhole()) {
-      math.abs(x - y) / math.max(x, y)
-    } else {
-      0.0
-    }
+  def error(x: Double, y: Double): Double = {
+    val e = math.abs(x - y) / math.max(x, y)
+    if (e.isWhole()) e else 0.0
+  }
 
   property("aggregate of tuples with custom Aggregator") =
     forAll { xs: SColl[(Double, Double, Double, Double)] =>
