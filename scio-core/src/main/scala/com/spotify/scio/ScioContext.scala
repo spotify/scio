@@ -24,8 +24,8 @@ import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 import java.util.jar.{Attributes, JarFile}
 
+import com.google.datastore.v1.{Query, Entity}
 import com.google.api.services.bigquery.model.TableReference
-import com.google.api.services.datastore.DatastoreV1.{Entity, Query}
 import com.google.cloud.dataflow.sdk.Pipeline
 import com.google.cloud.dataflow.sdk.PipelineResult.State
 import com.google.cloud.dataflow.sdk.coders.TableRowJsonCoder
@@ -457,17 +457,16 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection for a Datastore query.
    * @group input
    */
-  def datastore(datasetId: String, query: Query, namespace: String = null): SCollection[Entity] =
+  def datastore(projectId: String, query: Query, namespace: String = null): SCollection[Entity] =
     pipelineOp {
       if (this.isTest) {
-        this.getTestInput(DatastoreIO(datasetId, query, namespace))
+        this.getTestInput(DatastoreIO(projectId, query, namespace))
       } else {
         wrap(this.applyInternal(
-          gio.Read.from(
-            gio.DatastoreIO.source()
-              .withDataset(datasetId)
-              .withNamespace(namespace)
-              .withQuery(query))))
+          gio.datastore.DatastoreIO.v1().read()
+            .withProjectId(projectId)
+            .withNamespace(namespace)
+            .withQuery(query)))
       }
     }
 

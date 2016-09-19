@@ -24,13 +24,11 @@ import com.spotify.scio.accumulators._
 import com.spotify.scio.examples.common.ExampleData
 
 /*
-SBT
-runMain
-  com.spotify.scio.examples.WordCount
+sbt "scio-examples/runMain com.spotify.scio.examples.WordCount
   --project=[PROJECT] --runner=DataflowPipelineRunner --zone=[ZONE]
   --stagingLocation=gs://[BUCKET]/dataflow/staging
   --input=gs://dataflow-samples/shakespeare/kinglear.txt
-  --output=gs://[BUCKET]/[PATH]/wordcount
+  --output=gs://[BUCKET]/[PATH]/wordcount"
 */
 
 object WordCount {
