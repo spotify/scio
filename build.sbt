@@ -40,6 +40,7 @@ val hbaseVersion = "1.0.2"
 val javaLshVersion = "0.10"
 val jodaConvertVersion = "1.8.1"
 val junitVersion = "4.12"
+val junitInterfaceVersion = "0.11"
 val nettyTcNativeVersion = "1.1.33.Fork18"
 val scalaCheckVersion = "1.13.2"
 val scalaMacrosVersion = "2.1.0"
@@ -58,6 +59,8 @@ val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ ass
   scalacOptions in (Compile, doc) ++= Seq("-groups", "-skip-packages", "com.google"),
   javacOptions                    ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked"),
   javacOptions in (Compile, doc)  := Seq("-source", "1.7"),
+
+  testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
 
   coverageExcludedPackages := Seq(
     "com\\.spotify\\.scio\\.examples\\..*",
@@ -206,6 +209,7 @@ lazy val scioTest: Project = Project(
       "org.scalatest" %% "scalatest" % scalaTestVersion,
       // DataFlow testing requires junit and hamcrest
       "junit" % "junit" % junitVersion,
+      "com.novocode" % "junit-interface" % junitInterfaceVersion,
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion
     )
   )
