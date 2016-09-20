@@ -19,6 +19,7 @@ package com.spotify.scio.io
 
 import java.io.{File, FileInputStream, InputStream, SequenceInputStream}
 import java.net.URI
+import java.nio.ByteBuffer
 import java.nio.channels.Channels
 import java.nio.file.Path
 import java.util.Collections
@@ -29,7 +30,7 @@ import com.google.api.client.util.Charsets
 import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
-import org.apache.avro.file.DataFileReader
+import org.apache.avro.file.{DataFileReader, SeekableFileInput, SeekableInput}
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.specific.{SpecificDatumReader, SpecificRecordBase}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
@@ -55,6 +56,8 @@ private trait FileStorage {
 
   protected def getObjectInputStream(path: Path): InputStream
 
+  protected def getAvroSeekableInput(path: Path): SeekableInput
+
   def avroFile[T: ClassTag](schema: Schema = null): Iterator[T] = {
     val cls = ScioUtil.classOf[T]
     val reader = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
@@ -62,7 +65,8 @@ private trait FileStorage {
     } else {
       new GenericDatumReader[T](schema)
     }
-    listFiles.map(f => DataFileReader.openReader(f.toFile, reader))
+
+    listFiles.map(f => DataFileReader.openReader(getAvroSeekableInput(f), reader))
       .map(_.iterator().asScala).reduce(_ ++ _)
   }
 
@@ -132,6 +136,22 @@ private class GcsStorage(protected val path: String) extends FileStorage {
   override protected def getObjectInputStream(path: Path): InputStream =
     Channels.newInputStream(gcs.open(GcsPath.fromUri(path.toUri)))
 
+  override protected def getAvroSeekableInput(path: Path): SeekableInput =
+    new SeekableInput {
+      private val in = gcs.open(GcsPath.fromUri(path.toUri))
+
+      override def tell(): Long = in.position()
+
+      override def length(): Long = in.size()
+
+      override def seek(p: Long): Unit = in.position(p)
+
+      override def read(b: Array[Byte], off: Int, len: Int): Int =
+        in.read(ByteBuffer.wrap(b, off, len))
+
+      override def close(): Unit = in.close()
+    }
+
 }
 
 private class LocalStorage(protected val path: String)  extends FileStorage {
@@ -160,5 +180,8 @@ private class LocalStorage(protected val path: String)  extends FileStorage {
 
   override protected def getObjectInputStream(path: Path): InputStream =
     new FileInputStream(path.toFile)
+
+  override protected def getAvroSeekableInput(path: Path): SeekableInput =
+    new SeekableFileInput(path.toFile)
 
 }
