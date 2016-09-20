@@ -201,7 +201,8 @@ object AlgebirdSpec extends Properties("Algebird") {
   // =======================================================================
 
   property("sum with HyperLogLog") = forAll(sCollOfN(1000, Gen.alphaStr)) { xs =>
-    val m = new HyperLogLogMonoid(10)
+    // Error is 1.04 / sqrt(2 ^ 24) = 2.5390625E-4
+    val m = new HyperLogLogMonoid(24)
     xs.map(i => m.create(i.getBytes))
       .sum(m)
       .approximateSize
@@ -210,7 +211,8 @@ object AlgebirdSpec extends Properties("Algebird") {
   }
 
   property("aggregate with HyperLogLog") = forAll(sCollOfN(1000, Gen.alphaStr)) { xs =>
-    xs.aggregate(HyperLogLogAggregator(10).composePrepare(_.getBytes))
+    // Error is 1.04 / sqrt(2 ^ 24) = 2.5390625E-4
+    xs.aggregate(HyperLogLogAggregator(24).composePrepare(_.getBytes))
       .approximateSize
       // approximate bounds should contain exact distinct count
       .boundsContain(xs.internal.toSet.size)
