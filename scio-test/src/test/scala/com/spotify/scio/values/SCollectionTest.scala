@@ -140,6 +140,18 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support collect" in {
+    runWithContext { sc =>
+      val records = Seq(
+        ("test1", 1),
+        ("test2", 2),
+        ("test3", 3)
+      )
+      val p = sc.parallelize(records).collect { case ("test2", x) => 2 * x }
+      p should containSingleValue (4)
+    }
+  }
+
   it should "support combine()" in {
     runWithContext { sc =>
       val p = sc.parallelize(1 to 100).combine(_.toDouble)(_ + _)(_ + _)
