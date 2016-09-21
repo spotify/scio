@@ -228,6 +228,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /**
+   * Filter the elements for which the given PartialFunction is defined, and then map.
+   * @group transform
+   */
+  def collect[U: ClassTag](pfn: PartialFunction[T, U]): SCollection[U] = this.transform {
+    _.filter(pfn.isDefinedAt _).map(pfn)
+  }
+
+  /**
    * Generic function to combine the elements using a custom set of aggregation functions. Turns
    * an SCollection[T] into a result of type SCollection[C], for a "combined type" C. Note that V
    * and C can be different -- for example, one might combine an SCollection of type Int into an
