@@ -24,7 +24,7 @@ import sbtunidoc.Plugin.UnidocKeys._
 import com.trueaccord.scalapb.{ScalaPbPlugin => PB}
 
 val dataflowSdkVersion = "1.7.0"
-val algebirdVersion = "0.12.1"
+val algebirdVersion = "0.12.2"
 val avroVersion = "1.7.7"
 val bigQueryVersion = "v2-rev317-1.22.0"
 val bigtableVersion = "0.9.2"
