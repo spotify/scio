@@ -19,10 +19,9 @@ package com.spotify.scio.io
 
 import com.google.api.client.util.{BackOff, BackOffUtils, Sleeper}
 import com.google.api.services.bigquery.model.TableReference
-import com.google.cloud.dataflow.sdk.coders.Coder
 import com.google.cloud.dataflow.sdk.io.BigQueryIO
 import com.google.protobuf.Message
-import com.spotify.scio.bigquery.{BigQueryClient, BigQueryUtil, TableRow}
+import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
 import org.apache.avro.Schema
 import org.slf4j.{Logger, LoggerFactory}
 
