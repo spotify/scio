@@ -20,6 +20,7 @@ package com.spotify.scio.io
 import com.google.api.client.util.{BackOff, BackOffUtils, Sleeper}
 import com.google.api.services.bigquery.model.TableReference
 import com.google.cloud.dataflow.sdk.io.BigQueryIO
+import com.google.cloud.dataflow.sdk.util.FluentBackoff
 import com.google.protobuf.Message
 import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
 import org.apache.avro.Schema
@@ -161,58 +162,16 @@ object Taps extends {
   /** Default taps algorithm. */
   val ALGORITHM_DEFAULT = "immediate"
 
-  /** System property key for polling taps maximum interval in milliseconds. */
-  val POLLING_MAXIMUM_INTERVAL_KEY = "taps.polling.maximum_interval"
-
-  /** Default polling taps maximum interval. */
-  val POLLING_MAXIMUM_INTERVAL_DEFAULT = "600000"
-
-  /** System property key for polling taps initial interval in milliseconds. */
-  val POLLING_INITIAL_INTERVAL_KEY = "taps.polling.initial_interval"
-
-  /** Default polling taps initial interval. */
-  val POLLING_INITIAL_INTERVAL_DEFAULT = "10000"
-
-  /**
-   * System property key for polling taps maximum number of attempts, unlimited if <= 0. Default is
-   * 0.
-   */
-  val POLLING_MAXIMUM_ATTEMPTS_KEY = "taps.polling.maximum_attempts"
-
-  /** Default polling taps maximum number of attempts. */
-  val POLLING_MAXIMUM_ATTEMPTS_DEFAULT = "0"
-
   /**
    * Create a new Taps instance.
    *
    * Taps algorithm can be set via the `taps.algorithm` property.
    * Available algorithms are `immediate` (default) and `polling`.
-   *
-   * Additional properties can be set for the `polling` algorithm.
-   *
-   * - `taps.polling.maximum_interval`: maximum interval between polls.
-   *
-   * - `taps.polling.initial_interval`: initial interval between polls.
-   *
-   * - `taps.polling.maximum_attempts`: maximum number of attempts, unlimited if <= 0. Default is 0.
    */
   def apply(): Taps = {
-    import com.google.cloud.dataflow.sdk.util
     getPropOrElse(ALGORITHM_KEY, ALGORITHM_DEFAULT) match {
       case "immediate" => new ImmediateTaps
-      case "polling" =>
-        val maxAttempts =
-          getPropOrElse(POLLING_MAXIMUM_ATTEMPTS_KEY, POLLING_MAXIMUM_ATTEMPTS_DEFAULT).toInt
-        val initInterval =
-          getPropOrElse(POLLING_INITIAL_INTERVAL_KEY, POLLING_INITIAL_INTERVAL_DEFAULT).toLong
-        val backOff = if (maxAttempts <= 0) {
-          val maxInterval =
-            getPropOrElse(POLLING_MAXIMUM_INTERVAL_KEY, POLLING_MAXIMUM_INTERVAL_DEFAULT).toLong
-          new util.IntervalBoundedExponentialBackOff(maxInterval, initInterval)
-        } else {
-          new util.AttemptBoundedExponentialBackOff(maxAttempts, initInterval)
-        }
-        new PollingTaps(backOff)
+      case "polling" => new PollingTaps(FluentBackoff.DEFAULT.backoff())
       case t => throw new IllegalArgumentException(s"Unsupported Taps $t")
     }
   }
