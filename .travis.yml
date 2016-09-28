@@ -16,16 +16,11 @@ before_install:
     fi
 
 script:
-  - if [[ "${TRAVIS_SCALA_VERSION%.*}" == "2.10" ]]; then
-      ./scripts/travis.sh;
-      travis_wait 60 sbt -J-XX:ReservedCodeCacheSize=256m ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean test;
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+      travis_wait 60 sbt -J-XX:ReservedCodeCacheSize=256m ++$TRAVIS_SCALA_VERSION -Dbigquery.project=data-integration-test -Dbigquery.secret=scripts/data-integration-test-421ab9f796e8.json clean scalastyle coverage test it:test coverageReport coverageAggregate;
     else
-      if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
-        travis_wait 60 sbt -J-XX:ReservedCodeCacheSize=256m ++$TRAVIS_SCALA_VERSION -Dbigquery.project=data-integration-test -Dbigquery.secret=scripts/data-integration-test-421ab9f796e8.json clean scalastyle coverage test it:test coverageReport coverageAggregate;
-      else
-        ./scripts/travis.sh;
-        travis_wait 60 sbt -J-XX:ReservedCodeCacheSize=256m ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean scalastyle coverage test coverageReport coverageAggregate;
-      fi
+      ./scripts/travis.sh;
+      travis_wait 60 sbt -J-XX:ReservedCodeCacheSize=256m ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean scalastyle coverage test coverageReport coverageAggregate;
     fi
 
   # Test REPL
