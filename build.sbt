@@ -163,9 +163,9 @@ lazy val dataflowSdkDependency =
 
 lazy val root: Project = Project(
   "scio",
-  file("."),
-  settings = commonSettings ++ siteSettings ++ noPublishSettings
+  file(".")
 ).settings(
+  commonSettings ++ siteSettings ++ noPublishSettings,
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
     -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples),
   run <<= run in Compile in scioRepl dependsOn sbtReplScalaVersionCheck,
@@ -184,17 +184,17 @@ lazy val root: Project = Project(
 
 lazy val scioCore: Project = Project(
   "scio-core",
-  file("scio-core"),
-  settings = commonSettings ++ Seq(
-    description := "Scio - A Scala API for Google Cloud Dataflow",
-    libraryDependencies ++= Seq(
-      dataflowSdkDependency,
-      "com.twitter" %% "algebird-core" % algebirdVersion,
-      "com.twitter" %% "chill" % chillVersion,
-      "com.twitter" % "chill-protobuf" % chillVersion,
-      "commons-io" % "commons-io" % commonsIoVersion,
-      "org.apache.commons" % "commons-math3" % commonsMath3Version
-    )
+  file("scio-core")
+).settings(
+  commonSettings,
+  description := "Scio - A Scala API for Google Cloud Dataflow",
+  libraryDependencies ++= Seq(
+    dataflowSdkDependency,
+    "com.twitter" %% "algebird-core" % algebirdVersion,
+    "com.twitter" %% "chill" % chillVersion,
+    "com.twitter" % "chill-protobuf" % chillVersion,
+    "commons-io" % "commons-io" % commonsIoVersion,
+    "org.apache.commons" % "commons-math3" % commonsMath3Version
   )
 ).dependsOn(
   scioBigQuery
@@ -202,16 +202,16 @@ lazy val scioCore: Project = Project(
 
 lazy val scioTest: Project = Project(
   "scio-test",
-  file("scio-test"),
-  settings = commonSettings ++ Seq(
-    description := "Scio helpers for ScalaTest",
-    libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % scalaTestVersion,
-      // DataFlow testing requires junit and hamcrest
-      "junit" % "junit" % junitVersion,
-      "com.novocode" % "junit-interface" % junitInterfaceVersion,
-      "org.hamcrest" % "hamcrest-all" % hamcrestVersion
-    )
+  file("scio-test")
+).settings(
+  commonSettings,
+  description := "Scio helpers for ScalaTest",
+  libraryDependencies ++= Seq(
+    "org.scalatest" %% "scalatest" % scalaTestVersion,
+    // DataFlow testing requires junit and hamcrest
+    "junit" % "junit" % junitVersion,
+    "com.novocode" % "junit-interface" % junitInterfaceVersion,
+    "org.hamcrest" % "hamcrest-all" % hamcrestVersion
   )
 ).dependsOn(
   scioCore,
@@ -220,40 +220,40 @@ lazy val scioTest: Project = Project(
 
 lazy val scioBigQuery: Project = Project(
   "scio-bigquery",
-  file("scio-bigquery"),
-  settings = commonSettings ++ Defaults.itSettings ++ Seq(
-    description := "Scio add-on for Google BigQuery",
-    libraryDependencies ++= Seq(
-      dataflowSdkDependency,
-      "com.google.apis" % "google-api-services-bigquery" % bigQueryVersion,
-      "commons-io" % "commons-io" % commonsIoVersion,
-      "org.joda" % "joda-convert" % jodaConvertVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
-      "org.scalatest" %% "scalatest" % scalaTestVersion % "test,it"
-    ),
-    libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
-    libraryDependencies ++= (
-      if (scalaBinaryVersion.value == "2.10")
-        List("org.scalamacros" %% "quasiquotes" % scalaMacrosVersion cross CrossVersion.binary)
-      else
-        Nil
-    ),
-    addCompilerPlugin(paradiseDependency)
-  )
+  file("scio-bigquery")
+).settings(
+  commonSettings ++ Defaults.itSettings,
+  description := "Scio add-on for Google BigQuery",
+  libraryDependencies ++= Seq(
+    dataflowSdkDependency,
+    "com.google.apis" % "google-api-services-bigquery" % bigQueryVersion,
+    "commons-io" % "commons-io" % commonsIoVersion,
+    "org.joda" % "joda-convert" % jodaConvertVersion,
+    "org.slf4j" % "slf4j-api" % slf4jVersion,
+    "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
+    "org.scalatest" %% "scalatest" % scalaTestVersion % "test,it"
+  ),
+  libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
+  libraryDependencies ++= (
+    if (scalaBinaryVersion.value == "2.10")
+      List("org.scalamacros" %% "quasiquotes" % scalaMacrosVersion cross CrossVersion.binary)
+    else
+      Nil
+  ),
+  addCompilerPlugin(paradiseDependency)
 ).configs(IntegrationTest)
 
 lazy val scioBigtable: Project = Project(
   "scio-bigtable",
-  file("scio-bigtable"),
-  settings = commonSettings ++ Seq(
-    description := "Scio add-on for Google Cloud Bigtable",
-    libraryDependencies ++= Seq(
-      "com.google.cloud.bigtable" % "bigtable-hbase-dataflow" % bigtableVersion exclude ("org.slf4j", "slf4j-log4j12"),
-      "org.apache.hadoop" % "hadoop-common" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12"),
-      "org.apache.hbase" % "hbase-common" % hbaseVersion,
-      "io.netty" % "netty-tcnative-boringssl-static" % nettyTcNativeVersion
-    )
+  file("scio-bigtable")
+).settings(
+  commonSettings,
+  description := "Scio add-on for Google Cloud Bigtable",
+  libraryDependencies ++= Seq(
+    "com.google.cloud.bigtable" % "bigtable-hbase-dataflow" % bigtableVersion exclude ("org.slf4j", "slf4j-log4j12"),
+    "org.apache.hadoop" % "hadoop-common" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12"),
+    "org.apache.hbase" % "hbase-common" % hbaseVersion,
+    "io.netty" % "netty-tcnative-boringssl-static" % nettyTcNativeVersion
   )
 ).dependsOn(
   scioCore
@@ -261,28 +261,28 @@ lazy val scioBigtable: Project = Project(
 
 lazy val scioExtra: Project = Project(
   "scio-extra",
-  file("scio-extra"),
-  settings = commonSettings ++ Seq(
-    description := "Scio extra utilities",
-    libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % guavaVersion,
-      "com.twitter" %% "algebird-core" % algebirdVersion,
-      "org.scalanlp" %% "breeze" % breezeVersion,
-      "info.debatty" % "java-lsh" % javaLshVersion,
-      "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
-    )
+  file("scio-extra")
+).settings(
+  commonSettings,
+  description := "Scio extra utilities",
+  libraryDependencies ++= Seq(
+    "com.google.guava" % "guava" % guavaVersion,
+    "com.twitter" %% "algebird-core" % algebirdVersion,
+    "org.scalanlp" %% "breeze" % breezeVersion,
+    "info.debatty" % "java-lsh" % javaLshVersion,
+    "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
   )
 )
 
 lazy val scioHdfs: Project = Project(
   "scio-hdfs",
-  file("scio-hdfs"),
-  settings = commonSettings ++ Seq(
-    description := "Scio add-on for HDFS",
-    libraryDependencies ++= Seq(
-      "org.apache.avro" % "avro-mapred" % avroVersion classifier("hadoop2"),
-      "org.apache.hadoop" % "hadoop-client" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12")
-    )
+  file("scio-hdfs")
+).settings(
+  commonSettings,
+  description := "Scio add-on for HDFS",
+  libraryDependencies ++= Seq(
+    "org.apache.avro" % "avro-mapred" % avroVersion classifier("hadoop2"),
+    "org.apache.hadoop" % "hadoop-client" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12")
   )
 ).dependsOn(
   scioCore,
@@ -292,17 +292,13 @@ lazy val scioHdfs: Project = Project(
 
 lazy val scioSchemas: Project = Project(
   "scio-schemas",
-  file("scio-schemas"),
-  settings = commonSettings ++
-             sbtavro.SbtAvro.avroSettings ++
-             noPublishSettings ++
-             PB.protobufSettings ++ Seq(
-    description := "Avro/Proto schemas for testing",
-    libraryDependencies ++= Seq(
-      "com.github.os72" % "protoc-jar" % "3.0.0-b1"
-    )
-  )
+  file("scio-schemas")
 ).settings(
+  commonSettings ++ sbtavro.SbtAvro.avroSettings ++ noPublishSettings ++ PB.protobufSettings,
+  description := "Avro/Proto schemas for testing",
+  libraryDependencies ++= Seq(
+    "com.github.os72" % "protoc-jar" % "3.0.0-b1"
+  ),
   // suppress warnings
   sources in doc in Compile := List(),
   javacOptions := Seq("-source", "1.7", "-target", "1.7"),
@@ -316,15 +312,14 @@ lazy val scioSchemas: Project = Project(
 
 lazy val scioExamples: Project = Project(
   "scio-examples",
-  file("scio-examples"),
-  settings = commonSettings ++ noPublishSettings ++ Seq(
-    libraryDependencies ++= Seq(
-      "org.slf4j" % "slf4j-simple" % slf4jVersion,
-      "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
-    ),
-    addCompilerPlugin(paradiseDependency)
-  )
+  file("scio-examples")
 ).settings(
+  commonSettings ++ noPublishSettings,
+  libraryDependencies ++= Seq(
+    "org.slf4j" % "slf4j-simple" % slf4jVersion,
+    "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
+  ),
+  addCompilerPlugin(paradiseDependency),
   sources in doc in Compile := List(),
   javacOptions := {
     if (java8)
@@ -352,25 +347,24 @@ val sbtReplScalaVersionCheck = Def.task {
 
 lazy val scioRepl: Project = Project(
   "scio-repl",
-  file("scio-repl"),
-  settings = commonSettings ++ Seq(
-    libraryDependencies ++= Seq(
-      "org.slf4j" % "slf4j-simple" % slf4jVersion,
-      "jline" % "jline" % scalaBinaryVersion.value,
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "com.nrinaudo" %% "kantan.csv" % csvVersion,
-      paradiseDependency
-    ),
-    libraryDependencies ++= (
-      if (scalaBinaryVersion.value == "2.10")
-        List("org.scala-lang" % "jline" % scalaVersion.value)
-      else
-        Nil
-    ),
-    run <<= run in Compile dependsOn sbtReplScalaVersionCheck
-  )
+  file("scio-repl")
 ).settings(
+  commonSettings,
+  libraryDependencies ++= Seq(
+    "org.slf4j" % "slf4j-simple" % slf4jVersion,
+    "jline" % "jline" % scalaBinaryVersion.value,
+    "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+    "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+    "com.nrinaudo" %% "kantan.csv" % csvVersion,
+    paradiseDependency
+  ),
+  libraryDependencies ++= (
+    if (scalaBinaryVersion.value == "2.10")
+      List("org.scala-lang" % "jline" % scalaVersion.value)
+    else
+      Nil
+  ),
+  run <<= run in Compile dependsOn sbtReplScalaVersionCheck,
   assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
 ).dependsOn(
   scioCore,
