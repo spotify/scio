@@ -50,7 +50,7 @@ val slf4jVersion = "1.7.21"
 
 val java8 = sys.props("java.version").startsWith("1.8.")
 
-val commonSettings = Project.defaultSettings ++ Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
+val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
 
   scalaVersion       := "2.11.8",
