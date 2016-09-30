@@ -65,6 +65,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
     "com\\.spotify\\.scio\\.repl\\..*",
     "com\\.spotify\\.scio\\.util\\.MultiJoin"
   ).mkString(";"),
+  coverageHighlighting := (if (scalaBinaryVersion.value == "2.10") false else true),
 
   // Release settings
   releaseCrossBuild             := true,
