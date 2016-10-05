@@ -364,7 +364,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   private[scio] def applyInternal[Output <: POutput](root: PTransform[_ >: PBegin, Output])
   : Output =
-    pipeline.apply(CallSites.getCurrent, root)
+    pipeline.apply(CallSites.getCurrentName, root)
 
   /**
    * Apply a [[com.google.cloud.dataflow.sdk.transforms.PTransform PTransform]] and wrap the output
