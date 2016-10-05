@@ -180,7 +180,7 @@ lazy val root: Project = Project(
   scioExtra,
   scioHdfs,
   scioRepl,
-  scioExamples,
+  // scioExamples,
   scioSchemas
 )
 
