@@ -25,7 +25,7 @@ import java.net.URI
 import java.util.UUID
 
 import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
-import com.google.api.services.datastore.DatastoreV1.Entity
+import com.google.datastore.v1beta3.Entity
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.AvroBytesUtil
@@ -37,14 +37,15 @@ import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
+import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.{Coder, TableRowJsonCoder}
-import org.apache.beam.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import org.apache.beam.sdk.{io => gio}
-import org.apache.beam.sdk.runners.DirectPipelineRunner
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.util.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
+import org.apache.beam.sdk.{io => gio}
 import org.joda.time.{Duration, Instant}
 
 import scala.collection.JavaConverters._
@@ -290,7 +291,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def filter(f: T => Boolean): SCollection[T] =
-    this.pApply(Filter.byPredicate(Functions.serializableFn(f.asInstanceOf[T => JBoolean])))
+    this.pApply(Filter.by(Functions.serializableFn(f.asInstanceOf[T => JBoolean])))
 
   /**
    * Return a new SCollection by first applying a function to all elements of
@@ -821,7 +822,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   private def pathWithShards(path: String) = {
-    if (this.context.pipeline.getRunner.isInstanceOf[DirectPipelineRunner] &&
+    if (this.context.pipeline.getRunner.isInstanceOf[DirectRunner] &&
       ScioUtil.isLocalUri(new URI(path))) {
       // Create output directory when running locally with local file system
       val f = new File(path)
@@ -879,7 +880,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                      writeDisposition: WriteDisposition,
                      createDisposition: CreateDisposition)
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
-    val tableSpec = gio.BigQueryIO.toTableSpec(table)
+    val tableSpec = bqio.BigQueryIO.toTableSpec(table)
     if (context.isTest) {
       context.testOut(BigQueryIO(tableSpec))(this.asInstanceOf[SCollection[TableRow]])
 
@@ -889,7 +890,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         saveAsInMemoryTap.asInstanceOf[Future[Tap[TableRow]]]
       }
     } else {
-      var transform = gio.BigQueryIO.Write.to(table)
+      var transform = bqio.BigQueryIO.Write.to(table)
       if (schema != null) transform = transform.withSchema(schema)
       if (createDisposition != null) transform = transform.withCreateDisposition(createDisposition)
       if (writeDisposition != null) transform = transform.withWriteDisposition(writeDisposition)
@@ -912,17 +913,18 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                      createDisposition: CreateDisposition = null)
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
     saveAsBigQuery(
-      gio.BigQueryIO.parseTableSpec(tableSpec), schema, writeDisposition, createDisposition)
+      bqio.BigQueryIO.parseTableSpec(tableSpec), schema, writeDisposition, createDisposition)
 
   /**
    * Save this SCollection as a Datastore dataset. Note that elements must be of type Entity.
    * @group output
    */
-  def saveAsDatastore(datasetId: String)(implicit ev: T <:< Entity): Future[Tap[Entity]] = {
+  def saveAsDatastore(projectId: String)(implicit ev: T <:< Entity): Future[Tap[Entity]] = {
     if (context.isTest) {
-      context.testOut(DatastoreIO(datasetId))(this.asInstanceOf[SCollection[Entity]])
+      context.testOut(DatastoreIO(projectId))(this.asInstanceOf[SCollection[Entity]])
     } else {
-      this.asInstanceOf[SCollection[Entity]].applyInternal(gio.DatastoreIO.writeTo(datasetId))
+      val transform = dsio.DatastoreIO.v1beta3().write().withProjectId(projectId)
+      this.asInstanceOf[SCollection[Entity]].applyInternal(transform)
     }
     Future.failed(new NotImplementedError("Datastore future not implemented"))
   }

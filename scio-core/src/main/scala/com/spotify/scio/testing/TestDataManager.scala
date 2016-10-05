@@ -18,7 +18,7 @@
 package com.spotify.scio.testing
 
 import com.google.api.services.bigquery.model.TableRow
-import com.google.api.services.datastore.DatastoreV1.{Entity, Query}
+import com.google.datastore.v1beta3.{Entity, Query}
 import com.spotify.scio.values.SCollection
 
 import scala.collection.mutable.{Map => MMap, Set => MSet}
@@ -101,8 +101,8 @@ case class AvroIO[T](path: String) extends TestIO(path)
 
 case class BigQueryIO(tableSpecOrQuery: String) extends TestIO[TableRow](tableSpecOrQuery)
 
-case class DatastoreIO(datasetId: String, query: Query = null)
-  extends TestIO[Entity](s"$datasetId\t$query")
+case class DatastoreIO(projectId: String, namespace: String = null, query: Query = null)
+  extends TestIO[Entity](s"$projectId\t$namespace\t$query")
 
 case class PubsubIO(topic: String) extends TestIO[String](topic)
 

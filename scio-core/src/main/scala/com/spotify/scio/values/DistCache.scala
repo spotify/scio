@@ -24,8 +24,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.spotify.scio.util.ScioUtil
+import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.options.{GcsOptions, PipelineOptions}
-import org.apache.beam.sdk.runners.DirectPipelineRunner
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -104,7 +104,7 @@ private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistC
   }
 
   protected def verifyUri(uri: URI): Unit = {
-    if (classOf[DirectPipelineRunner] isAssignableFrom opts.getRunner) {
+    if (classOf[DirectRunner] isAssignableFrom opts.getRunner) {
       require(ScioUtil.isLocalUri(uri) || ScioUtil.isGcsUri(uri), s"Unsupported path $uri")
     } else {
       require(ScioUtil.isGcsUri(uri), s"Unsupported path $uri")

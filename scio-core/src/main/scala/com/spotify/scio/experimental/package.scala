@@ -22,8 +22,8 @@ import com.spotify.scio.bigquery.BigQueryClient
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.BigQueryIO
-import org.apache.beam.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag

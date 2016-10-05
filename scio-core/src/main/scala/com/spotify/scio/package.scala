@@ -20,7 +20,7 @@ package com.spotify
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.AccumulatorType
 import com.twitter.algebird.Semigroup
-import org.apache.beam.sdk.io.BigQueryIO.Write
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 import org.apache.beam.sdk.util.WindowingStrategy.AccumulationMode
 
 import scala.concurrent.duration.Duration
