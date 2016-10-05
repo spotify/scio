@@ -35,12 +35,13 @@ import com.google.common.base.Charsets
 import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
-import org.apache.beam.sdk.io.BigQueryIO
-import org.apache.beam.sdk.io.BigQueryIO.Write.CreateDisposition._
-import org.apache.beam.sdk.io.BigQueryIO.Write.WriteDisposition._
-import org.apache.beam.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition._
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.WriteDisposition._
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryTableRowIterator
 import org.apache.beam.sdk.options.GcpOptions.DefaultProjectFactory
-import org.apache.beam.sdk.util.{BigQueryTableInserter, BigQueryTableRowIterator}
+import org.apache.beam.sdk.util.BigQueryTableInserter
 import org.apache.commons.io.FileUtils
 import org.joda.time.format.{DateTimeFormat, PeriodFormatterBuilder}
 import org.joda.time.{Instant, Period}

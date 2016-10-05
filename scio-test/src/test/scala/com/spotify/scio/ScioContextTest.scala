@@ -19,11 +19,10 @@ package com.spotify.scio
 
 import com.google.common.collect.Lists
 import com.spotify.scio.testing.PipelineSpec
-import org.apache.beam.runners.dataflow.DataflowPipelineRunner
+import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
-import org.apache.beam.runners.direct.InProcessPipelineRunner
+import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.apache.beam.sdk.runners.DirectPipelineRunner
 import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.transforms.Create
 import org.apache.commons.lang.exception.ExceptionUtils
@@ -50,16 +49,9 @@ class ScioContextTest extends PipelineSpec {
     pipeline.getOptions.getTempLocation should not be null
   }
 
-  it should "have temp location for InProcessPipelineRunner" in {
+  it should "have temp location for DirectRunner" in {
     val opts = PipelineOptionsFactory.create()
-    opts.setRunner(classOf[InProcessPipelineRunner])
-    val pipeline = ScioContext(opts).pipeline
-    pipeline.getOptions.getTempLocation should not be null
-  }
-
-  it should "have temp location for DirectPipelineRunner" in {
-    val opts = PipelineOptionsFactory.create()
-    opts.setRunner(classOf[DirectPipelineRunner])
+    opts.setRunner(classOf[DirectRunner])
     val pipeline = ScioContext(opts).pipeline
     pipeline.getOptions.getTempLocation should not be null
   }
@@ -73,9 +65,9 @@ class ScioContextTest extends PipelineSpec {
   }
 
   // scalastyle:off no.whitespace.before.left.bracket
-  it should "fail on missing temp or staging location for DataflowPipelineRunner" in {
+  it should "fail on missing temp or staging location for DataflowRunner" in {
     val opts = PipelineOptionsFactory.create().as(classOf[DataflowPipelineOptions])
-    opts.setRunner(classOf[DataflowPipelineRunner])
+    opts.setRunner(classOf[DataflowRunner])
     opts.setProject("foobar")
     val sc = ScioContext(opts)
     val e = the [RuntimeException] thrownBy { sc.pipeline }

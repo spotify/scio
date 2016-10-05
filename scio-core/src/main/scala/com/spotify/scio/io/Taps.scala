@@ -22,7 +22,7 @@ import com.google.api.services.bigquery.model.TableReference
 import com.google.protobuf.Message
 import com.spotify.scio.bigquery.{BigQueryClient, BigQueryUtil, TableRow}
 import org.apache.avro.Schema
-import org.apache.beam.sdk.io.BigQueryIO
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.{Future, Promise}

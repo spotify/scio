@@ -25,18 +25,7 @@ import java.util.concurrent.TimeUnit
 import java.util.jar.{Attributes, JarFile}
 
 import com.google.api.services.bigquery.model.TableReference
-import com.google.api.services.datastore.DatastoreV1.{Entity, Query}
-import org.apache.beam.runners.dataflow.{DataflowPipelineJob, DataflowPipelineRunner}
-import org.apache.beam.runners.dataflow.options._
-import org.apache.beam.sdk.coders.TableRowJsonCoder
-import org.apache.beam.sdk.{io => gio}
-import org.apache.beam.sdk.options._
-import org.apache.beam.sdk.Pipeline
-import org.apache.beam.sdk.PipelineResult.State
-import org.apache.beam.sdk.testing.TestPipeline
-import org.apache.beam.sdk.transforms.Combine.CombineFn
-import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
-import org.apache.beam.sdk.values.{PBegin, PCollection, POutput, TimestampedValue}
+import com.google.datastore.v1beta3.{Entity, Query}
 import com.google.protobuf.Message
 import com.spotify.scio.bigquery._
 import com.spotify.scio.coders.AvroBytesUtil
@@ -47,6 +36,17 @@ import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
+import org.apache.beam.runners.dataflow.options._
+import org.apache.beam.runners.dataflow.{DataflowPipelineJob, DataflowRunner}
+import org.apache.beam.sdk.PipelineResult.State
+import org.apache.beam.sdk.coders.TableRowJsonCoder
+import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
+import org.apache.beam.sdk.options._
+import org.apache.beam.sdk.testing.TestPipeline
+import org.apache.beam.sdk.transforms.Combine.CombineFn
+import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
+import org.apache.beam.sdk.values.{PBegin, PCollection, POutput, TimestampedValue}
+import org.apache.beam.sdk.{Pipeline, io => gio}
 import org.joda.time.Instant
 import org.slf4j.LoggerFactory
 
@@ -202,7 +202,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   // Extra artifacts - jars/files etc
   // =======================================================================
 
-  /** Borrowed from DataflowPipelineRunner. */
+  /** Borrowed from DataflowRunner. */
   private def detectClassPathResourcesToStage(classLoader: ClassLoader): List[String] = {
     require(classLoader.isInstanceOf[URLClassLoader],
       "Current ClassLoader is '" + classLoader + "' only URLClassLoaders are supported")
@@ -243,7 +243,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   /** Compute list of local files to make available to workers. */
   private def getFilesToStage(extraLocalArtifacts: List[String]): List[String] = {
     val finalLocalArtifacts = detectClassPathResourcesToStage(
-      classOf[DataflowPipelineRunner].getClassLoader) ++ extraLocalArtifacts
+      classOf[DataflowRunner].getClassLoader) ++ extraLocalArtifacts
 
     logger.debug(s"Final list of extra artifacts: ${finalLocalArtifacts.mkString(":")}")
     finalLocalArtifacts
@@ -425,7 +425,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     } else {
       val queryJob = this.bigQueryClient.newQueryJob(sqlQuery, flattenResults)
       _queryJobs.append(queryJob)
-      wrap(this.applyInternal(gio.BigQueryIO.Read.from(queryJob.table).withoutValidation()))
+      wrap(this.applyInternal(bqio.BigQueryIO.Read.from(queryJob.table).withoutValidation()))
         .setName(sqlQuery)
     }
   }
@@ -435,11 +435,11 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group input
    */
   def bigQueryTable(table: TableReference): SCollection[TableRow] = pipelineOp {
-    val tableSpec: String = gio.BigQueryIO.toTableSpec(table)
+    val tableSpec: String = bqio.BigQueryIO.toTableSpec(table)
     if (this.isTest) {
       this.getTestInput(BigQueryIO(tableSpec))
     } else {
-      wrap(this.applyInternal(gio.BigQueryIO.Read.from(table))).setName(tableSpec)
+      wrap(this.applyInternal(bqio.BigQueryIO.Read.from(table))).setName(tableSpec)
     }
   }
 
@@ -448,17 +448,22 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group input
    */
   def bigQueryTable(tableSpec: String): SCollection[TableRow] =
-    this.bigQueryTable(gio.BigQueryIO.parseTableSpec(tableSpec))
+    this.bigQueryTable(bqio.BigQueryIO.parseTableSpec(tableSpec))
 
   /**
    * Get an SCollection for a Datastore query.
    * @group input
    */
-  def datastore(datasetId: String, query: Query): SCollection[Entity] = pipelineOp {
+  def datastore(projectId: String, namespace: String, query: Query)
+  : SCollection[Entity] = pipelineOp {
     if (this.isTest) {
-      this.getTestInput(DatastoreIO(datasetId, query))
+      this.getTestInput(DatastoreIO(projectId, namespace, query))
     } else {
-      wrap(this.applyInternal(gio.DatastoreIO.readFrom(datasetId, query)))
+      val transform = dsio.DatastoreIO.v1beta3().read()
+        .withProjectId(projectId)
+        .withNamespace(namespace)
+        .withQuery(query)
+      wrap(this.applyInternal(transform))
     }
   }
 

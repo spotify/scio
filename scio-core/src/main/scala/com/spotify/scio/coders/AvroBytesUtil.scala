@@ -31,7 +31,7 @@ private[scio] object AvroBytesUtil {
   val schema: Schema = {
     val s = Schema.createRecord("AvroBytesRecord", null, null, false)
     s.setFields(List(
-      new Schema.Field("bytes", Schema.create(Schema.Type.BYTES), null, null)
+      new Schema.Field("bytes", Schema.create(Schema.Type.BYTES), null, null.asInstanceOf[Object])
     ).asJava)
     s
   }

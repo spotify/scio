@@ -37,7 +37,7 @@ class RandomSamplerTest extends PipelineSpec {
       new BernoulliSampler[Int](actualFraction)
     }
 
-    val actual = DoFnTester.of(sampler).processBatch(population.asJava).asScala.toArray
+    val actual = DoFnTester.of(sampler).processBundle(population.asJava).asScala.toArray
     scala.util.Sorting.quickSort(actual)
     medianKSD(gaps(expected), gaps(actual))
   }
@@ -71,7 +71,7 @@ class RandomSamplerTest extends PipelineSpec {
       new BernoulliValueSampler[String, Int](fractions)
     }
 
-    val actual = DoFnTester.of(sampler).processBatch(keyedPopulation.asJava).asScala
+    val actual = DoFnTester.of(sampler).processBundle(keyedPopulation.asJava).asScala
       .groupBy(_._1)
       .mapValues { vs =>
         val a = vs.map(_._2).toArray

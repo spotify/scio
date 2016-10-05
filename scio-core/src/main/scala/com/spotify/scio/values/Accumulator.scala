@@ -29,8 +29,8 @@ sealed trait AccumulatorType[T] {
   type BCF = Combine.BinaryCombineFn[T]
 
   protected def sumFnImpl: CombineFn[_, _, _]
-  protected def minFnImpl: Combine.BinaryCombineFn[_]
-  protected def maxFnImpl: Combine.BinaryCombineFn[_]
+  protected def minFnImpl: CombineFn[_, _, _]
+  protected def maxFnImpl: CombineFn[_, _, _]
 
   /** CombineFn for computing sum of the underlying values. */
   def sumFn(): CF = sumFnImpl.asInstanceOf[CF]

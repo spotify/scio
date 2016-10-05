@@ -20,11 +20,11 @@ package com.spotify.scio.io
 import java.lang.Iterable
 
 import com.spotify.scio.coders.KryoAtomicCoder
+import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.io.Sink
 import org.apache.beam.sdk.io.Sink.{WriteOperation, Writer}
 import org.apache.beam.sdk.options.PipelineOptions
-import org.apache.beam.sdk.runners.DirectPipelineRunner
 import org.apache.beam.sdk.util.CoderUtils
 
 import scala.collection.JavaConverters._
@@ -37,8 +37,8 @@ private[scio] class InMemorySink[T](private val id: String) extends Sink[T] {
 
   override def validate(options: PipelineOptions): Unit = {
     require(
-      classOf[DirectPipelineRunner] isAssignableFrom  options.getRunner,
-      "InMemoryDataFlowSink can only be used with DirectPipelineRunner")
+      classOf[DirectRunner] isAssignableFrom options.getRunner,
+      "InMemoryDataFlowSink can only be used with DirectRunner")
   }
 }
 

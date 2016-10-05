@@ -19,10 +19,9 @@ package com.spotify.scio.util
 
 import java.net.URI
 
-import org.apache.beam.runners.direct.InProcessPipelineRunner
+import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.{Coder, CoderRegistry}
 import org.apache.beam.sdk.options.PipelineOptions
-import org.apache.beam.sdk.runners.DirectPipelineRunner
 
 import scala.reflect.ClassTag
 
@@ -49,7 +48,6 @@ private[scio] object ScioUtil {
 
     require(runner != null, "Pipeline runner not set!")
 
-    runner.isAssignableFrom(classOf[DirectPipelineRunner]) ||
-      runner.isAssignableFrom(classOf[InProcessPipelineRunner])
+    runner.isAssignableFrom(classOf[DirectRunner])
   }
 }
