@@ -19,7 +19,7 @@ package com.spotify.scio.bigquery
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
-import com.google.cloud.dataflow.sdk.io.BigQueryIO
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.JavaConverters._

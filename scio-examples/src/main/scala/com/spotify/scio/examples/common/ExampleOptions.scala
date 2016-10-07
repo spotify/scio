@@ -20,7 +20,7 @@ package com.spotify.scio.examples.common
 import com.google.api.services.bigquery.model.TableReference
 import org.apache.beam.examples.common._
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
-import org.apache.beam.sdk.io.BigQueryIO
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
 
 trait ExampleOptions
   extends DataflowPipelineOptions
