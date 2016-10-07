@@ -17,8 +17,8 @@
 
 package com.spotify.scio.bigquery.types
 
-import org.apache.beam.sdk.io.BigQueryIO
 import com.spotify.scio.bigquery.BigQueryClient
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.JavaConverters._
