@@ -392,6 +392,7 @@ lazy val scioBench: Project = Project(
   parallelExecution in Test := false,
   logBuffered := false
 ).dependsOn(
+  scioCore,
   scioExtra
 )
 
