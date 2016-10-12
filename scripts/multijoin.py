@@ -91,7 +91,7 @@ def join(out, n):
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
     print >> out, '      val iterator = for {'
     for x in vals:
-        print >> out, '        %s <- result.getAll(tag%s).asScala.toIterator' % (x.lower(), x)
+        print >> out, '        %s <- result.getAll(tag%s).asScala.iterator' % (x.lower(), x)
     print >> out, '      } yield (key, (%s))' % mkArgs(n)
     print >> out, '      iterator.toIterable'
     print >> out, '    }'
@@ -119,9 +119,9 @@ def left(out, n):
     print >> out, '      val iterator = for {'
     for (i, x) in enumerate(vals):
         if (i == 0):
-            print >> out, '        %s <- result.getAll(tag%s).asScala.toIterator' % (x.lower(), x)
+            print >> out, '        %s <- result.getAll(tag%s).asScala.iterator' % (x.lower(), x)
         else:
-            print >> out, '        %s <- toOptions(result.getAll(tag%s).asScala.toIterator)' % (x.lower(), x)
+            print >> out, '        %s <- toOptions(result.getAll(tag%s).asScala.iterator)' % (x.lower(), x)
     print >> out, '      } yield (key, (%s))' % mkArgs(n)
     print >> out, '      iterator.toIterable'
     print >> out, '    }'
@@ -148,7 +148,7 @@ def outer(out, n):
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
     print >> out, '      val iterator = for {'
     for (i, x) in enumerate(vals):
-        print >> out, '        %s <- toOptions(result.getAll(tag%s).asScala.toIterator)' % (x.lower(), x)
+        print >> out, '        %s <- toOptions(result.getAll(tag%s).asScala.iterator)' % (x.lower(), x)
     print >> out, '      } yield (key, (%s))' % mkArgs(n)
     print >> out, '      iterator.toIterable'
     print >> out, '    }'
