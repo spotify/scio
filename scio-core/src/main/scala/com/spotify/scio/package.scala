@@ -78,7 +78,10 @@ package object scio {
       Await.result(self.flatMap(identity), atMost)
   }
 
-  /** Get Scio version from scio-core/src/main/resources/version.sbt. */
+  /** Scala version. */
+  val scalaVersion: String = scala.util.Properties.versionNumberString
+
+  /** Scio version. */
   def scioVersion: String = {
     val stream = this.getClass.getResourceAsStream("/version.sbt")
     val line = scala.io.Source.fromInputStream(stream).getLines().next()
