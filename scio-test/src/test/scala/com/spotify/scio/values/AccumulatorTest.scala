@@ -17,8 +17,15 @@
 
 package com.spotify.scio.values
 
-import com.spotify.scio.ScioContext
+import java.io.File
+import java.nio.file.Files
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.spotify.scio._
 import com.spotify.scio.testing.PipelineSpec
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import org.apache.beam.sdk.options.ApplicationNameOptions
 
 class AccumulatorTest extends PipelineSpec {
 
@@ -116,5 +123,56 @@ class AccumulatorTest extends PipelineSpec {
     } should have message msg
   }
   // scalastyle:on no.whitespace.before.left.bracket
+
+  it should "support saveMetrics" in {
+    val sc = ScioContext.forTest()
+
+    val maxI = sc.maxAccumulator[Int]("maxI")
+    val sumL = sc.sumAccumulator[Long]("sumL")
+    val sumD = sc.sumAccumulator[Double]("sumD")
+    sc
+      .parallelize(Seq(1, 2, 3))
+      .withAccumulator(maxI, sumL, sumD)
+      .map { (i, a) =>
+        a.addValue(maxI, i).addValue(sumL, i.toLong).addValue(sumD, i.toDouble)
+        i
+      }
+    val r = sc.close()
+
+    r.accumulatorTotalValue(maxI) shouldBe 3
+    r.accumulatorTotalValue(sumL) shouldBe 6L
+    r.accumulatorTotalValue(sumD) shouldBe 6.0
+    maxI.name shouldBe "maxI"
+    sumL.name shouldBe "sumL"
+    sumD.name shouldBe "sumD"
+
+    val t = Files.createTempDirectory("saveMetrics")
+    val metricsFile = new File(t.toFile, "_metrics.json")
+    r.saveMetrics(metricsFile.toString)
+
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
+
+    val metrics = mapper.readValue(metricsFile, classOf[Metrics])
+
+    val expectedTotal = Seq(AccumulatorValue(maxI.name, r.accumulatorTotalValue(maxI)),
+                            AccumulatorValue(sumL.name, r.accumulatorTotalValue(sumL)),
+                            AccumulatorValue(sumD.name, r.accumulatorTotalValue(sumD)))
+
+    val expectedSteps = Seq(
+      AccumulatorStepsValue(sumD.name,
+        r.accumulatorValuesAtSteps(sumD).map(e => AccumulatorStepValue(e._1, e._2))),
+      AccumulatorStepsValue(maxI.name,
+        r.accumulatorValuesAtSteps(maxI).map(e => AccumulatorStepValue(e._1, e._2))),
+      AccumulatorStepsValue(sumL.name,
+        r.accumulatorValuesAtSteps(sumL).map(e => AccumulatorStepValue(e._1, e._2))))
+
+    metrics.version should be(scioVersion)
+    metrics.scalaVersion should be(scalaVersion)
+    metrics.jobName should be(sc.pipeline.getOptions.as(classOf[ApplicationNameOptions]).getAppName)
+    metrics.jobId should be(sc.pipeline.getOptions.as(classOf[DataflowPipelineOptions]).getJobName)
+    metrics.accumulators.total should contain theSameElementsAs expectedTotal
+    metrics.accumulators.steps should contain theSameElementsAs expectedSteps
+  }
 
 }
