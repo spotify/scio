@@ -389,6 +389,8 @@ lazy val scioBench: Project = Project(
   testOptions += Tests.Argument(scalaMeterFramework, "-silent"),
   parallelExecution in Test := false,
   logBuffered := false
+).dependsOn(
+  scioExtra
 )
 
 // =======================================================================
