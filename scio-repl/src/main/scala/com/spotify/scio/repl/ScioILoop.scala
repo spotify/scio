@@ -23,7 +23,7 @@ import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import com.spotify.scio.bigquery.BigQueryClient
-import com.spotify.scio.scioVersion
+import com.spotify.scio.{scalaVersion, scioVersion}
 
 import scala.tools.nsc.GenericRunnerSettings
 import scala.tools.nsc.interpreter.{IR, JPrintWriter}
@@ -183,9 +183,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     echo(ascii)
 
     val p = scala.util.Properties
-    val scalaVersion =
-      "Using Scala %s (%s, Java %s)".format(p.versionString, p.javaVmName, p.javaVersion)
-    echo(scalaVersion)
+    echo("Using Scala version %s (%s, Java %s)".format(scalaVersion, p.javaVmName, p.javaVersion))
 
     echo(
       """
