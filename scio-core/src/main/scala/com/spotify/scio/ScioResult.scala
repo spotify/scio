@@ -17,11 +17,19 @@
 
 package com.spotify.scio
 
+
+import java.nio.ByteBuffer
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.spotify.scio.values.Accumulator
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import org.apache.beam.sdk.options.ApplicationNameOptions
 import org.apache.beam.sdk.PipelineResult.State
-import org.apache.beam.sdk.runners.{AggregatorValues, AggregatorPipelineExtractor}
+import org.apache.beam.sdk.runners.{AggregatorPipelineExtractor, AggregatorValues}
 import org.apache.beam.sdk.{Pipeline, PipelineResult}
 import org.apache.beam.sdk.transforms.Aggregator
+import org.apache.beam.sdk.util.{IOChannelUtils, MimeTypes}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -54,7 +62,49 @@ class ScioResult private[scio] (val internal: PipelineResult,
   def accumulatorValuesAtSteps[T](acc: Accumulator[T]): Map[String, T] =
     getAggregatorValues(acc).flatMap(_.getValuesAtSteps.asScala).toMap
 
+  /** Save metrics of the finished pipeline to a file. */
+  def saveMetrics(filename: String): Unit = {
+    require(isCompleted, "Pipeline has to be finished to save metrics.")
+
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
+
+    val out = IOChannelUtils.create(filename, MimeTypes.TEXT)
+
+    try {
+      val totalValues = accumulators
+        .map(acc => AccumulatorValue(acc.name, accumulatorTotalValue(acc)))
+
+      val stepsValues = accumulators
+        .map(acc => AccumulatorStepsValue(acc.name,
+          accumulatorValuesAtSteps(acc).map(a => AccumulatorStepValue(a._1, a._2))))
+
+      val options = this.pipeline.getOptions
+      val metrics = Metrics(scioVersion,
+                            scalaVersion,
+                            options.as(classOf[ApplicationNameOptions]).getAppName,
+                            options.as(classOf[DataflowPipelineOptions]).getJobName,
+                            AccumulatorMetrics(totalValues, stepsValues))
+      out.write(ByteBuffer.wrap(mapper.writeValueAsBytes(metrics)))
+    } finally {
+      if (out != null) {
+        out.close()
+      }
+    }
+  }
+
   private def getAggregatorValues[T](acc: Accumulator[T]): Iterable[AggregatorValues[T]] =
     aggregators(acc.name).map(a => internal.getAggregatorValues(a.asInstanceOf[Aggregator[_, T]]))
 
 }
+
+private[scio] case class Metrics(version: String,
+                                 scalaVersion: String,
+                                 jobName: String,
+                                 jobId: String,
+                                 accumulators: AccumulatorMetrics)
+private[scio] case class AccumulatorMetrics(total: Iterable[AccumulatorValue],
+                                            steps: Iterable[AccumulatorStepsValue])
+private[scio] case class AccumulatorValue(name: String, value: Any)
+private[scio] case class AccumulatorStepValue(name: String, value: Any)
+private[scio] case class AccumulatorStepsValue(name: String, steps: Iterable[AccumulatorStepValue])
