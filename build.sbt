@@ -44,9 +44,12 @@ val junitInterfaceVersion = "0.11"
 val nettyTcNativeVersion = "1.1.33.Fork18"
 val scalaCheckVersion = "1.13.2"
 val scalaMacrosVersion = "2.1.0"
+val scalaMeterVersion = "0.7"
 val scalapbVersion = "0.5.19" // inner protobuf-java version must match beam/dataflow-sdk one
 val scalaTestVersion = "3.0.0"
 val slf4jVersion = "1.7.21"
+
+val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework")
 
 val java8 = sys.props("java.version").startsWith("1.8.")
 
@@ -372,6 +375,22 @@ lazy val scioRepl: Project = Project(
 ).dependsOn(
   scioCore,
   scioExtra
+)
+
+lazy val scioBench: Project = Project(
+  "scio-bench",
+  file("scio-bench")
+).settings(
+  commonSettings ++ noPublishSettings,
+  description := "Scio micro-benchmarks",
+  libraryDependencies ++= Seq(
+    "com.storm-enroute" %% "scalameter" % scalaMeterVersion % "test",
+    "com.google.guava" % "guava" % guavaVersion % "test"
+  ),
+  testFrameworks += scalaMeterFramework,
+  testOptions += Tests.Argument(scalaMeterFramework, "-silent"),
+  parallelExecution in Test := false,
+  logBuffered := false
 )
 
 // =======================================================================
