@@ -200,22 +200,30 @@ object AlgebirdSpec extends Properties("Algebird") {
   // HyperLogLog for approximate distinct count
   // =======================================================================
 
-  property("sum with HyperLogLog") = forAll(sCollOfN(1000, Gen.alphaStr)) { xs =>
-    // Error is 1.04 / sqrt(2 ^ 24) = 2.5390625E-4
-    val m = new HyperLogLogMonoid(24)
-    xs.map(i => m.create(i.getBytes))
-      .sum(m)
-      .approximateSize
-      // approximate bounds should contain exact distinct count
-      .boundsContain(xs.internal.toSet.size)
+  val hllBits = 8
+  val hllError = 1.04 / math.sqrt(math.pow(2, hllBits))  // 0.065
+  val hllInput = Gen.listOfN(100, sCollOf(Gen.alphaStr))
+
+  property("sum with HyperLogLog") = forAll(hllInput) { xss =>
+    val m = new HyperLogLogMonoid(hllBits)
+    xss.count { xs =>
+      val pass = xs.map(i => m.create(i.getBytes))
+        .sum(m)
+        .approximateSize
+        // approximate bounds should contain exact distinct count
+        .boundsContain(xs.internal.toSet.size)
+      !pass
+    }.toDouble / xss.size < hllError
   }
 
-  property("aggregate with HyperLogLog") = forAll(sCollOfN(1000, Gen.alphaStr)) { xs =>
-    // Error is 1.04 / sqrt(2 ^ 24) = 2.5390625E-4
-    xs.aggregate(HyperLogLogAggregator(24).composePrepare(_.getBytes))
-      .approximateSize
-      // approximate bounds should contain exact distinct count
-      .boundsContain(xs.internal.toSet.size)
+  property("aggregate with HyperLogLog") = forAll(hllInput) { xss =>
+    xss.count { xs =>
+      val pass = xs.aggregate(HyperLogLogAggregator(hllBits).composePrepare(_.getBytes))
+        .approximateSize
+        // approximate bounds should contain exact distinct count
+        .boundsContain(xs.internal.toSet.size)
+      !pass
+    }.toDouble / xss.size < hllError
   }
 
   // =======================================================================
