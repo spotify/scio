@@ -21,12 +21,11 @@ import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.Max.{MaxDoubleFn, MaxIntegerFn, MaxLongFn}
 import org.apache.beam.sdk.transforms.Min.{MinDoubleFn, MinIntegerFn, MinLongFn}
 import org.apache.beam.sdk.transforms.Sum.{SumDoubleFn, SumIntegerFn, SumLongFn}
-import org.apache.beam.sdk.transforms.{Aggregator, Combine}
+import org.apache.beam.sdk.transforms.Aggregator
 
 /** Type class for `T` that can be used in an [[Accumulator]]. */
 sealed trait AccumulatorType[T] {
   type CF = CombineFn[T, Array[T], T]
-  type BCF = Combine.BinaryCombineFn[T]
 
   protected def sumFnImpl: CombineFn[_, _, _]
   protected def minFnImpl: CombineFn[_, _, _]
@@ -35,11 +34,11 @@ sealed trait AccumulatorType[T] {
   /** CombineFn for computing sum of the underlying values. */
   def sumFn(): CF = sumFnImpl.asInstanceOf[CF]
 
-  /** BinaryCombineFn for computing maximum of the underlying values. */
-  def minFn(): BCF = minFnImpl.asInstanceOf[BCF]
+  /** CombineFn for computing maximum of the underlying values. */
+  def minFn(): CF = minFnImpl.asInstanceOf[CF]
 
-  /** BinaryCombineFn for computing minimum of the underlying values. */
-  def maxFn(): BCF = maxFnImpl.asInstanceOf[BCF]
+  /** CombineFn for computing minimum of the underlying values. */
+  def maxFn(): CF = maxFnImpl.asInstanceOf[CF]
 }
 
 private[scio] class IntAccumulatorType extends AccumulatorType[Int] {
