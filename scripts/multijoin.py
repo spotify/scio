@@ -89,10 +89,11 @@ def join(out, n):
 
     print >> out, '    a.context.wrap(keyed).flatMap { kv =>'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
-    print >> out, '      for {'
+    print >> out, '      val iterator = for {'
     for x in vals:
-        print >> out, '        %s <- result.getAll(tag%s).asScala' % (x.lower(), x)
+        print >> out, '        %s <- result.getAll(tag%s).asScala.toIterator' % (x.lower(), x)
     print >> out, '      } yield (key, (%s))' % mkArgs(n)
+    print >> out, '      iterator.toIterable'
     print >> out, '    }'
     print >> out, '  }'
     print >> out
@@ -115,13 +116,14 @@ def left(out, n):
 
     print >> out, '    a.context.wrap(keyed).flatMap { kv =>'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
-    print >> out, '      for {'
+    print >> out, '      val iterator = for {'
     for (i, x) in enumerate(vals):
         if (i == 0):
-            print >> out, '        %s <- result.getAll(tag%s).asScala' % (x.lower(), x)
+            print >> out, '        %s <- result.getAll(tag%s).asScala.toIterator' % (x.lower(), x)
         else:
-            print >> out, '        %s <- toOptions(result.getAll(tag%s).asScala)' % (x.lower(), x)
+            print >> out, '        %s <- toOptions(result.getAll(tag%s).asScala.toIterator)' % (x.lower(), x)
     print >> out, '      } yield (key, (%s))' % mkArgs(n)
+    print >> out, '      iterator.toIterable'
     print >> out, '    }'
     print >> out, '  }'
     print >> out
@@ -144,10 +146,11 @@ def outer(out, n):
 
     print >> out, '    a.context.wrap(keyed).flatMap { kv =>'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
-    print >> out, '      for {'
+    print >> out, '      val iterator = for {'
     for (i, x) in enumerate(vals):
-        print >> out, '        %s <- toOptions(result.getAll(tag%s).asScala)' % (x.lower(), x)
+        print >> out, '        %s <- toOptions(result.getAll(tag%s).asScala.toIterator)' % (x.lower(), x)
     print >> out, '      } yield (key, (%s))' % mkArgs(n)
+    print >> out, '      iterator.toIterable'
     print >> out, '    }'
     print >> out, '  }'
     print >> out
@@ -192,7 +195,7 @@ def main(out):
 
         object MultiJoin {
 
-          def toOptions[T](xs: Iterable[T]): Iterable[Option[T]] = if (xs.isEmpty) Iterable(None) else xs.map(Option(_))
+          def toOptions[T](xs: Iterator[T]): Iterator[Option[T]] = if (xs.isEmpty) Iterator(None) else xs.map(Option(_))
         ''').replace('  # NOQA', '').lstrip('\n')
 
     N = 22
