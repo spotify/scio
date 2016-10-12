@@ -30,6 +30,7 @@ import com.google.protobuf.Message
 import com.spotify.scio.bigquery._
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io.Tap
+import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
 import com.spotify.scio.util.{CallSites, ScioUtil}
 import com.spotify.scio.values._
@@ -150,6 +151,12 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (o.getAppName == null || o.getAppName.startsWith("ScioContext$")) {
       this.setName(CallSites.getAppName)
     }
+  }
+
+  {
+    val o = optionsAs[ScioOptions]
+    o.setScalaVersion(scalaVersion)
+    o.setScioVersion(scioVersion)
   }
 
   private[scio] val testId: Option[String] =
