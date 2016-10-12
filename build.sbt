@@ -37,6 +37,7 @@ val guavaVersion = "19.0"
 val hadoopVersion = "2.7.2"
 val hamcrestVersion = "1.3"
 val hbaseVersion = "1.0.2"
+val jacksonScalaModuleVersion = "2.8.3"
 val javaLshVersion = "0.10"
 val jodaConvertVersion = "1.8.1"
 val junitVersion = "4.12"
@@ -199,7 +200,8 @@ lazy val scioCore: Project = Project(
     "com.twitter" %% "chill" % chillVersion,
     "com.twitter" % "chill-protobuf" % chillVersion,
     "commons-io" % "commons-io" % commonsIoVersion,
-    "org.apache.commons" % "commons-math3" % commonsMath3Version
+    "org.apache.commons" % "commons-math3" % commonsMath3Version,
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion
   )
 ).dependsOn(
   scioBigQuery
