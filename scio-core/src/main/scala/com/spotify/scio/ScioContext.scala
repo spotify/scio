@@ -24,7 +24,7 @@ import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 import java.util.jar.{Attributes, JarFile}
 
-import com.google.datastore.v1.{Query, Entity}
+import com.google.datastore.v1.{Entity, Query}
 import com.google.api.services.bigquery.model.TableReference
 import com.google.cloud.dataflow.sdk.Pipeline
 import com.google.cloud.dataflow.sdk.PipelineResult.State
@@ -42,6 +42,7 @@ import com.google.protobuf.Message
 import com.spotify.scio.bigquery._
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io.Tap
+import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
 import com.spotify.scio.util.{CallSites, ScioUtil}
 import com.spotify.scio.values._
@@ -153,6 +154,12 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (o.getAppName == null || o.getAppName.startsWith("ScioContext$")) {
       this.setName(CallSites.getAppName)
     }
+  }
+
+  {
+    val o = optionsAs[ScioOptions]
+    o.setScalaVersion(scalaVersion)
+    o.setScioVersion(scioVersion)
   }
 
   private[scio] val testId: Option[String] =
