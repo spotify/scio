@@ -17,18 +17,12 @@
 
 package com.spotify.scio.bigtable;
 
-import com.google.bigtable.repackaged.com.google.cloud.config.BigtableOptions;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableInstanceClient;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableInstanceGrpcClient;
-import com.google.bigtable.repackaged.com.google.cloud.grpc.io.ChannelPool;
+import com.google.bigtable.repackaged.com.google.cloud.grpc.BigtableClusterUtilities;
 import com.google.bigtable.repackaged.com.google.com.google.bigtable.admin.v2.Cluster;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.admin.v2.ListClustersRequest;
-import com.google.bigtable.repackaged.com.google.com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.cloud.bigtable.dataflow.CloudBigtableConfiguration;
-import org.joda.time.Duration;
-
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
+import java.security.GeneralSecurityException;
+import org.joda.time.Duration;
 
 /**
  * Utilities to deal with Bigtable.
@@ -38,6 +32,8 @@ public final class BigtableUtil {
   private BigtableUtil() { }
 
   /**
+   * Deprecated. Please use {@link BigtableClusterUtilities#setClusterSize(String, String, int)}
+   *
    * Updates all clusters within the specified Bigtable Instance to have a specified number
    * of nodes. Useful for increasing the number of nodes at the start of the job and decreasing
    * it at the end to lower costs yet still get high throughput during bulk ingests/dumps.
@@ -51,33 +47,15 @@ public final class BigtableUtil {
    */
   public static void updateNumberOfBigtableNodes(final CloudBigtableConfiguration cloudBigtableConfiguration,
                                                  final int numberOfNodes,
-                                                 final Duration sleepDuration) throws IOException, InterruptedException {
-    final BigtableOptions bigtableOptions = cloudBigtableConfiguration.toBigtableOptions();
+                                                 final Duration sleepDuration)
+      throws IOException, GeneralSecurityException, InterruptedException {
+    final BigtableClusterUtilities clusterUtilities =
+        BigtableClusterUtilities.forInstance(cloudBigtableConfiguration.getProjectId(),
+                                             cloudBigtableConfiguration.getInstanceId());
 
-    final ChannelPool channelPool = ChannelPoolCreator.createPool(bigtableOptions.getInstanceAdminHost());
-
-    try {
-      final BigtableInstanceClient bigtableInstanceClient = new BigtableInstanceGrpcClient(channelPool);
-
-      final String instanceName = bigtableOptions.getInstanceName().toString();
-
-      // Fetch clusters in Bigtable instance
-      final ListClustersRequest clustersRequest = ListClustersRequest.newBuilder().setParent(instanceName).build();
-      final ListClustersResponse clustersResponse = bigtableInstanceClient.listCluster(clustersRequest);
-
-      // For each cluster update the number of nodes
-      for (Cluster cluster : clustersResponse.getClustersList()) {
-        final Cluster updatedCluster = Cluster.newBuilder()
-            .setName(cluster.getName())
-            .setServeNodes(numberOfNodes)
-            .build();
-        bigtableInstanceClient.updateCluster(updatedCluster);
-      }
-
-      // Wait for the new nodes to be provisioned
-      Thread.sleep(TimeUnit.SECONDS.toMillis(sleepDuration.getStandardSeconds()));
-    } finally {
-      channelPool.shutdownNow();
+    for (Cluster cluster : clusterUtilities.getClusters().getClustersList()) {
+      clusterUtilities.setClusterSize(cluster.getName(), cluster.getLocation(), numberOfNodes);
     }
+    Thread.sleep(sleepDuration.getMillis());
   }
 }

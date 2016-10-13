@@ -102,9 +102,14 @@ package object bigtable {
                        tableId: String,
                        additionalConfiguration: Map[String, String] = Map.empty)
                       (implicit ev: T <:< Mutation): Future[Tap[Result]] = {
-      val config = new bt.CloudBigtableTableConfiguration(
-        projectId, instanceId, tableId, additionalConfiguration.asJava)
-      this.saveAsBigtable(config)
+      val config = new bt.CloudBigtableTableConfiguration.Builder()
+        .withProjectId(projectId)
+        .withInstanceId(instanceId)
+        .withTableId(tableId)
+      val configWithConf = additionalConfiguration.foldLeft(config) { case (conf, (key, value)) =>
+        conf.withConfiguration(key, value)
+      }
+      this.saveAsBigtable(configWithConf.build)
     }
 
     /** Save this SCollection as a Bigtable table. Note that elements must be of type Mutation. */
@@ -143,9 +148,13 @@ package object bigtable {
                                additionalConfiguration: Map[String, String] = Map.empty)
                               (implicit ev: T <:< Mutation)
     : Future[Tap[(String, Iterable[Result])]] = {
-      val config = new bt.CloudBigtableTableConfiguration(
-        projectId, instanceId, null, additionalConfiguration.asJava)
-      this.saveAsMultipleBigtable(config)
+      val config = new bt.CloudBigtableTableConfiguration.Builder()
+        .withProjectId(projectId)
+        .withInstanceId(instanceId)
+      val configWithConf = additionalConfiguration.foldLeft(config) { case (conf, (key, value)) =>
+        conf.withConfiguration(key, value)
+      }
+      this.saveAsMultipleBigtable(configWithConf.build)
     }
 
     /**
