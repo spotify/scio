@@ -233,7 +233,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def collect[U: ClassTag](pfn: PartialFunction[T, U]): SCollection[U] = this.transform {
-    _.filter(pfn.isDefinedAt _).map(pfn)
+    _.filter(pfn.isDefinedAt).map(pfn)
   }
 
   /**
