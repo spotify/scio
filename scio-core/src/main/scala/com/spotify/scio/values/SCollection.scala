@@ -28,7 +28,6 @@ import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSc
 import com.google.cloud.dataflow.sdk.coders.{Coder, TableRowJsonCoder}
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import com.google.cloud.dataflow.sdk.io.PatchedAvroIO
-import com.google.cloud.dataflow.sdk.{io => gio}
 import com.google.cloud.dataflow.sdk.transforms._
 import com.google.cloud.dataflow.sdk.transforms.windowing._
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
