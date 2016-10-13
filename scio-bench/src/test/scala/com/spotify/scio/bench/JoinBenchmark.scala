@@ -51,11 +51,10 @@ object JoinBenchmark extends Bench.LocalTime {
 
     measure method "forIterator" in {
       using(inputs) in { case (l, r) =>
-        val i = for {
+        for {
           a <- l.asScala.iterator
           b <- r.asScala.iterator
         } yield ("key", (a, b))
-        i.toIterable
       }
     }
   }
