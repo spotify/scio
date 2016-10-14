@@ -28,16 +28,12 @@ import scala.collection.JavaConverters._
 /** Micro-benchmark for for/yield patterns used in MultiJoin.scala. */
 object JoinBenchmark extends Bench.LocalTime {
 
-  val lSizes = Gen.enumeration("lSize")(1, 10, 100, 1000)
-  val rSizes = Gen.enumeration("rSize")(1, 10, 100, 1000)
+  val sizes = Gen.enumeration("size")((1, 1), (1, 1000000), (1000000, 1), (1000, 1000))
 
   def jIterable(i: Int): JIterable[String] =
     Lists.newArrayList((0 until i).map("v%05d".format(_)): _*).asInstanceOf[JIterable[String]]
 
-  val inputs = for {
-    l <- lSizes
-    r <- rSizes
-  } yield (jIterable(l), jIterable(r))
+  val inputs = for (p <- sizes) yield (jIterable(p._1), jIterable(p._2))
 
   performance of "Join" in {
     measure method "forIterable" in {
@@ -51,10 +47,36 @@ object JoinBenchmark extends Bench.LocalTime {
 
     measure method "forIterator" in {
       using(inputs) in { case (l, r) =>
-        for {
+        val i = for {
           a <- l.asScala.iterator
           b <- r.asScala.iterator
         } yield ("key", (a, b))
+        while (i.hasNext) i.next()  // eager iterator evaluation
+      }
+    }
+
+    measure method "forLoop" in {
+      using(inputs) in { case (l, r) =>
+        val result = Lists.newArrayList[(String, (String, String))]()
+        for {
+          a <- l.asScala.iterator
+          b <- r.asScala.iterator
+        } result.add(("key", (a, b)))
+      }
+    }
+
+    measure method "whileLoop" in {
+      using(inputs) in { case (l, r) =>
+        val result = Lists.newArrayList[(String, (String, String))]()
+        val a = l.asScala.iterator
+        while (a.hasNext) {
+          val va = a.next()
+          val b = r.asScala.iterator
+          while (b.hasNext) {
+            val vb = b.next()
+            result.add(("key", (va, vb)))
+          }
+        }
       }
     }
   }
