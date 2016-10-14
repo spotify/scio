@@ -29,9 +29,10 @@ import scala.collection.JavaConverters._
 private class JIterableWrapperSerializer[T] extends KSerializer[Iterable[T]] {
 
   override def write(kser: Kryo, out: Output, obj: Iterable[T]): Unit = {
-    obj.foreach { t =>
+    val i = obj.iterator
+    while (i.hasNext) {
       out.writeBoolean(true)
-      kser.writeClassAndObject(out, t)
+      kser.writeClassAndObject(out, i.next())
       out.flush()
     }
     out.writeBoolean(false)
