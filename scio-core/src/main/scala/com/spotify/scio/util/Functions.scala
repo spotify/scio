@@ -126,8 +126,10 @@ private[scio] object Functions {
 
   def flatMapFn[T, U](f: T => TraversableOnce[U]): DoFn[T, U] = new DoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, U]#ProcessContext): Unit =
-      g(c.element()).foreach(c.output)
+    override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
+      val i = g(c.element()).toIterator
+      while (i.hasNext) c.output(i.next())
+    }
   }
 
   def serializableFn[T, U](f: T => U): SerializableFunction[T, U] = new SerializableFunction[T, U] {
