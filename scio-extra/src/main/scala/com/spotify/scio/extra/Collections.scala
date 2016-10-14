@@ -58,7 +58,9 @@ object Collections {
     val size = math.min(num, xs.size)
 
     val m = scala.collection.mutable.Map[K, MinMaxPriorityQueue[V]]()
-    xs.foreach { case (k, v) =>
+    val i = xs.iterator
+    while (i.hasNext) {
+      val (k, v) = i.next()
       if (!m.contains(k)) {
         val pq = MinMaxPriorityQueue
           .orderedBy(ord.reverse)
