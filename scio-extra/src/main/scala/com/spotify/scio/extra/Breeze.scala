@@ -42,9 +42,11 @@ object Breeze {
   /** [[com.twitter.algebird.Semigroup Semigroup]] for DenseVector[Float]. */
   implicit val floatVectorSg: Semigroup[FV] = new Semigroup[FV] {
     override def plus(l: FV, r: FV): FV = l + r
-    override def sumOption(iter: TraversableOnce[FV]): Option[FV] = {
+    override def sumOption(xs: TraversableOnce[FV]): Option[FV] = {
       var x: FV = null
-      iter.foreach { y =>
+      val i = xs.toIterator
+      while (i.hasNext) {
+        val y = i.next()
         if (x == null) {
           x = y.copy
         } else {
@@ -58,9 +60,11 @@ object Breeze {
   /** [[com.twitter.algebird.Semigroup Semigroup]] for DenseVector[Double]. */
   implicit val doubleVectorSg: Semigroup[DV] = new Semigroup[DV] {
     override def plus(l: DV, r: DV): DV = l + r
-    override def sumOption(iter: TraversableOnce[DV]): Option[DV] = {
+    override def sumOption(xs: TraversableOnce[DV]): Option[DV] = {
       var x: DV = null
-      iter.foreach { y =>
+      val i = xs.toIterator
+      while (i.hasNext) {
+        val y = i.next()
         if (x == null) {
           x = y.copy
         } else {
@@ -74,9 +78,11 @@ object Breeze {
   /** [[com.twitter.algebird.Semigroup Semigroup]] for DenseMatrix[Float]. */
   implicit val floatMatrixSg: Semigroup[FM] = new Semigroup[FM] {
     override def plus(l: FM, r: FM): FM = l + r
-    override def sumOption(iter: TraversableOnce[FM]): Option[FM] = {
+    override def sumOption(xs: TraversableOnce[FM]): Option[FM] = {
       var x: FM = null
-      iter.foreach { y =>
+      val i = xs.toIterator
+      while (i.hasNext) {
+        val y = i.next()
         if (x == null) {
           x = y.copy
         } else {
@@ -90,9 +96,11 @@ object Breeze {
   /** [[com.twitter.algebird.Semigroup Semigroup]] for DenseMatrix[Double]. */
   implicit val doubleMatrixSg: Semigroup[DM] = new Semigroup[DM] {
     override def plus(l: DM, r: DM): DM = l + r
-    override def sumOption(iter: TraversableOnce[DM]): Option[DM] = {
+    override def sumOption(xs: TraversableOnce[DM]): Option[DM] = {
       var x: DM = null
-      iter.foreach { y =>
+      val i = xs.toIterator
+      while (i.hasNext) {
+        val y = i.next()
         if (x == null) {
           x = y.copy
         } else {
