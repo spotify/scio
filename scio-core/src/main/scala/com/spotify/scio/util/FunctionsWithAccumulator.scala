@@ -46,8 +46,10 @@ private[scio] object FunctionsWithAccumulator {
                                 acc: Seq[Accumulator[_]])
   : DoFn[T, U] = new DoFnWithAccumulator[T, U](acc) {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, U]#ProcessContext): Unit =
-      g(c.element(), this.context).foreach(c.output)
+    override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
+      val i = g(c.element(), this.context).toIterator
+      while (i.hasNext) c.output(i.next())
+    }
   }
 
   def mapFn[T, U: ClassTag](f: (T, AccumulatorContext) => U,
