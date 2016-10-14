@@ -90,7 +90,7 @@ def join(out, n):
     print >> out, '    a.context.wrap(keyed).flatMap { kv =>'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
     print >> out, '      for {'
-    for x in vals:
+    for x in reversed(vals):
         print >> out, '        %s <- result.getAll(tag%s).asScala.iterator' % (x.lower(), x)
     print >> out, '      } yield (key, (%s))' % mkArgs(n)
     print >> out, '    }'
@@ -116,8 +116,8 @@ def left(out, n):
     print >> out, '    a.context.wrap(keyed).flatMap { kv =>'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
     print >> out, '      for {'
-    for (i, x) in enumerate(vals):
-        if (i == 0):
+    for (i, x) in enumerate(reversed(vals)):
+        if (i == n - 1):
             print >> out, '        %s <- result.getAll(tag%s).asScala.iterator' % (x.lower(), x)
         else:
             print >> out, '        %s <- toOptions(result.getAll(tag%s).asScala.iterator)' % (x.lower(), x)
@@ -145,7 +145,7 @@ def outer(out, n):
     print >> out, '    a.context.wrap(keyed).flatMap { kv =>'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
     print >> out, '      for {'
-    for (i, x) in enumerate(vals):
+    for (i, x) in enumerate(reversed(vals)):
         print >> out, '        %s <- toOptions(result.getAll(tag%s).asScala.iterator)' % (x.lower(), x)
     print >> out, '      } yield (key, (%s))' % mkArgs(n)
     print >> out, '    }'
@@ -185,6 +185,7 @@ def main(out):
 
         import com.google.cloud.dataflow.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}  # NOQA
         import com.google.cloud.dataflow.sdk.values.TupleTag
+        import com.google.common.collect.Lists
         import com.spotify.scio.values.SCollection
 
         import scala.collection.JavaConverters._
