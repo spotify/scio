@@ -28,6 +28,7 @@ package com.spotify.scio.util
 
 import com.google.cloud.dataflow.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}
 import com.google.cloud.dataflow.sdk.values.TupleTag
+import com.google.common.collect.Lists
 import com.spotify.scio.values.SCollection
 
 import scala.collection.JavaConverters._
@@ -508,8 +509,8 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b))
     }
   }
@@ -524,9 +525,9 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
         c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c))
     }
   }
@@ -542,10 +543,10 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
         d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d))
     }
   }
@@ -562,11 +563,11 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
         e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e))
     }
   }
@@ -584,12 +585,12 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
         f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f))
     }
   }
@@ -608,13 +609,13 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
-        f <- result.getAll(tagF).asScala.iterator
         g <- result.getAll(tagG).asScala.iterator
+        f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g))
     }
   }
@@ -634,14 +635,14 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
-        f <- result.getAll(tagF).asScala.iterator
-        g <- result.getAll(tagG).asScala.iterator
         h <- result.getAll(tagH).asScala.iterator
+        g <- result.getAll(tagG).asScala.iterator
+        f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h))
     }
   }
@@ -662,15 +663,15 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
-        f <- result.getAll(tagF).asScala.iterator
-        g <- result.getAll(tagG).asScala.iterator
-        h <- result.getAll(tagH).asScala.iterator
         i <- result.getAll(tagI).asScala.iterator
+        h <- result.getAll(tagH).asScala.iterator
+        g <- result.getAll(tagG).asScala.iterator
+        f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i))
     }
   }
@@ -692,16 +693,16 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
-        f <- result.getAll(tagF).asScala.iterator
-        g <- result.getAll(tagG).asScala.iterator
-        h <- result.getAll(tagH).asScala.iterator
-        i <- result.getAll(tagI).asScala.iterator
         j <- result.getAll(tagJ).asScala.iterator
+        i <- result.getAll(tagI).asScala.iterator
+        h <- result.getAll(tagH).asScala.iterator
+        g <- result.getAll(tagG).asScala.iterator
+        f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j))
     }
   }
@@ -724,17 +725,17 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
-        f <- result.getAll(tagF).asScala.iterator
-        g <- result.getAll(tagG).asScala.iterator
-        h <- result.getAll(tagH).asScala.iterator
-        i <- result.getAll(tagI).asScala.iterator
-        j <- result.getAll(tagJ).asScala.iterator
         k <- result.getAll(tagK).asScala.iterator
+        j <- result.getAll(tagJ).asScala.iterator
+        i <- result.getAll(tagI).asScala.iterator
+        h <- result.getAll(tagH).asScala.iterator
+        g <- result.getAll(tagG).asScala.iterator
+        f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k))
     }
   }
@@ -758,18 +759,18 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
-        f <- result.getAll(tagF).asScala.iterator
-        g <- result.getAll(tagG).asScala.iterator
-        h <- result.getAll(tagH).asScala.iterator
-        i <- result.getAll(tagI).asScala.iterator
-        j <- result.getAll(tagJ).asScala.iterator
-        k <- result.getAll(tagK).asScala.iterator
         l <- result.getAll(tagL).asScala.iterator
+        k <- result.getAll(tagK).asScala.iterator
+        j <- result.getAll(tagJ).asScala.iterator
+        i <- result.getAll(tagI).asScala.iterator
+        h <- result.getAll(tagH).asScala.iterator
+        g <- result.getAll(tagG).asScala.iterator
+        f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l))
     }
   }
@@ -794,19 +795,19 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
-        f <- result.getAll(tagF).asScala.iterator
-        g <- result.getAll(tagG).asScala.iterator
-        h <- result.getAll(tagH).asScala.iterator
-        i <- result.getAll(tagI).asScala.iterator
-        j <- result.getAll(tagJ).asScala.iterator
-        k <- result.getAll(tagK).asScala.iterator
-        l <- result.getAll(tagL).asScala.iterator
         m <- result.getAll(tagM).asScala.iterator
+        l <- result.getAll(tagL).asScala.iterator
+        k <- result.getAll(tagK).asScala.iterator
+        j <- result.getAll(tagJ).asScala.iterator
+        i <- result.getAll(tagI).asScala.iterator
+        h <- result.getAll(tagH).asScala.iterator
+        g <- result.getAll(tagG).asScala.iterator
+        f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m))
     }
   }
@@ -832,20 +833,20 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
-        f <- result.getAll(tagF).asScala.iterator
-        g <- result.getAll(tagG).asScala.iterator
-        h <- result.getAll(tagH).asScala.iterator
-        i <- result.getAll(tagI).asScala.iterator
-        j <- result.getAll(tagJ).asScala.iterator
-        k <- result.getAll(tagK).asScala.iterator
-        l <- result.getAll(tagL).asScala.iterator
-        m <- result.getAll(tagM).asScala.iterator
         n <- result.getAll(tagN).asScala.iterator
+        m <- result.getAll(tagM).asScala.iterator
+        l <- result.getAll(tagL).asScala.iterator
+        k <- result.getAll(tagK).asScala.iterator
+        j <- result.getAll(tagJ).asScala.iterator
+        i <- result.getAll(tagI).asScala.iterator
+        h <- result.getAll(tagH).asScala.iterator
+        g <- result.getAll(tagG).asScala.iterator
+        f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n))
     }
   }
@@ -872,21 +873,21 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
-        f <- result.getAll(tagF).asScala.iterator
-        g <- result.getAll(tagG).asScala.iterator
-        h <- result.getAll(tagH).asScala.iterator
-        i <- result.getAll(tagI).asScala.iterator
-        j <- result.getAll(tagJ).asScala.iterator
-        k <- result.getAll(tagK).asScala.iterator
-        l <- result.getAll(tagL).asScala.iterator
-        m <- result.getAll(tagM).asScala.iterator
-        n <- result.getAll(tagN).asScala.iterator
         o <- result.getAll(tagO).asScala.iterator
+        n <- result.getAll(tagN).asScala.iterator
+        m <- result.getAll(tagM).asScala.iterator
+        l <- result.getAll(tagL).asScala.iterator
+        k <- result.getAll(tagK).asScala.iterator
+        j <- result.getAll(tagJ).asScala.iterator
+        i <- result.getAll(tagI).asScala.iterator
+        h <- result.getAll(tagH).asScala.iterator
+        g <- result.getAll(tagG).asScala.iterator
+        f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o))
     }
   }
@@ -914,22 +915,22 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
-        f <- result.getAll(tagF).asScala.iterator
-        g <- result.getAll(tagG).asScala.iterator
-        h <- result.getAll(tagH).asScala.iterator
-        i <- result.getAll(tagI).asScala.iterator
-        j <- result.getAll(tagJ).asScala.iterator
-        k <- result.getAll(tagK).asScala.iterator
-        l <- result.getAll(tagL).asScala.iterator
-        m <- result.getAll(tagM).asScala.iterator
-        n <- result.getAll(tagN).asScala.iterator
-        o <- result.getAll(tagO).asScala.iterator
         p <- result.getAll(tagP).asScala.iterator
+        o <- result.getAll(tagO).asScala.iterator
+        n <- result.getAll(tagN).asScala.iterator
+        m <- result.getAll(tagM).asScala.iterator
+        l <- result.getAll(tagL).asScala.iterator
+        k <- result.getAll(tagK).asScala.iterator
+        j <- result.getAll(tagJ).asScala.iterator
+        i <- result.getAll(tagI).asScala.iterator
+        h <- result.getAll(tagH).asScala.iterator
+        g <- result.getAll(tagG).asScala.iterator
+        f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p))
     }
   }
@@ -958,23 +959,23 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
-        f <- result.getAll(tagF).asScala.iterator
-        g <- result.getAll(tagG).asScala.iterator
-        h <- result.getAll(tagH).asScala.iterator
-        i <- result.getAll(tagI).asScala.iterator
-        j <- result.getAll(tagJ).asScala.iterator
-        k <- result.getAll(tagK).asScala.iterator
-        l <- result.getAll(tagL).asScala.iterator
-        m <- result.getAll(tagM).asScala.iterator
-        n <- result.getAll(tagN).asScala.iterator
-        o <- result.getAll(tagO).asScala.iterator
-        p <- result.getAll(tagP).asScala.iterator
         q <- result.getAll(tagQ).asScala.iterator
+        p <- result.getAll(tagP).asScala.iterator
+        o <- result.getAll(tagO).asScala.iterator
+        n <- result.getAll(tagN).asScala.iterator
+        m <- result.getAll(tagM).asScala.iterator
+        l <- result.getAll(tagL).asScala.iterator
+        k <- result.getAll(tagK).asScala.iterator
+        j <- result.getAll(tagJ).asScala.iterator
+        i <- result.getAll(tagI).asScala.iterator
+        h <- result.getAll(tagH).asScala.iterator
+        g <- result.getAll(tagG).asScala.iterator
+        f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q))
     }
   }
@@ -1004,24 +1005,24 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
-        f <- result.getAll(tagF).asScala.iterator
-        g <- result.getAll(tagG).asScala.iterator
-        h <- result.getAll(tagH).asScala.iterator
-        i <- result.getAll(tagI).asScala.iterator
-        j <- result.getAll(tagJ).asScala.iterator
-        k <- result.getAll(tagK).asScala.iterator
-        l <- result.getAll(tagL).asScala.iterator
-        m <- result.getAll(tagM).asScala.iterator
-        n <- result.getAll(tagN).asScala.iterator
-        o <- result.getAll(tagO).asScala.iterator
-        p <- result.getAll(tagP).asScala.iterator
-        q <- result.getAll(tagQ).asScala.iterator
         r <- result.getAll(tagR).asScala.iterator
+        q <- result.getAll(tagQ).asScala.iterator
+        p <- result.getAll(tagP).asScala.iterator
+        o <- result.getAll(tagO).asScala.iterator
+        n <- result.getAll(tagN).asScala.iterator
+        m <- result.getAll(tagM).asScala.iterator
+        l <- result.getAll(tagL).asScala.iterator
+        k <- result.getAll(tagK).asScala.iterator
+        j <- result.getAll(tagJ).asScala.iterator
+        i <- result.getAll(tagI).asScala.iterator
+        h <- result.getAll(tagH).asScala.iterator
+        g <- result.getAll(tagG).asScala.iterator
+        f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r))
     }
   }
@@ -1052,25 +1053,25 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
-        f <- result.getAll(tagF).asScala.iterator
-        g <- result.getAll(tagG).asScala.iterator
-        h <- result.getAll(tagH).asScala.iterator
-        i <- result.getAll(tagI).asScala.iterator
-        j <- result.getAll(tagJ).asScala.iterator
-        k <- result.getAll(tagK).asScala.iterator
-        l <- result.getAll(tagL).asScala.iterator
-        m <- result.getAll(tagM).asScala.iterator
-        n <- result.getAll(tagN).asScala.iterator
-        o <- result.getAll(tagO).asScala.iterator
-        p <- result.getAll(tagP).asScala.iterator
-        q <- result.getAll(tagQ).asScala.iterator
-        r <- result.getAll(tagR).asScala.iterator
         s <- result.getAll(tagS).asScala.iterator
+        r <- result.getAll(tagR).asScala.iterator
+        q <- result.getAll(tagQ).asScala.iterator
+        p <- result.getAll(tagP).asScala.iterator
+        o <- result.getAll(tagO).asScala.iterator
+        n <- result.getAll(tagN).asScala.iterator
+        m <- result.getAll(tagM).asScala.iterator
+        l <- result.getAll(tagL).asScala.iterator
+        k <- result.getAll(tagK).asScala.iterator
+        j <- result.getAll(tagJ).asScala.iterator
+        i <- result.getAll(tagI).asScala.iterator
+        h <- result.getAll(tagH).asScala.iterator
+        g <- result.getAll(tagG).asScala.iterator
+        f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s))
     }
   }
@@ -1102,26 +1103,26 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
-        f <- result.getAll(tagF).asScala.iterator
-        g <- result.getAll(tagG).asScala.iterator
-        h <- result.getAll(tagH).asScala.iterator
-        i <- result.getAll(tagI).asScala.iterator
-        j <- result.getAll(tagJ).asScala.iterator
-        k <- result.getAll(tagK).asScala.iterator
-        l <- result.getAll(tagL).asScala.iterator
-        m <- result.getAll(tagM).asScala.iterator
-        n <- result.getAll(tagN).asScala.iterator
-        o <- result.getAll(tagO).asScala.iterator
-        p <- result.getAll(tagP).asScala.iterator
-        q <- result.getAll(tagQ).asScala.iterator
-        r <- result.getAll(tagR).asScala.iterator
-        s <- result.getAll(tagS).asScala.iterator
         t <- result.getAll(tagT).asScala.iterator
+        s <- result.getAll(tagS).asScala.iterator
+        r <- result.getAll(tagR).asScala.iterator
+        q <- result.getAll(tagQ).asScala.iterator
+        p <- result.getAll(tagP).asScala.iterator
+        o <- result.getAll(tagO).asScala.iterator
+        n <- result.getAll(tagN).asScala.iterator
+        m <- result.getAll(tagM).asScala.iterator
+        l <- result.getAll(tagL).asScala.iterator
+        k <- result.getAll(tagK).asScala.iterator
+        j <- result.getAll(tagJ).asScala.iterator
+        i <- result.getAll(tagI).asScala.iterator
+        h <- result.getAll(tagH).asScala.iterator
+        g <- result.getAll(tagG).asScala.iterator
+        f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t))
     }
   }
@@ -1154,27 +1155,27 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
-        f <- result.getAll(tagF).asScala.iterator
-        g <- result.getAll(tagG).asScala.iterator
-        h <- result.getAll(tagH).asScala.iterator
-        i <- result.getAll(tagI).asScala.iterator
-        j <- result.getAll(tagJ).asScala.iterator
-        k <- result.getAll(tagK).asScala.iterator
-        l <- result.getAll(tagL).asScala.iterator
-        m <- result.getAll(tagM).asScala.iterator
-        n <- result.getAll(tagN).asScala.iterator
-        o <- result.getAll(tagO).asScala.iterator
-        p <- result.getAll(tagP).asScala.iterator
-        q <- result.getAll(tagQ).asScala.iterator
-        r <- result.getAll(tagR).asScala.iterator
-        s <- result.getAll(tagS).asScala.iterator
-        t <- result.getAll(tagT).asScala.iterator
         u <- result.getAll(tagU).asScala.iterator
+        t <- result.getAll(tagT).asScala.iterator
+        s <- result.getAll(tagS).asScala.iterator
+        r <- result.getAll(tagR).asScala.iterator
+        q <- result.getAll(tagQ).asScala.iterator
+        p <- result.getAll(tagP).asScala.iterator
+        o <- result.getAll(tagO).asScala.iterator
+        n <- result.getAll(tagN).asScala.iterator
+        m <- result.getAll(tagM).asScala.iterator
+        l <- result.getAll(tagL).asScala.iterator
+        k <- result.getAll(tagK).asScala.iterator
+        j <- result.getAll(tagJ).asScala.iterator
+        i <- result.getAll(tagI).asScala.iterator
+        h <- result.getAll(tagH).asScala.iterator
+        g <- result.getAll(tagG).asScala.iterator
+        f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u))
     }
   }
@@ -1208,28 +1209,28 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- result.getAll(tagB).asScala.iterator
-        c <- result.getAll(tagC).asScala.iterator
-        d <- result.getAll(tagD).asScala.iterator
-        e <- result.getAll(tagE).asScala.iterator
-        f <- result.getAll(tagF).asScala.iterator
-        g <- result.getAll(tagG).asScala.iterator
-        h <- result.getAll(tagH).asScala.iterator
-        i <- result.getAll(tagI).asScala.iterator
-        j <- result.getAll(tagJ).asScala.iterator
-        k <- result.getAll(tagK).asScala.iterator
-        l <- result.getAll(tagL).asScala.iterator
-        m <- result.getAll(tagM).asScala.iterator
-        n <- result.getAll(tagN).asScala.iterator
-        o <- result.getAll(tagO).asScala.iterator
-        p <- result.getAll(tagP).asScala.iterator
-        q <- result.getAll(tagQ).asScala.iterator
-        r <- result.getAll(tagR).asScala.iterator
-        s <- result.getAll(tagS).asScala.iterator
-        t <- result.getAll(tagT).asScala.iterator
-        u <- result.getAll(tagU).asScala.iterator
         v <- result.getAll(tagV).asScala.iterator
+        u <- result.getAll(tagU).asScala.iterator
+        t <- result.getAll(tagT).asScala.iterator
+        s <- result.getAll(tagS).asScala.iterator
+        r <- result.getAll(tagR).asScala.iterator
+        q <- result.getAll(tagQ).asScala.iterator
+        p <- result.getAll(tagP).asScala.iterator
+        o <- result.getAll(tagO).asScala.iterator
+        n <- result.getAll(tagN).asScala.iterator
+        m <- result.getAll(tagM).asScala.iterator
+        l <- result.getAll(tagL).asScala.iterator
+        k <- result.getAll(tagK).asScala.iterator
+        j <- result.getAll(tagJ).asScala.iterator
+        i <- result.getAll(tagI).asScala.iterator
+        h <- result.getAll(tagH).asScala.iterator
+        g <- result.getAll(tagG).asScala.iterator
+        f <- result.getAll(tagF).asScala.iterator
+        e <- result.getAll(tagE).asScala.iterator
+        d <- result.getAll(tagD).asScala.iterator
+        c <- result.getAll(tagC).asScala.iterator
+        b <- result.getAll(tagB).asScala.iterator
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v))
     }
   }
@@ -1243,8 +1244,8 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
         b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b))
     }
   }
@@ -1259,9 +1260,9 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
         c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c))
     }
   }
@@ -1277,10 +1278,10 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
         d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d))
     }
   }
@@ -1297,11 +1298,11 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
         e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e))
     }
   }
@@ -1319,12 +1320,12 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
         f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f))
     }
   }
@@ -1343,13 +1344,13 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
         g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g))
     }
   }
@@ -1369,14 +1370,14 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
         h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h))
     }
   }
@@ -1397,15 +1398,15 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
         i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i))
     }
   }
@@ -1427,16 +1428,16 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
         j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j))
     }
   }
@@ -1459,17 +1460,17 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
         k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k))
     }
   }
@@ -1493,18 +1494,18 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
         l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l))
     }
   }
@@ -1529,19 +1530,19 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
         m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m))
     }
   }
@@ -1567,20 +1568,20 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
         n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n))
     }
   }
@@ -1607,21 +1608,21 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
-        n <- toOptions(result.getAll(tagN).asScala.iterator)
         o <- toOptions(result.getAll(tagO).asScala.iterator)
+        n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o))
     }
   }
@@ -1649,22 +1650,22 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
-        n <- toOptions(result.getAll(tagN).asScala.iterator)
-        o <- toOptions(result.getAll(tagO).asScala.iterator)
         p <- toOptions(result.getAll(tagP).asScala.iterator)
+        o <- toOptions(result.getAll(tagO).asScala.iterator)
+        n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p))
     }
   }
@@ -1693,23 +1694,23 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
-        n <- toOptions(result.getAll(tagN).asScala.iterator)
-        o <- toOptions(result.getAll(tagO).asScala.iterator)
-        p <- toOptions(result.getAll(tagP).asScala.iterator)
         q <- toOptions(result.getAll(tagQ).asScala.iterator)
+        p <- toOptions(result.getAll(tagP).asScala.iterator)
+        o <- toOptions(result.getAll(tagO).asScala.iterator)
+        n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q))
     }
   }
@@ -1739,24 +1740,24 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
-        n <- toOptions(result.getAll(tagN).asScala.iterator)
-        o <- toOptions(result.getAll(tagO).asScala.iterator)
-        p <- toOptions(result.getAll(tagP).asScala.iterator)
-        q <- toOptions(result.getAll(tagQ).asScala.iterator)
         r <- toOptions(result.getAll(tagR).asScala.iterator)
+        q <- toOptions(result.getAll(tagQ).asScala.iterator)
+        p <- toOptions(result.getAll(tagP).asScala.iterator)
+        o <- toOptions(result.getAll(tagO).asScala.iterator)
+        n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r))
     }
   }
@@ -1787,25 +1788,25 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
-        n <- toOptions(result.getAll(tagN).asScala.iterator)
-        o <- toOptions(result.getAll(tagO).asScala.iterator)
-        p <- toOptions(result.getAll(tagP).asScala.iterator)
-        q <- toOptions(result.getAll(tagQ).asScala.iterator)
-        r <- toOptions(result.getAll(tagR).asScala.iterator)
         s <- toOptions(result.getAll(tagS).asScala.iterator)
+        r <- toOptions(result.getAll(tagR).asScala.iterator)
+        q <- toOptions(result.getAll(tagQ).asScala.iterator)
+        p <- toOptions(result.getAll(tagP).asScala.iterator)
+        o <- toOptions(result.getAll(tagO).asScala.iterator)
+        n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s))
     }
   }
@@ -1837,26 +1838,26 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
-        n <- toOptions(result.getAll(tagN).asScala.iterator)
-        o <- toOptions(result.getAll(tagO).asScala.iterator)
-        p <- toOptions(result.getAll(tagP).asScala.iterator)
-        q <- toOptions(result.getAll(tagQ).asScala.iterator)
-        r <- toOptions(result.getAll(tagR).asScala.iterator)
-        s <- toOptions(result.getAll(tagS).asScala.iterator)
         t <- toOptions(result.getAll(tagT).asScala.iterator)
+        s <- toOptions(result.getAll(tagS).asScala.iterator)
+        r <- toOptions(result.getAll(tagR).asScala.iterator)
+        q <- toOptions(result.getAll(tagQ).asScala.iterator)
+        p <- toOptions(result.getAll(tagP).asScala.iterator)
+        o <- toOptions(result.getAll(tagO).asScala.iterator)
+        n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t))
     }
   }
@@ -1889,27 +1890,27 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
-        n <- toOptions(result.getAll(tagN).asScala.iterator)
-        o <- toOptions(result.getAll(tagO).asScala.iterator)
-        p <- toOptions(result.getAll(tagP).asScala.iterator)
-        q <- toOptions(result.getAll(tagQ).asScala.iterator)
-        r <- toOptions(result.getAll(tagR).asScala.iterator)
-        s <- toOptions(result.getAll(tagS).asScala.iterator)
-        t <- toOptions(result.getAll(tagT).asScala.iterator)
         u <- toOptions(result.getAll(tagU).asScala.iterator)
+        t <- toOptions(result.getAll(tagT).asScala.iterator)
+        s <- toOptions(result.getAll(tagS).asScala.iterator)
+        r <- toOptions(result.getAll(tagR).asScala.iterator)
+        q <- toOptions(result.getAll(tagQ).asScala.iterator)
+        p <- toOptions(result.getAll(tagP).asScala.iterator)
+        o <- toOptions(result.getAll(tagO).asScala.iterator)
+        n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u))
     }
   }
@@ -1943,28 +1944,28 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- result.getAll(tagA).asScala.iterator
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
-        n <- toOptions(result.getAll(tagN).asScala.iterator)
-        o <- toOptions(result.getAll(tagO).asScala.iterator)
-        p <- toOptions(result.getAll(tagP).asScala.iterator)
-        q <- toOptions(result.getAll(tagQ).asScala.iterator)
-        r <- toOptions(result.getAll(tagR).asScala.iterator)
-        s <- toOptions(result.getAll(tagS).asScala.iterator)
-        t <- toOptions(result.getAll(tagT).asScala.iterator)
-        u <- toOptions(result.getAll(tagU).asScala.iterator)
         v <- toOptions(result.getAll(tagV).asScala.iterator)
+        u <- toOptions(result.getAll(tagU).asScala.iterator)
+        t <- toOptions(result.getAll(tagT).asScala.iterator)
+        s <- toOptions(result.getAll(tagS).asScala.iterator)
+        r <- toOptions(result.getAll(tagR).asScala.iterator)
+        q <- toOptions(result.getAll(tagQ).asScala.iterator)
+        p <- toOptions(result.getAll(tagP).asScala.iterator)
+        o <- toOptions(result.getAll(tagO).asScala.iterator)
+        n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- result.getAll(tagA).asScala.iterator
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v))
     }
   }
@@ -1978,8 +1979,8 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b))
     }
   }
@@ -1994,9 +1995,9 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
         c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c))
     }
   }
@@ -2012,10 +2013,10 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
         d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d))
     }
   }
@@ -2032,11 +2033,11 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
         e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e))
     }
   }
@@ -2054,12 +2055,12 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
         f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f))
     }
   }
@@ -2078,13 +2079,13 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
         g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f, g))
     }
   }
@@ -2104,14 +2105,14 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
         h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f, g, h))
     }
   }
@@ -2132,15 +2133,15 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
         i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f, g, h, i))
     }
   }
@@ -2162,16 +2163,16 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
         j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f, g, h, i, j))
     }
   }
@@ -2194,17 +2195,17 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
         k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k))
     }
   }
@@ -2228,18 +2229,18 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
         l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l))
     }
   }
@@ -2264,19 +2265,19 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
         m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m))
     }
   }
@@ -2302,20 +2303,20 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
         n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n))
     }
   }
@@ -2342,21 +2343,21 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
-        n <- toOptions(result.getAll(tagN).asScala.iterator)
         o <- toOptions(result.getAll(tagO).asScala.iterator)
+        n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o))
     }
   }
@@ -2384,22 +2385,22 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
-        n <- toOptions(result.getAll(tagN).asScala.iterator)
-        o <- toOptions(result.getAll(tagO).asScala.iterator)
         p <- toOptions(result.getAll(tagP).asScala.iterator)
+        o <- toOptions(result.getAll(tagO).asScala.iterator)
+        n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p))
     }
   }
@@ -2428,23 +2429,23 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
-        n <- toOptions(result.getAll(tagN).asScala.iterator)
-        o <- toOptions(result.getAll(tagO).asScala.iterator)
-        p <- toOptions(result.getAll(tagP).asScala.iterator)
         q <- toOptions(result.getAll(tagQ).asScala.iterator)
+        p <- toOptions(result.getAll(tagP).asScala.iterator)
+        o <- toOptions(result.getAll(tagO).asScala.iterator)
+        n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q))
     }
   }
@@ -2474,24 +2475,24 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
-        n <- toOptions(result.getAll(tagN).asScala.iterator)
-        o <- toOptions(result.getAll(tagO).asScala.iterator)
-        p <- toOptions(result.getAll(tagP).asScala.iterator)
-        q <- toOptions(result.getAll(tagQ).asScala.iterator)
         r <- toOptions(result.getAll(tagR).asScala.iterator)
+        q <- toOptions(result.getAll(tagQ).asScala.iterator)
+        p <- toOptions(result.getAll(tagP).asScala.iterator)
+        o <- toOptions(result.getAll(tagO).asScala.iterator)
+        n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r))
     }
   }
@@ -2522,25 +2523,25 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
-        n <- toOptions(result.getAll(tagN).asScala.iterator)
-        o <- toOptions(result.getAll(tagO).asScala.iterator)
-        p <- toOptions(result.getAll(tagP).asScala.iterator)
-        q <- toOptions(result.getAll(tagQ).asScala.iterator)
-        r <- toOptions(result.getAll(tagR).asScala.iterator)
         s <- toOptions(result.getAll(tagS).asScala.iterator)
+        r <- toOptions(result.getAll(tagR).asScala.iterator)
+        q <- toOptions(result.getAll(tagQ).asScala.iterator)
+        p <- toOptions(result.getAll(tagP).asScala.iterator)
+        o <- toOptions(result.getAll(tagO).asScala.iterator)
+        n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s))
     }
   }
@@ -2572,26 +2573,26 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
-        n <- toOptions(result.getAll(tagN).asScala.iterator)
-        o <- toOptions(result.getAll(tagO).asScala.iterator)
-        p <- toOptions(result.getAll(tagP).asScala.iterator)
-        q <- toOptions(result.getAll(tagQ).asScala.iterator)
-        r <- toOptions(result.getAll(tagR).asScala.iterator)
-        s <- toOptions(result.getAll(tagS).asScala.iterator)
         t <- toOptions(result.getAll(tagT).asScala.iterator)
+        s <- toOptions(result.getAll(tagS).asScala.iterator)
+        r <- toOptions(result.getAll(tagR).asScala.iterator)
+        q <- toOptions(result.getAll(tagQ).asScala.iterator)
+        p <- toOptions(result.getAll(tagP).asScala.iterator)
+        o <- toOptions(result.getAll(tagO).asScala.iterator)
+        n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t))
     }
   }
@@ -2624,27 +2625,27 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
-        n <- toOptions(result.getAll(tagN).asScala.iterator)
-        o <- toOptions(result.getAll(tagO).asScala.iterator)
-        p <- toOptions(result.getAll(tagP).asScala.iterator)
-        q <- toOptions(result.getAll(tagQ).asScala.iterator)
-        r <- toOptions(result.getAll(tagR).asScala.iterator)
-        s <- toOptions(result.getAll(tagS).asScala.iterator)
-        t <- toOptions(result.getAll(tagT).asScala.iterator)
         u <- toOptions(result.getAll(tagU).asScala.iterator)
+        t <- toOptions(result.getAll(tagT).asScala.iterator)
+        s <- toOptions(result.getAll(tagS).asScala.iterator)
+        r <- toOptions(result.getAll(tagR).asScala.iterator)
+        q <- toOptions(result.getAll(tagQ).asScala.iterator)
+        p <- toOptions(result.getAll(tagP).asScala.iterator)
+        o <- toOptions(result.getAll(tagO).asScala.iterator)
+        n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u))
     }
   }
@@ -2678,28 +2679,28 @@ object MultiJoin {
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
-        a <- toOptions(result.getAll(tagA).asScala.iterator)
-        b <- toOptions(result.getAll(tagB).asScala.iterator)
-        c <- toOptions(result.getAll(tagC).asScala.iterator)
-        d <- toOptions(result.getAll(tagD).asScala.iterator)
-        e <- toOptions(result.getAll(tagE).asScala.iterator)
-        f <- toOptions(result.getAll(tagF).asScala.iterator)
-        g <- toOptions(result.getAll(tagG).asScala.iterator)
-        h <- toOptions(result.getAll(tagH).asScala.iterator)
-        i <- toOptions(result.getAll(tagI).asScala.iterator)
-        j <- toOptions(result.getAll(tagJ).asScala.iterator)
-        k <- toOptions(result.getAll(tagK).asScala.iterator)
-        l <- toOptions(result.getAll(tagL).asScala.iterator)
-        m <- toOptions(result.getAll(tagM).asScala.iterator)
-        n <- toOptions(result.getAll(tagN).asScala.iterator)
-        o <- toOptions(result.getAll(tagO).asScala.iterator)
-        p <- toOptions(result.getAll(tagP).asScala.iterator)
-        q <- toOptions(result.getAll(tagQ).asScala.iterator)
-        r <- toOptions(result.getAll(tagR).asScala.iterator)
-        s <- toOptions(result.getAll(tagS).asScala.iterator)
-        t <- toOptions(result.getAll(tagT).asScala.iterator)
-        u <- toOptions(result.getAll(tagU).asScala.iterator)
         v <- toOptions(result.getAll(tagV).asScala.iterator)
+        u <- toOptions(result.getAll(tagU).asScala.iterator)
+        t <- toOptions(result.getAll(tagT).asScala.iterator)
+        s <- toOptions(result.getAll(tagS).asScala.iterator)
+        r <- toOptions(result.getAll(tagR).asScala.iterator)
+        q <- toOptions(result.getAll(tagQ).asScala.iterator)
+        p <- toOptions(result.getAll(tagP).asScala.iterator)
+        o <- toOptions(result.getAll(tagO).asScala.iterator)
+        n <- toOptions(result.getAll(tagN).asScala.iterator)
+        m <- toOptions(result.getAll(tagM).asScala.iterator)
+        l <- toOptions(result.getAll(tagL).asScala.iterator)
+        k <- toOptions(result.getAll(tagK).asScala.iterator)
+        j <- toOptions(result.getAll(tagJ).asScala.iterator)
+        i <- toOptions(result.getAll(tagI).asScala.iterator)
+        h <- toOptions(result.getAll(tagH).asScala.iterator)
+        g <- toOptions(result.getAll(tagG).asScala.iterator)
+        f <- toOptions(result.getAll(tagF).asScala.iterator)
+        e <- toOptions(result.getAll(tagE).asScala.iterator)
+        d <- toOptions(result.getAll(tagD).asScala.iterator)
+        c <- toOptions(result.getAll(tagC).asScala.iterator)
+        b <- toOptions(result.getAll(tagB).asScala.iterator)
+        a <- toOptions(result.getAll(tagA).asScala.iterator)
       } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v))
     }
   }
