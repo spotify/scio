@@ -39,7 +39,11 @@ private[scio] object FunctionsWithWindowedValue {
     val g = ClosureCleaner(f)  // defeat closure
     override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
       val wv = WindowedValue(c.element(), c.timestamp(), c.window(), c.pane())
-      g(wv).foreach(v => c.outputWithTimestamp(v.value, v.timestamp))
+      val i = g(wv).toIterator
+      while (i.hasNext) {
+        val v = i.next()
+        c.outputWithTimestamp(v.value, v.timestamp)
+      }
     }
   }
 

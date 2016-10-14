@@ -44,8 +44,10 @@ private[scio] object FunctionsWithSideInput {
   def flatMapFn[T, U](f: (T, SideInputContext[T]) => TraversableOnce[U])
   : DoFn[T, U] = new SideInputDoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, U]#ProcessContext): Unit =
-      g(c.element(), sideInputContext(c)).foreach(c.output)
+    override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
+      val i = g(c.element(), sideInputContext(c)).toIterator
+      while (i.hasNext) c.output(i.next())
+    }
   }
 
   def mapFn[T, U](f: (T, SideInputContext[T]) => U): DoFn[T, U] = new SideInputDoFn[T, U] {
