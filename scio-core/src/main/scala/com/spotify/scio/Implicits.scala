@@ -44,21 +44,6 @@ private[scio] object Implicits {
       r.registerCoder(classOf[Long], classOf[VarLongCoder])
       r.registerCoder(classOf[Float], classOf[FloatCoder])
       r.registerCoder(classOf[Double], classOf[DoubleCoder])
-
-      // Fall back to Kryo
-      r.setFallbackCoderProvider(new CoderProvider {
-        override def getCoder[T](`type`: TypeDescriptor[T]): Coder[T] = {
-          val cls = `type`.getRawType
-          if (classOf[SpecificRecord] isAssignableFrom cls) {
-            // TODO: what about GenericRecord?
-            AvroCoder.of(cls).asInstanceOf[Coder[T]]
-          } else if (classOf[Message] isAssignableFrom cls) {
-            ProtoCoder.of(cls.asSubclass(classOf[Message])).asInstanceOf[Coder[T]]
-          } else {
-            KryoAtomicCoder[T]
-          }
-        }
-      })
     }
 
     def getScalaCoder[T: ClassTag]: Coder[T] = {
