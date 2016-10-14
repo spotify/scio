@@ -154,9 +154,9 @@ private[scio] object Functions {
     override def addInput(accumulator: JList[T], input: T): JList[T] = {
       accumulator.add(input)
       if (accumulator.size > BUFFER_SIZE) {
-        val combined = reduceOption(accumulator.asScala)
+        val v = reduceOption(accumulator.asScala).get
         accumulator.clear()
-        combined.foreach(accumulator.add)
+        accumulator.add(v)
       }
       accumulator
     }

@@ -25,7 +25,7 @@ import scala.reflect.ClassTag
 abstract private class DoFnWithAccumulator[I, O](acc: Seq[Accumulator[_]]) extends DoFn[I, O] {
   private val m = {
     val b = Map.newBuilder[String, Aggregator[_, _]]
-    acc.foreach(a => b += (a.name -> this.createAggregator(a.name, a.combineFn)))
+    b ++= acc.map(a => a.name -> this.createAggregator(a.name, a.combineFn))
     b.result()
   }
 

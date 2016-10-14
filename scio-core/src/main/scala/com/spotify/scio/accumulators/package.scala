@@ -35,7 +35,8 @@ package object accumulators {
     def accumulate(as: Accumulator[T]*): SCollection[T] =
       self.withAccumulator(as: _*)
         .map { case (x, c) =>
-          as.foreach(a => c.addValue(a, x))
+          val i = as.iterator
+          while (i.hasNext) c.addValue(i.next(), x)
           x
         }
         .toSCollection
@@ -44,7 +45,9 @@ package object accumulators {
     def accumulateBy[U](as: Accumulator[U]*)(f: T => U): SCollection[T] =
       self.withAccumulator(as: _*)
         .map { case (x, c) =>
-          as.foreach(a => c.addValue(a, f(x)))
+          val fx = f(x)
+          val i = as.iterator
+          while (i.hasNext) c.addValue(i.next(), fx)
           x
         }
         .toSCollection
