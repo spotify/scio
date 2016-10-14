@@ -72,7 +72,7 @@ class ScioContextTest extends PipelineSpec {
     val sc = ScioContext(opts)
     val e = the [RuntimeException] thrownBy { sc.pipeline }
     ExceptionUtils.getRootCause(e) should have message
-      "Missing required value: at least one of tempLocation or stagingLocation must be set."
+      "DataflowRunner requires gcpTempLocation, and it is missing in PipelineOptions."
   }
   // scalastyle:on no.whitespace.before.left.bracket
 
