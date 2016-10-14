@@ -119,9 +119,11 @@ package object scio {
       plusI(s, r)
       s
     }
-    override def sumOption(iter: TraversableOnce[Array[T]]): Option[Array[T]] = {
+    override def sumOption(xs: TraversableOnce[Array[T]]): Option[Array[T]] = {
       var s: Array[T] = null
-      iter.foreach { a =>
+      val i = xs.toIterator
+      while (i.hasNext) {
+        val a = i.next()
         if (s == null) {
           s = Array.fill[T](a.length)(num.zero)
         }
