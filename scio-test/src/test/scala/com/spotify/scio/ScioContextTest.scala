@@ -17,13 +17,20 @@
 
 package com.spotify.scio
 
+import java.nio.file.Files
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptionsFactory}
 import com.google.cloud.dataflow.sdk.runners.inprocess.InProcessPipelineRunner
 import com.google.cloud.dataflow.sdk.runners.{DataflowPipelineRunner, DirectPipelineRunner}
 import com.google.cloud.dataflow.sdk.testing.DataflowAssert
 import com.google.cloud.dataflow.sdk.transforms.Create
 import com.google.common.collect.Lists
+import com.spotify.scio.MetricSchema.Metrics
+import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.util.ScioUtil
 import org.apache.commons.lang.exception.ExceptionUtils
 
 import scala.collection.JavaConverters._
@@ -81,5 +88,18 @@ class ScioContextTest extends PipelineSpec {
       "Missing required value: at least one of tempLocation or stagingLocation must be set."
   }
   // scalastyle:on no.whitespace.before.left.bracket
+
+  it should "support save metrics on close for finished pipeline" in {
+    val metricsFile = Files.createTempFile("scio-metrics-dump", ".json").toFile
+    val opts = PipelineOptionsFactory.create()
+    opts.setRunner(classOf[InProcessPipelineRunner])
+    opts.as(classOf[ScioOptions]).setMetricsLocation(metricsFile.toString)
+    ScioContext(opts).close()
+
+    val mapper = ScioUtil.getScalaJsonMapper
+
+    val metrics = mapper.readValue(metricsFile, classOf[Metrics])
+    metrics.version should be(scioVersion)
+  }
 
 }
