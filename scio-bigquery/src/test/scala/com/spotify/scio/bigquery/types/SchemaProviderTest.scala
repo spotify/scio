@@ -27,49 +27,54 @@ class SchemaProviderTest extends FlatSpec with Matchers {
   private def basicFields(mode: String) =
     s"""
        |"fields": [
-       |  {"mode": "$mode", "name": "f1", "type": "INTEGER"},
-       |  {"mode": "$mode", "name": "f2", "type": "INTEGER"},
-       |  {"mode": "$mode", "name": "f3", "type": "FLOAT"},
-       |  {"mode": "$mode", "name": "f4", "type": "FLOAT"},
-       |  {"mode": "$mode", "name": "f5", "type": "BOOLEAN"},
-       |  {"mode": "$mode", "name": "f6", "type": "STRING"},
-       |  {"mode": "$mode", "name": "f7", "type": "TIMESTAMP"}
+       |  {"mode": "$mode", "name": "boolF", "type": "BOOLEAN"},
+       |  {"mode": "$mode", "name": "intF", "type": "INTEGER"},
+       |  {"mode": "$mode", "name": "longF", "type": "INTEGER"},
+       |  {"mode": "$mode", "name": "floatF", "type": "FLOAT"},
+       |  {"mode": "$mode", "name": "doubleF", "type": "FLOAT"},
+       |  {"mode": "$mode", "name": "stringF", "type": "STRING"},
+       |  {"mode": "$mode", "name": "byteArrayF", "type": "BYTES"},
+       |  {"mode": "$mode", "name": "byteStringF", "type": "BYTES"},
+       |  {"mode": "$mode", "name": "timestampF", "type": "TIMESTAMP"},
+       |  {"mode": "$mode", "name": "dateF", "type": "DATE"},
+       |  {"mode": "$mode", "name": "timeF", "type": "TIME"},
+       |  {"mode": "$mode", "name": "datetimeF", "type": "DATETIME"}
        |]
        |""".stripMargin
 
   "SchemaProvider.toSchema" should "support required primitive types" in {
-    SchemaProvider.schemaOf[P1] should equal (parseSchema(s"{${basicFields("REQUIRED")}}"))
+    SchemaProvider.schemaOf[Required] should equal (parseSchema(s"{${basicFields("REQUIRED")}}"))
   }
 
   it should "support nullable primitive types" in {
-    SchemaProvider.schemaOf[P2] should equal (parseSchema(s"{${basicFields("NULLABLE")}}"))
+    SchemaProvider.schemaOf[Optional] should equal (parseSchema(s"{${basicFields("NULLABLE")}}"))
   }
 
   it should "support repeated primitive types" in {
-    SchemaProvider.schemaOf[P3] should equal (parseSchema(s"{${basicFields("REPEATED")}}"))
+    SchemaProvider.schemaOf[Repeated] should equal (parseSchema(s"{${basicFields("REPEATED")}}"))
   }
 
   private def recordFields(mode: String) =
     s"""
        |{
        |  "fields": [
-       |    {"mode": "$mode", "name": "f1", "type": "RECORD", ${basicFields("REQUIRED")}},
-       |    {"mode": "$mode", "name": "f2", "type": "RECORD", ${basicFields("NULLABLE")}},
-       |    {"mode": "$mode", "name": "f3", "type": "RECORD", ${basicFields("REPEATED")}}
+       |    {"mode": "$mode", "name": "required", "type": "RECORD", ${basicFields("REQUIRED")}},
+       |    {"mode": "$mode", "name": "optional", "type": "RECORD", ${basicFields("NULLABLE")}},
+       |    {"mode": "$mode", "name": "repeated", "type": "RECORD", ${basicFields("REPEATED")}}
        |  ]
        |}
        |""".stripMargin
 
   it should "support required records" in {
-    SchemaProvider.schemaOf[R1] should equal (parseSchema(recordFields("REQUIRED")))
+    SchemaProvider.schemaOf[RequiredNested] should equal (parseSchema(recordFields("REQUIRED")))
   }
 
   it should "support nullable records" in {
-    SchemaProvider.schemaOf[R2] should equal (parseSchema(recordFields("NULLABLE")))
+    SchemaProvider.schemaOf[OptionalNested] should equal (parseSchema(recordFields("NULLABLE")))
   }
 
   it should "support repeated records" in {
-    SchemaProvider.schemaOf[R3] should equal (parseSchema(recordFields("REPEATED")))
+    SchemaProvider.schemaOf[RepeatedNested] should equal (parseSchema(recordFields("REPEATED")))
   }
 
 }

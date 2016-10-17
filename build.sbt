@@ -237,7 +237,8 @@ lazy val scioBigQuery: Project = Project(
     "org.joda" % "joda-convert" % jodaConvertVersion,
     "org.slf4j" % "slf4j-api" % slf4jVersion,
     "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
-    "org.scalatest" %% "scalatest" % scalaTestVersion % "test,it"
+    "org.scalatest" %% "scalatest" % scalaTestVersion % "test,it",
+    "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.1" % "test"
   ),
   libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
   libraryDependencies ++= (
