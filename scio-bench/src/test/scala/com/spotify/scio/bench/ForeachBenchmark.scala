@@ -36,20 +36,20 @@ object ForeachBenchmark extends Bench.LocalTime {
 
   performance of "Foreach" in {
     measure method "foreach" in {
-      using(inputs) in { case (in) =>
-        in.asScala.foreach(_ => Unit)
+      using(inputs) in { xs =>
+        xs.asScala.foreach(_ => Unit)
       }
     }
 
     measure method "forLoop" in {
-      using(inputs) in { case (in) =>
-        for (i <- in.asScala) Unit
+      using(inputs) in { xs =>
+        for (i <- xs.asScala) Unit
       }
     }
 
     measure method "whileLoop" in {
-      using(inputs) in { case (in) =>
-        val i = in.iterator()
+      using(inputs) in { xs =>
+        val i = xs.iterator()
         while (i.hasNext) i.next()
       }
     }
