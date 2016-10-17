@@ -32,13 +32,18 @@ object SchemaUtil {
     getCaseClass(schema.getFields, name, indent)
   }
 
+  // scalastyle:off cyclomatic.complexity
   private def getRawType(tfs: TableFieldSchema, indent: Int): (String, Seq[String]) = {
     val name = tfs.getType match {
+      case "BOOLEAN" => "Boolean"
       case "INTEGER" => "Long"
       case "FLOAT" => "Double"
-      case "BOOLEAN" => "Boolean"
       case "STRING" => "String"
+      case "BYTES" => "ByteString"
       case "TIMESTAMP" => "Instant"
+      case "DATE" => "LocalDate"
+      case "TIME" => "LocalTime"
+      case "DATETIME" => "LocalDateTime"
       case "RECORD" => NameProvider.getUniqueName(tfs.getName)
       case t => throw new IllegalArgumentException(s"Type: $t not supported")
     }
@@ -49,6 +54,7 @@ object SchemaUtil {
       (name, Seq.empty)
     }
   }
+  // scalastyle:on cyclomatic.complexity
 
   private def getFieldType(tfs: TableFieldSchema,
                            indent: Int): (String, Seq[String]) = {

@@ -18,8 +18,9 @@
 package com.spotify.scio.bigquery.types
 
 import com.google.api.services.bigquery.model.TableRow
+import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery.types.MacroUtil._
-import org.joda.time.Instant
+import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 import scala.language.experimental.macros
 import scala.reflect.macros._
@@ -62,13 +63,25 @@ private[types] object ConverterProvider {
     def cast(tree: Tree, tpe: Type): Tree = {
       val s = q"$tree.toString"
       tpe match {
+        case t if t =:= typeOf[Boolean] => q"$s.toBoolean"
         case t if t =:= typeOf[Int] => q"$s.toInt"
         case t if t =:= typeOf[Long] => q"$s.toLong"
         case t if t =:= typeOf[Float] => q"$s.toFloat"
         case t if t =:= typeOf[Double] => q"$s.toDouble"
-        case t if t =:= typeOf[Boolean] => q"$s.toBoolean"
         case t if t =:= typeOf[String] => q"$s"
+
+        case t if t =:= typeOf[ByteString] =>
+          val b = q"_root_.com.google.common.io.BaseEncoding.base64().decode($s)"
+          q"_root_.com.google.protobuf.ByteString.copyFrom($b)"
+        case t if t =:= typeOf[Array[Byte]] =>
+          q"_root_.com.google.common.io.BaseEncoding.base64().decode($s)"
+
         case t if t =:= typeOf[Instant] => q"_root_.com.spotify.scio.bigquery.Timestamp.parse($s)"
+        case t if t =:= typeOf[LocalDate] => q"_root_.com.spotify.scio.bigquery.Date.parse($s)"
+        case t if t =:= typeOf[LocalTime] => q"_root_.com.spotify.scio.bigquery.Time.parse($s)"
+        case t if t =:= typeOf[LocalDateTime] =>
+          q"_root_.com.spotify.scio.bigquery.DateTime.parse($s)"
+
         case t if isCaseClass(c)(t) =>
           // TODO: scala 2.11
           // val fn = TermName("r" + t.typeSymbol.name)
@@ -146,13 +159,23 @@ private[types] object ConverterProvider {
 
     def cast(tree: Tree, tpe: Type): Tree = {
       tpe match {
+        case t if t =:= typeOf[Boolean] => tree
         case t if t =:= typeOf[Int] => tree
         case t if t =:= typeOf[Long] => tree
         case t if t =:= typeOf[Float] => tree
         case t if t =:= typeOf[Double] => tree
-        case t if t =:= typeOf[Boolean] => tree
         case t if t =:= typeOf[String] => tree
+
+        case t if t =:= typeOf[ByteString] =>
+          q"_root_.com.google.common.io.BaseEncoding.base64().encode($tree.toByteArray)"
+        case t if t =:= typeOf[Array[Byte]] =>
+          q"_root_.com.google.common.io.BaseEncoding.base64().encode($tree)"
+
         case t if t =:= typeOf[Instant] => q"_root_.com.spotify.scio.bigquery.Timestamp($tree)"
+        case t if t =:= typeOf[LocalDate] => q"_root_.com.spotify.scio.bigquery.Date($tree)"
+        case t if t =:= typeOf[LocalTime] => q"_root_.com.spotify.scio.bigquery.Time($tree)"
+        case t if t =:= typeOf[LocalDateTime] => q"_root_.com.spotify.scio.bigquery.DateTime($tree)"
+
         case t if isCaseClass(c)(t) =>
           // TODO: scala 2.11
           // val fn = TermName("r" + t.typeSymbol.name)
