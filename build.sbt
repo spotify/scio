@@ -301,6 +301,7 @@ lazy val scioSchemas: Project = Project(
   file("scio-schemas")
 ).settings(
   commonSettings ++ sbtavro.SbtAvro.avroSettings ++ noPublishSettings ++ PB.protobufSettings,
+  version in sbtavro.SbtAvro.avroConfig := avroVersion, // Set avro version used by sbt-avro
   description := "Avro/Proto schemas for testing",
   libraryDependencies ++= Seq(
     "com.github.os72" % "protoc-jar" % "3.0.0-b1"
