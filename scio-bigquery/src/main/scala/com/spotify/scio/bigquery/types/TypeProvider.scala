@@ -110,12 +110,16 @@ private[types] object TypeProvider {
 
     // Returns: (raw type, e.g. Int, String, NestedRecord, nested case class definitions)
     def getRawType(tfs: TableFieldSchema): (Tree, Seq[Tree]) = tfs.getType match {
-      case "INTEGER" => (tq"_root_.scala.Long", Nil)
-      case "FLOAT" => (tq"_root_.scala.Double", Nil)
-      case "BOOLEAN" => (tq"_root_.scala.Boolean", Nil)
+      case "BOOLEAN" | "BOOL" => (tq"_root_.scala.Boolean", Nil)
+      case "INTEGER" | "INT64" => (tq"_root_.scala.Long", Nil)
+      case "FLOAT" | "FLOAT64" => (tq"_root_.scala.Double", Nil)
       case "STRING" => (tq"_root_.java.lang.String", Nil)
+      case "BYTES" => (tq"_root_.com.google.protobuf.ByteString", Nil)
       case "TIMESTAMP" => (tq"_root_.org.joda.time.Instant", Nil)
-      case "RECORD" =>
+      case "DATE" => (tq"_root_.org.joda.time.LocalDate", Nil)
+      case "TIME" => (tq"_root_.org.joda.time.LocalTime", Nil)
+      case "DATETIME" => (tq"_root_.org.joda.time.LocalDateTime", Nil)
+      case "RECORD" | "STRUCT" =>
         val name = NameProvider.getUniqueName(tfs.getName)
         val (fields, records) = toFields(tfs.getFields)
         (q"${Ident(newTypeName(name))}", Seq(q"case class ${newTypeName(name)}(..$fields)") ++ records)
