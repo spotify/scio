@@ -29,4 +29,8 @@ public interface ScioOptions extends PipelineOptions {
   @Description("Scala version")
   String getScalaVersion();
   void setScalaVersion(String version);
+
+  @Description("Filename to save metrics to.")
+  String getMetricsLocation();
+  void setMetricsLocation(String version);
 }
