@@ -321,7 +321,17 @@ class ScioContext private[scio] (val options: PipelineOptions,
         Future.successful(result.getState)
     }
 
-    new ScioResult(result, finalState, _accumulators.values.toSeq, pipeline)
+    val scioResult = new ScioResult(result, finalState, _accumulators.values.toSeq, pipeline)
+    val metricsLocation = optionsAs[ScioOptions].getMetricsLocation
+    if (metricsLocation != null) {
+      import scala.concurrent.ExecutionContext.Implicits.global
+      // force immediate execution on completed pipeline
+      finalState.value match {
+        case Some(_) => scioResult.saveMetrics(metricsLocation)
+        case None => finalState.onComplete(_ => scioResult.saveMetrics(metricsLocation))
+      }
+    }
+    scioResult
   }
 
   /** Whether the context is closed. */
