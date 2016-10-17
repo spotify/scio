@@ -26,18 +26,22 @@ class SchemaUtilTest extends FlatSpec with Matchers {
 
   def newSchema(mode: String): TableSchema =
     new TableSchema().setFields(List(
-      new TableFieldSchema().setName("f1").setType("INTEGER").setMode(mode),
-      new TableFieldSchema().setName("f2").setType("FLOAT").setMode(mode),
-      new TableFieldSchema().setName("f3").setType("BOOLEAN").setMode(mode),
-      new TableFieldSchema().setName("f4").setType("STRING").setMode(mode),
-      new TableFieldSchema().setName("f5").setType("TIMESTAMP").setMode(mode)
+      new TableFieldSchema().setName("boolF").setType("BOOLEAN").setMode(mode),
+      new TableFieldSchema().setName("intF").setType("INTEGER").setMode(mode),
+      new TableFieldSchema().setName("floatF").setType("FLOAT").setMode(mode),
+      new TableFieldSchema().setName("stringF").setType("STRING").setMode(mode),
+      new TableFieldSchema().setName("bytesF").setType("BYTES").setMode(mode),
+      new TableFieldSchema().setName("timestampF").setType("TIMESTAMP").setMode(mode),
+      new TableFieldSchema().setName("dateF").setType("DATE").setMode(mode),
+      new TableFieldSchema().setName("timeF").setType("TIME").setMode(mode),
+      new TableFieldSchema().setName("datetimeF").setType("DATETIME").setMode(mode)
     ).asJava)
 
   "toPrettyString()" should "support required primitive types" in {
     SchemaUtil.toPrettyString(newSchema("REQUIRED"), "Row", 0) should equal(
       """
         |@BigQueryType.toTable
-        |case class Row(f1: Long, f2: Double, f3: Boolean, f4: String, f5: Instant)
+        |case class Row(boolF: Boolean, intF: Long, floatF: Double, stringF: String, bytesF: ByteString, timestampF: Instant, dateF: LocalDate, timeF: LocalTime, datetimeF: LocalDateTime)
       """.stripMargin.trim)
   }
 
@@ -46,7 +50,7 @@ class SchemaUtilTest extends FlatSpec with Matchers {
     SchemaUtil.toPrettyString(newSchema("NULLABLE"), "Row", 0) should equal(
       """
         |@BigQueryType.toTable
-        |case class Row(f1: Option[Long], f2: Option[Double], f3: Option[Boolean], f4: Option[String], f5: Option[Instant])
+        |case class Row(boolF: Option[Boolean], intF: Option[Long], floatF: Option[Double], stringF: Option[String], bytesF: Option[ByteString], timestampF: Option[Instant], dateF: Option[LocalDate], timeF: Option[LocalTime], datetimeF: Option[LocalDateTime])
       """.stripMargin.trim)
     // scalastyle:on line.size.limit
   }
@@ -56,7 +60,7 @@ class SchemaUtilTest extends FlatSpec with Matchers {
     SchemaUtil.toPrettyString(newSchema("REPEATED"), "Row", 0) should equal(
       """
         |@BigQueryType.toTable
-        |case class Row(f1: List[Long], f2: List[Double], f3: List[Boolean], f4: List[String], f5: List[Instant])
+        |case class Row(boolF: List[Boolean], intF: List[Long], floatF: List[Double], stringF: List[String], bytesF: List[ByteString], timestampF: List[Instant], dateF: List[LocalDate], timeF: List[LocalTime], datetimeF: List[LocalDateTime])
       """.stripMargin.trim)
     // scalastyle:on line.size.limit
   }
@@ -86,11 +90,15 @@ class SchemaUtilTest extends FlatSpec with Matchers {
       """
         |@BigQueryType.toTable
         |case class Row(
-        |  f1: Long,
-        |  f2: Double,
-        |  f3: Boolean,
-        |  f4: String,
-        |  f5: Instant)
+        |  boolF: Boolean,
+        |  intF: Long,
+        |  floatF: Double,
+        |  stringF: String,
+        |  bytesF: ByteString,
+        |  timestampF: Instant,
+        |  dateF: LocalDate,
+        |  timeF: LocalTime,
+        |  datetimeF: LocalDateTime)
       """.stripMargin.trim)
   }
 

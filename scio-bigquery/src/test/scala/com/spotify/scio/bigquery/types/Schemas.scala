@@ -17,20 +17,46 @@
 
 package com.spotify.scio.bigquery.types
 
-import org.joda.time.Instant
+import com.google.protobuf.ByteString
+import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 object Schemas {
 
   // primitives
-  case class P1(f1: Int, f2: Long, f3: Float, f4: Double, f5: Boolean, f6: String, f7: Instant)
-  case class P2(f1: Option[Int], f2: Option[Long], f3: Option[Float], f4: Option[Double],
-                f5: Option[Boolean], f6: Option[String], f7: Option[Instant])
-  case class P3(f1: List[Int], f2: List[Long], f3: List[Float], f4: List[Double],
-                f5: List[Boolean], f6: List[String], f7: List[Instant])
+  case class Required(boolF: Boolean,
+                      intF: Int, longF: Long,
+                      floatF: Float, doubleF: Double,
+                      stringF: String,
+                      byteArrayF: Array[Byte], byteStringF: ByteString,
+                      timestampF: Instant,
+                      dateF: LocalDate,
+                      timeF: LocalTime,
+                      datetimeF: LocalDateTime)
+  case class Optional(boolF: Option[Boolean],
+                      intF: Option[Int], longF: Option[Long],
+                      floatF: Option[Float], doubleF: Option[Double],
+                      stringF: Option[String],
+                      byteArrayF: Option[Array[Byte]], byteStringF: Option[ByteString],
+                      timestampF: Option[Instant],
+                      dateF: Option[LocalDate],
+                      timeF: Option[LocalTime],
+                      datetimeF: Option[LocalDateTime])
+  case class Repeated(boolF: List[Boolean],
+                      intF: List[Int], longF: List[Long],
+                      floatF: List[Float], doubleF: List[Double],
+                      stringF: List[String],
+                      byteArrayF: List[Array[Byte]], byteStringF: List[ByteString],
+                      timestampF: List[Instant],
+                      dateF: List[LocalDate],
+                      timeF: List[LocalTime],
+                      datetimeF: List[LocalDateTime])
 
   // records
-  case class R1(f1: P1, f2: P2, f3: P3)
-  case class R2(f1: Option[P1], f2: Option[P2], f3: Option[P3])
-  case class R3(f1: List[P1], f2: List[P2], f3: List[P3])
-
+  case class RequiredNested(required: Required, optional: Optional, repeated: Repeated)
+  case class OptionalNested(required: Option[Required],
+                            optional: Option[Optional],
+                            repeated: Option[Repeated])
+  case class RepeatedNested(required: List[Required],
+                            optional: List[Optional],
+                            repeated: List[Repeated])
 }
