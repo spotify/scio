@@ -25,6 +25,7 @@ import com.trueaccord.scalapb.{ScalaPbPlugin => PB}
 
 val dataflowSdkVersion = "1.8.0"
 val algebirdVersion = "0.12.2"
+val autoServiceVersion = "1.0-rc2"
 val avroVersion = "1.7.7"
 val bigQueryVersion = "v2-rev317-1.22.0"
 val bigtableVersion = "0.9.3"
@@ -200,7 +201,8 @@ lazy val scioCore: Project = Project(
     "com.twitter" % "chill-protobuf" % chillVersion,
     "commons-io" % "commons-io" % commonsIoVersion,
     "org.apache.commons" % "commons-math3" % commonsMath3Version,
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion,
+    "com.google.auto.service" % "auto-service" % autoServiceVersion
   )
 ).dependsOn(
   scioBigQuery
