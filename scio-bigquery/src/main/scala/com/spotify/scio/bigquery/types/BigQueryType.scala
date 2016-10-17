@@ -31,6 +31,20 @@ import scala.util.Try
  * @groupname annotation Type annotations
  * @groupname converters Converters
  * @groupname Ungrouped Other Members
+ *
+ * The following table lists each legacy SQL data type, its standard SQL equivalent and Scala type.
+ * Legacy SQL          Standard SQL        Scala type
+ * BOOLEAN             BOOL                Boolean
+ * INTEGER             INT64               Long, Int
+ * FLOAT               FLOAT64             Double, Float
+ * STRING              STRING              String
+ * BYTES               BYTES               com.google.protobuf.ByteString, Array[Byte]
+ * RECORD              STRUCT              Nested case class
+ * REPEATED            ARRAY               List[T]
+ * TIMESTAMP           TIMESTAMP           org.joda.time.Instant
+ * DATE                DATE                org.joda.time.LocalDate
+ * TIME                TIME                org.joda.time.LocalTime
+ * DATETIME            DATETIME            org.joda.time.LocalDateTime
  */
 object BigQueryType {
 
