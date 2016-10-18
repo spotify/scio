@@ -19,8 +19,6 @@ package com.spotify.scio
 
 import java.nio.file.Files
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.google.cloud.dataflow.sdk.options.{DataflowPipelineOptions, PipelineOptionsFactory}
 import com.google.cloud.dataflow.sdk.runners.inprocess.InProcessPipelineRunner
 import com.google.cloud.dataflow.sdk.runners.{DataflowPipelineRunner, DirectPipelineRunner}
@@ -101,5 +99,15 @@ class ScioContextTest extends PipelineSpec {
     val metrics = mapper.readValue(metricsFile, classOf[Metrics])
     metrics.version should be(scioVersion)
   }
+
+  // scalastyle:off no.whitespace.before.left.bracket
+  it should "fail to close() on closed context" in {
+    val sc = ScioContext()
+    sc.close()
+    the [IllegalArgumentException] thrownBy {
+      sc.close()
+    } should have message "requirement failed: ScioContext already closed"
+  }
+  // scalastyle:on no.whitespace.before.left.bracket
 
 }
