@@ -106,4 +106,12 @@ class ScioContextTest extends PipelineSpec {
   }
   // scalastyle:on no.whitespace.before.left.bracket
 
+  it should "support containsAccumulator" in {
+    val sc = ScioContext()
+    val sc1 = ScioContext()
+    val max = sc.maxAccumulator[Long]("max")
+    val foo = sc1.maxAccumulator[Long]("foo")
+    sc.containsAccumulator(max) should be(true)
+    sc.containsAccumulator(foo) should be(false)
+  }
 }
