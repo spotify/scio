@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.spotify.scio._
 import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.util.ScioUtil
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.options.ApplicationNameOptions
 
@@ -150,8 +151,8 @@ class AccumulatorTest extends PipelineSpec {
     val metricsFile = new File(t.toFile, "_metrics.json")
     r.saveMetrics(metricsFile.toString)
 
-    val mapper = new ObjectMapper()
-    mapper.registerModule(DefaultScalaModule)
+    val mapper = ScioUtil.getScalaJsonMapper
+    import MetricSchema._
 
     val metrics = mapper.readValue(metricsFile, classOf[Metrics])
 

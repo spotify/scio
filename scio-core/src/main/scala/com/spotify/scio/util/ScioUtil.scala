@@ -19,6 +19,8 @@ package com.spotify.scio.util
 
 import java.net.URI
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.{Coder, CoderRegistry}
 import org.apache.beam.sdk.options.PipelineOptions
@@ -49,5 +51,10 @@ private[scio] object ScioUtil {
     require(runner != null, "Pipeline runner not set!")
 
     runner.isAssignableFrom(classOf[DirectRunner])
+  }
+
+  def getScalaJsonMapper: ObjectMapper = {
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
   }
 }
