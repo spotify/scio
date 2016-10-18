@@ -73,7 +73,8 @@ package object hdfs {
     private val logger = LoggerFactory.getLogger(ScioContext.getClass)
 
     /** Get an SCollection for a text file on HDFS. */
-    def hdfsTextFile(path: String, username: String = null): SCollection[String] = self.pipelineOp {
+    def hdfsTextFile(path: String, username: String = null): SCollection[String] =
+    self.requireNotClosed {
       val src = HDFSFileSource.fromText(path)
       self.wrap(self.applyInternal(Read.from(src)))
     }
@@ -81,7 +82,7 @@ package object hdfs {
     /** Get an SCollection of specific record type for an Avro file on HDFS. */
     def hdfsAvroFile[T: ClassTag](path: String,
                                   schema: Schema = null,
-                                  username: String = null): SCollection[T] = self.pipelineOp {
+                                  username: String = null): SCollection[T] = self.requireNotClosed {
       val coder: AvroCoder[T] = if (schema == null) {
         AvroCoder.of(ScioUtil.classOf[T])
       } else {
@@ -116,7 +117,7 @@ package object hdfs {
     def hadoopDistCacheMulti[F](paths: Seq[String],
                                 conf: Configuration = null,
                                 username: String = null)
-                               (initFn: Seq[File] => F): DistCache[F] = self.pipelineOp {
+                               (initFn: Seq[File] => F): DistCache[F] = self.requireNotClosed {
       if (self.isTest) {
         self.distCache(paths)(initFn)
       } else {
