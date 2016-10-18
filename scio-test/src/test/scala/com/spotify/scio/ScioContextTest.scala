@@ -96,4 +96,14 @@ class ScioContextTest extends PipelineSpec {
     metrics.version should be(scioVersion)
   }
 
+  // scalastyle:off no.whitespace.before.left.bracket
+  it should "fail to close() on closed context" in {
+    val sc = ScioContext()
+    sc.close()
+    the [IllegalArgumentException] thrownBy {
+      sc.close()
+    } should have message "requirement failed: ScioContext already closed"
+  }
+  // scalastyle:on no.whitespace.before.left.bracket
+
 }
