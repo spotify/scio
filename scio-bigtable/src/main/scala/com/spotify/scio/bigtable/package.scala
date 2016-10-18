@@ -49,7 +49,7 @@ package object bigtable {
     def bigTable(projectId: String,
                  instanceId: String,
                  tableId: String,
-                 scan: Scan = null): SCollection[Result] = self.pipelineOp {
+                 scan: Scan = null): SCollection[Result] = self.requireNotClosed {
       val _scan: Scan = if (scan != null) scan else new Scan()
       val config = new bt.CloudBigtableScanConfiguration.Builder()
         .withProjectId(projectId)
@@ -61,7 +61,8 @@ package object bigtable {
     }
 
     /** Get an SCollection for a Bigtable table. */
-    def bigTable(config: bt.CloudBigtableScanConfiguration): SCollection[Result] = self.pipelineOp {
+    def bigTable(config: bt.CloudBigtableScanConfiguration): SCollection[Result] =
+    self.requireNotClosed {
       if (self.isTest) {
         val input = BigtableInput(
           config.getProjectId, config.getInstanceId, config.getTableId)

@@ -31,10 +31,10 @@ class ReplScioContext(options: PipelineOptions,
   }
 
   /** Ensure an operation is called before the pipeline is closed. */
-  override private[scio] def pipelineOp[T](body: => T): T = {
+  override private[scio] def requireNotClosed[T](body: => T): T = {
     require(!this.isClosed,
       "ScioContext already closed, use :newScio <[context-name] | sc> to create new context")
-    super.pipelineOp(body)
+    super.requireNotClosed(body)
   }
 
   private def createJar(): Unit = {

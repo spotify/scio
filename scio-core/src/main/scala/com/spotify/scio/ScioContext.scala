@@ -338,7 +338,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   def isClosed: Boolean = _isClosed
 
   /** Ensure an operation is called before the pipeline is closed. */
-  private[scio] def pipelineOp[T](body: => T): T = {
+  private[scio] def requireNotClosed[T](body: => T): T = {
     require(!this.isClosed, "ScioContext already closed")
     body
   }
@@ -394,7 +394,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection for an object file.
    * @group input
    */
-  def objectFile[T: ClassTag](path: String): SCollection[T] = pipelineOp {
+  def objectFile[T: ClassTag](path: String): SCollection[T] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(ObjectFileIO[T](path))
     } else {
@@ -413,7 +413,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection for an Avro file.
    * @group input
    */
-  def avroFile[T: ClassTag](path: String, schema: Schema = null): SCollection[T] = pipelineOp {
+  def avroFile[T: ClassTag](path: String, schema: Schema = null): SCollection[T] =
+  requireNotClosed {
     if (this.isTest) {
       this.getTestInput(AvroIO[T](path))
     } else {
@@ -440,7 +441,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group input
    */
   def bigQuerySelect(sqlQuery: String,
-                     flattenResults: Boolean = false): SCollection[TableRow] = pipelineOp {
+                     flattenResults: Boolean = false): SCollection[TableRow] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(BigQueryIO(sqlQuery))
     } else {
@@ -455,7 +456,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection for a BigQuery table.
    * @group input
    */
-  def bigQueryTable(table: TableReference): SCollection[TableRow] = pipelineOp {
+  def bigQueryTable(table: TableReference): SCollection[TableRow] = requireNotClosed {
     val tableSpec: String = gio.BigQueryIO.toTableSpec(table)
     if (this.isTest) {
       this.getTestInput(BigQueryIO(tableSpec))
@@ -476,7 +477,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group input
    */
   def datastore(projectId: String, query: Query, namespace: String = null): SCollection[Entity] =
-    pipelineOp {
+    requireNotClosed {
       if (this.isTest) {
         this.getTestInput(DatastoreIO(projectId, query, namespace))
       } else {
@@ -494,7 +495,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    */
   def pubsubSubscription(sub: String,
                          idLabel: String = null,
-                         timestampLabel: String = null): SCollection[String] = pipelineOp {
+                         timestampLabel: String = null): SCollection[String] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(PubsubIO(sub))
     } else {
@@ -515,7 +516,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    */
   def pubsubTopic(topic: String,
                   idLabel: String = null,
-                  timestampLabel: String = null): SCollection[String] = pipelineOp {
+                  timestampLabel: String = null): SCollection[String] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(PubsubIO(topic))
     } else {
@@ -534,7 +535,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection of TableRow for a JSON file.
    * @group input
    */
-  def tableRowJsonFile(path: String): SCollection[TableRow] = pipelineOp {
+  def tableRowJsonFile(path: String): SCollection[TableRow] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(TableRowJsonIO(path))
     } else {
@@ -549,7 +550,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    */
   def textFile(path: String,
                compressionType: gio.TextIO.CompressionType = gio.TextIO.CompressionType.AUTO)
-  : SCollection[String] = pipelineOp {
+  : SCollection[String] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(TextIO(path))
     } else {
@@ -569,7 +570,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * for examples.
    * @group accumulator
    */
-  def maxAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] = pipelineOp {
+  def maxAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] =
+  requireNotClosed {
     require(!_accumulators.contains(n), s"Accumulator '$n' already exists")
     val acc = new Accumulator[T] {
       override val name: String = n
@@ -586,7 +588,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * for examples.
    * @group accumulator
    */
-  def minAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] = pipelineOp {
+  def minAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] =
+  requireNotClosed {
     require(!_accumulators.contains(n), s"Accumulator '$n' already exists")
     val acc = new Accumulator[T] {
       override val name: String = n
@@ -603,7 +606,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * for examples.
    * @group accumulator
    */
-  def sumAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] = pipelineOp {
+  def sumAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] =
+  requireNotClosed {
     require(!_accumulators.contains(n), s"Accumulator '$n' already exists")
     val acc = new Accumulator[T] {
       override val name: String = n
@@ -626,7 +630,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Distribute a local Scala Iterable to form an SCollection.
    * @group in_memory
    */
-  def parallelize[T: ClassTag](elems: Iterable[T]): SCollection[T] = pipelineOp {
+  def parallelize[T: ClassTag](elems: Iterable[T]): SCollection[T] = requireNotClosed {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     wrap(this.applyInternal(Create.of(elems.asJava).withCoder(coder)))
       .setName(truncate(elems.toString()))
@@ -636,7 +640,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Distribute a local Scala Map to form an SCollection.
    * @group in_memory
    */
-  def parallelize[K: ClassTag, V: ClassTag](elems: Map[K, V]): SCollection[(K, V)] = pipelineOp {
+  def parallelize[K: ClassTag, V: ClassTag](elems: Map[K, V]): SCollection[(K, V)] =
+  requireNotClosed {
     val coder = pipeline.getCoderRegistry.getScalaKvCoder[K, V]
     wrap(this.applyInternal(Create.of(elems.asJava).withCoder(coder)))
       .map(kv => (kv.getKey, kv.getValue))
@@ -648,7 +653,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group in_memory
    */
   def parallelizeTimestamped[T: ClassTag](elems: Iterable[(T, Instant)])
-  : SCollection[T] = pipelineOp {
+  : SCollection[T] = requireNotClosed {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     val v = elems.map(t => TimestampedValue.of(t._1, t._2))
     wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder)))
@@ -660,7 +665,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group in_memory
    */
   def parallelizeTimestamped[T: ClassTag](elems: Iterable[T], timestamps: Iterable[Instant])
-  : SCollection[T] = pipelineOp {
+  : SCollection[T] = requireNotClosed {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T]
     val v = elems.zip(timestamps).map(t => TimestampedValue.of(t._1, t._2))
     wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder)))
@@ -695,7 +700,7 @@ class DistCacheScioContext private[scio] (self: ScioContext) {
    * }}}
    * @group dist_cache
    */
-  def distCache[F](uri: String)(initFn: File => F): DistCache[F] = self.pipelineOp {
+  def distCache[F](uri: String)(initFn: File => F): DistCache[F] = self.requireNotClosed {
     if (self.isTest) {
       new MockDistCache(testDistCache(DistCacheIO(uri)))
     } else {
@@ -709,7 +714,8 @@ class DistCacheScioContext private[scio] (self: ScioContext) {
    * @param initFn function to initialized the distributed files
    * @group dist_cache
    */
-  def distCache[F](uris: Seq[String])(initFn: Seq[File] => F): DistCache[F] = self.pipelineOp {
+  def distCache[F](uris: Seq[String])(initFn: Seq[File] => F): DistCache[F] =
+  self.requireNotClosed {
     if (self.isTest) {
       new MockDistCache(testDistCache(DistCacheIO(uris.mkString("\t"))))
     } else {
