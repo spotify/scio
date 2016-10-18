@@ -35,7 +35,7 @@ sbt "scio-examples/runMain com.spotify.scio.examples.cookbook.DatastoreWordCount
   --stagingLocation=gs://[BUCKET]/dataflow/staging
   --input=gs://dataflow-samples/shakespeare/kinglear.txt
   --output=gs://[BUCKET]/[PATH]/datastore_wordcount
-  --dataset=[PROJECT]
+  --namespace=[PROJECT]
   --readOnly=false"
 */
 
