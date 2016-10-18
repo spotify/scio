@@ -599,6 +599,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
     acc
   }
 
+  private[scio] def containsAccumulator(acc: Accumulator[_]): Boolean =
+    _accumulators.contains(acc.name)
+
   // =======================================================================
   // In-memory collections
   // =======================================================================
