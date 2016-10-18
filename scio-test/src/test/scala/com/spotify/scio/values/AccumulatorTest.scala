@@ -20,11 +20,10 @@ package com.spotify.scio.values
 import java.io.File
 import java.nio.file.Files
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.google.cloud.dataflow.sdk.options.{ApplicationNameOptions, DataflowPipelineOptions}
 import com.spotify.scio._
 import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.util.ScioUtil
 
 class AccumulatorTest extends PipelineSpec {
 
@@ -149,8 +148,8 @@ class AccumulatorTest extends PipelineSpec {
     val metricsFile = new File(t.toFile, "_metrics.json")
     r.saveMetrics(metricsFile.toString)
 
-    val mapper = new ObjectMapper()
-    mapper.registerModule(DefaultScalaModule)
+    val mapper = ScioUtil.getScalaJsonMapper
+    import MetricSchema._
 
     val metrics = mapper.readValue(metricsFile, classOf[Metrics])
 

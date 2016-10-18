@@ -19,6 +19,8 @@ package com.spotify.scio.util
 
 import java.net.URI
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.google.cloud.dataflow.sdk.coders.{Coder, CoderRegistry}
 import com.google.cloud.dataflow.sdk.options.PipelineOptions
 import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
@@ -51,5 +53,10 @@ private[scio] object ScioUtil {
 
     runner.isAssignableFrom(classOf[DirectPipelineRunner]) ||
       runner.isAssignableFrom(classOf[InProcessPipelineRunner])
+  }
+
+  def getScalaJsonMapper: ObjectMapper = {
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
   }
 }

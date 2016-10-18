@@ -19,14 +19,13 @@ package com.spotify.scio
 
 import java.nio.ByteBuffer
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.google.cloud.dataflow.sdk.PipelineResult.State
 import com.google.cloud.dataflow.sdk.options.{ApplicationNameOptions, DataflowPipelineOptions}
 import com.google.cloud.dataflow.sdk.runners.{AggregatorPipelineExtractor, AggregatorValues}
 import com.google.cloud.dataflow.sdk.transforms.Aggregator
 import com.google.cloud.dataflow.sdk.util.{IOChannelUtils, MimeTypes}
 import com.google.cloud.dataflow.sdk.{Pipeline, PipelineResult}
+import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.Accumulator
 
 import scala.collection.JavaConverters._
@@ -63,31 +62,32 @@ class ScioResult private[scio] (val internal: PipelineResult,
   /** Save metrics of the finished pipeline to a file. */
   def saveMetrics(filename: String): Unit = {
     require(isCompleted, "Pipeline has to be finished to save metrics.")
-
-    val mapper = new ObjectMapper()
-    mapper.registerModule(DefaultScalaModule)
-
+    val mapper = ScioUtil.getScalaJsonMapper
     val out = IOChannelUtils.create(filename, MimeTypes.TEXT)
-
     try {
-      val totalValues = accumulators
-        .map(acc => AccumulatorValue(acc.name, accumulatorTotalValue(acc)))
-
-      val stepsValues = accumulators
-        .map(acc => AccumulatorStepsValue(acc.name,
-          accumulatorValuesAtSteps(acc).map(a => AccumulatorStepValue(a._1, a._2))))
-
-      val options = this.pipeline.getOptions
-      val metrics = Metrics(scioVersion,
-                            scalaVersion,
-                            options.as(classOf[ApplicationNameOptions]).getAppName,
-                            options.as(classOf[DataflowPipelineOptions]).getJobName,
-                            AccumulatorMetrics(totalValues, stepsValues))
-      out.write(ByteBuffer.wrap(mapper.writeValueAsBytes(metrics)))
+      out.write(ByteBuffer.wrap(mapper.writeValueAsBytes(getMetrics)))
     } finally {
       if (out != null) {
         out.close()
       }
+    }
+
+    def getMetrics: MetricSchema.Metrics = {
+      import MetricSchema._
+
+      val totalValues = accumulators
+        .map(acc => AccumulatorValue(acc.name, accumulatorTotalValue(acc)))
+
+      val stepsValues = accumulators.map(acc => AccumulatorStepsValue(acc.name,
+        accumulatorValuesAtSteps(acc).map(a => AccumulatorStepValue(a._1, a._2))))
+
+      val options = this.pipeline.getOptions
+      Metrics(scioVersion,
+        scalaVersion,
+        options.as(classOf[ApplicationNameOptions]).getAppName,
+        options.as(classOf[DataflowPipelineOptions]).getJobName,
+        this.state.toString,
+        AccumulatorMetrics(totalValues, stepsValues))
     }
   }
 
@@ -96,13 +96,16 @@ class ScioResult private[scio] (val internal: PipelineResult,
 
 }
 
-private[scio] case class Metrics(version: String,
-                                 scalaVersion: String,
-                                 jobName: String,
-                                 jobId: String,
-                                 accumulators: AccumulatorMetrics)
-private[scio] case class AccumulatorMetrics(total: Iterable[AccumulatorValue],
-                                            steps: Iterable[AccumulatorStepsValue])
-private[scio] case class AccumulatorValue(name: String, value: Any)
-private[scio] case class AccumulatorStepValue(name: String, value: Any)
-private[scio] case class AccumulatorStepsValue(name: String, steps: Iterable[AccumulatorStepValue])
+private[scio] object MetricSchema {
+  case class Metrics(version: String,
+                     scalaVersion: String,
+                     jobName: String,
+                     jobId: String,
+                     state: String,
+                     accumulators: AccumulatorMetrics)
+  case class AccumulatorMetrics(total: Iterable[AccumulatorValue],
+                                steps: Iterable[AccumulatorStepsValue])
+  case class AccumulatorValue(name: String, value: Any)
+  case class AccumulatorStepValue(name: String, value: Any)
+  case class AccumulatorStepsValue(name: String, steps: Iterable[AccumulatorStepValue])
+}
