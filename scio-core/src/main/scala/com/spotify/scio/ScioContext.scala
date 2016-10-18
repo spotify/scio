@@ -290,7 +290,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   }
 
   /** Close the context. No operation can be performed once the context is closed. */
-  def close(): ScioResult = {
+  def close(): ScioResult = requireNotClosed {
     if (_queryJobs.nonEmpty) {
       bigQueryClient.waitForJobs(_queryJobs: _*)
     }
