@@ -20,7 +20,6 @@ package com.spotify.scio.accumulators
 import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.values.Accumulator
-import org.apache.commons.lang.exception.ExceptionUtils
 
 class AccumulatorSCollectionTest extends PipelineSpec {
 
