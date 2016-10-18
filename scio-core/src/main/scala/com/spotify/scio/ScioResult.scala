@@ -52,12 +52,15 @@ class ScioResult private[scio] (val internal: PipelineResult,
 
   /** Get the total value of an accumulator. */
   def accumulatorTotalValue[T](acc: Accumulator[T]): T = {
+    require(accumulators.contains(acc), "Accumulator not present in the result")
     acc.combineFn(getAggregatorValues(acc).map(_.getTotalValue(acc.combineFn)).asJava)
   }
 
   /** Get the values of an accumulator at each step it was used. */
-  def accumulatorValuesAtSteps[T](acc: Accumulator[T]): Map[String, T] =
+  def accumulatorValuesAtSteps[T](acc: Accumulator[T]): Map[String, T] = {
+    require(accumulators.contains(acc), "Accumulator not present in the result")
     getAggregatorValues(acc).flatMap(_.getValuesAtSteps.asScala).toMap
+  }
 
   /** Save metrics of the finished pipeline to a file. */
   def saveMetrics(filename: String): Unit = {
