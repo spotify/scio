@@ -132,6 +132,31 @@ class AccumulatorSCollectionTest extends PipelineSpec {
       sc.parallelize(1 to 100).accumulateCountFilter(sum, min)(_ % 3 == 0)
     } should have message "requirement failed: accNeg must be a sum accumulator"
   }
+
+  it should "fail to use accumulators from different context" in {
+    val sc = ScioContext.forTest()
+
+    val max = sc.maxAccumulator[Int]("max")
+
+    val sc1 = ScioContext.forTest()
+    the [IllegalArgumentException] thrownBy {
+      sc1.parallelize(1 to 100).accumulate(max)
+    } should have message "requirement failed: Unregistered accumulator supplied"
+  }
+
+  it should "fail on accumulator not present in the result" in {
+    val sc = ScioContext.forTest()
+    val sc1 = ScioContext.forTest()
+
+    val max = sc.maxAccumulator[Int]("max")
+    val foo = sc1.maxAccumulator[Int]("foo")
+    sc.parallelize(1 to 100).accumulate(max)
+    val r = sc.close()
+
+    the [IllegalArgumentException] thrownBy {
+      r.accumulatorTotalValue(foo) shouldBe 100
+    } should have message "requirement failed: Accumulator not present in the result"
+  }
   // scalastyle:on no.whitespace.before.left.bracket
 
 }
