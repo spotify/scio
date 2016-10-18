@@ -36,8 +36,8 @@ runMain
   --stagingLocation=gs://[BUCKET]/dataflow/staging
   --input=gs://dataflow-samples/shakespeare/kinglear.txt
   --output=gs://[BUCKET]/[PATH]/datastore_wordcount
-  --dataset=[PROJECT]
-  --readOnly=false
+  --namespace=[PROJECT]
+  --readOnly=false"
 */
 
 object DatastoreWordCount {
