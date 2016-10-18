@@ -566,8 +566,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   .toSCollection
    * }}}
    */
-  def withAccumulator(acc: Accumulator[_]*): SCollectionWithAccumulator[T] =
+  def withAccumulator(acc: Accumulator[_]*): SCollectionWithAccumulator[T] = {
+    require(acc.forall(this.context.containsAccumulator), "Unregistered accumulator supplied")
     new SCollectionWithAccumulator(internal, context, acc)
+  }
 
   // =======================================================================
   // Side input operations
