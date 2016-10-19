@@ -33,7 +33,34 @@ import org.apache.commons.io.FileUtils
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 
-class TapTest extends PipelineSpec {
+
+trait TapSpec extends PipelineSpec {
+  def verifyTap[T: ClassTag](tap: Tap[T], expected: Set[T]): Unit = {
+    tap.value.toSet should equal (expected)
+    val sc = ScioContext()
+    tap.open(sc) should containInAnyOrder (expected)
+    sc.close()
+  }
+
+  def runWithInMemoryFuture[T](fn: ScioContext => Future[Tap[T]]): Tap[T] =
+    runWithFuture(ScioContext.forTest())(fn)
+
+  def runWithFileFuture[T](fn: ScioContext => Future[Tap[T]]): Tap[T] =
+    runWithFuture(ScioContext())(fn)
+
+  def runWithFuture[T](sc: ScioContext)(fn: ScioContext => Future[Tap[T]]): Tap[T] = {
+    val f = fn(sc)
+    sc.close()
+    f.waitForResult()
+  }
+
+  def tmpDir: File = new File(
+    new File(sys.props("java.io.tmpdir")),
+    "scio-test-" + UUID.randomUUID().toString)
+}
+
+
+class TapTest extends TapSpec {
 
   private def makeRecords(sc: ScioContext) =
     sc.parallelize(Seq(1, 2, 3))
@@ -178,28 +205,5 @@ class TapTest extends PipelineSpec {
     verifyTap(t, expected)
     FileUtils.deleteDirectory(dir)
   }
-
-  def runWithInMemoryFuture[T](fn: ScioContext => Future[Tap[T]]): Tap[T] =
-    runWithFuture(ScioContext.forTest())(fn)
-
-  def runWithFileFuture[T](fn: ScioContext => Future[Tap[T]]): Tap[T] =
-    runWithFuture(ScioContext())(fn)
-
-  def runWithFuture[T](sc: ScioContext)(fn: ScioContext => Future[Tap[T]]): Tap[T] = {
-    val f = fn(sc)
-    sc.close()
-    f.waitForResult()
-  }
-
-  def verifyTap[T: ClassTag](tap: Tap[T], expected: Set[T]): Unit = {
-    tap.value.toSet should equal (expected)
-    val sc = ScioContext()
-    tap.open(sc) should containInAnyOrder (expected)
-    sc.close()
-  }
-
-  def tmpDir: File = new File(
-    new File(sys.props("java.io.tmpdir")),
-    "scio-test-" + UUID.randomUUID().toString)
 
 }
