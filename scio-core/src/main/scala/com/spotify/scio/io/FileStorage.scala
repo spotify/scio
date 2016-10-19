@@ -65,8 +65,7 @@ private trait FileStorage {
     } else {
       new GenericDatumReader[T](schema)
     }
-
-    listFiles.map(f => DataFileReader.openReader(getAvroSeekableInput(f), reader))
+    listFiles.map(f => DataFileReader.openReader(f.toFile, reader))
       .map(_.iterator().asScala).reduce(_ ++ _)
   }
 
