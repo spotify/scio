@@ -295,7 +295,7 @@ lazy val scioHdfs: Project = Project(
   )
 ).dependsOn(
   scioCore,
-  scioTest % "test",
+  scioTest % "test->test",
   scioSchemas % "test"
 )
 

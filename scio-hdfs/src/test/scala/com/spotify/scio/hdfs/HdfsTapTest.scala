@@ -19,12 +19,9 @@ package com.spotify.scio.hdfs
 
 import java.io.File
 import java.nio.ByteBuffer
-import java.util.UUID
 
-import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils._
-import com.spotify.scio.io.Tap
-import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.io.TapSpec
 import org.apache.avro.Schema
 import org.apache.avro.file.DataFileReader
 import org.apache.avro.specific.SpecificDatumReader
@@ -32,10 +29,8 @@ import org.apache.avro.test.TestRecord
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 
-import scala.concurrent.Future
-import scala.reflect.ClassTag
 
-class HdfsTapTest extends PipelineSpec {
+class HdfsTapTest extends TapSpec {
 
   "Future" should "support saveAsHdfsAvroFile with SpecificRecord" in {
     val dir = tmpDir
@@ -140,25 +135,5 @@ class HdfsTapTest extends PipelineSpec {
     new File(dir, "part-r-00000.deflate") should not (exist)
     FileUtils.deleteDirectory(dir)
   }
-
-  // TODO: how to reuse test code from scio-test?
-
-  def runWithFileFuture[T](fn: ScioContext => Future[Tap[T]]): Tap[T] = {
-    val sc = ScioContext()
-    val f = fn(sc)
-    sc.close()
-    f.waitForResult()
-  }
-
-  def verifyTap[T: ClassTag](tap: Tap[T], expected: Set[T]): Unit = {
-    tap.value.toSet should equal (expected)
-    val sc = ScioContext()
-    tap.open(sc) should containInAnyOrder (expected)
-    sc.close()
-  }
-
-  def tmpDir: File = new File(
-    new File(sys.props("java.io.tmpdir")),
-    "scio-test-" + UUID.randomUUID().toString)
 
 }
