@@ -18,7 +18,6 @@
 package com.spotify.scio.bigquery
 
 import org.joda.time._
-import org.joda.time.format.DateTimeFormat
 import org.scalatest.{FlatSpec, Matchers}
 
 class TimestampTest extends FlatSpec with Matchers {
