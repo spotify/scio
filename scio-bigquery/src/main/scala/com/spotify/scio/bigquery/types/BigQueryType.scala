@@ -21,7 +21,6 @@ import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSc
 
 import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros
-import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.util.Try
 
