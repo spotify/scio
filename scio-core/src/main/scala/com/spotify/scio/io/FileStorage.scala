@@ -48,7 +48,7 @@ private object FileStorage {
     if (new URI(path).getScheme == "gs") new GcsStorage(path) else new LocalStorage(path)
 }
 
-private trait FileStorage {
+private[scio] trait FileStorage {
 
   protected val path: String
 
