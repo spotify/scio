@@ -3,10 +3,12 @@ package com.spotify.scio.hdfs
 import java.io.{File, InputStream}
 import java.net.URI
 import java.nio.file.Path
+
 import com.spotify.scio.io.FileStorage
 import org.apache.avro.file.SeekableInput
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, PathFilter}
+import org.apache.hadoop.io.compress.CompressionCodecFactory
 
 
 object HdfsFileStorage {
@@ -31,9 +33,16 @@ private class HdfsFileStorage(protected val path: String) extends FileStorage {
   }
 
   override protected def getObjectInputStream(path: Path): InputStream = {
+    val hPath = new org.apache.hadoop.fs.Path(path.toString)
     val conf = new Configuration()
+    val factory = new CompressionCodecFactory(conf)
     val fs = FileSystem.get(path.toUri, conf)
-    fs.open(new org.apache.hadoop.fs.Path(path.toString))
+    val codec = factory.getCodec(hPath)
+    if (codec != null) {
+      codec.createInputStream(fs.open(hPath))
+    } else {
+      fs.open(hPath)
+    }
   }
 
   override protected def getAvroSeekableInput(path: Path): SeekableInput =

@@ -293,25 +293,11 @@ package object hdfs {
 
   /** Tap for text files on HDFS. */
   case class HdfsTextTap(path: String) extends Tap[String] {
-    override def value: Iterator[String] = {
-      val conf = new Configuration()
-      val factory = new CompressionCodecFactory(conf)
-      val fs = FileSystem.get(new URI(path), conf)
-      val streams = fs
-        .listStatus(new Path(path), HdfsUtil.pathFilter)
-        .map { status =>
-          val p = status.getPath
-          val codec = factory.getCodec(p)
-          if (codec != null) {
-            codec.createInputStream(fs.open(p))
-          } else {
-            fs.open(p)
-          }
-        }
-      val stream = new SequenceInputStream(Collections.enumeration(streams.toList.asJava))
-      IOUtils.lineIterator(stream, Charsets.UTF_8).asScala
-    }
+
+    override def value: Iterator[String] = HdfsFileStorage(path).textFile
+
     override def open(sc: ScioContext): SCollection[String] = sc.hdfsTextFile(path + "/part-*")
+
   }
 
   /** Tap for Avro files on HDFS. */
