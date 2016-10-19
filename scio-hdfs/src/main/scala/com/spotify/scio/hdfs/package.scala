@@ -316,17 +316,11 @@ package object hdfs {
 
   /** Tap for Avro files on HDFS. */
   case class HdfsAvroTap[T: ClassTag](path: String, schema: Schema = null) extends Tap[T] {
-    override def value: Iterator[T] = {
-      val cls = ScioUtil.classOf[T]
-      val stream = HdfsUtil.getDirectoryInputStream(path)
-      val reader = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-        new SpecificDatumReader[T](cls)
-      } else {
-        new GenericDatumReader[T](schema)
-      }
-      new DataFileStream[T](stream, reader).iterator().asScala
-    }
+
+    override def value: Iterator[T] = HdfsFileStorage(path).avroFile()
+
     override def open(sc: ScioContext): SCollection[T] = sc.hdfsAvroFile[T](path, schema)
+
   }
 
   private object HdfsUtil {
