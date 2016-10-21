@@ -99,7 +99,8 @@ class ScioResult private[scio] (val internal: PipelineResult,
   }
 
   private def getAggregatorValues[T](acc: Accumulator[T]): Iterable[AggregatorValues[T]] =
-    aggregators(acc.name).map(a => internal.getAggregatorValues(a.asInstanceOf[Aggregator[_, T]]))
+    aggregators.getOrElse(acc.name, Nil)
+      .map(a => internal.getAggregatorValues(a.asInstanceOf[Aggregator[_, T]]))
 
 }
 

@@ -176,4 +176,12 @@ class AccumulatorTest extends PipelineSpec {
     metrics.accumulators.steps should contain theSameElementsAs expectedSteps
   }
 
+  it should "support support unused accumulators" in {
+    val sc = ScioContext.forTest()
+    val maxI = sc.maxAccumulator[Int]("maxI")
+    val r = sc.close()
+    r.accumulatorTotalValue(maxI) should be(Integer.MIN_VALUE)
+    r.accumulatorValuesAtSteps(maxI) shouldBe empty
+  }
+
 }
