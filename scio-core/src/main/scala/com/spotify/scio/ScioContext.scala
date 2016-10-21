@@ -153,6 +153,10 @@ class ScioContext private[scio] (val options: PipelineOptions,
     }
   }
 
+  Try(optionsAs[DataflowPipelineOptions]).foreach { o =>
+    o.setTempLocation(o.getGcpTempLocation)
+  }
+
   {
     val o = optionsAs[ScioOptions]
     o.setScalaVersion(scalaVersion)
