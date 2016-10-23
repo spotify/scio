@@ -829,7 +829,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as an object file using default serialization.
    * @group output
    */
-  def saveAsObjectFile(path: String, numShards: Int = 0, suffix: String = ".obj")
+  def saveAsObjectFile(path: String, numShards: Int = 0, suffix: String = ".obj",
+                       metadata: Map[String, AnyRef] = Map.empty)
   : Future[Tap[T]] = {
     if (context.isTest) {
       context.testOut(ObjectFileIO(path))(this)
@@ -842,7 +843,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
             c.output(AvroBytesUtil.encode(elemCoder, c.element()))
           }
         })
-        .saveAsAvroFile(path, numShards, AvroBytesUtil.schema, suffix)
+        .saveAsAvroFile(path, numShards, AvroBytesUtil.schema, suffix, metadata = metadata)
       context.makeFuture(ObjectFileTap[T](path + "/part-*"))
     }
   }
@@ -860,11 +861,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     path.replaceAll("\\/+$", "") + "/part"
   }
 
-  private def avroOut(path: String, numShards: Int, codec: CodecFactory) =
+  private def avroOut(path: String, numShards: Int,
+                      codec: CodecFactory,
+                      metadata: Map[String, AnyRef]) =
     gio.PatchedAvroIO.Write.to(pathWithShards(path))
-          .withNumShards(numShards)
-          .withSuffix(".avro")
-          .withCodec(codec)
+      .withNumShards(numShards)
+      .withSuffix(".avro")
+      .withCodec(codec)
+      .withMetadata(metadata.asJava)
 
   private def textOut(path: String, suffix: String, numShards: Int) =
     gio.TextIO.Write.to(pathWithShards(path)).withNumShards(numShards).withSuffix(suffix)
@@ -881,13 +885,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                      numShards: Int = 0,
                      schema: Schema = null,
                      suffix: String = "",
-                     codec: CodecFactory = CodecFactory.deflateCodec(6))
+                     codec: CodecFactory = CodecFactory.deflateCodec(6),
+                     metadata: Map[String, AnyRef] = Map.empty)
   : Future[Tap[T]] =
     if (context.isTest) {
       context.testOut(AvroIO(path))(this)
       saveAsInMemoryTap
     } else {
-      val transform = avroOut(path, numShards, codec).withSuffix(suffix + ".avro")
+      val transform = avroOut(path, numShards, codec, metadata).withSuffix(suffix + ".avro")
       val cls = ScioUtil.classOf[T]
       if (classOf[SpecificRecordBase] isAssignableFrom cls) {
         this.applyInternal(transform.withSchema(cls))
@@ -902,8 +907,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group output
    */
   def saveAsProtobufFile(path: String, numShards: Int = 0)
-                        (implicit ev: T <:< Message): Future[Tap[T]] =
-    this.saveAsObjectFile(path, numShards, ".protobuf")
+                        (implicit ev: T <:< Message): Future[Tap[T]] = {
+    import me.lyh.protobuf.generic
+    val schema = generic.Schema.of[Message](ct.asInstanceOf[ClassTag[Message]]).toJson
+    val metadata = Map("protobuf.generic.schema" -> schema)
+    this.saveAsObjectFile(path, numShards, ".protobuf", metadata)
+  }
 
   /**
    * Save this SCollection as a BigQuery table. Note that elements must be of type TableRow.
