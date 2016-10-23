@@ -16,8 +16,13 @@
 
 package com.google.cloud.dataflow.sdk.io;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.cloud.dataflow.sdk.repackaged.com.google.common.collect.ImmutableMap;
+import com.google.cloud.dataflow.sdk.transforms.display.HasDisplayData;
+import com.google.common.collect.Maps;
+import com.google.common.io.BaseEncoding;
 import com.spotify.scio.util.SerializableAvroCodecFactory;
 import com.google.cloud.dataflow.sdk.coders.AvroCoder;
 import com.google.cloud.dataflow.sdk.coders.Coder;
@@ -44,13 +49,13 @@ import org.apache.avro.reflect.ReflectData;
 import java.io.IOException;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
 // -------------------------------------------------------------------------------------------------
-// Scio custom AvroIO - add compression codec
-// Remove once available in Dataflow/Beam SDK via DataflowJavaSDK/issues/404
+// Scio custom AvroIO - add compression codec and metadata
 // -------------------------------------------------------------------------------------------------
 
 /**
@@ -486,6 +491,15 @@ public class PatchedAvroIO {
     }
 
     /**
+     * Returns a {@link PTransform} that writes Avro file(s) with the specified metadata.
+     *
+     * <p>Supported value types are String, Long, and byte[].
+     */
+    public static Bound<GenericRecord> withMetadata(Map<String, Object> metadata) {
+      return new Bound<>(GenericRecord.class).withMetadata(metadata);
+    }
+
+    /**
      * A {@link PTransform} that writes a bounded {@link PCollection} to an Avro file (or
      * multiple Avro files matching a sharding pattern).
      *
@@ -495,6 +509,8 @@ public class PatchedAvroIO {
       private static final String DEFAULT_SHARD_TEMPLATE = ShardNameTemplate.INDEX_OF_MAX;
       private static final SerializableAvroCodecFactory DEFAULT_CODEC =
           new SerializableAvroCodecFactory(CodecFactory.nullCodec());
+      // This should be a multiple of 4 to not get a partial encoded byte.
+      private static final int METADATA_BYTES_MAX_LENGTH = 40;
 
       /** The filename to write to. */
       @Nullable
@@ -517,6 +533,8 @@ public class PatchedAvroIO {
        * https://avro.apache.org/docs/1.7.7/api/java/org/apache/avro/file/CodecFactory.html
        */
       final SerializableAvroCodecFactory codec;
+      /** Avro file metadata. */
+      final ImmutableMap<String, Object> metadata;
 
       Bound(Class<T> type) {
         this(
@@ -528,7 +546,8 @@ public class PatchedAvroIO {
             type,
             null,
             true,
-            DEFAULT_CODEC);
+            DEFAULT_CODEC,
+            ImmutableMap.<String, Object>of());
       }
 
       Bound(
@@ -540,7 +559,8 @@ public class PatchedAvroIO {
           Class<T> type,
           Schema schema,
           boolean validate,
-          SerializableAvroCodecFactory codec) {
+          SerializableAvroCodecFactory codec,
+          Map<String, Object> metadata) {
         super(name);
         this.filenamePrefix = filenamePrefix;
         this.filenameSuffix = filenameSuffix;
@@ -550,6 +570,18 @@ public class PatchedAvroIO {
         this.schema = schema;
         this.validate = validate;
         this.codec = codec;
+
+        Map<String, String> badKeys = Maps.newLinkedHashMap();
+        for (Map.Entry<String, Object> entry : metadata.entrySet()) {
+          Object v = entry.getValue();
+          if (!(v instanceof String || v instanceof Long || v instanceof byte[])) {
+            badKeys.put(entry.getKey(), v.getClass().getSimpleName());
+          }
+        }
+        checkArgument(
+            badKeys.isEmpty(),
+            "Metadata value type must be one of String, Long, or byte[]. Found {}", badKeys);
+        this.metadata = ImmutableMap.copyOf(metadata);
       }
 
       /**
@@ -568,7 +600,8 @@ public class PatchedAvroIO {
             type,
             schema,
             validate,
-            codec);
+            codec,
+            metadata);
       }
 
       /**
@@ -591,7 +624,8 @@ public class PatchedAvroIO {
             type,
             schema,
             validate,
-            codec);
+            codec,
+            metadata);
       }
 
       /**
@@ -613,7 +647,8 @@ public class PatchedAvroIO {
             type,
             schema,
             validate,
-            codec);
+            codec,
+            metadata);
       }
 
       /**
@@ -631,7 +666,7 @@ public class PatchedAvroIO {
        * @see ShardNameTemplate
        */
       public Bound<T> withNumShards(int numShards) {
-        Preconditions.checkArgument(numShards >= 0);
+        checkArgument(numShards >= 0);
         return new Bound<>(
             name,
             filenamePrefix,
@@ -641,7 +676,8 @@ public class PatchedAvroIO {
             type,
             schema,
             validate,
-            codec);
+            codec,
+            metadata);
       }
 
       /**
@@ -662,7 +698,8 @@ public class PatchedAvroIO {
             type,
             schema,
             validate,
-            codec);
+            codec,
+            metadata);
       }
 
       /**
@@ -684,7 +721,8 @@ public class PatchedAvroIO {
             type,
             schema,
             validate,
-            codec);
+            codec,
+            metadata);
       }
 
       /**
@@ -706,7 +744,8 @@ public class PatchedAvroIO {
             type,
             ReflectData.get().getSchema(type),
             validate,
-            codec);
+            codec,
+            metadata);
       }
 
       /**
@@ -726,7 +765,8 @@ public class PatchedAvroIO {
             GenericRecord.class,
             schema,
             validate,
-            codec);
+            codec,
+            metadata);
       }
 
       /**
@@ -760,7 +800,8 @@ public class PatchedAvroIO {
             type,
             schema,
             false,
-            codec);
+            codec,
+            metadata);
       }
 
       public Bound<T> withCodec(CodecFactory codec) {
@@ -773,7 +814,22 @@ public class PatchedAvroIO {
             type,
             schema,
             validate,
-            new SerializableAvroCodecFactory(codec));
+            new SerializableAvroCodecFactory(codec),
+            metadata);
+      }
+
+      public Bound<T> withMetadata(Map<String, Object> metadata) {
+        return new Bound<>(
+            name,
+            filenamePrefix,
+            filenameSuffix,
+            numShards,
+            shardTemplate,
+            type,
+            schema,
+            validate,
+            codec,
+            ImmutableMap.copyOf(metadata));
       }
 
       @Override
@@ -793,7 +849,8 @@ public class PatchedAvroIO {
                     filenameSuffix,
                     shardTemplate,
                     AvroCoder.of(type, schema),
-                    codec));
+                    codec,
+                    metadata));
         if (getNumShards() > 0) {
           write = write.withNumShards(getNumShards());
         }
@@ -823,6 +880,24 @@ public class PatchedAvroIO {
             .addIfNotDefault(DisplayData.item("codec", codec.toString())
                     .withLabel("Codec"),
                 DEFAULT_CODEC.toString());
+        builder.include(new Metadata(), "Metadata");
+      }
+
+      private class Metadata implements HasDisplayData {
+        @Override
+        public void populateDisplayData(DisplayData.Builder builder) {
+          for (Map.Entry<String, Object> entry : metadata.entrySet()) {
+            DisplayData.Type type = DisplayData.inferType(entry.getValue());
+            if (type != null) {
+              builder.add(DisplayData.item(entry.getKey(), type, entry.getValue()));
+            } else {
+              String base64 = BaseEncoding.base64().encode((byte[]) entry.getValue());
+              String repr = base64.length() <= METADATA_BYTES_MAX_LENGTH ?
+                  base64 : base64.substring(0, METADATA_BYTES_MAX_LENGTH) + "...";
+              builder.add(DisplayData.item(entry.getKey(), repr));
+            }
+          }
+        }
       }
 
       /**
@@ -867,6 +942,8 @@ public class PatchedAvroIO {
 
       public CodecFactory getCodec() { return codec.getCodec(); }
 
+      public Map<String, Object> getMetadata() { return metadata; }
+
     }
 
     /** Disallow construction of utility class. */
@@ -878,7 +955,7 @@ public class PatchedAvroIO {
   private static final Pattern SHARD_OUTPUT_PATTERN = Pattern.compile("@([0-9]+|\\*)");
 
   private static void validateOutputComponent(String partialFilePattern) {
-    Preconditions.checkArgument(
+    checkArgument(
         !SHARD_OUTPUT_PATTERN.matcher(partialFilePattern).find(),
         "Output name components are not allowed to contain @* or @N patterns: "
             + partialFilePattern);
@@ -896,6 +973,7 @@ public class PatchedAvroIO {
   static class AvroSink<T> extends FileBasedSink<T> {
     private final AvroCoder<T> coder;
     private final SerializableAvroCodecFactory codec;
+    private final ImmutableMap<String, Object> metadata;
 
     @VisibleForTesting
     AvroSink(
@@ -903,15 +981,17 @@ public class PatchedAvroIO {
         String extension,
         String fileNameTemplate,
         AvroCoder<T> coder,
-        SerializableAvroCodecFactory codec) {
+        SerializableAvroCodecFactory codec,
+        ImmutableMap<String, Object> metadata) {
       super(baseOutputFilename, extension, fileNameTemplate);
       this.coder = coder;
       this.codec = codec;
+      this.metadata = metadata;
     }
 
     @Override
     public FileBasedSink.FileBasedWriteOperation<T> createWriteOperation(PipelineOptions options) {
-      return new AvroWriteOperation<>(this, coder, codec);
+      return new AvroWriteOperation<>(this, coder, codec, metadata);
     }
 
     /**
@@ -921,18 +1001,21 @@ public class PatchedAvroIO {
     private static class AvroWriteOperation<T> extends FileBasedWriteOperation<T> {
       private final AvroCoder<T> coder;
       private final SerializableAvroCodecFactory codec;
+      private final ImmutableMap<String, Object> metadata;
 
       private AvroWriteOperation(AvroSink<T> sink,
                                  AvroCoder<T> coder,
-                                 SerializableAvroCodecFactory codec) {
+                                 SerializableAvroCodecFactory codec,
+                                 ImmutableMap<String, Object> metadata) {
         super(sink);
         this.coder = coder;
         this.codec = codec;
+        this.metadata = metadata;
       }
 
       @Override
       public FileBasedWriter<T> createWriter(PipelineOptions options) throws Exception {
-        return new AvroWriter<>(this, coder, codec);
+        return new AvroWriter<>(this, coder, codec, metadata);
       }
     }
 
@@ -944,21 +1027,39 @@ public class PatchedAvroIO {
       private final AvroCoder<T> coder;
       private DataFileWriter<T> dataFileWriter;
       private SerializableAvroCodecFactory codec;
+      private final ImmutableMap<String, Object> metadata;
 
       public AvroWriter(FileBasedWriteOperation<T> writeOperation,
                         AvroCoder<T> coder,
-                        SerializableAvroCodecFactory codec) {
+                        SerializableAvroCodecFactory codec,
+                        ImmutableMap<String, Object> metadata) {
         super(writeOperation);
         this.mimeType = MimeTypes.BINARY;
         this.coder = coder;
         this.codec = codec;
+        this.metadata = metadata;
       }
 
       @SuppressWarnings("deprecation") // uses internal test functionality.
       @Override
       protected void prepareWrite(WritableByteChannel channel) throws Exception {
         dataFileWriter = new DataFileWriter<>(coder.createDatumWriter()).setCodec(codec.getCodec());
+        for (Map.Entry<String, Object> entry : metadata.entrySet()) {
+          Object v = entry.getValue();
+          if (v instanceof String) {
+            dataFileWriter.setMeta(entry.getKey(), (String) v);
+          } else if (v instanceof Long) {
+            dataFileWriter.setMeta(entry.getKey(), (Long) v);
+          } else if (v instanceof byte[]) {
+            dataFileWriter.setMeta(entry.getKey(), (byte[]) v);
+          } else {
+            throw new IllegalStateException(
+                "Metadata value type must be one of String, Long, or byte[]. Found " +
+                    v.getClass().getSimpleName());
+          }
+        }
         dataFileWriter.create(coder.getSchema(), Channels.newOutputStream(channel));
+
       }
 
       @Override
