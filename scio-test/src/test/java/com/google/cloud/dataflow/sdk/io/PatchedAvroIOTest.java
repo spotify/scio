@@ -21,13 +21,11 @@ package com.google.cloud.dataflow.sdk.io;
 import static org.apache.avro.file.DataFileConstants.NULL_CODEC;
 import static org.apache.avro.file.DataFileConstants.SNAPPY_CODEC;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import com.google.cloud.dataflow.sdk.coders.AvroCoder;
 import com.google.cloud.dataflow.sdk.coders.DefaultCoder;
+import com.google.cloud.dataflow.sdk.repackaged.com.google.common.collect.ImmutableMap;
 import com.google.cloud.dataflow.sdk.runners.DirectPipeline;
 import com.google.cloud.dataflow.sdk.testing.DataflowAssert;
 import com.google.cloud.dataflow.sdk.testing.TestPipeline;
@@ -362,5 +360,30 @@ public class PatchedAvroIOTest {
     DataFileStream dataFileStream = new DataFileStream(new FileInputStream(outputFile),
         new GenericDatumReader());
     assertTrue(dataFileStream.getMetaString("avro.codec").equals("null"));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testMetadata() throws Exception {
+    DirectPipeline p = DirectPipeline.createForTest();
+    List<GenericClass> values = ImmutableList.of(new GenericClass(3, "hi"),
+        new GenericClass(5, "bar"));
+    File outputFile = tmpFolder.newFile("output.avro");
+
+    p.apply(Create.of(values))
+        .apply(PatchedAvroIO.Write.to(outputFile.getAbsolutePath())
+            .withoutSharding()
+            .withSchema(GenericClass.class)
+            .withMetadata(ImmutableMap.<String, Object>of(
+                "stringKey", "stringValue",
+                "longKey", 100L,
+                "bytesKey", "bytesValue".getBytes())));
+    p.run();
+
+    DataFileStream dataFileStream = new DataFileStream(new FileInputStream(outputFile),
+        new GenericDatumReader());
+    assertEquals("stringValue", dataFileStream.getMetaString("stringKey"));
+    assertEquals(100L, dataFileStream.getMetaLong("longKey"));
+    assertArrayEquals("bytesValue".getBytes(), dataFileStream.getMeta("bytesKey"));
   }
 }
