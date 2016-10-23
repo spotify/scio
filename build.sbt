@@ -44,6 +44,7 @@ val jodaConvertVersion = "1.8.1"
 val junitVersion = "4.12"
 val junitInterfaceVersion = "0.11"
 val nettyTcNativeVersion = "1.1.33.Fork18"
+val protobufGenericVersion = "0.1.0"
 val scalaCheckVersion = "1.13.3"
 val scalaMacrosVersion = "2.1.0"
 val scalaMeterVersion = "0.7"
@@ -202,7 +203,8 @@ lazy val scioCore: Project = Project(
     "commons-io" % "commons-io" % commonsIoVersion,
     "org.apache.commons" % "commons-math3" % commonsMath3Version,
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion,
-    "com.google.auto.service" % "auto-service" % autoServiceVersion
+    "com.google.auto.service" % "auto-service" % autoServiceVersion,
+    "me.lyh" %% "protobuf-generic" % protobufGenericVersion
   )
 ).dependsOn(
   scioBigQuery
