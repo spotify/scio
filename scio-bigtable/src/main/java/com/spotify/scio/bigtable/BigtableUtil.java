@@ -54,8 +54,14 @@ public final class BigtableUtil {
                                              cloudBigtableConfiguration.getInstanceId());
 
     for (Cluster cluster : clusterUtilities.getClusters().getClustersList()) {
-      clusterUtilities.setClusterSize(cluster.getName(), cluster.getLocation(), numberOfNodes);
+      final String clusterId = extractAfterSlash(cluster.getName());
+      final String zoneId = extractAfterSlash(cluster.getLocation());
+      clusterUtilities.setClusterSize(clusterId, zoneId, numberOfNodes);
     }
     Thread.sleep(sleepDuration.getMillis());
+  }
+
+  private static String extractAfterSlash(final String path) {
+    return path.substring(path.lastIndexOf("/") + 1);
   }
 }
