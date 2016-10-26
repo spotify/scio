@@ -21,10 +21,16 @@ import java.net.URI
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.google.api.client.googleapis.services.AbstractGoogleClientRequest
+import com.google.api.services.dataflow.Dataflow
+import com.google.api.services.dataflow.model.JobMetrics
 import com.google.cloud.dataflow.sdk.coders.{Coder, CoderRegistry}
-import com.google.cloud.dataflow.sdk.options.PipelineOptions
+import com.google.cloud.dataflow.sdk.options.{DataflowPipelineDebugOptions,
+                                              DataflowPipelineOptions,
+                                              PipelineOptions}
 import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
 import com.google.cloud.dataflow.sdk.runners.inprocess.InProcessPipelineRunner
+import com.google.cloud.dataflow.sdk.util.BigQueryTableRowIterator
 
 import scala.reflect.ClassTag
 
@@ -59,4 +65,24 @@ private[scio] object ScioUtil {
     val mapper = new ObjectMapper()
     mapper.registerModule(DefaultScalaModule)
   }
+
+  def getDataflowServiceClient(options: PipelineOptions): Dataflow =
+    options.as(classOf[DataflowPipelineDebugOptions]).getDataflowClient
+
+  def executeWithBackOff[T](request: AbstractGoogleClientRequest[T], errorMsg: String): T = {
+    // Reuse util method from BigQuery
+    BigQueryTableRowIterator.executeWithBackOff(request, errorMsg)
+  }
+
+  def getDataflowServiceMetrics(options: DataflowPipelineOptions, jobId: String): JobMetrics = {
+    val getMetrics = ScioUtil.getDataflowServiceClient(options)
+      .projects()
+      .jobs()
+      .getMetrics(options.getProject, jobId)
+
+    ScioUtil.executeWithBackOff(getMetrics,
+      s"Could not get dataflow metrics of ${getMetrics.getJobId} in ${getMetrics.getProjectId}")
+  }
+
+
 }
