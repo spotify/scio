@@ -25,21 +25,26 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.Accumulator
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import org.apache.beam.runners.dataflow.DataflowPipelineJob
 import org.apache.beam.sdk.options.ApplicationNameOptions
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.runners.{AggregatorPipelineExtractor, AggregatorValues}
 import org.apache.beam.sdk.{Pipeline, PipelineResult}
 import org.apache.beam.sdk.transforms.Aggregator
 import org.apache.beam.sdk.util.{IOChannelUtils, MimeTypes}
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 /** Represent a Scio pipeline result. */
 class ScioResult private[scio] (val internal: PipelineResult,
                                 val finalState: Future[State],
                                 val accumulators: Seq[Accumulator[_]],
                                 private val pipeline: Pipeline) {
+
+  private val logger = LoggerFactory.getLogger(classOf[ScioResult])
 
   private val aggregators: Map[String, Iterable[Aggregator[_, _]]] =
     new AggregatorPipelineExtractor(pipeline)
@@ -66,6 +71,7 @@ class ScioResult private[scio] (val internal: PipelineResult,
     getAggregatorValues(acc).flatMap(_.getValuesAtSteps.asScala).toMap
   }
 
+  // scalastyle:off method.length
   /** Save metrics of the finished pipeline to a file. */
   def saveMetrics(filename: String): Unit = {
     require(isCompleted, "Pipeline has to be finished to save metrics.")
@@ -89,14 +95,47 @@ class ScioResult private[scio] (val internal: PipelineResult,
         accumulatorValuesAtSteps(acc).map(a => AccumulatorStepValue(a._1, a._2))))
 
       val options = this.pipeline.getOptions
+
+      val (jobId, dfMetrics) = if (ScioUtil.isLocalRunner(options)) {
+        // to be safe let's use app name at a cost of duplicate for local runner
+        // there are no dataflow service metrics on local runner
+        (options.as(classOf[ApplicationNameOptions]).getAppName, Nil)
+      } else {
+        val jobId = internal.asInstanceOf[DataflowPipelineJob].getJobId
+        // given that this depends on internals of dataflow service - handle failure gracefully
+        // if there is an error - no dataflow service metrics will be saved
+        val dfMetrics = Try {
+          ScioUtil
+            .getDataflowServiceMetrics(options.as(classOf[DataflowPipelineOptions]), jobId)
+            .getMetrics.asScala
+            .map(e => {
+              val name = DFMetricName(e.getName.getName,
+                e.getName.getOrigin,
+                Option(e.getName.getContext)
+                  .getOrElse(Map.empty[String, String].asJava).asScala.toMap)
+              DFServiceMetrics(name, e.getScalar, e.getUpdateTime)
+            })
+        } match {
+          case Success(x) => x
+          case Failure(e) => {
+            logger.error(s"Failed to fetch dataflow metrics due to $e")
+            Nil
+          }
+        }
+        (jobId, dfMetrics)
+      }
+
       Metrics(scioVersion,
         scalaVersion,
         options.as(classOf[ApplicationNameOptions]).getAppName,
-        options.as(classOf[DataflowPipelineOptions]).getJobName,
+        jobId,
         this.state.toString,
-        AccumulatorMetrics(totalValues, stepsValues))
+        AccumulatorMetrics(totalValues, stepsValues),
+        dfMetrics
+        )
     }
   }
+  // scalastyle:on method.length
 
   private def getAggregatorValues[T](acc: Accumulator[T]): Iterable[AggregatorValues[T]] =
     aggregators.getOrElse(acc.name, Nil)
@@ -110,7 +149,12 @@ private[scio] object MetricSchema {
                      jobName: String,
                      jobId: String,
                      state: String,
-                     accumulators: AccumulatorMetrics)
+                     accumulators: AccumulatorMetrics,
+                     cloudMetrics: Iterable[DFServiceMetrics])
+  case class DFServiceMetrics(name: DFMetricName,
+                              scalar: AnyRef,
+                              updateTime: String)
+  case class DFMetricName(name: String, origin: String, context: Map[String, String])
   case class AccumulatorMetrics(total: Iterable[AccumulatorValue],
                                 steps: Iterable[AccumulatorStepsValue])
   case class AccumulatorValue(name: String, value: Any)
