@@ -41,9 +41,14 @@ private[scio] class TestInput(val m: Map[TestIO[_], Iterable[_]]) {
 private[scio] class TestOutput(val m: Map[TestIO[_], SCollection[_] => Unit]) {
   val s: MSet[TestIO[_]] = MSet.empty
   def apply[T](key: TestIO[T]): SCollection[T] => Unit = {
-    require(m.contains(key), "Missing test output: " + key)
-    s.add(key)
-    m(key)
+    if (key.key.contains("scio-materialize-")) {
+      // dummy matcher for materialize output
+      _ => Unit
+    } else {
+      require(m.contains(key), "Missing test output: " + key)
+      s.add(key)
+      m(key)
+    }
   }
   def validate(): Unit = {
     val d = m.keySet -- s
