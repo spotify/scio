@@ -27,6 +27,7 @@ import scala.collection.mutable.{Map => MMap, Set => MSet}
 private[scio] class TestInput(val m: Map[TestIO[_], Iterable[_]]) {
   val s: MSet[TestIO[_]] = MSet.empty
   def apply[T](key: TestIO[T]): Iterable[T] = {
+    require(m.contains(key), "Missing test input: " + key)
     s.add(key)
     m(key).asInstanceOf[Iterable[T]]
   }
@@ -36,10 +37,11 @@ private[scio] class TestInput(val m: Map[TestIO[_], Iterable[_]]) {
   }
 }
 
-/* Outputs are lambdas that apply assertions on PCollections */
+/* Outputs are lambdas that apply assertions on SCollections */
 private[scio] class TestOutput(val m: Map[TestIO[_], SCollection[_] => Unit]) {
   val s: MSet[TestIO[_]] = MSet.empty
   def apply[T](key: TestIO[T]): SCollection[T] => Unit = {
+    require(m.contains(key), "Missing test output: " + key)
     s.add(key)
     m(key)
   }
@@ -52,6 +54,7 @@ private[scio] class TestOutput(val m: Map[TestIO[_], SCollection[_] => Unit]) {
 private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {
   val s: MSet[DistCacheIO[_]] = MSet.empty
   def apply[T](key: DistCacheIO[T]): T = {
+    require(m.contains(key), "Missing test dist cache: " + key)
     s.add(key)
     m(key).asInstanceOf[T]
   }
