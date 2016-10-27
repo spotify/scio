@@ -305,4 +305,16 @@ class TypeProviderTest extends FlatSpec with Matchers {
     doApply(Record)((3, "a")) shouldEqual Record(3, "a")
   }
 
+  // This should compile
+  @BigQueryType.toTable
+  case class RecordWithDefault(x: Int, y: Int = 2)
+
+  it should "work for case class with default params" in {
+    classOf[Function2[Int, Int, RecordWithDefault]] isAssignableFrom RecordWithDefault.getClass
+  }
+
+  it should "support default argument correctly" in {
+    RecordWithDefault(10).y shouldEqual 2
+  }
+
 }
