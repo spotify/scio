@@ -114,6 +114,16 @@ object DistCacheJob {
   }
 }
 
+object MaterializeJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val data = sc.textFile(args("input"))
+    data.materialize
+    data.saveAsTextFile(args("output"))
+    sc.close()
+  }
+}
+
 // scalastyle:off no.whitespace.before.left.bracket
 class JobTestTest extends PipelineSpec {
 
@@ -351,6 +361,14 @@ class JobTestTest extends PipelineSpec {
         .run()
     } should have message
       "requirement failed: Unmatched test dist cache: DistCacheIO(unmatched.txt)"
+  }
+
+  it should "ignore materialize" in {
+    JobTest[MaterializeJob.type]
+      .args("--input=in.txt", "--output=out.txt")
+      .input(TextIO("in.txt"), Seq("a", "b"))
+      .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a", "b")))
+      .run()
   }
 
 }
