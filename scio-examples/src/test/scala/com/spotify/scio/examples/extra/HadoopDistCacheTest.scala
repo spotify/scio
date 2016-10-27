@@ -5,7 +5,6 @@ import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.testing._
 import org.joda.time.format.DateTimeFormat
 
-
 class HadoopDistCacheTest extends PipelineSpec {
   val fmt = DateTimeFormat.forPattern("yyyyMMdd")
   def d2t(date: String): Long = fmt.parseDateTime(date).getMillis / 1000
