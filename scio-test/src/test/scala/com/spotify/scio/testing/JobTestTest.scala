@@ -288,6 +288,16 @@ class JobTestTest extends PipelineSpec {
     an [AssertionError] should be thrownBy { testDistCacheJob("a1", "a2", "b1", "b2", "c3", "d4") }
   }
 
+  it should "fail missing test input" in {
+    the [IllegalArgumentException] thrownBy {
+      JobTest[DistCacheJob.type]
+        .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
+        .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
+        .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .run()
+    } should have message "requirement failed: Missing test input: TextIO(in.txt)"
+  }
+
   it should "fail unmatched test input" in {
     the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type]
@@ -300,6 +310,16 @@ class JobTestTest extends PipelineSpec {
     } should have message "requirement failed: Unmatched test input: TextIO(unmatched.txt)"
   }
 
+  it should "fail missing test output" in {
+    the [IllegalArgumentException] thrownBy {
+      JobTest[DistCacheJob.type]
+        .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
+        .input(TextIO("in.txt"), Seq("a", "b"))
+        .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
+        .run()
+    } should have message "requirement failed: Missing test output: TextIO(out.txt)"
+  }
+
   it should "fail unmatched test output" in {
     the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type]
@@ -310,6 +330,16 @@ class JobTestTest extends PipelineSpec {
         .output[String](TextIO("unmatched.txt"))(_ should containInAnyOrder (Seq("X", "Y")))
         .run()
     } should have message "requirement failed: Unmatched test output: TextIO(unmatched.txt)"
+  }
+
+  it should "fail missing test dist cache" in {
+    the [IllegalArgumentException] thrownBy {
+      JobTest[DistCacheJob.type]
+        .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
+        .input(TextIO("in.txt"), Seq("a", "b"))
+        .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .run()
+    } should have message "requirement failed: Missing test dist cache: DistCacheIO(dc.txt)"
   }
 
   it should "fail unmatched test dist cache" in {
