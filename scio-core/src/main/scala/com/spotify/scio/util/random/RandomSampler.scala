@@ -40,11 +40,11 @@ private[scio] object RandomSampler {
 
 private[scio] abstract class RandomSampler[T, R] extends DoFn[T, T] {
 
-  protected var rng: R = null.asInstanceOf[R]
+  protected var rng: R = _
   protected var seed: Long = -1
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
-  override def startBundle(c: DoFn[T, T]#Context): Unit = { rng = init }
+  override def startBundle(c: DoFn[T, T]#Context): Unit = rng = init
 
   override def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
     val element = c.element()
@@ -68,7 +68,7 @@ private[scio] abstract class RandomSampler[T, R] extends DoFn[T, T] {
  * @param fraction the sampling fraction, aka Bernoulli sampling probability
  * @tparam T item type
  */
-private[scio] class BernoulliSampler[T](fraction: Double) extends RandomSampler[T, JRandom] {
+private[scio] class BernoulliSampler[T](val fraction: Double) extends RandomSampler[T, JRandom] {
 
   /** Epsilon slop to avoid failure from floating point jitter */
   require(
@@ -84,7 +84,7 @@ private[scio] class BernoulliSampler[T](fraction: Double) extends RandomSampler[
     r
   }
 
-  override def samples: Int = {
+  override def samples: Int =
     if (fraction <= 0.0) {
       0
     } else if (fraction >= 1.0) {
@@ -92,7 +92,6 @@ private[scio] class BernoulliSampler[T](fraction: Double) extends RandomSampler[
     } else {
       if (rng.nextDouble() <= fraction) 1 else 0
     }
-  }
 
 }
 
@@ -102,7 +101,7 @@ private[scio] class BernoulliSampler[T](fraction: Double) extends RandomSampler[
  * @param fraction the sampling fraction (with replacement)
  * @tparam T item type
  */
-private[scio] class PoissonSampler[T](fraction: Double)
+private[scio] class PoissonSampler[T](val fraction: Double)
   extends RandomSampler[T, IntegerDistribution] {
 
   /** Epsilon slop to avoid failure from floating point jitter. */
@@ -123,16 +122,15 @@ private[scio] class PoissonSampler[T](fraction: Double)
   override def samples: Int = if (fraction <= 0.0) 0 else rng.sample()
 }
 
-private[scio] abstract class RandomValueSampler[K, V, R](fractions: Map[K, Double])
+private[scio] abstract class RandomValueSampler[K, V, R](val fractions: Map[K, Double])
   extends DoFn[(K, V), (K, V)] {
 
   protected var rngs: Map[K, R] = null.asInstanceOf[Map[K, R]]
   protected var seed: Long = -1
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
-  override def startBundle(c: DoFn[(K, V), (K, V)]#Context): Unit = {
+  override def startBundle(c: DoFn[(K, V), (K, V)]#Context): Unit =
     rngs = fractions.mapValues(init).map(identity)  // workaround for serialization issue
-  }
 
   override def processElement(c: DoFn[(K, V), (K, V)]#ProcessContext): Unit = {
     val (key, value) = c.element()
@@ -169,7 +167,7 @@ private[scio] class BernoulliValueSampler[K, V](fractions: Map[K, Double])
     r
   }
 
-  override def samples(fraction: Double, rng: JRandom): Int = {
+  override def samples(fraction: Double, rng: JRandom): Int =
     if (fraction <= 0.0) {
       0
     } else if (fraction >= 1.0) {
@@ -177,7 +175,6 @@ private[scio] class BernoulliValueSampler[K, V](fractions: Map[K, Double])
     } else {
       if (rng.nextDouble() <= fraction) 1 else 0
     }
-  }
 
 }
 
