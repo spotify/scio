@@ -82,14 +82,20 @@ object JobTest {
     def args(newArgs: String*): Builder =
       this.copy(cmdlineArgs = (this.cmdlineArgs.toSeq ++ newArgs).toArray)
 
-    def input[T](key: TestIO[T], value: Iterable[T]): Builder =
+    def input[T](key: TestIO[T], value: Iterable[T]): Builder = {
+      require(!this.inputs.contains(key), "Duplicate test input: " + key)
       this.copy(inputs = this.inputs + (key -> value))
+    }
 
-    def output[T](key: TestIO[T])(value: SCollection[T] => Unit): Builder =
+    def output[T](key: TestIO[T])(value: SCollection[T] => Unit): Builder = {
+      require(!this.outputs.contains(key), "Duplicate test output: " + key)
       this.copy(outputs = this.outputs + (key -> value.asInstanceOf[SCollection[_] => Unit]))
+    }
 
-    def distCache[T](key: DistCacheIO[T], value: T): Builder =
+    def distCache[T](key: DistCacheIO[T], value: T): Builder = {
+      require(!this.distCaches.contains(key), "Duplicate test dist cache: " + key)
       this.copy(distCaches = this.distCaches + (key -> value))
+    }
 
     def run(): Unit = {
       val testId = newTestId(className)
