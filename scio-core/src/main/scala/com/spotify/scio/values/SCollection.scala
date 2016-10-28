@@ -1022,8 +1022,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection with a custom output transform. The transform should have a unique name.
    * @group output
    */
-  def saveAsCustomOutput(transform: PTransform[PCollection[T], PDone])
-  : Future[Tap[String]] = {
+  def saveAsCustomOutput(transform: PTransform[PCollection[T], PDone]): Future[Tap[T]] = {
     if (context.isTest) {
       context.testOut(CustomIO[T](transform.getName))(this)
     } else {
