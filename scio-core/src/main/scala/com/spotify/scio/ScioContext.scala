@@ -37,7 +37,7 @@ import com.google.cloud.dataflow.sdk.runners.{DataflowPipelineJob, DataflowPipel
 import com.google.cloud.dataflow.sdk.testing.TestPipeline
 import com.google.cloud.dataflow.sdk.transforms.Combine.CombineFn
 import com.google.cloud.dataflow.sdk.transforms.{Create, DoFn, PTransform}
-import com.google.cloud.dataflow.sdk.values.{PBegin, PCollection, POutput, TimestampedValue}
+import com.google.cloud.dataflow.sdk.values._
 import com.google.protobuf.Message
 import com.spotify.scio.bigquery._
 import com.spotify.scio.coders.AvroBytesUtil
@@ -556,6 +556,19 @@ class ScioContext private[scio] (val options: PipelineOptions,
     } else {
       wrap(this.applyInternal(gio.TextIO.Read.from(path)
         .withCompressionType(compressionType))).setName(path)
+    }
+  }
+
+  /**
+   * Get an SCollection with a custom input transform. The transform should have a unique name.
+   * @group input
+   */
+  def customInput[T : ClassTag](transform: PTransform[PInput, PCollection[T]])
+  : SCollection[T] = requireNotClosed {
+    if (this.isTest) {
+      this.getTestInput(CustomIO[T](transform.getName))
+    } else {
+      wrap(this.applyInternal(transform))
     }
   }
 
