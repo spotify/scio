@@ -359,6 +359,18 @@ class JobTestTest extends PipelineSpec {
     } should have message "requirement failed: Unmatched test input: TextIO(unmatched.txt)"
   }
 
+  it should "fail duplicate test input" in {
+    the [IllegalArgumentException] thrownBy {
+      JobTest[DistCacheJob.type]
+        .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
+        .input(TextIO("in.txt"), Seq("a", "b"))
+        .input(TextIO("in.txt"), Seq("X", "Y"))
+        .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
+        .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .run()
+    } should have message "requirement failed: Duplicate test input: TextIO(in.txt)"
+  }
+
   it should "fail missing test output" in {
     the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type]
@@ -379,6 +391,18 @@ class JobTestTest extends PipelineSpec {
         .output[String](TextIO("unmatched.txt"))(_ should containInAnyOrder (Seq("X", "Y")))
         .run()
     } should have message "requirement failed: Unmatched test output: TextIO(unmatched.txt)"
+  }
+
+  it should "fail duplicate test output" in {
+    the [IllegalArgumentException] thrownBy {
+      JobTest[DistCacheJob.type]
+        .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
+        .input(TextIO("in.txt"), Seq("a", "b"))
+        .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
+        .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("X", "Y")))
+        .run()
+    } should have message "requirement failed: Duplicate test output: TextIO(out.txt)"
   }
 
   it should "fail missing test dist cache" in {
@@ -402,6 +426,19 @@ class JobTestTest extends PipelineSpec {
         .run()
     } should have message
       "requirement failed: Unmatched test dist cache: DistCacheIO(unmatched.txt)"
+  }
+
+  it should "fail duplicate test dist cache" in {
+    the [IllegalArgumentException] thrownBy {
+      JobTest[DistCacheJob.type]
+        .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
+        .input(TextIO("in.txt"), Seq("a", "b"))
+        .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
+        .distCache(DistCacheIO("dc.txt"), Seq("X", "Y"))
+        .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .run()
+    } should have message
+      "requirement failed: Duplicate test dist cache: DistCacheIO(dc.txt)"
   }
 
   it should "ignore materialize" in {
