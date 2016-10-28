@@ -46,7 +46,7 @@ import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.testing.TestPipeline
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
-import org.apache.beam.sdk.values.{PBegin, PCollection, POutput, TimestampedValue}
+import org.apache.beam.sdk.values.{PBegin, PCollection, PInput, POutput, TimestampedValue}
 import org.apache.beam.sdk.{Pipeline, io => gio}
 import org.joda.time.Instant
 import org.slf4j.LoggerFactory
@@ -556,6 +556,19 @@ class ScioContext private[scio] (val options: PipelineOptions,
     } else {
       wrap(this.applyInternal(gio.TextIO.Read.from(path)
         .withCompressionType(compressionType))).setName(path)
+    }
+  }
+
+  /**
+   * Get an SCollection with a custom input transform. The transform should have a unique name.
+   * @group input
+   */
+  def customInput[T : ClassTag](transform: PTransform[PInput, PCollection[T]])
+  : SCollection[T] = requireNotClosed {
+    if (this.isTest) {
+      this.getTestInput(CustomIO[T](transform.getName))
+    } else {
+      wrap(this.applyInternal(transform))
     }
   }
 

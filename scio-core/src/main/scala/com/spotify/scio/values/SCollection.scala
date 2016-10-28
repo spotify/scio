@@ -1001,6 +1001,20 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     }
   }
 
+  /**
+   * Save this SCollection with a custom output transform. The transform should have a unique name.
+   * @group output
+   */
+  def saveAsCustomOutput(transform: PTransform[PCollection[T], PDone])
+  : Future[Tap[String]] = {
+    if (context.isTest) {
+      context.testOut(CustomIO[T](transform.getName))(this)
+    } else {
+      this.applyInternal(transform)
+    }
+    Future.failed(new NotImplementedError("Custom future not implemented"))
+  }
+
   private[scio] def saveAsInMemoryTap: Future[Tap[T]] = {
     val tap = new InMemoryTap[T]
     this.applyInternal(gio.Write.to(new InMemorySink[T](tap.id)))
