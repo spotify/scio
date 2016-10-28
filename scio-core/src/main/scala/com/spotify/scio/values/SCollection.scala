@@ -123,12 +123,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   : SCollection[U] =
     this.pApply(transform)
 
-  /**
-   * Apply a [[org.apache.beam.sdk.transforms.PTransform PTransform]] with [[PDone]] output.
-   */
-  def applyOutputTransform(transform: PTransform[_ >: PCollection[T], PDone]): PDone =
-    this.applyInternal(transform)
-
   /** Apply a transform. */
   private[values] def transform[U: ClassTag](f: SCollection[T] => SCollection[U])
   : SCollection[U] = {

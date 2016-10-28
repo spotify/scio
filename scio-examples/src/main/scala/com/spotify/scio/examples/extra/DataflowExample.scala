@@ -79,7 +79,7 @@ object DataflowExample {
     println(pipeline.getRunner)
 
     // Apply a native source PTransform and get a Scio SCollection
-    val accounts: SCollection[Account] = sc.applyTransform(pubsubIn(args("inputTopic")))
+    val accounts: SCollection[Account] = sc.customInput(pubsubIn(args("inputTopic")))
 
     // Underlying Dataflow PCollection
     val p: PCollection[Account] = accounts.internal
@@ -93,7 +93,7 @@ object DataflowExample {
       // Dataflow PTransform
       .applyTransform(sumByKey)
       // Dataflow PTransform of PCollection -> PDone
-      .applyOutputTransform(pubsubOut(args("outputTopic")))
+      .saveAsCustomOutput(pubsubOut(args("outputTopic")))
 
     val result = sc.close()
 

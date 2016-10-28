@@ -52,15 +52,6 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support applyOutputTransform()" in {
-    val id = System.currentTimeMillis().toString
-    runWithContext { sc =>
-      sc.parallelize(Seq(1, 2, 3, 4, 5))
-        .applyOutputTransform(Write.to(new InMemorySink[Int](id)))
-    }
-    InMemorySinkManager.get[Int](id).toSet should equal (Set(1, 2, 3, 4, 5))
-  }
-
   it should "support transform()" in {
     runWithContext {
       _.parallelize(1 to 10).transform(_.map(_ * 10).sum) should containSingleValue (550)

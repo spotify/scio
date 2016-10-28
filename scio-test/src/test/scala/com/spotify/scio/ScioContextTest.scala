@@ -34,17 +34,9 @@ import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.transforms.Create
 import org.apache.commons.lang.exception.ExceptionUtils
 
-import scala.collection.JavaConverters._
-
 class ScioContextTest extends PipelineSpec {
 
-  "ScioContext" should "support applyTransform()" in {
-    val sc = ScioContext()
-    sc.applyTransform(Create.of((1 to 10).asJava)) should containInAnyOrder (1 to 10)
-    sc.close()
-  }
-
-  it should "support pipeline" in {
+  "ScioContext" should "support pipeline" in {
     val pipeline = ScioContext().pipeline
     val p = pipeline.apply(Create.of(Lists.newArrayList(1, 2, 3)))
     PAssert.that(p).containsInAnyOrder(Lists.newArrayList(1, 2, 3))
