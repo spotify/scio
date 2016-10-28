@@ -384,13 +384,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
     pipeline.apply(CallSites.getCurrent, root)
 
   /**
-   * Apply a [[com.google.cloud.dataflow.sdk.transforms.PTransform PTransform]] and wrap the output
-   * in an [[SCollection]].
-   */
-  def applyTransform[T: ClassTag](root: PTransform[_ >: PBegin, PCollection[T]]): SCollection[T] =
-    this.wrap(this.applyInternal(root))
-
-  /**
    * Get an SCollection for an object file.
    * @group input
    */
