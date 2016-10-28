@@ -17,7 +17,9 @@
 
 package com.spotify.scio.testing
 
+import com.google.cloud.dataflow.sdk.coders.TextualIntegerCoder
 import com.google.common.collect.ImmutableMap
+import com.google.cloud.dataflow.sdk.{io => gio}
 import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.spotify.scio._
@@ -120,6 +122,24 @@ object MaterializeJob {
     val data = sc.textFile(args("input"))
     data.materialize
     data.saveAsTextFile(args("output"))
+    sc.close()
+  }
+}
+
+object CustomIOJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val inputTransform = gio.TextIO.Read
+      .named("TextIn")
+      .from(args("input"))
+      .withCoder(TextualIntegerCoder.of())
+    val outputTransform = gio.TextIO.Write
+      .named("TextOut")
+      .to(args("output"))
+      .withCoder(TextualIntegerCoder.of())
+    sc.customInput(inputTransform)
+      .map(x => (x * 10).asInstanceOf[java.lang.Integer])
+      .saveAsCustomOutput(outputTransform)
     sc.close()
   }
 }
@@ -295,6 +315,27 @@ class JobTestTest extends PipelineSpec {
     an [AssertionError] should be thrownBy { testDistCacheJob("a1", "a2", "b1") }
     an [AssertionError] should be thrownBy { testDistCacheJob("a1", "a2", "b1", "b2", "c3", "d4") }
   }
+
+  def testCustomIOJob(xs: Int*): Unit = {
+    JobTest[CustomIOJob.type]
+      .args("--input=in.txt", "--output=out.txt")
+      .input(CustomIO("TextIn"), Seq(1, 2, 3))
+      .output[Int](CustomIO("TextOut"))(_ should containInAnyOrder (xs))
+      .run()
+  }
+
+  it should "pass correct CustomIO" in {
+    testCustomIOJob(10, 20, 30)
+  }
+
+  it should "fail incorrect CustomIO" in {
+    an [AssertionError] should be thrownBy { testCustomIOJob(10, 20) }
+    an [AssertionError] should be thrownBy { testCustomIOJob(10, 20, 30, 40) }
+  }
+
+  // =======================================================================
+  // Handling incorrect test wiring
+  // =======================================================================
 
   it should "fail missing test input" in {
     the [IllegalArgumentException] thrownBy {
