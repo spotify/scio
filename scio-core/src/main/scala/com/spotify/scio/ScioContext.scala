@@ -154,7 +154,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
   }
 
   Try(optionsAs[DataflowPipelineOptions]).foreach { o =>
-    o.setTempLocation(o.getGcpTempLocation)
+    if (o.getTempLocation == null) {
+      o.setTempLocation(o.getGcpTempLocation)
+    }
   }
 
   {
