@@ -206,6 +206,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   private val _promises: MBuffer[(Promise[Tap[_]], Tap[_])] = MBuffer.empty
   private val _queryJobs: MBuffer[QueryJob] = MBuffer.empty
   private val _accumulators: MMap[String, Accumulator[_]] = MMap.empty
+  private val _preRunFns: MBuffer[() => Unit] = MBuffer.empty
 
   /** Wrap a [[org.apache.beam.sdk.values.PCollection PCollection]]. */
   def wrap[T: ClassTag](p: PCollection[T]): SCollection[T] =
@@ -302,6 +303,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
     }
 
     _isClosed = true
+
+    _preRunFns.foreach(_())
     val result = this.pipeline.run()
 
     val finalState = result match {
@@ -627,6 +630,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   private[scio] def containsAccumulator(acc: Accumulator[_]): Boolean =
     _accumulators.contains(acc.name)
+
+  private[scio] def addPreRunFn(f: () => Unit): Unit = _preRunFns += f
 
   // =======================================================================
   // In-memory collections
