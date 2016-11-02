@@ -844,12 +844,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   private def pathWithShards(path: String) = {
     if (ScioUtil.isLocalRunner(this.context.pipeline.getOptions) &&
       ScioUtil.isLocalUri(new URI(path))) {
-      // Create output directory when running locally with local file system
-      val f = new File(path)
-      if (f.exists()) {
-        throw new RuntimeException(s"Output directory $path already exists")
-      }
-      f.mkdirs()
+      context.addPreRunFn(() => {
+        // Create output directory when running locally with local file system
+        val f = new File(path)
+        if (f.exists()) {
+          throw new RuntimeException(s"Output directory $path already exists")
+        }
+        f.mkdirs()
+      })
     }
     path.replaceAll("\\/+$", "") + "/part"
   }
