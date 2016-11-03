@@ -61,10 +61,10 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
 
   scalaVersion       := "2.11.8",
   crossScalaVersions := Seq("2.11.8"),
-  scalacOptions                   ++= Seq("-target:jvm-1.7", "-deprecation", "-feature", "-unchecked"),
+  scalacOptions                   ++= Seq("-target:jvm-1.8", "-deprecation", "-feature", "-unchecked"),
   scalacOptions in (Compile, doc) ++= Seq("-groups", "-skip-packages", "com.google"),
-  javacOptions                    ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked"),
-  javacOptions in (Compile, doc)  := Seq("-source", "1.7"),
+  javacOptions                    ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
+  javacOptions in (Compile, doc)  := Seq("-source", "1.8"),
 
   testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
 
@@ -306,7 +306,7 @@ lazy val scioSchemas: Project = Project(
   ),
   // suppress warnings
   sources in doc in Compile := List(),
-  javacOptions := Seq("-source", "1.7", "-target", "1.7"),
+  javacOptions := Seq("-source", "1.8", "-target", "1.8"),
   compileOrder := CompileOrder.JavaThenScala,
   PB.javaConversions in PB.protobufConfig := true,
   PB.grpc := false,
