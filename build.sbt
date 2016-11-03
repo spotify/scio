@@ -60,7 +60,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
 
   scalaVersion       := "2.11.8",
-  crossScalaVersions := Seq("2.10.6", "2.11.8"),
+  crossScalaVersions := Seq("2.11.8"),
   scalacOptions                   ++= Seq("-target:jvm-1.7", "-deprecation", "-feature", "-unchecked"),
   scalacOptions in (Compile, doc) ++= Seq("-groups", "-skip-packages", "com.google"),
   javacOptions                    ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked"),
@@ -73,7 +73,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
     "com\\.spotify\\.scio\\.repl\\..*",
     "com\\.spotify\\.scio\\.util\\.MultiJoin"
   ).mkString(";"),
-  coverageHighlighting := (if (scalaBinaryVersion.value == "2.10") false else true),
+  coverageHighlighting := true,
 
   // Release settings
   releaseCrossBuild             := true,
@@ -175,7 +175,6 @@ lazy val root: Project = Project(
   commonSettings ++ siteSettings ++ noPublishSettings,
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
     -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples),
-  run <<= run in Compile in scioRepl dependsOn sbtReplScalaVersionCheck,
   aggregate in assembly := false
 ).aggregate(
   scioCore,
@@ -245,12 +244,6 @@ lazy val scioBigQuery: Project = Project(
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.1" % "test"
   ),
   libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
-  libraryDependencies ++= (
-    if (scalaBinaryVersion.value == "2.10")
-      List("org.scalamacros" %% "quasiquotes" % scalaMacrosVersion cross CrossVersion.binary)
-    else
-      Nil
-  ),
   addCompilerPlugin(paradiseDependency)
 ).configs(IntegrationTest)
 
@@ -350,13 +343,6 @@ lazy val scioExamples: Project = Project(
   scioTest % "test"
 )
 
-val sbtReplScalaVersionCheck = Def.task {
-  if (scalaVersion.value.startsWith("2.10"))
-    sys.error("\n\n\tERROR: Can't start Scio REPL in SBT for scala 2.10.x. " +
-                "Upgrade to 2.11.x. or build REPL assembly jar.\n" +
-                "\tMore info https://github.com/spotify/scio/wiki/Scio-REPL\n\n")
-}
-
 lazy val scioRepl: Project = Project(
   "scio-repl",
   file("scio-repl")
@@ -370,13 +356,6 @@ lazy val scioRepl: Project = Project(
     "com.nrinaudo" %% "kantan.csv" % csvVersion,
     paradiseDependency
   ),
-  libraryDependencies ++= (
-    if (scalaBinaryVersion.value == "2.10")
-      List("org.scala-lang" % "jline" % scalaVersion.value)
-    else
-      Nil
-  ),
-  run <<= run in Compile dependsOn sbtReplScalaVersionCheck,
   assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
 ).dependsOn(
   scioCore,
