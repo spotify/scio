@@ -17,11 +17,14 @@
 
 package com.spotify.scio
 
+import java.time._
+import java.time.format.{DateTimeFormatter, DateTimeFormatterBuilder}
+import java.time.temporal.ChronoField
+
 import com.google.api.services.bigquery.model.{TableRow => GTableRow}
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
-import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 /**
  * Main package for BigQuery APIs. Import all.
@@ -82,41 +85,46 @@ package object bigquery {
 
     // FIXME: verify that these match BigQuery specification
     // YYYY-[M]M-[D]D[ [H]H:[M]M:[S]S[.DDDDDD]][time zone]
-    private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS ZZZ")
+    // 'T' is required right now for this to work
+    // https://github.com/spotify/scio/issues/376
+    // https://code.google.com/p/google-cloud-platform/issues/detail?id=185
+    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS VV")
+      .withZone(ZoneOffset.UTC)
+
     private val parser = new DateTimeFormatterBuilder()
-      .append(DateTimeFormat.forPattern("yyyy-MM-dd"))
+      .appendPattern("yyyy-MM-dd")
       .appendOptional(new DateTimeFormatterBuilder()
-        .append(DateTimeFormat.forPattern(" HH:mm:ss").getParser)
-        .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
-        .toParser)
-      .appendOptional(new DateTimeFormatterBuilder()
-        .append(DateTimeFormat.forPattern("'T'HH:mm:ss").getParser)
-        .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
-        .toParser)
-      .appendOptional(new DateTimeFormatterBuilder()
-        .append(null, Array(" ZZZ", "ZZ").map(p => DateTimeFormat.forPattern(p).getParser))
-        .toParser)
+        .appendPattern("[ ]['T']HH:mm:ss")
+        .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true)
+        .toFormatter)
+      .appendOptional(DateTimeFormatter.ofPattern("[ ][xxx][xx][x][z]"))
       .toFormatter
-      .withZoneUTC()
 
     /** Convert Instant to BigQuery TIMESTAMP string. */
-    def apply(instant: Instant): String = formatter.print(instant)
+    def apply(instant: Instant): String = formatter.format(instant)
 
     /** Convert millisecond instant to BigQuery TIMESTAMP string. */
-    def apply(instant: Long): String = formatter.print(instant)
+    def apply(instant: Long): String = apply(Instant.ofEpochMilli(instant))
 
     /** Convert BigQuery TIMESTAMP string to Instant. */
-    def parse(timestamp: String): Instant = parser.parseDateTime(timestamp).toInstant
+    def parse(timestamp: String): Instant = {
+      val base = parser.parse(timestamp)
+      val date = LocalDate.from(base)
+      val time = Try(LocalTime.from(base)).getOrElse(LocalTime.MIN)
+      val zone = Try(ZoneId.from(base)).getOrElse(ZoneOffset.UTC)
+      val zonedDateTime = ZonedDateTime.of(date, time, zone)
+      Instant.from(zonedDateTime)
+    }
 
   }
 
   /** Utility for BigQuery DATE type. */
   object Date {
     // YYYY-[M]M-[D]D
-    private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd").withZoneUTC()
+    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneOffset.UTC)
 
     /** Convert LocalDate to BigQuery DATE string. */
-    def apply(date: LocalDate): String = formatter.print(date)
+    def apply(date: LocalDate): String = formatter.format(date)
 
     /** Convert BigQuery DATE string to LocalDate. */
     def parse(date: String): LocalDate = LocalDate.parse(date, formatter)
@@ -125,42 +133,45 @@ package object bigquery {
   /** Utility for BigQuery TIME type. */
   object Time {
     // [H]H:[M]M:[S]S[.DDDDDD]
-    private val formatter = DateTimeFormat.forPattern("HH:mm:ss.SSSSSS").withZoneUTC()
+    private val formatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSS").withZone(ZoneOffset.UTC)
     private val parser = new DateTimeFormatterBuilder()
-      .append(DateTimeFormat.forPattern("HH:mm:ss").getParser)
-      .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
+      .appendPattern("HH:mm:ss")
+      .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true)
       .toFormatter
-      .withZoneUTC()
+      .withZone(ZoneOffset.UTC)
 
     /** Convert LocalTime to BigQuery TIME string. */
-    def apply(time: LocalTime): String = formatter.print(time)
+    def apply(time: LocalTime): String = formatter.format(time)
 
     /** Convert BigQuery TIME string to LocalTime. */
-    def parse(time: String): LocalTime = parser.parseLocalTime(time)
+    def parse(time: String): LocalTime = LocalTime.parse(time, parser)
   }
 
   /** Utility for BigQuery DATETIME type. */
   object DateTime {
     // YYYY-[M]M-[D]D[ [H]H:[M]M:[S]S[.DDDDDD]]
-    private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
+    // 'T' is required right now for this to work
+    // https://github.com/spotify/scio/issues/376
+    // https://code.google.com/p/google-cloud-platform/issues/detail?id=185
+    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
     private val parser = new DateTimeFormatterBuilder()
-      .append(DateTimeFormat.forPattern("yyyy-MM-dd"))
+      .appendPattern("yyyy-MM-dd")
       .appendOptional(new DateTimeFormatterBuilder()
-        .append(DateTimeFormat.forPattern(" HH:mm:ss").getParser)
-        .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
-        .toParser)
-      .appendOptional(new DateTimeFormatterBuilder()
-        .append(DateTimeFormat.forPattern("'T'HH:mm:ss").getParser)
-        .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
-        .toParser)
+        .appendPattern("[ ]['T']HH:mm:ss")
+        .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true)
+        .toFormatter)
       .toFormatter
-      .withZoneUTC()
 
     /** Convert LocalDateTime to BigQuery DATETIME string. */
-    def apply(datetime: LocalDateTime): String = formatter.print(datetime)
+    def apply(datetime: LocalDateTime): String = formatter.format(datetime)
 
     /** Convert BigQuery DATETIME string to LocalDateTime. */
-    def parse(datetime: String): LocalDateTime = parser.parseLocalDateTime(datetime)
+    def parse(datetime: String): LocalDateTime = {
+      val base = parser.parse(datetime)
+      val date = LocalDate.from(base)
+      val time = Try(LocalTime.from(base)).getOrElse(LocalTime.MIN)
+      LocalDateTime.of(date, time)
+    }
   }
 
 }

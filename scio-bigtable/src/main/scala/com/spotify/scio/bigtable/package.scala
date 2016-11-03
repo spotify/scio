@@ -17,6 +17,8 @@
 
 package com.spotify.scio
 
+import java.time.Duration
+
 import com.google.cloud.bigtable.{dataflow => bt}
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
@@ -37,7 +39,7 @@ import scala.concurrent.Future
  */
 package object bigtable {
 
-  private val DEFAULT_SLEEP_DURATION = Duration.standardMinutes(20);
+  private val DEFAULT_SLEEP_DURATION = Duration.ofMinutes(20);
 
   /** Enhanced version of [[ScioContext]] with Bigtable methods. */
   implicit class BigtableScioContext(val self: ScioContext) extends AnyVal {

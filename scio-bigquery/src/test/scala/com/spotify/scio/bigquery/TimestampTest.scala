@@ -28,7 +28,7 @@ class TimestampTest extends FlatSpec with Matchers {
 
   it should "round trip Long" in {
     val t = Timestamp.parse("2016-01-01T00:00:00.000000 UTC")
-    Timestamp.parse(Timestamp(t.getMillis)) should equal (t)
+    Timestamp.parse(Timestamp(t.toEpochMilli)) should equal (t)
   }
 
   it should "parse different formats" in {

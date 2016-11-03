@@ -82,7 +82,7 @@ object WindowedWordCount {
         wv.copy(value = TableRow(
           "word" -> wv.value._1,
           "count" -> wv.value._2,
-          "window_timestamp" -> Timestamp(wv.timestamp)))
+          "window_timestamp" -> Timestamp(wv.timestamp.getMillis)))
       }
       .toSCollection  // convert back to normal SCollection
       .saveAsBigQuery(ExampleOptions.bigQueryTable(opts), schema)

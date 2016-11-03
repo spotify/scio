@@ -17,8 +17,9 @@
 
 package com.spotify.scio.bigquery.types
 
+import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+
 import com.google.protobuf.ByteString
-import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 object Schemas {
 

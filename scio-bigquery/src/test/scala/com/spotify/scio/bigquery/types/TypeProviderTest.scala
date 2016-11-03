@@ -17,8 +17,9 @@
 
 package com.spotify.scio.bigquery.types
 
+import java.time.Instant
+
 import com.google.api.services.bigquery.model.TableRow
-import org.joda.time.Instant
 import org.scalatest.{FlatSpec, Matchers}
 
 // TODO: figure out how to make IntelliJ happy
@@ -168,12 +169,12 @@ class TypeProviderTest extends FlatSpec with Matchers {
   it should "support repeated primitive types" in {
     val r1 = RecordWithRepeatedPrimitives(
       List(1L, 2L), List(1.5, 2.5), List(true, false), List("hello", "world"),
-      List(NOW, NOW.plus(1000)))
+      List(NOW, NOW.plusMillis(1000)))
     r1.f1 should equal (List(1L, 2L))
     r1.f2 should equal (List(1.5, 2.5))
     r1.f3 should equal (List(true, false))
     r1.f4 should equal (List("hello", "world"))
-    r1.f5 should equal (List(NOW, NOW.plus(1000)))
+    r1.f5 should equal (List(NOW, NOW.plusMillis(1000)))
 
     val r2 = RecordWithRepeatedPrimitives(Nil, Nil, Nil, Nil, Nil)
     r2.f1 shouldBe Nil
