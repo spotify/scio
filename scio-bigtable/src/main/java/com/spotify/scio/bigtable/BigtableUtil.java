@@ -22,7 +22,7 @@ import com.google.bigtable.repackaged.com.google.com.google.bigtable.admin.v2.Cl
 import com.google.cloud.bigtable.dataflow.CloudBigtableConfiguration;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import org.joda.time.Duration;
+import java.time.Duration;
 
 /**
  * Utilities to deal with Bigtable.
@@ -58,7 +58,7 @@ public final class BigtableUtil {
       final String zoneId = extractAfterSlash(cluster.getLocation());
       clusterUtilities.setClusterSize(clusterId, zoneId, numberOfNodes);
     }
-    Thread.sleep(sleepDuration.getMillis());
+    Thread.sleep(sleepDuration.toMillis());
   }
 
   private static String extractAfterSlash(final String path) {

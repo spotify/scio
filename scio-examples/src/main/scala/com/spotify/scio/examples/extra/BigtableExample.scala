@@ -17,13 +17,14 @@
 
 package com.spotify.scio.examples.extra
 
+import java.time.Duration
+
 import com.google.cloud.bigtable.{dataflow => bt}
 import com.spotify.scio._
 import com.spotify.scio.bigtable._
 import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.values.SCollection
 import org.apache.hadoop.hbase.client.{Put, Result}
-import org.joda.time.Duration
 
 /*
  * Bigtable examples.

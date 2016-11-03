@@ -18,6 +18,8 @@
 package com.spotify.scio.bigquery
 
 import java.io.{File, FileInputStream, StringReader}
+import java.time.{Duration, Instant, ZoneOffset}
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 import java.util.regex.Pattern
 
@@ -41,8 +43,6 @@ import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import org.apache.commons.io.FileUtils
-import org.joda.time.format.{DateTimeFormat, PeriodFormatterBuilder}
-import org.joda.time.{Instant, Period}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.{Map => MMap}
@@ -109,12 +109,19 @@ class BigQueryClient private (private val projectId: String,
   private val logger: Logger = LoggerFactory.getLogger(classOf[BigQueryClient])
 
   private val TABLE_PREFIX = "scio_query"
-  private val TIME_FORMATTER = DateTimeFormat.forPattern("yyyyMMddHHmmss")
-  private val PERIOD_FORMATTER = new PeriodFormatterBuilder()
-    .appendHours().appendSuffix("h")
-    .appendMinutes().appendSuffix("m")
-    .appendSecondsWithOptionalMillis().appendSuffix("s")
-    .toFormatter
+  private val TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+    .withZone(ZoneOffset.UTC)
+  private val DURATION_FORMATTER = new DurationFormatter()
+
+  // There is no analog in Java8 yet
+  private class DurationFormatter() {
+    def format(duration: Duration): String = {
+      val h = duration.toHours
+      val m = duration.minusHours(h).toMinutes
+      val s = duration.minusHours(h).minusMinutes(m).getSeconds
+      "%dh%dm%ds".format(h, m, s)
+    }
+  }
 
   private val STAGING_DATASET_PREFIX = "scio_bigquery_staging_"
   private val STAGING_DATASET_TABLE_EXPIRATION_MS = 86400000L
@@ -343,7 +350,7 @@ class BigQueryClient private (private val projectId: String,
   }
 
   private def temporaryTable(location: String): TableReference = {
-    val now = Instant.now().toString(TIME_FORMATTER)
+    val now = TIME_FORMATTER.format(Instant.now())
     val tableId = TABLE_PREFIX + "_" + now + "_" + Random.nextInt(Int.MaxValue)
     new TableReference()
       .setProjectId(projectId)
@@ -377,9 +384,14 @@ class BigQueryClient private (private val projectId: String,
     logger.info(s"Query completed: jobId: $jobId")
     logger.info(s"Query: `$sqlQuery`")
 
-    val elapsed = PERIOD_FORMATTER.print(new Period(stats.getEndTime - stats.getCreationTime))
-    val pending = PERIOD_FORMATTER.print(new Period(stats.getStartTime - stats.getCreationTime))
-    val execution = PERIOD_FORMATTER.print(new Period(stats.getEndTime - stats.getStartTime))
+    def inst(epMil: Long): Instant = Instant.ofEpochMilli(epMil)
+
+    val elapsed = DURATION_FORMATTER.format(
+      Duration.between(inst(stats.getCreationTime), inst(stats.getEndTime)))
+    val pending = DURATION_FORMATTER.format(
+      Duration.between(inst(stats.getCreationTime), inst(stats.getStartTime)))
+    val execution = DURATION_FORMATTER.format(
+      Duration.between(inst(stats.getStartTime), inst(stats.getEndTime)))
     logger.info(s"Elapsed: $elapsed, pending: $pending, execution: $execution")
 
     val bytes = FileUtils.byteCountToDisplaySize(stats.getQuery.getTotalBytesProcessed)

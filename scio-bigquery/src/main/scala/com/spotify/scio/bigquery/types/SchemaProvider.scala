@@ -17,10 +17,11 @@
 
 package com.spotify.scio.bigquery.types
 
+import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery.types.MacroUtil._
-import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 import scala.collection.JavaConverters._
 import scala.reflect.runtime.universe._

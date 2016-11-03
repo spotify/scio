@@ -25,7 +25,7 @@ import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
 import org.apache.hadoop.hbase.client.{Mutation, Result, Scan}
-import org.joda.time.Duration
+import java.time.Duration
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -39,11 +39,10 @@ import scala.concurrent.Future
  */
 package object bigtable {
 
-  private val DEFAULT_SLEEP_DURATION = Duration.standardMinutes(20);
+  private val DEFAULT_SLEEP_DURATION = Duration.ofMinutes(20);
 
   /** Enhanced version of [[ScioContext]] with Bigtable methods. */
   implicit class BigtableScioContext(val self: ScioContext) extends AnyVal {
-
 
     /** Get an SCollection for a Bigtable table. */
     def bigTable(projectId: String,

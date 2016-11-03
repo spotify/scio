@@ -17,7 +17,8 @@
 
 package com.spotify.scio.bigquery
 
-import org.joda.time._
+import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+
 import org.scalatest.{FlatSpec, Matchers}
 
 class TimestampTest extends FlatSpec with Matchers {
@@ -29,7 +30,7 @@ class TimestampTest extends FlatSpec with Matchers {
 
   it should "round trip Long" in {
     val now = Instant.now()
-    Timestamp.parse(Timestamp(now.getMillis)) should equal (now)
+    Timestamp.parse(Timestamp(now.toEpochMilli)) should equal (now)
   }
 
   it should "parse different formats" in {
