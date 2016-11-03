@@ -51,24 +51,25 @@ val slf4jVersion = "1.7.22"
 
 val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework")
 
+// TODO: remove this
 val java8 = sys.props("java.version").startsWith("1.8.")
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
 
   scalaVersion       := "2.11.8",
-  crossScalaVersions := Seq("2.10.6", "2.11.8"),
-  scalacOptions                   ++= Seq("-target:jvm-1.7", "-deprecation", "-feature", "-unchecked"),
+  crossScalaVersions := Seq("2.11.8"),
+  scalacOptions                   ++= Seq("-target:jvm-1.8", "-deprecation", "-feature", "-unchecked"),
   scalacOptions in (Compile, doc) ++= Seq("-groups", "-skip-packages", "com.google"),
-  javacOptions                    ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked"),
-  javacOptions in (Compile, doc)  := Seq("-source", "1.7"),
+  javacOptions                    ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
+  javacOptions in (Compile, doc)  := Seq("-source", "1.8"),
 
   coverageExcludedPackages := Seq(
     "com\\.spotify\\.scio\\.examples\\..*",
     "com\\.spotify\\.scio\\.repl\\..*",
     "com\\.spotify\\.scio\\.util\\.MultiJoin"
   ).mkString(";"),
-  coverageHighlighting := (if (scalaBinaryVersion.value == "2.10") false else true),
+  coverageHighlighting := true,
 
   // Release settings
   releaseCrossBuild             := true,
@@ -184,7 +185,6 @@ lazy val root: Project = Project(
   commonSettings ++ siteSettings ++ noPublishSettings,
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
     -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples),
-  run := run in Compile in scioRepl dependsOn sbtReplScalaVersionCheck,
   aggregate in assembly := false
 ).aggregate(
   scioCore,
@@ -257,8 +257,7 @@ lazy val scioBigQuery: Project = Project(
     "org.scalatest" %% "scalatest" % scalaTestVersion % "test,it",
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.1" % "test",
     "me.lyh" %% "shapeless-datatype-core" % "0.1.2" % "test"
-  ),
-  parallelExecution in Test := (scalaBinaryVersion.value != "2.10")
+  )
 ).configs(IntegrationTest)
 
 lazy val scioBigtable: Project = Project(
@@ -317,7 +316,6 @@ lazy val scioSchemas: Project = Project(
   description := "Avro/Proto schemas for testing",
   // suppress warnings
   sources in doc in Compile := List(),
-  javacOptions := Seq("-source", "1.7", "-target", "1.7"),
   compileOrder := CompileOrder.JavaThenScala,
   PB.targets in Compile := Seq(
     PB.gens.java -> (sourceManaged in Compile).value,
@@ -336,12 +334,6 @@ lazy val scioExamples: Project = Project(
   ),
   addCompilerPlugin(paradiseDependency),
   sources in doc in Compile := List(),
-  javacOptions := {
-    if (java8)
-      Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked")
-    else
-      javacOptions.value
-  },
   unmanagedSourceDirectories in Compile ++= {
     if (java8) Seq(baseDirectory.value / "src/main/java8") else Nil
   }
@@ -352,13 +344,6 @@ lazy val scioExamples: Project = Project(
   scioHdfs,
   scioTest % "test"
 )
-
-val sbtReplScalaVersionCheck = Def.task {
-  if (scalaVersion.value.startsWith("2.10"))
-    sys.error("\n\n\tERROR: Can't start Scio REPL in SBT for scala 2.10.x. " +
-                "Upgrade to 2.11.x. or build REPL assembly jar.\n" +
-                "\tMore info https://github.com/spotify/scio/wiki/Scio-REPL\n\n")
-}
 
 lazy val scioRepl: Project = Project(
   "scio-repl",
@@ -373,13 +358,6 @@ lazy val scioRepl: Project = Project(
     "com.nrinaudo" %% "kantan.csv" % csvVersion,
     paradiseDependency
   ),
-  libraryDependencies ++= (
-    if (scalaBinaryVersion.value == "2.10")
-      List("org.scala-lang" % "jline" % scalaVersion.value)
-    else
-      Nil
-  ),
-  run := run in Compile dependsOn sbtReplScalaVersionCheck,
   assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
 ).dependsOn(
   scioCore,
