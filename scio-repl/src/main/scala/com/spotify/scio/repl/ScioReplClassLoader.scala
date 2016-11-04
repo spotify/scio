@@ -81,8 +81,7 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent:
   private[scio] def createReplCodeJar: String = {
     require(scioREPL != null, "scioREPL can't be null - set it first!")
 
-    // TODO: scala 2.11 : use repl.replOutput.dir
-    val virtualDirectory = scioREPL.virtualDirectory
+    val virtualDirectory = scioREPL.replOutput.dir
 
     val tempJar = new File(nextReplJarDir, replJarName)
 

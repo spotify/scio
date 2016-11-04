@@ -74,7 +74,7 @@ private[types] object TypeProvider {
       case List(q"case class $name(..$fields) { ..$body }") =>
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SType)}.schemaOf[$name]"
         val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${name.toString}, indent)"
-        val fnTrait = tq"${newTypeName(s"Function${fields.size}")}[..${fields.map(_.children.head)}, $name]"
+        val fnTrait = tq"${TypeName(s"Function${fields.size}")}[..${fields.map(_.children.head)}, $name]"
         val traits = if (fields.size <= 22) Seq(fnTrait) else Seq()
         val caseClassTree = q"""${caseClass(c)(name, fields, body)}"""
         (q"""$caseClassTree
@@ -112,7 +112,7 @@ private[types] object TypeProvider {
       case "RECORD" | "STRUCT" =>
         val name = NameProvider.getUniqueName(tfs.getName)
         val (fields, records) = toFields(tfs.getFields)
-        (q"${Ident(newTypeName(name))}", Seq(q"case class ${newTypeName(name)}(..$fields)") ++ records)
+        (q"${Ident(TypeName(name))}", Seq(q"case class ${TypeName(name)}(..$fields)") ++ records)
       case t => c.abort(c.enclosingPosition, s"type: $t not supported")
     }
 
