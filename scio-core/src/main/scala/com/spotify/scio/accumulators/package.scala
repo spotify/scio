@@ -26,9 +26,6 @@ import scala.reflect.ClassTag
 package object accumulators {
 
   /** Enhanced version of [[SCollection]] with accumulator helpers. */
-  // TODO: scala 2.11
-  // implicit class AccumulatorSCollection[T: ClassTag](private val self: SCollection[T]))
-  // extends AnyVal {
   implicit class AccumulatorSCollection[T: ClassTag](val self: SCollection[T]) {
 
     /** Accumulate elements with the given accumulators. */
