@@ -23,8 +23,7 @@ import scala.reflect.ClassTag
 
 package object repl {
 
-  // TODO: scala 2.11
-  // implicit class ReplSCollection[T: ClassTag](private val self: SCollection[T]) extends AnyVal {
+  // Cannot extend AnyVal due to ClassTag
   implicit class ReplSCollection[T: ClassTag](val self: SCollection[T]) {
 
     /** Convenience method to close the current [[ScioContext]] and collect elements. */
