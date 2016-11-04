@@ -67,8 +67,7 @@ import scala.reflect.ClassTag
 package object hdfs {
 
   /** Enhanced version of [[ScioContext]] with HDFS methods. */
-  // TODO: scala 2.11
-  // implicit class HdfsScioContext(private val sc: ScioContext) extends AnyVal {
+  // Cannot extend AnyVal due to logger
   implicit class HdfsScioContext(val self: ScioContext) {
     private val logger = LoggerFactory.getLogger(ScioContext.getClass)
 
@@ -180,8 +179,7 @@ package object hdfs {
   }
 
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with HDFS methods. */
-  // TODO: scala 2.11
-  // implicit class HdfsSCollection[T](private val self: SCollection[T]) extends AnyVal {
+  // Cannot extend AnyVal due to ClassTag
   implicit class HdfsSCollection[T: ClassTag](val self: SCollection[T]) {
 
     /** Save this SCollection as a text file on HDFS. */
@@ -238,9 +236,7 @@ package object hdfs {
   }
 
   /** Enhanced version of [[com.spotify.scio.io.Taps]] with HDFS methods. */
-  // TODO: scala 2.11
-  // implicit class HdfsTaps(private val self: Taps) extends AnyVal {
-  implicit class HdfsTaps(val self: Taps) {
+  implicit class HdfsTaps(val self: Taps) extends AnyVal {
 
     /** Get a `Future[Tap[T]]` for a text file on HDFS. */
     def hdfsTextFile(path: String): Future[Tap[String]] =
