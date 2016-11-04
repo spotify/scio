@@ -39,11 +39,11 @@ import scala.concurrent.Future
  */
 package object bigtable {
 
-  /** Enhanced version of [[ScioContext]] with Bigtable methods. */
-  // implicit class BigtableScioContext(private val self: ScioContext) extends AnyVal {
-  implicit class BigtableScioContext(val self: ScioContext) {
+  private val DEFAULT_SLEEP_DURATION = Duration.standardMinutes(20);
 
-    private val DEFAULT_SLEEP_DURATION = Duration.standardMinutes(20);
+  /** Enhanced version of [[ScioContext]] with Bigtable methods. */
+  implicit class BigtableScioContext(val self: ScioContext) extends AnyVal {
+
 
     /** Get an SCollection for a Bigtable table. */
     def bigTable(projectId: String,
@@ -94,8 +94,7 @@ package object bigtable {
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Bigtable methods.
    */
-  // implicit class BigtableSCollection[T](private val self: SCollection[T]) extends AnyVal {
-  implicit class BigtableSCollection[T](val self: SCollection[T]) {
+  implicit class BigtableSCollection[T](val self: SCollection[T]) extends AnyVal {
 
     /** Save this SCollection as a Bigtable table. Note that elements must be of type Mutation. */
     def saveAsBigtable(projectId: String,
@@ -136,9 +135,8 @@ package object bigtable {
    *
    * Keys are table IDs and values are collections of Mutations.
    */
-  // implicit class PairBigtableSCollection[T](private val self: SCollection[(String, Iterable[T])])
-  //   extends AnyVal {
-  implicit class PairBigtableSCollection[T](val self: SCollection[(String, Iterable[T])]) {
+  implicit class PairBigtableSCollection[T](val self: SCollection[(String, Iterable[T])])
+    extends AnyVal {
 
     /**
      * Save this SCollection as multiple Bigtable tables. Note that value elements must be of type
