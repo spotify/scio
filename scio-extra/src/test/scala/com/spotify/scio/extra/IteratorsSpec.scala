@@ -36,7 +36,7 @@ object IteratorsSpec extends Properties("Iterators") {
 
   def windowSize(xs: Seq[Long]): Long = xs.last - xs.head
 
-  implicit class PairsIterable[T](self: Iterable[T]) {
+  implicit class PairsIterable[T](val self: Iterable[T]) extends AnyVal {
     def pairs: Iterator[(T, T)] = self.sliding(2).filter(_.size == 2).map(s => (s.head, s.last))
   }
 
