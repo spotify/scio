@@ -70,10 +70,8 @@ trait Accumulator[T] extends Serializable {
 }
 
 /** Encapsulate context of one or more [[Accumulator]]s in an [[SCollectionWithAccumulator]]. */
-// TODO: scala 2.11
-// class AccumulatorContext private[scio] (private val m: Map[String, Aggregator[_, _]])
-//   extends AnyVal {
-class AccumulatorContext private[scio] (val m: Map[String, Aggregator[_, _]]) {
+class AccumulatorContext private[scio] (private val m: Map[String, Aggregator[_, _]])
+  extends AnyVal {
 
   /** Add a value to the given [[Accumulator]]. */
   def addValue[T](acc: Accumulator[T], value: T): AccumulatorContext = {

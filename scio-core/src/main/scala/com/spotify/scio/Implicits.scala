@@ -32,9 +32,7 @@ import scala.reflect.ClassTag
 
 private[scio] object Implicits {
 
-  // TODO: scala 2.11
-  // private[scio] implicit class RichCoderRegistry(val r: CoderRegistry) extends AnyVal {
-  private[scio] implicit class RichCoderRegistry(val r: CoderRegistry) {
+  private[scio] implicit class RichCoderRegistry(val r: CoderRegistry) extends AnyVal {
 
     def registerScalaCoders(): Unit = {
       // Missing Coders from DataFlowJavaSDK
