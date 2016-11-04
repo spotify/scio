@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -21,9 +21,7 @@ import java.io.BufferedReader
 
 import scala.tools.nsc.interpreter.{ILoop, JPrintWriter}
 
-/**
- * ILoop for ScioLoop
- */
+/** ILoop for ScioLoop. */
 class ILoopCompat(in: Option[BufferedReader], out: JPrintWriter)
   extends ILoop(in, out) {
   def addThunk(f: => Unit): Unit = intp.initialize(f)
