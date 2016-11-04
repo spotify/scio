@@ -145,7 +145,7 @@ lazy val noPublishSettings = Seq(
 
 lazy val assemblySettings = Seq(
   test in assembly := {},
-  mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
+  mergeStrategy in assembly ~= { old => {
     case s if s.endsWith(".properties") => MergeStrategy.filterDistinctLines
     case s if s.endsWith("pom.xml") => MergeStrategy.last
     case s if s.endsWith(".class") => MergeStrategy.last
