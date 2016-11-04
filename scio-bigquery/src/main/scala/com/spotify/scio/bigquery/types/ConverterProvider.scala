@@ -27,9 +27,7 @@ import scala.reflect.macros._
 
 private[types] object ConverterProvider {
 
-  // TODO: scala 2.11
-  // def fromTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(TableRow => T)] = {
-  def fromTableRowImpl[T: c.WeakTypeTag](c: Context): c.Expr[(TableRow => T)] = {
+  def fromTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(TableRow => T)] = {
     import c.universe._
     val tpe = implicitly[c.WeakTypeTag[T]].tpe
     val r = fromTableRowInternal(c)(tpe)
@@ -38,9 +36,7 @@ private[types] object ConverterProvider {
     c.Expr[(TableRow => T)](r)
   }
 
-  // TODO: scala 2.11
-  // def toTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(T => TableRow)] = {
-  def toTableRowImpl[T: c.WeakTypeTag](c: Context): c.Expr[(T => TableRow)] = {
+  def toTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(T => TableRow)] = {
     import c.universe._
     val tpe = implicitly[c.WeakTypeTag[T]].tpe
     val r = toTableRowInternal(c)(tpe)
@@ -51,9 +47,7 @@ private[types] object ConverterProvider {
 
   // scalastyle:off cyclomatic.complexity
   // scalastyle:off method.length
-  // TODO: scala 2.11
-  // private def fromTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
-  private def fromTableRowInternal(c: Context)(tpe: c.Type): c.Tree = {
+  private def fromTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
     import c.universe._
 
     // =======================================================================
@@ -83,9 +77,7 @@ private[types] object ConverterProvider {
           q"_root_.com.spotify.scio.bigquery.DateTime.parse($s)"
 
         case t if isCaseClass(c)(t) =>
-          // TODO: scala 2.11
-          // val fn = TermName("r" + t.typeSymbol.name)
-          val fn = newTermName("r" + t.typeSymbol.name)
+          val fn = TermName("r" + t.typeSymbol.name)
           q"""{
                 val $fn = $tree.asInstanceOf[java.util.Map[String, AnyRef]]
                 ${constructor(t, fn)}
@@ -120,9 +112,7 @@ private[types] object ConverterProvider {
     }
 
     def constructor(tpe: Type, fn: TermName): Tree = {
-      // TODO: scala 2.11
-      // val companion = tpe.typeSymbol.companion
-      val companion = tpe.typeSymbol.companionSymbol
+      val companion = tpe.typeSymbol.companion
       val gets = tpe.erasure match {
         case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
         case t => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
@@ -134,9 +124,7 @@ private[types] object ConverterProvider {
     // Entry point
     // =======================================================================
 
-    // TODO: scala 2.11
-    // val tn = TermName("r")
-    val tn = newTermName("r")
+    val tn = TermName("r")
     q"""(r: java.util.Map[String, AnyRef]) => {
           import _root_.scala.collection.JavaConverters._
           ${constructor(tpe, tn)}
@@ -148,9 +136,7 @@ private[types] object ConverterProvider {
 
   // scalastyle:off cyclomatic.complexity
   // scalastyle:off method.length
-  // TODO: scala 2.11
-  // private def toTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
-  private def toTableRowInternal(c: Context)(tpe: c.Type): c.Tree = {
+  private def toTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
     import c.universe._
 
     // =======================================================================
@@ -177,9 +163,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[LocalDateTime] => q"_root_.com.spotify.scio.bigquery.DateTime($tree)"
 
         case t if isCaseClass(c)(t) =>
-          // TODO: scala 2.11
-          // val fn = TermName("r" + t.typeSymbol.name)
-          val fn = newTermName("r" + t.typeSymbol.name)
+          val fn = TermName("r" + t.typeSymbol.name)
           q"""{
                 val $fn = $tree
                 ${constructor(t, fn)}
@@ -200,9 +184,7 @@ private[types] object ConverterProvider {
       val tpe = symbol.typeSignature
       val TypeRef(_, _, args) = tpe
 
-      // TODO: scala 2.11
-      // val tree = q"$fn.${TermName(name)}"
-      val tree = q"$fn.${newTermName(name)}"
+      val tree = q"$fn.${TermName(name)}"
       if (tpe.erasure =:= typeOf[Option[_]].erasure) {
         (name, option(tree, args.head))
       } else if (tpe.erasure =:= typeOf[List[_]].erasure) {
@@ -229,9 +211,7 @@ private[types] object ConverterProvider {
     // Entry point
     // =======================================================================
 
-    // TODO: scala 2.11
-    // val tn = TermName("r")
-    val tn = newTermName("r")
+    val tn = TermName("r")
     q"""(r: $tpe) => {
           import _root_.scala.collection.JavaConverters._
           ${constructor(tpe, tn)}

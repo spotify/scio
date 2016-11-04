@@ -36,9 +36,7 @@ private[types] object TypeProvider {
   private val logger = LoggerFactory.getLogger(TypeProvider.getClass)
   private lazy val bigquery: BigQueryClient = BigQueryClient.defaultInstance()
 
-  // TODO: scala 2.11
-  // def tableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-  def tableImpl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  def tableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
     val args = extractStrings(c, "Missing table specification")
@@ -50,17 +48,13 @@ private[types] object TypeProvider {
     schemaToType(c)(schema, annottees, traits, overrides)
   }
 
-  // TODO: scala 2.11
-  // def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-  def schemaImpl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     val schemaString = extractStrings(c, "Missing schema").head
     val schema = BigQueryUtil.parseSchema(schemaString)
     schemaToType(c)(schema, annottees, Nil, Nil)
   }
 
-  // TODO: scala 2.11
-  // def queryImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-  def queryImpl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  def queryImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
     val args = extractStrings(c, "Missing query")
@@ -72,9 +66,7 @@ private[types] object TypeProvider {
     schemaToType(c)(schema, annottees, traits, overrides)
   }
 
-  // TODO: scala 2.11
-  // def toTableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-  def toTableImpl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  def toTableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
     checkMacroEnclosed(c)
 
@@ -82,7 +74,7 @@ private[types] object TypeProvider {
       case List(q"case class $name(..$fields) { ..$body }") =>
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SType)}.schemaOf[$name]"
         val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${name.toString}, indent)"
-        val fnTrait = tq"${newTypeName(s"Function${fields.size}")}[..${fields.map(_.children.head)}, $name]"
+        val fnTrait = tq"${TypeName(s"Function${fields.size}")}[..${fields.map(_.children.head)}, $name]"
         val traits = if (fields.size <= 22) Seq(fnTrait) else Seq()
         val caseClassTree = q"""${caseClass(c)(name, fields, body)}"""
         (q"""$caseClassTree
@@ -100,9 +92,7 @@ private[types] object TypeProvider {
 
   // scalastyle:off cyclomatic.complexity
   // scalastyle:off method.length
-  // TODO: scala 2.11
-  // private def schemaToType(c: blackbox.Context)
-  private def schemaToType(c: Context)
+  private def schemaToType(c: blackbox.Context)
                           (schema: TableSchema, annottees: Seq[c.Expr[Any]],
                            traits: Seq[c.Tree], overrides: Seq[c.Tree]): c.Expr[Any] = {
     import c.universe._
@@ -122,7 +112,7 @@ private[types] object TypeProvider {
       case "RECORD" | "STRUCT" =>
         val name = NameProvider.getUniqueName(tfs.getName)
         val (fields, records) = toFields(tfs.getFields)
-        (q"${Ident(newTypeName(name))}", Seq(q"case class ${newTypeName(name)}(..$fields)") ++ records)
+        (q"${Ident(TypeName(name))}", Seq(q"case class ${TypeName(name)}(..$fields)") ++ records)
       case t => c.abort(c.enclosingPosition, s"type: $t not supported")
     }
 
@@ -141,9 +131,7 @@ private[types] object TypeProvider {
     // Returns: ("fieldName: fieldType", nested case class definitions)
     def toField(tfs: TableFieldSchema): (Tree, Seq[Tree]) = {
       val (ft, r) = getFieldType(tfs)
-      // TODO: scala 2.11
-      // (q"${TermName(tfs.getName)}: $ft", r)
-      (q"${newTermName(tfs.getName)}: $ft", r)
+      (q"${TermName(tfs.getName)}: $ft", r)
     }
 
     def toFields(fields: JList[TableFieldSchema]): (Seq[Tree], Seq[Tree]) = {
@@ -176,18 +164,14 @@ private[types] object TypeProvider {
   // scalastyle:on method.length
 
   /** Extract string from annotation. */
-  // TODO: scala 2.11
-  // private def extractStrings(c: blackbox.Context, errorMessage: String): List[String] = {
-  private def extractStrings(c: Context, errorMessage: String): List[String] = {
+  private def extractStrings(c: blackbox.Context, errorMessage: String): List[String] = {
     import c.universe._
 
     def str(tree: c.Tree) = tree match {
       // "string literal"
       case Literal(Constant(s: String)) => s
       // "string literal".stripMargin
-      // TODO: scala 2.11
-      //  case Select(Literal(Constant(s: String)), TermName("stripMargin")) => s.stripMargin
-      case Select(Literal(Constant(s: String)), m: TermName) if m.toString == "stripMargin" => s.stripMargin
+      case Select(Literal(Constant(s: String)), TermName("stripMargin")) => s.stripMargin
       case _ => c.abort(c.enclosingPosition, errorMessage)
     }
 
@@ -205,38 +189,28 @@ private[types] object TypeProvider {
   private def formatString(xs: List[String]): String = if (xs.tail.isEmpty) xs.head else xs.head.format(xs.tail: _*)
 
   /** Generate a case class. */
-  // TODO: scala 2.11
-  // private def caseClass(c: blackbox.Context)
-  private def caseClass(c: Context)
+  private def caseClass(c: blackbox.Context)
                        (name: c.TypeName, fields: Seq[c.Tree], body: Seq[c.Tree]): c.Tree = {
     import c.universe._
     q"case class $name(..$fields) extends ${p(c, SType)}.HasAnnotation { ..$body }"
   }
   /** Generate a companion object. */
-  // TODO: scala 2.11
-  // private def companion(c: blackbox.Context)
-  private def companion(c: Context)
+  private def companion(c: blackbox.Context)
                        (name: c.TypeName, traits: Seq[c.Tree], methods: Seq[c.Tree], numFields: Int): c.Tree = {
     import c.universe._
 
     val overrideFlag = if (traits.exists(_.toString().contains("Function"))) Flag.OVERRIDE else NoFlags
-    // TODO: scala 2.11
-    // val tupled = if (numFields > 1 && numFields <= 22) Seq(q"$overrideFlag def tupled = (${TermName(name.toString)}.apply _).tupled") else Nil
-    val tupled = if (numFields > 1 && numFields <= 22) Seq(q"$overrideFlag def tupled = (${newTermName(name.toString)}.apply _).tupled") else Nil
+    val tupled = if (numFields > 1 && numFields <= 22) Seq(q"$overrideFlag def tupled = (${TermName(name.toString)}.apply _).tupled") else Nil
 
     val m = converters(c)(name) ++ tupled ++ methods
-    // TODO: scala 2.11
-    // val tn = TermName(name.toString)
-    val tn = newTermName(name.toString)
+    val tn = TermName(name.toString)
     q"""object $tn extends ${p(c, SType)}.HasSchema[$name] with ..$traits {
           ..$m
         }
     """
   }
   /** Generate override converter methods for HasSchema[T]. */
-  // TODO: scala 2.11
-  // private def converters(c: blackbox.Context)(name: c.TypeName): Seq[c.Tree] = {
-  private def converters(c: Context)(name: c.TypeName): Seq[c.Tree] = {
+  private def converters(c: blackbox.Context)(name: c.TypeName): Seq[c.Tree] = {
     import c.universe._
     List(
       q"override def fromTableRow: (${p(c, GModel)}.TableRow => $name) = ${p(c, SType)}.fromTableRow[$name]",
@@ -244,14 +218,10 @@ private[types] object TypeProvider {
   }
 
   /** Enforce that the macro is not enclosed by a package, but a class or object instead. */
-  private def checkMacroEnclosed(c: Context): Unit = {
-    // TODO: scala 2.11
-    //if (!c.internal.enclosingOwner.isClass) {
-    // c.abort(c.enclosingPosition,
-    //  "Invalid macro application - must be applied within class/object.")
-    // }
-    if (c.enclosingClass.isEmpty) {
-      c.abort(c.enclosingPosition, s"@BigQueryType declaration must be inside a class or object.")
+  private def checkMacroEnclosed(c: blackbox.Context): Unit = {
+    if (!c.internal.enclosingOwner.isClass) {
+      c.abort(c.enclosingPosition,
+      s"@BigQueryType declaration must be inside a class or object.")
     }
   }
 
@@ -274,7 +244,7 @@ private[types] object TypeProvider {
     }
   }
 
-  private def pShowCode(c: Context)(records: Seq[c.Tree], caseClass: c.Tree): Seq[String] = {
+  private def pShowCode(c: blackbox.Context)(records: Seq[c.Tree], caseClass: c.Tree): Seq[String] = {
     // print only records and case class and do it nicely so that we can just inject those
     // in scala plugin.
     import c.universe._
@@ -294,19 +264,10 @@ private[types] object TypeProvider {
       .hash().toString
   }
 
-  private def dumpCodeForScalaPlugin(c: Context)(records: Seq[c.universe.Tree],
+  private def dumpCodeForScalaPlugin(c: blackbox.Context)(records: Seq[c.universe.Tree],
                                                  caseClassTree: c.universe.Tree,
                                                  name: String): Unit = {
-    // TODO: scala 2.11
-    // val owner = c.internal.enclosingOwner.fullName
-    import  c.universe._
-    val owner = c.enclosingClass.collect {
-      case m: ModuleDef => m.symbol.fullName
-      case c: ClassDef => c.symbol.fullName
-    }.headOption.getOrElse {
-      c.abort(c.enclosingPosition,
-        "Invalid macro application - must be applied within class/object.")
-    }
+    val owner = c.internal.enclosingOwner.fullName
     val srcFile = c.macroApplication.pos.source.path
     val hash = genHashForMacro(owner, srcFile)
 

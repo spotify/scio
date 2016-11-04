@@ -45,9 +45,7 @@ package object experimental {
   type description = com.spotify.scio.bigquery.types.description
 
   /** Enhanced version of [[ScioContext]] with experimental features. */
-  // TODO: scala 2.11
-  // implicit class ExperimentalScioContext(private val self: ScioContext) extends AnyVal {
-  implicit class ExperimentalScioContext(val self: ScioContext) {
+  implicit class ExperimentalScioContext(private val self: ScioContext) extends AnyVal {
 
     /**
      * Get a typed SCollection for a BigQuery SELECT query or table.
@@ -102,9 +100,7 @@ package object experimental {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with
    * experimental features.
    */
-  // TODO: scala 2.11
-  // implicit class ExperimentalSCollection[T](private val self: SCollection[T]) extends AnyVal {
-  implicit class ExperimentalSCollection[T](val self: SCollection[T]) {
+  implicit class ExperimentalSCollection[T](private val self: SCollection[T]) extends AnyVal {
 
     /**
      * Save this SCollection as a BigQuery table. Note that element type `T` must be a case class

@@ -17,8 +17,6 @@
 
 package com.spotify.scio.bigquery.types
 
-// TODO: scala 2.11
-// import scala.reflect.macros.blackbox
 import org.slf4j.LoggerFactory
 
 import scala.reflect.macros._
@@ -39,21 +37,17 @@ private[types] object MacroUtil {
 
   // Case class helpers for macros
 
-  // TODO: scala 2.11
-  // def isCaseClass(c: blackbox.Context)(t: c.Type): Boolean = {
-  def isCaseClass(c: Context)(t: c.Type): Boolean = {
+  def isCaseClass(c: blackbox.Context)(t: c.Type): Boolean = {
     import c.universe._
     !t.toString.startsWith("scala.") &&
       List(typeOf[Product], typeOf[Serializable], typeOf[Equals])
         .forall(b => t.baseClasses.contains(b.typeSymbol))
   }
-  // TODO: scala 2.11
-  // def isField(c: blackbox.Context)(s: c.Symbol): Boolean =
-  //   !s.isSynthetic && s.isTerm && s.isPrivate
-  // def getFields(c: blackbox.Context)(t: c.Type): Iterable[c.Symbol] =
-  //   t.decls.filter(isField(c))
-  def isField(c: Context)(s: c.Symbol): Boolean = !s.isSynthetic && s.isTerm && s.isPrivate
-  def getFields(c: Context)(t: c.Type): Iterable[c.Symbol] = t.declarations.filter(isField(c))
+
+  def isField(c: blackbox.Context)(s: c.Symbol): Boolean =
+    !s.isSynthetic && s.isTerm && s.isPrivate
+  def getFields(c: blackbox.Context)(t: c.Type): Iterable[c.Symbol] =
+    t.decls.filter(isField(c))
 
   // Debugging
 
@@ -71,8 +65,6 @@ private[types] object MacroUtil {
   val SType = s"$SBQ.types.BigQueryType"
   val SUtil = s"$SBQ.BigQueryUtil"
 
-  // TODO: scala 2.11
-  // def p(c: blackbox.Context, code: String): c.Tree = c.parse(code)
-  def p(c: Context, code: String): c.Tree = c.parse(code)
+  def p(c: blackbox.Context, code: String): c.Tree = c.parse(code)
 
 }

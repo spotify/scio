@@ -31,9 +31,7 @@ class KryoRegistrar extends StaticAnnotation {
 }
 
 private object KryoRegistrarMacro {
-  // TODO: scala 2.11
-  // def impl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-  def impl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  def impl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
     val traitT = tq"_root_.com.spotify.scio.coders.AnnotatedKryoRegistrar"
