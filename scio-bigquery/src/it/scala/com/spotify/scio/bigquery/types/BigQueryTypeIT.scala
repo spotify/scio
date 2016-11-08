@@ -94,11 +94,10 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
 
   "fromTable" should "work" in {
     val bqt = BigQueryType[FromTableT]
-    val tableRef = BigQueryIO.parseTableSpec("bigquery-public-data:samples.shakespeare")
     bqt.isQuery should be (false)
     bqt.isTable should be (true)
     bqt.query should be (None)
-    bqt.table should be (Some(tableRef))
+    bqt.table should be (Some("bigquery-public-data:samples.shakespeare"))
     val fields = bqt.schema.getFields.asScala
     fields.size should be (4)
     fields.map(_.getName) should equal (Seq("word", "word_count", "corpus", "corpus_date"))
