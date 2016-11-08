@@ -56,7 +56,7 @@ object BigQueryType {
    */
   trait HasTable {
     /** Table for case class schema. */
-    def table: TableReference
+    def table: String
   }
 
   /**
@@ -227,7 +227,7 @@ class BigQueryType[T: TypeTag] {
   def isQuery: Boolean = classOf[BigQueryType.HasQuery] isAssignableFrom instance.getClass
 
   /** Table reference from the annotation. */
-  def table: Option[TableReference] = Try(getField("table").asInstanceOf[TableReference]).toOption
+  def table: Option[String] = Try(getField("table").asInstanceOf[String]).toOption
 
   /** Query from the annotation. */
   def query: Option[String] = Try(getField("query").asInstanceOf[String]).toOption
