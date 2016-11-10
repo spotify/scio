@@ -90,23 +90,13 @@ public class HDFSFileSink<T, K, V> extends Sink<T> {
 
   public static <T> HDFSFileSink<T, NullWritable, Text> toText(String path) {
     SerializableFunction<T, KV<NullWritable, Text>> outputConverter =
-        new SerializableFunction<T, KV<NullWritable, Text>>() {
-          @Override
-          public KV<NullWritable, Text> apply(T input) {
-            return KV.of(NullWritable.get(), new Text(input.toString()));
-          }
-        };
+        (SerializableFunction<T, KV<NullWritable, Text>>) input -> KV.of(NullWritable.get(), new Text(input.toString()));
     return to(path, TextOutputFormat.class, outputConverter);
   }
 
   public static <T> HDFSFileSink<T, AvroKey<T>, NullWritable> toAvro(String path) {
     SerializableFunction<T, KV<AvroKey<T>, NullWritable>> outputConverter =
-        new SerializableFunction<T, KV<AvroKey<T>, NullWritable>>() {
-          @Override
-          public KV<AvroKey<T>, NullWritable> apply(T input) {
-            return KV.of(new AvroKey<>(input), NullWritable.get());
-          }
-        };
+        (SerializableFunction<T, KV<AvroKey<T>, NullWritable>>) input -> KV.of(new AvroKey<>(input), NullWritable.get());
     return to(path, AvroKeyOutputFormat.class, outputConverter);
   }
 
@@ -221,12 +211,9 @@ public class HDFSFileSink<T, K, V> extends Sink<T> {
 
       // get actual output shards
       Set<String> actual = Sets.newHashSet();
-      FileStatus[] statuses = fs.listStatus(new Path(path), new PathFilter() {
-        @Override
-        public boolean accept(Path path) {
-          String name = path.getName();
-          return !name.startsWith("_") && !name.startsWith(".");
-        }
+      FileStatus[] statuses = fs.listStatus(new Path(path), path1 -> {
+        String name = path1.getName();
+        return !name.startsWith("_") && !name.startsWith(".");
       });
 
       // get expected output shards

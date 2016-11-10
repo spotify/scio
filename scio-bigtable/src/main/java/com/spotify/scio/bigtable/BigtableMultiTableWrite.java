@@ -94,13 +94,9 @@ public class BigtableMultiTableWrite {
     }
 
     protected BufferedMutator.ExceptionListener createExceptionListener(final Context context) {
-      return new BufferedMutator.ExceptionListener() {
-        @Override
-        public void onException(RetriesExhaustedWithDetailsException exception,
-                                BufferedMutator mutator) throws RetriesExhaustedWithDetailsException {
-          logExceptions(context, exception);
-          throw exception;
-        }
+      return (exception, mutator) -> {
+        logExceptions(context, exception);
+        throw exception;
       };
     }
 

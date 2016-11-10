@@ -43,11 +43,6 @@ public class ChannelPoolCreator {
   }
 
   public static ChannelPool createPool(final String host) throws IOException {
-    return new ChannelPool(interceptors, new ChannelPool.ChannelFactory() {
-      @Override
-      public ManagedChannel create() throws IOException {
-        return BigtableSession.createNettyChannel(host, options);
-      }
-    });
+    return new ChannelPool(interceptors, () -> BigtableSession.createNettyChannel(host, options));
   }
 }

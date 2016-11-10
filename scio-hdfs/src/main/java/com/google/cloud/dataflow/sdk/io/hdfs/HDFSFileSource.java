@@ -103,24 +103,14 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
        Class<V> valueClass) {
     KvCoder<K, V> coder = KvCoder.of(getDefaultCoder(keyClass), getDefaultCoder(valueClass));
     SerializableFunction<KV<K, V>, KV<K, V>> inputConverter =
-        new SerializableFunction<KV<K, V>, KV<K, V>>() {
-          @Override
-          public KV<K, V> apply(KV<K, V> input) {
-            return input;
-          }
-        };
+        (SerializableFunction<KV<K, V>, KV<K, V>>) input -> input;
     return new HDFSFileSource<>(filepattern, formatClass, coder, inputConverter, null, null, true);
   }
 
   public static HDFSFileSource<String, LongWritable, Text>
   fromText(String filepattern) {
     SerializableFunction<KV<LongWritable, Text>, String> inputConverter =
-        new SerializableFunction<KV<LongWritable, Text>, String>() {
-      @Override
-      public String apply(KV<LongWritable, Text> input) {
-        return input.getValue().toString();
-      }
-    };
+        (SerializableFunction<KV<LongWritable, Text>, String>) input -> input.getValue().toString();
     return from(filepattern, TextInputFormat.class, StringUtf8Coder.of(), inputConverter);
   }
 
@@ -128,14 +118,11 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
   fromAvro(String filepattern, final AvroCoder<T> coder) {
     Class<AvroKeyInputFormat<T>> formatClass = castClass(AvroKeyInputFormat.class);
     SerializableFunction<KV<AvroKey<T>, NullWritable>, T> inputConverter =
-        new SerializableFunction<KV<AvroKey<T>, NullWritable>, T>() {
-          @Override
-          public T apply(KV<AvroKey<T>, NullWritable> input) {
-            try {
-              return CoderUtils.clone(coder, input.getKey().datum());
-            } catch (CoderException e) {
-              throw new RuntimeException(e);
-            }
+        (SerializableFunction<KV<AvroKey<T>, NullWritable>, T>) input -> {
+          try {
+            return CoderUtils.clone(coder, input.getKey().datum());
+          } catch (CoderException e) {
+            throw new RuntimeException(e);
           }
         };
     Configuration conf = new Configuration();
@@ -200,14 +187,11 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
       PipelineOptions options) throws Exception {
     if (serializableSplit == null) {
       return Lists.transform(computeSplits(desiredBundleSizeBytes),
-          new Function<InputSplit, BoundedSource<T>>() {
-            @Override
-            public BoundedSource<T> apply(@Nullable InputSplit inputSplit) {
-              SerializableSplit serializableSplit = new SerializableSplit(inputSplit);
-              return new HDFSFileSource<>(
-                  filepattern, formatClass, coder, inputConverter,
-                  serializableConfiguration, serializableSplit, validate);
-            }
+          (Function<InputSplit, BoundedSource<T>>) inputSplit -> {
+            SerializableSplit serializableSplit1 = new SerializableSplit(inputSplit);
+            return new HDFSFileSource<>(
+                filepattern, formatClass, coder, inputConverter,
+                serializableConfiguration, serializableSplit1, validate);
           });
     } else {
       return ImmutableList.of(this);
