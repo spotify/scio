@@ -145,7 +145,7 @@ lazy val noPublishSettings = Seq(
 
 lazy val assemblySettings = Seq(
   test in assembly := {},
-  mergeStrategy in assembly ~= { old => {
+  assemblyMergeStrategy in assembly ~= { old => {
     case s if s.endsWith(".properties") => MergeStrategy.filterDistinctLines
     case s if s.endsWith("pom.xml") => MergeStrategy.last
     case s if s.endsWith(".class") => MergeStrategy.last
@@ -175,7 +175,7 @@ lazy val root: Project = Project(
   commonSettings ++ siteSettings ++ noPublishSettings,
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
     -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples),
-  run <<= run in Compile in scioRepl dependsOn sbtReplScalaVersionCheck,
+  run := run in Compile in scioRepl dependsOn sbtReplScalaVersionCheck,
   aggregate in assembly := false
 ).aggregate(
   scioCore,
@@ -244,7 +244,7 @@ lazy val scioBigQuery: Project = Project(
     "org.scalatest" %% "scalatest" % scalaTestVersion % "test,it",
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.1" % "test"
   ),
-  libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
+  libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
   libraryDependencies ++= (
     if (scalaBinaryVersion.value == "2.10")
       List("org.scalamacros" %% "quasiquotes" % scalaMacrosVersion cross CrossVersion.binary)
@@ -376,7 +376,7 @@ lazy val scioRepl: Project = Project(
     else
       Nil
   ),
-  run <<= run in Compile dependsOn sbtReplScalaVersionCheck,
+  run := run in Compile dependsOn sbtReplScalaVersionCheck,
   assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
 ).dependsOn(
   scioCore,
@@ -435,8 +435,8 @@ lazy val siteSettings = site.settings ++ ghpages.settings ++ unidocSettings ++ S
     }
   },
   // Insert fixJavaDocLinksTask between ScalaUnidoc.doc and SbtSite.makeSite
-  fixJavaDocLinksTask <<= fixJavaDocLinksTask dependsOn (doc in ScalaUnidoc),
-  makeSite <<= makeSite dependsOn fixJavaDocLinksTask
+  fixJavaDocLinksTask := fixJavaDocLinksTask dependsOn (doc in ScalaUnidoc),
+  makeSite := (makeSite dependsOn fixJavaDocLinksTask).value
 )
 
 // =======================================================================
