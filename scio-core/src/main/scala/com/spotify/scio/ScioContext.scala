@@ -149,7 +149,14 @@ class ScioContext private[scio] (val options: PipelineOptions,
   // Set default name if no app name specified by user
   Try(optionsAs[ApplicationNameOptions]).foreach { o =>
     if (o.getAppName == null || o.getAppName.startsWith("ScioContext$")) {
-      this.setName(CallSites.getAppName)
+      this.setAppName(CallSites.getAppName)
+    }
+  }
+
+  // Set default Dataflow job name if none specified by user
+  Try(optionsAs[DataflowPipelineOptions]).foreach { o =>
+    if (o.getJobName == null) {
+      this.setJobName(o.getAppName) // appName already set
     }
   }
 
@@ -285,13 +292,19 @@ class ScioContext private[scio] (val options: PipelineOptions,
   // States
   // =======================================================================
 
-  /** Set name for the context. */
-  def setName(name: String): Unit = {
+  /** Set application name for the context. */
+  def setAppName(name: String): Unit = {
     if (_pipeline != null) {
-      throw new RuntimeException("Cannot set name once pipeline is initialized")
+      throw new RuntimeException("Cannot set application name once pipeline is initialized")
     }
-    // override app name and job name
     Try(optionsAs[ApplicationNameOptions]).foreach(_.setAppName(name))
+  }
+
+  /** Set job name for the context (Dataflow only) */
+  def setJobName(name: String): Unit = {
+    if (_pipeline != null) {
+      throw new RuntimeException("Cannot set job name once pipeline is initialized")
+    }
     Try(optionsAs[DataflowPipelineOptions])
       .foreach(_.setJobName(new DataflowPipelineOptions.JobNameFactory().create(options)))
   }
