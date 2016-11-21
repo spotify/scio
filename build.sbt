@@ -251,6 +251,7 @@ lazy val scioBigQuery: Project = Project(
     else
       Nil
   ),
+  parallelExecution in Test := (scalaBinaryVersion.value != "2.10"),
   addCompilerPlugin(paradiseDependency)
 ).configs(IntegrationTest)
 
