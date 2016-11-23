@@ -149,7 +149,7 @@ class AccumulatorTest extends PipelineSpec {
     r.saveMetrics(metricsFile.toString)
 
     val mapper = ScioUtil.getScalaJsonMapper
-    import MetricSchema._
+    import com.spotify.scio.metrics._
 
     val metrics = mapper.readValue(metricsFile, classOf[Metrics])
 
