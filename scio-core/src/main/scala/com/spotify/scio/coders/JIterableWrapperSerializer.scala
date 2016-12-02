@@ -33,10 +33,8 @@ private class JIterableWrapperSerializer[T] extends KSerializer[Iterable[T]] {
     while (i.hasNext) {
       out.writeBoolean(true)
       kser.writeClassAndObject(out, i.next())
-      out.flush()
     }
     out.writeBoolean(false)
-    out.flush()
   }
 
   override def read(kser: Kryo, in: Input, cls: Class[Iterable[T]]): Iterable[T] = {

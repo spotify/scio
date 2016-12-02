@@ -51,7 +51,6 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
 
       k.forClass(new KVSerializer)
       // TODO:
-      // InstantCoder
       // TimestampedValueCoder
 
       k
@@ -71,7 +70,6 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
       val output = new Output(s)
       kryo.get().writeClassAndObject(output, value)
       output.flush()
-      s.close()
 
       VarInt.encode(s.size(), outStream)
       outStream.write(s.toByteArray)
