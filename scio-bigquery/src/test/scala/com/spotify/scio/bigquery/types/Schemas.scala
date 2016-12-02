@@ -59,4 +59,5 @@ object Schemas {
   case class RepeatedNested(required: List[Required],
                             optional: List[Optional],
                             repeated: List[Repeated])
+
 }
