@@ -77,4 +77,32 @@ class SchemaProviderTest extends FlatSpec with Matchers {
     SchemaProvider.schemaOf[RepeatedNested] should equal (parseSchema(recordFields("REPEATED")))
   }
 
+  case class User(@description("user name") name: String, @description("user age") age: Int)
+  case class Account(@description("account user") user: User,
+                     @description("in USD") balance: Double)
+
+  val userFields =
+    s"""
+       |"fields": [
+       |  {"mode": "REQUIRED", "name": "name", "type": "STRING", "description": "user name"},
+       |  {"mode": "REQUIRED", "name": "age", "type": "INTEGER", "description": "user age"}
+       |]
+     """.stripMargin
+  val userSchema = s"{$userFields}"
+  val accountSchema =
+    s"""
+       |{
+       |  "fields": [
+       |    {"mode": "REQUIRED", "name": "user", "type": "RECORD", "description": "account user",
+       |     $userFields},
+       |    {"mode": "REQUIRED", "name": "balance", "type": "FLOAT", "description": "in USD"}
+       |  ]
+       |}
+       |""".stripMargin
+
+  it should "support description" in {
+    SchemaProvider.schemaOf[User] should equal (parseSchema(userSchema))
+    SchemaProvider.schemaOf[Account] should equal (parseSchema(accountSchema))
+  }
+
 }

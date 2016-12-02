@@ -38,12 +38,13 @@ private[types] object SchemaProvider {
     r
   }
 
-  private def field(mode: String, name: String, tpe: String,
+  private def field(mode: String, name: String, tpe: String, desc: Option[String],
                     nested: Iterable[TableFieldSchema]): TableFieldSchema = {
     val s = new TableFieldSchema().setMode(mode).setName(name).setType(tpe)
     if (nested.nonEmpty) {
       s.setFields(nested.toList.asJava)
     }
+    desc.foreach(s.setDescription)
     s
   }
 
@@ -69,7 +70,8 @@ private[types] object SchemaProvider {
   }
   // scalastyle:on cyclomatic.complexity
 
-  private def toField(symbol: Symbol): TableFieldSchema = {
+  private def toField(f: (Symbol, Option[String])): TableFieldSchema = {
+    val (symbol, desc) = f
     // TODO: figure out why there's trailing spaces
     val name = symbol.name.toString.trim
     val tpe = symbol.typeSignature
@@ -81,9 +83,36 @@ private[types] object SchemaProvider {
       case _ => ("REQUIRED", tpe)
     }
     val (tpeParam, nestedParam) = rawType(valType)
-    field(mode, name, tpeParam, nestedParam)
+    field(mode, name, tpeParam, desc, nestedParam)
   }
 
   private def toFields(t: Type): Iterable[TableFieldSchema] = getFields(t).map(toField)
+
+  private def getFields(t: Type): Iterable[(Symbol, Option[String])] =
+    t.declarations.filter(isField) zip fieldDescs(t)
+
+  private def fieldDescs(t: Type): Iterable[Option[String]] = {
+    val tpe = "com.spotify.scio.bigquery.types.description"
+    // TODO: scala 2.11
+    /*
+    t.typeSymbol.asClass.primaryConstructor.typeSignature.paramLists.head.map {
+      _.annotations
+        .find(_.tree.tpe.toString == tpe)
+        .map { a =>
+          val q"new $t($v)" = a.tree
+          val Literal(Constant(s)) = v
+          s.toString
+        }
+    }
+    */
+    t.declaration(nme.CONSTRUCTOR).asMethod.paramss.head.map {
+      _.annotations
+        .find(_.tpe.toString == tpe)
+        .map { a =>
+          val Literal(Constant(s)) = a.scalaArgs.head
+          s.toString
+        }
+    }
+  }
 
 }
