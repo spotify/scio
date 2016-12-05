@@ -24,7 +24,7 @@ import sbtunidoc.Plugin.UnidocKeys._
 import com.trueaccord.scalapb.{ScalaPbPlugin => PB}
 
 val beamVersion = "0.2.0-incubating"
-val algebirdVersion = "0.12.2"
+val algebirdVersion = "0.12.3"
 val autoServiceVersion = "1.0-rc2"
 val avroVersion = "1.7.7"
 val bigQueryVersion = "v2-rev317-1.22.0"
