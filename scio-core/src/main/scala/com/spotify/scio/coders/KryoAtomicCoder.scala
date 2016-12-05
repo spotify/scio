@@ -22,6 +22,7 @@ import java.io.{ByteArrayOutputStream, IOException, InputStream, OutputStream}
 import com.google.common.io.ByteStreams
 import com.google.protobuf.Message
 import com.twitter.chill._
+import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
@@ -52,6 +53,9 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
       k.forClass(new KVSerializer)
       // TODO:
       // TimestampedValueCoder
+
+      val algebirdRegistrar = new AlgebirdRegistrar()
+      algebirdRegistrar(k)
 
       k
     }
