@@ -23,14 +23,53 @@ import com.google.cloud.dataflow.sdk.coders.Coder.Context
 import com.google.cloud.dataflow.sdk.coders._
 import com.google.cloud.dataflow.sdk.util.VarInt
 import com.google.common.io.ByteStreams
+import com.google.common.reflect.ClassPath
 import com.google.protobuf.Message
 import com.twitter.chill._
 import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
+import org.slf4j.LoggerFactory
 
+import scala.collection.JavaConverters._
 import scala.collection.convert.Wrappers.JIterableWrapper
+
+@KryoRegistrar
+private class AlgebirdKryoRegistrar extends IKryoRegistrar {
+  override def apply(k: Kryo): Unit = new AlgebirdRegistrar()(k)
+}
+
+private object KryoRegistrarLoader {
+
+  private val logger = LoggerFactory.getLogger("KryoRegistrarLoader")
+
+  def load(k: Kryo): Unit = {
+    logger.debug("Loading KryoRegistrars: " + registrars.mkString(", "))
+    registrars.foreach(_(k))
+  }
+
+  private val registrars: Seq[IKryoRegistrar] = {
+    logger.debug("Initializing KryoRegistrars")
+    val classLoader = Thread.currentThread().getContextClassLoader
+    ClassPath.from(classLoader).getAllClasses.asScala.toSeq
+      .filter(_.getName.endsWith("KryoRegistrar"))
+      .flatMap { clsInfo =>
+        val optCls: Option[IKryoRegistrar] = try {
+          val cls = clsInfo.load()
+          if (isKryoRegistrar(cls)) Some(cls.newInstance().asInstanceOf[IKryoRegistrar]) else None
+        } catch {
+          case _: Throwable => None
+        }
+        optCls
+      }
+  }
+
+  private def isKryoRegistrar(cls: Class[_]) =
+    (classOf[IKryoRegistrar] isAssignableFrom cls) &&
+      cls.getDeclaredAnnotations.exists(_.annotationType() == classOf[KryoRegistrar])
+
+}
 
 private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
 
@@ -54,8 +93,7 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
       // TODO:
       // TimestampedValueCoder
 
-      val algebirdRegistrar = new AlgebirdRegistrar()
-      algebirdRegistrar(k)
+      KryoRegistrarLoader.load(k)
 
       k
     }
