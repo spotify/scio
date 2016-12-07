@@ -119,9 +119,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Apply a [[com.google.cloud.dataflow.sdk.transforms.PTransform PTransform]] and wrap the output
    * in an [[SCollection]].
    */
-  def applyTransform[U: ClassTag](transform: PTransform[_ >: PCollection[T], PCollection[U]])
+  def applyTransform[U: ClassTag](transform: PTransform[_ >: PCollection[T], PCollection[U]],
+                                 name: String = CallSites.getCurrent)
   : SCollection[U] =
-    this.pApply(transform)
+    this.pApply(transform, name)
 
   /**
    * Apply a [[com.google.cloud.dataflow.sdk.transforms.PTransform PTransform]] and wrap the output
