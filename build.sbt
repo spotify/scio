@@ -168,6 +168,17 @@ lazy val beamDependencies = Seq(
   "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion
 )
 
+lazy val macroSettings = Seq(
+  libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+  libraryDependencies ++= (
+    if (scalaBinaryVersion.value == "2.10")
+      List("org.scalamacros" %% "quasiquotes" % scalaMacrosVersion cross CrossVersion.binary)
+    else
+      Nil
+  ),
+  addCompilerPlugin(paradiseDependency)
+)
+
 lazy val root: Project = Project(
   "scio",
   file(".")
@@ -193,7 +204,7 @@ lazy val scioCore: Project = Project(
   "scio-core",
   file("scio-core")
 ).settings(
-  commonSettings,
+  commonSettings ++ macroSettings,
   description := "Scio - A Scala API for Google Cloud Dataflow",
     libraryDependencies ++= beamDependencies,
   libraryDependencies ++= Seq(
@@ -222,7 +233,8 @@ lazy val scioTest: Project = Project(
     "junit" % "junit" % junitVersion,
     "com.novocode" % "junit-interface" % junitInterfaceVersion,
     "org.hamcrest" % "hamcrest-all" % hamcrestVersion
-  )
+  ),
+  addCompilerPlugin(paradiseDependency)
 ).dependsOn(
   scioCore,
   scioSchemas % "test"
@@ -232,7 +244,7 @@ lazy val scioBigQuery: Project = Project(
   "scio-bigquery",
   file("scio-bigquery")
 ).settings(
-  commonSettings ++ Defaults.itSettings,
+  commonSettings ++ macroSettings ++ Defaults.itSettings,
   description := "Scio add-on for Google BigQuery",
     libraryDependencies ++= beamDependencies,
   libraryDependencies ++= Seq(
@@ -245,14 +257,6 @@ lazy val scioBigQuery: Project = Project(
     "org.scalatest" %% "scalatest" % scalaTestVersion % "test,it",
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.1" % "test"
   ),
-  libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-  libraryDependencies ++= (
-    if (scalaBinaryVersion.value == "2.10")
-      List("org.scalamacros" %% "quasiquotes" % scalaMacrosVersion cross CrossVersion.binary)
-    else
-      Nil
-  ),
-  addCompilerPlugin(paradiseDependency),
   parallelExecution in Test := (scalaBinaryVersion.value != "2.10")
 ).configs(IntegrationTest)
 
