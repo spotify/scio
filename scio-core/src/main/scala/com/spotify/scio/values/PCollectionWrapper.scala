@@ -38,22 +38,25 @@ private[values] trait PCollectionWrapper[T] {
   implicit protected val ct: ClassTag[T]
 
   private[scio] def applyInternal[Output <: POutput]
-  (transform: PTransform[_ >: PCollection[T], Output]): Output =
-    internal.apply(CallSites.getCurrent, transform)
+  (transform: PTransform[_ >: PCollection[T], Output], name: String = CallSites.getCurrent)
+  : Output =
+    internal.apply(name, transform)
 
   protected def pApply[U: ClassTag]
-  (transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {
+  (transform: PTransform[_ >: PCollection[T], PCollection[U]], name: String = CallSites.getCurrent)
+  : SCollection[U] = {
     val t = if (classOf[Combine.Globally[T, U]] isAssignableFrom transform.getClass) {
       // In case PCollection is windowed
       transform.asInstanceOf[Combine.Globally[T, U]].withoutDefaults()
     } else {
       transform
     }
-    context.wrap(this.applyInternal(t))
+    context.wrap(this.applyInternal(t, name))
   }
 
-  private[scio] def parDo[U: ClassTag](fn: DoFn[T, U]): SCollection[U] =
-    this.pApply(ParDo.of(fn)).setCoder(this.getCoder[U])
+  private[scio] def parDo[U: ClassTag](fn: DoFn[T, U], name: String = CallSites.getCurrent)
+  : SCollection[U] =
+    this.pApply(ParDo.of(fn), name).setCoder(this.getCoder[U])
 
   private[values] def getCoder[U: ClassTag]: Coder[U] =
     internal.getPipeline.getCoderRegistry.getScalaCoder[U]
