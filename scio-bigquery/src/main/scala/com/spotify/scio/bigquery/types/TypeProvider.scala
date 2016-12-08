@@ -21,7 +21,7 @@ import java.util.{List => JList}
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.common.base.Charsets
-import com.google.common.hash.{HashCode, Hashing}
+import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import com.spotify.scio.bigquery.types.MacroUtil._
 import com.spotify.scio.bigquery.{BigQueryClient, BigQueryUtil}
