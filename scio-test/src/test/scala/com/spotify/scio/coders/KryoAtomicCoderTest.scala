@@ -19,12 +19,14 @@ package com.spotify.scio.coders
 
 import com.google.api.services.bigquery.model.TableRow
 import com.google.cloud.dataflow.sdk.coders.Coder
+import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.cloud.dataflow.sdk.values.KV
 import com.google.common.collect.ImmutableList
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.avro.TestRecord
 import com.spotify.scio.coders.CoderTestUtils._
 import com.spotify.scio.testing.PipelineSpec
+import com.twitter.chill.{Kryo, _}
 import org.joda.time.Instant
 import org.scalatest.matchers.{MatchResult, Matcher}
 
@@ -91,9 +93,53 @@ class KryoAtomicCoderTest extends PipelineSpec {
   it should "support Instant" in {
     cf should roundTrip (Instant.now())
   }
+
   it should "support TableRow" in {
     val r = new TableRow().set("repeated_field", ImmutableList.of("a", "b"))
     cf should roundTrip (r)
   }
 
+  it should "support custom KryoRegistrar" in {
+    val c = cf()
+
+    // should use custom serializer in annotated RecordAKryoRegistrar
+    val a = CoderUtils.encodeToByteArray(c, RecordA("foo", 10))
+    CoderUtils.decodeFromByteArray(c, a) shouldBe RecordA("foo", 20)
+
+    // should use default serializer since RecordBKryoRegistrar is not annotated
+    val b = CoderUtils.encodeToByteArray(c, RecordB("foo", 10))
+    CoderUtils.decodeFromByteArray(c, b) shouldBe RecordB("foo", 10)
+
+    // custom serializer should be more space efficient
+    a.length should be < b.length
+  }
+
+}
+
+case class RecordA(name: String, value: Int)
+case class RecordB(name: String, value: Int)
+
+@KryoRegistrar
+class RecordAKryoRegistrar extends IKryoRegistrar {
+  override def apply(k: Kryo): Unit =
+    k.forClass(new KSerializer[RecordA] {
+      override def write(k: Kryo, output: Output, obj: RecordA): Unit = {
+        output.writeString(obj.name)
+        output.writeInt(obj.value)
+      }
+      override def read(kryo: Kryo, input: Input, tpe: Class[RecordA]): RecordA =
+        RecordA(input.readString(), input.readInt() + 10)
+    })
+}
+
+class RecordBKryoRegistrar extends IKryoRegistrar {
+  override def apply(k: Kryo): Unit =
+    k.forClass(new KSerializer[RecordB] {
+      override def write(k: Kryo, output: Output, obj: RecordB): Unit = {
+        output.writeString(obj.name)
+        output.writeInt(obj.value)
+      }
+      override def read(kryo: Kryo, input: Input, tpe: Class[RecordB]): RecordB =
+        RecordB(input.readString(), input.readInt() + 10)
+    })
 }
