@@ -137,11 +137,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /** Apply a transform. */
   private[values] def transform[U: ClassTag](f: SCollection[T] => SCollection[U])
   : SCollection[U] = {
-    val o = internal.apply(CallSites.getCurrent, new PTransform[PCollection[T], PCollection[U]]() {
+    val o = this.applyInternal(new PTransform[PCollection[T], PCollection[U]]() {
       override def apply(input: PCollection[T]): PCollection[U] = {
         f(context.wrap(input)).internal
       }
-    })
+    }, CallSites.getCurrent)
     context.wrap(o)
   }
 
@@ -1052,4 +1052,13 @@ private[scio] class SCollectionImpl[T: ClassTag](val internal: PCollection[T],
   protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
 }
 
+private[scio] class NamedSCollectionImpl[T: ClassTag](tfName: String,
+                                                      internal: PCollection[T],
+                                                      context: ScioContext)
+  extends SCollectionImpl[T](internal, context) {
+  override def applyInternal[Output <: POutput]
+  (transform: PTransform[_ >: PCollection[T], Output], name: String = CallSites.getCurrent)
+  : Output =
+    internal.apply(tfName, transform)
+}
 // scalastyle:on file.size.limit

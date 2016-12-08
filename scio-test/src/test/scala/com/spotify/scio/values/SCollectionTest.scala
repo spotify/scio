@@ -53,8 +53,9 @@ class SCollectionTest extends PipelineSpec {
   it should "support custom transform name" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5))
-        .parDo(Functions.mapFn[Int, Int](_ * 2), "DoubleInts")
-      p.internal.getProducingTransformInternal.getFullName shouldBe "DoubleInts"
+        .map(_ * 3)
+        .withName("OnlyEven").filter(_ % 2 == 0)
+      p.internal.getProducingTransformInternal.getFullName shouldBe "OnlyEven/Filter"
     }
   }
 

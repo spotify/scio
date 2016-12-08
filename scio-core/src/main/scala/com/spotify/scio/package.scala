@@ -20,7 +20,7 @@ package com.spotify
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write
 import com.google.cloud.dataflow.sdk.util.WindowingStrategy.AccumulationMode
 import com.spotify.scio.io.Tap
-import com.spotify.scio.values.AccumulatorType
+import com.spotify.scio.values.{AccumulatorType, NamedSCollectionImpl, SCollection}
 import com.twitter.algebird.Semigroup
 
 import scala.concurrent.duration.Duration
@@ -76,6 +76,12 @@ package object scio {
     import scala.concurrent.ExecutionContext.Implicits.global
     def waitForResult(atMost: Duration = Duration.Inf): Tap[T] =
       Await.result(self.flatMap(identity), atMost)
+  }
+
+  /** Set the name of the next transform. */
+  implicit class NamedTfSCollection[T: ClassTag](val wrapped: SCollection[T]) {
+    def withName(tfName: String): SCollection[T] =
+      new NamedSCollectionImpl[T](tfName, wrapped.internal, wrapped.context)
   }
 
   /** Scala version. */
