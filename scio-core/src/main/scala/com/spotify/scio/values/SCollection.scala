@@ -61,7 +61,7 @@ object SCollection {
     val o = PCollectionList
       .of(scs.map(_.internal).asJava)
       .apply(CallSites.getCurrent, Flatten.pCollections())
-    new SCollectionImpl(o, scs.head.context)
+    scs.head.context.wrap(o)
   }
 
   import scala.language.implicitConversions
