@@ -82,7 +82,7 @@ package object scio {
   val scalaVersion: String = scala.util.Properties.versionNumberString
 
   /** Scio version. */
-  def scioVersion: String = {
+  val scioVersion: String = {
     val stream = this.getClass.getResourceAsStream("/version.sbt")
     val line = scala.io.Source.fromInputStream(stream).getLines().next()
     """version in .+"([^"]+)"""".r.findFirstMatchIn(line).get.group(1)

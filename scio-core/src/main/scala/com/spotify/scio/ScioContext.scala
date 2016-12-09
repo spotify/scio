@@ -164,6 +164,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   }
 
   {
+    VersionUtil.checkVersion()
     val o = optionsAs[ScioOptions]
     o.setScalaVersion(scalaVersion)
     o.setScioVersion(scioVersion)
