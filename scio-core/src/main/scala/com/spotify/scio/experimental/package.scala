@@ -17,7 +17,7 @@
 
 package com.spotify.scio
 
-import com.google.api.services.bigquery.model.TableReference
+import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.google.cloud.dataflow.sdk.io.BigQueryIO
 import com.google.cloud.dataflow.sdk.io.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import com.spotify.scio.bigquery.BigQueryClient
@@ -71,6 +71,7 @@ package object experimental {
      */
     def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null)
     : SCollection[T] = {
+      lazy val bigQueryClient = BigQueryClient.defaultInstance()
       val bqt = BigQueryType[T]
       val rows = if (newSource == null) {
         // newSource is missing, T's companion object must have either table or query
@@ -85,8 +86,18 @@ package object experimental {
         // newSource can be either table or query
         val table = scala.util.Try(BigQueryIO.parseTableSpec(newSource)).toOption
         if (table.isDefined) {
+          val newTableSchema = bigQueryClient.getTableSchema(table.get)
+          require(areSchemasCompatible(bqt.schema, newTableSchema),
+            s"""|New source $newSource has incompatible schema.
+                |New source schema ${newTableSchema.toString},
+                |Original schema ${bqt.schema.toString}!""".stripMargin)
           self.bigQueryTable(table.get)
         } else {
+          val newQuerySchema = bigQueryClient.getQuerySchema(newSource)
+          require(areSchemasCompatible(bqt.schema, newQuerySchema),
+            s"""|New source $newSource has incompatible schema.
+                |New source schema ${newQuerySchema.toString},
+                |Original schema ${bqt.schema.toString}!""".stripMargin)
           self.bigQuerySelect(newSource)
         }
       }
@@ -231,6 +242,12 @@ package object experimental {
         BigQueryIO.parseTableSpec(tableSpec), rows,
         writeDisposition, createDisposition)
 
+  }
+
+  private def areSchemasCompatible(from: TableSchema, to: TableSchema): Boolean = {
+    import scala.collection.JavaConverters._
+    val fields2 = to.getFields.asScala
+    from.getFields.asScala.forall(fields2.contains(_))
   }
 
 }

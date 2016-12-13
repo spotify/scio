@@ -239,7 +239,7 @@ lazy val scioTest: Project = Project(
 ).dependsOn(
   scioCore,
   scioSchemas % "test"
-)
+).configs(IntegrationTest)
 
 lazy val scioBigQuery: Project = Project(
   "scio-bigquery",

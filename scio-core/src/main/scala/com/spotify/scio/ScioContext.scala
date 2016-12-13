@@ -77,7 +77,7 @@ object ScioContext {
   def apply(): ScioContext = ScioContext(defaultOptions)
 
   /** Create a new [[ScioContext]] instance. */
-  def apply(options: PipelineOptions): ScioContext = new ScioContext(options,  Nil)
+  def apply(options: PipelineOptions): ScioContext = new ScioContext(options, Nil)
 
   /** Create a new [[ScioContext]] instance. */
   def apply(artifacts: List[String]): ScioContext = new ScioContext(defaultOptions, artifacts)
@@ -282,8 +282,17 @@ class ScioContext private[scio] (val options: PipelineOptions,
   // =======================================================================
 
   private lazy val bigQueryClient: BigQueryClient = {
-    val o = optionsAs[GcpOptions]
-    BigQueryClient(o.getProject, o.getGcpCredential)
+    // BigQueryClient.PROJECT_KEY trumps GcpOptions
+    if (sys.props(BigQueryClient.PROJECT_KEY) != null) {
+      BigQueryClient(sys.props(BigQueryClient.PROJECT_KEY))
+    } else {
+      val o = optionsAs[GcpOptions]
+      require(o.getProject != null,
+        s"Property ${BigQueryClient.PROJECT_KEY} not set. " +
+          s"Use -D${BigQueryClient.PROJECT_KEY}=<BILLING_PROJECT>")
+      BigQueryClient(o.getProject, o.getGcpCredential)
+    }
+
   }
 
   // =======================================================================
