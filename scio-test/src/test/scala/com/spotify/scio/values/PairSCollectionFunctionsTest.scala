@@ -383,7 +383,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support subtrackByKey() with empty LHS" in {
+  it should "support subtractByKey() with empty LHS" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq[(String, Any)]())
       val p2 = sc.parallelize(Seq("a", "b", "d"))
@@ -392,7 +392,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support subtrackByKey() with empty RHS" in {
+  it should "support subtractByKey() with empty RHS" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
       val p2 = sc.parallelize(Seq[String]())
