@@ -80,6 +80,10 @@ object SCollection {
   : PairSCollectionFunctions[K, V] =
     new PairSCollectionFunctions(s)
 
+  /** Implicit conversion from SCollection[K] to PairSCollectionFunctions[K, Unit] */
+  implicit def makeDefaultPairSCollectionFunctions[K: ClassTag](s: SCollection[K])
+  : PairSCollectionFunctions[K, Unit] = new PairSCollectionFunctions[K, Unit](s.map((_, ())))
+
 }
 
 // scalastyle:off number.of.methods

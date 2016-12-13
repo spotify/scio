@@ -209,6 +209,14 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support implicit conversion to default (K, V)" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq("a", "a", "b", "c"))
+        .countByKey
+      p should containInAnyOrder (Seq(("a", 2L), ("b", 1L), ("c", 1L)))
+    }
+  }
+
   it should "support keyBy()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq("hello", "world")).keyBy(_.substring(0, 1))
