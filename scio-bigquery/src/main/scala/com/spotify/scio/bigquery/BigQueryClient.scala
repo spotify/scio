@@ -346,7 +346,7 @@ class BigQueryClient private (private val projectId: String,
     }
   }
 
-  private def temporaryTable(location: String): TableReference = {
+  private[bigquery] def temporaryTable(location: String): TableReference = {
     val now = Instant.now().toString(TIME_FORMATTER)
     val tableId = TABLE_PREFIX + "_" + now + "_" + Random.nextInt(Int.MaxValue)
     new TableReference()
@@ -427,7 +427,7 @@ class BigQueryClient private (private val projectId: String,
     }
   }
 
-  private def isLegacySql(sqlQuery: String, flattenResults: Boolean): Boolean = {
+  private[bigquery] def isLegacySql(sqlQuery: String, flattenResults: Boolean): Boolean = {
     def isInvalidQuery(e: GoogleJsonResponseException): Boolean =
       e.getDetails.getErrors.get(0).getReason == "invalidQuery"
     def dryRunQuery(useLegacySql: Boolean): Try[Job] =
