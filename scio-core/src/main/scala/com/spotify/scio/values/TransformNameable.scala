@@ -26,6 +26,8 @@ trait TransformNameable[T <: TransformNameable[T]] {
   def tfName: String = nameProvider.name
 
   def withName(name: String): T = {
+    require(nameProvider.getClass != classOf[ConstNameProvider],
+      s"withName() has already been used to set '${tfName}' as the name for the next transform.")
     nameProvider = new ConstNameProvider(name)
     this
   }

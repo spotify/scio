@@ -137,6 +137,14 @@ class NamedTransformTest extends PipelineSpec {
     }
   }
 
+  "TransformNameable" should "prevent repeated calls to .withName" in {
+    intercept[IllegalArgumentException](runWithContext { sc =>
+      val p1 = sc.parallelize(1 to 5)
+        .withName("Double").withName("DoubleMap").map(_ * 2)
+    }).getMessage shouldBe "requirement failed: withName() has already been used to set 'Double'" +
+      " as the name for the next transform."
+  }
+
   private def assertTransformName(p: PCollectionWrapper[_], tfName: String) =
     p.internal.getProducingTransformInternal.getFullName shouldBe tfName
 }
