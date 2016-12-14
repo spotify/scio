@@ -60,7 +60,7 @@ package object accumulators {
 
     /** Count elements with an automatically created accumulator. */
     def accumulateCount: SCollection[T] =
-      self.accumulateCount(self.context.sumAccumulator[Long](CallSites.getCurrentName))
+      self.accumulateCount(self.context.sumAccumulator[Long](self.tfName))
 
     /** Count positive and negative results in a filter with the given accumulators. */
     def accumulateCountFilter(accPos: Accumulator[Long],
@@ -79,8 +79,8 @@ package object accumulators {
 
     /** Count positive and negative results in a filter with automatically created accumulators. */
     def accumulateCountFilter(f: T => Boolean): SCollection[T] = {
-      val accPos = self.context.sumAccumulator[Long]("Positive#" + CallSites.getCurrentName)
-      val accNeg = self.context.sumAccumulator[Long]("Negative#" + CallSites.getCurrentName)
+      val accPos = self.context.sumAccumulator[Long]("Positive#" + self.tfName)
+      val accNeg = self.context.sumAccumulator[Long]("Negative#" + self.tfName)
       self.accumulateCountFilter(accPos, accNeg)(f)
     }
 

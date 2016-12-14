@@ -29,12 +29,16 @@ package com.spotify.scio.util
 import com.google.cloud.dataflow.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}
 import com.google.cloud.dataflow.sdk.values.TupleTag
 import com.google.common.collect.Lists
-import com.spotify.scio.values.SCollection
+import com.spotify.scio.values.{CallSiteNameProvider, ConstNameProvider, SCollection, TransformNameProvider}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 object MultiJoin {
+
+  private var tfNameProvider: TransformNameProvider = CallSiteNameProvider
+
+  def withName(name: String): MultiJoin.type = {tfNameProvider = new ConstNameProvider(name); this}
 
   def toOptions[T](xs: Iterator[T]): Iterator[Option[T]] = if (xs.isEmpty) Iterator(None) else xs.map(Option(_))
 
@@ -43,8 +47,8 @@ object MultiJoin {
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala))
     }
@@ -56,8 +60,8 @@ object MultiJoin {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala))
     }
@@ -70,8 +74,8 @@ object MultiJoin {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala))
     }
@@ -85,8 +89,8 @@ object MultiJoin {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala))
     }
@@ -101,8 +105,8 @@ object MultiJoin {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala))
     }
@@ -118,8 +122,8 @@ object MultiJoin {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala))
     }
@@ -136,8 +140,8 @@ object MultiJoin {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala))
     }
@@ -155,8 +159,8 @@ object MultiJoin {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala))
     }
@@ -175,8 +179,8 @@ object MultiJoin {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala))
     }
@@ -196,8 +200,8 @@ object MultiJoin {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala))
     }
@@ -218,8 +222,8 @@ object MultiJoin {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala))
     }
@@ -241,8 +245,8 @@ object MultiJoin {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala))
     }
@@ -265,8 +269,8 @@ object MultiJoin {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala))
     }
@@ -290,8 +294,8 @@ object MultiJoin {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala))
     }
@@ -316,8 +320,8 @@ object MultiJoin {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala))
     }
@@ -343,8 +347,8 @@ object MultiJoin {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala))
     }
@@ -371,8 +375,8 @@ object MultiJoin {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala))
     }
@@ -400,8 +404,8 @@ object MultiJoin {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala, result.getAll(tagS).asScala))
     }
@@ -430,8 +434,8 @@ object MultiJoin {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala, result.getAll(tagS).asScala, result.getAll(tagT).asScala))
     }
@@ -461,8 +465,8 @@ object MultiJoin {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala, result.getAll(tagS).asScala, result.getAll(tagT).asScala, result.getAll(tagU).asScala))
     }
@@ -493,8 +497,8 @@ object MultiJoin {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).map { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala, result.getAll(tagS).asScala, result.getAll(tagT).asScala, result.getAll(tagU).asScala, result.getAll(tagV).asScala))
     }
@@ -505,8 +509,8 @@ object MultiJoin {
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         b <- result.getAll(tagB).asScala.iterator
@@ -521,8 +525,8 @@ object MultiJoin {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         c <- result.getAll(tagC).asScala.iterator
@@ -539,8 +543,8 @@ object MultiJoin {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         d <- result.getAll(tagD).asScala.iterator
@@ -559,8 +563,8 @@ object MultiJoin {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         e <- result.getAll(tagE).asScala.iterator
@@ -581,8 +585,8 @@ object MultiJoin {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         f <- result.getAll(tagF).asScala.iterator
@@ -605,8 +609,8 @@ object MultiJoin {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         g <- result.getAll(tagG).asScala.iterator
@@ -631,8 +635,8 @@ object MultiJoin {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         h <- result.getAll(tagH).asScala.iterator
@@ -659,8 +663,8 @@ object MultiJoin {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         i <- result.getAll(tagI).asScala.iterator
@@ -689,8 +693,8 @@ object MultiJoin {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         j <- result.getAll(tagJ).asScala.iterator
@@ -721,8 +725,8 @@ object MultiJoin {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         k <- result.getAll(tagK).asScala.iterator
@@ -755,8 +759,8 @@ object MultiJoin {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         l <- result.getAll(tagL).asScala.iterator
@@ -791,8 +795,8 @@ object MultiJoin {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         m <- result.getAll(tagM).asScala.iterator
@@ -829,8 +833,8 @@ object MultiJoin {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         n <- result.getAll(tagN).asScala.iterator
@@ -869,8 +873,8 @@ object MultiJoin {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         o <- result.getAll(tagO).asScala.iterator
@@ -911,8 +915,8 @@ object MultiJoin {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         p <- result.getAll(tagP).asScala.iterator
@@ -955,8 +959,8 @@ object MultiJoin {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         q <- result.getAll(tagQ).asScala.iterator
@@ -1001,8 +1005,8 @@ object MultiJoin {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         r <- result.getAll(tagR).asScala.iterator
@@ -1049,8 +1053,8 @@ object MultiJoin {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         s <- result.getAll(tagS).asScala.iterator
@@ -1099,8 +1103,8 @@ object MultiJoin {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         t <- result.getAll(tagT).asScala.iterator
@@ -1151,8 +1155,8 @@ object MultiJoin {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         u <- result.getAll(tagU).asScala.iterator
@@ -1205,8 +1209,8 @@ object MultiJoin {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         v <- result.getAll(tagV).asScala.iterator
@@ -1240,8 +1244,8 @@ object MultiJoin {
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         b <- toOptions(result.getAll(tagB).asScala.iterator)
@@ -1256,8 +1260,8 @@ object MultiJoin {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
@@ -1274,8 +1278,8 @@ object MultiJoin {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         d <- toOptions(result.getAll(tagD).asScala.iterator)
@@ -1294,8 +1298,8 @@ object MultiJoin {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         e <- toOptions(result.getAll(tagE).asScala.iterator)
@@ -1316,8 +1320,8 @@ object MultiJoin {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         f <- toOptions(result.getAll(tagF).asScala.iterator)
@@ -1340,8 +1344,8 @@ object MultiJoin {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         g <- toOptions(result.getAll(tagG).asScala.iterator)
@@ -1366,8 +1370,8 @@ object MultiJoin {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         h <- toOptions(result.getAll(tagH).asScala.iterator)
@@ -1394,8 +1398,8 @@ object MultiJoin {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         i <- toOptions(result.getAll(tagI).asScala.iterator)
@@ -1424,8 +1428,8 @@ object MultiJoin {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         j <- toOptions(result.getAll(tagJ).asScala.iterator)
@@ -1456,8 +1460,8 @@ object MultiJoin {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         k <- toOptions(result.getAll(tagK).asScala.iterator)
@@ -1490,8 +1494,8 @@ object MultiJoin {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         l <- toOptions(result.getAll(tagL).asScala.iterator)
@@ -1526,8 +1530,8 @@ object MultiJoin {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         m <- toOptions(result.getAll(tagM).asScala.iterator)
@@ -1564,8 +1568,8 @@ object MultiJoin {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         n <- toOptions(result.getAll(tagN).asScala.iterator)
@@ -1604,8 +1608,8 @@ object MultiJoin {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         o <- toOptions(result.getAll(tagO).asScala.iterator)
@@ -1646,8 +1650,8 @@ object MultiJoin {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         p <- toOptions(result.getAll(tagP).asScala.iterator)
@@ -1690,8 +1694,8 @@ object MultiJoin {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         q <- toOptions(result.getAll(tagQ).asScala.iterator)
@@ -1736,8 +1740,8 @@ object MultiJoin {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         r <- toOptions(result.getAll(tagR).asScala.iterator)
@@ -1784,8 +1788,8 @@ object MultiJoin {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         s <- toOptions(result.getAll(tagS).asScala.iterator)
@@ -1834,8 +1838,8 @@ object MultiJoin {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         t <- toOptions(result.getAll(tagT).asScala.iterator)
@@ -1886,8 +1890,8 @@ object MultiJoin {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         u <- toOptions(result.getAll(tagU).asScala.iterator)
@@ -1940,8 +1944,8 @@ object MultiJoin {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         v <- toOptions(result.getAll(tagV).asScala.iterator)
@@ -1975,8 +1979,8 @@ object MultiJoin {
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         b <- toOptions(result.getAll(tagB).asScala.iterator)
@@ -1991,8 +1995,8 @@ object MultiJoin {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
@@ -2009,8 +2013,8 @@ object MultiJoin {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         d <- toOptions(result.getAll(tagD).asScala.iterator)
@@ -2029,8 +2033,8 @@ object MultiJoin {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         e <- toOptions(result.getAll(tagE).asScala.iterator)
@@ -2051,8 +2055,8 @@ object MultiJoin {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         f <- toOptions(result.getAll(tagF).asScala.iterator)
@@ -2075,8 +2079,8 @@ object MultiJoin {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         g <- toOptions(result.getAll(tagG).asScala.iterator)
@@ -2101,8 +2105,8 @@ object MultiJoin {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         h <- toOptions(result.getAll(tagH).asScala.iterator)
@@ -2129,8 +2133,8 @@ object MultiJoin {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         i <- toOptions(result.getAll(tagI).asScala.iterator)
@@ -2159,8 +2163,8 @@ object MultiJoin {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         j <- toOptions(result.getAll(tagJ).asScala.iterator)
@@ -2191,8 +2195,8 @@ object MultiJoin {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         k <- toOptions(result.getAll(tagK).asScala.iterator)
@@ -2225,8 +2229,8 @@ object MultiJoin {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         l <- toOptions(result.getAll(tagL).asScala.iterator)
@@ -2261,8 +2265,8 @@ object MultiJoin {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         m <- toOptions(result.getAll(tagM).asScala.iterator)
@@ -2299,8 +2303,8 @@ object MultiJoin {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         n <- toOptions(result.getAll(tagN).asScala.iterator)
@@ -2339,8 +2343,8 @@ object MultiJoin {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         o <- toOptions(result.getAll(tagO).asScala.iterator)
@@ -2381,8 +2385,8 @@ object MultiJoin {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         p <- toOptions(result.getAll(tagP).asScala.iterator)
@@ -2425,8 +2429,8 @@ object MultiJoin {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         q <- toOptions(result.getAll(tagQ).asScala.iterator)
@@ -2471,8 +2475,8 @@ object MultiJoin {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         r <- toOptions(result.getAll(tagR).asScala.iterator)
@@ -2519,8 +2523,8 @@ object MultiJoin {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         s <- toOptions(result.getAll(tagS).asScala.iterator)
@@ -2569,8 +2573,8 @@ object MultiJoin {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         t <- toOptions(result.getAll(tagT).asScala.iterator)
@@ -2621,8 +2625,8 @@ object MultiJoin {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         u <- toOptions(result.getAll(tagU).asScala.iterator)
@@ -2675,8 +2679,8 @@ object MultiJoin {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
-    a.context.wrap(keyed).flatMap { kv =>
+      .apply("CoGroupByKey", CoGroupByKey.create())
+    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         v <- toOptions(result.getAll(tagV).asScala.iterator)

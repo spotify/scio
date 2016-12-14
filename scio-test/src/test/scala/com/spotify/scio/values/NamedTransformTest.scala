@@ -18,6 +18,7 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.util.MultiJoin
 
 class NamedTransformTest extends PipelineSpec {
 
@@ -41,8 +42,7 @@ class NamedTransformTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1.0, 2.0, 3.0, 4.0, 5.0))
         .withName("CalcVariance").variance
-      // TODO: give explicit names to internal transforms
-      //assertTransformName(p, "CalcVariance")
+      assertTransformName(p, "CalcVariance/Variance")
     }
   }
 
@@ -111,6 +111,29 @@ class NamedTransformTest extends PipelineSpec {
         .toWindowed
         .withName("Triple").map(x => x.withValue(x.value * 3))
       assertTransformName(p, "Triple")
+    }
+  }
+
+  "MultiJoin" should "support custom transform name" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
+      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13), ("d", 14)))
+      val p = MultiJoin.withName("JoinEm").left(p1, p2)
+      assertTransformName(p, "JoinEm")
+    }
+  }
+
+  "Duplicate transform name" should "have number to make unique" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(1 to 5)
+        .withName("MyTransform").map(_ * 2)
+      val p2 = p1
+        .withName("MyTransform").map(_ * 3)
+      val p3 = p1
+        .withName("MyTransform").map(_ * 4)
+      assertTransformName(p1, "MyTransform")
+      assertTransformName(p2, "MyTransform2")
+      assertTransformName(p3, "MyTransform3")
     }
   }
 

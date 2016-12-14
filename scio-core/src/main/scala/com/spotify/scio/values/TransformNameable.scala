@@ -31,12 +31,12 @@ trait TransformNameable[T <: TransformNameable[T]] {
   }
 }
 
-private trait TransformNameProvider {
+private[scio] trait TransformNameProvider {
   def name: String
 }
 
-private object CallSiteNameProvider extends TransformNameProvider {
+private[scio] object CallSiteNameProvider extends TransformNameProvider {
   def name: String = CallSites.getCurrent
 }
 
-private class ConstNameProvider(val name: String) extends TransformNameProvider
+private[scio] class ConstNameProvider(val name: String) extends TransformNameProvider

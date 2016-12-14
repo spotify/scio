@@ -106,7 +106,7 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
       .withOutputTags(_mainTag.tupleTag, sideTags)
       .of(transformWithSideOutputsFn(sideOutputs, f))
 
-    val pCollectionWrapper = this.internal.apply(CallSites.getCurrent, transform)
+    val pCollectionWrapper = this.internal.apply("TransformWithSideOutputs", transform)
     pCollectionWrapper.getAll.asScala
       .mapValues(context.wrap(_).asInstanceOf[SCollection[T]].setCoder(internal.getCoder))
       .flatMap{ case(tt, col) => Try{tagToSide(tt.getId) -> col}.toOption }
