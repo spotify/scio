@@ -24,8 +24,7 @@ import com.spotify.scio.{Implicits, ScioContext}
 
 import scala.reflect.ClassTag
 
-private[values] trait PCollectionWrapper[T] {
-  this: TransformNameable[_ <: PCollectionWrapper[T]] =>
+private[values] trait PCollectionWrapper[T] extends TransformNameable {
 
   import Implicits._
 

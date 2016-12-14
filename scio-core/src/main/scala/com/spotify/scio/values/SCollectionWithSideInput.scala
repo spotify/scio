@@ -34,7 +34,7 @@ import scala.util.Try
 class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PCollection[T],
                                                              val context: ScioContext,
                                                              sides: Iterable[SideInput[_]])
-  extends PCollectionWrapper[T] with TransformNameable[SCollectionWithSideInput[T]] {
+  extends PCollectionWrapper[T] {
 
   protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
 

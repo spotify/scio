@@ -35,7 +35,7 @@ class SCollectionWithSideOutput[T: ClassTag] private[values]
 (val internal: PCollection[T],
  val context: ScioContext,
  sides: Iterable[SideOutput[_]])
-  extends PCollectionWrapper[T] with TransformNameable[SCollectionWithSideOutput[T]] {
+  extends PCollectionWrapper[T] {
 
   protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
 

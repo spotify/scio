@@ -98,7 +98,7 @@ object SCollection {
  * @groupname transform Transformations
  * @groupname window Windowing Operations
  */
-sealed trait SCollection[T] extends PCollectionWrapper[T] with TransformNameable[SCollection[T]] {
+sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   import TupleFunctions._
 

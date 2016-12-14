@@ -32,7 +32,7 @@ import scala.reflect.ClassTag
 class SCollectionWithFanout[T: ClassTag] private[values] (val internal: PCollection[T],
                                                           val context: ScioContext,
                                                           private val fanout: Int)
-  extends PCollectionWrapper[T] with TransformNameable[SCollectionWithFanout[T]] {
+  extends PCollectionWrapper[T] {
 
   protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
 

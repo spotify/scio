@@ -63,7 +63,7 @@ def cogroup(out, n):
         print >> out, '      .and(tag%s, %s.toKV.internal)' % (x, x.lower())
     print >> out, '      .apply("CoGroupByKey", CoGroupByKey.create())'
 
-    print >> out, '    a.context.wrap(keyed).withName(this.tfNameProvider.name).map { kv =>'
+    print >> out, '    a.context.wrap(keyed).withName(this.tfName).map { kv =>'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
     print >> out, '      (key, (%s))' % ', '.join('result.getAll(tag%s).asScala' % x for x in vals)  # NOQA
     print >> out, '    }'
@@ -87,7 +87,7 @@ def join(out, n):
         print >> out, '      .and(tag%s, %s.toKV.internal)' % (x, x.lower())
     print >> out, '      .apply("CoGroupByKey", CoGroupByKey.create())'
 
-    print >> out, '    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>'
+    print >> out, '    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
     print >> out, '      for {'
     for x in reversed(vals):
@@ -113,7 +113,7 @@ def left(out, n):
         print >> out, '      .and(tag%s, %s.toKV.internal)' % (x, x.lower())
     print >> out, '      .apply("CoGroupByKey", CoGroupByKey.create())'
 
-    print >> out, '    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>'
+    print >> out, '    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
     print >> out, '      for {'
     for (i, x) in enumerate(reversed(vals)):
@@ -142,7 +142,7 @@ def outer(out, n):
         print >> out, '      .and(tag%s, %s.toKV.internal)' % (x, x.lower())
     print >> out, '      .apply("CoGroupByKey", CoGroupByKey.create())'
 
-    print >> out, '    a.context.wrap(keyed).withName(this.tfNameProvider.name).flatMap { kv =>'
+    print >> out, '    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
     print >> out, '      for {'
     for (i, x) in enumerate(reversed(vals)):
@@ -186,16 +186,12 @@ def main(out):
         import com.google.cloud.dataflow.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}  # NOQA
         import com.google.cloud.dataflow.sdk.values.TupleTag
         import com.google.common.collect.Lists
-        import com.spotify.scio.values.{CallSiteNameProvider, ConstNameProvider, SCollection, TransformNameProvider}
+        import com.spotify.scio.values.{SCollection, TransformNameable}
 
         import scala.collection.JavaConverters._
         import scala.reflect.ClassTag
 
-        object MultiJoin {
-
-          private var tfNameProvider: TransformNameProvider = CallSiteNameProvider
-
-          def withName(name: String): MultiJoin.type = {tfNameProvider = new ConstNameProvider(name); this}
+        object MultiJoin extends TransformNameable {
 
           def toOptions[T](xs: Iterator[T]): Iterator[Option[T]] = if (xs.isEmpty) Iterator(None) else xs.map(Option(_))
         ''').replace('  # NOQA', '').lstrip('\n')

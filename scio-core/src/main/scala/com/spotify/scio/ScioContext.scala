@@ -139,7 +139,7 @@ object ScioContext {
 // scalastyle:off number.of.methods
 class ScioContext private[scio] (val options: PipelineOptions,
                                  private var artifacts: List[String])
-  extends TransformNameable[ScioContext] {
+  extends TransformNameable {
 
   private implicit val context: ScioContext = this
 

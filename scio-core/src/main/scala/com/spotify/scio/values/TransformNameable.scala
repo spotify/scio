@@ -19,7 +19,7 @@ package com.spotify.scio.values
 
 import com.spotify.scio.util.CallSites
 
-trait TransformNameable[T <: TransformNameable[T]] { this: T =>
+trait TransformNameable {
   private var nameProvider: TransformNameProvider = CallSiteNameProvider
 
   def tfName: String = {
@@ -28,7 +28,7 @@ trait TransformNameable[T <: TransformNameable[T]] { this: T =>
     n
   }
 
-  def withName(name: String): T = {
+  def withName(name: String): this.type = {
     require(nameProvider.getClass != classOf[ConstNameProvider],
       s"withName() has already been used to set '${tfName}' as the name for the next transform.")
     nameProvider = new ConstNameProvider(name)
@@ -36,12 +36,12 @@ trait TransformNameable[T <: TransformNameable[T]] { this: T =>
   }
 }
 
-private[scio] trait TransformNameProvider {
+private trait TransformNameProvider {
   def name: String
 }
 
-private[scio] object CallSiteNameProvider extends TransformNameProvider {
+private object CallSiteNameProvider extends TransformNameProvider {
   def name: String = CallSites.getCurrent
 }
 
-private[scio] class ConstNameProvider(val name: String) extends TransformNameProvider
+private class ConstNameProvider(val name: String) extends TransformNameProvider

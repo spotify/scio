@@ -32,7 +32,7 @@ import scala.reflect.ClassTag
 class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag]
 (private val self: PairSCollectionFunctions[K, V],
  private val hotKeyFanout: Either[K => Int, Int])
-  extends TransformNameable[SCollectionWithHotKeyFanout[K, V]] {
+  extends TransformNameable {
 
   private def withFanout[K, I, O](combine: Combine.PerKey[K, I, O])
   : PerKeyWithHotKeyFanout[K, I, O] = this.hotKeyFanout match {
@@ -43,7 +43,7 @@ class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag]
       combine.withHotKeyFanout(f)
   }
 
-  override def withName(name: String): SCollectionWithHotKeyFanout[K, V] = {
+  override def withName(name: String): this.type = {
     self.self.withName(name)
     this
   }

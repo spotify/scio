@@ -29,7 +29,7 @@ import scala.reflect.ClassTag
  */
 class SCollectionWithAccumulator[T: ClassTag] private[values]
 (val internal: PCollection[T], val context: ScioContext, acc: Seq[Accumulator[_]])
-  extends PCollectionWrapper[T] with TransformNameable[SCollectionWithAccumulator[T]] {
+  extends PCollectionWrapper[T] {
 
   protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
 
