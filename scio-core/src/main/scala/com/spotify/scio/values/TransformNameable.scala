@@ -19,11 +19,14 @@ package com.spotify.scio.values
 
 import com.spotify.scio.util.CallSites
 
-trait TransformNameable[T <: TransformNameable[T]] {
-  this: T =>
+trait TransformNameable[T <: TransformNameable[T]] { this: T =>
   private var nameProvider: TransformNameProvider = CallSiteNameProvider
 
-  def tfName: String = nameProvider.name
+  def tfName: String = {
+    val n = nameProvider.name
+    nameProvider = CallSiteNameProvider
+    n
+  }
 
   def withName(name: String): T = {
     require(nameProvider.getClass != classOf[ConstNameProvider],
