@@ -17,9 +17,10 @@
 
 package com.spotify.scio
 
-import java.io.{File, InputStream, SequenceInputStream}
+import java.io._
 import java.net.URI
 import java.nio.channels.Channels
+import java.nio.file.Files
 import java.security.PrivilegedAction
 import java.util.Collections
 
@@ -46,7 +47,7 @@ import org.apache.beam.sdk.values.KV
 import org.apache.commons.io.IOUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path, PathFilter}
-import org.apache.hadoop.io.compress.{CompressionCodecFactory, DefaultCodec}
+import org.apache.hadoop.io.compress.DefaultCodec
 import org.apache.hadoop.io.{LongWritable, NullWritable, Text}
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat
@@ -139,13 +140,11 @@ package object hdfs {
                                (initFn: Seq[File] => F): DistCache[F] = self.requireNotClosed {
       if (self.isTest) {
         self.distCache(paths)(initFn)
-      } else {
-        //TODO: should upload be asynchronous, blocking on context close
-        val dfOptions = self.optionsAs[DataflowPipelineOptions]
-        require(dfOptions.getStagingLocation != null,
-          "Staging directory not set - use `--stagingLocation`!")
+      }
+      else {
         require(!paths.contains(null), "Artifact path can't be null")
 
+        val (targetDir, writeFn) = getTargetFromOptions()
         val _conf = Option(conf).getOrElse(new Configuration())
 
         val targetPaths = paths.map { path =>
@@ -158,16 +157,17 @@ package object hdfs {
 
           val targetDistCache = new Path("distcache", s"$targetHash-${path.split("/").last}")
 
-          val target = new Path(dfOptions.getStagingLocation, targetDistCache)
+          val target = new Path(targetDir, targetDistCache)
 
+          // TODO: should upload be asynchronous, blocking on context close
           if (username != null) {
             UserGroupInformation.createRemoteUser(username).doAs(new PrivilegedAction[Unit] {
               override def run(): Unit = {
-                hadoopDistCacheCopy(new Path(path), target.toUri, _conf)
+                hadoopDistCacheCopy(new Path(path), target.toUri, _conf)(writeFn)
               }
             })
           } else {
-            hadoopDistCacheCopy(new Path(path), target.toUri, _conf)
+            hadoopDistCacheCopy(new Path(path), target.toUri, _conf)(writeFn)
           }
 
           target
@@ -177,16 +177,38 @@ package object hdfs {
       }
     }
 
-    private[scio] def hadoopDistCacheCopy(src: Path, target: URI, conf: Configuration): Unit = {
+    private def getTargetFromOptions() = {
+      if (!ScioUtil.isLocalRunner(self.options)) {
+        val dfOptions = self.optionsAs[DataflowPipelineOptions]
+        require(self.optionsAs[DataflowPipelineOptions].getStagingLocation != null,
+          "Staging directory not set - use `--stagingLocation`!")
+        (dfOptions.getStagingLocation, gcsOutputStream _)
+      } else {
+        // should targetDir be specified in options?
+        (Files.createTempDirectory("distcache").toString, localOutputStream _)
+      }
+    }
+
+    private def localOutputStream(target: URI): OutputStream = {
+      val f = new File(target.getPath)
+      f.getParentFile.mkdir()
+      new FileOutputStream(f)
+    }
+
+    private def gcsOutputStream(target: URI): OutputStream = {
+      //TODO: Should we attempt to detect the Mime type rather than always using MimeTypes.BINARY?
+      val dfOptions = self.optionsAs[DataflowPipelineOptions]
+      Channels.newOutputStream(
+        dfOptions.getGcsUtil.create(GcsPath.fromUri(target), MimeTypes.BINARY))
+    }
+
+    private[scio] def hadoopDistCacheCopy(src: Path, target: URI, conf: Configuration)
+                                         (createOutputStream: URI => OutputStream): Unit = {
       logger.debug(s"Will copy ${src.toUri}, to $target")
 
       val fs = src.getFileSystem(conf)
       val inStream = fs.open(src)
-
-      //TODO: Should we attempt to detect the Mime type rather than always using MimeTypes.BINARY?
-      val dfOptions = self.optionsAs[DataflowPipelineOptions]
-      val outChannel = Channels.newOutputStream(
-        dfOptions.getGcsUtil.create(GcsPath.fromUri(target), MimeTypes.BINARY))
+      val outChannel = createOutputStream(target)
 
       try {
         ByteStreams.copy(inStream, outChannel)

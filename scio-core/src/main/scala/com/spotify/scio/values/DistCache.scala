@@ -29,7 +29,7 @@ import org.apache.beam.sdk.options.{GcsOptions, PipelineOptions}
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 import org.slf4j.{Logger, LoggerFactory}
 
-/** Encapsulate files on Google Cloud Storage that can be distributed to all workers. */
+/** Encapsulate arbitrary data that can be distributed to all workers. */
 sealed trait DistCache[F] extends Serializable {
   /** Extract the underlying data. */
   def apply(): F
