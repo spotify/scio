@@ -20,7 +20,6 @@ package com.spotify.scio.io
 import java.util.UUID
 
 import com.google.api.services.bigquery.model.TableReference
-import com.google.cloud.dataflow.sdk.coders.Coder
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
 import com.spotify.scio.coders.AvroBytesUtil
@@ -37,6 +36,9 @@ import scala.reflect.ClassTag
  */
 trait Tap[T] { self =>
 
+  /** Parent Taps this Tap's data came from after [[Tap.map]] */
+  val parent: Option[Tap[_]] = None
+
   /** Read data set into memory. */
   def value: Iterator[T]
 
@@ -45,6 +47,10 @@ trait Tap[T] { self =>
 
   /** Map items from T to U. */
   def map[U: ClassTag](f: T => U): Tap[U] = new Tap[U] {
+
+    /** Parent Taps this Tap's data came from after [[Tap.map]] */
+    override val parent: Option[Tap[_]] = Option(self)
+
     /** Read data set into memory. */
     override def value: Iterator[U] = self.value.map(f)
 
