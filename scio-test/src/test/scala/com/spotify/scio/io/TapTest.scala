@@ -206,4 +206,18 @@ class TapTest extends TapSpec {
     FileUtils.deleteDirectory(dir)
   }
 
+  it should "keep parent after Tap.map" in {
+    val dir = tmpDir
+    val t = runWithFileFuture {
+      _
+        .parallelize(Seq(1, 2, 3))
+        .saveAsTextFile(dir.getPath)
+    }.map(_.toInt)
+    verifyTap(t, Set(1, 2, 3))
+    t.isInstanceOf[Tap[Int]] should be (true)
+    t.parent.get.isInstanceOf[TextTap] should be (true)
+    t.parent.get.asInstanceOf[TextTap].path should be (dir.getPath + "/part-*")
+    FileUtils.deleteDirectory(dir)
+  }
+
 }
