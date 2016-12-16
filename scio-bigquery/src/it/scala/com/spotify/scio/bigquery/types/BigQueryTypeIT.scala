@@ -40,6 +40,20 @@ object BigQueryTypeIT {
     """.stripMargin)
   class UdfLegacyT
 
+  @BigQueryType.fromQuery(
+    """
+      |CREATE TEMP FUNCTION bigWords(w STRING)
+      |  RETURNS STRING
+      |  LANGUAGE js AS
+      |"if (w.length < 6) {return ''} else {return w}";
+      |
+      |SELECT bigWords(word) as bword
+      |FROM `bigquery-public-data.samples.shakespeare`
+      |LIMIT 10
+    """.stripMargin
+  )
+  class UdfSqlT
+
   @BigQueryType.fromTable("bigquery-public-data:samples.shakespeare")
   class FromTableT
 
@@ -57,12 +71,25 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
     "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] WHERE word = 'Romeo'"
   val sqlQuery =
     "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` WHERE word = 'Romeo'"
+
   val udfLegacyQuery =
     """
       |SELECT bword
       |FROM bigWords(
       |   SELECT word FROM [bigquery-public-data:samples.shakespeare] LIMIT 10
       |)
+    """.stripMargin
+
+  val udfSqlQuery =
+    """
+      |CREATE TEMP FUNCTION bigWords(w STRING)
+      |  RETURNS STRING
+      |  LANGUAGE js AS
+      |"if (w.length < 6) {return ''} else {return w}";
+      |
+      |SELECT bigWords(word) as bword
+      |FROM `bigquery-public-data.samples.shakespeare`
+      |LIMIT 10
     """.stripMargin
 
   "fromQuery" should "work with legacy syntax" in {
@@ -96,6 +123,20 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
     bqt.isQuery should be (true)
     bqt.isTable should be (false)
     bqt.query should be (Some(udfLegacyQuery))
+    bqt.table should be (None)
+    val fields = bqt.schema.getFields.asScala
+    fields.size should be (1)
+    val field = fields.head
+    field.getName should equal ("bword")
+    field.getType should equal ("STRING")
+    field.getMode should equal ("NULLABLE")
+  }
+
+  it should "support UDF in SQL syntax" in {
+    val bqt= BigQueryType[UdfSqlT]
+    bqt.isQuery should be (true)
+    bqt.isTable should be (false)
+    bqt.query should be (Some(udfSqlQuery))
     bqt.table should be (None)
     val fields = bqt.schema.getFields.asScala
     fields.size should be (1)

@@ -32,12 +32,26 @@ class BigQueryClientIT extends FlatSpec with Matchers {
     "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] LIMIT 10"
   val sqlQuery =
     "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` LIMIT 10"
+
   val legacyQueryWithUdf =
     """
       |SELECT bword
       |FROM bigWords(SELECT word FROM [bigquery-public-data:samples.shakespeare]
-      | LIMIT 10)
+      |  LIMIT 10)
     """.stripMargin
+
+  val sqlQueryWithUdf =
+    """
+      |CREATE TEMP FUNCTION bigWords(w STRING)
+      |  RETURNS STRING
+      |  LANGUAGE js AS
+      |"if (w.length < 6) {return ''} else {return w}";
+      |
+      |SELECT bigWords(word) as bword
+      |FROM `bigquery-public-data.samples.shakespeare`
+      |LIMIT 10
+    """.stripMargin
+
 
   "extractLocation" should "work with legacy syntax" in {
     val query = "SELECT word FROM [data-integration-test:samples_%s.shakespeare]"
@@ -81,11 +95,18 @@ class BigQueryClientIT extends FlatSpec with Matchers {
     bq.getQuerySchema(sqlQuery) should equal (expected)
   }
 
-  it should "work with UDF legacy syntax" in {
+  it should "work with UDF in legacy syntax" in {
     val expected = new TableSchema().setFields(List(
       new TableFieldSchema().setName("bword").setType("STRING").setMode("NULLABLE")
     ).asJava)
     bq.getQuerySchema(legacyQueryWithUdf) should equal (expected)
+  }
+
+  it should "work with UDF in sql syntax" in {
+    val expected = new TableSchema().setFields(List(
+      new TableFieldSchema().setName("bword").setType("STRING").setMode("NULLABLE")
+    ).asJava)
+    bq.getQuerySchema(sqlQueryWithUdf) should equal (expected)
   }
 
   // scalastyle:off no.whitespace.before.left.bracket
