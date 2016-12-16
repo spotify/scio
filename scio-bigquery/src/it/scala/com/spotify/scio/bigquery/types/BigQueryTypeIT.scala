@@ -17,7 +17,6 @@
 
 package com.spotify.scio.bigquery.types
 
-import com.google.cloud.dataflow.sdk.io.BigQueryIO
 import com.spotify.scio.bigquery.BigQueryClient
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -31,6 +30,15 @@ object BigQueryTypeIT {
   @BigQueryType.fromQuery(
     "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` WHERE word = 'Romeo'")
   class SqlT
+
+  @BigQueryType.fromQuery(
+    """
+      |SELECT bword
+      |FROM bigWords(
+      |   SELECT word FROM [bigquery-public-data:samples.shakespeare] LIMIT 10
+      |)
+    """.stripMargin)
+  class UdfLegacyT
 
   @BigQueryType.fromTable("bigquery-public-data:samples.shakespeare")
   class FromTableT
@@ -49,6 +57,13 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
     "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] WHERE word = 'Romeo'"
   val sqlQuery =
     "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` WHERE word = 'Romeo'"
+  val udfLegacyQuery =
+    """
+      |SELECT bword
+      |FROM bigWords(
+      |   SELECT word FROM [bigquery-public-data:samples.shakespeare] LIMIT 10
+      |)
+    """.stripMargin
 
   "fromQuery" should "work with legacy syntax" in {
     val bqt= BigQueryType[LegacyT]
@@ -74,6 +89,20 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
     fields.map(_.getName) should equal (Seq("word", "word_count"))
     fields.map(_.getType) should equal (Seq("STRING", "INTEGER"))
     fields.map(_.getMode) should equal (Seq("NULLABLE", "NULLABLE"))
+  }
+
+  it should "support UDF in legacy syntax" in {
+    val bqt= BigQueryType[UdfLegacyT]
+    bqt.isQuery should be (true)
+    bqt.isTable should be (false)
+    bqt.query should be (Some(udfLegacyQuery))
+    bqt.table should be (None)
+    val fields = bqt.schema.getFields.asScala
+    fields.size should be (1)
+    val field = fields.head
+    field.getName should equal ("bword")
+    field.getType should equal ("STRING")
+    field.getMode should equal ("NULLABLE")
   }
 
   it should "round trip rows with legacy syntax" in {

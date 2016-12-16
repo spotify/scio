@@ -32,6 +32,12 @@ class BigQueryClientIT extends FlatSpec with Matchers {
     "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] LIMIT 10"
   val sqlQuery =
     "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` LIMIT 10"
+  val legacyQueryWithUdf =
+    """
+      |SELECT bword
+      |FROM bigWords(SELECT word FROM [bigquery-public-data:samples.shakespeare]
+      | LIMIT 10)
+    """.stripMargin
 
   "extractLocation" should "work with legacy syntax" in {
     val query = "SELECT word FROM [data-integration-test:samples_%s.shakespeare]"
@@ -73,6 +79,13 @@ class BigQueryClientIT extends FlatSpec with Matchers {
       new TableFieldSchema().setName("word_count").setType("INTEGER").setMode("NULLABLE")
     ).asJava)
     bq.getQuerySchema(sqlQuery) should equal (expected)
+  }
+
+  it should "work with UDF legacy syntax" in {
+    val expected = new TableSchema().setFields(List(
+      new TableFieldSchema().setName("bword").setType("STRING").setMode("NULLABLE")
+    ).asJava)
+    bq.getQuerySchema(legacyQueryWithUdf) should equal (expected)
   }
 
   // scalastyle:off no.whitespace.before.left.bracket
