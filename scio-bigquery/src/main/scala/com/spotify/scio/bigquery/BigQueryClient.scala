@@ -121,6 +121,8 @@ class BigQueryClient private (private val projectId: String,
   private val STAGING_DATASET_TABLE_EXPIRATION_MS = 86400000L
   private val STAGING_DATASET_DESCRIPTION = "Staging dataset for temporary tables"
 
+  private val DEFAULT_LOCATION = "US"
+
   private def isInteractive =
     Thread
       .currentThread()
@@ -137,7 +139,7 @@ class BigQueryClient private (private val projectId: String,
     if (isLegacySql(sqlQuery, flattenResults = false)) {
       // Dry-run not supported for legacy query, using view as a work around
       logger.info("Getting legacy query schema with view")
-      val location = extractLocation(sqlQuery)
+      val location = extractLocation(sqlQuery).getOrElse(DEFAULT_LOCATION)
       prepareStagingDataset(location)
       val temp = temporaryTable(location)
 
@@ -293,7 +295,8 @@ class BigQueryClient private (private val projectId: String,
 
   private[scio] def newQueryJob(sqlQuery: String, flattenResults: Boolean): QueryJob = {
     try {
-      val sourceTimes = extractTables(sqlQuery).map(t => BigInt(getTable(t).getLastModifiedTime))
+      val sourceTimes = extractTables(sqlQuery)
+        .map(t => BigInt(getTable(t).getLastModifiedTime))
       val temp = getCacheDestinationTable(sqlQuery).get
       val time = BigInt(getTable(temp).getLastModifiedTime)
       if (sourceTimes.forall(_ < time)) {
@@ -313,7 +316,7 @@ class BigQueryClient private (private val projectId: String,
       }
     } catch {
       case NonFatal(_) =>
-        val temp = temporaryTable(extractLocation(sqlQuery))
+        val temp = temporaryTable(extractLocation(sqlQuery).getOrElse(DEFAULT_LOCATION))
         logger.info(s"Cache miss for query: `$sqlQuery`")
         logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
@@ -357,7 +360,7 @@ class BigQueryClient private (private val projectId: String,
                               flattenResults: Boolean): QueryJob = new QueryJob {
     override def waitForResult(): Unit = self.waitForJobs(this)
     override lazy val jobReference: Option[JobReference] = {
-      val location = extractLocation(sqlQuery)
+      val location = extractLocation(sqlQuery).getOrElse(DEFAULT_LOCATION)
       prepareStagingDataset(location)
       val isLegacy = isLegacySql(sqlQuery, flattenResults)
       if (isLegacy) {
@@ -451,19 +454,22 @@ class BigQueryClient private (private val projectId: String,
   def extractTables(sqlQuery: String): Set[TableReference] = {
     val isLegacy = isLegacySql(sqlQuery, flattenResults = false)
     val tryJob = runQuery(sqlQuery, null, flattenResults = false, isLegacy, dryRun = true)
-    tryJob.get.getStatistics.getQuery.getReferencedTables.asScala.toSet
+    Option(tryJob.get.getStatistics.getQuery.getReferencedTables) match {
+      case Some(l) => l.asScala.toSet
+      case None => Set.empty
+    }
   }
 
   /** Extract locations of tables to be access by a query. */
-  def extractLocation(sqlQuery: String): String = {
+  def extractLocation(sqlQuery: String): Option[String] = {
     val locations = extractTables(sqlQuery)
       .map(t => (t.getProjectId, t.getDatasetId))
       .map { case (pId, dId) =>
         val l = bigquery.datasets().get(pId, dId).execute().getLocation
-        if (l != null) l else "US"
+        if (l != null) l else DEFAULT_LOCATION
       }
-    require(locations.size == 1, "Tables in the query must be in the same location")
-    locations.head
+    require(locations.size <= 1, "Tables in the query must be in the same location")
+    locations.headOption
   }
 
   // =======================================================================

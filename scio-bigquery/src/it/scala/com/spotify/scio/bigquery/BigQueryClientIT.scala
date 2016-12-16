@@ -35,14 +35,18 @@ class BigQueryClientIT extends FlatSpec with Matchers {
 
   "extractLocation" should "work with legacy syntax" in {
     val query = "SELECT word FROM [data-integration-test:samples_%s.shakespeare]"
-    bq.extractLocation(query.format("us")) should equal ("US")
-    bq.extractLocation(query.format("eu")) should equal ("EU")
+    bq.extractLocation(query.format("us")) should equal (Some("US"))
+    bq.extractLocation(query.format("eu")) should equal (Some("EU"))
   }
 
   it should "work with SQL syntax" in {
     val query = "SELECT word FROM `data-integration-test.samples_%s.shakespeare`"
-    bq.extractLocation(query.format("us")) should equal ("US")
-    bq.extractLocation(query.format("eu")) should equal ("EU")
+    bq.extractLocation(query.format("us")) should equal (Some("US"))
+    bq.extractLocation(query.format("eu")) should equal (Some("EU"))
+  }
+
+  it should "support missing source tables" in {
+    bq.extractLocation("SELECT 6") should equal (None)
   }
 
   "extractTables" should "work with legacy syntax" in {
