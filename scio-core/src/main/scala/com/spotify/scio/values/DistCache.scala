@@ -28,7 +28,7 @@ import com.google.common.hash.Hashing
 import com.spotify.scio.util.ScioUtil
 import org.slf4j.{Logger, LoggerFactory}
 
-/** Encapsulate files on Google Cloud Storage that can be distributed to all workers. */
+/** Encapsulate arbitrary data that can be distributed to all workers. */
 sealed trait DistCache[F] extends Serializable {
   /** Extract the underlying data. */
   def apply(): F

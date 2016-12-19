@@ -145,6 +145,7 @@ class BigQueryClient private (private val projectId: String,
       // Create temporary table view and get schema
       logger.info(s"Creating temporary view ${BigQueryIO.toTableSpec(temp)}")
       val view = new ViewDefinition().setQuery(sqlQuery)
+      getUdfResource().map(view.setUserDefinedFunctionResources(_))
       val viewTable = new Table().setView(view).setTableReference(temp)
       val schema = bigquery
         .tables().insert(temp.getProjectId, temp.getDatasetId, viewTable)
@@ -409,6 +410,11 @@ class BigQueryClient private (private val projectId: String,
         .setPriority(PRIORITY)
         .setCreateDisposition("CREATE_IF_NEEDED")
         .setWriteDisposition("WRITE_EMPTY")
+
+      if (useLegacySql) {
+        getUdfResource().map(queryConfig.setUserDefinedFunctionResources(_))
+      }
+
       if (!dryRun) {
         queryConfig.setAllowLargeResults(true).setDestinationTable(destinationTable)
       }
@@ -446,6 +452,14 @@ class BigQueryClient private (private val projectId: String,
           case Failure(f) => throw f
         }
       case Failure(e) => throw e
+    }
+  }
+
+  private def getUdfResource(): Option[java.util.List[UserDefinedFunctionResource]] = {
+    BigQueryClient.udfResourceUri.map { uri =>
+      Seq(new UserDefinedFunctionResource()
+          .setResourceUri(uri)
+      ).asJava
     }
   }
 
@@ -540,6 +554,9 @@ object BigQueryClient {
    */
   val READ_TIMEOUT_MS_KEY: String = "bigquery.read_timeout"
 
+  /** System property key for GCS URI storing user-defined functions. */
+  val BQ_RESOURCE_URI: String = "bigquery.resource_uri"
+
   private val SCOPES = List(BigqueryScopes.BIGQUERY).asJava
 
   private var instance: BigQueryClient = null
@@ -600,6 +617,8 @@ object BigQueryClient {
   private def connectTimeoutMs: Option[Int] = Option(sys.props(CONNECT_TIMEOUT_MS_KEY)).map(_.toInt)
 
   private def readTimeoutMs: Option[Int] = Option(sys.props(READ_TIMEOUT_MS_KEY)).map(_.toInt)
+
+  private def udfResourceUri: Option[String] = Option(sys.props(BQ_RESOURCE_URI))
 
   private def getPropOrElse(key: String, default: String): String = {
     val value = sys.props(key)
