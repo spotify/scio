@@ -17,13 +17,22 @@
 
 package com.spotify.scio.testing
 
-import com.spotify.scio._
-import com.spotify.scio.values.SCollection
+import java.io.ByteArrayInputStream
+import java.nio.ByteBuffer
+import java.nio.channels.Channels
 
+import com.google.api.client.util.ByteStreams
+import com.google.cloud.dataflow.sdk.util.MimeTypes
+import com.google.cloud.dataflow.sdk.util.GcsUtil.GcsUtilFactory
+import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
+import com.spotify.scio._
+import com.spotify.scio.values.{DistCache, SCollection}
+
+import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 /** Trait with utility methods for unit testing pipelines. */
-trait PipelineTestUtils {
+trait PipelineTestUtils { this: ContextProvider =>
 
   /**
    * Test pipeline components with a [[ScioContext]].
@@ -36,7 +45,7 @@ trait PipelineTestUtils {
    * }}}
    */
   def runWithContext[T](fn: ScioContext => T): ScioResult = {
-    val sc = ScioContext.forTest()
+    val sc = this.context
     fn(sc)
     sc.close()
   }
@@ -128,6 +137,45 @@ trait PipelineTestUtils {
     val f = fn(sc).materialize
     sc.close()
     f.waitForResult().value.toSeq
+  }
+
+}
+
+trait PipelineUnitTestUtils extends PipelineTestUtils with UnitTestContextProvider
+
+/** Internal trait for integration testing. */
+private[scio] trait PipelineITUtils extends PipelineTestUtils with IntegrationTestContextProvider {
+
+  private val gcsUtil = new GcsUtilFactory().create(this.context.options)
+
+  /**
+   * Test pipeline components with a [[ScioContext]] by supplying data for a distributed cache.
+   * @param data the data for the distributed cache
+   * @param path the GCS file where the cache will be written
+   * @param fn code that tests the components and verifies the result
+   *
+   * {{{
+   * runWithDistCache(Seq("a", "b"), "gs://<bucket>/<file>") { sc =>
+   *   val cache = sc.distCache("gs://<bucket>/<file>") (initFn) // Can use in test
+   *   sc.parallelize(Seq(1, 2, 3)).sum should containSingleValue (6)
+   * }
+   * }}}
+   */
+  def runWithDistCache[T1: ClassTag, T2: ClassTag](data: Iterable[T1], path: String)
+                                                  (fn: ScioContext => T2)
+  : ScioResult = {
+    try {
+      val channel = gcsUtil.create(GcsPath.fromUri(path), MimeTypes.BINARY)
+      channel.write(ByteBuffer.wrap(data.mkString("\n").getBytes))
+      channel.close()
+      runWithContext(fn)
+    }
+    finally {
+      val gcsPath = GcsPath.fromUri(path)
+      if (gcsUtil.bucketExists(gcsPath)) {
+        gcsUtil.remove(Seq(path).asJava)
+      }
+    }
   }
 
 }

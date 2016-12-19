@@ -17,24 +17,16 @@
 
 package com.spotify.scio.testing
 
-import org.scalatest.{FlatSpec, Matchers}
+import com.spotify.scio.ScioContext
 
-/**
-  * Trait for unit testing pipelines.
-  *
-  * A simple test might look like this:
-  * {{{
-  * class SimplePipelineTest extends PipelineSpec {
-  *   "A simple pipeline" should "sum integers" in {
-  *     runWithContext { sc =>
-  *       sc.parallelize(Seq(1, 2, 3)).sum should containSingleValue (6)
-  *     }
-  *   }
-  * }
-  * }}}
-  */
-trait PipelineSpec extends FlatSpec
-  with Matchers with SCollectionMatchers with PipelineUnitTestUtils
+private[testing] trait ContextProvider {
+  def context: ScioContext
+}
 
-private[scio] trait ITPipelineSpec extends FlatSpec
-  with Matchers with SCollectionMatchers with PipelineITUtils
+private[testing] trait UnitTestContextProvider extends ContextProvider {
+  override def context: ScioContext = ScioContext.forTest()
+}
+
+private[testing] trait IntegrationTestContextProvider extends ContextProvider {
+  override def context: ScioContext = ScioContext()
+}
