@@ -398,7 +398,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   private[scio] def applyInternal[Output <: POutput](root: PTransform[_ >: PBegin, Output])
   : Output =
-    pipeline.apply(CallSites.getCurrent, root)
+    pipeline.apply(CallSites.getCurrentName, root)
 
   /**
    * Get an SCollection for an object file.

@@ -43,7 +43,7 @@ object MultiJoin {
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala))
@@ -56,7 +56,7 @@ object MultiJoin {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala))
@@ -70,7 +70,7 @@ object MultiJoin {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala))
@@ -85,7 +85,7 @@ object MultiJoin {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala))
@@ -101,7 +101,7 @@ object MultiJoin {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala))
@@ -118,7 +118,7 @@ object MultiJoin {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala))
@@ -136,7 +136,7 @@ object MultiJoin {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala))
@@ -155,7 +155,7 @@ object MultiJoin {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala))
@@ -175,7 +175,7 @@ object MultiJoin {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala))
@@ -196,7 +196,7 @@ object MultiJoin {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala))
@@ -218,7 +218,7 @@ object MultiJoin {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala))
@@ -241,7 +241,7 @@ object MultiJoin {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala))
@@ -265,7 +265,7 @@ object MultiJoin {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala))
@@ -290,7 +290,7 @@ object MultiJoin {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala))
@@ -316,7 +316,7 @@ object MultiJoin {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala))
@@ -343,7 +343,7 @@ object MultiJoin {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala))
@@ -371,7 +371,7 @@ object MultiJoin {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala))
@@ -400,7 +400,7 @@ object MultiJoin {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala, result.getAll(tagS).asScala))
@@ -430,7 +430,7 @@ object MultiJoin {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala, result.getAll(tagS).asScala, result.getAll(tagT).asScala))
@@ -461,7 +461,7 @@ object MultiJoin {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala, result.getAll(tagS).asScala, result.getAll(tagT).asScala, result.getAll(tagU).asScala))
@@ -493,7 +493,7 @@ object MultiJoin {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala, result.getAll(tagS).asScala, result.getAll(tagT).asScala, result.getAll(tagU).asScala, result.getAll(tagV).asScala))
@@ -505,7 +505,7 @@ object MultiJoin {
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -521,7 +521,7 @@ object MultiJoin {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -539,7 +539,7 @@ object MultiJoin {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -559,7 +559,7 @@ object MultiJoin {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -581,7 +581,7 @@ object MultiJoin {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -605,7 +605,7 @@ object MultiJoin {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -631,7 +631,7 @@ object MultiJoin {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -659,7 +659,7 @@ object MultiJoin {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -689,7 +689,7 @@ object MultiJoin {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -721,7 +721,7 @@ object MultiJoin {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -755,7 +755,7 @@ object MultiJoin {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -791,7 +791,7 @@ object MultiJoin {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -829,7 +829,7 @@ object MultiJoin {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -869,7 +869,7 @@ object MultiJoin {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -911,7 +911,7 @@ object MultiJoin {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -955,7 +955,7 @@ object MultiJoin {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1001,7 +1001,7 @@ object MultiJoin {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1049,7 +1049,7 @@ object MultiJoin {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1099,7 +1099,7 @@ object MultiJoin {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1151,7 +1151,7 @@ object MultiJoin {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1205,7 +1205,7 @@ object MultiJoin {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1240,7 +1240,7 @@ object MultiJoin {
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1256,7 +1256,7 @@ object MultiJoin {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1274,7 +1274,7 @@ object MultiJoin {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1294,7 +1294,7 @@ object MultiJoin {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1316,7 +1316,7 @@ object MultiJoin {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1340,7 +1340,7 @@ object MultiJoin {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1366,7 +1366,7 @@ object MultiJoin {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1394,7 +1394,7 @@ object MultiJoin {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1424,7 +1424,7 @@ object MultiJoin {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1456,7 +1456,7 @@ object MultiJoin {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1490,7 +1490,7 @@ object MultiJoin {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1526,7 +1526,7 @@ object MultiJoin {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1564,7 +1564,7 @@ object MultiJoin {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1604,7 +1604,7 @@ object MultiJoin {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1646,7 +1646,7 @@ object MultiJoin {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1690,7 +1690,7 @@ object MultiJoin {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1736,7 +1736,7 @@ object MultiJoin {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1784,7 +1784,7 @@ object MultiJoin {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1834,7 +1834,7 @@ object MultiJoin {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1886,7 +1886,7 @@ object MultiJoin {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1940,7 +1940,7 @@ object MultiJoin {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1975,7 +1975,7 @@ object MultiJoin {
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1991,7 +1991,7 @@ object MultiJoin {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2009,7 +2009,7 @@ object MultiJoin {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2029,7 +2029,7 @@ object MultiJoin {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2051,7 +2051,7 @@ object MultiJoin {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2075,7 +2075,7 @@ object MultiJoin {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2101,7 +2101,7 @@ object MultiJoin {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2129,7 +2129,7 @@ object MultiJoin {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2159,7 +2159,7 @@ object MultiJoin {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2191,7 +2191,7 @@ object MultiJoin {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2225,7 +2225,7 @@ object MultiJoin {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2261,7 +2261,7 @@ object MultiJoin {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2299,7 +2299,7 @@ object MultiJoin {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2339,7 +2339,7 @@ object MultiJoin {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2381,7 +2381,7 @@ object MultiJoin {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2425,7 +2425,7 @@ object MultiJoin {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2471,7 +2471,7 @@ object MultiJoin {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2519,7 +2519,7 @@ object MultiJoin {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2569,7 +2569,7 @@ object MultiJoin {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2621,7 +2621,7 @@ object MultiJoin {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2675,7 +2675,7 @@ object MultiJoin {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
-      .apply(CallSites.getCurrent, CoGroupByKey.create())
+      .apply(CallSites.getCurrentName, CoGroupByKey.create())
     a.context.wrap(keyed).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
