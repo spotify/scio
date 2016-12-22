@@ -92,6 +92,10 @@ package object bigquery {
         .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
         .toParser)
       .appendOptional(new DateTimeFormatterBuilder()
+        .append(DateTimeFormat.forPattern("'T'HH:mm:ss").getParser)
+        .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
+        .toParser)
+      .appendOptional(new DateTimeFormatterBuilder()
         .append(null, Array(" ZZZ", "ZZ").map(p => DateTimeFormat.forPattern(p).getParser))
         .toParser)
       .toFormatter
@@ -145,6 +149,10 @@ package object bigquery {
       .append(DateTimeFormat.forPattern("yyyy-MM-dd"))
       .appendOptional(new DateTimeFormatterBuilder()
         .append(DateTimeFormat.forPattern(" HH:mm:ss").getParser)
+        .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
+        .toParser)
+      .appendOptional(new DateTimeFormatterBuilder()
+        .append(DateTimeFormat.forPattern("'T'HH:mm:ss").getParser)
         .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
         .toParser)
       .toFormatter
