@@ -23,7 +23,7 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import sbtunidoc.Plugin.UnidocKeys._
 import com.trueaccord.scalapb.{ScalaPbPlugin => PB}
 
-val dataflowSdkVersion = "1.8.1"
+val dataflowSdkVersion = "1.9.0"
 val algebirdVersion = "0.12.3"
 val autoServiceVersion = "1.0-rc2"
 val avroVersion = "1.7.7"
