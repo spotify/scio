@@ -178,7 +178,7 @@ package object experimental {
      * bq.getTypedRows[Row]("myproject:samples.gsod")
      *
      * // Read from a query instead.
-     * sc.getTypedRows[Row]("SELECT * FROM [publicdata:samples.gsod] LIMIT 1000")
+     * bq.getTypedRows[Row]("SELECT * FROM [publicdata:samples.gsod] LIMIT 1000")
      * }}}
      */
     def getTypedRows[T <: HasAnnotation : TypeTag](newSource: String = null)
