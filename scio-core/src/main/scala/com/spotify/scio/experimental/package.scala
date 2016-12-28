@@ -20,7 +20,7 @@ package com.spotify.scio
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.bigquery.BigQueryClient
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.io.Tap
+import com.spotify.scio.io.{Tap, Taps}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
@@ -230,6 +230,37 @@ package object experimental {
       writeTypedRows(
         BigQueryIO.parseTableSpec(tableSpec), rows,
         writeDisposition, createDisposition)
+
+  }
+
+  /** Enhanced version of [[Taps]] with type-safe features for BigQuery [[Taps]]. */
+  implicit class TypedBigQueryTaps(self: Taps) {
+
+    /** Get a `Future[Tap[T]]` for BigQuery source. */
+    def typedBigQuery[T <: HasAnnotation : TypeTag : ClassTag](newSource: String = null)
+    : Future[Tap[T]] = {
+      val bqt = BigQueryType[T]
+      val rows = if (newSource == null) {
+        // newSource is missing, T's companion object must have either table or query
+        if (bqt.isTable) {
+          self.bigQueryTable(bqt.table.get)
+        } else if (bqt.isQuery) {
+          self.bigQuerySelect(bqt.query.get)
+        } else {
+          throw new IllegalArgumentException(s"Missing table or query field in companion object")
+        }
+      } else {
+        // newSource can be either table or query
+        val table = scala.util.Try(BigQueryIO.parseTableSpec(newSource)).toOption
+        if (table.isDefined) {
+          self.bigQueryTable(table.get)
+        } else {
+          self.bigQuerySelect(newSource)
+        }
+      }
+      import scala.concurrent.ExecutionContext.Implicits.global
+      rows.map(_.map(bqt.fromTableRow))
+    }
 
   }
 
