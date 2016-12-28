@@ -117,7 +117,7 @@ class IoCommands(options: PipelineOptions) {
                               sep: Char = ',',
                               header: Seq[String] = Seq.empty): Unit = {
     import kantan.csv.ops._
-    IOUtils.write(data.asCsv(sep, header), outputStream(path, TEXT), StandardCharsets.UTF_8)
+    IOUtils.write(data.asCsv(sep, header: _*), outputStream(path, TEXT), StandardCharsets.UTF_8)
     logger.info("{} line{} written to {}", Array(data.size, plural(data), path))
   }
 
@@ -126,7 +126,7 @@ class IoCommands(options: PipelineOptions) {
                               sep: Char = '\t',
                               header: Seq[String] = Seq.empty): Unit = {
     import kantan.csv.ops._
-    IOUtils.write(data.asCsv(sep, header), outputStream(path, TEXT), StandardCharsets.UTF_8)
+    IOUtils.write(data.asCsv(sep, header: _*), outputStream(path, TEXT), StandardCharsets.UTF_8)
     logger.info("{} line{} written to {}", Array(data.size, plural(data), path))
   }
 
