@@ -84,11 +84,15 @@ package object bigquery {
 
     // FIXME: verify that these match BigQuery specification
     // YYYY-[M]M-[D]D[ [H]H:[M]M:[S]S[.DDDDDD]][time zone]
-    private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSSSS ZZZ")
+    private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS ZZZ")
     private val parser = new DateTimeFormatterBuilder()
       .append(DateTimeFormat.forPattern("yyyy-MM-dd"))
       .appendOptional(new DateTimeFormatterBuilder()
         .append(DateTimeFormat.forPattern(" HH:mm:ss").getParser)
+        .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
+        .toParser)
+      .appendOptional(new DateTimeFormatterBuilder()
+        .append(DateTimeFormat.forPattern("'T'HH:mm:ss").getParser)
         .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
         .toParser)
       .appendOptional(new DateTimeFormatterBuilder()
@@ -140,11 +144,15 @@ package object bigquery {
   /** Utility for BigQuery DATETIME type. */
   object DateTime {
     // YYYY-[M]M-[D]D[ [H]H:[M]M:[S]S[.DDDDDD]]
-    private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")
+    private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
     private val parser = new DateTimeFormatterBuilder()
       .append(DateTimeFormat.forPattern("yyyy-MM-dd"))
       .appendOptional(new DateTimeFormatterBuilder()
         .append(DateTimeFormat.forPattern(" HH:mm:ss").getParser)
+        .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
+        .toParser)
+      .appendOptional(new DateTimeFormatterBuilder()
+        .append(DateTimeFormat.forPattern("'T'HH:mm:ss").getParser)
         .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
         .toParser)
       .toFormatter
