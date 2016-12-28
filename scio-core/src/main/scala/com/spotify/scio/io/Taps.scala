@@ -39,26 +39,26 @@ trait Taps {
   def avroFile[T: ClassTag](path: String, schema: Schema = null): Future[Tap[T]] =
     mkTap(s"Avro: $path", () => isPathDone(path), () => AvroTap[T](path, schema))
 
-  /** Get a `Future[Tap[T]]` for BigQuery SELECT query. */
+  /** Get a `Future[Tap[TableRow]]` for BigQuery SELECT query. */
   def bigQuerySelect(sqlQuery: String, flattenResults: Boolean = false): Future[Tap[TableRow]] =
     mkTap(
       s"BigQuery SELECT: $sqlQuery",
       () => isQueryDone(sqlQuery),
       () => bigQueryTap(sqlQuery, flattenResults))
 
-  /** Get a `Future[Tap[T]]` for BigQuery table. */
+  /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
   def bigQueryTable(table: TableReference): Future[Tap[TableRow]] =
     mkTap(s"BigQuery Table: $table", () => tableExists(table), () => BigQueryTap(table))
 
-  /** Get a `Future[Tap[T]]` for BigQuery table. */
+  /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
   def bigQueryTable(tableSpec: String): Future[Tap[TableRow]] =
     bigQueryTable(BigQueryIO.parseTableSpec(tableSpec))
 
-  /** Get a `Future[Tap[T]]` of TableRow for a JSON file. */
+  /** Get a `Future[Tap[TableRow]]` of TableRow for a JSON file. */
   def tableRowJsonFile(path: String): Future[Tap[TableRow]] =
     mkTap(s"TableRowJson: $path", () => isPathDone(path), () => TableRowJsonTap(path))
 
-  /** Get a `Future[Tap[T]]` for a text file. */
+  /** Get a `Future[Tap[String]]` for a text file. */
   def textFile(path: String): Future[Tap[String]] =
     mkTap(s"Text: $path", () => isPathDone(path), () => TextTap(path))
 
