@@ -18,6 +18,7 @@
 package com.spotify.scio.testing
 
 import com.spotify.scio._
+import com.spotify.scio.named.NamedScioContext
 import com.spotify.scio.values.SCollection
 
 import scala.reflect.ClassTag
@@ -37,6 +38,22 @@ trait PipelineTestUtils {
    */
   def runWithContext[T](fn: ScioContext => T): ScioResult = {
     val sc = ScioContext.forTest()
+    fn(sc)
+    sc.close()
+  }
+
+  /**
+   * Test pipeline components with a [[NamedScioContext]].
+   * @param fn code that tests the components and verifies the result
+   *
+   * {{{
+   * runWithNamedContext { sc =>
+   *   sc.parallelize(Seq(1, 2, 3)).sum should containSingleValue (6)
+   * }
+   * }}}
+   */
+  def runWithNamedContext[T](fn: ScioContext => T): ScioResult = {
+    val sc = NamedScioContext.forTest()
     fn(sc)
     sc.close()
   }

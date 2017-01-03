@@ -138,7 +138,7 @@ object ScioContext {
  */
 // scalastyle:off number.of.methods
 class ScioContext private[scio] (val options: PipelineOptions,
-                                 private var artifacts: List[String]) {
+                                 private[scio] var artifacts: List[String]) {
 
   private implicit val context: ScioContext = this
 

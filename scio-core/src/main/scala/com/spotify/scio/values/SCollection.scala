@@ -61,7 +61,7 @@ object SCollection {
     val o = PCollectionList
       .of(scs.map(_.internal).asJava)
       .apply(CallSites.getCurrent, Flatten.pCollections())
-    new SCollectionImpl(o, scs.head.context)
+    scs.head.context.wrap(o)
   }
 
   import scala.language.implicitConversions
@@ -98,7 +98,7 @@ object SCollection {
  * @groupname transform Transformations
  * @groupname window Windowing Operations
  */
-sealed trait SCollection[T] extends PCollectionWrapper[T] {
+trait SCollection[T] extends PCollectionWrapper[T] {
 
   import TupleFunctions._
 
@@ -122,6 +122,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def applyTransform[U: ClassTag](transform: PTransform[_ >: PCollection[T], PCollection[U]])
   : SCollection[U] =
     this.pApply(transform)
+
+  /**
+   * Apply a [[com.google.cloud.dataflow.sdk.transforms.PTransform PTransform]] and wrap the output
+   * in an [[SCollection]].
+   * @param name the name given to the transform
+   */
+  def applyTransform[U: ClassTag](name: String,
+                                  transform: PTransform[_ >: PCollection[T], PCollection[U]])
+  : SCollection[U] =
+    this.pApply(transform, name)
 
   /** Apply a transform. */
   private[values] def transform[U: ClassTag](f: SCollection[T] => SCollection[U])
