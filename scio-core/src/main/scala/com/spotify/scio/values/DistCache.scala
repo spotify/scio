@@ -117,6 +117,10 @@ private[scio] class MockDistCache[F](val value: F) extends DistCache[F] {
   override def apply(): F = value
 }
 
+object MockDistCache {
+  def apply[F](value: F): MockDistCache[F] = new MockDistCache(value)
+}
+
 private[scio] class DistCacheSingle[F](val uri: URI, val initFn: File => F, options: GcsOptions)
   extends FileDistCache[F](options) {
   verifyUri(uri)
