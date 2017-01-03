@@ -66,4 +66,12 @@ class DoubleSCollectionFunctionsTest extends PipelineSpec {
     test(runWithData(doubles)(_.variance), e)
   }
 
+  it should "support custom transform name" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq(1.0, 2.0, 3.0))
+        .withName("computeVariance").variance
+      p.internal.getProducingTransformInternal.getFullName shouldBe "computeVariance"
+    }
+  }
+
 }

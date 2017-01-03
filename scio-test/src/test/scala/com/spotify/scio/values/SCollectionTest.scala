@@ -25,7 +25,7 @@ import com.google.cloud.dataflow.sdk.transforms.Count
 import com.google.cloud.dataflow.sdk.transforms.windowing.PaneInfo.Timing
 import com.google.cloud.dataflow.sdk.transforms.windowing.{GlobalWindow, PaneInfo}
 import com.spotify.scio.testing.PipelineSpec
-import com.spotify.scio.util.MockedPrintStream
+import com.spotify.scio.util.{Functions, MockedPrintStream}
 import com.spotify.scio.util.random.RandomSamplerUtils
 import com.twitter.algebird.{Aggregator, Semigroup}
 import org.joda.time.{Duration, Instant}
@@ -47,6 +47,15 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).applyTransform(Count.globally())
       p should containSingleValue (5L.asInstanceOf[java.lang.Long])
+    }
+  }
+
+  it should "support custom transform name" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq(1, 2, 3, 4, 5))
+        .map(_ * 3)
+        .withName("OnlyEven").filter(_ % 2 == 0)
+      p.internal.getProducingTransformInternal.getFullName shouldBe "OnlyEven/Filter"
     }
   }
 
