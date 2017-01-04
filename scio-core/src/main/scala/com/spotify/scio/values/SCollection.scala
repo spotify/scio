@@ -1014,6 +1014,25 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /**
+   * Save this SCollection as a TensorFlow TFRecord file. Note that elements must be of type
+   * Array[[Byte]].
+   * @group output
+   */
+  def saveAsTfRecordFile(path: String,
+                         suffix: String = ".tfrecords",
+                         tfRecordOptions: TFRecordOptions = TFRecordOptions.writeDefault)
+                        (implicit ev: T <:< Array[Byte]): Future[Tap[Array[Byte]]] = {
+    if (context.isTest) {
+      context.testOut(TFRecordIO(path))(this.asInstanceOf[SCollection[Array[Byte]]])
+      saveAsInMemoryTap.asInstanceOf[Future[Tap[Array[Byte]]]]
+    } else {
+      this.asInstanceOf[SCollection[Array[Byte]]].applyInternal(
+        gio.Write.to(new TFRecordSink(pathWithShards(path), suffix, tfRecordOptions)))
+      context.makeFuture(TFRecordFileTap(path + "/part-*"))
+    }
+  }
+
+  /**
    * Save this SCollection with a custom output transform. The transform should have a unique name.
    * @group output
    */
