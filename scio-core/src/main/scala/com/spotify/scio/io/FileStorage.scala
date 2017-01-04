@@ -78,6 +78,20 @@ private[scio] trait FileStorage {
     textFile.map(mapper.readValue(_, classOf[TableRow]))
   }
 
+  def tfRecordFile: Iterator[Array[Byte]] = {
+    val stream = getDirectoryInputStream(path)
+    new Iterator[Array[Byte]] {
+      private val input = TFRecordCodec.wrapInputStream(stream, TFRecordOptions.readDefault)
+      private var current: Array[Byte] = TFRecordCodec.read(input)
+      override def hasNext: Boolean = current != null
+      override def next(): Array[Byte] = {
+        val r = current
+        current = TFRecordCodec.read(input)
+        r
+      }
+    }
+  }
+
   def isDone: Boolean = {
     val partPattern = "([0-9]{5})-of-([0-9]{5})".r
     val paths = listFiles

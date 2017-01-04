@@ -95,6 +95,12 @@ case class ObjectFileTap[T: ClassTag](path: String) extends Tap[T] {
   override def open(sc: ScioContext): SCollection[T] = sc.objectFile(path)
 }
 
+/** Tap for TensorFlow TFRecord files. */
+case class TFRecordFileTap(path: String) extends Tap[Array[Byte]] {
+  override def value: Iterator[Array[Byte]] = FileStorage(path).tfRecordFile
+  override def open(sc: ScioContext): SCollection[Array[Byte]] = sc.tfRecordFile(path)
+}
+
 private[scio] class InMemoryTap[T: ClassTag] extends Tap[T] {
   private[scio] val id: String = UUID.randomUUID().toString
   override def value: Iterator[T] = InMemorySinkManager.get(id).iterator
