@@ -233,7 +233,9 @@ lazy val scioTest: Project = Project(
     // DataFlow testing requires junit and hamcrest
     "junit" % "junit" % junitVersion,
     "com.novocode" % "junit-interface" % junitInterfaceVersion,
-    "org.hamcrest" % "hamcrest-all" % hamcrestVersion
+    "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
+    "com.spotify" % "annoy" % "0.2.5" % "test",
+    "com.spotify.sparkey" % "sparkey" % "2.1.3" % "test"
   ),
   addCompilerPlugin(paradiseDependency)
 ).dependsOn(
