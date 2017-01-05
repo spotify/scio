@@ -122,4 +122,8 @@ case class TFRecordIO(path: String) extends TestIO[Array[Byte]](path)
 
 case class DistCacheIO[T](uri: String)
 
+object DistCacheIO {
+  def apply[T](uris: Seq[String]): DistCacheIO[T] = DistCacheIO(uris.mkString("\t"))
+}
+
 case class CustomIO[T](name: String) extends TestIO(name)
