@@ -45,8 +45,8 @@ import org.joda.time.format.{DateTimeFormat, PeriodFormatterBuilder}
 import org.joda.time.{Instant, Period}
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.collection.mutable.{Map => MMap}
 import scala.collection.JavaConverters._
+import scala.collection.mutable.{Map => MMap}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Random, Success, Try}
 
@@ -257,6 +257,28 @@ class BigQueryClient private (private val projectId: String,
                      createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =
     writeTableRows(
       BigQueryIO.parseTableSpec(tableSpec), rows, schema, writeDisposition, createDisposition)
+
+  /** Write rows to a table with insertIds */
+  def writeTableRows(table: TableReference, rows: List[TableRow],
+                     insertIdList: List[String],
+                     schema: TableSchema,
+                     writeDisposition: WriteDisposition,
+                     createDisposition: CreateDisposition): Unit = {
+    val inserter = new BigQueryTableInserter(bigquery)
+    inserter.getOrCreateTable(table, writeDisposition, createDisposition, schema)
+    inserter.insertAll(table, rows.asJava, insertIdList.asJava, null)
+  }
+
+  /** Write rows to a table with insertIds */
+  def writeTableRows(tableSpec: String, rows: List[TableRow],
+                     insertIdList: List[String],
+                     schema: TableSchema = null,
+                     writeDisposition: WriteDisposition = WRITE_EMPTY,
+                     createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =
+  writeTableRows(
+    BigQueryIO.parseTableSpec(tableSpec),
+    rows, insertIdList, schema, writeDisposition, createDisposition
+  )
 
   /** Wait for all jobs to finish. */
   def waitForJobs(jobs: QueryJob*): Unit = {
