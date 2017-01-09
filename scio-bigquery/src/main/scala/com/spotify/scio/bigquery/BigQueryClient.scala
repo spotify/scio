@@ -258,6 +258,28 @@ class BigQueryClient private (private val projectId: String,
     writeTableRows(
       BigQueryIO.parseTableSpec(tableSpec), rows, schema, writeDisposition, createDisposition)
 
+  /** Write rows to a table with insertIds */
+  def writeTableRowsWithInsertIds(table: TableReference, rows: List[TableRow],
+                                  insertIdList: List[String],
+                                  schema: TableSchema,
+                                  writeDisposition: WriteDisposition,
+                                  createDisposition: CreateDisposition): Unit = {
+    val inserter = new BigQueryTableInserter(bigquery)
+    inserter.getOrCreateTable(table, writeDisposition, createDisposition, schema)
+    inserter.insertAll(table, rows.asJava, insertIdList.asJava, null)
+  }
+
+  /** Write rows to a table with insertIds */
+  def writeTableRowsWithInsertIds(tableSpec: String, rows: List[TableRow],
+                                  insertIdList: List[String],
+                                  schema: TableSchema,
+                                  writeDisposition: WriteDisposition = WRITE_EMPTY,
+                                  createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =
+  writeTableRowsWithInsertIds(
+    BigQueryIO.parseTableSpec(tableSpec),
+    rows, insertIdList, schema, writeDisposition, createDisposition
+  )
+
   /** Wait for all jobs to finish. */
   def waitForJobs(jobs: QueryJob*): Unit = {
     val numTotal = jobs.size
