@@ -217,10 +217,12 @@ private[types] object ConverterProvider {
         case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
         case t => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
-      val tr = q"new ${p(c, GModel)}.TableRow()"
-      sets.foldLeft(tr) { case (acc, (name, value)) =>
-        q"$acc.set($name, $value)"
+      val header = q"val result = new ${p(c, GModel)}.TableRow()"
+      val body = sets.map { case (name, value) =>
+        q"if ($value != null) result.set($name, $value)"
       }
+      val footer = q"result"
+      q"{$header; ..$body; $footer}"
     }
 
     // =======================================================================
