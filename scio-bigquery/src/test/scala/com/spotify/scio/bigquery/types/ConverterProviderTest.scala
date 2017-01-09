@@ -48,6 +48,24 @@ object ConverterProviderTest extends Properties("ConverterProvider") {
     RecordMatcher[Optional](r1, r2)
   }
 
+  property("skip null optional primitive types") = forAll { o: Optional =>
+    val r = BigQueryType.toTableRow[Optional](o)
+    // TableRow object should only contain a key if the corresponding Option[T] is defined
+    all(
+      o.boolF.isDefined == r.containsKey("boolF"),
+      o.intF.isDefined == r.containsKey("intF"),
+      o.longF.isDefined == r.containsKey("longF"),
+      o.floatF.isDefined == r.containsKey("floatF"),
+      o.doubleF.isDefined == r.containsKey("doubleF"),
+      o.stringF.isDefined == r.containsKey("stringF"),
+      o.byteArrayF.isDefined == r.containsKey("byteArrayF"),
+      o.byteStringF.isDefined == r.containsKey("byteStringF"),
+      o.timestampF.isDefined == r.containsKey("timestampF"),
+      o.dateF.isDefined == r.containsKey("dateF"),
+      o.timeF.isDefined == r.containsKey("timeF"),
+      o.datetimeF.isDefined == r.containsKey("datetimeF"))
+  }
+
   property("round trip repeated primitive types") = forAll { r1: Repeated =>
     val r2 = BigQueryType.fromTableRow[Repeated](BigQueryType.toTableRow[Repeated](r1))
     RecordMatcher[Repeated](r1, r2)
@@ -61,6 +79,15 @@ object ConverterProviderTest extends Properties("ConverterProvider") {
   property("round trip optional nested types") = forAll { r1: OptionalNested =>
     val r2 = BigQueryType.fromTableRow[OptionalNested](BigQueryType.toTableRow[OptionalNested](r1))
     RecordMatcher[OptionalNested](r1, r2)
+  }
+
+  property("skip null optional nested types") = forAll { o: OptionalNested =>
+    val r = BigQueryType.toTableRow[OptionalNested](o)
+    // TableRow object should only contain a key if the corresponding Option[T] is defined
+    all(
+      o.required.isDefined == r.containsKey("required"),
+      o.optional.isDefined == r.containsKey("optional"),
+      o.repeated.isDefined == r.containsKey("repeated"))
   }
 
   property("round trip repeated nested types") = forAll { r1: RepeatedNested =>
