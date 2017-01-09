@@ -257,7 +257,8 @@ lazy val scioBigQuery: Project = Project(
     "org.slf4j" % "slf4j-api" % slf4jVersion,
     "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
     "org.scalatest" %% "scalatest" % scalaTestVersion % "test,it",
-    "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.1" % "test"
+    "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.1" % "test",
+    "me.lyh" %% "shapeless-datatype-core" % "0.1.2" % "test"
   ),
   parallelExecution in Test := (scalaBinaryVersion.value != "2.10")
 ).configs(IntegrationTest)

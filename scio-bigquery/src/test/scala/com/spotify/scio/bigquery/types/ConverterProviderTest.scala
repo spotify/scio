@@ -18,6 +18,7 @@
 package com.spotify.scio.bigquery.types
 
 import com.google.protobuf.ByteString
+import shapeless.datatype.record._
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import org.scalacheck.Prop.{all, forAll}
 import org.scalacheck._
@@ -34,67 +35,37 @@ object ConverterProviderTest extends Properties("ConverterProvider") {
   implicit val arbTime = Arbitrary(Gen.const(LocalTime.now()))
   implicit val arbDatetime = Arbitrary(Gen.const(LocalDateTime.now()))
 
-  val toBS = (b: Array[Byte]) => ByteString.copyFrom(b)
+  implicit def compareByteArrays(x: Array[Byte], y: Array[Byte]): Boolean =
+    ByteString.copyFrom(x) == ByteString.copyFrom(y)
 
   property("round trip required primitive types") = forAll { r1: Required =>
     val r2 = BigQueryType.fromTableRow[Required](BigQueryType.toTableRow[Required](r1))
-    all(
-      r1.copy(byteArrayF = null) == r2.copy(byteArrayF = null),
-      toBS(r1.byteArrayF) == toBS(r2.byteArrayF)
-    )
+    RecordMatcher[Required](r1, r2)
   }
 
   property("round trip optional primitive types") = forAll { r1: Optional =>
     val r2 = BigQueryType.fromTableRow[Optional](BigQueryType.toTableRow[Optional](r1))
-    all(
-      r1.copy(byteArrayF = None) == r2.copy(byteArrayF = None),
-      r1.byteArrayF.map(toBS) == r2.byteArrayF.map(toBS)
-    )
+    RecordMatcher[Optional](r1, r2)
   }
 
   property("round trip repeated primitive types") = forAll { r1: Repeated =>
     val r2 = BigQueryType.fromTableRow[Repeated](BigQueryType.toTableRow[Repeated](r1))
-    all(
-      r1.copy(byteArrayF = Nil) == r2.copy(byteArrayF = Nil),
-      r1.byteArrayF.map(toBS) == r2.byteArrayF.map(toBS)
-    )
+    RecordMatcher[Repeated](r1, r2)
   }
 
   property("round trip required nested types") = forAll { r1: RequiredNested =>
     val r2 = BigQueryType.fromTableRow[RequiredNested](BigQueryType.toTableRow[RequiredNested](r1))
-    val r1a = r1.copy(
-      r1.required.copy(byteArrayF = null),
-      r1.optional.copy(byteArrayF = None),
-      r1.repeated.copy(byteArrayF = Nil))
-    val r2a = r2.copy(
-      r2.required.copy(byteArrayF = null),
-      r2.optional.copy(byteArrayF = None),
-      r2.repeated.copy(byteArrayF = Nil))
-    all(
-      r1a == r2a,
-      toBS(r1.required.byteArrayF) == toBS(r2.required.byteArrayF),
-      r1.optional.byteArrayF.map(toBS) == r2.optional.byteArrayF.map(toBS),
-      r1.repeated.byteArrayF.map(toBS) == r2.repeated.byteArrayF.map(toBS)
-    )
+    RecordMatcher[RequiredNested](r1, r2)
   }
 
   property("round trip optional nested types") = forAll { r1: OptionalNested =>
     val r2 = BigQueryType.fromTableRow[OptionalNested](BigQueryType.toTableRow[OptionalNested](r1))
-    val r1a = r1.copy(
-      r1.required.map(_.copy(byteArrayF = null)),
-      r1.optional.map(_.copy(byteArrayF = None)),
-      r1.repeated.map(_.copy(byteArrayF = Nil)))
-    val r2a = r2.copy(
-      r2.required.map(_.copy(byteArrayF = null)),
-      r2.optional.map(_.copy(byteArrayF = None)),
-      r2.repeated.map(_.copy(byteArrayF = Nil)))
-    all(
-      r1a == r2a,
-      r1.required.map(_.byteArrayF).map(toBS) == r2.required.map(_.byteArrayF).map(toBS),
-      r1.optional.flatMap(_.byteArrayF).map(toBS) == r2.optional.flatMap(_.byteArrayF).map(toBS),
-      r1.repeated.toList.flatMap(_.byteArrayF).map(toBS) ==
-        r2.repeated.toList.flatMap(_.byteArrayF).map(toBS)
-    )
+    RecordMatcher[OptionalNested](r1, r2)
+  }
+
+  property("round trip repeated nested types") = forAll { r1: RepeatedNested =>
+    val r2 = BigQueryType.fromTableRow[RepeatedNested](BigQueryType.toTableRow[RepeatedNested](r1))
+    RecordMatcher[RepeatedNested](r1, r2)
   }
 
 }
