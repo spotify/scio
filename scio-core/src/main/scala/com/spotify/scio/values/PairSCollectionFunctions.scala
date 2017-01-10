@@ -46,7 +46,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   private val context: ScioContext = self.context
 
-  private def toKvTransform = ParDo.of(Functions.mapFn[(K, V), KV[K, V]](kv => KV.of(kv._1, kv._2)))
+  private val toKvTransform = ParDo.of(Functions.mapFn[(K, V), KV[K, V]](kv => KV.of(kv._1, kv._2)))
 
   private[scio] def toKV: SCollection[KV[K, V]] = {
     val o = self.applyInternal(toKvTransform).setCoder(self.getKvCoder[K, V])
@@ -56,8 +56,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   private[values] def applyPerKey[UI: ClassTag, UO: ClassTag]
   (t: PTransform[PCollection[KV[K, V]], PCollection[KV[K, UI]]], f: KV[K, UI] => (K, UO))
   : SCollection[(K, UO)] = {
-    val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollection[(K, UO)]]() {
-      override def apply(input: PCollection[(K, V)]): PCollection[(K, UO)] =
+    // FIXME: null name
+    val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollection[(K, UO)]](null) {
+      override def expand(input: PCollection[(K, V)]): PCollection[(K, UO)] =
         input
           .apply("TupleToKv", toKvTransform)
           .setCoder(self.getKvCoder[K, V])
@@ -615,8 +616,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   def asMapSideInput: SideInput[Map[K, V]] = {
     val o = self.applyInternal(
-      new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, V]]]() {
-        override def apply(input: PCollection[(K, V)]): PCollectionView[JMap[K, V]] = {
+      // FIXME: null name
+      new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, V]]](null) {
+        override def expand(input: PCollection[(K, V)]): PCollectionView[JMap[K, V]] = {
           input.apply(toKvTransform).setCoder(self.getKvCoder[K, V]).apply(View.asMap())
         }
       })
@@ -630,8 +632,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   def asMultiMapSideInput: SideInput[Map[K, Iterable[V]]] = {
     val o = self.applyInternal(
-      new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, JIterable[V]]]]() {
-        override def apply(input: PCollection[(K, V)]): PCollectionView[JMap[K, JIterable[V]]] = {
+      // FIXME: null name
+      new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, JIterable[V]]]](null) {
+        override def expand(input: PCollection[(K, V)]): PCollectionView[JMap[K, JIterable[V]]] = {
           input.apply(toKvTransform).setCoder(self.getKvCoder[K, V]).apply(View.asMultimap())
         }
       })
