@@ -307,7 +307,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
       throw new RuntimeException("Cannot set job name once pipeline is initialized")
     }
     Try(optionsAs[DataflowPipelineOptions])
-      .foreach(_.setJobName(new DataflowPipelineOptions.JobNameFactory().create(options)))
+      .foreach(_.setJobName(new PipelineOptions.JobNameFactory().create(options)))
   }
 
   /** Close the context. No operation can be performed once the context is closed. */
