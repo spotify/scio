@@ -171,7 +171,14 @@ private class TFRecordWriter(writeOperation: TFRecordWriteOperation)
 
   override def write(value: Array[Byte]): Unit = TFRecordCodec.write(outputStream, value)
 
-  override def writeFooter(): Unit = outputStream.close()
+  override def writeFooter(): Unit = {
+    outputStream match {
+      case s: DeflateCompressorOutputStream => s.finish()
+      case s: GzipCompressorOutputStream => s.finish()
+      case _ => Unit
+    }
+  }
+
 }
 
 // =======================================================================
