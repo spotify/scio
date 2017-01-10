@@ -30,7 +30,10 @@ import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.bigquery.model._
 import com.google.api.services.bigquery.{Bigquery, BigqueryScopes}
-import com.google.cloud.hadoop.util.ApiErrorExtractor
+import com.google.auth.Credentials
+import com.google.auth.http.HttpCredentialsAdapter
+import com.google.auth.oauth2.GoogleCredentials
+import com.google.cloud.hadoop.util.{ApiErrorExtractor, ChainingHttpRequestInitializer}
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
@@ -81,28 +84,28 @@ private[scio] trait QueryJob {
 /** A simple BigQuery client. */
 // scalastyle:off number.of.methods
 class BigQueryClient private (private val projectId: String,
-                              credential: Credential = null) { self =>
+                              credentials: Credentials = null) { self =>
 
   def this(projectId: String, secretFile: File) =
     this(
       projectId,
-      GoogleCredential
+      GoogleCredentials
         .fromStream(new FileInputStream(secretFile))
         .createScoped(BigQueryClient.SCOPES))
 
   private lazy val bigquery: Bigquery = {
-    val c = Option(credential).getOrElse(
-      GoogleCredential.getApplicationDefault.createScoped(BigQueryClient.SCOPES))
-    val requestInitializer = new HttpRequestInitializer {
-      override def initialize(request: HttpRequest): Unit = {
-        BigQueryClient.connectTimeoutMs.foreach(request.setConnectTimeout)
-        BigQueryClient.readTimeoutMs.foreach(request.setReadTimeout)
-        // Credential also implements HttpRequestInitializer
-        c.initialize(request)
+    val c = Option(credentials).getOrElse(
+      GoogleCredentials.getApplicationDefault.createScoped(BigQueryClient.SCOPES))
+    val requestInitializer = new ChainingHttpRequestInitializer(
+      new HttpCredentialsAdapter(c),
+      new HttpRequestInitializer {
+        override def initialize(request: HttpRequest): Unit = {
+          BigQueryClient.connectTimeoutMs.foreach(request.setConnectTimeout)
+          BigQueryClient.readTimeoutMs.foreach(request.setReadTimeout)
+        }
       }
-    }
-    new Bigquery.Builder(new NetHttpTransport, new JacksonFactory, c)
-      .setHttpRequestInitializer(requestInitializer)
+    )
+    new Bigquery.Builder(new NetHttpTransport, new JacksonFactory, requestInitializer)
       .setApplicationName("scio")
       .build()
   }
@@ -589,8 +592,8 @@ object BigQueryClient {
   }
 
   /** Create a new BigQueryClient instance with the given project and credential. */
-  def apply(project: String, credential: Credential): BigQueryClient =
-    new BigQueryClient(project, credential)
+  def apply(project: String, credentials: Credentials): BigQueryClient =
+    new BigQueryClient(project, credentials)
 
   /** Create a new BigQueryClient instance with the given project and secret file. */
   def apply(project: String, secretFile: File): BigQueryClient =
