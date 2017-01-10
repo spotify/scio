@@ -17,8 +17,9 @@
 
 package com.spotify.scio.util
 
-import com.spotify.scio.values.{SideInputContext, SideOutput}
+import com.spotify.scio.values.SideInputContext
 import org.apache.beam.sdk.transforms.DoFn
+import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 
 private[scio] object FunctionsWithSideInput {
 
@@ -35,7 +36,8 @@ private[scio] object FunctionsWithSideInput {
 
   def filterFn[T](f: (T, SideInputContext[T]) => Boolean): DoFn[T, T] = new SideInputDoFn[T, T] {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, T]#ProcessContext): Unit =
+    @ProcessElement
+    def processElement(c: DoFn[T, T]#ProcessContext): Unit =
       if (g(c.element(), sideInputContext(c))) {
         c.output(c.element())
       }
@@ -44,7 +46,8 @@ private[scio] object FunctionsWithSideInput {
   def flatMapFn[T, U](f: (T, SideInputContext[T]) => TraversableOnce[U])
   : DoFn[T, U] = new SideInputDoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
+    @ProcessElement
+    def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
       val i = g(c.element(), sideInputContext(c)).toIterator
       while (i.hasNext) c.output(i.next())
     }
@@ -52,7 +55,8 @@ private[scio] object FunctionsWithSideInput {
 
   def mapFn[T, U](f: (T, SideInputContext[T]) => U): DoFn[T, U] = new SideInputDoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, U]#ProcessContext): Unit =
+    @ProcessElement
+    def processElement(c: DoFn[T, U]#ProcessContext): Unit =
       c.output(g(c.element(), sideInputContext(c)))
   }
 

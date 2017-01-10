@@ -767,7 +767,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group window
    */
   def withPaneInfo: SCollection[(T, PaneInfo)] = this.parDo(new DoFn[T, (T, PaneInfo)] {
-    override def processElement(c: DoFn[T, (T, PaneInfo)]#ProcessContext): Unit =
+    @ProcessElement
+    def processElement(c: DoFn[T, (T, PaneInfo)]#ProcessContext): Unit =
       c.output((c.element(), c.pane()))
   })
 
@@ -776,7 +777,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group window
    */
   def withTimestamp: SCollection[(T, Instant)] = this.parDo(new DoFn[T, (T, Instant)] {
-    override def processElement(c: DoFn[T, (T, Instant)]#ProcessContext): Unit =
+    @ProcessElement
+    def processElement(c: DoFn[T, (T, Instant)]#ProcessContext): Unit =
       c.output((c.element(), c.timestamp()))
   })
 
@@ -834,9 +836,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       val elemCoder = this.getCoder[T]
       this
         .parDo(new DoFn[T, GenericRecord] {
-          override def processElement(c: DoFn[T, GenericRecord]#ProcessContext): Unit = {
+          @ProcessElement
+          def processElement(c: DoFn[T, GenericRecord]#ProcessContext): Unit =
             c.output(AvroBytesUtil.encode(elemCoder, c.element()))
-          }
         })
         .saveAsAvroFile(path, numShards, AvroBytesUtil.schema, suffix)
       context.makeFuture(ObjectFileTap[T](path + "/part-*"))

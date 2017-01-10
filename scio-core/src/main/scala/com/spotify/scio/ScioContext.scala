@@ -45,6 +45,7 @@ import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.testing.TestPipeline
 import org.apache.beam.sdk.transforms.Combine.CombineFn
+import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
 import org.apache.beam.sdk.values.{PBegin, PCollection, PInput, POutput, TimestampedValue}
 import org.apache.beam.sdk.{Pipeline, io => gio}
@@ -407,7 +408,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
       val coder = pipeline.getCoderRegistry.getScalaCoder[T]
       this.avroFile[GenericRecord](path, AvroBytesUtil.schema)
         .parDo(new DoFn[GenericRecord, T] {
-          override def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit = {
+          @ProcessElement
+          def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit = {
             c.output(AvroBytesUtil.decode(coder, c.element()))
           }
         })

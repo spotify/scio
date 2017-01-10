@@ -24,6 +24,7 @@ package com.spotify.scio.util.random
 import java.util.{Random => JRandom}
 
 import org.apache.beam.sdk.transforms.DoFn
+import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, StartBundle}
 import org.apache.commons.math3.distribution.{IntegerDistribution, PoissonDistribution}
 
 private[scio] object RandomSampler {
@@ -44,9 +45,11 @@ private[scio] abstract class RandomSampler[T, R] extends DoFn[T, T] {
   protected var seed: Long = -1
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
-  override def startBundle(c: DoFn[T, T]#Context): Unit = rng = init
+  @StartBundle
+  def startBundle(c: DoFn[T, T]#Context): Unit = rng = init
 
-  override def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
+  @ProcessElement
+  def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
     val element = c.element()
     val count = samples
     var i = 0
@@ -129,10 +132,12 @@ private[scio] abstract class RandomValueSampler[K, V, R](val fractions: Map[K, D
   protected var seed: Long = -1
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
-  override def startBundle(c: DoFn[(K, V), (K, V)]#Context): Unit =
+  @StartBundle
+  def startBundle(c: DoFn[(K, V), (K, V)]#Context): Unit =
     rngs = fractions.mapValues(init).map(identity)  // workaround for serialization issue
 
-  override def processElement(c: DoFn[(K, V), (K, V)]#ProcessContext): Unit = {
+  @ProcessElement
+  def processElement(c: DoFn[(K, V), (K, V)]#ProcessContext): Unit = {
     val (key, value) = c.element()
     val count = samples(fractions(key), rngs(key))
     var i = 0

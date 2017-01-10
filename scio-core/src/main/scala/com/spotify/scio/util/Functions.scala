@@ -25,6 +25,7 @@ import com.spotify.scio.coders.KryoAtomicCoder
 import com.twitter.algebird.{Monoid, Semigroup}
 import org.apache.beam.sdk.coders.{Coder, CoderRegistry}
 import org.apache.beam.sdk.transforms.Combine.CombineFn
+import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.Partition.PartitionFn
 import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
 
@@ -126,7 +127,8 @@ private[scio] object Functions {
 
   def flatMapFn[T, U](f: T => TraversableOnce[U]): DoFn[T, U] = new DoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
+    @ProcessElement
+    def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
       val i = g(c.element()).toIterator
       while (i.hasNext) c.output(i.next())
     }
@@ -139,7 +141,8 @@ private[scio] object Functions {
 
   def mapFn[T, U](f: T => U): DoFn[T, U] = new DoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, U]#ProcessContext): Unit = c.output(g(c.element()))
+    @ProcessElement
+    def processElement(c: DoFn[T, U]#ProcessContext): Unit = c.output(g(c.element()))
   }
 
   def partitionFn[T](numPartitions: Int, f: T => Int): PartitionFn[T] = new PartitionFn[T] {

@@ -18,6 +18,7 @@
 package com.spotify.scio.util
 
 import com.spotify.scio.values.{Accumulator, AccumulatorContext}
+import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{Aggregator, DoFn}
 
 import scala.reflect.ClassTag
@@ -37,7 +38,8 @@ private[scio] object FunctionsWithAccumulator {
   def filterFn[T](f: (T, AccumulatorContext) => Boolean,
                   acc: Seq[Accumulator[_]]): DoFn[T, T] = new DoFnWithAccumulator[T, T](acc) {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
+    @ProcessElement
+    def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
       if (g(c.element(), this.context)) c.output(c.element())
     }
   }
@@ -46,7 +48,8 @@ private[scio] object FunctionsWithAccumulator {
                                 acc: Seq[Accumulator[_]])
   : DoFn[T, U] = new DoFnWithAccumulator[T, U](acc) {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
+    @ProcessElement
+    def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
       val i = g(c.element(), this.context).toIterator
       while (i.hasNext) c.output(i.next())
     }
@@ -56,7 +59,8 @@ private[scio] object FunctionsWithAccumulator {
                             acc: Seq[Accumulator[_]])
   : DoFn[T, U] = new DoFnWithAccumulator[T, U](acc) {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, U]#ProcessContext): Unit =
+    @ProcessElement
+    def processElement(c: DoFn[T, U]#ProcessContext): Unit =
       c.output(g(c.element(), this.context))
   }
 

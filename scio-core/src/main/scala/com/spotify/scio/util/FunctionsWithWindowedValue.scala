@@ -49,6 +49,7 @@ private[scio] object FunctionsWithWindowedValue {
 
   def mapFn[T, U](f: WindowedValue[T] => WindowedValue[U]): DoFn[T, U] = new DoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
+    @ProcessElement
     def processElement(c: DoFn[T, U]#ProcessContext, window: BoundedWindow): Unit = {
       val wv = g(WindowedValue(c.element(), c.timestamp(), window, c.pane()))
       c.outputWithTimestamp(wv.value, wv.timestamp)
