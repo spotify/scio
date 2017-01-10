@@ -286,7 +286,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Return a new SCollection containing the distinct elements in this SCollection.
    * @group transform
    */
-  def distinct: SCollection[T] = this.pApply(RemoveDuplicates.create[T]())
+  def distinct: SCollection[T] = this.pApply(Distinct.create[T]())
 
   /**
    * Return a new SCollection containing only the elements that satisfy a predicate.
