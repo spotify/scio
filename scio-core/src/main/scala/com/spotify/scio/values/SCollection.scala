@@ -25,7 +25,7 @@ import java.net.URI
 import java.util.UUID
 
 import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
-import com.google.datastore.v1beta3.Entity
+import com.google.datastore.v1.Entity
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.AvroBytesUtil
@@ -944,7 +944,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (context.isTest) {
       context.testOut(DatastoreIO(projectId))(this.asInstanceOf[SCollection[Entity]])
     } else {
-      val transform = dsio.DatastoreIO.v1beta3().write().withProjectId(projectId)
+      val transform = dsio.DatastoreIO.v1().write().withProjectId(projectId)
       this.asInstanceOf[SCollection[Entity]].applyInternal(transform)
     }
     Future.failed(new NotImplementedError("Datastore future not implemented"))

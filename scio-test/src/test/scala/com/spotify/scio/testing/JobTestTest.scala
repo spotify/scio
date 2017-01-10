@@ -17,8 +17,8 @@
 
 package com.spotify.scio.testing
 
-import com.google.datastore.v1beta3.Entity
-import com.google.datastore.v1beta3.client.DatastoreHelper
+import com.google.datastore.v1.Entity
+import com.google.datastore.v1.client.DatastoreHelper
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro.{AvroUtils, TestRecord}

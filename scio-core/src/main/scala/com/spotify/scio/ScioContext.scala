@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit
 import java.util.jar.{Attributes, JarFile}
 
 import com.google.api.services.bigquery.model.TableReference
-import com.google.datastore.v1beta3.{Entity, Query}
+import com.google.datastore.v1.{Entity, Query}
 import com.google.protobuf.Message
 import com.spotify.scio.bigquery._
 import com.spotify.scio.coders.AvroBytesUtil
@@ -493,7 +493,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (this.isTest) {
       this.getTestInput(DatastoreIO(datasetId, query, namespace))
     } else {
-      val transform = dsio.DatastoreIO.v1beta3().read()
+      val transform = dsio.DatastoreIO.v1().read()
         .withProjectId(datasetId)
         .withNamespace(namespace)
         .withQuery(query)

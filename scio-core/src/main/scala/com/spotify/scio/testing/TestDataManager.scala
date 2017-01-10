@@ -18,7 +18,7 @@
 package com.spotify.scio.testing
 
 import com.google.api.services.bigquery.model.TableRow
-import com.google.datastore.v1beta3.{Entity, Query}
+import com.google.datastore.v1.{Entity, Query}
 import com.spotify.scio.values.SCollection
 
 import scala.collection.mutable.{Map => MMap, Set => MSet}
