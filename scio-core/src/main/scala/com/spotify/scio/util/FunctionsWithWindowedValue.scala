@@ -19,26 +19,26 @@ package com.spotify.scio.util
 
 import com.spotify.scio.values.WindowedValue
 import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.transforms.DoFn.RequiresWindowAccess
-import org.joda.time.Instant
+import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 
 private[scio] object FunctionsWithWindowedValue {
 
-  abstract class WindowDoFn[T, U] extends DoFn[T, U] with RequiresWindowAccess
-
-  def filterFn[T, U](f: WindowedValue[T] => Boolean): DoFn[T, T] = new WindowDoFn[T, T] {
+  def filterFn[T, U](f: WindowedValue[T] => Boolean): DoFn[T, T] = new DoFn[T, T] {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
-      val wv = WindowedValue(c.element(), c.timestamp(), c.window(), c.pane())
+    @ProcessElement
+    def processElement(c: DoFn[T, T]#ProcessContext, window: BoundedWindow): Unit = {
+      val wv = WindowedValue(c.element(), c.timestamp(), window, c.pane())
       if (g(wv)) c.output(c.element())
     }
   }
 
   def flatMapFn[T, U](f: WindowedValue[T] => TraversableOnce[WindowedValue[U]])
-  : DoFn[T, U] = new WindowDoFn[T, U] {
+  : DoFn[T, U] = new DoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-      val wv = WindowedValue(c.element(), c.timestamp(), c.window(), c.pane())
+    @ProcessElement
+    def processElement(c: DoFn[T, U]#ProcessContext, window: BoundedWindow): Unit = {
+      val wv = WindowedValue(c.element(), c.timestamp(), window, c.pane())
       val i = g(wv).toIterator
       while (i.hasNext) {
         val v = i.next()
@@ -47,10 +47,10 @@ private[scio] object FunctionsWithWindowedValue {
     }
   }
 
-  def mapFn[T, U](f: WindowedValue[T] => WindowedValue[U]): DoFn[T, U] = new WindowDoFn[T, U] {
+  def mapFn[T, U](f: WindowedValue[T] => WindowedValue[U]): DoFn[T, U] = new DoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
-    override def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-      val wv = g(WindowedValue(c.element(), c.timestamp(), c.window(), c.pane()))
+    def processElement(c: DoFn[T, U]#ProcessContext, window: BoundedWindow): Unit = {
+      val wv = g(WindowedValue(c.element(), c.timestamp(), window, c.pane()))
       c.outputWithTimestamp(wv.value, wv.timestamp)
     }
   }

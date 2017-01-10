@@ -41,6 +41,7 @@ import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.{Coder, TableRowJsonCoder}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
+import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.util.WindowingStrategy.AccumulationMode
@@ -784,9 +785,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group window
    */
   def withWindow: SCollection[(T, BoundedWindow)] = this.parDo(
-    new DoFn[T, (T, BoundedWindow)] with DoFn.RequiresWindowAccess {
-      override def processElement(c: DoFn[T, (T, BoundedWindow)]#ProcessContext): Unit =
-        c.output((c.element(), c.window()))
+    new DoFn[T, (T, BoundedWindow)] {
+      @ProcessElement
+      def processElement(c: DoFn[T, (T, BoundedWindow)]#ProcessContext,
+                         window: BoundedWindow): Unit =
+        c.output((c.element(), window))
     })
 
   /**
