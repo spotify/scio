@@ -321,23 +321,17 @@ class ScioContext private[scio] (val options: PipelineOptions,
     _preRunFns.foreach(_())
     val result = this.pipeline.run()
 
-    val finalState = result match {
-      // non-blocking runner, handle callbacks asynchronously
-      case job: DataflowPipelineJob =>
-        import scala.concurrent.ExecutionContext.Implicits.global
-        val f = Future {
-          val state = job.waitToFinish(-1, TimeUnit.SECONDS, null)
-          updateFutures(state)
-          state
-        }
-        f.onFailure {
-          case NonFatal(e) => _promises.foreach(_._1.failure(e))
-        }
-        f
-      // blocking runner, handle callbacks directly
-      case _ =>
-        updateFutures(result.getState)
-        Future.successful(result.getState)
+    val finalState = {
+      import scala.concurrent.ExecutionContext.Implicits.global
+      val f = Future {
+        val state = result.waitUntilFinish()
+        updateFutures(state)
+        state
+      }
+      f.onFailure {
+        case NonFatal(e) => _promises.foreach(_._1.failure(e))
+      }
+      f
     }
 
     val scioResult = new ScioResult(result, finalState, _accumulators.values.toSeq, pipeline)
