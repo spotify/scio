@@ -20,19 +20,16 @@ package com.spotify.scio
 
 import java.nio.ByteBuffer
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.spotify.scio.metrics._
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.Accumulator
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.runners.dataflow.DataflowPipelineJob
-import org.apache.beam.sdk.options.ApplicationNameOptions
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.PipelineResult.State
-import org.apache.beam.sdk.runners.{AggregatorPipelineExtractor, AggregatorValues}
-import org.apache.beam.sdk.{Pipeline, PipelineResult}
+import org.apache.beam.sdk.options.ApplicationNameOptions
 import org.apache.beam.sdk.transforms.Aggregator
 import org.apache.beam.sdk.util.{IOChannelUtils, MimeTypes}
+import org.apache.beam.sdk.{AggregatorValues, Pipeline, PipelineResult}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -48,11 +45,7 @@ class ScioResult private[scio] (val internal: PipelineResult,
   private val logger = LoggerFactory.getLogger(classOf[ScioResult])
 
   private val aggregators: Map[String, Iterable[Aggregator[_, _]]] =
-    new AggregatorPipelineExtractor(pipeline)
-      .getAggregatorSteps
-      .asScala
-      .keys
-      .groupBy(_.getName)
+    pipeline.getAggregatorSteps.asScala.keys.groupBy(_.getName)
 
   /** Whether the pipeline is completed. */
   def isCompleted: Boolean = internal.getState.isTerminal
