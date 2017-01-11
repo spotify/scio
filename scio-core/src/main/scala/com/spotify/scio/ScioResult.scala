@@ -21,6 +21,7 @@ package com.spotify.scio
 import java.nio.ByteBuffer
 
 import com.spotify.scio.metrics._
+import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.Accumulator
 import org.apache.beam.runners.dataflow.DataflowPipelineJob
@@ -29,23 +30,45 @@ import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.options.ApplicationNameOptions
 import org.apache.beam.sdk.transforms.Aggregator
 import org.apache.beam.sdk.util.{IOChannelUtils, MimeTypes}
-import org.apache.beam.sdk.{AggregatorValues, Pipeline, PipelineResult}
+import org.apache.beam.sdk.{AggregatorValues, PipelineResult}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
+import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 /** Represent a Scio pipeline result. */
 class ScioResult private[scio] (val internal: PipelineResult,
-                                val finalState: Future[State],
                                 val accumulators: Seq[Accumulator[_]],
-                                private val pipeline: Pipeline) {
+                                private val context: ScioContext) {
 
   private val logger = LoggerFactory.getLogger(classOf[ScioResult])
 
   private val aggregators: Map[String, Iterable[Aggregator[_, _]]] =
-    pipeline.getAggregatorSteps.asScala.keys.groupBy(_.getName)
+    context.pipeline.getAggregatorSteps.asScala.keys.groupBy(_.getName)
+
+  val finalState: Future[State] = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val f = Future {
+      val state = internal.waitUntilFinish()
+      context.updateFutures(state)
+      val metricsLocation = context.optionsAs[ScioOptions].getMetricsLocation
+      if (metricsLocation != null) {
+        saveMetrics(metricsLocation)
+      }
+      this.state
+    }
+    f.onFailure {
+      case NonFatal(e) => context.updateFutures(state)
+    }
+    f
+  }
+
+  /** Wait until the pipeline finishes. */
+  def waitUntilFinish(duration: Duration = Duration.Inf): Unit =
+    Await.ready(finalState, duration)
 
   /** Whether the pipeline is completed. */
   def isCompleted: Boolean = internal.getState.isTerminal
@@ -81,25 +104,24 @@ class ScioResult private[scio] (val internal: PipelineResult,
 
   /** Get metrics of the finished pipeline. */
   def getMetrics: Metrics = {
+    require(isCompleted, "Pipeline has to be finished to get metrics.")
     val totalValues = accumulators
         .map(acc => AccumulatorValue(acc.name, accumulatorTotalValue(acc)))
 
     val stepsValues = accumulators.map(acc => AccumulatorStepsValue(acc.name,
       accumulatorValuesAtSteps(acc).map(a => AccumulatorStepValue(a._1, a._2))))
 
-    val options = this.pipeline.getOptions
-
-    val (jobId, dfMetrics) = if (ScioUtil.isLocalRunner(options)) {
+    val (jobId, dfMetrics) = if (ScioUtil.isLocalRunner(this.context.options)) {
       // to be safe let's use app name at a cost of duplicate for local runner
       // there are no dataflow service metrics on local runner
-      (options.as(classOf[ApplicationNameOptions]).getAppName, Nil)
+      (context.optionsAs[ApplicationNameOptions].getAppName, Nil)
     } else {
       val jobId = internal.asInstanceOf[DataflowPipelineJob].getJobId
       // given that this depends on internals of dataflow service - handle failure gracefully
       // if there is an error - no dataflow service metrics will be saved
       val dfMetrics = Try {
         ScioUtil
-          .getDataflowServiceMetrics(options.as(classOf[DataflowPipelineOptions]), jobId)
+          .getDataflowServiceMetrics(context.optionsAs[DataflowPipelineOptions], jobId)
           .getMetrics.asScala
           .map(e => {
             val name = DFMetricName(e.getName.getName,
@@ -120,7 +142,7 @@ class ScioResult private[scio] (val internal: PipelineResult,
 
     Metrics(scioVersion,
       scalaVersion,
-      options.as(classOf[ApplicationNameOptions]).getAppName,
+      context.optionsAs[ApplicationNameOptions].getAppName,
       jobId,
       this.state.toString,
       AccumulatorMetrics(totalValues, stepsValues),

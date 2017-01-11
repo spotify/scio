@@ -28,8 +28,6 @@ class ScioResultTest extends PipelineSpec {
     val r = runWithContext(_.parallelize(Seq(1, 2, 3)))
     r.isCompleted shouldBe true
     r.state shouldBe State.DONE
-    r.finalState.isCompleted shouldBe true
-    r.finalState.value.get.get shouldBe State.DONE
   }
 
 }
