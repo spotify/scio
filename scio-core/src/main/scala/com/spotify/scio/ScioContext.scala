@@ -409,7 +409,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
       this.avroFile[GenericRecord](path, AvroBytesUtil.schema)
         .parDo(new DoFn[GenericRecord, T] {
           @ProcessElement
-          def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit = {
+          private[scio] def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit = {
             c.output(AvroBytesUtil.decode(coder, c.element()))
           }
         })

@@ -128,7 +128,7 @@ private[scio] object Functions {
   def flatMapFn[T, U](f: T => TraversableOnce[U]): DoFn[T, U] = new DoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
     @ProcessElement
-    def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
+    private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
       val i = g(c.element()).toIterator
       while (i.hasNext) c.output(i.next())
     }
@@ -142,7 +142,7 @@ private[scio] object Functions {
   def mapFn[T, U](f: T => U): DoFn[T, U] = new DoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
     @ProcessElement
-    def processElement(c: DoFn[T, U]#ProcessContext): Unit = c.output(g(c.element()))
+    private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = c.output(g(c.element()))
   }
 
   def partitionFn[T](numPartitions: Int, f: T => Int): PartitionFn[T] = new PartitionFn[T] {

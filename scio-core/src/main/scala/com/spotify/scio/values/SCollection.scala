@@ -768,7 +768,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def withPaneInfo: SCollection[(T, PaneInfo)] = this.parDo(new DoFn[T, (T, PaneInfo)] {
     @ProcessElement
-    def processElement(c: DoFn[T, (T, PaneInfo)]#ProcessContext): Unit =
+    private[scio] def processElement(c: DoFn[T, (T, PaneInfo)]#ProcessContext): Unit =
       c.output((c.element(), c.pane()))
   })
 
@@ -778,7 +778,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def withTimestamp: SCollection[(T, Instant)] = this.parDo(new DoFn[T, (T, Instant)] {
     @ProcessElement
-    def processElement(c: DoFn[T, (T, Instant)]#ProcessContext): Unit =
+    private[scio] def processElement(c: DoFn[T, (T, Instant)]#ProcessContext): Unit =
       c.output((c.element(), c.timestamp()))
   })
 
@@ -789,7 +789,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def withWindow: SCollection[(T, BoundedWindow)] = this.parDo(
     new DoFn[T, (T, BoundedWindow)] {
       @ProcessElement
-      def processElement(c: DoFn[T, (T, BoundedWindow)]#ProcessContext,
+      private[scio] def processElement(c: DoFn[T, (T, BoundedWindow)]#ProcessContext,
                          window: BoundedWindow): Unit =
         c.output((c.element(), window))
     })
@@ -837,7 +837,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       this
         .parDo(new DoFn[T, GenericRecord] {
           @ProcessElement
-          def processElement(c: DoFn[T, GenericRecord]#ProcessContext): Unit =
+          private[scio] def processElement(c: DoFn[T, GenericRecord]#ProcessContext): Unit =
             c.output(AvroBytesUtil.encode(elemCoder, c.element()))
         })
         .saveAsAvroFile(path, numShards, AvroBytesUtil.schema, suffix)

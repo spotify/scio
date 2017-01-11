@@ -92,7 +92,7 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
       val g = ClosureCleaner(f) // defeat closure
 
       @ProcessElement
-      def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
+      private[scio] def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
         val elem = c.element()
         val partition = g(elem, sideInputContext(c))
         if (!partitions.exists(_.tupleTag == partition.tupleTag)) {

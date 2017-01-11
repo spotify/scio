@@ -27,7 +27,7 @@ private[scio] object FunctionsWithWindowedValue {
   def filterFn[T, U](f: WindowedValue[T] => Boolean): DoFn[T, T] = new DoFn[T, T] {
     val g = ClosureCleaner(f)  // defeat closure
     @ProcessElement
-    def processElement(c: DoFn[T, T]#ProcessContext, window: BoundedWindow): Unit = {
+    private[scio] def processElement(c: DoFn[T, T]#ProcessContext, window: BoundedWindow): Unit = {
       val wv = WindowedValue(c.element(), c.timestamp(), window, c.pane())
       if (g(wv)) c.output(c.element())
     }
@@ -37,7 +37,7 @@ private[scio] object FunctionsWithWindowedValue {
   : DoFn[T, U] = new DoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
     @ProcessElement
-    def processElement(c: DoFn[T, U]#ProcessContext, window: BoundedWindow): Unit = {
+    private[scio] def processElement(c: DoFn[T, U]#ProcessContext, window: BoundedWindow): Unit = {
       val wv = WindowedValue(c.element(), c.timestamp(), window, c.pane())
       val i = g(wv).toIterator
       while (i.hasNext) {
@@ -50,7 +50,7 @@ private[scio] object FunctionsWithWindowedValue {
   def mapFn[T, U](f: WindowedValue[T] => WindowedValue[U]): DoFn[T, U] = new DoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
     @ProcessElement
-    def processElement(c: DoFn[T, U]#ProcessContext, window: BoundedWindow): Unit = {
+    private[scio] def processElement(c: DoFn[T, U]#ProcessContext, window: BoundedWindow): Unit = {
       val wv = g(WindowedValue(c.element(), c.timestamp(), window, c.pane()))
       c.outputWithTimestamp(wv.value, wv.timestamp)
     }
