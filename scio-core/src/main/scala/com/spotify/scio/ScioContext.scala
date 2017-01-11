@@ -21,7 +21,6 @@ import java.beans.Introspector
 import java.io.File
 import java.net.{URI, URLClassLoader}
 import java.nio.file.Files
-import java.util.concurrent.TimeUnit
 import java.util.jar.{Attributes, JarFile}
 
 import com.google.api.services.bigquery.model.TableReference
@@ -37,8 +36,8 @@ import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
+import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options._
-import org.apache.beam.runners.dataflow.{DataflowPipelineJob, DataflowRunner}
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.coders.TableRowJsonCoder
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
@@ -47,7 +46,7 @@ import org.apache.beam.sdk.testing.TestPipeline
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
-import org.apache.beam.sdk.values.{PBegin, PCollection, PInput, POutput, TimestampedValue}
+import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{Pipeline, io => gio}
 import org.joda.time.Instant
 import org.slf4j.LoggerFactory
@@ -57,7 +56,6 @@ import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
 import scala.util.Try
-import scala.util.control.NonFatal
 
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
 object ContextAndArgs {
@@ -320,32 +318,14 @@ class ScioContext private[scio] (val options: PipelineOptions,
     _isClosed = true
 
     _preRunFns.foreach(_())
-    val result = this.pipeline.run()
+    val result = new ScioResult(this.pipeline.run(), _accumulators.values.toSeq, context)
 
-    val finalState = {
-      import scala.concurrent.ExecutionContext.Implicits.global
-      val f = Future {
-        val state = result.waitUntilFinish()
-        updateFutures(state)
-        state
-      }
-      f.onFailure {
-        case NonFatal(e) => _promises.foreach(_._1.failure(e))
-      }
-      f
+    if (this.isTest) {
+      result.waitUntilFinish()  // block local runner for JobTest to work
+      result
+    } else {
+      result
     }
-
-    val scioResult = new ScioResult(result, finalState, _accumulators.values.toSeq, pipeline)
-    val metricsLocation = optionsAs[ScioOptions].getMetricsLocation
-    if (metricsLocation != null) {
-      import scala.concurrent.ExecutionContext.Implicits.global
-      // force immediate execution on completed pipeline
-      finalState.value match {
-        case Some(_) => scioResult.saveMetrics(metricsLocation)
-        case None => finalState.onComplete(_ => scioResult.saveMetrics(metricsLocation))
-      }
-    }
-    scioResult
   }
 
   /** Whether the context is closed. */
@@ -368,7 +348,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
     p.future
   }
 
-  private def updateFutures(state: State): Unit = _promises.foreach { kv =>
+  // Update pending futures after pipeline completes.
+  private[scio] def updateFutures(state: State): Unit = _promises.foreach { kv =>
     if (state == State.DONE || state == State.UPDATED) {
       kv._1.success(kv._2)
     } else {

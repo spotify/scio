@@ -114,7 +114,8 @@ class ScioContextTest extends PipelineSpec {
     val opts = PipelineOptionsFactory.create()
     opts.setRunner(classOf[DirectRunner])
     opts.as(classOf[ScioOptions]).setMetricsLocation(metricsFile.toString)
-    ScioContext(opts).close()
+    val sc = ScioContext(opts)
+    sc.close().waitUntilFinish()  // block non-test runner
 
     val mapper = ScioUtil.getScalaJsonMapper
 

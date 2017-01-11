@@ -39,7 +39,7 @@ trait TapSpec extends PipelineSpec {
     tap.value.toSet should equal (expected)
     val sc = ScioContext()
     tap.open(sc) should containInAnyOrder (expected)
-    sc.close()
+    sc.close().waitUntilFinish()  // block non-test runner
   }
 
   def runWithInMemoryFuture[T](fn: ScioContext => Future[Tap[T]]): Tap[T] =
@@ -50,7 +50,7 @@ trait TapSpec extends PipelineSpec {
 
   def runWithFuture[T](sc: ScioContext)(fn: ScioContext => Future[Tap[T]]): Tap[T] = {
     val f = fn(sc)
-    sc.close()
+    sc.close().waitUntilFinish()  // block non-test runner
     f.waitForResult()
   }
 
@@ -79,7 +79,7 @@ class TapTest extends TapSpec {
       .map(newSpecificRecord)
       .saveAsInMemoryTap
     f.isCompleted shouldBe false
-    sc.close()
+    sc.close().waitUntilFinish()  // block non-test runner
     f.isCompleted shouldBe true
   }
 
@@ -90,7 +90,7 @@ class TapTest extends TapSpec {
       .map(newSpecificRecord)
       .saveAsAvroFile(dir.getPath)
     f.isCompleted shouldBe false
-    sc.close()
+    sc.close().waitUntilFinish()  // block non-test runner
     f.isCompleted shouldBe true
     FileUtils.deleteDirectory(dir)
   }
