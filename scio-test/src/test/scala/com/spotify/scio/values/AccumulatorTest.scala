@@ -170,9 +170,9 @@ class AccumulatorTest extends PipelineSpec {
 
     metrics.version should be(scioVersion)
     metrics.scalaVersion should be(scalaVersion)
-    metrics.jobName should be(sc.pipeline.getOptions.as(classOf[ApplicationNameOptions]).getAppName)
+    metrics.jobName should be(sc.optionsAs[ApplicationNameOptions].getAppName)
     // test run via local runner - so this will be the same a app name
-    metrics.jobId should be(sc.pipeline.getOptions.as(classOf[ApplicationNameOptions]).getAppName)
+    metrics.jobId should be(sc.optionsAs[ApplicationNameOptions].getAppName)
     metrics.accumulators.total should contain theSameElementsAs expectedTotal
     metrics.accumulators.steps should contain theSameElementsAs expectedSteps
   }
