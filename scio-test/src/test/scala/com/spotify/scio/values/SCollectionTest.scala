@@ -463,10 +463,10 @@ class SCollectionTest extends PipelineSpec {
     Console.withOut(stdOutMock){
       runWithContext { sc =>
         val r = sc.parallelize(1 to 3).debug()
-        r should containInAnyOrder(Seq(1, 2, 3))
+        r should containInAnyOrder (Seq(1, 2, 3))
       }
     }
-    stdOutMock.message should contain only("1", "2", "3")
+    stdOutMock.message should contain theSameElementsAs Seq("1", "2", "3")
   }
 
   it should "support debug to the stdout with prefix" in {
@@ -474,10 +474,10 @@ class SCollectionTest extends PipelineSpec {
     Console.withOut(stdOutMock) {
       runWithContext { sc =>
         val r = sc.parallelize(1 to 3).debug(prefix = "===")
-        r should containInAnyOrder(Seq(1, 2, 3))
+        r should containInAnyOrder (Seq(1, 2, 3))
       }
     }
-    stdOutMock.message should contain only ("===1", "===2", "===3")
+    stdOutMock.message should contain theSameElementsAs Seq("===1", "===2", "===3")
   }
 
   it should "support debug to the stderr" in {
@@ -485,10 +485,10 @@ class SCollectionTest extends PipelineSpec {
     Console.withErr(stdErrMock){
       runWithContext { sc =>
         val r = sc.parallelize(1 to 3).debug(() => Console.err)
-        r should containInAnyOrder(Seq(1, 2, 3))
+        r should containInAnyOrder (Seq(1, 2, 3))
       }
     }
-    stdErrMock.message should contain only("1", "2", "3")
+    stdErrMock.message should contain theSameElementsAs Seq("1", "2", "3")
   }
 
   it should "support debug to a file" in {
@@ -497,9 +497,9 @@ class SCollectionTest extends PipelineSpec {
     Console.withOut(fileStream){
       runWithContext { sc =>
         val r = sc.parallelize(1 to 3).debug()
-        r should containInAnyOrder(Seq(1, 2, 3))
+        r should containInAnyOrder (Seq(1, 2, 3))
       }
     }
-    Files.readAllLines(outFile, Charsets.UTF_8) should contain only("1", "2", "3")
+    Files.readAllLines(outFile, Charsets.UTF_8) should contain theSameElementsAs Seq("1", "2", "3")
   }
 }
