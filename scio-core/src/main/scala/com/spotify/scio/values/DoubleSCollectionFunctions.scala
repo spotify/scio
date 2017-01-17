@@ -48,17 +48,13 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
    * Compute the sample standard deviation of this SCollection's elements (which corrects for bias
    * in estimating the standard deviation by dividing by N-1 instead of N).
    */
-  def sampleStdev: SCollection[Double] = self.transform {
-    _.stats.map(_.sampleStdev)
-  }
+  def sampleStdev: SCollection[Double] = self.transform(_.stats.map(_.sampleStdev))
 
   /**
    * Compute the sample variance of this SCollection's elements (which corrects for bias in
    * estimating the variance by dividing by N-1 instead of N).
    */
-  def sampleVariance: SCollection[Double] = self.transform {
-    _.stats.map(_.sampleVariance)
-  }
+  def sampleVariance: SCollection[Double] = self.transform(_.stats.map(_.sampleVariance))
 
   // Ported from org.apache.spark.rdd.DoubleRDDFunctions
 
