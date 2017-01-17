@@ -41,7 +41,7 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent:
   private val replJarName = "scio-repl-session.jar"
   private var nextReplJarDir: File = genNextReplCodeJarDir
 
-  private var scioREPL: ILoop = null
+  private var scioREPL: ILoop = _
 
   def setRepl(repl: ILoop): Unit = scioREPL = repl
 

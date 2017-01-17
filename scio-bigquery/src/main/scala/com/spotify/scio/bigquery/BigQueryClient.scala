@@ -546,7 +546,7 @@ object BigQueryClient {
 
   private val SCOPES = List(BigqueryScopes.BIGQUERY).asJava
 
-  private var instance: BigQueryClient = null
+  private var instance: BigQueryClient = _
 
   /**
    * Get the default BigQueryClient instance.

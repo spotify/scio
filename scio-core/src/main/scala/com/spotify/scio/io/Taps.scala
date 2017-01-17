@@ -112,7 +112,7 @@ private class PollingTaps(private val backOff: BackOff) extends Taps {
                   tapFn: () => Tap[Any],
                   promise: Promise[AnyRef])
 
-  private var polls: List[Poll] = null
+  private var polls: List[Poll] = _
   private val logger: Logger = LoggerFactory.getLogger(classOf[PollingTaps])
 
   override private[scio] def mkTap[T](name: String,

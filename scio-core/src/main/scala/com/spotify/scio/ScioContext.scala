@@ -209,7 +209,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   }
 
   /* Mutable members */
-  private var _pipeline: Pipeline = null
+  private var _pipeline: Pipeline = _
   private var _isClosed: Boolean = false
   private val _promises: MBuffer[(Promise[Tap[_]], Tap[_])] = MBuffer.empty
   private val _queryJobs: MBuffer[QueryJob] = MBuffer.empty
