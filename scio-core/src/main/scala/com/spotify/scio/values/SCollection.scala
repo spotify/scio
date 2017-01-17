@@ -60,8 +60,8 @@ object SCollection {
   def unionAll[T: ClassTag](scs: Iterable[SCollection[T]]): SCollection[T] = {
     val o = PCollectionList
       .of(scs.map(_.internal).asJava)
-      .apply(CallSites.getCurrent, Flatten.pCollections())
-    new SCollectionImpl(o, scs.head.context)
+      .apply("UnionAll", Flatten.pCollections())
+    scs.head.context.wrap(o)
   }
 
   import scala.language.implicitConversions
@@ -126,7 +126,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /** Apply a transform. */
   private[values] def transform[U: ClassTag](f: SCollection[T] => SCollection[U])
   : SCollection[U] = {
-    val o = internal.apply(CallSites.getCurrent, new PTransform[PCollection[T], PCollection[U]]() {
+    val o = internal.apply(this.tfName, new PTransform[PCollection[T], PCollection[U]]() {
       override def apply(input: PCollection[T]): PCollection[U] = {
         f(context.wrap(input)).internal
       }
@@ -163,7 +163,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def union(that: SCollection[T]): SCollection[T] = {
     val o = PCollectionList
       .of(internal).and(that.internal)
-      .apply(CallSites.getCurrent, Flatten.pCollections())
+      .apply(this.tfName, Flatten.pCollections())
     context.wrap(o)
   }
 

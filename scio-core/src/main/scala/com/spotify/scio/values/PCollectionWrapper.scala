@@ -20,12 +20,11 @@ package com.spotify.scio.values
 import com.google.cloud.dataflow.sdk.coders.Coder
 import com.google.cloud.dataflow.sdk.transforms.{Combine, DoFn, PTransform, ParDo}
 import com.google.cloud.dataflow.sdk.values.{KV, PCollection, POutput}
-import com.spotify.scio.util.CallSites
 import com.spotify.scio.{Implicits, ScioContext}
 
 import scala.reflect.ClassTag
 
-private[values] trait PCollectionWrapper[T] {
+private[values] trait PCollectionWrapper[T] extends TransformNameable {
 
   import Implicits._
 
@@ -39,7 +38,7 @@ private[values] trait PCollectionWrapper[T] {
 
   private[scio] def applyInternal[Output <: POutput]
   (transform: PTransform[_ >: PCollection[T], Output]): Output =
-    internal.apply(CallSites.getCurrent, transform)
+    internal.apply(this.tfName, transform)
 
   protected def pApply[U: ClassTag]
   (transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {
