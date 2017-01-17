@@ -22,7 +22,7 @@ import com.spotify.scio.util.CallSites
 trait TransformNameable {
   private var nameProvider: TransformNameProvider = CallSiteNameProvider
 
-  def tfName: String = {
+  private[scio] def tfName: String = {
     val n = nameProvider.name
     nameProvider = CallSiteNameProvider
     n
