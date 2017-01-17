@@ -21,7 +21,6 @@ import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtSite.SiteKeys._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import sbtunidoc.Plugin.UnidocKeys._
-import com.trueaccord.scalapb.{ScalaPbPlugin => PB}
 
 val dataflowSdkVersion = "1.9.0"
 val algebirdVersion = "0.12.3"
@@ -48,7 +47,6 @@ val protobufGenericVersion = "0.1.1"
 val scalaCheckVersion = "1.13.4"
 val scalaMacrosVersion = "2.1.0"
 val scalaMeterVersion = "0.8.2"
-val scalapbVersion = "0.5.19" // inner protobuf-java version must match beam/dataflow-sdk one
 val scalaTestVersion = "3.0.1"
 val slf4jVersion = "1.7.22"
 
@@ -314,20 +312,16 @@ lazy val scioSchemas: Project = Project(
   "scio-schemas",
   file("scio-schemas")
 ).settings(
-  commonSettings ++ sbtavro.SbtAvro.avroSettings ++ noPublishSettings ++ PB.protobufSettings,
+  commonSettings ++ sbtavro.SbtAvro.avroSettings ++ noPublishSettings,
   version in sbtavro.SbtAvro.avroConfig := avroVersion, // Set avro version used by sbt-avro
   description := "Avro/Proto schemas for testing",
-  libraryDependencies ++= Seq(
-    "com.github.os72" % "protoc-jar" % "3.0.0-b1"
-  ),
   // suppress warnings
   sources in doc in Compile := List(),
   javacOptions := Seq("-source", "1.7", "-target", "1.7"),
   compileOrder := CompileOrder.JavaThenScala,
-  PB.javaConversions in PB.protobufConfig := true,
-  PB.grpc := false,
-  PB.runProtoc in PB.protobufConfig := (args =>
-    com.github.os72.protocjar.Protoc.runProtoc("-v300" +: args.toArray)
+  PB.targets in Compile := Seq(
+    PB.gens.java -> (sourceManaged in Compile).value,
+    scalapb.gen(javaConversions=true, grpc=false) -> (sourceManaged in Compile).value
   )
 )
 
