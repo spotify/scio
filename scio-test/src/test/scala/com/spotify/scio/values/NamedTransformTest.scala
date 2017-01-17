@@ -42,7 +42,7 @@ class NamedTransformTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1.0, 2.0, 3.0, 4.0, 5.0))
         .withName("CalcVariance").variance
-      assertTransformName(p, "CalcVariance/Variance")
+      assertOuterTransformName(p, "CalcVariance")
     }
   }
 
@@ -147,4 +147,7 @@ class NamedTransformTest extends PipelineSpec {
 
   private def assertTransformName(p: PCollectionWrapper[_], tfName: String) =
     p.internal.getProducingTransformInternal.getFullName shouldBe tfName
+
+  private def assertOuterTransformName(p: PCollectionWrapper[_], tfName: String) =
+    p.internal.getProducingTransformInternal.getFullName.split("/").head shouldBe tfName
 }
