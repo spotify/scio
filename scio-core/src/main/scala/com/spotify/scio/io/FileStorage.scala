@@ -79,9 +79,10 @@ private[scio] trait FileStorage {
   }
 
   def tfRecordFile: Iterator[Array[Byte]] = {
-    val stream = getDirectoryInputStream(path)
     new Iterator[Array[Byte]] {
-      private val input = TFRecordCodec.wrapInputStream(stream, TFRecordOptions.readDefault)
+      private def wrapInputStream(in: InputStream) =
+        TFRecordCodec.wrapInputStream(in, TFRecordOptions.readDefault)
+      private val input = getDirectoryInputStream(path, wrapInputStream)
       private var current: Array[Byte] = TFRecordCodec.read(input)
       override def hasNext: Boolean = current != null
       override def next(): Array[Byte] = {
@@ -119,8 +120,10 @@ private[scio] trait FileStorage {
     }
   }
 
-  private def getDirectoryInputStream(path: String): InputStream = {
-    val inputs = listFiles.map(getObjectInputStream).asJava
+  private def getDirectoryInputStream(path: String,
+                                      wrapperFn: InputStream => InputStream = identity)
+  : InputStream = {
+    val inputs = listFiles.map(getObjectInputStream).map(wrapperFn).asJava
     new SequenceInputStream(Collections.enumeration(inputs))
   }
 
