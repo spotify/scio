@@ -134,7 +134,8 @@ object ScioContext {
  */
 // scalastyle:off number.of.methods
 class ScioContext private[scio] (val options: PipelineOptions,
-                                 private var artifacts: List[String]) {
+                                 private var artifacts: List[String])
+  extends TransformNameable {
 
   private implicit val context: ScioContext = this
 
@@ -377,7 +378,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   private[scio] def applyInternal[Output <: POutput](root: PTransform[_ >: PBegin, Output])
   : Output =
-    pipeline.apply(CallSites.getCurrent, root)
+    pipeline.apply(this.tfName, root)
 
   /**
    * Get an SCollection for an object file.

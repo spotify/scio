@@ -25,7 +25,7 @@ import org.apache.beam.sdk.values.{KV, PCollection, POutput}
 
 import scala.reflect.ClassTag
 
-private[values] trait PCollectionWrapper[T] {
+private[values] trait PCollectionWrapper[T] extends TransformNameable {
 
   import Implicits._
 
@@ -39,7 +39,7 @@ private[values] trait PCollectionWrapper[T] {
 
   private[scio] def applyInternal[Output <: POutput]
   (transform: PTransform[_ >: PCollection[T], Output]): Output =
-    internal.apply(CallSites.getCurrent, transform)
+    internal.apply(this.tfName, transform)
 
   protected def pApply[U: ClassTag]
   (transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {
