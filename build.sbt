@@ -27,9 +27,8 @@ val algebirdVersion = "0.12.3"
 val autoServiceVersion = "1.0-rc2"
 val avroVersion = "1.7.7"
 val bigQueryVersion = "v2-rev317-1.22.0"
-val bigtableVersion = "0.9.2"
-val breezeVersion ="0.12"
-val chillVersion = "0.8.1"
+val breezeVersion ="0.13"
+val chillVersion = "0.9.1"
 val commonsIoVersion = "2.5"
 val commonsMath3Version = "3.6.1"
 val csvVersion = "0.1.16"
@@ -37,7 +36,7 @@ val guavaVersion = "19.0"
 val hadoopVersion = "2.7.2"
 val hamcrestVersion = "1.3"
 val hbaseVersion = "1.0.2"
-val jacksonScalaModuleVersion = "2.8.3"
+val jacksonScalaModuleVersion = "2.8.6"
 val javaLshVersion = "0.10"
 val jodaConvertVersion = "1.8.1"
 val junitVersion = "4.12"
@@ -169,12 +168,6 @@ lazy val beamDependencies = Seq(
 
 lazy val macroSettings = Seq(
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-  libraryDependencies ++= (
-    if (scalaBinaryVersion.value == "2.10")
-      List("org.scalamacros" %% "quasiquotes" % scalaMacrosVersion cross CrossVersion.binary)
-    else
-      Nil
-  ),
   addCompilerPlugin(paradiseDependency)
 )
 
@@ -255,7 +248,7 @@ lazy val scioBigQuery: Project = Project(
     "org.slf4j" % "slf4j-api" % slf4jVersion,
     "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
     "org.scalatest" %% "scalatest" % scalaTestVersion % "test,it",
-    "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.1" % "test",
+    "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.4" % "test",
     "me.lyh" %% "shapeless-datatype-core" % "0.1.2" % "test"
   )
 ).configs(IntegrationTest)
