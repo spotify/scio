@@ -380,7 +380,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
   // Test wiring
   // =======================================================================
 
-  private[scio] def isTest: Boolean = testId.isDefined
+  /**  Whether this is a test context. */
+  def isTest: Boolean = testId.isDefined
 
   private[scio] def testIn: TestInput = TestDataManager.getInput(testId.get)
   private[scio] def testOut: TestOutput = TestDataManager.getOutput(testId.get)
