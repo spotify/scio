@@ -38,9 +38,6 @@ object SideOutput {
 }
 
 /** Encapsulate context of one or more [[SideOutput]]s in an [[SCollectionWithSideOutput]]. */
-// TODO: scala 2.11
-// class SideOutputContext[T] private[scio] (private val context: DoFn[T, AnyRef]#ProcessContext)
-//   extends AnyVal {
 class SideOutputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessContext) {
   /** Write a value to a given [[SideOutput]]. */
   def output[S](sideOutput: SideOutput[S],

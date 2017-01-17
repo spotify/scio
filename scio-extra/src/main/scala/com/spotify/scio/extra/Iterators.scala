@@ -168,7 +168,7 @@ object Iterators {
   }
 
   /** Enhance Iterator by adding a `timeSeries` method. */
-  implicit class RichIterator[T](self: Iterator[T]) {
+  implicit class RichIterator[T](val self: Iterator[T]) extends AnyVal {
     /**
       * Convert this iterator to a [[TimeSeriesIterator]].
       * @param timestampFn function to extract timestamp.
