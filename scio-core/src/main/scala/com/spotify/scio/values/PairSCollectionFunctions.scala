@@ -248,14 +248,15 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @param hotKeyThreshold key with `hotKeyThreshold` values will be considered hot. Some runners
    *                        have inefficient GroupByKey implementation for groups with more than 10K
    *                        values. Thus it is recommended to set `hotKeyThreshold` to below 10K,
-   *                        keep upper estimation error in mind.
+   *                        keep upper estimation error in mind. If you sample input via
+   *                        `sampleFraction` make sure to adjust `hotKeyThreshold` accordingly.
    * @param eps One-sided error bound on the error of each point query, i.e. frequency estimate.
    *            Must lie in (0, 1).
    * @param seed A seed to initialize the random number generator used to create the pairwise
    *             independent hash functions.
    * @param delta A bound on the probability that a query estimate does not lie within some small
    *              interval (an interval that depends on `eps`) around the truth. Must lie in (0, 1).
-   * @param sampleFraction left side sample fracation. Default is `1.0` - no sampling.
+   * @param sampleFraction left side sample fraction. Default is `1.0` - no sampling.
    * @param withReplacement whether to use sampling with replacement, see [[SCollection.sample()]]
    */
   def skewedJoin[W: ClassTag](that: SCollection[(K, W)],
