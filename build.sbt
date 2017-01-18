@@ -184,7 +184,7 @@ lazy val root: Project = Project(
   commonSettings ++ siteSettings ++ noPublishSettings,
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
     -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples),
-  run := run in Compile in scioRepl dependsOn sbtReplScalaVersionCheck,
+  run in Compile := (run in Compile in scioRepl).evaluated,
   aggregate in assembly := false
 ).aggregate(
   scioCore,
@@ -379,7 +379,10 @@ lazy val scioRepl: Project = Project(
     else
       Nil
   ),
-  run := run in Compile dependsOn sbtReplScalaVersionCheck,
+  run in Compile := {
+    sbtReplScalaVersionCheck.value
+    (run in Compile).evaluated
+  },
   assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
 ).dependsOn(
   scioCore,
