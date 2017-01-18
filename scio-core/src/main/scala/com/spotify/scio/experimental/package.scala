@@ -41,6 +41,9 @@ package object experimental {
   /** Typed BigQuery annotations and converters. */
   val BigQueryType = com.spotify.scio.bigquery.types.BigQueryType
 
+  /** Annotation for BigQuery field [[com.spotify.scio.bigquery.types.description]]. */
+  type description = com.spotify.scio.bigquery.types.description
+
   /** Enhanced version of [[ScioContext]] with experimental features. */
   // TODO: scala 2.11
   // implicit class ExperimentalScioContext(private val self: ScioContext) extends AnyVal {
