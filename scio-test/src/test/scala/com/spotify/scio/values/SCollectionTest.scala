@@ -185,6 +185,13 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support filterNot()" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).filterNot(_ % 2 == 0)
+      p should containInAnyOrder (Seq(1, 3, 5))
+    }
+  }
+
   it should "support flatMap()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq("a b c", "d e", "f")).flatMap(_.split(" "))
