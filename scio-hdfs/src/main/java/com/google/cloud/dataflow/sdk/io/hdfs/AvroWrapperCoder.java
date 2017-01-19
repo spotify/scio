@@ -66,7 +66,7 @@ public class AvroWrapperCoder<WrapperT extends AvroWrapper<DatumT>, DatumT>
 
   @JsonCreator
   @SuppressWarnings("unchecked")
-  public static AvroWrapperCoder<?, ?> of(
+  public static AvroWrapperCoder<? extends AvroWrapper, ?> of(
       @JsonProperty("wrapperType") String wrapperType,
       @JsonProperty(PropertyNames.COMPONENT_ENCODINGS) List<Coder<?>> components)
       throws ClassNotFoundException {
