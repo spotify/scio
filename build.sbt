@@ -15,7 +15,7 @@
  * under the License.
  */
 
-import sbt.{Defaults, _}
+import sbt._
 import Keys._
 import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtSite.SiteKeys._

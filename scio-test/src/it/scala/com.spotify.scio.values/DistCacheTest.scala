@@ -1,13 +1,23 @@
 package com.spotify.scio.values
 
-import com.spotify.scio.testing.ITPipelineSpec
+import java.nio.ByteBuffer
 
-class DistCacheTest extends ITPipelineSpec {
+import com.google.cloud.dataflow.sdk.util.GcsUtil.GcsUtilFactory
+import com.google.cloud.dataflow.sdk.util.MimeTypes
+import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath
+import com.spotify.scio.{ScioContext, ScioResult}
+import com.spotify.scio.testing.{ITPipelineSpec, PipelineSpec}
+
+import scala.collection.JavaConverters._
+import scala.reflect.ClassTag
+
+class DistCacheTest extends PipelineSpec {
+
+  val distCacheUri = "gs://data-integration-test-us/scio/name-distcache"
+  val cacheData = Seq("name1", "name2")
 
   "GCS DistCache" should "work" in {
-    val distCacheUri = "gs://data-integration-test-us/scio/name-distcache"
-
-    runWithDistCache(Seq("name1", "name2"), distCacheUri) { sc =>
+    runWithDistCache(cacheData, distCacheUri) { sc =>
       val names = sc.distCache(distCacheUri) { f =>
         scala.io.Source.fromFile(f).getLines().toList
       }
@@ -16,6 +26,26 @@ class DistCacheTest extends ITPipelineSpec {
         .map(i => (i, names()(i)))
 
       p should containInAnyOrder(Seq((0, "name1"), (1, "name2")))
+    }
+  }
+
+  def runWithDistCache[T1: ClassTag, T2: ClassTag](data: Iterable[T1], path: String)
+                                                  (fn: ScioContext => T2)
+  : ScioResult = {
+    val sc = ScioContext()
+    val gcsUtil = new GcsUtilFactory().create(sc.options)
+    try {
+      val channel = gcsUtil.create(GcsPath.fromUri(path), MimeTypes.BINARY)
+      channel.write(ByteBuffer.wrap(data.mkString("\n").getBytes))
+      channel.close()
+      fn(sc)
+      sc.close()
+    }
+    finally {
+      val gcsPath = GcsPath.fromUri(path)
+      if (gcsUtil.bucketExists(gcsPath)) {
+        gcsUtil.remove(Seq(path).asJava)
+      }
     }
   }
 }
