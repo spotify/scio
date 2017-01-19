@@ -305,14 +305,14 @@ lazy val scioSchemas: Project = Project(
   file("scio-schemas")
 ).settings(
   commonSettings ++ sbtavro.SbtAvro.avroSettings ++ noPublishSettings,
-  version in sbtavro.SbtAvro.avroConfig := avroVersion, // Set avro version used by sbt-avro
+  version in avroConfig := avroVersion, // Set avro version used by sbt-avro
   description := "Avro/Proto schemas for testing",
   // suppress warnings
   sources in doc in Compile := List(),
   compileOrder := CompileOrder.JavaThenScala,
   PB.targets in Compile := Seq(
-    PB.gens.java -> (sourceManaged in Compile).value,
-    scalapb.gen(javaConversions=true, grpc=false) -> (sourceManaged in Compile).value
+    PB.gens.java -> (sourceManaged in Compile).value / "compiled_protobuf",
+    scalapb.gen(javaConversions=true, grpc=false) -> (sourceManaged in Compile).value / "compiled_protobuf"
   )
 )
 
