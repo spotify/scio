@@ -380,7 +380,7 @@ lazy val scioRepl: Project = Project(
       Nil
   ),
   run in Compile := {
-    sbtReplScalaVersionCheck.value
+    val _ = sbtReplScalaVersionCheck.value
     (run in Compile).evaluated
   },
   assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
