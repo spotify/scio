@@ -29,13 +29,13 @@ class DistCacheTest extends PipelineSpec {
     }
   }
 
-  def runWithDistCache[T1: ClassTag, T2: ClassTag](data: Iterable[T1], path: String)
-                                                  (fn: ScioContext => T2)
+  def runWithDistCache[T: ClassTag](data: Iterable[String], path: String)
+                                                  (fn: ScioContext => T)
   : ScioResult = {
     val sc = ScioContext()
     val gcsUtil = new GcsUtilFactory().create(sc.options)
     try {
-      val channel = gcsUtil.create(GcsPath.fromUri(path), MimeTypes.BINARY)
+      val channel = gcsUtil.create(GcsPath.fromUri(path), MimeTypes.TEXT)
       channel.write(ByteBuffer.wrap(data.mkString("\n").getBytes))
       channel.close()
       fn(sc)
