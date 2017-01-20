@@ -26,7 +26,6 @@ val beamVersion = "0.4.0"
 val algebirdVersion = "0.12.3"
 val autoServiceVersion = "1.0-rc2"
 val avroVersion = "1.7.7"
-val bigQueryVersion = "v2-rev317-1.22.0"
 val breezeVersion ="0.13"
 val chillVersion = "0.9.1"
 val commonsIoVersion = "2.5"
@@ -243,7 +242,6 @@ lazy val scioBigQuery: Project = Project(
   description := "Scio add-on for Google BigQuery",
     libraryDependencies ++= beamDependencies,
   libraryDependencies ++= Seq(
-    "com.google.apis" % "google-api-services-bigquery" % bigQueryVersion,
     "commons-io" % "commons-io" % commonsIoVersion,
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
     "org.joda" % "joda-convert" % jodaConvertVersion,
