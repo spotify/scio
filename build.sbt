@@ -216,7 +216,7 @@ lazy val scioTest: Project = Project(
   "scio-test",
   file("scio-test")
 ).settings(
-  commonSettings,
+  commonSettings ++ Defaults.itSettings,
   description := "Scio helpers for ScalaTest",
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % scalaTestVersion,
@@ -228,6 +228,8 @@ lazy val scioTest: Project = Project(
     "com.spotify.sparkey" % "sparkey" % "2.1.3" % "test"
   ),
   addCompilerPlugin(paradiseDependency)
+).configs(
+  IntegrationTest
 ).dependsOn(
   scioCore,
   scioSchemas % "test"
