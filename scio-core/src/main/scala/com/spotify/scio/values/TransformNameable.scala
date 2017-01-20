@@ -19,6 +19,7 @@ package com.spotify.scio.values
 
 import com.spotify.scio.util.CallSites
 
+/** Trait for setting custom names on transforms. */
 trait TransformNameable {
   private var nameProvider: TransformNameProvider = CallSiteNameProvider
 
@@ -28,6 +29,7 @@ trait TransformNameable {
     n
   }
 
+  /** Set a custom name for the next transform to be applied. */
   def withName(name: String): this.type = {
     require(nameProvider.getClass != classOf[ConstNameProvider],
       s"withName() has already been used to set '${tfName}' as the name for the next transform.")
