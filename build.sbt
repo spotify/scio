@@ -26,7 +26,6 @@ val dataflowSdkVersion = "1.9.0"
 val algebirdVersion = "0.12.3"
 val autoServiceVersion = "1.0-rc2"
 val avroVersion = "1.7.7"
-val bigQueryVersion = "v2-rev317-1.22.0"
 val bigtableVersion = "0.9.4"
 val breezeVersion ="0.12"
 val chillVersion = "0.8.1"
@@ -251,7 +250,6 @@ lazy val scioBigQuery: Project = Project(
   description := "Scio add-on for Google BigQuery",
   libraryDependencies ++= Seq(
     dataflowSdkDependency,
-    "com.google.apis" % "google-api-services-bigquery" % bigQueryVersion,
     "commons-io" % "commons-io" % commonsIoVersion,
     "org.joda" % "joda-convert" % jodaConvertVersion,
     "org.slf4j" % "slf4j-api" % slf4jVersion,
