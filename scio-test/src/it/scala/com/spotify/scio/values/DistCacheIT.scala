@@ -11,7 +11,7 @@ import org.apache.beam.sdk.util.gcsfs.GcsPath
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
-class DistCacheTest extends PipelineSpec {
+class DistCacheIT extends PipelineSpec {
 
   val distCacheUri = "gs://data-integration-test-us/scio/name-distcache"
   val cacheData = Seq("name1", "name2")
