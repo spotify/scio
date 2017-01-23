@@ -568,12 +568,12 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection with a custom input transform. The transform should have a unique name.
    * @group input
    */
-  def customInput[T : ClassTag](transform: PTransform[PInput, PCollection[T]])
+  def customInput[T : ClassTag](name: String, transform: PTransform[PBegin, PCollection[T]])
   : SCollection[T] = requireNotClosed {
     if (this.isTest) {
-      this.getTestInput(CustomIO[T](transform.getName))
+      this.getTestInput(CustomIO[T](name))
     } else {
-      wrap(this.applyInternal(transform))
+      wrap(this.pipeline.apply(name, transform))
     }
   }
 

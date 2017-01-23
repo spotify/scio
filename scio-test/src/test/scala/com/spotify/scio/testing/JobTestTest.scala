@@ -127,26 +127,21 @@ object MaterializeJob {
   }
 }
 
-// FIXME: TextIO.named
-/*
 object CustomIOJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val inputTransform = gio.TextIO.Read
-      .named("TextIn")
       .from(args("input"))
       .withCoder(TextualIntegerCoder.of())
     val outputTransform = gio.TextIO.Write
-      .named("TextOut")
       .to(args("output"))
       .withCoder(TextualIntegerCoder.of())
-    sc.customInput(inputTransform)
+    sc.customInput("TextIn", inputTransform)
       .map(x => (x * 10).asInstanceOf[java.lang.Integer])
-      .saveAsCustomOutput(outputTransform)
+      .saveAsCustomOutput("TextOut", outputTransform)
     sc.close()
   }
 }
-*/
 
 // scalastyle:off no.whitespace.before.left.bracket
 class JobTestTest extends PipelineSpec {
@@ -320,8 +315,6 @@ class JobTestTest extends PipelineSpec {
     an [AssertionError] should be thrownBy { testDistCacheJob("a1", "a2", "b1", "b2", "c3", "d4") }
   }
 
-  // FIXME: TextIO.named
-  /*
   def testCustomIOJob(xs: Int*): Unit = {
     JobTest[CustomIOJob.type]
       .args("--input=in.txt", "--output=out.txt")
@@ -338,7 +331,6 @@ class JobTestTest extends PipelineSpec {
     an [AssertionError] should be thrownBy { testCustomIOJob(10, 20) }
     an [AssertionError] should be thrownBy { testCustomIOJob(10, 20, 30, 40) }
   }
-  */
 
   // =======================================================================
   // Handling incorrect test wiring
