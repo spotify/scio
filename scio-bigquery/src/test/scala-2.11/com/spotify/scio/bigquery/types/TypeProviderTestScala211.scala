@@ -80,12 +80,12 @@ class TypeProviderTestScala211 extends FlatSpec with Matchers {
   }
 
   it should "support .fromTableRow in companion object" in {
-    (classOf[(TableRow => TwentyThree)]
-      isAssignableFrom TwentyThree.fromTableRow.getClass) shouldBe true
+    val cls = classOf[(TableRow => TwentyThree)]
+    (cls isAssignableFrom TwentyThree.fromTableRow.getClass) shouldBe true
   }
 
   it should "support .toTableRow in companion object" in {
-    (classOf[(TwentyThree => TableRow)]
-      isAssignableFrom TwentyThree.toTableRow.getClass) shouldBe true
+    val cls = classOf[(TwentyThree => TableRow)]
+    (cls isAssignableFrom TwentyThree.toTableRow.getClass) shouldBe true
   }
 }
