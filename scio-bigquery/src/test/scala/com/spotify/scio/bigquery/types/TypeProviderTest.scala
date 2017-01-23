@@ -294,8 +294,10 @@ class TypeProviderTest extends FlatSpec with Matchers {
   }
 
   it should "create companion object that is a Function subtype" in {
-    (classOf[Function5[Long, Double, Boolean, String, Instant, ToTable]] isAssignableFrom ToTable.getClass) shouldBe true
-    (classOf[Function2[Int, String, Record]] isAssignableFrom Record.getClass) shouldBe true
+    val cls5 = classOf[Function5[Long, Double, Boolean, String, Instant, ToTable]]
+    val cls2 = classOf[Function2[Int, String, Record]]
+    (cls5 isAssignableFrom ToTable.getClass) shouldBe true
+    (cls2 isAssignableFrom Record.getClass) shouldBe true
   }
 
   it should "create companion object that is functionally equal to its apply method" in {

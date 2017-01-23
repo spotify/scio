@@ -15,6 +15,7 @@
  * under the License.
  */
 
+// scalastyle:off line.size.limit
 package com.spotify.scio.bigquery.types
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
@@ -103,3 +104,4 @@ class SchemaUtilTest extends FlatSpec with Matchers {
   }
 
 }
+// scalastyle:on line.size.limit

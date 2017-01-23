@@ -57,12 +57,12 @@ class TypeProviderTestScala211 extends FlatSpec with Matchers {
     """.stripMargin)
   class ArtisanalMoreThan22Fields
 
-  "BigQueryType.fromSchema" should "support .schema in companion object with more than 22 fields" in {
+  "BigQueryType.fromSchema" should "support .schema in companion object with >22 fields" in {
     ArtisanalMoreThan22Fields(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23)
     ArtisanalMoreThan22Fields.schema should not be null
   }
 
-  it should "not provide .tupled in companion object with more than 22 fields" in {
+  it should "not provide .tupled in companion object with >22 fields" in {
     ArtisanalMoreThan22Fields.getClass.getMethods.map(_.getName) should not contain "tupled"
   }
 
@@ -71,19 +71,21 @@ class TypeProviderTestScala211 extends FlatSpec with Matchers {
                          a11:Int,a12:Int,a13:Int,a14:Int,a15:Int,a16:Int,a17:Int,a18:Int,a19:Int,
                          a20:Int,a21:Int,a22:Int,a23:Int)
 
-  "BigQueryType.toTable" should "not provide .tupled in companion object with more than 22 fields" in {
+  "BigQueryType.toTable" should "not provide .tupled in companion object with >22 fields" in {
     TwentyThree.getClass.getMethods.map(_.getName) should not contain "tupled"
   }
 
-  it should "support .schema in companion object with more than 22 fields" in {
+  it should "support .schema in companion object with >22 fields" in {
     TwentyThree.schema should not be null
   }
 
   it should "support .fromTableRow in companion object" in {
-    (classOf[(TableRow => TwentyThree)] isAssignableFrom TwentyThree.fromTableRow.getClass) shouldBe true
+    val cls = classOf[(TableRow => TwentyThree)]
+    (cls isAssignableFrom TwentyThree.fromTableRow.getClass) shouldBe true
   }
 
   it should "support .toTableRow in companion object" in {
-    (classOf[(TwentyThree => TableRow)] isAssignableFrom TwentyThree.toTableRow.getClass) shouldBe true
+    val cls = classOf[(TwentyThree => TableRow)]
+    (cls isAssignableFrom TwentyThree.toTableRow.getClass) shouldBe true
   }
 }
