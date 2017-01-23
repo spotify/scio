@@ -294,7 +294,8 @@ class TypeProviderTest extends FlatSpec with Matchers {
   }
 
   it should "create companion object that is a Function subtype" in {
-    (classOf[Function5[Long, Double, Boolean, String, Instant, ToTable]] isAssignableFrom ToTable.getClass) shouldBe true
+    (classOf[Function5[Long, Double, Boolean, String, Instant, ToTable]]
+      isAssignableFrom ToTable.getClass) shouldBe true
     (classOf[Function2[Int, String, Record]] isAssignableFrom Record.getClass) shouldBe true
   }
 

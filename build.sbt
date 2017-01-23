@@ -131,7 +131,13 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
       } yield jarFile).headOption.map((_, url(apiUrl)))
     }
     docMappings.map(mappinngFn.tupled).flatten.toMap
-  }
+  },
+
+  scalastyleSources in Compile <++= unmanagedSourceDirectories in Test
+)
+
+lazy val itSettings = Defaults.itSettings ++ Seq(
+  scalastyleSources in Compile <++= unmanagedSourceDirectories in IntegrationTest
 )
 
 lazy val noPublishSettings = Seq(
@@ -223,7 +229,7 @@ lazy val scioTest: Project = Project(
   "scio-test",
   file("scio-test")
 ).settings(
-  commonSettings ++ Defaults.itSettings,
+  commonSettings ++ itSettings,
   description := "Scio helpers for ScalaTest",
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % scalaTestVersion,
@@ -246,7 +252,7 @@ lazy val scioBigQuery: Project = Project(
   "scio-bigquery",
   file("scio-bigquery")
 ).settings(
-  commonSettings ++ macroSettings ++ Defaults.itSettings,
+  commonSettings ++ macroSettings ++ itSettings,
   description := "Scio add-on for Google BigQuery",
   libraryDependencies ++= Seq(
     dataflowSdkDependency,
