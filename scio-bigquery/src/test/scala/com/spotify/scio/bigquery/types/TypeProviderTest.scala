@@ -22,7 +22,6 @@ import java.time.Instant
 import com.google.api.services.bigquery.model.TableRow
 import org.scalatest.{FlatSpec, Matchers}
 
-// TODO: figure out how to make IntelliJ happy
 // TODO: mock BigQueryClient for fromTable and fromQuery
 class TypeProviderTest extends FlatSpec with Matchers {
 

@@ -271,9 +271,6 @@ private[types] object TypeProvider {
     val srcFile = c.macroApplication.pos.source.path
     val hash = genHashForMacro(owner, srcFile)
 
-    // TODO scala 2.11
-    // import c.universe._
-    // showCode(r)
     val prettyCode = pShowCode(c)(records, caseClassTree).mkString("\n")
     val classCacheDir = getBQClassCacheDir
     val genSrcFile = new java.io.File(s"$classCacheDir/$name-$hash.scala")

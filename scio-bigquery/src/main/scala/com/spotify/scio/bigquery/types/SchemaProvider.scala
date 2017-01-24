@@ -90,27 +90,16 @@ private[types] object SchemaProvider {
   private def toFields(t: Type): Iterable[TableFieldSchema] = getFields(t).map(toField)
 
   private def getFields(t: Type): Iterable[(Symbol, Option[String])] =
-    t.declarations.filter(isField) zip fieldDescs(t)
+    t.decls.filter(isField) zip fieldDescs(t)
 
   private def fieldDescs(t: Type): Iterable[Option[String]] = {
     val tpe = "com.spotify.scio.bigquery.types.description"
-    // TODO: scala 2.11
-    /*
     t.typeSymbol.asClass.primaryConstructor.typeSignature.paramLists.head.map {
       _.annotations
         .find(_.tree.tpe.toString == tpe)
         .map { a =>
           val q"new $t($v)" = a.tree
           val Literal(Constant(s)) = v
-          s.toString
-        }
-    }
-    */
-    t.declaration(nme.CONSTRUCTOR).asMethod.paramss.head.map {
-      _.annotations
-        .find(_.tpe.toString == tpe)
-        .map { a =>
-          val Literal(Constant(s)) = a.scalaArgs.head
           s.toString
         }
     }
