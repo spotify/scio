@@ -17,7 +17,7 @@
 
 package com.spotify.scio.io
 
-import java.io.{File, FileInputStream, InputStream, SequenceInputStream}
+import java.io._
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
@@ -36,6 +36,7 @@ import org.apache.avro.specific.{SpecificDatumReader, SpecificRecordBase}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
 import org.apache.beam.sdk.util.gcsfs.GcsPath
+import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.apache.commons.io.{FileUtils, IOUtils}
 
@@ -70,8 +71,11 @@ private[scio] trait FileStorage {
       .map(_.iterator().asScala).reduce(_ ++ _)
   }
 
-  def textFile: Iterator[String] =
-    IOUtils.lineIterator(getDirectoryInputStream(path), Charsets.UTF_8).asScala
+  def textFile: Iterator[String] = {
+    val in = new BufferedInputStream(getDirectoryInputStream(path))
+    val cin = Try(new CompressorStreamFactory().createCompressorInputStream(in)).getOrElse(in)
+    IOUtils.lineIterator(cin, Charsets.UTF_8).asScala
+  }
 
   def tableRowJsonFile: Iterator[TableRow] = {
     val mapper = new ObjectMapper().disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)

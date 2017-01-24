@@ -17,10 +17,11 @@
 
 package com.spotify.scio.io
 
-import java.io.File
+import java.io._
 import java.nio.ByteBuffer
 import java.util.UUID
 
+import com.google.api.client.util.Charsets
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.bigquery._
@@ -28,6 +29,7 @@ import com.spotify.scio.proto.SimpleV2.{SimplePB => SimplePBV2}
 import com.spotify.scio.proto.SimpleV3.{SimplePB => SimplePBV3}
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.avro.Schema
+import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.FileUtils
 
 import scala.concurrent.Future
@@ -166,6 +168,20 @@ class TapTest extends TapSpec {
     }
     verifyTap(t, Set("a", "b", "c"))
     FileUtils.deleteDirectory(dir)
+  }
+
+  it should "support reading compressed text files" in {
+    val data = Seq.fill(100)(UUID.randomUUID().toString)
+    for ((cType, ext) <- Seq(("gz", "gz"), ("bzip2", "bz2"))) {
+      val file = new File(s"scio-test-data.$ext")
+      file.deleteOnExit()
+      val os = new CompressorStreamFactory()
+        .createCompressorOutputStream(cType, new FileOutputStream(file))
+      val writer = new OutputStreamWriter(os, Charsets.UTF_8)
+      writer.write(data.mkString("\n"))
+      writer.close()
+      verifyTap(TextTap(file.getPath), data.toSet)
+    }
   }
 
   it should "support saveAsTFRecordFile" in {
