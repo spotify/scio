@@ -27,14 +27,16 @@
 package com.spotify.scio.util
 
 import com.google.common.collect.Lists
-import com.spotify.scio.values.{SCollection, TransformNameable}
+import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}
 import org.apache.beam.sdk.values.TupleTag
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
-object MultiJoin extends TransformNameable {
+trait MultiJoin extends Serializable {
+
+  protected def tfName: String = CallSites.getCurrent
 
   def toOptions[T](xs: Iterator[T]): Iterator[Option[T]] = if (xs.isEmpty) Iterator(None) else xs.map(Option(_))
 
@@ -44,7 +46,7 @@ object MultiJoin extends TransformNameable {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala))
     }
@@ -57,7 +59,7 @@ object MultiJoin extends TransformNameable {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala))
     }
@@ -71,7 +73,7 @@ object MultiJoin extends TransformNameable {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala))
     }
@@ -86,7 +88,7 @@ object MultiJoin extends TransformNameable {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala))
     }
@@ -102,7 +104,7 @@ object MultiJoin extends TransformNameable {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala))
     }
@@ -119,7 +121,7 @@ object MultiJoin extends TransformNameable {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala))
     }
@@ -137,7 +139,7 @@ object MultiJoin extends TransformNameable {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala))
     }
@@ -156,7 +158,7 @@ object MultiJoin extends TransformNameable {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala))
     }
@@ -176,7 +178,7 @@ object MultiJoin extends TransformNameable {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala))
     }
@@ -197,7 +199,7 @@ object MultiJoin extends TransformNameable {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala))
     }
@@ -219,7 +221,7 @@ object MultiJoin extends TransformNameable {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala))
     }
@@ -242,7 +244,7 @@ object MultiJoin extends TransformNameable {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala))
     }
@@ -266,7 +268,7 @@ object MultiJoin extends TransformNameable {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala))
     }
@@ -291,7 +293,7 @@ object MultiJoin extends TransformNameable {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala))
     }
@@ -317,7 +319,7 @@ object MultiJoin extends TransformNameable {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala))
     }
@@ -344,7 +346,7 @@ object MultiJoin extends TransformNameable {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala))
     }
@@ -372,7 +374,7 @@ object MultiJoin extends TransformNameable {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala))
     }
@@ -401,7 +403,7 @@ object MultiJoin extends TransformNameable {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala, result.getAll(tagS).asScala))
     }
@@ -431,7 +433,7 @@ object MultiJoin extends TransformNameable {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala, result.getAll(tagS).asScala, result.getAll(tagT).asScala))
     }
@@ -462,7 +464,7 @@ object MultiJoin extends TransformNameable {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala, result.getAll(tagS).asScala, result.getAll(tagT).asScala, result.getAll(tagU).asScala))
     }
@@ -494,7 +496,7 @@ object MultiJoin extends TransformNameable {
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).map { kv =>
+    a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala, result.getAll(tagS).asScala, result.getAll(tagT).asScala, result.getAll(tagU).asScala, result.getAll(tagV).asScala))
     }
@@ -506,7 +508,7 @@ object MultiJoin extends TransformNameable {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         b <- result.getAll(tagB).asScala.iterator
@@ -522,7 +524,7 @@ object MultiJoin extends TransformNameable {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         c <- result.getAll(tagC).asScala.iterator
@@ -540,7 +542,7 @@ object MultiJoin extends TransformNameable {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         d <- result.getAll(tagD).asScala.iterator
@@ -560,7 +562,7 @@ object MultiJoin extends TransformNameable {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         e <- result.getAll(tagE).asScala.iterator
@@ -582,7 +584,7 @@ object MultiJoin extends TransformNameable {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         f <- result.getAll(tagF).asScala.iterator
@@ -606,7 +608,7 @@ object MultiJoin extends TransformNameable {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         g <- result.getAll(tagG).asScala.iterator
@@ -632,7 +634,7 @@ object MultiJoin extends TransformNameable {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         h <- result.getAll(tagH).asScala.iterator
@@ -660,7 +662,7 @@ object MultiJoin extends TransformNameable {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         i <- result.getAll(tagI).asScala.iterator
@@ -690,7 +692,7 @@ object MultiJoin extends TransformNameable {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         j <- result.getAll(tagJ).asScala.iterator
@@ -722,7 +724,7 @@ object MultiJoin extends TransformNameable {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         k <- result.getAll(tagK).asScala.iterator
@@ -756,7 +758,7 @@ object MultiJoin extends TransformNameable {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         l <- result.getAll(tagL).asScala.iterator
@@ -792,7 +794,7 @@ object MultiJoin extends TransformNameable {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         m <- result.getAll(tagM).asScala.iterator
@@ -830,7 +832,7 @@ object MultiJoin extends TransformNameable {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         n <- result.getAll(tagN).asScala.iterator
@@ -870,7 +872,7 @@ object MultiJoin extends TransformNameable {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         o <- result.getAll(tagO).asScala.iterator
@@ -912,7 +914,7 @@ object MultiJoin extends TransformNameable {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         p <- result.getAll(tagP).asScala.iterator
@@ -956,7 +958,7 @@ object MultiJoin extends TransformNameable {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         q <- result.getAll(tagQ).asScala.iterator
@@ -1002,7 +1004,7 @@ object MultiJoin extends TransformNameable {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         r <- result.getAll(tagR).asScala.iterator
@@ -1050,7 +1052,7 @@ object MultiJoin extends TransformNameable {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         s <- result.getAll(tagS).asScala.iterator
@@ -1100,7 +1102,7 @@ object MultiJoin extends TransformNameable {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         t <- result.getAll(tagT).asScala.iterator
@@ -1152,7 +1154,7 @@ object MultiJoin extends TransformNameable {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         u <- result.getAll(tagU).asScala.iterator
@@ -1206,7 +1208,7 @@ object MultiJoin extends TransformNameable {
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         v <- result.getAll(tagV).asScala.iterator
@@ -1241,7 +1243,7 @@ object MultiJoin extends TransformNameable {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         b <- toOptions(result.getAll(tagB).asScala.iterator)
@@ -1257,7 +1259,7 @@ object MultiJoin extends TransformNameable {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
@@ -1275,7 +1277,7 @@ object MultiJoin extends TransformNameable {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         d <- toOptions(result.getAll(tagD).asScala.iterator)
@@ -1295,7 +1297,7 @@ object MultiJoin extends TransformNameable {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         e <- toOptions(result.getAll(tagE).asScala.iterator)
@@ -1317,7 +1319,7 @@ object MultiJoin extends TransformNameable {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         f <- toOptions(result.getAll(tagF).asScala.iterator)
@@ -1341,7 +1343,7 @@ object MultiJoin extends TransformNameable {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         g <- toOptions(result.getAll(tagG).asScala.iterator)
@@ -1367,7 +1369,7 @@ object MultiJoin extends TransformNameable {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         h <- toOptions(result.getAll(tagH).asScala.iterator)
@@ -1395,7 +1397,7 @@ object MultiJoin extends TransformNameable {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         i <- toOptions(result.getAll(tagI).asScala.iterator)
@@ -1425,7 +1427,7 @@ object MultiJoin extends TransformNameable {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         j <- toOptions(result.getAll(tagJ).asScala.iterator)
@@ -1457,7 +1459,7 @@ object MultiJoin extends TransformNameable {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         k <- toOptions(result.getAll(tagK).asScala.iterator)
@@ -1491,7 +1493,7 @@ object MultiJoin extends TransformNameable {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         l <- toOptions(result.getAll(tagL).asScala.iterator)
@@ -1527,7 +1529,7 @@ object MultiJoin extends TransformNameable {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         m <- toOptions(result.getAll(tagM).asScala.iterator)
@@ -1565,7 +1567,7 @@ object MultiJoin extends TransformNameable {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         n <- toOptions(result.getAll(tagN).asScala.iterator)
@@ -1605,7 +1607,7 @@ object MultiJoin extends TransformNameable {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         o <- toOptions(result.getAll(tagO).asScala.iterator)
@@ -1647,7 +1649,7 @@ object MultiJoin extends TransformNameable {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         p <- toOptions(result.getAll(tagP).asScala.iterator)
@@ -1691,7 +1693,7 @@ object MultiJoin extends TransformNameable {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         q <- toOptions(result.getAll(tagQ).asScala.iterator)
@@ -1737,7 +1739,7 @@ object MultiJoin extends TransformNameable {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         r <- toOptions(result.getAll(tagR).asScala.iterator)
@@ -1785,7 +1787,7 @@ object MultiJoin extends TransformNameable {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         s <- toOptions(result.getAll(tagS).asScala.iterator)
@@ -1835,7 +1837,7 @@ object MultiJoin extends TransformNameable {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         t <- toOptions(result.getAll(tagT).asScala.iterator)
@@ -1887,7 +1889,7 @@ object MultiJoin extends TransformNameable {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         u <- toOptions(result.getAll(tagU).asScala.iterator)
@@ -1941,7 +1943,7 @@ object MultiJoin extends TransformNameable {
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         v <- toOptions(result.getAll(tagV).asScala.iterator)
@@ -1976,7 +1978,7 @@ object MultiJoin extends TransformNameable {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         b <- toOptions(result.getAll(tagB).asScala.iterator)
@@ -1992,7 +1994,7 @@ object MultiJoin extends TransformNameable {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
@@ -2010,7 +2012,7 @@ object MultiJoin extends TransformNameable {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         d <- toOptions(result.getAll(tagD).asScala.iterator)
@@ -2030,7 +2032,7 @@ object MultiJoin extends TransformNameable {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         e <- toOptions(result.getAll(tagE).asScala.iterator)
@@ -2052,7 +2054,7 @@ object MultiJoin extends TransformNameable {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         f <- toOptions(result.getAll(tagF).asScala.iterator)
@@ -2076,7 +2078,7 @@ object MultiJoin extends TransformNameable {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         g <- toOptions(result.getAll(tagG).asScala.iterator)
@@ -2102,7 +2104,7 @@ object MultiJoin extends TransformNameable {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         h <- toOptions(result.getAll(tagH).asScala.iterator)
@@ -2130,7 +2132,7 @@ object MultiJoin extends TransformNameable {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         i <- toOptions(result.getAll(tagI).asScala.iterator)
@@ -2160,7 +2162,7 @@ object MultiJoin extends TransformNameable {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         j <- toOptions(result.getAll(tagJ).asScala.iterator)
@@ -2192,7 +2194,7 @@ object MultiJoin extends TransformNameable {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         k <- toOptions(result.getAll(tagK).asScala.iterator)
@@ -2226,7 +2228,7 @@ object MultiJoin extends TransformNameable {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         l <- toOptions(result.getAll(tagL).asScala.iterator)
@@ -2262,7 +2264,7 @@ object MultiJoin extends TransformNameable {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         m <- toOptions(result.getAll(tagM).asScala.iterator)
@@ -2300,7 +2302,7 @@ object MultiJoin extends TransformNameable {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         n <- toOptions(result.getAll(tagN).asScala.iterator)
@@ -2340,7 +2342,7 @@ object MultiJoin extends TransformNameable {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         o <- toOptions(result.getAll(tagO).asScala.iterator)
@@ -2382,7 +2384,7 @@ object MultiJoin extends TransformNameable {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         p <- toOptions(result.getAll(tagP).asScala.iterator)
@@ -2426,7 +2428,7 @@ object MultiJoin extends TransformNameable {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         q <- toOptions(result.getAll(tagQ).asScala.iterator)
@@ -2472,7 +2474,7 @@ object MultiJoin extends TransformNameable {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         r <- toOptions(result.getAll(tagR).asScala.iterator)
@@ -2520,7 +2522,7 @@ object MultiJoin extends TransformNameable {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         s <- toOptions(result.getAll(tagS).asScala.iterator)
@@ -2570,7 +2572,7 @@ object MultiJoin extends TransformNameable {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         t <- toOptions(result.getAll(tagT).asScala.iterator)
@@ -2622,7 +2624,7 @@ object MultiJoin extends TransformNameable {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         u <- toOptions(result.getAll(tagU).asScala.iterator)
@@ -2676,7 +2678,7 @@ object MultiJoin extends TransformNameable {
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
       .apply("CoGroupByKey", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(this.tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         v <- toOptions(result.getAll(tagV).asScala.iterator)
@@ -2705,6 +2707,15 @@ object MultiJoin extends TransformNameable {
     }
   }
 
+}
+
+
+object MultiJoin extends MultiJoin {
+  def withName(name: String): MultiJoin = new NamedMultiJoin(name)
+}
+
+private class NamedMultiJoin(val name: String) extends MultiJoin {
+  override def tfName: String = name
 }
 
 // scalastyle:on cyclomatic.complexity
