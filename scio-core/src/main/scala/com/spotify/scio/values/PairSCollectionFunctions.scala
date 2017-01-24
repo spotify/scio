@@ -56,7 +56,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   private[values] def applyPerKey[UI: ClassTag, UO: ClassTag]
   (t: PTransform[PCollection[KV[K, V]], PCollection[KV[K, UI]]], f: KV[K, UI] => (K, UO))
   : SCollection[(K, UO)] = {
-    // FIXME: null name
     val o = self.applyInternal(new PTransform[PCollection[(K, V)], PCollection[(K, UO)]](null) {
       override def expand(input: PCollection[(K, V)]): PCollection[(K, UO)] =
         input
@@ -617,8 +616,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   def asMapSideInput: SideInput[Map[K, V]] = {
     val o = self.applyInternal(
-      // FIXME: null name
-      new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, V]]](null) {
+      new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, V]]]() {
         override def expand(input: PCollection[(K, V)]): PCollectionView[JMap[K, V]] = {
           input.apply(toKvTransform).setCoder(self.getKvCoder[K, V]).apply(View.asMap())
         }
@@ -633,8 +631,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   def asMultiMapSideInput: SideInput[Map[K, Iterable[V]]] = {
     val o = self.applyInternal(
-      // FIXME: null name
-      new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, JIterable[V]]]](null) {
+      new PTransform[PCollection[(K, V)], PCollectionView[JMap[K, JIterable[V]]]]() {
         override def expand(input: PCollection[(K, V)]): PCollectionView[JMap[K, JIterable[V]]] = {
           input.apply(toKvTransform).setCoder(self.getKvCoder[K, V]).apply(View.asMultimap())
         }
