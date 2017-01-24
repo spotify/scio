@@ -71,14 +71,24 @@ private[types] object TypeProvider {
     checkMacroEnclosed(c)
 
     val (r, caseClassTree, name) = annottees.map(_.tree) match {
-      case List(q"case class $name(..$fields) { ..$body }") =>
+      case l @ List(q"$mods class $name[..$tparams] $ctorMods(..$fields) extends { ..$earlydefns } with ..$parents { $self => ..$body }") if mods.asInstanceOf[Modifiers].hasFlag(Flag.CASE) =>
+
+        val desc = l.head.asInstanceOf[ClassDef].mods.annotations
+          .filter(_.children.head.toString() == "new description")
+          .map(_.children.tail.head.toString())
+
+        if (parents.map(_.toString()).toSet != Set("scala.Product", "scala.Serializable")) {
+          c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the case class $l")
+        }
+
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SType)}.schemaOf[$name]"
+        val defTblDesc = desc.headOption.map(d => q"override def tableDescription: _root_.java.lang.String = $d")
         val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${name.toString}, indent)"
         val fnTrait = tq"${TypeName(s"Function${fields.size}")}[..${fields.map(_.children.head)}, $name]"
-        val traits = if (fields.size <= 22) Seq(fnTrait) else Seq()
+        val traits = (if (fields.size <= 22) Seq(fnTrait) else Seq()) ++ defTblDesc.map(_ => tq"${p(c, SType)}.HasTableDescription")
         val caseClassTree = q"""${caseClass(c)(name, fields, body)}"""
         (q"""$caseClassTree
-            ${companion(c)(name, traits, Seq(defSchema, defToPrettyString), fields.asInstanceOf[Seq[Tree]].size)}
+            ${companion(c)(name, traits, Seq(defSchema, defToPrettyString) ++ defTblDesc, fields.asInstanceOf[Seq[Tree]].size)}
         """, caseClassTree, name.toString())
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
