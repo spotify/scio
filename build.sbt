@@ -37,7 +37,6 @@ val hamcrestVersion = "1.3"
 val hbaseVersion = "1.0.2"
 val jacksonScalaModuleVersion = "2.8.6"
 val javaLshVersion = "0.10"
-val jodaConvertVersion = "1.8.1"
 val junitVersion = "4.12"
 val junitInterfaceVersion = "0.11"
 val mockitoVersion = "1.10.19"
@@ -252,7 +251,6 @@ lazy val scioBigQuery: Project = Project(
   libraryDependencies ++= Seq(
     "commons-io" % "commons-io" % commonsIoVersion,
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-    "org.joda" % "joda-convert" % jodaConvertVersion,
     "org.slf4j" % "slf4j-api" % slf4jVersion,
     "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
     "org.scalatest" %% "scalatest" % scalaTestVersion % "test,it",
@@ -428,8 +426,7 @@ val javaMappings = Seq(
   ("com.google.cloud.dataflow", "google-cloud-dataflow-java-sdk-all",
    "https://cloud.google.com/dataflow/java-sdk/JavaDoc"),
   ("com.google.apis", "google-api-services-bigquery",
-   "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest"),
-  ("joda-time", "joda-time", "http://www.joda.org/joda-time/apidocs")
+   "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest")
  )
 val scalaMappings = Seq(
   ("com.twitter", "algebird-core", "http://twitter.github.io/algebird"))
