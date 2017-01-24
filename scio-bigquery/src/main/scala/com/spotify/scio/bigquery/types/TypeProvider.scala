@@ -75,7 +75,7 @@ private[types] object TypeProvider {
 
         val desc = l.head.asInstanceOf[ClassDef].mods.annotations
           .filter(_.children.head.toString() == "new description")
-          .map(_.children.tail.head.toString())
+          .map(_.children.tail.head)
 
         if (parents.map(_.toString()).toSet != Set("scala.Product", "scala.Serializable")) {
           c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the case class $l")
@@ -152,13 +152,28 @@ private[types] object TypeProvider {
     val (fields, records) = toFields(schema.getFields)
 
     val (r, caseClassTree, name) = annottees.map(_.tree) match {
-      case List(q"class $name") =>
+      case l @ List(q"$mods class $name[..$tparams] $ctorMods(..$cfields) extends { ..$earlydefns } with ..$parents { $self => ..$body }") if mods.asInstanceOf[Modifiers].flags == NoFlags =>
+        if (parents.map(_.toString()).toSet != Set("scala.AnyRef")) {
+          c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the case class $l")
+        }
+
+        if (cfields.size != 0) {
+          c.abort(c.enclosingPosition, s"Invalid annotation, don't provide class fields $l")
+        }
+
+        val desc = l.head.asInstanceOf[ClassDef].mods.annotations
+          .filter(_.children.head.toString() == "new description")
+          .map(_.children.tail.head)
+
+        val defTblDesc = desc.headOption.map(d => q"override def tableDescription: _root_.java.lang.String = $d")
+        val defTblTrait = defTblDesc.map(_ => tq"${p(c, SType)}.HasTableDescription").toSeq
+
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SUtil)}.parseSchema(${schema.toString})"
         val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${name.toString}, indent)"
 
         val caseClassTree = q"""${caseClass(c)(name, fields, Nil)}"""
         (q"""$caseClassTree
-            ${companion(c)(name, traits, Seq(defSchema, defToPrettyString) ++ overrides, fields.size)}
+            ${companion(c)(name, traits ++ defTblTrait, Seq(defSchema, defToPrettyString) ++ overrides ++ defTblDesc, fields.size)}
             ..$records
         """, caseClassTree, name.toString())
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
