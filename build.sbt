@@ -40,6 +40,7 @@ val javaLshVersion = "0.10"
 val jodaConvertVersion = "1.8.1"
 val junitVersion = "4.12"
 val junitInterfaceVersion = "0.11"
+val mockitoVersion = "1.10.19"
 val nettyTcNativeVersion = "1.1.33.Fork18"
 val protobufGenericVersion = "0.1.1"
 val scalaCheckVersion = "1.13.4"
@@ -50,9 +51,6 @@ val slf4jVersion = "1.7.22"
 
 val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework")
 
-// TODO: remove this
-val java8 = sys.props("java.version").startsWith("1.8.")
-
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
 
@@ -62,6 +60,8 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   scalacOptions in (Compile, doc) ++= Seq("-groups", "-skip-packages", "com.google"),
   javacOptions                    ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
   javacOptions in (Compile, doc)  := Seq("-source", "1.8"),
+
+  testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
 
   coverageExcludedPackages := Seq(
     "com\\.spotify\\.scio\\.examples\\..*",
@@ -193,7 +193,7 @@ lazy val root: Project = Project(
   scioExtra,
   scioHdfs,
   scioRepl,
-  // scioExamples,
+  scioExamples,
   scioSchemas
 )
 
@@ -331,13 +331,12 @@ lazy val scioExamples: Project = Project(
   commonSettings ++ noPublishSettings,
   libraryDependencies ++= Seq(
     "org.slf4j" % "slf4j-simple" % slf4jVersion,
-    "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
+    "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
+    "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test",
+    "org.mockito" % "mockito-all" % mockitoVersion % "test"
   ),
   addCompilerPlugin(paradiseDependency),
-  sources in doc in Compile := List(),
-  unmanagedSourceDirectories in Compile ++= {
-    if (java8) Seq(baseDirectory.value / "src/main/java8") else Nil
-  }
+  sources in doc in Compile := List()
 ).dependsOn(
   scioCore,
   // scioBigtable,
