@@ -115,7 +115,7 @@ package object experimental {
       import scala.concurrent.ExecutionContext.Implicits.global
       self
         .map(bqt.toTableRow)
-        .saveAsBigQuery(table, bqt.schema, writeDisposition, createDisposition)
+        .saveAsBigQuery(table, bqt.schema, writeDisposition, createDisposition, null)
         .map(_.map(bqt.fromTableRow))
     }
 
