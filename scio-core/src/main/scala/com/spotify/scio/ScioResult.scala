@@ -67,8 +67,10 @@ class ScioResult private[scio] (val internal: PipelineResult,
   }
 
   /** Wait until the pipeline finishes. */
-  def waitUntilFinish(duration: Duration = Duration.Inf): Unit =
+  def waitUntilFinish(duration: Duration = Duration.Inf): ScioResult = {
     Await.ready(finalState, duration)
+    this
+  }
 
   /** Whether the pipeline is completed. */
   def isCompleted: Boolean = internal.getState.isTerminal

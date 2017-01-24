@@ -323,7 +323,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
     if (this.isTest) {
       result.waitUntilFinish()  // block local runner for JobTest to work
-      result
     } else {
       result
     }
