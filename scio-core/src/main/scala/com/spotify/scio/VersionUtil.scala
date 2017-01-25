@@ -28,9 +28,9 @@ import scala.util.Try
 
 private object VersionUtil {
 
-  case class SemVer(major: Int, minor: Int, rev: Int, snapshot: String) extends Ordered[SemVer] {
+  case class SemVer(major: Int, minor: Int, rev: Int, suffix: String) extends Ordered[SemVer] {
     def compare(that: SemVer): Int = {
-      implicit val revStringOrder = Ordering[String].reverse
+      implicit val revStringOrder = Ordering[String]
       implicitly[Ordering[(Int, Int, Int, String)]]
         .compare(SemVer.unapply(this).get, SemVer.unapply(that).get)
     }
@@ -38,7 +38,7 @@ private object VersionUtil {
 
   private val TIMEOUT = 3000
   private val url = "https://api.github.com/repos/spotify/scio/releases"
-  private val pattern = """v?(\d+)\.(\d+).(\d+)(-SNAPSHOT)?""".r
+  private val pattern = """v?(\d+)\.(\d+).(\d+)(-\w+)?""".r
   private val logger = LoggerFactory.getLogger(VersionUtil.getClass)
 
   private def getLatest: Option[String] = Try {
@@ -61,14 +61,14 @@ private object VersionUtil {
   private def parseVersion(version: String): SemVer = {
     val m = pattern.findFirstMatchIn(version).get
     // higher value for no "-SNAPSHOT"
-    val snapshot = if (m.group(4) != null) m.group(4) else ""
+    val snapshot = if (m.group(4) != null) m.group(4).toUpperCase else "\uffff"
     SemVer(m.group(1).toInt, m.group(2).toInt, m.group(3).toInt, snapshot)
   }
 
   def checkVersion(current: String, latest: Option[String]): Seq[String] = {
     val b = mutable.Buffer.empty[String]
     val v1 = parseVersion(current)
-    if (v1.snapshot == "-SNAPSHOT") {
+    if (v1.suffix == "-SNAPSHOT") {
       b.append(s"Using a SNAPSHOT version of Scio: $current")
     }
     latest.foreach { v =>
