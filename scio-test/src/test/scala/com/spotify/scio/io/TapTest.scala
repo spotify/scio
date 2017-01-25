@@ -30,7 +30,7 @@ import com.spotify.scio.proto.SimpleV3.{SimplePB => SimplePBV3}
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.avro.Schema
 import org.apache.commons.compress.compressors.CompressorStreamFactory
-import org.apache.commons.io.FileUtils
+import org.apache.commons.io.{FileUtils, IOUtils}
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -171,16 +171,21 @@ class TapTest extends TapSpec {
   }
 
   it should "support reading compressed text files" in {
-    val data = Seq.fill(100)(UUID.randomUUID().toString)
+    val nFiles = 10
+    val nLines = 100
+    val data = Array.fill(nFiles)(Array.fill(nLines)(UUID.randomUUID().toString))
     for ((cType, ext) <- Seq(("gz", "gz"), ("bzip2", "bz2"))) {
-      val file = new File(s"scio-test-data.$ext")
-      file.deleteOnExit()
-      val os = new CompressorStreamFactory()
-        .createCompressorOutputStream(cType, new FileOutputStream(file))
-      val writer = new OutputStreamWriter(os, Charsets.UTF_8)
-      writer.write(data.mkString("\n"))
-      writer.close()
-      verifyTap(TextTap(file.getPath), data.toSet)
+      val dir = tmpDir
+      dir.mkdir()
+      for (i <- 0 until nFiles) {
+        val file = new File(dir, "part-%05d-%05d.%s".format(i, nFiles, ext))
+        val os = new CompressorStreamFactory()
+          .createCompressorOutputStream(cType, new FileOutputStream(file))
+        data(i).foreach(l => IOUtils.write(l + "\n", os, Charsets.UTF_8))
+        os.close()
+      }
+      verifyTap(TextTap(s"${dir.getPath}/part-*.$ext"), data.flatten.toSet)
+      FileUtils.deleteDirectory(dir)
     }
   }
 
