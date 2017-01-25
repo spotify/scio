@@ -66,21 +66,25 @@ private[types] object TypeProvider {
     schemaToType(c)(schema, annottees, traits, overrides)
   }
 
+  private def getTableDescription(c: blackbox.Context)(tree: Seq[c.universe.Tree])
+  : List[c.universe.Tree] = {
+    import c.universe._
+    tree.head.asInstanceOf[ClassDef].mods.annotations
+      .filter(_.children.head.toString() == "new description")
+      .map(_.children.tail.head)
+  }
+
+
   def toTableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
     checkMacroEnclosed(c)
 
     val (r, caseClassTree, name) = annottees.map(_.tree) match {
       case l @ List(q"$mods class $name[..$tparams] $ctorMods(..$fields) extends { ..$earlydefns } with ..$parents { $self => ..$body }") if mods.asInstanceOf[Modifiers].hasFlag(Flag.CASE) =>
-
-        val desc = l.head.asInstanceOf[ClassDef].mods.annotations
-          .filter(_.children.head.toString() == "new description")
-          .map(_.children.tail.head)
-
         if (parents.map(_.toString()).toSet != Set("scala.Product", "scala.Serializable")) {
           c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the case class $l")
         }
-
+        val desc = getTableDescription(c)(l)
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SType)}.schemaOf[$name]"
         val defTblDesc = desc.headOption.map(d => q"override def tableDescription: _root_.java.lang.String = $d")
         val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${name.toString}, indent)"
@@ -156,18 +160,13 @@ private[types] object TypeProvider {
         if (parents.map(_.toString()).toSet != Set("scala.AnyRef")) {
           c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the case class $l")
         }
-
-        if (cfields.size != 0) {
+        if (cfields.nonEmpty) {
           c.abort(c.enclosingPosition, s"Invalid annotation, don't provide class fields $l")
         }
 
-        val desc = l.head.asInstanceOf[ClassDef].mods.annotations
-          .filter(_.children.head.toString() == "new description")
-          .map(_.children.tail.head)
-
+        val desc = getTableDescription(c)(l)
         val defTblDesc = desc.headOption.map(d => q"override def tableDescription: _root_.java.lang.String = $d")
         val defTblTrait = defTblDesc.map(_ => tq"${p(c, SType)}.HasTableDescription").toSeq
-
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SUtil)}.parseSchema(${schema.toString})"
         val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${name.toString}, indent)"
 
