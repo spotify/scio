@@ -24,8 +24,9 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.grpc.BigtableInstanceClient;
 import com.google.cloud.bigtable.grpc.BigtableInstanceGrpcClient;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
+import org.joda.time.Duration;
+
 import java.io.IOException;
-import java.time.Duration;
 
 /**
  * Utilities to deal with Bigtable.
@@ -75,7 +76,7 @@ public final class BigtableUtil {
       }
 
       // Wait for the new nodes to be provisioned
-      Thread.sleep(sleepDuration.toMillis());
+      Thread.sleep(sleepDuration.getMillis());
     } finally {
       channelPool.shutdownNow();
     }

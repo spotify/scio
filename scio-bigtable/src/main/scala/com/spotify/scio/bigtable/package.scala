@@ -17,8 +17,6 @@
 
 package com.spotify.scio
 
-import java.time.Duration
-
 import com.google.bigtable.v2.{Mutation, Row, RowFilter}
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
@@ -28,6 +26,7 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.bigtable.BigtableIO
 import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.apache.beam.sdk.values.KV
+import org.joda.time.Duration
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -41,7 +40,7 @@ import scala.concurrent.Future
  */
 package object bigtable {
 
-  private val DEFAULT_SLEEP_DURATION = Duration.ofMinutes(20)
+  private val DEFAULT_SLEEP_DURATION = Duration.standardMinutes(20);
 
   /** Enhanced version of [[ScioContext]] with Bigtable methods. */
   implicit class BigtableScioContext(val self: ScioContext) extends AnyVal {
