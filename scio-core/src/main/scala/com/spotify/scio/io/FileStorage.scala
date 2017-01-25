@@ -72,9 +72,13 @@ private[scio] trait FileStorage {
   }
 
   def textFile: Iterator[String] = {
-    val in = new BufferedInputStream(getDirectoryInputStream(path))
-    val cin = Try(new CompressorStreamFactory().createCompressorInputStream(in)).getOrElse(in)
-    IOUtils.lineIterator(cin, Charsets.UTF_8).asScala
+    val factory = new CompressorStreamFactory()
+    def wrapInputStream(in: InputStream) = {
+      val buffered = new BufferedInputStream(in)
+      Try(factory.createCompressorInputStream(buffered)).getOrElse(buffered)
+    }
+    val input = getDirectoryInputStream(path, wrapInputStream)
+    IOUtils.lineIterator(input, Charsets.UTF_8).asScala
   }
 
   def tableRowJsonFile: Iterator[TableRow] = {
