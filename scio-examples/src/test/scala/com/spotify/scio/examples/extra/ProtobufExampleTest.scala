@@ -19,7 +19,7 @@ package com.spotify.scio.examples.extra
 
 import com.spotify.scio.proto.SimpleV2.SimplePB
 import com.spotify.scio.proto.Track.TrackPB
-import com.spotify.scio.testing.{JobTest, ObjectFileIO, PipelineSpec}
+import com.spotify.scio.testing.{JobTest, PipelineSpec, ProtobufIO}
 
 class ProtobufExampleTest extends PipelineSpec {
 
@@ -36,8 +36,8 @@ class ProtobufExampleTest extends PipelineSpec {
   "ProtobufExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.ProtobufExample.type]
       .args("--input=in.proto", "--output=out.proto")
-      .input(ObjectFileIO[SimplePB]("in.proto"), input)
-      .output[TrackPB](ObjectFileIO[TrackPB]("out.proto"))(_ should
+      .input(ProtobufIO[SimplePB]("in.proto"), input)
+      .output[TrackPB](ProtobufIO[TrackPB]("out.proto"))(_ should
         containInAnyOrder[TrackPB](expected))
       .run()
   }

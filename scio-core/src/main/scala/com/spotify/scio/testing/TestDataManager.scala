@@ -112,6 +112,8 @@ case class BigQueryIO(tableSpecOrQuery: String) extends TestIO[TableRow](tableSp
 case class DatastoreIO(projectId: String, query: Query = null, namespace: String = null)
   extends TestIO[Entity](s"$projectId\t$query\t$namespace")
 
+case class ProtobufIO[T](path: String) extends TestIO(path)
+
 case class PubsubIO(topic: String) extends TestIO[String](topic)
 
 case class TableRowJsonIO(path: String) extends TestIO[TableRow](path)
