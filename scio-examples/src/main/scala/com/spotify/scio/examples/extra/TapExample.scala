@@ -49,10 +49,10 @@ object TapExample {
     val (sc2, _) = ContextAndArgs(cmdlineArgs)
     // re-open taps in new context
     val s = (t1.open(sc2) ++ t2.open(sc2).map(_.toInt)).sum
-    val result = sc2.close()
+    val result = sc2.close().waitUntilFinish()
 
     // block main() until second job completes
-    println(Await.result(result.finalState, Duration.Inf))
+    println(result.finalState)
   }
   // scalastyle:on regex
 }
