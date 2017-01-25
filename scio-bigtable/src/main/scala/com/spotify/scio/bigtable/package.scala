@@ -19,13 +19,15 @@ package com.spotify.scio
 
 import java.time.Duration
 
-import com.google.cloud.bigtable.{dataflow => bt}
+import com.google.bigtable.v2.{Mutation, Row, RowFilter}
+import com.google.cloud.bigtable.config.BigtableOptions
+import com.google.protobuf.{ByteString => ByteS}
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.Read
+import org.apache.beam.sdk.io.gcp.bigtable.BigtableIO
+import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.apache.beam.sdk.values.KV
-import org.apache.hadoop.hbase.client.{Mutation, Result, Scan}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -39,129 +41,129 @@ import scala.concurrent.Future
  */
 package object bigtable {
 
-  private val DEFAULT_SLEEP_DURATION = Duration.ofMinutes(20);
+  private val DEFAULT_SLEEP_DURATION = Duration.ofMinutes(20)
 
   /** Enhanced version of [[ScioContext]] with Bigtable methods. */
   implicit class BigtableScioContext(val self: ScioContext) extends AnyVal {
 
     /** Get an SCollection for a Bigtable table. */
-    def bigTable(projectId: String,
+    def bigtable(projectId: String,
                  instanceId: String,
                  tableId: String,
-                 scan: Scan = null): SCollection[Result] = self.requireNotClosed {
-      val _scan: Scan = if (scan != null) scan else new Scan()
-      val config = new bt.CloudBigtableScanConfiguration.Builder()
-        .withProjectId(projectId)
-        .withInstanceId(instanceId)
-        .withTableId(tableId)
-        .withScan(_scan)
+                 keyRange: ByteKeyRange = null,
+                 rowFilter: RowFilter = null): SCollection[Row] = self.requireNotClosed {
+      val bigtableOptions = new BigtableOptions.Builder()
+        .setProjectId(projectId)
+        .setInstanceId(instanceId)
         .build
-      this.bigTable(config)
+      this.bigtable(bigtableOptions, tableId, keyRange, rowFilter)
     }
 
     /** Get an SCollection for a Bigtable table. */
-    def bigTable(config: bt.CloudBigtableScanConfiguration): SCollection[Result] =
+    def bigtable(bigtableOptions: BigtableOptions,
+                 tableId: String,
+                 keyRange: ByteKeyRange,
+                 rowFilter: RowFilter): SCollection[Row] =
     self.requireNotClosed {
       if (self.isTest) {
         val input = BigtableInput(
-          config.getProjectId, config.getInstanceId, config.getTableId)
-        self.getTestInput[Result](input)
+          bigtableOptions.getProjectId,
+          bigtableOptions.getInstanceId,
+          tableId
+        )
+        self.getTestInput[Row](input)
       } else {
-        self
-          .wrap(self.applyInternal(Read.from(bt.CloudBigtableIO.read(config))))
-          .setName(s"${config.getProjectId} ${config.getInstanceId} ${config.getTableId}")
+        val read = BigtableIO.read()
+          .withBigtableOptions(bigtableOptions)
+          .withTableId(tableId)
+        if (keyRange != null) read.withKeyRange(keyRange)
+        if (rowFilter != null) read.withRowFilter(rowFilter)
+        self.wrap(self.applyInternal(read))
+          .setName(s"${bigtableOptions.getProjectId} ${bigtableOptions.getInstanceId} $tableId")
       }
     }
+
+    /** Wrapper around update number of Bigtable nodes function to allow for testing. */
+    def updateNumberOfBigtableNodes(projectId: String,
+                                    instanceId: String,
+                                    numberOfNodes: Int,
+                                    sleepDuration: Duration = DEFAULT_SLEEP_DURATION): Unit = {
+      if (self.isTest) {
+        // No need to update the number of nodes in a test
+      } else {
+        val bigtableOptions = new BigtableOptions.Builder()
+          .setProjectId(projectId)
+          .setInstanceId(instanceId)
+          .build
+        BigtableUtil.updateNumberOfBigtableNodes(
+          bigtableOptions,
+          numberOfNodes,
+          sleepDuration
+        )
+      }
+    }
+
+    /** Wrapper around update number of Bigtable nodes function to allow for testing. */
+    def updateNumberOfBigtableNodes(bigtableOptions: BigtableOptions,
+                                    numberOfNodes: Int,
+                                    sleepDuration: Duration): Unit = {
+      if (self.isTest) {
+        // No need to update the number of nodes in a test
+      } else {
+        BigtableUtil.updateNumberOfBigtableNodes(
+          bigtableOptions,
+          numberOfNodes,
+          sleepDuration
+        )
+      }
+    }
+
 
   }
 
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Bigtable methods.
    */
-  implicit class BigtableSCollection[T](val self: SCollection[T]) extends AnyVal {
+  implicit class BigtableSCollection[T](val self: SCollection[(ByteS, Iterable[T])])
+    extends AnyVal {
 
     /** Save this SCollection as a Bigtable table. Note that elements must be of type Mutation. */
     def saveAsBigtable(projectId: String,
                        instanceId: String,
-                       tableId: String,
-                       additionalConfiguration: Map[String, String] = Map.empty)
-                      (implicit ev: T <:< Mutation): Future[Tap[Result]] = {
-      val config = new bt.CloudBigtableTableConfiguration(
-        projectId, instanceId, tableId, additionalConfiguration.asJava)
-      this.saveAsBigtable(config)
+                       tableId: String)
+                      (implicit ev: T <:< Mutation): Future[Tap[(ByteS, Iterable[Mutation])]] = {
+      val bigtableOptions = new BigtableOptions.Builder()
+        .setProjectId(projectId)
+        .setInstanceId(instanceId)
+        .build
+      this.saveAsBigtable(bigtableOptions, tableId)
     }
 
     /** Save this SCollection as a Bigtable table. Note that elements must be of type Mutation. */
-    def saveAsBigtable(config: bt.CloudBigtableTableConfiguration)
-                      (implicit ev: T <:< Mutation): Future[Tap[Result]] = {
+    def saveAsBigtable(bigtableOptions: BigtableOptions,
+                       tableId: String)
+                      (implicit ev: T <:< Mutation): Future[Tap[(ByteS, Iterable[Mutation])]] = {
       if (self.context.isTest) {
         val output = BigtableOutput(
-          config.getProjectId, config.getInstanceId, config.getTableId)
-        self.context.testOut(output)(self)
+          bigtableOptions.getProjectId, bigtableOptions.getInstanceId, tableId)
+        self.context.testOut(output.asInstanceOf[TestIO[(ByteS, Iterable[T])]])(self)
       } else {
-        bt.CloudBigtableIO.initializeForWrite(self.context.pipeline)
-        val sink = bt.CloudBigtableIO.writeToTable(config)
-        self.asInstanceOf[SCollection[Mutation]].applyInternal(sink)
-      }
-      Future.failed(new NotImplementedError("Bigtable future not implemented"))
-    }
-
-  }
-
-  /**
-   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] for writing to
-   * multiple Bigtable tables.
-   *
-   * Keys are table IDs and values are collections of Mutations.
-   */
-  implicit class PairBigtableSCollection[T](val self: SCollection[(String, Iterable[T])])
-    extends AnyVal {
-
-    /**
-     * Save this SCollection as multiple Bigtable tables. Note that value elements must be of type
-     * Mutation.
-     */
-    def saveAsMultipleBigtable(projectId: String,
-                               instanceId: String,
-                               additionalConfiguration: Map[String, String] = Map.empty)
-                              (implicit ev: T <:< Mutation)
-    : Future[Tap[(String, Iterable[Result])]] = {
-      val config = new bt.CloudBigtableTableConfiguration(
-        projectId, instanceId, null, additionalConfiguration.asJava)
-      this.saveAsMultipleBigtable(config)
-    }
-
-    /**
-     * Save this SCollection as multiple Bigtable tables. Note that value elements must be of type
-     * Mutation.
-     */
-    def saveAsMultipleBigtable(config: bt.CloudBigtableTableConfiguration)
-                              (implicit ev: T <:< Mutation)
-    : Future[Tap[(String, Iterable[Result])]] = {
-      if (self.context.isTest) {
-        val output = MultipleBigtableOutput(
-          config.getProjectId, config.getInstanceId)
-        self.context.testOut(output.asInstanceOf[TestIO[(String, Iterable[T])]])(self)
-      } else {
-        val transform = BigtableMultiTableWrite.writeToMultipleTables(config)
+        val sink = BigtableIO.write().withBigtableOptions(bigtableOptions).withTableId(tableId)
         self
           .map(kv => KV.of(kv._1, kv._2.asJava.asInstanceOf[java.lang.Iterable[Mutation]]))
-          .applyInternal(transform)
+          .applyInternal(sink)
       }
       Future.failed(new NotImplementedError("Bigtable future not implemented"))
     }
+
   }
 
   case class BigtableInput(projectId: String, instanceId: String, tableId: String)
-    extends TestIO[Result](s"$projectId\t$instanceId\t$tableId")
+    extends TestIO[Row](s"$projectId\t$instanceId\t$tableId")
 
   case class BigtableOutput[T <: Mutation](projectId: String,
                                            instanceId: String,
                                            tableId: String)
-    extends TestIO[T](s"$projectId\t$instanceId\t$tableId")
-
-  case class MultipleBigtableOutput[T <: Mutation](projectId: String,
-                                                   instanceId: String)
-    extends TestIO[(String, Iterable[T])](s"$projectId\t$instanceId")
+    extends TestIO[(ByteS, Iterable[T])](s"$projectId\t$instanceId\t$tableId")
 
 }

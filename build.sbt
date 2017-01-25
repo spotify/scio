@@ -188,7 +188,7 @@ lazy val root: Project = Project(
   scioCore,
   scioTest,
   scioBigQuery,
-  // scioBigtable,
+  scioBigtable,
   scioExtra,
   scioHdfs,
   scioRepl,
@@ -337,7 +337,7 @@ lazy val scioExamples: Project = Project(
   sources in doc in Compile := List()
 ).dependsOn(
   scioCore,
-  // scioBigtable,
+  scioBigtable,
   scioSchemas,
   scioHdfs,
   scioTest % "test"
