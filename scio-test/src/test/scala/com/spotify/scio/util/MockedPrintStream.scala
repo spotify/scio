@@ -24,6 +24,9 @@ import scala.collection.mutable.ListBuffer
 class MockedPrintStream extends PrintStream("/dev/null") with Serializable {
   val message = ListBuffer[String]()
   // scalastyle:off regex
-  override def println(x: String): Unit = message += x
+  override def println(x: String): Unit = {
+    super.println(x)
+    message += x
+  }
   // scalastyle:on regex
 }
