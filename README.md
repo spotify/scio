@@ -13,7 +13,7 @@ Scio
 
 Scio is a Scala API for [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) and [Apache Beam](http://beam.incubator.apache.org/) inspired by [Spark](http://spark.apache.org/) and [Scalding](https://github.com/twitter/scalding). See the [current API documentation](http://spotify.github.io/scio/) for more information.
 
-Scio is being donated to Apache Beam as a Scala DSL ([BEAM-302](https://issues.apache.org/jira/browse/BEAM-302)).
+Starting from version 0.3.0, Scio move from Dataflow Java SDK to Beam as its core dependencies and will introduce a few breaking changes. See this [page](https://github.com/spotify/scio/wiki/Apache-Beam) for more.
 
 # Features
 
