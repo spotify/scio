@@ -424,7 +424,13 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group input
    */
   def protobufFile[T: ClassTag](path: String)(implicit ev: T <:< Message): SCollection[T] =
-    objectFile(path)
+    requireNotClosed {
+      if (this.isTest) {
+        this.getTestInput(ProtobufIO[T](path))
+      } else {
+        objectFile(path)
+      }
+    }
 
   /**
    * Get an SCollection for a BigQuery SELECT query.

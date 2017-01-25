@@ -909,10 +909,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def saveAsProtobufFile(path: String, numShards: Int = 0)
                         (implicit ev: T <:< Message): Future[Tap[T]] = {
-    import me.lyh.protobuf.generic
-    val schema = generic.Schema.of[Message](ct.asInstanceOf[ClassTag[Message]]).toJson
-    val metadata = Map("protobuf.generic.schema" -> schema)
-    this.saveAsObjectFile(path, numShards, ".protobuf", metadata)
+    if (context.isTest) {
+      context.testOut(ProtobufIO(path))(this)
+      saveAsInMemoryTap
+    } else {
+      import me.lyh.protobuf.generic
+      val schema = generic.Schema.of[Message](ct.asInstanceOf[ClassTag[Message]]).toJson
+      val metadata = Map("protobuf.generic.schema" -> schema)
+      this.saveAsObjectFile(path, numShards, ".protobuf", metadata)
+    }
   }
 
   /**
