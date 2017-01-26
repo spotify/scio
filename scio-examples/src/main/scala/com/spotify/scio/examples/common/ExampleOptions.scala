@@ -26,7 +26,7 @@ trait ExampleOptions
   extends DataflowPipelineOptions
   with DataflowExampleOptions
   with ExampleBigQueryTableOptions
-  with ExamplePubsubTopicOptions
+  with ExamplePubsubTopicAndSubscriptionOptions
 
 object ExampleOptions {
   def bigQueryTable(options: ExampleOptions): String =
