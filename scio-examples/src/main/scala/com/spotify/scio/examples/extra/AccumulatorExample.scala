@@ -45,7 +45,7 @@ object AccumulatorExample {
         i
       }
 
-    val r = sc.close()
+    val r = sc.close().waitUntilFinish()
 
     // access accumulator values after job is submitted
     // scalastyle:off regex
@@ -80,7 +80,7 @@ object SimpleAccumulatorExample {
       .accumulate(sum)
       .accumulateCount
 
-    val r = sc.close()
+    val r = sc.close().waitUntilFinish()
 
     // access accumulator values after job is submitted
     // scalastyle:off regex

@@ -51,7 +51,6 @@ object TapExample {
     val s = (t1.open(sc2) ++ t2.open(sc2).map(_.toInt)).sum
     val result = sc2.close().waitUntilFinish()
 
-    // block main() until second job completes
     println(result.finalState)
   }
   // scalastyle:on regex
