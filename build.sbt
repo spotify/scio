@@ -208,6 +208,7 @@ lazy val scioCore: Project = Project(
   description := "Scio - A Scala API for Google Cloud Dataflow",
     libraryDependencies ++= beamDependencies,
   libraryDependencies ++= Seq(
+    "com.spotify.sparkey" % "sparkey" % "2.1.3",
     "com.twitter" %% "algebird-core" % algebirdVersion,
     "com.twitter" %% "chill" % chillVersion,
     "com.twitter" %% "chill-algebird" % chillVersion,

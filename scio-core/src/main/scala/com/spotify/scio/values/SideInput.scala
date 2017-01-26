@@ -17,9 +17,11 @@
 
 package com.spotify.scio.values
 
+import java.io.File
 import java.lang.{Iterable => JIterable}
 import java.util.{List => JList, Map => JMap}
 
+import com.spotify.sparkey.Sparkey
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.values.PCollectionView
 
@@ -67,6 +69,12 @@ private[values] class MapSideInput[K, V](val view: PCollectionView[JMap[K, V]])
     new SideInputMap(context.sideInput(view))
 }
 
+private[values] class SparkeySideInput(val view: PCollectionView[String])
+  extends SideInput[Map[String, String]] {
+  override def get[I, O](context: DoFn[I, O]#ProcessContext): Map[String, String] =
+    new SparkeySideInputMap(context.sideInput(view))
+}
+
 private[values] class MultiMapSideInput[K, V](val view: PCollectionView[JMap[K, JIterable[V]]])
   extends SideInput[Map[K, Iterable[V]]] {
   override def get[I, O](context: DoFn[I, O]#ProcessContext): Map[K, Iterable[V]] =
@@ -92,6 +100,29 @@ private class SideInputMap[A, B](self: JMap[A, B]) extends Map[A, B] {
   override def get(key: A): Option[B] = Option(self.get(key))
   override def iterator: Iterator[(A, B)] = self.asScala.iterator
 
+}
+
+private class SparkeySideInputMap(indexFile: String) extends Map[String, String] {
+  val reader = Sparkey.open(new File(indexFile))
+
+  override def get(key: String): Option[String] = Option(reader.getAsString(key))
+
+  override def iterator: Iterator[(String, String)] = new Iterator[(String, String)] {
+    val delegate = reader.iterator()
+
+    override def hasNext: Boolean = delegate.hasNext
+
+    override def next(): (String, String) = {
+      val entry = delegate.next()
+      (entry.getKeyAsString, entry.getValueAsString)
+    }
+  }
+
+  // scalastyle:off method.name
+  override def +[B1 >: String](kv: (String, B1)): Map[String, B1] = ???
+
+  override def -(key: String): Map[String, String] = ???
+  // scalastyle:on method.name
 }
 
 // Immutable wrapper for j.u.Map[A, j.l.terable[B]] because .asScala returns a s.c.mutable.Map

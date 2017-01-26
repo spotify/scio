@@ -69,6 +69,20 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     }
   }
 
+  it should "support asSparkeySideInput" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(1))
+      val sideDat = sideData.map(kv => (kv._1.toString, kv._2.toString))
+      val p2 = sc.parallelize(sideDat).asSparkeySideInput
+      val s = p1.withSideInputs(p2).flatMap { (i, si) =>
+        val map = si(p2)
+        val r = map.toList.map(_._2)
+        r
+      }.toSCollection
+      s should containInAnyOrder (Seq("1", "2", "3"))
+    }
+  }
+
   it should "support filter()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(1 to 10)
