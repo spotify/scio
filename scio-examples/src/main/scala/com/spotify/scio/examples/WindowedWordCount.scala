@@ -64,7 +64,7 @@ object WindowedWordCount {
 
     // initialize input
     val input = if (opts.isStreaming) {
-      sc.pubsubTopic(opts.getPubsubTopic)
+      sc.pubsubSubscription(opts.getPubsubSubscription)
     } else {
       sc
       .textFile(inputFile.getOrElse(ExampleData.KING_LEAR))
