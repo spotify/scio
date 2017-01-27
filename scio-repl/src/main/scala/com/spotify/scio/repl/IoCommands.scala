@@ -79,11 +79,7 @@ class IoCommands(options: PipelineOptions) {
   /** Read from a TSV file on local filesystem or GCS. */
   def readTsv[T: RowDecoder](path: String,
                              sep: Char = '\t',
-                             header: Boolean = false): Iterator[T] = {
-    import kantan.csv.ops._
-    implicit val codec = scala.io.Codec.UTF8
-    inputStream(path).asUnsafeCsvReader[T](sep, header).toIterator
-  }
+                             header: Boolean = false): Iterator[T] = readCsv[T](path, sep, header)
 
   // =======================================================================
   // Write operations
@@ -117,18 +113,16 @@ class IoCommands(options: PipelineOptions) {
                               sep: Char = ',',
                               header: Seq[String] = Seq.empty): Unit = {
     import kantan.csv.ops._
-    IOUtils.write(data.asCsv(sep, header: _*), outputStream(path, TEXT), StandardCharsets.UTF_8)
+    implicit val codec = scala.io.Codec.UTF8
+    outputStream(path, TEXT).writeCsv(data, sep, header: _*)
     logger.info("{} line{} written to {}", Array(data.size, plural(data), path))
   }
 
   /** Write to a TSV file on local filesystem or GCS. */
   def writeTsv[T: RowEncoder](path: String, data: Seq[T],
                               sep: Char = '\t',
-                              header: Seq[String] = Seq.empty): Unit = {
-    import kantan.csv.ops._
-    IOUtils.write(data.asCsv(sep, header: _*), outputStream(path, TEXT), StandardCharsets.UTF_8)
-    logger.info("{} line{} written to {}", Array(data.size, plural(data), path))
-  }
+                              header: Seq[String] = Seq.empty): Unit =
+    writeCsv[T](path, data, sep, header)
 
   // =======================================================================
   // Utilities
