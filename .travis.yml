@@ -19,7 +19,7 @@ script:
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
       travis_wait 60 sbt -J-XX:ReservedCodeCacheSize=256m ++$TRAVIS_SCALA_VERSION -Dbigquery.project=data-integration-test -Dbigquery.secret=$GOOGLE_APPLICATION_CREDENTIALS clean scalastyle coverage test it:test coverageReport coverageAggregate;
     else
-      ./scripts/travis.sh;
+      ./scripts/gen_tornado_schema.sh;
       travis_wait 60 sbt -J-XX:ReservedCodeCacheSize=256m ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean scalastyle coverage test coverageReport coverageAggregate;
     fi
 

@@ -1,0 +1,40 @@
+machine:
+  java:
+    version: oraclejdk8
+  environment:
+    SBT_VERSION: 0.13.13
+    SBT_OPTS: "-XX:ReservedCodeCacheSize=256m"
+    JAVA_OPTS: "-Xms1g -Xmx3584m"
+    GOOGLE_APPLICATION_CREDENTIALS: "scripts/data-integration-test-2210ed0f609b.json"
+
+dependencies:
+  cache_directories:
+    - "~/.ivy2"
+    - "~/.sbt"
+  pre:
+    - wget -q https://dl.bintray.com/sbt/debian/sbt-0.13.13.deb
+    - sudo dpkg -i sbt-0.13.13.deb
+    - find ~/.sbt -name "*.lock" | xargs -r rm
+    - find ~/.ivy2 -name "ivydata-*.properties" | xargs -r rm
+  override:
+    - sbt ++2.10.6 clean update
+    - sbt ++2.11.8 clean update
+
+test:
+  override:
+    - ./scripts/circleci_test.sh:
+        parallel: true
+    - ./scripts/circleci_parallel_run.sh './scripts/it-repl.sh $CI_SCALA_VERSION':
+        parallel: true
+    - sbt coverageReport coverageAggregate
+  post:
+    - bash <(curl -s https://codecov.io/bash)
+    - if [[ ($CIRCLE_BRANCH == "master") && $(grep -q SNAPSHOT version.sbt) ]]; then ./scripts/circleci_parallel_run.sh 'sbt ++$CI_SCALA_VERSION publish'; fi:
+        parallel: true
+
+deployment:
+  release:
+    tag: /v.*/
+    commands:
+      - ./scripts/circleci_parallel_run.sh 'sbt ++$CI_SCALA_VERSION "project scio-repl" clean assembly':
+          parallel: true
