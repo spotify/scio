@@ -538,7 +538,7 @@ object BigQueryClient {
   val CACHE_DIRECTORY_DEFAULT: String = sys.props("user.dir") + "/.bigquery"
 
   /** System property key for enabling or disabling scio bigquery caching */
-  val CACHE_ENABLED: String = "bigquery.cache.enabled"
+  val CACHE_ENABLED_KEY: String = "bigquery.cache.enabled"
 
   /** Default cache behavior is enabled. */
   val CACHE_ENABLED_DEFAULT: Boolean = true
@@ -611,7 +611,7 @@ object BigQueryClient {
   def apply(project: String, secretFile: File): BigQueryClient =
     new BigQueryClient(project, secretFile)
 
-  private def isCacheEnabled: Boolean = Option(sys.props(CACHE_ENABLED))
+  private def isCacheEnabled: Boolean = Option(sys.props(CACHE_ENABLED_KEY))
     .flatMap(x => Try(x.toBoolean).toOption).getOrElse(CACHE_ENABLED_DEFAULT)
 
   private def cacheDirectory: String = getPropOrElse(CACHE_DIRECTORY_KEY, CACHE_DIRECTORY_DEFAULT)
