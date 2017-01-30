@@ -434,9 +434,9 @@ class BigQueryClient private (private val projectId: String,
     def dryRunQuery(useLegacySql: Boolean): Try[Job] =
       runQuery(sqlQuery, null, flattenResults, useLegacySql, dryRun = true)
 
-    sqlQuery.trim.split("\n")(0).trim match {
-      case "#legacySQL" => true
-      case "#standardSQL" => false
+    sqlQuery.trim.split("\n")(0).trim.toLowerCase match {
+      case "#legacysql" => true
+      case "#standardsql" => false
       case _ =>
 
         // dry run with SQL syntax first
