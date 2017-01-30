@@ -1,7 +1,7 @@
 Scio
 ====
 
-[![Build Status](https://travis-ci.org/spotify/scio.svg?branch=master)](https://travis-ci.org/spotify/scio)
+[![Build Status](https://circleci.com/gh/spotify/scio.svg?style=svg)](https://circleci.com/gh/spotify/scio)
 [![codecov.io](https://codecov.io/github/spotify/scio/coverage.svg?branch=master)](https://codecov.io/github/spotify/scio?branch=master)
 [![GitHub license](https://img.shields.io/github/license/spotify/scio.svg)](./LICENSE)
 [![Maven Central](https://img.shields.io/maven-central/v/com.spotify/scio-core_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/com.spotify/scio-core_2.11)
