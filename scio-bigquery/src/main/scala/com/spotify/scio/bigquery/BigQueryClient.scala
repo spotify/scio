@@ -137,6 +137,8 @@ class BigQueryClient private (private val projectId: String,
 
   private val PRIORITY = if (isInteractive) "INTERACTIVE" else "BATCH"
 
+  def isCacheEnabled: Boolean = BigQueryClient.isCacheEnabled
+
   /** Get schema for a query without executing it. */
   def getQuerySchema(sqlQuery: String): TableSchema = withCacheKey(sqlQuery) {
     if (isLegacySql(sqlQuery, flattenResults = false)) {
@@ -430,27 +432,34 @@ class BigQueryClient private (private val projectId: String,
     }
   }
 
-  private[bigquery] def isLegacySql(sqlQuery: String, flattenResults: Boolean): Boolean = {
+  private[scio] def isLegacySql(sqlQuery: String, flattenResults: Boolean): Boolean = {
     def isInvalidQuery(e: GoogleJsonResponseException): Boolean =
       e.getDetails.getErrors.get(0).getReason == "invalidQuery"
     def dryRunQuery(useLegacySql: Boolean): Try[Job] =
       runQuery(sqlQuery, null, flattenResults, useLegacySql, dryRun = true)
 
-    // dry run with SQL syntax first
-    dryRunQuery(false) match {
-      case Success(_) => false
-      case Failure(e: GoogleJsonResponseException) if isInvalidQuery(e) =>
-        // dry run with legacy syntax next
-        dryRunQuery(true) match {
-          case Success(_) =>
-            logger.warn("Legacy syntax is deprecated, use SQL syntax instead. " +
-              "See https://cloud.google.com/bigquery/sql-reference/")
-            logger.warn(s"Legacy query: `$sqlQuery`")
-            true
-          case Failure(f) => throw f
+    sqlQuery.trim.split("\n")(0).trim.toLowerCase match {
+      case "#legacysql" => true
+      case "#standardsql" => false
+      case _ =>
+
+        // dry run with SQL syntax first
+        dryRunQuery(false) match {
+          case Success(_) => false
+          case Failure(e: GoogleJsonResponseException) if isInvalidQuery(e) =>
+            // dry run with legacy syntax next
+            dryRunQuery(true) match {
+              case Success(_) =>
+                logger.warn("Legacy syntax is deprecated, use SQL syntax instead. " +
+                  "See https://cloud.google.com/bigquery/sql-reference/")
+                logger.warn(s"Legacy query: `$sqlQuery`")
+                true
+              case Failure(f) => throw f
+            }
+          case Failure(e) => throw e
         }
-      case Failure(e) => throw e
     }
+
   }
 
   /** Extract tables to be accessed by a query. */
@@ -532,6 +541,13 @@ object BigQueryClient {
   /** Default cache directory. */
   val CACHE_DIRECTORY_DEFAULT: String = sys.props("user.dir") + "/.bigquery"
 
+  /** System property key for enabling or disabling scio bigquery caching */
+  val CACHE_ENABLED_KEY: String = "bigquery.cache.enabled"
+
+  /** Default cache behavior is enabled. */
+  val CACHE_ENABLED_DEFAULT: Boolean = true
+
+
   /**
    * System property key for timeout in milliseconds to establish a connection.
    * Default is 20000 (20 seconds). 0 for an infinite timeout.
@@ -598,6 +614,9 @@ object BigQueryClient {
   /** Create a new BigQueryClient instance with the given project and secret file. */
   def apply(project: String, secretFile: File): BigQueryClient =
     new BigQueryClient(project, secretFile)
+
+  private def isCacheEnabled: Boolean = Option(sys.props(CACHE_ENABLED_KEY))
+    .flatMap(x => Try(x.toBoolean).toOption).getOrElse(CACHE_ENABLED_DEFAULT)
 
   private def cacheDirectory: String = getPropOrElse(CACHE_DIRECTORY_KEY, CACHE_DIRECTORY_DEFAULT)
 
