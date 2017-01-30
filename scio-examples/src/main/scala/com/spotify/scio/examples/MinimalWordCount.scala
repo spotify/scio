@@ -25,7 +25,7 @@ SBT
 runMain
   com.spotify.scio.examples.MinimalWordCount
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --stagingLocation=gs://[BUCKET]/dataflow/staging
+  --gcpTempLocation=gs://[BUCKET]/dataflow/staging
   --input=gs://dataflow-samples/shakespeare/kinglear.txt
   --output=gs://[BUCKET]/[PATH]/minimal_wordcount
 */
