@@ -16,9 +16,7 @@
 #  under the License.
 
 case $CIRCLE_NODE_INDEX in
-  0) export CI_SCALA_VERSION="2.10.6"
-    ;;
-  1) export CI_SCALA_VERSION="2.11.8"
+  0) export CI_SCALA_VERSION="2.11.8"
     ;;
 esac
 

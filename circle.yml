@@ -17,7 +17,6 @@ dependencies:
     - find ~/.sbt -name "*.lock" | xargs -r rm
     - find ~/.ivy2 -name "ivydata-*.properties" | xargs -r rm
   override:
-    - sbt ++2.10.6 clean update
     - sbt ++2.11.8 clean update
 
 test:
