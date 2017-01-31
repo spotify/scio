@@ -23,7 +23,6 @@ test:
   override:
     - ./scripts/circleci_test.sh
     - ./scripts/circleci_parallel_run.sh './scripts/it-repl.sh $CI_SCALA_VERSION'
-    - sbt coverageReport coverageAggregate
   post:
     - bash <(curl -s https://codecov.io/bash)
     - if ( ( [ $CIRCLE_BRANCH = "master" ] || [ $CIRCLE_BRANCH = "apache-beam" ] ) && $(grep -q SNAPSHOT version.sbt) ); then ./scripts/circleci_parallel_run.sh 'sbt ++$CI_SCALA_VERSION publish'; fi:
