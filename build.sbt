@@ -23,7 +23,7 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import sbtunidoc.Plugin.UnidocKeys._
 
 val dataflowSdkVersion = "1.9.0"
-val algebirdVersion = "0.12.3"
+val algebirdVersion = "0.12.4"
 val autoServiceVersion = "1.0-rc2"
 val avroVersion = "1.7.7"
 val bigtableVersion = "0.9.4"
