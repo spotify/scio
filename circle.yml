@@ -29,7 +29,7 @@ test:
     - sbt coverageReport coverageAggregate
   post:
     - bash <(curl -s https://codecov.io/bash)
-    - if [[ ($CIRCLE_BRANCH == "master") && $(grep -q SNAPSHOT version.sbt) ]]; then ./scripts/circleci_parallel_run.sh 'sbt ++$CI_SCALA_VERSION publish'; fi:
+    - if ( [ $CIRCLE_BRANCH = "master" ] && $(grep -q SNAPSHOT version.sbt) ); then ./scripts/circleci_parallel_run.sh 'sbt ++$CI_SCALA_VERSION publish'; fi:
         parallel: true
 
 deployment:
