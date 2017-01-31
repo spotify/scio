@@ -231,7 +231,7 @@ object AlgebirdSpec extends Properties("Algebird") {
   // =======================================================================
 
   property("sum with BloomFilter") = forAll { xs: SColl[String] =>
-    val m = BloomFilter(1000, 0.01)
+    val m = BloomFilter[String](1000, 0.01)
     val bf = xs
       .map(m.create)
       .sum(m)
@@ -240,9 +240,9 @@ object AlgebirdSpec extends Properties("Algebird") {
   }
 
   property("aggregator with BloomFilter") = forAll { xs: SColl[String] =>
-    val width = BloomFilter.optimalWidth(1000, 0.01)
+    val width = BloomFilter.optimalWidth(1000, 0.01).get
     val numHashes = BloomFilter.optimalNumHashes(1000, width)
-    val m = BloomFilter(1000, 0.01)
+    val m = BloomFilter[String](1000, 0.01)
     val bf = xs.aggregate(BloomFilterAggregator(numHashes, width))
     // BF should test positive for all members
     xs.internal.forall(bf.contains(_).isTrue)
