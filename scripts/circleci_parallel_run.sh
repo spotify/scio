@@ -18,6 +18,12 @@
 case $CIRCLE_NODE_INDEX in
   0) export CI_SCALA_VERSION="2.11.8"
     ;;
+  1)
+    exit 0
+    ;;
+  *)
+    exit 1
+    ;;
 esac
 
 echo "INFO: scala version is $CI_SCALA_VERSION"
