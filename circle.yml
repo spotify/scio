@@ -4,7 +4,7 @@ machine:
   environment:
     SBT_VERSION: 0.13.13
     SBT_OPTS: "-XX:ReservedCodeCacheSize=256m"
-    JAVA_OPTS: "-Xms1g -Xmx3g"
+    JAVA_OPTS: "-Xms1g -Xmx2g"
     GOOGLE_APPLICATION_CREDENTIALS: "scripts/data-integration-test-2210ed0f609b.json"
 
 dependencies:
