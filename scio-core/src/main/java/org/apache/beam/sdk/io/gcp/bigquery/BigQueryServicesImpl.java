@@ -66,6 +66,10 @@ import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// -------------------------------------------------------------------------------------------------
+// Add table description patch (BEAM-1301)
+// -------------------------------------------------------------------------------------------------
+
 /**
  * An implementation of {@link BigQueryServices} that actually communicates with the cloud BigQuery
  * service.
@@ -795,6 +799,31 @@ class BigQueryServicesImpl implements BigQueryServices {
         throws IOException, InterruptedException {
       return insertAll(
           ref, rowList, insertIdList, INSERT_BACKOFF_FACTORY.backoff(), Sleeper.DEFAULT);
+    }
+
+
+    @Override
+    public Table patchTableDescription(TableReference tableReference,
+                                       @Nullable String tableDescription)
+        throws IOException, InterruptedException {
+      Table table = new Table();
+      table.setDescription(tableDescription);
+
+      BackOff backoff =
+          FluentBackoff.DEFAULT
+              .withMaxRetries(MAX_RPC_RETRIES).withInitialBackoff(INITIAL_RPC_BACKOFF).backoff();
+      return executeWithRetries(
+          client.tables().patch(
+              tableReference.getProjectId(),
+              tableReference.getDatasetId(),
+              tableReference.getTableId(),
+              table),
+          String.format(
+              "Unable to patch table description: %s, aborting after %d retries.",
+              tableReference, MAX_RPC_RETRIES),
+          Sleeper.DEFAULT,
+          backoff,
+          ALWAYS_RETRY);
     }
   }
 
