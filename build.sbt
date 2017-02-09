@@ -34,7 +34,6 @@ val csvVersion = "0.1.16"
 val guavaVersion = "19.0"
 val hadoopVersion = "2.7.2"
 val hamcrestVersion = "1.3"
-val hbaseVersion = "1.0.2"
 val jacksonScalaModuleVersion = "2.8.6"
 val javaLshVersion = "0.10"
 val jodaConvertVersion = "1.8.1"
@@ -228,7 +227,6 @@ lazy val scioTest: Project = Project(
   description := "Scio helpers for ScalaTest",
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
-    "org.slf4j" % "slf4j-jdk14" % slf4jVersion % "test",
     "org.scalatest" %% "scalatest" % scalaTestVersion,
     // DataFlow testing requires junit and hamcrest
     "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
@@ -274,8 +272,6 @@ lazy val scioBigtable: Project = Project(
   description := "Scio add-on for Google Cloud Bigtable",
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-    "org.apache.hadoop" % "hadoop-common" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12"),
-    "org.apache.hbase" % "hbase-common" % hbaseVersion,
     "io.netty" % "netty-tcnative-boringssl-static" % nettyTcNativeVersion
   )
 ).dependsOn(
