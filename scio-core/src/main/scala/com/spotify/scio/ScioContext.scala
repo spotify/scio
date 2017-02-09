@@ -87,7 +87,7 @@ object ScioContext {
   /** Create a new [[ScioContext]] instance for testing. */
   def forTest(): ScioContext = {
     val opts = PipelineOptionsFactory
-      .fromArgs(Array("--appName=" + JobTest.newTestId()))
+      .fromArgs("--appName=" + JobTest.newTestId())
       .as(classOf[ApplicationNameOptions])
     new ScioContext(opts, List[String]())
   }
@@ -115,7 +115,7 @@ object ScioContext {
     val (optArgs, appArgs) =
       cmdlineArgs.partition(arg => optPatterns.exists(_.findFirstIn(arg).isDefined))
 
-    (PipelineOptionsFactory.fromArgs(optArgs).as(optClass), Args(appArgs))
+    (PipelineOptionsFactory.fromArgs(optArgs: _*).as(optClass), Args(appArgs))
   }
 
   private val defaultOptions: PipelineOptions = PipelineOptionsFactory.create()
@@ -506,7 +506,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (this.isTest) {
       this.getTestInput(PubsubIO(sub))
     } else {
-      var transform = gio.PubsubIO.Read.subscription(sub)
+      var transform = gio.PubsubIO.read[String]().subscription(sub)
       if (idLabel != null) {
         transform = transform.idLabel(idLabel)
       }
@@ -527,7 +527,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (this.isTest) {
       this.getTestInput(PubsubIO(topic))
     } else {
-      var transform = gio.PubsubIO.Read.topic(topic)
+      var transform = gio.PubsubIO.read[String]().topic(topic)
       if (idLabel != null) {
         transform = transform.idLabel(idLabel)
       }

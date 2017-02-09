@@ -22,7 +22,7 @@ import com.typesafe.sbt.SbtSite.SiteKeys._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import sbtunidoc.Plugin.UnidocKeys._
 
-val beamVersion = "0.4.0"
+val beamVersion = "0.5.0"
 val algebirdVersion = "0.12.4"
 val autoServiceVersion = "1.0-rc2"
 val avroVersion = "1.7.7"

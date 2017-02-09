@@ -51,7 +51,7 @@ package object accumulators {
 
     /** Count elements with an accumulator. */
     def accumulateCount(acc: Accumulator[Long]): SCollection[T] = {
-      require(acc.combineFn.isInstanceOf[SumLongFn], "acc must be a sum accumulator")
+      require(acc.combineFn.getClass.getSimpleName == "SumLongFn", "acc must be a sum accumulator")
       self.accumulateBy(acc)(_ => 1L)
     }
 
@@ -63,8 +63,12 @@ package object accumulators {
     def accumulateCountFilter(accPos: Accumulator[Long],
                               accNeg: Accumulator[Long])
                              (f: T => Boolean): SCollection[T] = {
-      require(accPos.combineFn.isInstanceOf[SumLongFn], "accPos must be a sum accumulator")
-      require(accNeg.combineFn.isInstanceOf[SumLongFn], "accNeg must be a sum accumulator")
+      require(
+        accPos.combineFn.getClass.getSimpleName == "SumLongFn",
+        "accPos must be a sum accumulator")
+      require(
+        accNeg.combineFn.getClass.getSimpleName == "SumLongFn",
+        "accNeg must be a sum accumulator")
       self.withAccumulator(accPos, accNeg)
         .filter { case (x, c) =>
           val b = f(x)

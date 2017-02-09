@@ -18,9 +18,9 @@
 package com.spotify.scio.values
 
 import org.apache.beam.sdk.transforms.Combine.CombineFn
-import org.apache.beam.sdk.transforms.Max.{MaxDoubleFn, MaxIntegerFn, MaxLongFn}
-import org.apache.beam.sdk.transforms.Min.{MinDoubleFn, MinIntegerFn, MinLongFn}
-import org.apache.beam.sdk.transforms.Sum.{SumDoubleFn, SumIntegerFn, SumLongFn}
+import org.apache.beam.sdk.transforms.Max
+import org.apache.beam.sdk.transforms.Min
+import org.apache.beam.sdk.transforms.Sum
 import org.apache.beam.sdk.transforms.Aggregator
 
 /** Type class for `T` that can be used in an [[Accumulator]]. */
@@ -42,21 +42,21 @@ sealed trait AccumulatorType[T] {
 }
 
 private[scio] class IntAccumulatorType extends AccumulatorType[Int] {
-  override protected def sumFnImpl = new SumIntegerFn()
-  override protected def minFnImpl = new MinIntegerFn()
-  override protected def maxFnImpl = new MaxIntegerFn()
+  override protected def sumFnImpl = Sum.ofIntegers()
+  override protected def minFnImpl = Min.ofIntegers()
+  override protected def maxFnImpl = Max.ofIntegers()
 }
 
 private[scio] class LongAccumulatorType extends AccumulatorType[Long] {
-  override protected def sumFnImpl = new SumLongFn()
-  override protected def minFnImpl = new MinLongFn()
-  override protected def maxFnImpl = new MaxLongFn()
+  override protected def sumFnImpl = Sum.ofLongs()
+  override protected def minFnImpl = Min.ofLongs()
+  override protected def maxFnImpl = Max.ofLongs()
 }
 
 private[scio] class DoubleAccumulatorType extends AccumulatorType[Double] {
-  override protected def sumFnImpl =  new SumDoubleFn()
-  override protected def minFnImpl = new MinDoubleFn()
-  override protected def maxFnImpl = new MaxDoubleFn()
+  override protected def sumFnImpl = Sum.ofDoubles()
+  override protected def minFnImpl = Min.ofDoubles()
+  override protected def maxFnImpl = Max.ofDoubles()
 }
 
 /** Encapsulate an accumulator, similar to Hadoop counters. */

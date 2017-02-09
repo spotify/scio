@@ -985,7 +985,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (context.isTest) {
       context.testOut(PubsubIO(topic))(this.asInstanceOf[SCollection[String]])
     } else {
-      this.asInstanceOf[SCollection[String]].applyInternal(gio.PubsubIO.Write.topic(topic))
+      this.asInstanceOf[SCollection[String]]
+        .applyInternal(gio.PubsubIO.write[String]().topic(topic))
     }
     Future.failed(new NotImplementedError("Pubsub future not implemented"))
   }
