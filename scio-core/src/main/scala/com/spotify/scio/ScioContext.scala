@@ -439,21 +439,22 @@ class ScioContext private[scio] (val options: PipelineOptions,
                      flattenResults: Boolean = false): SCollection[TableRow] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(BigQueryIO(sqlQuery))
-
     } else if (this.bigQueryClient.isCacheEnabled) {
       val queryJob = this.bigQueryClient.newQueryJob(sqlQuery, flattenResults)
       _queryJobs.append(queryJob)
       wrap(this.applyInternal(bqio.BigQueryIO.Read.from(queryJob.table).withoutValidation()))
         .setName(sqlQuery)
-
     } else {
-      val baseQuery = bqio.BigQueryIO.Read.fromQuery(sqlQuery)
+      val baseQuery = if (!flattenResults) {
+        bqio.BigQueryIO.Read.fromQuery(sqlQuery).withoutResultFlattening()
+      } else {
+        bqio.BigQueryIO.Read.fromQuery(sqlQuery)
+      }
       val query = if (this.bigQueryClient.isLegacySql(sqlQuery, flattenResults)) {
         baseQuery
       } else {
         baseQuery.usingStandardSql()
       }
-
       wrap(this.applyInternal(query)).setName(sqlQuery)
     }
   }

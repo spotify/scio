@@ -137,7 +137,7 @@ class BigQueryClient private (private val projectId: String,
 
   private val PRIORITY = if (isInteractive) "INTERACTIVE" else "BATCH"
 
-  def isCacheEnabled: Boolean = BigQueryClient.isCacheEnabled
+  private[scio] def isCacheEnabled: Boolean = BigQueryClient.isCacheEnabled
 
   /** Get schema for a query without executing it. */
   def getQuerySchema(sqlQuery: String): TableSchema = withCacheKey(sqlQuery) {
