@@ -213,7 +213,8 @@ lazy val scioCore: Project = Project(
     "org.apache.commons" % "commons-math3" % commonsMath3Version,
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion,
     "com.google.auto.service" % "auto-service" % autoServiceVersion,
-    "me.lyh" %% "protobuf-generic" % protobufGenericVersion
+    "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
+    "junit" % "junit" % junitVersion % "provided"
   )
 ).dependsOn(
   scioBigQuery
