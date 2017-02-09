@@ -35,7 +35,7 @@ deployment:
   release:
     tag: /v.*/
     commands:
-      -  go get -u github.com/tcnksm/ghr
+      - go get -u github.com/tcnksm/ghr
       - ./scripts/circleci_parallel_run.sh 'sbt ++$CI_SCALA_VERSION "project scio-repl" clean assembly':
           parallel: true
       - mkdir "$CIRCLE_ARTIFACTS/repl"
