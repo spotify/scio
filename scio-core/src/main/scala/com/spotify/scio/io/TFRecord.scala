@@ -88,7 +88,6 @@ private[scio] trait TFRecordSource extends FileBasedSource[Array[Byte]] {
     TFRecordSource(fileName, options, 0, Long.MaxValue)
   }
 
-  override def producesSortedKeys(options: PipelineOptions): Boolean = false
   override def getDefaultOutputCoder: Coder[Array[Byte]] = ByteArrayCoder.of()
   override def isSplittable: Boolean = false
 
