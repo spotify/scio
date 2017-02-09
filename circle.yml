@@ -37,5 +37,5 @@ deployment:
       - ./scripts/circleci_parallel_run.sh 'sbt ++$CI_SCALA_VERSION "project scio-repl" clean assembly':
           parallel: true
       - mkdir "$CIRCLE_ARTIFACTS/repl"
-      - mv scio-repl/target/scala-*/scio-repl-*.jar "$CIRCLE_ARTIFACTS/repl/"
+      - cp scio-repl/target/scala-*/scio-repl-*.jar "$CIRCLE_ARTIFACTS/repl/"
       - ghr -draft $CIRCLE_TAG "$CIRCLE_ARTIFACTS/repl"
