@@ -84,6 +84,17 @@ class ScioContextTest extends PipelineSpec {
     pipelineOpts.getJobName shouldBe jobName
   }
 
+  it should "support user defined job name via options then context" in {
+    val jobName1 = "test-job-1"
+    val jobName2 = "test-job-2"
+    val opts = PipelineOptionsFactory.create().as(classOf[DataflowPipelineOptions])
+    opts.setJobName(jobName1)
+    val sc = ScioContext(opts)
+    sc.setJobName(jobName2)
+    val pipelineOpts = sc.pipeline.getOptions.as(classOf[DataflowPipelineOptions])
+    pipelineOpts.getJobName shouldBe jobName2
+  }
+
   // scalastyle:off no.whitespace.before.left.bracket
   it should "fail on missing temp or staging location for DataflowPipelineRunner" in {
     val opts = PipelineOptionsFactory.create().as(classOf[DataflowPipelineOptions])
