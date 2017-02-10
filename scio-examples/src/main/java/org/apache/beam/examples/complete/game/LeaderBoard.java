@@ -104,7 +104,7 @@ public class LeaderBoard extends HourlyTeamScore {
   /**
    * Options supported by {@link LeaderBoard}.
    */
-  interface Options extends HourlyTeamScore.Options, ExampleOptions, StreamingOptions {
+  public interface Options extends HourlyTeamScore.Options, ExampleOptions, StreamingOptions {
 
     @Description("Pub/Sub topic to read from")
     @Validation.Required
