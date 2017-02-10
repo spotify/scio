@@ -91,18 +91,6 @@ class ScioContextTest extends PipelineSpec {
     pipelineOpts.getJobName shouldBe jobName2
   }
 
-  // scalastyle:off no.whitespace.before.left.bracket
-  it should "fail on missing temp or staging location for DataflowRunner" in {
-    val opts = PipelineOptionsFactory.create().as(classOf[DataflowPipelineOptions])
-    opts.setRunner(classOf[DataflowRunner])
-    opts.setProject("foobar")
-    val sc = ScioContext(opts)
-    val e = the [RuntimeException] thrownBy { sc.pipeline }
-    ExceptionUtils.getRootCause(e) should have message
-      "DataflowRunner requires gcpTempLocation, and it is missing in PipelineOptions."
-  }
-  // scalastyle:on no.whitespace.before.left.bracket
-
   it should "create local output directory on close()" in {
     val output = Files.createTempDirectory("scio-output").toFile
     output.delete()

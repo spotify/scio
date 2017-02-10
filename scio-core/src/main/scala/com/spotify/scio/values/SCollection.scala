@@ -42,6 +42,7 @@ import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.{Coder, TableRowJsonCoder}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
+import org.apache.beam.sdk.options.GcpOptions
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
@@ -815,10 +816,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def materialize: Future[Tap[T]] = {
     val filename = "scio-materialize-" + UUID.randomUUID().toString
-    val tmpDir = if (context.options.getTempLocation == null) {
-      sys.props("java.io.tmpdir")
+    val tmpDir = if (ScioUtil.isLocalRunner(context.options)) {
+      if (context.options.getTempLocation == null) {
+        sys.props("java.io.tmpdir")
+      } else {
+        context.options.getTempLocation
+      }
     } else {
-      context.options.getTempLocation
+      context.optionsAs[GcpOptions].getGcpTempLocation
     }
     val path = tmpDir + (if (tmpDir.endsWith("/")) "" else "/") + filename
     saveAsObjectFile(path)
