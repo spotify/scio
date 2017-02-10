@@ -429,8 +429,14 @@ lazy val siteSettings = site.settings ++ ghpages.settings ++ unidocSettings ++ S
 // =======================================================================
 
 val javaMappings = Seq(
-  ("com.google.cloud.dataflow", "google-cloud-dataflow-java-sdk-all",
-   "https://cloud.google.com/dataflow/java-sdk/JavaDoc"),
+  ("org.apache.beam", "beam-sdks-java-core",
+   s"https://beam.apache.org/documentation/sdks/javadoc/$beamVersion/"),
+  ("org.apache.beam", "beam-runners-direct-java",
+   s"https://beam.apache.org/documentation/sdks/javadoc/$beamVersion/"),
+  ("org.apache.beam", "beam-runners-google-cloud-dataflow-java",
+   s"https://beam.apache.org/documentation/sdks/javadoc/$beamVersion/"),
+  ("org.apache.beam", "beam-sdks-java-io-google-cloud-platform",
+   s"https://beam.apache.org/documentation/sdks/javadoc/$beamVersion/"),
   ("com.google.apis", "google-api-services-bigquery",
    "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest"),
   ("joda-time", "joda-time", "http://www.joda.org/joda-time/apidocs")
