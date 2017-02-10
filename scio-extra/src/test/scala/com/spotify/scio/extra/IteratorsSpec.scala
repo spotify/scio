@@ -21,7 +21,15 @@ import com.spotify.scio.extra.Iterators._
 import org.scalacheck.Prop.{BooleanOperators, all, forAll}
 import org.scalacheck._
 
-object IteratorsSpec extends Properties("Iterators") {
+object IteratorsSpec {
+  implicit class PairsIterable[T](val self: Iterable[T]) extends AnyVal {
+    def pairs: Iterator[(T, T)] = self.sliding(2).filter(_.size == 2).map(s => (s.head, s.last))
+  }
+}
+
+class IteratorsSpec extends PropertySpec {
+
+  import IteratorsSpec._
 
   val maxInterval = 10L
 
@@ -36,33 +44,29 @@ object IteratorsSpec extends Properties("Iterators") {
 
   def windowSize(xs: Seq[Long]): Long = xs.last - xs.head
 
-  implicit class PairsIterable[T](val self: Iterable[T]) extends AnyVal {
-    def pairs: Iterator[(T, T)] = self.sliding(2).filter(_.size == 2).map(s => (s.head, s.last))
-  }
-
   val fixedParams = for {
     size <- Gen.choose(1L, maxInterval)
     offset <- Gen.choose(0L, size - 1L)
   } yield (size, offset)
 
-  property("fixed") = forAll(timeSeries, fixedParams) { case (ts, (size, offset)) =>
-    val r = ts.iterator.timeSeries(identity).fixed(size, offset).toList
-    all(
-      "flatten"  |: r.flatten == ts,
-      "nonEmpty" |: r.forall(_.nonEmpty),
-      "size"     |: r.forall(windowSize(_) < size),
-      "bounds"   |: r.forall(isWithinBounds(_, size, offset))
-    )
+  property("fixed") {
+    forAll(timeSeries, fixedParams) { case (ts, (size, offset)) =>
+      val r = ts.iterator.timeSeries(identity).fixed(size, offset).toList
+      r.flatten shouldBe ts
+      r.forall(_.nonEmpty)
+      r.forall(windowSize(_) < size)
+      r.forall(isWithinBounds(_, size, offset))
+    }
   }
 
-  property("session") = forAll(timeSeries, Gen.choose(1L, maxInterval)) { (ts, gap) =>
-    val r = ts.iterator.timeSeries(identity).session(gap).toList
-    all(
-      "flatten"     |: r.flatten == ts,
-      "nonEmpty"    |: r.forall(_.nonEmpty),
-      "gap inside"  |: r.forall(_.pairs.forall(p => p._2 - p._1 < gap)),
-      "gap between" |: r.pairs.forall(s => s._2.head - s._1.last >= gap)
-    )
+  property("session") {
+    forAll(timeSeries, Gen.choose(1L, maxInterval)) { (ts, gap) =>
+      val r = ts.iterator.timeSeries(identity).session(gap).toList
+      r.flatten shouldBe ts
+      r.forall(_.nonEmpty)
+      r.forall(_.pairs.forall(p => p._2 - p._1 < gap))
+      r.pairs.forall(s => s._2.head - s._1.last >= gap)
+    }
   }
 
   val slidingParams = for {
@@ -71,18 +75,18 @@ object IteratorsSpec extends Properties("Iterators") {
     period <- Gen.choose(offset + 1L, maxInterval)
   } yield (size, period, offset)
 
-  property("sliding") = Prop.forAll(timeSeries, slidingParams) { case (ts, params) =>
-    val (size, period, offset) = params
-    val r = ts.iterator.timeSeries(identity).sliding(size, period, offset).toList
-    val lowers = r.map(w => lowerBound(w.head, period, offset)).pairs
-    val uppers = r.map(w => upperBound(w.head, period, offset)).pairs
-    all(
-      "nonEmpty" |: r.forall(_.nonEmpty),
-      "size"     |: r.forall(windowSize(_)< size),
-      "bounds"   |: r.forall(isWithinBounds(_, size, offset)),
-      "lower"    |: lowers.forall(p => p._2 - p._1 >= period),
-      "upper"    |: uppers.forall(p => p._2 - p._1 >= period)
-    )
+  property("sliding") {
+    forAll(timeSeries, slidingParams) { case (ts, params) =>
+      val (size, period, offset) = params
+      val r = ts.iterator.timeSeries(identity).sliding(size, period, offset).toList
+      val lowers = r.map(w => lowerBound(w.head, period, offset)).pairs
+      val uppers = r.map(w => upperBound(w.head, period, offset)).pairs
+      r.forall(_.nonEmpty)
+      r.forall(windowSize(_)< size)
+      r.forall(isWithinBounds(_, size, offset))
+      lowers.forall(p => p._2 - p._1 >= period)
+      uppers.forall(p => p._2 - p._1 >= period)
+    }
   }
 
 }

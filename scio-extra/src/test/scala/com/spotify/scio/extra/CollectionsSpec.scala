@@ -18,48 +18,50 @@
 package com.spotify.scio.extra
 
 import com.spotify.scio.extra.Collections._
-import org.scalacheck.Prop.{BooleanOperators, all, forAll}
 import org.scalacheck._
+import org.scalatest._
+import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
-object CollectionsSpec extends Properties("Collections") {
+class CollectionsSpec extends PropertySpec {
 
   val posInts = Gen.posNum[Int]
   val intLists = Arbitrary.arbitrary[List[Int]]
   val tupleLists = Arbitrary.arbitrary[List[(String, Int)]]
 
-  property("top") = forAll(intLists, posInts) { (xs, num) =>
-    val maxExpected = xs.sorted.reverse.take(num).sorted
-    val minExpected = xs.sorted.take(num).sorted
-    def verify(actual: Iterable[Int], expected: List[Int]): Boolean =
-      actual.toList.sorted == expected
-    all(
-      "List"       |: verify(xs.top(num), maxExpected),
-      "Ordering"   |: verify(xs.top(num)(Ordering[Int].reverse), minExpected),
-      "Array"      |: verify(xs.toArray.top(num), maxExpected),
-      "Buffer"     |: verify(xs.toBuffer.top(num), maxExpected),
-      "IndexedSeq" |: verify(xs.toIndexedSeq.top(num), maxExpected),
-      "Iterable"   |: verify(xs.toIterable.top(num), maxExpected),
-      "Seq"        |: verify(xs.toSeq.top(num), maxExpected),
-      "Stream"     |: verify(xs.toStream.top(num), maxExpected),
-      "Vector"     |: verify(xs.toVector.top(num), maxExpected)
-    )
+  property("top") {
+    forAll(intLists, posInts) { (xs, num) =>
+      val maxExpected = xs.sorted.reverse.take(num).sorted
+      val minExpected = xs.sorted.take(num).sorted
+      def verify(actual: Iterable[Int], expected: List[Int]): Assertion =
+        actual.toList.sorted shouldEqual expected
+
+      verify(xs.top(num), maxExpected)
+      verify(xs.top(num)(Ordering[Int].reverse), minExpected)
+      verify(xs.toArray.top(num), maxExpected)
+      verify(xs.toBuffer.top(num), maxExpected)
+      verify(xs.toIndexedSeq.top(num), maxExpected)
+      verify(xs.toIterable.top(num), maxExpected)
+      verify(xs.toSeq.top(num), maxExpected)
+      verify(xs.toStream.top(num), maxExpected)
+      verify(xs.toVector.top(num), maxExpected)
+    }
   }
 
-  property("topByKey") = forAll(tupleLists, posInts) { (xs, num) =>
-    val maxExpected = xs.groupBy(_._1).mapValues(_.map(_._2).sorted.reverse.take(num).sorted)
-    val minExpected = xs.groupBy(_._1).mapValues(_.map(_._2).sorted.take(num).sorted)
-    def verify(actual: Map[String, Iterable[Int]], expected: Map[String, List[Int]]): Boolean =
-      actual.mapValues(_.toList.sorted) == expected
-    all(
-      "List"       |: verify(xs.topByKey(num), maxExpected),
-      "Ordering"   |: verify(xs.topByKey(num)(Ordering[Int].reverse), minExpected),
-      "Array"      |: verify(xs.toArray.topByKey(num), maxExpected),
-      "IndexedSeq" |: verify(xs.toIndexedSeq.topByKey(num), maxExpected),
-      "Iterable"   |: verify(xs.toIterable.topByKey(num), maxExpected),
-      "Seq"        |: verify(xs.toSeq.topByKey(num), maxExpected),
-      "Stream"     |: verify(xs.toStream.topByKey(num), maxExpected),
-      "Vector"     |: verify(xs.toVector.topByKey(num), maxExpected)
-    )
+  property("topByKey") {
+    forAll(tupleLists, posInts) { (xs, num) =>
+      val maxExpected = xs.groupBy(_._1).mapValues(_.map(_._2).sorted.reverse.take(num).sorted)
+      val minExpected = xs.groupBy(_._1).mapValues(_.map(_._2).sorted.take(num).sorted)
+      def verify(actual: Map[String, Iterable[Int]], expected: Map[String, List[Int]]): Assertion =
+        actual.mapValues(_.toList.sorted) shouldEqual expected
+      verify(xs.topByKey(num), maxExpected)
+      verify(xs.topByKey(num)(Ordering[Int].reverse), minExpected)
+      verify(xs.toArray.topByKey(num), maxExpected)
+      verify(xs.toIndexedSeq.topByKey(num), maxExpected)
+      verify(xs.toIterable.topByKey(num), maxExpected)
+      verify(xs.toSeq.topByKey(num), maxExpected)
+      verify(xs.toStream.topByKey(num), maxExpected)
+      verify(xs.toVector.topByKey(num), maxExpected)
+    }
   }
 
 }
