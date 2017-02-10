@@ -224,11 +224,6 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
   }
 
   @Override
-  public boolean producesSortedKeys(PipelineOptions options) throws Exception {
-    return false;
-  }
-
-  @Override
   public BoundedReader<T> createReader(PipelineOptions options) throws IOException {
     this.validate();
     return new HDFSFileReader<>(this, filepattern, formatClass, serializableSplit);
