@@ -33,10 +33,10 @@ import com.spotify.scio.values.{DistCache, SCollection}
 import org.apache.avro.Schema
 import org.apache.avro.mapred.AvroOutputFormat
 import org.apache.avro.mapreduce.AvroJob
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.coders.AvroCoder
 import org.apache.beam.sdk.io.hdfs._
 import org.apache.beam.sdk.io.{Read, Write}
+import org.apache.beam.sdk.options.{GcpOptions, GcsOptions}
 import org.apache.beam.sdk.util.MimeTypes
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 import org.apache.hadoop.conf.Configuration
@@ -156,10 +156,10 @@ package object hdfs {
 
     private def getTargetFromOptions() = {
       if (!ScioUtil.isLocalRunner(self.options)) {
-        val dfOptions = self.optionsAs[DataflowPipelineOptions]
-        require(self.optionsAs[DataflowPipelineOptions].getStagingLocation != null,
-          "Staging directory not set - use `--stagingLocation`!")
-        (dfOptions.getStagingLocation, gcsOutputStream _)
+        val gcpOptions = self.optionsAs[GcpOptions]
+        require(self.optionsAs[GcpOptions].getGcpTempLocation != null,
+          "Staging directory not set - use `--gcpTempLocation`!")
+        (gcpOptions.getGcpTempLocation, gcsOutputStream _)
       } else {
         // should targetDir be specified in options?
         (Files.createTempDirectory("distcache").toString, localOutputStream _)
@@ -174,9 +174,9 @@ package object hdfs {
 
     private def gcsOutputStream(target: URI): OutputStream = {
       //TODO: Should we attempt to detect the Mime type rather than always using MimeTypes.BINARY?
-      val dfOptions = self.optionsAs[DataflowPipelineOptions]
+      val gcsOptions = self.optionsAs[GcsOptions]
       Channels.newOutputStream(
-        dfOptions.getGcsUtil.create(GcsPath.fromUri(target), MimeTypes.BINARY))
+        gcsOptions.getGcsUtil.create(GcsPath.fromUri(target), MimeTypes.BINARY))
     }
 
     private[scio] def hadoopDistCacheCopy(src: Path, target: URI, conf: Configuration)

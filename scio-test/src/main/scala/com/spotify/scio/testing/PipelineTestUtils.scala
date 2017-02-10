@@ -125,6 +125,7 @@ trait PipelineTestUtils {
 
   private def runWithLocalOutput[U](fn: ScioContext => SCollection[U]): Seq[U] = {
     val sc = ScioContext()
+    println(sc.pipeline.getRunner)
     val f = fn(sc).materialize
     sc.close().waitUntilFinish()  // block non-test runner
     f.waitForResult().value.toSeq
