@@ -234,8 +234,7 @@ lazy val scioTest: Project = Project(
     "com.spotify" % "annoy" % "0.2.5" % "test",
     "com.spotify.sparkey" % "sparkey" % "2.1.3" % "test",
     "org.mockito" % "mockito-all" % "1.10.19" % "test",
-    "junit" % "junit" % junitVersion,
-    "com.novocode" % "junit-interface" % junitInterfaceVersion
+    "junit" % "junit" % junitVersion
   ),
   addCompilerPlugin(paradiseDependency)
 ).configs(
