@@ -35,6 +35,10 @@ import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.options.BigQueryOptions;
 
+// -------------------------------------------------------------------------------------------------
+// Add table description patch (BEAM-1301)
+// -------------------------------------------------------------------------------------------------
+
 /** An interface for real, mock, or fake implementations of Cloud BigQuery services. */
 interface BigQueryServices extends Serializable {
 
@@ -169,6 +173,10 @@ interface BigQueryServices extends Serializable {
      * <p>Returns the total bytes count of {@link TableRow TableRows}.
      */
     long insertAll(TableReference ref, List<TableRow> rowList, @Nullable List<String> insertIdList)
+        throws IOException, InterruptedException;
+
+    /** Patch BigQuery {@link Table} description. */
+    Table patchTableDescription(TableReference tableReference, @Nullable String tableDescription)
         throws IOException, InterruptedException;
   }
 
