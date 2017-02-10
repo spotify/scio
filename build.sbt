@@ -24,6 +24,7 @@ import sbtunidoc.Plugin.UnidocKeys._
 
 val beamVersion = "0.5.0"
 val algebirdVersion = "0.12.4"
+val annoyVersion = "0.2.5"
 val autoServiceVersion = "1.0-rc2"
 val avroVersion = "1.7.7"
 val breezeVersion ="0.13"
@@ -43,11 +44,14 @@ val junitInterfaceVersion = "0.11"
 val mockitoVersion = "1.10.19"
 val nettyTcNativeVersion = "1.1.33.Fork18"
 val protobufGenericVersion = "0.2.0"
-val scalaCheckVersion = "1.13.4"
 val scalaMacrosVersion = "2.1.0"
 val scalaMeterVersion = "0.8.2"
-val scalaTestVersion = "3.0.1"
+val scalacheckShapelessVersion = "1.1.4"
+val scalacheckVersion = "1.13.4"
+val scalatestVersion = "3.0.1"
+val shapelessDatatypeVersion = "0.1.2"
 val slf4jVersion = "1.7.22"
+val sparkeyVersion = "2.1.3"
 
 val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework")
 
@@ -228,12 +232,11 @@ lazy val scioTest: Project = Project(
   description := "Scio helpers for ScalaTest",
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
-    "org.scalatest" %% "scalatest" % scalaTestVersion,
+    "org.scalatest" %% "scalatest" % scalatestVersion,
     // DataFlow testing requires junit and hamcrest
     "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
-    "com.spotify" % "annoy" % "0.2.5" % "test",
-    "com.spotify.sparkey" % "sparkey" % "2.1.3" % "test",
-    "org.mockito" % "mockito-all" % "1.10.19" % "test",
+    "com.spotify" % "annoy" % annoyVersion % "test",
+    "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
     "junit" % "junit" % junitVersion
   ),
   addCompilerPlugin(paradiseDependency)
@@ -258,9 +261,9 @@ lazy val scioBigQuery: Project = Project(
     "org.joda" % "joda-convert" % jodaConvertVersion,
     "org.slf4j" % "slf4j-api" % slf4jVersion,
     "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
-    "org.scalatest" %% "scalatest" % scalaTestVersion % "test,it",
-    "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.4" % "test",
-    "me.lyh" %% "shapeless-datatype-core" % "0.1.2" % "test"
+    "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
+    "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test",
+    "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
   )
 ).configs(IntegrationTest)
 
@@ -289,7 +292,7 @@ lazy val scioExtra: Project = Project(
     "com.twitter" %% "algebird-core" % algebirdVersion,
     "org.scalanlp" %% "breeze" % breezeVersion,
     "info.debatty" % "java-lsh" % javaLshVersion,
-    "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
+    "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
   )
 )
 
@@ -333,7 +336,7 @@ lazy val scioExamples: Project = Project(
   libraryDependencies ++= Seq(
     "org.slf4j" % "slf4j-simple" % slf4jVersion,
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
-    "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test",
+    "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
     "org.mockito" % "mockito-all" % mockitoVersion % "test"
   ),
   addCompilerPlugin(paradiseDependency),
