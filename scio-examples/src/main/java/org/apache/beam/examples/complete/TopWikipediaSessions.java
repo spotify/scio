@@ -62,15 +62,6 @@ import org.joda.time.Instant;
  *
  * <p>The default input is {@code gs://apache-beam-samples/wikipedia_edits/*.json} and can be
  * overridden with {@code --input}.
- *
- * <p>The input for this example is large enough that it's a good place to enable (experimental)
- * autoscaling:
- * <pre>{@code
- *   --autoscalingAlgorithm=BASIC
- *   --maxNumWorkers=20
- * }
- * </pre>
- * This will automatically scale the number of workers up over time until the job completes.
  */
 public class TopWikipediaSessions {
   private static final String EXPORTED_WIKI_TABLE =
@@ -180,7 +171,7 @@ public class TopWikipediaSessions {
    *
    * <p>Inherits standard Beam configuration options.
    */
-  private interface Options extends PipelineOptions {
+  public interface Options extends PipelineOptions {
     @Description(
       "Input specified as a GCS path containing a BigQuery table exported as json")
     @Default.String(EXPORTED_WIKI_TABLE)
