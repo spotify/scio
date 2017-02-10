@@ -44,7 +44,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
 
   // Fail fast for illegal arguments
   try {
-    PipelineOptionsFactory.fromArgs(args.toArray).as(classOf[DataflowPipelineOptions])
+    PipelineOptionsFactory.fromArgs(args: _*).as(classOf[DataflowPipelineOptions])
   } catch {
     case e: Throwable =>
       echo(e.getMessage)
@@ -166,7 +166,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
   // Initialization
   // =======================================================================
 
-  private def optsFromArgs(args: Array[String]): String = {
+  private def optsFromArgs(args: Seq[String]): String = {
     val factory = "org.apache.beam.sdk.options.PipelineOptionsFactory"
     val options = "org.apache.beam.runners.dataflow.options.DataflowPipelineOptions"
     val argsStr = args.mkString("Array(\"", "\", \"", "\")")
