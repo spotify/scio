@@ -22,13 +22,17 @@ import com.spotify.scio.testing.{JobTest, PipelineSpec}
 class AccumulatorExampleTest extends PipelineSpec {
 
   "AccumulatorExample" should "work" in {
-    JobTest[com.spotify.scio.examples.extra.AccumulatorExample.type]
-      .run()
+    noException should be thrownBy {
+      JobTest[com.spotify.scio.examples.extra.AccumulatorExample.type]
+        .run()
+    }
   }
 
   "SimpleAccumulatorExample" should "work" in {
-    JobTest[com.spotify.scio.examples.extra.SimpleAccumulatorExample.type]
-      .run()
+    noException should be thrownBy {
+      JobTest[com.spotify.scio.examples.extra.SimpleAccumulatorExample.type]
+        .run()
+    }
   }
 
 }
