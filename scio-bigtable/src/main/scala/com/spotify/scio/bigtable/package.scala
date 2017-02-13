@@ -17,7 +17,7 @@
 
 package com.spotify.scio
 
-import com.google.bigtable.v2.{Mutation, Row, RowFilter}
+import com.google.bigtable.v2._
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
 import com.spotify.scio.io.Tap
@@ -40,7 +40,61 @@ import scala.concurrent.Future
  */
 package object bigtable {
 
-  private val DEFAULT_SLEEP_DURATION = Duration.standardMinutes(20);
+  /** Enhanced version of [[Row]] with convenience methods. */
+  implicit class RichRow(val self: Row) extends AnyVal {
+
+    /** Return the Cells for the specific column. */
+    def getColumnCells(familyName: String, columnQualifier: ByteString): List[Cell] =
+      (for {
+        f <- self.getFamiliesList.asScala.find(_.getName == familyName)
+        c <- f.getColumnsList.asScala.find(_.getQualifier == columnQualifier)
+      } yield c.getCellsList.asScala).toList.flatten
+
+    /** The Cell for the most recent timestamp for a given column. */
+    def getColumnLatestCell(familyName: String, columnQualifier: ByteString): Option[Cell] =
+      getColumnCells(familyName, columnQualifier).headOption
+
+    /** Map of qualifiers to values. */
+    def getFamilyMap(familyName: String): Map[ByteString, ByteString] =
+      self.getFamiliesList.asScala.find(_.getName == familyName) match {
+        case None => Map.empty
+        case Some(f) => if (f.getColumnsCount > 0) {
+          f.getColumnsList.asScala.map(c => c.getQualifier -> c.getCells(0).getValue).toMap
+        } else {
+          Map.empty
+        }
+      }
+
+    /** Map of families to all versions of its qualifiers and values. */
+    def getMap: Map[String, Map[ByteString, Map[Long, ByteString]]] = {
+      val m = Map.newBuilder[String, Map[ByteString, Map[Long, ByteString]]]
+      for (family <- self.getFamiliesList.asScala) {
+        val columnMap = Map.newBuilder[ByteString, Map[Long, ByteString]]
+        for (column <- family.getColumnsList.asScala) {
+          val cellMap = column.getCellsList.asScala
+            .map(x => x.getTimestampMicros -> x.getValue)
+            .toMap
+          columnMap += column.getQualifier -> cellMap
+        }
+        m += family.getName -> columnMap.result()
+      }
+      m.result()
+    }
+
+    /** Map of families to their most recent qualifiers and values. */
+    def getNoVersionMap: Map[String, Map[ByteString, ByteString]] =
+      self.getFamiliesList.asScala.map(f => f.getName -> getFamilyMap(f.getName)).toMap
+
+    /** Get the latest version of the specified column. */
+    def getValue(familyName: String, columnQualifier: ByteString): Option[ByteString] =
+      for {
+        f <- self.getFamiliesList.asScala.find(_.getName == familyName)
+        c <- f.getColumnsList.asScala.find(_.getQualifier == columnQualifier)
+      } yield c.getCells(0).getValue
+
+  }
+
+  private val DEFAULT_SLEEP_DURATION = Duration.standardMinutes(20)
 
   /** Enhanced version of [[ScioContext]] with Bigtable methods. */
   implicit class BigtableScioContext(val self: ScioContext) extends AnyVal {
@@ -154,9 +208,7 @@ package object bigtable {
   case class BigtableInput(projectId: String, instanceId: String, tableId: String)
     extends TestIO[Row](s"$projectId\t$instanceId\t$tableId")
 
-  case class BigtableOutput[T <: Mutation](projectId: String,
-                                           instanceId: String,
-                                           tableId: String)
+  case class BigtableOutput[T <: Mutation](projectId: String, instanceId: String, tableId: String)
     extends TestIO[(ByteString, Iterable[T])](s"$projectId\t$instanceId\t$tableId")
 
 }
