@@ -63,6 +63,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   javacOptions                    ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked"),
   javacOptions in (Compile, doc)  := Seq("-source", "1.7"),
 
+  scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value,
   testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
 
   coverageExcludedPackages := Seq(
@@ -131,9 +132,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
       } yield jarFile).headOption.map((_, url(apiUrl)))
     }
     docMappings.map(mappinngFn.tupled).flatten.toMap
-  },
-
-  scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value
+  }
 )
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
