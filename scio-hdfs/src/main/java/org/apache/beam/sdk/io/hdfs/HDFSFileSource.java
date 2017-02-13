@@ -216,9 +216,24 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
   @Override
   public long getEstimatedSizeBytes(PipelineOptions options) throws Exception {
     long size = 0;
-    Job job = Job.getInstance(); // new instance
-    for (FileStatus st : listStatus(createFormat(job), job)) {
-      size += st.getLen();
+
+    try {
+      // If this source represents a split from splitIntoBundles, then return the size of the split,
+      // rather then the entire input
+      if (serializableSplit != null) {
+        return serializableSplit.getSplit().getLength();
+      }
+
+      Job job = Job.getInstance(); // new instance
+      for (FileStatus st : listStatus(createFormat(job), job)) {
+        size += st.getLen();
+      }
+    } catch (IOException | NoSuchMethodException | InvocationTargetException
+        | IllegalAccessException | InstantiationException e) {
+      // ignore, and return 0
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      // ignore, and return 0
     }
     return size;
   }
