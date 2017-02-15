@@ -18,14 +18,13 @@
 package com.spotify.scio.bigquery.types
 
 import com.google.protobuf.ByteString
+import com.spotify.scio.test.PropertySpec
 import shapeless.datatype.record._
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import org.scalacheck._
 import org.scalacheck.Shapeless._
-import org.scalatest._
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
-class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matchers {
+class ConverterProviderTest extends PropertySpec {
 
   import Schemas._
 

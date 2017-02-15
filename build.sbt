@@ -190,6 +190,7 @@ lazy val root: Project = Project(
     -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples),
   aggregate in assembly := false
 ).aggregate(
+  propTestConfig,
   scioCore,
   scioTest,
   scioBigQuery,
@@ -199,6 +200,18 @@ lazy val root: Project = Project(
   scioRepl,
   scioExamples,
   scioSchemas
+)
+
+lazy val propTestConfig: Project = Project(
+  "prop-test-config",
+  file("prop-test-config")
+).settings(
+  commonSettings,
+  description := "Configuration helper for property checks in ScalaTest",
+  libraryDependencies ++= Seq(
+    "org.scalatest" %% "scalatest" % scalatestVersion,
+    "org.scalacheck" %% "scalacheck" % scalacheckVersion
+  )
 )
 
 lazy val scioCore: Project = Project(
@@ -244,6 +257,7 @@ lazy val scioTest: Project = Project(
   IntegrationTest
 ).dependsOn(
   scioCore,
+  propTestConfig % "test",
   scioSchemas % "test"
 )
 
@@ -266,6 +280,7 @@ lazy val scioBigQuery: Project = Project(
     "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
   )
 ).configs(IntegrationTest)
+.dependsOn(propTestConfig)
 
 lazy val scioBigtable: Project = Project(
   "scio-bigtable",
@@ -291,10 +306,10 @@ lazy val scioExtra: Project = Project(
     "com.google.guava" % "guava" % guavaVersion,
     "com.twitter" %% "algebird-core" % algebirdVersion,
     "org.scalanlp" %% "breeze" % breezeVersion,
-    "info.debatty" % "java-lsh" % javaLshVersion,
-    "org.scalatest" %% "scalatest" % scalatestVersion % "test",
-    "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
+    "info.debatty" % "java-lsh" % javaLshVersion
   )
+).dependsOn(
+  propTestConfig % "test"
 )
 
 lazy val scioHdfs: Project = Project(
@@ -337,7 +352,6 @@ lazy val scioExamples: Project = Project(
   libraryDependencies ++= Seq(
     "org.slf4j" % "slf4j-simple" % slf4jVersion,
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
-    "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
     "org.mockito" % "mockito-all" % mockitoVersion % "test"
   ),
   addCompilerPlugin(paradiseDependency),
