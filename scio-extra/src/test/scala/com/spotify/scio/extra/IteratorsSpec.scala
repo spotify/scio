@@ -18,7 +18,6 @@
 package com.spotify.scio.extra
 
 import com.spotify.scio.extra.Iterators._
-import org.scalacheck.Prop.{BooleanOperators, all, forAll}
 import org.scalacheck._
 
 object IteratorsSpec {

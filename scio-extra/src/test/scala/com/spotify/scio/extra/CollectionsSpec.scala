@@ -20,7 +20,6 @@ package com.spotify.scio.extra
 import com.spotify.scio.extra.Collections._
 import org.scalacheck._
 import org.scalatest._
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
 class CollectionsSpec extends PropertySpec {
 

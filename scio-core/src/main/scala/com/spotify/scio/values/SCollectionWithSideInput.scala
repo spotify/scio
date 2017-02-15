@@ -19,7 +19,7 @@ package com.spotify.scio.values
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util.FunctionsWithSideInput.SideInputDoFn
-import com.spotify.scio.util.{CallSites, ClosureCleaner, FunctionsWithSideInput}
+import com.spotify.scio.util.{ClosureCleaner, FunctionsWithSideInput}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{PCollection, TupleTag, TupleTagList}
