@@ -171,6 +171,16 @@ class ScioContext private[scio] (val options: PipelineOptions,
     o.setScioVersion(scioVersion)
   }
 
+  {
+    /** Check if running within [[scala.App]] see https://github.com/spotify/scio/issues/449 */
+    if (Thread.currentThread()
+      .getStackTrace.toList.map(_.getClassName.split('$').head)
+      .exists(_.equals(classOf[App].getName))) {
+      logger.warn(
+        "Applications defined within scala.App might not work properly. Please use main method!")
+    }
+  }
+
   private[scio] val testId: Option[String] =
     Try(optionsAs[ApplicationNameOptions]).toOption.flatMap { o =>
       if (JobTest.isTestId(o.getAppName)) {
