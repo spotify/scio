@@ -26,6 +26,7 @@ import com.google.protobuf.ByteString
 /** Helper methods for [[Mutation]]. */
 object Mutations {
 
+  /** New [[SetCell]] Mutation using the current timestamp. */
   def newSetCell(familyName: String, columnQualifier: ByteString, value: ByteString): Mutation =
     Mutation.newBuilder()
       .setSetCell(SetCell.newBuilder()
@@ -35,6 +36,7 @@ object Mutations {
         .setTimestampMicros(TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis())))
       .build()
 
+  /** New [[SetCell]] Mutation. */
   def newSetCell(familyName: String, columnQualifier: ByteString, value: ByteString,
                  timestampMicros: Long): Mutation =
     Mutation.newBuilder()
@@ -45,6 +47,7 @@ object Mutations {
         .setTimestampMicros(timestampMicros))
       .build()
 
+  /** New [[DeleteFromColumn]] Mutation. */
   def newDeleteFromColumn(familyName: String, columnQualifier: ByteString,
                           startTimestampMicros: Long, endTimestampMicros: Long): Mutation =
     Mutation.newBuilder()
@@ -56,12 +59,14 @@ object Mutations {
           .setEndTimestampMicros(endTimestampMicros)))
       .build()
 
+  /** New [[DeleteFromFamily]] Mutation. */
   def newDeleteFromFamily(familyName: String): Mutation =
     Mutation.newBuilder()
       .setDeleteFromFamily(DeleteFromFamily.newBuilder()
         .setFamilyName(familyName))
       .build()
 
+  /** New [[DeleteFromRow]] Mutation. */
   def newDeleteFromRow: Mutation =
     Mutation.newBuilder().setDeleteFromRow(DeleteFromRow.getDefaultInstance).build()
 

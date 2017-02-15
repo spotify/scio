@@ -39,10 +39,12 @@ object Rows {
           .addCells(cell)))
       .build()
 
+  /** New [[Row]] with timestamp default to 0. */
   def newRow(key: ByteString, familyName: String, columnQualifier: ByteString,
              value: ByteString): Row =
     newRow(key, familyName, columnQualifier, newCell(value))
 
+  /** New [[Row]]. */
   def newRow(key: ByteString, familyName: String, columnQualifier: ByteString,
              value: ByteString, timestampMicros: Long): Row =
     newRow(key, familyName, columnQualifier, newCell(value, timestampMicros))
