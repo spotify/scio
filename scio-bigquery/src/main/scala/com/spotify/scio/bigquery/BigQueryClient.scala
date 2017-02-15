@@ -21,8 +21,6 @@ import java.io.{File, FileInputStream, StringReader}
 import java.util.UUID
 import java.util.regex.Pattern
 
-import com.google.api.client.auth.oauth2.Credential
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.http.{HttpRequest, HttpRequestInitializer}
@@ -37,6 +35,7 @@ import com.google.cloud.hadoop.util.{ApiErrorExtractor, ChainingHttpRequestIniti
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
+import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition._
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.WriteDisposition._
@@ -51,6 +50,7 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.{Map => MMap}
 import scala.collection.JavaConverters._
+import scala.reflect.runtime.universe._
 import scala.util.control.NonFatal
 import scala.util.{Failure, Random, Success, Try}
 
@@ -293,6 +293,83 @@ class BigQueryClient private (private val projectId: String,
       }
     }
   }
+
+  // =======================================================================
+  // Type safe API
+  // =======================================================================
+
+  /**
+   * Get a typed iterator for a BigQuery SELECT query or table.
+   *
+   * Note that `T` must be annotated with [[BigQueryType.fromSchema]],
+   * [[BigQueryType.fromTable]], [[BigQueryType.fromQuery]], or [[BigQueryType.toTable]].
+   *
+   * By default the source (table or query) specified in the annotation will be used, but it can
+   * be overridden with the `newSource` parameter. For example:
+   *
+   * {{{
+   * @BigQueryType.fromTable("publicdata:samples.gsod")
+   * class Row
+   *
+   * // Read from [publicdata:samples.gsod] as specified in the annotation.
+   * bq.getTypedRows[Row]()
+   *
+   * // Read from [myproject:samples.gsod] instead.
+   * bq.getTypedRows[Row]("myproject:samples.gsod")
+   *
+   * // Read from a query instead.
+   * bq.getTypedRows[Row]("SELECT * FROM [publicdata:samples.gsod] LIMIT 1000")
+   * }}}
+   */
+  def getTypedRows[T <: HasAnnotation : TypeTag](newSource: String = null)
+  : Iterator[T] = {
+    val bqt = BigQueryType[T]
+    val rows = if (newSource == null) {
+      // newSource is missing, T's companion object must have either table or query
+      if (bqt.isTable) {
+        self.getTableRows(bqt.table.get)
+      } else if (bqt.isQuery) {
+        self.getQueryRows(bqt.query.get)
+      } else {
+        throw new IllegalArgumentException(s"Missing table or query field in companion object")
+      }
+    } else {
+      // newSource can be either table or query
+      val table = scala.util.Try(BigQueryIO.parseTableSpec(newSource)).toOption
+      if (table.isDefined) {
+        self.getTableRows(table.get)
+      } else {
+        self.getQueryRows(newSource)
+      }
+    }
+    rows.map(bqt.fromTableRow)
+  }
+
+  /**
+   * Write a List of rows to a BigQuery table. Note that element type `T` must be annotated with
+   * [[BigQueryType]].
+   */
+  def writeTypedRows[T <: HasAnnotation : TypeTag]
+  (table: TableReference, rows: List[T],
+   writeDisposition: WriteDisposition,
+   createDisposition: CreateDisposition): Unit = {
+    val bqt = BigQueryType[T]
+    self.writeTableRows(
+      table, rows.map(bqt.toTableRow), bqt.schema,
+      writeDisposition, createDisposition)
+  }
+
+  /**
+   * Write a List of rows to a BigQuery table. Note that element type `T` must be annotated with
+   * [[BigQueryType]].
+   */
+  def writeTypedRows[T <: HasAnnotation : TypeTag]
+  (tableSpec: String, rows: List[T],
+   writeDisposition: WriteDisposition = WRITE_EMPTY,
+   createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =
+    writeTypedRows(
+      BigQueryIO.parseTableSpec(tableSpec), rows,
+      writeDisposition, createDisposition)
 
   // =======================================================================
   // Job execution

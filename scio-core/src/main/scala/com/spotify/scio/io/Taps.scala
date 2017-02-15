@@ -20,6 +20,8 @@ package com.spotify.scio.io
 import com.google.api.client.util.{BackOff, BackOffUtils, Sleeper}
 import com.google.api.services.bigquery.model.TableReference
 import com.google.protobuf.Message
+import com.spotify.scio.bigquery.types.BigQueryType
+import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
 import org.apache.avro.Schema
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
@@ -29,6 +31,7 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe._
 import scala.util.Try
 
 /** Exception for when a tap is not available. */
@@ -55,6 +58,32 @@ trait Taps {
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
   def bigQueryTable(tableSpec: String): Future[Tap[TableRow]] =
     bigQueryTable(BigQueryIO.parseTableSpec(tableSpec))
+
+  /** Get a `Future[Tap[T]]` for BigQuery source. */
+  def typedBigQuery[T <: HasAnnotation : TypeTag : ClassTag](newSource: String = null)
+  : Future[Tap[T]] = {
+    val bqt = BigQueryType[T]
+    val rows = if (newSource == null) {
+      // newSource is missing, T's companion object must have either table or query
+      if (bqt.isTable) {
+        bigQueryTable(bqt.table.get)
+      } else if (bqt.isQuery) {
+        bigQuerySelect(bqt.query.get)
+      } else {
+        throw new IllegalArgumentException(s"Missing table or query field in companion object")
+      }
+    } else {
+      // newSource can be either table or query
+      val table = scala.util.Try(BigQueryIO.parseTableSpec(newSource)).toOption
+      if (table.isDefined) {
+        bigQueryTable(table.get)
+      } else {
+        bigQuerySelect(newSource)
+      }
+    }
+    import scala.concurrent.ExecutionContext.Implicits.global
+    rows.map(_.map(bqt.fromTableRow))
+  }
 
   /** Get a `Future[Tap[TableRow]]` of TableRow for a JSON file. */
   def tableRowJsonFile(path: String): Future[Tap[TableRow]] =

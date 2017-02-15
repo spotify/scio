@@ -28,6 +28,8 @@ import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSc
 import com.google.datastore.v1.Entity
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
+import com.spotify.scio.bigquery.types.BigQueryType
+import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io._
 import com.spotify.scio.testing._
@@ -55,6 +57,7 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
 import scala.concurrent._
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe._
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
@@ -967,6 +970,58 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
     saveAsBigQuery(
       bqio.BigQueryIO.parseTableSpec(tableSpec), schema, writeDisposition, createDisposition)
+
+  /**
+   * Save this SCollection as a BigQuery table. Note that element type `T` must be a case class
+   * annotated with [[BigQueryType.toTable]].
+   */
+  def saveAsTypedBigQuery(table: TableReference,
+                          writeDisposition: WriteDisposition,
+                          createDisposition: CreateDisposition)
+                         (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
+  : Future[Tap[T]] = {
+    val bqt = BigQueryType[T]
+    import scala.concurrent.ExecutionContext.Implicits.global
+    this
+      .map(bqt.toTableRow)
+      .saveAsBigQuery(table, bqt.schema, writeDisposition, createDisposition)
+      .map(_.map(bqt.fromTableRow))
+  }
+
+  /**
+   * Save this SCollection as a BigQuery table. Note that element type `T` must be annotated with
+   * [[BigQueryType]].
+   *
+   * This could be a complete case class with [[BigQueryType.toTable]]. For example:
+   *
+   * {{{
+   * @BigQueryType.toTable
+   * case class Result(name: String, score: Double)
+   *
+   * val p: SCollection[Result] = // process data and convert elements to Result
+   * p.saveAsTypedBigQuery("myproject:mydataset.mytable")
+   * }}}
+   *
+   * It could also be an empty class with schema from [[BigQueryType.fromSchema]],
+   * [[BigQueryType.fromTable]], or [[BigQueryType.fromQuery]]. For example:
+   *
+   * {{{
+   * @BigQueryType.fromTable("publicdata:samples.gsod")
+   * class Row
+   *
+   * sc.typedBigQuery[Row]()
+   *   .sample(withReplacement = false, fraction = 0.1)
+   *   .saveAsTypedBigQuery("myproject:samples.gsod")
+   * }}}
+   */
+  def saveAsTypedBigQuery(tableSpec: String,
+                          writeDisposition: WriteDisposition = null,
+                          createDisposition: CreateDisposition = null)
+                         (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
+  : Future[Tap[T]] =
+    saveAsTypedBigQuery(
+      bqio.BigQueryIO.parseTableSpec(tableSpec),
+      writeDisposition, createDisposition)
 
   /**
    * Save this SCollection as a Datastore dataset. Note that elements must be of type Entity.

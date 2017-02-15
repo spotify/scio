@@ -15,6 +15,8 @@
  * under the License.
  */
 
+// scalastyle:off file.size.limit
+
 package com.spotify.scio
 
 import java.beans.Introspector
@@ -27,6 +29,7 @@ import com.google.api.services.bigquery.model.TableReference
 import com.google.datastore.v1.{Entity, Query}
 import com.google.protobuf.Message
 import com.spotify.scio.bigquery._
+import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io.{TFRecordOptions, TFRecordSource, Tap}
 import com.spotify.scio.options.ScioOptions
@@ -54,6 +57,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe._
 import scala.util.Try
 
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
@@ -478,6 +482,53 @@ class ScioContext private[scio] (val options: PipelineOptions,
     this.bigQueryTable(bqio.BigQueryIO.parseTableSpec(tableSpec))
 
   /**
+   * Get a typed SCollection for a BigQuery SELECT query or table.
+   *
+   * Note that `T` must be annotated with [[BigQueryType.fromSchema]],
+   * [[BigQueryType.fromTable]], [[BigQueryType.fromQuery]], or [[BigQueryType.toTable]].
+   *
+   * By default the source (table or query) specified in the annotation will be used, but it can
+   * be overridden with the `newSource` parameter. For example:
+   *
+   * {{{
+   * @BigQueryType.fromTable("publicdata:samples.gsod")
+   * class Row
+   *
+   * // Read from [publicdata:samples.gsod] as specified in the annotation.
+   * sc.typedBigQuery[Row]()
+   *
+   * // Read from [myproject:samples.gsod] instead.
+   * sc.typedBigQuery[Row]("myproject:samples.gsod")
+   *
+   * // Read from a query instead.
+   * sc.typedBigQuery[Row]("SELECT * FROM [publicdata:samples.gsod] LIMIT 1000")
+   * }}}
+   */
+  def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null)
+  : SCollection[T] = {
+    val bqt = BigQueryType[T]
+    val rows = if (newSource == null) {
+      // newSource is missing, T's companion object must have either table or query
+      if (bqt.isTable) {
+        this.bigQueryTable(bqt.table.get)
+      } else if (bqt.isQuery) {
+        this.bigQuerySelect(bqt.query.get)
+      } else {
+        throw new IllegalArgumentException(s"Missing table or query field in companion object")
+      }
+    } else {
+      // newSource can be either table or query
+      val table = scala.util.Try(bqio.BigQueryIO.parseTableSpec(newSource)).toOption
+      if (table.isDefined) {
+        this.bigQueryTable(table.get)
+      } else {
+        this.bigQuerySelect(newSource)
+      }
+    }
+    rows.map(bqt.fromTableRow)
+  }
+
+  /**
    * Get an SCollection for a Datastore query.
    * @group input
    */
@@ -752,12 +803,14 @@ class DistCacheScioContext private[scio] (self: ScioContext) {
    * @group dist_cache
    */
   def distCache[F](uris: Seq[String])(initFn: Seq[File] => F): DistCache[F] =
-  self.requireNotClosed {
-    if (self.isTest) {
-      new MockDistCache(testDistCache(DistCacheIO(uris)))
-    } else {
-      new DistCacheMulti(uris.map(new URI(_)), initFn, self.optionsAs[GcsOptions])
+    self.requireNotClosed {
+      if (self.isTest) {
+        new MockDistCache(testDistCache(DistCacheIO(uris)))
+      } else {
+        new DistCacheMulti(uris.map(new URI(_)), initFn, self.optionsAs[GcsOptions])
+      }
     }
-  }
 
 }
+
+// scalastyle:on file.size.limit

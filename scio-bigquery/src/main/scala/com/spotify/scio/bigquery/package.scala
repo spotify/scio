@@ -32,6 +32,12 @@ import scala.collection.JavaConverters._
  */
 package object bigquery {
 
+  /** Typed BigQuery annotations and converters. */
+  val BigQueryType = com.spotify.scio.bigquery.types.BigQueryType
+
+  /** Annotation for BigQuery field [[com.spotify.scio.bigquery.types.description]]. */
+  type description = com.spotify.scio.bigquery.types.description
+
   /**
    * Create a TableRow with Map-like syntax. For example:
    *

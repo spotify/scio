@@ -197,7 +197,6 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
       """
         |import com.spotify.scio._
         |import com.spotify.scio.bigquery._
-        |import com.spotify.scio.experimental._
         |import com.spotify.scio.repl._
         |import scala.concurrent.ExecutionContext.Implicits.global
       """.stripMargin)
