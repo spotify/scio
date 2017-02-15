@@ -274,7 +274,8 @@ lazy val scioBigtable: Project = Project(
   description := "Scio add-on for Google Cloud Bigtable",
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-    "io.netty" % "netty-tcnative-boringssl-static" % nettyTcNativeVersion
+    "io.netty" % "netty-tcnative-boringssl-static" % nettyTcNativeVersion,
+    "org.scalatest" %% "scalatest" % scalatestVersion % "test"
   )
 ).dependsOn(
   scioCore
