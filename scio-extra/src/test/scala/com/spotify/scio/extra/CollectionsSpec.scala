@@ -22,7 +22,7 @@ import org.scalacheck._
 import org.scalatest._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
-class CollectionsSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matchers {
+class CollectionsSpec extends PropertySpec {
 
   val posInts = Gen.posNum[Int]
   val intLists = Arbitrary.arbitrary[List[Int]]

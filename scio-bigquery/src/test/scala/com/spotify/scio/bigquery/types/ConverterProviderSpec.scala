@@ -39,6 +39,9 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
   implicit def compareByteArrays(x: Array[Byte], y: Array[Byte]): Boolean =
     ByteString.copyFrom(x) == ByteString.copyFrom(y)
 
+  implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
+    PropertyCheckConfiguration(minSuccessful = 100)
+
   property("round trip required primitive types") {
     forAll { r1: Required =>
       val r2 = BigQueryType.fromTableRow[Required](BigQueryType.toTableRow[Required](r1))

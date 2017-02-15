@@ -21,12 +21,13 @@ import breeze.linalg.{DenseMatrix, DenseVector}
 import breeze.stats.distributions.Rand
 import com.spotify.scio.extra.Breeze._
 import com.twitter.algebird.Semigroup
-import org.scalacheck.Prop.forAll
 import org.scalacheck._
+import org.scalatest.{Matchers, PropSpec}
+import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
 import scala.language.higherKinds
 
-trait BreezeSpec[M[_], T] {
+trait BreezeSpec[M[_], T] extends PropertySpec {
   val dimension = 10
   val rows = 20
   val cols = 10
@@ -37,42 +38,59 @@ trait BreezeSpec[M[_], T] {
   def sumOption(xs: Iterable[M[T]])(implicit sg: Semigroup[M[T]]): Option[M[T]] = sg.sumOption(xs)
 }
 
-object FVSpec extends Properties("FloatVectorSemigroup") with BreezeSpec[DenseVector, Float] {
+class FVSpec extends BreezeSpec[DenseVector, Float] {
   val m = Gen.const(dimension).map(DenseVector.rand[Float](_, fRand))
-  property("plus") = forAll(m, m) { (x, y) =>
-    plus(x, y) == x + y
+
+  property("plus") {
+    forAll(m, m) { (x, y) =>
+      plus(x, y) == x + y
+    }
   }
-  property("sumOption") = forAll(ms) { xs =>
-    sumOption(xs) == xs.reduceLeftOption(_ + _)
+  property("sumOption") {
+    forAll(ms) { xs =>
+      sumOption(xs) == xs.reduceLeftOption(_ + _)
+    }
   }
 }
 
-object DVSpec extends Properties("DoubleVectorSemigroup") with BreezeSpec[DenseVector, Double] {
+class DVSpec extends BreezeSpec[DenseVector, Double] {
   val m = Gen.const(dimension).map(DenseVector.rand[Double](_))
-  property("plus") = forAll(m, m) { (x, y) =>
-    plus(x, y) == x + y
+  property("plus") {
+    forAll(m, m) { (x, y) =>
+      plus(x, y) == x + y
+    }
   }
-  property("sumOption") = Prop.forAll(ms) { xs =>
-    sumOption(xs) == xs.reduceLeftOption(_ + _)
+  property("sumOption") {
+    forAll(ms) { xs =>
+      sumOption(xs) == xs.reduceLeftOption(_ + _)
+    }
   }
 }
 
-object FMSpec extends Properties("FloatMatrixSemigroup") with BreezeSpec[DenseMatrix, Float] {
+class FMSpec extends BreezeSpec[DenseMatrix, Float] {
   val m = Gen.const((rows, cols)).map { case (r, c) => DenseMatrix.rand[Float](r, c, fRand) }
-  property("plus") = forAll(m, m) { (x, y) =>
-    plus(x, y) == x + y
+  property("plus") {
+    forAll(m, m) { (x, y) =>
+      plus(x, y) == x + y
+    }
   }
-  property("sumOption") = Prop.forAll(ms) { xs =>
-    sumOption(xs) == xs.reduceLeftOption(_ + _)
+  property("sumOption") {
+    forAll(ms) { xs =>
+      sumOption(xs) == xs.reduceLeftOption(_ + _)
+    }
   }
 }
 
-object DMSpec extends Properties("DoubleMatrixSemigroup") with BreezeSpec[DenseMatrix, Double] {
+class DMSpec extends BreezeSpec[DenseMatrix, Double] {
   val m = Gen.const((rows, cols)).map { case (r, c) => DenseMatrix.rand[Double](r, c) }
-  property("plus") = forAll(m, m) { (x, y) =>
-    plus(x, y) == x + y
+  property("plus") {
+    forAll(m, m) { (x, y) =>
+      plus(x, y) == x + y
+    }
   }
-  property("sumOption") = Prop.forAll(ms) { xs =>
-    sumOption(xs) == xs.reduceLeftOption(_ + _)
+  property("sumOption") {
+    forAll(ms) { xs =>
+      sumOption(xs) == xs.reduceLeftOption(_ + _)
+    }
   }
 }

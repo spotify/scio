@@ -19,12 +19,10 @@ package com.spotify.scio.extra.nn
 
 import breeze.linalg._
 import com.spotify.scio.extra.Collections._
+import com.spotify.scio.extra.PropertySpec
 import org.scalacheck._
-import org.scalatest._
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
-class NearestNeighborSpec extends PropSpec with GeneratorDrivenPropertyChecks
-  with Matchers {
+class NearestNeighborSpec extends PropertySpec {
 
   val dimension = 40
   private def randVec = DenseVector.rand[Double](dimension)
