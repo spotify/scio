@@ -18,7 +18,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
-import com.spotify.scio.experimental._
+import com.spotify.scio.bigquery._
 
 /*
 sbt -Dbigquery.project=[PROJECT]
