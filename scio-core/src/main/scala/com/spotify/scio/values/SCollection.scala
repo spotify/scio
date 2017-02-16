@@ -525,13 +525,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group debug
    */
   def debug(out: () => PrintStream = () => Console.out, prefix: String = ""): SCollection[T] =
-    this.filter(e => {
+    this.filter { e =>
       // scalastyle:off regex
-      out().println(s"""$prefix${e.toString}""")
+      out().println(prefix + e)
       // scalastyle:on regex
       // filter that never removes
       true
-    })
+    }
 
   // =======================================================================
   // Accumulators
