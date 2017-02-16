@@ -587,7 +587,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * [[SCollection.withSideInputs]].
    * @group side
    */
-  def asListSideInput: SideInput[List[T]] =
+  // j.u.List#asScala returns s.c.mutable.Buffer which has an O(n) .toList method
+  // returning Seq[T] here to avoid copying
+  def asListSideInput: SideInput[Seq[T]] =
     new ListSideInput[T](this.applyInternal(View.asList()))
 
   /**
