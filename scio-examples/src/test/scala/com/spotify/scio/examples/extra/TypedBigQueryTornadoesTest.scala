@@ -21,12 +21,23 @@ import com.spotify.scio.testing._
 
 class TypedBigQueryTornadoesTest extends PipelineSpec {
 
-  import com.spotify.scio.examples.cookbook.BigQueryTornadoesTest._
+  import TypedBigQueryTornadoes.{Result, Row}
+
+  val inData = Seq(
+    Row(Some(true), 1),
+    Row(Some(false), 1),
+    Row(Some(false), 2),
+    Row(Some(true), 3),
+    Row(Some(true), 4),
+    Row(Some(true), 4)
+  ).map(Row.toTableRow)
+
+  val expected = Seq(Result(1, 1), Result(3, 1), Result(4, 2)).map(Result.toTableRow)
 
   "TypedBigQueryTornadoes" should "work" in {
     JobTest[com.spotify.scio.examples.extra.TypedBigQueryTornadoes.type]
       .args("--output=dataset.table")
-      .input(BigQueryIO(TypedBigQueryTornadoes.Row.query), input)
+      .input(BigQueryIO(TypedBigQueryTornadoes.Row.query), inData)
       .output(BigQueryIO("dataset.table"))(_ should containInAnyOrder (expected))
       .run()
   }
