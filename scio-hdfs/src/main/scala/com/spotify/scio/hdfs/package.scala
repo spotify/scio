@@ -70,22 +70,28 @@ package object hdfs {
     private val logger = LoggerFactory.getLogger(ScioContext.getClass)
 
     /** Get an SCollection for a text file on HDFS. */
-    def hdfsTextFile(path: String, username: String = null): SCollection[String] =
+    def hdfsTextFile(path: String,
+                     username: String = null,
+                     conf: Configuration = null): SCollection[String] =
     self.requireNotClosed {
-      val src = HDFSFileSource.fromText(path)
+      val _conf = Option(conf).getOrElse(new Configuration())
+      val src = HDFSFileSource.fromText(path).withConfiguration(_conf).withUsername(username)
       self.wrap(self.applyInternal(Read.from(src)))
     }
 
     /** Get an SCollection of specific record type for an Avro file on HDFS. */
     def hdfsAvroFile[T: ClassTag](path: String,
                                   schema: Schema = null,
-                                  username: String = null): SCollection[T] = self.requireNotClosed {
+                                  username: String = null,
+                                  conf: Configuration = null): SCollection[T] =
+    self.requireNotClosed {
+      val _conf = Option(conf).getOrElse(new Configuration())
       val coder: AvroCoder[T] = if (schema == null) {
         AvroCoder.of(ScioUtil.classOf[T])
       } else {
         AvroCoder.of(ScioUtil.classOf[T], schema)
       }
-      val src = HDFSFileSource.fromAvro(path, coder)
+      val src = HDFSFileSource.fromAvro(path, coder, _conf).withUsername(username)
       self.wrap(self.applyInternal(Read.from(src))).setName(path)
     }
 
@@ -240,15 +246,13 @@ package object hdfs {
         newConf
       }
 
-      val job = Job.getInstance(_conf)
       val s = if (schema == null) {
         ScioUtil.classOf[T].getMethod("getClassSchema").invoke(null).asInstanceOf[Schema]
       } else {
         schema
       }
-      AvroJob.setOutputKeySchema(job, s)
-      val jobConf = job.getConfiguration
-      val sink = HDFSFileSink.toAvro[T](path).withConfiguration(jobConf).withUsername(username)
+      val sink = HDFSFileSink.toAvro[T](path, AvroCoder.of(ScioUtil.classOf[T], s), _conf)
+        .withUsername(username)
       self.applyInternal(Write.to(sink))
       self.context.makeFuture(HdfsAvroTap[T](path, schema))
     }

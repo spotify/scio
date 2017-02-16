@@ -16,10 +16,22 @@
  */
 package org.apache.beam.sdk.io.hdfs;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import java.io.IOException;
+import java.net.URI;
+import java.security.PrivilegedExceptionAction;
+import java.util.Random;
+import java.util.Set;
+
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
+import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.Sink;
@@ -33,24 +45,29 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.JobID;
+import org.apache.hadoop.mapreduce.RecordWriter;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.mapreduce.TaskID;
+import org.apache.hadoop.mapreduce.TaskType;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.mapreduce.task.JobContextImpl;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
-import org.apache.hadoop.security.UserGroupInformation;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.PrivilegedExceptionAction;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkState;
-
+/**
+ * A {@code Sink} for writing records to a Hadoop filesystem using a Hadoop file-based output
+ * format.
+ * @param <T> the type of elements of the input {@link org.apache.beam.sdk.values.PCollection}.
+ * @param <K> the type of keys to be written to the sink via {@link FileOutputFormat}.
+ * @param <V> the type of values to be written to the sink via {@link FileOutputFormat}.
+ */
 public class HDFSFileSink<T, K, V> extends Sink<T> {
 
   private static final JobID jobId = new JobID(
@@ -59,6 +76,8 @@ public class HDFSFileSink<T, K, V> extends Sink<T> {
 
   private final String path;
   private final Class<? extends FileOutputFormat<K, V>> formatClass;
+  private final Class<K> keyClass;
+  private final Class<V> valueClass;
   private final SerializableFunction<T, KV<K, V>> outputConverter;
   private final SerializableConfiguration serializableConfiguration;
   private final String username;
@@ -66,12 +85,16 @@ public class HDFSFileSink<T, K, V> extends Sink<T> {
 
   private HDFSFileSink(String path,
                        Class<? extends FileOutputFormat<K, V>> formatClass,
+                       Class<K> keyClass,
+                       Class<V> valueClass,
                        SerializableFunction<T, KV<K, V>> outputConverter,
                        SerializableConfiguration serializableConfiguration,
-                       String username,
+                       @Nullable String username,
                        boolean validate) {
     this.path = path;
     this.formatClass = formatClass;
+    this.keyClass = keyClass;
+    this.valueClass = valueClass;
     this.outputConverter = outputConverter;
     this.serializableConfiguration = serializableConfiguration;
     this.username = username;
@@ -82,9 +105,21 @@ public class HDFSFileSink<T, K, V> extends Sink<T> {
   // Factory methods
   // =======================================================================
 
-  public static <T, K, V, F extends FileOutputFormat<K, V>> HDFSFileSink<T, K, V>
-  to(String path, Class<F> formatClass, SerializableFunction<T, KV<K, V>> outputConverter) {
-    return new HDFSFileSink<>(path, formatClass, outputConverter, null, null, true);
+  public static <T, K, V, W extends FileOutputFormat<K, V>> HDFSFileSink<T, K, V>
+  to(String path,
+     Class<W> formatClass,
+     Class<K> keyClass,
+     Class<V> valueClass,
+     SerializableFunction<T, KV<K, V>> outputConverter) {
+    return new HDFSFileSink<>(
+        path,
+        formatClass,
+        keyClass,
+        valueClass,
+        outputConverter,
+        null,
+        null,
+        true);
   }
 
   public static <T> HDFSFileSink<T, NullWritable, Text> toText(String path) {
@@ -95,10 +130,16 @@ public class HDFSFileSink<T, K, V> extends Sink<T> {
             return KV.of(NullWritable.get(), new Text(input.toString()));
           }
         };
-    return to(path, TextOutputFormat.class, outputConverter);
+    return to(path, TextOutputFormat.class, NullWritable.class, Text.class, outputConverter);
   }
 
-  public static <T> HDFSFileSink<T, AvroKey<T>, NullWritable> toAvro(String path) {
+  /**
+   * Helper to create Avro sink given {@link AvroCoder}. Keep in mind that configuration
+   * object is altered to enable Avro output.
+   */
+  public static <T> HDFSFileSink<T, AvroKey<T>, NullWritable> toAvro(String path,
+                                                                     final AvroCoder<T> coder,
+                                                                     Configuration conf) {
     SerializableFunction<T, KV<AvroKey<T>, NullWritable>> outputConverter =
         new SerializableFunction<T, KV<AvroKey<T>, NullWritable>>() {
           @Override
@@ -106,7 +147,32 @@ public class HDFSFileSink<T, K, V> extends Sink<T> {
             return KV.of(new AvroKey<>(input), NullWritable.get());
           }
         };
-    return to(path, AvroKeyOutputFormat.class, outputConverter);
+    conf.set("avro.schema.output.key", coder.getSchema().toString());
+    return to(
+        path,
+        AvroKeyOutputFormat.class,
+        (Class<AvroKey<T>>) (Class<?>) AvroKey.class,
+        NullWritable.class,
+        outputConverter).withConfiguration(conf);
+  }
+
+  /**
+   * Helper to create Avro sink given {@link Schema}. Keep in mind that configuration
+   * object is altered to enable Avro output.
+   */
+  public static HDFSFileSink<GenericRecord, AvroKey<GenericRecord>, NullWritable>
+  toAvro(String path, Schema schema, Configuration conf) {
+    return toAvro(path, AvroCoder.of(schema), conf);
+  }
+
+  /**
+   * Helper to create Avro sink given {@link Class}. Keep in mind that configuration
+   * object is altered to enable Avro output.
+   */
+  public static <T> HDFSFileSink<T, AvroKey<T>, NullWritable> toAvro(String path,
+                                                                     Class<T> cls,
+                                                                     Configuration conf) {
+    return toAvro(path, AvroCoder.of(cls), conf);
   }
 
   // =======================================================================
@@ -116,17 +182,38 @@ public class HDFSFileSink<T, K, V> extends Sink<T> {
   public HDFSFileSink<T, K, V> withConfiguration(Configuration conf) {
     SerializableConfiguration serializableConfiguration = new SerializableConfiguration(conf);
     return new HDFSFileSink<>(
-        path, formatClass, outputConverter, serializableConfiguration, username, validate);
+        path,
+        formatClass,
+        keyClass,
+        valueClass,
+        outputConverter,
+        serializableConfiguration,
+        username,
+        validate);
   }
 
-  public HDFSFileSink<T, K, V> withUsername(String username) {
+  public HDFSFileSink<T, K, V> withUsername(@Nullable String username) {
     return new HDFSFileSink<>(
-        path, formatClass, outputConverter, serializableConfiguration, username, false);
+        path,
+        formatClass,
+        keyClass,
+        valueClass,
+        outputConverter,
+        serializableConfiguration,
+        username,
+        validate);
   }
 
   public HDFSFileSink<T, K, V> withoutValidation() {
     return new HDFSFileSink<>(
-        path, formatClass, outputConverter, serializableConfiguration, username, false);
+        path,
+        formatClass,
+        keyClass,
+        valueClass,
+        outputConverter,
+        serializableConfiguration,
+        username,
+        false);
   }
 
   // =======================================================================
@@ -137,27 +224,31 @@ public class HDFSFileSink<T, K, V> extends Sink<T> {
   public void validate(PipelineOptions options) {
     if (validate) {
       try {
-        FileSystem fs = FileSystem.get(new URI(path), jobInstance().getConfiguration());
-        checkState(!fs.exists(new Path(path)), "Output path %s exists", path);
-      } catch (IOException | URISyntaxException e) {
+        UGIHelper.getBestUGI(username).doAs(new PrivilegedExceptionAction<Void>() {
+          @Override
+          public Void run() throws Exception {
+            FileSystem fs = FileSystem.get(new URI(path),
+                SerializableConfiguration.newConfiguration(serializableConfiguration));
+            checkState(!fs.exists(new Path(path)), "Output path %s already exists", path);
+            return null;
+          }
+        });
+      } catch (IOException | InterruptedException e) {
         throw new RuntimeException(e);
       }
     }
   }
 
   @Override
-  public Sink.WriteOperation<T, ?> createWriteOperation(PipelineOptions options) {
+  public Sink.WriteOperation<T, String> createWriteOperation(PipelineOptions options) {
     return new HDFSWriteOperation<>(this, path, formatClass);
   }
 
-  private Job jobInstance() throws IOException {
-    Job job = Job.getInstance();
-    if (serializableConfiguration != null) {
-      for (Map.Entry<String, String> entry : serializableConfiguration.get()) {
-        job.getConfiguration().set(entry.getKey(), entry.getValue());
-      }
-    }
+  private Job newJob() throws IOException {
+    Job job = SerializableConfiguration.newJob(serializableConfiguration);
     job.setJobID(jobId);
+    job.setOutputKeyClass(keyClass);
+    job.setOutputValueClass(valueClass);
     return job;
   }
 
@@ -182,29 +273,24 @@ public class HDFSFileSink<T, K, V> extends Sink<T> {
 
     @Override
     public void initialize(PipelineOptions options) throws Exception {
-      Job job = sink.jobInstance();
+      Job job = sink.newJob();
       FileOutputFormat.setOutputPath(job, new Path(path));
     }
 
     @Override
     public void finalize(final Iterable<String> writerResults, PipelineOptions options)
         throws Exception {
-      if (sink.username == null) {
-        doFinalize(writerResults);
-      } else {
-        UserGroupInformation.createRemoteUser(sink.username).doAs(
-            new PrivilegedExceptionAction<Void>() {
-              @Override
-              public Void run() throws Exception {
-                doFinalize(writerResults);
-                return null;
-              }
-            });
-      }
+      UGIHelper.getBestUGI(sink.username).doAs(new PrivilegedExceptionAction<Void>() {
+        @Override
+        public Void run() throws Exception {
+          doFinalize(writerResults);
+          return null;
+        }
+      });
     }
 
     private void doFinalize(Iterable<String> writerResults) throws Exception {
-      Job job = sink.jobInstance();
+      Job job = sink.newJob();
       FileSystem fs = FileSystem.get(new URI(path), job.getConfiguration());
 
       // If there are 0 output shards, just create output folder.
@@ -298,24 +384,21 @@ public class HDFSFileSink<T, K, V> extends Sink<T> {
 
     @Override
     public void open(final String uId) throws Exception {
-      if (writeOperation.sink.username == null) {
-        doOpen(uId);
-      } else {
-        UserGroupInformation.createRemoteUser(writeOperation.sink.username).doAs(
-            new PrivilegedExceptionAction<Void>() {
-              @Override
-              public Void run() throws Exception {
-                doOpen(uId);
-                return null;
-              }
-            });
-      }
+      UGIHelper.getBestUGI(writeOperation.sink.username).doAs(
+          new PrivilegedExceptionAction<Void>() {
+            @Override
+            public Void run() throws Exception {
+              doOpen(uId);
+              return null;
+            }
+          }
+      );
     }
 
     private void doOpen(String uId) throws Exception {
       this.hash = uId.hashCode();
 
-      Job job = writeOperation.sink.jobInstance();
+      Job job = writeOperation.sink.newJob();
       FileOutputFormat.setOutputPath(job, new Path(path));
 
       // Each Writer is responsible for writing one bundle of elements and is represented by one
@@ -332,23 +415,21 @@ public class HDFSFileSink<T, K, V> extends Sink<T> {
 
     @Override
     public void write(T value) throws Exception {
+      checkNotNull(recordWriter,
+          "Record writer can't be null. Make sure to open Writer first!");
       KV<K, V> kv = writeOperation.sink.outputConverter.apply(value);
       recordWriter.write(kv.getKey(), kv.getValue());
     }
 
     @Override
     public String close() throws Exception {
-      if (writeOperation.sink.username == null) {
-        return doClose();
-      } else {
-        return UserGroupInformation.createRemoteUser(writeOperation.sink.username).doAs(
-            new PrivilegedExceptionAction<String>() {
-              @Override
-              public String run() throws Exception {
-                return doClose();
-              }
-            });
-      }
+      return UGIHelper.getBestUGI(writeOperation.sink.username).doAs(
+          new PrivilegedExceptionAction<String>() {
+            @Override
+            public String run() throws Exception {
+              return doClose();
+            }
+          });
     }
 
     private String doClose() throws Exception {

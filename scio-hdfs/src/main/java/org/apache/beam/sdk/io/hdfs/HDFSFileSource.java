@@ -23,7 +23,12 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
-import org.apache.beam.sdk.coders.*;
+import org.apache.beam.sdk.coders.AvroCoder;
+import org.apache.beam.sdk.coders.Coder;
+import org.apache.beam.sdk.coders.CoderException;
+import org.apache.beam.sdk.coders.KvCoder;
+import org.apache.beam.sdk.coders.StringUtf8Coder;
+import org.apache.beam.sdk.coders.VoidCoder;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.transforms.SerializableFunction;
@@ -33,11 +38,22 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableUtils;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.Externalizable;
@@ -47,10 +63,9 @@ import java.io.ObjectOutput;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -59,12 +74,15 @@ import static com.google.common.base.Preconditions.checkState;
 public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
   private static final long serialVersionUID = 0L;
 
+  private static final Logger LOG = LoggerFactory.getLogger(HDFSFileSource.class);
+
   private final String filepattern;
   private final Class<? extends FileInputFormat<K, V>> formatClass;
   private final Coder<T> coder;
   private final SerializableFunction<KV<K, V>, T> inputConverter;
   private final SerializableConfiguration serializableConfiguration;
   private final SerializableSplit serializableSplit;
+  private final String username;
   private final boolean validate;
 
   private HDFSFileSource(String filepattern,
@@ -73,6 +91,7 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
                          SerializableFunction<KV<K, V>, T> inputConverter,
                          SerializableConfiguration serializableConfiguration,
                          SerializableSplit serializableSplit,
+                         @Nullable String username,
                          boolean validate) {
     this.filepattern = filepattern;
     this.formatClass = castClass(formatClass);
@@ -80,6 +99,7 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
     this.inputConverter = inputConverter;
     this.serializableConfiguration = serializableConfiguration;
     this.serializableSplit = serializableSplit;
+    this.username = username;
     this.validate = validate;
   }
 
@@ -92,7 +112,15 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
        Class<F> formatClass,
        Coder<T> coder,
        SerializableFunction<KV<K, V>, T> inputConverter) {
-    return new HDFSFileSource<>(filepattern, formatClass, coder, inputConverter, null, null, true);
+    return new HDFSFileSource<>(
+        filepattern,
+        formatClass,
+        coder,
+        inputConverter,
+        null,
+        null,
+        null,
+        true);
   }
 
   public static <K, V, F extends FileInputFormat<K, V>> HDFSFileSource<KV<K, V>, K, V>
@@ -108,7 +136,15 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
             return input;
           }
         };
-    return new HDFSFileSource<>(filepattern, formatClass, coder, inputConverter, null, null, true);
+    return new HDFSFileSource<>(
+        filepattern,
+        formatClass,
+        coder,
+        inputConverter,
+        null,
+        null,
+        null,
+        true);
   }
 
   public static HDFSFileSource<String, LongWritable, Text>
@@ -123,8 +159,12 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
     return from(filepattern, TextInputFormat.class, StringUtf8Coder.of(), inputConverter);
   }
 
+  /**
+   * Helper to read from Avro source given {@link AvroCoder}. Keep in mind that configuration
+   * object is altered to enable Avro input.
+   */
   public static <T> HDFSFileSource<T, AvroKey<T>, NullWritable>
-  fromAvro(String filepattern, final AvroCoder<T> coder) {
+  fromAvro(String filepattern, final AvroCoder<T> coder, Configuration conf) {
     Class<AvroKeyInputFormat<T>> formatClass = castClass(AvroKeyInputFormat.class);
     SerializableFunction<KV<AvroKey<T>, NullWritable>, T> inputConverter =
         new SerializableFunction<KV<AvroKey<T>, NullWritable>, T>() {
@@ -137,19 +177,26 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
             }
           }
         };
-    Configuration conf = new Configuration();
     conf.set("avro.schema.input.key", coder.getSchema().toString());
     return from(filepattern, formatClass, coder, inputConverter).withConfiguration(conf);
   }
 
+  /**
+   * Helper to read from Avro source given {@link Schema}. Keep in mind that configuration
+   * object is altered to enable Avro input.
+   */
   public static HDFSFileSource<GenericRecord, AvroKey<GenericRecord>, NullWritable>
-  fromAvro(String filepattern, Schema schema) {
-    return fromAvro(filepattern, AvroCoder.of(schema));
+  fromAvro(String filepattern, Schema schema, Configuration conf) {
+    return fromAvro(filepattern, AvroCoder.of(schema), conf);
   }
 
+  /**
+   * Helper to read from Avro source given {@link Class}. Keep in mind that configuration
+   * object is altered to enable Avro input.
+   */
   public static <T> HDFSFileSource<T, AvroKey<T>, NullWritable>
-  fromAvro(String filepattern, Class<T> cls) {
-    return fromAvro(filepattern, AvroCoder.of(cls));
+  fromAvro(String filepattern, Class<T> cls, Configuration conf) {
+    return fromAvro(filepattern, AvroCoder.of(cls), conf);
   }
 
   // =======================================================================
@@ -159,34 +206,40 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
   public HDFSFileSource<T, K, V> withCoder(Coder<T> coder) {
     return new HDFSFileSource<>(
         filepattern, formatClass, coder, inputConverter,
-        serializableConfiguration, serializableSplit, validate);
+        serializableConfiguration, serializableSplit, username, validate);
   }
 
   public HDFSFileSource<T, K, V> withInputConverter(
       SerializableFunction<KV<K, V>, T> inputConverter) {
     return new HDFSFileSource<>(
         filepattern, formatClass, coder, inputConverter,
-        serializableConfiguration, serializableSplit, validate);
+        serializableConfiguration, serializableSplit, username, validate);
   }
 
   public HDFSFileSource<T, K, V> withConfiguration(Configuration conf) {
     SerializableConfiguration serializableConfiguration = new SerializableConfiguration(conf);
     return new HDFSFileSource<>(
         filepattern, formatClass, coder, inputConverter,
-        serializableConfiguration, serializableSplit, validate);
+        serializableConfiguration, serializableSplit, username, validate);
   }
 
   public HDFSFileSource<T, K, V> withInputSplit(InputSplit inputSplit) {
     SerializableSplit serializableSplit = new SerializableSplit(inputSplit);
     return new HDFSFileSource<>(
         filepattern, formatClass, coder, inputConverter,
-        serializableConfiguration, serializableSplit, validate);
+        serializableConfiguration, serializableSplit, username, validate);
   }
 
   public HDFSFileSource<T, K, V> withoutValidation() {
     return new HDFSFileSource<>(
         filepattern, formatClass, coder, inputConverter,
-        serializableConfiguration, serializableSplit, false);
+        serializableConfiguration, serializableSplit, username, false);
+  }
+
+  public HDFSFileSource<T, K, V> withUsername(@Nullable String username) {
+    return new HDFSFileSource<>(
+        filepattern, formatClass, coder, inputConverter,
+        serializableConfiguration, serializableSplit, username, validate);
   }
 
   // =======================================================================
@@ -198,14 +251,21 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
       long desiredBundleSizeBytes,
       PipelineOptions options) throws Exception {
     if (serializableSplit == null) {
-      return Lists.transform(computeSplits(desiredBundleSizeBytes),
+      List<InputSplit> inputSplits = UGIHelper.getBestUGI(username).doAs(
+          new PrivilegedExceptionAction<List<InputSplit>>() {
+            @Override
+            public List<InputSplit> run() throws Exception {
+              return computeSplits(desiredBundleSizeBytes, serializableConfiguration);
+            }
+          });
+      return Lists.transform(inputSplits,
           new Function<InputSplit, BoundedSource<T>>() {
             @Override
             public BoundedSource<T> apply(@Nullable InputSplit inputSplit) {
               SerializableSplit serializableSplit = new SerializableSplit(inputSplit);
               return new HDFSFileSource<>(
                   filepattern, formatClass, coder, inputConverter,
-                  serializableConfiguration, serializableSplit, validate);
+                  serializableConfiguration, serializableSplit, username, validate);
             }
           });
     } else {
@@ -224,15 +284,26 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
         return serializableSplit.getSplit().getLength();
       }
 
-      Job job = Job.getInstance(); // new instance
-      for (FileStatus st : listStatus(createFormat(job), job)) {
-        size += st.getLen();
-      }
-    } catch (IOException | NoSuchMethodException | InvocationTargetException
-        | IllegalAccessException | InstantiationException e) {
+      //TODO: rav - should use our conf?
+      size += UGIHelper.getBestUGI(username).doAs(new PrivilegedExceptionAction<Long>() {
+        @Override
+        public Long run() throws Exception {
+          long size = 0;
+          Job job = SerializableConfiguration.newJob(serializableConfiguration);
+          for (FileStatus st : listStatus(createFormat(job), job)) {
+            size += st.getLen();
+          }
+          return size;
+        }
+      });
+    } catch (IOException e) {
+      LOG.warn(
+          "Will estimate size of input to be 0 bytes. Can't estimate size of the input due to:", e);
       // ignore, and return 0
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+      LOG.warn(
+          "Will estimate size of input to be 0 bytes. Can't estimate size of the input due to:", e);
       // ignore, and return 0
     }
     return size;
@@ -248,12 +319,19 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
   public void validate() {
     if (validate) {
       try {
-        FileSystem fs = FileSystem.get(new URI(filepattern), Job.getInstance().getConfiguration());
-        FileStatus[] fileStatuses = fs.globStatus(new Path(filepattern));
-        checkState(
-            fileStatuses != null && fileStatuses.length > 0,
-            "Unable to find any files matching %s", filepattern);
-      } catch (IOException | URISyntaxException e) {
+        UGIHelper.getBestUGI(username).doAs(new PrivilegedExceptionAction<Void>() {
+              @Override
+              public Void run() throws Exception {
+                FileSystem fs = FileSystem.get(new URI(filepattern),
+                    SerializableConfiguration.newConfiguration(serializableConfiguration));
+                FileStatus[] fileStatuses = fs.globStatus(new Path(filepattern));
+                checkState(
+                    fileStatuses != null && fileStatuses.length > 0,
+                    "Unable to find any files matching %s", filepattern);
+                  return null;
+                }
+              });
+      } catch (IOException | InterruptedException e) {
         throw new RuntimeException(e);
       }
     }
@@ -268,9 +346,10 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
   // Helpers
   // =======================================================================
 
-  private List<InputSplit> computeSplits(long desiredBundleSizeBytes)
+  private List<InputSplit> computeSplits(long desiredBundleSizeBytes,
+                                         SerializableConfiguration serializableConfiguration)
       throws IOException, IllegalAccessException, InstantiationException {
-    Job job = Job.getInstance();
+    Job job = SerializableConfiguration.newJob(serializableConfiguration);
     FileInputFormat.setMinInputSplitSize(job, desiredBundleSizeBytes);
     FileInputFormat.setMaxInputSplitSize(job, desiredBundleSizeBytes);
     return createFormat(job).getSplits(job);
@@ -339,13 +418,7 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
       this.source = source;
       this.filepattern = filepattern;
       this.formatClass = formatClass;
-      this.job = Job.getInstance();
-
-      if (source.serializableConfiguration != null) {
-        for (Map.Entry<String, String> entry : source.serializableConfiguration.get()) {
-          job.getConfiguration().set(entry.getKey(), entry.getValue());
-        }
-      }
+      this.job = SerializableConfiguration.newJob(source.serializableConfiguration);
 
       if (serializableSplit != null) {
         this.splits = ImmutableList.of(serializableSplit.getSplit());
@@ -391,7 +464,13 @@ public class HDFSFileSource<T, K, V> extends BoundedSource<T> {
               currentReader.close();
             }
             currentReader = reader;
-            currentReader.initialize(nextSplit, attemptContext);
+            UGIHelper.getBestUGI(source.username).doAs(new PrivilegedExceptionAction<Void>() {
+              @Override
+              public Void run() throws Exception {
+                currentReader.initialize(nextSplit, attemptContext);
+                return null;
+              }
+            });
             if (currentReader.nextKeyValue()) {
               currentPair = nextPair();
               return true;
