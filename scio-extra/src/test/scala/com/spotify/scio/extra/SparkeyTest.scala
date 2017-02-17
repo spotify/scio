@@ -29,8 +29,8 @@ class SparkeyTest extends PipelineSpec {
       val sideData = Seq(("a", "1"), ("b", "2"), ("c", "3"))
       val p2 = sc.parallelize(sideData).asSparkeySideInput
       val s = p1.withSideInputs(p2).flatMap { (i, si) =>
-        val map = si(p2)
-        val r = map.toList.map(_._2)
+        val reader = si(p2)
+        val r = reader.toStream.map(_._2)
         r
       }.toSCollection
       s should containInAnyOrder (Seq("1", "2", "3"))

@@ -19,16 +19,19 @@ package com.spotify.scio.extra
 
 import java.io.File
 
+import com.spotify.scio.ScioContext
 import com.spotify.scio.values.{SCollection, SideInput}
-import com.spotify.sparkey.{CompressionType, Sparkey => JSparkey}
+import com.spotify.sparkey.{CompressionType, SparkeyReader, Sparkey => JSparkey}
 import org.apache.beam.sdk.transforms.{DoFn, PTransform, View}
 import org.apache.beam.sdk.values.{PCollection, PCollectionView}
+
+import scala.collection.JavaConverters._
 
 object Sparkey {
 
   implicit class PairSCollectionWithSparkey[K, V](val self: SCollection[(K, V)])
                                                  (implicit ev1: K <:< String, ev2: V <:< String) {
-    def asSparkeySideInput: SideInput[Map[String, String]] = {
+    def asSparkeySideInput: SideInput[SparkeyReader] = {
       val f = self.groupBy(_ => ())
         .map { case (_, iter) =>
           val indexFile = new File("test.spi")
@@ -55,33 +58,22 @@ object Sparkey {
     }
   }
 
-  private[scio] class SparkeySideInput(val view: PCollectionView[String])
-    extends SideInput[Map[String, String]] {
-    override def get[I, O](context: DoFn[I, O]#ProcessContext): Map[String, String] =
-      new SparkeySideInputMap(context.sideInput(view))
+  implicit class Reader(val self: SparkeyReader) {
+    def get(key: String): Option[String] = Option(self.getAsString(key))
+
+    def toStream(): Stream[(String, String)] = self.iterator().asScala.toStream.map { e =>
+      (e.getKeyAsString, e.getValueAsString)
+    }
   }
 
-  private class SparkeySideInputMap(indexFile: String) extends Map[String, String] {
-    val reader = JSparkey.open(new File(indexFile))
+  implicit class SparkeyScioContext(val self: ScioContext) {
+    def sparkeySideInput(indexFile: String): SideInput[Map[String, String]] = ???
+  }
 
-    override def get(key: String): Option[String] = Option(reader.getAsString(key))
-
-    override def iterator: Iterator[(String, String)] = new Iterator[(String, String)] {
-      val delegate = reader.iterator()
-
-      override def hasNext: Boolean = delegate.hasNext
-
-      override def next(): (String, String) = {
-        val entry = delegate.next()
-        (entry.getKeyAsString, entry.getValueAsString)
-      }
-    }
-
-    // scalastyle:off method.name
-    override def +[B1 >: String](kv: (String, B1)): Map[String, B1] = ???
-
-    override def -(key: String): Map[String, String] = ???
-    // scalastyle:on method.name
+  private[scio] class SparkeySideInput(val view: PCollectionView[String])
+    extends SideInput[SparkeyReader] {
+    override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
+      JSparkey.open(new File(context.sideInput(view)))
   }
 
 }
