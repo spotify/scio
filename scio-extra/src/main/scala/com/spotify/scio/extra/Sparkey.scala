@@ -29,10 +29,26 @@ import scala.collection.JavaConverters._
 
 object Sparkey {
 
-  implicit class PairSCollectionWithSparkey[K, V](val self: SCollection[(K, V)])
+  private val sparkeyTransform =
+    new PTransform[PCollection[SparkeyUrl], PCollectionView[SparkeyUrl]]() {
+    override def expand(input: PCollection[SparkeyUrl]): PCollectionView[SparkeyUrl] = {
+      input.apply(View.asSingleton())
+    }
+  }
+
+  case class SparkeyUrl(val url: String)
+
+  implicit class SparkeyScioContext(val self: ScioContext) {
+    def sparkeySideInput(url: SparkeyUrl): SideInput[SparkeyReader] = {
+      val view = self.parallelize(Seq(url)).applyInternal(sparkeyTransform)
+      new SparkeySideInput(view)
+    }
+  }
+
+  implicit class SCollectionWithSparkeyWriter[K, V](val self: SCollection[(K, V)])
                                                  (implicit ev1: K <:< String, ev2: V <:< String) {
-    def asSparkeySideInput: SideInput[SparkeyReader] = {
-      val f = self.groupBy(_ => ())
+    def asSparkey(url: SparkeyUrl = SparkeyUrl("default.spi")): SCollection[SparkeyUrl] =
+      self.transform { in => in.groupBy(_ => ())
         .map { case (_, iter) =>
           val indexFile = new File("test.spi")
           val writer = JSparkey.createNew(indexFile, CompressionType.NONE, 512);
@@ -44,18 +60,20 @@ object Sparkey {
           writer.flush()
           writer.writeHash()
           writer.close()
-          indexFile.toString
+          SparkeyUrl(indexFile.toString)
         }
-      val o = f.applyInternal(
-        new PTransform[PCollection[String], PCollectionView[String]]() {
-          override def expand(input: PCollection[String]): PCollectionView[String] = {
-            input.apply(View.asSingleton())
-          }
-        }
-      )
-
-      new SparkeySideInput(o)
     }
+  }
+
+  implicit class SparkeySCollection(val self: SCollection[SparkeyUrl]) {
+    def asSparkeySideInput(): SideInput[SparkeyReader] = {
+      val view = self.applyInternal(sparkeyTransform)
+      new SparkeySideInput(view)
+    }
+  }
+
+  implicit class SCollectionToSparkeySideInput(val self: SCollection[(String, String)]) {
+    def asSparkeySideInput(): SideInput[SparkeyReader] = self.asSparkey().asSparkeySideInput()
   }
 
   implicit class Reader(val self: SparkeyReader) {
@@ -66,14 +84,10 @@ object Sparkey {
     }
   }
 
-  implicit class SparkeyScioContext(val self: ScioContext) {
-    def sparkeySideInput(indexFile: String): SideInput[Map[String, String]] = ???
-  }
-
-  private[scio] class SparkeySideInput(val view: PCollectionView[String])
+  private[scio] class SparkeySideInput(val view: PCollectionView[SparkeyUrl])
     extends SideInput[SparkeyReader] {
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
-      JSparkey.open(new File(context.sideInput(view)))
+      JSparkey.open(new File(context.sideInput(view).url))
   }
 
 }
