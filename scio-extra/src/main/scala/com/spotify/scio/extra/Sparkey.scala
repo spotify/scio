@@ -26,7 +26,8 @@ import org.apache.beam.sdk.values.{PCollection, PCollectionView}
 
 object Sparkey {
 
-  implicit class PairSCollectionWithSparkey[K, V](val self: SCollection[(K, V)]) {
+  implicit class PairSCollectionWithSparkey[K, V](val self: SCollection[(K, V)])
+                                                 (implicit ev1: K <:< String, ev2: V <:< String) {
     def asSparkeySideInput: SideInput[Map[String, String]] = {
       val f = self.groupBy(_ => ()).values
         .map(_.map(kv => (kv._1.toString, kv._2.toString))).map { iter =>
