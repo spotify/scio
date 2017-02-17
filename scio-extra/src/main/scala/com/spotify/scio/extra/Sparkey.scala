@@ -29,16 +29,16 @@ object Sparkey {
   implicit class PairSCollectionWithSparkey[K, V](val self: SCollection[(K, V)])
                                                  (implicit ev1: K <:< String, ev2: V <:< String) {
     def asSparkeySideInput: SideInput[Map[String, String]] = {
-      val f = self.groupBy(_ => ()).values
-        .map(_.map(kv => (kv._1.toString, kv._2.toString))).map { iter =>
-        val indexFile = new File("test.spi")
-        val writer = JSparkey.createNew(indexFile, CompressionType.NONE, 512);
-        iter.foreach(kv => writer.put(kv._1, kv._2))
-        writer.flush()
-        writer.writeHash()
-        writer.close()
-        indexFile.toString
-      }
+      val f = self.groupBy(_ => ())
+        .map { case (_, iter) =>
+          val indexFile = new File("test.spi")
+          val writer = JSparkey.createNew(indexFile, CompressionType.NONE, 512);
+          iter.foreach(kv => writer.put(kv._1.toString, kv._2.toString))
+          writer.flush()
+          writer.writeHash()
+          writer.close()
+          indexFile.toString
+        }
       val o = f.applyInternal(
         new PTransform[PCollection[String], PCollectionView[String]]() {
           override def expand(input: PCollection[String]): PCollectionView[String] = {
