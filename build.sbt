@@ -208,7 +208,6 @@ lazy val scioCore: Project = Project(
   description := "Scio - A Scala API for Google Cloud Dataflow",
     libraryDependencies ++= beamDependencies,
   libraryDependencies ++= Seq(
-    "com.spotify.sparkey" % "sparkey" % "2.1.3",
     "com.twitter" %% "algebird-core" % algebirdVersion,
     "com.twitter" %% "chill" % chillVersion,
     "com.twitter" %% "chill-algebird" % chillVersion,
@@ -290,12 +289,16 @@ lazy val scioExtra: Project = Project(
   description := "Scio extra utilities",
   libraryDependencies ++= Seq(
     "com.google.guava" % "guava" % guavaVersion,
+    "com.spotify.sparkey" % "sparkey" % sparkeyVersion,
     "com.twitter" %% "algebird-core" % algebirdVersion,
     "org.scalanlp" %% "breeze" % breezeVersion,
     "info.debatty" % "java-lsh" % javaLshVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion % "test",
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
   )
+).dependsOn(
+  scioCore,
+  scioTest % "test"
 )
 
 lazy val scioHdfs: Project = Project(

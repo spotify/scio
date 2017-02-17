@@ -17,14 +17,12 @@
 
 package com.spotify.scio.values
 
-import java.io.File
 import java.lang.{Iterable => JIterable, Long => JLong}
 import java.util.{Map => JMap}
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
-import com.spotify.sparkey.{CompressionType, Sparkey}
 import com.twitter.algebird.{Aggregator, _}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
@@ -624,30 +622,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
         }
       })
     new MapSideInput[K, V](o)
-  }
-
-  def asSparkeySideInput: SideInput[Map[String, String]] = {
-    val f = self.groupBy(_ => ()).values
-      .map(_.map(kv => (kv._1.toString, kv._2.toString))).map { iter =>
-        val indexFile = new File("test.spi")
-        val writer = Sparkey.createNew(indexFile, CompressionType.NONE, 512);
-        iter.foreach { kv =>
-          writer.put(kv._1, kv._2)
-          writer.flush();
-        }
-        writer.writeHash();
-        writer.close();
-      indexFile.toString
-    }
-    val o = f.applyInternal(
-      new PTransform[PCollection[String], PCollectionView[String]]() {
-        override def expand(input: PCollection[String]): PCollectionView[String] = {
-          input.apply(View.asSingleton())
-        }
-      }
-    )
-
-    new SparkeySideInput(o)
   }
 
   /**
