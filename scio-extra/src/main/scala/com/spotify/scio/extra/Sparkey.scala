@@ -33,7 +33,11 @@ object Sparkey {
         .map { case (_, iter) =>
           val indexFile = new File("test.spi")
           val writer = JSparkey.createNew(indexFile, CompressionType.NONE, 512);
-          iter.foreach(kv => writer.put(kv._1.toString, kv._2.toString))
+          val it = iter.iterator
+          while (it.hasNext) {
+            val kv = it.next()
+            writer.put(kv._1.toString, kv._2.toString)
+          }
           writer.flush()
           writer.writeHash()
           writer.close()
