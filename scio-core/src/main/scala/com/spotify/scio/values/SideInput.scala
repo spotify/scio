@@ -94,7 +94,6 @@ private class SideInputMap[A, B](self: JMap[A, B]) extends Map[A, B] {
 
 }
 
-
 // Immutable wrapper for j.u.Map[A, j.l.terable[B]] because .asScala returns a s.c.mutable.Map
 private class SideInputMultiMap[A, B](self: JMap[A, JIterable[B]]) extends Map[A, Iterable[B]] {
 
