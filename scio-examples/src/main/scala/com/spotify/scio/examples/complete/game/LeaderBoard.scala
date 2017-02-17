@@ -24,7 +24,10 @@ import com.spotify.scio.bigquery._
 import com.spotify.scio.values.WindowOptions
 import org.apache.beam.examples.common.ExampleUtils
 import org.apache.beam.sdk.options.StreamingOptions
-import org.apache.beam.sdk.transforms.windowing.{AfterProcessingTime, AfterWatermark, IntervalWindow, Repeatedly}
+import org.apache.beam.sdk.transforms.windowing.{AfterProcessingTime,
+                                                 AfterWatermark,
+                                                 IntervalWindow,
+                                                 Repeatedly}
 import org.joda.time.{DateTimeZone, Duration, Instant}
 import org.joda.time.format.DateTimeFormat
 
