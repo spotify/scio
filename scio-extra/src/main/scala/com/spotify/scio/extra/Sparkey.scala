@@ -46,7 +46,7 @@ object Sparkey {
   }
 
   implicit class SCollectionWithSparkeyWriter[K, V](val self: SCollection[(K, V)])
-                                                 (implicit ev1: K <:< String, ev2: V <:< String) {
+                                                   (implicit ev1: K <:< String, ev2: V <:< String) {
     def asSparkey(uri: SparkeyUri): SCollection[SparkeyUri] = self.transform { in =>
       in.groupBy(_ => ())
         .map { case (_, iter) =>
