@@ -17,23 +17,56 @@
 
 package com.spotify.scio.extra
 
+import java.io.File
+
+import com.google.common.io.Files
+import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.PipelineSpec
+import com.spotify.sparkey.{Sparkey => JSparkey}
+import org.apache.beam.sdk.options.GcpOptions
 
 class SparkeyTest extends PipelineSpec {
-  "PairSCollectionFunctions" should "support asSparkeySideInput" in {
+  import Sparkey._
 
-    import Sparkey._
+  val sideData = Seq(("a", "1"), ("b", "2"), ("c", "3"))
 
+  "SCollection" should "support .asSparkeySideInput using default gcpTempLocation" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
-      val sideData = Seq(("a", "1"), ("b", "2"), ("c", "3"))
       val p2 = sc.parallelize(sideData).asSparkeySideInput
-      val s = p1.withSideInputs(p2).flatMap { (i, si) =>
-        val reader = si(p2)
-        val r = reader.toStream.map(_._2)
-        r
-      }.toSCollection
+      val s = p1.withSideInputs(p2).flatMap((i, si) => si(p2).toStream.map(_._2)).toSCollection
       s should containInAnyOrder (Seq("1", "2", "3"))
     }
+  }
+
+  it should "support .asSparkeySideInput using custom gcpTempLocation" in {
+    val sc = ScioContext.forTest()
+    val gcpOpts = sc.optionsAs[GcpOptions]
+    gcpOpts.setGcpTempLocation(gcpOpts.getGcpTempLocation + "/test-folder/sparkey-prefix")
+    val p1 = sc.parallelize(Seq(1))
+    val p2 = sc.parallelize(sideData).asSparkeySideInput
+    val s = p1.withSideInputs(p2).flatMap((i, si) => si(p2).toStream.map(_._2)).toSCollection
+    s should containInAnyOrder (Seq("1", "2", "3"))
+  }
+
+  it should "support .asSparkey with default local file" in {
+    val tmpDir = Files.createTempDir()
+    val sparkeyRoot = tmpDir + "/sparkey"
+    val sc = ScioContext()
+    sc.options.setTempLocation(sparkeyRoot)
+    val p = sc.parallelize(sideData).asSparkey
+    sc.close().waitUntilFinish()
+    val reader = JSparkey.open(new File(sparkeyRoot + ".spi"))
+    reader.toStream.toSet shouldEqual Set(("a", "1"), ("b", "2"), ("c", "3"))
+  }
+
+  it should "support .asSparkey with specified local file" in {
+    val tmpDir = Files.createTempDir()
+    val sparkeyRoot = tmpDir + "/my-sparkey-file"
+    runWithContext { sc =>
+      val p = sc.parallelize(sideData).asSparkey(SparkeyUri(sparkeyRoot))
+    }
+    val reader = JSparkey.open(new File(sparkeyRoot + ".spi"))
+    reader.toStream.toSet shouldEqual Set(("a", "1"), ("b", "2"), ("c", "3"))
   }
 }
