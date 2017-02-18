@@ -821,15 +821,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def materialize: Future[Tap[T]] = {
     val filename = "scio-materialize-" + UUID.randomUUID().toString
-    val tmpDir = if (ScioUtil.isLocalRunner(context.options)) {
-      if (context.options.getTempLocation == null) {
-        sys.props("java.io.tmpdir")
-      } else {
-        context.options.getTempLocation
-      }
-    } else {
-      context.optionsAs[GcpOptions].getGcpTempLocation
-    }
+    val tmpDir = ScioUtil.tempLocation(context.options)
     val path = tmpDir + (if (tmpDir.endsWith("/")) "" else "/") + filename
     saveAsObjectFile(path)
   }
