@@ -28,10 +28,10 @@ import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.{CompressionType, SparkeyReader, SparkeyWriter, Sparkey => JSparkey}
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.apache.beam.sdk.transforms.{DoFn, PTransform, View}
+import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
 import org.apache.beam.sdk.util.gcsfs.GcsPath
-import org.apache.beam.sdk.values.{PCollection, PCollectionView}
+import org.apache.beam.sdk.values.PCollectionView
 
 import scala.collection.JavaConverters._
 import scala.util.Try
@@ -40,7 +40,7 @@ object Sparkey {
 
   implicit class SparkeyScioContext(val self: ScioContext) {
     def sparkeySideInput(url: SparkeyUri): SideInput[SparkeyReader] = {
-      val view = self.parallelize(Seq(url)).applyInternal(sparkeyTransform)
+      val view = self.parallelize(Seq(url)).applyInternal(View.asSingleton())
       new SparkeySideInput(view)
     }
   }
@@ -70,7 +70,7 @@ object Sparkey {
 
   implicit class SparkeySCollection(val self: SCollection[SparkeyUri]) {
     def asSparkeySideInput(): SideInput[SparkeyReader] = {
-      val view = self.applyInternal(sparkeyTransform)
+      val view = self.applyInternal(View.asSingleton())
       new SparkeySideInput(view)
     }
   }
@@ -92,13 +92,6 @@ object Sparkey {
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
       SparkeyUri(context.sideInput(view).path).getReader()
   }
-
-  private val sparkeyTransform =
-    new PTransform[PCollection[SparkeyUri], PCollectionView[SparkeyUri]]() {
-      override def expand(input: PCollection[SparkeyUri]): PCollectionView[SparkeyUri] = {
-        input.apply(View.asSingleton())
-      }
-    }
 }
 
 trait SparkeyUri extends Serializable {
