@@ -105,8 +105,6 @@ object Sparkey {
   implicit class RichSparkeyReader(val self: SparkeyReader) extends Map[String, String] {
     override def get(key: String): Option[String] = Option(self.getAsString(key))
 
-    override def +[B1 >: String](kv: (String, B1)): Map[String, B1] = ???
-
     override def iterator: Iterator[(String, String)] = new Iterator[(String, String)] {
       private val delegate = self.iterator()
 
@@ -117,8 +115,10 @@ object Sparkey {
         (entry.getKeyAsString, entry.getValueAsString)
       }
     }
-
+    //scalastyle:off method.name
+    override def +[B1 >: String](kv: (String, B1)): Map[String, B1] = ???
     override def -(key: String): Map[String, String] = ???
+    //scalastyle:on method.name
   }
 
   private[scio] class SparkeySideInput(val view: PCollectionView[SparkeyUri])

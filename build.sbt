@@ -285,7 +285,7 @@ lazy val scioExtra: Project = Project(
   "scio-extra",
   file("scio-extra")
 ).settings(
-  commonSettings,
+  commonSettings ++ itSettings,
   description := "Scio extra utilities",
   libraryDependencies ++= Seq(
     "com.google.guava" % "guava" % guavaVersion,
@@ -298,8 +298,8 @@ lazy val scioExtra: Project = Project(
   )
 ).dependsOn(
   scioCore,
-  scioTest % "test"
-)
+  scioTest % "it,test"
+).configs(IntegrationTest)
 
 lazy val scioHdfs: Project = Project(
   "scio-hdfs",

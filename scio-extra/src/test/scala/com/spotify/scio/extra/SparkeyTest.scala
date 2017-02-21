@@ -30,26 +30,7 @@ class SparkeyTest extends PipelineSpec {
 
   val sideData = Seq(("a", "1"), ("b", "2"), ("c", "3"))
 
-  "SCollection" should "support .asSparkeySideInput using default gcpTempLocation" in {
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(1))
-      val p2 = sc.parallelize(sideData).asSparkeySideInput
-      val s = p1.withSideInputs(p2).flatMap((i, si) => si(p2).toStream.map(_._2)).toSCollection
-      s should containInAnyOrder (Seq("1", "2", "3"))
-    }
-  }
-
-  it should "support .asSparkeySideInput using custom gcpTempLocation" in {
-    val sc = ScioContext.forTest()
-    val gcpOpts = sc.optionsAs[GcpOptions]
-    gcpOpts.setGcpTempLocation(gcpOpts.getGcpTempLocation + "/test-folder/sparkey-prefix")
-    val p1 = sc.parallelize(Seq(1))
-    val p2 = sc.parallelize(sideData).asSparkeySideInput
-    val s = p1.withSideInputs(p2).flatMap((i, si) => si(p2).toStream.map(_._2)).toSCollection
-    s should containInAnyOrder (Seq("1", "2", "3"))
-  }
-
-  it should "support .asSparkey with default local file" in {
+  "SCollection" should "support .asSparkey with default local file" in {
     val tmpDir = Files.createTempDir().toString
     val sparkeyRoot = tmpDir + "/sparkey"
     val sc = ScioContext()
