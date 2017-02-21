@@ -50,14 +50,17 @@ class SparkeyTest extends PipelineSpec {
   }
 
   it should "support .asSparkey with default local file" in {
-    val tmpDir = Files.createTempDir()
+    val tmpDir = Files.createTempDir().toString
     val sparkeyRoot = tmpDir + "/sparkey"
     val sc = ScioContext()
-    sc.options.setTempLocation(sparkeyRoot)
+    sc.options.setTempLocation(tmpDir)
     val p = sc.parallelize(sideData).asSparkey
     sc.close().waitUntilFinish()
-    val reader = JSparkey.open(new File(sparkeyRoot + ".spi"))
+    val reader = JSparkey.open(new File(sparkeyRoot))
     reader.toStream.toSet shouldEqual Set(("a", "1"), ("b", "2"), ("c", "3"))
+    for (ext <- Seq(".spi", ".spl")) {
+      new File(sparkeyRoot + ext).delete()
+    }
   }
 
   it should "support .asSparkey with specified local file" in {
@@ -68,5 +71,8 @@ class SparkeyTest extends PipelineSpec {
     }
     val reader = JSparkey.open(new File(sparkeyRoot + ".spi"))
     reader.toStream.toSet shouldEqual Set(("a", "1"), ("b", "2"), ("c", "3"))
+    for (ext <- Seq(".spi", ".spl")) {
+      new File(sparkeyRoot + ext).delete()
+    }
   }
 }

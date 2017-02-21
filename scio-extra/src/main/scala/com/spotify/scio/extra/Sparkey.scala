@@ -22,32 +22,36 @@ import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.file.{Paths, Files => JFiles}
 
-import com.google.common.io.Files
+import com.google.common.base.Charsets
+import com.google.common.hash.Hashing
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.{SCollection, SideInput}
-import com.spotify.sparkey.{CompressionType, SparkeyReader, SparkeyWriter, Sparkey => JSparkey}
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import com.spotify.sparkey.{CompressionType, SparkeyReader, Sparkey => JSparkey}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 import org.apache.beam.sdk.values.PCollectionView
 
-import scala.util.Try
-
 object Sparkey {
 
+  /**
+   * Represents the base URI for a Sparkey index and log file, either on the local file
+   * system or on GCS. For GCS, the uri should be in the form
+   * 'gs://<bucket>/<path>/<sparkey-prefix>'. For local files, the uri should be in the form
+   * '/<path>/<sparkey-prefix>'. Note that the uri must not be a folder or GCS bucket as the uri is
+   * a base path representing two files - <sparkey-prefix>.spi and <sparkey-prefix>.spl.
+   */
   trait SparkeyUri {
-    val path: String
-    private[Sparkey] def getWriter(): WrappedSparkeyWriter
+    val basePath: String
     def getReader(): SparkeyReader
-    override def toString(): String = path
+    override def toString(): String = basePath
   }
 
   object SparkeyUri {
     def apply(path: String): SparkeyUri =
-      if (new URI(path).getScheme == "gs") new GcsSparkeyUri(path) else new LocalSparkeyUri(path)
+      if (ScioUtil.isGcsUri(new URI(path))) new GcsSparkeyUri(path) else new LocalSparkeyUri(path)
   }
 
   implicit class SparkeyScioContext(val self: ScioContext) {
@@ -59,10 +63,15 @@ object Sparkey {
 
   implicit class SCollectionWithSparkeyWriter[K, V](val self: SCollection[(K, V)])
                                                    (implicit ev1: K <:< String, ev2: V <:< String) {
+    /**
+     * Write the contents of this SCollection as a Sparkey file, either locally or on GCS.
+     *
+     * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
+     */
     def asSparkey(uri: SparkeyUri): SCollection[SparkeyUri] = self.transform { in =>
       in.groupBy(_ => ())
         .map { case (_, iter) =>
-          val writer = uri.getWriter()
+          val writer = new SparkeyWriter(uri)
           val it = iter.iterator
           while (it.hasNext) {
             val kv = it.next()
@@ -73,8 +82,13 @@ object Sparkey {
         }
     }
 
-    def asSparkey: SCollection[SparkeyUri] =
-      this.asSparkey(SparkeyUri(ScioUtil.tempLocation(self.context.options)))
+    /** Write the contents of this SCollection as a Sparkey file using the default uri. */
+    def asSparkey: SCollection[SparkeyUri] = {
+      val uri = ScioUtil.tempLocation(self.context.options) + "/sparkey"
+      this.asSparkey(SparkeyUri(uri))
+    }
+
+    def asSparkeySideInput: SideInput[SparkeyReader] = self.asSparkey.asSparkeySideInput()
   }
 
   implicit class SparkeySCollection(val self: SCollection[SparkeyUri]) {
@@ -110,35 +124,42 @@ object Sparkey {
   private[scio] class SparkeySideInput(val view: PCollectionView[SparkeyUri])
     extends SideInput[SparkeyReader] {
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
-      SparkeyUri(context.sideInput(view).path).getReader()
+      SparkeyUri(context.sideInput(view).basePath).getReader()
   }
 
-  private case class LocalSparkeyUri(path: String) extends SparkeyUri {
-    override def getReader(): SparkeyReader = JSparkey.open(new File(path + ".spi"))
-    override def getWriter(): WrappedSparkeyWriter = new LocalSparkeyWriter(path)
+  private case class LocalSparkeyUri(basePath: String) extends SparkeyUri {
+    override def getReader(): SparkeyReader = JSparkey.open(new File(basePath))
   }
 
-  private case class GcsSparkeyUri(path: String) extends SparkeyUri {
-    override def getReader(): SparkeyReader = {
+  private object GcsSparkeyUri
+
+  private case class GcsSparkeyUri(basePath: String) extends SparkeyUri {
+    val localBasePath: String =
+      // Hash the URI as part of the prefix to allow multiple Sparkey files per job
+      sys.props("java.io.tmpdir") + "/" + hashPrefix(basePath)
+
+    // Synchronize on companion object to eliminate any threading issues on worker.
+    override def getReader(): SparkeyReader = GcsSparkeyUri.synchronized {
       val gcs = new GcsUtilFactory().create(PipelineOptionsFactory.create())
-      val localTmpDir = Files.createTempDir()
       // Copy .spi and .spl to local files
-      for (ext <- Seq(".spi", ".spl")) {
-        val src = gcs.open(GcsPath.fromUri(s"$path/sparkey$ext"))
-        val dst = new FileOutputStream(s"$localTmpDir/sparkey$ext").getChannel
+      for (ext <- Seq("spi", "spl")) {
+        val src = gcs.open(GcsPath.fromUri(s"$basePath.$ext"))
+        val dst = new FileOutputStream(s"$localBasePath.$ext").getChannel
         dst.transferFrom(src, 0, src.size())
         src.close()
         dst.close()
       }
-      JSparkey.open(new File(localTmpDir + "/sparkey.spi"))
+      JSparkey.open(new File(s"$localBasePath.spi"))
     }
-
-    override def getWriter(): WrappedSparkeyWriter = new GcsSparkeyWriter(path)
   }
 
-  trait WrappedSparkeyWriter {
-    protected val delegate: SparkeyWriter
-    val path: String
+  private class SparkeyWriter(val uri: SparkeyUri) {
+    private lazy val localFile = uri match {
+      case LocalSparkeyUri(_) => uri.toString()
+      case gcsUri: GcsSparkeyUri => gcsUri.localBasePath
+    }
+
+    private lazy val delegate = JSparkey.createNew(new File(localFile), CompressionType.NONE, 512)
 
     def put(key: String, value: String): Unit = delegate.put(key, value)
 
@@ -146,28 +167,21 @@ object Sparkey {
       delegate.flush()
       delegate.writeHash()
       delegate.close()
-    }
-  }
-
-  private class LocalSparkeyWriter(val path: String) extends WrappedSparkeyWriter {
-    val delegate = JSparkey.createNew(new File(path + ".spi"), CompressionType.NONE, 512)
-  }
-
-  private class GcsSparkeyWriter(val path: String) extends WrappedSparkeyWriter {
-    private val localTmpDir = Files.createTempDir()
-    private val localIndex = localTmpDir + "/sparkey.spi"
-
-    val delegate = JSparkey.createNew(new File(localIndex), CompressionType.NONE, 512)
-
-    override def close(): Unit = {
-      super.close()
-      val gcs = new GcsUtilFactory().create(PipelineOptionsFactory.create())
-      // Copy .spi and .spl to GCS path
-      for (ext <- Seq(".spi", ".spl")) {
-        val writer = gcs.create(GcsPath.fromUri(s"$path/sparkey$ext"), "application/octet-stream")
-        writer.write(ByteBuffer.wrap(JFiles.readAllBytes(Paths.get(localIndex.replace(".spi", ext)))))
-        writer.close()
+      uri match {
+        case GcsSparkeyUri(path) => {
+          val gcs = new GcsUtilFactory().create(PipelineOptionsFactory.create())
+          // Copy .spi and .spl to GCS path
+          for (ext <- Seq("spi", "spl")) {
+            val writer = gcs.create(GcsPath.fromUri(s"$path.$ext"), "application/octet-stream")
+            writer.write(ByteBuffer.wrap(JFiles.readAllBytes(Paths.get(s"$localFile.$ext"))))
+            writer.close()
+          }
+        }
+        case _ => ()
       }
     }
   }
+
+  private def hashPrefix(path: String): String =
+    Hashing.sha1().hashString(path, Charsets.UTF_8).toString.substring(0, 8) + "-sparkey"
 }
