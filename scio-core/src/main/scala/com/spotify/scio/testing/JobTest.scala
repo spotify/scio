@@ -80,6 +80,8 @@ object JobTest {
                      outputs: Map[TestIO[_], SCollection[_] => Unit],
                      distCaches: Map[DistCacheIO[_], _]) {
 
+    val testId: String = newTestId(className)
+
     def args(newArgs: String*): Builder =
       this.copy(cmdlineArgs = (this.cmdlineArgs.toSeq ++ newArgs).toArray)
 
@@ -98,11 +100,20 @@ object JobTest {
       this.copy(distCaches = this.distCaches + (key -> value))
     }
 
-    def run(): Unit = {
-      val testId = newTestId(className)
+    def setUp(): Unit = {
       TestDataManager.setInput(testId, new TestInput(inputs))
       TestDataManager.setOutput(testId, new TestOutput(outputs))
       TestDataManager.setDistCache(testId, new TestDistCache(distCaches))
+    }
+
+    def tearDown(): Unit = {
+      TestDataManager.unsetInput(testId)
+      TestDataManager.unsetOutput(testId)
+      TestDataManager.unsetDistCache(testId)
+    }
+
+    def run(): Unit = {
+      setUp()
 
       try {
         Class
@@ -116,9 +127,7 @@ object JobTest {
         case NonFatal(e) => throw e
       }
 
-      TestDataManager.unsetInput(testId)
-      TestDataManager.unsetOutput(testId)
-      TestDataManager.unsetDistCache(testId)
+      tearDown()
     }
 
   }
