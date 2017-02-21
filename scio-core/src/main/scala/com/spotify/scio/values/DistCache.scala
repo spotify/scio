@@ -53,43 +53,6 @@ private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistC
     .readValue(json, classOf[PipelineOptions])
     .as(classOf[GcsOptions])
 
-  private def fetchFromGCS(uri: URI, prefix: String): File = {
-    val path = prefix + uri.getPath.split("/").last
-    val file = new File(path)
-
-    // There can be multiple DoFns/Threads trying to fetch the same data/files on the same
-    // worker. To prevent from situation where some workers see incomplete data, and keep the
-    // solution simple - let's synchronize on FileDistCache companion object (which is a singleton).
-    // There is a downside - more specifically we might have to wait a bit longer then in more
-    // optimal solution, but, simplicity > performance.
-    FileDistCache.synchronized {
-      val gcsUtil = opts.getGcsUtil
-      val src = gcsUtil.open(GcsPath.fromUri(uri))
-
-      if (file.exists() && src.size() != file.length()) {
-        // File exists but has different size than source file, most likely there was an issue
-        // on previous thread, let's remove invalid file, and download it again.
-        file.delete()
-      }
-
-      if (!file.exists()) {
-        val fos: FileOutputStream = new FileOutputStream(path)
-        val dst = fos.getChannel
-        val src = gcsUtil.open(GcsPath.fromUri(uri))
-
-        val size = dst.transferFrom(src, 0, src.size())
-        logger.info(s"DistCache $uri fetched to $path, size: $size")
-
-        dst.close()
-        fos.close()
-      } else {
-        logger.info(s"DistCache $uri already fetched ")
-      }
-
-      file
-    }
-  }
-
   private def temporaryPrefix(uris: Seq[URI]): String = {
     val hash = Hashing.sha1().hashString(uris.map(_.toString).mkString("|"), Charsets.UTF_8)
     sys.props("java.io.tmpdir") + "/" + hash.toString.substring(0, 8) + "-"
@@ -97,7 +60,8 @@ private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistC
 
   protected def prepareFiles(uris: Seq[URI]): Seq[File] = uris.map { u =>
     if (ScioUtil.isGcsUri(u)) {
-      fetchFromGCS(u, temporaryPrefix(uris))
+      val dest = temporaryPrefix(uris) + u.getPath.split("/").last
+      ScioUtil.fetchFromGCS(opts.getGcsUtil, u, dest)
     } else {
       new File(u.toString)
     }

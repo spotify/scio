@@ -138,16 +138,10 @@ object Sparkey {
       // Hash the URI as part of the prefix to allow multiple Sparkey files per job
       sys.props("java.io.tmpdir") + "/" + hashPrefix(basePath)
 
-    // Synchronize on companion object to eliminate any threading issues on worker.
-    override def getReader(): SparkeyReader = GcsSparkeyUri.synchronized {
-      val gcs = new GcsUtilFactory().create(PipelineOptionsFactory.create())
-      // Copy .spi and .spl to local files
+    override def getReader(): SparkeyReader = {
       for (ext <- Seq("spi", "spl")) {
-        val src = gcs.open(GcsPath.fromUri(s"$basePath.$ext"))
-        val dst = new FileOutputStream(s"$localBasePath.$ext").getChannel
-        dst.transferFrom(src, 0, src.size())
-        src.close()
-        dst.close()
+        val gcs = new GcsUtilFactory().create(PipelineOptionsFactory.create())
+        ScioUtil.fetchFromGCS(gcs, new URI(s"$basePath.$ext"), s"$localBasePath.$ext")
       }
       JSparkey.open(new File(s"$localBasePath.spi"))
     }

@@ -17,6 +17,7 @@
 
 package com.spotify.scio.util
 
+import java.io.{File, FileOutputStream}
 import java.net.URI
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -29,6 +30,8 @@ import org.apache.beam.runners.dataflow.options.{DataflowPipelineDebugOptions, D
 import com.google.api.client.googleapis.services.AbstractGoogleClientRequest
 import com.google.api.services.dataflow.Dataflow
 import com.google.api.services.dataflow.model.JobMetrics
+import org.apache.beam.sdk.util.GcsUtil
+import org.apache.beam.sdk.util.gcsfs.GcsPath
 
 import scala.reflect.ClassTag
 import scala.util.Try
@@ -90,5 +93,37 @@ private[scio] object ScioUtil {
     } else {
       options.getTempLocation
     }
+  }
+
+  /**
+   * Download a file from GCS onto the local file system.
+   *
+   * There can be multiple DoFns/Threads trying to fetch the same data/files on the same
+   * worker. To prevent from situation where some workers see incomplete data, and keep the
+   * solution simple - let's make this method synchronized. There is a downside - more
+   * specifically we might have to wait a bit longer then in more optimal solution, but,
+   * simplicity > performance.
+   */
+  def fetchFromGCS(gcsUtil: GcsUtil, gcsUri: URI, dest: String): File = synchronized {
+    require(isGcsUri(gcsUri), "Invalid GCS URI.")
+    val file = new File(dest)
+    val src = gcsUtil.open(GcsPath.fromUri(gcsUri))
+
+    if (file.exists() && src.size() != file.length()) {
+      // File exists but has different size than source file, most likely there was an issue
+      // on previous thread, let's remove invalid file, and download it again.
+      file.delete()
+    }
+
+    if (!file.exists()) {
+      val fos: FileOutputStream = new FileOutputStream(dest)
+      val dst = fos.getChannel
+      val src = gcsUtil.open(GcsPath.fromUri(gcsUri))
+      val size = dst.transferFrom(src, 0, src.size())
+      dst.close()
+      fos.close()
+    }
+
+    file
   }
 }
