@@ -70,7 +70,7 @@ private case class GcsSparkeyUri(basePath: String) extends SparkeyUri {
 
 private[sparkey] class SparkeyWriter(val uri: SparkeyUri) {
   private lazy val localFile = uri match {
-    case LocalSparkeyUri(_) => uri.toString()
+    case LocalSparkeyUri(_) => uri.toString
     case gcsUri: GcsSparkeyUri => gcsUri.localBasePath
   }
 
