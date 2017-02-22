@@ -68,10 +68,18 @@ package object sparkey {
       this.asSparkey(SparkeyUri(uri))
     }
 
+    /**
+     *  Convert this SCollection to a SideInput[SparkeyReader] by first writing to a Sparkey file.
+     */
     def asSparkeySideInput: SideInput[SparkeyReader] = self.asSparkey.asSparkeySideInput
   }
 
   implicit class SparkeySCollection(val self: SCollection[SparkeyUri]) extends AnyVal {
+
+    /**
+     * Convert this SCollection to a SideInput[SparkeyReader]. Note that this SCollection should
+     * be a singleton containing a [[SparkeyUri]].
+     */
     def asSparkeySideInput: SideInput[SparkeyReader] = {
       val view = self.applyInternal(View.asSingleton())
       new SparkeySideInput(view)

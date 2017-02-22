@@ -44,6 +44,7 @@ trait SparkeyUri {
 }
 
 object SparkeyUri {
+  /** Create a [[SparkeyUri]] from a string. */
   def apply(path: String): SparkeyUri =
     if (ScioUtil.isGcsUri(new URI(path))) new GcsSparkeyUri(path) else new LocalSparkeyUri(path)
 }
