@@ -57,22 +57,16 @@ object SparkeyUri {
     }
 }
 
-private case class LocalSparkeyUri(basePath: String) extends SparkeyUri {
+private class LocalSparkeyUri(val basePath: String) extends SparkeyUri {
   override def getReader: SparkeyReader = Sparkey.open(new File(basePath))
   override def exists: Boolean =
     (new File(basePath + ".spi").exists || new File(basePath + ".spl").exists)
 }
 
-private case class GcsSparkeyUri(basePath: String,
-                                 @transient options: GcsOptions) extends SparkeyUri {
+private class GcsSparkeyUri(val basePath: String, options: GcsOptions) extends SparkeyUri {
   val localBasePath: String = sys.props("java.io.tmpdir") + hashPrefix(basePath)
 
   private val json: String = new ObjectMapper().writeValueAsString(options)
-
-  private[sparkey] def gcs: GcsUtil = new ObjectMapper()
-    .readValue(json, classOf[PipelineOptions])
-    .as(classOf[GcsOptions])
-    .getGcsUtil
 
   override def getReader: SparkeyReader = {
     for (ext <- Seq("spi", "spl")) {
@@ -87,13 +81,18 @@ private case class GcsSparkeyUri(basePath: String,
     Try(gcs.fileSize(index)).isSuccess || Try(gcs.fileSize(log)).isSuccess
   }
 
+  private[sparkey] def gcs: GcsUtil = new ObjectMapper()
+    .readValue(json, classOf[PipelineOptions])
+    .as(classOf[GcsOptions])
+    .getGcsUtil
+
   private def hashPrefix(path: String): String =
     "sparkey-" + Hashing.sha1().hashString(path, Charsets.UTF_8).toString.substring(0, 8)
 }
 
 private[sparkey] class SparkeyWriter(val uri: SparkeyUri) {
   private lazy val localFile = uri match {
-    case LocalSparkeyUri(_) => uri.toString
+    case localUri: LocalSparkeyUri => uri.toString
     case gcsUri: GcsSparkeyUri => gcsUri.localBasePath
   }
 
