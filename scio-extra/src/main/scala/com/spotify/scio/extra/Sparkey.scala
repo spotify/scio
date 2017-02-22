@@ -35,6 +35,8 @@ import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 import org.apache.beam.sdk.values.PCollectionView
 
+import scala.collection.JavaConverters._
+
 object Sparkey {
 
   /**
@@ -107,16 +109,9 @@ object Sparkey {
   implicit class RichSparkeyReader(val self: SparkeyReader) extends Map[String, String] {
     override def get(key: String): Option[String] = Option(self.getAsString(key))
 
-    override def iterator: Iterator[(String, String)] = new Iterator[(String, String)] {
-      private val delegate = self.iterator()
-
-      override def hasNext: Boolean = delegate.hasNext
-
-      override def next(): (String, String) = {
-        val entry = delegate.next()
-        (entry.getKeyAsString, entry.getValueAsString)
-      }
-    }
+    override def iterator: Iterator[(String, String)] =
+      self.iterator.asScala.map(e => (e.getKeyAsString, e.getValueAsString))
+    
     //scalastyle:off method.name
     override def +[B1 >: String](kv: (String, B1)): Map[String, B1] = ???
     override def -(key: String): Map[String, String] = ???
