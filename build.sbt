@@ -285,17 +285,21 @@ lazy val scioExtra: Project = Project(
   "scio-extra",
   file("scio-extra")
 ).settings(
-  commonSettings,
+  commonSettings ++ itSettings,
   description := "Scio extra utilities",
   libraryDependencies ++= Seq(
     "com.google.guava" % "guava" % guavaVersion,
+    "com.spotify.sparkey" % "sparkey" % sparkeyVersion,
     "com.twitter" %% "algebird-core" % algebirdVersion,
     "org.scalanlp" %% "breeze" % breezeVersion,
     "info.debatty" % "java-lsh" % javaLshVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion % "test",
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
   )
-)
+).dependsOn(
+  scioCore,
+  scioTest % "it,test"
+).configs(IntegrationTest)
 
 lazy val scioHdfs: Project = Project(
   "scio-hdfs",

@@ -130,7 +130,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.pApply(transform)
 
   /** Apply a transform. */
-  private[values] def transform[U: ClassTag](f: SCollection[T] => SCollection[U])
+  private[scio] def transform[U: ClassTag](f: SCollection[T] => SCollection[U])
   : SCollection[U] = {
     val o = internal.apply(this.tfName, new PTransform[PCollection[T], PCollection[U]]() {
       override def expand(input: PCollection[T]): PCollection[U] = {
