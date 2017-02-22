@@ -64,15 +64,15 @@ private case class LocalSparkeyUri(basePath: String) extends SparkeyUri {
 }
 
 private case class GcsSparkeyUri(basePath: String,
-                                          @transient options: GcsOptions) extends SparkeyUri {
+                                 @transient options: GcsOptions) extends SparkeyUri {
   val localBasePath: String = sys.props("java.io.tmpdir") + hashPrefix(basePath)
 
   private val json: String = new ObjectMapper().writeValueAsString(options)
-  private def opts: GcsOptions = new ObjectMapper()
+
+  private[sparkey] def gcs: GcsUtil = new ObjectMapper()
     .readValue(json, classOf[PipelineOptions])
     .as(classOf[GcsOptions])
-
-  def gcs: GcsUtil = opts.getGcsUtil
+    .getGcsUtil
 
   override def getReader: SparkeyReader = {
     for (ext <- Seq("spi", "spl")) {
@@ -88,7 +88,7 @@ private case class GcsSparkeyUri(basePath: String,
   }
 
   private def hashPrefix(path: String): String =
-    Hashing.sha1().hashString(path, Charsets.UTF_8).toString.substring(0, 8) + "-sparkey"
+    "sparkey-" + Hashing.sha1().hashString(path, Charsets.UTF_8).toString.substring(0, 8)
 }
 
 private[sparkey] class SparkeyWriter(val uri: SparkeyUri) {
