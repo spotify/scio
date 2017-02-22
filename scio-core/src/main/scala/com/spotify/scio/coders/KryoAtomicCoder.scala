@@ -37,7 +37,7 @@ import scala.collection.convert.Wrappers.JIterableWrapper
 
 private object KryoRegistrarLoader {
 
-  private val logger = LoggerFactory.getLogger("KryoRegistrarLoader")
+  private val logger = LoggerFactory.getLogger(KryoRegistrarLoader.getClass)
 
   def load(k: Kryo): Unit = {
     logger.debug("Loading KryoRegistrars: " + registrars.mkString(", "))
