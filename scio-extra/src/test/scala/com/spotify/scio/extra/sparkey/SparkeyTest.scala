@@ -15,17 +15,17 @@
  * under the License.
  */
 
-package com.spotify.scio.extra
+package com.spotify.scio.extra.sparkey
 
 import java.io.File
 
 import com.google.common.io.Files
 import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.PipelineSpec
-import com.spotify.sparkey.{Sparkey => JSparkey}
+import com.spotify.sparkey.Sparkey
 
 class SparkeyTest extends PipelineSpec {
-  import Sparkey._
+  import com.spotify.scio.extra.sparkey._
 
   val sideData = Seq(("a", "1"), ("b", "2"), ("c", "3"))
 
@@ -36,7 +36,7 @@ class SparkeyTest extends PipelineSpec {
     val p = sc.parallelize(sideData).asSparkey.materialize
     sc.close().waitUntilFinish()
     val basePath = p.waitForResult().value.next().basePath
-    val reader = JSparkey.open(new File(basePath))
+    val reader = Sparkey.open(new File(basePath))
     reader.toStream.toSet shouldEqual Set(("a", "1"), ("b", "2"), ("c", "3"))
     for (ext <- Seq(".spi", ".spl")) {
       new File(basePath + ext).delete()
@@ -49,7 +49,7 @@ class SparkeyTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(sideData).asSparkey(SparkeyUri(sparkeyRoot))
     }
-    val reader = JSparkey.open(new File(sparkeyRoot + ".spi"))
+    val reader = Sparkey.open(new File(sparkeyRoot + ".spi"))
     reader.toStream.toSet shouldEqual Set(("a", "1"), ("b", "2"), ("c", "3"))
     for (ext <- Seq(".spi", ".spl")) {
       new File(sparkeyRoot + ext).delete()

@@ -17,46 +17,19 @@
 
 package com.spotify.scio.extra
 
-import java.io._
-import java.net.URI
-import java.nio.ByteBuffer
-import java.nio.file.{Paths, Files => JFiles}
 import java.util.UUID
 
-import com.google.common.base.Charsets
-import com.google.common.hash.Hashing
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.{SCollection, SideInput}
-import com.spotify.sparkey.{CompressionType, SparkeyReader, Sparkey => JSparkey}
-import org.apache.beam.sdk.options.PipelineOptionsFactory
+import com.spotify.sparkey.SparkeyReader
 import org.apache.beam.sdk.transforms.{DoFn, View}
-import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
-import org.apache.beam.sdk.util.gcsfs.GcsPath
 import org.apache.beam.sdk.values.PCollectionView
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
 
-object Sparkey {
-
-  /**
-   * Represents the base URI for a Sparkey index and log file, either on the local file
-   * system or on GCS. For GCS, the URI should be in the form
-   * 'gs://<bucket>/<path>/<sparkey-prefix>'. For local files, the URI should be in the form
-   * '/<path>/<sparkey-prefix>'. Note that the URI must not be a folder or GCS bucket as the URI is
-   * a base path representing two files - <sparkey-prefix>.spi and <sparkey-prefix>.spl.
-   */
-  trait SparkeyUri {
-    val basePath: String
-    def getReader(): SparkeyReader
-    override def toString(): String = basePath
-  }
-
-  object SparkeyUri {
-    def apply(path: String): SparkeyUri =
-      if (ScioUtil.isGcsUri(new URI(path))) new GcsSparkeyUri(path) else new LocalSparkeyUri(path)
-  }
+package object sparkey {
 
   implicit class SparkeyScioContext(val self: ScioContext) extends AnyVal {
     def sparkeySideInput(url: SparkeyUri): SideInput[SparkeyReader] = {
@@ -119,59 +92,9 @@ object Sparkey {
     //scalastyle:on method.name
   }
 
-  private[scio] class SparkeySideInput(val view: PCollectionView[SparkeyUri])
+  private class SparkeySideInput(val view: PCollectionView[SparkeyUri])
     extends SideInput[SparkeyReader] {
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
       SparkeyUri(context.sideInput(view).basePath).getReader()
   }
-
-  private case class LocalSparkeyUri(basePath: String) extends SparkeyUri {
-    override def getReader(): SparkeyReader = JSparkey.open(new File(basePath))
-  }
-
-  private case class GcsSparkeyUri(basePath: String) extends SparkeyUri {
-    val localBasePath: String =
-      // Hash the URI as part of the prefix to allow multiple Sparkey files per job
-      sys.props("java.io.tmpdir") + "/" + hashPrefix(basePath)
-
-    override def getReader(): SparkeyReader = {
-      for (ext <- Seq("spi", "spl")) {
-        val gcs = new GcsUtilFactory().create(PipelineOptionsFactory.create())
-        ScioUtil.fetchFromGCS(gcs, new URI(s"$basePath.$ext"), s"$localBasePath.$ext")
-      }
-      JSparkey.open(new File(s"$localBasePath.spi"))
-    }
-  }
-
-  private class SparkeyWriter(val uri: SparkeyUri) {
-    private lazy val localFile = uri match {
-      case LocalSparkeyUri(_) => uri.toString()
-      case gcsUri: GcsSparkeyUri => gcsUri.localBasePath
-    }
-
-    private lazy val delegate = JSparkey.createNew(new File(localFile), CompressionType.NONE, 512)
-
-    def put(key: String, value: String): Unit = delegate.put(key, value)
-
-    def close(): Unit = {
-      delegate.flush()
-      delegate.writeHash()
-      delegate.close()
-      uri match {
-        case GcsSparkeyUri(path) => {
-          val gcs = new GcsUtilFactory().create(PipelineOptionsFactory.create())
-          // Copy .spi and .spl to GCS path
-          for (ext <- Seq("spi", "spl")) {
-            val writer = gcs.create(GcsPath.fromUri(s"$path.$ext"), "application/octet-stream")
-            writer.write(ByteBuffer.wrap(JFiles.readAllBytes(Paths.get(s"$localFile.$ext"))))
-            writer.close()
-          }
-        }
-        case _ => ()
-      }
-    }
-  }
-
-  private def hashPrefix(path: String): String =
-    Hashing.sha1().hashString(path, Charsets.UTF_8).toString.substring(0, 8) + "-sparkey"
 }

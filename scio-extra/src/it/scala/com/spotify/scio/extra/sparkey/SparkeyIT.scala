@@ -15,14 +15,14 @@
  * under the License.
  */
 
-package com.spotify.scio.extra
+package com.spotify.scio.extra.sparkey
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.options.GcpOptions
 
 class SparkeyIT extends PipelineSpec {
-  import Sparkey._
+  import com.spotify.scio.extra.sparkey._
 
   val sideData = Seq(("a", "1"), ("b", "2"), ("c", "3"))
 
