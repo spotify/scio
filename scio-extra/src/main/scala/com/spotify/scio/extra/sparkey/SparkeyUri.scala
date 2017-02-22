@@ -81,7 +81,7 @@ private class GcsSparkeyUri(val basePath: String, options: GcsOptions) extends S
     Try(gcs.fileSize(index)).isSuccess || Try(gcs.fileSize(log)).isSuccess
   }
 
-  private[sparkey] def gcs: GcsUtil = new ObjectMapper()
+  @transient private[sparkey] lazy val gcs: GcsUtil = new ObjectMapper()
     .readValue(json, classOf[PipelineOptions])
     .as(classOf[GcsOptions])
     .getGcsUtil
