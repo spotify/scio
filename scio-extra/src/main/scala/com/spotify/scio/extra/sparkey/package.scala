@@ -63,7 +63,7 @@ package object sparkey {
       }
     }
 
-    /** Write the contents of this SCollection as a Sparkey file using the default uri. */
+    /** Write the contents of this SCollection as a Sparkey file using the default URI. */
     def asSparkey: SCollection[SparkeyUri] = {
       val uid = UUID.randomUUID()
       val uri = ScioUtil.tempLocation(self.context.options) + s"/sparkey-$uid"
