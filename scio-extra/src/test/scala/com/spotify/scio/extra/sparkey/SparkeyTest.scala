@@ -55,4 +55,19 @@ class SparkeyTest extends PipelineSpec {
       new File(sparkeyRoot + ext).delete()
     }
   }
+
+  it should "throw exception when sparkey file exists" in {
+    val tmpDir = Files.createTempDir()
+    val sparkeyRoot = tmpDir + "/my-sparkey-file"
+    val index = new File(sparkeyRoot + ".spi")
+    val sparkey = Files.touch(index)
+
+    the[IllegalArgumentException] thrownBy {
+      runWithContext { sc =>
+        val p = sc.parallelize(sideData).asSparkey(SparkeyUri(sparkeyRoot, sc.options))
+      }
+    } should have message s"requirement failed: Sparkey URI ${sparkeyRoot} already exists."
+
+    index.delete()
+  }
 }

@@ -46,18 +46,21 @@ package object sparkey {
      *
      * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
-    def asSparkey(uri: SparkeyUri): SCollection[SparkeyUri] = self.transform { in =>
-      in.groupBy(_ => ())
-        .map { case (_, iter) =>
-          val writer = new SparkeyWriter(uri)
-          val it = iter.iterator
-          while (it.hasNext) {
-            val kv = it.next()
-            writer.put(kv._1.toString, kv._2.toString)
+    def asSparkey(uri: SparkeyUri): SCollection[SparkeyUri] = {
+      require(!uri.exists, s"Sparkey URI ${uri.basePath} already exists.")
+      self.transform { in =>
+        in.groupBy(_ => ())
+          .map { case (_, iter) =>
+            val writer = new SparkeyWriter(uri)
+            val it = iter.iterator
+            while (it.hasNext) {
+              val kv = it.next()
+              writer.put(kv._1.toString, kv._2.toString)
+            }
+            writer.close()
+            uri
           }
-          writer.close()
-          uri
-        }
+      }
     }
 
     /** Write the contents of this SCollection as a Sparkey file using the default uri. */
@@ -103,6 +106,6 @@ package object sparkey {
   private class SparkeySideInput(val view: PCollectionView[SparkeyUri])
     extends SideInput[SparkeyReader] {
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
-      SparkeyUri(context.sideInput(view).basePath, view.getPipeline.getOptions).getReader()
+      SparkeyUri(context.sideInput(view).basePath, context.getPipelineOptions).getReader
   }
 }

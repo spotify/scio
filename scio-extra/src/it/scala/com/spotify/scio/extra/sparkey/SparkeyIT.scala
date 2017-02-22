@@ -17,31 +17,55 @@
 
 package com.spotify.scio.extra.sparkey
 
-import com.spotify.scio.ScioContext
+import java.nio.ByteBuffer
+
 import com.spotify.scio.testing.PipelineSpec
-import org.apache.beam.sdk.options.GcpOptions
+import org.apache.beam.sdk.options.{GcpOptions, GcsOptions}
+import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
+import org.apache.beam.sdk.util.gcsfs.GcsPath
+
+import scala.collection.JavaConverters._
 
 class SparkeyIT extends PipelineSpec {
   import com.spotify.scio.extra.sparkey._
 
   val sideData = Seq(("a", "1"), ("b", "2"), ("c", "3"))
 
-  "SCollection" should "support .asSparkeySideInput using default gcpTempLocation" in {
+  "SCollection" should "support .asSparkeySideInput using GCS tempLocation" in {
     runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(1))
-      val p2 = sc.parallelize(sideData).asSparkeySideInput
-      val s = p1.withSideInputs(p2).flatMap((i, si) => si(p2).toStream.map(_._2)).toSCollection
-      s should containInAnyOrder (Seq("1", "2", "3"))
+      val tempLocation = sc.optionsAs[GcpOptions].getGcpTempLocation
+      sc.options.setTempLocation(tempLocation)
+      try {
+        val p1 = sc.parallelize(Seq(1))
+        val p2 = sc.parallelize(sideData).asSparkeySideInput
+        val s = p1.withSideInputs(p2).flatMap((i, si) => si(p2).toStream.map(_._2)).toSCollection
+        s should containInAnyOrder (Seq("1", "2", "3"))
+      }
+      finally {
+        val gcs = new GcsUtilFactory().create(sc.options)
+        val files = gcs.expand(GcsPath.fromUri(tempLocation + "/sparkey-*")).asScala
+        gcs.remove(files.map(_.toString).asJava)
+      }
     }
   }
 
-  it should "support .asSparkeySideInput using custom gcpTempLocation" in {
-    val sc = ScioContext.forTest()
-    val gcpOpts = sc.optionsAs[GcpOptions]
-    gcpOpts.setGcpTempLocation(gcpOpts.getGcpTempLocation + "/test-folder/sparkey-prefix")
-    val p1 = sc.parallelize(Seq(1))
-    val p2 = sc.parallelize(sideData).asSparkeySideInput
-    val s = p1.withSideInputs(p2).flatMap((i, si) => si(p2).toStream.map(_._2)).toSCollection
-    s should containInAnyOrder (Seq("1", "2", "3"))
+  it should "throw exception when sparkey file exists" in {
+    runWithContext { sc =>
+      val tempLocation = sc.optionsAs[GcpOptions].getGcpTempLocation
+      val gcs = sc.optionsAs[GcsOptions].getGcsUtil
+      sc.options.setTempLocation(tempLocation)
+      val sparkeyRoot = tempLocation + "/sparkey-test"
+      try {
+        val f = gcs.create(GcsPath.fromUri(sparkeyRoot + ".spi"), "application/octet-stream")
+        f.write(ByteBuffer.wrap("test-data".getBytes))
+        f.close()
+        the[IllegalArgumentException] thrownBy {
+          sc.parallelize(sideData).asSparkey(SparkeyUri(sparkeyRoot, sc.options))
+        } should have message s"requirement failed: Sparkey URI $sparkeyRoot already exists."
+      }
+      finally {
+        gcs.remove(Seq(sparkeyRoot + ".spi").asJava)
+      }
+    }
   }
 }

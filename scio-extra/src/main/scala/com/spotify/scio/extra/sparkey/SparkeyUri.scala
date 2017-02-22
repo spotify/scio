@@ -22,6 +22,7 @@ import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.file.{Files, Paths}
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.spotify.scio.util.ScioUtil
@@ -29,6 +30,8 @@ import com.spotify.sparkey.{CompressionType, Sparkey, SparkeyReader}
 import org.apache.beam.sdk.options.{GcsOptions, PipelineOptions}
 import org.apache.beam.sdk.util.GcsUtil
 import org.apache.beam.sdk.util.gcsfs.GcsPath
+
+import scala.util.Try
 
 /**
  * Represents the base URI for a Sparkey index and log file, either on the local file
@@ -39,33 +42,49 @@ import org.apache.beam.sdk.util.gcsfs.GcsPath
  */
 trait SparkeyUri {
   val basePath: String
-  def getReader(): SparkeyReader
-  override def toString(): String = basePath
+  def getReader: SparkeyReader
+  def exists: Boolean
+  override def toString: String = basePath
 }
 
 object SparkeyUri {
   /** Create a [[SparkeyUri]] from a string. */
   def apply(path: String, opts: PipelineOptions): SparkeyUri =
     if (ScioUtil.isGcsUri(new URI(path))) {
-      val gcs = opts.as(classOf[GcsOptions]).getGcsUtil
-      new GcsSparkeyUri(path, gcs)
+      new GcsSparkeyUri(path, opts.as(classOf[GcsOptions]))
     } else {
       new LocalSparkeyUri(path)
     }
 }
 
 private case class LocalSparkeyUri(basePath: String) extends SparkeyUri {
-  override def getReader(): SparkeyReader = Sparkey.open(new File(basePath))
+  override def getReader: SparkeyReader = Sparkey.open(new File(basePath))
+  override def exists: Boolean =
+    (new File(basePath + ".spi").exists || new File(basePath + ".spl").exists)
 }
 
-private case class GcsSparkeyUri(basePath: String, gcs: GcsUtil) extends SparkeyUri {
-  val localBasePath: String = sys.props("java.io.tmpdir") + "/" + hashPrefix(basePath)
+private case class GcsSparkeyUri(basePath: String,
+                                          @transient options: GcsOptions) extends SparkeyUri {
+  val localBasePath: String = sys.props("java.io.tmpdir") + hashPrefix(basePath)
 
-  override def getReader(): SparkeyReader = {
+  private val json: String = new ObjectMapper().writeValueAsString(options)
+  private def opts: GcsOptions = new ObjectMapper()
+    .readValue(json, classOf[PipelineOptions])
+    .as(classOf[GcsOptions])
+
+  def gcs: GcsUtil = opts.getGcsUtil
+
+  override def getReader: SparkeyReader = {
     for (ext <- Seq("spi", "spl")) {
       ScioUtil.fetchFromGCS(gcs, new URI(s"$basePath.$ext"), s"$localBasePath.$ext")
     }
     Sparkey.open(new File(s"$localBasePath.spi"))
+  }
+
+  override def exists: Boolean = {
+    val index = GcsPath.fromUri(basePath + ".spi")
+    val log = GcsPath.fromUri(basePath + ".spl")
+    Try(gcs.fileSize(index)).isSuccess || Try(gcs.fileSize(log)).isSuccess
   }
 
   private def hashPrefix(path: String): String =
@@ -87,10 +106,12 @@ private[sparkey] class SparkeyWriter(val uri: SparkeyUri) {
     delegate.writeHash()
     delegate.close()
     uri match {
-      case GcsSparkeyUri(path, gcs) => {
+      case gcsUri: GcsSparkeyUri => {
         // Copy .spi and .spl to GCS path
         for (ext <- Seq("spi", "spl")) {
-          val writer = gcs.create(GcsPath.fromUri(s"$path.$ext"), "application/octet-stream")
+          val writer = gcsUri.gcs.create(
+            GcsPath.fromUri(s"${gcsUri.basePath}.$ext"),
+            "application/octet-stream")
           writer.write(ByteBuffer.wrap(Files.readAllBytes(Paths.get(s"$localFile.$ext"))))
           writer.close()
         }
