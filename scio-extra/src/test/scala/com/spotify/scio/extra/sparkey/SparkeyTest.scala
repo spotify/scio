@@ -47,7 +47,7 @@ class SparkeyTest extends PipelineSpec {
     val tmpDir = Files.createTempDir()
     val sparkeyRoot = tmpDir + "/my-sparkey-file"
     runWithContext { sc =>
-      val p = sc.parallelize(sideData).asSparkey(SparkeyUri(sparkeyRoot))
+      val p = sc.parallelize(sideData).asSparkey(SparkeyUri(sparkeyRoot, sc.options))
     }
     val reader = Sparkey.open(new File(sparkeyRoot + ".spi"))
     reader.toStream.toSet shouldEqual Set(("a", "1"), ("b", "2"), ("c", "3"))

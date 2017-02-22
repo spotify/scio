@@ -65,7 +65,7 @@ package object sparkey {
       val uid = UUID.randomUUID()
       val uri = ScioUtil.tempLocation(self.context.options) + s"/sparkey-$uid"
       logger.info(s"Sparkey URI: $uri")
-      this.asSparkey(SparkeyUri(uri))
+      this.asSparkey(SparkeyUri(uri, self.context.options))
     }
 
     /**
@@ -103,6 +103,6 @@ package object sparkey {
   private class SparkeySideInput(val view: PCollectionView[SparkeyUri])
     extends SideInput[SparkeyReader] {
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
-      SparkeyUri(context.sideInput(view).basePath).getReader()
+      SparkeyUri(context.sideInput(view).basePath, view.getPipeline.getOptions).getReader()
   }
 }

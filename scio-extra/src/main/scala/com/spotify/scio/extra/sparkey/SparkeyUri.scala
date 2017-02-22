@@ -26,8 +26,8 @@ import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.spotify.scio.util.ScioUtil
 import com.spotify.sparkey.{CompressionType, Sparkey, SparkeyReader}
-import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
+import org.apache.beam.sdk.options.{GcsOptions, PipelineOptions}
+import org.apache.beam.sdk.util.GcsUtil
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 
 /**
@@ -45,20 +45,24 @@ trait SparkeyUri {
 
 object SparkeyUri {
   /** Create a [[SparkeyUri]] from a string. */
-  def apply(path: String): SparkeyUri =
-    if (ScioUtil.isGcsUri(new URI(path))) new GcsSparkeyUri(path) else new LocalSparkeyUri(path)
+  def apply(path: String, opts: PipelineOptions): SparkeyUri =
+    if (ScioUtil.isGcsUri(new URI(path))) {
+      val gcs = opts.as(classOf[GcsOptions]).getGcsUtil
+      new GcsSparkeyUri(path, gcs)
+    } else {
+      new LocalSparkeyUri(path)
+    }
 }
 
 private case class LocalSparkeyUri(basePath: String) extends SparkeyUri {
   override def getReader(): SparkeyReader = Sparkey.open(new File(basePath))
 }
 
-private case class GcsSparkeyUri(basePath: String) extends SparkeyUri {
+private case class GcsSparkeyUri(basePath: String, gcs: GcsUtil) extends SparkeyUri {
   val localBasePath: String = sys.props("java.io.tmpdir") + "/" + hashPrefix(basePath)
 
   override def getReader(): SparkeyReader = {
     for (ext <- Seq("spi", "spl")) {
-      val gcs = new GcsUtilFactory().create(PipelineOptionsFactory.create())
       ScioUtil.fetchFromGCS(gcs, new URI(s"$basePath.$ext"), s"$localBasePath.$ext")
     }
     Sparkey.open(new File(s"$localBasePath.spi"))
@@ -83,8 +87,7 @@ private[sparkey] class SparkeyWriter(val uri: SparkeyUri) {
     delegate.writeHash()
     delegate.close()
     uri match {
-      case GcsSparkeyUri(path) => {
-        val gcs = new GcsUtilFactory().create(PipelineOptionsFactory.create())
+      case GcsSparkeyUri(path, gcs) => {
         // Copy .spi and .spl to GCS path
         for (ext <- Seq("spi", "spl")) {
           val writer = gcs.create(GcsPath.fromUri(s"$path.$ext"), "application/octet-stream")
