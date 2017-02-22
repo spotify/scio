@@ -26,7 +26,7 @@ import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.{Coder, CoderRegistry}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryTableRowIterator
 import org.apache.beam.sdk.options.{GcpOptions, PipelineOptions}
-import org.apache.beam.runners.dataflow.options.{DataflowPipelineDebugOptions, DataflowPipelineOptions}
+import org.apache.beam.runners.dataflow.options._
 import com.google.api.client.googleapis.services.AbstractGoogleClientRequest
 import com.google.api.services.dataflow.Dataflow
 import com.google.api.services.dataflow.model.JobMetrics
