@@ -26,7 +26,7 @@ import java.util.UUID
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.spotify.scio.ScioContext
-import com.spotify.scio.util.{CallSites, ScioUtil}
+import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.{CompressionType, SparkeyReader, Sparkey => JSparkey}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
@@ -64,7 +64,7 @@ object Sparkey {
     }
   }
 
-  implicit class SparkeyPairSCollection(val self: SCollection[(String, String)]) {
+  implicit class SparkeyPairSCollection(val self: SCollection[(String, String)]) extends AnyVal {
     /**
      * Write the contents of this SCollection as a Sparkey file, either locally or on GCS.
      *
@@ -101,11 +101,6 @@ object Sparkey {
     }
   }
 
-  implicit class SparkeyPairSCollectionFunctions(val self: SCollection[(String, String)])
-    extends AnyVal {
-    def asSparkeySideInput: SideInput[SparkeyReader] = self.asSparkey.asSparkeySideInput
-  }
-
   implicit class RichSparkeyReader(val self: SparkeyReader) extends Map[String, String] {
     override def get(key: String): Option[String] = Option(self.getAsString(key))
 
@@ -129,7 +124,7 @@ object Sparkey {
   private case class LocalSparkeyUri(basePath: String) extends SparkeyUri {
     override def getReader(): SparkeyReader = JSparkey.open(new File(basePath))
   }
-  
+
   private case class GcsSparkeyUri(basePath: String) extends SparkeyUri {
     val localBasePath: String =
       // Hash the URI as part of the prefix to allow multiple Sparkey files per job
