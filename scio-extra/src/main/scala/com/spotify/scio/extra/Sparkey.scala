@@ -90,18 +90,18 @@ object Sparkey {
       this.asSparkey(SparkeyUri(uri))
     }
 
-    def asSparkeySideInput: SideInput[SparkeyReader] = self.asSparkey.asSparkeySideInput()
+    def asSparkeySideInput: SideInput[SparkeyReader] = self.asSparkey.asSparkeySideInput
   }
 
   implicit class SparkeySCollection(val self: SCollection[SparkeyUri]) {
-    def asSparkeySideInput(): SideInput[SparkeyReader] = {
+    def asSparkeySideInput: SideInput[SparkeyReader] = {
       val view = self.applyInternal(View.asSingleton())
       new SparkeySideInput(view)
     }
   }
 
   implicit class SparkeyPairSCollectionFunctions(val self: SCollection[(String, String)]) {
-    def asSparkeySideInput(): SideInput[SparkeyReader] = self.asSparkey.asSparkeySideInput()
+    def asSparkeySideInput: SideInput[SparkeyReader] = self.asSparkey.asSparkeySideInput
   }
 
   implicit class RichSparkeyReader(val self: SparkeyReader) extends Map[String, String] {
