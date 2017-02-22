@@ -40,7 +40,7 @@ import scala.util.Try
  * '/<path>/<sparkey-prefix>'. Note that the URI must not be a folder or GCS bucket as the URI is
  * a base path representing two files - <sparkey-prefix>.spi and <sparkey-prefix>.spl.
  */
-trait SparkeyUri {
+trait SparkeyUri extends Serializable {
   val basePath: String
   def getReader: SparkeyReader
   def exists: Boolean
