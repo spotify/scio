@@ -31,15 +31,15 @@ class SparkeyTest extends PipelineSpec {
 
   "SCollection" should "support .asSparkey with default local file" in {
     val tmpDir = Files.createTempDir().toString
-    val sparkeyRoot = tmpDir + "/sparkey"
     val sc = ScioContext()
     sc.options.setTempLocation(tmpDir)
-    val p = sc.parallelize(sideData).asSparkey
+    val p = sc.parallelize(sideData).asSparkey.materialize
     sc.close().waitUntilFinish()
-    val reader = JSparkey.open(new File(sparkeyRoot))
+    val basePath = p.waitForResult().value.next().basePath
+    val reader = JSparkey.open(new File(basePath))
     reader.toStream.toSet shouldEqual Set(("a", "1"), ("b", "2"), ("c", "3"))
     for (ext <- Seq(".spi", ".spl")) {
-      new File(sparkeyRoot + ext).delete()
+      new File(basePath + ext).delete()
     }
   }
 
