@@ -62,8 +62,7 @@ object Sparkey {
     }
   }
 
-  implicit class SCollectionWithSparkeyWriter[K, V](val self: SCollection[(K, V)])
-                                                   (implicit ev1: K <:< String, ev2: V <:< String) {
+  implicit class SparkeyPairSCollection(val self: SCollection[(String, String)]) {
     /**
      * Write the contents of this SCollection as a Sparkey file, either locally or on GCS.
      *
