@@ -26,6 +26,7 @@ val beamVersion = "0.5.0"
 val algebirdVersion = "0.12.4"
 val annoyVersion = "0.2.5"
 val autoServiceVersion = "1.0-rc2"
+val autoValueVersion = "1.3"
 val avroVersion = "1.7.7"
 val breezeVersion ="0.13"
 val chillVersion = "0.9.1"
@@ -309,7 +310,8 @@ lazy val scioHdfs: Project = Project(
   description := "Scio add-on for HDFS",
   libraryDependencies ++= Seq(
     "org.apache.avro" % "avro-mapred" % avroVersion classifier("hadoop2"),
-    "org.apache.hadoop" % "hadoop-client" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12")
+    "org.apache.hadoop" % "hadoop-client" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12"),
+    "com.google.auto.value" % "auto-value" % autoValueVersion % "provided"
   )
 ).dependsOn(
   scioCore,
