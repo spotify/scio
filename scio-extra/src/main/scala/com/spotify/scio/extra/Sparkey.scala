@@ -129,9 +129,7 @@ object Sparkey {
   private case class LocalSparkeyUri(basePath: String) extends SparkeyUri {
     override def getReader(): SparkeyReader = JSparkey.open(new File(basePath))
   }
-
-  private object GcsSparkeyUri
-
+  
   private case class GcsSparkeyUri(basePath: String) extends SparkeyUri {
     val localBasePath: String =
       // Hash the URI as part of the prefix to allow multiple Sparkey files per job
