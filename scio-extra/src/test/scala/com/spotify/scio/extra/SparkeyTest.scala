@@ -23,7 +23,6 @@ import com.google.common.io.Files
 import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.sparkey.{Sparkey => JSparkey}
-import org.apache.beam.sdk.options.GcpOptions
 
 class SparkeyTest extends PipelineSpec {
   import Sparkey._

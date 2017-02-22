@@ -21,11 +21,12 @@ import java.io._
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.file.{Paths, Files => JFiles}
+import java.util.UUID
 
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.spotify.scio.ScioContext
-import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.{CallSites, ScioUtil}
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.{CompressionType, SparkeyReader, Sparkey => JSparkey}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
@@ -38,9 +39,9 @@ object Sparkey {
 
   /**
    * Represents the base URI for a Sparkey index and log file, either on the local file
-   * system or on GCS. For GCS, the uri should be in the form
-   * 'gs://<bucket>/<path>/<sparkey-prefix>'. For local files, the uri should be in the form
-   * '/<path>/<sparkey-prefix>'. Note that the uri must not be a folder or GCS bucket as the uri is
+   * system or on GCS. For GCS, the URI should be in the form
+   * 'gs://<bucket>/<path>/<sparkey-prefix>'. For local files, the URI should be in the form
+   * '/<path>/<sparkey-prefix>'. Note that the URI must not be a folder or GCS bucket as the URI is
    * a base path representing two files - <sparkey-prefix>.spi and <sparkey-prefix>.spl.
    */
   trait SparkeyUri {
@@ -84,7 +85,8 @@ object Sparkey {
 
     /** Write the contents of this SCollection as a Sparkey file using the default uri. */
     def asSparkey: SCollection[SparkeyUri] = {
-      val uri = ScioUtil.tempLocation(self.context.options) + "/sparkey"
+      val uid = UUID.randomUUID()
+      val uri = ScioUtil.tempLocation(self.context.options) + s"/sparkey-$uid"
       this.asSparkey(SparkeyUri(uri))
     }
 
