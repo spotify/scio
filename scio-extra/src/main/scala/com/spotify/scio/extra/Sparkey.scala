@@ -34,6 +34,7 @@ import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 import org.apache.beam.sdk.values.PCollectionView
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
 
@@ -64,7 +65,9 @@ object Sparkey {
     }
   }
 
-  implicit class SparkeyPairSCollection(val self: SCollection[(String, String)]) extends AnyVal {
+  implicit class SparkeyPairSCollection(val self: SCollection[(String, String)]) {
+    private val logger: Logger = LoggerFactory.getLogger(classOf[SparkeyPairSCollection])
+
     /**
      * Write the contents of this SCollection as a Sparkey file, either locally or on GCS.
      *
@@ -88,6 +91,7 @@ object Sparkey {
     def asSparkey: SCollection[SparkeyUri] = {
       val uid = UUID.randomUUID()
       val uri = ScioUtil.tempLocation(self.context.options) + s"/sparkey-$uid"
+      logger.info(s"Sparkey URI: $uri")
       this.asSparkey(SparkeyUri(uri))
     }
 
