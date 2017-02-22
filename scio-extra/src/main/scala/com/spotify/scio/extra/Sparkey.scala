@@ -111,10 +111,12 @@ object Sparkey {
 
     override def iterator: Iterator[(String, String)] =
       self.iterator.asScala.map(e => (e.getKeyAsString, e.getValueAsString))
-    
+
     //scalastyle:off method.name
-    override def +[B1 >: String](kv: (String, B1)): Map[String, B1] = ???
-    override def -(key: String): Map[String, String] = ???
+    override def +[B1 >: String](kv: (String, B1)): Map[String, B1] =
+      throw new NotImplementedError("Sparkey-backed map; operation not supported.")
+    override def -(key: String): Map[String, String] =
+      throw new NotImplementedError("Sparkey-backed map; operation not supported.")
     //scalastyle:on method.name
   }
 
