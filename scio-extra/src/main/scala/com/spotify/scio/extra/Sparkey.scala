@@ -55,7 +55,7 @@ object Sparkey {
       if (ScioUtil.isGcsUri(new URI(path))) new GcsSparkeyUri(path) else new LocalSparkeyUri(path)
   }
 
-  implicit class SparkeyScioContext(val self: ScioContext) {
+  implicit class SparkeyScioContext(val self: ScioContext) extends AnyVal {
     def sparkeySideInput(url: SparkeyUri): SideInput[SparkeyReader] = {
       val view = self.parallelize(Seq(url)).applyInternal(View.asSingleton())
       new SparkeySideInput(view)
@@ -92,14 +92,15 @@ object Sparkey {
     def asSparkeySideInput: SideInput[SparkeyReader] = self.asSparkey.asSparkeySideInput
   }
 
-  implicit class SparkeySCollection(val self: SCollection[SparkeyUri]) {
+  implicit class SparkeySCollection(val self: SCollection[SparkeyUri]) extends AnyVal {
     def asSparkeySideInput: SideInput[SparkeyReader] = {
       val view = self.applyInternal(View.asSingleton())
       new SparkeySideInput(view)
     }
   }
 
-  implicit class SparkeyPairSCollectionFunctions(val self: SCollection[(String, String)]) {
+  implicit class SparkeyPairSCollectionFunctions(val self: SCollection[(String, String)])
+    extends AnyVal {
     def asSparkeySideInput: SideInput[SparkeyReader] = self.asSparkey.asSparkeySideInput
   }
 
