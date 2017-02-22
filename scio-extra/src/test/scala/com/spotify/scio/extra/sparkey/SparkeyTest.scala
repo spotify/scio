@@ -32,7 +32,6 @@ class SparkeyTest extends PipelineSpec {
   "SCollection" should "support .asSparkey with default local file" in {
     val tmpDir = Files.createTempDir().toString
     val sc = ScioContext()
-    sc.options.setTempLocation(tmpDir)
     val p = sc.parallelize(sideData).asSparkey.materialize
     sc.close().waitUntilFinish()
     val basePath = p.waitForResult().value.next().basePath

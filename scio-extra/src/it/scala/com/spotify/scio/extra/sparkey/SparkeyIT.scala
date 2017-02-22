@@ -34,7 +34,6 @@ class SparkeyIT extends PipelineSpec {
   "SCollection" should "support .asSparkeySideInput using GCS tempLocation" in {
     runWithContext { sc =>
       val tempLocation = sc.optionsAs[GcpOptions].getGcpTempLocation
-      sc.options.setTempLocation(tempLocation)
       try {
         val p1 = sc.parallelize(Seq(1))
         val p2 = sc.parallelize(sideData).asSparkeySideInput
@@ -53,7 +52,6 @@ class SparkeyIT extends PipelineSpec {
     runWithContext { sc =>
       val tempLocation = sc.optionsAs[GcpOptions].getGcpTempLocation
       val gcs = sc.optionsAs[GcsOptions].getGcsUtil
-      sc.options.setTempLocation(tempLocation)
       val sparkeyRoot = tempLocation + "/sparkey-test"
       try {
         val f = gcs.create(GcsPath.fromUri(sparkeyRoot + ".spi"), "application/octet-stream")
