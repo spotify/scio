@@ -48,6 +48,7 @@ package object sparkey {
      */
     def asSparkey(uri: SparkeyUri): SCollection[SparkeyUri] = {
       require(!uri.exists, s"Sparkey URI ${uri.basePath} already exists.")
+      logger.info(s"Saving as sparkey: $uri")
       self.transform { in =>
         in.groupBy(_ => ())
           .map { case (_, iter) =>
@@ -67,7 +68,6 @@ package object sparkey {
     def asSparkey: SCollection[SparkeyUri] = {
       val uid = UUID.randomUUID()
       val uri = ScioUtil.tempLocation(self.context.options) + s"/sparkey-$uid"
-      logger.info(s"Sparkey URI: $uri")
       this.asSparkey(SparkeyUri(uri, self.context.options))
     }
 
