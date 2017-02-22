@@ -34,7 +34,6 @@ import org.apache.beam.sdk.util.GcsUtil
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 
 import scala.reflect.ClassTag
-import scala.util.Try
 
 private[scio] object ScioUtil {
 
@@ -86,12 +85,14 @@ private[scio] object ScioUtil {
   }
 
   def tempLocation(options: PipelineOptions): String = {
-    val location = Try(options.as(classOf[GcpOptions]))
-      .map(_.getGcpTempLocation).getOrElse(options.getTempLocation)
-    if (location == null) {
-      sys.props("java.io.tmpdir")
+    if (ScioUtil.isLocalRunner(options)) {
+      if (options.getTempLocation == null) {
+        sys.props("java.io.tmpdir")
+      } else {
+        options.getTempLocation
+      }
     } else {
-      options.getTempLocation
+      options.as(classOf[GcpOptions]).getGcpTempLocation
     }
   }
 
