@@ -130,7 +130,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.pApply(transform)
 
   /** Apply a transform. */
-  private[values] def transform[U: ClassTag](f: SCollection[T] => SCollection[U])
+  private[scio] def transform[U: ClassTag](f: SCollection[T] => SCollection[U])
   : SCollection[U] = {
     val o = internal.apply(this.tfName, new PTransform[PCollection[T], PCollection[U]]() {
       override def expand(input: PCollection[T]): PCollection[U] = {
@@ -821,15 +821,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def materialize: Future[Tap[T]] = {
     val filename = "scio-materialize-" + UUID.randomUUID().toString
-    val tmpDir = if (ScioUtil.isLocalRunner(context.options)) {
-      if (context.options.getTempLocation == null) {
-        sys.props("java.io.tmpdir")
-      } else {
-        context.options.getTempLocation
-      }
-    } else {
-      context.optionsAs[GcpOptions].getGcpTempLocation
-    }
+    val tmpDir = ScioUtil.tempLocation(context.options)
     val path = tmpDir + (if (tmpDir.endsWith("/")) "" else "/") + filename
     saveAsObjectFile(path)
   }
