@@ -17,7 +17,7 @@
 
 package com.spotify.scio.values
 
-import java.io.{File, FileOutputStream}
+import java.io.File
 import java.net.URI
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -26,16 +26,15 @@ import com.google.common.hash.Hashing
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.options.{GcsOptions, PipelineOptions}
-import org.apache.beam.sdk.util.gcsfs.GcsPath
-import org.slf4j.{Logger, LoggerFactory}
 
-/** Encapsulate arbitrary data that can be distributed to all workers. */
+/**
+ * Encapsulate arbitrary data that can be distributed to all workers. Similar to Hadoop
+ * distributed cache.
+ */
 sealed trait DistCache[F] extends Serializable {
   /** Extract the underlying data. */
   def apply(): F
 }
-
-private[scio] object FileDistCache
 
 private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistCache[F] {
 
@@ -44,8 +43,6 @@ private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistC
   protected def init: F
 
   protected lazy val data: F = init
-
-  private val logger: Logger = LoggerFactory.getLogger(classOf[DistCache[_]])
 
   // Serialize options to avoid shipping it with closure
   private val json: String = new ObjectMapper().writeValueAsString(options)
@@ -82,7 +79,7 @@ private[scio] class MockDistCache[F](val value: F) extends DistCache[F] {
 }
 
 object MockDistCache {
-  def apply[F](value: F): MockDistCache[F] = new MockDistCache(value)
+  def apply[F](value: F): DistCache[F] = new MockDistCache(value)
 }
 
 private[scio] class DistCacheSingle[F](val uri: URI, val initFn: File => F, options: GcsOptions)
