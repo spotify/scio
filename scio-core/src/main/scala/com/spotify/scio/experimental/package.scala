@@ -158,7 +158,10 @@ package object experimental {
 
   }
 
-  /** Enhanced version of [[BigQueryClient]] with type-safe features. */
+  /**
+   * Enhanced version of [[com.spotify.scio.bigquery.BigQueryClient BigQueryClient]] with
+   * type-safe features.
+   */
   implicit class TypedBigQueryClient(self: BigQueryClient) {
 
     /**
@@ -236,7 +239,9 @@ package object experimental {
 
   }
 
-  /** Enhanced version of [[Taps]] with type-safe features for BigQuery [[Taps]]. */
+  /**
+   * Enhanced version of [[com.spotify.scio.io.Taps Taps]] with type-safe features for BigQuery.
+   */
   implicit class TypedBigQueryTaps(self: Taps) {
 
     /** Get a `Future[Tap[T]]` for BigQuery source. */

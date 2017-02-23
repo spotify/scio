@@ -25,7 +25,10 @@ import scala.reflect.ClassTag
 
 package object accumulators {
 
-  /** Enhanced version of [[SCollection]] with accumulator helpers. */
+  /**
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with accumulator
+   * helpers.
+   */
   // TODO: scala 2.11
   // implicit class AccumulatorSCollection[T: ClassTag](private val self: SCollection[T]))
   // extends AnyVal {

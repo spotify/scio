@@ -1022,7 +1022,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /**
    * Save this SCollection as a TensorFlow TFRecord file. Note that elements must be of type
-   * Array[[Byte]].
+   * `Array[Byte]`.
    * @group output
    */
   def saveAsTfRecordFile(path: String,
