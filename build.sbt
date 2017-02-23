@@ -462,8 +462,8 @@ val javaMappings = Seq(
    "https://cloud.google.com/dataflow/java-sdk/JavaDoc"),
   ("com.google.apis", "google-api-services-bigquery",
    "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest"),
-  ("joda-time", "joda-time", "http://www.joda.org/joda-time/apidocs")
- )
+  ("joda-time", "joda-time", "http://www.joda.org/joda-time/apidocs"))
 val scalaMappings = Seq(
-  ("com.twitter", "algebird-core", "http://twitter.github.io/algebird/api"))
+  ("com.twitter", "algebird-core", "http://twitter.github.io/algebird/api"),
+  ("org.scalatest", "scalatest", s"http://doc.scalatest.org/$scalatestVersion/"))
 val docMappings = javaMappings ++ scalaMappings
