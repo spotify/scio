@@ -17,7 +17,6 @@
 
 package com.spotify.scio.values
 
-import com.spotify.scio.util.CallSites
 import com.spotify.scio.{Implicits, ScioContext}
 import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.transforms.{Combine, DoFn, PTransform, ParDo}

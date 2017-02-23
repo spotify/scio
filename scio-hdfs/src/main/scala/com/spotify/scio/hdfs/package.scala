@@ -20,7 +20,6 @@ package com.spotify.scio
 import java.io._
 import java.net.URI
 import java.nio.channels.Channels
-import java.nio.file.Files
 import java.security.PrivilegedAction
 import java.util.Collections
 
@@ -32,17 +31,15 @@ import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.{DistCache, SCollection}
 import org.apache.avro.Schema
 import org.apache.avro.mapred.AvroOutputFormat
-import org.apache.avro.mapreduce.AvroJob
 import org.apache.beam.sdk.coders.AvroCoder
 import org.apache.beam.sdk.io.hdfs._
 import org.apache.beam.sdk.io.{Read, Write}
-import org.apache.beam.sdk.options.{GcpOptions, GcsOptions}
+import org.apache.beam.sdk.options.GcsOptions
 import org.apache.beam.sdk.util.MimeTypes
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path, PathFilter}
 import org.apache.hadoop.io.compress.DefaultCodec
-import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
 import org.apache.hadoop.security.UserGroupInformation
 import org.slf4j.LoggerFactory

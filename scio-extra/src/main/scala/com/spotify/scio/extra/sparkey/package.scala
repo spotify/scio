@@ -20,7 +20,6 @@ package com.spotify.scio.extra
 import java.util.UUID
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.SparkeyReader
 import org.apache.beam.sdk.transforms.{DoFn, View}

@@ -44,7 +44,6 @@ import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.{Coder, TableRowJsonCoder}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
-import org.apache.beam.sdk.options.GcpOptions
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
