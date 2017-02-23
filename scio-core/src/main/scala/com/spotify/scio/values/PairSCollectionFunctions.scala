@@ -227,7 +227,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   }
 
   /**
-   * N to 1 skewproof flavor of [[PairSCollectionFunctions.join()]].
+   * N to 1 skewproof flavor of [[join]].
    *
    * Perform a skewed join where some keys on the left hand may be hot, i.e. appear more than
    * `hotKeyThreshold` times. Frequency of a key is estimated with `1 - delta` probability, and the
@@ -235,7 +235,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * `true frequency <= estimate <= true frequency + eps * N`, where N is the total size of
    * the left hand side stream so far.
    *
-   * @note Make sure to import [[com.twitter.algebird.CMSHasherImplicits]] before using this join
+   * @note Make sure to `import com.twitter.algebird.CMSHasherImplicits` before using this join.
    * @example {{{
    * // Implicits that enabling CMS-hashing
    * import com.twitter.algebird.CMSHasherImplicits._
@@ -257,7 +257,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @param delta A bound on the probability that a query estimate does not lie within some small
    *              interval (an interval that depends on `eps`) around the truth. Must lie in (0, 1).
    * @param sampleFraction left side sample fraction. Default is `1.0` - no sampling.
-   * @param withReplacement whether to use sampling with replacement, see [[SCollection.sample()]]
+   * @param withReplacement whether to use sampling with replacement, see
+   *                        [[SCollection.sample(withReplacement:Boolean,fraction:Double)*
+   *                        SCollection.sample]].
    */
   def skewedJoin[W: ClassTag](that: SCollection[(K, W)],
                               hotKeyThreshold: Long,
@@ -285,7 +287,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   }
 
   /**
-   * N to 1 skewproof flavor of [[PairSCollectionFunctions.join()]].
+   * N to 1 skewproof flavor of [[join]].
    *
    * Perform a skewed join where some keys on the left hand may be hot, i.e. appear more than
    * `hotKeyThreshold` times. Frequency of a key is estimated with `1 - delta` probability, and the
@@ -293,7 +295,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * `true frequency <= estimate <= true frequency + eps * N`, where N is the total size of
    * the left hand side stream so far.
    *
-   * @note Make sure to import [[com.twitter.algebird.CMSHasherImplicits]] before using this join
+   * @note Make sure to `import com.twitter.algebird.CMSHasherImplicits` before using this join.
    * @example {{{
    * // Implicits that enabling CMS-hashing
    * import com.twitter.algebird.CMSHasherImplicits._

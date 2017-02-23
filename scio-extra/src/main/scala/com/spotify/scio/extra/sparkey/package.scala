@@ -82,8 +82,8 @@ package object sparkey {
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
   implicit class SparkeyScioContext(val self: ScioContext) extends AnyVal {
     /**
-     * Create a SideInput of [[SparkeyReader]] from a [[SparkeyUri]] base path, to be used with
-     * [[SCollection.withSideInputs]].
+     * Create a SideInput of `SparkeyReader` from a [[SparkeyUri]] base path, to be used with
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
      */
     def sparkeySideInput(basePath: String): SideInput[SparkeyReader] = {
       val uri = SparkeyUri(basePath, self.options)
@@ -92,7 +92,9 @@ package object sparkey {
     }
   }
 
-  /** Enhanced version of [[SCollection]] with Sparkey methods. */
+  /**
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
+   */
   implicit class SparkeyPairSCollection(val self: SCollection[(String, String)]) {
 
     private val logger: Logger = LoggerFactory.getLogger(classOf[SparkeyPairSCollection])
@@ -134,18 +136,21 @@ package object sparkey {
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
-     * [[SparkeyReader]], to be used with [[SCollection.withSideInputs]]. It is required that each
-     * key of the input be associated with a single value.
+     * `SparkeyReader`, to be used with
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
+     * required that each key of the input be associated with a single value.
      */
     def asSparkeySideInput: SideInput[SparkeyReader] = self.asSparkey.asSparkeySideInput
 
   }
 
-  /** Enhanced version of [[SCollection]] with Sparkey methods. */
+  /**
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
+   */
   implicit class SparkeySCollection(val self: SCollection[SparkeyUri]) extends AnyVal {
     /**
-     * Convert this SCollection to a SideInput of [[SparkeyReader]], to be used with
-     * [[SCollection.withSideInputs]].
+     * Convert this SCollection to a SideInput of `SparkeyReader`, to be used with
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
      */
     def asSparkeySideInput: SideInput[SparkeyReader] = {
       val view = self.applyInternal(View.asSingleton())
@@ -153,7 +158,7 @@ package object sparkey {
     }
   }
 
-  /** Enhanced version of [[SparkeyReader]] that mimics a [[Map]]. */
+  /** Enhanced version of `SparkeyReader` that mimics a `Map`. */
   implicit class RichSparkeyReader(val self: SparkeyReader) extends Map[String, String] {
     override def get(key: String): Option[String] = Option(self.getAsString(key))
     override def iterator: Iterator[(String, String)] =

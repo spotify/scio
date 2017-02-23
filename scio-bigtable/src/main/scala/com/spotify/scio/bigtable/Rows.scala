@@ -20,7 +20,7 @@ package com.spotify.scio.bigtable
 import com.google.bigtable.v2.{Cell, Column, Family, Row}
 import com.google.protobuf.ByteString
 
-/** Helper methods for [[Row]]. */
+/** Helper methods for `Row`. */
 object Rows {
 
   private def newCell(value: ByteString): Cell = Cell.newBuilder().setValue(value).build()
@@ -39,12 +39,12 @@ object Rows {
           .addCells(cell)))
       .build()
 
-  /** New [[Row]] with timestamp default to 0. */
+  /** New `Row` with timestamp default to 0. */
   def newRow(key: ByteString, familyName: String, columnQualifier: ByteString,
              value: ByteString): Row =
     newRow(key, familyName, columnQualifier, newCell(value))
 
-  /** New [[Row]]. */
+  /** New `Row`. */
   def newRow(key: ByteString, familyName: String, columnQualifier: ByteString,
              value: ByteString, timestampMicros: Long): Row =
     newRow(key, familyName, columnQualifier, newCell(value, timestampMicros))

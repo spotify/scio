@@ -966,7 +966,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /**
    * Save this SCollection as a BigQuery table. Note that element type `T` must be a case class
-   * annotated with [[BigQueryType.toTable]].
+   * annotated with [[com.spotify.scio.bigquery.types.BigQueryType.toTable BigQueryType.toTable]].
    */
   def saveAsTypedBigQuery(table: TableReference,
                           writeDisposition: WriteDisposition,
@@ -983,9 +983,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /**
    * Save this SCollection as a BigQuery table. Note that element type `T` must be annotated with
-   * [[BigQueryType]].
+   * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
    *
-   * This could be a complete case class with [[BigQueryType.toTable]]. For example:
+   * This could be a complete case class with
+   * [[com.spotify.scio.bigquery.types.BigQueryType.toTable BigQueryType.toTable]]. For example:
    *
    * {{{
    * @BigQueryType.toTable
@@ -995,8 +996,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * p.saveAsTypedBigQuery("myproject:mydataset.mytable")
    * }}}
    *
-   * It could also be an empty class with schema from [[BigQueryType.fromSchema]],
-   * [[BigQueryType.fromTable]], or [[BigQueryType.fromQuery]]. For example:
+   * It could also be an empty class with schema from
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromSchema]],
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromTable]], or
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]. For
+   * example:
    *
    * {{{
    * @BigQueryType.fromTable("publicdata:samples.gsod")
@@ -1080,7 +1084,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /**
    * Save this SCollection as a TensorFlow TFRecord file. Note that elements must be of type
-   * Array[[Byte]].
+   * `Array[Byte]`.
    * @group output
    */
   def saveAsTfRecordFile(path: String,

@@ -494,8 +494,11 @@ class ScioContext private[scio] (val options: PipelineOptions,
   /**
    * Get a typed SCollection for a BigQuery SELECT query or table.
    *
-   * Note that `T` must be annotated with [[BigQueryType.fromSchema]],
-   * [[BigQueryType.fromTable]], [[BigQueryType.fromQuery]], or [[BigQueryType.toTable]].
+   * Note that `T` must be annotated with
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromSchema]],
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromTable]],
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]], or
+   * [[com.spotify.scio.bigquery.types.BigQueryType.toTable BigQueryType.toTable]].
    *
    * By default the source (table or query) specified in the annotation will be used, but it can
    * be overridden with the `newSource` parameter. For example:

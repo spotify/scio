@@ -40,7 +40,7 @@ import scala.concurrent.Future
  */
 package object bigtable {
 
-  /** Enhanced version of [[Row]] with convenience methods. */
+  /** Enhanced version of `Row` with convenience methods. */
   implicit class RichRow(val self: Row) extends AnyVal {
 
     /** Return the Cells for the specific column. */

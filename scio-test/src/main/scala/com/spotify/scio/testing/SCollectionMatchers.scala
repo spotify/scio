@@ -30,7 +30,10 @@ import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
-/** Trait with ScalaTest [[Matcher]]s for [[SCollection]]s. */
+/**
+ * Trait with ScalaTest [[org.scalatest.matchers.Matcher Matcher]]s for
+ * [[com.spotify.scio.values.SCollection SCollection]]s.
+ */
 trait SCollectionMatchers {
 
   private def m(f: () => Any): MatchResult = {

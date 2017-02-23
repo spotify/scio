@@ -23,10 +23,10 @@ import com.google.bigtable.v2.Mutation.{DeleteFromColumn, DeleteFromFamily, Dele
 import com.google.bigtable.v2._
 import com.google.protobuf.ByteString
 
-/** Helper methods for [[Mutation]]. */
+/** Helper methods for `Mutation`. */
 object Mutations {
 
-  /** New [[SetCell]] Mutation using the current timestamp. */
+  /** New `SetCell` mutation using the current timestamp. */
   def newSetCell(familyName: String, columnQualifier: ByteString, value: ByteString): Mutation =
     Mutation.newBuilder()
       .setSetCell(SetCell.newBuilder()
@@ -36,7 +36,7 @@ object Mutations {
         .setTimestampMicros(TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis())))
       .build()
 
-  /** New [[SetCell]] Mutation. */
+  /** New `SetCell` mutation. */
   def newSetCell(familyName: String, columnQualifier: ByteString, value: ByteString,
                  timestampMicros: Long): Mutation =
     Mutation.newBuilder()
@@ -47,7 +47,7 @@ object Mutations {
         .setTimestampMicros(timestampMicros))
       .build()
 
-  /** New [[DeleteFromColumn]] Mutation. */
+  /** New `DeleteFromColumn` mutation. */
   def newDeleteFromColumn(familyName: String, columnQualifier: ByteString,
                           startTimestampMicros: Long, endTimestampMicros: Long): Mutation =
     Mutation.newBuilder()
@@ -59,14 +59,14 @@ object Mutations {
           .setEndTimestampMicros(endTimestampMicros)))
       .build()
 
-  /** New [[DeleteFromFamily]] Mutation. */
+  /** New `DeleteFromFamily` mutation. */
   def newDeleteFromFamily(familyName: String): Mutation =
     Mutation.newBuilder()
       .setDeleteFromFamily(DeleteFromFamily.newBuilder()
         .setFamilyName(familyName))
       .build()
 
-  /** New [[DeleteFromRow]] Mutation. */
+  /** New `DeleteFromRow` mutation. */
   def newDeleteFromRow: Mutation =
     Mutation.newBuilder().setDeleteFromRow(DeleteFromRow.getDefaultInstance).build()
 

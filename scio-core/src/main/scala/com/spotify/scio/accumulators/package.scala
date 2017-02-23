@@ -19,13 +19,15 @@ package com.spotify.scio
 
 import com.spotify.scio.util.CallSites
 import com.spotify.scio.values.{Accumulator, SCollection}
-import org.apache.beam.sdk.transforms.Sum.SumLongFn
 
 import scala.reflect.ClassTag
 
 package object accumulators {
 
-  /** Enhanced version of [[SCollection]] with accumulator helpers. */
+  /**
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with accumulator
+   * helpers.
+   */
   implicit class AccumulatorSCollection[T: ClassTag](val self: SCollection[T]) {
 
     /** Accumulate elements with the given accumulators. */

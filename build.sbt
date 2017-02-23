@@ -433,21 +433,17 @@ lazy val siteSettings = site.settings ++ ghpages.settings ++ Seq(
 // API mappings
 // =======================================================================
 
+val beamDocUrl = s"https://beam.apache.org/documentation/sdks/javadoc/$beamVersion/"
 val javaMappings = Seq(
-  ("org.apache.beam", "beam-sdks-java-core",
-   s"https://beam.apache.org/documentation/sdks/javadoc/$beamVersion/"),
-  ("org.apache.beam", "beam-runners-direct-java",
-   s"https://beam.apache.org/documentation/sdks/javadoc/$beamVersion/"),
-  ("org.apache.beam", "beam-runners-google-cloud-dataflow-java",
-   s"https://beam.apache.org/documentation/sdks/javadoc/$beamVersion/"),
-  ("org.apache.beam", "beam-sdks-java-io-google-cloud-platform",
-   s"https://beam.apache.org/documentation/sdks/javadoc/$beamVersion/"),
-  ("org.scalanlp", "breeze", "http://www.scalanlp.org/api/breeze/"),
-  ("org.scalatest", "scalatest", s"http://doc.scalatest.org/$scalatestVersion/"),
+  ("org.apache.beam", "beam-sdks-java-core", beamDocUrl),
+  ("org.apache.beam", "beam-runners-direct-java", beamDocUrl),
+  ("org.apache.beam", "beam-runners-google-cloud-dataflow-java", beamDocUrl),
+  ("org.apache.beam", "beam-sdks-java-io-google-cloud-platform", beamDocUrl),
   ("com.google.apis", "google-api-services-bigquery",
    "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest"),
-  ("joda-time", "joda-time", "http://www.joda.org/joda-time/apidocs")
- )
+  ("joda-time", "joda-time", "http://www.joda.org/joda-time/apidocs"))
 val scalaMappings = Seq(
-  ("com.twitter", "algebird-core", "http://twitter.github.io/algebird/api"))
+  ("com.twitter", "algebird-core", "http://twitter.github.io/algebird/api"),
+  ("org.scalanlp", "breeze", "http://www.scalanlp.org/api/breeze/"),
+  ("org.scalatest", "scalatest", s"http://doc.scalatest.org/$scalatestVersion/"))
 val docMappings = javaMappings ++ scalaMappings

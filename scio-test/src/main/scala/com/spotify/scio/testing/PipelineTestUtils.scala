@@ -44,8 +44,9 @@ trait PipelineTestUtils {
   /**
    * Test pipeline components with in-memory data.
    *
-   * Input data is passed to `fn` as an [[SCollection]] and the result [[SCollection]] from `fn`
-   * is extracted and to be verified.
+   * Input data is passed to `fn` as an [[com.spotify.scio.values.SCollection SCollection]] and the
+   * result [[com.spotify.scio.values.SCollection SCollection]] from `fn` is extracted and to be
+   * verified.
    *
    * @param data input data
    * @param fn transform to be tested
@@ -65,8 +66,9 @@ trait PipelineTestUtils {
   /**
    * Test pipeline components with in-memory data.
    *
-   * Input data is passed to `fn` as [[SCollection]]s and the result [[SCollection]] from `fn` is
-   * extracted and to be verified.
+   * Input data is passed to `fn` as [[com.spotify.scio.values.SCollection SCollection]]s and the
+   * result [[com.spotify.scio.values.SCollection SCollection]] from `fn` is extracted and to be
+   * verified.
    *
    * @param data1 input data
    * @param data2 input data
@@ -84,8 +86,9 @@ trait PipelineTestUtils {
   /**
    * Test pipeline components with in-memory data.
    *
-   * Input data is passed to `fn` as [[SCollection]]s and the result [[SCollection]] from `fn` is
-   * extracted and to be verified.
+   * Input data is passed to `fn` as [[com.spotify.scio.values.SCollection SCollection]]s and the
+   * result [[com.spotify.scio.values.SCollection SCollection]] from `fn` is extracted and to be
+   * verified.
    *
    * @param data1 input data
    * @param data2 input data
@@ -104,8 +107,9 @@ trait PipelineTestUtils {
   /**
    * Test pipeline components with in-memory data.
    *
-   * Input data is passed to `fn` as [[SCollection]]s and the result [[SCollection]] from `fn` is
-   * extracted and to be verified.
+   * Input data is passed to `fn` as [[com.spotify.scio.values.SCollection SCollection]]s and the
+   * result [[com.spotify.scio.values.SCollection SCollection]] from `fn` is extracted and to be
+   * verified.
    *
    * @param data1 input data
    * @param data2 input data
