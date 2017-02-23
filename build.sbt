@@ -447,5 +447,5 @@ val javaMappings = Seq(
   ("joda-time", "joda-time", "http://www.joda.org/joda-time/apidocs")
  )
 val scalaMappings = Seq(
-  ("com.twitter", "algebird-core", "http://twitter.github.io/algebird"))
+  ("com.twitter", "algebird-core", "http://twitter.github.io/algebird/api"))
 val docMappings = javaMappings ++ scalaMappings
