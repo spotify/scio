@@ -442,6 +442,7 @@ val javaMappings = Seq(
    s"https://beam.apache.org/documentation/sdks/javadoc/$beamVersion/"),
   ("org.apache.beam", "beam-sdks-java-io-google-cloud-platform",
    s"https://beam.apache.org/documentation/sdks/javadoc/$beamVersion/"),
+  ("org.scalatest", "scalatest", s"http://doc.scalatest.org/$scalatestVersion/"),
   ("com.google.apis", "google-api-services-bigquery",
    "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest"),
   ("joda-time", "joda-time", "http://www.joda.org/joda-time/apidocs")
