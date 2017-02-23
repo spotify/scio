@@ -18,8 +18,7 @@
 case $CIRCLE_NODE_INDEX in
   0) export CI_SCALA_VERSION="2.11.8"
     ;;
-  1)
-    exit 0
+  1) export CI_SCALA_VERSION="2.12.1"
     ;;
   *)
     exit 1

@@ -58,8 +58,8 @@ val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework"
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
 
-  scalaVersion       := "2.11.8",
-  crossScalaVersions := Seq("2.11.8"),
+  scalaVersion       := "2.12.1",
+  crossScalaVersions := Seq("2.11.8", "2.12.1"),
   scalacOptions                   ++= Seq("-Xmax-classfile-name", "100", "-target:jvm-1.8", "-deprecation", "-feature", "-unchecked"),
   scalacOptions in (Compile, doc) ++= Seq("-skip-packages", "org.apache.beam"),
   javacOptions                    ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
