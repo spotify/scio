@@ -23,7 +23,9 @@ import com.twitter.algebird.Semigroup
 /**
  * Utilities for Breeze.
  *
- * Includes [[Semigroup]]s for `DenseVector`s and `DenseMatrix`s of `Float` and `Double`.
+ * Includes [[com.twitter.algebird.Semigroup Semigroup]]s for
+ * [[breeze.linalg.DenseVector DenseVector]]s and [[breeze.linalg.DenseMatrix DenseMatrix]]s of
+ * `Float` and `Double`.
  *
  * {{{
  * import com.spotify.scio.extra.Breeze._
@@ -39,7 +41,7 @@ object Breeze {
   private type FM = DenseMatrix[Float]
   private type DM = DenseMatrix[Double]
 
-  /** [[com.twitter.algebird.Semigroup Semigroup]] for DenseVector[Float]. */
+  /** [[com.twitter.algebird.Semigroup Semigroup]] for `DenseVector[Float]`. */
   implicit val floatVectorSg: Semigroup[FV] = new Semigroup[FV] {
     override def plus(l: FV, r: FV): FV = l + r
     override def sumOption(xs: TraversableOnce[FV]): Option[FV] = {
@@ -57,7 +59,7 @@ object Breeze {
     }
   }
 
-  /** [[com.twitter.algebird.Semigroup Semigroup]] for DenseVector[Double]. */
+  /** [[com.twitter.algebird.Semigroup Semigroup]] for `DenseVector[Double]`. */
   implicit val doubleVectorSg: Semigroup[DV] = new Semigroup[DV] {
     override def plus(l: DV, r: DV): DV = l + r
     override def sumOption(xs: TraversableOnce[DV]): Option[DV] = {
@@ -75,7 +77,7 @@ object Breeze {
     }
   }
 
-  /** [[com.twitter.algebird.Semigroup Semigroup]] for DenseMatrix[Float]. */
+  /** [[com.twitter.algebird.Semigroup Semigroup]] for `DenseMatrix[Float]`. */
   implicit val floatMatrixSg: Semigroup[FM] = new Semigroup[FM] {
     override def plus(l: FM, r: FM): FM = l + r
     override def sumOption(xs: TraversableOnce[FM]): Option[FM] = {
@@ -93,7 +95,7 @@ object Breeze {
     }
   }
 
-  /** [[com.twitter.algebird.Semigroup Semigroup]] for DenseMatrix[Double]. */
+  /** [[com.twitter.algebird.Semigroup Semigroup]] for `DenseMatrix[Double]`. */
   implicit val doubleMatrixSg: Semigroup[DM] = new Semigroup[DM] {
     override def plus(l: DM, r: DM): DM = l + r
     override def sumOption(xs: TraversableOnce[DM]): Option[DM] = {
