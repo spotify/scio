@@ -55,16 +55,11 @@ private[scio] object ScioUtil {
 
   def isLocalRunner(options: PipelineOptions): Boolean = {
     val runner = options.getRunner
-
     require(runner != null, "Pipeline runner not set!")
-
     runner.isAssignableFrom(classOf[DirectRunner])
   }
 
-  def getScalaJsonMapper: ObjectMapper = {
-    val mapper = new ObjectMapper()
-    mapper.registerModule(DefaultScalaModule)
-  }
+  def getScalaJsonMapper: ObjectMapper = new ObjectMapper().registerModule(DefaultScalaModule)
 
   def getDataflowServiceClient(options: PipelineOptions): Dataflow =
     options.as(classOf[DataflowPipelineDebugOptions]).getDataflowClient
