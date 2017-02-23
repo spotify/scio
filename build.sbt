@@ -20,7 +20,6 @@ import Keys._
 import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtSite.SiteKeys._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
-import sbtunidoc.Plugin.UnidocKeys._
 
 val beamVersion = "0.5.0"
 val algebirdVersion = "0.12.4"
@@ -184,7 +183,7 @@ lazy val macroSettings = Seq(
 lazy val root: Project = Project(
   "scio",
   file(".")
-).settings(
+).enablePlugins(ScalaUnidocPlugin).settings(
   commonSettings ++ siteSettings ++ noPublishSettings,
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
     -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples),
@@ -413,7 +412,7 @@ def fixJavaDocLinks(bases: Seq[String], doc: String): String = {
 
 lazy val fixJavaDocLinksTask = taskKey[Unit]("Fix JavaDoc links")
 
-lazy val siteSettings = site.settings ++ ghpages.settings ++ unidocSettings ++ Seq(
+lazy val siteSettings = site.settings ++ ghpages.settings ++ Seq(
   autoAPIMappings := true,
   site.addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), ""),
   gitRemoteRepo := "git@github.com:spotify/scio.git",

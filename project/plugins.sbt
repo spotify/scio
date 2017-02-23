@@ -1,6 +1,6 @@
 addSbtPlugin("com.cavorite" % "sbt-avro" % "0.3.2")
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.3")
-addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.3.3")
+addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.0")
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.4")
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")
 addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.5.4")
