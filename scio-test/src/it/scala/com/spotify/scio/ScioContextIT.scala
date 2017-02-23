@@ -19,10 +19,10 @@ package com.spotify.scio
 
 import java.net.URI
 
+import com.spotify.scio.testing.ItUtils
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.sdk.options.{GcpOptions, PipelineOptions, PipelineOptionsFactory}
-import org.apache.beam.sdk.util.DefaultBucket
 import org.scalatest._
 
 class ScioContextIT extends FlatSpec with Matchers {
@@ -30,13 +30,15 @@ class ScioContextIT extends FlatSpec with Matchers {
   "ScioContext" should "have temp location for DataflowRunner" in {
     val opts = PipelineOptionsFactory.create()
     opts.setRunner(classOf[DataflowRunner])
+    opts.as(classOf[GcpOptions]).setProject(ItUtils.project)
     verify(opts)
   }
 
   it should "support user defined temp location for DataflowRunner" in {
     val opts = PipelineOptionsFactory.create()
     opts.setRunner(classOf[DataflowRunner])
-    opts.setTempLocation(DefaultBucket.tryCreateDefaultBucket(opts))
+    opts.as(classOf[GcpOptions]).setProject(ItUtils.project)
+    opts.setTempLocation(ItUtils.gcpTempLocation("scio-context-it"))
     verify(opts)
   }
 

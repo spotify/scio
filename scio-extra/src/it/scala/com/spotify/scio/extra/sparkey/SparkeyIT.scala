@@ -19,10 +19,9 @@ package com.spotify.scio.extra.sparkey
 
 import java.nio.ByteBuffer
 
-import com.spotify.scio.testing.PipelineSpec
-import org.apache.beam.sdk.options.GcsOptions
+import com.spotify.scio.testing.{ItUtils, PipelineSpec}
+import org.apache.beam.sdk.util.MimeTypes
 import org.apache.beam.sdk.util.gcsfs.GcsPath
-import org.apache.beam.sdk.util.{DefaultBucket, MimeTypes}
 
 import scala.collection.JavaConverters._
 
@@ -34,14 +33,14 @@ class SparkeyIT extends PipelineSpec {
 
   "SCollection" should "support .asSparkeySideInput using GCS tempLocation" in {
     runWithContext { sc =>
-      val tempLocation = DefaultBucket.tryCreateDefaultBucket(sc.options)
+      val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
       try {
         val p1 = sc.parallelize(Seq(1))
         val p2 = sc.parallelize(sideData).asSparkeySideInput
         val s = p1.withSideInputs(p2).flatMap((_, si) => si(p2).map(_._2)).toSCollection
         s should containInAnyOrder (Seq("1", "2", "3"))
       } finally {
-        val gcs = sc.optionsAs[GcsOptions].getGcsUtil
+        val gcs = ItUtils.gcsUtil
         val files = gcs.expand(GcsPath.fromUri(tempLocation + "/sparkey-*")).asScala
         gcs.remove(files.map(_.toString).asJava)
       }
@@ -50,9 +49,9 @@ class SparkeyIT extends PipelineSpec {
 
   it should "throw exception when Sparkey file exists" in {
     runWithContext { sc =>
-      val tempLocation = DefaultBucket.tryCreateDefaultBucket(sc.options)
-      val gcs = sc.optionsAs[GcsOptions].getGcsUtil
-      val basePath = tempLocation + "/sparkey-test"
+      val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
+      val basePath = tempLocation + "/sparkey"
+      val gcs = ItUtils.gcsUtil
       try {
         val f = gcs.create(GcsPath.fromUri(basePath + ".spi"), MimeTypes.BINARY)
         f.write(ByteBuffer.wrap("test-data".getBytes))
