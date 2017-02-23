@@ -26,7 +26,6 @@ SBT
 runMain
   com.spotify.scio.examples.cookbook.JoinExamples
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --gcpTempLocation=gs://[BUCKET]/path/to/staging
   --output=gs://[BUCKET]/[PATH]/join_examples
 */
 

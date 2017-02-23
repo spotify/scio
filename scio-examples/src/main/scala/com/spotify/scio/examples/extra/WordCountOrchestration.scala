@@ -31,7 +31,6 @@ SBT
 runMain
   com.spotify.scio.examples.extra.WordCountOrchestration
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --gcpTempLocation=gs://[BUCKET]/dataflow/staging
   --output=gs://[BUCKET]/[PATH]/wordcount
 */
 

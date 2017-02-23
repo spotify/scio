@@ -29,7 +29,6 @@ SBT
 runMain
   com.spotify.scio.examples.cookbook.MaxPerKeyExamples
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --gcpTempLocation=gs://[BUCKET]/path/to/staging
   --output=[DATASET].max_per_key_examples
 */
 

@@ -129,7 +129,7 @@ package object sparkey {
      */
     def asSparkey: SCollection[SparkeyUri] = {
       val uuid = UUID.randomUUID()
-      val basePath = ScioUtil.tempLocation(self.context.options) + s"/sparkey-$uuid"
+      val basePath = self.context.options.getTempLocation + s"/sparkey-$uuid"
       this.asSparkey(basePath)
     }
 

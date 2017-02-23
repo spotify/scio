@@ -127,7 +127,7 @@ package object hdfs {
       else {
         require(!paths.contains(null), "Artifact path can't be null")
 
-        val (targetDir, writeFn) = getTargetFromOptions()
+        val (targetDir, writeFn) = getTargetFromOptions
         val _conf = Option(conf).getOrElse(new Configuration())
 
         val targetPaths = paths.map { path =>
@@ -142,7 +142,7 @@ package object hdfs {
 
           val target = new Path(targetDir, targetDistCache)
 
-          // TODO: should upload be asynchronous, blocking on context close
+          // TODO: should upload be asynchronous, blocking on context close?
           if (username != null) {
             UserGroupInformation.createRemoteUser(username).doAs(new PrivilegedAction[Unit] {
               override def run(): Unit = {
@@ -160,16 +160,13 @@ package object hdfs {
       }
     }
 
-    private def getTargetFromOptions() = {
-      if (!ScioUtil.isLocalRunner(self.options)) {
-        val gcpOptions = self.optionsAs[GcpOptions]
-        require(self.optionsAs[GcpOptions].getGcpTempLocation != null,
-          "Staging directory not set - use `--gcpTempLocation`!")
-        (gcpOptions.getGcpTempLocation, gcsOutputStream _)
+    private def getTargetFromOptions: (String, URI => OutputStream) = {
+      val writeFn = if (ScioUtil.isLocalRunner(self.options)) {
+        localOutputStream _
       } else {
-        // should targetDir be specified in options?
-        (Files.createTempDirectory("distcache").toString, localOutputStream _)
+        gcsOutputStream _
       }
+      (self.options.getTempLocation, writeFn)
     }
 
     private def localOutputStream(target: URI): OutputStream = {

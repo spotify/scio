@@ -26,7 +26,6 @@ SBT
 runMain
   com.spotify.scio.examples.extra.SideInOutExample
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --gcpTempLocation=gs://[BUCKET]/dataflow/staging
   --input=gs://dataflow-samples/shakespeare/kinglear.txt
   --stopWords=[STOP_WORDS_URI]
   --output1=gs://[BUCKET]/[PATH]/output1

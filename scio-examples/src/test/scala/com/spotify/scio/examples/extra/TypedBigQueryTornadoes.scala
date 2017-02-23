@@ -25,7 +25,6 @@ sbt -Dbigquery.project=[PROJECT]
 runMain
   com.spotify.scio.examples.extra.TypedBigQueryTornadoes
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --gcpTempLocation=gs://[BUCKET]/path/to/staging
   --output=[DATASET].typed_bigquery_tornadoes
 */
 

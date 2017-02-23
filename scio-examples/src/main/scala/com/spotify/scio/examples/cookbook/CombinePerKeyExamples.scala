@@ -30,7 +30,6 @@ SBT
 runMain
   com.spotify.scio.examples.cookbook.CombinePerKeyExamples
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --gcpTempLocation=gs://[BUCKET]/path/to/staging
   --output=[DATASET].combine_per_key_examples
 */
 

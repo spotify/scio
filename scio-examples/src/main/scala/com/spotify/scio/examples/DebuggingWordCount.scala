@@ -32,7 +32,6 @@ SBT
 runMain
   com.spotify.scio.examples.DebuggingWordCount
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --gcpTempLocation=gs://[BUCKET]/dataflow/staging
   --input=gs://dataflow-samples/shakespeare/kinglear.txt
 */
 

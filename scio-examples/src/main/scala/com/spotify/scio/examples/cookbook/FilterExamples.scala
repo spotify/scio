@@ -31,7 +31,6 @@ SBT
 runMain
   com.spotify.scio.examples.cookbook.FilterExamples
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --gcpTempLocation=gs://[BUCKET]/path/to/staging
   --output=[DATASET].filter_examples
 */
 

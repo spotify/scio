@@ -25,7 +25,6 @@ SBT
 runMain
   com.spotify.scio.examples.extra.TableRowJsonInOut
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --gcpTempLocation=gs://[BUCKET]/path/to/staging
   --input=gs://dataflow-samples/wikipedia_edits/wiki_data-*.json
   --output=gs://[BUCKET]/[PATH]/wikipedia
 */

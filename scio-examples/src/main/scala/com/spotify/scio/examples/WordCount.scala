@@ -24,7 +24,6 @@ import com.spotify.scio.examples.common.ExampleData
 /*
 sbt "scio-examples/runMain com.spotify.scio.examples.WordCount
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --gcpTempLocation=gs://[BUCKET]/dataflow/staging
   --input=gs://dataflow-samples/shakespeare/kinglear.txt
   --output=gs://[BUCKET]/[PATH]/wordcount"
 */

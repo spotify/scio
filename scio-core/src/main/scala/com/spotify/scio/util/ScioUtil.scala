@@ -79,18 +79,6 @@ private[scio] object ScioUtil {
       s"Could not get dataflow metrics of ${getMetrics.getJobId} in ${getMetrics.getProjectId}")
   }
 
-  def tempLocation(options: PipelineOptions): String = {
-    if (ScioUtil.isLocalRunner(options)) {
-      if (options.getTempLocation == null) {
-        sys.props("java.io.tmpdir")
-      } else {
-        options.getTempLocation
-      }
-    } else {
-      options.as(classOf[GcpOptions]).getGcpTempLocation
-    }
-  }
-
   /**
    * Download a file from GCS onto the local file system.
    *

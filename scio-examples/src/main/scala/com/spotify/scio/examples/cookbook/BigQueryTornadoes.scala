@@ -28,7 +28,6 @@ import scala.collection.JavaConverters._
 runMain
   com.spotify.scio.examples.cookbook.BigQueryTornadoes
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --gcpTempLocation=gs://[BUCKET]/path/to/staging
   --input=clouddataflow-readonly:samples.weather_stations
   --output=[DATASET].bigquery_tornadoes
 */
