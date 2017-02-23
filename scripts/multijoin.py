@@ -198,7 +198,7 @@ def main(out):
           def toOptions[T](xs: Iterator[T]): Iterator[Option[T]] = if (xs.isEmpty) Iterator(None) else xs.map(Option(_))
         ''').replace('  # NOQA', '').lstrip('\n')
 
-    N = 22
+    N = 11
     for i in xrange(2, N + 1):
         cogroup(out, i)
     for i in xrange(2, N + 1):
