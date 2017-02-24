@@ -447,7 +447,7 @@ class BigQueryClient private (private val projectId: String,
             dryRunQuery(true) match {
               case Success(_) =>
                 logger.warn("Legacy syntax is deprecated, use SQL syntax instead. " +
-                  "See https://cloud.google.com/bigquery/sql-reference/")
+                  "See https://cloud.google.com/bigquery/docs/reference/standard-sql/")
                 logger.warn(s"Legacy query: `$sqlQuery`")
                 true
               case Failure(f) => throw f
