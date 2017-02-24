@@ -44,7 +44,7 @@ class ScioResult private[scio] (val internal: PipelineResult,
                                 val accumulators: Seq[Accumulator[_]],
                                 private val context: ScioContext) {
 
-  private val logger = LoggerFactory.getLogger(classOf[ScioResult])
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   private val aggregators: Map[String, Iterable[Aggregator[_, _]]] =
     context.pipeline.getAggregatorSteps.asScala.keys.groupBy(_.getName)

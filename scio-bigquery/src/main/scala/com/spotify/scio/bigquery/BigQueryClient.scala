@@ -46,7 +46,7 @@ import org.apache.beam.sdk.util.BigQueryTableInserter
 import org.apache.commons.io.FileUtils
 import org.joda.time.format.{DateTimeFormat, PeriodFormatterBuilder}
 import org.joda.time.{Instant, Period}
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.{Map => MMap}
 import scala.collection.JavaConverters._
@@ -110,7 +110,7 @@ class BigQueryClient private (private val projectId: String,
       .build()
   }
 
-  private val logger: Logger = LoggerFactory.getLogger(classOf[BigQueryClient])
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   private val TABLE_PREFIX = "scio_query"
   private val TIME_FORMATTER = DateTimeFormat.forPattern("yyyyMMddHHmmss")

@@ -24,7 +24,7 @@ import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.SparkeyReader
 import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.values.PCollectionView
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 
@@ -97,7 +97,7 @@ package object sparkey {
    */
   implicit class SparkeyPairSCollection(val self: SCollection[(String, String)]) {
 
-    private val logger: Logger = LoggerFactory.getLogger(classOf[SparkeyPairSCollection])
+    private val logger = LoggerFactory.getLogger(this.getClass)
 
     /**
      * Write the key-value pairs of this SCollection as a Sparkey file to a specific location.

@@ -27,7 +27,7 @@ import org.apache.avro.Schema
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
 import org.apache.beam.sdk.util.FluentBackoff
 import org.joda.time.Duration
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
@@ -142,7 +142,7 @@ private class PollingTaps(private val backOff: BackOff) extends Taps {
                   promise: Promise[AnyRef])
 
   private var polls: List[Poll] = _
-  private val logger: Logger = LoggerFactory.getLogger(classOf[PollingTaps])
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   override private[scio] def mkTap[T](name: String,
                                       readyFn: () => Boolean,

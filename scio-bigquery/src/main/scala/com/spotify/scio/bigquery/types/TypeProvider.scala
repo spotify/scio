@@ -33,7 +33,8 @@ import scala.reflect.macros._
 
 // scalastyle:off line.size.limit
 private[types] object TypeProvider {
-  private val logger = LoggerFactory.getLogger(TypeProvider.getClass)
+
+  private val logger = LoggerFactory.getLogger(this.getClass)
   private lazy val bigquery: BigQueryClient = BigQueryClient.defaultInstance()
 
   def tableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
