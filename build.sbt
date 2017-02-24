@@ -61,7 +61,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   scalaVersion       := "2.11.8",
   crossScalaVersions := Seq("2.11.8"),
   scalacOptions                   ++= Seq("-Xmax-classfile-name", "100", "-target:jvm-1.8", "-deprecation", "-feature", "-unchecked"),
-  scalacOptions in (Compile, doc) ++= Seq("-groups", "-skip-packages", "org.apache.beam"),
+  scalacOptions in (Compile, doc) ++= Seq("-skip-packages", "org.apache.beam"),
   javacOptions                    ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
   javacOptions in (Compile, doc)  := Seq("-source", "1.8"),
 
