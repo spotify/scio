@@ -36,7 +36,7 @@ import scala.tools.nsc.io._
 class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent: ClassLoader)
   extends URLClassLoader(urls, parent) {
 
-  private val logger = LoggerFactory.getLogger(classOf[ScioReplClassLoader])
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   private val replJarName = "scio-repl-session.jar"
   private var nextReplJarDir: File = genNextReplCodeJarDir

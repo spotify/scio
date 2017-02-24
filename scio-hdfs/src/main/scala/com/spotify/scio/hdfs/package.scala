@@ -63,11 +63,10 @@ import scala.reflect.ClassTag
  */
 package object hdfs {
 
+  private val logger = LoggerFactory.getLogger(this.getClass)
+
   /** Enhanced version of [[ScioContext]] with HDFS methods. */
-  // TODO: scala 2.11
-  // implicit class HdfsScioContext(private val sc: ScioContext) extends AnyVal {
-  implicit class HdfsScioContext(val self: ScioContext) {
-    private val logger = LoggerFactory.getLogger(ScioContext.getClass)
+  implicit class HdfsScioContext(val self: ScioContext) extends AnyVal {
 
     /** Get an SCollection for a text file on HDFS. */
     def hdfsTextFile(path: String, username: String = null): SCollection[String] =

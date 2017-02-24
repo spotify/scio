@@ -24,7 +24,8 @@ import com.google.cloud.dataflow.sdk.util.FluentBackoff
 import com.google.protobuf.Message
 import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
 import org.apache.avro.Schema
-import org.slf4j.{Logger, LoggerFactory}
+import org.joda.time.Duration
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
@@ -111,8 +112,8 @@ private class PollingTaps(private val backOff: BackOff) extends Taps {
                   tapFn: () => Tap[Any],
                   promise: Promise[AnyRef])
 
-  private var polls: List[Poll] = null
-  private val logger: Logger = LoggerFactory.getLogger(classOf[PollingTaps])
+  private var polls: List[Poll] = _
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   override private[scio] def mkTap[T](name: String,
                                       readyFn: () => Boolean,

@@ -143,7 +143,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   private implicit val context: ScioContext = this
 
-  private val logger = LoggerFactory.getLogger(ScioContext.getClass)
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   import Implicits._
 

@@ -39,7 +39,7 @@ private object VersionUtil {
   private val TIMEOUT = 3000
   private val url = "https://api.github.com/repos/spotify/scio/releases"
   private val pattern = """v?(\d+)\.(\d+).(\d+)(-\w+)?""".r
-  private val logger = LoggerFactory.getLogger(VersionUtil.getClass)
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   private def getLatest: Option[String] = Try {
     val transport = new NetHttpTransport()

@@ -32,7 +32,7 @@ import org.apache.avro.file.{DataFileStream, DataFileWriter}
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
 import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter, SpecificRecordBase}
 import org.apache.commons.io.IOUtils
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -40,7 +40,7 @@ import scala.reflect.ClassTag
 /** Commands for simple file I/O in the REPL. */
 class IoCommands(options: PipelineOptions) {
 
-  private val logger: Logger = LoggerFactory.getLogger(classOf[IoCommands])
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   private val TEXT = "text/plain"
   private val BINARY = "application/octet-stream"
