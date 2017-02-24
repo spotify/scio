@@ -103,16 +103,16 @@ private[scio] object TestDataManager {
 
 class TestIO[+T] private[scio] (val key: String)
 
-case class ObjectFileIO[T](path: String) extends TestIO(path)
+case class ObjectFileIO[T](path: String) extends TestIO[T](path)
 
-case class AvroIO[T](path: String) extends TestIO(path)
+case class AvroIO[T](path: String) extends TestIO[T](path)
 
 case class BigQueryIO(tableSpecOrQuery: String) extends TestIO[TableRow](tableSpecOrQuery)
 
 case class DatastoreIO(projectId: String, query: Query = null, namespace: String = null)
   extends TestIO[Entity](s"$projectId\t$query\t$namespace")
 
-case class ProtobufIO[T](path: String) extends TestIO(path)
+case class ProtobufIO[T](path: String) extends TestIO[T](path)
 
 case class PubsubIO(topic: String) extends TestIO[String](topic)
 
@@ -128,4 +128,4 @@ object DistCacheIO {
   def apply[T](uris: Seq[String]): DistCacheIO[T] = DistCacheIO(uris.mkString("\t"))
 }
 
-case class CustomIO[T](name: String) extends TestIO(name)
+case class CustomIO[T](name: String) extends TestIO[T](name)
