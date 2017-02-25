@@ -114,7 +114,7 @@ case class DatastoreIO(projectId: String, query: Query = null, namespace: String
 
 case class ProtobufIO[T](path: String) extends TestIO[T](path)
 
-case class PubsubIO(topic: String) extends TestIO[String](topic)
+case class PubsubIO[T](topic: String) extends TestIO[T](topic)
 
 case class TableRowJsonIO(path: String) extends TestIO[TableRow](path)
 

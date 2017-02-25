@@ -80,7 +80,7 @@ object DatastoreJob {
 object PubsubJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.pubsubTopic(args("input"), null)
+    sc.pubsubTopic[String](args("input"), null)
       .map(_ + "X")
       .saveAsPubsub(args("output"))
     sc.close()
@@ -249,7 +249,7 @@ class JobTestTest extends PipelineSpec {
   def testPubsubJob(xs: String*): Unit = {
     JobTest[PubsubJob.type]
       .args("--input=in", "--output=out")
-      .input(PubsubIO("in"), Seq("a", "b", "c"))
+      .input(PubsubIO[String]("in"), Seq("a", "b", "c"))
       .output[String](PubsubIO("out"))(_ should containInAnyOrder (xs))
       .run()
   }

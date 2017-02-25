@@ -576,13 +576,15 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection for a Pub/Sub subscription.
    * @group input
    */
-  def pubsubSubscription(sub: String,
-                         idLabel: String = null,
-                         timestampLabel: String = null): SCollection[String] = requireNotClosed {
+  def pubsubSubscription[T: ClassTag](sub: String,
+                                      idLabel: String = null,
+                                      timestampLabel: String = null)
+  : SCollection[T] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(PubsubIO(sub))
     } else {
-      var transform = gio.PubsubIO.read[String]().subscription(sub)
+      val coder = pipeline.getCoderRegistry.getScalaCoder[T]
+      var transform = gio.PubsubIO.read().subscription(sub).withCoder(coder)
       if (idLabel != null) {
         transform = transform.idLabel(idLabel)
       }
@@ -597,13 +599,15 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection for a Pub/Sub topic.
    * @group input
    */
-  def pubsubTopic(topic: String,
-                  idLabel: String = null,
-                  timestampLabel: String = null): SCollection[String] = requireNotClosed {
+  def pubsubTopic[T: ClassTag](topic: String,
+                               idLabel: String = null,
+                               timestampLabel: String = null)
+  : SCollection[T] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(PubsubIO(topic))
     } else {
-      var transform = gio.PubsubIO.read[String]().topic(topic)
+      val coder = pipeline.getCoderRegistry.getScalaCoder[T]
+      var transform = gio.PubsubIO.read().topic(topic).withCoder(coder)
       if (idLabel != null) {
         transform = transform.idLabel(idLabel)
       }
