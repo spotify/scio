@@ -61,7 +61,7 @@ def cogroup(out, n):
     print >> out, '      .of(tagA, a.toKV.internal)'
     for x in vals[1:]:
         print >> out, '      .and(tag%s, %s.toKV.internal)' % (x, x.lower())
-    print >> out, '      .apply("CoGroupByKey", CoGroupByKey.create())'
+    print >> out, '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())'
 
     print >> out, '    a.context.wrap(keyed).withName(tfName).map { kv =>'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
@@ -85,7 +85,7 @@ def join(out, n):
     print >> out, '      .of(tagA, a.toKV.internal)'
     for x in vals[1:]:
         print >> out, '      .and(tag%s, %s.toKV.internal)' % (x, x.lower())
-    print >> out, '      .apply("CoGroupByKey", CoGroupByKey.create())'
+    print >> out, '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())'
 
     print >> out, '    a.context.wrap(keyed).withName(tfName).flatMap { kv =>'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
@@ -111,7 +111,7 @@ def left(out, n):
     print >> out, '      .of(tagA, a.toKV.internal)'
     for x in vals[1:]:
         print >> out, '      .and(tag%s, %s.toKV.internal)' % (x, x.lower())
-    print >> out, '      .apply("CoGroupByKey", CoGroupByKey.create())'
+    print >> out, '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())'
 
     print >> out, '    a.context.wrap(keyed).withName(tfName).flatMap { kv =>'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
@@ -140,7 +140,7 @@ def outer(out, n):
     print >> out, '      .of(tagA, a.toKV.internal)'
     for x in vals[1:]:
         print >> out, '      .and(tag%s, %s.toKV.internal)' % (x, x.lower())
-    print >> out, '      .apply("CoGroupByKey", CoGroupByKey.create())'
+    print >> out, '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())'
 
     print >> out, '    a.context.wrap(keyed).withName(tfName).flatMap { kv =>'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
