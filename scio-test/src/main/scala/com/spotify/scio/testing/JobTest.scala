@@ -18,7 +18,6 @@
 package com.spotify.scio.testing
 
 import java.lang.reflect.InvocationTargetException
-import java.util.UUID
 
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
@@ -66,21 +65,13 @@ import scala.util.control.NonFatal
  */
 object JobTest {
 
-  private[scio] def newTestId(className: String = "TestClass"): String = {
-    val uuid = UUID.randomUUID().toString.replaceAll("-", "")
-    s"JobTest-$className-$uuid"
-  }
-
-  private[scio] def isTestId(appName: String): Boolean =
-    "JobTest-[^-]+-[a-z0-9]+".r.pattern.matcher(appName).matches()
-
   case class Builder(className: String, cmdlineArgs: Array[String],
                      inputs: Map[TestIO[_], Iterable[_]],
                      outputs: Map[TestIO[_], SCollection[_] => Unit],
                      distCaches: Map[DistCacheIO[_], _]) {
 
     /** Test ID for input and output wiring. */
-    val testId: String = newTestId(className)
+    val testId: String = TestUtil.newTestId(className)
 
     /** Feed command line arguments to the pipeline being tested. */
     def args(newArgs: String*): Builder =
@@ -100,6 +91,9 @@ object JobTest {
      * Evaluate an output of the pipeline being tested. Note that `TestIO[T]` must match the one
      * used inside the pipeline, e.g. `AvroIO[MyRecord]("out.avro")` with
      * `data.saveAsAvroFile("out.avro")` where `data` is of type `SCollection[MyRecord]`.
+     *
+     * @param value assertions for output data. See [[SCollectionMatchers]] for available matchers
+     *              on an [[com.spotify.scio.values.SCollection SCollection]].
      */
     def output[T](key: TestIO[T])(value: SCollection[T] => Unit): Builder = {
       require(!this.outputs.contains(key), "Duplicate test output: " + key)
