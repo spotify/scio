@@ -412,6 +412,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   /**
    * Get an SCollection for an Avro file.
+   * @param schema must be not null if `T` is of type
+   *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
    * @group input
    */
   def avroFile[T: ClassTag](path: String, schema: Schema = null): SCollection[T] =

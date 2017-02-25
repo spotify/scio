@@ -75,7 +75,11 @@ package object hdfs {
       self.wrap(self.applyInternal(Read.from(src)))
     }
 
-    /** Get an SCollection of specific record type for an Avro file on HDFS. */
+    /**
+     * Get an SCollection for an Avro file on HDFS.
+     * @param schema must be not null if `T` is of type
+     *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
+     */
     def hdfsAvroFile[T: ClassTag](path: String,
                                   schema: Schema = null,
                                   username: String = null,
@@ -222,7 +226,11 @@ package object hdfs {
       self.context.makeFuture(HdfsTextTap(path))
     }
 
-    /** Save this SCollection as an Avro file on HDFS. */
+    /**
+     * Save this SCollection as an Avro file.
+     * @param schema must be not null if `T` is of type
+     *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
+     */
     // TODO: numShards
     def saveAsHdfsAvroFile(path: String,
                            schema: Schema = null,

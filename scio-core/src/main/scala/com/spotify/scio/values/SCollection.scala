@@ -880,7 +880,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /**
    * Save this SCollection as an Avro file.
-   * @param schema must be not null if T is of type GenericRecord.
+   * @param schema must be not null if `T` is of type
+   *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
    * @group output
    */
   def saveAsAvroFile(path: String,
