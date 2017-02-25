@@ -17,7 +17,7 @@
 
 package com.spotify.scio.bigquery.types
 
-import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
+import com.google.api.services.bigquery.model.{TableRow, TableSchema}
 
 import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros
