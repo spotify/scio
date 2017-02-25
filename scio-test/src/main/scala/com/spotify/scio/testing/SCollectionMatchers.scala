@@ -49,23 +49,27 @@ trait SCollectionMatchers {
       .map(e => CoderUtils.decodeFromByteArray(coder, CoderUtils.encodeToByteArray(coder, e)))
   }
 
+  /** Assert that the SCollection in question contains the provided elements. */
   def containInAnyOrder[T: ClassTag](value: Iterable[T])
   : Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
     override def apply(left: SCollection[T]): MatchResult =
       m(() => PAssert.that(serDeCycle(left).internal).containsInAnyOrder(value.asJava))
   }
 
+  /** Assert that the SCollection in question contains a single provided element. */
   def containSingleValue[T: ClassTag](value: T)
   : Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
     override def apply(left: SCollection[T]): MatchResult =
       m(() => PAssert.thatSingleton(serDeCycle(left).internal).isEqualTo(value))
   }
 
+  /** Assert that the SCollection in question is empty. */
   val beEmpty = new Matcher[SCollection[_]] {
     override def apply(left: SCollection[_]): MatchResult =
       m(() => PAssert.that(left.internal).empty())
   }
 
+  /** Assert that the SCollection in question has provided size. */
   def haveSize(size: Int): Matcher[SCollection[_]] = new Matcher[SCollection[_]] {
     override def apply(left: SCollection[_]): MatchResult = {
       val g = new SerializableFunction[java.lang.Iterable[Any], Void] {
@@ -80,6 +84,7 @@ trait SCollectionMatchers {
     }
   }
 
+  /** Assert that the SCollection in question is equivalent to the provided map. */
   def equalMapOf[K: ClassTag, V: ClassTag](value: Map[K, V])
   : Matcher[SCollection[(K, V)]] = new Matcher[SCollection[(K, V)]] {
     override def apply(left: SCollection[(K, V)]): MatchResult = {
@@ -87,6 +92,7 @@ trait SCollectionMatchers {
     }
   }
 
+  /** Assert that the SCollection in question is not equivalent to the provided map. */
   def notEqualMapOf[K: ClassTag, V: ClassTag](value: Map[K, V])
   : Matcher[SCollection[(K, V)]] = new Matcher[SCollection[(K, V)]] {
     override def apply(left: SCollection[(K, V)]): MatchResult = {
@@ -96,6 +102,7 @@ trait SCollectionMatchers {
 
   // TODO: investigate why multi-map doesn't work
 
+  /** Assert that the SCollection in question satisfies the provided function. */
   def satisfy[T: ClassTag](predicate: Iterable[T] => Boolean)
   : Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
     override def apply(left: SCollection[T]): MatchResult = {
@@ -110,9 +117,11 @@ trait SCollectionMatchers {
     }
   }
 
+  /** Assert that all elements of the SCollection in question satisfy the provided function. */
   def forAll[T: ClassTag](predicate: T => Boolean): Matcher[SCollection[T]] =
     satisfy(_.forall(predicate))
 
+  /** Assert that some elements of the SCollection in question satisfy the provided function. */
   def exist[T: ClassTag](predicate: T => Boolean): Matcher[SCollection[T]] =
     satisfy(_.exists(predicate))
 

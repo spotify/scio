@@ -35,11 +35,13 @@ package object bigquery {
   /** Typed BigQuery annotations and converters. */
   val BigQueryType = com.spotify.scio.bigquery.types.BigQueryType
 
-  /** Annotation for BigQuery field [[com.spotify.scio.bigquery.types.description]]. */
+  /**
+   * Annotation for BigQuery field [[com.spotify.scio.bigquery.types.description description]].
+   */
   type description = com.spotify.scio.bigquery.types.description
 
   /**
-   * Create a TableRow with Map-like syntax. For example:
+   * Create a [[TableRow]] with `Map`-like syntax. For example:
    *
    * {{{
    * val r = TableRow("name" -> "Alice", "score" -> 100)
@@ -50,10 +52,10 @@ package object bigquery {
       fields.foldLeft(new GTableRow())((r, kv) => r.set(kv._1, kv._2))
   }
 
-  /** Alias for BigQuery TableRow. */
+  /** Alias for BigQuery `TableRow`. */
   type TableRow = GTableRow
 
-  /** Enhanced version of TableRow with typed getters. */
+  /** Enhanced version of [[TableRow]] with typed getters. */
   implicit class RichTableRow(val r: TableRow) extends AnyVal {
 
     def getBoolean(name: AnyRef): Boolean = this.getValue(name, _.toString.toBoolean, false)
@@ -83,7 +85,7 @@ package object bigquery {
 
   }
 
-  /** Utility for BigQuery TIMESTAMP type. */
+  /** Utility for BigQuery `TIMESTAMP` type. */
   object Timestamp {
 
     // FIXME: verify that these match BigQuery specification
@@ -105,30 +107,30 @@ package object bigquery {
       .toFormatter
       .withZoneUTC()
 
-    /** Convert Instant to BigQuery TIMESTAMP string. */
+    /** Convert `Instant` to BigQuery `TIMESTAMP` string. */
     def apply(instant: Instant): String = formatter.print(instant)
 
-    /** Convert millisecond instant to BigQuery TIMESTAMP string. */
+    /** Convert millisecond instant to BigQuery `TIMESTAMP` string. */
     def apply(instant: Long): String = formatter.print(instant)
 
-    /** Convert BigQuery TIMESTAMP string to Instant. */
+    /** Convert BigQuery `TIMESTAMP` string to `Instant`. */
     def parse(timestamp: String): Instant = parser.parseDateTime(timestamp).toInstant
 
   }
 
-  /** Utility for BigQuery DATE type. */
+  /** Utility for BigQuery `DATE` type. */
   object Date {
     // YYYY-[M]M-[D]D
     private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd").withZoneUTC()
 
-    /** Convert LocalDate to BigQuery DATE string. */
+    /** Convert `LocalDate` to BigQuery `DATE` string. */
     def apply(date: LocalDate): String = formatter.print(date)
 
-    /** Convert BigQuery DATE string to LocalDate. */
+    /** Convert BigQuery `DATE` string to `LocalDate`. */
     def parse(date: String): LocalDate = LocalDate.parse(date, formatter)
   }
 
-  /** Utility for BigQuery TIME type. */
+  /** Utility for BigQuery `TIME` type. */
   object Time {
     // [H]H:[M]M:[S]S[.DDDDDD]
     private val formatter = DateTimeFormat.forPattern("HH:mm:ss.SSSSSS").withZoneUTC()
@@ -138,14 +140,14 @@ package object bigquery {
       .toFormatter
       .withZoneUTC()
 
-    /** Convert LocalTime to BigQuery TIME string. */
+    /** Convert `LocalTime` to BigQuery `TIME` string. */
     def apply(time: LocalTime): String = formatter.print(time)
 
-    /** Convert BigQuery TIME string to LocalTime. */
+    /** Convert BigQuery `TIME` string to `LocalTime`. */
     def parse(time: String): LocalTime = parser.parseLocalTime(time)
   }
 
-  /** Utility for BigQuery DATETIME type. */
+  /** Utility for BigQuery `DATETIME` type. */
   object DateTime {
     // YYYY-[M]M-[D]D[ [H]H:[M]M:[S]S[.DDDDDD]]
     private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
@@ -162,10 +164,10 @@ package object bigquery {
       .toFormatter
       .withZoneUTC()
 
-    /** Convert LocalDateTime to BigQuery DATETIME string. */
+    /** Convert `LocalDateTime` to BigQuery `DATETIME` string. */
     def apply(datetime: LocalDateTime): String = formatter.print(datetime)
 
-    /** Convert BigQuery DATETIME string to LocalDateTime. */
+    /** Convert BigQuery `DATETIME` string to `LocalDateTime`. */
     def parse(datetime: String): LocalDateTime = parser.parseLocalDateTime(datetime)
   }
 

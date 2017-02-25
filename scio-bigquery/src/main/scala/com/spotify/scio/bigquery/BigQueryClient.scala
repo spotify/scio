@@ -218,11 +218,11 @@ class BigQueryClient private (private val projectId: String,
       getTable(table).getSchema
     }
 
-  /** Get table metadata **/
+  /** Get table metadata. */
   def getTable(tableSpec: String): Table =
     getTable(BigQueryIO.parseTableSpec(tableSpec))
 
-  /** Get table metadata **/
+  /** Get table metadata. */
   def getTable(table: TableReference): Table = {
     val p = if (table.getProjectId == null) this.projectId else table.getProjectId
     bigquery.tables().get(p, table.getDatasetId, table.getTableId).execute()

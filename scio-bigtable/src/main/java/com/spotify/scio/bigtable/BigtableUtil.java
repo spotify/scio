@@ -36,12 +36,12 @@ public final class BigtableUtil {
   private BigtableUtil() { }
 
   /**
-   * Updates all clusters within the specified Bigtable Instance to have a specified number
-   * of nodes. Useful for increasing the number of nodes at the start of the job and decreasing
-   * it at the end to lower costs yet still get high throughput during bulk ingests/dumps.
+   * Updates all clusters within the specified Bigtable instance to a specified number of nodes.
+   * Useful for increasing the number of nodes at the beginning of a job and decreasing it at
+   * the end to lower costs yet still get high throughput during bulk ingests/dumps.
    *
    * @param bigtableOptions Bigtable Options
-   * @param numberOfNodes Number of nodes to make cluster
+   * @param numberOfNodes New number of nodes in the cluster
    * @param sleepDuration How long to sleep after updating the number of nodes. Google recommends
    *                      at least 20 minutes before the new nodes are fully functional
    * @throws IOException If setting up channel pool fails

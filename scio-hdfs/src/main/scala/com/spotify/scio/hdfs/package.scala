@@ -96,10 +96,9 @@ package object hdfs {
     }
 
     /**
-     * Create a new [[com.spotify.scio.values.DistCache DistCache]] instance for a file on
-     * Hadoop/HDFS.
+     * Create a new [[com.spotify.scio.values.DistCache DistCache]] instance for a file on HDFS.
      *
-     * @param path to the Hadoop/HDFS artifact
+     * @param path to the HDFS artifact
      * @param conf optional custom Hadoop configuration
      * @param username optional Hadoop Simple Authentication remote username
      */
@@ -111,9 +110,9 @@ package object hdfs {
 
     /**
      * Create a new [[com.spotify.scio.values.DistCache DistCache]] instance for a list of
-     * files on Hadoop/HDFS.
+     * files on HDFS.
      *
-     * @param paths Sequence of paths to the Hadoop/HDFS artifacts
+     * @param paths Sequence of paths to the HDFS artifacts
      * @param conf optional custom Hadoop configuration
      * @param username optional Hadoop Simple Authentication remote username
      */

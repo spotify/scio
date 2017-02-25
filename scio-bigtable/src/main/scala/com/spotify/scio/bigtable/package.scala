@@ -43,14 +43,14 @@ package object bigtable {
   /** Enhanced version of `Row` with convenience methods. */
   implicit class RichRow(val self: Row) extends AnyVal {
 
-    /** Return the Cells for the specific column. */
+    /** Return the `Cell`s for the specific column. */
     def getColumnCells(familyName: String, columnQualifier: ByteString): List[Cell] =
       (for {
         f <- self.getFamiliesList.asScala.find(_.getName == familyName)
         c <- f.getColumnsList.asScala.find(_.getQualifier == columnQualifier)
       } yield c.getCellsList.asScala).toList.flatten
 
-    /** The Cell for the most recent timestamp for a given column. */
+    /** The `Cell` for the most recent timestamp for a given column. */
     def getColumnLatestCell(familyName: String, columnQualifier: ByteString): Option[Cell] =
       getColumnCells(familyName, columnQualifier).headOption
 
@@ -139,7 +139,14 @@ package object bigtable {
       }
     }
 
-    /** Wrapper around update number of Bigtable nodes function to allow for testing. */
+    /**
+     * Updates all clusters within the specified Bigtable instance to a specified number of nodes.
+     * Useful for increasing the number of nodes at the beginning of a job and decreasing it at
+     * the end to lower costs yet still get high throughput during bulk ingests/dumps.
+     *
+     * @param sleepDuration How long to sleep after updating the number of nodes. Google recommends
+     *                      at least 20 minutes before the new nodes are fully functional
+     */
     def updateNumberOfBigtableNodes(projectId: String,
                                     instanceId: String,
                                     numberOfNodes: Int,
@@ -151,17 +158,22 @@ package object bigtable {
       updateNumberOfBigtableNodes(bigtableOptions, numberOfNodes, sleepDuration)
     }
 
-    /** Wrapper around update number of Bigtable nodes function to allow for testing. */
+    /**
+     * Updates all clusters within the specified Bigtable instance to a specified number of nodes.
+     * Useful for increasing the number of nodes at the beginning of a job and decreasing it at
+     * the end to lower costs yet still get high throughput during bulk ingests/dumps.
+     *
+     * @param sleepDuration How long to sleep after updating the number of nodes. Google recommends
+     *                      at least 20 minutes before the new nodes are fully functional
+     */
     def updateNumberOfBigtableNodes(bigtableOptions: BigtableOptions,
                                     numberOfNodes: Int,
-                                    sleepDuration: Duration): Unit = {
+                                    sleepDuration: Duration): Unit = if (!self.isTest) {
       // No need to update the number of nodes in a test
-      if (!self.isTest) {
-        BigtableUtil.updateNumberOfBigtableNodes(
-          bigtableOptions,
-          numberOfNodes,
-          sleepDuration)
-      }
+      BigtableUtil.updateNumberOfBigtableNodes(
+        bigtableOptions,
+        numberOfNodes,
+        sleepDuration)
     }
 
   }
@@ -172,7 +184,9 @@ package object bigtable {
   implicit class BigtableSCollection[T](val self: SCollection[(ByteString, Iterable[T])])
     extends AnyVal {
 
-    /** Save this SCollection as a Bigtable table. Note that elements must be of type Mutation. */
+    /**
+     * Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`.
+     */
     def saveAsBigtable(projectId: String,
                        instanceId: String,
                        tableId: String)
@@ -185,7 +199,9 @@ package object bigtable {
       this.saveAsBigtable(bigtableOptions, tableId)
     }
 
-    /** Save this SCollection as a Bigtable table. Note that elements must be of type Mutation. */
+    /**
+     * Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`.
+     */
     def saveAsBigtable(bigtableOptions: BigtableOptions,
                        tableId: String)
                       (implicit ev: T <:< Mutation)

@@ -43,7 +43,8 @@ object MockBigQuery {
 /**
  * Mock BigQuery environment for integration test.
  *
- * Use `mockTable` to feed data into live BigQuery service and `query` to query them.
+ * Use [[mockTable(original:String)* mockTable]] to feed data into live BigQuery service and
+ * [[queryResult]] to query them.
  */
 class MockBigQuery private (private val bq: BigQueryClient) {
 
@@ -69,7 +70,8 @@ class MockBigQuery private (private val bq: BigQueryClient) {
   }
 
   /**
-   * Get result of a live query against BigQuery service, substituting mocked tables with test data.
+   * Get result of a live query against BigQuery service, substituting mocked tables with test
+   * data.
    */
   def queryResult(sqlQuery: String, flattenResults: Boolean = false): Seq[TableRow] = {
     val isLegacy = bq.isLegacySql(sqlQuery, flattenResults)
@@ -86,7 +88,8 @@ class MockBigQuery private (private val bq: BigQueryClient) {
   }
 
   /**
-   * Get result of a live query against BigQuery service, substituting mocked tables with test data.
+   * Get result of a live query against BigQuery service, substituting mocked tables with test
+   * data.
    */
   def typedQueryResult[T <: HasAnnotation : ClassTag : TypeTag]
   (sqlQuery: String, flattenResults: Boolean = false): Seq[T] = {
