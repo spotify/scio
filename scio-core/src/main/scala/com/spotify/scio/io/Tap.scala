@@ -27,35 +27,34 @@ import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.coders.Coder
 
 import scala.reflect.ClassTag
 
 /**
- * Placeholder to an external data set that can either be load into memory as an iterator or opened
- * in a new ScioContext as an SCollection.
+ * Placeholder to an external data set that can either be load into memory as an iterator or
+ * opened in a new [[ScioContext]] as an [[com.spotify.scio.values.SCollection SCollection]].
  */
 trait Tap[T] { self =>
 
-  /** Parent Taps this Tap's data came from after [[Tap.map]] */
+  /** Parent of this Tap before [[map]]. */
   val parent: Option[Tap[_]] = None
 
   /** Read data set into memory. */
   def value: Iterator[T]
 
-  /** Open data set as an SCollection. */
+  /** Open data set as an [[com.spotify.scio.values.SCollection SCollection]]. */
   def open(sc: ScioContext): SCollection[T]
 
-  /** Map items from T to U. */
+  /** Map items from `T` to `U`. */
   def map[U: ClassTag](f: T => U): Tap[U] = new Tap[U] {
 
-    /** Parent Taps this Tap's data came from after [[Tap.map]] */
+    /** Parent of this Tap before [[map]]. */
     override val parent: Option[Tap[_]] = Option(self)
 
     /** Read data set into memory. */
     override def value: Iterator[U] = self.value.map(f)
 
-    /** Open data set as an SCollection. */
+    /** Open data set as an [[com.spotify.scio.values.SCollection SCollection]]. */
     override def open(sc: ScioContext): SCollection[U] = self.open(sc).map(f)
   }
 
@@ -67,13 +66,17 @@ case class TextTap(path: String) extends Tap[String] {
   override def open(sc: ScioContext): SCollection[String] = sc.textFile(path)
 }
 
-/** Tap for Avro files on local file system or GCS. */
+/**
+ * Tap for Avro files on local file system or GCS.
+ * @param schema must be not null if `T` is of type
+ *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
+ */
 case class AvroTap[T: ClassTag](path: String, schema: Schema = null) extends Tap[T] {
   override def value: Iterator[T] = FileStorage(path).avroFile(schema)
   override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path, schema)
 }
 
-/** Tap for JSON files on local file system or GCS. */
+/** Tap for BigQuery TableRow JSON files on local file system or GCS. */
 case class TableRowJsonTap(path: String) extends Tap[TableRow] {
   override def value: Iterator[TableRow] = FileStorage(path).tableRowJsonFile
   override def open(sc: ScioContext): SCollection[TableRow] = sc.tableRowJsonFile(path)
@@ -85,7 +88,10 @@ case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
   override def open(sc: ScioContext): SCollection[TableRow] = sc.bigQueryTable(table)
 }
 
-/** Tap for object files on local file system or GCS. */
+/**
+ * Tap for object files on local file system or GCS. Note that serialization is not guaranteed to
+ * be compatible across Scio releases.
+ */
 case class ObjectFileTap[T: ClassTag](path: String) extends Tap[T] {
   override def value: Iterator[T] = {
     val elemCoder = ScioUtil.getScalaCoder[T]

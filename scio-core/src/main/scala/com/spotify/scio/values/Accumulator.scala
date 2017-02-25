@@ -31,13 +31,13 @@ sealed trait AccumulatorType[T] {
   protected def minFnImpl: CombineFn[_, _, _]
   protected def maxFnImpl: CombineFn[_, _, _]
 
-  /** CombineFn for computing sum of the underlying values. */
+  /** `CombineFn` for computing sum of the underlying values. */
   def sumFn(): CF = sumFnImpl.asInstanceOf[CF]
 
-  /** CombineFn for computing maximum of the underlying values. */
+  /** `CombineFn` for computing maximum of the underlying values. */
   def minFn(): CF = minFnImpl.asInstanceOf[CF]
 
-  /** CombineFn for computing minimum of the underlying values. */
+  /** `CombineFn` for computing minimum of the underlying values. */
   def maxFn(): CF = maxFnImpl.asInstanceOf[CF]
 }
 

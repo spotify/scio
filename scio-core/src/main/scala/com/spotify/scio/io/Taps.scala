@@ -59,7 +59,7 @@ trait Taps {
   def bigQueryTable(tableSpec: String): Future[Tap[TableRow]] =
     bigQueryTable(BigQueryIO.parseTableSpec(tableSpec))
 
-  /** Get a `Future[Tap[T]]` for BigQuery source. */
+  /** Get a `Future[Tap[T]]` for typed BigQuery source. */
   def typedBigQuery[T <: HasAnnotation : TypeTag : ClassTag](newSource: String = null)
   : Future[Tap[T]] = {
     val bqt = BigQueryType[T]
@@ -85,7 +85,7 @@ trait Taps {
     rows.map(_.map(bqt.fromTableRow))
   }
 
-  /** Get a `Future[Tap[TableRow]]` of TableRow for a JSON file. */
+  /** Get a `Future[Tap[TableRow]]` for a BigQuery TableRow JSON file. */
   def tableRowJsonFile(path: String): Future[Tap[TableRow]] =
     mkTap(s"TableRowJson: $path", () => isPathDone(path), () => TableRowJsonTap(path))
 
@@ -94,8 +94,11 @@ trait Taps {
     mkTap(s"Text: $path", () => isPathDone(path), () => TextTap(path))
 
   /** Get a `Future[Tap[T]]` of a Protobuf file. */
-  def protobufFile[T: ClassTag](path: String)(implicit ev: T <:< Message)
-  : Future[Tap[T]] =
+  def protobufFile[T: ClassTag](path: String)(implicit ev: T <:< Message): Future[Tap[T]] =
+    mkTap(s"Protobuf: $path", () => isPathDone(path), () => ObjectFileTap[T](path))
+
+  /** Get a `Future[Tap[T]]` of an object file. */
+  def objectFile[T: ClassTag](path: String): Future[Tap[T]] =
     mkTap(s"Protobuf: $path", () => isPathDone(path), () => ObjectFileTap[T](path))
 
   private def isPathDone(path: String): Boolean = FileStorage(path).isDone
@@ -214,7 +217,7 @@ object Taps extends {
   val POLLING_MAXIMUM_ATTEMPTS_DEFAULT = "0"
 
   /**
-   * Create a new Taps instance.
+   * Create a new [[Taps]] instance.
    *
    * Taps algorithm can be set via the `taps.algorithm` property.
    * Available algorithms are `immediate` (default) and `polling`.

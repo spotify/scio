@@ -121,6 +121,12 @@ object ScioContext {
     (PipelineOptionsFactory.fromArgs(optArgs: _*).as(optClass), Args(appArgs))
   }
 
+  import scala.language.implicitConversions
+
+  /** Implicit conversion from ScioContext to DistCacheScioContext. */
+  implicit def makeDistCacheScioContext(self: ScioContext): DistCacheScioContext =
+    new DistCacheScioContext(self)
+
   private val defaultOptions: PipelineOptions = PipelineOptionsFactory.create()
 
 }
@@ -391,7 +397,10 @@ class ScioContext private[scio] (val options: PipelineOptions,
     pipeline.apply(this.tfName, root)
 
   /**
-   * Get an SCollection for an object file.
+   * Get an SCollection for an object file using default serialization.
+   *
+   * Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
+   * serialization is not guaranteed to be compatible across Scio releases.
    * @group input
    */
   def objectFile[T: ClassTag](path: String): SCollection[T] = requireNotClosed {
@@ -434,6 +443,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   /**
    * Get an SCollection for a Protobuf file.
+   *
+   * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage
+   * Avro's block file format.
    * @group input
    */
   def protobufFile[T: ClassTag](path: String)(implicit ev: T <:< Message): SCollection[T] =
@@ -603,7 +615,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   }
 
   /**
-   * Get an SCollection of TableRow for a JSON file.
+   * Get an SCollection for a BigQuery TableRow JSON file.
    * @group input
    */
   def tableRowJsonFile(path: String): SCollection[TableRow] = requireNotClosed {
@@ -730,7 +742,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   }
 
   /**
-   * Distribute a local Scala Iterable to form an SCollection.
+   * Distribute a local Scala `Iterable` to form an SCollection.
    * @group in_memory
    */
   def parallelize[T: ClassTag](elems: Iterable[T]): SCollection[T] = requireNotClosed {
@@ -740,7 +752,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   }
 
   /**
-   * Distribute a local Scala Map to form an SCollection.
+   * Distribute a local Scala `Map` to form an SCollection.
    * @group in_memory
    */
   def parallelize[K: ClassTag, V: ClassTag](elems: Map[K, V]): SCollection[(K, V)] =
@@ -752,7 +764,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   }
 
   /**
-   * Distribute a local Scala Iterable with timestamps to form an SCollection.
+   * Distribute a local Scala `Iterable` with timestamps to form an SCollection.
    * @group in_memory
    */
   def parallelizeTimestamped[T: ClassTag](elems: Iterable[(T, Instant)])
@@ -764,7 +776,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   }
 
   /**
-   * Distribute a local Scala Iterable with timestamps to form an SCollection.
+   * Distribute a local Scala `Iterable` with timestamps to form an SCollection.
    * @group in_memory
    */
   def parallelizeTimestamped[T: ClassTag](elems: Iterable[T], timestamps: Iterable[Instant])

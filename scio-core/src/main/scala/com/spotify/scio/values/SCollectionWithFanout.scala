@@ -36,30 +36,13 @@ class SCollectionWithFanout[T: ClassTag] private[values] (val internal: PCollect
 
   protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
 
-  /**
-   * Aggregate the elements using given combine functions and a neutral "zero value". This
-   * function can return a different result type, U, than the type of this SCollection, T. Thus,
-   * we need one operation for merging a T into an U and one operation for merging two U's. Both
-   * of these functions are allowed to modify and return their first argument instead of creating
-   * a new U to avoid memory allocation.
-   */
+  /** [[SCollection.aggregate[U]* SCollection.aggregate]] with fan out. */
   def aggregate[U: ClassTag](zeroValue: U)(seqOp: (U, T) => U,
                                            combOp: (U, U) => U): SCollection[U] =
     this.pApply(
       Combine.globally(Functions.aggregateFn(zeroValue)(seqOp, combOp)).withFanout(fanout))
 
-  /**
-   * Generic function to combine the elements using a custom set of aggregation functions. Turns
-   * an SCollection[T] into a result of type SCollection[C], for a "combined type" C. Note that V
-   * and C can be different -- for example, one might combine an SCollection of type Int into an
-   * SCollection of type Seq[Int]. Users provide three functions:
-   *
-   * - `createCombiner`, which turns a V into a C (e.g., creates a one-element list)
-   *
-   * - `mergeValue`, to merge a V into a C (e.g., adds it to the end of a list)
-   *
-   * - `mergeCombiners`, to combine two C's into a single one.
-   */
+  /** [[SCollection.combine]] with fan out. */
   def combine[C: ClassTag](createCombiner: T => C)
                           (mergeValue: (C, T) => C)
                           (mergeCombiners: (C, C) => C): SCollection[C] =
@@ -68,32 +51,19 @@ class SCollectionWithFanout[T: ClassTag] private[values] (val internal: PCollect
         .globally(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))
         .withFanout(fanout))
 
-  /**
-   * Aggregate the elements using a given associative function and a neutral "zero value". The
-   * function op(t1, t2) is allowed to modify t1 and return it as its result value to avoid object
-   * allocation; however, it should not modify t2.
-   */
+  /** [[SCollection.fold(zeroValue:T)* SCollection.fold]] with fan out. */
   def fold(zeroValue: T)(op: (T, T) => T): SCollection[T] =
     this.pApply(Combine.globally(Functions.aggregateFn(zeroValue)(op, op)).withFanout(fanout))
 
-  /**
-   * Fold with [[com.twitter.algebird.Monoid Monoid]], which defines the associative function and
-   * "zero value" for T. This could be more powerful and better optimized in some cases.
-   */
+  /** [[SCollection.fold(implicit* SCollection.fold]] with fan out. */
   def fold(implicit mon: Monoid[T]): SCollection[T] =
     this.pApply(Combine.globally(Functions.reduceFn(mon)).withFanout(fanout))
 
-  /**
-   * Reduce the elements of this SCollection using the specified commutative and associative
-   * binary operator.
-   */
+  /** [[SCollection.reduce]] with fan out. */
   def reduce(op: (T, T) => T): SCollection[T] =
     this.pApply(Combine.globally(Functions.reduceFn(op)).withFanout(fanout))
 
-  /**
-   * Reduce with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful and
-   * better optimized in some cases.
-   */
+  /** [[SCollection.sum]] with fan out. */
   def sum(implicit sg: Semigroup[T]): SCollection[T] =
     this.pApply(Combine.globally(Functions.reduceFn(sg)).withFanout(fanout))
 

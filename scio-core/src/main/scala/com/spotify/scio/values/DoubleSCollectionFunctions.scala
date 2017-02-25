@@ -21,14 +21,14 @@ import com.spotify.scio._
 import com.spotify.scio.util.StatCounter
 
 /**
- * Extra functions available on SCollections of Doubles through an implicit conversion.
+ * Extra functions available on SCollections of `Double`s through an implicit conversion.
  */
 class DoubleSCollectionFunctions(self: SCollection[Double]) {
 
   /**
-   * Return an SCollection with a single [[com.spotify.scio.util.StatCounter
-   * StatCounter]] object that captures the mean, variance and count of the SCollection's elements
-   * in one operation.
+   * Return an SCollection with a single
+   * [[com.spotify.scio.util.StatCounter StatCounter]] object that captures the mean, variance and
+   * count of the SCollection's elements in one operation.
    */
   def stats: SCollection[StatCounter] = self.combine(StatCounter(_))(_.merge(_))(_.merge(_))
 
@@ -61,9 +61,10 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
   /**
    * Compute a histogram of the data using `bucketCount` number of buckets evenly spaced between
    * the minimum and maximum of the SCollection. For example if the min value is 0 and the max is
-   * 100 and there are two buckets the resulting buckets will be [0, 50) [50, 100]. `bucketCount`
-   * must be at least 1. If the SCollection contains infinity, NaN throws an exception. If the
-   * elements in SCollection do not vary (max == min) always returns a single bucket.
+   * 100 and there are two buckets the resulting buckets will be `[0, 50)` `[50, 100]`.
+   * `bucketCount` must be at least 1. If the SCollection contains infinity, NaN throws an
+   * exception. If the elements in SCollection do not vary (max == min) always returns a single
+   * bucket.
    */
   def histogram(bucketCount: Int): (SCollection[Array[Double]], SCollection[Array[Long]]) = {
     // Compute the minimum and the maximum

@@ -24,7 +24,7 @@ import scala.util.Random
 class ArraySemigroupTest extends FlatSpec with Matchers {
 
   val dimension = 10
-  val sg = new ArraySemigroup[Double]
+  val sg = doubleArraySg
   def nextArray: Array[Double] = Array.fill(dimension)(Random.nextDouble)
 
   def plus(l: Array[Double], r: Array[Double]): Array[Double] = l.zip(r).map(p => p._1 + p._2)

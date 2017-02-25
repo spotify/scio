@@ -66,12 +66,12 @@ import scala.util.control.NonFatal
  */
 object JobTest {
 
-  def newTestId(className: String = "TestClass"): String = {
+  private[scio] def newTestId(className: String = "TestClass"): String = {
     val uuid = UUID.randomUUID().toString.replaceAll("-", "")
     s"JobTest-$className-$uuid"
   }
 
-  def isTestId(appName: String): Boolean =
+  private[scio] def isTestId(appName: String): Boolean =
     "JobTest-[^-]+-[a-z0-9]+".r.pattern.matcher(appName).matches()
 
   case class Builder(className: String, cmdlineArgs: Array[String],
@@ -79,38 +79,64 @@ object JobTest {
                      outputs: Map[TestIO[_], SCollection[_] => Unit],
                      distCaches: Map[DistCacheIO[_], _]) {
 
+    /** Test ID for input and output wiring. */
     val testId: String = newTestId(className)
 
+    /** Feed command line arguments to the pipeline being tested. */
     def args(newArgs: String*): Builder =
       this.copy(cmdlineArgs = (this.cmdlineArgs.toSeq ++ newArgs).toArray)
 
+    /**
+     * Feed an input to the pipeline being tested. Note that `TestIO[T]` must match the one used
+     * inside the pipeline, e.g. `AvroIO[MyRecord]("in.avro")` with
+     * `sc.avroFile[MyRecord]("in.avro")`.
+     */
     def input[T](key: TestIO[T], value: Iterable[T]): Builder = {
       require(!this.inputs.contains(key), "Duplicate test input: " + key)
       this.copy(inputs = this.inputs + (key -> value))
     }
 
+    /**
+     * Evaluate an output of the pipeline being tested. Note that `TestIO[T]` must match the one
+     * used inside the pipeline, e.g. `AvroIO[MyRecord]("out.avro")` with
+     * `data.saveAsAvroFile("out.avro")` where `data` is of type `SCollection[MyRecord]`.
+     */
     def output[T](key: TestIO[T])(value: SCollection[T] => Unit): Builder = {
       require(!this.outputs.contains(key), "Duplicate test output: " + key)
       this.copy(outputs = this.outputs + (key -> value.asInstanceOf[SCollection[_] => Unit]))
     }
 
+    /**
+     * Feed an distributed cache to the pipeline being tested. Note that `DistCacheIO[T]` must
+     * match the one used inside the pipeline, e.g. `DistCacheIO[Set[String]]("dc.txt")` with
+     * `sc.distCache("dc.txt")(f => scala.io.Source.fromFile(f).getLines().toSet)`.
+     */
     def distCache[T](key: DistCacheIO[T], value: T): Builder = {
       require(!this.distCaches.contains(key), "Duplicate test dist cache: " + key)
       this.copy(distCaches = this.distCaches + (key -> value))
     }
 
+    /**
+     * Set up test wiring. Use this only if you have custom pipeline wiring and are bypassing
+     * [[run]]. Make sure [[tearDown]] is called afterwards.
+     */
     def setUp(): Unit = {
       TestDataManager.setInput(testId, new TestInput(inputs))
       TestDataManager.setOutput(testId, new TestOutput(outputs))
       TestDataManager.setDistCache(testId, new TestDistCache(distCaches))
     }
 
+    /**
+     * Tear down test wiring. Use this only if you have custom pipeline wiring and are bypassing
+     * [[run]]. Make sure [[setUp]] is called before.
+     */
     def tearDown(): Unit = {
       TestDataManager.unsetInput(testId)
       TestDataManager.unsetOutput(testId)
       TestDataManager.unsetDistCache(testId)
     }
 
+    /** Run the pipeline with test wiring. */
     def run(): Unit = {
       setUp()
 

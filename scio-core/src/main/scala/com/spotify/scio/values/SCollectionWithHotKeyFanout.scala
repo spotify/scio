@@ -29,7 +29,7 @@ import scala.reflect.ClassTag
  * An enhanced SCollection that uses an intermediate node to combine "hot" keys partially before
  * performing the full combine.
  */
-class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag]
+class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag] private[values]
 (private val self: PairSCollectionFunctions[K, V],
  private val hotKeyFanout: Either[K => Int, Int])
   extends TransformNameable {
@@ -49,11 +49,8 @@ class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag]
   }
 
   /**
-   * Aggregate the values of each key, using given combine functions and a neutral "zero value".
-   * This function can return a different result type, U, than the type of the values in this
-   * SCollection, V. Thus, we need one operation for merging a V into a U and one operation for
-   * merging two U's. To avoid memory allocation, both of these functions are allowed to modify
-   * and return their first argument instead of creating a new U.
+   * [[PairSCollectionFunctions.aggregateByKey[U]* PairSCollectionFunctions.aggregateByKey]] with
+   * hot key fanout.
    */
   def aggregateByKey[U: ClassTag](zeroValue: U)(seqOp: (U, V) => U,
                                                 combOp: (U, U) => U): SCollection[(K, U)] =
@@ -61,19 +58,7 @@ class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag]
       withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp))),
       kvToTuple[K, U])
 
-  /**
-   * Generic function to combine the elements for each key using a custom set of aggregation
-   * functions. Turns an SCollection[(K, V)] into a result of type SCollection[(K, C)], for a
-   * "combined type" C Note that V and C can be different -- for example, one might group an
-   * SCollection of type (Int, Int) into an RDD of type (Int, Seq[Int]). Users provide three
-   * functions:
-   *
-   * - `createCombiner`, which turns a V into a C (e.g., creates a one-element list)
-   *
-   * - `mergeValue`, to merge a V into a C (e.g., adds it to the end of a list)
-   *
-   * - `mergeCombiners`, to combine two C's into a single one.
-   */
+  /** [[PairSCollectionFunctions.combineByKey]] with hot key fanout. */
   def combineByKey[C: ClassTag](createCombiner: V => C)
                                (mergeValue: (C, V) => C)
                                (mergeCombiners: (C, C) => C): SCollection[(K, C)] =
@@ -82,10 +67,8 @@ class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag]
       kvToTuple[K, C])
 
   /**
-   * Merge the values for each key using an associative function and a neutral "zero value" which
-   * may be added to the result an arbitrary number of times, and must not change the result
-   * (e.g., Nil for list concatenation, 0 for addition, or 1 for multiplication.).
-   * @group per_key
+   * [[PairSCollectionFunctions.foldByKey(zeroValue:V)* PairSCollectionFunctions.foldByKey]] with
+   * hot key fanout.
    */
   def foldByKey(zeroValue: V)(op: (V, V) => V): SCollection[(K, V)] =
     self.applyPerKey(
@@ -93,26 +76,17 @@ class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag]
       kvToTuple[K, V])
 
   /**
-   * Fold by key with [[com.twitter.algebird.Monoid Monoid]], which defines the associative
-   * function and "zero value" for V. This could be more powerful and better optimized in some
-   * cases.
-   * @group per_key
+   * [[PairSCollectionFunctions.foldByKey(implicit* PairSCollectionFunctions.foldByKey]] with
+   * hot key fanout.
    */
   def foldByKey(implicit mon: Monoid[V]): SCollection[(K, V)] =
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(mon))), kvToTuple[K, V])
 
-  /**
-   * Merge the values for each key using an associative reduce function. This will also perform
-   * the merging locally on each mapper before sending results to a reducer, similarly to a
-   * "combiner" in MapReduce.
-   */
+  /** [[PairSCollectionFunctions.reduceByKey]] with hot key fanout. */
   def reduceByKey(op: (V, V) => V): SCollection[(K, V)] =
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(op))), kvToTuple[K, V])
 
-  /**
-   * Reduce by key with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful
-   * and better optimized in some cases.
-   */
+  /** [[PairSCollectionFunctions.sumByKey]] with hot key fanout. */
   def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] =
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(sg))), kvToTuple[K, V])
 

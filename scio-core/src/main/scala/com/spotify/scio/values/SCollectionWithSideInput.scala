@@ -41,7 +41,7 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
 
   private val parDo = ParDo.withSideInputs(sides.map(_.view).asJava)
 
-  /** [[SCollection.filter]] with an additional SideInputContext argument. */
+  /** [[SCollection.filter]] with an additional [[SideInputContext]] argument. */
   def filter(f: (T, SideInputContext[T]) => Boolean): SCollectionWithSideInput[T] = {
     val o = this
       .pApply(parDo.of(FunctionsWithSideInput.filterFn(f)))
@@ -49,7 +49,7 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
     new SCollectionWithSideInput[T](o, context, sides)
   }
 
-  /** [[SCollection.flatMap]] with an additional SideInputContext argument. */
+  /** [[SCollection.flatMap]] with an additional [[SideInputContext]] argument. */
   def flatMap[U: ClassTag](f: (T, SideInputContext[T]) => TraversableOnce[U])
   : SCollectionWithSideInput[U] = {
     val o = this
@@ -58,11 +58,11 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
     new SCollectionWithSideInput[U](o, context, sides)
   }
 
-  /** [[SCollection.keyBy]] with an additional SideInputContext argument. */
+  /** [[SCollection.keyBy]] with an additional [[SideInputContext]] argument. */
   def keyBy[K: ClassTag](f: (T, SideInputContext[T]) => K): SCollectionWithSideInput[(K, T)] =
     this.map((x, s) => (f(x, s), x))
 
-  /** [[SCollection.map]] with an additional SideInputContext argument. */
+  /** [[SCollection.map]] with an additional [[SideInputContext]] argument. */
   def map[U: ClassTag](f: (T, SideInputContext[T]) => U): SCollectionWithSideInput[U] = {
     val o = this
       .pApply(parDo.of(FunctionsWithSideInput.mapFn(f)))
@@ -71,7 +71,7 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
   }
 
   /**
-   * Allows multiple outputs from [[SCollectionWithSideInput]]
+   * Allows multiple outputs from [[SCollectionWithSideInput]].
    *
    * @return map of side output to [[SCollection]]
    */

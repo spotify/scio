@@ -32,7 +32,7 @@ trait TransformNameable {
   /** Set a custom name for the next transform to be applied. */
   def withName(name: String): this.type = {
     require(nameProvider.getClass != classOf[ConstNameProvider],
-      s"withName() has already been used to set '${tfName}' as the name for the next transform.")
+      s"withName() has already been used to set '$tfName' as the name for the next transform.")
     nameProvider = new ConstNameProvider(name)
     this
   }

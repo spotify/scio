@@ -33,20 +33,20 @@ class SCollectionWithAccumulator[T: ClassTag] private[values]
 
   protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
 
-  /** [[SCollection.filter]] with an additional AccumulatorContext argument. */
+  /** [[SCollection.filter]] with an additional [[AccumulatorContext]] argument. */
   def filter(f: (T, AccumulatorContext) => Boolean): SCollectionWithAccumulator[T] = {
     val o = this.parDo(FunctionsWithAccumulator.filterFn(f, acc))
     new SCollectionWithAccumulator[T](o.internal, context, acc)
   }
 
-  /** [[SCollection.flatMap]] with an additional AccumulatorContext argument. */
+  /** [[SCollection.flatMap]] with an additional [[AccumulatorContext]] argument. */
   def flatMap[U: ClassTag](f: (T, AccumulatorContext) => TraversableOnce[U])
   : SCollectionWithAccumulator[U] = {
     val o = this.parDo(FunctionsWithAccumulator.flatMapFn(f, acc))
     new SCollectionWithAccumulator[U](o.internal, context, acc)
   }
 
-  /** [[SCollection.map]] with an additional AccumulatorContext argument. */
+  /** [[SCollection.map]] with an additional [[AccumulatorContext]] argument. */
   def map[U: ClassTag](f: (T, AccumulatorContext) => U): SCollectionWithAccumulator[U] = {
     val o = this.parDo(FunctionsWithAccumulator.mapFn(f, acc))
     new SCollectionWithAccumulator[U](o.internal, context, acc)

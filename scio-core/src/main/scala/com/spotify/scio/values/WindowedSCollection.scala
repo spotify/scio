@@ -27,36 +27,55 @@ import org.joda.time.{Duration, Instant}
 
 import scala.reflect.ClassTag
 
+/** Window options for an [[SCollection]]. */
 case class WindowOptions[W <: BoundedWindow](trigger: Trigger = null,
                                              accumulationMode: AccumulationMode = null,
                                              allowedLateness: Duration = null,
                                              closingBehavior: ClosingBehavior = null,
                                              outputTimeFn: OutputTimeFn[BoundedWindow] = null)
 
+/** Value with window information to be used inside a [[WindowedSCollection]]. */
 case class WindowedValue[T](value: T, timestamp: Instant, window: BoundedWindow, pane: PaneInfo) {
-  def withValue[U](v: U): WindowedValue[U] =
-    WindowedValue(v, this.timestamp, this.window, this.pane)
+
+  /** Make a copy with new value. */
+  def withValue[U](v: U): WindowedValue[U] = this.copy(value = v)
+
+  /** Make a copy with new timestamp. */
+  def withTimestamp(t: Instant): WindowedValue[T] = this.copy(timestamp = t)
+
+  /** Make a copy with new window. */
+  def withWindow(w: BoundedWindow): WindowedValue[T] = this.copy(window = w)
+
+  /** Make a copy with new pane. */
+  def withPane(p: PaneInfo): WindowedValue[T] = this.copy(pane = p)
+
 }
 
+/** An enhanced SCollection that provides access to window information via [[WindowedValue]]. */
 class WindowedSCollection[T: ClassTag] private[values] (val internal: PCollection[T],
                                                         val context: ScioContext)
   extends PCollectionWrapper[T] {
 
   protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
 
+  /** [[SCollection.filter]] with access to window information via [[WindowedValue]]. */
   def filter(f: WindowedValue[T] => Boolean): WindowedSCollection[T] =
     new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.filterFn(f)).internal, context)
 
+  /** [[SCollection.flatMap]] with access to window information via [[WindowedValue]]. */
   def flatMap[U: ClassTag](f: WindowedValue[T] => TraversableOnce[WindowedValue[U]])
   : WindowedSCollection[U] =
     new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.flatMapFn(f)).internal, context)
 
+  /** [[SCollection.keyBy]] with access to window information via [[WindowedValue]]. */
   def keyBy[K: ClassTag](f: WindowedValue[T] => K): WindowedSCollection[(K, T)] =
     this.map(wv => wv.copy(value = (f(wv), wv.value)))
 
+  /** [[SCollection.map]] with access to window information via [[WindowedValue]]. */
   def map[U: ClassTag](f: WindowedValue[T] => WindowedValue[U]): WindowedSCollection[U] =
     new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.mapFn(f)).internal, context)
 
+  /** Convert back to a basic SCollection. */
   def toSCollection: SCollection[T] = context.wrap(internal)
 
 }

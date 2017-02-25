@@ -28,10 +28,13 @@ private[values] trait PCollectionWrapper[T] extends TransformNameable {
 
   import Implicits._
 
-  /** The PCollection being wrapped internally. */
+  /** The [[org.apache.beam.sdk.values.PCollection PCollection]] being wrapped internally. */
   val internal: PCollection[T]
 
-  /** The ScioContext associated with this PCollection. */
+  /**
+   * The [[ScioContext]] associated with this
+   * [[org.apache.beam.sdk.values.PCollection PCollection]].
+   */
   val context: ScioContext
 
   implicit protected val ct: ClassTag[T]

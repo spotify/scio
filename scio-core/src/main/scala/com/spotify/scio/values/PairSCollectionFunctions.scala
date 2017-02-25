@@ -37,7 +37,6 @@ import scala.reflect.ClassTag
  * @groupname join Join Operations
  * @groupname per_key Per Key Aggregations
  * @groupname transform Transformations
- * @groupname Ungrouped Other Members
  */
 class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
                                     (implicit ctKey: ClassTag[K], ctValue: ClassTag[V]) {
@@ -121,7 +120,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     MultiJoin.withName(self.tfName).cogroup(self, that1, that2, that3)
 
   /**
-   * Alias for cogroup.
+   * Alias for `cogroup`.
    * @group cogroup
    */
   def groupWith[W: ClassTag](that: SCollection[(K, W)])
@@ -129,7 +128,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     this.cogroup(that)
 
   /**
-   * Alias for cogroup.
+   * Alias for `cogroup`.
    * @group cogroup
    */
   def groupWith[W1: ClassTag, W2: ClassTag]
@@ -138,7 +137,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     this.cogroup(that1, that2)
 
   /**
-   * Alias for cogroup.
+   * Alias for `cogroup`.
    * @group cogroup
    */
   def groupWith[W1: ClassTag, W2: ClassTag, W3: ClassTag]
@@ -156,7 +155,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * or the pair (k, (Some(v), None)) if no elements in `that` have key k. Similarly, for each
    * element (k, w) in `that`, the resulting SCollection will either contain all pairs (k,
    * (Some(v), Some(w))) for v in `this`, or the pair (k, (None, Some(w))) if no elements in
-   * `this` have key k. Uses the given Partitioner to partition the output SCollection.
+   * `this` have key k.
    * @group join
    */
   def fullOuterJoin[W: ClassTag](that: SCollection[(K, W)])
@@ -166,7 +165,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * Return an SCollection containing all pairs of elements with matching keys in `this` and
    * `that`. Each pair of elements will be returned as a (k, (v1, v2)) tuple, where (k, v1) is in
-   * `this` and (k, v2) is in `that`. Uses the given Partitioner to partition the output RDD.
+   * `this` and (k, v2) is in `that`.
    * @group join
    */
   def join[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, W))] =
@@ -175,8 +174,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * Perform a left outer join of `this` and `that`. For each element (k, v) in `this`, the
    * resulting SCollection will either contain all pairs (k, (v, Some(w))) for w in `that`, or the
-   * pair (k, (v, None)) if no elements in `that` have key k. Uses the given Partitioner to
-   * partition the output SCollection.
+   * pair (k, (v, None)) if no elements in `that` have key k.
    * @group join
    */
   def leftOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, Option[W]))] =
@@ -185,8 +183,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   /**
    * Perform a right outer join of `this` and `that`. For each element (k, w) in `that`, the
    * resulting SCollection will either contain all pairs (k, (Some(v), w)) for v in `this`, or the
-   * pair (k, (None, w)) if no elements in `this` have key k. Uses the given Partitioner to
-   * partition the output SCollection.
+   * pair (k, (None, w)) if no elements in `this` have key k.
    * @group join
    */
   def rightOuterJoin[W: ClassTag](that: SCollection[(K, W)])
@@ -246,16 +243,17 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * Read more about CMS -> [[com.twitter.algebird.CMSMonoid]]
    * @group join
    * @param hotKeyThreshold key with `hotKeyThreshold` values will be considered hot. Some runners
-   *                        have inefficient GroupByKey implementation for groups with more than 10K
-   *                        values. Thus it is recommended to set `hotKeyThreshold` to below 10K,
-   *                        keep upper estimation error in mind. If you sample input via
+   *                        have inefficient `GroupByKey` implementation for groups with more than
+   *                        10K values. Thus it is recommended to set `hotKeyThreshold` to below
+   *                        10K, keep upper estimation error in mind. If you sample input via
    *                        `sampleFraction` make sure to adjust `hotKeyThreshold` accordingly.
    * @param eps One-sided error bound on the error of each point query, i.e. frequency estimate.
-   *            Must lie in (0, 1).
+   *            Must lie in `(0, 1)`.
    * @param seed A seed to initialize the random number generator used to create the pairwise
    *             independent hash functions.
    * @param delta A bound on the probability that a query estimate does not lie within some small
-   *              interval (an interval that depends on `eps`) around the truth. Must lie in (0, 1).
+   *              interval (an interval that depends on `eps`) around the truth. Must lie in
+   *              `(0, 1)`.
    * @param sampleFraction left side sample fraction. Default is `1.0` - no sampling.
    * @param withReplacement whether to use sampling with replacement, see
    *                        [[SCollection.sample(withReplacement:Boolean,fraction:Double)*
@@ -308,9 +306,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * Read more about CMS -> [[com.twitter.algebird.CMSMonoid]]
    * @group join
    * @param hotKeyThreshold key with `hotKeyThreshold` values will be considered hot. Some runners
-   *                        have inefficient GroupByKey implementation for groups with more than 10K
-   *                        values. Thus it is recommended to set `hotKeyThreshold` to below 10K,
-   *                        keep upper estimation error in mind.
+   *                        have inefficient `GroupByKey` implementation for groups with more than
+   *                        10K values. Thus it is recommended to set `hotKeyThreshold` to below
+   *                        10K, keep upper estimation error in mind.
    * @param cms left hand side key [[com.twitter.algebird.CMSMonoid]]
    */
   def skewedJoin[W: ClassTag](that: SCollection[(K, W)],
@@ -361,10 +359,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   /**
    * Aggregate the values of each key, using given combine functions and a neutral "zero value".
-   * This function can return a different result type, U, than the type of the values in this
-   * SCollection, V. Thus, we need one operation for merging a V into a U and one operation for
-   * merging two U's. To avoid memory allocation, both of these functions are allowed to modify
-   * and return their first argument instead of creating a new U.
+   * This function can return a different result type, `U`, than the type of the values in this
+   * SCollection, `V`. Thus, we need one operation for merging a `V` into a `U` and one operation
+   * for merging two `U``'s. To avoid memory allocation, both of these functions are allowed to
+   * modify and return their first argument instead of creating a new `U`.
    * @group per_key
    */
   def aggregateByKey[U: ClassTag](zeroValue: U)(seqOp: (U, V) => U,
@@ -375,8 +373,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   /**
    * Aggregate the values of each key with [[com.twitter.algebird.Aggregator Aggregator]]. First
-   * each value V is mapped to A, then we reduce with a semigroup of A, then finally we present
-   * the results as U. This could be more powerful and better optimized in some cases.
+   * each value `V` is mapped to `A`, then we reduce with a
+   * [[com.twitter.algebird.Semigroup Semigroup]] of `A`, then finally we present the results as
+   * `U`. This could be more powerful and better optimized in some cases.
    * @group per_key
    */
   def aggregateByKey[A: ClassTag, U: ClassTag](aggregator: Aggregator[V, A, U])
@@ -387,7 +386,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   /**
    * For each key, compute the values' data distribution using approximate `N`-tiles.
-   * @return a new SCollection whose values are Iterables of the approximate `N`-tiles of
+   * @return a new SCollection whose values are `Iterable`s of the approximate `N`-tiles of
    * the elements.
    * @group per_key
    */
@@ -399,16 +398,16 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   /**
    * Generic function to combine the elements for each key using a custom set of aggregation
-   * functions. Turns an SCollection[(K, V)] into a result of type SCollection[(K, C)], for a
-   * "combined type" C Note that V and C can be different -- for example, one might group an
-   * SCollection of type (Int, Int) into an RDD of type (Int, Seq[Int]). Users provide three
-   * functions:
+   * functions. Turns an `SCollection[(K, V)]` into a result of type `SCollection[(K, C)]`, for a
+   * "combined type" `C` Note that `V` and `C` can be different -- for example, one might group an
+   * SCollection of type `(Int, Int)` into an SCollection of type `(Int, Seq[Int])`. Users provide
+   * three functions:
    *
-   * - `createCombiner`, which turns a V into a C (e.g., creates a one-element list)
+   * - `createCombiner`, which turns a `V` into a `C` (e.g., creates a one-element list)
    *
-   * - `mergeValue`, to merge a V into a C (e.g., adds it to the end of a list)
+   * - `mergeValue`, to merge a `V` into a `C` (e.g., adds it to the end of a list)
    *
-   * - `mergeCombiners`, to combine two C's into a single one.
+   * - `mergeCombiners`, to combine two `C`'s into a single one.
    * @group per_key
    */
   def combineByKey[C: ClassTag](createCombiner: V => C)
@@ -420,7 +419,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   /**
    * Count approximate number of distinct values for each key in the SCollection.
-   * @param sampleSize the number of entries in the statisticalsample; the higher this number, the
+   * @param sampleSize the number of entries in the statistical sample; the higher this number, the
    * more accurate the estimate will be; should be `>= 16`.
    * @group per_key
    */
@@ -446,8 +445,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   def countByKey: SCollection[(K, Long)] = self.transform(_.keys.countByValue)
 
   /**
-   * Pass each value in the key-value pair SCollection through a flatMap function without changing
-   * the keys.
+   * Pass each value in the key-value pair SCollection through a `flatMap` function without
+   * changing the keys.
    * @group transform
    */
   def flatMapValues[U: ClassTag](f: V => TraversableOnce[U]): SCollection[(K, U)] =
@@ -464,7 +463,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   /**
    * Fold by key with [[com.twitter.algebird.Monoid Monoid]], which defines the associative
-   * function and "zero value" for V. This could be more powerful and better optimized in some
+   * function and "zero value" for `V`. This could be more powerful and better optimized in some
    * cases.
    * @group per_key
    */
@@ -481,8 +480,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * [[PairSCollectionFunctions.aggregateByKey[U]* PairSCollectionFunctions.aggregateByKey]] or
    * [[PairSCollectionFunctions.reduceByKey]] will provide much better performance.
    *
-   * Note: As currently implemented, groupByKey must be able to hold all the key-value pairs for
-   * any key in memory. If a key has too many values, it can result in an OutOfMemoryError.
+   * Note: As currently implemented, `groupByKey` must be able to hold all the key-value pairs for
+   * any key in memory. If a key has too many values, it can result in an `OutOfMemoryError`.
    * @group per_key
    */
   def groupByKey: SCollection[(K, Iterable[V])] =
@@ -506,14 +505,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   def keys: SCollection[K] = self.map(_._1)
 
   /**
-   * Pass each value in the key-value pair SCollection through a map function without changing the
-   * keys.
+   * Pass each value in the key-value pair SCollection through a `map` function without changing
+   * the keys.
    * @group transform
    */
   def mapValues[U: ClassTag](f: V => U): SCollection[(K, U)] = self.map(kv => (kv._1, f(kv._2)))
 
   /**
-   * Return the max of values for each key as defined by the implicit Ordering[T].
+   * Return the max of values for each key as defined by the implicit `Ordering[T]`.
    * @return a new SCollection of (key, maximum value) pairs
    * @group per_key
    */
@@ -521,7 +520,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   def maxByKey(implicit ord: Ordering[V]): SCollection[(K, V)] = this.reduceByKey(ord.max)
 
   /**
-   * Return the min of values for each key as defined by the implicit Ordering[T].
+   * Return the min of values for each key as defined by the implicit `Ordering[T]`.
    * @return a new SCollection of (key, minimum value) pairs
    * @group per_key
    */
@@ -551,7 +550,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * Create a sample of this SCollection using variable sampling rates for different keys as
    * specified by `fractions`, a key to sampling rate map, via simple random sampling with one
    * pass over the SCollection, to produce a sample of size that's approximately equal to the sum
-   * of math.ceil(numItems * samplingRate) over all key values.
+   * of `math.ceil(numItems * samplingRate)` over all key values.
    *
    * @param withReplacement whether to sample with or without replacement
    * @param fractions map of specific keys to sampling rates
@@ -578,7 +577,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   /**
    * Reduce by key with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful
-   * and better optimized in some cases.
+   * and better optimized than [[reduceByKey]] in some cases.
    * @group per_key
    */
   def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] =
@@ -593,7 +592,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   /**
    * Return the top k (largest) values for each key from this SCollection as defined by the
-   * specified implicit Ordering[T].
+   * specified implicit `Ordering[T]`.
    * @return a new SCollection of (key, top k) pairs
    * @group per_key
    */
@@ -612,9 +611,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   // =======================================================================
 
   /**
-   * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a Map[key,
-   * value], to be used with [[SCollection.withSideInputs]]. It is required that each key of the
-   * input be associated with a single value.
+   * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+   * `Map[key, value]`, to be used with [[SCollection.withSideInputs]]. It is required that each
+   * key of the input be associated with a single value.
+   *
+   * Currently, the resulting map is required to fit into memory.
    */
   def asMapSideInput: SideInput[Map[K, V]] = {
     val o = self.applyInternal(
@@ -627,9 +628,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   }
 
   /**
-   * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a Map[key,
-   * Iterable[value]], to be used with [[SCollection.withSideInputs]]. It is not required that the
-   * keys in the input collection be unique.
+   * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
+   * `Map[key, Iterable[value]]`, to be used with [[SCollection.withSideInputs]]. In contrast to
+   * [[asMapSideInput]], it is not required that the keys in the input collection be unique.
+   *
+   * Currently, the resulting map is required to fit into memory.
    */
   def asMultiMapSideInput: SideInput[Map[K, Iterable[V]]] = {
     val o = self.applyInternal(

@@ -18,10 +18,10 @@
 package com.spotify.scio
 
 /**
-  * This package contains the schema types for metrics collected during a pipeline run.
-  *
-  * See [[ScioResult.getMetrics]]
-  */
+ * This package contains the schema types for metrics collected during a pipeline run.
+ *
+ * See [[ScioResult.getMetrics]].
+ */
 package object metrics {
   case class Metrics(version: String,
       scalaVersion: String,

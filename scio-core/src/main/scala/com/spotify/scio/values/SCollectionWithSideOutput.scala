@@ -42,8 +42,8 @@ class SCollectionWithSideOutput[T: ClassTag] private[values]
   private val sideTags = TupleTagList.of(sides.map(_.tupleTag).toList.asJava)
 
   /**
-   * [[SCollection.flatMap]] with an additional SideOutputContext argument and additional
-   * SideOutputCollections return value.
+   * [[SCollection.flatMap]] with an additional [[SideOutputContext]] argument and additional
+   * [[SideOutputCollections]] return value.
    */
   def flatMap[U: ClassTag](f: (T, SideOutputContext[T]) => TraversableOnce[U])
   : (SCollection[U], SideOutputCollections) = {
@@ -56,8 +56,8 @@ class SCollectionWithSideOutput[T: ClassTag] private[values]
   }
 
   /**
-   * [[SCollection.map]] with an additional SideOutputContext argument and additional
-   * SideOutputCollections return value.
+   * [[SCollection.map]] with an additional [[SideOutputContext]] argument and additional
+   * [[SideOutputCollections]] return value.
    */
   def map[U: ClassTag](f: (T, SideOutputContext[T]) => U)
   : (SCollection[U], SideOutputCollections) = {

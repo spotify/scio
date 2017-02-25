@@ -49,6 +49,10 @@ class ScioResult private[scio] (val internal: PipelineResult,
   private val aggregators: Map[String, Iterable[Aggregator[_, _]]] =
     context.pipeline.getAggregatorSteps.asScala.keys.groupBy(_.getName)
 
+  /**
+   * `Future` for pipeline's final state. The `Future` will be completed once the pipeline
+   * completes successfully.
+   */
   val finalState: Future[State] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     val f = Future {
@@ -61,7 +65,7 @@ class ScioResult private[scio] (val internal: PipelineResult,
       this.state
     }
     f.onFailure {
-      case NonFatal(e) => context.updateFutures(state)
+      case NonFatal(_) => context.updateFutures(state)
     }
     f
   }
@@ -78,13 +82,16 @@ class ScioResult private[scio] (val internal: PipelineResult,
   /** Pipeline's current state. */
   def state: State = internal.getState
 
-  /** Get the total value of an accumulator. */
+  /** Get the total value of an [[com.spotify.scio.values.Accumulator Accumulator]]. */
   def accumulatorTotalValue[T](acc: Accumulator[T]): T = {
     require(accumulators.contains(acc), "Accumulator not present in the result")
     acc.combineFn(getAggregatorValues(acc).map(_.getTotalValue(acc.combineFn)).asJava)
   }
 
-  /** Get the values of an accumulator at each step it was used. */
+  /**
+   * Get the values of an [[com.spotify.scio.values.Accumulator Accumulator]] at each step it was
+   * used.
+   */
   def accumulatorValuesAtSteps[T](acc: Accumulator[T]): Map[String, T] = {
     require(accumulators.contains(acc), "Accumulator not present in the result")
     getAggregatorValues(acc).flatMap(_.getValuesAtSteps.asScala).toMap
@@ -135,7 +142,7 @@ class ScioResult private[scio] (val internal: PipelineResult,
       } match {
         case Success(x) => x
         case Failure(e) => {
-          logger.error(s"Failed to fetch dataflow metrics due to $e")
+          logger.error(s"Failed to fetch Dataflow metrics due to $e")
           Nil
         }
       }

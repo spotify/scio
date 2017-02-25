@@ -37,25 +37,25 @@ import scala.reflect.ClassTag
  */
 package object scio {
 
-  /** Alias for BigQuery CreateDisposition. */
+  /** Alias for BigQuery `CreateDisposition`. */
   val CREATE_IF_NEEDED = Write.CreateDisposition.CREATE_IF_NEEDED
 
-  /** Alias for BigQuery CreateDisposition. */
+  /** Alias for BigQuery `CreateDisposition`. */
   val CREATE_NEVER = Write.CreateDisposition.CREATE_NEVER
 
-  /** Alias for BigQuery WriteDisposition. */
+  /** Alias for BigQuery `WriteDisposition`. */
   val WRITE_APPEND = Write.WriteDisposition.WRITE_APPEND
 
-  /** Alias for BigQuery WriteDisposition. */
+  /** Alias for BigQuery `WriteDisposition`. */
   val WRITE_EMPTY = Write.WriteDisposition.WRITE_EMPTY
 
-  /** Alias for BigQuery WriteDisposition. */
+  /** Alias for BigQuery `WriteDisposition`. */
   val WRITE_TRUNCATE = Write.WriteDisposition.WRITE_TRUNCATE
 
-  /** Alias for WindowingStrategy AccumulationMode.ACCUMULATING_FIRED_PANES. */
+  /** Alias for WindowingStrategy `AccumulationMode.ACCUMULATING_FIRED_PANES`. */
   val ACCUMULATING_FIRED_PANES = AccumulationMode.ACCUMULATING_FIRED_PANES
 
-  /** Alias for WindowingStrategy AccumulationMode.DISCARDING_FIRED_PANES. */
+  /** Alias for WindowingStrategy `AccumulationMode.DISCARDING_FIRED_PANES`. */
   val DISCARDING_FIRED_PANES = AccumulationMode.DISCARDING_FIRED_PANES
 
   import com.spotify.scio.values
@@ -63,15 +63,17 @@ package object scio {
   implicit val longAccumulatorType: AccumulatorType[Long] = new values.LongAccumulatorType
   implicit val doubleAccumulatorType: AccumulatorType[Double] = new values.DoubleAccumulatorType
 
-  implicit def makeDistCacheScioContext(self: ScioContext): DistCacheScioContext =
-    new DistCacheScioContext(self)
-
-  /** Wait for Tap to be available and get Tap reference from Future. */
+  /**
+   * Wait for [[com.spotify.scio.io.Tap Tap]] to be available and get Tap reference from `Future`.
+   */
   implicit class WaitableFutureTap[T](self: Future[Tap[T]]) {
     def waitForResult(atMost: Duration = Duration.Inf): Tap[T] = Await.result(self, atMost)
   }
 
-  /** Wait for nested Tap to be available, flatten result and get Tap reference from Future. */
+  /**
+   * Wait for nested [[com.spotify.scio.io.Tap Tap]] to be available, flatten result and get Tap
+   * reference from `Future`.
+   */
   implicit class WaitableNestedFutureTap[T](self: Future[Future[Tap[T]]]) {
     import scala.concurrent.ExecutionContext.Implicits.global
     def waitForResult(atMost: Duration = Duration.Inf): Tap[T] =
@@ -88,19 +90,19 @@ package object scio {
     """version in .+"([^"]+)"""".r.findFirstMatchIn(line).get.group(1)
   }
 
-  /** [[com.twitter.algebird.Semigroup Semigroup]] for Array[Int]. */
+  /** [[com.twitter.algebird.Semigroup Semigroup]] for `Array[Int]`. */
   implicit val intArraySg: Semigroup[Array[Int]] = new ArraySemigroup[Int]
 
-  /** [[com.twitter.algebird.Semigroup Semigroup]] for Array[Long]. */
+  /** [[com.twitter.algebird.Semigroup Semigroup]] for `Array[Long]`. */
   implicit val longArraySg: Semigroup[Array[Long]] = new ArraySemigroup[Long]
 
-  /** [[com.twitter.algebird.Semigroup Semigroup]] for Array[Float]. */
+  /** [[com.twitter.algebird.Semigroup Semigroup]] for `Array[Float]`. */
   implicit val floatArraySg: Semigroup[Array[Float]] = new ArraySemigroup[Float]
 
-  /** [[com.twitter.algebird.Semigroup Semigroup]] for Array[Double]. */
+  /** [[com.twitter.algebird.Semigroup Semigroup]] for `Array[Double]`. */
   implicit val doubleArraySg: Semigroup[Array[Double]] = new ArraySemigroup[Double]
 
-  class ArraySemigroup[@specialized(Int, Long, Float, Double) T : ClassTag : Numeric]
+  private class ArraySemigroup[@specialized(Int, Long, Float, Double) T : ClassTag : Numeric]
     extends Semigroup[Array[T]]{
     private val num = implicitly[Numeric[T]]
     private def plusI(l: Array[T], r: Array[T]): Array[T] = {

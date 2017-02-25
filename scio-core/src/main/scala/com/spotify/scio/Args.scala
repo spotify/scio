@@ -66,7 +66,7 @@ class Args private (private val m: Map[String, List[String]]) {
   /** Get the list of values for a given key. */
   def list(key: String): List[String] = m.getOrElse(key, Nil)
 
-  /** Get an Option if there is zero or one element for a given key. */
+  /** Get an `Option` if there is zero or one element for a given key. */
   def optional(key: String): Option[String] = list(key) match {
     case Nil => None
     case List(v) => Some(v)
@@ -80,34 +80,34 @@ class Args private (private val m: Map[String, List[String]]) {
     case _ => throw new IllegalArgumentException(s"Multiple values for property '$key'")
   }
 
-  /** Get value as Int with a default. */
+  /** Get value as `Int` with a default. */
   def int(key: String, default: Int): Int = getOrElse(key, default, _.toInt)
 
-  /** Get value as Int. */
+  /** Get value as `Int`. */
   def int(key: String): Int = get(key, _.toInt)
 
-  /** Get value as Long with a default. */
+  /** Get value as `Long` with a default. */
   def long(key: String, default: Long): Long = getOrElse(key, default, _.toLong)
 
-  /** Get value as Long. */
+  /** Get value as `Long`. */
   def long(key: String): Long = get(key, _.toLong)
 
-  /** Get value as Float with a default. */
+  /** Get value as `Float` with a default. */
   def float(key: String, default: Float): Float = getOrElse(key, default, _.toFloat)
 
-  /** Get value as Float. */
+  /** Get value as `Float`. */
   def float(key: String): Float = get(key, _.toFloat)
 
-  /** Get value as Double with a default. */
+  /** Get value as `Double` with a default. */
   def double(key: String, default: Double): Double = getOrElse(key, default, _.toDouble)
 
-  /** Get value as Double. */
+  /** Get value as `Double`. */
   def double(key: String): Double = get(key, _.toDouble)
 
-  /** Get value as Boolean with a default. */
+  /** Get value as `Boolean` with a default. */
   def boolean(key: String, default: Boolean): Boolean = getOrElse(key, default, _.toBoolean)
 
-  /** Get value as Boolean. */
+  /** Get value as `Boolean`. */
   def boolean(key: String): Boolean = get(key, _.toBoolean)
 
   private def getOrElse[T](key: String, default: T, f: String => T): T = {
