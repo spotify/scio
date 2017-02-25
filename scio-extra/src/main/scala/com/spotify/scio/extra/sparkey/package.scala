@@ -175,7 +175,7 @@ package object sparkey {
   private class SparkeySideInput(val view: PCollectionView[SparkeyUri])
     extends SideInput[SparkeyReader] {
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
-      SparkeyUri(context.sideInput(view).basePath, context.getPipelineOptions).getReader
+      context.sideInput(view).getReader
   }
 
 }
