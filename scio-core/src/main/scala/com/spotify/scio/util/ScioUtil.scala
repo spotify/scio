@@ -32,10 +32,13 @@ import com.google.api.services.dataflow.Dataflow
 import com.google.api.services.dataflow.model.JobMetrics
 import org.apache.beam.sdk.util.GcsUtil
 import org.apache.beam.sdk.util.gcsfs.GcsPath
+import org.slf4j.LoggerFactory
 
 import scala.reflect.ClassTag
 
 private[scio] object ScioUtil {
+
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   def isLocalUri(uri: URI): Boolean = uri.getScheme == null || uri.getScheme == "file"
 
@@ -91,9 +94,12 @@ private[scio] object ScioUtil {
   def fetchFromGCS(gcsUtil: GcsUtil, gcsUri: URI, dest: String): File = synchronized {
     require(isGcsUri(gcsUri), "Invalid GCS URI.")
     val file = new File(dest)
-    val src = gcsUtil.open(GcsPath.fromUri(gcsUri))
+    val srcPath = GcsPath.fromUri(gcsUri)
+    val srcSize = gcsUtil.fileSize(srcPath)
 
-    if (file.exists() && src.size() != file.length()) {
+    if (file.exists() && file.length() != srcSize) {
+      logger.info("Existing destination file with wrong size. " +
+        s"Source = $srcSize, destination = ${file.length()}")
       // File exists but has different size than source file, most likely there was an issue
       // on previous thread, let's remove invalid file, and download it again.
       file.delete()
@@ -102,12 +108,16 @@ private[scio] object ScioUtil {
     if (!file.exists()) {
       val fos: FileOutputStream = new FileOutputStream(dest)
       val dst = fos.getChannel
-      val src = gcsUtil.open(GcsPath.fromUri(gcsUri))
+      val src = gcsUtil.open(srcPath)
       val size = dst.transferFrom(src, 0, src.size())
       dst.close()
       fos.close()
+      logger.info(s"GCS URI $gcsUri to $dest, copied $size bytes")
+    } else {
+      logger.info(s"GCS URI $gcsUri already")
     }
 
     file
   }
+
 }
