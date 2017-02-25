@@ -21,15 +21,13 @@ import java.io.PrintStream
 import java.nio.file.Files
 
 import com.google.api.client.util.Charsets
-import com.spotify.scio.io.{InMemorySink, InMemorySinkManager}
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.MockedPrintStream
 import com.spotify.scio.util.random.RandomSamplerUtils
 import com.twitter.algebird.{Aggregator, Semigroup}
-import org.apache.beam.sdk.io.Write
 import org.apache.beam.sdk.transforms.Count
-import org.apache.beam.sdk.transforms.windowing.{GlobalWindow, PaneInfo}
 import org.apache.beam.sdk.transforms.windowing.PaneInfo.Timing
+import org.apache.beam.sdk.transforms.windowing.{GlobalWindow, PaneInfo}
 import org.joda.time.{Duration, Instant}
 
 import scala.reflect.ClassTag
