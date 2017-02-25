@@ -45,7 +45,7 @@ trait MultiJoin extends Serializable {
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala))
@@ -58,7 +58,7 @@ trait MultiJoin extends Serializable {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala))
@@ -72,7 +72,7 @@ trait MultiJoin extends Serializable {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala))
@@ -87,7 +87,7 @@ trait MultiJoin extends Serializable {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala))
@@ -103,7 +103,7 @@ trait MultiJoin extends Serializable {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala))
@@ -120,7 +120,7 @@ trait MultiJoin extends Serializable {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala))
@@ -138,7 +138,7 @@ trait MultiJoin extends Serializable {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala))
@@ -157,7 +157,7 @@ trait MultiJoin extends Serializable {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala))
@@ -177,7 +177,7 @@ trait MultiJoin extends Serializable {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala))
@@ -198,7 +198,7 @@ trait MultiJoin extends Serializable {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala))
@@ -220,7 +220,7 @@ trait MultiJoin extends Serializable {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala))
@@ -243,7 +243,7 @@ trait MultiJoin extends Serializable {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala))
@@ -267,7 +267,7 @@ trait MultiJoin extends Serializable {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala))
@@ -292,7 +292,7 @@ trait MultiJoin extends Serializable {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala))
@@ -318,7 +318,7 @@ trait MultiJoin extends Serializable {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala))
@@ -345,7 +345,7 @@ trait MultiJoin extends Serializable {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala))
@@ -373,7 +373,7 @@ trait MultiJoin extends Serializable {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala))
@@ -402,7 +402,7 @@ trait MultiJoin extends Serializable {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala, result.getAll(tagS).asScala))
@@ -432,7 +432,7 @@ trait MultiJoin extends Serializable {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala, result.getAll(tagS).asScala, result.getAll(tagT).asScala))
@@ -463,7 +463,7 @@ trait MultiJoin extends Serializable {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala, result.getAll(tagS).asScala, result.getAll(tagT).asScala, result.getAll(tagU).asScala))
@@ -495,7 +495,7 @@ trait MultiJoin extends Serializable {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).map { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       (key, (result.getAll(tagA).asScala, result.getAll(tagB).asScala, result.getAll(tagC).asScala, result.getAll(tagD).asScala, result.getAll(tagE).asScala, result.getAll(tagF).asScala, result.getAll(tagG).asScala, result.getAll(tagH).asScala, result.getAll(tagI).asScala, result.getAll(tagJ).asScala, result.getAll(tagK).asScala, result.getAll(tagL).asScala, result.getAll(tagM).asScala, result.getAll(tagN).asScala, result.getAll(tagO).asScala, result.getAll(tagP).asScala, result.getAll(tagQ).asScala, result.getAll(tagR).asScala, result.getAll(tagS).asScala, result.getAll(tagT).asScala, result.getAll(tagU).asScala, result.getAll(tagV).asScala))
@@ -507,7 +507,7 @@ trait MultiJoin extends Serializable {
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -523,7 +523,7 @@ trait MultiJoin extends Serializable {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -541,7 +541,7 @@ trait MultiJoin extends Serializable {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -561,7 +561,7 @@ trait MultiJoin extends Serializable {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -583,7 +583,7 @@ trait MultiJoin extends Serializable {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -607,7 +607,7 @@ trait MultiJoin extends Serializable {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -633,7 +633,7 @@ trait MultiJoin extends Serializable {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -661,7 +661,7 @@ trait MultiJoin extends Serializable {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -691,7 +691,7 @@ trait MultiJoin extends Serializable {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -723,7 +723,7 @@ trait MultiJoin extends Serializable {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -757,7 +757,7 @@ trait MultiJoin extends Serializable {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -793,7 +793,7 @@ trait MultiJoin extends Serializable {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -831,7 +831,7 @@ trait MultiJoin extends Serializable {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -871,7 +871,7 @@ trait MultiJoin extends Serializable {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -913,7 +913,7 @@ trait MultiJoin extends Serializable {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -957,7 +957,7 @@ trait MultiJoin extends Serializable {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1003,7 +1003,7 @@ trait MultiJoin extends Serializable {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1051,7 +1051,7 @@ trait MultiJoin extends Serializable {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1101,7 +1101,7 @@ trait MultiJoin extends Serializable {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1153,7 +1153,7 @@ trait MultiJoin extends Serializable {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1207,7 +1207,7 @@ trait MultiJoin extends Serializable {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1242,7 +1242,7 @@ trait MultiJoin extends Serializable {
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1258,7 +1258,7 @@ trait MultiJoin extends Serializable {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1276,7 +1276,7 @@ trait MultiJoin extends Serializable {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1296,7 +1296,7 @@ trait MultiJoin extends Serializable {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1318,7 +1318,7 @@ trait MultiJoin extends Serializable {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1342,7 +1342,7 @@ trait MultiJoin extends Serializable {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1368,7 +1368,7 @@ trait MultiJoin extends Serializable {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1396,7 +1396,7 @@ trait MultiJoin extends Serializable {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1426,7 +1426,7 @@ trait MultiJoin extends Serializable {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1458,7 +1458,7 @@ trait MultiJoin extends Serializable {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1492,7 +1492,7 @@ trait MultiJoin extends Serializable {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1528,7 +1528,7 @@ trait MultiJoin extends Serializable {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1566,7 +1566,7 @@ trait MultiJoin extends Serializable {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1606,7 +1606,7 @@ trait MultiJoin extends Serializable {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1648,7 +1648,7 @@ trait MultiJoin extends Serializable {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1692,7 +1692,7 @@ trait MultiJoin extends Serializable {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1738,7 +1738,7 @@ trait MultiJoin extends Serializable {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1786,7 +1786,7 @@ trait MultiJoin extends Serializable {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1836,7 +1836,7 @@ trait MultiJoin extends Serializable {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1888,7 +1888,7 @@ trait MultiJoin extends Serializable {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1942,7 +1942,7 @@ trait MultiJoin extends Serializable {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1977,7 +1977,7 @@ trait MultiJoin extends Serializable {
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -1993,7 +1993,7 @@ trait MultiJoin extends Serializable {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2011,7 +2011,7 @@ trait MultiJoin extends Serializable {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2031,7 +2031,7 @@ trait MultiJoin extends Serializable {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2053,7 +2053,7 @@ trait MultiJoin extends Serializable {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2077,7 +2077,7 @@ trait MultiJoin extends Serializable {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2103,7 +2103,7 @@ trait MultiJoin extends Serializable {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2131,7 +2131,7 @@ trait MultiJoin extends Serializable {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2161,7 +2161,7 @@ trait MultiJoin extends Serializable {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2193,7 +2193,7 @@ trait MultiJoin extends Serializable {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2227,7 +2227,7 @@ trait MultiJoin extends Serializable {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2263,7 +2263,7 @@ trait MultiJoin extends Serializable {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2301,7 +2301,7 @@ trait MultiJoin extends Serializable {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2341,7 +2341,7 @@ trait MultiJoin extends Serializable {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2383,7 +2383,7 @@ trait MultiJoin extends Serializable {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2427,7 +2427,7 @@ trait MultiJoin extends Serializable {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2473,7 +2473,7 @@ trait MultiJoin extends Serializable {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2521,7 +2521,7 @@ trait MultiJoin extends Serializable {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2571,7 +2571,7 @@ trait MultiJoin extends Serializable {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2623,7 +2623,7 @@ trait MultiJoin extends Serializable {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
@@ -2677,7 +2677,7 @@ trait MultiJoin extends Serializable {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
-      .apply("CoGroupByKey", CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
     a.context.wrap(keyed).withName(tfName).flatMap { kv =>
       val (key, result) = (kv.getKey, kv.getValue)
       for {
