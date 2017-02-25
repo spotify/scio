@@ -434,23 +434,21 @@ def fixJavaDocLinks(bases: Seq[String], doc: String): String = {
   }
 }
 
-lazy val fixJavaDocLinksTask = taskKey[Unit]("Fix JavaDoc links")
-
 lazy val siteSettings = site.settings ++ ghpages.settings ++ unidocSettings ++ Seq(
   autoAPIMappings := true,
   site.addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), ""),
   gitRemoteRepo := "git@github.com:spotify/scio.git",
-  fixJavaDocLinksTask := {
+  makeSite := {
+    // fix JavaDoc links before makeSite
+    (doc in ScalaUnidoc).value
     val bases = javaMappings.map(m => m._3 + "/index.html")
     val t = (target in ScalaUnidoc).value
     (t ** "*.html").get.foreach { f =>
       val doc = fixJavaDocLinks(bases, IO.read(f))
       IO.write(f, doc)
     }
-  },
-  // Insert fixJavaDocLinksTask between ScalaUnidoc.doc and SbtSite.makeSite
-  fixJavaDocLinksTask := fixJavaDocLinksTask dependsOn (doc in ScalaUnidoc),
-  makeSite := (makeSite dependsOn fixJavaDocLinksTask).value
+    makeSite.value
+  }
 )
 
 // =======================================================================
