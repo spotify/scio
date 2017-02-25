@@ -18,7 +18,7 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.testing.PipelineSpec
-import com.twitter.algebird.Semigroup
+import com.twitter.algebird.{Aggregator, Semigroup}
 
 import scala.reflect.ClassTag
 
@@ -26,8 +26,13 @@ class SCollectionWithFanoutTest extends PipelineSpec {
 
   "SCollectionWithFanout" should "support aggregate()" in {
     runWithContext { sc =>
-      val p = sc.parallelize(1 to 100).withFanout(10).aggregate(0.0)(_ + _, _ + _)
-      p should containSingleValue (5050.0)
+      val p = sc.parallelize(1 to 100).withFanout(10)
+      val p1 = p.aggregate(0.0)(_ + _, _ + _)
+      val p2 = p.aggregate(Aggregator.max[Int])
+      val p3 = p.aggregate(Aggregator.immutableSortedReverseTake[Int](5))
+      p1 should containSingleValue (5050.0)
+      p2 should containSingleValue (100)
+      p3 should containSingleValue (Seq(100, 99, 98, 97, 96))
     }
   }
 

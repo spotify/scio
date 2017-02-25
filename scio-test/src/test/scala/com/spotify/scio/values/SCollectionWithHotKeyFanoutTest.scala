@@ -18,17 +18,28 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.testing.PipelineSpec
+import com.twitter.algebird.Aggregator
 
 class SCollectionWithHotKeyFanoutTest extends PipelineSpec {
 
   "SCollectionWithHotKeyFanout" should "support aggregateByKey()" in {
     runWithContext { sc =>
-      val p1 = sc.parallelize(1 to 100).map(("a", _))
-      val p2 = sc.parallelize(1 to 10).map(("b", _))
-      val r1 = (p1 ++ p2).withHotKeyFanout(10).aggregateByKey(0.0)(_ + _, _ + _)
-      val r2 = (p1 ++ p2).withHotKeyFanout(_.hashCode).aggregateByKey(0.0)(_ + _, _ + _)
-      r1 should containInAnyOrder (Seq(("a", 5050.0), ("b", 55.0)))
-      r2 should containInAnyOrder (Seq(("a", 5050.0), ("b", 55.0)))
+      val p = sc.parallelize(1 to 100).map(("a", _)) ++ sc.parallelize(1 to 10).map(("b", _))
+      val pa = p.withHotKeyFanout(10)
+      val pb = p.withHotKeyFanout(_.hashCode)
+      val r1a = pa.aggregateByKey(0.0)(_ + _, _ + _)
+      val r1b = pb.aggregateByKey(0.0)(_ + _, _ + _)
+      val r2a = pa.aggregateByKey(Aggregator.max[Int])
+      val r2b = pb.aggregateByKey(Aggregator.max[Int])
+      val r3a = pa.aggregateByKey(Aggregator.immutableSortedReverseTake[Int](5))
+      val r3b = pb.aggregateByKey(Aggregator.immutableSortedReverseTake[Int](5))
+      r1a should containInAnyOrder (Seq(("a", 5050.0), ("b", 55.0)))
+      r1b should containInAnyOrder (Seq(("a", 5050.0), ("b", 55.0)))
+      r2a should containInAnyOrder (Seq(("a", 100), ("b", 10)))
+      r2b should containInAnyOrder (Seq(("a", 100), ("b", 10)))
+      val r3expected = Seq(("a", Seq(100, 99, 98, 97, 96)), ("b", Seq(10, 9, 8, 7, 6)))
+      r3a should containInAnyOrder (r3expected)
+      r3b should containInAnyOrder (r3expected)
     }
   }
 

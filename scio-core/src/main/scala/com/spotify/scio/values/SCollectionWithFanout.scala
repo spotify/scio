@@ -19,7 +19,7 @@ package com.spotify.scio.values
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util.Functions
-import com.twitter.algebird.{Semigroup, Monoid}
+import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.beam.sdk.transforms.Combine
 import org.apache.beam.sdk.values.PCollection
 
@@ -41,6 +41,12 @@ class SCollectionWithFanout[T: ClassTag] private[values] (val internal: PCollect
                                            combOp: (U, U) => U): SCollection[U] =
     this.pApply(
       Combine.globally(Functions.aggregateFn(zeroValue)(seqOp, combOp)).withFanout(fanout))
+
+  /** [[SCollection.aggregate[A,U]* SCollection.aggregate]] with fan out. */
+  def aggregate[A: ClassTag, U: ClassTag](aggregator: Aggregator[T, A, U]): SCollection[U] = {
+    val a = aggregator  // defeat closure
+    context.wrap(internal).transform(_.map(a.prepare).sum(a.semigroup).map(a.present))
+  }
 
   /** [[SCollection.combine]] with fan out. */
   def combine[C: ClassTag](createCombiner: T => C)
