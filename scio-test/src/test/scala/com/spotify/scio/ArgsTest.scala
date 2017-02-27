@@ -17,7 +17,8 @@
 
 package com.spotify.scio
 
-import org.scalatest.{Matchers, FlatSpec}
+import org.apache.beam.sdk.util.SerializableUtils
+import org.scalatest.{FlatSpec, Matchers}
 
 class ArgsTest extends FlatSpec with Matchers {
 
@@ -88,6 +89,16 @@ class ArgsTest extends FlatSpec with Matchers {
     args.boolean("key3") shouldBe true
     args.boolean("key4", true) shouldBe true
     args.boolean("key5", false) shouldBe false
+  }
+
+  it should "support toString" in {
+    val args = Args(Array("--key1=value1", "--key2=value2", "--key2=value3", "--key3"))
+    args.toString shouldBe "Args(--key1=value1, --key2=[value2, value3], --key3=true)"
+  }
+
+  it should "be serializable" in {
+    val args = Args(Array("--key1=value1", "--key2=value2", "--key2=value3"))
+    SerializableUtils.ensureSerializable(args) should equal (args)
   }
 
 }
