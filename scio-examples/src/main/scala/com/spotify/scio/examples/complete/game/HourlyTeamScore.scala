@@ -52,9 +52,9 @@ object HourlyTeamScore {
       .withFixedWindows(Duration.standardMinutes(windowDuration))
       .map(i => (i.team, i.score))
       .sumByKey
-      .withWindow
+      .withWindow[IntervalWindow]
       .map { case ((team, score), window) =>
-        val start = fmt.print(window.asInstanceOf[IntervalWindow].start())
+        val start = fmt.print(window.start())
         TeamScoreSums(team, score, start)
       }
       .saveAsTypedBigQuery(args("output"))

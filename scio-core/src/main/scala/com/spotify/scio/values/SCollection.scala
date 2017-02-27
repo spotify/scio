@@ -789,15 +789,22 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /**
    * Convert values into pairs of (value, window).
+   * @tparam W window type, must be
+   *           [[org.apache.beam.sdk.transforms.windowing.BoundedWindow BoundedWindow]] or one of
+   *           it's sub-types, e.g.
+   *           [[org.apache.beam.sdk.transforms.windowing.GlobalWindow GlobalWindow]] if this
+   *           SCollection is not windowed or
+   *           [[org.apache.beam.sdk.transforms.windowing.IntervalWindow IntervalWindow]] if it is
+   *           windowed.
    * @group window
    */
-  def withWindow: SCollection[(T, BoundedWindow)] = this.parDo(
+  def withWindow[W <: BoundedWindow]: SCollection[(T, W)] = this.parDo(
     new DoFn[T, (T, BoundedWindow)] {
       @ProcessElement
       private[scio] def processElement(c: DoFn[T, (T, BoundedWindow)]#ProcessContext,
-                         window: BoundedWindow): Unit =
+                                       window: BoundedWindow): Unit =
         c.output((c.element(), window))
-    })
+    }).asInstanceOf[SCollection[(T, W)]]
 
   /**
    * Assign timestamps to values.

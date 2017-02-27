@@ -27,8 +27,10 @@ import com.spotify.scio.util.random.RandomSamplerUtils
 import com.twitter.algebird.{Aggregator, Semigroup}
 import org.apache.beam.sdk.transforms.Count
 import org.apache.beam.sdk.transforms.windowing.PaneInfo.Timing
-import org.apache.beam.sdk.transforms.windowing.{GlobalWindow, PaneInfo}
-import org.joda.time.{Duration, Instant}
+import org.apache.beam.sdk.transforms.windowing.{
+  BoundedWindow, GlobalWindow, IntervalWindow, PaneInfo
+}
+import org.joda.time.{DateTimeConstants, Duration, Instant}
 
 import scala.reflect.ClassTag
 
@@ -433,11 +435,40 @@ class SCollectionTest extends PipelineSpec {
   }
 
   it should "support withWindow" in {
+    def w2s(window: BoundedWindow): String = window match {
+      case w: GlobalWindow => s"GlobalWindow(${w.maxTimestamp()})"
+      case w: IntervalWindow => s"IntervalWindow(${w.start()}, ${w.end()})"
+    }
+
+    val timestamps = Seq(1, 2, 3).map(t => new Instant(t * DateTimeConstants.MILLIS_PER_MINUTE))
+
     runWithContext { sc =>
-      val w = classOf[GlobalWindow].getSimpleName
-      val p = sc.parallelizeTimestamped(Seq("a", "b", "c"), Seq(1, 2, 3).map(new Instant(_)))
-      val r = p.withWindow.map(kv => (kv._1, kv._2.getClass.getSimpleName))
+      val p = sc.parallelizeTimestamped(Seq("a", "b", "c"), timestamps)
+      val r = p.withWindow[BoundedWindow].map(kv => (kv._1, w2s(kv._2)))
+
+      // default is GlobalWindow
+      val w = w2s(GlobalWindow.INSTANCE)
       r should containInAnyOrder (Seq(("a", w), ("b", w), ("c", w)))
+    }
+
+    runWithContext { sc =>
+      val p = sc.parallelizeTimestamped(Seq("a", "b", "c"), timestamps)
+      val r = p.withWindow[GlobalWindow].map(kv => (kv._1, w2s(kv._2)))
+
+      // default is GlobalWindow
+      val w = w2s(GlobalWindow.INSTANCE)
+      r should containInAnyOrder (Seq(("a", w), ("b", w), ("c", w)))
+    }
+
+    runWithContext { sc =>
+      val p = sc
+        .parallelizeTimestamped(Seq("a", "b", "c"), timestamps)
+        .withFixedWindows(Duration.standardMinutes(1))
+      val r = p.withWindow[IntervalWindow].map(kv => (kv._1, w2s(kv._2)))
+
+      // type is IntervalWindow after windowing is applied
+      val ws = timestamps.map(t => w2s(new IntervalWindow(t, t.plus(Duration.standardMinutes(1)))))
+      r should containInAnyOrder (Seq("a", "b", "c").zip(ws))
     }
   }
 
@@ -502,4 +533,5 @@ class SCollectionTest extends PipelineSpec {
     }
     Files.readAllLines(outFile, Charsets.UTF_8) should contain theSameElementsAs Seq("1", "2", "3")
   }
+
 }

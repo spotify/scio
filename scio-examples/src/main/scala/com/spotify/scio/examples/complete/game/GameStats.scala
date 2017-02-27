@@ -85,16 +85,15 @@ object GameStats {
         Duration.standardMinutes(sessionGap),
         options = WindowOptions(outputTimeFn = OutputTimeFns.outputAtEndOfWindow()))
       .keys.distinct
-      .withWindow
-      .map { kv =>
-        val w = kv._2.asInstanceOf[IntervalWindow]
+      .withWindow[IntervalWindow]
+      .map { case (_, w) =>
         new Duration(w.start(), w.end()).toPeriod().toStandardMinutes.getMinutes
       }
       .withFixedWindows(Duration.standardMinutes(userActivityWindowDuration))
       .mean
-      .withWindow
+      .withWindow[IntervalWindow]
       .map { case (mean, w) =>
-        AvgSessionLength(mean, fmt.print(w.asInstanceOf[IntervalWindow].start()))
+        AvgSessionLength(mean, fmt.print(w.start()))
       }
       .saveAsTypedBigQuery(args("output") + "_sessions")
 
