@@ -55,7 +55,25 @@ object Args {
 }
 
 /** Encapsulate parsed commandline arguments. */
-class Args private (private val m: Map[String, List[String]]) {
+class Args private (private val m: Map[String, List[String]]) extends Serializable {
+
+  override def toString: String = {
+    val str = m.keys.toArray.sorted.map { k =>
+      val values = m(k) match {
+        case v :: Nil => v.toString
+        case vs => vs.mkString("[", ", ", "]")
+      }
+      s"--$k=$values"
+    }.mkString(", ")
+    s"Args($str)"
+  }
+
+  override def equals(obj: Any): Boolean = obj match {
+    case that: Args => this.m == that.m
+    case _ => false
+  }
+
+  override def hashCode(): Int = m.hashCode()
 
   /** Shortcut for `required`. */
   def apply(key: String): String = required(key)
