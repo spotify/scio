@@ -26,6 +26,7 @@ import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.Accumulator
 import org.apache.beam.runners.dataflow.DataflowPipelineJob
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.options.ApplicationNameOptions
 import org.apache.beam.sdk.transforms.Aggregator
@@ -73,6 +74,18 @@ class ScioResult private[scio] (val internal: PipelineResult,
   /** Wait until the pipeline finishes. */
   def waitUntilFinish(duration: Duration = Duration.Inf): ScioResult = {
     Await.ready(finalState, duration)
+    this
+  }
+
+  /**
+   * Wait until the pipeline finishes with the State `Done` (as opposed to `CANCELLED` or
+   * `FAILED`). Throws exception otherwise.
+   */
+  def waitUntilDone(duration: Duration = Duration.Inf): ScioResult = {
+    waitUntilFinish(duration)
+    if (!this.state.equals(State.DONE)) {
+      throw new PipelineExecutionException(new Exception(s"Job finished with state ${this.state}"))
+    }
     this
   }
 
