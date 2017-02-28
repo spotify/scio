@@ -21,12 +21,11 @@ import java.util.TimeZone
 
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
-import com.spotify.scio.values.WindowOptions
+import com.spotify.scio.examples.complete.game.UserScore.GameActionInfo
+import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.beam.examples.common.{ExampleOptions, ExampleUtils}
 import org.apache.beam.sdk.options.StreamingOptions
-import org.apache.beam.sdk.transforms.windowing.{
-  AfterProcessingTime, AfterWatermark, IntervalWindow, Repeatedly
-}
+import org.apache.beam.sdk.transforms.windowing._
 import org.joda.time.{DateTimeZone, Duration, Instant}
 import org.joda.time.format.DateTimeFormat
 
@@ -48,25 +47,13 @@ object LeaderBoard {
 
     def fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
       .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
-    val teamWindowDuration = args.int("teamWindowDuration", 60)
-    val allowedLateness = args.int("allowedLateness", 120)
+    val teamWindowDuration = Duration.standardMinutes(args.int("teamWindowDuration", 60))
+    val allowedLateness = Duration.standardMinutes(args.int("allowedLateness", 120))
 
     val gameEvents = sc.pubsubTopic(args("topic"), idLabel = "timestamp_ms")
       .flatMap(UserScore.parseEvent)
 
-    gameEvents
-      .withFixedWindows(
-        Duration.standardMinutes(teamWindowDuration),
-        options = WindowOptions(
-          trigger = AfterWatermark.pastEndOfWindow()
-            .withEarlyFirings(AfterProcessingTime.pastFirstElementInPane()
-              .plusDelayOf(Duration.standardMinutes(5)))
-            .withLateFirings(AfterProcessingTime.pastFirstElementInPane()
-              .plusDelayOf(Duration.standardMinutes(10))),
-          accumulationMode = ACCUMULATING_FIRED_PANES,
-          allowedLateness = Duration.standardMinutes(allowedLateness)))
-      .map(i => (i.team, i.score))
-      .sumByKey
+    calculateTeamScores(gameEvents, teamWindowDuration, allowedLateness)
       .toWindowed
       .map { wv =>
         val start = fmt.print(wv.window.asInstanceOf[IntervalWindow].start())
@@ -82,7 +69,7 @@ object LeaderBoard {
         trigger = Repeatedly.forever(AfterProcessingTime.pastFirstElementInPane()
           .plusDelayOf(Duration.standardMinutes(10))),
         accumulationMode = ACCUMULATING_FIRED_PANES,
-        allowedLateness = Duration.standardMinutes(allowedLateness))
+        allowedLateness = allowedLateness)
       )
       .map(i => (i.user, i.score))
       .sumByKey
@@ -93,5 +80,21 @@ object LeaderBoard {
     exampleUtils.waitToFinish(result.internal)
   }
   // scalastyle:on method.length
+
+  def calculateTeamScores(infos: SCollection[GameActionInfo],
+                          teamWindowDuration: Duration,
+                          allowedLateness: Duration): SCollection[(String, Int)] =
+    infos.withFixedWindows(
+      teamWindowDuration,
+      options = WindowOptions(
+        trigger = AfterWatermark.pastEndOfWindow()
+          .withEarlyFirings(AfterProcessingTime.pastFirstElementInPane()
+            .plusDelayOf(Duration.standardMinutes(5)))
+          .withLateFirings(AfterProcessingTime.pastFirstElementInPane()
+            .plusDelayOf(Duration.standardMinutes(10))),
+        accumulationMode = ACCUMULATING_FIRED_PANES,
+        allowedLateness = allowedLateness))
+      .map(i => (i.team, i.score))
+      .sumByKey
 
 }
