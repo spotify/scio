@@ -22,7 +22,7 @@ import java.util.TimeZone
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.values.WindowOptions
-import org.apache.beam.examples.common.ExampleUtils
+import org.apache.beam.examples.common.{ExampleOptions, ExampleUtils}
 import org.apache.beam.sdk.options.StreamingOptions
 import org.apache.beam.sdk.transforms.windowing.{IntervalWindow, OutputTimeFns}
 import org.joda.time.format.DateTimeFormat
@@ -39,7 +39,8 @@ object GameStats {
 
   // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
+    val sc = ScioContext(opts)
     sc.optionsAs[StreamingOptions].setStreaming(true)
     val exampleUtils = new ExampleUtils(sc.options)
 

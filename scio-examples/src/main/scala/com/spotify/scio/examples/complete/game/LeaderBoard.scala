@@ -22,12 +22,11 @@ import java.util.TimeZone
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.values.WindowOptions
-import org.apache.beam.examples.common.ExampleUtils
+import org.apache.beam.examples.common.{ExampleOptions, ExampleUtils}
 import org.apache.beam.sdk.options.StreamingOptions
-import org.apache.beam.sdk.transforms.windowing.{AfterProcessingTime,
-                                                 AfterWatermark,
-                                                 IntervalWindow,
-                                                 Repeatedly}
+import org.apache.beam.sdk.transforms.windowing.{
+  AfterProcessingTime, AfterWatermark, IntervalWindow, Repeatedly
+}
 import org.joda.time.{DateTimeZone, Duration, Instant}
 import org.joda.time.format.DateTimeFormat
 
@@ -40,8 +39,10 @@ object LeaderBoard {
   @BigQueryType.toTable
   case class UserScoreSums(user: String, total_score: Int, processing_time: String)
 
+  // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
+    val sc = ScioContext(opts)
     sc.optionsAs[StreamingOptions].setStreaming(true)
     val exampleUtils = new ExampleUtils(sc.options)
 
@@ -91,5 +92,6 @@ object LeaderBoard {
     val result = sc.close()
     exampleUtils.waitToFinish(result.internal)
   }
+  // scalastyle:on method.length
 
 }
