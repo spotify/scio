@@ -21,7 +21,7 @@ import java.util.TimeZone
 
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
-import com.spotify.scio.values.WindowOptions
+import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.beam.examples.common.{ExampleOptions, ExampleUtils}
 import org.apache.beam.sdk.options.StreamingOptions
 import org.apache.beam.sdk.transforms.windowing.{IntervalWindow, OutputTimeFns}
@@ -54,16 +54,8 @@ object GameStats {
       .flatMap(UserScore.parseEvent)
 
     val userEvents = rawEvents.map(i => (i.user, i.score))
-    val sumScores = userEvents
-      .withFixedWindows(Duration.standardMinutes(fixedWindowDuration))
-      .sumByKey
-    val globalMeanScore = sumScores.values.mean
-    val spammyUsers = sumScores
-      .cross(globalMeanScore)
-      .filter { case ((_, score), gmc) =>
-        score > (gmc * 2.5)
-      }
-      .keys.asMapSideInput
+    val userScores = userEvents.withFixedWindows(Duration.standardMinutes(fixedWindowDuration))
+    val spammyUsers = calculateSpammyUsers(userScores).asMapSideInput
 
     rawEvents
       .withFixedWindows(Duration.standardMinutes(fixedWindowDuration))
@@ -102,5 +94,16 @@ object GameStats {
     exampleUtils.waitToFinish(result.internal)
   }
   // scalastyle:on method.length
+
+  def calculateSpammyUsers(userScores: SCollection[(String, Int)]): SCollection[(String, Int)] = {
+    val sumScores = userScores.sumByKey
+    val globalMeanScore = sumScores.values.mean
+    sumScores
+      .cross(globalMeanScore)
+      .filter { case ((_, score), gmc) =>
+        score > (gmc * 2.5)
+      }
+      .keys
+  }
 
 }
