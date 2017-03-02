@@ -22,7 +22,7 @@ import scala.collection.mutable.{Map => MMap}
 private[scio] object CallSites {
 
   private val scioNs = "com.spotify.scio."
-  private val dfNs = "org.apache.beam.sdk."
+  private val beamNs = "org.apache.beam."
 
   private val methodMap = Map("$plus$plus" -> "++")
 
@@ -30,7 +30,7 @@ private[scio] object CallSites {
 
   private def isExternalClass(c: String): Boolean =
     // Not in our code base or an interpreter
-    (!c.startsWith(scioNs) && !c.startsWith("scala.") && !c.startsWith(dfNs)) ||
+    (!c.startsWith(scioNs) && !c.startsWith("scala.") && !c.startsWith(beamNs)) ||
       c.startsWith(scioNs + "examples.") || // unless if it's in examples
       c.startsWith(scioNs + "values.AccumulatorTest") || // or this test
       c.startsWith(scioNs + "accumulators.AccumulatorSCollectionTest") // or this test
