@@ -22,7 +22,9 @@ import java.io.{ByteArrayOutputStream, IOException, InputStream, OutputStream}
 import com.google.cloud.dataflow.sdk.coders.Coder.Context
 import com.google.cloud.dataflow.sdk.coders._
 import com.google.cloud.dataflow.sdk.util.VarInt
+import com.google.cloud.dataflow.sdk.util.common.ElementByteSizeObserver
 import com.google.common.io.ByteStreams
+import com.google.common.io.{ByteStreams, CountingOutputStream}
 import com.google.common.reflect.ClassPath
 import com.google.protobuf.Message
 import com.twitter.chill._
@@ -128,6 +130,31 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
       kryo.get().readClassAndObject(new Input(value))
     }
     o.asInstanceOf[T]
+  }
+
+  // This method is called by PipelineRunner to sample elements in a PCollection and estimate
+  // size. This could be expensive for collections with small number of very large elements.
+  override def registerByteSizeObserver(value: T, observer: ElementByteSizeObserver,
+                                        context: Context): Unit = value match {
+    // (K, Iterable[V]) is the return type of `groupBy` or `groupByKey`. This could be very slow
+    // when there're few keys with many values.
+    case (key, wrapper: JIterableWrapper[_]) =>
+      observer.update(kryoEncodedElementByteSize(key, Context.OUTER))
+      // FIXME: handle ElementByteSizeObservableIterable[_, _]
+      val i = wrapper.underlying.iterator()
+      while (i.hasNext) {
+        observer.update(kryoEncodedElementByteSize(i.next(), Context.OUTER))
+      }
+    case _ =>
+      observer.update(kryoEncodedElementByteSize(value, context))
+  }
+
+  private def kryoEncodedElementByteSize(obj: Any, context: Context): Long = {
+    val s = new CountingOutputStream(ByteStreams.nullOutputStream())
+    val output = new Output(s)
+    kryo.get().writeClassAndObject(output, obj)
+    output.flush()
+    if (context.isWholeStream) s.getCount else s.getCount + VarInt.getLength(s.getCount)
   }
 
 }
