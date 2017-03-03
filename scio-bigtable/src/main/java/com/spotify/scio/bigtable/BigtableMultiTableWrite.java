@@ -111,7 +111,14 @@ public class BigtableMultiTableWrite {
     public void processElement(ProcessContext context) throws Exception {
       KV<String, Iterable<Mutation>> element = context.element();
       final List<Mutation> mutations = Lists.newArrayList(element.getValue());
-      getBufferedMutator(context, element.getKey()).mutate(mutations);
+      try {
+        getBufferedMutator(context, element.getKey()).mutate(mutations);
+      } catch (RetriesExhaustedWithDetailsException e) {
+        for (Throwable cause : e.getCauses()) {
+          cause.printStackTrace();
+        }
+        throw e;
+      }
       mutationsCounter.addValue((long) mutations.size());
     }
 
