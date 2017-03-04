@@ -144,7 +144,7 @@ private[scio] object Functions {
 
   def partitionFn[T](numPartitions: Int, f: T => Int): PartitionFn[T] = new PartitionFn[T] {
     val g = ClosureCleaner(f)  // defeat closure
-    override def partitionFor(elem: T, numPartitions: Int): Int = f(elem)
+    override def partitionFor(elem: T, numPartitions: Int): Int = g(elem)
   }
 
   private abstract class ReduceFn[T] extends KryoCombineFn[T, JList[T], T] {
