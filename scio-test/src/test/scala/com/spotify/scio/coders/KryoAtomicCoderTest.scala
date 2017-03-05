@@ -99,6 +99,12 @@ class KryoAtomicCoderTest extends PipelineSpec {
     cf should roundTrip (r)
   }
 
+  it should "support large objects" in {
+    val vs = iterable((1 to 1000000).map("value-%08d".format(_)): _*)
+    val kv = ("key", vs)
+    cf should roundTrip (kv)
+  }
+
   it should "support custom KryoRegistrar" in {
     val c = cf()
 
