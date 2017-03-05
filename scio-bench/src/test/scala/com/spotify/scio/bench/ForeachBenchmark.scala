@@ -25,6 +25,7 @@ import org.scalameter.picklers.noPickler._
 
 import scala.collection.JavaConverters._
 
+/** Micro-benchmark for for and while loops. */
 object ForeachBenchmark extends Bench.LocalTime {
 
   val sizes = Gen.enumeration("size")(100000, 500000, 1000000)
@@ -43,7 +44,7 @@ object ForeachBenchmark extends Bench.LocalTime {
 
     measure method "forLoop" in {
       using(inputs) in { xs =>
-        for (i <- xs.asScala) Unit
+        for (_ <- xs.asScala) Unit
       }
     }
 
