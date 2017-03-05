@@ -26,22 +26,46 @@ import com.twitter.chill.KSerializer
 
 import scala.collection.JavaConverters._
 
+/**
+ * Based on [[org.apache.beam.sdk.coders.IterableLikeCoder]] and
+ * [[org.apache.beam.sdk.util.BufferedElementCountingOutputStream]].
+ */
 private class JIterableWrapperSerializer[T] extends KSerializer[Iterable[T]] {
 
+  private val bufferSize = 64 * 1024
+
   override def write(kser: Kryo, out: Output, obj: Iterable[T]): Unit = {
+    val buffer = new Output(bufferSize)
+    var count = 0
     val i = obj.iterator
     while (i.hasNext) {
-      out.writeBoolean(true)
-      kser.writeClassAndObject(out, i.next())
+      if (buffer.position() >= bufferSize) {
+        out.writeInt(count)
+        out.write(buffer.getBuffer, 0, buffer.position())
+        buffer.clear()
+        count = 0
+      }
+      kser.writeClassAndObject(buffer, i.next())
+      count += 1
     }
-    out.writeBoolean(false)
+    if (buffer.position() > 0) {
+      out.writeInt(count)
+      out.write(buffer.getBuffer, 0, buffer.position())
+    }
+    out.writeInt(0)
   }
 
   override def read(kser: Kryo, in: Input, cls: Class[Iterable[T]]): Iterable[T] = {
     val list = Lists.newArrayList[T]
-    while (in.readBoolean()) {
-      val item = kser.readClassAndObject(in).asInstanceOf[T]
-      list.add(item)
+    var count = in.readInt()
+    while (count > 0) {
+      var i = 0
+      while (i < count) {
+        val item = kser.readClassAndObject(in).asInstanceOf[T]
+        list.add(item)
+        i += 1
+      }
+      count = in.readInt()
     }
     list.asInstanceOf[JIterable[T]].asScala
   }
