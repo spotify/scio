@@ -41,7 +41,6 @@ object AvroUtils {
   ).asJava)
 
   def newGenericRecord(i: Int): GenericRecord = {
-
     val r = new GenericData.Record(schema)
     r.put("int_field", 1 * i)
     r.put("long_field", 1L * i)
