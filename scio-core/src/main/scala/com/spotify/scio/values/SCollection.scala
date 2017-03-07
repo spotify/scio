@@ -105,6 +105,7 @@ object SCollection {
  */
 sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
+  import com.spotify.scio.Implicits._
   import TupleFunctions._
 
   // =======================================================================
@@ -1057,7 +1058,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (context.isTest) {
       context.testOut(PubsubIO(topic))(this)
     } else {
-      this.applyInternal(gio.PubsubIO.write().topic(topic))
+      val coder = internal.getPipeline.getCoderRegistry.getScalaCoder[T]
+      this.applyInternal(gio.PubsubIO.write().topic(topic).withCoder(coder))
     }
     Future.failed(new NotImplementedError("Pubsub future not implemented"))
   }
