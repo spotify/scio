@@ -19,53 +19,35 @@ package com.spotify.scio.coders
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
-import com.google.common.collect.{BiMap, HashBiMap}
 import com.twitter.chill.KSerializer
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.coders.AvroCoder
-import org.apache.beam.sdk.util.CoderUtils
+import org.apache.beam.sdk.coders.Coder.Context
 
 import scala.collection.mutable.{Map => MMap}
 
 private class GenericAvroSerializer extends KSerializer[GenericRecord] {
 
-  private lazy val cache: MMap[Int, AvroCoder[GenericRecord]] = MMap()
-  private lazy val ids: BiMap[Int, Schema] = HashBiMap.create()
+  private lazy val cache: MMap[String, AvroCoder[GenericRecord]] = MMap()
 
-  private def getCoder(id: Int): AvroCoder[GenericRecord] = this.getCoder(id, ids.get(id))
-  private def getCoder(id: Int, schema: Schema): AvroCoder[GenericRecord] =
-    cache.getOrElseUpdate(id, AvroCoder.of(schema))
-
-  private def getId(schema: Schema): Int =
-    if (ids.containsValue(schema)) {
-      ids.inverse().get(schema)
-    } else {
-      val id: Int = ids.size()
-      ids.put(id, schema)
-      id
-    }
+  private def getCoder(schemaStr: String): AvroCoder[GenericRecord] =
+    cache.getOrElseUpdate(schemaStr, AvroCoder.of(new Schema.Parser().parse(schemaStr)))
+  private def getCoder(schemaStr: String, schema: Schema): AvroCoder[GenericRecord] =
+    cache.getOrElseUpdate(schemaStr, AvroCoder.of(schema))
 
   override def write(kryo: Kryo, out: Output, obj: GenericRecord): Unit = {
-    val id = this.getId(obj.getSchema)
-    val coder = this.getCoder(id)
-    val bytes = CoderUtils.encodeToByteArray(coder, obj)
-
-    out.writeInt(id)
+    val schemaStr = obj.getSchema.toString
+    val coder = this.getCoder(schemaStr, obj.getSchema)
     // write schema before every record in case it's not in reader serializer's cache
-    out.writeString(obj.getSchema.toString)
-    out.writeInt(bytes.length)
-    out.writeBytes(bytes)
-    out.flush()
+    out.writeString(schemaStr)
+    coder.encode(obj, out, Context.NESTED)
   }
 
   override def read(kryo: Kryo, in: Input, cls: Class[GenericRecord]): GenericRecord = {
-    val id = in.readInt()
-    val coder = this.getCoder(id, new Schema.Parser().parse(in.readString()))
-
-    val bytes = in.readBytes(in.readInt())
-    CoderUtils.decodeFromByteArray(coder, bytes)
+    val coder = this.getCoder(in.readString())
+    coder.decode(in, Context.NESTED)
   }
 
 }
@@ -76,19 +58,10 @@ private class SpecificAvroSerializer[T <: SpecificRecordBase] extends KSerialize
 
   private def getCoder(cls: Class[T]): AvroCoder[T] = cache.getOrElseUpdate(cls, AvroCoder.of(cls))
 
-  override def write(kser: Kryo, out: Output, obj: T): Unit = {
-    val coder = this.getCoder(obj.getClass.asInstanceOf[Class[T]])
-    val bytes = CoderUtils.encodeToByteArray(coder, obj)
+  override def write(kser: Kryo, out: Output, obj: T): Unit =
+    this.getCoder(obj.getClass.asInstanceOf[Class[T]]).encode(obj, out, Context.NESTED)
 
-    out.writeInt(bytes.length)
-    out.writeBytes(bytes)
-    out.flush()
-  }
-
-  override def read(kser: Kryo, in: Input, cls: Class[T]): T = {
-    val coder = this.getCoder(cls)
-    val bytes = in.readBytes(in.readInt())
-    CoderUtils.decodeFromByteArray(coder, bytes)
-  }
+  override def read(kser: Kryo, in: Input, cls: Class[T]): T =
+    this.getCoder(cls).decode(in, Context.NESTED)
 
 }
