@@ -19,8 +19,8 @@ package com.spotify.scio.extra.sparkey
 
 import java.io.File
 import java.net.URI
-import java.nio.ByteBuffer
-import java.nio.file.{Files, Paths}
+import java.nio.channels.{FileChannel, WritableByteChannel}
+import java.nio.file.Paths
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.base.Charsets
@@ -28,7 +28,7 @@ import com.google.common.hash.Hashing
 import com.spotify.scio.util.ScioUtil
 import com.spotify.sparkey.{CompressionType, Sparkey, SparkeyReader}
 import org.apache.beam.sdk.options.{GcsOptions, PipelineOptions}
-import org.apache.beam.sdk.util.GcsUtil
+import org.apache.beam.sdk.util.{GcsUtil, MimeTypes}
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 
 import scala.util.Try
@@ -109,15 +109,24 @@ private[sparkey] class SparkeyWriter(val uri: SparkeyUri) {
       case gcsUri: GcsSparkeyUri => {
         // Copy .spi and .spl to GCS path
         for (ext <- Seq("spi", "spl")) {
-          val writer = gcsUri.gcs.create(
+          val gcsFile = gcsUri.gcs.create(
             GcsPath.fromUri(s"${gcsUri.basePath}.$ext"),
-            "application/octet-stream")
-          writer.write(ByteBuffer.wrap(Files.readAllBytes(Paths.get(s"$localFile.$ext"))))
-          writer.close()
+            MimeTypes.BINARY)
+          val localFileChannel = FileChannel.open(Paths.get(s"$localFile.$ext"))
+          transferFile(localFileChannel, gcsFile)
         }
       }
       case _ => ()
     }
   }
 
+  private def transferFile(srcChannel: FileChannel, destination: WritableByteChannel): Unit = {
+    var position = 0L
+    val srcFileSize = srcChannel.size()
+    while (position < srcFileSize) {
+      position += srcChannel.transferTo(position, srcFileSize - position, destination)
+    }
+    srcChannel.close()
+    destination.close()
+  }
 }
