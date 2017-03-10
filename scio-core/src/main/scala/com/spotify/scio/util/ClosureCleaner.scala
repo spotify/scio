@@ -27,9 +27,9 @@ private[scio] object ClosureCleaner {
       SerializableUtils.serializeToByteArray(obj.asInstanceOf[Serializable])
     } catch {
       case e: IllegalArgumentException if e.getCause.isInstanceOf[NotSerializableException] =>
-        com.twitter.chill.ClosureCleaner(obj)
+        ChillClosureCleaner(obj)
       case e: ClassCastException =>
-        com.twitter.chill.ClosureCleaner(obj)
+        ChillClosureCleaner(obj)
     }
     obj
   }
