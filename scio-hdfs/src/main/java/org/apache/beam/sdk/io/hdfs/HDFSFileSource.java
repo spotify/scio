@@ -327,7 +327,7 @@ public abstract class HDFSFileSource<T, K, V> extends BoundedSource<T> {
   }
 
   @Override
-  public BoundedReader<T> createReader(PipelineOptions options) throws IOException {
+  public BoundedSource.BoundedReader<T> createReader(PipelineOptions options) throws IOException {
     this.validate();
     return new HDFSFileReader<>(this, filepattern(), formatClass(), serializableSplit());
   }
