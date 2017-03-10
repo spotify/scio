@@ -30,7 +30,7 @@ object UserScore {
   @BigQueryType.toTable
   case class UserScoreSums(user: String, total_score: Int)
 
-  def parseEvent(line: String): Option[GameActionInfo] =  Try {
+  def parseEvent(line: String): Option[GameActionInfo] = Try {
     val t = line.split(",")
     GameActionInfo(t(0).trim, t(1).trim, t(2).toInt, t(3).toLong)
   }.toOption
