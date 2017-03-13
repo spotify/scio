@@ -55,12 +55,15 @@ private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistC
     sys.props("java.io.tmpdir") + "/" + hash.toString.substring(0, 8) + "-"
   }
 
-  protected def prepareFiles(uris: Seq[URI]): Seq[File] = uris.map { u =>
-    if (ScioUtil.isGcsUri(u)) {
-      val dest = temporaryPrefix(uris) + u.getPath.split("/").last
-      ScioUtil.fetchFromGCS(opts.getGcsUtil, u, dest)
-    } else {
-      new File(u.toString)
+  protected def prepareFiles(uris: Seq[URI]): Seq[File] = {
+    val prefix = temporaryPrefix(uris)
+    uris.map { u =>
+      if (ScioUtil.isGcsUri(u)) {
+        val dest = prefix + u.getPath.split("/").last
+        ScioUtil.fetchFromGCS(opts.getGcsUtil, u, dest)
+      } else {
+        new File(u.toString)
+      }
     }
   }
 
