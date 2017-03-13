@@ -64,7 +64,7 @@ private class LocalSparkeyUri(val basePath: String) extends SparkeyUri {
 
 private class GcsSparkeyUri(val basePath: String, options: GcsOptions) extends SparkeyUri {
 
-  val localBasePath: String = sys.props("java.io.tmpdir") + hashPrefix(basePath)
+  def localBasePath: String = sys.props("java.io.tmpdir") + hashPrefix(basePath)
   private val json: String = new ObjectMapper().writeValueAsString(options)
 
   override def getReader: SparkeyReader = {
