@@ -18,6 +18,7 @@
 package com.spotify.scio.extra.sparkey
 
 import java.io.File
+import java.util
 
 import com.google.common.io.Files
 import com.spotify.scio.ScioContext
@@ -68,6 +69,24 @@ class SparkeyTest extends PipelineSpec {
     } should have message s"requirement failed: Sparkey URI $basePath already exists."
     // scalastyle:on no.whitespace.before.left.bracket
     index.delete()
+  }
+
+  it should "support .asSparkey with Array[Byte] key, value" in {
+    val tmpDir = Files.createTempDir()
+    val sideDataBytes = sideData.map {case (key, value) =>
+      (key.toCharArray.map(_.toByte), value.toCharArray.map(_.toByte))
+    }
+    val basePath = tmpDir + "/my-sparkey-file"
+    runWithContext { sc =>
+      sc.parallelize(sideDataBytes).asSparkey(basePath)
+    }
+    val reader = Sparkey.open(new File(basePath + ".spi"))
+    sideDataBytes.foreach { kv =>
+      util.Arrays.equals(reader.getAsByteArray(kv._1), kv._2) shouldBe true
+    }
+    for (ext <- Seq(".spi", ".spl")) {
+      new File(basePath + ext).delete()
+    }
   }
 
 }

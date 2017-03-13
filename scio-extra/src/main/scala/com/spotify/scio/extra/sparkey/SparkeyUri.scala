@@ -101,6 +101,8 @@ private[sparkey] class SparkeyWriter(val uri: SparkeyUri) {
 
   def put(key: String, value: String): Unit = delegate.put(key, value)
 
+  def put(key: Array[Byte], value: Array[Byte]): Unit = delegate.put(key, value)
+
   def close(): Unit = {
     delegate.flush()
     delegate.writeHash()
