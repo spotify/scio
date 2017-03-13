@@ -95,7 +95,7 @@ package object sparkey {
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
    */
-  implicit class SparkeyPairSCollection(val self: SCollection[(String, String)]) {
+  implicit class SparkeyPairSCollection[K, V](val self: SCollection[(K, V)]) {
 
     private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -104,7 +104,8 @@ package object sparkey {
      *
      * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
-    def asSparkey(basePath: String): SCollection[SparkeyUri] = {
+    def asSparkey(basePath: String)(implicit w: SparkeyWritable[K, V])
+    : SCollection[SparkeyUri] = {
       val uri = SparkeyUri(basePath, self.context.options)
       require(!uri.exists, s"Sparkey URI ${uri.basePath} already exists.")
       logger.info(s"Saving as sparkey: $uri")
@@ -115,7 +116,7 @@ package object sparkey {
             val it = xs.iterator
             while (it.hasNext) {
               val kv = it.next()
-              writer.put(kv._1.toString, kv._2.toString)
+              w.put(writer, kv._1, kv._2)
             }
             writer.close()
             uri
@@ -128,7 +129,7 @@ package object sparkey {
      *
      * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
-    def asSparkey: SCollection[SparkeyUri] = {
+    def asSparkey(implicit w: SparkeyWritable[K, V]): SCollection[SparkeyUri] = {
       val uuid = UUID.randomUUID()
       val basePath = self.context.options.getTempLocation + s"/sparkey-$uuid"
       this.asSparkey(basePath)
@@ -140,8 +141,8 @@ package object sparkey {
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
      * required that each key of the input be associated with a single value.
      */
-    def asSparkeySideInput: SideInput[SparkeyReader] = self.asSparkey.asSparkeySideInput
-
+    def asSparkeySideInput(implicit w: SparkeyWritable[K, V]): SideInput[SparkeyReader] =
+      self.asSparkey.asSparkeySideInput
   }
 
   /**
@@ -159,7 +160,7 @@ package object sparkey {
   }
 
   /** Enhanced version of `SparkeyReader` that mimics a `Map`. */
-  implicit class RichSparkeyReader(val self: SparkeyReader) extends Map[String, String] {
+  implicit class RichStringSparkeyReader(val self: SparkeyReader) extends Map[String, String] {
     override def get(key: String): Option[String] = Option(self.getAsString(key))
     override def iterator: Iterator[(String, String)] =
       self.iterator.asScala.map(e => (e.getKeyAsString, e.getValueAsString))
@@ -176,6 +177,20 @@ package object sparkey {
     extends SideInput[SparkeyReader] {
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
       context.sideInput(view).getReader
+  }
+
+  sealed trait SparkeyWritable[K, V] extends Serializable {
+    def put(w: SparkeyWriter, key: K, value: V)
+  }
+
+  implicit val stringSparkeyWritable = new SparkeyWritable[String, String] {
+    def put(w: SparkeyWriter, key: String, value: String): Unit =
+      w.put(key, value)
+  }
+
+  implicit val ByteArraySparkeyWritable = new SparkeyWritable[Array[Byte], Array[Byte]] {
+    def put(w: SparkeyWriter, key: Array[Byte], value: Array[Byte]): Unit =
+      w.put(key, value)
   }
 
 }
