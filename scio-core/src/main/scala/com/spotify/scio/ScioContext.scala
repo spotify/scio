@@ -459,6 +459,10 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   /**
    * Get an SCollection for a BigQuery SELECT query.
+   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
+   * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
+   * supported. By default the query dialect will be automatically detected. To override this
+   * behavior, start the query string with `#legacysql` or `#standardsql`.
    * @group input
    */
   def bigQuerySelect(sqlQuery: String,
@@ -530,6 +534,11 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * // Read from a query instead.
    * sc.typedBigQuery[Row]("SELECT * FROM [publicdata:samples.gsod] LIMIT 1000")
    * }}}
+   *
+   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
+   * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
+   * supported. By default the query dialect will be automatically detected. To override this
+   * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
   def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null)
   : SCollection[T] = {

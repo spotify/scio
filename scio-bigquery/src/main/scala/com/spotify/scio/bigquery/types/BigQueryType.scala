@@ -154,6 +154,11 @@ object BigQueryType {
    * }}}
    *
    * Also generate a companion object with convenience methods.
+   *
+   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
+   * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
+   * supported. By default the query dialect will be automatically detected. To override this
+   * behavior, start the query string with `#legacysql` or `#standardsql`.
    * @group annotation
    */
   class fromQuery(query: String, args: String*) extends StaticAnnotation {
