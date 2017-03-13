@@ -132,7 +132,7 @@ package object sparkey {
     def asSparkey(implicit w: SparkeyWritable[K, V]): SCollection[SparkeyUri] = {
       val uuid = UUID.randomUUID()
       val basePath = self.context.options.getTempLocation + s"/sparkey-$uuid"
-      this.asSparkey(basePath)(w)
+      this.asSparkey(basePath)
     }
 
     /**
@@ -142,7 +142,7 @@ package object sparkey {
      * required that each key of the input be associated with a single value.
      */
     def asSparkeySideInput(implicit w: SparkeyWritable[K, V]): SideInput[SparkeyReader] =
-      self.asSparkey(w).asSparkeySideInput
+      self.asSparkey.asSparkeySideInput
   }
 
   /**
