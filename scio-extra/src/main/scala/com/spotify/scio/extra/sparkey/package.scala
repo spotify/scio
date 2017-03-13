@@ -183,13 +183,13 @@ package object sparkey {
     def put(w: SparkeyWriter, key: K, value: V)
   }
 
-  implicit object StringSparkeyWritable extends SparkeyWritable[String, String] {
-    override def put(w: SparkeyWriter, key: String, value: String): Unit =
+  implicit val stringSparkeyWritable = new SparkeyWritable[String, String] {
+    def put(w: SparkeyWriter, key: String, value: String): Unit =
       w.put(key, value)
   }
 
-  implicit object ByteArraySparkeyWritable extends SparkeyWritable[Array[Byte], Array[Byte]] {
-    override def put(w: SparkeyWriter, key: Array[Byte], value: Array[Byte]): Unit =
+  implicit val ByteArraySparkeyWritable = new SparkeyWritable[Array[Byte], Array[Byte]] {
+    def put(w: SparkeyWriter, key: Array[Byte], value: Array[Byte]): Unit =
       w.put(key, value)
   }
 
