@@ -127,7 +127,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def applyTransform[U: ClassTag](transform: PTransform[_ >: PCollection[T], PCollection[U]])
   : SCollection[U] =
-    this.pApply(transform)
+    this.pApply(transform).setCoder(this.getCoder[U])
 
   /** Apply a transform. */
   private[scio] def transform[U: ClassTag](f: SCollection[T] => SCollection[U])
