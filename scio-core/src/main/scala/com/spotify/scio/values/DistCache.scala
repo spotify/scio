@@ -20,12 +20,10 @@ package com.spotify.scio.values
 import java.io.File
 import java.net.URI
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.google.common.base.Charsets
-import com.google.common.hash.Hashing
-import com.spotify.scio.util.ScioUtil
-import org.apache.beam.runners.direct.DirectRunner
-import org.apache.beam.sdk.options.{GcsOptions, PipelineOptions}
+import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
+import org.apache.beam.sdk.options.PipelineOptions
+
+import scala.collection.JavaConverters._
 
 /**
  * Encapsulate arbitrary data that can be distributed to all workers. Similar to Hadoop
@@ -36,7 +34,7 @@ sealed trait DistCache[F] extends Serializable {
   def apply(): F
 }
 
-private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistCache[F] {
+private[scio] abstract class FileDistCache[F](options: PipelineOptions) extends DistCache[F] {
 
   override def apply(): F = data
 
@@ -44,36 +42,16 @@ private[scio] abstract class FileDistCache[F](options: GcsOptions) extends DistC
 
   protected lazy val data: F = init
 
-  // Serialize options to avoid shipping it with closure
-  private val json: String = new ObjectMapper().writeValueAsString(options)
-  private def opts: GcsOptions = new ObjectMapper()
-    .readValue(json, classOf[PipelineOptions])
-    .as(classOf[GcsOptions])
+  private val rfu = RemoteFileUtil.create(options)
+  private val isRemoteRunner = ScioUtil.isRemoteRunner(options)
 
-  private def temporaryPrefix(uris: Seq[URI]): String = {
-    val hash = Hashing.sha1().hashString(uris.map(_.toString).mkString("|"), Charsets.UTF_8)
-    sys.props("java.io.tmpdir") + "/" + hash.toString.substring(0, 8) + "-"
-  }
+  protected def prepareFiles(uris: Seq[URI]): Seq[File] =
+    rfu.download(uris.asJava).asScala.map(_.toFile)
 
-  protected def prepareFiles(uris: Seq[URI]): Seq[File] = {
-    val prefix = temporaryPrefix(uris)
-    uris.map { u =>
-      if (ScioUtil.isGcsUri(u)) {
-        val dest = prefix + u.getPath.split("/").last
-        ScioUtil.fetchFromGCS(opts.getGcsUtil, u, dest)
-      } else {
-        new File(u.toString)
-      }
+  protected def verifyUri(uri: URI): Unit =
+    if (isRemoteRunner) {
+      require(ScioUtil.isRemoteUri(uri), s"Unsupported path $uri")
     }
-  }
-
-  protected def verifyUri(uri: URI): Unit = {
-    if (classOf[DirectRunner] isAssignableFrom opts.getRunner) {
-      require(ScioUtil.isLocalUri(uri) || ScioUtil.isGcsUri(uri), s"Unsupported path $uri")
-    } else {
-      require(ScioUtil.isGcsUri(uri), s"Unsupported path $uri")
-    }
-  }
 
 }
 
@@ -85,7 +63,9 @@ object MockDistCache {
   def apply[F](value: F): DistCache[F] = new MockDistCache(value)
 }
 
-private[scio] class DistCacheSingle[F](val uri: URI, val initFn: File => F, options: GcsOptions)
+private[scio] class DistCacheSingle[F](val uri: URI,
+                                       val initFn: File => F,
+                                       options: PipelineOptions)
   extends FileDistCache[F](options) {
   verifyUri(uri)
   override protected def init: F = initFn(prepareFiles(Seq(uri)).head)
@@ -93,7 +73,7 @@ private[scio] class DistCacheSingle[F](val uri: URI, val initFn: File => F, opti
 
 private[scio] class DistCacheMulti[F](val uris: Seq[URI],
                                       val initFn: Seq[File] => F,
-                                      options: GcsOptions)
+                                      options: PipelineOptions)
   extends FileDistCache[F](options) {
   uris.foreach(verifyUri)
   override protected def init: F = initFn(prepareFiles(uris))
