@@ -11,6 +11,17 @@ dependencies:
   cache_directories:
     - "~/.ivy2"
     - "~/.sbt"
+    - project/target/resolution-cache
+    - target/resolution-cache
+    - scio-core/target/resolution-cache
+    - scio-test/target/resolution-cache
+    - scio-bigquery/target/resolution-cache
+    - scio-bigtable/target/resolution-cache
+    - scio-extra/target/resolution-cache
+    - scio-hdfs/target/resolution-cache
+    - scio-repl/target/resolution-cache
+    - scio-examples/target/resolution-cache
+    - scio-schemas/target/resolution-cache
   pre:
     - wget -q https://dl.bintray.com/sbt/debian/sbt-0.13.13.deb
     - sudo dpkg -i sbt-0.13.13.deb
