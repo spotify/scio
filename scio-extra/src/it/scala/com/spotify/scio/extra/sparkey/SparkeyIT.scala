@@ -59,7 +59,7 @@ class SparkeyIT extends PipelineSpec {
         // scalastyle:off no.whitespace.before.left.bracket
         the [IllegalArgumentException] thrownBy {
           sc.parallelize(sideData).asSparkey(basePath)
-        } should have message s"requirement failed: Sparkey URI $basePath already exists."
+        } should have message s"requirement failed: Sparkey URI $basePath already exists"
         // scalastyle:on no.whitespace.before.left.bracket
       } finally {
         gcs.remove(Seq(basePath + ".spi").asJava)

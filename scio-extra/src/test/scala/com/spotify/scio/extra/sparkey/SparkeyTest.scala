@@ -27,8 +27,6 @@ import com.spotify.sparkey.Sparkey
 
 class SparkeyTest extends PipelineSpec {
 
-  import com.spotify.scio.extra.sparkey._
-
   val sideData = Seq(("a", "1"), ("b", "2"), ("c", "3"))
 
   "SCollection" should "support .asSparkey with temporary local file" in {
@@ -63,10 +61,10 @@ class SparkeyTest extends PipelineSpec {
     val sparkey = Files.touch(index)
     // scalastyle:off no.whitespace.before.left.bracket
     the [IllegalArgumentException] thrownBy {
-      runWithContext { sc =>
-        val p = sc.parallelize(sideData).asSparkey(basePath)
+      runWithContext {
+        _.parallelize(sideData).asSparkey(basePath)
       }
-    } should have message s"requirement failed: Sparkey URI $basePath already exists."
+    } should have message s"requirement failed: Sparkey URI $basePath already exists"
     // scalastyle:on no.whitespace.before.left.bracket
     index.delete()
   }

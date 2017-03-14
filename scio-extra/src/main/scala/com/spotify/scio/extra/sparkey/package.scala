@@ -107,8 +107,8 @@ package object sparkey {
     def asSparkey(basePath: String)(implicit w: SparkeyWritable[K, V])
     : SCollection[SparkeyUri] = {
       val uri = SparkeyUri(basePath, self.context.options)
-      require(!uri.exists, s"Sparkey URI ${uri.basePath} already exists.")
-      logger.info(s"Saving as sparkey: $uri")
+      require(!uri.exists, s"Sparkey URI ${uri.basePath} already exists")
+      logger.info(s"Saving as Sparkey: $uri")
       self.transform { in =>
         in.groupBy(_ => ())
           .map { case (_, xs) =>
