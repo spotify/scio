@@ -98,7 +98,7 @@ private[scio] object ScioUtil {
     val srcSize = gcsUtil.fileSize(srcPath)
 
     if (file.exists() && file.length() != srcSize) {
-      logger.info("Existing destination file with wrong size. " +
+      logger.warn("Existing destination file with wrong size. " +
         s"Source = $srcSize, destination = ${file.length()}")
       // File exists but has different size than source file, most likely there was an issue
       // on previous thread, let's remove invalid file, and download it again.
@@ -106,7 +106,7 @@ private[scio] object ScioUtil {
     }
 
     if (!file.exists()) {
-      val fos: FileOutputStream = new FileOutputStream(dest)
+      val fos = new FileOutputStream(dest)
       val dst = fos.getChannel
       val src = gcsUtil.open(srcPath)
       val size = dst.transferFrom(src, 0, src.size())
@@ -114,7 +114,7 @@ private[scio] object ScioUtil {
       fos.close()
       logger.info(s"GCS URI $gcsUri to $dest, copied $size bytes")
     } else {
-      logger.info(s"GCS URI $gcsUri already")
+      logger.info(s"GCS URI $gcsUri already downloaded")
     }
 
     file

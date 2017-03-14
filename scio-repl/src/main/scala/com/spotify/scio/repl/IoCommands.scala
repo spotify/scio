@@ -98,14 +98,14 @@ class IoCommands(options: PipelineOptions) {
     val fileWriter = new DataFileWriter[T](writer).create(schema, outputStream(path, BINARY))
     data.foreach(fileWriter.append)
     fileWriter.close()
-    logger.info("{} record{} written to {}", Array(data.size, plural(data), path))
+    logger.info(s"${data.size} record${plural(data)} written to $path")
   }
 
   /** Write to a text file on local filesystem or GCS. */
   def writeText(path: String, data: Seq[String]): Unit = {
     IOUtils.writeLines(
       data.asJava, IOUtils.LINE_SEPARATOR, outputStream(path, TEXT), StandardCharsets.UTF_8)
-    logger.info("{} line{} written to {}", Array(data.size, plural(data), path))
+    logger.info(s"${data.size} record${plural(data)} written to $path")
   }
 
   /** Write to a CSV file on local filesystem or GCS. */
@@ -115,7 +115,7 @@ class IoCommands(options: PipelineOptions) {
     import kantan.csv.ops._
     implicit val codec = scala.io.Codec.UTF8
     outputStream(path, TEXT).writeCsv(data, sep, header: _*)
-    logger.info("{} line{} written to {}", Array(data.size, plural(data), path))
+    logger.info(s"${data.size} record${plural(data)} written to $path")
   }
 
   /** Write to a TSV file on local filesystem or GCS. */

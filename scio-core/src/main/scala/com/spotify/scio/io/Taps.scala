@@ -167,7 +167,8 @@ private class PollingTaps(private val backOff: BackOff) extends Taps {
         val sleeper = Sleeper.DEFAULT
         do {
           if (polls.nonEmpty) {
-            logger.info(s"Polling for ${polls.size} tap" + (if (polls.size > 1) "s" else ""))
+            val tap = if (polls.size > 1) "taps" else "tap"
+            logger.info(s"Polling for ${polls.size} $tap")
           }
           this.synchronized {
             val (ready, pending) = polls.partition(_.readyFn())

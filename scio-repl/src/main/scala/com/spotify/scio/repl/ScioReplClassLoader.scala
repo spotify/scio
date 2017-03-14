@@ -49,18 +49,18 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent:
     // If contains $line - means that repl was loaded, so we can lookup
     // runtime classes
     if (name.contains("$line")) {
-      logger.debug("Trying to load " + name)
+      logger.debug(s"Trying to load $name")
       // Don't want to use Try{} cause nonFatal handling
       val clazz: Class[_] = try {
         scioREPL.classLoader.loadClass(name)
       } catch {
         case e: Exception => {
-          logger.error("Could not find " + name + " in REPL classloader", e)
+          logger.error(s"Could not find $name in REPL classloader", e)
           null
         }
       }
       if (clazz != null) {
-        logger.debug("Found " + name + " in REPL classloader " + scioREPL.classLoader.toString)
+        logger.debug(s"Found $name in REPL classloader ${scioREPL.classLoader}")
         clazz
       } else {
         super.loadClass(name)

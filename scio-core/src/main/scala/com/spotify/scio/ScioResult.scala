@@ -155,7 +155,7 @@ class ScioResult private[scio] (val internal: PipelineResult,
       } match {
         case Success(x) => x
         case Failure(e) => {
-          logger.error(s"Failed to fetch Dataflow metrics due to $e")
+          logger.error(s"Failed to fetch Dataflow metrics", e)
           Nil
         }
       }
