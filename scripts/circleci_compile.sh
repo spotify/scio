@@ -18,4 +18,4 @@
 DIR_OF_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 "$DIR_OF_SCRIPT/gen_tornado_schema.sh"
-sbt ++2.11.8 -Dbigquery.project=dummy-project test:compile
+sbt ++2.11.8 -Dbigquery.project=dummy-project coverage test:compile
