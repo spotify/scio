@@ -132,12 +132,12 @@ object CustomIOJob {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     val inputTransform = gio.TextIO.Read
       .from(args("input"))
-      .withCoder(TextualIntegerCoder.of())
     val outputTransform = gio.TextIO.Write
       .to(args("output"))
-      .withCoder(TextualIntegerCoder.of())
     sc.customInput("TextIn", inputTransform)
-      .map(x => (x * 10).asInstanceOf[java.lang.Integer])
+      .map(_.toInt)
+      .map(_ * 10)
+      .map(_.toString)
       .saveAsCustomOutput("TextOut", outputTransform)
     sc.close()
   }
@@ -315,21 +315,21 @@ class JobTestTest extends PipelineSpec {
     an [AssertionError] should be thrownBy { testDistCacheJob("a1", "a2", "b1", "b2", "c3", "d4") }
   }
 
-  def testCustomIOJob(xs: Int*): Unit = {
+  def testCustomIOJob(xs: String*): Unit = {
     JobTest[CustomIOJob.type]
       .args("--input=in.txt", "--output=out.txt")
-      .input(CustomIO("TextIn"), Seq(1, 2, 3))
-      .output[Int](CustomIO("TextOut"))(_ should containInAnyOrder (xs))
+      .input(CustomIO("TextIn"), Seq(1, 2, 3).map(_.toString))
+      .output[String](CustomIO("TextOut"))(_ should containInAnyOrder (xs))
       .run()
   }
 
   it should "pass correct CustomIO" in {
-    testCustomIOJob(10, 20, 30)
+    testCustomIOJob("10", "20", "30")
   }
 
   it should "fail incorrect CustomIO" in {
-    an [AssertionError] should be thrownBy { testCustomIOJob(10, 20) }
-    an [AssertionError] should be thrownBy { testCustomIOJob(10, 20, 30, 40) }
+    an [AssertionError] should be thrownBy { testCustomIOJob("10", "20") }
+    an [AssertionError] should be thrownBy { testCustomIOJob("10", "20", "30", "40") }
   }
 
   // =======================================================================

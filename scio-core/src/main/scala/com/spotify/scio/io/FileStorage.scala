@@ -25,7 +25,6 @@ import java.nio.file.Path
 import java.util.Collections
 import java.util.regex.Pattern
 
-import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.google.api.client.util.Charsets
 import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.util.ScioUtil
@@ -81,10 +80,8 @@ private[scio] trait FileStorage {
     IOUtils.lineIterator(input, Charsets.UTF_8).asScala
   }
 
-  def tableRowJsonFile: Iterator[TableRow] = {
-    val mapper = new ObjectMapper().disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-    textFile.map(mapper.readValue(_, classOf[TableRow]))
-  }
+  def tableRowJsonFile: Iterator[TableRow] =
+    textFile.map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
 
   def tfRecordFile: Iterator[Array[Byte]] = {
     new Iterator[Array[Byte]] {

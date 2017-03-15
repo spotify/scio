@@ -28,6 +28,7 @@ import com.spotify.scio.bigquery._
 import com.spotify.scio.proto.SimpleV2.{SimplePB => SimplePBV2}
 import com.spotify.scio.proto.SimpleV3.{SimplePB => SimplePBV3}
 import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.{FileUtils, IOUtils}
@@ -154,8 +155,8 @@ class TapTest extends TapSpec {
         .parallelize(Seq(1, 2, 3))
         .map(newTableRow)
         .saveAsTableRowJsonFile(dir.getPath)
-    }.map(_.toString)
-    verifyTap(t, Set(1, 2, 3).map(i => newTableRow(i).toString))
+    }.map(ScioUtil.jsonFactory.toString)
+    verifyTap(t, Set(1, 2, 3).map(i => ScioUtil.jsonFactory.toString(newTableRow(i))))
     FileUtils.deleteDirectory(dir)
   }
 
