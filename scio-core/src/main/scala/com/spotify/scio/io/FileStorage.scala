@@ -196,11 +196,15 @@ private class LocalStorage(protected val path: String)  extends FileStorage {
       // "file.ext"
       (new File("."), new WildcardFileFilter(path))
     }
-    FileUtils
-      .listFiles(dir, filter, null)
-      .asScala
-      .toSeq
-      .map(_.toPath)
+    if (dir.isDirectory) {
+      FileUtils
+        .listFiles(dir, filter, null)
+        .asScala
+        .toSeq
+        .map(_.toPath)
+    } else {
+      Seq.empty
+    }
   }
 
   override protected def getObjectInputStream(path: Path): InputStream =
