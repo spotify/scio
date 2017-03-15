@@ -25,7 +25,6 @@ import java.nio.file.Path
 import java.util.Collections
 import java.util.regex.Pattern
 
-import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.google.api.client.util.Charsets
 import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.util.ScioUtil
@@ -35,7 +34,6 @@ import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.specific.{SpecificDatumReader, SpecificRecordBase}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
-import org.apache.beam.sdk.util.Transport
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.filefilter.WildcardFileFilter
@@ -83,7 +81,7 @@ private[scio] trait FileStorage {
   }
 
   def tableRowJsonFile: Iterator[TableRow] =
-    textFile.map(i => Transport.getJsonFactory.fromString(i, classOf[TableRow]))
+    textFile.map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
 
   def tfRecordFile: Iterator[Array[Byte]] = {
     new Iterator[Array[Byte]] {

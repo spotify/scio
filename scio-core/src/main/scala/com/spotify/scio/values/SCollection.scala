@@ -41,13 +41,12 @@ import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.runners.direct.DirectRunner
-import org.apache.beam.sdk.coders.{Coder, TableRowJsonCoder}
+import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
-import org.apache.beam.sdk.util.Transport
 import org.apache.beam.sdk.util.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{io => gio}
@@ -1068,16 +1067,17 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group output
    */
   def saveAsTableRowJsonFile(path: String, numShards: Int = 0)
-                            (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
+                            (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
     if (context.isTest) {
       context.testOut(TableRowJsonIO(path))(this.asInstanceOf[SCollection[TableRow]])
       saveAsInMemoryTap.asInstanceOf[Future[Tap[TableRow]]]
     } else {
       this.asInstanceOf[SCollection[TableRow]]
-          .map(Transport.getJsonFactory.toString)
-          .applyInternal(textOut(path, ".json", numShards))
+        .map(e => ScioUtil.jsonFactory.toString(e))
+        .applyInternal(textOut(path, ".json", numShards))
       context.makeFuture(TableRowJsonTap(path + "/part-*"))
     }
+  }
 
   /**
    * Save this SCollection as a text file. Note that elements must be of type `String`.

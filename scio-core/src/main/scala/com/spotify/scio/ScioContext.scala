@@ -42,13 +42,12 @@ import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options._
 import org.apache.beam.sdk.PipelineResult.State
-import org.apache.beam.sdk.coders.TableRowJsonCoder
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
 import org.apache.beam.sdk.options._
+import org.apache.beam.sdk.testing.TestPipeline
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
-import org.apache.beam.sdk.util.Transport
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{Pipeline, io => gio}
 import org.joda.time.Instant
@@ -217,7 +216,10 @@ class ScioContext private[scio] (val options: PipelineOptions,
         val tp = Class.forName("org.apache.beam.sdk.testing.TestPipeline")
           .getMethod("create")
           .invoke(null)
-          .asInstanceOf[Pipeline]
+          .asInstanceOf[TestPipeline]
+        // workaround for @Rule enforcement introduced by
+        // https://issues.apache.org/jira/browse/BEAM-1205
+        tp.enableAbandonedNodeEnforcement(true)
         // propagate options
         tp.getOptions.setStableUniqueNames(options.getStableUniqueNames)
         tp
@@ -634,10 +636,10 @@ class ScioContext private[scio] (val options: PipelineOptions,
    */
   def tableRowJsonFile(path: String): SCollection[TableRow] = requireNotClosed {
     if (this.isTest) {
-      this.getTestInput(TableRowJsonIO(path))
+      this.getTestInput[TableRow](TableRowJsonIO(path))
     } else {
       wrap(this.applyInternal(gio.TextIO.Read.from(path))).setName(path)
-        .map(i => Transport.getJsonFactory.fromString(i, classOf[TableRow]))
+        .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
     }
   }
 

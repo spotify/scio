@@ -30,7 +30,7 @@ import org.apache.beam.runners.dataflow.options._
 import com.google.api.client.googleapis.services.AbstractGoogleClientRequest
 import com.google.api.services.dataflow.Dataflow
 import com.google.api.services.dataflow.model.JobMetrics
-import org.apache.beam.sdk.util.GcsUtil
+import org.apache.beam.sdk.util.{GcsUtil, Transport}
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 import org.slf4j.LoggerFactory
 
@@ -39,6 +39,8 @@ import scala.reflect.ClassTag
 private[scio] object ScioUtil {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
+
+  @transient lazy val jsonFactory = Transport.getJsonFactory
 
   def isLocalUri(uri: URI): Boolean = uri.getScheme == null || uri.getScheme == "file"
 
