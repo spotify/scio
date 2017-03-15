@@ -23,7 +23,6 @@ if [ "$CI_PULL_REQUEST" = "" ]; then
   "$DIR_OF_SCRIPT/circleci_parallel_run.sh" 'sbt ++$CI_SCALA_VERSION -Dbigquery.project=data-integration-test '"-Dbigquery.secret=$DIR_OF_SCRIPT/data-integration-test-2210ed0f609b.json"' scalastyle coverage test it:test coverageReport'
 else
   echo "Running test for PR: $CI_PULL_REQUEST"
-  "$DIR_OF_SCRIPT/gen_tornado_schema.sh"
   "$DIR_OF_SCRIPT/circleci_parallel_run.sh" 'sbt ++$CI_SCALA_VERSION -Dbigquery.project=dummy-project scalastyle coverage test coverageReport coverageAggregate'
 fi
 
