@@ -47,6 +47,7 @@ import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
+import org.apache.beam.sdk.util.Transport
 import org.apache.beam.sdk.util.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{io => gio}
@@ -885,9 +886,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   private def textOut(path: String, suffix: String, numShards: Int) =
     gio.TextIO.Write.to(pathWithShards(path)).withNumShards(numShards).withSuffix(suffix)
 
-  private def tableRowJsonOut(path: String, numShards: Int) =
-    textOut(path, ".json", numShards).withCoder(TableRowJsonCoder.of())
-
   /**
    * Save this SCollection as an Avro file.
    * @param schema must be not null if `T` is of type
@@ -1075,7 +1073,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       context.testOut(TableRowJsonIO(path))(this.asInstanceOf[SCollection[TableRow]])
       saveAsInMemoryTap.asInstanceOf[Future[Tap[TableRow]]]
     } else {
-      this.asInstanceOf[SCollection[TableRow]].applyInternal(tableRowJsonOut(path, numShards))
+      this.asInstanceOf[SCollection[TableRow]]
+          .map(Transport.getJsonFactory.toString)
+          .applyInternal(textOut(path, ".json", numShards))
       context.makeFuture(TableRowJsonTap(path + "/part-*"))
     }
 

@@ -48,6 +48,7 @@ import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
+import org.apache.beam.sdk.util.Transport
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{Pipeline, io => gio}
 import org.joda.time.Instant
@@ -635,8 +636,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (this.isTest) {
       this.getTestInput(TableRowJsonIO(path))
     } else {
-      wrap(this.applyInternal(gio.TextIO.Read.from(path).withCoder(TableRowJsonCoder.of())))
-        .setName(path)
+      wrap(this.applyInternal(gio.TextIO.Read.from(path))).setName(path)
+        .map(i => Transport.getJsonFactory.fromString(i, classOf[TableRow]))
     }
   }
 
