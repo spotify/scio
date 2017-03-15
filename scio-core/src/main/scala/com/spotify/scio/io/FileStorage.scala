@@ -35,6 +35,7 @@ import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.specific.{SpecificDatumReader, SpecificRecordBase}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
+import org.apache.beam.sdk.util.Transport
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.filefilter.WildcardFileFilter
@@ -81,10 +82,8 @@ private[scio] trait FileStorage {
     IOUtils.lineIterator(input, Charsets.UTF_8).asScala
   }
 
-  def tableRowJsonFile: Iterator[TableRow] = {
-    val mapper = new ObjectMapper().disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-    textFile.map(mapper.readValue(_, classOf[TableRow]))
-  }
+  def tableRowJsonFile: Iterator[TableRow] =
+    textFile.map(i => Transport.getJsonFactory.fromString(i, classOf[TableRow]))
 
   def tfRecordFile: Iterator[Array[Byte]] = {
     new Iterator[Array[Byte]] {
