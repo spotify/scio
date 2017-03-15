@@ -179,6 +179,50 @@ package object bigtable {
     }
   }
 
+  /**
+    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] for writing
+    * multiple objects to one Bigtable table.
+    *
+    */
+  implicit class IterableBigtableSCollection[T](val self: SCollection[Iterable[T]]) {
+
+    /**
+      * Save this SCollection in one Bigtable table. Note that value elements must be of type
+      * Mutation.
+      */
+    def saveAsIterableBigtable(projectId: String,
+                               instanceId: String,
+                               tableId: String,
+                               additionalConfiguration: Map[String, String] = Map.empty)
+                              (implicit ev: T <:< Mutation)
+    : Future[Tap[Iterable[Result]]] = {
+      val config = new bt.CloudBigtableTableConfiguration(
+        projectId, instanceId, null, additionalConfiguration.asJava)
+      this.saveAsIterableBigtable(config)
+    }
+
+    /**
+      * Save this SCollection in one Bigtable table. Note that value elements must be of type
+      * Mutation.
+      */
+    def saveAsIterableBigtable(config: bt.CloudBigtableTableConfiguration)
+                              (implicit ev: T <:< Mutation)
+    : Future[Tap[Iterable[Result]]] = {
+      if (self.context.isTest) {
+        val output = IterableBigtableOutput(
+          config.getProjectId, config.getInstanceId)
+        self.context.testOut(output.asInstanceOf[TestIO[Iterable[T]]])(self)
+      } else {
+        val transform = BigtableMultiTableWrite.writeToMultipleTables(config)
+        self
+          .map(v => KV.of(config.getTableId, v.asJava.asInstanceOf[java.lang.Iterable[Mutation]]))
+          .applyInternal(transform)
+      }
+      Future.failed(new NotImplementedError("Bigtable future not implemented"))
+    }
+
+  }
+
   case class BigtableInput(projectId: String, instanceId: String, tableId: String)
     extends TestIO[Result](s"$projectId\t$instanceId\t$tableId")
 
@@ -190,5 +234,9 @@ package object bigtable {
   case class MultipleBigtableOutput[T <: Mutation](projectId: String,
                                                    instanceId: String)
     extends TestIO[(String, Iterable[T])](s"$projectId\t$instanceId")
+
+  case class IterableBigtableOutput[T <: Mutation](projectId: String,
+                                                   instanceId: String)
+    extends TestIO[Iterable[T]](s"$projectId\t$instanceId")
 
 }
