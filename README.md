@@ -11,9 +11,9 @@ Scio
 
 > Verb: I can, know, understand, have knowledge.
 
-Scio is a Scala API for [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) and [Apache Beam](http://beam.incubator.apache.org/) inspired by [Spark](http://spark.apache.org/) and [Scalding](https://github.com/twitter/scalding). See the [current API documentation](http://spotify.github.io/scio/) for more information.
+Scio is a Scala API for [Apache Beam](http://beam.incubator.apache.org/) and [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) inspired by [Apache Spark](http://spark.apache.org/) and [Scalding](https://github.com/twitter/scalding). See the [current API documentation](http://spotify.github.io/scio/) for more information.
 
-Starting from version 0.3.0, Scio will move from Dataflow Java SDK to Beam as its core dependencies and will introduce a few breaking changes. See this [page](https://github.com/spotify/scio/wiki/Apache-Beam) for more.
+Scio 0.3.0 and future versions depend on Apache Beam (`org.apache.beam`) while earlier versions depend on Google Cloud Dataflow SDK (`com.google.cloud.dataflow`). See this [page](https://github.com/spotify/scio/wiki/Apache-Beam) for a list of breaking changes.
 
 # Features
 
