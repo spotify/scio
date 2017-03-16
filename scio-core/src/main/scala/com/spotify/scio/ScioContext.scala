@@ -44,7 +44,6 @@ import org.apache.beam.runners.dataflow.options._
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
 import org.apache.beam.sdk.options._
-import org.apache.beam.sdk.testing.TestPipeline
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
@@ -213,13 +212,13 @@ class ScioContext private[scio] (val options: PipelineOptions,
       } else {
         // load TestPipeline dynamically to avoid ClassNotFoundException when running src/main
         // https://issues.apache.org/jira/browse/BEAM-298
-        val tp = Class.forName("org.apache.beam.sdk.testing.TestPipeline")
-          .getMethod("create")
-          .invoke(null)
-          .asInstanceOf[TestPipeline]
+        val cls = Class.forName("org.apache.beam.sdk.testing.TestPipeline")
+        val tp = cls.getMethod("create").invoke(null).asInstanceOf[Pipeline]
         // workaround for @Rule enforcement introduced by
         // https://issues.apache.org/jira/browse/BEAM-1205
-        tp.enableAbandonedNodeEnforcement(true)
+        cls
+          .getMethod("enableAbandonedNodeEnforcement", classOf[Boolean])
+          .invoke(tp, Boolean.box(true))
         // propagate options
         tp.getOptions.setStableUniqueNames(options.getStableUniqueNames)
         tp
