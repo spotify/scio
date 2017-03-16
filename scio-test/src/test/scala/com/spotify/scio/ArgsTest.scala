@@ -96,9 +96,4 @@ class ArgsTest extends FlatSpec with Matchers {
     args.toString shouldBe "Args(--key1=value1, --key2=[value2, value3], --key3=true)"
   }
 
-  it should "be serializable" in {
-    val args = Args(Array("--key1=value1", "--key2=value2", "--key2=value3"))
-    SerializableUtils.ensureSerializable(args) should equal (args)
-  }
-
 }
