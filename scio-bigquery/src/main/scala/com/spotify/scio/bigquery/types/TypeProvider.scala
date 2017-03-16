@@ -71,7 +71,7 @@ private[types] object TypeProvider {
   : List[c.universe.Tree] = {
     import c.universe._
     tree.head.asInstanceOf[ClassDef].mods.annotations
-      .filter(_.children.head.toString() == "new description")
+      .filter(_.children.head.toString().matches("^new description$"))
       .map(_.children.tail.head)
   }
 
