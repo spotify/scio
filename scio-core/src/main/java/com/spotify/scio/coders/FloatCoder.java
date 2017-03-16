@@ -108,7 +108,7 @@ public class FloatCoder extends AtomicCoder<Float> {
   /**
    * {@inheritDoc}
    *
-   * @return {@code 8}, the byte size of a {@link Float} encoded using Java serialization.
+   * @return {@code 4}, the byte size of a {@link Float} encoded using Java serialization.
    */
   @Override
   protected long getEncodedElementByteSize(Float value, Context context)
