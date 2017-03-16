@@ -116,6 +116,6 @@ public class FloatCoder extends AtomicCoder<Float> {
     if (value == null) {
       throw new CoderException("cannot encode a null Float");
     }
-    return 8;
+    return 4;
   }
 }
