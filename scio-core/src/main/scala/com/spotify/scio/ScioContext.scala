@@ -696,15 +696,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group accumulator
    */
   def maxAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] =
-  requireNotClosed {
-    require(!_accumulators.contains(n), s"Accumulator '$n' already exists")
-    val acc = new Accumulator[T] {
-      override val name: String = n
-      override val combineFn: CombineFn[T, _, T] = at.maxFn()
-    }
-    _accumulators.put(n, acc)
-    acc
-  }
+    makeAccumulator(n, at.maxFn())
 
   /**
    * Create a new [[com.spotify.scio.values.Accumulator Accumulator]] that keeps track
@@ -714,15 +706,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group accumulator
    */
   def minAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] =
-  requireNotClosed {
-    require(!_accumulators.contains(n), s"Accumulator '$n' already exists")
-    val acc = new Accumulator[T] {
-      override val name: String = n
-      override val combineFn: CombineFn[T, _, T] = at.minFn()
-    }
-    _accumulators.put(n, acc)
-    acc
-  }
+    makeAccumulator(n, at.minFn())
 
   /**
    * Create a new [[com.spotify.scio.values.Accumulator Accumulator]] that keeps track
@@ -732,11 +716,13 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group accumulator
    */
   def sumAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] =
-  requireNotClosed {
+    makeAccumulator(n, at.sumFn())
+
+  private def makeAccumulator[T](n: String, fn: CombineFn[T, _, T]) = requireNotClosed {
     require(!_accumulators.contains(n), s"Accumulator '$n' already exists")
     val acc = new Accumulator[T] {
       override val name: String = n
-      override val combineFn: CombineFn[T, _, T] = at.sumFn()
+      override val combineFn: CombineFn[T, _, T] = fn
     }
     _accumulators.put(n, acc)
     acc
