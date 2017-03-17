@@ -27,6 +27,7 @@ val annoyVersion = "0.2.5"
 val autoServiceVersion = "1.0-rc3"
 val autoValueVersion = "1.3"
 val avroVersion = "1.7.7"
+val bigtableVersion = "0.9.5.1"
 val breezeVersion ="0.13"
 val chillVersion = "0.9.2"
 val commonsIoVersion = "2.5"
@@ -274,6 +275,7 @@ lazy val scioBigtable: Project = Project(
   description := "Scio add-on for Google Cloud Bigtable",
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+    "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableVersion,
     "io.netty" % "netty-tcnative-boringssl-static" % nettyTcNativeVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion % "test"
   )
