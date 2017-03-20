@@ -25,6 +25,10 @@ import com.google.cloud.bigtable.grpc.BigtableInstanceClient;
 import com.google.cloud.bigtable.grpc.BigtableInstanceGrpcClient;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import org.joda.time.Duration;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -34,6 +38,19 @@ import java.io.IOException;
 public final class BigtableUtil {
 
   private BigtableUtil() { }
+
+  private static final Logger LOG = LoggerFactory.getLogger(BigtableUtil.class);
+
+  private static final PeriodFormatter formatter = new PeriodFormatterBuilder()
+     .appendDays()
+     .appendSuffix("d")
+     .appendHours()
+     .appendSuffix("h")
+     .appendMinutes()
+     .appendSuffix("m")
+     .appendSeconds()
+     .appendSuffix("s")
+     .toFormatter();
 
   /**
    * Updates all clusters within the specified Bigtable instance to a specified number of nodes.
@@ -72,13 +89,18 @@ public final class BigtableUtil {
             .setName(cluster.getName())
             .setServeNodes(numberOfNodes)
             .build();
+        LOG.info("Updating number of nodes to {} for cluster {}", numberOfNodes, cluster.getName());
         bigtableInstanceClient.updateCluster(updatedCluster);
       }
 
       // Wait for the new nodes to be provisioned
-      Thread.sleep(sleepDuration.getMillis());
+      if (sleepDuration.getMillis() > 0) {
+        LOG.info("Sleeping for {} after update", formatter.print(sleepDuration.toPeriod()));
+        Thread.sleep(sleepDuration.getMillis());
+      }
     } finally {
       channelPool.shutdownNow();
     }
   }
+
 }
