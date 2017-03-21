@@ -79,11 +79,9 @@ class BigtableIT extends PipelineSpec {
         .saveAsBigtable(projectId, instanceId, tableId)
     }.waitUntilFinish()
 
-
     runWithContext { sc =>
       sc.bigtable(projectId, instanceId, tableId).map(fromRow) should containInAnyOrder(testData)
     }.waitUntilFinish()
-
 
     cleanup()
   }
