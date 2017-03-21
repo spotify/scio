@@ -23,11 +23,12 @@ import com.google.bigtable.v2.{Mutation, Row}
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.cloud.bigtable.grpc.BigtableClusterUtilities
 import com.google.protobuf.ByteString
-import com.spotify.scio.ScioContext
-import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio._
+import com.spotify.scio.testing._
 import org.joda.time.Duration
 
 object BigtableIT {
+
   val projectId = "data-integration-test"
   val instanceId = "scio-bigtable-it"
   val clusterId = "scio-bigtable-it-cluster"
@@ -74,22 +75,24 @@ class BigtableIT extends PipelineSpec {
   }
 
   "BigtableIO" should "work" in {
-    runWithContext{ sc =>
-      sc.parallelize(testData.map(kv => toWriteMutation(kv._1, kv._2)))
-        .saveAsBigtable(projectId, instanceId, tableId)
-    }.waitUntilFinish()
+    val sc1 = ScioContext()
+    sc1
+      .parallelize(testData.map(kv => toWriteMutation(kv._1, kv._2)))
+      .saveAsBigtable(projectId, instanceId, tableId)
+    sc1.close().waitUntilFinish()
 
-    runWithContext { sc =>
-      sc.bigtable(projectId, instanceId, tableId).map(fromRow) should containInAnyOrder(testData)
-    }.waitUntilFinish()
+    val sc2 = ScioContext()
+    sc2.bigtable(projectId, instanceId, tableId).map(fromRow) should containInAnyOrder(testData)
+    sc2.close().waitUntilFinish()
 
     cleanup()
   }
 
   private def cleanup() = {
-    runWithContext { sc =>
-      sc.parallelize(testData.map(kv => toDeleteMutation(kv._1)))
-        .saveAsBigtable(projectId, instanceId, tableId)
-    }.waitUntilFinish()
+    val sc = ScioContext()
+    sc.parallelize(testData.map(kv => toDeleteMutation(kv._1)))
+      .saveAsBigtable(projectId, instanceId, tableId)
+    sc.close().waitUntilFinish()
   }
+
 }
