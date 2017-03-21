@@ -271,7 +271,7 @@ lazy val scioBigtable: Project = Project(
   "scio-bigtable",
   file("scio-bigtable")
 ).settings(
-  commonSettings,
+  commonSettings ++ itSettings,
   description := "Scio add-on for Google Cloud Bigtable",
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
@@ -280,8 +280,9 @@ lazy val scioBigtable: Project = Project(
     "org.scalatest" %% "scalatest" % scalatestVersion % "test"
   )
 ).dependsOn(
-  scioCore
-)
+  scioCore,
+  scioTest % "it"
+).configs(IntegrationTest)
 
 lazy val scioExtra: Project = Project(
   "scio-extra",
