@@ -211,7 +211,8 @@ package object bigtable {
           bigtableOptions.getProjectId, bigtableOptions.getInstanceId, tableId)
         self.context.testOut(output.asInstanceOf[TestIO[(ByteString, Iterable[T])]])(self)
       } else {
-        val sink = PatchedBigtableIO.write().withBigtableOptions(bigtableOptions).withTableId(tableId)
+        val sink = PatchedBigtableIO.write()
+          .withBigtableOptions(bigtableOptions).withTableId(tableId)
         self
           .map(kv => KV.of(kv._1, kv._2.asJava.asInstanceOf[java.lang.Iterable[Mutation]]))
           .applyInternal(sink)
