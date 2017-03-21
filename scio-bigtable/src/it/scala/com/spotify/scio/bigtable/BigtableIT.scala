@@ -17,6 +17,8 @@
 
 package com.spotify.scio.bigtable
 
+import java.util.UUID
+
 import com.google.bigtable.v2.{Mutation, Row}
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.cloud.bigtable.grpc.BigtableClusterUtilities
@@ -31,7 +33,8 @@ object BigtableIT {
   val clusterId = "scio-bigtable-it-cluster"
   val zoneId = "us-east1-b"
   val tableId = "scio-bigtable-it-counts"
-  val testData = Seq(("key1", 1L), ("key2", 2L), ("key3", 3L))
+  val uuid = UUID.randomUUID()
+  val testData = Seq((s"$uuid-key1", 1L), (s"$uuid-key2", 2L), (s"$uuid-key3", 3L))
 
   val bigtableOptions = new BigtableOptions.Builder()
     .setProjectId(projectId)
