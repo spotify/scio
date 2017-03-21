@@ -74,22 +74,24 @@ class BigtableIT extends PipelineSpec {
   }
 
   "BigtableIO" should "work" in {
-    val sc = ScioContext()
-    sc.parallelize(testData.map(kv => toWriteMutation(kv._1, kv._2)))
-      .saveAsBigtable(projectId, instanceId, tableId)
-    sc.close().waitUntilFinish()
+    runWithContext{ sc =>
+      sc.parallelize(testData.map(kv => toWriteMutation(kv._1, kv._2)))
+        .saveAsBigtable(projectId, instanceId, tableId)
+    }.waitUntilFinish()
 
-    val sc2 = ScioContext()
-    sc2.bigtable(projectId, instanceId, tableId).map(fromRow) should containInAnyOrder(testData)
-    sc2.close().waitUntilFinish()
+
+    runWithContext { sc =>
+      sc.bigtable(projectId, instanceId, tableId).map(fromRow) should containInAnyOrder(testData)
+    }.waitUntilFinish()
+
 
     cleanup()
   }
 
   private def cleanup() = {
-    val sc = ScioContext()
-    sc.parallelize(testData.map(kv => toDeleteMutation(kv._1)))
-      .saveAsBigtable(projectId, instanceId, tableId)
-    sc.close().waitUntilFinish()
+    runWithContext { sc =>
+      sc.parallelize(testData.map(kv => toDeleteMutation(kv._1)))
+        .saveAsBigtable(projectId, instanceId, tableId)
+    }.waitUntilFinish()
   }
 }
