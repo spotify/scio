@@ -258,7 +258,7 @@ package object hdfs {
     }
   }
 
-  /** Enhanced version of [[com.spotify.scio.io.Taps]] with HDFS methods. */
+  /** Enhanced version of [[com.spotify.scio.io.Taps Taps]] with HDFS methods. */
   implicit class HdfsTaps(val self: Taps) extends AnyVal {
 
     /** Get a `Future[Tap[T]]` for a text file on HDFS. */
