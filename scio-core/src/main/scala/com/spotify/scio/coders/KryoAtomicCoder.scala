@@ -80,7 +80,7 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
 
       // java.lang.Iterable.asScala returns JIterableWrapper which causes problem.
       // Treat it as standard Iterable instead.
-      k.register(classOf[JIterableWrapper[_]], new JIterableWrapperSerializer)
+      k.register(classOf[JIterableWrapper[_]], new JIterableWrapperSerializer())
 
       k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
       k.forSubclass[GenericRecord](new GenericAvroSerializer)
