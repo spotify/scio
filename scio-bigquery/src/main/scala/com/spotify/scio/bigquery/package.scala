@@ -18,6 +18,7 @@
 package com.spotify.scio
 
 import com.google.api.services.bigquery.model.{TableRow => GTableRow}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
@@ -31,6 +32,21 @@ import scala.collection.JavaConverters._
  * }}}
  */
 package object bigquery {
+
+  /** Alias for BigQuery `CreateDisposition`. */
+  val CREATE_IF_NEEDED = Write.CreateDisposition.CREATE_IF_NEEDED
+
+  /** Alias for BigQuery `CreateDisposition`. */
+  val CREATE_NEVER = Write.CreateDisposition.CREATE_NEVER
+
+  /** Alias for BigQuery `WriteDisposition`. */
+  val WRITE_APPEND = Write.WriteDisposition.WRITE_APPEND
+
+  /** Alias for BigQuery `WriteDisposition`. */
+  val WRITE_EMPTY = Write.WriteDisposition.WRITE_EMPTY
+
+  /** Alias for BigQuery `WriteDisposition`. */
+  val WRITE_TRUNCATE = Write.WriteDisposition.WRITE_TRUNCATE
 
   /** Typed BigQuery annotations and converters. */
   val BigQueryType = com.spotify.scio.bigquery.types.BigQueryType
