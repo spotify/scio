@@ -20,7 +20,6 @@ package com.spotify
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.AccumulatorType
 import com.twitter.algebird.Semigroup
-import org.apache.beam.sdk.util.WindowingStrategy.AccumulationMode
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -35,12 +34,6 @@ import scala.reflect.ClassTag
  * }}}
  */
 package object scio {
-
-  /** Alias for WindowingStrategy `AccumulationMode.ACCUMULATING_FIRED_PANES`. */
-  val ACCUMULATING_FIRED_PANES = AccumulationMode.ACCUMULATING_FIRED_PANES
-
-  /** Alias for WindowingStrategy `AccumulationMode.DISCARDING_FIRED_PANES`. */
-  val DISCARDING_FIRED_PANES = AccumulationMode.DISCARDING_FIRED_PANES
 
   import com.spotify.scio.values
   implicit val intAccumulatorType: AccumulatorType[Int] = new values.IntAccumulatorType
