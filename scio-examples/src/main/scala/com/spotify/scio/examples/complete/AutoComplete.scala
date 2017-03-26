@@ -17,9 +17,6 @@
 
 package com.spotify.scio.examples.complete
 
-import java.util.regex.Pattern
-
-import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.common.collect.ImmutableMap
 import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
@@ -28,7 +25,7 @@ import com.spotify.scio.bigquery._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.examples.common.{ExampleOptions, ExampleUtils}
 import org.apache.beam.sdk.options.{GcpOptions, StreamingOptions}
-import org.apache.beam.sdk.transforms.windowing.{GlobalWindows, SlidingWindows, Window}
+import org.apache.beam.sdk.transforms.windowing.{GlobalWindows, SlidingWindows}
 import org.joda.time.Duration
 
 import scala.collection.JavaConverters._
@@ -46,16 +43,10 @@ runMain
 
 object AutoComplete {
 
-  val bigQuerySchema: TableSchema = {
-    val tagFields = List(
-      new TableFieldSchema().setName("count").setType("INTEGER"),
-      new TableFieldSchema().setName("tag").setType("STRING"))
-    val fields = List(
-      new TableFieldSchema().setName("pre").setType("STRING"),
-      new TableFieldSchema().setName("tags").setType("RECORD").setMode("REPEATED")
-        .setFields(tagFields.asJava))
-    new TableSchema().setFields(fields.asJava)
-  }
+  case class Tag(tag: String, count: Long)
+
+  @BigQueryType.toTable
+  case class Record(pre: String, tags: List[Tag])
 
   def computeTopCompletions(input: SCollection[String],
                             candidatesPerPrefix: Int,
@@ -139,11 +130,8 @@ object AutoComplete {
     // outputs
     if (outputToBigqueryTable) {
       tags
-        .map { kv =>
-          val tags = kv._2.map(p => TableRow("tag" -> p._1, "count" -> p._2))
-          TableRow("pre" -> kv._1, "tags" -> tags.toList.asJava)
-        }
-        .saveAsBigQuery(args("output"), bigQuerySchema)
+        .map(kv => Record(kv._1, kv._2.map(p => Tag(p._1, p._2)).toList))
+        .saveAsTypedBigQuery(args("output"))
     }
     if (outputToDatastore) {
       val kind = args.getOrElse("kind", "autocomplete-demo")
