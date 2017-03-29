@@ -333,8 +333,7 @@ lazy val scioSchemas: Project = Project(
   sources in doc in Compile := List(),
   compileOrder := CompileOrder.JavaThenScala,
   PB.targets in Compile := Seq(
-    PB.gens.java -> (sourceManaged in Compile).value / "compiled_protobuf",
-    scalapb.gen(javaConversions=true, grpc=false) -> (sourceManaged in Compile).value / "compiled_protobuf"
+    PB.gens.java -> (sourceManaged in Compile).value / "compiled_protobuf"
   )
 )
 
