@@ -26,7 +26,7 @@ val algebirdVersion = "0.13.0"
 val annoyVersion = "0.2.5"
 val autoServiceVersion = "1.0-rc3"
 val autoValueVersion = "1.3"
-val avroVersion = "1.7.7"
+val avroVersion = "1.8.1"
 val bigtableVersion = "0.9.5.1"
 val breezeVersion ="0.13"
 val chillVersion = "0.9.2"
@@ -312,6 +312,7 @@ lazy val scioHdfs: Project = Project(
   description := "Scio add-on for HDFS",
   libraryDependencies ++= Seq(
     "org.apache.avro" % "avro-mapred" % avroVersion classifier("hadoop2"),
+    "org.apache.avro" % "avro-ipc" % avroVersion classifier("tests") % "test",
     "org.apache.hadoop" % "hadoop-client" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12"),
     "com.google.auto.value" % "auto-value" % autoValueVersion % "provided"
   )
