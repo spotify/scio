@@ -312,6 +312,7 @@ lazy val scioHdfs: Project = Project(
   description := "Scio add-on for HDFS",
   libraryDependencies ++= Seq(
     "org.apache.avro" % "avro-mapred" % avroVersion classifier("hadoop2"),
+    "org.apache.avro" % "avro-ipc" % avroVersion classifier("tests"),
     "org.apache.hadoop" % "hadoop-client" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12"),
     "com.google.auto.value" % "auto-value" % autoValueVersion % "provided"
   )
