@@ -138,11 +138,16 @@ class NamedTransformTest extends PipelineSpec {
   }
 
   "TransformNameable" should "prevent repeated calls to .withName" in {
-    intercept[IllegalArgumentException](runWithContext { sc =>
-      val p1 = sc.parallelize(1 to 5)
-        .withName("Double").withName("DoubleMap").map(_ * 2)
-    }).getMessage shouldBe "requirement failed: withName() has already been used to set 'Double'" +
-      " as the name for the next transform."
+    // scalastyle:off no.whitespace.before.left.bracket
+    val e = the [IllegalArgumentException] thrownBy {
+      runWithContext { sc =>
+        val p1 = sc.parallelize(1 to 5).withName("Double").withName("DoubleMap").map(_ * 2)
+      }
+    }
+    // scalastyle:on no.whitespace.before.left.bracket
+    val msg = "requirement failed: withName() has already been used to set 'Double' as " +
+      "the name for the next transform."
+    e should have message msg
   }
 
   private def assertTransformNameStartsWith(p: PCollectionWrapper[_], tfName: String) = {

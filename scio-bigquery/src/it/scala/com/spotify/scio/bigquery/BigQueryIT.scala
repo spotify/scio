@@ -108,12 +108,13 @@ class BigQueryIT extends FlatSpec with Matchers {
   it should "fail insufficient sample data" in {
     val t = "clouddataflow-readonly:samples.weather_stations"
 
-    the[IllegalArgumentException] thrownBy {
+    // scalastyle:off no.whitespace.before.left.bracket
+    the [IllegalArgumentException] thrownBy {
       val mbq = MockBigQuery()
       mbq.mockTable(t).withSample(2000)
     } should have message s"requirement failed: Sample size 1000 != requested 2000"
 
-    the[IllegalArgumentException] thrownBy {
+    the [IllegalArgumentException] thrownBy {
       val mbq = MockBigQuery()
       mbq.mockTable(t).withSample(2000, 5000)
     } should have message s"requirement failed: Sample size 1000 < requested minimal 2000"
@@ -122,7 +123,7 @@ class BigQueryIT extends FlatSpec with Matchers {
   it should "fail duplicate mockTable" in {
     val mbq = MockBigQuery()
     mbq.mockTable(tableRef)
-    the[IllegalArgumentException] thrownBy {
+    the [IllegalArgumentException] thrownBy {
       mbq.mockTable(tableRef)
     } should have message s"requirement failed: Table $tableRef already registered for mocking"
   }
@@ -131,7 +132,7 @@ class BigQueryIT extends FlatSpec with Matchers {
     val mbq = MockBigQuery()
     val mt = mbq.mockTable(tableRef)
     mt.withData(Nil)
-    the[IllegalArgumentException] thrownBy {
+    the [IllegalArgumentException] thrownBy {
       mt.withData(Nil)
     } should have message s"requirement failed: Table $tableRef already populated with mock data"
   }
@@ -139,10 +140,11 @@ class BigQueryIT extends FlatSpec with Matchers {
   it should "fail missing mock data" in {
     val mbq = MockBigQuery()
     mbq.mockTable(tableRef)
-    the[RuntimeException] thrownBy {
+    the [RuntimeException] thrownBy {
       mbq.queryResult(sqlQuery)
     } should have message
       "404 Not Found, this is most likely caused by missing source table or mock data"
   }
+  // scalastyle:on no.whitespace.before.left.bracket
 
 }

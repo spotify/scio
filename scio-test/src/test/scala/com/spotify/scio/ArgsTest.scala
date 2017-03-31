@@ -46,7 +46,7 @@ class ArgsTest extends FlatSpec with Matchers {
 
   // scalastyle:off no.whitespace.before.left.bracket
   it should "fail required with missing value" in {
-    the[IllegalArgumentException] thrownBy {
+    the [IllegalArgumentException] thrownBy {
       Args(Array.empty).required("key")
     } should have message "Missing value for property 'key'"
   }
