@@ -194,6 +194,13 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support flatten()" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq(Seq("a", "b", "c"), Seq("d", "e"), Seq("f"))).flatten
+      p should containInAnyOrder (Seq("a", "b", "c", "d", "e", "f"))
+    }
+  }
+
   it should "support fold()" in {
     runWithContext { sc =>
       val p = sc.parallelize(1 to 100)
@@ -208,6 +215,20 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3, 4)).groupBy(_ % 2).mapValues(_.toSet)
       p should containInAnyOrder (Seq((0, Set(2, 4)), (1, Set(1, 3))))
+    }
+  }
+
+  it should "support asKey()" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq("hello", "world")).asKey
+      p should containInAnyOrder (Seq(("hello", ()), ("world", ())))
+    }
+  }
+
+  it should "support asKeyBy()" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq("hello", "world")).asKeyBy(_.substring(0, 1))
+      p should containInAnyOrder (Seq(("h", ()), ("w", ())))
     }
   }
 

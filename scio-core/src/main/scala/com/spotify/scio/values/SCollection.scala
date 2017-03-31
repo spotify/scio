@@ -311,6 +311,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.parDo(Functions.flatMapFn(f))
 
   /**
+    * Return a new SCollection of Transversables by flatterning them.
+    * Similar to collection.flatMap(identity)
+    */
+  def flatten[U: ClassTag](implicit ev: T <:< TraversableOnce[U]): SCollection[U] =
+    this.parDo(Functions.flatMapFn(_.asInstanceOf[TraversableOnce[U]]))
+
+  /**
    * Aggregate the elements using a given associative function and a neutral "zero value". The
    * function op(t1, t2) is allowed to modify t1 and return it as its result value to avoid object
    * allocation; however, it should not modify t2.
@@ -350,6 +357,18 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   // Scala lambda is simpler than transforms.WithKeys
   def keyBy[K: ClassTag](f: T => K): SCollection[(K, T)] = this.map(v => (f(v), v))
+
+  /**
+    * Make the Elements the key in the Tuple, the values are unit.
+    * Useful for Filtering with a join
+    */
+  def asKey: SCollection[(T, Unit)] = this.map(v => (v, ()))
+
+  /**
+    * Similar to [[SCollection.asKey]] but also provides a function for the key.
+    * Short hand for collection.map(i => f(i)).toKey
+    */
+  def asKeyBy[K: ClassTag](f: T => K): SCollection[(K, Unit)] = this.map(v => (f(v), ()))
 
   /**
    * Return a new SCollection by applying a function to all elements of this SCollection.
