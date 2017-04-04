@@ -1,0 +1,75 @@
+/*
+ * Copyright 2017 Spotify AB.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.spotify.scio.testing
+
+import com.spotify.scio.testing.{JobTest => InnerJobTest}
+import org.scalactic.source.Position
+import org.scalatest._
+
+import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
+
+/**
+ * Trait that enforces [[JobTest.Builder.run()]] is called.
+ */
+trait RunEnforcementJobTest extends FlatSpec { this: Suite =>
+
+  private val tests = ArrayBuffer.empty[InnerJobTest.Builder]
+
+  // scalastyle:off method.name
+  def JobTest[T: ClassTag]: InnerJobTest.Builder = {
+    val jt = InnerJobTest[T]
+    tests += jt
+    jt
+  }
+  // scalastyle:on method.name
+
+  // scalastyle:off method.name
+  private[testing] def JobTest[T: ClassTag](enforceRun: Boolean = true): InnerJobTest.Builder = {
+    val jt = InnerJobTest[T]
+    if (enforceRun) tests += jt
+    jt
+  }
+  // scalastyle:on method.name
+
+  // scalastyle:off method.name
+  def JobTest(className: String): InnerJobTest.Builder = {
+    val jt = InnerJobTest(className)
+    tests += jt
+    jt
+  }
+  // scalastyle:on method.name
+
+  override protected def withFixture(test: NoArgTest): Outcome = {
+    // Tests within Suites are executed sequentially, thus we need to clear the tests, if
+    // ParallelTestExecution was enabled, clear is obsolete given the OneInstancePerTest
+    tests.clear()
+    super.withFixture(test) match {
+      case o if o.isSucceeded =>
+        val notRun = tests.filterNot(_.wasRunInvoked)
+        if (notRun.nonEmpty) {
+          Failed(s"""Did you forget run()?\n${notRun.mkString(start = "Missing run(): ",
+                                                              sep = "\nMissing run(): ",
+                                                              end = "")}""")(
+            test.pos.getOrElse(Position.here))
+        } else {
+          o
+        }
+    }
+  }
+
+}

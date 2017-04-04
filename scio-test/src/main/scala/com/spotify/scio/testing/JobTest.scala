@@ -65,17 +65,23 @@ import scala.util.control.NonFatal
  */
 object JobTest {
 
-  case class Builder(className: String, cmdlineArgs: Array[String],
-                     inputs: Map[TestIO[_], Iterable[_]],
-                     outputs: Map[TestIO[_], SCollection[_] => Unit],
-                     distCaches: Map[DistCacheIO[_], _]) {
+  private case class BuilderState(className: String, cmdlineArgs: Array[String],
+                                  inputs: Map[TestIO[_], Iterable[_]],
+                                  outputs: Map[TestIO[_], SCollection[_] => Unit],
+                                  distCaches: Map[DistCacheIO[_], _],
+                                  wasRunInvoked: Boolean = false)
+
+  class Builder(private var state: BuilderState) {
 
     /** Test ID for input and output wiring. */
-    val testId: String = TestUtil.newTestId(className)
+    val testId: String = TestUtil.newTestId(state.className)
+    def wasRunInvoked: Boolean = state.wasRunInvoked
 
     /** Feed command line arguments to the pipeline being tested. */
-    def args(newArgs: String*): Builder =
-      this.copy(cmdlineArgs = (this.cmdlineArgs.toSeq ++ newArgs).toArray)
+    def args(newArgs: String*): Builder = {
+      state = state.copy(cmdlineArgs = (state.cmdlineArgs.toSeq ++ newArgs).toArray)
+      this
+    }
 
     /**
      * Feed an input to the pipeline being tested. Note that `TestIO[T]` must match the one used
@@ -83,8 +89,9 @@ object JobTest {
      * `sc.avroFile[MyRecord]("in.avro")`.
      */
     def input[T](key: TestIO[T], value: Iterable[T]): Builder = {
-      require(!this.inputs.contains(key), "Duplicate test input: " + key)
-      this.copy(inputs = this.inputs + (key -> value))
+      require(!state.inputs.contains(key), "Duplicate test input: " + key)
+      state = state.copy(inputs = state.inputs + (key -> value))
+      this
     }
 
     /**
@@ -96,8 +103,10 @@ object JobTest {
      *              on an [[com.spotify.scio.values.SCollection SCollection]].
      */
     def output[T](key: TestIO[T])(value: SCollection[T] => Unit): Builder = {
-      require(!this.outputs.contains(key), "Duplicate test output: " + key)
-      this.copy(outputs = this.outputs + (key -> value.asInstanceOf[SCollection[_] => Unit]))
+      require(!state.outputs.contains(key), "Duplicate test output: " + key)
+      state = state
+        .copy(outputs = state.outputs + (key -> value.asInstanceOf[SCollection[_] => Unit]))
+      this
     }
 
     /**
@@ -106,8 +115,9 @@ object JobTest {
      * `sc.distCache("dc.txt")(f => scala.io.Source.fromFile(f).getLines().toSet)`.
      */
     def distCache[T](key: DistCacheIO[T], value: T): Builder = {
-      require(!this.distCaches.contains(key), "Duplicate test dist cache: " + key)
-      this.copy(distCaches = this.distCaches + (key -> value))
+      require(!state.distCaches.contains(key), "Duplicate test dist cache: " + key)
+      state = state.copy(distCaches = state.distCaches + (key -> value))
+      this
     }
 
     /**
@@ -115,9 +125,9 @@ object JobTest {
      * [[run]]. Make sure [[tearDown]] is called afterwards.
      */
     def setUp(): Unit = {
-      TestDataManager.setInput(testId, new TestInput(inputs))
-      TestDataManager.setOutput(testId, new TestOutput(outputs))
-      TestDataManager.setDistCache(testId, new TestDistCache(distCaches))
+      TestDataManager.setInput(testId, new TestInput(state.inputs))
+      TestDataManager.setOutput(testId, new TestOutput(state.outputs))
+      TestDataManager.setDistCache(testId, new TestDistCache(state.distCaches))
     }
 
     /**
@@ -133,13 +143,14 @@ object JobTest {
 
     /** Run the pipeline with test wiring. */
     def run(): Unit = {
+      state = state.copy(wasRunInvoked = true)
       setUp()
 
       try {
         Class
-          .forName(className)
+          .forName(state.className)
           .getMethod("main", classOf[Array[String]])
-          .invoke(null, cmdlineArgs :+ s"--appName=$testId")
+          .invoke(null, state.cmdlineArgs :+ s"--appName=$testId")
       } catch {
         // InvocationTargetException stacktrace is noisy and useless
         case e: InvocationTargetException => throw e.getCause
@@ -149,16 +160,22 @@ object JobTest {
       tearDown()
     }
 
+    override def toString: String =
+      s"""|JobTest[${state.className}](
+          |\targs: ${state.cmdlineArgs.mkString(" ")}
+          |\tdistCache: ${state.distCaches}
+          |\tinputs: ${state.inputs.mkString(", ")}""".stripMargin
+
   }
 
   /** Create a new JobTest.Builder instance. */
   def apply(className: String): Builder =
-    Builder(className, Array(), Map.empty, Map.empty, Map.empty)
+    new Builder(BuilderState(className, Array(), Map.empty, Map.empty, Map.empty))
 
   /** Create a new JobTest.Builder instance. */
   def apply[T: ClassTag]: Builder = {
     val className= ScioUtil.classOf[T].getName.replaceAll("\\$$", "")
-    Builder(className, Array(), Map.empty, Map.empty, Map.empty)
+    new Builder(BuilderState(className, Array(), Map.empty, Map.empty, Map.empty))
   }
 
 }

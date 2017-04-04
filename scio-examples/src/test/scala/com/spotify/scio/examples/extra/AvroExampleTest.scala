@@ -18,7 +18,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.avro.Account
-import com.spotify.scio.testing.{AvroIO, JobTest, PipelineSpec, TextIO}
+import com.spotify.scio.testing.{AvroIO, PipelineSpec, TextIO}
 
 class AvroExampleTest extends PipelineSpec {
 
