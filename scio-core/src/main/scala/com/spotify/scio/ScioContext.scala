@@ -210,6 +210,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
       _pipeline = if (testId.isEmpty) {
         Pipeline.create(options)
       } else {
+        TestDataManager.startTest(testId.get)
         // load TestPipeline dynamically to avoid ClassNotFoundException when running src/main
         // https://issues.apache.org/jira/browse/BEAM-298
         val cls = Class.forName("org.apache.beam.sdk.testing.TestPipeline")
@@ -341,6 +342,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     val result = new ScioResult(this.pipeline.run(), _accumulators.values.toSeq, context)
 
     if (this.isTest) {
+      TestDataManager.closeTest(testId.get)
       result.waitUntilFinish()  // block local runner for JobTest to work
     } else {
       result

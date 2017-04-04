@@ -24,7 +24,7 @@ import com.spotify.scio.values.Accumulator
 // Update accumulators inside a job and retrieve values later
 object AccumulatorExample {
   def main(cmdlineArgs: Array[String]): Unit = {
-    val sc = ScioContext()
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     // create accumulators to be updated inside the pipeline
     val max = sc.maxAccumulator[Int]("max")
@@ -66,7 +66,7 @@ object AccumulatorExample {
 // Simplified version using helpers from com.spotify.scio.accumulators._
 object SimpleAccumulatorExample {
   def main(cmdlineArgs: Array[String]): Unit = {
-    val sc = ScioContext()
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     // create accumulators to be updated inside the pipeline
     val max = sc.maxAccumulator[Int]("max")

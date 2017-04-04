@@ -74,6 +74,7 @@ private[scio] object TestDataManager {
   private val inputs = MMap.empty[String, TestInput]
   private val outputs = MMap.empty[String, TestOutput]
   private val distCaches = MMap.empty[String, TestDistCache]
+  private val closed = MMap.empty[String, Boolean]
 
   def getInput(testId: String): TestInput = inputs(testId)
   def getOutput(testId: String): TestOutput = outputs(testId)
@@ -95,6 +96,13 @@ private[scio] object TestDataManager {
   def unsetDistCache(testId: String): Unit = {
     distCaches(testId).validate()
     distCaches -= testId
+  }
+
+  def startTest(testId: String): Unit = closed(testId) = false
+  def closeTest(testId: String): Unit = closed(testId) = true
+  def ensureClosed(testId: String): Unit = {
+    require(closed(testId), "ScioContext was not closed. Did you forget close()?")
+    closed -= testId
   }
 
 }
