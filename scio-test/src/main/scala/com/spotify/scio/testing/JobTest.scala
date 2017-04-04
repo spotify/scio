@@ -128,6 +128,7 @@ object JobTest {
       TestDataManager.unsetInput(testId)
       TestDataManager.unsetOutput(testId)
       TestDataManager.unsetDistCache(testId)
+      TestDataManager.ensureClosed(testId)
     }
 
     /** Run the pipeline with test wiring. */

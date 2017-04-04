@@ -25,10 +25,8 @@ import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro.{AvroUtils, TestRecord}
 import com.spotify.scio.bigquery._
 import org.apache.beam.sdk.{io => gio}
-import org.apache.beam.sdk.coders.TextualIntegerCoder
 import org.apache.avro.generic.GenericRecord
 
-import scala.collection.JavaConverters._
 import scala.io.Source
 
 object ObjectFileJob {
@@ -140,6 +138,15 @@ object CustomIOJob {
       .map(_.toString)
       .saveAsCustomOutput("TextOut", outputTransform)
     sc.close()
+  }
+}
+
+object JobWithoutClose {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.parallelize(1 to 10)
+      .count
+      .saveAsObjectFile(args("output"))
   }
 }
 
@@ -446,6 +453,16 @@ class JobTestTest extends PipelineSpec {
       .input(TextIO("in.txt"), Seq("a", "b"))
       .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a", "b")))
       .run()
+  }
+
+  it should "fail job without close" in {
+    the [IllegalArgumentException] thrownBy {
+      JobTest[JobWithoutClose.type]
+        .args("--output=out.avro")
+        .output[Long](ObjectFileIO("out.avro"))(_ should containInAnyOrder (Seq(10L)))
+        .run()
+    } should have message
+      "requirement failed: ScioContext was not closed. Did you forget close()?"
   }
 
 }
