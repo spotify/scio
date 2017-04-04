@@ -24,8 +24,9 @@ import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro.{AvroUtils, TestRecord}
 import com.spotify.scio.bigquery._
-import org.apache.beam.sdk.{io => gio}
+import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.{io => gio}
 
 import scala.io.Source
 
@@ -367,7 +368,7 @@ class JobTestTest extends PipelineSpec {
 
   it should "fail duplicate test input" in {
     the [IllegalArgumentException] thrownBy {
-      JobTest[DistCacheJob.type]
+      JobTest[DistCacheJob.type](enforceRun = false)
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
         .input(TextIO("in.txt"), Seq("a", "b"))
         .input(TextIO("in.txt"), Seq("X", "Y"))
@@ -401,7 +402,7 @@ class JobTestTest extends PipelineSpec {
 
   it should "fail duplicate test output" in {
     the [IllegalArgumentException] thrownBy {
-      JobTest[DistCacheJob.type]
+      JobTest[DistCacheJob.type](enforceRun = false)
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
         .input(TextIO("in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
@@ -436,7 +437,7 @@ class JobTestTest extends PipelineSpec {
 
   it should "fail duplicate test dist cache" in {
     the [IllegalArgumentException] thrownBy {
-      JobTest[DistCacheJob.type]
+      JobTest[DistCacheJob.type](enforceRun = false)
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
         .input(TextIO("in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
@@ -463,6 +464,110 @@ class JobTestTest extends PipelineSpec {
         .run()
     } should have message
       "requirement failed: ScioContext was not closed. Did you forget close()?"
+  }
+
+  // =======================================================================
+  // Tests of JobTest testing wiring
+  // =======================================================================
+
+  class JobTestFromType extends PipelineSpec {
+    "JobTestFromType" should "work" in {
+      JobTest[ObjectFileJob.type]
+        .args("--input=in.avro", "--output=out.avro")
+        .input(ObjectFileIO("in.avro"), Seq(1, 2, 3))
+        .output[Int](ObjectFileIO("out.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
+    }
+  }
+
+  class MultiJobTest extends PipelineSpec {
+    "MultiJobTest" should "work" in {
+      JobTest[ObjectFileJob.type]
+        .args("--input=in.avro", "--output=out.avro")
+        .input(ObjectFileIO("in.avro"), Seq(1, 2, 3))
+        .output[Int](ObjectFileIO("out.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
+
+      testBigQuery((1 to 3).map(newTableRow))
+
+      JobTest[ObjectFileJob.type]
+        .args("--input=in2.avro", "--output=out2.avro")
+        .input(ObjectFileIO("in2.avro"), Seq(1, 2, 3))
+        .output[Int](ObjectFileIO("out2.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
+    }
+  }
+
+  class JobTestFromString extends PipelineSpec {
+    "JobTestFromString" should "work" in {
+      JobTest("com.spotify.scio.testing.ObjectFileJob")
+        .args("--input=in.avro", "--output=out.avro")
+        .input(ObjectFileIO("in.avro"), Seq(1, 2, 3))
+        .output[Int](ObjectFileIO("out.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
+    }
+  }
+
+  class OriginalJobTest extends PipelineSpec {
+    import com.spotify.scio.testing.{JobTest => InternalJobTest}
+    "OriginalJobTest" should "work" in {
+      InternalJobTest[ObjectFileJob.type]
+        .args("--input=in.avro", "--output=out.avro")
+        .input(ObjectFileIO("in.avro"), Seq(1, 2, 3))
+        .output[Int](ObjectFileIO("out.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
+    }
+  }
+
+  // scalastyle:off line.contains.tab
+  // scalastyle:off line.size.limit
+  private val runMissedMessage = """|- should work \*\*\* FAILED \*\*\*
+                                    |  Did you forget run\(\)\?
+                                    |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
+                                    |  	args: --input=in.avro --output=out.avro
+                                    |  	distCache: Map\(\)
+                                    |  	inputs: ObjectFileIO\(in.avro\) -> List\(1, 2, 3\) \(JobTestTest.scala:.*\)""".stripMargin
+  // scalastyle:on line.size.limit
+  // scalastyle:on line.contains.tab
+
+  it should "enforce run() on JobTest from class type" in {
+    val stdOutMock = new MockedPrintStream
+    Console.withOut(stdOutMock) {
+      new JobTestFromType().execute("JobTestFromType should work", color = false)
+    }
+    stdOutMock.message.mkString("") should include regex runMissedMessage
+  }
+
+  // scalastyle:off line.contains.tab
+  // scalastyle:off line.size.limit
+  it should "enforce run() on multi JobTest" in {
+    val stdOutMock = new MockedPrintStream
+    Console.withOut(stdOutMock) {
+      new MultiJobTest().execute("MultiJobTest should work", color = false)
+    }
+    stdOutMock.message.mkString("") should include regex """|- should work \*\*\* FAILED \*\*\*
+                                                            |  Did you forget run\(\)\?
+                                                            |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
+                                                            |  	args: --input=in.avro --output=out.avro
+                                                            |  	distCache: Map\(\)
+                                                            |  	inputs: ObjectFileIO\(in.avro\) -> List\(1, 2, 3\)
+                                                            |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
+                                                            |  	args: --input=in2.avro --output=out2.avro
+                                                            |  	distCache: Map\(\)
+                                                            |  	inputs: ObjectFileIO\(in2.avro\) -> List\(1, 2, 3\) \(JobTestTest.scala:.*\)""".stripMargin
+  }
+  // scalastyle:on line.size.limit
+  // scalastyle:on line.contains.tab
+
+  it should "enforce run() on JobTest from string class" in {
+    val stdOutMock = new MockedPrintStream
+    Console.withOut(stdOutMock) {
+      new JobTestFromString().execute("JobTestFromString should work", color = false)
+    }
+    stdOutMock.message.mkString("") should include regex runMissedMessage
+  }
+
+  it should "not enforce run() on internal JobTest" in {
+    val stdOutMock = new MockedPrintStream
+    Console.withOut(stdOutMock) {
+      new OriginalJobTest().execute("OriginalJobTest should work", color = false)
+    }
+    stdOutMock.message.mkString("") shouldNot include regex runMissedMessage
   }
 
 }

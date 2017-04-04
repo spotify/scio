@@ -33,4 +33,5 @@ import org.scalatest.{FlatSpec, Matchers}
   * }
   * }}}
   */
-trait PipelineSpec extends FlatSpec with Matchers with SCollectionMatchers with PipelineTestUtils
+trait PipelineSpec extends FlatSpec
+  with Matchers with SCollectionMatchers with PipelineTestUtils with RunEnforcementJobTest
