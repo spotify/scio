@@ -72,7 +72,7 @@ object SchemaUtil {
     val xs = fields.asScala
       .map { f =>
         val (fieldType, nested) = getFieldType(f, indent)
-        (f.getName + ": " + fieldType, nested)
+        (escapeNameIfReserved(f.getName) + ": " + fieldType, nested)
       }
     val lines = xs.map(_._1)
     val nested = xs.flatMap(_._2)
@@ -92,5 +92,19 @@ object SchemaUtil {
     sb.append(")")
     (sb.toString() +: nested).mkString("\n")
   }
+
+  private[types] def escapeNameIfReserved(name: String): String = {
+    if (scalaReservedWords.contains(name)) {
+      s"`$name`"
+    } else {
+      name
+    }
+  }
+
+  private[types] val scalaReservedWords = Seq(
+    "abstract", "case", "catch", "class", "def", "do", "else", "extends", "false", "final",
+    "finally", "for", "forSome", "if", "implicit", "import", "lazy", "match", "new", "null",
+    "object", "override", "package", "private", "protected", "return", "sealed", "super", "this",
+    "throw", "trait", "try", "true", "type", "val", "var", "while", "with", "yield")
 
 }

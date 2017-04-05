@@ -103,5 +103,18 @@ class SchemaUtilTest extends FlatSpec with Matchers {
       """.stripMargin.trim)
   }
 
+  it should "support reserved words" in {
+    val expectedFields = SchemaUtil.scalaReservedWords
+      .map(e => s"`$e`").mkString(start = "", sep = ": Long, ", end = ": Long")
+    val schema = new TableSchema().setFields(
+      SchemaUtil.scalaReservedWords.map { name =>
+        new TableFieldSchema().setName(name).setType("INTEGER").setMode("REQUIRED")
+      }.asJava)
+    SchemaUtil.toPrettyString(schema, "Row", 0) should equal (
+      s"""|@BigQueryType.toTable
+          |case class Row($expectedFields)""".stripMargin
+    )
+  }
+
 }
 // scalastyle:on line.size.limit
