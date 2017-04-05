@@ -269,18 +269,22 @@ private[types] object TypeProvider {
     }
   }
 
+  // scalastyle:off line.size.limit
   private def pShowCode(c: blackbox.Context)(records: Seq[c.Tree], caseClass: c.Tree): Seq[String] = {
     // print only records and case class and do it nicely so that we can just inject those
     // in scala plugin.
     import c.universe._
     (Seq(caseClass) ++ records).map {
       case q"case class $name(..$fields) { ..$body }" =>
-        s"case class $name(${fields.map{case ValDef(mods, fname, ftpt, _) => s"$fname : $ftpt"}.mkString(", ")})"
+        s"case class $name(${fields.map{case ValDef(mods, fname, ftpt, _) =>
+          s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"}.mkString(", ")})"
       case q"case class $name(..$fields) extends $annotation { ..$body }" =>
-        s"case class $name(${fields.map{case ValDef(mods, fname, ftpt, _) => s"$fname : $ftpt"}.mkString(", ")}) extends $annotation"
+        s"case class $name(${fields.map{case ValDef(mods, fname, ftpt, _) =>
+          s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"}.mkString(", ")}) extends $annotation"
       case _ => ""
     }
   }
+  // scalastyle:on line.size.limit
 
   private def genHashForMacro(owner: String, srcFile: String): String = {
     Hashing.murmur3_32().newHasher()
