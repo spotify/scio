@@ -344,6 +344,7 @@ lazy val scioExamples: Project = Project(
 ).settings(
   commonSettings ++ noPublishSettings,
   libraryDependencies ++= Seq(
+    "me.lyh" %% "shapeless-datatype-datastore_1.3" % "0.1.2",
     "org.slf4j" % "slf4j-simple" % slf4jVersion,
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
     "org.mockito" % "mockito-all" % mockitoVersion % "test"
