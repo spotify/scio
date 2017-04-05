@@ -497,7 +497,7 @@ class SCollectionTest extends PipelineSpec {
         r should containInAnyOrder (Seq(1, 2, 3))
       }
     }
-    stdOutMock.message should contain theSameElementsAs Seq("1", "2", "3")
+    stdOutMock.message.filterNot(_ == "\n") should contain theSameElementsAs Seq("1", "2", "3")
   }
 
   it should "support debug to the stdout with prefix" in {
@@ -508,7 +508,8 @@ class SCollectionTest extends PipelineSpec {
         r should containInAnyOrder (Seq(1, 2, 3))
       }
     }
-    stdOutMock.message should contain theSameElementsAs Seq("===1", "===2", "===3")
+    stdOutMock.message.filterNot(_ == "\n") should contain theSameElementsAs
+      Seq("===1", "===2", "===3")
   }
 
   it should "support debug to the stderr" in {
@@ -519,7 +520,7 @@ class SCollectionTest extends PipelineSpec {
         r should containInAnyOrder (Seq(1, 2, 3))
       }
     }
-    stdErrMock.message should contain theSameElementsAs Seq("1", "2", "3")
+    stdErrMock.message.filterNot(_ == "\n") should contain theSameElementsAs Seq("1", "2", "3")
   }
 
   it should "support debug to a file" in {
