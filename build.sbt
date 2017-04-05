@@ -345,7 +345,6 @@ lazy val scioExamples: Project = Project(
   commonSettings ++ noPublishSettings,
   libraryDependencies ++= Seq(
     "org.slf4j" % "slf4j-simple" % slf4jVersion,
-    "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
     "org.mockito" % "mockito-all" % mockitoVersion % "test"
   ),
