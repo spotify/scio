@@ -58,17 +58,17 @@ trait RunEnforcementJobTest extends FlatSpec { this: Suite =>
     // Tests within Suites are executed sequentially, thus we need to clear the tests, if
     // ParallelTestExecution was enabled, clear is obsolete given the OneInstancePerTest
     tests.clear()
-    super.withFixture(test) match {
-      case o if o.isSucceeded =>
-        val notRun = tests.filterNot(_.wasRunInvoked)
-        if (notRun.nonEmpty) {
-          Failed(s"""Did you forget run()?\n${notRun.mkString(start = "Missing run(): ",
-                                                              sep = "\nMissing run(): ",
-                                                              end = "")}""")(
-            test.pos.getOrElse(Position.here))
-        } else {
-          o
-        }
+    val outcome = super.withFixture(test)
+    if (outcome.isSucceeded) {
+      val notRun = tests.filterNot(_.wasRunInvoked)
+      if (notRun.nonEmpty) {
+        val m = notRun.mkString(start = "Missing run(): ", sep = "\nMissing run(): ", end = "")
+        Failed(s"Did you forget run()?\n$m")(test.pos.getOrElse(Position.here))
+      } else {
+        outcome
+      }
+    } else {
+      outcome
     }
   }
 
