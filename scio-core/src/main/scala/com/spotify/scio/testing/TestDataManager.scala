@@ -21,7 +21,8 @@ import com.google.api.services.bigquery.model.TableRow
 import com.google.datastore.v1.{Entity, Query}
 import com.spotify.scio.values.SCollection
 
-import scala.collection.mutable.{Map => MMap, Set => MSet}
+import scala.collection.concurrent.TrieMap
+import scala.collection.mutable.{Set => MSet}
 
 /* Inputs are Scala Iterables to be parallelized for TestPipeline */
 private[scio] class TestInput(val m: Map[TestIO[_], Iterable[_]]) {
@@ -71,10 +72,10 @@ private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {
 
 private[scio] object TestDataManager {
 
-  private val inputs = MMap.empty[String, TestInput]
-  private val outputs = MMap.empty[String, TestOutput]
-  private val distCaches = MMap.empty[String, TestDistCache]
-  private val closed = MMap.empty[String, Boolean]
+  private val inputs = TrieMap.empty[String, TestInput]
+  private val outputs = TrieMap.empty[String, TestOutput]
+  private val distCaches = TrieMap.empty[String, TestDistCache]
+  private val closed = TrieMap.empty[String, Boolean]
 
   def getInput(testId: String): TestInput = inputs(testId)
   def getOutput(testId: String): TestOutput = outputs(testId)
