@@ -90,7 +90,7 @@ object ScioContext {
   def forTest(): ScioContext = {
     val opts = PipelineOptionsFactory
       .fromArgs("--appName=" + TestUtil.newTestId())
-      .as(classOf[ApplicationNameOptions])
+      .as(classOf[PipelineOptions])
     new ScioContext(opts, List[String]())
   }
 
