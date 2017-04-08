@@ -28,7 +28,7 @@ object AvroUtils {
     new Schema.Field(
       name,
       Schema.createUnion(List(Schema.create(Schema.Type.NULL), Schema.create(tpe)).asJava),
-      null, null)
+      null: String, null: AnyRef)
 
   val schema = Schema.createRecord("GenericTestRecord", null, null, false)
   schema.setFields(List(
