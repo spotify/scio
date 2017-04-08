@@ -78,8 +78,8 @@ class ScioResult private[scio] (val internal: PipelineResult,
   }
 
   /**
-   * Wait until the pipeline finishes with the State `Done` (as opposed to `CANCELLED` or
-   * `FAILED`). Throws exception otherwise.
+   * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
+   * `FAILED`). Throw exception otherwise.
    */
   def waitUntilDone(duration: Duration = Duration.Inf): ScioResult = {
     waitUntilFinish(duration)
