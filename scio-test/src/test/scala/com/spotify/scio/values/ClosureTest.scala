@@ -91,6 +91,17 @@ class ClosureTest extends PipelineSpec {
     }
   }
 
+  it should "print readable error message for unserializable fn" in {
+    val thrown = the[IllegalArgumentException] thrownBy
+      runWithContext { sc =>
+        val o = new NotSerializableObj()
+        sc.parallelize(Seq(1, 2, 3))
+          .map(_ * o.x)
+      }
+    thrown.getMessage should startWith(
+      "unable to serialize anonymous function map@{ClosureTest.scala:"
+    )
+  }
 }
 
 object ClosureTest {
@@ -105,4 +116,8 @@ object Foo extends Serializable {
 class Foo extends Serializable {
   val x = 10
   def bar(in: SCollection[Int]): SCollection[Int] = in.map(_ * x)
+}
+
+class NotSerializableObj {
+  val x = 10
 }

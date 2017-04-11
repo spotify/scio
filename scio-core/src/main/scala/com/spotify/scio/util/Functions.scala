@@ -36,7 +36,7 @@ private[scio] object Functions {
 
   private val BUFFER_SIZE = 20
 
-  private abstract class KryoCombineFn[VI, VA, VO] extends CombineFn[VI, VA, VO] {
+  private abstract class KryoCombineFn[VI, VA, VO] extends CombineFn[VI, VA, VO] with NamedFn {
 
     override def getAccumulatorCoder(registry: CoderRegistry, inputCoder: Coder[VI]): Coder[VA] =
       KryoAtomicCoder[VA]
@@ -134,18 +134,18 @@ private[scio] object Functions {
     }
   }
 
-  def serializableFn[T, U](f: T => U): SerializableFunction[T, U] = new SerializableFunction[T, U] {
+  def serializableFn[T, U](f: T => U): SerializableFunction[T, U] = new NamedSerializableFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
     override def apply(input: T): U = g(input)
   }
 
-  def mapFn[T, U](f: T => U): DoFn[T, U] = new DoFn[T, U] {
+  def mapFn[T, U](f: T => U): DoFn[T, U] = new NamedDoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
     @ProcessElement
     private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = c.output(g(c.element()))
   }
 
-  def partitionFn[T](numPartitions: Int, f: T => Int): PartitionFn[T] = new PartitionFn[T] {
+  def partitionFn[T](numPartitions: Int, f: T => Int): PartitionFn[T] = new NamedPartitionFn[T] {
     val g = ClosureCleaner(f)  // defeat closure
     override def partitionFor(elem: T, numPartitions: Int): Int = g(elem)
   }
