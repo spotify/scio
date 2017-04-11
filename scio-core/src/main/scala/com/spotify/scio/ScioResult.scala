@@ -93,7 +93,7 @@ class ScioResult private[scio] (val internal: PipelineResult,
   def isCompleted: Boolean = internal.getState.isTerminal
 
   /** Pipeline's current state. */
-  def state: State = internal.getState
+  def state: State = Try(internal.getState).getOrElse(State.UNKNOWN)
 
   /** Get the total value of an [[com.spotify.scio.values.Accumulator Accumulator]]. */
   def accumulatorTotalValue[T](acc: Accumulator[T]): T = {
