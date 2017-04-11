@@ -23,7 +23,7 @@ import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 
 private[scio] object FunctionsWithSideInput {
 
-  trait SideInputDoFn[T, U] extends DoFn[T, U] {
+  trait SideInputDoFn[T, U] extends NamedDoFn[T, U] {
     private var ctx: SideInputContext[T] = _
     def sideInputContext(c: DoFn[T, U]#ProcessContext): SideInputContext[T] = {
       if (ctx == null || ctx.context != c) {

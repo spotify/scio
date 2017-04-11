@@ -23,7 +23,8 @@ import org.apache.beam.sdk.transforms.{Aggregator, DoFn}
 
 import scala.reflect.ClassTag
 
-abstract private class DoFnWithAccumulator[I, O](acc: Seq[Accumulator[_]]) extends DoFn[I, O] {
+abstract private class DoFnWithAccumulator[I, O](acc: Seq[Accumulator[_]])
+  extends NamedDoFn[I, O] {
   private val m = {
     val b = Map.newBuilder[String, Aggregator[_, _]]
     b ++= acc.map(a => a.name -> this.createAggregator(a.name, a.combineFn))
