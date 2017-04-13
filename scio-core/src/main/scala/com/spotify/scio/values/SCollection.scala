@@ -1063,12 +1063,18 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as a Pub/Sub topic.
    * @group output
    */
-  def saveAsPubsub(topic: String): Future[Tap[T]] = {
+  def saveAsPubsub(topic: String,
+                   formatFn: SimpleFunction[T, gio.PubsubIO.PubsubMessage] = null)
+  : Future[Tap[T]] = {
     if (context.isTest) {
       context.testOut(PubsubIO(topic))(this)
     } else {
       val coder = internal.getPipeline.getCoderRegistry.getScalaCoder[T]
-      this.applyInternal(gio.PubsubIO.write().topic(topic).withCoder(coder))
+      var transform = gio.PubsubIO.write().topic(topic).withCoder(coder)
+      if (formatFn != null) {
+        transform = transform.withAttributes(formatFn)
+      }
+      this.applyInternal(transform)
     }
     Future.failed(new NotImplementedError("Pubsub future not implemented"))
   }

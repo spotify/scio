@@ -46,7 +46,7 @@ import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
+import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform, SimpleFunction}
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{Pipeline, io => gio}
 import org.joda.time.Instant
@@ -591,7 +591,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
    */
   def pubsubSubscription[T: ClassTag](sub: String,
                                       idLabel: String = null,
-                                      timestampLabel: String = null)
+                                      timestampLabel: String = null,
+                                      parseFn: SimpleFunction[gio.PubsubIO.PubsubMessage,T] = null)
   : SCollection[T] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(PubsubIO(sub))
@@ -604,6 +605,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
       if (timestampLabel != null) {
         transform = transform.timestampLabel(timestampLabel)
       }
+      if (parseFn != null) {
+        transform = transform.withAttributes(parseFn)
+      }
       wrap(this.applyInternal(transform)).setName(sub)
     }
   }
@@ -614,7 +618,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
    */
   def pubsubTopic[T: ClassTag](topic: String,
                                idLabel: String = null,
-                               timestampLabel: String = null)
+                               timestampLabel: String = null,
+                               parseFn: SimpleFunction[gio.PubsubIO.PubsubMessage,T] = null)
   : SCollection[T] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(PubsubIO(topic))
@@ -626,6 +631,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
       }
       if (timestampLabel != null) {
         transform = transform.timestampLabel(timestampLabel)
+      }
+      if (parseFn != null) {
+        transform = transform.withAttributes(parseFn)
       }
       wrap(this.applyInternal(transform)).setName(topic)
     }
