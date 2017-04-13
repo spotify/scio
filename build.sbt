@@ -219,6 +219,10 @@ lazy val scioCore: Project = Project(
     "com.google.auto.service" % "auto-service" % autoServiceVersion,
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
     "junit" % "junit" % junitVersion % "provided"
+  ),
+  compileOrder := CompileOrder.JavaThenScala,
+  PB.targets in Compile := Seq(
+    PB.gens.java -> (sourceManaged in Compile).value / "compiled_protobuf"
   )
 ).dependsOn(
   scioBigQuery
