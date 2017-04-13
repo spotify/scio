@@ -1064,7 +1064,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group output
    */
   def saveAsPubsub(topic: String,
-                   formatFn: SimpleFunction[T, gio.PubsubIO.PubsubMessage] = null)
+                   formatFn: T => gio.PubsubIO.PubsubMessage = null)
   : Future[Tap[T]] = {
     if (context.isTest) {
       context.testOut(PubsubIO(topic))(this)
@@ -1072,7 +1072,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       val coder = internal.getPipeline.getCoderRegistry.getScalaCoder[T]
       var transform = gio.PubsubIO.write().topic(topic).withCoder(coder)
       if (formatFn != null) {
-        transform = transform.withAttributes(formatFn)
+        transform = transform.withAttributes(Functions.simpleFn(formatFn))
       }
       this.applyInternal(transform)
     }

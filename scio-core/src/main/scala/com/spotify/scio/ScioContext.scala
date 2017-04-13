@@ -34,7 +34,7 @@ import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io.{TFRecordOptions, TFRecordSource, Tap}
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
-import com.spotify.scio.util.{CallSites, ScioUtil}
+import com.spotify.scio.util.{CallSites, Functions, ScioUtil}
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
@@ -592,7 +592,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   def pubsubSubscription[T: ClassTag](sub: String,
                                       idLabel: String = null,
                                       timestampLabel: String = null,
-                                      parseFn: SimpleFunction[gio.PubsubIO.PubsubMessage,T] = null)
+                                      parseFn: gio.PubsubIO.PubsubMessage => T = null)
   : SCollection[T] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(PubsubIO(sub))
@@ -606,7 +606,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
         transform = transform.timestampLabel(timestampLabel)
       }
       if (parseFn != null) {
-        transform = transform.withAttributes(parseFn)
+        transform = transform.withAttributes(Functions.simpleFn(parseFn))
       }
       wrap(this.applyInternal(transform)).setName(sub)
     }
@@ -619,7 +619,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   def pubsubTopic[T: ClassTag](topic: String,
                                idLabel: String = null,
                                timestampLabel: String = null,
-                               parseFn: SimpleFunction[gio.PubsubIO.PubsubMessage,T] = null)
+                               parseFn: gio.PubsubIO.PubsubMessage => T = null)
   : SCollection[T] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(PubsubIO(topic))
@@ -633,7 +633,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
         transform = transform.timestampLabel(timestampLabel)
       }
       if (parseFn != null) {
-        transform = transform.withAttributes(parseFn)
+        transform = transform.withAttributes(Functions.simpleFn(parseFn))
       }
       wrap(this.applyInternal(transform)).setName(topic)
     }
