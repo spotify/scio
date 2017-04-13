@@ -661,7 +661,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   /**
    * Get an SCollection for a TensorFlow TFRecord file. Note that TFRecord files are not
-   * splittable.
+   * splittable. The recommended record encoding is [[org.tensorflow.example.Example]] protocol
+   * buffers (which contain [[org.tensorflow.example.Features]] as a field) serialized as bytes.
    * @group input
    */
   def tfRecordFile(path: String, tfRecordOptions: TFRecordOptions = TFRecordOptions.readDefault)

@@ -1113,7 +1113,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /**
    * Save this SCollection as a TensorFlow TFRecord file. Note that elements must be of type
-   * `Array[Byte]`.
+   * `Array[Byte]`. The recommended record encoding is [[org.tensorflow.example.Example]] protocol
+   * buffers (which contain [[org.tensorflow.example.Features]] as a field) serialized as bytes.
    * @group output
    */
   def saveAsTfRecordFile(path: String,
