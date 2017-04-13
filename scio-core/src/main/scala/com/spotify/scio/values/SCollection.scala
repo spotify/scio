@@ -42,11 +42,13 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.Coder
+import org.apache.beam.sdk.io.PubsubIO.PubsubMessage
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
+import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.util.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{io => gio}
@@ -1063,12 +1065,35 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as a Pub/Sub topic.
    * @group output
    */
-  def saveAsPubsub(topic: String): Future[Tap[T]] = {
+  def saveAsPubsub(topic: String) : Future[Tap[T]] = {
     if (context.isTest) {
       context.testOut(PubsubIO(topic))(this)
     } else {
       val coder = internal.getPipeline.getCoderRegistry.getScalaCoder[T]
       this.applyInternal(gio.PubsubIO.write().topic(topic).withCoder(coder))
+    }
+    Future.failed(new NotImplementedError("Pubsub future not implemented"))
+  }
+
+  /**
+    * Save this SCollection as a Pub/Sub topic using the given map as message attributes.
+    * @group output
+    */
+  def saveAsPubsubWithAttributes[V: ClassTag](topic: String)
+                                             (implicit ev: T <:< (V, Map[String, String]))
+  : Future[Tap[V]] = {
+    if (context.isTest) {
+      context.testOut(PubsubIO(topic))(this)
+    } else {
+      val elementCoder = internal.getPipeline.getCoderRegistry.getScalaCoder[V]
+      val tupleCoder = internal.getPipeline.getCoderRegistry.getScalaCoder[T]
+      val formatFn = Functions.simpleFn { tuple: T =>
+        val element = CoderUtils.encodeToByteArray(elementCoder, tuple._1)
+        new PubsubMessage(element, tuple._2.asJava)
+      }
+      this.applyInternal(gio.PubsubIO.write().topic(topic)
+        .withAttributes(formatFn)
+        .withCoder(tupleCoder))
     }
     Future.failed(new NotImplementedError("Pubsub future not implemented"))
   }

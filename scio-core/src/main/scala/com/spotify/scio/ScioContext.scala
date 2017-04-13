@@ -34,7 +34,7 @@ import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io.{TFRecordOptions, TFRecordSource, Tap}
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
-import com.spotify.scio.util.{CallSites, ScioUtil}
+import com.spotify.scio.util.{CallSites, Functions, ScioUtil}
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
@@ -42,11 +42,13 @@ import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options._
 import org.apache.beam.sdk.PipelineResult.State
+import org.apache.beam.sdk.io.PubsubIO.PubsubMessage
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
+import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform, SimpleFunction}
+import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{Pipeline, io => gio}
 import org.joda.time.Instant
@@ -609,6 +611,37 @@ class ScioContext private[scio] (val options: PipelineOptions,
   }
 
   /**
+    * Get an SCollection for a Pub/Sub subscription that includes message attributes.
+    * @group input
+    */
+  def pubsubSubscriptionWithAttributes[T: ClassTag](sub: String,
+                                      idLabel: String = null,
+                                      timestampLabel: String = null)
+  : SCollection[(T, Map[String, String])] = requireNotClosed {
+    if (this.isTest) {
+      this.getTestInput(PubsubIO(sub))
+    } else {
+      val elementCoder = pipeline.getCoderRegistry.getScalaCoder[T]
+      val outputCoder  = pipeline.getCoderRegistry.getScalaCoder[(T, Map[String, String])]
+      val parseFn = Functions.simpleFn { msg: PubsubMessage =>
+        val element = CoderUtils.decodeFromByteArray(elementCoder, msg.getMessage)
+        val attributes = msg.getAttributeMap.asScala.toMap
+        (element, attributes)
+      }
+      var transform = gio.PubsubIO.read().subscription(sub)
+        .withAttributes(parseFn)
+        .withCoder(outputCoder)
+      if (idLabel != null) {
+        transform = transform.idLabel(idLabel)
+      }
+      if (timestampLabel != null) {
+        transform = transform.timestampLabel(timestampLabel)
+      }
+      wrap(this.applyInternal(transform)).setName(sub)
+    }
+  }
+
+  /**
    * Get an SCollection for a Pub/Sub topic.
    * @group input
    */
@@ -631,6 +664,36 @@ class ScioContext private[scio] (val options: PipelineOptions,
     }
   }
 
+  /**
+    * Get an SCollection for a Pub/Sub topic that includes message attributes.
+    * @group input
+    */
+  def pubsubTopicWithAttributes[T: ClassTag](topic: String,
+                               idLabel: String = null,
+                               timestampLabel: String = null)
+  : SCollection[(T, Map[String, String])] = requireNotClosed {
+    if (this.isTest) {
+      this.getTestInput(PubsubIO(topic))
+    } else {
+      val elementCoder = pipeline.getCoderRegistry.getScalaCoder[T]
+      val outputCoder  = pipeline.getCoderRegistry.getScalaCoder[(T, Map[String, String])]
+      val parseFn = Functions.simpleFn { msg: PubsubMessage =>
+        val element = CoderUtils.decodeFromByteArray(elementCoder, msg.getMessage)
+        val attributes = msg.getAttributeMap.asScala.toMap
+        (element, attributes)
+      }
+      var transform = gio.PubsubIO.read().topic(topic)
+        .withAttributes(parseFn)
+        .withCoder(outputCoder)
+      if (idLabel != null) {
+        transform = transform.idLabel(idLabel)
+      }
+      if (timestampLabel != null) {
+        transform = transform.timestampLabel(timestampLabel)
+      }
+      wrap(this.applyInternal(transform)).setName(topic)
+    }
+  }
   /**
    * Get an SCollection for a BigQuery TableRow JSON file.
    * @group input
