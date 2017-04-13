@@ -132,6 +132,10 @@ case class ProtobufIO[T](path: String) extends TestIO[T](path)
 
 case class PubsubIO[T](topic: String) extends TestIO[T](topic)
 
+case class CloudSqlIO[T](table: String) extends TestIO[T](table)
+
+case class JdbcIO[T](table: String) extends TestIO[T](table)
+
 case class TableRowJsonIO(path: String) extends TestIO[TableRow](path)
 
 case class TextIO(path: String) extends TestIO[String](path)

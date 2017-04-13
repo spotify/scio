@@ -198,6 +198,7 @@ lazy val root: Project = Project(
   scioBigtable,
   scioExtra,
   scioHdfs,
+  scioJdbc,
   scioRepl,
   scioExamples,
   scioSchemas
@@ -368,6 +369,7 @@ lazy val scioExamples: Project = Project(
   scioBigtable,
   scioSchemas,
   scioHdfs,
+  scioJdbc,
   scioTest % "test"
 )
 
@@ -406,6 +408,20 @@ lazy val scioBench: Project = Project(
   logBuffered := false
 ).dependsOn(
   scioExtra
+)
+
+lazy val scioJdbc: Project = Project(
+  "scio-jdbc",
+  file("scio-jdbc")
+).settings(
+  commonSettings,
+  description := "Scio add-on for JDBC",
+  libraryDependencies ++= Seq(
+    "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion
+  )
+).dependsOn(
+  scioCore,
+  scioTest % "test"
 )
 
 // =======================================================================
