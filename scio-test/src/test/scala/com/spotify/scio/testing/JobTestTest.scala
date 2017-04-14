@@ -351,7 +351,19 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
-    } should have message "requirement failed: Missing test input: TextIO(in.txt)"
+    } should have message "requirement failed: Missing test input: TextIO(in.txt), available: []"
+  }
+
+  it should "fail misspelled test input" in {
+    the [IllegalArgumentException] thrownBy {
+      JobTest[DistCacheJob.type]
+        .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
+        .input(TextIO("bad-in.txt"), Seq("a", "b"))
+        .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
+        .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .run()
+    } should have message
+      "requirement failed: Missing test input: TextIO(in.txt), available: [TextIO(bad-in.txt)]"
   }
 
   it should "fail unmatched test input" in {
@@ -385,7 +397,20 @@ class JobTestTest extends PipelineSpec {
         .input(TextIO("in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .run()
-    } should have message "requirement failed: Missing test output: TextIO(out.txt)"
+    } should have message "requirement failed: Missing test output: TextIO(out.txt), available: []"
+  }
+
+  it should "fail misspelled test output" in {
+    the [IllegalArgumentException] thrownBy {
+      JobTest[DistCacheJob.type]
+        .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
+        .input(TextIO("in.txt"), Seq("a", "b"))
+        .output[String](TextIO("bad-out.txt"))(
+          _ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
+        .run()
+    } should have message
+      "requirement failed: Missing test output: TextIO(out.txt), available: [TextIO(bad-out.txt)]"
   }
 
   it should "fail unmatched test output" in {
@@ -419,7 +444,21 @@ class JobTestTest extends PipelineSpec {
         .input(TextIO("in.txt"), Seq("a", "b"))
         .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
-    } should have message "requirement failed: Missing test dist cache: DistCacheIO(dc.txt)"
+    } should have message
+      "requirement failed: Missing test dist cache: DistCacheIO(dc.txt), available: []"
+  }
+
+  it should "fail misspelled test dist cache" in {
+    the [IllegalArgumentException] thrownBy {
+      JobTest[DistCacheJob.type]
+        .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
+        .input(TextIO("in.txt"), Seq("a", "b"))
+        .distCache(DistCacheIO("bad-dc.txt"), Seq("1", "2"))
+        .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .run()
+    } should have message
+      "requirement failed: Missing test dist cache: DistCacheIO(dc.txt), available: " +
+        "[DistCacheIO(bad-dc.txt)]"
   }
 
   it should "fail unmatched test dist cache" in {
@@ -479,6 +518,15 @@ class JobTestTest extends PipelineSpec {
     }
   }
 
+  class JobTestFromString extends PipelineSpec {
+    "JobTestFromString" should "work" in {
+      JobTest("com.spotify.scio.testing.ObjectFileJob")
+        .args("--input=in.avro", "--output=out.avro")
+        .input(ObjectFileIO("in.avro"), Seq(1, 2, 3))
+        .output[Int](ObjectFileIO("out.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
+    }
+  }
+
   class MultiJobTest extends PipelineSpec {
     "MultiJobTest" should "work" in {
       JobTest[ObjectFileJob.type]
@@ -492,15 +540,6 @@ class JobTestTest extends PipelineSpec {
         .args("--input=in2.avro", "--output=out2.avro")
         .input(ObjectFileIO("in2.avro"), Seq(1, 2, 3))
         .output[Int](ObjectFileIO("out2.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
-    }
-  }
-
-  class JobTestFromString extends PipelineSpec {
-    "JobTestFromString" should "work" in {
-      JobTest("com.spotify.scio.testing.ObjectFileJob")
-        .args("--input=in.avro", "--output=out.avro")
-        .input(ObjectFileIO("in.avro"), Seq(1, 2, 3))
-        .output[Int](ObjectFileIO("out.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
     }
   }
 
@@ -533,26 +572,27 @@ class JobTestTest extends PipelineSpec {
     stdOutMock.message.mkString("") should include regex runMissedMessage
   }
 
-  // scalastyle:off line.contains.tab
-  // scalastyle:off line.size.limit
   it should "enforce run() on multi JobTest" in {
     val stdOutMock = new MockedPrintStream
     Console.withOut(stdOutMock) {
       new MultiJobTest().execute("MultiJobTest should work", color = false)
     }
-    stdOutMock.message.mkString("") should include regex """|- should work \*\*\* FAILED \*\*\*
-                                                            |  Did you forget run\(\)\?
-                                                            |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
-                                                            |  	args: --input=in.avro --output=out.avro
-                                                            |  	distCache: Map\(\)
-                                                            |  	inputs: ObjectFileIO\(in.avro\) -> List\(1, 2, 3\)
-                                                            |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
-                                                            |  	args: --input=in2.avro --output=out2.avro
-                                                            |  	distCache: Map\(\)
-                                                            |  	inputs: ObjectFileIO\(in2.avro\) -> List\(1, 2, 3\) \(JobTestTest.scala:.*\)""".stripMargin
+    // scalastyle:off line.contains.tab
+    // scalastyle:off line.size.limit
+    val msg = """|- should work \*\*\* FAILED \*\*\*
+                 |  Did you forget run\(\)\?
+                 |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
+                 |  	args: --input=in.avro --output=out.avro
+                 |  	distCache: Map\(\)
+                 |  	inputs: ObjectFileIO\(in.avro\) -> List\(1, 2, 3\)
+                 |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
+                 |  	args: --input=in2.avro --output=out2.avro
+                 |  	distCache: Map\(\)
+                 |  	inputs: ObjectFileIO\(in2.avro\) -> List\(1, 2, 3\) \(JobTestTest.scala:.*\)""".stripMargin
+    // scalastyle:on line.size.limit
+    // scalastyle:on line.contains.tab
+    stdOutMock.message.mkString("") should include regex msg
   }
-  // scalastyle:on line.size.limit
-  // scalastyle:on line.contains.tab
 
   it should "enforce run() on JobTest from string class" in {
     val stdOutMock = new MockedPrintStream

@@ -125,22 +125,14 @@ object JobTest {
      * Set up test wiring. Use this only if you have custom pipeline wiring and are bypassing
      * [[run]]. Make sure [[tearDown]] is called afterwards.
      */
-    def setUp(): Unit = {
-      TestDataManager.setInput(testId, new TestInput(state.inputs))
-      TestDataManager.setOutput(testId, new TestOutput(state.outputs))
-      TestDataManager.setDistCache(testId, new TestDistCache(state.distCaches))
-    }
+    def setUp(): Unit =
+      TestDataManager.setup(testId, state.inputs, state.outputs, state.distCaches)
 
     /**
      * Tear down test wiring. Use this only if you have custom pipeline wiring and are bypassing
      * [[run]]. Make sure [[setUp]] is called before.
      */
-    def tearDown(): Unit = {
-      TestDataManager.unsetInput(testId)
-      TestDataManager.unsetOutput(testId)
-      TestDataManager.unsetDistCache(testId)
-      TestDataManager.ensureClosed(testId)
-    }
+    def tearDown(): Unit = TestDataManager.tearDown(testId)
 
     /** Run the pipeline with test wiring. */
     def run(): Unit = {
