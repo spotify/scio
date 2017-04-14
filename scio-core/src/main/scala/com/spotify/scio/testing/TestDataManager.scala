@@ -110,7 +110,10 @@ private[scio] object TestDataManager {
 
 /* For matching IO types */
 
-class TestIO[+T] private[scio] (val key: String)
+class TestIO[+T] private[scio] (val key: String) {
+  require(key != null, s"$this has null key")
+  require(!key.isEmpty, s"$this has empty string key")
+}
 
 case class ObjectFileIO[T](path: String) extends TestIO[T](path)
 
@@ -119,7 +122,7 @@ case class AvroIO[T](path: String) extends TestIO[T](path)
 case class BigQueryIO(tableSpecOrQuery: String) extends TestIO[TableRow](tableSpecOrQuery)
 
 case class DatastoreIO(projectId: String, query: Query = null, namespace: String = null)
-  extends TestIO[Entity](s"$projectId\t$query\t$namespace")
+  extends TestIO[Entity](projectId)
 
 case class ProtobufIO[T](path: String) extends TestIO[T](path)
 
