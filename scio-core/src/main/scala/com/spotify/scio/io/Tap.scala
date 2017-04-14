@@ -25,6 +25,7 @@ import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
+import com.twitter.chill.Externalizer
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 
@@ -34,7 +35,7 @@ import scala.reflect.ClassTag
  * Placeholder to an external data set that can either be load into memory as an iterator or
  * opened in a new [[ScioContext]] as an [[com.spotify.scio.values.SCollection SCollection]].
  */
-trait Tap[T] { self =>
+trait Tap[T] extends Serializable { self =>
 
   /** Parent of this Tap before [[map]]. */
   val parent: Option[Tap[_]] = None
@@ -71,9 +72,11 @@ case class TextTap(path: String) extends Tap[String] {
  * @param schema must be not null if `T` is of type
  *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
  */
-case class AvroTap[T: ClassTag](path: String, schema: Schema = null) extends Tap[T] {
-  override def value: Iterator[T] = FileStorage(path).avroFile(schema)
-  override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path, schema)
+case class AvroTap[T: ClassTag](path: String,
+                                @transient private val schema: Schema = null) extends Tap[T] {
+  private lazy val s = Externalizer(schema)
+  override def value: Iterator[T] = FileStorage(path).avroFile(s.get)
+  override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path, s.get)
 }
 
 /** Tap for BigQuery TableRow JSON files on local file system or GCS. */

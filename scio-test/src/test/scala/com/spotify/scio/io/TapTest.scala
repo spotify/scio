@@ -30,6 +30,7 @@ import com.spotify.scio.proto.SimpleV3.{SimplePB => SimplePBV3}
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
+import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.{FileUtils, IOUtils}
 
@@ -39,6 +40,7 @@ import scala.reflect.ClassTag
 
 trait TapSpec extends PipelineSpec {
   def verifyTap[T: ClassTag](tap: Tap[T], expected: Set[T]): Unit = {
+    SerializableUtils.ensureSerializable(tap)
     tap.value.toSet should equal (expected)
     val sc = ScioContext()
     tap.open(sc) should containInAnyOrder (expected)
