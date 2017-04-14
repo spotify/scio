@@ -28,13 +28,15 @@ import scala.collection.mutable.{Set => MSet}
 private[scio] class TestInput(val m: Map[TestIO[_], Iterable[_]]) {
   val s: MSet[TestIO[_]] = MSet.empty
   def apply[T](key: TestIO[T]): Iterable[T] = {
-    require(m.contains(key), "Missing test input: " + key)
+    require(
+      m.contains(key),
+      s"Missing test input: $key, available: ${m.keys.mkString("[", ", ", "]")}")
     s.add(key)
     m(key).asInstanceOf[Iterable[T]]
   }
   def validate(): Unit = {
     val d = m.keySet -- s
-    require(d.isEmpty, "Unmatched test input: " + d.mkString(" "))
+    require(d.isEmpty, "Unmatched test input: " + d.mkString(", "))
   }
 }
 
@@ -46,27 +48,31 @@ private[scio] class TestOutput(val m: Map[TestIO[_], SCollection[_] => Unit]) {
       // dummy matcher for materialize output
       _ => Unit
     } else {
-      require(m.contains(key), "Missing test output: " + key)
+      require(
+        m.contains(key),
+        s"Missing test output: $key, available: ${m.keys.mkString("[", ", ", "]")}")
       s.add(key)
       m(key)
     }
   }
   def validate(): Unit = {
     val d = m.keySet -- s
-    require(d.isEmpty, "Unmatched test output: " + d.mkString(" "))
+    require(d.isEmpty, "Unmatched test output: " + d.mkString(", "))
   }
 }
 
 private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {
   val s: MSet[DistCacheIO[_]] = MSet.empty
   def apply[T](key: DistCacheIO[T]): T = {
-    require(m.contains(key), "Missing test dist cache: " + key)
+    require(
+      m.contains(key),
+      s"Missing test dist cache: $key, available: ${m.keys.mkString("[", ", ", "]")}")
     s.add(key)
     m(key).asInstanceOf[T]
   }
   def validate(): Unit = {
     val d = m.keySet -- s
-    require(d.isEmpty, "Unmatched test dist cache: " + d.mkString(" "))
+    require(d.isEmpty, "Unmatched test dist cache: " + d.mkString(", "))
   }
 }
 
@@ -81,22 +87,20 @@ private[scio] object TestDataManager {
   def getOutput(testId: String): TestOutput = outputs(testId)
   def getDistCache(testId: String): TestDistCache = distCaches(testId)
 
-  def setInput(testId: String, input: TestInput): Unit = inputs += (testId -> input)
-  def setOutput(testId: String, output: TestOutput): Unit = outputs += (testId -> output)
-  def setDistCache(testId: String, distCache: TestDistCache): Unit =
-    distCaches += (testId -> distCache)
+  def setup(testId: String,
+            ins: Map[TestIO[_], Iterable[_]],
+            outs: Map[TestIO[_], SCollection[_] => Unit],
+            dcs: Map[DistCacheIO[_], _]): Unit = {
+    inputs += (testId -> new TestInput(ins))
+    outputs += (testId -> new TestOutput(outs))
+    distCaches += (testId -> new TestDistCache(dcs))
+  }
 
-  def unsetInput(testId: String): Unit = {
-    inputs(testId).validate()
-    inputs -= testId
-  }
-  def unsetOutput(testId: String): Unit = {
-    outputs(testId).validate()
-    outputs -= testId
-  }
-  def unsetDistCache(testId: String): Unit = {
-    distCaches(testId).validate()
-    distCaches -= testId
+  def tearDown(testId: String): Unit = {
+    inputs.remove(testId).get.validate()
+    outputs.remove(testId).get.validate()
+    distCaches.remove(testId).get.validate()
+    ensureClosed(testId)
   }
 
   def startTest(testId: String): Unit = closed(testId) = false
