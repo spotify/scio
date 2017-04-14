@@ -570,5 +570,43 @@ class JobTestTest extends PipelineSpec {
     stdOutMock.message.mkString("") shouldNot include regex runMissedMessage
   }
 
+  // =======================================================================
+  // Test invalid TestIO
+  // =======================================================================
+
+  "TestIO" should "not allow null keys" in {
+    def test[T](testIO: => TestIO[T], repr: String): Unit = {
+      the [IllegalArgumentException] thrownBy {
+        testIO
+      } should have message s"requirement failed: $repr has null key"
+    }
+    test(ObjectFileIO(null), "ObjectFileIO(null)")
+    test(AvroIO(null), "AvroIO(null)")
+    test(BigQueryIO(null), "BigQueryIO(null)")
+    test(DatastoreIO(null), "DatastoreIO(null,null,null)")
+    test(ProtobufIO(null), "ProtobufIO(null)")
+    test(PubsubIO(null), "PubsubIO(null)")
+    test(TableRowJsonIO(null), "TableRowJsonIO(null)")
+    test(TextIO(null), "TextIO(null)")
+    test(TFRecordIO(null), "TFRecordIO(null)")
+  }
+
+  it should "not allow empty keys" in {
+    def test[T](testIO: => TestIO[T], repr: String): Unit = {
+      the [IllegalArgumentException] thrownBy {
+        testIO
+      } should have message s"requirement failed: $repr has empty string key"
+    }
+    test(ObjectFileIO(""), "ObjectFileIO()")
+    test(AvroIO(""), "AvroIO()")
+    test(BigQueryIO(""), "BigQueryIO()")
+    test(DatastoreIO(""), "DatastoreIO(,null,null)")
+    test(ProtobufIO(""), "ProtobufIO()")
+    test(PubsubIO(""), "PubsubIO()")
+    test(TableRowJsonIO(""), "TableRowJsonIO()")
+    test(TextIO(""), "TextIO()")
+    test(TFRecordIO(""), "TFRecordIO()")
+  }
+
 }
 // scalastyle:on no.whitespace.before.left.bracket
