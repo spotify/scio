@@ -29,6 +29,7 @@ import com.google.common.hash.Hashing
 import com.spotify.scio.io.{Tap, Taps}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.{DistCache, SCollection}
+import com.twitter.chill.Externalizer
 import org.apache.avro.Schema
 import org.apache.avro.mapred.AvroOutputFormat
 import org.apache.beam.sdk.coders.AvroCoder
@@ -279,20 +280,16 @@ package object hdfs {
 
   /** Tap for text files on HDFS. */
   case class HdfsTextTap(path: String) extends Tap[String] {
-
     override def value: Iterator[String] = HdfsFileStorage(path).textFile
-
     override def open(sc: ScioContext): SCollection[String] = sc.hdfsTextFile(path + "/part-*")
-
   }
 
   /** Tap for Avro files on HDFS. */
-  case class HdfsAvroTap[T: ClassTag](path: String, schema: Schema = null) extends Tap[T] {
-
+  case class HdfsAvroTap[T: ClassTag](path: String,
+                                      @transient private val schema: Schema = null) extends Tap[T] {
+    private lazy val s = Externalizer(schema)
     override def value: Iterator[T] = HdfsFileStorage(path).avroFile()
-
     override def open(sc: ScioContext): SCollection[T] = sc.hdfsAvroFile[T](path, schema)
-
   }
 
   private object HdfsUtil {
