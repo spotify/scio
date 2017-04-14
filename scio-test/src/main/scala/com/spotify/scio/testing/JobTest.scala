@@ -75,7 +75,8 @@ object JobTest {
 
     /** Test ID for input and output wiring. */
     val testId: String = TestUtil.newTestId(state.className)
-    def wasRunInvoked: Boolean = state.wasRunInvoked
+
+    private[testing] def wasRunInvoked: Boolean = state.wasRunInvoked
 
     /** Feed command line arguments to the pipeline being tested. */
     def args(newArgs: String*): Builder = {
