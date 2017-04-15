@@ -47,7 +47,7 @@ import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform, SimpleFunction}
+import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{Pipeline, io => gio}
