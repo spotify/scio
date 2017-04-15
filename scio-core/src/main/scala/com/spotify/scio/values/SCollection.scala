@@ -1065,7 +1065,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as a Pub/Sub topic.
    * @group output
    */
-  def saveAsPubsub(topic: String) : Future[Tap[T]] = {
+  def saveAsPubsub(topic: String): Future[Tap[T]] = {
     if (context.isTest) {
       context.testOut(PubsubIO(topic))(this)
     } else {
