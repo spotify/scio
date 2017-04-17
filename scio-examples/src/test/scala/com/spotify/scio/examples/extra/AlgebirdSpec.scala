@@ -270,7 +270,6 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
     forAll { xs: SColl[String] =>
       val width = BloomFilter.optimalWidth(1000, 0.01).get
       val numHashes = BloomFilter.optimalNumHashes(1000, width)
-      val m = BloomFilter[String](1000, 0.01)
       val bf = xs.aggregate(BloomFilterAggregator(numHashes, width))
       // BF should test positive for all members
       xs.internal.forall(bf.contains(_).isTrue)
