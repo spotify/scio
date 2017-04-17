@@ -75,11 +75,10 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
    *
    * @return map of side output to [[SCollection]]
    */
-  private[values] def transformWithSideOutputs(sideOutputs: Seq[SideOutput[T]],
-                                             f: (T, SideInputContext[T]) => SideOutput[T],
-                                             mainOutput: SideOutput[T] = null)
+  private[values] def transformWithSideOutputs(sideOutputs: Seq[SideOutput[T]])
+                                              (f: (T, SideInputContext[T]) => SideOutput[T])
   : Map[SideOutput[T], SCollection[T]] = {
-    val _mainTag = Option(mainOutput).getOrElse(SideOutput[T]())
+    val _mainTag = SideOutput[T]()
     val tagToSide = sideOutputs.map(e => e.tupleTag.getId -> e).toMap +
       (_mainTag.tupleTag.getId -> _mainTag)
 

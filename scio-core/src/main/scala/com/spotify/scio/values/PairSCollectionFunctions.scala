@@ -323,26 +323,25 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     val keyCMS = cms.asIterableSideInput
 
     val partitionedSelf = self
-      .withSideInputs(keyCMS).transformWithSideOutputs(Seq(hotSelf, chillSelf), (e, c) =>
-        if (c(keyCMS).nonEmpty &&
-            c(keyCMS).head.frequency(e._1).estimate >= hotKeyThreshold) {
+      .withSideInputs(keyCMS)
+      .transformWithSideOutputs(Seq(hotSelf, chillSelf)) { (e, c) =>
+        if (c(keyCMS).nonEmpty && c(keyCMS).head.frequency(e._1).estimate >= hotKeyThreshold) {
           hotSelf
         } else {
           chillSelf
         }
-    )
+      }
 
     val (hotThat, chillThat) = (SideOutput[(K, W)](), SideOutput[(K, W)]())
     val partitionedThat = that
       .withSideInputs(keyCMS)
-      .transformWithSideOutputs(Seq(hotThat, chillThat), (e, c) =>
-        if (c(keyCMS).nonEmpty &&
-            c(keyCMS).head.frequency(e._1).estimate >= hotKeyThreshold) {
+      .transformWithSideOutputs(Seq(hotThat, chillThat)) { (e, c) =>
+        if (c(keyCMS).nonEmpty && c(keyCMS).head.frequency(e._1).estimate >= hotKeyThreshold) {
           hotThat
         } else {
           chillThat
         }
-      )
+      }
 
     // Use hash join for hot keys
     val hotJoined = partitionedSelf(hotSelf).hashJoin(partitionedThat(hotThat))
