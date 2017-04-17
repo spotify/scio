@@ -1089,7 +1089,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     * Save this SCollection as a Pub/Sub topic using the given map as message attributes.
     * @group output
     */
-  def saveAsPubsubWithAttributes[V: ClassTag](topic: String)
+  def saveAsPubsubWithAttributes[V: ClassTag](topic: String,
+                                              idLabel: String = null,
+                                              timestampLabel: String = null)
                                              (implicit ev: T <:< (V, Map[String, String]))
   : Future[Tap[V]] = {
     if (context.isTest) {
@@ -1101,9 +1103,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         val element = CoderUtils.encodeToByteArray(elementCoder, tuple._1)
         new PubsubMessage(element, tuple._2.asJava)
       }
-      this.applyInternal(gio.PubsubIO.write().topic(topic)
+      var transform = gio.PubsubIO.write().topic(topic)
         .withAttributes(formatFn)
-        .withCoder(tupleCoder))
+        .withCoder(tupleCoder)
+      if (idLabel != null) {
+        transform = transform.idLabel(idLabel)
+      }
+      if (timestampLabel != null) {
+        transform = transform.timestampLabel(timestampLabel)
+      }
+      this.applyInternal(transform)
     }
     Future.failed(new NotImplementedError("Pubsub future not implemented"))
   }
