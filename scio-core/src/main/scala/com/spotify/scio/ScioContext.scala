@@ -587,6 +587,32 @@ class ScioContext private[scio] (val options: PipelineOptions,
       }
     }
 
+  private def pubsubIn[T: ClassTag](isSubscription: Boolean,
+                                    name: String,
+                                    idLabel: String,
+                                    timestampLabel: String)
+  : SCollection[T] = requireNotClosed {
+    if (this.isTest) {
+      this.getTestInput(PubsubIO(name))
+    } else {
+      val coder = pipeline.getCoderRegistry.getScalaCoder[T]
+      var transform =
+        if (isSubscription) {
+          gio.PubsubIO.read().subscription(name).withCoder(coder)
+        } else {
+          gio.PubsubIO.read().topic(name).withCoder(coder)
+        }
+
+      if (idLabel != null) {
+        transform = transform.idLabel(idLabel)
+      }
+      if (timestampLabel != null) {
+        transform = transform.timestampLabel(timestampLabel)
+      }
+      wrap(this.applyInternal(transform)).setName(name)
+    }
+  }
+
   /**
    * Get an SCollection for a Pub/Sub subscription.
    * @group input
@@ -594,19 +620,48 @@ class ScioContext private[scio] (val options: PipelineOptions,
   def pubsubSubscription[T: ClassTag](sub: String,
                                       idLabel: String = null,
                                       timestampLabel: String = null)
-  : SCollection[T] = requireNotClosed {
+  : SCollection[T] = pubsubIn(isSubscription = true, sub, idLabel, timestampLabel)
+
+  /**
+    * Get an SCollection for a Pub/Sub topic.
+    * @group input
+    */
+  def pubsubTopic[T: ClassTag](topic: String,
+                               idLabel: String = null,
+                               timestampLabel: String = null)
+  : SCollection[T] = pubsubIn(isSubscription = false, topic, idLabel, timestampLabel)
+
+  private def pubsubInWithAttributes[T: ClassTag](isSubscription: Boolean,
+                                                  name: String,
+                                                  idLabel: String,
+                                                  timestampLabel: String)
+  : SCollection[(T, Map[String, String])] = requireNotClosed {
     if (this.isTest) {
-      this.getTestInput(PubsubIO(sub))
+      this.getTestInput(PubsubIO(name))
     } else {
-      val coder = pipeline.getCoderRegistry.getScalaCoder[T]
-      var transform = gio.PubsubIO.read().subscription(sub).withCoder(coder)
+      val elementCoder = pipeline.getCoderRegistry.getScalaCoder[T]
+      val outputCoder  = pipeline.getCoderRegistry.getScalaCoder[(T, Map[String, String])]
+      val parseFn = Functions.simpleFn { msg: PubsubMessage =>
+        val element = CoderUtils.decodeFromByteArray(elementCoder, msg.getMessage)
+        val attributes = msg.getAttributeMap.asScala.toMap
+        (element, attributes)
+      }
+      val input: gio.PubsubIO.Read[(T, Map[String, String])] =
+        if (isSubscription) {
+          gio.PubsubIO.read().subscription(name)
+        } else {
+          gio.PubsubIO.read().topic(name)
+        }
+      var transform = input
+        .withAttributes(parseFn)
+        .withCoder(outputCoder)
       if (idLabel != null) {
         transform = transform.idLabel(idLabel)
       }
       if (timestampLabel != null) {
         transform = transform.timestampLabel(timestampLabel)
       }
-      wrap(this.applyInternal(transform)).setName(sub)
+      wrap(this.applyInternal(transform)).setName(name)
     }
   }
 
@@ -615,54 +670,10 @@ class ScioContext private[scio] (val options: PipelineOptions,
     * @group input
     */
   def pubsubSubscriptionWithAttributes[T: ClassTag](sub: String,
-                                      idLabel: String = null,
-                                      timestampLabel: String = null)
-  : SCollection[(T, Map[String, String])] = requireNotClosed {
-    if (this.isTest) {
-      this.getTestInput(PubsubIO(sub))
-    } else {
-      val elementCoder = pipeline.getCoderRegistry.getScalaCoder[T]
-      val outputCoder  = pipeline.getCoderRegistry.getScalaCoder[(T, Map[String, String])]
-      val parseFn = Functions.simpleFn { msg: PubsubMessage =>
-        val element = CoderUtils.decodeFromByteArray(elementCoder, msg.getMessage)
-        val attributes = msg.getAttributeMap.asScala.toMap
-        (element, attributes)
-      }
-      var transform = gio.PubsubIO.read().subscription(sub)
-        .withAttributes(parseFn)
-        .withCoder(outputCoder)
-      if (idLabel != null) {
-        transform = transform.idLabel(idLabel)
-      }
-      if (timestampLabel != null) {
-        transform = transform.timestampLabel(timestampLabel)
-      }
-      wrap(this.applyInternal(transform)).setName(sub)
-    }
-  }
-
-  /**
-   * Get an SCollection for a Pub/Sub topic.
-   * @group input
-   */
-  def pubsubTopic[T: ClassTag](topic: String,
-                               idLabel: String = null,
-                               timestampLabel: String = null)
-  : SCollection[T] = requireNotClosed {
-    if (this.isTest) {
-      this.getTestInput(PubsubIO(topic))
-    } else {
-      val coder = pipeline.getCoderRegistry.getScalaCoder[T]
-      var transform = gio.PubsubIO.read().topic(topic).withCoder(coder)
-      if (idLabel != null) {
-        transform = transform.idLabel(idLabel)
-      }
-      if (timestampLabel != null) {
-        transform = transform.timestampLabel(timestampLabel)
-      }
-      wrap(this.applyInternal(transform)).setName(topic)
-    }
-  }
+                                                    idLabel: String = null,
+                                                    timestampLabel: String = null)
+  : SCollection[(T, Map[String, String])] =
+    pubsubInWithAttributes(isSubscription = true, sub, idLabel, timestampLabel)
 
   /**
     * Get an SCollection for a Pub/Sub topic that includes message attributes.
@@ -671,29 +682,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
   def pubsubTopicWithAttributes[T: ClassTag](topic: String,
                                idLabel: String = null,
                                timestampLabel: String = null)
-  : SCollection[(T, Map[String, String])] = requireNotClosed {
-    if (this.isTest) {
-      this.getTestInput(PubsubIO(topic))
-    } else {
-      val elementCoder = pipeline.getCoderRegistry.getScalaCoder[T]
-      val outputCoder  = pipeline.getCoderRegistry.getScalaCoder[(T, Map[String, String])]
-      val parseFn = Functions.simpleFn { msg: PubsubMessage =>
-        val element = CoderUtils.decodeFromByteArray(elementCoder, msg.getMessage)
-        val attributes = msg.getAttributeMap.asScala.toMap
-        (element, attributes)
-      }
-      var transform = gio.PubsubIO.read().topic(topic)
-        .withAttributes(parseFn)
-        .withCoder(outputCoder)
-      if (idLabel != null) {
-        transform = transform.idLabel(idLabel)
-      }
-      if (timestampLabel != null) {
-        transform = transform.timestampLabel(timestampLabel)
-      }
-      wrap(this.applyInternal(transform)).setName(topic)
-    }
-  }
+  : SCollection[(T, Map[String, String])] =
+    pubsubInWithAttributes(isSubscription = false, topic, idLabel, timestampLabel)
+
   /**
    * Get an SCollection for a BigQuery TableRow JSON file.
    * @group input
