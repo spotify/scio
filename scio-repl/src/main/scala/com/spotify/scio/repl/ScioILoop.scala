@@ -169,7 +169,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
   private def optsFromArgs(args: Seq[String]): String = {
     val factory = "org.apache.beam.sdk.options.PipelineOptionsFactory"
     val options = "org.apache.beam.runners.dataflow.options.DataflowPipelineOptions"
-    val argsStr = args.mkString(",")
+    val argsStr = args.mkString("\"", "\", \"", "\"")
     s"""$factory.fromArgs($argsStr).as(classOf[$options])"""
   }
 
