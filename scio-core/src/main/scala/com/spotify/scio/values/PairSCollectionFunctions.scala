@@ -224,7 +224,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   }
 
   /**
-   * N to 1 skewproof flavor of [[join]].
+   * N to 1 skew-proof flavor of [[join]].
    *
    * Perform a skewed join where some keys on the left hand may be hot, i.e. appear more than
    * `hotKeyThreshold` times. Frequency of a key is estimated with `1 - delta` probability, and the
@@ -285,7 +285,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   }
 
   /**
-   * N to 1 skewproof flavor of [[join]].
+   * N to 1 skew-proof flavor of [[join]].
    *
    * Perform a skewed join where some keys on the left hand may be hot, i.e. appear more than
    * `hotKeyThreshold` times. Frequency of a key is estimated with `1 - delta` probability, and the
