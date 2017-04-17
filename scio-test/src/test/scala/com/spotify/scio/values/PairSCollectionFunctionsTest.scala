@@ -486,8 +486,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
       val p = p1.skewedJoin(p2, Long.MaxValue, skewEps, skewSeed)
-      p should
-        containInAnyOrder (Seq(("a", (1, 11)), ("b", (2, 12)), ("b", (2, 13))))
+      p should containInAnyOrder (Seq(("a", (1, 11)), ("b", (2, 12)), ("b", (2, 13))))
     }
   }
 
@@ -497,11 +496,11 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
       val p = p1.skewedJoin(p2, Long.MaxValue, skewEps, skewSeed)
-      p should
-        containInAnyOrder (Seq( ("a", (1, 11)),
-                                ("a", (2, 11)),
-                                ("b", (3, 12)),
-                                ("b", (3, 13))))
+      p should containInAnyOrder (Seq(
+        ("a", (1, 11)),
+        ("a", (2, 11)),
+        ("b", (3, 12)),
+        ("b", (3, 13))))
     }
   }
 
@@ -512,11 +511,11 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
       // set threshold to 2, to hash join on "a"
       val p = p1.skewedJoin(p2, 2, skewEps, skewSeed)
-      p should
-        containInAnyOrder (Seq( ("a", (1, 11)),
-                                ("a", (2, 11)),
-                                ("b", (3, 12)),
-                                ("b", (3, 13))))
+      p should containInAnyOrder (Seq(
+        ("a", (1, 11)),
+        ("a", (2, 11)),
+        ("b", (3, 12)),
+        ("b", (3, 13))))
     }
   }
 
@@ -528,12 +527,12 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
 
       // set threshold to 3, given 0.5 fraction for sample - "a" should not be hash joined
       val p = p1.skewedJoin(p2, 3, skewEps, skewSeed, sampleFraction = 0.5)
-      p should
-        containInAnyOrder (Seq( ("a", (1, 11)),
-                                ("a", (2, 11)),
-                                ("a", (3, 11)),
-                                ("b", (3, 12)),
-                                ("b", (3, 13))))
+      p should containInAnyOrder (Seq(
+        ("a", (1, 11)),
+        ("a", (2, 11)),
+        ("a", (3, 11)),
+        ("b", (3, 12)),
+        ("b", (3, 13))))
     }
   }
 
@@ -545,9 +544,21 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
 
       // set threshold to 3, given 0.5 fraction for sample - "a" should not be hash joined
       val p = p1.skewedJoin(p2, 3, skewEps, skewSeed, sampleFraction = 0.01)
-      p should
-        containInAnyOrder (Seq(("a", (2, 11)),
-                               ("a", (1, 11))))
+      p should containInAnyOrder (Seq(("a", (2, 11)), ("a", (1, 11))))
+    }
+  }
+
+  it should "support sparseOuterJoin()" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
+      val p2 = sc.parallelize(Seq(("a", 11), ("d", 5)))
+      val p = p1.sparseOuterJoin(p2, 10)
+      p should containInAnyOrder (Seq(
+        ("a", (Some(1), Some(11))),
+        ("a", (Some(2), Some(11))),
+        ("b", (Some(3), None)),
+        ("c", (Some(4), None)),
+        ("d", (None, Some(5)))))
     }
   }
 

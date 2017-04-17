@@ -23,8 +23,8 @@ import java.util.{Map => JMap}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
-import com.twitter.algebird.{Aggregator, _}
-import org.apache.beam.sdk.transforms._
+import com.twitter.algebird._
+import org.apache.beam.sdk.transforms.{Aggregator => _, _}
 import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
 
 import scala.reflect.ClassTag
@@ -240,7 +240,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * val p = logs.skewedJoin(logMetadata, hotKeyThreshold = 8500, eps=0.0005, seed=1)
    * }}}
    *
-   * Read more about CMS -> [[com.twitter.algebird.CMSMonoid]]
+   * Read more about CMS: [[com.twitter.algebird.CMSMonoid]].
    * @group join
    * @param hotKeyThreshold key with `hotKeyThreshold` values will be considered hot. Some runners
    *                        have inefficient `GroupByKey` implementation for groups with more than
@@ -303,7 +303,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * val p = logs.skewedJoin(logMetadata, hotKeyThreshold = 8500, cms=hotKeyCMS)
    * }}}
    *
-   * Read more about CMS -> [[com.twitter.algebird.CMSMonoid]]
+   * Read more about CMS: [[com.twitter.algebird.CMSMonoid]].
    * @group join
    * @param hotKeyThreshold key with `hotKeyThreshold` values will be considered hot. Some runners
    *                        have inefficient `GroupByKey` implementation for groups with more than
@@ -350,6 +350,40 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     val chillJoined = partitionedSelf(chillSelf).join(partitionedThat(chillThat))
 
     hotJoined ++ chillJoined
+  }
+
+  /**
+   * Full outer join for cases when `this` is much larger than `that` which cannot fit in memory,
+   * but contains a mostly overlapping set of keys as `this`, i.e. when the intersection of keys
+   * is sparse in `this`. A Bloom Filter of keys in `that` is used to split `this` into 2
+   * partitions. Only those with keys in the filter go through the join and the rest are
+   * concatenated. This is useful for joining historical aggregates with incremental updates.
+   * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
+   * @group join
+   * @param thatNumKeys estimated number of keys in `that`
+   * @param fpProb false positive probability when computing the overlap
+   */
+  def sparseOuterJoin[W: ClassTag](that: SCollection[(K, W)],
+                                   thatNumKeys: Int,
+                                   fpProb: Double = 0.01)
+                                  (implicit hash: Hash128[K])
+  : SCollection[(K, (Option[V], Option[W]))] = {
+    val width = BloomFilter.optimalWidth(thatNumKeys, fpProb).get
+    val numHashes = BloomFilter.optimalNumHashes(thatNumKeys, width)
+    val rhsBf = that.keys.aggregate(BloomFilterAggregator[K](numHashes, width)).asSingletonSideInput
+    val (lhsUnique, lhsOverlap) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
+    val partitionedSelf = self
+      .withSideInputs(rhsBf)
+      .transformWithSideOutputs(Seq(lhsUnique, lhsOverlap)) { (e, c) =>
+        if (c(rhsBf).maybeContains(e._1)) {
+          lhsOverlap
+        } else {
+          lhsUnique
+        }
+      }
+    val unique = partitionedSelf(lhsUnique).map(kv => (kv._1, (Option(kv._2), Option.empty[W])))
+    val overlap = partitionedSelf(lhsOverlap).fullOuterJoin(that)
+    unique ++ overlap
   }
 
   // =======================================================================
