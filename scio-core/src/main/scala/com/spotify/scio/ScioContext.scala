@@ -643,7 +643,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
       val outputCoder  = pipeline.getCoderRegistry.getScalaCoder[(T, Map[String, String])]
       val parseFn = Functions.simpleFn { msg: PubsubMessage =>
         val element = CoderUtils.decodeFromByteArray(elementCoder, msg.getMessage)
-        val attributes = msg.getAttributeMap.asScala.toMap
+        val attributes = JMapWrapper.of(msg.getAttributeMap)
         (element, attributes)
       }
       val input: gio.PubsubIO.Read[(T, Map[String, String])] =
