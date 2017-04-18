@@ -44,6 +44,7 @@ import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
+import org.apache.beam.sdk.options.GcpOptions
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
@@ -51,12 +52,14 @@ import org.apache.beam.sdk.util.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{io => gio}
 import org.joda.time.{Duration, Instant}
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
 import scala.concurrent._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import scala.util.{Failure, Success}
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
@@ -104,6 +107,8 @@ object SCollection {
  * @groupname window Windowing Operations
  */
 sealed trait SCollection[T] extends PCollectionWrapper[T] {
+
+  @transient lazy private val log = LoggerFactory.getLogger(SCollection.getClass)
 
   import com.spotify.scio.Implicits._
   import TupleFunctions._
@@ -827,7 +832,18 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def materialize: Future[Tap[T]] = {
     val filename = "scio-materialize-" + UUID.randomUUID().toString
-    val tmpDir = context.options.getTempLocation
+    val tmpDir = if (context.options.getTempLocation != null) {
+      context.options.getTempLocation
+    } else {
+      val m = "Specify a temporary location via --tempLocation or PipelineOptions.setTempLocation."
+      scala.util.Try(context.optionsAs[GcpOptions].getGcpTempLocation) match {
+        case Success(l) =>
+          log.warn("Using GCP temporary location as a temporary location to materialize data. " + m)
+          l
+        case Failure(_) =>
+          throw new IllegalArgumentException("No temporary location was specified. " + m)
+      }
+    }
     val path = tmpDir + (if (tmpDir.endsWith("/")) "" else "/") + filename
     saveAsObjectFile(path)
   }
