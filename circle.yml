@@ -2,7 +2,6 @@ machine:
   java:
     version: oraclejdk8
   environment:
-    SBT_VERSION: 0.13.15
     SBT_OPTS: "-XX:ReservedCodeCacheSize=256m"
     JAVA_OPTS: "-Xms1g -Xmx2g -Dsun.io.serialization.extendedDebugInfo=true"
     GOOGLE_APPLICATION_CREDENTIALS: "scripts/data-integration-test-2210ed0f609b.json"
@@ -34,8 +33,8 @@ dependencies:
     - scio-schemas/target/resolution-cache
     - scio-schemas/target/streams
   pre:
-    - wget -q https://dl.bintray.com/sbt/debian/sbt-0.13.13.deb
-    - sudo dpkg -i sbt-0.13.13.deb
+    - wget -q https://dl.bintray.com/sbt/debian/sbt-0.13.15.deb
+    - sudo dpkg -i sbt-0.13.15.deb
     - find ~/.sbt -name "*.lock" | xargs -r rm
     - find ~/.ivy2 -name "ivydata-*.properties" | xargs -r rm
   override:
