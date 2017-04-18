@@ -24,6 +24,9 @@ class ReplScioContext(options: PipelineOptions,
                       artifacts: List[String])
   extends ScioContext(options, artifacts) {
 
+  this.setAppName("sciorepl")
+  this.setJobName(s"""sciorepl-${sys.props("user.name")}-${System.currentTimeMillis()}""")
+
   /** Enhanced version that dumps REPL session jar. */
   override def close(): ScioResult = {
     createJar()

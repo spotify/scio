@@ -85,10 +85,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     val opts = optsFromArgs(scioOpts)
     val nextReplJar = scioClassLoader.getNextReplCodeJarPath
     intp.beQuietDuring {
-      intp.interpret(
-        s"""val $sc: ScioContext = new $rsc($opts, List("$nextReplJar"))
-           |$sc.setAppName("sciorepl")
-         """.stripMargin)
+      intp.interpret(s"""val $sc: ScioContext = new $rsc($opts, List("$nextReplJar"))""")
     }
     this.echo("Scio context available as '" + sc + "'")
     Result.default
