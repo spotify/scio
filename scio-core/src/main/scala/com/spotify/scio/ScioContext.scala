@@ -49,7 +49,7 @@ import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{Pipeline, io => gio}
-import org.joda.time.Instant
+import org.joda.time.{Duration, Instant}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -591,18 +591,24 @@ class ScioContext private[scio] (val options: PipelineOptions,
    */
   def pubsubSubscription[T: ClassTag](sub: String,
                                       idLabel: String = null,
-                                      timestampLabel: String = null)
+                                      timestampLabel: String = null,
+                                      numMaxRecords: Int = 0,
+                                      maxReadTime: Duration = null)
   : SCollection[T] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(PubsubIO(sub))
     } else {
       val coder = pipeline.getCoderRegistry.getScalaCoder[T]
-      var transform = gio.PubsubIO.read().subscription(sub).withCoder(coder)
+      var transform =
+        gio.PubsubIO.read().subscription(sub).maxNumRecords(numMaxRecords).withCoder(coder)
       if (idLabel != null) {
         transform = transform.idLabel(idLabel)
       }
       if (timestampLabel != null) {
         transform = transform.timestampLabel(timestampLabel)
+      }
+      if (maxReadTime != null) {
+        transform = transform.maxReadTime(maxReadTime)
       }
       wrap(this.applyInternal(transform)).setName(sub)
     }
@@ -614,18 +620,23 @@ class ScioContext private[scio] (val options: PipelineOptions,
    */
   def pubsubTopic[T: ClassTag](topic: String,
                                idLabel: String = null,
-                               timestampLabel: String = null)
+                               timestampLabel: String = null,
+                               numMaxRecords: Int = 0,
+                               maxReadTime: Duration = null)
   : SCollection[T] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(PubsubIO(topic))
     } else {
       val coder = pipeline.getCoderRegistry.getScalaCoder[T]
-      var transform = gio.PubsubIO.read().topic(topic).withCoder(coder)
+      var transform = gio.PubsubIO.read().topic(topic).maxNumRecords(numMaxRecords).withCoder(coder)
       if (idLabel != null) {
         transform = transform.idLabel(idLabel)
       }
       if (timestampLabel != null) {
         transform = transform.timestampLabel(timestampLabel)
+      }
+      if (maxReadTime != null) {
+        transform = transform.maxReadTime(maxReadTime)
       }
       wrap(this.applyInternal(transform)).setName(topic)
     }
