@@ -34,7 +34,7 @@ import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io.{TFRecordOptions, TFRecordSource, Tap}
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
-import com.spotify.scio.util.{CallSites, Functions, ScioUtil}
+import com.spotify.scio.util._
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord

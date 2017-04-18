@@ -20,6 +20,7 @@ package com.spotify.scio.values
 import java.lang.{Iterable => JIterable}
 import java.util.{List => JList, Map => JMap}
 
+import com.spotify.scio.util.JMapWrapper
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.values.PCollectionView
 
@@ -64,49 +65,17 @@ private[values] class IterableSideInput[T](val view: PCollectionView[JIterable[T
 private[values] class MapSideInput[K, V](val view: PCollectionView[JMap[K, V]])
   extends SideInput[Map[K, V]] {
   override def get[I, O](context: DoFn[I, O]#ProcessContext): Map[K, V] =
-    new SideInputMap(context.sideInput(view))
+    JMapWrapper.of(context.sideInput(view))
 }
 
 private[values] class MultiMapSideInput[K, V](val view: PCollectionView[JMap[K, JIterable[V]]])
   extends SideInput[Map[K, Iterable[V]]] {
   override def get[I, O](context: DoFn[I, O]#ProcessContext): Map[K, Iterable[V]] =
-    new SideInputMultiMap(context.sideInput(view))
+    JMapWrapper.ofMultiMap(context.sideInput(view))
 }
 
 /** Encapsulate context of one or more [[SideInput]]s in an [[SCollectionWithSideInput]]. */
 class SideInputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessContext) {
   /** Extract the value of a given [[SideInput]]. */
   def apply[S](side: SideInput[S]): S = side.getCache(context)
-}
-
-// Immutable wrapper for j.u.Map[A, B] because .asScala returns a s.c.mutable.Map
-private class SideInputMap[A, B](self: JMap[A, B]) extends Map[A, B] {
-
-  // make eager copies when necessary
-  // scalastyle:off method.name
-  override def +[B1 >: B](kv: (A, B1)): Map[A, B1] = self.asScala.toMap + kv
-  override def -(key: A): Map[A, B] = self.asScala.toMap - key
-  // scalastyle:on method.name
-
-  // lazy transform underlying j.l.Map
-  override def get(key: A): Option[B] = Option(self.get(key))
-  override def iterator: Iterator[(A, B)] = self.asScala.iterator
-
-}
-
-// Immutable wrapper for j.u.Map[A, j.l.terable[B]] because .asScala returns a s.c.mutable.Map
-private class SideInputMultiMap[A, B](self: JMap[A, JIterable[B]]) extends Map[A, Iterable[B]] {
-
-  // make eager copies when necessary
-  // scalastyle:off method.name
-  override def +[B1 >: Iterable[B]](kv: (A, B1)): Map[A, B1] =
-    self.asScala.mapValues(_.asScala).toMap + kv
-  override def -(key: A): Map[A, Iterable[B]] = self.asScala.mapValues(_.asScala).toMap - key
-  // scalastyle:on method.name
-
-  // lazy transform underlying j.l.Map
-  override def get(key: A): Option[Iterable[B]] = Option(self.get(key)).map(_.asScala)
-  override def iterator: Iterator[(A, Iterable[B])] =
-    self.asScala.iterator.map(kv => (kv._1, kv._2.asScala))
-
 }
