@@ -31,7 +31,7 @@ import com.google.protobuf.Message
 import com.spotify.scio.bigquery._
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.AvroBytesUtil
-import com.spotify.scio.io.{TFRecordOptions, TFRecordSource, Tap}
+import com.spotify.scio.io.Tap
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
@@ -720,21 +720,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
     } else {
       wrap(this.applyInternal(gio.TextIO.Read.from(path)
         .withCompressionType(compressionType))).setName(path)
-    }
-  }
-
-  /**
-   * Get an SCollection for a TensorFlow TFRecord file. Note that TFRecord files are not
-   * splittable. The recommended record encoding is [[org.tensorflow.example.Example]] protocol
-   * buffers (which contain [[org.tensorflow.example.Features]] as a field) serialized as bytes.
-   * @group input
-   */
-  def tfRecordFile(path: String, tfRecordOptions: TFRecordOptions = TFRecordOptions.readDefault)
-  : SCollection[Array[Byte]] = requireNotClosed {
-    if (this.isTest) {
-      this.getTestInput(TFRecordIO(path))
-    } else {
-      wrap(this.applyInternal(gio.Read.from(TFRecordSource(path, tfRecordOptions))))
     }
   }
 

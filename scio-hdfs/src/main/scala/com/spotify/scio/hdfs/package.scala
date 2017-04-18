@@ -26,7 +26,7 @@ import java.util.Collections
 import com.google.api.client.util.ByteStreams
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
-import com.spotify.scio.io.{Tap, Taps}
+import com.spotify.scio.io.{HdfsFileStorage, Tap, Taps}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.{DistCache, SCollection}
 import com.twitter.chill.Externalizer
