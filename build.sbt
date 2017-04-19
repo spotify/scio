@@ -205,7 +205,8 @@ lazy val root: Project = Project(
   scioJdbc,
   scioRepl,
   scioExamples,
-  scioSchemas
+  scioSchemas,
+  scioTensorflow
 )
 
 lazy val scioCore: Project = Project(
@@ -323,7 +324,6 @@ lazy val scioExtra: Project = Project(
     "com.twitter" %% "algebird-core" % algebirdVersion,
     "org.scalanlp" %% "breeze" % breezeVersion,
     "info.debatty" % "java-lsh" % javaLshVersion,
-    "org.tensorflow" % "tensorflow" % tensorFlowVersion ,
     "org.scalatest" %% "scalatest" % scalatestVersion % "test",
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
   ),
@@ -336,6 +336,24 @@ lazy val scioExtra: Project = Project(
   scioCore,
   scioTest % "it,test->test"
 ).configs(IntegrationTest)
+
+lazy val scioTensorflow: Project = Project(
+  "scio-tensorflow",
+  file("scio-tensorflow")
+).settings(
+  commonSettings,
+  description := "Scio add-on for Tensorflow",
+  libraryDependencies ++= Seq(
+    "org.tensorflow" % "tensorflow" % tensorFlowVersion
+  ),
+  compileOrder := CompileOrder.JavaThenScala,
+  PB.targets in Compile := Seq(
+    PB.gens.java -> (sourceManaged in Compile).value / "compiled_protobuf"
+  )
+).dependsOn(
+  scioCore,
+  scioTest % "test->test"
+)
 
 lazy val scioHdfs: Project = Project(
   "scio-hdfs",
