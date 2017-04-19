@@ -263,12 +263,12 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "pass correct PubsubIO" in {
-    testTextFileJob("aX", "bX", "cX")
+    testPubsubJob("aX", "bX", "cX")
   }
 
   it should "fail incorrect PubsubIO" in {
-    an [AssertionError] should be thrownBy { testTextFileJob("aX", "bX") }
-    an [AssertionError] should be thrownBy { testTextFileJob("aX", "bX", "cX", "dX") }
+    an [AssertionError] should be thrownBy { testPubsubJob("aX", "bX") }
+    an [AssertionError] should be thrownBy { testPubsubJob("aX", "bX", "cX", "dX") }
   }
 
   def testTableRowJson(xs: Seq[TableRow]): Unit = {
