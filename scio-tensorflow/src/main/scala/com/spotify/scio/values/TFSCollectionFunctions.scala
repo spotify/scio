@@ -31,7 +31,6 @@ import scala.concurrent.Future
 /** Enhanced version of [[SCollection]] with Tensorflow methods. */
 class TensorSCollectionFunctions(val self: SCollection[Tensor]) extends AnyVal {
 
-  //TODO: provide config schema + seperate class instead of bytes
   /**
    *
    * @param graphUri
@@ -49,8 +48,6 @@ class TensorSCollectionFunctions(val self: SCollection[Tensor]) extends AnyVal {
     lazy val g = {
       val p = rfu.download(URI.create(graphUri))
       val g = new Graph()
-      val dd = SavedModelBundle.load("")
-      dd.graph()
       g.importGraphDef(Files.readAllBytes(p))
       //TODO: is this gonna keep resources for too long?
       sys.addShutdownHook(g.close())
