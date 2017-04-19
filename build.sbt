@@ -204,7 +204,8 @@ lazy val root: Project = Project(
   scioRepl,
   scioExamples,
   scioSchemas,
-  scioHdfs
+  scioHdfs,
+  scioTensorflow
 )
 
 lazy val scioCore: Project = Project(
@@ -333,6 +334,24 @@ lazy val scioExtra: Project = Project(
   scioCore,
   scioTest % "it,test->test"
 ).configs(IntegrationTest)
+
+lazy val scioTensorflow: Project = Project(
+  "scio-tensorflow",
+  file("scio-tensorflow")
+).settings(
+  commonSettings,
+  description := "Scio add-on for Tensorflow",
+  libraryDependencies ++= Seq(
+    "org.tensorflow" % "tensorflow" % tensorFlowVersion
+  ),
+  compileOrder := CompileOrder.JavaThenScala,
+  PB.targets in Compile := Seq(
+    PB.gens.java -> (sourceManaged in Compile).value / "compiled_protobuf"
+  )
+).dependsOn(
+  scioCore,
+  scioTest % "test->test"
+)
 
 lazy val scioHdfs: Project = Project(
   "scio-hdfs",
