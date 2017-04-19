@@ -17,13 +17,10 @@
 
 package com.spotify.scio.tensorflow
 
-import java.io.File
-import java.net.URI
-import java.nio.file.{Files, Paths}
+import java.nio.file.Files
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.testing.{PipelineSpec, SCollectionMatchers}
-import org.scalatest.{FlatSpec, Matchers}
+import com.spotify.scio.testing.PipelineSpec
 import org.tensorflow._
 
 class TensorflowSpec extends PipelineSpec {
@@ -65,12 +62,11 @@ class TensorflowSpec extends PipelineSpec {
     g.opBuilder("Mul", "multiply").addInput(c3).addInput(input).build()
     val graphFile = Files.createTempFile("tf-grap", ".bin")
     Files.write(graphFile, g.toGraphDef)
-    // create my own context cause otherwise distcache test wiring gets in the way
-    val sc = ScioContext()
-    sc.parallelize(1L to 10).map(Tensor.create)
-      .predict(graphFile.toString, "input", Seq("multiply"))
-      .flatMap(e => e.map(_.longValue())) should containInAnyOrder ((1L to 10).map(_ * 3))
-    sc.close()
+    runWithContext { sc =>
+      sc.parallelize(1L to 10).map(Tensor.create)
+        .predict(graphFile.toString, "input", Seq("multiply"))
+        .flatMap(e => e.map(_.longValue())) should containInAnyOrder ((1L to 10).map(_ * 3))
+    }
   }
 
 }

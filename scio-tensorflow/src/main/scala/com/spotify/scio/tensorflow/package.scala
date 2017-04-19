@@ -31,7 +31,8 @@ package object tensorflow {
   new TensorSCollectionFunctions(s)
 
   /** Implicit conversion from [[SCollection]] to [[TFRecordSCollectionFunctions]]. */
-  implicit def makeTFRecordSCollectionFunctions[T](s: SCollection[T <:< Array[Byte]])
+  implicit def makeTFRecordSCollectionFunctions[T](s: SCollection[T])
+                                                  (implicit ev: T <:< Array[Byte])
   : TFRecordSCollectionFunctions[T] = new TFRecordSCollectionFunctions(s)
 
   /** Implicit conversion from [[ScioContext]] to [[TFRecordSCollectionFunctions]]. */
