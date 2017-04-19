@@ -289,7 +289,7 @@ package object hdfs {
                                       @transient private val schema: Schema = null) extends Tap[T] {
     private lazy val s = Externalizer(schema)
     override def value: Iterator[T] = HdfsFileStorage(path).avroFile()
-    override def open(sc: ScioContext): SCollection[T] = sc.hdfsAvroFile[T](path, schema)
+    override def open(sc: ScioContext): SCollection[T] = sc.hdfsAvroFile[T](path, s.get)
   }
 
   private object HdfsUtil {
