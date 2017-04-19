@@ -27,7 +27,7 @@ import org.apache.beam.sdk.coders.{Coder, CoderRegistry}
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.Partition.PartitionFn
-import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
+import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction, SimpleFunction}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -150,6 +150,11 @@ private[scio] object Functions {
     override def partitionFor(elem: T, numPartitions: Int): Int = g(elem)
   }
 
+  def simpleFn[T, U](f: T => U): NamedSimpleFn[T, U] = new NamedSimpleFn[T, U] {
+    val g = ClosureCleaner(f)  // defeat closure
+    override def apply(input: T): U = g(input)
+  }
+
   private abstract class ReduceFn[T] extends KryoCombineFn[T, JList[T], T] {
 
     override def createAccumulator(): JList[T] = Lists.newArrayList()
@@ -194,5 +199,4 @@ private[scio] object Functions {
     val _mon = ClosureCleaner(mon)  // defeat closure
     override def reduceOption(accumulator: Iterable[T]): Option[T] = _mon.sumOption(accumulator)
   }
-
 }
