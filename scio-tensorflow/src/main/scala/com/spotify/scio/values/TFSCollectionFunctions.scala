@@ -24,7 +24,7 @@ import com.spotify.scio.io.{TFRecordFileTap, TFRecordOptions, TFRecordSink, Tap}
 import com.spotify.scio.testing.TFRecordIO
 import com.spotify.scio.util.RemoteFileUtil
 import org.apache.beam.sdk.{io => gio}
-import org.tensorflow.{Graph, SavedModelBundle, Session, Tensor}
+import org.tensorflow.{Graph, Session, Tensor}
 
 import scala.concurrent.Future
 
@@ -32,11 +32,13 @@ import scala.concurrent.Future
 class TensorSCollectionFunctions(val self: SCollection[Tensor]) extends AnyVal {
 
   /**
+   * Predict/infer/forward-pass [[Tensor]]s on pre-trained and saved model.
    *
-   * @param graphUri
-   * @param feedOp
-   * @param fetchOp
-   * @param config
+   * @param graphUri URI of pre-trained/saved Tensorflow model
+   * @param feedOp operation to feed [[Tensor]] with
+   * @param fetchOp opreation to fetch the results from
+   * @param config configuration parameters for the session specified as a serialized
+   *               [[org.tensorflow.framework.ConfigProto]] protocol buffer.
    * @return
    */
   def predict(graphUri: String,
@@ -50,6 +52,8 @@ class TensorSCollectionFunctions(val self: SCollection[Tensor]) extends AnyVal {
       val g = new Graph()
       g.importGraphDef(Files.readAllBytes(p))
       //TODO: is this gonna keep resources for too long?
+      //TODO: test this with large model, one way could be to keep atomic count of @setup/@teardown
+      //      and once counter is zero close
       sys.addShutdownHook(g.close())
       g
     }
@@ -68,7 +72,7 @@ class TensorSCollectionFunctions(val self: SCollection[Tensor]) extends AnyVal {
 
 }
 
-class TFRecordSCollectionFunctions[T](val self: SCollection[T <:< Array[Byte]]) extends AnyVal {
+class TFRecordSCollectionFunctions[T](val self: SCollection[T])(implicit ev: T <:< Array[Byte]) {
 
   /**
    * Save this SCollection as a TensorFlow TFRecord file. Note that elements must be of type
