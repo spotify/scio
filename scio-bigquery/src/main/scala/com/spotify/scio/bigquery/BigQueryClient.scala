@@ -639,7 +639,18 @@ object BigQueryClient {
 
   private val SCOPES = List(BigqueryScopes.BIGQUERY).asJava
 
-  private var instance: BigQueryClient = _
+  private lazy val instance: BigQueryClient =
+    if (sys.props(PROJECT_KEY) != null) {
+      BigQueryClient(sys.props(PROJECT_KEY))
+    } else {
+      val project = new DefaultProjectFactory().create(null)
+      if (project != null) {
+        BigQueryClient(project)
+      } else {
+        throw new RuntimeException(
+          s"Property $PROJECT_KEY not set. Use -D$PROJECT_KEY=<BILLING_PROJECT>")
+      }
+    }
 
   /**
    * Get the default BigQueryClient instance.
@@ -657,22 +668,7 @@ object BigQueryClient {
    * sbt -Dbigquery.project=my-project -Dbigquery.secret=/path/to/secret.json
    * }}}
    */
-  def defaultInstance(): BigQueryClient = {
-    if (instance == null) {
-      instance = if (sys.props(PROJECT_KEY) != null) {
-        BigQueryClient(sys.props(PROJECT_KEY))
-      } else {
-        val project = new DefaultProjectFactory().create(null)
-        if (project != null) {
-          BigQueryClient(project)
-        } else {
-          throw new RuntimeException(
-            s"Property $PROJECT_KEY not set. Use -D$PROJECT_KEY=<BILLING_PROJECT>")
-        }
-      }
-    }
-    instance
-  }
+  def defaultInstance(): BigQueryClient = instance
 
   /** Create a new BigQueryClient instance with the given project. */
   def apply(project: String): BigQueryClient = {
