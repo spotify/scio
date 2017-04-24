@@ -75,7 +75,8 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
    *
    * @return map of side output to [[SCollection]]
    */
-  private[values] def transformWithSideOutputs(sideOutputs: Seq[SideOutput[T]])
+  private[values] def transformWithSideOutputs(sideOutputs: Seq[SideOutput[T]],
+                                               name: String = "TransformWithSideOutputs")
                                               (f: (T, SideInputContext[T]) => SideOutput[T])
   : Map[SideOutput[T], SCollection[T]] = {
     val _mainTag = SideOutput[T]()
@@ -107,7 +108,7 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
       .withOutputTags(_mainTag.tupleTag, sideTags)
       .of(transformWithSideOutputsFn(sideOutputs, f))
 
-    val pCollectionWrapper = this.internal.apply("TransformWithSideOutputs", transform)
+    val pCollectionWrapper = this.internal.apply(name, transform)
     pCollectionWrapper.getAll.asScala
       .mapValues(context.wrap(_).asInstanceOf[SCollection[T]].setCoder(internal.getCoder))
       .flatMap{ case(tt, col) => Try{tagToSide(tt.getId) -> col}.toOption }
