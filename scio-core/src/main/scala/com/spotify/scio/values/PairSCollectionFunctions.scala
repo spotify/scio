@@ -223,6 +223,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     }.toSCollection
   }
 
+  // scalastyle:off parameter.number
   /**
    * N to 1 skew-proof flavor of [[join]].
    *
@@ -237,7 +238,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * // Implicits that enabling CMS-hashing
    * import com.twitter.algebird.CMSHasherImplicits._
    *
-   * val p = logs.skewedJoin(logMetadata, hotKeyThreshold = 8500, eps=0.0005, seed=1)
+   * val p = logs.skewedJoin(logMetadata)
    * }}}
    *
    * Read more about CMS: [[com.twitter.algebird.CMSMonoid]].
@@ -260,9 +261,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    *                        SCollection.sample]].
    */
   def skewedJoin[W: ClassTag](that: SCollection[(K, W)],
-                              hotKeyThreshold: Long,
-                              eps: Double,
-                              seed: Int,
+                              hotKeyThreshold: Long = 9000,
+                              eps: Double = 0.0001,
+                              seed: Int = 42,
                               delta: Double = 1E-10,
                               sampleFraction: Double = 1.0,
                               withReplacement: Boolean = true)(implicit hasher: CMSHasher[K])
@@ -272,17 +273,19 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
     import com.twitter.algebird._
     // Key aggregator for `k->#values`
+    // TODO: might be better to use SparseCMS
     val keyAggregator = CMS.aggregator[K](eps, delta, seed)
 
     val leftSideKeys = if (sampleFraction < 1.0) {
-      self.sample(withReplacement, sampleFraction).keys
+      self.withName("Sample LHS").sample(withReplacement, sampleFraction).keys
     } else {
       self.keys
     }
 
-    val cms = leftSideKeys.aggregate(keyAggregator)
+    val cms = leftSideKeys.withName("Compute CMS of LHS keys").aggregate(keyAggregator)
     self.skewedJoin(that, hotKeyThreshold, cms)
   }
+  // scalastyle:on parameter.number
 
   /**
    * N to 1 skew-proof flavor of [[join]].
@@ -321,11 +324,15 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     // http://stackoverflow.com/questions/37126729/ismsinkwriter-expects-keys-to-be-written-in-strictly-increasing-order
     // scalastyle:on line.size.limit
     val keyCMS = cms.asIterableSideInput
+    val error = cms
+      .withName("Compute CMS error bound")
+      .map(c => c.totalCount * c.eps).asSingletonSideInput
 
     val partitionedSelf = self
-      .withSideInputs(keyCMS)
-      .transformWithSideOutputs(Seq(hotSelf, chillSelf)) { (e, c) =>
-        if (c(keyCMS).nonEmpty && c(keyCMS).head.frequency(e._1).estimate >= hotKeyThreshold) {
+      .withSideInputs(keyCMS, error)
+      .transformWithSideOutputs(Seq(hotSelf, chillSelf), "Partition LHS") { (e, c) =>
+        if (c(keyCMS).nonEmpty &&
+            c(keyCMS).head.frequency(e._1).estimate >= c(error) + hotKeyThreshold) {
           hotSelf
         } else {
           chillSelf
@@ -334,9 +341,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
     val (hotThat, chillThat) = (SideOutput[(K, W)](), SideOutput[(K, W)]())
     val partitionedThat = that
-      .withSideInputs(keyCMS)
-      .transformWithSideOutputs(Seq(hotThat, chillThat)) { (e, c) =>
-        if (c(keyCMS).nonEmpty && c(keyCMS).head.frequency(e._1).estimate >= hotKeyThreshold) {
+      .withSideInputs(keyCMS, error)
+      .transformWithSideOutputs(Seq(hotThat, chillThat), "Partition RHS") { (e, c) =>
+        if (c(keyCMS).nonEmpty &&
+            c(keyCMS).head.frequency(e._1).estimate >= c(error) + hotKeyThreshold) {
           hotThat
         } else {
           chillThat
@@ -344,12 +352,16 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
       }
 
     // Use hash join for hot keys
-    val hotJoined = partitionedSelf(hotSelf).hashJoin(partitionedThat(hotThat))
+    val hotJoined = partitionedSelf(hotSelf)
+      .withName("Hash join hot partitions")
+      .hashJoin(partitionedThat(hotThat))
 
     // Use regular join for the rest of the keys
-    val chillJoined = partitionedSelf(chillSelf).join(partitionedThat(chillThat))
+    val chillJoined = partitionedSelf(chillSelf)
+      .withName("Join chill partitions")
+      .join(partitionedThat(chillThat))
 
-    hotJoined ++ chillJoined
+    hotJoined.withName("Union hot and chill join results") ++ chillJoined
   }
 
   /**

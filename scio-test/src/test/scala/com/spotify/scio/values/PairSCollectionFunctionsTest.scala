@@ -542,7 +542,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2)))
       val p2 = sc.parallelize(Seq(("a", 11)))
 
-      // set threshold to 3, given 0.5 fraction for sample - "a" should not be hash joined
+      // Small sample size to force empty key count
       val p = p1.skewedJoin(p2, 3, skewEps, skewSeed, sampleFraction = 0.01)
       p should containInAnyOrder (Seq(("a", (2, 11)), ("a", (1, 11))))
     }
