@@ -26,8 +26,45 @@ import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.twitter.algebird._
 import org.apache.beam.sdk.transforms.{Aggregator => _, _}
 import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
+import org.slf4j.LoggerFactory
 
 import scala.reflect.ClassTag
+
+private object PairSCollectionFunctions {
+
+  private val logger = LoggerFactory.getLogger(this.getClass)
+
+  case class BFSettings(width: Int, capacity: Int, numBFs: Int)
+
+  def optimalBFSettings(numEntries: Long, fpProb: Double): BFSettings = {
+    // double to int rounding error happens when numEntries > (1 << 27)
+    // set numEntries upper bound to 1 << 27 to avoid high false positive
+    def estimateWidth(numEntries: Int, fpProb: Double): Int =
+      math.ceil(-1 * numEntries * math.log(fpProb) / math.log(2) / math.log(2)).toInt
+
+    // upper bound of n as 2^x
+    def upper(n: Int): Int = 1 << (0 to 27).find(1 << _ >= n).get
+
+    // cap capacity between [minSize, maxSize] and find upper bound of 2^x
+    val (minSize, maxSize) = (2048, 1 << 27)
+    var capacity = upper(math.max(math.min(numEntries, maxSize).toInt, minSize))
+
+    // find a width with the given capacity
+    var width = estimateWidth(capacity, fpProb)
+    while (width == Int.MaxValue) {
+      capacity = capacity >> 1
+      width = estimateWidth(capacity, fpProb)
+    }
+    val numBFs = (numEntries / capacity).toInt + 1
+
+    val totalBytes = width.toLong * numBFs / 8
+    logger.info(s"Optimal Bloom Filter settings for numEntries = $numEntries, fpProb = $fpProb")
+    logger.info(
+      s"BF width = $width, capacity = $capacity, numBFs = $numBFs, total bytes = $totalBytes")
+    BFSettings(width, capacity, numBFs)
+  }
+
+}
 
 // scalastyle:off number.of.methods
 /**
@@ -376,18 +413,37 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @param fpProb false positive probability when computing the overlap
    */
   def sparseOuterJoin[W: ClassTag](that: SCollection[(K, W)],
-                                   thatNumKeys: Int,
+                                   thatNumKeys: Long,
                                    fpProb: Double = 0.01)
                                   (implicit hash: Hash128[K])
   : SCollection[(K, (Option[V], Option[W]))] = {
+    val bfSettings = PairSCollectionFunctions.optimalBFSettings(thatNumKeys, fpProb)
+    if (bfSettings.numBFs == 1) {
+      sparseOuterJoinImpl(that, thatNumKeys.toInt, fpProb)
+    } else {
+      val n = bfSettings.numBFs
+      val thisParts = self.partition(n, _._1.hashCode() % n)
+      val thatParts = that.partition(n, _._1.hashCode() % n)
+      val joined = (thisParts zip thatParts).map { case (lhs, rhs) =>
+        lhs.sparseOuterJoinImpl(rhs, bfSettings.capacity, fpProb)
+      }
+      SCollection.unionAll(joined)
+    }
+  }
+
+  protected def sparseOuterJoinImpl[W: ClassTag](that: SCollection[(K, W)],
+                                                 thatNumKeys: Int,
+                                                 fpProb: Double)
+                                                (implicit hash: Hash128[K])
+  : SCollection[(K, (Option[V], Option[W]))] = {
     val width = BloomFilter.optimalWidth(thatNumKeys, fpProb).get
     val numHashes = BloomFilter.optimalNumHashes(thatNumKeys, width)
-    val rhsBf = that.keys.aggregate(BloomFilterAggregator[K](numHashes, width)).asSingletonSideInput
+    val rhsBf = that.keys.aggregate(BloomFilterAggregator[K](numHashes, width)).asIterableSideInput
     val (lhsUnique, lhsOverlap) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
     val partitionedSelf = self
       .withSideInputs(rhsBf)
       .transformWithSideOutputs(Seq(lhsUnique, lhsOverlap)) { (e, c) =>
-        if (c(rhsBf).maybeContains(e._1)) {
+        if (c(rhsBf).nonEmpty && c(rhsBf).head.maybeContains(e._1)) {
           lhsOverlap
         } else {
           lhsUnique

@@ -548,17 +548,30 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  val sparseLhs = Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4))
+  val sparseRhs = Seq(("a", 11), ("d", 5))
+  val sparseExpected = Seq(
+    ("a", (Some(1), Some(11))),
+    ("a", (Some(2), Some(11))),
+    ("b", (Some(3), None)),
+    ("c", (Some(4), None)),
+    ("d", (None, Some(5))))
+
   it should "support sparseOuterJoin()" in {
     runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("d", 5)))
+      val p1 = sc.parallelize(sparseLhs)
+      val p2 = sc.parallelize(sparseRhs)
       val p = p1.sparseOuterJoin(p2, 10)
-      p should containInAnyOrder (Seq(
-        ("a", (Some(1), Some(11))),
-        ("a", (Some(2), Some(11))),
-        ("b", (Some(3), None)),
-        ("c", (Some(4), None)),
-        ("d", (None, Some(5)))))
+      p should containInAnyOrder (sparseExpected)
+    }
+  }
+
+  it should "support sparseOuterJoin() with partitions" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(sparseLhs)
+      val p2 = sc.parallelize(sparseRhs)
+      val p = p1.sparseOuterJoin(p2, 1000000000L)
+      p should containInAnyOrder (sparseExpected)
     }
   }
 
