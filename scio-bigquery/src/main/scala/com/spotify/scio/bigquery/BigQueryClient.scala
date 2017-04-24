@@ -36,11 +36,8 @@ import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition._
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.WriteDisposition._
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryTableRowIterator
+import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryIO, BigQueryTableRowIterator}
 import org.apache.beam.sdk.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.util.BigQueryTableInserter
 import org.apache.commons.io.FileUtils
@@ -48,8 +45,8 @@ import org.joda.time.format.{DateTimeFormat, PeriodFormatterBuilder}
 import org.joda.time.{Instant, Period}
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable.{Map => MMap}
 import scala.collection.JavaConverters._
+import scala.collection.mutable.{Map => MMap}
 import scala.reflect.runtime.universe._
 import scala.util.control.NonFatal
 import scala.util.{Failure, Random, Success, Try}
@@ -397,6 +394,7 @@ class BigQueryClient private (private val projectId: String,
         delayedQueryJob(sqlQuery, temp, flattenResults)
       }
     } catch {
+      case NonFatal(e: GoogleJsonResponseException) if isInvalidQuery(e) => throw e
       case NonFatal(_) =>
         val temp = temporaryTable(extractLocation(sqlQuery).getOrElse(DEFAULT_LOCATION))
         logger.info(s"Cache miss for query: `$sqlQuery`")
@@ -509,9 +507,10 @@ class BigQueryClient private (private val projectId: String,
     }
   }
 
+  private def isInvalidQuery(e: GoogleJsonResponseException): Boolean =
+    e.getDetails.getErrors.get(0).getReason == "invalidQuery"
+
   private[scio] def isLegacySql(sqlQuery: String, flattenResults: Boolean): Boolean = {
-    def isInvalidQuery(e: GoogleJsonResponseException): Boolean =
-      e.getDetails.getErrors.get(0).getReason == "invalidQuery"
     def dryRunQuery(useLegacySql: Boolean): Try[Job] =
       runQuery(sqlQuery, null, flattenResults, useLegacySql, dryRun = true)
 
@@ -531,7 +530,12 @@ class BigQueryClient private (private val projectId: String,
                   "See https://cloud.google.com/bigquery/docs/reference/standard-sql/")
                 logger.warn(s"Legacy query: `$sqlQuery`")
                 true
-              case Failure(f) => throw f
+              case Failure(f) =>
+                logger.error(
+                  s"Tried both standard and legacy syntax, query `$sqlQuery` failed for both!")
+                logger.error("Standard syntax failed due to:", e)
+                logger.error("Legacy syntax failed due to:", f)
+                throw f
             }
           case Failure(e) => throw e
         }
