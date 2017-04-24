@@ -17,25 +17,30 @@
 
 package com.spotify.scio
 
+import com.spotify.scio.io.{FileStorage, TFFileStorageFunctions}
 import com.spotify.scio.values.{SCollection,
                                 TFRecordSCollectionFunctions,
-                                TensorSCollectionFunctions}
-import org.tensorflow.Tensor
+                                TensorFlowSCollectionFunctions}
+
+import scala.reflect.ClassTag
 
 package object tensorflow {
 
   import scala.language.implicitConversions
 
-  /** Implicit conversion from [[SCollection]] to [[TensorSCollectionFunctions]]. */
-  implicit def makeTensorSCollectionFunctions(s: SCollection[Tensor]): TensorSCollectionFunctions =
-  new TensorSCollectionFunctions(s)
+  /** Implicit conversion from [[SCollection]] to [[TensorFlowSCollectionFunctions]]. */
+  implicit def makeTensorFlowSCollectionFunctions[T: ClassTag](s: SCollection[T])
+  : TensorFlowSCollectionFunctions[T] = new TensorFlowSCollectionFunctions(s)
 
   /** Implicit conversion from [[SCollection]] to [[TFRecordSCollectionFunctions]]. */
-  implicit def makeTFRecordSCollectionFunctions[T](s: SCollection[T])
-                                                  (implicit ev: T <:< Array[Byte])
+  implicit def makeTFRecordSCollectionFunctions[T <: Array[Byte]](s: SCollection[T])
   : TFRecordSCollectionFunctions[T] = new TFRecordSCollectionFunctions(s)
 
   /** Implicit conversion from [[ScioContext]] to [[TFRecordSCollectionFunctions]]. */
   implicit def makeTFScioContextFunctions(s: ScioContext): TFScioConextFunctions =
     new TFScioConextFunctions(s)
+
+  /** Implicit conversion from [[FileStorage]] to [[TFFileStorageFunctions]]. */
+  implicit def makeTFFileStorageFunctions(s: FileStorage): TFFileStorageFunctions =
+    new TFFileStorageFunctions(s)
 }
