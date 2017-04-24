@@ -22,6 +22,12 @@ import java.util.{Map => JMap}
 
 import scala.collection.JavaConverters._
 
+/**
+ * Immutable wrappers for `java.util.Map[K, V]`.
+ * Java `Map`s are mutable and `.asJava` returns `mutable.Map[K, V]` which is inconsistent and not
+ * idiomatic Scala. When wrapping Beam API, in many cases the underlying `j.u.Map` is immutable in
+ * nature and it's safe to wrap them with this.
+ */
 private[scio] object JMapWrapper {
   def ofMultiMap[A, B](self: JMap[A, JIterable[B]]): Map[A, Iterable[B]] =
     new Map[A, Iterable[B]] {
@@ -52,5 +58,3 @@ private[scio] object JMapWrapper {
       override def iterator: Iterator[(K, V)] = self.asScala.iterator
     }
 }
-
-
