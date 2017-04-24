@@ -32,6 +32,7 @@ import org.apache.beam.sdk.coders.Coder.Context
 import org.apache.beam.sdk.coders._
 import org.apache.beam.sdk.util.VarInt
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
+import org.joda.time.{LocalDate, LocalDateTime}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -85,6 +86,9 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
       k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
       k.forSubclass[GenericRecord](new GenericAvroSerializer)
       k.forSubclass[Message](new ProtobufSerializer)
+
+      k.forSubclass[LocalDateTime](new JodaLocalDateTimeSerializer)
+      k.forSubclass[LocalDate](new JodaLocalDateSerializer)
 
       k.forClass(new KVSerializer)
       // TODO:
