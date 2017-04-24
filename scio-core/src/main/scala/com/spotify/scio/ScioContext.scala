@@ -31,7 +31,7 @@ import com.google.protobuf.Message
 import com.spotify.scio.bigquery._
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.AvroBytesUtil
-import com.spotify.scio.io.{TFRecordOptions, TFRecordSource, Tap}
+import com.spotify.scio.io.Tap
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
 import com.spotify.scio.util._

@@ -19,9 +19,34 @@ package com.spotify.scio.tensorflow
 
 import java.nio.file.Files
 
-import com.spotify.scio.ScioContext
-import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.ContextAndArgs
+import com.spotify.scio.testing.{DistCacheIO, PipelineSpec, TextIO}
 import org.tensorflow._
+
+private object TFJob {
+  def main(argv: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(argv)
+    sc.parallelize(1L to 10)
+      .predict(args("graphURI"), Seq("multiply"))
+      {e => Map("input" -> Tensor.create(e))}
+      {o => o.map{case (_, t) => t.longValue()}.head}
+      .saveAsTextFile(args("output"))
+    sc.close()
+  }
+}
+
+private object TFJob2Inputs {
+  def main(argv: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(argv)
+    sc.parallelize(1L to 10)
+      .predict(args("graphURI"), Seq("multiply"))
+      {e => Map("input" -> Tensor.create(e),
+                "input2" -> Tensor.create(3L))}
+      {o => o.map{case (_, t) => t.longValue()}.head}
+      .saveAsTextFile(args("output"))
+    sc.close()
+  }
+}
 
 class TensorflowSpec extends PipelineSpec {
 
@@ -60,13 +85,22 @@ class TensorflowSpec extends PipelineSpec {
       .setAttr("dtype", t3.dataType)
       .setAttr("value", t3).build.output(0)
     g.opBuilder("Mul", "multiply").addInput(c3).addInput(input).build()
-    val graphFile = Files.createTempFile("tf-grap", ".bin")
-    Files.write(graphFile, g.toGraphDef)
-    runWithContext { sc =>
-      sc.parallelize(1L to 10).map(Tensor.create)
-        .predict(graphFile.toString, "input", Seq("multiply"))
-        .flatMap(e => e.map(_.longValue())) should containInAnyOrder ((1L to 10).map(_ * 3))
-    }
+
+
+  }
+
+  it should "allow to predict with 2 inputs" in {
+    val g = new Graph()
+    val input = g.opBuilder("Placeholder", "input")
+      .setAttr("dtype", DataType.INT64).build.output(0)
+    val input2 = g.opBuilder("Placeholder", "input2")
+      .setAttr("dtype", DataType.INT64).build.output(0)
+    g.opBuilder("Mul", "multiply").addInput(input2).addInput(input).build()
+    JobTest[TFJob2Inputs.type]
+      .distCache(DistCacheIO[Array[Byte]]("tf-graph.bin"), g.toGraphDef)
+      .args("--graphURI=tf-graph.bin", "--output=output")
+      .output(TextIO("output"))(_ should containInAnyOrder((1L to 10).map(_ * 3).map(_.toString)))
+      .run()
   }
 
 }

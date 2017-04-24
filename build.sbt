@@ -56,8 +56,7 @@ val scalatestVersion = "3.0.3"
 val shapelessDatatypeVersion = "0.1.2"
 val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.1.3"
-val elasticsearchVersion = "2.1.0"
-val tensorflowVersion = "1.1.0"
+val tensorFlowVersion = "1.1.0"
 
 val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework")
 
@@ -206,7 +205,7 @@ lazy val root: Project = Project(
   scioRepl,
   scioExamples,
   scioSchemas,
-  scioTensorflow
+  scioTensorFlow
 )
 
 lazy val scioCore: Project = Project(
@@ -223,7 +222,7 @@ lazy val scioCore: Project = Project(
     "com.twitter" % "chill-protobuf" % chillVersion,
     "commons-io" % "commons-io" % commonsIoVersion,
     "org.apache.commons" % "commons-math3" % commonsMath3Version,
-    "org.tensorflow" % "proto" % tensorflowVersion,
+    "org.tensorflow" % "proto" % tensorFlowVersion,
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion,
     "com.google.auto.service" % "auto-service" % autoServiceVersion,
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
@@ -337,18 +336,15 @@ lazy val scioExtra: Project = Project(
   scioTest % "it,test->test"
 ).configs(IntegrationTest)
 
-lazy val scioTensorflow: Project = Project(
+lazy val scioTensorFlow: Project = Project(
   "scio-tensorflow",
   file("scio-tensorflow")
 ).settings(
   commonSettings,
-  description := "Scio add-on for Tensorflow",
+  description := "Scio add-on for TensorFlow",
   libraryDependencies ++= Seq(
-    "org.tensorflow" % "tensorflow" % tensorFlowVersion
-  ),
-  compileOrder := CompileOrder.JavaThenScala,
-  PB.targets in Compile := Seq(
-    PB.gens.java -> (sourceManaged in Compile).value / "compiled_protobuf"
+    "org.tensorflow" % "tensorflow" % tensorFlowVersion,
+    "org.tensorflow" % "proto" % tensorFlowVersion
   )
 ).dependsOn(
   scioCore,

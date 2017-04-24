@@ -15,13 +15,12 @@
  * under the License.
  */
 
-package com.spotify.scio.hdfs
+package com.spotify.scio.io
 
 import java.io.{File, InputStream}
 import java.net.URI
 import java.nio.file.Path
 
-import com.spotify.scio.io.FileStorage
 import org.apache.avro.file.{SeekableFileInput, SeekableInput}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, PathFilter}
@@ -32,7 +31,7 @@ object HdfsFileStorage {
 }
 
 
-private class HdfsFileStorage(protected val path: String) extends FileStorage {
+private class HdfsFileStorage(protected[io] val path: String) extends FileStorage {
 
   private val pathFilter = new PathFilter {
     override def accept(path: org.apache.hadoop.fs.Path): Boolean =
