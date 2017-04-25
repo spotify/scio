@@ -262,7 +262,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   def skewedJoin[W: ClassTag](that: SCollection[(K, W)],
                               hotKeyThreshold: Long = 9000,
-                              eps: Double = 0.0001,
+                              eps: Double = 0.001,
                               seed: Int = 42,
                               delta: Double = 1E-10,
                               sampleFraction: Double = 1.0,
