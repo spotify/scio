@@ -5,7 +5,6 @@ import java.sql.{PreparedStatement, ResultSet}
 import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.jdbc._
 import org.apache.beam.examples.common.ExampleCloudSqlOptions
-import org.apache.beam.sdk.io.jdbc.JdbcIO
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.values.KV
 
@@ -45,7 +44,7 @@ object CloudSqlExample {
     DbConnectionOptions(
       username = "root",
       password = "bqstats",
-      driverClassName = "com.mysql.jdbc.Driver",
+      driverClass = classOf[com.mysql.jdbc.Driver],
       connectionUrl = getJdbcUrl(cloudSqlOptions))
   }
 
@@ -54,16 +53,11 @@ object CloudSqlExample {
     JdbcReadOptions(
       dbConnectionOptions = connOpts,
       query = "SELECT * FROM word_count",
-      statementPreparator = new JdbcIO.StatementPreparator {
-        override def setParameters(preparedStatement: PreparedStatement): Unit = {
-
-        }
-      },
-      rowMapper = new JdbcIO.RowMapper[KV[String, Long]] {
-        override def mapRow(resultSet: ResultSet): KV[String, Long] = {
-          KV.of(resultSet.getString(1), resultSet.getLong(2))
-        }
-      })
+      statementPreparator = (preparedStatement: PreparedStatement) => {},
+      rowMapper = (resultSet: ResultSet) => {
+        KV.of(resultSet.getString(1), resultSet.getLong(2))
+      }
+    )
   }
 
   def getWriteOptions(connOpt: DbConnectionOptions): JdbcWriteOptions[KV[String, Long]] = {
@@ -71,14 +65,11 @@ object CloudSqlExample {
     JdbcWriteOptions(
       dbConnectionOptions = connOpt,
       statement = "INSERT INTO result_word_count values(?, ?)",
-      preparedStatementSetter = new JdbcIO.PreparedStatementSetter[KV[String, Long]] {
-        override def setParameters(kv: KV[String, Long],
-                                   preparedStatement: PreparedStatement): Unit = {
-
-          preparedStatement.setString(1, kv.getKey)
-          preparedStatement.setLong(2, kv.getValue)
-        }
-      })
+      preparedStatementSetter = (kv: KV[String, Long], preparedStatement: PreparedStatement) => {
+        preparedStatement.setString(1, kv.getKey)
+        preparedStatement.setLong(2, kv.getValue)
+      }
+    )
   }
 
 }
