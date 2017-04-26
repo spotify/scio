@@ -1,8 +1,10 @@
 #!/bin/bash
 
+set -e
+
 if [ $# != 1 ]; then
   echo "usage: $0 [full-scala-version]"
-  echo "example: $0 2.11.7"
+  echo "example: $0 2.11.8"
   exit 1
 fi
 

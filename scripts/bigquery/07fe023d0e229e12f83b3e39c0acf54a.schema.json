@@ -1,0 +1,11 @@
+{
+  "fields" : [ {
+    "mode" : "NULLABLE",
+    "name" : "tornado",
+    "type" : "BOOLEAN"
+  }, {
+    "mode" : "REQUIRED",
+    "name" : "month",
+    "type" : "INTEGER"
+  } ]
+}

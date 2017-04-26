@@ -15,6 +15,8 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
+set -e
+
 case $CIRCLE_NODE_INDEX in
   0) export CI_SCALA_VERSION="2.11.11"
     ;;
