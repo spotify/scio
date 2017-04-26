@@ -15,7 +15,9 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
+set -e
+
 DIR_OF_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-"$DIR_OF_SCRIPT/gen_tornado_schema.sh"
-sbt -Dbigquery.project=scio-playground coverage "+ test:compile"
+"$DIR_OF_SCRIPT/gen_schemas.sh"
+sbt -Dbigquery.project=data-integration-test coverage "+ test:compile"
