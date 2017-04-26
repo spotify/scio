@@ -30,6 +30,7 @@ val avroVersion = "1.8.1"
 val bigtableVersion = "0.9.5.1"
 val breezeVersion ="0.13"
 val chillVersion = "0.9.2"
+val circeVersion = "0.7.1"
 val commonsIoVersion = "2.5"
 val commonsMath3Version = "3.6.1"
 val csvVersion = "0.1.17"
@@ -304,10 +305,15 @@ lazy val scioExtra: Project = Project(
     "info.debatty" % "java-lsh" % javaLshVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion % "test",
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
-  )
+  ),
+  libraryDependencies ++= Seq(
+    "io.circe" %% "circe-core",
+    "io.circe" %% "circe-generic",
+    "io.circe" %% "circe-parser"
+  ).map(_ % circeVersion)
 ).dependsOn(
   scioCore,
-  scioTest % "it,test"
+  scioTest % "it,test->test"
 ).configs(IntegrationTest)
 
 lazy val scioHdfs: Project = Project(
