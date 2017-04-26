@@ -45,7 +45,7 @@ class HdfsTapTest extends TapSpec {
 
   it should "support default compression with saveAsHdfsAvroFile" in {
     val dir = tmpDir
-    val t = runWithFileFuture {
+    runWithFileFuture {
       _
         .parallelize(Seq(1, 2, 3))
         .map(newSpecificRecord)
@@ -84,9 +84,9 @@ class HdfsTapTest extends TapSpec {
 
   it should "support user conf with saveAsHdfsAvroFile" in {
     val dir = tmpDir
-    // create empty configuration (no compresion)
+    // create empty configuration (no compression)
     val conf = new Configuration(false)
-    val t = runWithFileFuture {
+    runWithFileFuture {
       _
         .parallelize(Seq(1, 2, 3))
         .map(newSpecificRecord)
@@ -111,7 +111,7 @@ class HdfsTapTest extends TapSpec {
 
   it should "support default compression with saveAsHdfsTextFile" in {
     val dir = tmpDir
-    val t = runWithFileFuture {
+    runWithFileFuture {
       _
         .parallelize(Seq("a", "b", "c"))
         .saveAsHdfsTextFile(dir.getPath)
@@ -123,9 +123,9 @@ class HdfsTapTest extends TapSpec {
 
   it should "support user conf with saveAsHdfsTextFile" in {
     val dir = tmpDir
-    // create empty configuration (no compresion)
+    // create empty configuration (no compression)
     val conf = new Configuration(false)
-    val t =  runWithFileFuture {
+    runWithFileFuture {
       _
         .parallelize(Seq("a", "b", "c", "d"))
         .saveAsHdfsTextFile(dir.getPath, conf = conf)
