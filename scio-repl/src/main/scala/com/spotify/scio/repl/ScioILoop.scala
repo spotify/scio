@@ -35,9 +35,11 @@ import scala.tools.nsc.interpreter.{IR, JPrintWriter}
  */
 class ScioILoop(scioClassLoader: ScioReplClassLoader,
                 args: List[String],
-                in: Option[BufferedReader],
+                reader: Option[BufferedReader],
                 out: JPrintWriter)
-  extends ILoopCompat(in, out) {
+  extends ILoopCompat(reader, out) {
+
+  welcome()
 
   def this(scioCL: ScioReplClassLoader, args: List[String]) =
     this(scioCL, args, None, new JPrintWriter(Console.out, true))
@@ -79,7 +81,6 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
    * User may specify a name for the context val, default is `sc`.
    */
   private def newScioCmdImpl(name: String) = {
-
     val sc = if (name.nonEmpty) name else "sc"
     val rsc = "com.spotify.scio.repl.ReplScioContext"
     val opts = optsFromArgs(scioOpts)
@@ -230,15 +231,16 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
       """.stripMargin)
   }
 
+
   override def createInterpreter(): Unit = {
     super.createInterpreter()
-    welcome()
     intp.beQuietDuring {
       addImports()
       createBigQueryClient()
       newScioCmdImpl("sc")
       loadIoCommands()
     }
+    in.redrawLine()
   }
 
 }
