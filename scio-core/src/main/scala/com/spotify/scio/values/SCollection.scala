@@ -900,7 +900,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .withCodec(codec)
       .withMetadata(metadata.asJava)
 
-  private def textOut(path: String, suffix: String, numShards: Int) =
+  private[scio] def textOut(path: String, suffix: String, numShards: Int) =
     gio.TextIO.Write.to(pathWithShards(path)).withNumShards(numShards).withSuffix(suffix)
 
   /**
