@@ -38,6 +38,7 @@ val hadoopVersion = "2.7.3"
 val hamcrestVersion = "1.3"
 val jacksonScalaModuleVersion = "2.8.8"
 val javaLshVersion = "0.10"
+val jlineVersion = "2.14.3"
 val jodaConvertVersion = "1.8.1"
 val jodaTimeVersion = "2.9.9"
 val junitVersion = "4.12"
@@ -371,7 +372,7 @@ lazy val scioRepl: Project = Project(
   commonSettings,
   libraryDependencies ++= Seq(
     "org.slf4j" % "slf4j-simple" % slf4jVersion,
-    "jline" % "jline" % scalaBinaryVersion.value,
+    "jline" % "jline" % jlineVersion,
     "org.scala-lang" % "scala-compiler" % scalaVersion.value,
     "org.scala-lang" % "scala-reflect" % scalaVersion.value,
     "com.nrinaudo" %% "kantan.csv" % csvVersion,
