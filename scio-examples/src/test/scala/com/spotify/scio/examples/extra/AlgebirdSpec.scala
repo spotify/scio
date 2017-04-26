@@ -24,6 +24,10 @@ import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
 class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matchers {
 
+  // TODO: remove this once https://github.com/scalatest/scalatest/issues/1090 is addressed
+  override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
+    PropertyCheckConfiguration(minSuccessful = 100)
+
   // =======================================================================
   // Utilities
   // =======================================================================
