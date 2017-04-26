@@ -19,7 +19,7 @@ package com.spotify.scio.bigtable
 
 import java.util.UUID
 
-import com.google.bigtable.v2.{Mutation, Row}
+import com.google.bigtable.v2.{Mutation, Row, RowFilter}
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.cloud.bigtable.grpc.BigtableClusterUtilities
 import com.google.protobuf.ByteString
@@ -65,7 +65,6 @@ class BigtableIT extends PipelineSpec {
   import BigtableIT._
 
   "Update number of bigtable nodes" should "work" in {
-    val channelPool = ChannelPoolCreator.createPool(bigtableOptions.getInstanceAdminHost)
     val bt = new BigtableClusterUtilities(bigtableOptions)
     val sc = ScioContext()
     sc.updateNumberOfBigtableNodes(projectId, instanceId, 4, Duration.standardSeconds(10))
@@ -75,24 +74,33 @@ class BigtableIT extends PipelineSpec {
   }
 
   "BigtableIO" should "work" in {
-    val sc1 = ScioContext()
-    sc1
-      .parallelize(testData.map(kv => toWriteMutation(kv._1, kv._2)))
-      .saveAsBigtable(projectId, instanceId, tableId)
-    sc1.close().waitUntilFinish()
+    try {
+      // Write rows to table
+      val sc1 = ScioContext()
+      sc1
+        .parallelize(testData.map(kv => toWriteMutation(kv._1, kv._2)))
+        .saveAsBigtable(projectId, instanceId, tableId)
+      sc1.close().waitUntilFinish()
 
-    val sc2 = ScioContext()
-    sc2.bigtable(projectId, instanceId, tableId).map(fromRow) should containInAnyOrder(testData)
-    sc2.close().waitUntilFinish()
-
-    cleanup()
-  }
-
-  private def cleanup() = {
-    val sc = ScioContext()
-    sc.parallelize(testData.map(kv => toDeleteMutation(kv._1)))
-      .saveAsBigtable(projectId, instanceId, tableId)
-    sc.close().waitUntilFinish()
+      // Read rows back
+      val sc2 = ScioContext()
+      // Filter rows in case there are other keys in the table
+      val rowFilter = RowFilter.newBuilder()
+        .setRowKeyRegexFilter(ByteString.copyFromUtf8(s"$uuid-.*"))
+        .build()
+      sc2
+        .bigtable(projectId, instanceId, tableId, rowFilter = rowFilter)
+        .map(fromRow) should containInAnyOrder(testData)
+      sc2.close().waitUntilFinish()
+    } catch {
+      case e: Throwable => throw e
+    } finally {
+      // Delete rows afterwards
+      val sc = ScioContext()
+      sc.parallelize(testData.map(kv => toDeleteMutation(kv._1)))
+        .saveAsBigtable(projectId, instanceId, tableId)
+      sc.close().waitUntilFinish()
+    }
   }
 
 }
