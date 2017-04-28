@@ -20,10 +20,10 @@ package object jdbc {
   /**
     * Options require to create a connection with remote database.
     *
-    * @param username      database username
-    * @param password      database password
+    * @param username database login username
+    * @param password database login password
     * @param connectionUrl connection url i.e "jdbc:mysql://[host]:[port]/db?"
-    * @param driverClass   subclass of java.sql.Driver
+    * @param driverClass subclass of java.sql.Driver
     */
   case class DbConnectionOptions(username: String,
                                  password: String,
@@ -34,9 +34,9 @@ package object jdbc {
     * Values need to initiate read connection to database and Convert it to given type.
     *
     * @param dbConnectionOptions Options need to create a database connection.
-    * @param query               JDBC query string
+    * @param query JDBC query string
     * @param statementPreparator
-    * @param rowMapper           sql Row mapper to read from ResultSet
+    * @param rowMapper sql Row mapper to read from ResultSet
     * @tparam T serializable type
     */
   case class JdbcReadOptions[T](dbConnectionOptions: DbConnectionOptions,
@@ -48,7 +48,7 @@ package object jdbc {
     * Values need to initiate write connection to database.
     *
     * @param dbConnectionOptions Options need to create a database connection.
-    * @param statement           JDBC query statement
+    * @param statement JDBC query statement
     * @param preparedStatementSetter
     * @tparam T serializable type
     */
@@ -57,7 +57,7 @@ package object jdbc {
                                  preparedStatementSetter: (T, PreparedStatement) => Unit)
 
   /** Enhanced version of [[ScioContext]] with Jdbc and Cloud SQL methods. */
-  implicit class JdbcScioContext(val self: ScioContext) {
+  implicit class JdbcScioContext(@transient val self: ScioContext) extends Serializable {
     /**
       * Get an SCollection for a CloudSql query
       *
@@ -110,7 +110,7 @@ package object jdbc {
     * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JDBC and
     * Cloud SQL methods.
     */
-  implicit class JdbcSCollection[T](val self: SCollection[T]) extends AnyVal {
+  implicit class JdbcSCollection[T](val self: SCollection[T]) extends Serializable {
 
     /**
       * Save this SCollection as a Cloud SQL database entry.
@@ -148,7 +148,7 @@ package object jdbc {
               writeOptions.preparedStatementSetter(element, preparedStatement)
             }
           })
-        this.asInstanceOf[SCollection[T]].applyInternal(transform)
+        self.applyInternal(transform)
       }
       Future.failed(new NotImplementedError("JDBC future is not implemented"))
     }

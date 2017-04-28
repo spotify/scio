@@ -10,8 +10,8 @@ import org.apache.beam.sdk.values.KV
 
 // Read from cloud sql database table and write to different table in the same database.
 object CloudSqlExample {
-
   def main(cmdlineArgs: Array[String]): Unit = {
+    // Ensure this has been called with required database connection details.
     val cloudSqlOptions: ExampleCloudSqlOptions = PipelineOptionsFactory.fromArgs(cmdlineArgs: _*)
       .withValidation()
       .as(classOf[ExampleCloudSqlOptions])
