@@ -4,8 +4,8 @@ import java.sql.{Driver, PreparedStatement, ResultSet}
 
 import com.spotify.scio.Implicits._
 import com.spotify.scio.io.Tap
+import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.{testing => tio}
 import org.apache.beam.sdk.io.jdbc.JdbcIO
 import org.apache.beam.sdk.io.jdbc.JdbcIO._
 
@@ -56,6 +56,9 @@ package object jdbc {
                                  statement: String,
                                  preparedStatementSetter: (T, PreparedStatement) => Unit)
 
+
+  case class JdbcSqlIO[T](table: String) extends TestIO[T](table)
+
   /** Enhanced version of [[ScioContext]] with Jdbc and Cloud SQL methods. */
   implicit class JdbcScioContext(@transient val self: ScioContext) extends Serializable {
     /**
@@ -66,7 +69,7 @@ package object jdbc {
     def cloudSqlSelect[T: ClassTag](readOptions: JdbcReadOptions[T])
     : SCollection[T] = self.requireNotClosed {
       if (self.isTest) {
-        self.getTestInput(tio.CloudSqlIO[T](TEST_READ_TABLE_NAME))
+        self.getTestInput(JdbcSqlIO[T](TEST_READ_TABLE_NAME))
       } else {
         jdbcSelect[T](readOptions)
       }
@@ -80,7 +83,7 @@ package object jdbc {
     def jdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T])
     : SCollection[T] = self.requireNotClosed {
       if (self.isTest) {
-        self.getTestInput(tio.JdbcIO[T](TEST_READ_TABLE_NAME))
+        self.getTestInput(JdbcSqlIO[T](TEST_READ_TABLE_NAME))
       } else {
         val coder = self.pipeline.getCoderRegistry.getScalaCoder[T]
         val conOpt = readOptions.dbConnectionOptions
@@ -120,7 +123,7 @@ package object jdbc {
       */
     def saveAsCloudSql(writeOptions: JdbcWriteOptions[T]): Future[Tap[T]] = {
       if (self.context.isTest) {
-        self.context.testOut(tio.CloudSqlIO[T](TEST_WRITE_TABLE_NAME))(self)
+        self.context.testOut(JdbcSqlIO[T](TEST_WRITE_TABLE_NAME))(self)
       } else {
         saveAsJdbc(writeOptions)
       }
@@ -135,7 +138,7 @@ package object jdbc {
       */
     def saveAsJdbc(writeOptions: JdbcWriteOptions[T]): Future[Tap[T]] = {
       if (self.context.isTest) {
-        self.context.testOut(tio.JdbcIO[T](TEST_WRITE_TABLE_NAME))(self)
+        self.context.testOut(JdbcSqlIO[T](TEST_WRITE_TABLE_NAME))(self)
       } else {
         val conOpt = writeOptions.dbConnectionOptions
         val transform = JdbcIO.write[T]()

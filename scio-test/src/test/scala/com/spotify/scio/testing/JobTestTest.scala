@@ -296,8 +296,8 @@ class JobTestTest extends PipelineSpec {
 
   def testCloudSql(xs: String*): Unit = {
     JobTest[CloudSqlJob.type]
-      .input(CloudSqlIO(TEST_READ_TABLE_NAME), Seq("a", "b", "c"))
-      .output[String](CloudSqlIO(TEST_WRITE_TABLE_NAME))(_ should containInAnyOrder(xs))
+      .input(JdbcSqlIO(TEST_READ_TABLE_NAME), Seq("a", "b", "c"))
+      .output[String](JdbcSqlIO(TEST_WRITE_TABLE_NAME))(_ should containInAnyOrder(xs))
       .run()
   }
 
@@ -312,8 +312,8 @@ class JobTestTest extends PipelineSpec {
 
   def testJdbc(xs: String*): Unit = {
     JobTest[JdbcJob.type]
-      .input(JdbcIO(TEST_READ_TABLE_NAME), Seq("a", "b", "c"))
-      .output[String](JdbcIO(TEST_WRITE_TABLE_NAME))(_ should containInAnyOrder(xs))
+      .input(JdbcSqlIO(TEST_READ_TABLE_NAME), Seq("a", "b", "c"))
+      .output[String](JdbcSqlIO(TEST_WRITE_TABLE_NAME))(_ should containInAnyOrder(xs))
       .run()
   }
 
