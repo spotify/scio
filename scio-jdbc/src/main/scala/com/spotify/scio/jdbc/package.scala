@@ -113,7 +113,7 @@ package object jdbc {
     * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JDBC and
     * Cloud SQL methods.
     */
-  implicit class JdbcSCollection[T](val self: SCollection[T]) extends Serializable {
+  implicit class JdbcSCollection[T](val self: SCollection[T]) {
 
     /**
       * Save this SCollection as a Cloud SQL database entry.
