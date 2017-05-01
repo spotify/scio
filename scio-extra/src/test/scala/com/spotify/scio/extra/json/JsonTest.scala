@@ -71,11 +71,10 @@ class JsonTest extends TapSpec {
     runWithFileFuture {
       _.parallelize(badData).saveAsTextFile(dir.getPath)
     }
-    val t = runWithFileFuture { sc =>
-      val p = sc
+    val t = runWithFileFuture {
+      _
         .jsonFile[Record](dir.getPath + "/part-*")
-      p.debug()
-        p.flatMap(_.left.toOption.map(_.input))
+        .flatMap(_.left.toOption.map(_.input))
         .materialize
     }
     verifyTap(t, badData.toSet)
