@@ -68,11 +68,8 @@ package object jdbc {
       */
     def cloudSqlSelect[T: ClassTag](readOptions: JdbcReadOptions[T])
     : SCollection[T] = self.requireNotClosed {
-      if (self.isTest) {
-        self.getTestInput(JdbcSqlIO[T](TEST_READ_TABLE_NAME))
-      } else {
-        jdbcSelect[T](readOptions)
-      }
+      // delegate to jdbcSelect
+      jdbcSelect[T](readOptions)
     }
 
     /**
@@ -122,12 +119,8 @@ package object jdbc {
       * @return Future tap with given type.
       */
     def saveAsCloudSql(writeOptions: JdbcWriteOptions[T]): Future[Tap[T]] = {
-      if (self.context.isTest) {
-        self.context.testOut(JdbcSqlIO[T](TEST_WRITE_TABLE_NAME))(self)
-      } else {
-        saveAsJdbc(writeOptions)
-      }
-      Future.failed(new NotImplementedError("Cloud Sql future not implemented"))
+      // delegate to saveAsJdbc
+      saveAsJdbc(writeOptions)
     }
 
     /**
