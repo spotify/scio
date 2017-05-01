@@ -17,13 +17,11 @@
 
 package com.spotify.scio.extra
 
-import breeze.linalg.{DenseMatrix, DenseVector}
+import breeze.linalg.{DenseMatrix, DenseVector, SparseVector}
 import breeze.stats.distributions.Rand
 import com.spotify.scio.extra.Breeze._
 import com.twitter.algebird.Semigroup
 import org.scalacheck._
-import org.scalatest.{Matchers, PropSpec}
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
 import scala.language.higherKinds
 
@@ -38,7 +36,7 @@ trait BreezeSpec[M[_], T] extends PropertySpec {
   def sumOption(xs: Iterable[M[T]])(implicit sg: Semigroup[M[T]]): Option[M[T]] = sg.sumOption(xs)
 }
 
-class FVSpec extends BreezeSpec[DenseVector, Float] {
+class FloatDenseVectorSpec extends BreezeSpec[DenseVector, Float] {
   val m = Gen.const(dimension).map(DenseVector.rand[Float](_, fRand))
 
   property("plus") {
@@ -53,7 +51,7 @@ class FVSpec extends BreezeSpec[DenseVector, Float] {
   }
 }
 
-class DVSpec extends BreezeSpec[DenseVector, Double] {
+class DoubleDenseVectorSpec extends BreezeSpec[DenseVector, Double] {
   val m = Gen.const(dimension).map(DenseVector.rand[Double](_))
   property("plus") {
     forAll(m, m) { (x, y) =>
@@ -67,7 +65,7 @@ class DVSpec extends BreezeSpec[DenseVector, Double] {
   }
 }
 
-class FMSpec extends BreezeSpec[DenseMatrix, Float] {
+class FloatDenseMatrixSpec extends BreezeSpec[DenseMatrix, Float] {
   val m = Gen.const((rows, cols)).map { case (r, c) => DenseMatrix.rand[Float](r, c, fRand) }
   property("plus") {
     forAll(m, m) { (x, y) =>
@@ -81,8 +79,38 @@ class FMSpec extends BreezeSpec[DenseMatrix, Float] {
   }
 }
 
-class DMSpec extends BreezeSpec[DenseMatrix, Double] {
+class DoubleDenseMatrixSpec extends BreezeSpec[DenseMatrix, Double] {
   val m = Gen.const((rows, cols)).map { case (r, c) => DenseMatrix.rand[Double](r, c) }
+  property("plus") {
+    forAll(m, m) { (x, y) =>
+      plus(x, y) == x + y
+    }
+  }
+  property("sumOption") {
+    forAll(ms) { xs =>
+      sumOption(xs) == xs.reduceLeftOption(_ + _)
+    }
+  }
+}
+
+class FloatSparseVectorSpec extends BreezeSpec[SparseVector, Float] {
+  val m = Gen.const(dimension).map(d => SparseVector(DenseVector.rand[Float](d, fRand).data))
+
+  property("plus") {
+    forAll(m, m) { (x, y) =>
+      plus(x, y) == x + y
+    }
+  }
+  property("sumOption") {
+    forAll(ms) { xs =>
+      sumOption(xs) == xs.reduceLeftOption(_ + _)
+    }
+  }
+}
+
+class DoubleSparseVectorSpec extends BreezeSpec[SparseVector, Double] {
+  val m = Gen.const(dimension).map(d => SparseVector(DenseVector.rand[Double](d).data))
+
   property("plus") {
     forAll(m, m) { (x, y) =>
       plus(x, y) == x + y
