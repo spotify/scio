@@ -18,99 +18,88 @@
 package com.spotify.scio.extra
 
 import breeze.linalg._
-import com.twitter.algebird.Semigroup
+import breeze.linalg.operators.OpAdd
+import breeze.linalg.support.CanCopy
+import com.twitter.algebird.Monoid
+
+import scala.language.higherKinds
+import scala.reflect.ClassTag
 
 /**
  * Utilities for Breeze.
  *
- * Includes [[com.twitter.algebird.Semigroup Semigroup]]s for
- * [[breeze.linalg.DenseVector DenseVector]]s and [[breeze.linalg.DenseMatrix DenseMatrix]]s of
- * `Float` and `Double`.
+ * Includes [[com.twitter.algebird.Monoid Monoid]]s for [[breeze.linalg.DenseVector DenseVector]]s
+ * and [[breeze.linalg.DenseMatrix DenseMatrix]]s of `Float` and `Double`.
  *
  * {{{
  * import com.spotify.scio.extra.Breeze._
  *
  * val vectors: SCollection[DenseVector[Double]] = // ...
- * vectors.sum  // implicit Semigroup[T]
+ * vectors.sum  // implicit Monoid[T]
  * }}}
  */
 object Breeze {
 
-  private type FV = DenseVector[Float]
-  private type DV = DenseVector[Double]
-  private type FM = DenseMatrix[Float]
-  private type DM = DenseMatrix[Double]
+  // workaround for diverging implicit expansion
+  private class BreezeOps[M](val zero: M,
+                             val isNonZero: M => Boolean,
+                             val copy: CanCopy[M],
+                             val add: OpAdd.Impl2[M, M, M],
+                             val addInPlace: OpAdd.InPlaceImpl2[M, M])
 
-  /** [[com.twitter.algebird.Semigroup Semigroup]] for `DenseVector[Float]`. */
-  implicit val floatVectorSg: Semigroup[FV] = new Semigroup[FV] {
-    override def plus(l: FV, r: FV): FV = l + r
-    override def sumOption(xs: TraversableOnce[FV]): Option[FV] = {
-      var x: FV = null
+  private val floatDenseVectorOps = new BreezeOps(
+    DenseVector.zeros[Float](0), (v: DenseVector[Float]) => v.length > 0,
+    DenseVector.canCopyDenseVector[Float], DenseVector.canAddF, DenseVector.canAddIntoF)
+  private val doubleDenseVectorOps = new BreezeOps(
+    DenseVector.zeros[Double](0), (v: DenseVector[Double]) => v.length > 0,
+    DenseVector.canCopyDenseVector[Double], DenseVector.canAddD, DenseVector.canAddIntoD)
+  private val floatDenseMatrixOps = new BreezeOps(
+    DenseMatrix.zeros[Float](0, 0), (v: DenseMatrix[Float]) => v.size > 0,
+    DenseMatrix.canCopyDenseMatrix[Float],
+    DenseMatrix.op_DM_DM_Float_OpAdd, DenseMatrix.dm_dm_UpdateOp_Float_OpAdd)
+  private val doubleDenseMatrixOps = new BreezeOps(
+    DenseMatrix.zeros[Double](0, 0), (v: DenseMatrix[Double]) => v.size > 0,
+    DenseMatrix.canCopyDenseMatrix[Double],
+    DenseMatrix.op_DM_DM_Double_OpAdd, DenseMatrix.dm_dm_UpdateOp_Double_OpAdd)
+
+  private class BreezeMonoid[M[_], @specialized(Float, Double) T : ClassTag]
+  (private val ops: BreezeOps[M[T]]) extends Monoid[M[T]] {
+
+    override def isNonZero(v: M[T]): Boolean = ops.isNonZero(v)
+    override def zero: M[T] = ops.zero
+
+    override def plus(l: M[T], r: M[T]): M[T] =
+      if (!isNonZero(l)) {
+        r
+      } else if (!isNonZero(r)) {
+        l
+      } else {
+        ops.add(l, r)
+      }
+
+    override def sumOption(xs: TraversableOnce[M[T]]): Option[M[T]] = {
+      var x: M[T] = null.asInstanceOf[M[T]]
       val i = xs.toIterator
       while (i.hasNext) {
         val y = i.next()
-        if (x == null) {
-          x = y.copy
-        } else {
-          x :+= y
+        if (x == null || !isNonZero(x)) {
+          x = ops.copy(y)
+        } else if (ops.isNonZero(y)) {
+          ops.addInPlace(x, y)
         }
       }
       Option(x)
     }
+
   }
 
-  /** [[com.twitter.algebird.Semigroup Semigroup]] for `DenseVector[Double]`. */
-  implicit val doubleVectorSg: Semigroup[DV] = new Semigroup[DV] {
-    override def plus(l: DV, r: DV): DV = l + r
-    override def sumOption(xs: TraversableOnce[DV]): Option[DV] = {
-      var x: DV = null
-      val i = xs.toIterator
-      while (i.hasNext) {
-        val y = i.next()
-        if (x == null) {
-          x = y.copy
-        } else {
-          x :+= y
-        }
-      }
-      Option(x)
-    }
-  }
-
-  /** [[com.twitter.algebird.Semigroup Semigroup]] for `DenseMatrix[Float]`. */
-  implicit val floatMatrixSg: Semigroup[FM] = new Semigroup[FM] {
-    override def plus(l: FM, r: FM): FM = l + r
-    override def sumOption(xs: TraversableOnce[FM]): Option[FM] = {
-      var x: FM = null
-      val i = xs.toIterator
-      while (i.hasNext) {
-        val y = i.next()
-        if (x == null) {
-          x = y.copy
-        } else {
-          x :+= y
-        }
-      }
-      Option(x)
-    }
-  }
-
-  /** [[com.twitter.algebird.Semigroup Semigroup]] for `DenseMatrix[Double]`. */
-  implicit val doubleMatrixSg: Semigroup[DM] = new Semigroup[DM] {
-    override def plus(l: DM, r: DM): DM = l + r
-    override def sumOption(xs: TraversableOnce[DM]): Option[DM] = {
-      var x: DM = null
-      val i = xs.toIterator
-      while (i.hasNext) {
-        val y = i.next()
-        if (x == null) {
-          x = y.copy
-        } else {
-          x :+= y
-        }
-      }
-      Option(x)
-    }
-  }
+  implicit val floatDenseVectorMon: Monoid[DenseVector[Float]] =
+    new BreezeMonoid(floatDenseVectorOps)
+  implicit val doubleDenseVectorMon: Monoid[DenseVector[Double]] =
+    new BreezeMonoid(doubleDenseVectorOps)
+  implicit val floatDenseMatrixMon: Monoid[DenseMatrix[Float]] =
+    new BreezeMonoid(floatDenseMatrixOps)
+  implicit val doubleDenseMatrixMon: Monoid[DenseMatrix[Double]] =
+    new BreezeMonoid(doubleDenseMatrixOps)
 
 }
