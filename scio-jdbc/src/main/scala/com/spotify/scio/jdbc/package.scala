@@ -1,3 +1,20 @@
+/*
+ * Copyright 2016 Spotify AB.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 package com.spotify.scio
 
 import java.sql.{Driver, PreparedStatement, ResultSet}
@@ -12,75 +29,68 @@ import org.apache.beam.sdk.io.jdbc.JdbcIO._
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 
+/**
+ * Main package for JDBC APIs. Import all.
+ *
+ * {{{
+ * import com.spotify.scio.jdbc._
+ * }}}
+ */
 package object jdbc {
 
   val TEST_READ_TABLE_NAME = "table_read"
   val TEST_WRITE_TABLE_NAME = "table_write"
 
   /**
-    * Options require to create a connection with remote database.
-    *
-    * @param username database login username
-    * @param password database login password
-    * @param connectionUrl connection url i.e "jdbc:mysql://[host]:[port]/db?"
-    * @param driverClass subclass of java.sql.Driver
-    */
+   * Options require to create a connection with remote database.
+   *
+   * @param username database login username
+   * @param password database login password
+   * @param connectionUrl connection url i.e "jdbc:mysql://[host]:[port]/db?"
+   * @param driverClass subclass of java.sql.Driver
+   */
   case class DbConnectionOptions(username: String,
                                  password: String,
                                  connectionUrl: String,
                                  driverClass: Class[_ <: Driver])
 
   /**
-    * Values need to initiate read connection to database and Convert it to given type.
-    *
-    * @param dbConnectionOptions Options need to create a database connection.
-    * @param query JDBC query string
-    * @param statementPreparator
-    * @param rowMapper sql Row mapper to read from ResultSet
-    * @tparam T serializable type
-    */
+   * Values need to initiate read connection to database and Convert it to given type.
+   *
+   * @param dbConnectionOptions Options need to create a database connection.
+   * @param query JDBC query string
+   * @param statementPreparator
+   * @param rowMapper sql Row mapper to read from ResultSet
+   * @tparam T serializable type
+   */
   case class JdbcReadOptions[T](dbConnectionOptions: DbConnectionOptions,
                                 query: String,
                                 statementPreparator: (PreparedStatement) => Unit,
                                 rowMapper: (ResultSet) => T)
 
   /**
-    * Values need to initiate write connection to database.
-    *
-    * @param dbConnectionOptions Options need to create a database connection.
-    * @param statement JDBC query statement
-    * @param preparedStatementSetter
-    * @tparam T serializable type
-    */
+   * Values need to initiate write connection to database.
+   *
+   * @param dbConnectionOptions Options need to create a database connection.
+   * @param statement JDBC query statement
+   * @param preparedStatementSetter
+   * @tparam T serializable type
+   */
   case class JdbcWriteOptions[T](dbConnectionOptions: DbConnectionOptions,
                                  statement: String,
                                  preparedStatementSetter: (T, PreparedStatement) => Unit)
 
 
-  case class JdbcSqlIO[T](table: String) extends TestIO[T](table)
+  case class JdbcTestIO[T](table: String) extends TestIO[T](table)
 
   /** Enhanced version of [[ScioContext]] with Jdbc and Cloud SQL methods. */
   implicit class JdbcScioContext(@transient val self: ScioContext) extends Serializable {
-    /**
-      * Get an SCollection for a CloudSql query
-      *
-      * @group input
-      */
-    def cloudSqlSelect[T: ClassTag](readOptions: JdbcReadOptions[T])
-    : SCollection[T] = self.requireNotClosed {
-      // delegate to jdbcSelect
-      jdbcSelect[T](readOptions)
-    }
 
-    /**
-      * Get as SCollection for JDBC query
-      *
-      * @group input
-      */
+    /** Get an SCollection for JDBC query */
     def jdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T])
     : SCollection[T] = self.requireNotClosed {
       if (self.isTest) {
-        self.getTestInput(JdbcSqlIO[T](TEST_READ_TABLE_NAME))
+        self.getTestInput(JdbcTestIO[T](TEST_READ_TABLE_NAME))
       } else {
         val coder = self.pipeline.getCoderRegistry.getScalaCoder[T]
         val conOpt = readOptions.dbConnectionOptions
@@ -106,32 +116,18 @@ package object jdbc {
     }
   }
 
-  /**
-    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JDBC and
-    * Cloud SQL methods.
-    */
+  /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JDBC methods */
   implicit class JdbcSCollection[T](val self: SCollection[T]) {
 
     /**
-      * Save this SCollection as a Cloud SQL database entry.
-      *
-      * @param writeOptions option to create a Jdbc connection with database.
-      * @return Future tap with given type.
-      */
-    def saveAsCloudSql(writeOptions: JdbcWriteOptions[T]): Future[Tap[T]] = {
-      // delegate to saveAsJdbc
-      saveAsJdbc(writeOptions)
-    }
-
-    /**
-      * Save this SCollection as a Jdbc database entry.
-      *
-      * @param writeOptions option to create a Jdbc connection with database.
-      * @return Future tap with given type.
-      */
+     * Save this SCollection as a JDBC database entry.
+     *
+     * @param writeOptions option to create a JDBC connection with database.
+     * @return Future tap with given type.
+     */
     def saveAsJdbc(writeOptions: JdbcWriteOptions[T]): Future[Tap[T]] = {
       if (self.context.isTest) {
-        self.context.testOut(JdbcSqlIO[T](TEST_WRITE_TABLE_NAME))(self)
+        self.context.testOut(JdbcTestIO[T](TEST_WRITE_TABLE_NAME))(self)
       } else {
         val conOpt = writeOptions.dbConnectionOptions
         val transform = JdbcIO.write[T]()

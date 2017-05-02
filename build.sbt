@@ -252,7 +252,6 @@ lazy val scioTest: Project = Project(
   IntegrationTest
 ).dependsOn(
   scioCore,
-  scioJdbc,
   scioSchemas % "test"
 )
 
@@ -423,7 +422,8 @@ lazy val scioJdbc: Project = Project(
     "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion
   )
 ).dependsOn(
-  scioCore
+  scioCore,
+  scioTest % "test"
 )
 
 // =======================================================================

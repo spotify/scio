@@ -24,11 +24,8 @@ import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro.{AvroUtils, TestRecord}
 import com.spotify.scio.bigquery._
-import com.spotify.scio.jdbc._
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.coders.StringUtf8Coder
-import org.apache.beam.sdk.values.KV
 import org.apache.beam.sdk.{io => gio}
 
 import scala.io.Source
@@ -85,26 +82,6 @@ object PubsubJob {
     sc.pubsubTopic[String](args("input"), null)
       .map(_ + "X")
       .saveAsPubsub(args("output"))
-    sc.close()
-  }
-}
-
-object CloudSqlJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.cloudSqlSelect[String](readOptions = null)
-      .map(_ + "C")
-      .saveAsCloudSql(writeOptions = null)
-    sc.close()
-  }
-}
-
-object JdbcJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.jdbcSelect[String](readOptions = null)
-      .map(_ + "J")
-      .saveAsJdbc(writeOptions = null)
     sc.close()
   }
 }
@@ -292,38 +269,6 @@ class JobTestTest extends PipelineSpec {
   it should "fail incorrect PubsubIO" in {
     an [AssertionError] should be thrownBy { testPubsubJob("aX", "bX") }
     an [AssertionError] should be thrownBy { testPubsubJob("aX", "bX", "cX", "dX") }
-  }
-
-  def testCloudSql(xs: String*): Unit = {
-    JobTest[CloudSqlJob.type]
-      .input(JdbcSqlIO(TEST_READ_TABLE_NAME), Seq("a", "b", "c"))
-      .output[String](JdbcSqlIO(TEST_WRITE_TABLE_NAME))(_ should containInAnyOrder(xs))
-      .run()
-  }
-
-  it should "pass correct CloudSql" in {
-    testCloudSql("aC", "bC", "cC")
-  }
-
-  it should "fail incorrect CloudSql" in {
-    an [AssertionError] should be thrownBy { testCloudSql("aC", "bC")}
-    an [AssertionError] should be thrownBy { testCloudSql("aC", "bC", "cC", "dC")}
-  }
-
-  def testJdbc(xs: String*): Unit = {
-    JobTest[JdbcJob.type]
-      .input(JdbcSqlIO(TEST_READ_TABLE_NAME), Seq("a", "b", "c"))
-      .output[String](JdbcSqlIO(TEST_WRITE_TABLE_NAME))(_ should containInAnyOrder(xs))
-      .run()
-  }
-
-  it should "pass correct JDBC" in {
-    testJdbc("aJ", "bJ", "cJ")
-  }
-
-  it should "fail incorrect JDBC" in {
-    an [AssertionError] should be thrownBy { testJdbc("aJ", "bJ")}
-    an [AssertionError] should be thrownBy { testJdbc("aJ", "bJ", "cJ", "dJ")}
   }
 
   def testTableRowJson(xs: Seq[TableRow]): Unit = {
