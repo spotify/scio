@@ -345,7 +345,10 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
     if (this.isTest) {
       TestDataManager.closeTest(testId.get)
-      result.waitUntilFinish()  // block local runner for JobTest to work
+    }
+
+    if (this.isTest || this.optionsAs[ScioOptions].isBlocking) {
+      result.waitUntilDone()  // block local runner for JobTest to work
     } else {
       result
     }
