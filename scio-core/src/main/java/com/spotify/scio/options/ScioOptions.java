@@ -33,4 +33,8 @@ public interface ScioOptions extends PipelineOptions {
   @Description("Filename to save metrics to.")
   String getMetricsLocation();
   void setMetricsLocation(String version);
+
+  @Description("Set to true to block on ScioContext#close()")
+  boolean isBlocking();
+  void setBlocking(boolean value);
 }
