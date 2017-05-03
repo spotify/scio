@@ -38,7 +38,7 @@ class BigQueryUtilTest extends FlatSpec with Matchers {
       ).asJava)
     ).asJava)
     schema.setFactory(new JacksonFactory)
-    BigQueryUtil.parseSchema(schema.toString) should equal (schema)
+    BigQueryUtil.parseSchema(schema.toString) shouldBe schema
   }
 
 }

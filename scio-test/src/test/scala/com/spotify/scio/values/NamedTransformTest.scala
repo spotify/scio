@@ -155,7 +155,7 @@ class NamedTransformTest extends PipelineSpec {
     p.internal.getProducingTransformInternal.getFullName
       .split("[\\(/]")
       .toList
-      .take(prefix.length) should equal (prefix)
+      .take(prefix.length) shouldBe prefix
   }
 
 }

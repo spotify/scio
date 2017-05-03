@@ -78,31 +78,31 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
 
   property("sum of Int") {
     forAll { xs: SColl[Int] =>
-      xs.sum shouldEqual xs.internal.sum
+      xs.sum shouldBe xs.internal.sum
     }
   }
 
   property("sum of Long") {
     forAll { xs: SColl[Long] =>
-      xs.sum shouldEqual xs.internal.sum
+      xs.sum shouldBe xs.internal.sum
     }
   }
 
   property("sum of Float") {
     forAll { xs: SColl[Float] =>
-      xs.sum shouldEqual xs.internal.sum
+      xs.sum shouldBe xs.internal.sum
     }
   }
 
   property("sum of Double") {
     forAll { xs: SColl[Double] =>
-      xs.sum shouldEqual xs.internal.sum
+      xs.sum shouldBe xs.internal.sum
     }
   }
 
   property("sum of Set") {
     forAll { xs: SColl[Set[String]] =>
-      xs.sum shouldEqual xs.internal.reduce(_ ++ _)
+      xs.sum shouldBe xs.internal.reduce(_ ++ _)
     }
   }
 
@@ -113,7 +113,7 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
         xs.internal.map(_._1).sum,
         xs.internal.map(_._2).sum,
         xs.internal.map(_._3).reduce(_ ++ _))
-      xs.sum shouldEqual expected
+      xs.sum shouldBe expected
     }
   }
 
@@ -130,7 +130,7 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
         xs.internal.map(_._1).sum,
         xs.internal.map(_._2).max,
         xs.internal.map(_._3).min)
-      xs.sum(colSg) shouldEqual expected
+      xs.sum(colSg) shouldBe expected
     }
   }
 
@@ -168,9 +168,9 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
         xs.internal.map(_._3).min,
         mean(xs.internal.map(_._4)))
       val actual = xs.aggregate(colAgg)
-      actual._1 shouldEqual expected._1
-      actual._2 shouldEqual expected._2
-      actual._3 shouldEqual expected._3
+      actual._1 shouldBe expected._1
+      actual._2 shouldBe expected._2
+      actual._3 shouldBe expected._3
       error(actual._4, expected._4) shouldBe 0.0 +- 1e-10 // double arithmetic error
     }
   }
@@ -189,8 +189,8 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
 
       val expected = (xs.internal.max, xs.internal.min, mean(xs.internal), stddev(xs.internal))
       val actual = xs.aggregate(colAgg)
-      actual._1 shouldEqual expected._1
-      actual._2 shouldEqual expected._2
+      actual._1 shouldBe expected._1
+      actual._2 shouldBe expected._2
       // double arithmetic error
       error(actual._3, expected._3) shouldBe 0.0 +- 1e-10
       error(actual._4, expected._4) shouldBe 0.0 +- 1e-10
@@ -215,7 +215,7 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
         xs.internal.map(_.i).sum,
         xs.internal.map(_.d).sum,
         xs.internal.map(_.s).reduce(_ ++ _))
-      xs.sum(recordSg) shouldEqual expected
+      xs.sum(recordSg) shouldBe expected
     }
   }
 

@@ -46,11 +46,11 @@ class DoFnWithResourceTest extends FlatSpec with Matchers {
     val c3 = cloneAndProcess(i2)
     val c4 = cloneAndProcess(i2)
 
-    c1.getResource should equal (c2.getResource)
-    c1.getResource should equal (c3.getResource)
-    c1.getResource should equal (c4.getResource)
+    c1.getResource shouldBe c2.getResource
+    c1.getResource shouldBe c3.getResource
+    c1.getResource shouldBe c4.getResource
 
-    DoFnTester.of(c1).processBundle("a", "b", "c").asScala should equal (Seq("A", "B", "C"))
+    DoFnTester.of(c1).processBundle("a", "b", "c").asScala shouldBe Seq("A", "B", "C")
   }
 
   it should "support per instance resources" in {
@@ -64,15 +64,15 @@ class DoFnWithResourceTest extends FlatSpec with Matchers {
     val c3 = cloneAndProcess(i2)
     val c4 = cloneAndProcess(i2)
 
-    c1.getResource should equal (c2.getResource)
-    c1.getResource shouldNot equal (c3.getResource)
-    c1.getResource shouldNot equal (c4.getResource)
+    c1.getResource shouldBe c2.getResource
+    c1.getResource should not be c3.getResource
+    c1.getResource should not be c4.getResource
 
-    c3.getResource should equal (c4.getResource)
-    c3.getResource shouldNot equal (c1.getResource)
-    c3.getResource shouldNot equal (c2.getResource)
+    c3.getResource shouldBe c4.getResource
+    c3.getResource should not be c1.getResource
+    c3.getResource should not be c2.getResource
 
-    DoFnTester.of(c1).processBundle("a", "b", "c").asScala should equal (Seq("A", "B", "C"))
+    DoFnTester.of(c1).processBundle("a", "b", "c").asScala shouldBe Seq("A", "B", "C")
   }
 
   it should "support per core resources" in {
@@ -86,19 +86,19 @@ class DoFnWithResourceTest extends FlatSpec with Matchers {
     val c3 = cloneAndProcess(i2)
     val c4 = cloneAndProcess(i2)
 
-    c1.getResource shouldNot equal (c2.getResource)
-    c1.getResource shouldNot equal (c3.getResource)
-    c1.getResource shouldNot equal (c4.getResource)
+    c1.getResource should not be c2.getResource
+    c1.getResource should not be c3.getResource
+    c1.getResource should not be c4.getResource
 
-    c2.getResource shouldNot equal (c1.getResource)
-    c2.getResource shouldNot equal (c3.getResource)
-    c2.getResource shouldNot equal (c4.getResource)
+    c2.getResource should not be c1.getResource
+    c2.getResource should not be c3.getResource
+    c2.getResource should not be c4.getResource
 
-    c3.getResource shouldNot equal (c1.getResource)
-    c3.getResource shouldNot equal (c2.getResource)
-    c3.getResource shouldNot equal (c4.getResource)
+    c3.getResource should not be c1.getResource
+    c3.getResource should not be c2.getResource
+    c3.getResource should not be c4.getResource
 
-    DoFnTester.of(c1).processBundle("a", "b", "c").asScala should equal (Seq("A", "B", "C"))
+    DoFnTester.of(c1).processBundle("a", "b", "c").asScala shouldBe Seq("A", "B", "C")
   }
 
 }

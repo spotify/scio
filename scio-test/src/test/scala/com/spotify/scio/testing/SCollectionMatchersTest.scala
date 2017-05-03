@@ -63,10 +63,10 @@ class SCollectionMatchersTest extends PipelineSpec {
     runWithContext { _.parallelize(1 to 10) should haveSize (10) }
 
     an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(Seq.empty[Int]) should haveSize(1) }
+      runWithContext { _.parallelize(Seq.empty[Int]) should haveSize (1) }
     }
     an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(Seq(1)) should haveSize(0) }
+      runWithContext { _.parallelize(Seq(1)) should haveSize (0) }
     }
     an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(1 to 10) should haveSize (20) }

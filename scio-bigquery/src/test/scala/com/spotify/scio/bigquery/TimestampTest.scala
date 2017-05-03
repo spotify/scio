@@ -23,71 +23,71 @@ class TimestampTest extends FlatSpec with Matchers {
 
   "Timestamp" should "round trip Instant" in {
     val t = Timestamp.parse("2016-01-01T00:00:00.000000 UTC")
-    Timestamp.parse(Timestamp(t)) should equal (t)
+    Timestamp.parse(Timestamp(t)) shouldBe t
   }
 
   it should "round trip Long" in {
     val t = Timestamp.parse("2016-01-01T00:00:00.000000 UTC")
-    Timestamp.parse(Timestamp(t.getMillis)) should equal (t)
+    Timestamp.parse(Timestamp(t.getMillis)) shouldBe t
   }
 
   it should "parse different formats" in {
     val t = Timestamp.parse("2016-01-01T00:00:00.000000 UTC")
-    Timestamp.parse("2016-01-01 00:00:00.000000 UTC") should equal (t)
-    Timestamp.parse("2016-01-01 08:00:00.000000+08:00") should equal (t)
-    Timestamp.parse("2016-01-01 08:00:00.000000+0800") should equal (t)
-    Timestamp.parse("2016-01-01 08:00:00.000000+08") should equal (t)
-    Timestamp.parse("2016-01-01 00:00:00.000 UTC") should equal (t)
-    Timestamp.parse("2016-01-01 00:00:00.000") should equal (t)
-    Timestamp.parse("2016-01-01 00:00:00 UTC") should equal (t)
-    Timestamp.parse("2016-01-01 00:00:00") should equal (t)
-    Timestamp.parse("2016-01-01 UTC") should equal (t)
-    Timestamp.parse("2016-01-01") should equal (t)
+    Timestamp.parse("2016-01-01 00:00:00.000000 UTC") shouldBe t
+    Timestamp.parse("2016-01-01 08:00:00.000000+08:00") shouldBe t
+    Timestamp.parse("2016-01-01 08:00:00.000000+0800") shouldBe t
+    Timestamp.parse("2016-01-01 08:00:00.000000+08") shouldBe t
+    Timestamp.parse("2016-01-01 00:00:00.000 UTC") shouldBe t
+    Timestamp.parse("2016-01-01 00:00:00.000") shouldBe t
+    Timestamp.parse("2016-01-01 00:00:00 UTC") shouldBe t
+    Timestamp.parse("2016-01-01 00:00:00") shouldBe t
+    Timestamp.parse("2016-01-01 UTC") shouldBe t
+    Timestamp.parse("2016-01-01") shouldBe t
 
     // with 'T'
-    Timestamp.parse("2016-01-01T00:00:00.000000 UTC") should equal (t)
-    Timestamp.parse("2016-01-01T08:00:00.000000+08:00") should equal (t)
-    Timestamp.parse("2016-01-01T08:00:00.000000+0800") should equal (t)
-    Timestamp.parse("2016-01-01T08:00:00.000000+08") should equal (t)
-    Timestamp.parse("2016-01-01T00:00:00.000 UTC") should equal (t)
-    Timestamp.parse("2016-01-01T00:00:00.000") should equal (t)
-    Timestamp.parse("2016-01-01T00:00:00 UTC") should equal (t)
-    Timestamp.parse("2016-01-01T00:00:00") should equal (t)
+    Timestamp.parse("2016-01-01T00:00:00.000000 UTC") shouldBe t
+    Timestamp.parse("2016-01-01T08:00:00.000000+08:00") shouldBe t
+    Timestamp.parse("2016-01-01T08:00:00.000000+0800") shouldBe t
+    Timestamp.parse("2016-01-01T08:00:00.000000+08") shouldBe t
+    Timestamp.parse("2016-01-01T00:00:00.000 UTC") shouldBe t
+    Timestamp.parse("2016-01-01T00:00:00.000") shouldBe t
+    Timestamp.parse("2016-01-01T00:00:00 UTC") shouldBe t
+    Timestamp.parse("2016-01-01T00:00:00") shouldBe t
   }
 
   "Date" should "round trip LocalDate" in {
     val t = Date.parse("2016-01-01")
-    Date.parse(Date(t)) should equal (t)
+    Date.parse(Date(t)) shouldBe t
   }
 
   "Time" should "round trip LocalTime" in {
     val t = Time.parse("00:00:00.000000")
-    Time.parse(Time(t)) should equal (t)
+    Time.parse(Time(t)) shouldBe t
   }
 
   it should "parse different formats" in {
     val t = Time.parse("00:00:00.000000")
-    Time.parse("00:00:00.000000") should equal (t)
-    Time.parse("00:00:00.000") should equal (t)
-    Time.parse("00:00:00") should equal (t)
+    Time.parse("00:00:00.000000") shouldBe t
+    Time.parse("00:00:00.000") shouldBe t
+    Time.parse("00:00:00") shouldBe t
   }
 
   "DateTime" should "round trip LocalDateTime" in {
     val t = DateTime.parse("2016-01-01T00:00:00.000000")
-    DateTime.parse(DateTime(t)) should equal (t)
+    DateTime.parse(DateTime(t)) shouldBe t
   }
 
   it should "parse different formats" in {
     val t = DateTime.parse("2016-01-01T00:00:00.000000")
-    DateTime.parse("2016-01-01 00:00:00.000000") should equal (t)
-    DateTime.parse("2016-01-01 00:00:00.000") should equal (t)
-    DateTime.parse("2016-01-01 00:00:00") should equal (t)
-    DateTime.parse("2016-01-01") should equal (t)
+    DateTime.parse("2016-01-01 00:00:00.000000") shouldBe t
+    DateTime.parse("2016-01-01 00:00:00.000") shouldBe t
+    DateTime.parse("2016-01-01 00:00:00") shouldBe t
+    DateTime.parse("2016-01-01") shouldBe t
 
     // with 'T'
-    DateTime.parse("2016-01-01T00:00:00.000000") should equal (t)
-    DateTime.parse("2016-01-01T00:00:00.000") should equal (t)
-    DateTime.parse("2016-01-01T00:00:00") should equal (t)
+    DateTime.parse("2016-01-01T00:00:00.000000") shouldBe t
+    DateTime.parse("2016-01-01T00:00:00.000") shouldBe t
+    DateTime.parse("2016-01-01T00:00:00") shouldBe t
   }
 
 }

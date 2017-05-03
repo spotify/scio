@@ -98,9 +98,8 @@ class ClosureTest extends PipelineSpec {
         sc.parallelize(Seq(1, 2, 3))
           .map(_ * o.x)
       }
-    thrown.getMessage should startWith(
-      "unable to serialize anonymous function map@{ClosureTest.scala:"
-    )
+    val msg = "unable to serialize anonymous function map@{ClosureTest.scala:"
+    thrown.getMessage should startWith (msg)
   }
 }
 

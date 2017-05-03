@@ -128,7 +128,7 @@ class ScioContextTest extends PipelineSpec {
     val mapper = ScioUtil.getScalaJsonMapper
 
     val metrics = mapper.readValue(metricsFile, classOf[Metrics])
-    metrics.version should be(scioVersion)
+    metrics.version shouldBe scioVersion
   }
 
   // scalastyle:off no.whitespace.before.left.bracket
@@ -146,7 +146,7 @@ class ScioContextTest extends PipelineSpec {
     val sc1 = ScioContext()
     val max = sc.maxAccumulator[Long]("max")
     val foo = sc1.maxAccumulator[Long]("foo")
-    sc.containsAccumulator(max) should be(true)
-    sc.containsAccumulator(foo) should be(false)
+    sc.containsAccumulator(max) shouldBe true
+    sc.containsAccumulator(foo) shouldBe false
   }
 }

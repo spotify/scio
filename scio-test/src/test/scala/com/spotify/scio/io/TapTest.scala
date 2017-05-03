@@ -41,7 +41,7 @@ import scala.reflect.ClassTag
 trait TapSpec extends PipelineSpec {
   def verifyTap[T: ClassTag](tap: Tap[T], expected: Set[T]): Unit = {
     SerializableUtils.ensureSerializable(tap)
-    tap.value.toSet should equal (expected)
+    tap.value.toSet shouldBe expected
     val sc = ScioContext()
     tap.open(sc) should containInAnyOrder (expected)
     sc.close().waitUntilFinish()  // block non-test runner
@@ -254,9 +254,9 @@ class TapTest extends TapSpec {
         .saveAsTextFile(dir.getPath)
     }.map(_.toInt)
     verifyTap(t, Set(1, 2, 3))
-    t.isInstanceOf[Tap[Int]] should be (true)
-    t.parent.get.isInstanceOf[TextTap] should be (true)
-    t.parent.get.asInstanceOf[TextTap].path should be (dir.getPath + "/part-*")
+    t.isInstanceOf[Tap[Int]] shouldBe true
+    t.parent.get.isInstanceOf[TextTap] shouldBe true
+    t.parent.get.asInstanceOf[TextTap].path shouldBe s"${dir.getPath}/part-*"
     FileUtils.deleteDirectory(dir)
   }
 

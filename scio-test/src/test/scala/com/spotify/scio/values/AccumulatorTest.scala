@@ -96,9 +96,9 @@ class AccumulatorTest extends PipelineSpec {
 
     val av = r.accumulatorValuesAtSteps(count)
     av.size shouldBe 3
-    av.find(_._1.startsWith("map@")).map(_._2) should equal (Some(100))
-    av.find(_._1.startsWith("filter@")).map(_._2) should equal (Some(50))
-    av.find(_._1.startsWith("flatMap@")).map(_._2) should equal (Some(50))
+    av.find(_._1.startsWith("map@")).map(_._2) shouldBe Some(100)
+    av.find(_._1.startsWith("filter@")).map(_._2) shouldBe Some(50)
+    av.find(_._1.startsWith("flatMap@")).map(_._2) shouldBe Some(50)
   }
 
   // scalastyle:off no.whitespace.before.left.bracket
@@ -168,11 +168,11 @@ class AccumulatorTest extends PipelineSpec {
       AccumulatorStepsValue(sumL.name,
         r.accumulatorValuesAtSteps(sumL).map(e => AccumulatorStepValue(e._1, e._2))))
 
-    metrics.version should be(scioVersion)
-    metrics.scalaVersion should be(scalaVersion)
-    metrics.jobName should be(sc.optionsAs[ApplicationNameOptions].getAppName)
+    metrics.version shouldBe scioVersion
+    metrics.scalaVersion shouldBe scalaVersion
+    metrics.jobName shouldBe sc.optionsAs[ApplicationNameOptions].getAppName
     // test run via local runner - so this will be the same a app name
-    metrics.jobId should be(sc.optionsAs[ApplicationNameOptions].getAppName)
+    metrics.jobId shouldBe sc.optionsAs[ApplicationNameOptions].getAppName
     metrics.accumulators.total should contain theSameElementsAs expectedTotal
     metrics.accumulators.steps should contain theSameElementsAs expectedSteps
   }
@@ -181,7 +181,7 @@ class AccumulatorTest extends PipelineSpec {
     val sc = ScioContext.forTest()
     val maxI = sc.maxAccumulator[Int]("maxI")
     val r = sc.close()
-    r.accumulatorTotalValue(maxI) should be(Integer.MIN_VALUE)
+    r.accumulatorTotalValue(maxI) shouldBe Integer.MIN_VALUE
     r.accumulatorValuesAtSteps(maxI) shouldBe empty
   }
 

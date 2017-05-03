@@ -35,7 +35,7 @@ class SparkeyTest extends PipelineSpec {
     sc.close().waitUntilFinish()
     val basePath = p.waitForResult().value.next().basePath
     val reader = Sparkey.open(new File(basePath))
-    reader.toMap shouldEqual sideData.toMap
+    reader.toMap shouldBe sideData.toMap
     for (ext <- Seq(".spi", ".spl")) {
       new File(basePath + ext).delete()
     }
@@ -48,7 +48,7 @@ class SparkeyTest extends PipelineSpec {
       sc.parallelize(sideData).asSparkey(basePath)
     }
     val reader = Sparkey.open(new File(basePath + ".spi"))
-    reader.toMap shouldEqual sideData.toMap
+    reader.toMap shouldBe sideData.toMap
     for (ext <- Seq(".spi", ".spl")) {
       new File(basePath + ext).delete()
     }

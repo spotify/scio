@@ -61,7 +61,7 @@ class RichRowTest extends FlatSpec with Matchers {
       val cells = cs.map { case (t, v) =>
         Cell.newBuilder().setTimestampMicros(t).setValue(v).build()
       }
-      row.getColumnCells(FAMILY_NAME, q) shouldEqual cells
+      row.getColumnCells(FAMILY_NAME, q) shouldBe cells
     }
   }
 
@@ -70,27 +70,27 @@ class RichRowTest extends FlatSpec with Matchers {
       val cells = cs.map { case (t, v) =>
         Cell.newBuilder().setTimestampMicros(t).setValue(v).build()
       }
-      row.getColumnLatestCell(FAMILY_NAME, q) shouldEqual cells.headOption
+      row.getColumnLatestCell(FAMILY_NAME, q) shouldBe cells.headOption
     }
   }
 
   it should "support getFamilyMap" in {
     val familyMap = dataMap.map { case (q, cs) => (q, cs.head._2)}
-    row.getFamilyMap(FAMILY_NAME) shouldEqual familyMap
+    row.getFamilyMap(FAMILY_NAME) shouldBe familyMap
   }
 
   it should "support getMap" in {
-    row.getMap shouldEqual Map(FAMILY_NAME -> dataMap)
+    row.getMap shouldBe Map(FAMILY_NAME -> dataMap)
   }
 
   it should "support getNoVersionMap" in {
     val noVerMap = dataMap.map { case (q, cs) => (q, cs.head._2)}
-    row.getNoVersionMap shouldEqual Map(FAMILY_NAME -> noVerMap)
+    row.getNoVersionMap shouldBe Map(FAMILY_NAME -> noVerMap)
   }
 
   it should "support getValue" in {
     for ((q, cs) <- dataMap) {
-      row.getValue(FAMILY_NAME, q) shouldEqual Some(cs.head._2)
+      row.getValue(FAMILY_NAME, q) shouldBe Some(cs.head._2)
     }
   }
 

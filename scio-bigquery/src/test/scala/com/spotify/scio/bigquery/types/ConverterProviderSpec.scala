@@ -62,18 +62,18 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
     forAll { o: Optional =>
       val r = BigQueryType.toTableRow[Optional](o)
       // TableRow object should only contain a key if the corresponding Option[T] is defined
-      o.boolF.isDefined shouldEqual r.containsKey("boolF")
-      o.intF.isDefined shouldEqual r.containsKey("intF")
-      o.longF.isDefined shouldEqual r.containsKey("longF")
-      o.floatF.isDefined shouldEqual r.containsKey("floatF")
-      o.doubleF.isDefined shouldEqual r.containsKey("doubleF")
-      o.stringF.isDefined shouldEqual r.containsKey("stringF")
-      o.byteArrayF.isDefined shouldEqual r.containsKey("byteArrayF")
-      o.byteStringF.isDefined shouldEqual r.containsKey("byteStringF")
-      o.timestampF.isDefined shouldEqual r.containsKey("timestampF")
-      o.dateF.isDefined shouldEqual r.containsKey("dateF")
-      o.timeF.isDefined shouldEqual r.containsKey("timeF")
-      o.datetimeF.isDefined shouldEqual r.containsKey("datetimeF")
+      o.boolF.isDefined shouldBe r.containsKey("boolF")
+      o.intF.isDefined shouldBe r.containsKey("intF")
+      o.longF.isDefined shouldBe r.containsKey("longF")
+      o.floatF.isDefined shouldBe r.containsKey("floatF")
+      o.doubleF.isDefined shouldBe r.containsKey("doubleF")
+      o.stringF.isDefined shouldBe r.containsKey("stringF")
+      o.byteArrayF.isDefined shouldBe r.containsKey("byteArrayF")
+      o.byteStringF.isDefined shouldBe r.containsKey("byteStringF")
+      o.timestampF.isDefined shouldBe r.containsKey("timestampF")
+      o.dateF.isDefined shouldBe r.containsKey("dateF")
+      o.timeF.isDefined shouldBe r.containsKey("timeF")
+      o.datetimeF.isDefined shouldBe r.containsKey("datetimeF")
     }
   }
 
@@ -104,9 +104,9 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
     forAll { o: OptionalNested =>
       val r = BigQueryType.toTableRow[OptionalNested](o)
       // TableRow object should only contain a key if the corresponding Option[T] is defined
-      o.required.isDefined shouldEqual r.containsKey("required")
-      o.optional.isDefined shouldEqual r.containsKey("optional")
-      o.repeated.isDefined shouldEqual r.containsKey("repeated")
+      o.required.isDefined shouldBe r.containsKey("required")
+      o.optional.isDefined shouldBe r.containsKey("optional")
+      o.repeated.isDefined shouldBe r.containsKey("repeated")
     }
   }
 

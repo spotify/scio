@@ -73,7 +73,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   it should "support missing mode" in {
     val r = MissingMode(Some(1))
-    r.f1 should equal (Some(1))
+    r.f1 shouldBe Some(1)
   }
 
   @BigQueryType.fromSchema(
@@ -102,7 +102,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
   it should "support .tupled in companion object" in {
     val r1 = RecordWithRequiredPrimitives(1L, 1.5, true, "hello", NOW)
     val r2 = RecordWithRequiredPrimitives.tupled((1L, 1.5, true, "hello", NOW))
-    r1 should equal (r2)
+    r1 shouldBe r2
   }
 
   @BigQueryType.fromSchema(
@@ -147,11 +147,11 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   it should "support nullable primitive types" in {
     val r1 = RecordWithNullablePrimitives(Some(1L), Some(1.5), Some(true), Some("hello"), Some(NOW))
-    r1.f1 should equal (Some(1L))
-    r1.f2 should equal (Some(1.5))
-    r1.f3 should equal (Some(true))
-    r1.f4 should equal (Some("hello"))
-    r1.f5 should equal (Some(NOW))
+    r1.f1 shouldBe Some(1L)
+    r1.f2 shouldBe Some(1.5)
+    r1.f3 shouldBe Some(true)
+    r1.f4 shouldBe Some("hello")
+    r1.f5 shouldBe Some(NOW)
 
     val r2 = RecordWithNullablePrimitives(None, None, None, None, None)
     r2.f1 shouldBe None
@@ -179,11 +179,11 @@ class TypeProviderTest extends FlatSpec with Matchers {
     val r1 = RecordWithRepeatedPrimitives(
       List(1L, 2L), List(1.5, 2.5), List(true, false), List("hello", "world"),
       List(NOW, NOW.plus(1000)))
-    r1.f1 should equal (List(1L, 2L))
-    r1.f2 should equal (List(1.5, 2.5))
-    r1.f3 should equal (List(true, false))
-    r1.f4 should equal (List("hello", "world"))
-    r1.f5 should equal (List(NOW, NOW.plus(1000)))
+    r1.f1 shouldBe List(1L, 2L)
+    r1.f2 shouldBe List(1.5, 2.5)
+    r1.f3 shouldBe List(true, false)
+    r1.f4 shouldBe List("hello", "world")
+    r1.f5 shouldBe List(NOW, NOW.plus(1000))
 
     val r2 = RecordWithRepeatedPrimitives(Nil, Nil, Nil, Nil, Nil)
     r2.f1 shouldBe Nil
@@ -216,9 +216,9 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   it should "support required records" in {
     val r = RecordWithRequiredRecords(F1$1(1L), F2$1(Some(1L)), F3$1(List(1L, 2L)))
-    r.f1.g should equal (1L)
-    r.f2.g should equal (Some(1L))
-    r.f3.g should equal (List(1L, 2L))
+    r.f1.g shouldBe 1L
+    r.f2.g shouldBe Some(1L)
+    r.f3.g shouldBe List(1L, 2L)
   }
 
   @BigQueryType.fromSchema(
@@ -245,9 +245,9 @@ class TypeProviderTest extends FlatSpec with Matchers {
   it should "support nullable records" in {
     val r = RecordWithNullableRecords(
       Some(F1$2(1L)), Some(F2$2(Some(1L))), Some(F3$2(List(1L, 2L))))
-    r.f1.get.g should equal (1L)
-    r.f2.get.g should equal (Some(1L))
-    r.f3.get.g should equal (List(1L, 2L))
+    r.f1.get.g shouldBe 1L
+    r.f2.get.g shouldBe Some(1L)
+    r.f3.get.g shouldBe List(1L, 2L)
   }
 
   @BigQueryType.fromSchema(
@@ -274,9 +274,9 @@ class TypeProviderTest extends FlatSpec with Matchers {
   it should "support repeated records" in {
     val r = RecordWithRepeatedRecords(
       List(F1$3(1L)), List(F2$3(Some(1L))), List(F3$3(List(1L, 2L))))
-    r.f1 should equal (List(F1$3(1L)))
-    r.f2 should equal (List(F2$3(Some(1L))))
-    r.f3 should equal (List(F3$3(List(1L, 2L))))
+    r.f1 shouldBe List(F1$3(1L))
+    r.f2 shouldBe List(F2$3(Some(1L)))
+    r.f3 shouldBe List(F3$3(List(1L, 2L)))
   }
 
   @BigQueryType.toTable
@@ -288,7 +288,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
   "BigQueryType.toTable" should "support .tupled in companion object" in {
     val r1 = ToTable(1L, 1.5, true, "hello", NOW)
     val r2 = ToTable.tupled((1L, 1.5, true, "hello", NOW))
-    r1 should equal (r2)
+    r1 shouldBe r2
   }
 
   it should "support .schema in companion object" in {
@@ -313,8 +313,8 @@ class TypeProviderTest extends FlatSpec with Matchers {
   it should "create companion object that is functionally equal to its apply method" in {
     def doApply(f: (Int, String) => Record)(x: (Int, String)): Record = f(x._1, x._2)
 
-    doApply(Record.apply _)((3, "a")) shouldEqual doApply(Record)((3, "a"))
-    doApply(Record)((3, "a")) shouldEqual Record(3, "a")
+    doApply(Record.apply _)((3, "a")) shouldBe doApply(Record)((3, "a"))
+    doApply(Record)((3, "a")) shouldBe Record(3, "a")
   }
 
   // This should compile
@@ -326,7 +326,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
   }
 
   it should "support default argument correctly" in {
-    RecordWithDefault(10).y shouldEqual 2
+    RecordWithDefault(10).y shouldBe 2
   }
 
   @BigQueryType.fromSchema(

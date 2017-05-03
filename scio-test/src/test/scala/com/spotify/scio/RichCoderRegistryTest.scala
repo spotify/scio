@@ -38,7 +38,7 @@ class RichCoderRegistryTest extends PipelineSpec {
   private def roundTrip[T: ClassTag](value: T) = new Matcher[CoderRegistry] {
     override def apply(left: CoderRegistry): MatchResult = {
       val coder = left.getScalaCoder[T]
-      coder shouldNot be (null)
+      coder should not be null
       MatchResult(
         testRoundTrip(coder, value),
         s"CoderRegistry did not round trip $value",

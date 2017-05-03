@@ -49,7 +49,7 @@ class ScioContextIT extends FlatSpec with Matchers {
 
     tempLocation should not be null
     gcpTempLocation should not be null
-    tempLocation should equal (gcpTempLocation)
+    tempLocation shouldBe gcpTempLocation
     ScioUtil.isGcsUri(new URI(gcpTempLocation)) shouldBe true
   }
 

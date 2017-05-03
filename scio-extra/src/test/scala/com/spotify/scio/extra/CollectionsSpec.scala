@@ -32,7 +32,7 @@ class CollectionsSpec extends PropertySpec {
       val maxExpected = xs.sorted.reverse.take(num).sorted
       val minExpected = xs.sorted.take(num).sorted
       def verify(actual: Iterable[Int], expected: List[Int]): Assertion =
-        actual.toList.sorted shouldEqual expected
+        actual.toList.sorted shouldBe expected
 
       verify(xs.top(num), maxExpected)
       verify(xs.top(num)(Ordering[Int].reverse), minExpected)
@@ -51,7 +51,7 @@ class CollectionsSpec extends PropertySpec {
       val maxExpected = xs.groupBy(_._1).mapValues(_.map(_._2).sorted.reverse.take(num).sorted)
       val minExpected = xs.groupBy(_._1).mapValues(_.map(_._2).sorted.take(num).sorted)
       def verify(actual: Map[String, Iterable[Int]], expected: Map[String, List[Int]]): Assertion =
-        actual.mapValues(_.toList.sorted) shouldEqual expected
+        actual.mapValues(_.toList.sorted) shouldBe expected
       verify(xs.topByKey(num), maxExpected)
       verify(xs.topByKey(num)(Ordering[Int].reverse), minExpected)
       verify(xs.toArray.topByKey(num), maxExpected)

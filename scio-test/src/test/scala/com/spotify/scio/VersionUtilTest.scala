@@ -22,8 +22,8 @@ import org.scalatest._
 class VersionUtilTest extends FlatSpec with Matchers {
 
   private def verifySnapshotVersion(oldVer: String, newVerOpt: Option[String]) =
-    VersionUtil.checkVersion(oldVer, newVerOpt) should equal (Seq(
-      s"Using a SNAPSHOT version of Scio: $oldVer"))
+    VersionUtil.checkVersion(oldVer, newVerOpt) shouldBe Seq(
+      s"Using a SNAPSHOT version of Scio: $oldVer")
 
   "checkVersion" should "warn about snapshot version" in {
     verifySnapshotVersion("0.1.0-SNAPSHOT", None)
@@ -33,14 +33,14 @@ class VersionUtilTest extends FlatSpec with Matchers {
   }
 
   it should "warn about release version" in {
-    VersionUtil.checkVersion("0.1.0-SNAPSHOT", Some("0.1.0")) should equal (Seq(
+    VersionUtil.checkVersion("0.1.0-SNAPSHOT", Some("0.1.0")) shouldBe Seq(
       "Using a SNAPSHOT version of Scio: 0.1.0-SNAPSHOT",
-      "A newer version of Scio is available: 0.1.0-SNAPSHOT -> 0.1.0"))
+      "A newer version of Scio is available: 0.1.0-SNAPSHOT -> 0.1.0")
   }
 
   private def verifyNewVersion(oldVer: String, newVer: String) =
-  VersionUtil.checkVersion(oldVer, Some(newVer)) should equal (Seq(
-    s"A newer version of Scio is available: $oldVer -> $newVer"))
+  VersionUtil.checkVersion(oldVer, Some(newVer)) shouldBe Seq(
+    s"A newer version of Scio is available: $oldVer -> $newVer")
 
   it should "warn about newer version" in {
     val versions = Array(

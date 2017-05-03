@@ -55,7 +55,7 @@ trait PipelineTestUtils {
    * {{{
    * runWithData(Seq(1, 2, 3)) { p =>
    *   p.sum
-   * } should equal (Seq(6))
+   * } shouldBe Seq(6)
    * }}}
    */
   def runWithData[T: ClassTag, U: ClassTag](data: Iterable[T])

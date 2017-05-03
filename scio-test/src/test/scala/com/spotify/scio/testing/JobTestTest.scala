@@ -523,7 +523,7 @@ class JobTestTest extends PipelineSpec {
       JobTest("com.spotify.scio.testing.ObjectFileJob")
         .args("--input=in.avro", "--output=out.avro")
         .input(ObjectFileIO("in.avro"), Seq(1, 2, 3))
-        .output[Int](ObjectFileIO("out.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
+        .output[Int](ObjectFileIO("out.avro"))(_ should containInAnyOrder (Seq(1, 2, 3)))
     }
   }
 
@@ -532,14 +532,14 @@ class JobTestTest extends PipelineSpec {
       JobTest[ObjectFileJob.type]
         .args("--input=in.avro", "--output=out.avro")
         .input(ObjectFileIO("in.avro"), Seq(1, 2, 3))
-        .output[Int](ObjectFileIO("out.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
+        .output[Int](ObjectFileIO("out.avro"))(_ should containInAnyOrder (Seq(1, 2, 3)))
 
       testBigQuery((1 to 3).map(newTableRow))
 
       JobTest[ObjectFileJob.type]
         .args("--input=in2.avro", "--output=out2.avro")
         .input(ObjectFileIO("in2.avro"), Seq(1, 2, 3))
-        .output[Int](ObjectFileIO("out2.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
+        .output[Int](ObjectFileIO("out2.avro"))(_ should containInAnyOrder (Seq(1, 2, 3)))
     }
   }
 
@@ -549,7 +549,7 @@ class JobTestTest extends PipelineSpec {
       InternalJobTest[ObjectFileJob.type]
         .args("--input=in.avro", "--output=out.avro")
         .input(ObjectFileIO("in.avro"), Seq(1, 2, 3))
-        .output[Int](ObjectFileIO("out.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
+        .output[Int](ObjectFileIO("out.avro"))(_ should containInAnyOrder (Seq(1, 2, 3)))
     }
   }
 

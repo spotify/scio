@@ -90,7 +90,7 @@ class BigtableIT extends PipelineSpec {
         .build()
       sc2
         .bigtable(projectId, instanceId, tableId, rowFilter = rowFilter)
-        .map(fromRow) should containInAnyOrder(testData)
+        .map(fromRow) should containInAnyOrder (testData)
       sc2.close().waitUntilFinish()
     } catch {
       case e: Throwable => throw e

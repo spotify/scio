@@ -52,70 +52,70 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
 
   "fromQuery" should "work with legacy syntax" in {
     val bqt= BigQueryType[LegacyT]
-    bqt.isQuery should be (true)
-    bqt.isTable should be (false)
-    bqt.query should be (Some(legacyQuery))
-    bqt.table should be (None)
+    bqt.isQuery shouldBe true
+    bqt.isTable shouldBe false
+    bqt.query shouldBe Some(legacyQuery)
+    bqt.table shouldBe None
     val fields = bqt.schema.getFields.asScala
-    fields.size should be (2)
-    fields.map(_.getName) should equal (Seq("word", "word_count"))
-    fields.map(_.getType) should equal (Seq("STRING", "INTEGER"))
-    fields.map(_.getMode) should equal (Seq("REQUIRED", "REQUIRED"))
+    fields.size shouldBe 2
+    fields.map(_.getName) shouldBe Seq("word", "word_count")
+    fields.map(_.getType) shouldBe Seq("STRING", "INTEGER")
+    fields.map(_.getMode) shouldBe Seq("REQUIRED", "REQUIRED")
   }
 
   it should "work with SQL syntax" in {
     val bqt= BigQueryType[SqlT]
-    bqt.isQuery should be (true)
-    bqt.isTable should be (false)
-    bqt.query should be (Some(sqlQuery))
-    bqt.table should be (None)
+    bqt.isQuery shouldBe true
+    bqt.isTable shouldBe false
+    bqt.query shouldBe Some(sqlQuery)
+    bqt.table shouldBe None
     val fields = bqt.schema.getFields.asScala
-    fields.size should be (2)
-    fields.map(_.getName) should equal (Seq("word", "word_count"))
-    fields.map(_.getType) should equal (Seq("STRING", "INTEGER"))
-    fields.map(_.getMode) should equal (Seq("NULLABLE", "NULLABLE"))
+    fields.size shouldBe 2
+    fields.map(_.getName) shouldBe Seq("word", "word_count")
+    fields.map(_.getType) shouldBe Seq("STRING", "INTEGER")
+    fields.map(_.getMode) shouldBe Seq("NULLABLE", "NULLABLE")
   }
 
   it should "round trip rows with legacy syntax" in {
     val bqt= BigQueryType[LegacyT]
     val rows = bq.getQueryRows(legacyQuery).toList
     val typed = Seq(LegacyT("Romeo", 117L))
-    rows.map(bqt.fromTableRow) should equal (typed)
-    typed.map(bqt.toTableRow).map(bqt.fromTableRow) should equal (typed)
+    rows.map(bqt.fromTableRow) shouldBe typed
+    typed.map(bqt.toTableRow).map(bqt.fromTableRow) shouldBe typed
   }
 
   it should "round trip rows with SQL syntax" in {
     val bqt= BigQueryType[SqlT]
     val rows = bq.getQueryRows(sqlQuery).toList
     val typed = Seq(SqlT(Some("Romeo"), Some(117L)))
-    rows.map(bqt.fromTableRow) should equal (typed)
-    typed.map(bqt.toTableRow).map(bqt.fromTableRow) should equal (typed)
+    rows.map(bqt.fromTableRow) shouldBe typed
+    typed.map(bqt.toTableRow).map(bqt.fromTableRow) shouldBe typed
   }
 
   "fromTable" should "work" in {
     val bqt = BigQueryType[FromTableT]
-    bqt.isQuery should be (false)
-    bqt.isTable should be (true)
-    bqt.query should be (None)
-    bqt.table should be (Some("bigquery-public-data:samples.shakespeare"))
+    bqt.isQuery shouldBe false
+    bqt.isTable shouldBe true
+    bqt.query shouldBe None
+    bqt.table shouldBe Some("bigquery-public-data:samples.shakespeare")
     val fields = bqt.schema.getFields.asScala
-    fields.size should be (4)
-    fields.map(_.getName) should equal (Seq("word", "word_count", "corpus", "corpus_date"))
-    fields.map(_.getType) should equal (Seq("STRING", "INTEGER", "STRING", "INTEGER"))
-    fields.map(_.getMode) should equal (Seq("REQUIRED", "REQUIRED", "REQUIRED", "REQUIRED"))
+    fields.size shouldBe 4
+    fields.map(_.getName) shouldBe Seq("word", "word_count", "corpus", "corpus_date")
+    fields.map(_.getType) shouldBe Seq("STRING", "INTEGER", "STRING", "INTEGER")
+    fields.map(_.getMode) shouldBe Seq("REQUIRED", "REQUIRED", "REQUIRED", "REQUIRED")
   }
 
   "toTable" should "work" in {
     val bqt = BigQueryType[ToTableT]
-    bqt.isQuery should be (false)
-    bqt.isTable should be (false)
-    bqt.query should be (None)
-    bqt.table should be (None)
+    bqt.isQuery shouldBe false
+    bqt.isTable shouldBe false
+    bqt.query shouldBe None
+    bqt.table shouldBe None
     val fields = bqt.schema.getFields.asScala
-    fields.size should be (2)
-    fields.map(_.getName) should equal (Seq("word", "word_count"))
-    fields.map(_.getType) should equal (Seq("STRING", "INTEGER"))
-    fields.map(_.getMode) should equal (Seq("REQUIRED", "REQUIRED"))
+    fields.size shouldBe 2
+    fields.map(_.getName) shouldBe Seq("word", "word_count")
+    fields.map(_.getType) shouldBe Seq("STRING", "INTEGER")
+    fields.map(_.getMode) shouldBe Seq("REQUIRED", "REQUIRED")
   }
 
 }

@@ -32,17 +32,17 @@ class ArraySemigroupTest extends FlatSpec with Matchers {
   "ArraySemigroup" should "support plus" in {
     val l = nextArray
     val r = nextArray
-    sg.plus(l, r) should equal (plus(l, r))
+    sg.plus(l, r) shouldBe plus(l, r)
   }
 
   it should "support sumOption" in {
     sg.sumOption(Seq.empty[Array[Double]]) shouldBe None
 
     val a = nextArray
-    sg.sumOption(Seq(a)).get should equal (a)
+    sg.sumOption(Seq(a)).get shouldBe a
 
     val xs = (1 to 100).map(_ => nextArray)
-    sg.sumOption(xs).get should equal (xs.reduce(plus))
+    sg.sumOption(xs).get shouldBe xs.reduce(plus)
   }
 
 }
