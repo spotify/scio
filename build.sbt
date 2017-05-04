@@ -198,6 +198,7 @@ lazy val root: Project = Project(
   scioBigtable,
   scioExtra,
   scioHdfs,
+  scioJdbc,
   scioRepl,
   scioExamples,
   scioSchemas
@@ -357,6 +358,8 @@ lazy val scioExamples: Project = Project(
   commonSettings ++ noPublishSettings,
   libraryDependencies ++= Seq(
     "me.lyh" %% "shapeless-datatype-datastore_1.3" % "0.1.2",
+    "mysql" % "mysql-connector-java" % "5.1.+",
+    "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.2",
     "org.slf4j" % "slf4j-simple" % slf4jVersion,
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
     "org.mockito" % "mockito-all" % mockitoVersion % "test"
@@ -368,6 +371,7 @@ lazy val scioExamples: Project = Project(
   scioBigtable,
   scioSchemas,
   scioHdfs,
+  scioJdbc,
   scioTest % "test"
 )
 
@@ -406,6 +410,20 @@ lazy val scioBench: Project = Project(
   logBuffered := false
 ).dependsOn(
   scioExtra
+)
+
+lazy val scioJdbc: Project = Project(
+  "scio-jdbc",
+  file("scio-jdbc")
+).settings(
+  commonSettings,
+  description := "Scio add-on for JDBC",
+  libraryDependencies ++= Seq(
+    "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion
+  )
+).dependsOn(
+  scioCore,
+  scioTest % "test"
 )
 
 // =======================================================================
