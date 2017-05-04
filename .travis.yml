@@ -1,0 +1,28 @@
+language: scala
+scala:
+  - 2.11.11
+jdk: oraclejdk8
+
+cache:
+  directories:
+    - $HOME/.sbt/boot
+    - $HOME/.ivy2/cache
+
+script:
+  - if [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_PULL_REQUEST_SLUG" != "spotify/scio" ]; then
+      scripts/gen_schemas.sh;
+      sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean scalastyle coverage test coverageReport coverageAggregate;
+      ./scripts/it-repl.sh $TRAVIS_SCALA_VERSION;
+    else
+      echo "Not a forked pulled request";
+    fi
+
+  # Tricks to avoid unnecessary cache updates
+  - find $HOME/.sbt -name "*.lock" | xargs rm
+  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+
+notifications:
+  email:
+    - neville@spotify.com
+    - rav@spotify.com
+    - amartin@spotify.com
