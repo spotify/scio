@@ -38,110 +38,115 @@ import scala.reflect.ClassTag
 package object jdbc {
 
   /**
-   * Options required to create a connection with remote database.
+   * Options for a JDBC connection.
    *
    * @param username database login username
    * @param password database login password
-   * @param connectionUrl connection url i.e "jdbc:mysql://[host]:[port]/db?"
-   * @param driverClass subclass of java.sql.Driver
+   * @param connectionUrl connection url, i.e "jdbc:mysql://[host]:[port]/db?"
+   * @param driverClass subclass of [[java.sql.Driver]]
    */
-  case class DbConnectionOptions(username: String,
-                                 password: String,
-                                 connectionUrl: String,
-                                 driverClass: Class[_ <: Driver])
+  case class JdbcConnectionOptions(username: String,
+                                   password: String,
+                                   connectionUrl: String,
+                                   driverClass: Class[_ <: Driver])
+
+  sealed trait JdbcIoOptions
 
   /**
-   * Values need to initiate read connection to database and Convert it to given type.
+   * Options for reading from a JDBC source.
    *
-   * @param dbConnectionOptions Options need to create a database connection.
-   * @param query JDBC query string
-   * @param statementPreparator
-   * @param rowMapper sql Row mapper to read from ResultSet
-   * @tparam T serializable type
+   * @param connectionOptions connection options
+   * @param query query string
+   * @param statementPreparator function to prepare a [[PreparedStatement]]
+   * @param rowMapper function to map from a SQL [[ResultSet]] to `T`
    */
-  case class JdbcReadOptions[T](dbConnectionOptions: DbConnectionOptions,
+  case class JdbcReadOptions[T](connectionOptions: JdbcConnectionOptions,
                                 query: String,
-                                statementPreparator: PreparedStatement => Unit
-                                = (_: PreparedStatement) => {},
-                                rowMapper: ResultSet => T)
+                                statementPreparator: PreparedStatement => Unit = null,
+                                rowMapper: ResultSet => T) extends JdbcIoOptions
 
   /**
-   * Values need to initiate write connection to database.
+   * Options for writing to a JDBC source.
    *
-   * @param dbConnectionOptions Options need to create a database connection.
-   * @param statement JDBC query statement
-   * @param preparedStatementSetter
-   * @tparam T serializable type
+   * @param connectionOptions connection options
+   * @param statement query statement
+   * @param preparedStatementSetter function to set values in a [[PreparedStatement]]
    */
-  case class JdbcWriteOptions[T](dbConnectionOptions: DbConnectionOptions,
+  case class JdbcWriteOptions[T](connectionOptions: JdbcConnectionOptions,
                                  statement: String,
-                                 preparedStatementSetter: (T, PreparedStatement) => Unit
-                                 = (_: T, _: PreparedStatement) => {})
-
+                                 preparedStatementSetter: (T, PreparedStatement) => Unit = null)
+    extends JdbcIoOptions
 
   case class JdbcIO[T](uniqueId: String) extends TestIO[T](uniqueId)
 
-  def uniqueId(opt: DbConnectionOptions): String = {
-    opt.username + opt.password
+  object JdbcIO {
+    def apply[T](jdbcIoOptions: JdbcIoOptions): JdbcIO[T] = JdbcIO[T](jdbcIoId(jdbcIoOptions))
   }
 
-  /** Enhanced version of [[ScioContext]] with Jdbc and Cloud SQL methods. */
-  implicit class JdbcScioContext(@transient val self: ScioContext) extends Serializable {
+  private def jdbcIoId(opts: JdbcConnectionOptions, query: String): String =
+    s"${opts.username}:${opts.password}@${opts.connectionUrl}:$query"
 
-    /** Get an SCollection for JDBC query */
+  private def jdbcIoId(opts: JdbcIoOptions): String = opts match {
+    case JdbcReadOptions(connOpts, query, _, _) => jdbcIoId(connOpts, query)
+    case JdbcWriteOptions(connOpts, statement, _) => jdbcIoId(connOpts, statement)
+  }
+
+  /** Enhanced version of [[ScioContext]] with JDBC methods. */
+  implicit class JdbcScioContext(@transient val self: ScioContext) extends Serializable {
+    /** Get an SCollection for JDBC query. */
     def jdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T])
     : SCollection[T] = self.requireNotClosed {
-      val conOpt = readOptions.dbConnectionOptions
       if (self.isTest) {
-        self.getTestInput(JdbcIO[T](uniqueId(conOpt)))
+        self.getTestInput(JdbcIO[T](readOptions))
       } else {
         val coder = self.pipeline.getCoderRegistry.getScalaCoder[T]
-        val transformer = jio.JdbcIO.read[T]()
+        val connOpts = readOptions.connectionOptions
+        var transform = jio.JdbcIO.read[T]()
           .withCoder(coder)
           .withDataSourceConfiguration(jio.JdbcIO.DataSourceConfiguration
-            .create(conOpt.driverClass.getCanonicalName, conOpt.connectionUrl)
-            .withUsername(conOpt.username)
-            .withPassword(conOpt.password))
+            .create(connOpts.driverClass.getCanonicalName, connOpts.connectionUrl)
+            .withUsername(connOpts.username)
+            .withPassword(connOpts.password))
           .withQuery(readOptions.query)
-          .withStatementPrepator(new jio.JdbcIO.StatementPreparator {
-            override def setParameters(preparedStatement: PreparedStatement): Unit = {
-              readOptions.statementPreparator(preparedStatement)
-            }
-          })
           .withRowMapper(new jio.JdbcIO.RowMapper[T] {
             override def mapRow(resultSet: ResultSet): T = {
               readOptions.rowMapper(resultSet)
             }
           })
-        self.wrap(self.applyInternal(transformer)).setName(self.tfName)
+        if (readOptions.statementPreparator != null) {
+          transform = transform
+            .withStatementPrepator(new jio.JdbcIO.StatementPreparator {
+              override def setParameters(preparedStatement: PreparedStatement): Unit = {
+                readOptions.statementPreparator(preparedStatement)
+              }
+            })
+        }
+        self.wrap(self.applyInternal(transform)).setName(self.tfName)
       }
     }
   }
 
-  /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JDBC methods */
+  /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JDBC methods. */
   implicit class JdbcSCollection[T](val self: SCollection[T]) {
-
-    /**
-     * Save this SCollection as a JDBC database entry.
-     *
-     * @param writeOptions option to create a JDBC connection with database.
-     * @return Future tap with given type.
-     */
+    /** Save this SCollection as a JDBC database entry. */
     def saveAsJdbc(writeOptions: JdbcWriteOptions[T]): Future[Tap[T]] = {
-      val conOpt = writeOptions.dbConnectionOptions
       if (self.context.isTest) {
-        self.context.testOut(JdbcIO[T](uniqueId(conOpt)))(self)
+        self.context.testOut(JdbcIO[T](writeOptions))(self)
       } else {
-        val transform = jio.JdbcIO.write[T]()
+        val connOpts = writeOptions.connectionOptions
+        var transform = jio.JdbcIO.write[T]()
           .withDataSourceConfiguration(jio.JdbcIO.DataSourceConfiguration
-            .create(conOpt.driverClass.getCanonicalName, conOpt.connectionUrl)
-            .withUsername(conOpt.username).withPassword(conOpt.password))
+            .create(connOpts.driverClass.getCanonicalName, connOpts.connectionUrl)
+            .withUsername(connOpts.username).withPassword(connOpts.password))
           .withStatement(writeOptions.statement)
-          .withPreparedStatementSetter(new jio.JdbcIO.PreparedStatementSetter[T] {
-            override def setParameters(element: T, preparedStatement: PreparedStatement): Unit = {
-              writeOptions.preparedStatementSetter(element, preparedStatement)
-            }
-          })
+        if (writeOptions.preparedStatementSetter != null) {
+          transform = transform
+            .withPreparedStatementSetter(new jio.JdbcIO.PreparedStatementSetter[T] {
+              override def setParameters(element: T, preparedStatement: PreparedStatement): Unit = {
+                writeOptions.preparedStatementSetter(element, preparedStatement)
+              }
+            })
+        }
         self.applyInternal(transform)
       }
       Future.failed(new NotImplementedError("JDBC future is not implemented"))

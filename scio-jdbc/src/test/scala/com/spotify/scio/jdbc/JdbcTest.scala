@@ -23,49 +23,56 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.PipelineSpec
 
 object JdbcJob {
+
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (_opt, _args) = ScioContext.parseArguments[CloudSQLOptions](cmdlineArgs)
-    val sc = ScioContext(_opt)
-    sc.jdbcSelect[String](readOptions = getReadOptions(_opt))
+    val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](cmdlineArgs)
+    val sc = ScioContext(opts)
+    sc.jdbcSelect(getReadOptions(opts))
       .map(_ + "J")
-      .saveAsJdbc(writeOptions = getWriteOptions(_opt))
+      .saveAsJdbc(getWriteOptions(opts))
     sc.close()
   }
 
-  def getReadOptions(cloudOpt: CloudSQLOptions): JdbcReadOptions[String] = {
-    JdbcReadOptions(dbConnectionOptions = getDbConnectionOpt(cloudOpt),
+  def getReadOptions(opts: CloudSqlOptions): JdbcReadOptions[String] =
+    JdbcReadOptions(
+      connectionOptions = getConnectionOptions(opts),
       query = "SELECT <this> FROM <this>",
       rowMapper = (rs: ResultSet) => rs.getString(1))
-  }
 
-  def getWriteOptions(cloudOpt: CloudSQLOptions): JdbcWriteOptions[String] = {
-    JdbcWriteOptions[String](dbConnectionOptions = getDbConnectionOpt(cloudOpt),
+  def getWriteOptions(opts: CloudSqlOptions): JdbcWriteOptions[String] =
+    JdbcWriteOptions[String](
+      connectionOptions = getConnectionOptions(opts),
       statement = "INSERT INTO <this> VALUES( ?, ? ..?)")
-  }
 
-  def connectionUrl(cloudOption: CloudSQLOptions): String = {
-    s"jdbc:mysql://google/${cloudOption.getCloudSqlDb}?" +
-      s"cloudSqlInstance=${cloudOption.getCloudSqlInstanceConnectionName}&" +
+  def connectionUrl(opts: CloudSqlOptions): String =
+    s"jdbc:mysql://google/${opts.getCloudSqlDb}?" +
+      s"cloudSqlInstance=${opts.getCloudSqlInstanceConnectionName}&" +
       s"socketFactory=com.google.cloud.sql.mysql.SocketFactory"
-  }
 
-  def getDbConnectionOpt(cloudOption: CloudSQLOptions): DbConnectionOptions = {
-    DbConnectionOptions(username = cloudOption.getCloudSqlUser,
-      password = cloudOption.getCloudSqlPassword,
-      connectionUrl = connectionUrl(cloudOption),
+  def getConnectionOptions(opts: CloudSqlOptions): JdbcConnectionOptions =
+    JdbcConnectionOptions(username = opts.getCloudSqlUsername,
+      password = opts.getCloudSqlPassword,
+      connectionUrl = connectionUrl(opts),
       classOf[java.sql.Driver])
-  }
+
 }
 
-// scalastyle:off no.whitespace.before.left.bracket
 class JdbcTest extends PipelineSpec {
 
   def testJdbc(xs: String*): Unit = {
+    val args = Array(
+      "--cloudSqlUsername=john",
+      "--cloudSqlPassword=secret",
+      "--cloudSqlDb=mydb",
+      "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name")
+    val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
+    val readOpts = JdbcJob.getReadOptions(opts)
+    val writeOpts = JdbcJob.getWriteOptions(opts)
+
     JobTest[JdbcJob.type]
-      .args("--cloudSqlUser=john", "--cloudSqlPassword=secret", "--cloudSqlDb=mydb",
-        "--cloudSqlInstanceConnectionName=my-project-Id:zonex:db-instance-name")
-      .input(JdbcIO("johnsecret"), Seq("a", "b", "c"))
-      .output[String](JdbcIO("johnsecret"))(_ should containInAnyOrder (xs))
+      .args(args: _*)
+      .input(JdbcIO(readOpts), Seq("a", "b", "c"))
+      .output[String](JdbcIO(writeOpts))(_ should containInAnyOrder (xs))
       .run()
   }
 
@@ -74,9 +81,10 @@ class JdbcTest extends PipelineSpec {
   }
 
   it should "fail incorrect JDBC" in {
-    an [AssertionError] should be thrownBy { testJdbc("aJ", "bJ")}
-    an [AssertionError] should be thrownBy { testJdbc("aJ", "bJ", "cJ", "dJ")}
+    // scalastyle:off no.whitespace.before.left.bracket
+    an [AssertionError] should be thrownBy { testJdbc("aJ", "bJ") }
+    an [AssertionError] should be thrownBy { testJdbc("aJ", "bJ", "cJ", "dJ") }
+    // scalastyle:on no.whitespace.before.left.bracket
   }
 
 }
-// scalastyle:on no.whitespace.before.left.bracket
