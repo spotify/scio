@@ -17,16 +17,43 @@
 
 package com.spotify.scio.jdbc
 
-import com.spotify.scio.ContextAndArgs
+import java.sql.ResultSet
+
+import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.PipelineSpec
 
 object JdbcJob {
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.jdbcSelect[String](readOptions = null)
+    val (_opt, _args) = ScioContext.parseArguments[CloudSQLOptions](cmdlineArgs)
+    val sc = ScioContext(_opt)
+    sc.jdbcSelect[String](readOptions = getReadOptions(_opt))
       .map(_ + "J")
-      .saveAsJdbc(writeOptions = null)
+      .saveAsJdbc(writeOptions = getWriteOptions(_opt))
     sc.close()
+  }
+
+  def getReadOptions(cloudOpt: CloudSQLOptions): JdbcReadOptions[String] = {
+    JdbcReadOptions(dbConnectionOptions = getDbConnectionOpt(cloudOpt),
+      query = "SELECT <this> FROM <this>",
+      rowMapper = (rs: ResultSet) => rs.getString(1))
+  }
+
+  def getWriteOptions(cloudOpt: CloudSQLOptions): JdbcWriteOptions[String] = {
+    JdbcWriteOptions[String](dbConnectionOptions = getDbConnectionOpt(cloudOpt),
+      statement = "INSERT INTO <this> VALUES( ?, ? ..?)")
+  }
+
+  def connectionUrl(cloudOption: CloudSQLOptions): String = {
+    s"jdbc:mysql://google/${cloudOption.getCloudSqlDb}?" +
+      s"cloudSqlInstance=${cloudOption.getCloudSqlInstanceConnectionName}&" +
+      s"socketFactory=com.google.cloud.sql.mysql.SocketFactory"
+  }
+
+  def getDbConnectionOpt(cloudOption: CloudSQLOptions): DbConnectionOptions = {
+    DbConnectionOptions(username = cloudOption.getCloudSqlUser,
+      password = cloudOption.getCloudSqlPassword,
+      connectionUrl = connectionUrl(cloudOption),
+      classOf[java.sql.Driver])
   }
 }
 
@@ -35,8 +62,10 @@ class JdbcTest extends PipelineSpec {
 
   def testJdbc(xs: String*): Unit = {
     JobTest[JdbcJob.type]
-      .input(JdbcTestIO(TEST_READ_TABLE_NAME), Seq("a", "b", "c"))
-      .output[String](JdbcTestIO(TEST_WRITE_TABLE_NAME))(_ should containInAnyOrder(xs))
+      .args("--cloudSqlUser=john", "--cloudSqlPassword=secret", "--cloudSqlDb=mydb",
+        "--cloudSqlInstanceConnectionName=my-project-Id:zonex:db-instance-name")
+      .input(JdbcIO("johnsecret"), Seq("a", "b", "c"))
+      .output[String](JdbcIO("johnsecret"))(_ should containInAnyOrder (xs))
       .run()
   }
 

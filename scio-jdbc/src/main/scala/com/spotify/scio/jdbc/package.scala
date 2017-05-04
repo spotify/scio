@@ -23,8 +23,7 @@ import com.spotify.scio.Implicits._
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.jdbc.JdbcIO
-import org.apache.beam.sdk.io.jdbc.JdbcIO._
+import org.apache.beam.sdk.io.{jdbc => jio}
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -38,11 +37,8 @@ import scala.reflect.ClassTag
  */
 package object jdbc {
 
-  val TEST_READ_TABLE_NAME = "table_read"
-  val TEST_WRITE_TABLE_NAME = "table_write"
-
   /**
-   * Options require to create a connection with remote database.
+   * Options required to create a connection with remote database.
    *
    * @param username database login username
    * @param password database login password
@@ -65,8 +61,9 @@ package object jdbc {
    */
   case class JdbcReadOptions[T](dbConnectionOptions: DbConnectionOptions,
                                 query: String,
-                                statementPreparator: (PreparedStatement) => Unit,
-                                rowMapper: (ResultSet) => T)
+                                statementPreparator: PreparedStatement => Unit
+                                = (_: PreparedStatement) => {},
+                                rowMapper: ResultSet => T)
 
   /**
    * Values need to initiate write connection to database.
@@ -78,10 +75,15 @@ package object jdbc {
    */
   case class JdbcWriteOptions[T](dbConnectionOptions: DbConnectionOptions,
                                  statement: String,
-                                 preparedStatementSetter: (T, PreparedStatement) => Unit)
+                                 preparedStatementSetter: (T, PreparedStatement) => Unit
+                                 = (_: T, _: PreparedStatement) => {})
 
 
-  case class JdbcTestIO[T](table: String) extends TestIO[T](table)
+  case class JdbcIO[T](uniqueId: String) extends TestIO[T](uniqueId)
+
+  def uniqueId(opt: DbConnectionOptions): String = {
+    opt.username + opt.password
+  }
 
   /** Enhanced version of [[ScioContext]] with Jdbc and Cloud SQL methods. */
   implicit class JdbcScioContext(@transient val self: ScioContext) extends Serializable {
@@ -89,24 +91,24 @@ package object jdbc {
     /** Get an SCollection for JDBC query */
     def jdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T])
     : SCollection[T] = self.requireNotClosed {
+      val conOpt = readOptions.dbConnectionOptions
       if (self.isTest) {
-        self.getTestInput(JdbcTestIO[T](TEST_READ_TABLE_NAME))
+        self.getTestInput(JdbcIO[T](uniqueId(conOpt)))
       } else {
         val coder = self.pipeline.getCoderRegistry.getScalaCoder[T]
-        val conOpt = readOptions.dbConnectionOptions
-        val transformer = JdbcIO.read[T]()
+        val transformer = jio.JdbcIO.read[T]()
           .withCoder(coder)
-          .withDataSourceConfiguration(DataSourceConfiguration
+          .withDataSourceConfiguration(jio.JdbcIO.DataSourceConfiguration
             .create(conOpt.driverClass.getCanonicalName, conOpt.connectionUrl)
             .withUsername(conOpt.username)
             .withPassword(conOpt.password))
           .withQuery(readOptions.query)
-          .withStatementPrepator(new StatementPreparator {
+          .withStatementPrepator(new jio.JdbcIO.StatementPreparator {
             override def setParameters(preparedStatement: PreparedStatement): Unit = {
               readOptions.statementPreparator(preparedStatement)
             }
           })
-          .withRowMapper(new RowMapper[T] {
+          .withRowMapper(new jio.JdbcIO.RowMapper[T] {
             override def mapRow(resultSet: ResultSet): T = {
               readOptions.rowMapper(resultSet)
             }
@@ -126,16 +128,16 @@ package object jdbc {
      * @return Future tap with given type.
      */
     def saveAsJdbc(writeOptions: JdbcWriteOptions[T]): Future[Tap[T]] = {
+      val conOpt = writeOptions.dbConnectionOptions
       if (self.context.isTest) {
-        self.context.testOut(JdbcTestIO[T](TEST_WRITE_TABLE_NAME))(self)
+        self.context.testOut(JdbcIO[T](uniqueId(conOpt)))(self)
       } else {
-        val conOpt = writeOptions.dbConnectionOptions
-        val transform = JdbcIO.write[T]()
-          .withDataSourceConfiguration(DataSourceConfiguration
+        val transform = jio.JdbcIO.write[T]()
+          .withDataSourceConfiguration(jio.JdbcIO.DataSourceConfiguration
             .create(conOpt.driverClass.getCanonicalName, conOpt.connectionUrl)
             .withUsername(conOpt.username).withPassword(conOpt.password))
           .withStatement(writeOptions.statement)
-          .withPreparedStatementSetter(new PreparedStatementSetter[T] {
+          .withPreparedStatementSetter(new jio.JdbcIO.PreparedStatementSetter[T] {
             override def setParameters(element: T, preparedStatement: PreparedStatement): Unit = {
               writeOptions.preparedStatementSetter(element, preparedStatement)
             }

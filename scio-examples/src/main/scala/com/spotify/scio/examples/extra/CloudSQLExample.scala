@@ -19,30 +19,29 @@ package com.spotify.scio.examples.extra
 
 import java.sql.{PreparedStatement, ResultSet}
 
+import com.spotify.scio.ScioContext
 import com.spotify.scio.jdbc._
-import com.spotify.scio.{ContextAndArgs, ScioContext}
-import org.apache.beam.examples.common.ExampleCloudSQLOptions
 import org.apache.beam.sdk.values.KV
 
 // Read from google Cloud SQL database table and write to different table in the same database.
 object CloudSQLExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     // Ensure this has been called with required database connection details.
-    val (cloudSqlOptions, extraArgs) =
-      ScioContext.parseArguments[ExampleCloudSQLOptions](cmdlineArgs)
+    val (_opts, extraArgs) =
+      ScioContext.parseArguments[CloudSQLOptions](cmdlineArgs)
 
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val connOpt = getDbConnectionOptions(cloudSqlOptions)
+    val sc = ScioContext(_opts)
+    val connOpt = getDbConnectionOptions(_opts)
     val readOptions = getReadOptions(connOpt)
     val writeOptions = getWriteOptions(connOpt)
 
-    sc.withName("Read from Cloud Sql").jdbcSelect(readOptions)
+    sc.jdbcSelect(readOptions)
       .map(kv => KV.of(kv.getKey + "_", kv.getValue)) // append _ to words
-      .withName("Write to Cloud Sql").saveAsJdbc(writeOptions)
+      .saveAsJdbc(writeOptions)
     sc.close()
   }
 
-  def getJdbcUrl(options: ExampleCloudSQLOptions): String = {
+  def getJdbcUrl(options: CloudSQLOptions): String = {
     // socketFactory:com.google.cloud.sql.mysql.SocketFactory enable to create a secure connection
     // with cloud sql instance using Cloud SDK credential. With this option you don't need to
     // white list your ip to get access to database.
@@ -54,7 +53,7 @@ object CloudSQLExample {
       s"socketFactory=com.google.cloud.sql.mysql.SocketFactory"
   }
 
-  def getDbConnectionOptions(cloudSqlOptions: ExampleCloudSQLOptions): DbConnectionOptions = {
+  def getDbConnectionOptions(cloudSqlOptions: CloudSQLOptions): DbConnectionOptions = {
     // Basic connection details
     DbConnectionOptions(
       username = "root",
@@ -68,7 +67,6 @@ object CloudSQLExample {
     JdbcReadOptions(
       dbConnectionOptions = connOpts,
       query = "SELECT * FROM word_count",
-      statementPreparator = (preparedStatement: PreparedStatement) => {},
       rowMapper = (resultSet: ResultSet) => {
         KV.of(resultSet.getString(1), resultSet.getLong(2))
       }
