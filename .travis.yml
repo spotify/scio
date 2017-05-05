@@ -13,13 +13,12 @@ script:
       scripts/gen_schemas.sh;
       sbt ++$TRAVIS_SCALA_VERSION -Dbigquery.project=dummy-project clean scalastyle coverage test coverageReport coverageAggregate;
       ./scripts/it-repl.sh $TRAVIS_SCALA_VERSION;
+      find $HOME/.sbt -name "*.lock" | xargs rm;
+      find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm;
     else
       echo "Not a forked pulled request";
     fi
 
-  # Tricks to avoid unnecessary cache updates
-  - find $HOME/.sbt -name "*.lock" | xargs rm
-  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
 
 notifications:
   email:
