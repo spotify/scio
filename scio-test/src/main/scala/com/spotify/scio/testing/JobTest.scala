@@ -52,7 +52,7 @@ import scala.util.control.NonFatal
  *       .input(TextIO("in.txt"), inData)
  *
  *       // Mock distributed cache
- *       .distCache(DistCacheIO("gs://dataflow-samples/samples/misc/months.txt", distCache)
+ *       .distCache(DistCacheIO("gs://dataflow-samples/samples/misc/months.txt"), distCache)
  *
  *       // Verify output
  *       .output(TextIO("out.txt")) { actual => actual should containInAnyOrder (expected) }
