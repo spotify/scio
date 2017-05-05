@@ -17,6 +17,9 @@
 
 package com.spotify.scio
 
+import com.google.common.base.Splitter
+
+import scala.collection.JavaConverters._
 import scala.collection.breakOut
 import scala.util.control.NonFatal
 
@@ -38,7 +41,7 @@ object Args {
 
     val propertyMap = properties.map { s =>
       val Array(k, v) = s.split("=", 2)
-      (k, v.split(","))
+      (k, Splitter.onPattern(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)").split(v).asScala)
     }.groupBy(_._1).mapValues(_.flatMap(_._2).toList)
     val booleanMap: Map[String, List[String]] = booleans.map((_, List("true")))(breakOut)
 
