@@ -17,7 +17,6 @@
 
 package com.spotify.scio
 
-import org.apache.beam.sdk.util.SerializableUtils
 import org.scalatest.{FlatSpec, Matchers}
 
 class ArgsTest extends FlatSpec with Matchers {
@@ -89,6 +88,19 @@ class ArgsTest extends FlatSpec with Matchers {
     args.boolean("key3") shouldBe true
     args.boolean("key4", true) shouldBe true
     args.boolean("key5", false) shouldBe false
+  }
+
+  it should "support quotes" in {
+    def list(s: String): List[String] = Args(Array(s"--list=$s")).list("list")
+    list("a,b,c") shouldBe List("a", "b", "c")
+    list(",a,b") shouldBe List("", "a", "b")
+    list("a,,b") shouldBe List("a", "", "b")
+    list("a,b,") shouldBe List("a", "b", "")
+    list("\"a1,a2\",b,c") shouldBe List("\"a1,a2\"", "b", "c")
+    list("a,\"b1,b2\",c") shouldBe List("a", "\"b1,b2\"", "c")
+    list("a,b,\"c1,c2\"") shouldBe List("a", "b", "\"c1,c2\"")
+    list("a,\"b1, b2\",c") shouldBe List("a", "\"b1, b2\"", "c")
+    list("a,b0 \"b1, b2\" b3,c") shouldBe List("a", "b0 \"b1, b2\" b3", "c")
   }
 
   it should "support toString" in {
