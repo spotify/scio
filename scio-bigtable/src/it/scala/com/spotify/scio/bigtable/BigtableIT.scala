@@ -19,13 +19,20 @@ package com.spotify.scio.bigtable
 
 import java.util.UUID
 
+import com.google.bigtable.admin.v2.{DeleteTableRequest, GetTableRequest, ListTablesRequest}
 import com.google.bigtable.v2.{Mutation, Row, RowFilter}
 import com.google.cloud.bigtable.config.BigtableOptions
-import com.google.cloud.bigtable.grpc.BigtableClusterUtilities
+import com.google.cloud.bigtable.grpc.{BigtableClusterUtilities,
+                                       BigtableTableAdminGrpcClient,
+                                       BigtableTableName}
 import com.google.protobuf.ByteString
 import com.spotify.scio._
 import com.spotify.scio.testing._
 import org.joda.time.Duration
+
+import org.scalatest._
+
+import scala.collection.JavaConverters._
 
 object BigtableIT {
 
@@ -58,6 +65,14 @@ object BigtableIT {
 
   def fromRow(r: Row): (String, Long) =
     (r.getKey.toStringUtf8, r.getValue(FAMILY_NAME, COLUMN_QUALIFIER).get.toStringUtf8.toLong)
+
+  def listTables(client: BigtableTableAdminGrpcClient): Set[String] = {
+    val instancePath = s"projects/$projectId/instances/$instanceId"
+    val tables = client.listTables(ListTablesRequest.newBuilder().setParent(instancePath).build)
+    tables.getTablesList.asScala.map(t =>
+      new BigtableTableName(t.getName).getTableId)
+      .toSet
+  }
 }
 
 class BigtableIT extends PipelineSpec {
@@ -101,6 +116,46 @@ class BigtableIT extends PipelineSpec {
         .saveAsBigtable(projectId, instanceId, tableId)
       sc.close().waitUntilFinish()
     }
+  }
+
+  "TableAdmin" should "work" in {
+    val tables = Map(
+      "scio-bigtable-empty-table" -> List(),
+      "scio-bigtable-one-cf-table" -> List("colfam1"),
+      "scio-bigtable-two-cf-table" -> List("colfam1", "colfam2")
+    )
+    val channel = ChannelPoolCreator.createPool(bigtableOptions.getTableAdminHost)
+    val client = new BigtableTableAdminGrpcClient(channel)
+    val instancePath = s"projects/$projectId/instances/$instanceId"
+    val tableIds = tables.keys.toSet
+    val tablePath = (table: String) => s"$instancePath/tables/$table"
+    val deleteTable = (table: String) =>
+      client.deleteTable(DeleteTableRequest.newBuilder()
+        .setName(tablePath(table)).build)
+
+    // Delete any tables that could be left around from previous IT run.
+    val oldTables = listTables(client).toSet.intersect(tableIds)
+    oldTables.foreach(deleteTable)
+
+    // Ensure that the tables don't exist now
+    listTables(client).intersect(tableIds) shouldBe empty
+
+    // Run UUT
+    TableAdmin.ensureTables(bigtableOptions, tables)
+
+    // Tables must exist
+    listTables(client).intersect(tableIds) shouldEqual tableIds
+
+    // Assert Column families exist
+    for ((table, columnFamilies) <- tables) {
+      val tableInfo = client.getTable(GetTableRequest.newBuilder()
+        .setName(tablePath(table)).build)
+      val actualColumnFamilies = tableInfo.getColumnFamiliesMap.asScala.keys
+      actualColumnFamilies should contain theSameElementsAs columnFamilies
+    }
+
+    // Clean up and delete
+    tables.keys.foreach(deleteTable)
   }
 
 }
