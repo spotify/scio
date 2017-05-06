@@ -87,21 +87,22 @@ object PubsubJob {
   }
 }
 
-object PubsubWithAttributesJob {
+object PubsubInWithAttributesJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.pubsubSubscriptionWithAttributes(args("input"))
+      .map((v: (String, Map[String, String])) => (v._1 + "X", v._2))
+      .saveAsPubsubWithAttributes(args("output"))
+    sc.close()
+  }
+}
+
+object PubsubOutWithAttributesJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.pubsubTopic[String](args("input"), null)
       .map(_ + "X")
       .map(s => (s, Map("attribute1"-> "value1")))
-      .saveAsPubsubWithAttributes(args("output"))
-    sc.close()
-  }
-}
-object PubsubInWithAttributesJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.pubsubSubscriptionWithAttributes(args("input"))
-      .map(_ + "X")
       .saveAsPubsubWithAttributes(args("output"))
     sc.close()
   }
