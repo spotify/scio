@@ -7,6 +7,13 @@ import com.spotify.scio.values.SCollection
 
 import scala.concurrent.Future
 
+/**
+  * Main package for Elasticsearch APIs. Import all.
+  *
+  * {{{
+  * import com.spotify.scio.elasticsearch._
+  * }}}
+  */
 package object elasticsearch extends AnyVal{
   implicit class ElasticsearchSCollection(val self: SCollection[IndexRequestWrapper]) {
     /**
