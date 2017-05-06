@@ -297,7 +297,7 @@ lazy val scioElsticsearch: Project = Project(
   file("scio-elasticsearch")
 ).settings(
   commonSettings ++ itSettings,
-  description := "Scio add-on for Writing to Elasticsearch Cluster",
+  description := "Scio add-on for writing to Elasticsearch",
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
     "com.google.auto.value" % "auto-value" % "1.2",
