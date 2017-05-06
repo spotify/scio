@@ -293,7 +293,7 @@ lazy val scioBigtable: Project = Project(
   scioTest % "it"
 ).configs(IntegrationTest)
 
-lazy val scioElsticsearch: Project = Project(
+lazy val scioElasticsearch: Project = Project(
   "scio-elasticsearch",
   file("scio-elasticsearch")
 ).settings(
