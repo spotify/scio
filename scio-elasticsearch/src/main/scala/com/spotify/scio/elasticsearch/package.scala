@@ -7,7 +7,7 @@ import com.spotify.scio.values.SCollection
 
 import scala.concurrent.Future
 
-package object elasticsearch {
+package object elasticsearch extends AnyVal{
   implicit class ElasticsearchSCollection(val self: SCollection[IndexRequestWrapper]) {
     /**
       * Save this SCollection into Elasticsearch. Default flushInterval is set to 1 secnod.
