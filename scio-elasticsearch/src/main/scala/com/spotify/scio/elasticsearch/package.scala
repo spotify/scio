@@ -10,7 +10,7 @@ import scala.concurrent.Future
 package object elasticsearch {
   implicit class ElasticsearchSCollection(val self: SCollection[IndexRequestWrapper]) {
     /**
-      * Save this SCollection into Elasticsearch.
+      * Save this SCollection into Elasticsearch. Default flushInterval is set to 1 secnod.
       * Note that the elements must be of a type 'IndexRequestWrapper'
       * @param elasticsearchOptions provides clusterName and server endpoints
       */
