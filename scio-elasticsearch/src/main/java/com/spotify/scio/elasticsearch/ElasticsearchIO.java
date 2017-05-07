@@ -33,6 +33,24 @@ import org.slf4j.LoggerFactory;
 public class ElasticsearchIO {
   public static class Write {
     /**
+     * Returns a tranform for writing to Elasticsearch cluster for a given name.
+     *
+     * @param clusterName name of the Elasticsearch cluster
+     */
+    public static Bound withClusterName(String clusterName) {
+      return new Bound().withClusterName(clusterName);
+    }
+
+    /**
+     * Returns a transform for writing to the Elasticsearch cluster for a given servers.
+     *
+     * @param servers endpoints for the Elasticsearch cluster
+     */
+    public static Bound withServers(InetSocketAddress[] servers) {
+      return new Bound().withServers(servers);
+    }
+
+    /**
      * Returns a transform for writing to Elasticsearch cluster by providing
      * slight delay specified by flushInterval.
      *
@@ -42,47 +60,44 @@ public class ElasticsearchIO {
       return new Bound().withFlushInterval(flushInterval);
     }
 
-    /**
-     * Returns a transform which writes to the clusterName and servers specified
-     * in ElasticsearchOptions.
-     *
-     * @param options - Specifies cluster name and server addresses
-     */
-    public static Bound withElasticsearchOptions(ElasticsearchOptions options) {
-      return new Bound().withElasticsearchOptions(options);
-    }
-
     public static class Bound extends PTransform<PCollection<IndexRequestWrapper>, PDone> {
+      private final String clusterName;
+      private final InetSocketAddress[] servers;
       private final Duration flushInterval;
-      private final ElasticsearchOptions options;
 
-      private Bound(final Duration flushInterval,
-                    final ElasticsearchOptions options) {
+      private Bound(final String clusterName,
+                    final InetSocketAddress[] servers,
+                    final Duration flushInterval) {
+        this.clusterName = clusterName;
+        this.servers = servers;
         this.flushInterval = flushInterval == null? Duration.ofSeconds(1L): flushInterval;
-        this.options = options;
       }
 
       Bound() {
-        this(null, null);
+        this(null, null, null);
+      }
+
+      public Bound withClusterName(String clusterName) {
+        return new Bound(clusterName, servers, flushInterval);
+      }
+
+      public Bound withServers(InetSocketAddress[] servers) {
+        return new Bound(clusterName, servers, flushInterval);
       }
 
       public Bound withFlushInterval(Duration flushInterval) {
-        return new Bound(flushInterval, options);
-      }
-
-      public Bound withElasticsearchOptions(ElasticsearchOptions options) {
-        return new Bound(flushInterval, options);
+        return new Bound(clusterName, servers, flushInterval);
       }
 
       @Override
       public PDone expand(final PCollection<IndexRequestWrapper> input) {
 
-        if (options.clusterName() == null) {
+        if (clusterName == null) {
           throw new IllegalStateException(
               "need to set clustername of ElasticsearchIO.Write transform");
         }
 
-        if (options.servers() == null) {
+        if (servers == null) {
           throw new IllegalStateException(
               "need to set clustername of ElasticsearchIO.Write transform");
         }
@@ -96,7 +111,7 @@ public class ElasticsearchIO {
                                .plusDelayOf(javaToJoda(flushInterval))))
                        .discardingFiredPanes())
             .apply(GroupByKey.create())
-            .apply("Write to Elasticesarch", ParDo.of(new ElasticsearchWriter(options)));
+            .apply("Write to Elasticesarch", ParDo.of(new ElasticsearchWriter(clusterName, servers)));
         return PDone.in(input.getPipeline());
       }
       private org.joda.time.Duration javaToJoda(final Duration duration) {
@@ -134,8 +149,9 @@ public class ElasticsearchIO {
       private final Logger LOG = LoggerFactory.getLogger(ElasticsearchWriter.class);
       private final ClientSupplier clientSupplier;
 
-      public ElasticsearchWriter(ElasticsearchOptions options) {
-        this.clientSupplier = new ClientSupplier(options.clusterName(),options.servers());
+      public ElasticsearchWriter(String clusterName,
+                                 InetSocketAddress[] servers) {
+        this.clientSupplier = new ClientSupplier(clusterName, servers);
       }
       @ProcessElement
       public void processElement(ProcessContext c) throws Exception {
