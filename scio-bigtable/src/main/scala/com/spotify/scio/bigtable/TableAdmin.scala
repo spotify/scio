@@ -21,7 +21,6 @@ import com.google.bigtable.admin.v2._
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.cloud.bigtable.grpc.BigtableTableAdminGrpcClient
-import com.google.cloud.bigtable.grpc.io.ChannelPool
 import com.google.common.annotations.VisibleForTesting
 import org.slf4j.{Logger, LoggerFactory}
 

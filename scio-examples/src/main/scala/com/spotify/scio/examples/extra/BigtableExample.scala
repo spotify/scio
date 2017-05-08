@@ -18,7 +18,6 @@
 package com.spotify.scio.examples.extra
 
 import com.google.bigtable.v2.{Mutation, Row}
-import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
 import com.spotify.scio._
 import com.spotify.scio.bigtable._
