@@ -38,9 +38,9 @@ class BigtableExampleTest extends PipelineSpec {
   val textIn = Seq("a b c d e", "a b a b")
   val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
   val expectedMutations = wordCount.map(kv => BigtableExample.toMutation(kv._1, kv._2))
-  TableAdmin.mockBigtableClient = mockBigtableTableAdminClient()
 
   "BigtableV1WriteExample" should "work" in {
+    TableAdmin.mockBigtableClient = mockBigtableTableAdminClient()
     JobTest[com.spotify.scio.examples.extra.BigtableWriteExample.type]
       .args(bigtableOptions :+ "--input=in.txt": _*)
       .input(TextIO("in.txt"), textIn)
@@ -48,9 +48,8 @@ class BigtableExampleTest extends PipelineSpec {
         _ should containInAnyOrder (expectedMutations)
       }
       .run()
+    TableAdmin.mockBigtableClient = null
   }
-
-  TableAdmin.mockBigtableClient = null
 
 
   def toRow(key: String, value: Long): Row =
