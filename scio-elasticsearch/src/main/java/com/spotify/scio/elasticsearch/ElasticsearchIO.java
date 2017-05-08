@@ -156,7 +156,7 @@ public class ElasticsearchIO {
       @ProcessElement
       public void processElement(ProcessContext c) throws Exception {
         // assign this element to a random shard
-        final long shard = ThreadLocalRandom.current().nextLong(2);
+        final long shard = ThreadLocalRandom.current().nextLong(numWorkers);
         c.output(KV.of(shard, c.element()));
       }
     }
@@ -206,7 +206,6 @@ public class ElasticsearchIO {
           synchronized (CLIENT) {
             if (CLIENT.get() == null) {
               CLIENT.set(create(clusterName, addresses));
-              return CLIENT.get();
             }
           }
         }
