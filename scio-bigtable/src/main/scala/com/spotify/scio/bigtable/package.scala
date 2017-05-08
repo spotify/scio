@@ -176,6 +176,40 @@ package object bigtable {
         sleepDuration)
     }
 
+    /**
+     * Ensure that tables and column families exist.
+     * Checks for existence of tables or creates them if they do not exist.  Also checks for
+     * existence of column families within each table and creates them if they do not exist.
+     *
+     * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
+     *                                Values are a list of column family names.
+     */
+    def ensureTables(projectId: String,
+                     instanceId: String,
+                     tablesAndColumnFamilies: Map[String, List[String]]): Unit = {
+      if (!self.isTest) {
+        val bigtableOptions = new BigtableOptions.Builder()
+          .setProjectId(projectId)
+          .setInstanceId(instanceId)
+          .build
+        TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies)
+      }
+    }
+
+    /**
+     * Ensure that tables and column families exist.
+     * Checks for existence of tables or creates them if they do not exist.  Also checks for
+     * existence of column families within each table and creates them if they do not exist.
+     *
+     * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
+     *                                Values are a list of column family names.
+     */
+    def ensureTables(bigtableOptions: BigtableOptions,
+                     tablesAndColumnFamilies: Map[String, List[String]]): Unit = {
+      if (!self.isTest) {
+        TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies)
+      }
+    }
   }
 
   /**

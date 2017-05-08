@@ -68,7 +68,7 @@ object BigtableWriteExample {
     sc.updateNumberOfBigtableNodes(btProjectId, btInstanceId, 15)
 
     // Ensure that destination tables and column families exist
-    TableAdmin.ensureTables(btProjectId, btInstanceId, Map(
+    sc.ensureTables(btProjectId, btInstanceId, Map(
       btTableId -> List(BigtableExample.FAMILY_NAME)
     ))
 
