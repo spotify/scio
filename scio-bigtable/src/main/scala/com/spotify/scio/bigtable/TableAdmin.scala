@@ -29,14 +29,14 @@ import scala.collection.JavaConverters._
  * Bigtable Table Admin API helper commands.
  */
 object TableAdmin {
-  val log: Logger = LoggerFactory.getLogger(TableAdmin.getClass)
+  private val log: Logger = LoggerFactory.getLogger(TableAdmin.getClass)
 
   /**
    * Ensure that tables and column families exist.
-   * Checks for existence of tables or creates them if they don't exist.
-   * Then calls `ensureColumnFamilies` to ensure that the column families exist as well.
+   * Checks for existence of tables or creates them if they do not exist.  Also checks for
+   * existence of column families within each table and creates them if they do not exist.
    *
-   * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names,
+   * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
    *                                Values are a list of column family names.
    */
   def ensureTables(bigtableOptions: BigtableOptions,
@@ -82,12 +82,12 @@ object TableAdmin {
    * Checks for existence of column families and creates them if they don't exist.
    *
    * @param tablePath A full table path that the bigtable API expects, in the form of
-   *                  `projects/&lt;projectid&gt;/instances/&lt;instance&gt;/tables/&lt;table&gt;`
+   *                  `projects/projectId/instances/instanceId/tables/tableId`
    * @param columnFamilies A list of column family names.
    */
-  def ensureColumnFamilies(client: BigtableTableAdminGrpcClient,
-                           tablePath: String,
-                           columnFamilies: List[String]): Unit = {
+  private def ensureColumnFamilies(client: BigtableTableAdminGrpcClient,
+                                   tablePath: String,
+                                   columnFamilies: List[String]): Unit = {
 
     val tableInfo = client.getTable(GetTableRequest.newBuilder().setName(tablePath).build)
 
