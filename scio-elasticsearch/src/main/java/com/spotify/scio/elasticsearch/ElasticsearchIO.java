@@ -5,6 +5,7 @@ import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.GroupByKey;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.windowing.AfterProcessingTime;
 import org.apache.beam.sdk.transforms.windowing.GlobalWindows;
 import org.apache.beam.sdk.transforms.windowing.Repeatedly;
@@ -37,8 +38,8 @@ public class ElasticsearchIO {
      *
      * @param clusterName name of the Elasticsearch cluster
      */
-    public static Bound withClusterName(String clusterName) {
-      return new Bound().withClusterName(clusterName);
+    public static <T> Bound<T> withClusterName(String clusterName) {
+      return new Bound<T>().withClusterName(clusterName);
     }
 
     /**
@@ -46,8 +47,8 @@ public class ElasticsearchIO {
      *
      * @param servers endpoints for the Elasticsearch cluster
      */
-    public static Bound withServers(InetSocketAddress[] servers) {
-      return new Bound().withServers(servers);
+    public static<T> Bound<T> withServers(InetSocketAddress[] servers) {
+      return new Bound<T>().withServers(servers);
     }
 
     /**
@@ -56,41 +57,52 @@ public class ElasticsearchIO {
      *
      * @param flushInterval delay applied to buffer elements. Defaulted to 1 seconds.
      */
-    public static Bound withFlushInterval(Duration flushInterval) {
-      return new Bound().withFlushInterval(flushInterval);
+    public static<T> Bound withFlushInterval(Duration flushInterval) {
+      return new Bound<T>().withFlushInterval(flushInterval);
     }
 
-    public static class Bound extends PTransform<PCollection<IndexRequestWrapper>, PDone> {
+    public static<T> Bound withFunction(SerializableFunction function) {
+      return new Bound<T>().withFunction(function);
+    }
+
+    public static class Bound<T> extends PTransform<PCollection<T>, PDone> {
       private final String clusterName;
       private final InetSocketAddress[] servers;
       private final Duration flushInterval;
+      private final SerializableFunction<T, IndexRequest> function;
 
       private Bound(final String clusterName,
                     final InetSocketAddress[] servers,
-                    final Duration flushInterval) {
+                    final Duration flushInterval,
+                    final SerializableFunction<T, IndexRequest> function) {
         this.clusterName = clusterName;
         this.servers = servers;
         this.flushInterval = flushInterval == null? Duration.ofSeconds(1L): flushInterval;
+        this.function = function;
       }
 
       Bound() {
-        this(null, null, null);
+        this(null, null, null, null);
       }
 
-      public Bound withClusterName(String clusterName) {
-        return new Bound(clusterName, servers, flushInterval);
+      public Bound<T> withClusterName(String clusterName) {
+        return new Bound<>(clusterName, servers, flushInterval, function);
       }
 
-      public Bound withServers(InetSocketAddress[] servers) {
-        return new Bound(clusterName, servers, flushInterval);
+      public Bound<T> withServers(InetSocketAddress[] servers) {
+        return new Bound<>(clusterName, servers, flushInterval, function);
       }
 
-      public Bound withFlushInterval(Duration flushInterval) {
-        return new Bound(clusterName, servers, flushInterval);
+      public Bound<T> withFlushInterval(Duration flushInterval) {
+        return new Bound<>(clusterName, servers, flushInterval, function);
+      }
+
+      public Bound<T> withFunction(SerializableFunction<T, IndexRequest> function) {
+        return new Bound<T>(clusterName, servers, flushInterval, function);
       }
 
       @Override
-      public PDone expand(final PCollection<IndexRequestWrapper> input) {
+      public PDone expand(final PCollection<T> input) {
 
         if (clusterName == null) {
           throw new IllegalStateException(
@@ -102,16 +114,22 @@ public class ElasticsearchIO {
               "need to set clustername of ElasticsearchIO.Write transform");
         }
 
+        if (function == null) {
+          throw new IllegalStateException(
+              "need to set SerializableFunction<T, IndexRequest> of ElasticsearchIO.Write transform");
+        }
+
         input
-            .apply("Assign To Shard", ParDo.of(new AssignToShard()))
-            .apply("Re-Window to Global Window", Window.<KV<Long, IndexRequestWrapper>>into(new GlobalWindows())
+            .apply("Assign To Shard", ParDo.of(new AssignToShard<>()))
+            .apply("Re-Window to Global Window", Window.<KV<Long, T>>into(new GlobalWindows())
                        .triggering(Repeatedly.forever(
                            AfterProcessingTime
                                .pastFirstElementInPane()
                                .plusDelayOf(javaToJoda(flushInterval))))
                        .discardingFiredPanes())
             .apply(GroupByKey.create())
-            .apply("Write to Elasticesarch", ParDo.of(new ElasticsearchWriter(clusterName, servers)));
+            .apply("Write to Elasticesarch",
+                   ParDo.of(new ElasticsearchWriter(clusterName, servers, function)));
         return PDone.in(input.getPipeline());
       }
       private org.joda.time.Duration javaToJoda(final Duration duration) {
@@ -119,8 +137,7 @@ public class ElasticsearchIO {
       }
     }
 
-    private static class AssignToShard
-        extends DoFn<IndexRequestWrapper, KV<Long, IndexRequestWrapper>> {
+    private static class AssignToShard<T> extends DoFn<T, KV<Long, T>> {
       private int numWorkers;
 
       @StartBundle
@@ -144,20 +161,22 @@ public class ElasticsearchIO {
       }
     }
 
-    private static class ElasticsearchWriter
-        extends DoFn<KV<Long, Iterable<IndexRequestWrapper>>, Void> {
+    private static class ElasticsearchWriter<T> extends DoFn<KV<Long, Iterable<T>>, Void> {
       private final Logger LOG = LoggerFactory.getLogger(ElasticsearchWriter.class);
       private final ClientSupplier clientSupplier;
+      private final SerializableFunction<T, IndexRequest> function;
 
       public ElasticsearchWriter(String clusterName,
-                                 InetSocketAddress[] servers) {
+                                 InetSocketAddress[] servers,
+                                 SerializableFunction<T, IndexRequest> function) {
         this.clientSupplier = new ClientSupplier(clusterName, servers);
+        this.function = function;
       }
       @ProcessElement
       public void processElement(ProcessContext c) throws Exception {
         final BulkRequestBuilder bulkRequestBuilder = clientSupplier.get().prepareBulk();
 
-        c.element().getValue().forEach(request -> bulkRequestBuilder.add(toIndexRequest(request)));
+        c.element().getValue().forEach(x -> bulkRequestBuilder.add(function.apply(x)));
         // Elasticsearch throws ActionRequestValidationException if bulk request is empty,
         // so do nothing if number of actions is zero.
         if (bulkRequestBuilder.numberOfActions() == 0) {
@@ -169,21 +188,6 @@ public class ElasticsearchIO {
         if (bulkItemResponse.hasFailures()) {
           throw new IOException(bulkItemResponse.buildFailureMessage());
         }
-      }
-
-      private IndexRequest toIndexRequest(IndexRequestWrapper wrapper) {
-        IndexRequest indexRequest = new IndexRequest(wrapper.index(), wrapper.type())
-            .source(wrapper.source())
-            .id(wrapper.id())
-            .version(wrapper.ttl())
-            .refresh(wrapper.refresh());
-
-        if (wrapper.timestamp() != null)
-          indexRequest.timestamp(wrapper.timestamp());
-
-        if (wrapper.version() > 0 )
-          indexRequest.version(wrapper.version());
-        return indexRequest;
       }
     }
 
