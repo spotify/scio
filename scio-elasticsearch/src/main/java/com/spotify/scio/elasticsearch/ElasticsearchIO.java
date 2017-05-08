@@ -1,6 +1,5 @@
 package com.spotify.scio.elasticsearch;
 
-import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.GroupByKey;
 import org.apache.beam.sdk.transforms.PTransform;
@@ -33,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 public class ElasticsearchIO {
   public static class Write {
+
     /**
      * Returns a tranform for writing to Elasticsearch cluster for a given name.
      *
@@ -61,8 +61,23 @@ public class ElasticsearchIO {
       return new Bound<T>().withFlushInterval(flushInterval);
     }
 
+    /**
+     * Returns a transform for writing to Elasticsearch cluster.
+     *
+     * @param function creates IndexRequest required by Elasticsearch client
+     */
     public static<T> Bound withFunction(SerializableFunction function) {
       return new Bound<T>().withFunction(function);
+    }
+
+    /**
+     * Returns a transform for writing to Elasticsearch cluster.
+     * Note: Recommended to set this number as number of workers in your pipeline.
+     *
+     * @param numOfShard to construct a batch to bulk write to Elasticsearch.
+     */
+    public static<T> Bound withNumOfShard(Long numOfShard) {
+      return new Bound<>().withNumOfShard(numOfShard);
     }
 
     public static class Bound<T> extends PTransform<PCollection<T>, PDone> {
@@ -70,35 +85,42 @@ public class ElasticsearchIO {
       private final InetSocketAddress[] servers;
       private final Duration flushInterval;
       private final SerializableFunction<T, IndexRequest> function;
+      private final Long numOfShard;
 
       private Bound(final String clusterName,
                     final InetSocketAddress[] servers,
                     final Duration flushInterval,
-                    final SerializableFunction<T, IndexRequest> function) {
+                    final SerializableFunction<T, IndexRequest> function,
+                    final Long numOfShard) {
         this.clusterName = clusterName;
         this.servers = servers;
         this.flushInterval = flushInterval == null? Duration.ofSeconds(1L): flushInterval;
         this.function = function;
+        this.numOfShard = numOfShard;
       }
 
       Bound() {
-        this(null, null, null, null);
+        this(null, null, null, null, null);
       }
 
       public Bound<T> withClusterName(String clusterName) {
-        return new Bound<>(clusterName, servers, flushInterval, function);
+        return new Bound<>(clusterName, servers, flushInterval, function, numOfShard);
       }
 
       public Bound<T> withServers(InetSocketAddress[] servers) {
-        return new Bound<>(clusterName, servers, flushInterval, function);
+        return new Bound<>(clusterName, servers, flushInterval, function, numOfShard);
       }
 
       public Bound<T> withFlushInterval(Duration flushInterval) {
-        return new Bound<>(clusterName, servers, flushInterval, function);
+        return new Bound<>(clusterName, servers, flushInterval, function, numOfShard);
       }
 
       public Bound<T> withFunction(SerializableFunction<T, IndexRequest> function) {
-        return new Bound<T>(clusterName, servers, flushInterval, function);
+        return new Bound<>(clusterName, servers, flushInterval, function, numOfShard);
+      }
+
+      public Bound<T> withNumOfShard(Long numOfShard) {
+        return new Bound<>(clusterName, servers, flushInterval, function, numOfShard);
       }
 
       @Override
@@ -119,8 +141,12 @@ public class ElasticsearchIO {
               "need to set SerializableFunction<T, IndexRequest> of ElasticsearchIO.Write transform");
         }
 
+        if (numOfShard == null) {
+          throw new IllegalStateException(
+              "need to set numOfShard of ElasticsearchIO.Write transform");
+        }
         input
-            .apply("Assign To Shard", ParDo.of(new AssignToShard<>()))
+            .apply("Assign To Shard", ParDo.of(new AssignToShard<>(numOfShard)))
             .apply("Re-Window to Global Window", Window.<KV<Long, T>>into(new GlobalWindows())
                        .triggering(Repeatedly.forever(
                            AfterProcessingTime
@@ -138,25 +164,16 @@ public class ElasticsearchIO {
     }
 
     private static class AssignToShard<T> extends DoFn<T, KV<Long, T>> {
-      private int numWorkers;
+      private final Long numOfShard;
 
-      @StartBundle
-      public void startBundle(Context c) throws Exception {
-        numWorkers = c
-            .getPipelineOptions()
-            .as(DataflowPipelineWorkerPoolOptions.class)
-            .getNumWorkers();
-        // numWorkers will be zero when running ElasticsearchWriterIT. Set it
-        // to 1 or ThreadLocalRandom's nextLong method will throw an exception.
-        if (numWorkers == 0) {
-          numWorkers = 1;
-        }
+      public AssignToShard(Long numOfShard) {
+        this.numOfShard = numOfShard;
       }
 
       @ProcessElement
       public void processElement(ProcessContext c) throws Exception {
         // assign this element to a random shard
-        final long shard = ThreadLocalRandom.current().nextLong(numWorkers);
+        final long shard = ThreadLocalRandom.current().nextLong(numOfShard);
         c.output(KV.of(shard, c.element()));
       }
     }
