@@ -30,7 +30,6 @@ package object elasticsearch {
     def saveAsElasticsearch(elasticsearchOptions: ElasticsearchOptions,
                             flushInterval: Duration = Duration.ofSeconds(1),
                             f: T => IndexRequest) :Future[Tap[T]] = {
-
         self.saveAsCustomOutput("Write to Elasticsearch",
           ElasticsearchIO.Write
             .withClusterName(elasticsearchOptions.clusterName)
