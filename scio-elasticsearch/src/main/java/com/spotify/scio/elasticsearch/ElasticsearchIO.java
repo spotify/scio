@@ -1,6 +1,6 @@
 package com.spotify.scio.elasticsearch;
 
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
+import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.GroupByKey;
 import org.apache.beam.sdk.transforms.PTransform;
@@ -144,7 +144,7 @@ public class ElasticsearchIO {
       public void startBundle(Context c) throws Exception {
         numWorkers = c
             .getPipelineOptions()
-            .as(DataflowPipelineOptions.class)
+            .as(DataflowPipelineWorkerPoolOptions.class)
             .getNumWorkers();
         // numWorkers will be zero when running ElasticsearchWriterIT. Set it
         // to 1 or ThreadLocalRandom's nextLong method will throw an exception.
