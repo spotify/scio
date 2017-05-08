@@ -17,10 +17,14 @@
 
 package com.spotify.scio.examples.extra
 
+import com.google.bigtable.admin.v2.{ListTablesResponse, Table}
 import com.google.bigtable.v2.{Mutation, Row}
+import com.google.cloud.bigtable.grpc.BigtableTableAdminGrpcClient
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigtable._
 import com.spotify.scio.testing._
+import org.mockito.Mockito._
+import org.mockito.Matchers._
 
 class BigtableExampleTest extends PipelineSpec {
 
@@ -34,6 +38,7 @@ class BigtableExampleTest extends PipelineSpec {
   val textIn = Seq("a b c d e", "a b a b")
   val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
   val expectedMutations = wordCount.map(kv => BigtableExample.toMutation(kv._1, kv._2))
+  TableAdmin.mockBigtableClient = mockBigtableTableAdminClient()
 
   "BigtableV1WriteExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.BigtableWriteExample.type]
@@ -44,6 +49,8 @@ class BigtableExampleTest extends PipelineSpec {
       }
       .run()
   }
+
+  TableAdmin.mockBigtableClient = null
 
 
   def toRow(key: String, value: Long): Row =
@@ -60,6 +67,15 @@ class BigtableExampleTest extends PipelineSpec {
       .input(BigtableInput("my-project", "my-instance", "my-table"), rowsIn)
       .output(TextIO("out.txt"))(_ should containInAnyOrder (expectedText))
       .run()
+  }
+
+  def mockBigtableTableAdminClient(): BigtableTableAdminGrpcClient = {
+    val mockBigtableClient = mock(classOf[BigtableTableAdminGrpcClient])
+    when(mockBigtableClient.listTables(any()))
+      .thenReturn(ListTablesResponse.newBuilder().build)
+    when(mockBigtableClient.getTable(any()))
+      .thenReturn(Table.newBuilder().build())
+    mockBigtableClient
   }
 
 }

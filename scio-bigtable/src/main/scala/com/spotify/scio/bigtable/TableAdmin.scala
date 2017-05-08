@@ -21,6 +21,8 @@ import com.google.bigtable.admin.v2._
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.cloud.bigtable.grpc.BigtableTableAdminGrpcClient
+import com.google.cloud.bigtable.grpc.io.ChannelPool
+import com.google.common.annotations.VisibleForTesting
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
@@ -30,6 +32,27 @@ import scala.collection.JavaConverters._
  */
 object TableAdmin {
   private val log: Logger = LoggerFactory.getLogger(TableAdmin.getClass)
+
+  @VisibleForTesting
+  var mockBigtableClient: BigtableTableAdminGrpcClient = null
+
+  /**
+   * Ensure that tables and column families exist.
+   * Checks for existence of tables or creates them if they do not exist.  Also checks for
+   * existence of column families within each table and creates them if they do not exist.
+   *
+   * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
+   *                                Values are a list of column family names.
+   */
+  def ensureTables(projectId: String,
+                   instanceId: String,
+                   tablesAndColumnFamilies: Map[String, List[String]]): Unit = {
+    val bigtableOptions = new BigtableOptions.Builder()
+      .setProjectId(projectId)
+      .setInstanceId(instanceId)
+      .build
+    ensureTables(bigtableOptions, tablesAndColumnFamilies)
+  }
 
   /**
    * Ensure that tables and column families exist.
@@ -42,8 +65,13 @@ object TableAdmin {
   def ensureTables(bigtableOptions: BigtableOptions,
                    tablesAndColumnFamilies: Map[String, List[String]]): Unit = {
 
-    val channel = ChannelPoolCreator.createPool(bigtableOptions.getTableAdminHost)
-    val client = new BigtableTableAdminGrpcClient(channel)
+    val (channel,client) = if (mockBigtableClient != null) {
+      (null, mockBigtableClient)
+    } else {
+      val chan = ChannelPoolCreator.createPool(bigtableOptions.getTableAdminHost)
+      (chan, new BigtableTableAdminGrpcClient(chan))
+    }
+
     val project = bigtableOptions.getProjectId
     val instance = bigtableOptions.getInstanceId
     val instancePath = s"projects/$project/instances/$instance"
@@ -73,7 +101,7 @@ object TableAdmin {
         ensureColumnFamilies(client, tablePath, columnFamilies)
       }
     } finally {
-      channel.shutdownNow()
+      Option(channel).map(_.shutdownNow())
     }
   }
 
