@@ -67,6 +67,11 @@ object BigtableWriteExample {
     // bump up the number of bigtable nodes before writing
     sc.updateNumberOfBigtableNodes(btProjectId, btInstanceId, 15)
 
+    // Ensure that destination tables and column families exist
+    sc.ensureTables(btProjectId, btInstanceId, Map(
+      btTableId -> List(BigtableExample.FAMILY_NAME)
+    ))
+
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
