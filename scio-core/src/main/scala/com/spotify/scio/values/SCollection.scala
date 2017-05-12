@@ -833,6 +833,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group output
    */
   def materialize: Future[Tap[T]] = {
+    require(!context.isTest, "Cannot materialize in a test context.")
     val filename = "scio-materialize-" + UUID.randomUUID().toString
     val tmpDir = if (context.options.getTempLocation != null) {
       context.options.getTempLocation
