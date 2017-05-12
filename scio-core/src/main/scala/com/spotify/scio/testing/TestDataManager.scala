@@ -83,9 +83,15 @@ private[scio] object TestDataManager {
   private val distCaches = TrieMap.empty[String, TestDistCache]
   private val closed = TrieMap.empty[String, Boolean]
 
-  def getInput(testId: String): TestInput = inputs(testId)
-  def getOutput(testId: String): TestOutput = outputs(testId)
-  def getDistCache(testId: String): TestDistCache = distCaches(testId)
+  private def getValue[V](key: String, m: TrieMap[String, V], ioMsg: String): V = {
+    require(m.contains(key), s"Missing test data. Are you $ioMsg outside of JobTest?")
+    m(key)
+  }
+
+  def getInput(testId: String): TestInput = getValue(testId, inputs, "reading input")
+  def getOutput(testId: String): TestOutput = getValue(testId, outputs, "writing output")
+  def getDistCache(testId: String): TestDistCache =
+    getValue(testId, distCaches, "using dist cache")
 
   def setup(testId: String,
             ins: Map[TestIO[_], Iterable[_]],
