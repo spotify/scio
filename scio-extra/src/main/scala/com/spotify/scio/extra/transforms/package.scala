@@ -23,6 +23,9 @@ import java.nio.file.Path
 
 import com.spotify.scio.util.{Functions, RemoteFileUtil}
 import com.spotify.scio.values.SCollection
+import org.apache.beam.runners.dataflow.DataflowRunner
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.transforms.ParDo
 
 import scala.collection.JavaConverters._
@@ -110,6 +113,44 @@ package object transforms {
       self.applyTransform(ParDo.of(new PipeDoFn(cmdArray, env, dir, sCmds, tCmds)))
     }
 
+  }
+
+  /**
+    * Enhanced version of [[SCollection]] with rate limiting methods.
+    */
+  implicit class RateLimitingSCollection[T: ClassTag](val self: SCollection[T])  {
+
+    /**
+      * Rate limit the number of elements this step will process per second. Useful to rate limit
+      * throughput for a job writing to a database or making calls to external services.
+      *
+      * Note that this only limits the throughput for the current step as well as any steps
+      * running within the same machine (within a serialization boundary). Therefore any maps
+      * and filters surrounding this will be properly rate limited usually until a groupBy, reduce,
+      * or join (or anything that uses those under the hood e.g. distinct, fold) is hit.
+      *
+      * @param maxElementsPerSecond The maxmimum number of elements which should be processed
+      *                             per second
+      */
+    def withRateLimit(maxElementsPerSecond: Double): SCollection[T] = {
+      val runner = self.context.pipeline.getRunner
+      val maxNumWorkers = runner match {
+        case _: DirectRunner => 1
+        case _: DataflowRunner =>
+          val pipelineOptions = self.context.optionsAs[DataflowPipelineOptions]
+          val numWorkers = Math.max(pipelineOptions.getNumWorkers, pipelineOptions.getMaxNumWorkers)
+          if (numWorkers == 0) {
+            throw new RuntimeException(
+              "Rate limiting only available when numWorkers or maxNumWorkers is explicitly set"
+            )
+          }
+          numWorkers
+        case _ => throw new NotImplementedError(
+          s"rateLimitThroughput not implemented for runner ${runner.getClass.toString}"
+        )
+      }
+      self.applyTransform(ParDo.of(new RateLimiterDoFn[T](maxElementsPerSecond / maxNumWorkers)))
+    }
   }
 
 }
