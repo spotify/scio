@@ -42,8 +42,8 @@ import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options._
 import org.apache.beam.sdk.PipelineResult.State
-import org.apache.beam.sdk.io.PubsubIO.PubsubMessage
-import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
+import org.apache.beam.sdk.extensions.gcp.options.{GcpOptions, GcsOptions}
+import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub => psio}
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
@@ -216,14 +216,15 @@ class ScioContext private[scio] (val options: PipelineOptions,
         // load TestPipeline dynamically to avoid ClassNotFoundException when running src/main
         // https://issues.apache.org/jira/browse/BEAM-298
         val cls = Class.forName("org.apache.beam.sdk.testing.TestPipeline")
-        val tp = cls.getMethod("create").invoke(null).asInstanceOf[Pipeline]
+        // propagate options
+        val opts = PipelineOptionsFactory.create()
+        opts.setStableUniqueNames(options.getStableUniqueNames)
+        val tp = cls.getMethod("create").invoke(null, opts).asInstanceOf[Pipeline]
         // workaround for @Rule enforcement introduced by
         // https://issues.apache.org/jira/browse/BEAM-1205
         cls
           .getMethod("enableAbandonedNodeEnforcement", classOf[Boolean])
           .invoke(tp, Boolean.box(true))
-        // propagate options
-        tp.getOptions.setStableUniqueNames(options.getStableUniqueNames)
         tp
       }
       _pipeline.getCoderRegistry.registerScalaCoders()
@@ -439,12 +440,11 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (this.isTest) {
       this.getTestInput(AvroIO[T](path))
     } else {
-      val transform = gio.AvroIO.Read.from(path)
       val cls = ScioUtil.classOf[T]
-      val t = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-        transform.withSchema(cls)
+      val t = if (classOf[GenericRecord] isAssignableFrom cls) {
+        gio.AvroIO.readGenericRecords(schema).from(path).asInstanceOf[gio.AvroIO.Read[T]]
       } else {
-        transform.withSchema(schema).asInstanceOf[gio.AvroIO.Read.Bound[T]]
+        gio.AvroIO.read(cls).from(path)
       }
       wrap(this.applyInternal(t)).setName(path)
     }
@@ -481,13 +481,13 @@ class ScioContext private[scio] (val options: PipelineOptions,
     } else if (this.bigQueryClient.isCacheEnabled) {
       val queryJob = this.bigQueryClient.newQueryJob(sqlQuery, flattenResults)
       _queryJobs.append(queryJob)
-      wrap(this.applyInternal(bqio.BigQueryIO.Read.from(queryJob.table).withoutValidation()))
+      wrap(this.applyInternal(bqio.BigQueryIO.read().from(queryJob.table).withoutValidation()))
         .setName(sqlQuery)
     } else {
       val baseQuery = if (!flattenResults) {
-        bqio.BigQueryIO.Read.fromQuery(sqlQuery).withoutResultFlattening()
+        bqio.BigQueryIO.read().fromQuery(sqlQuery).withoutResultFlattening()
       } else {
-        bqio.BigQueryIO.Read.fromQuery(sqlQuery)
+        bqio.BigQueryIO.read().fromQuery(sqlQuery)
       }
       val query = if (this.bigQueryClient.isLegacySql(sqlQuery, flattenResults)) {
         baseQuery
@@ -503,11 +503,11 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group input
    */
   def bigQueryTable(table: TableReference): SCollection[TableRow] = requireNotClosed {
-    val tableSpec: String = bqio.BigQueryIO.toTableSpec(table)
+    val tableSpec: String = bqio.BigQueryHelpers.toTableSpec(table)
     if (this.isTest) {
       this.getTestInput(BigQueryIO(tableSpec))
     } else {
-      wrap(this.applyInternal(bqio.BigQueryIO.Read.from(table))).setName(tableSpec)
+      wrap(this.applyInternal(bqio.BigQueryIO.read().from(table))).setName(tableSpec)
     }
   }
 
@@ -516,7 +516,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group input
    */
   def bigQueryTable(tableSpec: String): SCollection[TableRow] =
-    this.bigQueryTable(bqio.BigQueryIO.parseTableSpec(tableSpec))
+    this.bigQueryTable(bqio.BigQueryHelpers.parseTableSpec(tableSpec))
 
   /**
    * Get a typed SCollection for a BigQuery SELECT query or table.
@@ -563,7 +563,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
       }
     } else {
       // newSource can be either table or query
-      val table = scala.util.Try(bqio.BigQueryIO.parseTableSpec(newSource)).toOption
+      val table = scala.util.Try(bqio.BigQueryHelpers.parseTableSpec(newSource)).toOption
       if (table.isDefined) {
         this.bigQueryTable(table.get)
       } else {
@@ -592,27 +592,39 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   private def pubsubIn[T: ClassTag](isSubscription: Boolean,
                                     name: String,
-                                    idLabel: String,
-                                    timestampLabel: String)
+                                    idAttribute: String,
+                                    timestampAttribute: String)
   : SCollection[T] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(PubsubIO(name))
     } else {
-      val coder = pipeline.getCoderRegistry.getScalaCoder[T]
-      var transform =
-        if (isSubscription) {
-          gio.PubsubIO.read().subscription(name).withCoder(coder)
-        } else {
-          gio.PubsubIO.read().topic(name).withCoder(coder)
+      val cls = ScioUtil.classOf[T]
+      def setup[U](read: psio.PubsubIO.Read[U]) = {
+        var r = read
+        r = if (isSubscription) r.fromSubscription(name) else r.fromTopic(name)
+        if (idAttribute != null) {
+          r = r.withIdAttribute(idAttribute)
         }
-
-      if (idLabel != null) {
-        transform = transform.idLabel(idLabel)
+        if (timestampAttribute != null) {
+          r = r.withTimestampAttribute(timestampAttribute)
+        }
+        r
       }
-      if (timestampLabel != null) {
-        transform = transform.timestampLabel(timestampLabel)
+      if (classOf[String] isAssignableFrom cls) {
+        val t = setup(psio.PubsubIO.readStrings())
+        wrap(this.applyInternal(t)).setName(name).asInstanceOf[SCollection[T]]
+      } else if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+        val t = setup(psio.PubsubIO.readAvros(cls))
+        wrap(this.applyInternal(t)).setName(name)
+      } else if (classOf[Message] isAssignableFrom cls) {
+        val t = setup(psio.PubsubIO.readProtos(cls))
+        wrap(this.applyInternal(t)).setName(name)
+      } else {
+        val coder = pipeline.getCoderRegistry.getScalaCoder[T]
+        val t = setup(psio.PubsubIO.readMessages())
+        wrap(this.applyInternal(t)).setName(name)
+          .map(m => CoderUtils.decodeFromByteArray(coder, m.getPayload))
       }
-      wrap(this.applyInternal(transform)).setName(name)
     }
   }
 
@@ -621,50 +633,42 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group input
    */
   def pubsubSubscription[T: ClassTag](sub: String,
-                                      idLabel: String = null,
-                                      timestampLabel: String = null)
-  : SCollection[T] = pubsubIn(isSubscription = true, sub, idLabel, timestampLabel)
+                                      idAttribute: String = null,
+                                      timestampAttribute: String = null)
+  : SCollection[T] = pubsubIn(isSubscription = true, sub, idAttribute, timestampAttribute)
 
   /**
     * Get an SCollection for a Pub/Sub topic.
     * @group input
     */
   def pubsubTopic[T: ClassTag](topic: String,
-                               idLabel: String = null,
-                               timestampLabel: String = null)
-  : SCollection[T] = pubsubIn(isSubscription = false, topic, idLabel, timestampLabel)
+                               idAttribute: String = null,
+                               timestampAttribute: String = null)
+  : SCollection[T] = pubsubIn(isSubscription = false, topic, idAttribute, timestampAttribute)
 
   private def pubsubInWithAttributes[T: ClassTag](isSubscription: Boolean,
                                                   name: String,
-                                                  idLabel: String,
-                                                  timestampLabel: String)
+                                                  idAttribute: String,
+                                                  timestampAttribute: String)
   : SCollection[(T, Map[String, String])] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(PubsubIO(name))
     } else {
+      var t = psio.PubsubIO.readMessagesWithAttributes()
+      t = if (isSubscription) t.fromSubscription(name) else t.fromTopic(name)
+      if (idAttribute != null) {
+        t = t.withIdAttribute(idAttribute)
+      }
+      if (timestampAttribute != null) {
+        t = t.withTimestampAttribute(timestampAttribute)
+      }
       val elementCoder = pipeline.getCoderRegistry.getScalaCoder[T]
-      val outputCoder  = pipeline.getCoderRegistry.getScalaCoder[(T, Map[String, String])]
-      val parseFn = Functions.simpleFn { msg: PubsubMessage =>
-        val element = CoderUtils.decodeFromByteArray(elementCoder, msg.getMessage)
-        val attributes = JMapWrapper.of(msg.getAttributeMap)
-        (element, attributes)
-      }
-      val input: gio.PubsubIO.Read[(T, Map[String, String])] =
-        if (isSubscription) {
-          gio.PubsubIO.read().subscription(name)
-        } else {
-          gio.PubsubIO.read().topic(name)
+      wrap(this.applyInternal(t)).setName(name)
+        .map { m =>
+          val payload = CoderUtils.decodeFromByteArray(elementCoder, m.getPayload)
+          val attributes = JMapWrapper.of(m.getAttributeMap)
+          (payload, attributes)
         }
-      var transform = input
-        .withAttributes(parseFn)
-        .withCoder(outputCoder)
-      if (idLabel != null) {
-        transform = transform.idLabel(idLabel)
-      }
-      if (timestampLabel != null) {
-        transform = transform.timestampLabel(timestampLabel)
-      }
-      wrap(this.applyInternal(transform)).setName(name)
     }
   }
 
@@ -673,10 +677,10 @@ class ScioContext private[scio] (val options: PipelineOptions,
     * @group input
     */
   def pubsubSubscriptionWithAttributes[T: ClassTag](sub: String,
-                                                    idLabel: String = null,
-                                                    timestampLabel: String = null)
+                                                    idAttribute: String = null,
+                                                    timestampAttribute: String = null)
   : SCollection[(T, Map[String, String])] =
-    pubsubInWithAttributes(isSubscription = true, sub, idLabel, timestampLabel)
+    pubsubInWithAttributes(isSubscription = true, sub, idAttribute, timestampAttribute)
 
   /**
     * Get an SCollection for a Pub/Sub topic that includes message attributes.
@@ -696,7 +700,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (this.isTest) {
       this.getTestInput[TableRow](TableRowJsonIO(path))
     } else {
-      wrap(this.applyInternal(gio.TextIO.Read.from(path))).setName(path)
+      wrap(this.applyInternal(gio.TextIO.read().from(path))).setName(path)
         .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
     }
   }
@@ -711,7 +715,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (this.isTest) {
       this.getTestInput(TextIO(path))
     } else {
-      wrap(this.applyInternal(gio.TextIO.Read.from(path)
+      wrap(this.applyInternal(gio.TextIO.read().from(path)
         .withCompressionType(compressionType))).setName(path)
     }
   }
