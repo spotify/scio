@@ -19,7 +19,7 @@ package com.spotify.scio
 
 import java.lang.{Float => JFloat}
 
-import com.spotify.scio.coders.{FloatCoder, KryoAtomicCoder}
+import com.spotify.scio.coders.KryoAtomicCoder
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.coders._
 import org.apache.beam.sdk.values.{KV, TypeDescriptor}
@@ -33,19 +33,19 @@ private[scio] object Implicits {
 
     def registerScalaCoders(): Unit = {
       // Missing Coders from DataFlowJavaSDK
-      r.registerCoder(classOf[JFloat], classOf[FloatCoder])
+      r.registerCoderForClass(classOf[JFloat], FloatCoder.of())
 
-      r.registerCoder(classOf[Int], classOf[VarIntCoder])
-      r.registerCoder(classOf[Long], classOf[VarLongCoder])
-      r.registerCoder(classOf[Float], classOf[FloatCoder])
-      r.registerCoder(classOf[Double], classOf[DoubleCoder])
+      r.registerCoderForClass(classOf[Int], VarIntCoder.of())
+      r.registerCoderForClass(classOf[Long], VarLongCoder.of())
+      r.registerCoderForClass(classOf[Float], FloatCoder.of())
+      r.registerCoderForClass(classOf[Double], DoubleCoder.of())
     }
 
     def getScalaCoder[T: ClassTag]: Coder[T] = {
       val coder = try {
         // This may fail in come cases, i.e. Malformed class name in REPL
         // Always fall back to Kryo
-        r.getDefaultCoder(TypeDescriptor.of(ScioUtil.classOf[T]))
+        r.getCoder(ScioUtil.classOf[T])
       } catch {
         // Malformed class name is a `java.lang.InternalError` and cannot be caught by NonFatal
         case _: Throwable => null
