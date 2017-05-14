@@ -330,8 +330,6 @@ lazy val scioHdfs: Project = Project(
   libraryDependencies ++= Seq(
     "org.apache.avro" % "avro-mapred" % avroVersion classifier("hadoop2"),
     "org.apache.avro" % "avro-ipc" % avroVersion % "test" classifier("tests"),
-    "org.apache.beam" % "beam-sdks-java-io-hdfs" % beamVersion,
-    "org.apache.hadoop" % "hadoop-client" % hadoopVersion exclude ("org.slf4j", "slf4j-log4j12"),
     "com.google.auto.value" % "auto-value" % autoValueVersion % "provided"
   )
 ).dependsOn(
