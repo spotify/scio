@@ -27,7 +27,7 @@ import org.apache.beam.sdk.util.GcsUtil
 import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 import com.spotify.scio.util.ScioUtil
-import kantan.csv.{RowDecoder, RowEncoder}
+import kantan.csv.{RowDecoder, RowEncoder, rfc}
 import org.apache.avro.file.{DataFileStream, DataFileWriter}
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
 import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter, SpecificRecordBase}
@@ -73,7 +73,7 @@ class IoCommands(options: PipelineOptions) {
                              header: Boolean = false): Iterator[T] = {
     import kantan.csv.ops._
     implicit val codec = scala.io.Codec.UTF8
-    inputStream(path).asUnsafeCsvReader[T](sep, header).toIterator
+    inputStream(path).asUnsafeCsvReader(rfc.withColumnSeparator(sep).withHeader(header)).toIterator
   }
 
   /** Read from a TSV file on local filesystem or GCS. */
@@ -114,7 +114,7 @@ class IoCommands(options: PipelineOptions) {
                               header: Seq[String] = Seq.empty): Unit = {
     import kantan.csv.ops._
     implicit val codec = scala.io.Codec.UTF8
-    outputStream(path, TEXT).writeCsv(data, sep, header: _*)
+    outputStream(path, TEXT).writeCsv(data, rfc.withColumnSeparator(sep).withHeader(header:_*))
     logger.info(s"${data.size} record${plural(data)} written to $path")
   }
 
