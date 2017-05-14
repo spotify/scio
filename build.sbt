@@ -21,7 +21,7 @@ import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtSite.SiteKeys._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 
-val beamVersion = "0.6.0"
+val beamVersion = "2.0.0"
 val algebirdVersion = "0.13.0"
 val annoyVersion = "0.2.5"
 val autoServiceVersion = "1.0-rc3"
@@ -59,6 +59,9 @@ val sparkeyVersion = "2.1.3"
 val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework")
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
+  // FIXME: remove this once 2.0.0 is officially released
+  resolvers += "Apache Snapshots" at "https://repository.apache.org/content/repositories/orgapachebeam-1017/",
+
   organization       := "com.spotify",
 
   scalaVersion       := "2.11.11",
