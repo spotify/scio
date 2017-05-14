@@ -42,15 +42,15 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.Coder
-import org.apache.beam.sdk.io.PubsubIO.PubsubMessage
+import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
+import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
-import org.apache.beam.sdk.options.GcpOptions
+import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub => psio}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.util.CoderUtils
-import org.apache.beam.sdk.util.WindowingStrategy.AccumulationMode
+import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{io => gio}
 import org.joda.time.{Duration, Instant}
@@ -891,17 +891,21 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     path.replaceAll("\\/+$", "") + "/part"
   }
 
-  private def avroOut(path: String, numShards: Int,
-                      codec: CodecFactory,
-                      metadata: Map[String, AnyRef]) =
-    gio.AvroIO.Write.to(pathWithShards(path))
+  private def avroOut[U](write: gio.AvroIO.Write[U], path: String, numShards: Int, suffix: String,
+                         codec: CodecFactory,
+                         metadata: Map[String, AnyRef]) =
+    write
+      .to(pathWithShards(path))
       .withNumShards(numShards)
-      .withSuffix(".avro")
+      .withSuffix(suffix + ".avro")
       .withCodec(codec)
       .withMetadata(metadata.asJava)
 
   private[scio] def textOut(path: String, suffix: String, numShards: Int) =
-    gio.TextIO.Write.to(pathWithShards(path)).withNumShards(numShards).withSuffix(suffix)
+    gio.TextIO.write()
+      .to(pathWithShards(path))
+      .withSuffix(suffix)
+      .withNumShards(numShards)
 
   /**
    * Save this SCollection as an Avro file.
@@ -920,12 +924,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       context.testOut(AvroIO(path))(this)
       saveAsInMemoryTap
     } else {
-      val transform = avroOut(path, numShards, codec, metadata).withSuffix(suffix + ".avro")
       val cls = ScioUtil.classOf[T]
-      if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-        this.applyInternal(transform.withSchema(cls))
+      if (classOf[GenericRecord] isAssignableFrom cls) {
+        val t = gio.AvroIO.writeGenericRecords(schema).asInstanceOf[gio.AvroIO.Write[T]]
+        this.applyInternal(avroOut(t, path, numShards, suffix, codec, metadata))
       } else {
-        this.applyInternal(transform.withSchema(schema).asInstanceOf[gio.AvroIO.Write.Bound[T]])
+        val t = gio.AvroIO.write(cls)
+        this.applyInternal(avroOut(t, path, numShards, suffix, codec, metadata))
       }
       context.makeFuture(AvroTap(path + "/part-*", schema))
     }
@@ -960,7 +965,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                      createDisposition: CreateDisposition,
                      tableDescription: String)
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
-    val tableSpec = bqio.BigQueryIO.toTableSpec(table)
+    val tableSpec = bqio.BigQueryHelpers.toTableSpec(table)
     if (context.isTest) {
       context.testOut(BigQueryIO(tableSpec))(this.asInstanceOf[SCollection[TableRow]])
 
@@ -970,7 +975,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         saveAsInMemoryTap.asInstanceOf[Future[Tap[TableRow]]]
       }
     } else {
-      var transform = bqio.BigQueryIO.Write.to(table)
+      var transform = bqio.BigQueryIO.writeTableRows().to(table)
       if (schema != null) transform = transform.withSchema(schema)
       if (createDisposition != null) transform = transform.withCreateDisposition(createDisposition)
       if (writeDisposition != null) transform = transform.withWriteDisposition(writeDisposition)
@@ -996,7 +1001,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                      tableDescription: String = null)
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
     saveAsBigQuery(
-      bqio.BigQueryIO.parseTableSpec(tableSpec),
+      bqio.BigQueryHelpers.parseTableSpec(tableSpec),
       schema,
       writeDisposition,
       createDisposition,
@@ -1060,7 +1065,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                          (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
   : Future[Tap[T]] =
     saveAsTypedBigQuery(
-      bqio.BigQueryIO.parseTableSpec(tableSpec),
+      bqio.BigQueryHelpers.parseTableSpec(tableSpec),
       writeDisposition, createDisposition)
 
   /**
@@ -1082,21 +1087,40 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group output
    */
   def saveAsPubsub(topic: String,
-                   idLabel: String = null,
-                   timestampLabel: String = null)
+                   idAttribute: String = null,
+                   timestampAttribute: String = null)
   : Future[Tap[T]] = {
     if (context.isTest) {
       context.testOut(PubsubIO(topic))(this)
     } else {
-      val coder = internal.getPipeline.getCoderRegistry.getScalaCoder[T]
-      var transform = gio.PubsubIO.write().topic(topic).withCoder(coder)
-      if (idLabel != null) {
-        transform = transform.idLabel(idLabel)
+      val cls = ScioUtil.classOf[T]
+      def setup[U](write: psio.PubsubIO.Write[U]) = {
+        var w = write
+        if (idAttribute != null) {
+          w = w.withIdAttribute(idAttribute)
+        }
+        if (timestampAttribute != null) {
+          w = w.withTimestampAttribute(timestampAttribute)
+        }
+        w
       }
-      if (timestampLabel != null) {
-        transform = transform.timestampLabel(timestampLabel)
+      if (classOf[String] isAssignableFrom cls) {
+        val t = setup(psio.PubsubIO.writeStrings())
+        this.asInstanceOf[SCollection[String]].applyInternal(t)
+      } else if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+        val t = setup(psio.PubsubIO.writeAvros(cls))
+        this.applyInternal(t)
+      } else if (classOf[Message] isAssignableFrom cls) {
+        val t = setup(psio.PubsubIO.writeProtos(cls))
+        this.applyInternal(t)
+      } else {
+        val coder = internal.getPipeline.getCoderRegistry.getScalaCoder[T]
+        val t = setup(psio.PubsubIO.writeMessages())
+        this.map { t =>
+          val payload = CoderUtils.encodeToByteArray(coder, t)
+          new PubsubMessage(payload, Map.empty[String, String].asJava)
+        }.applyInternal(t)
       }
-      this.applyInternal(transform)
     }
     Future.failed(new NotImplementedError("Pubsub future not implemented"))
   }
@@ -1106,29 +1130,27 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     * @group output
     */
   def saveAsPubsubWithAttributes[V: ClassTag](topic: String,
-                                              idLabel: String = null,
-                                              timestampLabel: String = null)
+                                              idAttribute: String = null,
+                                              timestampAttribute: String = null)
                                              (implicit ev: T <:< (V, Map[String, String]))
   : Future[Tap[V]] = {
     if (context.isTest) {
       context.testOut(PubsubIO(topic))(this)
     } else {
-      val elementCoder = internal.getPipeline.getCoderRegistry.getScalaCoder[V]
-      val tupleCoder = internal.getPipeline.getCoderRegistry.getScalaCoder[T]
-      val formatFn = Functions.simpleFn { tuple: T =>
-        val element = CoderUtils.encodeToByteArray(elementCoder, tuple._1)
-        new PubsubMessage(element, tuple._2.asJava)
+      var transform = psio.PubsubIO.writeMessages()
+      if (idAttribute != null) {
+        transform = transform.withIdAttribute(idAttribute)
       }
-      var transform = gio.PubsubIO.write().topic(topic)
-        .withAttributes(formatFn)
-        .withCoder(tupleCoder)
-      if (idLabel != null) {
-        transform = transform.idLabel(idLabel)
+      if (timestampAttribute != null) {
+        transform = transform.withTimestampAttribute(timestampAttribute)
       }
-      if (timestampLabel != null) {
-        transform = transform.timestampLabel(timestampLabel)
-      }
-      this.applyInternal(transform)
+      val coder = internal.getPipeline.getCoderRegistry.getScalaCoder[V]
+      this.map { t =>
+        val kv = t.asInstanceOf[(V, Map[String, String])]
+        val payload = CoderUtils.encodeToByteArray(coder, kv._1)
+        val attributes = kv._2.asJava
+        new PubsubMessage(payload, attributes)
+      }.applyInternal(transform)
     }
     Future.failed(new NotImplementedError("Pubsub future not implemented"))
   }
