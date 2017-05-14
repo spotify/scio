@@ -21,7 +21,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.google.cloud.hadoop.util.ApiErrorExtractor
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 
 import scala.collection.mutable.{Map => MMap}
 import scala.reflect.ClassTag
@@ -51,7 +51,7 @@ class MockBigQuery private (private val bq: BigQueryClient) {
   /**
    * Mock a BigQuery table. Each table can be mocked only once in a test class.
    */
-  def mockTable(original: String): MockTable = mockTable(BigQueryIO.parseTableSpec(original))
+  def mockTable(original: String): MockTable = mockTable(BigQueryHelpers.parseTableSpec(original))
 
   /**
    * Mock a BigQuery table. Each table can be mocked only once in a test class.
@@ -59,7 +59,7 @@ class MockBigQuery private (private val bq: BigQueryClient) {
   def mockTable(original: TableReference): MockTable = {
     require(
       !mapping.contains(original),
-      s"Table ${BigQueryIO.toTableSpec(original)} already registered for mocking")
+      s"Table ${BigQueryHelpers.toTableSpec(original)} already registered for mocking")
 
     val t = bq.getTable(original)
     val temp = bq.temporaryTable(t.getLocation)
@@ -115,7 +115,9 @@ class MockTable(private val bq: BigQueryClient,
   private var mocked: Boolean = false
 
   private def ensureUnique(): Unit = {
-    require(!mocked, s"Table ${BigQueryIO.toTableSpec(original)} already populated with mock data")
+    require(
+      !mocked,
+      s"Table ${BigQueryHelpers.toTableSpec(original)} already populated with mock data")
     this.mocked = true
   }
 
