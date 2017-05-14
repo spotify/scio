@@ -26,7 +26,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.MapMaker;
 import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.MoreExecutors;
-import org.apache.beam.sdk.options.GcsOptions;
+import org.apache.beam.sdk.extensions.gcp.options.GcsOptions;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.util.GcsUtil;
 import org.apache.beam.sdk.util.MimeTypes;
