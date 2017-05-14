@@ -51,7 +51,7 @@ object LeaderBoard {
     val teamWindowDuration = Duration.standardMinutes(args.int("teamWindowDuration", 60))
     val allowedLateness = Duration.standardMinutes(args.int("allowedLateness", 120))
 
-    val gameEvents = sc.pubsubTopic(args("topic"), timestampLabel = "timestamp_ms")
+    val gameEvents = sc.pubsubTopic(args("topic"), timestampAttribute = "timestamp_ms")
       .flatMap(UserScore.parseEvent)
 
     calculateTeamScores(gameEvents, teamWindowDuration, allowedLateness)
