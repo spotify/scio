@@ -50,7 +50,7 @@ object GameStats {
     val sessionGap = args.int("sessionGap", 5)
     val userActivityWindowDuration = args.int("userActivityWindowDuration", 30)
 
-    val rawEvents = sc.pubsubTopic(args("topic"), idLabel = "timestamp_ms")
+    val rawEvents = sc.pubsubTopic(args("topic"), idAttribute = "timestamp_ms")
       .flatMap(UserScore.parseEvent)
 
     val userEvents = rawEvents.map(i => (i.user, i.score))
