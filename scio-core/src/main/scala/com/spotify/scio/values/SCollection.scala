@@ -877,7 +877,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   private def pathWithShards(path: String) = {
-    if (this.context.pipeline.getRunner.isInstanceOf[DirectRunner] &&
+    if (this.context.options.getRunner.isInstanceOf[DirectRunner] &&
       ScioUtil.isLocalUri(new URI(path))) {
       context.addPreRunFn(() => {
         // Create output directory when running locally with local file system
