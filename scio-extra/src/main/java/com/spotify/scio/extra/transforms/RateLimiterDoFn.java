@@ -40,7 +40,7 @@ public class RateLimiterDoFn<InputT> extends DoFnWithResource<InputT, InputT, Ra
   }
 
   @Override
-  public ResourceType getResourceType() {
+  public DoFnWithResource.ResourceType getResourceType() {
     return ResourceType.PER_CLASS;
   }
 
