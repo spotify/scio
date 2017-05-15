@@ -136,7 +136,6 @@ object ScioContext {
  * Main entry point for Scio functionality. A ScioContext represents a pipeline and can be used to
  * create SCollections and distributed caches on that cluster.
  *
- * @groupname accumulator Accumulators
  * @groupname dist_cache Distributed Cache
  * @groupname in_memory In-memory Collections
  * @groupname input Input Sources
@@ -237,7 +236,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
   private var _isClosed: Boolean = false
   private val _promises: MBuffer[(Promise[Tap[_]], Tap[_])] = MBuffer.empty
   private val _queryJobs: MBuffer[QueryJob] = MBuffer.empty
-  private val _accumulators: MMap[String, Accumulator[_]] = MMap.empty
   private val _preRunFns: MBuffer[() => Unit] = MBuffer.empty
 
   /** Wrap a [[org.apache.beam.sdk.values.PCollection PCollection]]. */
@@ -342,7 +340,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     _isClosed = true
 
     _preRunFns.foreach(_())
-    val result = new ScioResult(this.pipeline.run(), _accumulators.values.toSeq, context)
+    val result = new ScioResult(this.pipeline.run(), context)
 
     if (this.isTest) {
       TestDataManager.closeTest(testId.get)
@@ -747,53 +745,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
       wrap(this.pipeline.apply(name, transform))
     }
   }
-
-  // =======================================================================
-  // Accumulators
-  // =======================================================================
-
-  /**
-   * Create a new [[com.spotify.scio.values.Accumulator Accumulator]] that keeps track
-   * of the maximum value. See
-   * [[com.spotify.scio.values.SCollection.withAccumulator SCollection.withAccumulator]]
-   * for examples.
-   * @group accumulator
-   */
-  def maxAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] =
-    makeAccumulator(n, at.maxFn())
-
-  /**
-   * Create a new [[com.spotify.scio.values.Accumulator Accumulator]] that keeps track
-   * of the minimum value. See
-   * [[com.spotify.scio.values.SCollection.withAccumulator SCollection.withAccumulator]]
-   * for examples.
-   * @group accumulator
-   */
-  def minAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] =
-    makeAccumulator(n, at.minFn())
-
-  /**
-   * Create a new [[com.spotify.scio.values.Accumulator Accumulator]] that keeps track
-   * of the sum of values. See
-   * [[com.spotify.scio.values.SCollection.withAccumulator SCollection.withAccumulator]]
-   * for examples.
-   * @group accumulator
-   */
-  def sumAccumulator[T](n: String)(implicit at: AccumulatorType[T]): Accumulator[T] =
-    makeAccumulator(n, at.sumFn())
-
-  private def makeAccumulator[T](n: String, fn: CombineFn[T, _, T]) = requireNotClosed {
-    require(!_accumulators.contains(n), s"Accumulator '$n' already exists")
-    val acc = new Accumulator[T] {
-      override val name: String = n
-      override val combineFn: CombineFn[T, _, T] = fn
-    }
-    _accumulators.put(n, acc)
-    acc
-  }
-
-  private[scio] def containsAccumulator(acc: Accumulator[_]): Boolean =
-    _accumulators.contains(acc.name)
 
   private[scio] def addPreRunFn(f: () => Unit): Unit = _preRunFns += f
 
