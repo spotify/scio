@@ -19,7 +19,7 @@ package com.spotify.scio.bigquery
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.JavaConverters._
@@ -50,12 +50,12 @@ class BigQueryClientIT extends FlatSpec with Matchers {
   }
 
   "extractTables" should "work with legacy syntax" in {
-    val tableSpec = BigQueryIO.parseTableSpec("bigquery-public-data:samples.shakespeare")
+    val tableSpec = BigQueryHelpers.parseTableSpec("bigquery-public-data:samples.shakespeare")
     bq.extractTables(legacyQuery) shouldBe Set(tableSpec)
   }
 
   it should "work with SQL syntax" in {
-    val tableSpec = BigQueryIO.parseTableSpec("bigquery-public-data:samples.shakespeare")
+    val tableSpec = BigQueryHelpers.parseTableSpec("bigquery-public-data:samples.shakespeare")
     bq.extractTables(sqlQuery) shouldBe Set(tableSpec)
   }
 
