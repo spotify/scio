@@ -540,43 +540,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     }
 
   // =======================================================================
-  // Accumulators
-  // =======================================================================
-
-  /**
-   * Convert this SCollection to an [[SCollectionWithAccumulator]] with one or more
-   * [[Accumulator]]s, similar to Hadoop counters. Call
-   * [[SCollectionWithAccumulator.toSCollection]] when done with accumulators.
-   *
-   * Note that each accumulator may be used in a single scope only.
-   *
-   * Create accumulators with [[ScioContext.maxAccumulator]],
-   * [[ScioContext.minAccumulator]] or [[ScioContext.sumAccumulator]]. For example:
-   *
-   * {{{
-   * val maxLineLength = sc.maxAccumulator[Int]("maxLineLength")
-   * val minLineLength = sc.maxAccumulator[Int]("maxLineLength")
-   * val emptyLines = sc.maxAccumulator[Long]("emptyLines")
-   *
-   * val p: SCollection[String] = // ...
-   * p
-   *   .withAccumulators(maxLineLength, minLineLength, emptyLines)
-   *   .filter { (l, c) =>
-   *     val t = l.strip()
-   *     c.addValue(maxLineLength, t.length).addValue(minLineLength, t.length)
-   *     val b = t.isEmpty
-   *     if (b) c.addValue(emptyLines, 1L)
-   *     !b
-   *   }
-   *   .toSCollection
-   * }}}
-   */
-  def withAccumulator(acc: Accumulator[_]*): SCollectionWithAccumulator[T] = {
-    require(acc.forall(this.context.containsAccumulator), "Unregistered accumulator supplied")
-    new SCollectionWithAccumulator(internal, context, acc)
-  }
-
-  // =======================================================================
   // Side input operations
   // =======================================================================
 
