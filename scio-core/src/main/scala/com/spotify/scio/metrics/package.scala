@@ -28,15 +28,9 @@ package object metrics {
       jobName: String,
       jobId: String,
       state: String,
-      accumulators: AccumulatorMetrics,
       cloudMetrics: Iterable[DFServiceMetrics])
   case class DFServiceMetrics(name: DFMetricName,
       scalar: AnyRef,
       updateTime: String)
   case class DFMetricName(name: String, origin: String, context: Map[String, String])
-  case class AccumulatorMetrics(total: Iterable[AccumulatorValue],
-      steps: Iterable[AccumulatorStepsValue])
-  case class AccumulatorValue(name: String, value: Any)
-  case class AccumulatorStepValue(name: String, value: Any)
-  case class AccumulatorStepsValue(name: String, steps: Iterable[AccumulatorStepValue])
 }
