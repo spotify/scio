@@ -125,7 +125,7 @@ private[scio] object Functions {
 
   }
 
-  def flatMapFn[T, U](f: T => TraversableOnce[U]): DoFn[T, U] = new DoFn[T, U] {
+  def flatMapFn[T, U](f: T => TraversableOnce[U]): DoFn[T, U] = new NamedDoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
     @ProcessElement
     private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
