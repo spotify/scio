@@ -113,7 +113,7 @@ case class TFRecordFileTap(path: String) extends Tap[Array[Byte]] {
 
 private[scio] class InMemoryTap[T: ClassTag] extends Tap[T] {
   private[scio] val id: String = UUID.randomUUID().toString
-  override def value: Iterator[T] = InMemorySinkManager.get(id).iterator
+  override def value: Iterator[T] = InMemorySink.get(id).iterator
   override def open(sc: ScioContext): SCollection[T] =
-    sc.parallelize[T](InMemorySinkManager.get(id))
+    sc.parallelize[T](InMemorySink.get(id))
 }
