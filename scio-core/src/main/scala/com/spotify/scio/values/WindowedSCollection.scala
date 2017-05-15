@@ -21,8 +21,8 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.util.FunctionsWithWindowedValue
 import org.apache.beam.sdk.transforms.windowing.Window.ClosingBehavior
 import org.apache.beam.sdk.transforms.windowing._
-import org.apache.beam.sdk.util.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values.PCollection
+import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
 import org.joda.time.{Duration, Instant}
 
 import scala.reflect.ClassTag
