@@ -29,13 +29,6 @@ class SerializationTest extends FlatSpec with Matchers {
     SerializableUtils.ensureSerializable(Args(Array("--key=value")))
   }
 
-  "Accumulator" should "be serializable" in {
-    val sc = ScioContext()
-    SerializableUtils.ensureSerializable(sc.maxAccumulator[Long]("max"))
-    SerializableUtils.ensureSerializable(sc.minAccumulator[Long]("min"))
-    SerializableUtils.ensureSerializable(sc.sumAccumulator[Long]("sum"))
-  }
-
   "DistCache" should "be serializable" in {
     val sc = ScioContext()
     val dc1 = sc.distCache("a.txt")(Source.fromFile(_).getLines())
