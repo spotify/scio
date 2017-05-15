@@ -17,82 +17,33 @@
 
 package com.spotify.scio.io
 
-import java.lang.Iterable
-
-import com.spotify.scio.coders.KryoAtomicCoder
+import com.spotify.scio.values.SCollection
 import org.apache.beam.runners.direct.DirectRunner
-import org.apache.beam.sdk.coders.Coder
-import org.apache.beam.sdk.io.Sink
-import org.apache.beam.sdk.io.Sink.{WriteOperation, Writer}
-import org.apache.beam.sdk.options.PipelineOptions
-import org.apache.beam.sdk.util.CoderUtils
+import org.apache.beam.sdk.transforms.PTransform
+import org.apache.beam.sdk.values.{PCollection, PDone}
 
-import scala.collection.JavaConverters._
-import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}
+import scala.collection.concurrent.TrieMap
 
-private[scio] class InMemorySink[T](private val id: String) extends Sink[T] {
-  override def createWriteOperation(options: PipelineOptions)
-  : WriteOperation[T, MBuffer[Array[Byte]]] =
-    new InMemoryWriteOperation(this, id)
+private[scio] object InMemorySink {
 
-  override def validate(options: PipelineOptions): Unit = {
+  private val cache: TrieMap[String, Iterable[Any]] = TrieMap.empty
+
+  def save[T](id: String, data: SCollection[T]): Unit = {
     require(
-      classOf[DirectRunner] isAssignableFrom options.getRunner,
-      "InMemoryDataFlowSink can only be used with DirectRunner")
-  }
-}
-
-private class InMemoryWriteOperation[T](private val sink: Sink[T], private val id: String)
-  extends WriteOperation[T, MBuffer[Array[Byte]]] {
-
-  private val coder: Coder[T] = KryoAtomicCoder[T]
-
-  override def finalize(writerResults: Iterable[MBuffer[Array[Byte]]],
-                        options: PipelineOptions): Unit =
-    writerResults.asScala.foreach { lb =>
-      InMemorySinkManager.put(id, lb.map(CoderUtils.decodeFromByteArray(coder, _)))
-    }
-  override def initialize(options: PipelineOptions): Unit = {}
-  override def getSink: Sink[T] = sink
-  override def createWriter(options: PipelineOptions): Writer[T, MBuffer[Array[Byte]]] =
-    new InMemoryWriter(this)
-
-  override def getWriterResultCoder: Coder[MBuffer[Array[Byte]]] =
-    KryoAtomicCoder[MBuffer[Array[Byte]]]
-
-}
-
-private class InMemoryWriter[T](private val writeOperation: WriteOperation[T, MBuffer[Array[Byte]]])
-  extends Writer[T, MBuffer[Array[Byte]]] {
-
-  private val buffer: MBuffer[Array[Byte]] = MBuffer.empty
-  private val coder: Coder[T] = KryoAtomicCoder[T]
-
-  override def getWriteOperation: WriteOperation[T, MBuffer[Array[Byte]]] = writeOperation
-  override def write(value: T): Unit = buffer.append(CoderUtils.encodeToByteArray(coder, value))
-  override def close(): MBuffer[Array[Byte]] = buffer
-  override def open(uId: String): Unit = {}
-
-}
-
-private[scio] object InMemorySinkManager {
-
-  private val cache: MMap[String, MBuffer[Any]] = MMap.empty
-
-  def put[T](id: String, value: TraversableOnce[T]): Unit = {
-    if (!cache.contains(id)) {
-      cache.put(id, MBuffer.empty)
-    }
-    cache(id).appendAll(value)
+      classOf[DirectRunner] isAssignableFrom data.context.options.getRunner,
+      "In memory sink can only be used with DirectRunner")
+    data
+      .groupBy(_ => ())
+      .values
+      .map { values =>
+        cache += (id -> values)
+        ()
+      }
+      .applyInternal(new PTransform[PCollection[Unit], PDone]() {
+        override def expand(input: PCollection[Unit]): PDone = PDone.in(input.getPipeline)
+      })
   }
 
-  def put[T](id: String, value: T): Unit =
-    if (!cache.contains(id)) {
-      cache.put(id, MBuffer(value))
-    } else {
-      cache(id).append(value)
-    }
-
-  def get[T](id: String): MBuffer[T] = cache(id).asInstanceOf[MBuffer[T]]
+  def get[T](id: String): Iterable[T] = cache(id).asInstanceOf[Iterable[T]]
 
 }
