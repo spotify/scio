@@ -685,10 +685,10 @@ class ScioContext private[scio] (val options: PipelineOptions,
     * @group input
     */
   def pubsubTopicWithAttributes[T: ClassTag](topic: String,
-                               idLabel: String = null,
-                               timestampLabel: String = null)
+                                             idAttribute: String = null,
+                                             timestampAttribute: String = null)
   : SCollection[(T, Map[String, String])] =
-    pubsubInWithAttributes(isSubscription = false, topic, idLabel, timestampLabel)
+    pubsubInWithAttributes(isSubscription = false, topic, idAttribute, timestampAttribute)
 
   /**
    * Get an SCollection for a BigQuery TableRow JSON file.
