@@ -97,7 +97,6 @@ class ScioResult private[scio] (val internal: PipelineResult,
 
   /** Get the total value of an [[com.spotify.scio.values.Accumulator Accumulator]]. */
   def accumulatorTotalValue[T](acc: Accumulator[T]): T = {
-    require(!isTemplateCreationJob, "Cannot retrieve accumulator values during template creation")
     require(accumulators.contains(acc), "Accumulator not present in the result")
     acc.combineFn(getAggregatorValues(acc).map(_.getTotalValue(acc.combineFn)).asJava)
   }
@@ -107,7 +106,6 @@ class ScioResult private[scio] (val internal: PipelineResult,
    * used.
    */
   def accumulatorValuesAtSteps[T](acc: Accumulator[T]): Map[String, T] = {
-    require(!isTemplateCreationJob, "Cannot retrieve accumulator values during template creation")
     require(accumulators.contains(acc), "Accumulator not present in the result")
     getAggregatorValues(acc).flatMap(_.getValuesAtSteps.asScala).toMap
   }
@@ -174,9 +172,11 @@ class ScioResult private[scio] (val internal: PipelineResult,
     )
   }
 
-  private def getAggregatorValues[T](acc: Accumulator[T]): Iterable[AggregatorValues[T]] =
+  private def getAggregatorValues[T](acc: Accumulator[T]): Iterable[AggregatorValues[T]] = {
+    require(!isTemplateCreationJob, "Cannot retrieve accumulator values during template creation")
     aggregators.getOrElse(acc.name, Nil)
       .map(a => internal.getAggregatorValues(a.asInstanceOf[Aggregator[_, T]]))
+  }
 
   private def isTemplateCreationJob: Boolean =
     Try(context.optionsAs[DataflowPipelineOptions].getTemplateLocation)
