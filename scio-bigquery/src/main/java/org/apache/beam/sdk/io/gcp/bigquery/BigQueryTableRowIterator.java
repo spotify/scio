@@ -455,7 +455,7 @@ public class BigQueryTableRowIterator implements AutoCloseable {
   // client - BQ request to be executed
   // error - Formatted message to log if when a request fails. Takes exception message as a
   // formatter parameter.
-  private static <T> T executeWithBackOff(AbstractGoogleClientRequest<T> client, String error)
+  public static <T> T executeWithBackOff(AbstractGoogleClientRequest<T> client, String error)
       throws IOException, InterruptedException {
     Sleeper sleeper = Sleeper.DEFAULT;
     BackOff backOff =
