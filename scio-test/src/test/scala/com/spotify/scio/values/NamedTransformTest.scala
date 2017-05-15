@@ -54,20 +54,6 @@ class NamedTransformTest extends PipelineSpec {
     }
   }
 
-  "SCollectionWithAccumulator" should "support custom transform name" in {
-    runWithContext { sc =>
-      val intSum = sc.sumAccumulator[Int]("IntSum")
-      val p = sc.parallelize(Seq(1, 2, 3, 4, 5))
-        .withAccumulator(intSum)
-        .withName("TripleSum").map { (i, c) =>
-          val n = i * 3
-          c.addValue(intSum, n)
-          n
-        }
-      assertTransformNameStartsWith(p, "TripleSum")
-    }
-  }
-
   "SCollectionWithFanout" should "support custom transform name" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3)).withFanout(10)
