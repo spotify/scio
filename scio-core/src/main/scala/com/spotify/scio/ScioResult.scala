@@ -28,9 +28,8 @@ import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.options.ApplicationNameOptions
-import org.apache.beam.sdk.transforms.Aggregator
 import org.apache.beam.sdk.util.{IOChannelUtils, MimeTypes}
-import org.apache.beam.sdk.{AggregatorValues, PipelineResult}
+import org.apache.beam.sdk.PipelineResult
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
