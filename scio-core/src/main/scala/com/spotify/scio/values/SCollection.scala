@@ -646,7 +646,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def withWindowFn[W <: BoundedWindow](fn: WindowFn[AnyRef, W],
                                        options: WindowOptions[W] = WindowOptions[W]())
   : SCollection[T] = {
-    var transform = Window.into(fn).asInstanceOf[Window.Bound[T]]
+    var transform = Window.into(fn).asInstanceOf[Window[T]]
     if (options.trigger != null) {
       transform = transform.triggering(options.trigger)
     }
