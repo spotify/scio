@@ -57,8 +57,7 @@ private[scio] object ScioUtil {
   def getScalaCoder[T: ClassTag]: Coder[T] = {
     import com.spotify.scio.Implicits._
 
-    val coderRegistry = new CoderRegistry()
-    coderRegistry.registerStandardCoders()
+    val coderRegistry = CoderRegistry.createDefault()
     coderRegistry.registerScalaCoders()
 
     coderRegistry.getScalaCoder[T]
