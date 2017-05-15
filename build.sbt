@@ -346,9 +346,13 @@ lazy val scioSchemas: Project = Project(
   // suppress warnings
   sources in doc in Compile := List(),
   compileOrder := CompileOrder.JavaThenScala,
+  // generate both Avro and Protobuf sources in src_managed/main to avoid confusing IntelliJ
+  javaSource in avroConfig := (sourceManaged in Compile).value,
   PB.targets in Compile := Seq(
-    PB.gens.java -> (sourceManaged in Compile).value / "compiled_protobuf"
-  )
+    PB.gens.java -> (sourceManaged in Compile).value
+  ),
+  // avoid accidentally deleting Avro sources
+  PB.deleteTargetDirectory := false
 )
 
 lazy val scioExamples: Project = Project(
