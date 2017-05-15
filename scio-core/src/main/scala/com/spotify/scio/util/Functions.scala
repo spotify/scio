@@ -27,7 +27,7 @@ import org.apache.beam.sdk.coders.{Coder, CoderRegistry}
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.Partition.PartitionFn
-import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction, SimpleFunction}
+import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
