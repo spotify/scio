@@ -49,7 +49,7 @@ class SCollectionWithSideOutput[T: ClassTag] private[values]
   : (SCollection[U], SideOutputCollections) = {
     val mainTag = new TupleTag[U]
     val tuple = this.applyInternal(
-      ParDo.withOutputTags(mainTag, sideTags).of(FunctionsWithSideOutput.flatMapFn(f)))
+      ParDo.of(FunctionsWithSideOutput.flatMapFn(f)).withOutputTags(mainTag, sideTags))
 
     val main = tuple.get(mainTag).setCoder(this.getCoder[U])
     (context.wrap(main), new SideOutputCollections(tuple, context))
@@ -63,7 +63,7 @@ class SCollectionWithSideOutput[T: ClassTag] private[values]
   : (SCollection[U], SideOutputCollections) = {
     val mainTag = new TupleTag[U]
     val tuple = this.applyInternal(
-      ParDo.withOutputTags(mainTag, sideTags).of(FunctionsWithSideOutput.mapFn(f)))
+      ParDo.of(FunctionsWithSideOutput.mapFn(f)).withOutputTags(mainTag, sideTags))
 
     val main = tuple.get(mainTag).setCoder(this.getCoder[U])
     (context.wrap(main), new SideOutputCollections(tuple, context))
