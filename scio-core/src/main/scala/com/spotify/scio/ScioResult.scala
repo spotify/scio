@@ -23,7 +23,6 @@ import java.nio.ByteBuffer
 import com.spotify.scio.metrics._
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.values.Accumulator
 import org.apache.beam.runners.dataflow.DataflowPipelineJob
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
@@ -42,13 +41,10 @@ import scala.util.{Failure, Success, Try}
 
 /** Represent a Scio pipeline result. */
 class ScioResult private[scio] (val internal: PipelineResult,
-                                val accumulators: Seq[Accumulator[_]],
                                 val context: ScioContext) {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  private val aggregators: Map[String, Iterable[Aggregator[_, _]]] =
-    context.pipeline.getAggregatorSteps.asScala.keys.groupBy(_.getName)
 
   /**
    * `Future` for pipeline's final state. The `Future` will be completed once the pipeline
@@ -95,21 +91,6 @@ class ScioResult private[scio] (val internal: PipelineResult,
   /** Pipeline's current state. */
   def state: State = Try(internal.getState).getOrElse(State.UNKNOWN)
 
-  /** Get the total value of an [[com.spotify.scio.values.Accumulator Accumulator]]. */
-  def accumulatorTotalValue[T](acc: Accumulator[T]): T = {
-    require(accumulators.contains(acc), "Accumulator not present in the result")
-    acc.combineFn(getAggregatorValues(acc).map(_.getTotalValue(acc.combineFn)).asJava)
-  }
-
-  /**
-   * Get the values of an [[com.spotify.scio.values.Accumulator Accumulator]] at each step it was
-   * used.
-   */
-  def accumulatorValuesAtSteps[T](acc: Accumulator[T]): Map[String, T] = {
-    require(accumulators.contains(acc), "Accumulator not present in the result")
-    getAggregatorValues(acc).flatMap(_.getValuesAtSteps.asScala).toMap
-  }
-
   /** Save metrics of the finished pipeline to a file. */
   def saveMetrics(filename: String): Unit = {
     require(isCompleted, "Pipeline has to be finished to save metrics.")
@@ -127,11 +108,6 @@ class ScioResult private[scio] (val internal: PipelineResult,
   /** Get metrics of the finished pipeline. */
   def getMetrics: Metrics = {
     require(isCompleted, "Pipeline has to be finished to get metrics.")
-    val totalValues = accumulators
-        .map(acc => AccumulatorValue(acc.name, accumulatorTotalValue(acc)))
-
-    val stepsValues = accumulators.map(acc => AccumulatorStepsValue(acc.name,
-      accumulatorValuesAtSteps(acc).map(a => AccumulatorStepValue(a._1, a._2))))
 
     val (jobId, dfMetrics) = if (ScioUtil.isLocalRunner(this.context.options)) {
       // to be safe let's use app name at a cost of duplicate for local runner
@@ -167,13 +143,8 @@ class ScioResult private[scio] (val internal: PipelineResult,
       context.optionsAs[ApplicationNameOptions].getAppName,
       jobId,
       this.state.toString,
-      AccumulatorMetrics(totalValues, stepsValues),
       dfMetrics
     )
   }
-
-  private def getAggregatorValues[T](acc: Accumulator[T]): Iterable[AggregatorValues[T]] =
-    aggregators.getOrElse(acc.name, Nil)
-      .map(a => internal.getAggregatorValues(a.asInstanceOf[Aggregator[_, T]]))
 
 }

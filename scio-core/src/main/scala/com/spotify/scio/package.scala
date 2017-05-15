@@ -18,7 +18,6 @@
 package com.spotify
 
 import com.spotify.scio.io.Tap
-import com.spotify.scio.values.AccumulatorType
 import com.twitter.algebird.Semigroup
 
 import scala.concurrent.duration.Duration
@@ -34,11 +33,6 @@ import scala.reflect.ClassTag
  * }}}
  */
 package object scio {
-
-  import com.spotify.scio.values
-  implicit val intAccumulatorType: AccumulatorType[Int] = new values.IntAccumulatorType
-  implicit val longAccumulatorType: AccumulatorType[Long] = new values.LongAccumulatorType
-  implicit val doubleAccumulatorType: AccumulatorType[Double] = new values.DoubleAccumulatorType
 
   /**
    * Wait for [[com.spotify.scio.io.Tap Tap]] to be available and get Tap reference from `Future`.
