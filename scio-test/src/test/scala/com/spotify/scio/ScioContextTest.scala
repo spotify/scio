@@ -140,13 +140,4 @@ class ScioContextTest extends PipelineSpec {
     } should have message "requirement failed: ScioContext already closed"
   }
   // scalastyle:on no.whitespace.before.left.bracket
-
-  it should "support containsAccumulator" in {
-    val sc = ScioContext()
-    val sc1 = ScioContext()
-    val max = sc.maxAccumulator[Long]("max")
-    val foo = sc1.maxAccumulator[Long]("foo")
-    sc.containsAccumulator(max) shouldBe true
-    sc.containsAccumulator(foo) shouldBe false
-  }
 }
