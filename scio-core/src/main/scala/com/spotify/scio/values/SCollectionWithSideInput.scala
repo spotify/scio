@@ -100,13 +100,12 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
             ${partitions.map(_.tupleTag.getId).mkString}""")
         }
 
-        c.sideOutput(partition.tupleTag, elem)
+        c.output(partition.tupleTag, elem)
       }
     }
 
-    val transform = parDo
+    val transform = parDo[T, T](transformWithSideOutputsFn(sideOutputs, f))
       .withOutputTags(_mainTag.tupleTag, sideTags)
-      .of(transformWithSideOutputsFn(sideOutputs, f))
 
     val pCollectionWrapper = this.internal.apply(name, transform)
     pCollectionWrapper.getAll.asScala
