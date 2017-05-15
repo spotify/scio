@@ -17,7 +17,7 @@
 
 package com.spotify.scio
 
-import org.apache.beam.sdk.util.WindowingStrategy.AccumulationMode
+import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
 
 /**
  * Main package for streaming APIs. Import all.
