@@ -225,7 +225,7 @@ lazy val scioCore: Project = Project(
   ),
   compileOrder := CompileOrder.JavaThenScala,
   PB.targets in Compile := Seq(
-    PB.gens.java -> (sourceManaged in Compile).value / "compiled_protobuf"
+    PB.gens.java -> (sourceManaged in Compile).value
   )
 ).dependsOn(
   scioBigQuery
