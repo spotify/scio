@@ -61,7 +61,7 @@ object TriggerExample {
     val flowInfo = extractFlowInfo(insertDelays(sc.textFile(input)))
 
     def compute(triggerType: String,
-                windowOptions: WindowOptions[IntervalWindow]): SCollection[Record] = {
+                windowOptions: WindowOptions): SCollection[Record] = {
       val f = flowInfo.withFixedWindows(windowDuration, options = windowOptions)
       totalFlow(f, triggerType)
     }
