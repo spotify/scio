@@ -44,9 +44,9 @@ class SideOutputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessCo
                 output: S,
                 timestamp: Instant = null): SideOutputContext[T] = {
     if (timestamp == null) {
-      context.sideOutput(sideOutput.tupleTag, output)
+      context.output(sideOutput.tupleTag, output)
     } else {
-      context.sideOutputWithTimestamp(sideOutput.tupleTag, output, timestamp)
+      context.outputWithTimestamp(sideOutput.tupleTag, output, timestamp)
     }
     this
   }
