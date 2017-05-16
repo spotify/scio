@@ -28,7 +28,7 @@ import org.joda.time.{Duration, Instant}
 import scala.reflect.ClassTag
 
 /** Window options for an [[SCollection]]. */
-case class WindowOptions[W <: BoundedWindow](trigger: Trigger = null,
+case class WindowOptions(trigger: Trigger = null,
                                              accumulationMode: AccumulationMode = null,
                                              allowedLateness: Duration = null,
                                              closingBehavior: ClosingBehavior = null,
