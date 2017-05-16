@@ -24,7 +24,8 @@ import com.spotify.scio._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.examples.common.{ExampleOptions, ExampleUtils}
-import org.apache.beam.sdk.options.{GcpOptions, StreamingOptions}
+import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
+import org.apache.beam.sdk.options.StreamingOptions
 import org.apache.beam.sdk.transforms.windowing.{GlobalWindows, SlidingWindows}
 import org.joda.time.Duration
 
