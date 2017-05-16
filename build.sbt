@@ -245,6 +245,7 @@ lazy val scioTest: Project = Project(
     "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
     "com.spotify" % "annoy" % annoyVersion % "test",
     "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
+    "com.novocode" % "junit-interface" % junitInterfaceVersion,
     "junit" % "junit" % junitVersion
   ),
   addCompilerPlugin(paradiseDependency)
