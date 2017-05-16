@@ -20,9 +20,10 @@ package com.spotify.scio.testing
 import java.util.UUID
 
 import com.spotify.scio.bigquery.BigQueryClient
-import org.apache.beam.sdk.options.GcpOptions.DefaultProjectFactory
-import org.apache.beam.sdk.options.{GcpOptions, GcsOptions, PipelineOptionsFactory}
-import org.apache.beam.sdk.util.{DefaultBucket, GcsUtil}
+import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
+import org.apache.beam.sdk.extensions.gcp.options.{GcpOptions, GcsOptions}
+import org.apache.beam.sdk.options.PipelineOptionsFactory
+import org.apache.beam.sdk.util.GcsUtil
 
 /** Integration test utilities. */
 private[scio] object ItUtils {
