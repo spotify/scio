@@ -115,7 +115,7 @@ package object jdbc {
           })
         if (readOptions.statementPreparator != null) {
           transform = transform
-            .withStatementPrepator(new jio.JdbcIO.StatementPreparator {
+            .withStatementPreparator(new jio.JdbcIO.StatementPreparator {
               override def setParameters(preparedStatement: PreparedStatement): Unit = {
                 readOptions.statementPreparator(preparedStatement)
               }
