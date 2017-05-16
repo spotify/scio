@@ -24,7 +24,7 @@ import com.spotify.scio.bigquery._
 import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.beam.examples.common.{ExampleOptions, ExampleUtils}
 import org.apache.beam.sdk.options.StreamingOptions
-import org.apache.beam.sdk.transforms.windowing.{IntervalWindow, OutputTimeFns}
+import org.apache.beam.sdk.transforms.windowing.{IntervalWindow, TimestampCombiner}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTimeZone, Duration, Instant}
 
@@ -76,7 +76,7 @@ object GameStats {
     userEvents
       .withSessionWindows(
         Duration.standardMinutes(sessionGap),
-        options = WindowOptions(outputTimeFn = OutputTimeFns.outputAtEndOfWindow()))
+        options = WindowOptions(timestampCombiner = TimestampCombiner.END_OF_WINDOW))
       .keys.distinct
       .withWindow[IntervalWindow]
       .map { case (_, w) =>
