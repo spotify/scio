@@ -46,7 +46,7 @@ private[scio] abstract class RandomSampler[T, R] extends DoFn[T, T] {
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
   @StartBundle
-  def startBundle(c: DoFn[T, T]#Context): Unit = rng = init
+  def startBundle(c: DoFn[T, T]#StartBundleContext): Unit = rng = init
 
   @ProcessElement
   def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
@@ -133,7 +133,7 @@ private[scio] abstract class RandomValueSampler[K, V, R](val fractions: Map[K, D
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
   @StartBundle
-  def startBundle(c: DoFn[(K, V), (K, V)]#Context): Unit =
+  def startBundle(c: DoFn[(K, V), (K, V)]#StartBundleContext): Unit =
     rngs = fractions.mapValues(init).map(identity)  // workaround for serialization issue
 
   @ProcessElement
