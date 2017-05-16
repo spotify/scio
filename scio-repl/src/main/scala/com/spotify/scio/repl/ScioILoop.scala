@@ -20,10 +20,10 @@ package com.spotify.scio.repl
 import java.io.BufferedReader
 
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
-import org.apache.beam.sdk.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import com.spotify.scio.bigquery.BigQueryClient
 import com.spotify.scio.{scalaVersion, scioVersion}
+import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 
 import scala.tools.nsc.GenericRunnerSettings
 import scala.tools.nsc.interpreter.{IR, JPrintWriter}
