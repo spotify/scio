@@ -32,7 +32,7 @@ case class WindowOptions[W <: BoundedWindow](trigger: Trigger = null,
                                              accumulationMode: AccumulationMode = null,
                                              allowedLateness: Duration = null,
                                              closingBehavior: ClosingBehavior = null,
-                                             outputTimeFn: OutputTimeFn[BoundedWindow] = null)
+                                             timestampCombiner: TimestampCombiner = null)
 
 /** Value with window information to be used inside a [[WindowedSCollection]]. */
 case class WindowedValue[T](value: T, timestamp: Instant, window: BoundedWindow, pane: PaneInfo) {
