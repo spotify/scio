@@ -22,7 +22,8 @@ import java.net.URI
 import com.spotify.scio.testing.ItUtils
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.runners.dataflow.DataflowRunner
-import org.apache.beam.sdk.options.{GcpOptions, PipelineOptions, PipelineOptionsFactory}
+import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.scalatest._
 
 class ScioContextIT extends FlatSpec with Matchers {
