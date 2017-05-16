@@ -664,8 +664,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         transform.withAllowedLateness(options.allowedLateness, options.closingBehavior)
       }
     }
-    if (options.outputTimeFn != null) {
-      transform = transform.withOutputTimeFn(options.outputTimeFn)
+    if (options.timestampCombiner != null) {
+      transform = transform.withTimestampCombiner(options.timestampCombiner)
     }
     this.pApply(transform)
   }
