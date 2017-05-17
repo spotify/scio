@@ -61,9 +61,6 @@ val tensorflowVersion = "1.1.0"
 val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework")
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
-  // FIXME: remove this once 2.0.0 is officially released
-  resolvers += "Apache Snapshots" at "https://repository.apache.org/content/repositories/orgapachebeam-1017/",
-
   organization       := "com.spotify",
 
   scalaVersion       := "2.11.11",
