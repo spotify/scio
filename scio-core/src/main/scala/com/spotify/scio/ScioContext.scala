@@ -36,7 +36,6 @@ import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.values._
-import com.twitter.algebird.{Max, SparseVector}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
