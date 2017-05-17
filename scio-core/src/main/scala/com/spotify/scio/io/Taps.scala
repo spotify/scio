@@ -17,7 +17,6 @@
 
 package com.spotify.scio.io
 
-import com.google.api.client.util.{BackOff, BackOffUtils, Sleeper}
 import com.google.api.services.bigquery.model.TableReference
 import com.google.protobuf.Message
 import com.spotify.scio.bigquery.types.BigQueryType
@@ -25,7 +24,7 @@ import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
 import org.apache.avro.Schema
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
-import org.apache.beam.sdk.util.FluentBackoff
+import org.apache.beam.sdk.util.{BackOff, BackOffUtils, FluentBackoff, Sleeper}
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 
