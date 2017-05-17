@@ -110,7 +110,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
       <developer>
         <id>andrewsmartin</id>
         <name>Andrew Martin</name>
-        <url>https://github.com/andrewsmartin</url>
+        <url>https://twitter.com/andrew_martin92</url>
       </developer>
     </developers>
   },
