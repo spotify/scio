@@ -172,8 +172,14 @@ class ScioResult private[scio] (val internal: PipelineResult,
     )
   }
 
-  private def getAggregatorValues[T](acc: Accumulator[T]): Iterable[AggregatorValues[T]] =
+  private def getAggregatorValues[T](acc: Accumulator[T]): Iterable[AggregatorValues[T]] = {
+    require(!isTemplateCreationJob, "Cannot retrieve accumulator values during template creation")
     aggregators.getOrElse(acc.name, Nil)
       .map(a => internal.getAggregatorValues(a.asInstanceOf[Aggregator[_, T]]))
+  }
+
+  private def isTemplateCreationJob: Boolean =
+    Try(context.optionsAs[DataflowPipelineOptions].getTemplateLocation)
+      .map(_ != null).getOrElse(false)
 
 }
