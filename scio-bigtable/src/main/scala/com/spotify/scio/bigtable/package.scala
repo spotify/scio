@@ -23,7 +23,7 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.gcp.bigtable.PatchedBigtableIO
+import org.apache.beam.sdk.io.gcp.bigtable.BigtableIO
 import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.apache.beam.sdk.values.KV
 import org.joda.time.Duration
@@ -125,7 +125,7 @@ package object bigtable {
           tableId)
         self.getTestInput[Row](input)
       } else {
-        var read = PatchedBigtableIO.read()
+        var read = BigtableIO.read()
           .withBigtableOptions(bigtableOptions)
           .withTableId(tableId)
         if (keyRange != null) {
@@ -245,7 +245,7 @@ package object bigtable {
           bigtableOptions.getProjectId, bigtableOptions.getInstanceId, tableId)
         self.context.testOut(output.asInstanceOf[TestIO[(ByteString, Iterable[T])]])(self)
       } else {
-        val sink = PatchedBigtableIO.write()
+        val sink = BigtableIO.write()
           .withBigtableOptions(bigtableOptions).withTableId(tableId)
         self
           .map(kv => KV.of(kv._1, kv._2.asJava.asInstanceOf[java.lang.Iterable[Mutation]]))
