@@ -8,6 +8,7 @@ import com.twitter.algebird.Max
 package object libsvm {
 
   implicit class SVMReader(@transient val self: ScioContext) extends Serializable {
+
     private def parseLibSVMRecord(line: String): (Double, Array[Int], Array[Double]) = {
       val items = line.split(' ')
       val label = items.head.toDouble
@@ -39,8 +40,8 @@ package object libsvm {
     : SCollection[(Double, SparseVector[Double])] = {
       val data = col
         .map(_.trim)
-          .filter(line => !(line.isEmpty || line.startsWith("#")))
-          .map(parseLibSVMRecord)
+        .filter(line => !(line.isEmpty || line.startsWith("#")))
+        .map(parseLibSVMRecord)
 
       val featureCntCol = if (numFeatures > 0) {
         self.parallelize(List(numFeatures))
