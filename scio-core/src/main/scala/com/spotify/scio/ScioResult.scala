@@ -174,7 +174,7 @@ class ScioResult private[scio] (val internal: PipelineResult,
 
   private def getAggregatorValues[T](acc: Accumulator[T]): Iterable[AggregatorValues[T]] = {
     if (isTemplateCreationJob) {
-      logger.info("This is a template creation job; accumulators will not have meaningful values.")
+      logger.info("This is a template creation job; accumulators are not available.")
       Seq()
     }
     else {
