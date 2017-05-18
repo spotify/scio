@@ -18,32 +18,24 @@
 package com.spotify.scio.io
 
 import java.io.{InputStream, OutputStream, PushbackInputStream}
-import java.nio.channels.{Channels, ReadableByteChannel, WritableByteChannel}
+import java.nio.channels.{Channels, ReadableByteChannel}
 import java.nio.{ByteBuffer, ByteOrder}
 import java.util.zip.GZIPInputStream
 
 import com.google.common.hash.Hashing
 import com.google.common.primitives.Ints
 import org.apache.beam.sdk.coders.{ByteArrayCoder, Coder}
-import org.apache.beam.sdk.io.FileBasedSink.{FileBasedWriteOperation, FileBasedWriter}
+import org.apache.beam.sdk.io.FileBasedSource
 import org.apache.beam.sdk.io.FileBasedSource.FileBasedReader
-import org.apache.beam.sdk.io.{FileBasedSink, FileBasedSource}
+import org.apache.beam.sdk.io.TFRecordIO.CompressionType
+import org.apache.beam.sdk.io.fs.MatchResult.Metadata
 import org.apache.beam.sdk.options.PipelineOptions
-import org.apache.beam.sdk.util.MimeTypes
-import org.apache.commons.compress.compressors.deflate._
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import org.apache.beam.sdk.repackaged.org.apache.commons.compress.compressors.deflate._
 import org.apache.commons.compress.compressors.gzip._
 
 /** TensorFlow TFRecord options. */
 object TFRecordOptions {
-
-  /** Compression type. */
-  sealed trait CompressionType
-  object CompressionType {
-    case object AUTO extends CompressionType
-    case object NONE extends CompressionType
-    case object ZLIB extends CompressionType
-    case object GZIP extends CompressionType
-  }
 
   /** Default read options. */
   val readDefault = TFRecordOptions(CompressionType.AUTO)
@@ -53,7 +45,7 @@ object TFRecordOptions {
 
 }
 
-case class TFRecordOptions(compressionType: TFRecordOptions.CompressionType)
+case class TFRecordOptions(compressionType: CompressionType)
 
 // =======================================================================
 // Source
@@ -62,12 +54,12 @@ case class TFRecordOptions(compressionType: TFRecordOptions.CompressionType)
 // workaround for multiple super class constructors
 private[scio] object TFRecordSource {
   def apply(fileOrPatternSpec: String, opts: TFRecordOptions): TFRecordSource =
-    new FileBasedSource[Array[Byte]](fileOrPatternSpec, 1L) with TFRecordSource {
+    new FileBasedSource[Array[Byte]](StaticValueProvider.of(fileOrPatternSpec), 1L) with TFRecordSource {
       override val options: TFRecordOptions = opts
     }
-  def apply(fileOrPatternSpec: String, opts: TFRecordOptions,
+  def apply(fileMetadata: Metadata, opts: TFRecordOptions,
             startOffset: Long, endOffset: Long): TFRecordSource =
-    new FileBasedSource[Array[Byte]](fileOrPatternSpec, 1L, startOffset, endOffset)
+    new FileBasedSource[Array[Byte]](fileMetadata, 1L, startOffset, endOffset)
       with TFRecordSource {
       override val options: TFRecordOptions = opts
     }
@@ -80,12 +72,12 @@ private[scio] trait TFRecordSource extends FileBasedSource[Array[Byte]] {
   override def createSingleFileReader(options: PipelineOptions): FileBasedReader[Array[Byte]] =
     new TFRecordReader(this)
 
-  override def createForSubrangeOfFile(fileName: String,
+  override def createForSubrangeOfFile(fileMetadata: Metadata,
                                        start: Long,
                                        end: Long): FileBasedSource[Array[Byte]] = {
     require(start == 0, "TFRecordSource is not splittable")
     // workaround for compression offset inconsistency: always read entire file
-    TFRecordSource(fileName, options, 0, Long.MaxValue)
+    TFRecordSource(fileMetadata, options, 0, Long.MaxValue)
   }
 
   override def getDefaultOutputCoder: Coder[Array[Byte]] = ByteArrayCoder.of()
@@ -186,13 +178,11 @@ private object TFRecordCodec {
   }
 
   def wrapInputStream(stream: InputStream, options: TFRecordOptions): InputStream = {
-    import TFRecordOptions.CompressionType._
-
     val deflateParam = new DeflateParameters()
     deflateParam.setWithZlibHeader(true)
 
     options.compressionType match {
-      case AUTO =>
+      case CompressionType.AUTO =>
         val pushback = new PushbackInputStream(stream, 2)
         if (isInflaterInputStream(pushback)) {
           new DeflateCompressorInputStream(pushback, deflateParam)
@@ -201,9 +191,9 @@ private object TFRecordCodec {
         } else {
           pushback
         }
-      case NONE => stream
-      case ZLIB => new DeflateCompressorInputStream(stream, deflateParam)
-      case GZIP => new GzipCompressorInputStream(stream)
+      case CompressionType.NONE => stream
+      case CompressionType.ZLIB => new DeflateCompressorInputStream(stream, deflateParam)
+      case CompressionType.GZIP => new GzipCompressorInputStream(stream)
     }
   }
 
