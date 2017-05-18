@@ -24,7 +24,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.twitter.algebird._
-import org.apache.beam.sdk.transforms.{Aggregator => _, _}
+import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
 import org.slf4j.LoggerFactory
 
