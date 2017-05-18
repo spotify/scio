@@ -22,8 +22,9 @@ import java.util.concurrent.ThreadLocalRandom
 
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
+import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.transforms.windowing.IntervalWindow
-import org.apache.beam.sdk.util.{IOChannelUtils, MimeTypes}
+import org.apache.beam.sdk.util.MimeTypes
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{Duration, Instant}
 
@@ -64,8 +65,8 @@ object WindowedWordCount {
       .map { case (w, vs) =>
         val outputShard = "%s-%s-%s".format(
           args("output"), formatter.print(w.start()), formatter.print(w.end()))
-        val factory = IOChannelUtils.getFactory(outputShard)
-        val out = Channels.newOutputStream(factory.create(outputShard, MimeTypes.TEXT))
+        val resourceId = FileSystems.matchSingleFileSpec(outputShard).resourceId
+        val out = Channels.newOutputStream(FileSystems.create(resourceId, MimeTypes.TEXT))
         vs.foreach { case (k, v) => out.write(s"$k: $v\n".getBytes) }
         out.close()
       }
