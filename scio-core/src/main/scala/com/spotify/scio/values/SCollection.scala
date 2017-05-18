@@ -1171,7 +1171,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       saveAsInMemoryTap.asInstanceOf[Future[Tap[Array[Byte]]]]
     } else {
       this.asInstanceOf[SCollection[Array[Byte]]].applyInternal(
-        gio.Write.to(new TFRecordSink(pathWithShards(path), suffix, tfRecordOptions)))
+        gio.TFRecordIO.write().to(pathWithShards(path))
+          .withSuffix(suffix)
+          .withCompressionType(tfRecordOptions.compressionType))
       context.makeFuture(TFRecordFileTap(path + "/part-*"))
     }
   }

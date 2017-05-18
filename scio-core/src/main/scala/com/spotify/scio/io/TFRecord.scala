@@ -122,65 +122,6 @@ private class TFRecordReader(source: TFRecordSource) extends FileBasedReader[Arr
 }
 
 // =======================================================================
-// Sink
-// =======================================================================
-
-private[scio] class TFRecordSink(baseOutputFilename: String,
-                                 extension: String,
-                                 private[io] val options: TFRecordOptions)
-  extends FileBasedSink[Array[Byte]](baseOutputFilename, extension) {
-
-  require(
-    options.compressionType != TFRecordOptions.CompressionType.AUTO,
-    "Unsupported compression type AUTO")
-
-  def this(baseOutputFilename: String, options: TFRecordOptions) =
-    this(baseOutputFilename, ".tfrecords", options)
-
-  override def createWriteOperation(options: PipelineOptions)
-  : FileBasedWriteOperation[Array[Byte]] = new TFRecordWriteOperation(this)
-
-}
-
-private class TFRecordWriteOperation(sink: TFRecordSink)
-  extends FileBasedWriteOperation[Array[Byte]](sink) {
-  override def createWriter(options: PipelineOptions): FileBasedWriter[Array[Byte]] =
-    new TFRecordWriter(this)
-}
-
-private class TFRecordWriter(writeOperation: TFRecordWriteOperation)
-  extends FileBasedWriter[Array[Byte]](writeOperation) {
-
-  mimeType = MimeTypes.BINARY
-
-  private var outputStream: OutputStream = _
-
-  override def prepareWrite(channel: WritableByteChannel): Unit = {
-    import TFRecordOptions.CompressionType._
-
-    val stream = Channels.newOutputStream(channel)
-    val options = writeOperation.getSink.asInstanceOf[TFRecordSink].options
-    outputStream = options.compressionType match {
-      case AUTO => throw new RuntimeException("Unsupported compression type AUTO")
-      case NONE => stream
-      case ZLIB => new DeflateCompressorOutputStream(stream)
-      case GZIP => new GzipCompressorOutputStream(stream)
-    }
-  }
-
-  override def write(value: Array[Byte]): Unit = TFRecordCodec.write(outputStream, value)
-
-  override def writeFooter(): Unit = {
-    outputStream match {
-      case s: DeflateCompressorOutputStream => s.finish()
-      case s: GzipCompressorOutputStream => s.finish()
-      case _ => Unit
-    }
-  }
-
-}
-
-// =======================================================================
 // Codec
 // =======================================================================
 
