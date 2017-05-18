@@ -18,8 +18,9 @@
 package com.spotify.scio
 
 import com.spotify.scio.testing.PipelineSpec
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.PipelineResult.State
+
+import scala.concurrent.Future
 
 class ScioResultTest extends PipelineSpec {
 
@@ -27,20 +28,6 @@ class ScioResultTest extends PipelineSpec {
     val r = runWithContext(_.parallelize(Seq(1, 2, 3)))
     r.isCompleted shouldBe true
     r.state shouldBe State.DONE
-  }
-
-  it should "allow accumulators during template creation" in {
-    val sc = ScioContext.forTest()
-    sc.optionsAs[DataflowPipelineOptions].setTemplateLocation("gs://bucket/path")
-    val maxI = sc.maxAccumulator[Int]("maxI")
-    sc.parallelize(Seq(1, 2, 3))
-      .withAccumulator(maxI)
-      .map { (i, a) =>
-        a.addValue(maxI, i)
-        i
-      }
-    val r = sc.close()
-    r.accumulatorTotalValue(maxI) // This should not throw exception
   }
 
 }
