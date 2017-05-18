@@ -23,7 +23,7 @@ import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
 import org.apache.avro.Schema
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.apache.beam.sdk.util.{BackOff, BackOffUtils, FluentBackoff, Sleeper}
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
@@ -56,7 +56,7 @@ trait Taps {
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
   def bigQueryTable(tableSpec: String): Future[Tap[TableRow]] =
-    bigQueryTable(BigQueryIO.parseTableSpec(tableSpec))
+    bigQueryTable(BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Get a `Future[Tap[T]]` for typed BigQuery source. */
   def typedBigQuery[T <: HasAnnotation : TypeTag : ClassTag](newSource: String = null)
@@ -73,7 +73,7 @@ trait Taps {
       }
     } else {
       // newSource can be either table or query
-      val table = scala.util.Try(BigQueryIO.parseTableSpec(newSource)).toOption
+      val table = scala.util.Try(BigQueryHelpers.parseTableSpec(newSource)).toOption
       if (table.isDefined) {
         bigQueryTable(table.get)
       } else {
