@@ -28,8 +28,9 @@ import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.options.ApplicationNameOptions
-import org.apache.beam.sdk.util.{IOChannelUtils, MimeTypes}
 import org.apache.beam.sdk.PipelineResult
+import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.util.MimeTypes
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -94,7 +95,8 @@ class ScioResult private[scio] (val internal: PipelineResult,
   def saveMetrics(filename: String): Unit = {
     require(isCompleted, "Pipeline has to be finished to save metrics.")
     val mapper = ScioUtil.getScalaJsonMapper
-    val out = IOChannelUtils.create(filename, MimeTypes.TEXT)
+    val resourceId = FileSystems.matchSingleFileSpec(filename).resourceId
+    val out = FileSystems.create(resourceId, MimeTypes.TEXT)
     try {
       out.write(ByteBuffer.wrap(mapper.writeValueAsBytes(getMetrics)))
     } finally {
