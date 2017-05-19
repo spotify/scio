@@ -43,6 +43,7 @@ import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
+import org.apache.beam.sdk.io.TFRecordIO.CompressionType
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub => psio}
@@ -1164,7 +1165,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def saveAsTfRecordFile(path: String,
                          suffix: String = ".tfrecords",
-                         tfRecordOptions: TFRecordOptions = TFRecordOptions.writeDefault)
+                         compressionType: CompressionType = CompressionType.NONE)
                         (implicit ev: T <:< Array[Byte]): Future[Tap[Array[Byte]]] = {
     if (context.isTest) {
       context.testOut(TFRecordIO(path))(this.asInstanceOf[SCollection[Array[Byte]]])
@@ -1173,7 +1174,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       this.asInstanceOf[SCollection[Array[Byte]]].applyInternal(
         gio.TFRecordIO.write().to(pathWithShards(path))
           .withSuffix(suffix)
-          .withCompressionType(tfRecordOptions.compressionType))
+          .withCompressionType(compressionType))
       context.makeFuture(TFRecordFileTap(path + "/part-*"))
     }
   }

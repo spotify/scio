@@ -32,6 +32,7 @@ import org.apache.avro.Schema
 import org.apache.avro.file.{DataFileReader, SeekableFileInput, SeekableInput}
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.specific.{SpecificDatumReader, SpecificRecordBase}
+import org.apache.beam.sdk.io.TFRecordIO.CompressionType
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
 import org.apache.beam.sdk.util.gcsfs.GcsPath
@@ -86,7 +87,7 @@ private[scio] trait FileStorage {
   def tfRecordFile: Iterator[Array[Byte]] = {
     new Iterator[Array[Byte]] {
       private def wrapInputStream(in: InputStream) =
-        TFRecordCodec.wrapInputStream(in, TFRecordOptions.readDefault)
+        TFRecordCodec.wrapInputStream(in, CompressionType.AUTO)
       private val input = getDirectoryInputStream(path, wrapInputStream)
       private var current: Array[Byte] = TFRecordCodec.read(input)
       override def hasNext: Boolean = current != null
