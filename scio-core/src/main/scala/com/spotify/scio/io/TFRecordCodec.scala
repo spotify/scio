@@ -17,7 +17,7 @@
 
 package com.spotify.scio.io
 
-import java.io.{InputStream, OutputStream, PushbackInputStream}
+import java.io.{InputStream, PushbackInputStream}
 import java.nio.{ByteBuffer, ByteOrder}
 import java.util.zip.GZIPInputStream
 
@@ -68,23 +68,6 @@ private object TFRecordCodec {
       }
     } while (n > 0 && off < data.length)
     if (n <= 0) null else data
-  }
-
-  def write(output: OutputStream, data: Array[Byte]): Unit = {
-    val length = data.length.toLong
-    val maskedCrc32OfLength = hashLong(length)
-    val maskedCrc32OfData = hashBytes(data)
-
-    val headerBuf = ByteBuffer.allocate(headerLength).order(ByteOrder.LITTLE_ENDIAN)
-    headerBuf.putLong(length)
-    headerBuf.putInt(maskedCrc32OfLength)
-    output.write(headerBuf.array(), 0, headerLength)
-
-    output.write(data)
-
-    val footerBuf = ByteBuffer.allocate(footerLength).order(ByteOrder.LITTLE_ENDIAN)
-    footerBuf.putInt(maskedCrc32OfData)
-    output.write(footerBuf.array())
   }
 
   def wrapInputStream(stream: InputStream, compressionType: CompressionType): InputStream = {
