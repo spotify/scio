@@ -19,6 +19,7 @@ package com.spotify.scio.extra.json
 
 import com.spotify.scio._
 import com.spotify.scio.io.TapSpec
+import com.spotify.scio.util.ScioUtil
 import org.apache.commons.io.FileUtils
 
 object JsonJob {
@@ -73,7 +74,7 @@ class JsonTest extends TapSpec {
     }
     val t = runWithFileFuture {
       _
-        .jsonFile[Record](dir.getPath + "/part-*")
+        .jsonFile[Record](ScioUtil.addPartSuffix(dir.getPath))
         .flatMap(_.left.toOption.map(_.input))
         .materialize
     }

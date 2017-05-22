@@ -20,6 +20,7 @@ package com.spotify.scio.extra
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{Tap, TextTap}
 import com.spotify.scio.testing.TestIO
+import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import io.circe.generic.AutoDerivation
 import io.circe.parser._
@@ -89,7 +90,7 @@ package object json extends AutoDerivation {
         self
           .map(_.asJson.noSpaces)
           .applyInternal(self.textOut(path, ".json", numShards))
-        self.context.makeFuture(TextTap(path + "/part-*").map(decode[T](_).right.get))
+        self.context.makeFuture(TextTap(ScioUtil.addPartSuffix(path)).map(decode[T](_).right.get))
       }
     }
   }

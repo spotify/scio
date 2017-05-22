@@ -43,7 +43,7 @@ import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.util.Try
 
-private object FileStorage {
+private[scio] object FileStorage {
   def apply(path: String): FileStorage =
     if (new URI(path).getScheme == "gs") new GcsStorage(path) else new LocalStorage(path)
 }

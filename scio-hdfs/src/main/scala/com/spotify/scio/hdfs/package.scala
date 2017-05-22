@@ -281,7 +281,8 @@ package object hdfs {
   /** Tap for text files on HDFS. */
   case class HdfsTextTap(path: String) extends Tap[String] {
     override def value: Iterator[String] = HdfsFileStorage(path).textFile
-    override def open(sc: ScioContext): SCollection[String] = sc.hdfsTextFile(path + "/part-*")
+    override def open(sc: ScioContext): SCollection[String] =
+      sc.hdfsTextFile(ScioUtil.addPartSuffix(path))
   }
 
   /** Tap for Avro files on HDFS. */
