@@ -187,7 +187,7 @@ class TapTest extends TapSpec {
         data(i).foreach(l => IOUtils.write(l + "\n", os, Charsets.UTF_8))
         os.close()
       }
-      verifyTap(TextTap(s"${dir.getPath}/part-*.$ext"), data.flatten.toSet)
+      verifyTap(TextTap(ScioUtil.addPartSuffix(dir.getPath, ext)), data.flatten.toSet)
       FileUtils.deleteDirectory(dir)
     }
   }
@@ -256,7 +256,7 @@ class TapTest extends TapSpec {
     verifyTap(t, Set(1, 2, 3))
     t.isInstanceOf[Tap[Int]] shouldBe true
     t.parent.get.isInstanceOf[TextTap] shouldBe true
-    t.parent.get.asInstanceOf[TextTap].path shouldBe s"${dir.getPath}/part-*"
+    t.parent.get.asInstanceOf[TextTap].path shouldBe ScioUtil.addPartSuffix(dir.getPath)
     FileUtils.deleteDirectory(dir)
   }
 

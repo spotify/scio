@@ -84,4 +84,7 @@ private[scio] object ScioUtil {
       s"Could not get dataflow metrics of ${getMetrics.getJobId} in ${getMetrics.getProjectId}")
   }
 
+  def addPartSuffix(path: String, ext: String = ""): String =
+    if (path.endsWith("/")) s"${path}part-*$ext" else s"$path/part-*$ext"
+
 }

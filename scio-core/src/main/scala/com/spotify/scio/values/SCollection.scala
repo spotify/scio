@@ -872,7 +872,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
             c.output(AvroBytesUtil.encode(elemCoder, c.element()))
         })
         .saveAsAvroFile(path, numShards, AvroBytesUtil.schema, suffix, metadata = metadata)
-      context.makeFuture(ObjectFileTap[T](path + "/part-*"))
+      context.makeFuture(ObjectFileTap[T](ScioUtil.addPartSuffix(path)))
     }
   }
 
@@ -927,7 +927,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       } else {
         this.applyInternal(transform.withSchema(schema).asInstanceOf[gio.AvroIO.Write.Bound[T]])
       }
-      context.makeFuture(AvroTap(path + "/part-*", schema))
+      context.makeFuture(AvroTap(ScioUtil.addPartSuffix(path), schema))
     }
 
   /**
@@ -1147,7 +1147,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       this.asInstanceOf[SCollection[TableRow]]
         .map(e => ScioUtil.jsonFactory.toString(e))
         .applyInternal(textOut(path, ".json", numShards))
-      context.makeFuture(TableRowJsonTap(path + "/part-*"))
+      context.makeFuture(TableRowJsonTap(ScioUtil.addPartSuffix(path)))
     }
   }
 
@@ -1167,7 +1167,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       s.saveAsInMemoryTap
     } else {
       s.applyInternal(textOut(path, suffix, numShards))
-      context.makeFuture(TextTap(path + "/part-*"))
+      context.makeFuture(TextTap(ScioUtil.addPartSuffix(path)))
     }
   }
 
@@ -1187,7 +1187,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     } else {
       this.asInstanceOf[SCollection[Array[Byte]]].applyInternal(
         gio.Write.to(new TFRecordSink(pathWithShards(path), suffix, tfRecordOptions)))
-      context.makeFuture(TFRecordFileTap(path + "/part-*"))
+      context.makeFuture(TFRecordFileTap(ScioUtil.addPartSuffix(path)))
     }
   }
 
