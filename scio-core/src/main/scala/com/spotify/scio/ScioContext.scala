@@ -616,8 +616,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
         val t = setup(psio.PubsubIO.readAvros(cls))
         wrap(this.applyInternal(t)).setName(name)
       } else if (classOf[Message] isAssignableFrom cls) {
-        val t = setup(psio.PubsubIO.readProtos(cls))
-        wrap(this.applyInternal(t)).setName(name)
+        val t = setup(psio.PubsubIO.readProtos(cls.asSubclass(classOf[Message])))
+        wrap(this.applyInternal(t)).setName(name).asInstanceOf[SCollection[T]]
       } else {
         val coder = pipeline.getCoderRegistry.getScalaCoder[T]
         val t = setup(psio.PubsubIO.readMessages())
