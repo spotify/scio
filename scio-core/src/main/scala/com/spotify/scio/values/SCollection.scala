@@ -1064,8 +1064,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         val t = setup(psio.PubsubIO.writeAvros(cls))
         this.applyInternal(t)
       } else if (classOf[Message] isAssignableFrom cls) {
-        val t = setup(psio.PubsubIO.writeProtos(cls))
-        this.applyInternal(t)
+        val t = setup(psio.PubsubIO.writeProtos(classOf[Message]))
+        this.asInstanceOf[SCollection[Message]].applyInternal(t)
       } else {
         val coder = internal.getPipeline.getCoderRegistry.getScalaCoder[T]
         val t = setup(psio.PubsubIO.writeMessages())
