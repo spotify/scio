@@ -224,6 +224,7 @@ lazy val scioCore: Project = Project(
     "org.tensorflow" % "proto" % tensorflowVersion,
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion,
     "com.google.auto.service" % "auto-service" % autoServiceVersion,
+    "com.google.auto.value" % "auto-value" % autoValueVersion,
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
     "junit" % "junit" % junitVersion % "provided"
   )
