@@ -37,7 +37,8 @@ import scala.concurrent.Future
   */
 package object elasticsearch {
 
-  case class ElasticsearchIOTest[T](uniqueId: String) extends TestIO[T](uniqueId)
+  case class ElasticsearchIOTest[T](options: ElasticsearchOptions)
+    extends TestIO[T](options.toString)
 
   case class ElasticsearchOptions(clusterName: String, servers: Array[InetSocketAddress])
   implicit class ElasticsearchSCollection[T](val self: SCollection[T])
@@ -58,10 +59,9 @@ package object elasticsearch {
 
       if (self.context.isTest) {
         self.context.testOut(
-          ElasticsearchIOTest[T](elasticsearchOptions.clusterName))(self)
-        null
+          ElasticsearchIOTest[T](elasticsearchOptions))(self)
       } else {
-        self.saveAsCustomOutput("Write to Elasticsearch",
+        self.applyInternal(
           ElasticsearchIO.Write
             .withClusterName(elasticsearchOptions.clusterName)
             .withServers(elasticsearchOptions.servers)
@@ -70,6 +70,7 @@ package object elasticsearch {
               override def apply(t: T): IndexRequest = f(t)
             }))
       }
+      Future.failed(new NotImplementedError("Custom future not implemented"))
     }
   }
 }

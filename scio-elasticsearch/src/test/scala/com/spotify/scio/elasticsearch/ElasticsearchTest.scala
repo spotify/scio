@@ -24,7 +24,7 @@ class ElasticsearchTest extends PipelineSpec {
   import ElasticsearchJob._
   "ElasticsearchIO" should "work" in {
     JobTest[ElasticsearchJob.type]
-      .output(ElasticsearchIOTest[Int](options.clusterName))(_ should containInAnyOrder(data))
+      .output(ElasticsearchIOTest[Int](options))(_ should containInAnyOrder(data))
       .run()
   }
 }
