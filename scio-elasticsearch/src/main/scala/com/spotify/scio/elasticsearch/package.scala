@@ -18,7 +18,7 @@
 package com.spotify.scio
 
 import java.net.InetSocketAddress
-import java.time.Duration
+import org.joda.time.Duration
 
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
@@ -48,7 +48,7 @@ package object elasticsearch {
       *                   Note: Recommended to be equal to number of workers in your pipeline.
       */
     def saveAsElasticsearch(elasticsearchOptions: ElasticsearchOptions,
-                            flushInterval: Duration = Duration.ofSeconds(1),
+                            flushInterval: Duration = Duration.standardSeconds(1),
                             f: T => IndexRequest,
                             numOfShard: Long) :Future[Tap[T]] = {
         self.saveAsCustomOutput("Write to Elasticsearch",

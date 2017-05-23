@@ -17,6 +17,8 @@
 
 package com.spotify.scio.elasticsearch;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.GroupByKey;
 import org.apache.beam.sdk.transforms.PTransform;
@@ -33,7 +35,7 @@ import com.twitter.jsr166e.ThreadLocalRandom;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
-import java.time.Duration;
+import org.joda.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -111,7 +113,7 @@ public class ElasticsearchIO {
                     final Long numOfShard) {
         this.clusterName = clusterName;
         this.servers = servers;
-        this.flushInterval = flushInterval == null? Duration.ofSeconds(1L): flushInterval;
+        this.flushInterval = flushInterval;
         this.function = function;
         this.numOfShard = numOfShard;
       }
@@ -142,41 +144,23 @@ public class ElasticsearchIO {
 
       @Override
       public PDone expand(final PCollection<T> input) {
-
-        if (clusterName == null) {
-          throw new IllegalStateException(
-              "need to set clustername of ElasticsearchIO.Write transform");
-        }
-
-        if (servers == null) {
-          throw new IllegalStateException(
-              "need to set clustername of ElasticsearchIO.Write transform");
-        }
-
-        if (function == null) {
-          throw new IllegalStateException(
-              "need to set SerializableFunction<T, IndexRequest> of ElasticsearchIO.Write transform");
-        }
-
-        if (numOfShard == null) {
-          throw new IllegalStateException(
-              "need to set numOfShard of ElasticsearchIO.Write transform");
-        }
+        checkNotNull(clusterName);
+        checkNotNull(servers);
+        checkNotNull(function);
+        checkNotNull(numOfShard);
+        checkNotNull(flushInterval);
         input
             .apply("Assign To Shard", ParDo.of(new AssignToShard<>(numOfShard)))
             .apply("Re-Window to Global Window", Window.<KV<Long, T>>into(new GlobalWindows())
                        .triggering(Repeatedly.forever(
                            AfterProcessingTime
                                .pastFirstElementInPane()
-                               .plusDelayOf(javaToJoda(flushInterval))))
+                               .plusDelayOf(flushInterval)))
                        .discardingFiredPanes())
             .apply(GroupByKey.create())
             .apply("Write to Elasticesarch",
                    ParDo.of(new ElasticsearchWriter(clusterName, servers, function)));
         return PDone.in(input.getPipeline());
-      }
-      private org.joda.time.Duration javaToJoda(final Duration duration) {
-        return duration == null ? null : org.joda.time.Duration.millis(duration.toMillis());
       }
     }
 

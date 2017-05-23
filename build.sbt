@@ -300,6 +300,7 @@ lazy val scioElasticsearch: Project = Project(
   commonSettings ++ itSettings,
   description := "Scio add-on for writing to Elasticsearch",
   libraryDependencies ++= Seq(
+    "com.google.guava" % "guava" % guavaVersion,
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
     "com.google.auto.value" % "auto-value" % "1.2",
     "joda-time" % "joda-time" % jodaTimeVersion,
