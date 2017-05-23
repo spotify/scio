@@ -18,23 +18,28 @@
 package com.spotify.scio.util
 
 import java.net.URI
+import java.util.UUID
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.google.api.client.googleapis.services.AbstractGoogleClientRequest
 import com.google.api.services.dataflow.Dataflow
 import com.google.api.services.dataflow.model.JobMetrics
+import com.spotify.scio.ScioContext
 import org.apache.beam.runners.dataflow.options._
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.{Coder, CoderRegistry}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryTableRowIterator
-import org.apache.beam.sdk.options.PipelineOptions
+import org.apache.beam.sdk.options.{GcpOptions, PipelineOptions}
 import org.apache.beam.sdk.util.Transport
+import org.slf4j.LoggerFactory
 
 import scala.reflect.ClassTag
+import scala.util.{Failure, Success, Try}
 
 private[scio] object ScioUtil {
 
+  @transient lazy private val log = LoggerFactory.getLogger(this.getClass)
   @transient lazy val jsonFactory = Transport.getJsonFactory
 
   def isLocalUri(uri: URI): Boolean = uri.getScheme == null || uri.getScheme == "file"
@@ -86,5 +91,30 @@ private[scio] object ScioUtil {
 
   def addPartSuffix(path: String, ext: String = ""): String =
     if (path.endsWith("/")) s"${path}part-*$ext" else s"$path/part-*$ext"
+
+  def getTempFile(context: ScioContext, fileOrPath: String = null): String = {
+    val fop = Option(fileOrPath).getOrElse("scio-materialize-" + UUID.randomUUID().toString)
+    val uri = URI.create(fop)
+    if ((ScioUtil.isLocalUri(uri) && uri.toString.startsWith("/")) || uri.isAbsolute) {
+      fop
+    } else {
+      val filename = fop
+      val tmpDir = if (context.options.getTempLocation != null) {
+        context.options.getTempLocation
+      } else {
+        val m =
+          "Specify a temporary location via --tempLocation or PipelineOptions.setTempLocation."
+        Try(context.optionsAs[GcpOptions].getGcpTempLocation) match {
+          case Success(l) =>
+            log.warn(
+              "Using GCP temporary location as a temporary location to materialize data. " + m)
+            l
+          case Failure(_) =>
+            throw new IllegalArgumentException("No temporary location was specified. " + m)
+        }
+      }
+      tmpDir + (if (tmpDir.endsWith("/")) "" else "/") + filename
+    }
+  }
 
 }
