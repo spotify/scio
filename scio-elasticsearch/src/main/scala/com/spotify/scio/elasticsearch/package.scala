@@ -18,9 +18,10 @@
 package com.spotify.scio
 
 import java.net.InetSocketAddress
-import org.joda.time.Duration
 
+import org.joda.time.Duration
 import com.spotify.scio.io.Tap
+import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.elasticsearch.action.index.IndexRequest
@@ -35,6 +36,9 @@ import scala.concurrent.Future
   * }}}
   */
 package object elasticsearch {
+
+  case class ElasticsearchIOTest[T](uniqueId: String) extends TestIO[T](uniqueId)
+
   case class ElasticsearchOptions(clusterName: String, servers: Array[InetSocketAddress])
   implicit class ElasticsearchSCollection[T](val self: SCollection[T])
     extends AnyVal {
@@ -51,14 +55,21 @@ package object elasticsearch {
                             flushInterval: Duration = Duration.standardSeconds(1),
                             f: T => IndexRequest,
                             numOfShard: Long) :Future[Tap[T]] = {
+
+      if (self.context.isTest) {
+        self.context.testOut(
+          ElasticsearchIOTest[T](elasticsearchOptions.clusterName))(self)
+        null
+      } else {
         self.saveAsCustomOutput("Write to Elasticsearch",
           ElasticsearchIO.Write
             .withClusterName(elasticsearchOptions.clusterName)
             .withServers(elasticsearchOptions.servers)
             .withNumOfShard(numOfShard)
-            .withFunction(new SerializableFunction[T, IndexRequest](){
-                override def apply(t: T): IndexRequest = f(t)
-              }))
+            .withFunction(new SerializableFunction[T, IndexRequest]() {
+              override def apply(t: T): IndexRequest = f(t)
+            }))
+      }
     }
   }
 }
