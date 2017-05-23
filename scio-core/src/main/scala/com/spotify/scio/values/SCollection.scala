@@ -110,8 +110,6 @@ object SCollection {
  */
 sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
-  @transient lazy private val log = LoggerFactory.getLogger(SCollection.getClass)
-
   import com.spotify.scio.Implicits._
   import TupleFunctions._
 
@@ -832,23 +830,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * pipeline completes successfully.
    * @group output
    */
-  def materialize: Future[Tap[T]] = {
-    val filename = "scio-materialize-" + UUID.randomUUID().toString
-    val tmpDir = if (context.options.getTempLocation != null) {
-      context.options.getTempLocation
-    } else {
-      val m = "Specify a temporary location via --tempLocation or PipelineOptions.setTempLocation."
-      scala.util.Try(context.optionsAs[GcpOptions].getGcpTempLocation) match {
-        case Success(l) =>
-          log.warn("Using GCP temporary location as a temporary location to materialize data. " + m)
-          l
-        case Failure(_) =>
-          throw new IllegalArgumentException("No temporary location was specified. " + m)
-      }
-    }
-    val path = tmpDir + (if (tmpDir.endsWith("/")) "" else "/") + filename
-    saveAsObjectFile(path)
-  }
+  def materialize: Future[Tap[T]] = materialize(ScioUtil.getTempFile(context))
+  private[scio] def materialize(path: String): Future[Tap[T]] = saveAsObjectFile(path)
 
   /**
    * Save this SCollection as an object file using default serialization.
