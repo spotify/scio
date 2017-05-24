@@ -42,12 +42,12 @@ private class GenericAvroSerializer extends KSerializer[GenericRecord] {
     val coder = this.getCoder(schemaStr, obj.getSchema)
     // write schema before every record in case it's not in reader serializer's cache
     out.writeString(schemaStr)
-    coder.encode(obj, out, Context.NESTED)
+    coder.encode(obj, out)
   }
 
   override def read(kryo: Kryo, in: Input, cls: Class[GenericRecord]): GenericRecord = {
     val coder = this.getCoder(in.readString())
-    coder.decode(in, Context.NESTED)
+    coder.decode(in)
   }
 
 }
@@ -59,9 +59,9 @@ private class SpecificAvroSerializer[T <: SpecificRecordBase] extends KSerialize
   private def getCoder(cls: Class[T]): AvroCoder[T] = cache.getOrElseUpdate(cls, AvroCoder.of(cls))
 
   override def write(kser: Kryo, out: Output, obj: T): Unit =
-    this.getCoder(obj.getClass.asInstanceOf[Class[T]]).encode(obj, out, Context.NESTED)
+    this.getCoder(obj.getClass.asInstanceOf[Class[T]]).encode(obj, out)
 
   override def read(kser: Kryo, in: Input, cls: Class[T]): T =
-    this.getCoder(cls).decode(in, Context.NESTED)
+    this.getCoder(cls).decode(in)
 
 }
