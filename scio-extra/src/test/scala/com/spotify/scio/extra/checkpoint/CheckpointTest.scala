@@ -17,9 +17,10 @@
 
 package com.spotify.scio.extra.checkpoint
 
-import java.nio.file.{Files, Path}
+import java.nio.file.Files
 
 import com.spotify.scio.ContextAndArgs
+import com.spotify.scio.testing.{ObjectFileIO, PipelineSpec, TextIO}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.reflect.io.File
@@ -57,6 +58,33 @@ class CheckpointTest extends FlatSpec with Matchers {
     runJob(checkpointName, tempLocation) shouldBe (10L, 10L)
   }
 
+}
 
+object CheckpointJobTest {
+  def main(argv: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(argv)
+    val tenTo20 = sc.parallelize(10 to 20)
+    val sideIn = sc.checkpoint("sum")(tenTo20.sum).asSingletonSideInput
+    sc.checkpoint("1to10")(sc.parallelize(1 to 10))
+      .withSideInputs(sideIn)
+      .map{case (e, c) => c(sideIn) + e}
+      .toSCollection
+      .saveAsTextFile(args("output"))
+    sc.close()
+  }
+}
+
+class CheckpointJobTest extends PipelineSpec {
+
+  "CheckpointJobTest" should "work" in {
+    val s = (10 to 20).sum
+    val tempLocation = Files.createTempDirectory("tempLocation")
+    JobTest[CheckpointJobTest.type]
+      .args("--output=output", s"--tempLocation=$tempLocation")
+      .output(TextIO("output"))(_ should containInAnyOrder ((1 to 10).map(_ + s).map(_.toString)))
+      .output[Int](ObjectFileIO(s"$tempLocation/1to10"))(_ should containInAnyOrder (1 to 10))
+      .output[Int](ObjectFileIO(s"$tempLocation/sum"))(_ should containSingleValue (s))
+      .run()
+  }
 
 }
