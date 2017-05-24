@@ -102,58 +102,47 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
     }
   }
 
-  override def encode(value: T, outStream: OutputStream, context: Context): Unit = {
+  override def encode(value: T, outStream: OutputStream): Unit = {
     if (value == null) {
       throw new CoderException("cannot encode a null value")
     }
-    if (context.isWholeStream) {
-      val output = new Output(outStream)
-      kryo.get().writeClassAndObject(output, value)
-      output.flush()
-    } else {
-      val os = new BufferedPrefixOutputStream(outStream)
-      val output = new Output(os)
-      kryo.get().writeClassAndObject(output, value)
-      output.flush()
-      os.finish()
-    }
+    val os = new BufferedPrefixOutputStream(outStream)
+    val output = new Output(os)
+    kryo.get().writeClassAndObject(output, value)
+    output.flush()
+    os.finish()
   }
 
-  override def decode(inStream: InputStream, context: Context): T = {
-    val o = if (context.isWholeStream) {
-      kryo.get().readClassAndObject(new Input(inStream))
-    } else {
-      val is = new BufferedPrefixInputStream(inStream)
-      val obj = kryo.get().readClassAndObject(new Input(is))
-      is.finish()
-      obj
-    }
-    o.asInstanceOf[T]
+  override def decode(inStream: InputStream): T = {
+    val is = new BufferedPrefixInputStream(inStream)
+    val obj = kryo.get().readClassAndObject(new Input(is))
+    is.finish()
+    obj.asInstanceOf[T]
   }
 
   // This method is called by PipelineRunner to sample elements in a PCollection and estimate
   // size. This could be expensive for collections with small number of very large elements.
-  override def registerByteSizeObserver(value: T, observer: ElementByteSizeObserver,
-                                        context: Context): Unit = value match {
+  override def registerByteSizeObserver(value: T,
+                                        observer: ElementByteSizeObserver): Unit = value match {
     // (K, Iterable[V]) is the return type of `groupBy` or `groupByKey`. This could be very slow
     // when there're few keys with many values.
     case (key, wrapper: JIterableWrapper[_]) =>
-      observer.update(kryoEncodedElementByteSize(key, Context.OUTER))
+      observer.update(kryoEncodedElementByteSize(key))
       // FIXME: handle ElementByteSizeObservableIterable[_, _]
       val i = wrapper.underlying.iterator()
       while (i.hasNext) {
-        observer.update(kryoEncodedElementByteSize(i.next(), Context.OUTER))
+        observer.update(kryoEncodedElementByteSize(i.next()))
       }
     case _ =>
-      observer.update(kryoEncodedElementByteSize(value, context))
+      observer.update(kryoEncodedElementByteSize(value))
   }
 
-  private def kryoEncodedElementByteSize(obj: Any, context: Context): Long = {
+  private def kryoEncodedElementByteSize(obj: Any): Long = {
     val s = new CountingOutputStream(ByteStreams.nullOutputStream())
     val output = new Output(s)
     kryo.get().writeClassAndObject(output, obj)
     output.flush()
-    if (context.isWholeStream) s.getCount else s.getCount + VarInt.getLength(s.getCount)
+    s.getCount + VarInt.getLength(s.getCount)
   }
 
 }
