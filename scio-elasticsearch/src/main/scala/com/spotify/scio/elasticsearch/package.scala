@@ -24,6 +24,7 @@ import org.joda.time.Duration
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
+import org.apache.beam.io.elasticsearch.{ElasticsearchIO, SerializableConsumer}
 import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.runners.direct.DirectRunner
@@ -41,7 +42,7 @@ import scala.concurrent.Future
   */
 package object elasticsearch {
 
-  case class ElasticsearchIOTest[T](options: ElasticsearchOptions)
+  case class ElasticsearchIO[T](options: ElasticsearchOptions)
     extends TestIO[T](options.toString)
 
   case class ElasticsearchOptions(clusterName: String, servers: Array[InetSocketAddress]) {
@@ -101,10 +102,10 @@ package object elasticsearch {
                             errorHandle: String => Unit) :Future[Tap[T]] = {
       if (self.context.isTest) {
         self.context.testOut(
-          ElasticsearchIOTest[T](elasticsearchOptions))(self)
+          ElasticsearchIO[T](elasticsearchOptions))(self)
       } else {
         self.applyInternal(
-          ElasticsearchIO.Write
+          org.apache.beam.io.elasticsearch.ElasticsearchIO.Write
             .withClusterName(elasticsearchOptions.clusterName)
             .withServers(elasticsearchOptions.servers)
             .withNumOfShard(numOfShard)

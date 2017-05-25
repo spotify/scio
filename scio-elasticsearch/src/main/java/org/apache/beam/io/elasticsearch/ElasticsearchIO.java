@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.elasticsearch;
+package org.apache.beam.io.elasticsearch;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -85,7 +85,7 @@ public class ElasticsearchIO {
      *
      * @param function creates IndexRequest required by Elasticsearch client
      */
-    public static<T> Bound withFunction(SerializableFunction function) {
+    public static<T> Bound withFunction(SerializableFunction<T, IndexRequest> function) {
       return new Bound<T>().withFunction(function);
     }
 
@@ -176,7 +176,7 @@ public class ElasticsearchIO {
                        .discardingFiredPanes())
             .apply(GroupByKey.create())
             .apply("Write to Elasticesarch",
-                   ParDo.of(new ElasticsearchWriter(clusterName, servers, toIndexRequest, error)));
+                   ParDo.of(new ElasticsearchWriter<>(clusterName, servers, toIndexRequest, error)));
         return PDone.in(input.getPipeline());
       }
     }

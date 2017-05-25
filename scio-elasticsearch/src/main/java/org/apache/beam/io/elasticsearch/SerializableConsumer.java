@@ -1,4 +1,4 @@
-package com.spotify.scio.elasticsearch;
+package org.apache.beam.io.elasticsearch;
 
 import java.io.Serializable;
 import java.util.function.Consumer;

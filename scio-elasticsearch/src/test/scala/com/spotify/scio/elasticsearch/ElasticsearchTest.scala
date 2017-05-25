@@ -54,12 +54,12 @@ class ElasticsearchTest extends PipelineSpec {
   import ElasticsearchJobSpec._
   "ElasticsearchIO" should "work" in {
     JobTest[ElasticsearchJob.type]
-      .output(ElasticsearchIOTest[Int](options))(_ should containInAnyOrder (data))
+      .output(ElasticsearchIO[Int](options))(_ should containInAnyOrder (data))
       .run()
   }
   "ElasticsearchIO with DirectRunner" should "work" in {
     JobTest[ElasticsearchDirectRunnerJob.type]
-      .output(ElasticsearchIOTest[Int](options))(_ should containInAnyOrder (data))
+      .output(ElasticsearchIO[Int](options))(_ should containInAnyOrder (data))
       .run()
   }
 }
