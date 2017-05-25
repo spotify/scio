@@ -99,54 +99,71 @@ public class ElasticsearchIO {
       return new Bound<>().withNumOfShard(numOfShard);
     }
 
+    /**
+     * Returns a transform for writing to Elasticsearch cluster.
+     *
+     * @param error applies given function if specified in case of
+     *              Elasticsearch error with bulk writes. Default behavior throws IOException.
+     */
+    public static<T> Bound withError(SerializableConsumer<String> error) {
+      return new Bound<>().withError(error);
+    }
+
     public static class Bound<T> extends PTransform<PCollection<T>, PDone> {
       private final String clusterName;
       private final InetSocketAddress[] servers;
       private final Duration flushInterval;
-      private final SerializableFunction<T, IndexRequest> function;
+      private final SerializableFunction<T, IndexRequest> toIndexRequest;
       private final Long numOfShard;
+      private final SerializableConsumer<String> error;
 
       private Bound(final String clusterName,
                     final InetSocketAddress[] servers,
                     final Duration flushInterval,
-                    final SerializableFunction<T, IndexRequest> function,
-                    final Long numOfShard) {
+                    final SerializableFunction<T, IndexRequest> toIndexRequest,
+                    final Long numOfShard,
+                    final SerializableConsumer<String> error) {
         this.clusterName = clusterName;
         this.servers = servers;
         this.flushInterval = flushInterval;
-        this.function = function;
+        this.toIndexRequest = toIndexRequest;
         this.numOfShard = numOfShard;
+        this.error = error;
       }
 
       Bound() {
-        this(null, null, null, null, null);
+        this(null, null, null, null, null, null);
       }
 
       public Bound<T> withClusterName(String clusterName) {
-        return new Bound<>(clusterName, servers, flushInterval, function, numOfShard);
+        return new Bound<>(clusterName, servers, flushInterval, toIndexRequest, numOfShard, error);
       }
 
       public Bound<T> withServers(InetSocketAddress[] servers) {
-        return new Bound<>(clusterName, servers, flushInterval, function, numOfShard);
+        return new Bound<>(clusterName, servers, flushInterval, toIndexRequest, numOfShard, error);
       }
 
       public Bound<T> withFlushInterval(Duration flushInterval) {
-        return new Bound<>(clusterName, servers, flushInterval, function, numOfShard);
+        return new Bound<>(clusterName, servers, flushInterval, toIndexRequest, numOfShard, error);
       }
 
-      public Bound<T> withFunction(SerializableFunction<T, IndexRequest> function) {
-        return new Bound<>(clusterName, servers, flushInterval, function, numOfShard);
+      public Bound<T> withFunction(SerializableFunction<T, IndexRequest> toIndexRequest) {
+        return new Bound<>(clusterName, servers, flushInterval, toIndexRequest, numOfShard, error);
       }
 
       public Bound<T> withNumOfShard(Long numOfShard) {
-        return new Bound<>(clusterName, servers, flushInterval, function, numOfShard);
+        return new Bound<>(clusterName, servers, flushInterval, toIndexRequest, numOfShard, error);
+      }
+
+      public Bound<T> withError(SerializableConsumer<String> error) {
+        return new Bound<>(clusterName, servers, flushInterval, toIndexRequest, numOfShard, error);
       }
 
       @Override
       public PDone expand(final PCollection<T> input) {
         checkNotNull(clusterName);
         checkNotNull(servers);
-        checkNotNull(function);
+        checkNotNull(toIndexRequest);
         checkNotNull(numOfShard);
         checkNotNull(flushInterval);
         input
@@ -159,7 +176,7 @@ public class ElasticsearchIO {
                        .discardingFiredPanes())
             .apply(GroupByKey.create())
             .apply("Write to Elasticesarch",
-                   ParDo.of(new ElasticsearchWriter(clusterName, servers, function)));
+                   ParDo.of(new ElasticsearchWriter(clusterName, servers, toIndexRequest, error)));
         return PDone.in(input.getPipeline());
       }
     }
@@ -182,19 +199,22 @@ public class ElasticsearchIO {
     private static class ElasticsearchWriter<T> extends DoFn<KV<Long, Iterable<T>>, Void> {
       private final Logger LOG = LoggerFactory.getLogger(ElasticsearchWriter.class);
       private final ClientSupplier clientSupplier;
-      private final SerializableFunction<T, IndexRequest> function;
+      private final SerializableFunction<T, IndexRequest> toIndexRequest;
+      private final SerializableConsumer<String> error;
 
       public ElasticsearchWriter(String clusterName,
                                  InetSocketAddress[] servers,
-                                 SerializableFunction<T, IndexRequest> function) {
+                                 SerializableFunction<T, IndexRequest> toIndexRequest,
+                                 SerializableConsumer<String> error) {
         this.clientSupplier = new ClientSupplier(clusterName, servers);
-        this.function = function;
+        this.toIndexRequest = toIndexRequest;
+        this.error = error;
       }
       @ProcessElement
       public void processElement(ProcessContext c) throws Exception {
         final BulkRequestBuilder bulkRequestBuilder = clientSupplier.get().prepareBulk();
 
-        c.element().getValue().forEach(x -> bulkRequestBuilder.add(function.apply(x)));
+        c.element().getValue().forEach(x -> bulkRequestBuilder.add(toIndexRequest.apply(x)));
         // Elasticsearch throws ActionRequestValidationException if bulk request is empty,
         // so do nothing if number of actions is zero.
         if (bulkRequestBuilder.numberOfActions() == 0) {
@@ -204,7 +224,10 @@ public class ElasticsearchIO {
 
         final BulkResponse bulkItemResponse = bulkRequestBuilder.get();
         if (bulkItemResponse.hasFailures()) {
-          throw new IOException(bulkItemResponse.buildFailureMessage());
+          if (error == null)
+            throw new IOException(bulkItemResponse.buildFailureMessage());
+          else
+            error.accept(bulkItemResponse.buildFailureMessage());
         }
       }
     }

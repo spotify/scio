@@ -50,9 +50,11 @@ package object elasticsearch {
       *
       * @param elasticsearchOptions defines clusterName and cluster endpoints
       * @param f transforms arbitrary type T to the object required by Elasticsearch client
+      * @param e handles custom error in case of bulk write by Elasticsearch client
       */
     def saveAsElasticsearch(elasticsearchOptions: ElasticsearchOptions,
-                            f: T => IndexRequest) :Future[Tap[T]] = {
+                            f: T => IndexRequest,
+                            e: String => Unit) :Future[Tap[T]] = {
       def numOfWorkers: Long = {
         val runner = self.context.pipeline.getRunner
         val maxNumWorkers = runner match {
@@ -73,7 +75,8 @@ package object elasticsearch {
         }
         maxNumWorkers
       }
-      saveAsElasticsearch(elasticsearchOptions, Duration.standardSeconds(1), f, numOfWorkers)
+      saveAsElasticsearch(elasticsearchOptions,
+        Duration.standardSeconds(1), f, numOfWorkers, e)
     }
 
     /**
@@ -84,11 +87,13 @@ package object elasticsearch {
       * @param f transforms arbitrary type T to the object required by Elasticsearch client
       * @param numOfShard number of parallel writes to be performed.
       *                   Note: Recommended to be equal to number of workers in your pipeline.
+      * @param e handles custom error in case of bulk write by Elasticsearch client
       */
     def saveAsElasticsearch(elasticsearchOptions: ElasticsearchOptions,
                             flushInterval: Duration = Duration.standardSeconds(1),
                             f: T => IndexRequest,
-                            numOfShard: Long) :Future[Tap[T]] = {
+                            numOfShard: Long,
+                            e: String => Unit) :Future[Tap[T]] = {
       if (self.context.isTest) {
         self.context.testOut(
           ElasticsearchIOTest[T](elasticsearchOptions))(self)
@@ -100,7 +105,10 @@ package object elasticsearch {
             .withNumOfShard(numOfShard)
             .withFunction(new SerializableFunction[T, IndexRequest]() {
               override def apply(t: T): IndexRequest = f(t)
-            }))
+            })
+          .withError(new SerializableConsumer[String]() {
+            override def accept(t: String): Unit = e(t)
+          }))
       }
       Future.failed(new NotImplementedError("Custom future not implemented"))
     }

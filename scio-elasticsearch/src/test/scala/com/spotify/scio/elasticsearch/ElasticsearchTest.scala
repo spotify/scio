@@ -35,7 +35,7 @@ object ElasticsearchJob {
   import ElasticsearchJobSpec._
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, _) = ContextAndArgs(cmdlineArgs)
-    sc.parallelize(data).saveAsElasticsearch(options, flushInterval, toIndexRequest, shard)
+    sc.parallelize(data).saveAsElasticsearch(options, flushInterval, toIndexRequest, shard,_=> ())
     sc.close()
   }
 }
@@ -43,7 +43,7 @@ object ElasticsearchDirectRunnerJob {
   import ElasticsearchJobSpec._
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, _) = ContextAndArgs(cmdlineArgs)
-    sc.parallelize(data).saveAsElasticsearch(options, toIndexRequest)
+    sc.parallelize(data).saveAsElasticsearch(options, toIndexRequest,_=> ())
     sc.close()
   }
 }
