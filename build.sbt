@@ -201,7 +201,8 @@ lazy val root: Project = Project(
   scioJdbc,
   scioRepl,
   scioExamples,
-  scioSchemas
+  scioSchemas,
+  scioElasticsearch
 )
 
 lazy val scioCore: Project = Project(
@@ -293,6 +294,23 @@ lazy val scioBigtable: Project = Project(
   scioTest % "it"
 ).configs(IntegrationTest)
 
+lazy val scioElasticsearch: Project = Project(
+  "scio-elasticsearch",
+  file("scio-elasticsearch")
+).settings(
+  commonSettings,
+  description := "Scio add-on for writing to Elasticsearch",
+  libraryDependencies ++= Seq(
+    "com.google.guava" % "guava" % guavaVersion,
+    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+    "joda-time" % "joda-time" % jodaTimeVersion,
+    "org.elasticsearch" % "elasticsearch" % "2.1.0"
+  )
+).dependsOn(
+  scioCore,
+  scioTest % "test"
+)
+
 lazy val scioExtra: Project = Project(
   "scio-extra",
   file("scio-extra")
@@ -377,6 +395,7 @@ lazy val scioExamples: Project = Project(
   scioSchemas,
   scioHdfs,
   scioJdbc,
+  scioElasticsearch,
   scioTest % "test"
 )
 
