@@ -24,24 +24,40 @@ import com.spotify.scio.testing.PipelineSpec
 import org.elasticsearch.action.index.IndexRequest
 import org.joda.time.Duration
 
-object ElasticsearchJob {
+object ElasticsearchJobSpec {
   val options = new ElasticsearchOptions("clusterName", Array(new InetSocketAddress(8080)))
   val data = Seq(1, 2, 3)
+  val shard = 2
+  val toIndexRequest = (x: Int) => new IndexRequest()
+  val flushInterval = Duration.standardSeconds(1)
+}
+object ElasticsearchJob {
+  import ElasticsearchJobSpec._
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, _) = ContextAndArgs(cmdlineArgs)
-    val shard = 2
-    val toIndexRequest = (x: Int) => new IndexRequest()
-    val flushInterval = Duration.standardSeconds(1)
-    sc.parallelize(data)
-      .saveAsElasticsearch(options, flushInterval, toIndexRequest, shard)
+    sc.parallelize(data).saveAsElasticsearch(options, flushInterval, toIndexRequest, shard)
+    sc.close()
+  }
+}
+object ElasticsearchDirectRunnerJob {
+  import ElasticsearchJobSpec._
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, _) = ContextAndArgs(cmdlineArgs)
+    sc.parallelize(data).saveAsElasticsearch(options, toIndexRequest)
     sc.close()
   }
 }
 class ElasticsearchTest extends PipelineSpec {
-  import ElasticsearchJob._
+  import ElasticsearchJobSpec._
   "ElasticsearchIO" should "work" in {
     JobTest[ElasticsearchJob.type]
       .output(ElasticsearchIOTest[Int](options))(_ should containInAnyOrder(data))
       .run()
   }
+  "ElasticsearchIO with DirectRunner" should "work" in {
+    JobTest[ElasticsearchDirectRunnerJob.type]
+      .output(ElasticsearchIOTest[Int](options))(_ should containInAnyOrder(data))
+      .run()
+  }
 }
+

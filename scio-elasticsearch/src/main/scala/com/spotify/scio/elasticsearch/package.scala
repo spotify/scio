@@ -23,6 +23,9 @@ import org.joda.time.Duration
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
+import org.apache.beam.runners.dataflow.DataflowRunner
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.elasticsearch.action.index.IndexRequest
 
@@ -39,10 +42,40 @@ package object elasticsearch {
 
   case class ElasticsearchIOTest[T](options: ElasticsearchOptions)
     extends TestIO[T](options.toString)
-
   case class ElasticsearchOptions(clusterName: String, servers: Array[InetSocketAddress])
-  implicit class ElasticsearchSCollection[T](val self: SCollection[T])
-    extends AnyVal {
+
+  implicit class ElasticsearchSCollection[T](val self: SCollection[T]) extends AnyVal {
+    /**
+      * Save this SCollection into Elasticsearch.
+      *
+      * @param elasticsearchOptions defines clusterName and cluster endpoints
+      * @param f transforms arbitrary type T to the object required by Elasticsearch client
+      */
+    def saveAsElasticsearch(elasticsearchOptions: ElasticsearchOptions,
+                            f: T => IndexRequest) :Future[Tap[T]] = {
+      def numOfWorkers: Long = {
+        val runner = self.context.pipeline.getRunner
+        val maxNumWorkers = runner match {
+          case _: DirectRunner => 1
+          case _: DataflowRunner =>
+            val pipelineOptions = self.context.optionsAs[DataflowPipelineOptions]
+            val numWorkers = Math.max(
+              pipelineOptions.getNumWorkers, pipelineOptions.getMaxNumWorkers)
+            require(
+              numWorkers != 0,
+              "Given runner does not support numWorkers or maxNumWorkers. " +
+                "You must specify the value explicitly."
+            )
+            numWorkers
+          case _ => throw new NotImplementedError(
+            s"You must specify numWorkers explicitly for runner ${runner.getClass}"
+          )
+        }
+        maxNumWorkers
+      }
+      saveAsElasticsearch(elasticsearchOptions, Duration.standardSeconds(1), f, numOfWorkers)
+    }
+
     /**
       * Save this SCollection into Elasticsearch.
       *
@@ -56,7 +89,6 @@ package object elasticsearch {
                             flushInterval: Duration = Duration.standardSeconds(1),
                             f: T => IndexRequest,
                             numOfShard: Long) :Future[Tap[T]] = {
-
       if (self.context.isTest) {
         self.context.testOut(
           ElasticsearchIOTest[T](elasticsearchOptions))(self)
