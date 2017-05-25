@@ -377,6 +377,7 @@ lazy val scioExamples: Project = Project(
   scioSchemas,
   scioHdfs,
   scioJdbc,
+  scioExtra,
   scioTest % "test"
 )
 
