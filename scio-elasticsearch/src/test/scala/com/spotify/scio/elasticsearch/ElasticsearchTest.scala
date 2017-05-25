@@ -31,32 +31,35 @@ object ElasticsearchJobSpec {
   val toIndexRequest = (x: Int) => new IndexRequest()
   val flushInterval = Duration.standardSeconds(1)
 }
+
 object ElasticsearchJob {
   import ElasticsearchJobSpec._
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, _) = ContextAndArgs(cmdlineArgs)
-    sc.parallelize(data).saveAsElasticsearch(options, flushInterval, toIndexRequest, shard,_=> ())
+    sc.parallelize(data).saveAsElasticsearch(options, flushInterval, toIndexRequest, shard, _=> ())
     sc.close()
   }
 }
+
 object ElasticsearchDirectRunnerJob {
   import ElasticsearchJobSpec._
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, _) = ContextAndArgs(cmdlineArgs)
-    sc.parallelize(data).saveAsElasticsearch(options, toIndexRequest,_=> ())
+    sc.parallelize(data).saveAsElasticsearch(options, toIndexRequest)
     sc.close()
   }
 }
+
 class ElasticsearchTest extends PipelineSpec {
   import ElasticsearchJobSpec._
   "ElasticsearchIO" should "work" in {
     JobTest[ElasticsearchJob.type]
-      .output(ElasticsearchIOTest[Int](options))(_ should containInAnyOrder(data))
+      .output(ElasticsearchIOTest[Int](options))(_ should containInAnyOrder (data))
       .run()
   }
   "ElasticsearchIO with DirectRunner" should "work" in {
     JobTest[ElasticsearchDirectRunnerJob.type]
-      .output(ElasticsearchIOTest[Int](options))(_ should containInAnyOrder(data))
+      .output(ElasticsearchIOTest[Int](options))(_ should containInAnyOrder (data))
       .run()
   }
 }

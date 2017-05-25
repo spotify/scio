@@ -17,6 +17,7 @@
 
 package com.spotify.scio
 
+import java.io.IOException
 import java.net.InetSocketAddress
 
 import org.joda.time.Duration
@@ -42,7 +43,12 @@ package object elasticsearch {
 
   case class ElasticsearchIOTest[T](options: ElasticsearchOptions)
     extends TestIO[T](options.toString)
-  case class ElasticsearchOptions(clusterName: String, servers: Array[InetSocketAddress])
+
+  case class ElasticsearchOptions(clusterName: String, servers: Array[InetSocketAddress]) {
+    override def toString: String = {
+      s"Elasticsearch configured with: $clusterName and ${servers.mkString(", ")}"
+    }
+  }
 
   implicit class ElasticsearchSCollection[T](val self: SCollection[T]) extends AnyVal {
     /**
@@ -50,11 +56,10 @@ package object elasticsearch {
       *
       * @param elasticsearchOptions defines clusterName and cluster endpoints
       * @param f transforms arbitrary type T to the object required by Elasticsearch client
-      * @param e handles custom error in case of bulk write by Elasticsearch client
       */
     def saveAsElasticsearch(elasticsearchOptions: ElasticsearchOptions,
-                            f: T => IndexRequest,
-                            e: String => Unit) :Future[Tap[T]] = {
+                            f: T => IndexRequest )
+    :Future[Tap[T]] = {
       def numOfWorkers: Long = {
         val runner = self.context.pipeline.getRunner
         val maxNumWorkers = runner match {
@@ -76,7 +81,7 @@ package object elasticsearch {
         maxNumWorkers
       }
       saveAsElasticsearch(elasticsearchOptions,
-        Duration.standardSeconds(1), f, numOfWorkers, e)
+        Duration.standardSeconds(1), f, numOfWorkers, m => throw new IOException(m))
     }
 
     /**
@@ -87,13 +92,13 @@ package object elasticsearch {
       * @param f transforms arbitrary type T to the object required by Elasticsearch client
       * @param numOfShard number of parallel writes to be performed.
       *                   Note: Recommended to be equal to number of workers in your pipeline.
-      * @param e handles custom error in case of bulk write by Elasticsearch client
+      * @param errorHandle handles custom error in case of bulk write by Elasticsearch client
       */
     def saveAsElasticsearch(elasticsearchOptions: ElasticsearchOptions,
                             flushInterval: Duration = Duration.standardSeconds(1),
                             f: T => IndexRequest,
                             numOfShard: Long,
-                            e: String => Unit) :Future[Tap[T]] = {
+                            errorHandle: String => Unit) :Future[Tap[T]] = {
       if (self.context.isTest) {
         self.context.testOut(
           ElasticsearchIOTest[T](elasticsearchOptions))(self)
@@ -107,7 +112,7 @@ package object elasticsearch {
               override def apply(t: T): IndexRequest = f(t)
             })
           .withError(new SerializableConsumer[String]() {
-            override def accept(t: String): Unit = e(t)
+              override def accept(t: String): Unit = errorHandle(t)
           }))
       }
       Future.failed(new NotImplementedError("Custom future not implemented"))
