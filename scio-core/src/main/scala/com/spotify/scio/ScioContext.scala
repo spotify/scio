@@ -196,19 +196,20 @@ class ScioContext private[scio] (val options: PipelineOptions,
       }
     }
 
+  // if in local runner, temp location may be needed, but is not currently required by
+  // the runner, which may end up with NPE. If not set but user generate new temp dir
+  if (ScioUtil.isLocalRunner(options) && options.getTempLocation == null) {
+    val tmpDir = Files.createTempDirectory("scio-temp-")
+    logger.debug(s"New temp directory at $tmpDir")
+    options.setTempLocation(tmpDir.toString)
+  }
+
   /** Underlying pipeline. */
   def pipeline: Pipeline = {
     if (_pipeline == null) {
       // TODO: make sure this works for other PipelineOptions
       Try(optionsAs[DataflowPipelineWorkerPoolOptions])
         .foreach(_.setFilesToStage(getFilesToStage(artifacts).asJava))
-      // if in local runner, temp location may be needed, but is not currently required by
-      // the runner, which may end up with NPE. If not set but user generate new temp dir
-      if (ScioUtil.isLocalRunner(options) && options.getTempLocation == null) {
-        val tmpDir = Files.createTempDirectory("scio-temp-")
-        logger.debug(s"New temp directory at $tmpDir")
-        options.setTempLocation(tmpDir.toString)
-      }
       _pipeline = if (testId.isEmpty) {
         Pipeline.create(options)
       } else {
@@ -224,6 +225,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
           .invoke(tp, Boolean.box(true))
         // propagate options
         tp.getOptions.setStableUniqueNames(options.getStableUniqueNames)
+        tp.getOptions.setTempLocation(options.getTempLocation)
         tp
       }
       _pipeline.getCoderRegistry.registerScalaCoders()
