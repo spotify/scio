@@ -830,8 +830,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * pipeline completes successfully.
    * @group output
    */
-  def materialize: Future[Tap[T]] = materialize(ScioUtil.getTempFile(context))
-  private[scio] def materialize(path: String): Future[Tap[T]] = saveAsObjectFile(path)
+  def materialize: Future[Tap[T]] = materialize(ScioUtil.getTempFile(context), isCheckpoint = false)
+  private[scio] def materialize(path: String, isCheckpoint: Boolean): Future[Tap[T]] =
+    internalSaveAsObjectFile(path, isCheckpoint = isCheckpoint)
 
   /**
    * Save this SCollection as an object file using default serialization.
@@ -841,10 +842,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group output
    */
   def saveAsObjectFile(path: String, numShards: Int = 0, suffix: String = ".obj",
-                       metadata: Map[String, AnyRef] = Map.empty)
+                       metadata: Map[String, AnyRef] = Map.empty): Future[Tap[T]] =
+    internalSaveAsObjectFile(path, numShards, suffix, metadata, isCheckpoint = false)
+
+  private def internalSaveAsObjectFile(path: String, numShards: Int = 0, suffix: String = ".obj",
+                                       metadata: Map[String, AnyRef] = Map.empty,
+                                       isCheckpoint: Boolean = false)
   : Future[Tap[T]] = {
     if (context.isTest) {
-      context.testOut(ObjectFileIO(path))(this)
+      // if it's a test and checkpoint - no need to test checkpoint data
+      if (!isCheckpoint) context.testOut(ObjectFileIO(path))(this)
       saveAsInMemoryTap
     } else {
       val elemCoder = this.getCoder[T]

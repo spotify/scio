@@ -19,6 +19,7 @@ package com.spotify.scio.extra
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.FileStorage
+import com.spotify.scio.testing.ObjectFileIO
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 
@@ -33,6 +34,13 @@ import scala.reflect.ClassTag
  */
 package object checkpoint {
 
+  // scalastyle:off method.name
+  /**
+   * For use in testing, see [[CheckpointExampleTest]].
+   */
+  def CheckpointIO[T](fileOrPath: String): ObjectFileIO[T] = ObjectFileIO[T](fileOrPath)
+  // scalastyle:on method.name
+
   implicit class CheckpointScioContext(val self: ScioContext) extends AnyVal {
 
     /**
@@ -45,14 +53,28 @@ package object checkpoint {
      */
     def checkpoint[T: ClassTag](fileOrPath: String)
                                (fn: => SCollection[T]): SCollection[T] = {
-      val path = ScioUtil.getTempFile(self, fileOrPath)
-      if (FileStorage(ScioUtil.addPartSuffix(path)).isDone) {
-        self.objectFile[T](ScioUtil.addPartSuffix(path))
+
+      val path = if (self.isTest) {
+        fileOrPath
+      } else {
+        ScioUtil.getTempFile(self, fileOrPath)
+      }
+      if (isCheckpointAvailable(path)) {
+        self.objectFile[T](if (self.isTest) path else ScioUtil.addPartSuffix(path))
       } else {
         val r = fn
         require(r.context == self, "Result SCollection has to share the same ScioContext")
-        r.materialize(path)
+        r.materialize(path, isCheckpoint = true)
         r
+      }
+    }
+
+    private def isCheckpointAvailable(path: String): Boolean = {
+      if (self.isTest && self.testIn.m.contains(ObjectFileIO(path))) {
+        // if it's test and checkpoint was registered in test
+        true
+      } else {
+        FileStorage(ScioUtil.addPartSuffix(path)).isDone
       }
     }
   }
