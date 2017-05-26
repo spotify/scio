@@ -24,12 +24,18 @@ object CheckpointExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    val words = sc.checkpoint(args("checkpoint") + "-src"){
+    val words = sc.checkpoint(args("checkpoint") + "-src") {
+      // Result of this block is stored as a checkpoint. If checkpoint already exists, this block
+      // is not executed. In this example we use ScioContext to read an process some data.
       sc.textFile(args("input"))
         .map(_.trim)
         .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-      }
-    val count = sc.checkpoint(args("checkpoint") + "-count")(words.countByValue)
+    }
+    val count = sc.checkpoint(args("checkpoint") + "-count")(
+      // Another checkpoint block, this time we use SCollection, perform a transformation and
+      // checkpoint the result.
+      words.countByValue
+    )
 
     words.saveAsTextFile(args("output") + "-words")
     count.max(Ordering.by(_._2)).saveAsTextFile(args("output") + "-max")
