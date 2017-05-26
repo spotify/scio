@@ -29,7 +29,7 @@ object CheckpointExample {
         .map(_.trim)
         .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       }
-    val count = sc.checkpoint(args("checkpoint") + "-count2")(words.countByValue)
+    val count = sc.checkpoint(args("checkpoint") + "-count")(words.countByValue)
 
     words.saveAsTextFile(args("output") + "-words")
     count.max(Ordering.by(_._2)).saveAsTextFile(args("output") + "-max")
