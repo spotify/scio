@@ -19,7 +19,8 @@ package com.spotify.scio.values
 
 import java.nio.ByteBuffer
 
-import com.spotify.scio.testing.{ItUtils, PipelineSpec}
+import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.testing.util.ItUtils
 import com.spotify.scio.{ScioContext, ScioResult}
 import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
 import org.apache.beam.sdk.util.MimeTypes
