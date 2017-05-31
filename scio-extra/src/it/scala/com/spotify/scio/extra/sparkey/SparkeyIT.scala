@@ -19,7 +19,8 @@ package com.spotify.scio.extra.sparkey
 
 import java.nio.ByteBuffer
 
-import com.spotify.scio.testing.{ItUtils, PipelineSpec}
+import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.testing.util.ItUtils
 import org.apache.beam.sdk.util.MimeTypes
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 
