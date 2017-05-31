@@ -19,7 +19,7 @@ package com.spotify.scio
 
 import java.net.URI
 
-import com.spotify.scio.testing.ItUtils
+import com.spotify.scio.testing.util.ItUtils
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
