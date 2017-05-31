@@ -19,20 +19,16 @@ package com.spotify.scio
 
 import java.nio.file.Files
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.google.common.collect.Lists
 import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.ScioUtil
-import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.transforms.Create
-import org.apache.commons.lang.exception.ExceptionUtils
 
 class ScioContextTest extends PipelineSpec {
 
@@ -44,30 +40,28 @@ class ScioContextTest extends PipelineSpec {
   }
 
   it should "have temp location for default runner" in {
-    val pipeline = ScioContext().pipeline
-    pipeline.getOptions.getTempLocation should not be null
+    val opts = ScioContext().options
+    opts.getTempLocation should not be null
   }
 
   it should "have temp location for DirectRunner" in {
     val opts = PipelineOptionsFactory.create()
     opts.setRunner(classOf[DirectRunner])
-    val pipeline = ScioContext(opts).pipeline
-    pipeline.getOptions.getTempLocation should not be null
+    ScioContext(opts).options.getTempLocation should not be null
   }
 
   it should "support user defined temp location" in {
     val expected = "/expected"
     val opts = PipelineOptionsFactory.create()
     opts.setTempLocation(expected)
-    val pipeline = ScioContext(opts).pipeline
-    pipeline.getOptions.getTempLocation shouldBe expected
+    ScioContext(opts).options.getTempLocation shouldBe expected
   }
 
   it should "support user defined job name via options" in {
     val jobName = "test-job-1"
     val opts = PipelineOptionsFactory.create().as(classOf[DataflowPipelineOptions])
     opts.setJobName(jobName)
-    val pipelineOpts = ScioContext(opts).pipeline.getOptions.as(classOf[DataflowPipelineOptions])
+    val pipelineOpts = ScioContext(opts).optionsAs[DataflowPipelineOptions]
     pipelineOpts.getJobName shouldBe jobName
   }
 
@@ -76,7 +70,7 @@ class ScioContextTest extends PipelineSpec {
     val opts = PipelineOptionsFactory.create().as(classOf[DataflowPipelineOptions])
     val sc = ScioContext(opts)
     sc.setJobName(jobName)
-    val pipelineOpts = sc.pipeline.getOptions.as(classOf[DataflowPipelineOptions])
+    val pipelineOpts = ScioContext(opts).optionsAs[DataflowPipelineOptions]
     pipelineOpts.getJobName shouldBe jobName
   }
 
@@ -87,7 +81,7 @@ class ScioContextTest extends PipelineSpec {
     opts.setJobName(jobName1)
     val sc = ScioContext(opts)
     sc.setJobName(jobName2)
-    val pipelineOpts = sc.pipeline.getOptions.as(classOf[DataflowPipelineOptions])
+    val pipelineOpts = ScioContext(opts).optionsAs[DataflowPipelineOptions]
     pipelineOpts.getJobName shouldBe jobName2
   }
 

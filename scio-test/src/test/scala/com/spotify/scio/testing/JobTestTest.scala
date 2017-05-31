@@ -129,9 +129,9 @@ object MaterializeJob {
 object CustomIOJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val inputTransform = gio.TextIO.Read
+    val inputTransform = gio.TextIO.read()
       .from(args("input"))
-    val outputTransform = gio.TextIO.Write
+    val outputTransform = gio.TextIO.write()
       .to(args("output"))
     sc.customInput("TextIn", inputTransform)
       .map(_.toInt)
