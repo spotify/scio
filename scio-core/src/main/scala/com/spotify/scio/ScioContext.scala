@@ -220,7 +220,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
         // propagate options
         val opts = PipelineOptionsFactory.create()
         opts.setStableUniqueNames(options.getStableUniqueNames)
-        val tp = cls.getMethod("create").invoke(null, opts).asInstanceOf[Pipeline]
+        val tp = cls.getMethod("fromOptions", classOf[PipelineOptions])
+          .invoke(null, opts).asInstanceOf[Pipeline]
         // workaround for @Rule enforcement introduced by
         // https://issues.apache.org/jira/browse/BEAM-1205
         cls
