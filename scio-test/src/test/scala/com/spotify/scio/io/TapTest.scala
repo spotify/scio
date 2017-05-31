@@ -194,14 +194,14 @@ class TapTest extends TapSpec {
 
   it should "support saveAsTFRecordFile" in {
     val data = Seq.fill(100)(UUID.randomUUID().toString)
-    import TFRecordOptions.CompressionType._
-    for (compressionType <- Seq(NONE, ZLIB, GZIP)) {
+    import org.apache.beam.sdk.io.TFRecordIO.{CompressionType => CType}
+    for (compressionType <- Seq(CType.NONE, CType.ZLIB, CType.GZIP)) {
       val dir = tmpDir
       val t = runWithFileFuture {
         _
           .parallelize(data)
           .map(_.getBytes)
-          .saveAsTfRecordFile(dir.getPath, tfRecordOptions = TFRecordOptions(compressionType))
+          .saveAsTfRecordFile(dir.getPath, compressionType = compressionType)
       }
       verifyTap(t.map(new String(_)), data.toSet)
       FileUtils.deleteDirectory(dir)
