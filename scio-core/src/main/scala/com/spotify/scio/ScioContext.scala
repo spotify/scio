@@ -128,7 +128,7 @@ object ScioContext {
   implicit def makeDistCacheScioContext(self: ScioContext): DistCacheScioContext =
     new DistCacheScioContext(self)
 
-  private val defaultOptions: PipelineOptions = PipelineOptionsFactory.create()
+  private def defaultOptions: PipelineOptions = PipelineOptionsFactory.create()
 
 }
 
