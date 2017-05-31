@@ -19,6 +19,9 @@ package com.spotify.scio.values
 
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.MultiJoin
+import org.apache.beam.sdk.Pipeline
+import org.apache.beam.sdk.runners.TransformHierarchy
+import org.apache.beam.sdk.values.PCollection
 
 class NamedTransformTest extends PipelineSpec {
 
@@ -138,10 +141,25 @@ class NamedTransformTest extends PipelineSpec {
 
   private def assertTransformNameStartsWith(p: PCollectionWrapper[_], tfName: String) = {
     val prefix = tfName.split("[\\(/]").toList
-    p.internal.getProducingTransformInternal.getFullName
-      .split("[\\(/]")
-      .toList
-      .take(prefix.length) shouldBe prefix
+    val visitor = new AssertTransformNameVisitor(p.internal, tfName)
+    p.context.pipeline.traverseTopologically(visitor)
+    visitor.success shouldBe true
+  }
+
+  private class AssertTransformNameVisitor(pcoll: PCollection[_], tfName: String)
+    extends Pipeline.PipelineVisitor.Defaults {
+    val prefix = tfName.split("[\\(/]").toList
+    var success = false
+
+    override def visitPrimitiveTransform(node: TransformHierarchy#Node): Unit = {
+      if (node.getOutputs.containsValue(pcoll)) {
+        success = node.getFullName
+          .split("[\\(/]")
+          .toList
+          .take(prefix.length).equals(prefix)
+      }
+
+    }
   }
 
 }
