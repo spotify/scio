@@ -29,8 +29,9 @@ import com.spotify.scio.ScioContext
 import org.apache.beam.runners.dataflow.options._
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.{Coder, CoderRegistry}
+import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryTableRowIterator
-import org.apache.beam.sdk.options.{GcpOptions, PipelineOptions}
+import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.util.Transport
 import org.slf4j.LoggerFactory
 
