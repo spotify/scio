@@ -25,6 +25,7 @@ import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro.{AvroUtils, TestRecord}
 import com.spotify.scio.bigquery._
 import com.spotify.scio.util.MockedPrintStream
+import com.spotify.scio.values.SCollection
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.{io => gio}
 
@@ -82,6 +83,27 @@ object PubsubJob {
     sc.pubsubTopic[String](args("input"), null)
       .map(_ + "X")
       .saveAsPubsub(args("output"))
+    sc.close()
+  }
+}
+
+object PubsubInWithAttributesJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.pubsubSubscriptionWithAttributes(args("input"))
+      .map((v: (String, Map[String, String])) => (v._1 + "X", v._2))
+      .saveAsPubsubWithAttributes(args("output"))
+    sc.close()
+  }
+}
+
+object PubsubOutWithAttributesJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.pubsubTopic[String](args("input"), null)
+      .map(_ + "X")
+      .map(s => (s, Map("attribute1"-> "value1")))
+      .saveAsPubsubWithAttributes(args("output"))
     sc.close()
   }
 }
