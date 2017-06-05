@@ -197,13 +197,13 @@ lazy val root: Project = Project(
   scioTest,
   scioBigQuery,
   scioBigtable,
+  scioElasticsearch,
   scioExtra,
   scioHdfs,
   scioJdbc,
   scioRepl,
   scioExamples,
-  scioSchemas,
-  scioElasticsearch
+  scioSchemas
 )
 
 lazy val scioCore: Project = Project(
@@ -303,7 +303,6 @@ lazy val scioElasticsearch: Project = Project(
   description := "Scio add-on for writing to Elasticsearch",
   libraryDependencies ++= Seq(
     "com.google.guava" % "guava" % guavaVersion,
-    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
     "joda-time" % "joda-time" % jodaTimeVersion,
     "org.elasticsearch" % "elasticsearch" % elasticsearchVersion
   )
@@ -356,6 +355,20 @@ lazy val scioHdfs: Project = Project(
   scioSchemas % "test"
 )
 
+lazy val scioJdbc: Project = Project(
+  "scio-jdbc",
+  file("scio-jdbc")
+).settings(
+  commonSettings,
+  description := "Scio add-on for JDBC",
+  libraryDependencies ++= Seq(
+    "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion
+  )
+).dependsOn(
+  scioCore,
+  scioTest % "test"
+)
+
 lazy val scioSchemas: Project = Project(
   "scio-schemas",
   file("scio-schemas")
@@ -396,8 +409,8 @@ lazy val scioExamples: Project = Project(
   scioSchemas,
   scioHdfs,
   scioJdbc,
-  scioExtra,
   scioElasticsearch,
+  scioExtra,
   scioTest % "test"
 )
 
@@ -436,20 +449,6 @@ lazy val scioBench: Project = Project(
   logBuffered := false
 ).dependsOn(
   scioExtra
-)
-
-lazy val scioJdbc: Project = Project(
-  "scio-jdbc",
-  file("scio-jdbc")
-).settings(
-  commonSettings,
-  description := "Scio add-on for JDBC",
-  libraryDependencies ++= Seq(
-    "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion
-  )
-).dependsOn(
-  scioCore,
-  scioTest % "test"
 )
 
 // =======================================================================
