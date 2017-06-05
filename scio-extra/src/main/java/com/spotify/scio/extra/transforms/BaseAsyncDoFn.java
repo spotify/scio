@@ -20,7 +20,6 @@ package com.spotify.scio.extra.transforms;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import org.apache.beam.sdk.transforms.DoFn;
-import org.joda.time.Instant;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
