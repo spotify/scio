@@ -70,8 +70,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Iterates over all rows in a table.
  */
-public class BigQueryTableRowIterator implements AutoCloseable {
-  private static final Logger LOG = LoggerFactory.getLogger(BigQueryTableRowIterator.class);
+public class PatchedBigQueryTableRowIterator implements AutoCloseable {
+  private static final Logger LOG = LoggerFactory.getLogger(PatchedBigQueryTableRowIterator.class);
 
   @Nullable private TableReference ref;
   @Nullable private final String projectId;
@@ -102,7 +102,7 @@ public class BigQueryTableRowIterator implements AutoCloseable {
   // Temporary table used to store query results.
   private String temporaryTableId = null;
 
-  private BigQueryTableRowIterator(
+  private PatchedBigQueryTableRowIterator(
       @Nullable TableReference ref, @Nullable String query, @Nullable String projectId,
       Bigquery client, boolean flattenResults, boolean useLegacySql) {
     this.ref = ref;
@@ -114,25 +114,25 @@ public class BigQueryTableRowIterator implements AutoCloseable {
   }
 
   /**
-   * Constructs a {@code BigQueryTableRowIterator} that reads from the specified table.
+   * Constructs a {@code PatchedBigQueryTableRowIterator} that reads from the specified table.
    */
-  public static BigQueryTableRowIterator fromTable(TableReference ref, Bigquery client) {
+  public static PatchedBigQueryTableRowIterator fromTable(TableReference ref, Bigquery client) {
     checkNotNull(ref, "ref");
     checkNotNull(client, "client");
-    return new BigQueryTableRowIterator(ref, null, ref.getProjectId(), client, true, true);
+    return new PatchedBigQueryTableRowIterator(ref, null, ref.getProjectId(), client, true, true);
   }
 
   /**
-   * Constructs a {@code BigQueryTableRowIterator} that reads from the results of executing the
+   * Constructs a {@code PatchedBigQueryTableRowIterator} that reads from the results of executing the
    * specified query in the specified project.
    */
-  public static BigQueryTableRowIterator fromQuery(
+  public static PatchedBigQueryTableRowIterator fromQuery(
       String query, String projectId, Bigquery client, @Nullable Boolean flattenResults,
       @Nullable Boolean useLegacySql) {
     checkNotNull(query, "query");
     checkNotNull(projectId, "projectId");
     checkNotNull(client, "client");
-    return new BigQueryTableRowIterator(null, query, projectId, client,
+    return new PatchedBigQueryTableRowIterator(null, query, projectId, client,
         MoreObjects.firstNonNull(flattenResults, Boolean.TRUE),
         MoreObjects.firstNonNull(useLegacySql, Boolean.TRUE));
   }
