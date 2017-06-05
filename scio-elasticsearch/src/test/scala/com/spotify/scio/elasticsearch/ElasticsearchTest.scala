@@ -25,10 +25,9 @@ import org.elasticsearch.action.index.IndexRequest
 import org.joda.time.Duration
 
 object ElasticsearchJobSpec {
-  val options = new ElasticsearchOptions("clusterName", Array(new InetSocketAddress(8080)))
+  val options = ElasticsearchOptions("clusterName", Seq(new InetSocketAddress(8080)))
   val data = Seq(1, 2, 3)
   val shard = 2
-  val toIndexRequest = (x: Int) => new IndexRequest()
   val flushInterval = Duration.standardSeconds(1)
 }
 
@@ -36,7 +35,8 @@ object ElasticsearchJob {
   import ElasticsearchJobSpec._
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, _) = ContextAndArgs(cmdlineArgs)
-    sc.parallelize(data).saveAsElasticsearch(options, flushInterval, toIndexRequest, shard, _=> ())
+    sc.parallelize(data)
+      .saveAsElasticsearch(options, _ => new IndexRequest, flushInterval, shard, _=> ())
     sc.close()
   }
 }
@@ -45,21 +45,25 @@ object ElasticsearchDirectRunnerJob {
   import ElasticsearchJobSpec._
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, _) = ContextAndArgs(cmdlineArgs)
-    sc.parallelize(data).saveAsElasticsearch(options, toIndexRequest)
+    sc.parallelize(data)
+      .saveAsElasticsearch(options, _ => new IndexRequest)
     sc.close()
   }
 }
 
 class ElasticsearchTest extends PipelineSpec {
   import ElasticsearchJobSpec._
+
   "ElasticsearchIO" should "work" in {
     JobTest[ElasticsearchJob.type]
-      .output(ElasticsearchIOTest[Int](options))(_ should containInAnyOrder (data))
+      .output(ElasticsearchIO[Int](options))(_ should containInAnyOrder (data))
       .run()
   }
+
   "ElasticsearchIO with DirectRunner" should "work" in {
     JobTest[ElasticsearchDirectRunnerJob.type]
-      .output(ElasticsearchIOTest[Int](options))(_ should containInAnyOrder (data))
+      .output(ElasticsearchIO[Int](options))(_ should containInAnyOrder (data))
       .run()
   }
+
 }

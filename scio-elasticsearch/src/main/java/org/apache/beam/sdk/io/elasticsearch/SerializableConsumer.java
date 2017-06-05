@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.elasticsearch;
+package org.apache.beam.sdk.io.elasticsearch;
 
 import java.io.Serializable;
 import java.util.function.Consumer;
