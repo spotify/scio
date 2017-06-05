@@ -58,10 +58,10 @@ package object elasticsearch {
                             f: T => IndexRequest):Future[Tap[T]] = {
       val runner = self.context.options.getRunner
       val numOfWorkers = {
-        if (classOf[DirectRunner] isAssignableFrom(runner)) {
+        if (classOf[DirectRunner] isAssignableFrom runner) {
           1
         }
-        else if (classOf[DataflowRunner] isAssignableFrom(runner)) {
+        else if (classOf[DataflowRunner] isAssignableFrom runner) {
           val opts = self.context.optionsAs[DataflowPipelineOptions]
           val n = math.max(opts.getNumWorkers, opts.getMaxNumWorkers)
           require(

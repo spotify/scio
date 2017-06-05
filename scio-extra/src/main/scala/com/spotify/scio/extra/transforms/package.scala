@@ -141,10 +141,10 @@ package object transforms {
     def withRateLimit(maxElementsPerSecond: Double): SCollection[T] = {
       val runner = self.context.options.getRunner
       val maxNumWorkers = {
-        if (classOf[DirectRunner] isAssignableFrom(runner)) {
+        if (classOf[DirectRunner] isAssignableFrom runner) {
           1
         }
-        else if (classOf[DataflowRunner] isAssignableFrom(runner)) {
+        else if (classOf[DataflowRunner] isAssignableFrom runner) {
           val pipelineOptions = self.context.optionsAs[DataflowPipelineOptions]
           val numWorkers = Math.max(pipelineOptions.getNumWorkers, pipelineOptions.getMaxNumWorkers)
           require(
