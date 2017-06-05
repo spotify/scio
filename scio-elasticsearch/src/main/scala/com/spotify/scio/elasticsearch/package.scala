@@ -56,17 +56,22 @@ package object elasticsearch {
      */
     def saveAsElasticsearch(esOptions: ElasticsearchOptions,
                             f: T => IndexRequest):Future[Tap[T]] = {
-      val numOfWorkers = self.context.pipeline.getRunner match {
-        case _: DirectRunner => 1
-        case _: DataflowRunner =>
+      val runner = self.context.options.getRunner
+      val numOfWorkers = {
+        if (classOf[DirectRunner] isAssignableFrom(runner)) {
+          1
+        }
+        else if (classOf[DataflowRunner] isAssignableFrom(runner)) {
           val opts = self.context.optionsAs[DataflowPipelineOptions]
           val n = math.max(opts.getNumWorkers, opts.getMaxNumWorkers)
           require(
             n != 0,
             "Cannot determine number of workers, either numWorkers or maxNumWorkers must be set")
           n
-        case r => throw new NotImplementedError(
-          s"You must specify numWorkers explicitly for ${r.getClass}")
+        }
+        else {
+          throw new NotImplementedError(s"You must specify numWorkers explicitly for ${runner}")
+        }
       }
       saveAsElasticsearch(esOptions, f,
         Duration.standardSeconds(1), numOfWorkers, m => throw new IOException(m))
