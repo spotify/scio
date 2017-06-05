@@ -55,6 +55,7 @@ val scalatestVersion = "3.0.3"
 val shapelessDatatypeVersion = "0.1.2"
 val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.1.3"
+val elasticsearchVersion = "2.1.0"
 
 val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework")
 
@@ -196,6 +197,7 @@ lazy val root: Project = Project(
   scioTest,
   scioBigQuery,
   scioBigtable,
+  scioElasticsearch,
   scioExtra,
   scioHdfs,
   scioJdbc,
@@ -293,6 +295,22 @@ lazy val scioBigtable: Project = Project(
   scioTest % "it"
 ).configs(IntegrationTest)
 
+lazy val scioElasticsearch: Project = Project(
+  "scio-elasticsearch",
+  file("scio-elasticsearch")
+).settings(
+  commonSettings,
+  description := "Scio add-on for writing to Elasticsearch",
+  libraryDependencies ++= Seq(
+    "com.google.guava" % "guava" % guavaVersion,
+    "joda-time" % "joda-time" % jodaTimeVersion,
+    "org.elasticsearch" % "elasticsearch" % elasticsearchVersion
+  )
+).dependsOn(
+  scioCore,
+  scioTest % "test"
+)
+
 lazy val scioExtra: Project = Project(
   "scio-extra",
   file("scio-extra")
@@ -337,6 +355,20 @@ lazy val scioHdfs: Project = Project(
   scioSchemas % "test"
 )
 
+lazy val scioJdbc: Project = Project(
+  "scio-jdbc",
+  file("scio-jdbc")
+).settings(
+  commonSettings,
+  description := "Scio add-on for JDBC",
+  libraryDependencies ++= Seq(
+    "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion
+  )
+).dependsOn(
+  scioCore,
+  scioTest % "test"
+)
+
 lazy val scioSchemas: Project = Project(
   "scio-schemas",
   file("scio-schemas")
@@ -377,6 +409,7 @@ lazy val scioExamples: Project = Project(
   scioSchemas,
   scioHdfs,
   scioJdbc,
+  scioElasticsearch,
   scioExtra,
   scioTest % "test"
 )
@@ -416,20 +449,6 @@ lazy val scioBench: Project = Project(
   logBuffered := false
 ).dependsOn(
   scioExtra
-)
-
-lazy val scioJdbc: Project = Project(
-  "scio-jdbc",
-  file("scio-jdbc")
-).settings(
-  commonSettings,
-  description := "Scio add-on for JDBC",
-  libraryDependencies ++= Seq(
-    "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion
-  )
-).dependsOn(
-  scioCore,
-  scioTest % "test"
 )
 
 // =======================================================================
