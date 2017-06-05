@@ -37,7 +37,7 @@ import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryIO, BigQueryTableRowIterator}
+import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryIO, PatchedBigQueryTableRowIterator}
 import org.apache.beam.sdk.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.util.BigQueryTableInserter
 import org.apache.commons.io.FileUtils
@@ -181,7 +181,7 @@ class BigQueryClient private (private val projectId: String,
 
   /** Get rows from a table. */
   def getTableRows(table: TableReference): Iterator[TableRow] = new Iterator[TableRow] {
-    private val iterator = BigQueryTableRowIterator.fromTable(table, bigquery)
+    private val iterator = PatchedBigQueryTableRowIterator.fromTable(table, bigquery)
     private var _isOpen = false
     private var _hasNext = false
     private def init(): Unit = if (!_isOpen) {

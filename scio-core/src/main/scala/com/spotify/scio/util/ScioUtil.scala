@@ -29,7 +29,7 @@ import com.spotify.scio.ScioContext
 import org.apache.beam.runners.dataflow.options._
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.{Coder, CoderRegistry}
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryTableRowIterator
+import org.apache.beam.sdk.io.gcp.bigquery.PatchedBigQueryTableRowIterator
 import org.apache.beam.sdk.options.{GcpOptions, PipelineOptions}
 import org.apache.beam.sdk.util.Transport
 import org.slf4j.LoggerFactory
@@ -76,7 +76,7 @@ private[scio] object ScioUtil {
 
   def executeWithBackOff[T](request: AbstractGoogleClientRequest[T], errorMsg: String): T = {
     // Reuse util method from BigQuery
-    BigQueryTableRowIterator.executeWithBackOff(request, errorMsg)
+    PatchedBigQueryTableRowIterator.executeWithBackOff(request, errorMsg)
   }
 
   def getDataflowServiceMetrics(options: DataflowPipelineOptions, jobId: String): JobMetrics = {
