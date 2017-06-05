@@ -20,6 +20,7 @@ package com.spotify.scio.extra.transforms;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import org.apache.beam.sdk.transforms.DoFn;
+import org.joda.time.Instant;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -49,14 +50,14 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
   private final ConcurrentLinkedQueue<Throwable> errors = Queues.newConcurrentLinkedQueue();
 
   @StartBundle
-  public void startBundle(Context c) {
+  public void startBundle(StartBundleContext c) {
     futures.clear();
     results.clear();
     errors.clear();
   }
 
   @FinishBundle
-  public void finishBundle(Context c) {
+  public void finishBundle(ProcessContext c) {
     if (!futures.isEmpty()) {
       try {
         waitForFutures(futures.values());
@@ -91,7 +92,7 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
     futures.put(uuid, future);
   }
 
-  private void flush(Context c) {
+  private void flush(ProcessContext c) {
     if (!errors.isEmpty()) {
       RuntimeException e = new RuntimeException("Failed to process futures");
       Throwable t = errors.poll();

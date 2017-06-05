@@ -139,10 +139,12 @@ package object transforms {
      *                             per second
      */
     def withRateLimit(maxElementsPerSecond: Double): SCollection[T] = {
-      val runner = self.context.pipeline.getRunner
-      val maxNumWorkers = runner match {
-        case _: DirectRunner => 1
-        case _: DataflowRunner =>
+      val runner = self.context.options.getRunner
+      val maxNumWorkers = {
+        if (classOf[DirectRunner] isAssignableFrom(runner)) {
+          1
+        }
+        else if (classOf[DataflowRunner] isAssignableFrom(runner)) {
           val pipelineOptions = self.context.optionsAs[DataflowPipelineOptions]
           val numWorkers = Math.max(pipelineOptions.getNumWorkers, pipelineOptions.getMaxNumWorkers)
           require(
@@ -150,9 +152,12 @@ package object transforms {
             "Rate limiting only available when numWorkers or maxNumWorkers is explicitly set"
           )
           numWorkers
-        case _ => throw new NotImplementedError(
-          s"rateLimitThroughput not implemented for runner ${runner.getClass}"
-        )
+        }
+        else {
+          throw new NotImplementedError(
+            s"rateLimitThroughput not implemented for runner ${runner}"
+          )
+        }
       }
       self.applyTransform(ParDo.of(new RateLimiterDoFn[T](maxElementsPerSecond / maxNumWorkers)))
     }
