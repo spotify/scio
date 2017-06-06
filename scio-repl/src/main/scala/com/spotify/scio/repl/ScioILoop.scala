@@ -240,6 +240,11 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
       newScioCmdImpl("sc")
       loadIoCommands()
     }
+    if (in == null) {
+      sys.error("Could not initialize Scio interpreter - abort." +
+        "One possible reason is inconsistent Scala versions. Please use the exact same version of" +
+        " Scala as scio-repl.")
+    }
     in.redrawLine()
   }
 
