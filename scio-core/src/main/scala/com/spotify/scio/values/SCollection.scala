@@ -22,7 +22,6 @@ package com.spotify.scio.values
 import java.io.{File, PrintStream}
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.net.URI
-import java.util.UUID
 
 import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
 import com.google.datastore.v1.Entity
@@ -42,7 +41,6 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.Coder
-import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.TFRecordIO.CompressionType
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
@@ -807,7 +805,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def saveAsObjectFile(path: String, numShards: Int = 0, suffix: String = ".obj",
                        metadata: Map[String, AnyRef] = Map.empty): Future[Tap[T]] =
-    internalSaveAsObjectFile(path, numShards, suffix, metadata, isCheckpoint = false)
+    internalSaveAsObjectFile(path, numShards, suffix, metadata)
 
   private def internalSaveAsObjectFile(path: String, numShards: Int = 0, suffix: String = ".obj",
                                        metadata: Map[String, AnyRef] = Map.empty,
