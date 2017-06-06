@@ -72,6 +72,12 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value,
   testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
 
+  // Avro and Protobuf
+  compileOrder := CompileOrder.JavaThenScala,
+  PB.targets in Compile := Seq(
+    PB.gens.java -> (sourceManaged in Compile).value
+  ),
+
   coverageExcludedPackages := Seq(
     "com\\.spotify\\.scio\\.examples\\..*",
     "com\\.spotify\\.scio\\.repl\\..*",
@@ -224,10 +230,6 @@ lazy val scioCore: Project = Project(
     "com.google.auto.service" % "auto-service" % autoServiceVersion,
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
     "junit" % "junit" % junitVersion % "provided"
-  ),
-  compileOrder := CompileOrder.JavaThenScala,
-  PB.targets in Compile := Seq(
-    PB.gens.java -> (sourceManaged in Compile).value
   )
 ).dependsOn(
   scioBigQuery
@@ -378,12 +380,8 @@ lazy val scioSchemas: Project = Project(
   description := "Avro/Proto schemas for testing",
   // suppress warnings
   sources in doc in Compile := List(),
-  compileOrder := CompileOrder.JavaThenScala,
   // generate both Avro and Protobuf sources in src_managed/main to avoid confusing IntelliJ
   javaSource in avroConfig := (sourceManaged in Compile).value,
-  PB.targets in Compile := Seq(
-    PB.gens.java -> (sourceManaged in Compile).value
-  ),
   // avoid accidentally deleting Avro sources
   PB.deleteTargetDirectory := false
 )
