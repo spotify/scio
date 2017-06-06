@@ -52,17 +52,18 @@ package object elasticsearch {
   implicit class ElasticsearchSCollection[T](val self: SCollection[T]) extends AnyVal {
 
     private def defaultNumOfShards: Int = {
-      self.context.pipeline.getRunner match {
-        case _: DirectRunner => 1
-        case _: DataflowRunner =>
-          val opts = self.context.optionsAs[DataflowPipelineOptions]
-          val n = math.max(opts.getNumWorkers, opts.getMaxNumWorkers)
-          require(
-            n != 0,
-            "Cannot determine number of workers, either numWorkers or maxNumWorkers must be set")
-          n
-        case r => throw new NotImplementedError(
-          s"You must specify numWorkers explicitly for ${r.getClass}")
+      val runner = self.context.options.getRunner
+      if (classOf[DirectRunner] isAssignableFrom runner) {
+        1
+      } else if (classOf[DataflowRunner] isAssignableFrom runner) {
+        val opts = self.context.optionsAs[DataflowPipelineOptions]
+        val n = math.max(opts.getNumWorkers, opts.getMaxNumWorkers)
+        require(
+          n != 0,
+          "Cannot determine number of workers, either numWorkers or maxNumWorkers must be set")
+        n
+      } else {
+        throw new NotImplementedError(s"You must specify numWorkers explicitly for ${runner}")
       }
     }
 

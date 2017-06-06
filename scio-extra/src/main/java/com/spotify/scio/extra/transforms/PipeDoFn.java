@@ -174,7 +174,7 @@ public class PipeDoFn extends DoFn<String, String> {
   }
 
   @StartBundle
-  public void startBundle(Context c) {
+  public void startBundle(ProcessContext c) {
     try {
       pipeProcess = Runtime.getRuntime().exec(cmdArray, envp, dir);
       stdIn = new BufferedWriter(new OutputStreamWriter(pipeProcess.getOutputStream()));
@@ -187,7 +187,7 @@ public class PipeDoFn extends DoFn<String, String> {
   }
 
   @FinishBundle
-  public void finishBundle(Context c) {
+  public void finishBundle(ProcessContext c) {
     try {
       stdIn.close();
       int exitCode = pipeProcess.waitFor();
