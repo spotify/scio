@@ -24,7 +24,7 @@ import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import com.spotify.scio.bigquery.types.MacroUtil._
-import com.spotify.scio.bigquery.{BigQueryClient, BigQueryUtil}
+import com.spotify.scio.bigquery.{BigQueryClient, BigQueryPartitionUtil, BigQueryUtil}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -41,7 +41,7 @@ private[types] object TypeProvider {
     import c.universe._
 
     val args = extractStrings(c, "Missing table specification")
-    val tableSpec = formatString(args)
+    val tableSpec = BigQueryPartitionUtil.latestTable(bigquery, formatString(args))
     val schema = bigquery.getTableSchema(tableSpec)
     val traits = List(tq"${p(c, SType)}.HasTable")
     val overrides = List(q"override def table: _root_.java.lang.String = ${args.head}")
@@ -59,7 +59,7 @@ private[types] object TypeProvider {
     import c.universe._
 
     val args = extractStrings(c, "Missing query")
-    val query = formatString(args)
+    val query = BigQueryPartitionUtil.latestQuery(bigquery, formatString(args))
     val schema = bigquery.getQuerySchema(query)
     val traits = Seq(tq"${p(c, SType)}.HasQuery")
     val overrides = Seq(q"override def query: _root_.java.lang.String = ${args.head}")
