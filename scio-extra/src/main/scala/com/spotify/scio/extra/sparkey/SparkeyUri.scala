@@ -23,10 +23,10 @@ import java.nio.file.{Files, Paths}
 
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.sparkey.{Sparkey, SparkeyReader}
-import org.apache.beam.sdk.options.{GcsOptions, PipelineOptions}
+import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
+import org.apache.beam.sdk.options.PipelineOptions
 
 import scala.collection.JavaConverters._
-import scala.util.Try
 
 /**
  * Represents the base URI for a Sparkey index and log file, either on the local or a remote file
