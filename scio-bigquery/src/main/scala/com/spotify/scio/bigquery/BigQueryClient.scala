@@ -54,15 +54,6 @@ import scala.util.{Failure, Random, Success, Try}
 /** Utility for BigQuery data types. */
 object BigQueryUtil {
 
-  // Ported from com.google.cloud.dataflow.sdk.io.BigQueryIO
-
-  private val PROJECT_ID_REGEXP = "[a-z][-a-z0-9:.]{4,61}[a-z0-9]"
-  private val DATASET_REGEXP = "[-\\w.]{1,1024}"
-  private val TABLE_REGEXP = "[-\\w$@]{1,1024}"
-  private val DATASET_TABLE_REGEXP =
-    s"((?<PROJECT>$PROJECT_ID_REGEXP):)?(?<DATASET>$DATASET_REGEXP)\\.(?<TABLE>$TABLE_REGEXP)"
-  private val QUERY_TABLE_SPEC = Pattern.compile(s"(?<=\\[)$DATASET_TABLE_REGEXP(?=\\])")
-
   /** Parse a schema string. */
   def parseSchema(schemaString: String): TableSchema =
     new JsonObjectParser(new JacksonFactory)
@@ -223,6 +214,21 @@ class BigQueryClient private (private val projectId: String,
   def getTable(table: TableReference): Table = {
     val p = if (table.getProjectId == null) this.projectId else table.getProjectId
     bigquery.tables().get(p, table.getDatasetId, table.getTableId).execute()
+  }
+
+  /** Get list of tables in a dataset. */
+  def getTables(projectId: String, datasetId: String): Seq[TableReference] = {
+    val b = Seq.newBuilder[TableReference]
+    val req = bigquery.tables().list(projectId, datasetId)
+    var rep = req.execute()
+    rep.getTables.asScala.foreach(t => b += t.getTableReference)
+    while (rep.getNextPageToken != null) {
+      rep = req.setPageToken(rep.getNextPageToken).execute()
+      if (rep.getTables != null) {
+        rep.getTables.asScala.foreach(t => b += t.getTableReference)
+      }
+    }
+    b.result()
   }
 
   /**

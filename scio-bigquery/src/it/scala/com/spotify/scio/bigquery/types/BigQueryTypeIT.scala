@@ -35,6 +35,17 @@ object BigQueryTypeIT {
   @BigQueryType.fromTable("bigquery-public-data:samples.shakespeare")
   class FromTableT
 
+  @BigQueryType.fromQuery(
+    "SELECT word, word_count FROM [data-integration-test:partition_a.table_%s]", "$LATEST")
+  class LegacyLatestT
+
+  @BigQueryType.fromQuery(
+    "SELECT word, word_count FROM `data-integration-test.partition_a.table_%s`", "$LATEST")
+  class SqlLatestT
+
+  @BigQueryType.fromTable("data-integration-test:partition_a.table_%s", "$LATEST")
+  class FromTableLatestT
+
   @BigQueryType.toTable
   case class ToTableT(word: String, word_count: Int)
 }
@@ -49,9 +60,13 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
     "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] WHERE word = 'Romeo'"
   val sqlQuery =
     "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` WHERE word = 'Romeo'"
+  val legacyLatestQuery =
+    "SELECT word, word_count FROM [data-integration-test:partition_a.table_%s]"
+  val sqlLatestQuery =
+    "SELECT word, word_count FROM `data-integration-test.partition_a.table_%s`"
 
   "fromQuery" should "work with legacy syntax" in {
-    val bqt= BigQueryType[LegacyT]
+    val bqt = BigQueryType[LegacyT]
     bqt.isQuery shouldBe true
     bqt.isTable shouldBe false
     bqt.query shouldBe Some(legacyQuery)
@@ -64,7 +79,7 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
   }
 
   it should "work with SQL syntax" in {
-    val bqt= BigQueryType[SqlT]
+    val bqt = BigQueryType[SqlT]
     bqt.isQuery shouldBe true
     bqt.isTable shouldBe false
     bqt.query shouldBe Some(sqlQuery)
@@ -77,7 +92,7 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
   }
 
   it should "round trip rows with legacy syntax" in {
-    val bqt= BigQueryType[LegacyT]
+    val bqt = BigQueryType[LegacyT]
     val rows = bq.getQueryRows(legacyQuery).toList
     val typed = Seq(LegacyT("Romeo", 117L))
     rows.map(bqt.fromTableRow) shouldBe typed
@@ -85,11 +100,19 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
   }
 
   it should "round trip rows with SQL syntax" in {
-    val bqt= BigQueryType[SqlT]
+    val bqt = BigQueryType[SqlT]
     val rows = bq.getQueryRows(sqlQuery).toList
     val typed = Seq(SqlT(Some("Romeo"), Some(117L)))
     rows.map(bqt.fromTableRow) shouldBe typed
     typed.map(bqt.toTableRow).map(bqt.fromTableRow) shouldBe typed
+  }
+
+  it should "work with legacy syntax with $LATEST" in {
+    BigQueryType[LegacyLatestT].query shouldBe Some(legacyLatestQuery)
+  }
+
+  it should "work with SQL syntax with $LATEST" in {
+    BigQueryType[SqlLatestT].query shouldBe Some(sqlLatestQuery)
   }
 
   "fromTable" should "work" in {
@@ -103,6 +126,10 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
     fields.map(_.getName) shouldBe Seq("word", "word_count", "corpus", "corpus_date")
     fields.map(_.getType) shouldBe Seq("STRING", "INTEGER", "STRING", "INTEGER")
     fields.map(_.getMode) shouldBe Seq("REQUIRED", "REQUIRED", "REQUIRED", "REQUIRED")
+  }
+
+  it should "work with $LATEST" in {
+    BigQueryType[FromTableLatestT].table shouldBe Some("data-integration-test:partition_a.table_%s")
   }
 
   "toTable" should "work" in {
