@@ -69,7 +69,7 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
   }
 
   @StartBundle
-  public void startBundle(Context c) {
+  public void startBundle(StartBundleContext c) {
     this.batch.clear();
   }
 
@@ -82,7 +82,7 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
   }
 
   @FinishBundle
-  public void finishBundle(Context c) {
+  public void finishBundle(ProcessContext c) {
     processBatch(c);
   }
 
@@ -94,7 +94,7 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
         .add(DisplayData.item("Keep Downloaded Files", keep));
   }
 
-  private void processBatch(Context c) {
+  private void processBatch(ProcessContext c) {
     if (batch.isEmpty()) {
       return;
     }
