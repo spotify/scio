@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.Iterables;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.apache.beam.sdk.transforms.DoFn;
@@ -40,6 +41,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.joda.time.Duration;
 import java.util.Arrays;
@@ -109,7 +111,7 @@ public class ElasticsearchIO {
      * @param error applies given function if specified in case of
      *              Elasticsearch error with bulk writes. Default behavior throws IOException.
      */
-    public static<T> Bound withError(SerializableConsumer<String> error) {
+    public static<T> Bound withError(ThrowingConsumer<Throwable> error) {
       return new Bound<>().withError(error);
     }
 
@@ -119,14 +121,14 @@ public class ElasticsearchIO {
       private final Duration flushInterval;
       private final SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests;
       private final Long numOfShard;
-      private final SerializableConsumer<String> error;
+      private final ThrowingConsumer<Throwable> error;
 
       private Bound(final String clusterName,
                     final InetSocketAddress[] servers,
                     final Duration flushInterval,
                     final SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests,
                     final Long numOfShard,
-                    final SerializableConsumer<String> error) {
+                    final ThrowingConsumer<Throwable> error) {
         this.clusterName = clusterName;
         this.servers = servers;
         this.flushInterval = flushInterval;
@@ -136,7 +138,7 @@ public class ElasticsearchIO {
       }
 
       Bound() {
-        this(null, null, null, null, null, null);
+        this(null, null, null, null, null, defaultErrorHandler());
       }
 
       public Bound<T> withClusterName(String clusterName) {
@@ -159,7 +161,7 @@ public class ElasticsearchIO {
         return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard, error);
       }
 
-      public Bound<T> withError(SerializableConsumer<String> error) {
+      public Bound<T> withError(ThrowingConsumer<Throwable> error) {
         return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard, error);
       }
 
@@ -205,12 +207,12 @@ public class ElasticsearchIO {
       private final Logger LOG = LoggerFactory.getLogger(ElasticsearchWriter.class);
       private final ClientSupplier clientSupplier;
       private final SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests;
-      private final SerializableConsumer<String> error;
+      private final ThrowingConsumer<Throwable> error;
 
       public ElasticsearchWriter(String clusterName,
                                  InetSocketAddress[] servers,
                                  SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests,
-                                 SerializableConsumer<String> error) {
+                                 ThrowingConsumer<Throwable> error) {
         this.clientSupplier = new ClientSupplier(clusterName, servers);
         this.toActionRequests = toActionRequests;
         this.error = error;
@@ -232,10 +234,7 @@ public class ElasticsearchIO {
         final BulkRequest bulkRequest = new BulkRequest().add(Iterables.concat(actionRequests));
         final BulkResponse bulkItemResponse = clientSupplier.get().bulk(bulkRequest).get();
         if (bulkItemResponse.hasFailures()) {
-          if (error == null)
-            throw new IOException(bulkItemResponse.buildFailureMessage());
-          else
-            error.accept(bulkItemResponse.buildFailureMessage());
+          error.accept(new BulkExecutionException(bulkItemResponse));
         }
       }
     }
@@ -274,6 +273,36 @@ public class ElasticsearchIO {
             .settings(settings)
             .build()
             .addTransportAddresses(transportAddresses);
+      }
+    }
+
+    private static ThrowingConsumer<Throwable> defaultErrorHandler() {
+      return new ThrowingConsumer<Throwable>() {
+        @Override
+        @SuppressWarnings("unchecked")
+        public <X extends Throwable> void accept(Throwable throwable) throws X {
+          throw (X) throwable;
+        }
+      };
+    }
+
+    /**
+     * An exception that puts information about the failures in the bulk execution.
+     */
+    public static class BulkExecutionException extends IOException {
+      private final Iterable<Throwable> failures;
+
+      BulkExecutionException(BulkResponse bulkResponse) {
+        super(bulkResponse.buildFailureMessage());
+        this.failures = Arrays.stream(bulkResponse.getItems())
+            .map(BulkItemResponse::getFailure)
+            .filter(Objects::nonNull)
+            .map(BulkItemResponse.Failure::getCause)
+            .collect(Collectors.toList());
+      }
+
+      public Iterable<Throwable> getFailures() {
+        return failures;
       }
     }
   }

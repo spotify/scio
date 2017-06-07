@@ -17,7 +17,6 @@
 
 package com.spotify.scio
 
-import java.io.IOException
 import java.net.InetSocketAddress
 import java.lang.{Iterable => JIterable}
 
@@ -71,7 +70,7 @@ package object elasticsearch {
           s"You must specify numWorkers explicitly for ${r.getClass}")
       }
       saveAsElasticsearch(esOptions, f,
-        Duration.standardSeconds(1), numOfWorkers, m => throw new IOException(m))
+        Duration.standardSeconds(1), numOfWorkers, m => throw m)
     }
 
     /**
@@ -88,7 +87,7 @@ package object elasticsearch {
                             f: T => Iterable[ActionRequest[_]],
                             flushInterval: Duration = Duration.standardSeconds(1),
                             numOfShard: Long,
-                            errorHandler: String => Unit): Future[Tap[T]] = {
+                            errorHandler: Throwable => Unit): Future[Tap[T]] = {
       if (self.context.isTest) {
         self.context.testOut(ElasticsearchIO[T](esOptions))(self)
       } else {
@@ -101,8 +100,8 @@ package object elasticsearch {
             })
             .withFlushInterval(flushInterval)
             .withNumOfShard(numOfShard)
-            .withError(new esio.SerializableConsumer[String]() {
-              override def accept(t: String): Unit = errorHandler(t)
+            .withError(new esio.ThrowingConsumer[Throwable]() {
+              override def accept[X <: Throwable](t: Throwable): Unit = errorHandler(t)
             }))
       }
       Future.failed(new NotImplementedError("Custom future not implemented"))

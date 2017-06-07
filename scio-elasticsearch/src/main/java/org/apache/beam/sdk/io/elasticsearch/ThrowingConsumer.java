@@ -18,8 +18,9 @@
 package org.apache.beam.sdk.io.elasticsearch;
 
 import java.io.Serializable;
-import java.util.function.Consumer;
 
-public interface SerializableConsumer<T> extends Consumer<T>, Serializable {
+@FunctionalInterface
+public interface ThrowingConsumer<T> extends Serializable {
 
+  <X extends Throwable> void accept(T t) throws X;
 }
