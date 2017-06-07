@@ -22,5 +22,5 @@ import java.io.Serializable;
 @FunctionalInterface
 public interface ThrowingConsumer<T> extends Serializable {
 
-  <X extends Throwable> void accept(T t) throws X;
+  void accept(T t) throws Exception;
 }

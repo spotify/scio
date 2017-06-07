@@ -27,6 +27,7 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.runners.direct.DirectRunner
+import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException
 import org.apache.beam.sdk.io.{elasticsearch => esio}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.elasticsearch.action.ActionRequest
@@ -87,7 +88,7 @@ package object elasticsearch {
                             f: T => Iterable[ActionRequest[_]],
                             flushInterval: Duration = Duration.standardSeconds(1),
                             numOfShard: Long,
-                            errorHandler: Throwable => Unit): Future[Tap[T]] = {
+                            errorHandler: BulkExecutionException => Unit): Future[Tap[T]] = {
       if (self.context.isTest) {
         self.context.testOut(ElasticsearchIO[T](esOptions))(self)
       } else {
@@ -100,8 +101,8 @@ package object elasticsearch {
             })
             .withFlushInterval(flushInterval)
             .withNumOfShard(numOfShard)
-            .withError(new esio.ThrowingConsumer[Throwable]() {
-              override def accept[X <: Throwable](t: Throwable): Unit = errorHandler(t)
+            .withError(new esio.ThrowingConsumer[BulkExecutionException] {
+              override def accept(t: BulkExecutionException): Unit = errorHandler(t)
             }))
       }
       Future.failed(new NotImplementedError("Custom future not implemented"))

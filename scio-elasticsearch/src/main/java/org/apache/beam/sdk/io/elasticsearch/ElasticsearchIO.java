@@ -111,7 +111,7 @@ public class ElasticsearchIO {
      * @param error applies given function if specified in case of
      *              Elasticsearch error with bulk writes. Default behavior throws IOException.
      */
-    public static<T> Bound withError(ThrowingConsumer<Throwable> error) {
+    public static<T> Bound withError(ThrowingConsumer<BulkExecutionException> error) {
       return new Bound<>().withError(error);
     }
 
@@ -121,14 +121,14 @@ public class ElasticsearchIO {
       private final Duration flushInterval;
       private final SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests;
       private final Long numOfShard;
-      private final ThrowingConsumer<Throwable> error;
+      private final ThrowingConsumer<BulkExecutionException> error;
 
       private Bound(final String clusterName,
                     final InetSocketAddress[] servers,
                     final Duration flushInterval,
                     final SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests,
                     final Long numOfShard,
-                    final ThrowingConsumer<Throwable> error) {
+                    final ThrowingConsumer<BulkExecutionException> error) {
         this.clusterName = clusterName;
         this.servers = servers;
         this.flushInterval = flushInterval;
@@ -161,7 +161,7 @@ public class ElasticsearchIO {
         return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard, error);
       }
 
-      public Bound<T> withError(ThrowingConsumer<Throwable> error) {
+      public Bound<T> withError(ThrowingConsumer<BulkExecutionException> error) {
         return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard, error);
       }
 
@@ -207,12 +207,12 @@ public class ElasticsearchIO {
       private final Logger LOG = LoggerFactory.getLogger(ElasticsearchWriter.class);
       private final ClientSupplier clientSupplier;
       private final SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests;
-      private final ThrowingConsumer<Throwable> error;
+      private final ThrowingConsumer<BulkExecutionException> error;
 
       public ElasticsearchWriter(String clusterName,
                                  InetSocketAddress[] servers,
                                  SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests,
-                                 ThrowingConsumer<Throwable> error) {
+                                 ThrowingConsumer<BulkExecutionException> error) {
         this.clientSupplier = new ClientSupplier(clusterName, servers);
         this.toActionRequests = toActionRequests;
         this.error = error;
@@ -276,13 +276,9 @@ public class ElasticsearchIO {
       }
     }
 
-    private static ThrowingConsumer<Throwable> defaultErrorHandler() {
-      return new ThrowingConsumer<Throwable>() {
-        @Override
-        @SuppressWarnings("unchecked")
-        public <X extends Throwable> void accept(Throwable throwable) throws X {
-          throw (X) throwable;
-        }
+    private static ThrowingConsumer<BulkExecutionException> defaultErrorHandler() {
+      return throwable -> {
+        throw throwable;
       };
     }
 
