@@ -37,4 +37,8 @@ public interface ScioOptions extends PipelineOptions {
   @Description("Set to true to block on ScioContext#close()")
   boolean isBlocking();
   void setBlocking(boolean value);
+
+  @Description("Custom application arguments")
+  String getAppArguments();
+  void setAppArguments(String arguments);
 }
