@@ -119,7 +119,12 @@ object ScioContext {
     val (optArgs, appArgs) =
       cmdlineArgs.partition(arg => optPatterns.exists(_.findFirstIn(arg).isDefined))
 
-    (PipelineOptionsFactory.fromArgs(optArgs: _*).as(optClass), Args(appArgs))
+    val pipelineOpts = PipelineOptionsFactory.fromArgs(optArgs: _*).as(optClass)
+    val args = Args(appArgs)
+    if (appArgs.nonEmpty) {
+      pipelineOpts.as(classOf[ScioOptions]).setAppArguments(args.toString("", ", ", ""))
+    }
+    (pipelineOpts, args)
   }
 
   import scala.language.implicitConversions

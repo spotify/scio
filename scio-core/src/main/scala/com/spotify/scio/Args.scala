@@ -60,16 +60,17 @@ object Args {
 /** Encapsulate parsed commandline arguments. */
 class Args private (private val m: Map[String, List[String]]) extends Serializable {
 
-  override def toString: String = {
-    val str = m.keys.toArray.sorted.map { k =>
+  def toString(start: String, sep: String, end: String): String = {
+    m.keys.toArray.sorted.map { k =>
       val values = m(k) match {
         case v :: Nil => v.toString
         case vs => vs.mkString("[", ", ", "]")
       }
       s"--$k=$values"
-    }.mkString(", ")
-    s"Args($str)"
+    }.mkString(start, sep, end)
   }
+
+  override def toString: String = toString("Args(", ", ", ")")
 
   override def equals(obj: Any): Boolean = obj match {
     case that: Args => this.m == that.m
