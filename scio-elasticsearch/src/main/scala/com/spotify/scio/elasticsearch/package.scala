@@ -17,8 +17,8 @@
 
 package com.spotify.scio
 
-import java.io.IOException
 import java.net.InetSocketAddress
+import java.lang.{Iterable => JIterable}
 
 import org.joda.time.Duration
 import com.spotify.scio.io.Tap
@@ -27,11 +27,13 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.runners.direct.DirectRunner
+import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException
 import org.apache.beam.sdk.io.{elasticsearch => esio}
 import org.apache.beam.sdk.transforms.SerializableFunction
-import org.elasticsearch.action.index.IndexRequest
+import org.elasticsearch.action.ActionRequest
 
 import scala.concurrent.Future
+import scala.collection.JavaConverters._
 
 /**
  * Main package for Elasticsearch APIs. Import all.
@@ -52,10 +54,10 @@ package object elasticsearch {
      * Save this SCollection into Elasticsearch.
      *
      * @param esOptions Elasticsearch options
-     * @param f function to transform arbitrary type T to Elasticsearch [[IndexRequest]]
+     * @param f function to transform arbitrary type T to Elasticsearch [[ActionRequest]]
      */
     def saveAsElasticsearch(esOptions: ElasticsearchOptions,
-                            f: T => IndexRequest):Future[Tap[T]] = {
+                            f: T => Iterable[ActionRequest[_]]):Future[Tap[T]] = {
       val numOfWorkers = self.context.pipeline.getRunner match {
         case _: DirectRunner => 1
         case _: DataflowRunner =>
@@ -69,7 +71,7 @@ package object elasticsearch {
           s"You must specify numWorkers explicitly for ${r.getClass}")
       }
       saveAsElasticsearch(esOptions, f,
-        Duration.standardSeconds(1), numOfWorkers, m => throw new IOException(m))
+        Duration.standardSeconds(1), numOfWorkers, m => throw m)
     }
 
     /**
@@ -77,16 +79,16 @@ package object elasticsearch {
      *
      * @param esOptions Elasticsearch options
      * @param flushInterval delays to Elasticsearch writes for rate limiting purpose
-     * @param f function to transform arbitrary type T to Elasticsearch [[IndexRequest]]
+     * @param f function to transform arbitrary type T to Elasticsearch [[ActionRequest]]
      * @param numOfShard number of parallel writes to be performed, recommended setting is the
      *                   number of pipeline workers
      * @param errorHandler function to handle error when performing Elasticsearch bulk writes
      */
     def saveAsElasticsearch(esOptions: ElasticsearchOptions,
-                            f: T => IndexRequest,
+                            f: T => Iterable[ActionRequest[_]],
                             flushInterval: Duration = Duration.standardSeconds(1),
                             numOfShard: Long,
-                            errorHandler: String => Unit): Future[Tap[T]] = {
+                            errorHandler: BulkExecutionException => Unit): Future[Tap[T]] = {
       if (self.context.isTest) {
         self.context.testOut(ElasticsearchIO[T](esOptions))(self)
       } else {
@@ -94,13 +96,13 @@ package object elasticsearch {
           esio.ElasticsearchIO.Write
             .withClusterName(esOptions.clusterName)
             .withServers(esOptions.servers.toArray)
-            .withFunction(new SerializableFunction[T, IndexRequest]() {
-              override def apply(t: T): IndexRequest = f(t)
+            .withFunction(new SerializableFunction[T, JIterable[ActionRequest[_]]]() {
+              override def apply(t: T): JIterable[ActionRequest[_]] = f(t).asJava
             })
             .withFlushInterval(flushInterval)
             .withNumOfShard(numOfShard)
-            .withError(new esio.SerializableConsumer[String]() {
-              override def accept(t: String): Unit = errorHandler(t)
+            .withError(new esio.ThrowingConsumer[BulkExecutionException] {
+              override def accept(t: BulkExecutionException): Unit = errorHandler(t)
             }))
       }
       Future.failed(new NotImplementedError("Custom future not implemented"))
