@@ -34,6 +34,7 @@ val circeVersion = "0.8.0"
 val commonsIoVersion = "2.5"
 val commonsMath3Version = "3.6.1"
 val csvVersion = "0.1.19"
+val elasticsearchVersion = "2.1.0"
 val guavaVersion = "20.0"
 val hadoopVersion = "2.7.3"
 val hamcrestVersion = "1.3"
@@ -55,7 +56,7 @@ val scalatestVersion = "3.0.3"
 val shapelessDatatypeVersion = "0.1.2"
 val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.1.3"
-val elasticsearchVersion = "2.1.0"
+val tensorflowVersion = "1.1.0"
 
 val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework")
 
@@ -71,12 +72,6 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
 
   scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value,
   testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
-
-  // Avro and Protobuf
-  compileOrder := CompileOrder.JavaThenScala,
-  PB.targets in Compile := Seq(
-    PB.gens.java -> (sourceManaged in Compile).value
-  ),
 
   coverageExcludedPackages := Seq(
     "com\\.spotify\\.scio\\.examples\\..*",
@@ -226,6 +221,7 @@ lazy val scioCore: Project = Project(
     "com.twitter" % "chill-protobuf" % chillVersion,
     "commons-io" % "commons-io" % commonsIoVersion,
     "org.apache.commons" % "commons-math3" % commonsMath3Version,
+    "org.tensorflow" % "proto" % tensorflowVersion,
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion,
     "com.google.auto.service" % "auto-service" % autoServiceVersion,
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
@@ -382,6 +378,11 @@ lazy val scioSchemas: Project = Project(
   sources in doc in Compile := List(),
   // generate both Avro and Protobuf sources in src_managed/main to avoid confusing IntelliJ
   javaSource in avroConfig := (sourceManaged in Compile).value,
+  // Avro and Protobuf
+  compileOrder := CompileOrder.JavaThenScala,
+  PB.targets in Compile := Seq(
+    PB.gens.java -> (sourceManaged in Compile).value
+  ),
   // avoid accidentally deleting Avro sources
   PB.deleteTargetDirectory := false
 )
