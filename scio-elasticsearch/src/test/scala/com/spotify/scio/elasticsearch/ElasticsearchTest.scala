@@ -36,7 +36,9 @@ object ElasticsearchJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, _) = ContextAndArgs(cmdlineArgs)
     sc.parallelize(data)
-      .saveAsElasticsearch(options, _ => new IndexRequest :: Nil, flushInterval, shard, _=> ())
+      .saveAsElasticsearch(options, flushInterval, shard, _ => ()) { _ =>
+        new IndexRequest :: Nil
+      }
     sc.close()
   }
 }
@@ -46,7 +48,7 @@ object ElasticsearchDirectRunnerJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, _) = ContextAndArgs(cmdlineArgs)
     sc.parallelize(data)
-      .saveAsElasticsearch(options, _ => new IndexRequest :: Nil)
+      .saveAsElasticsearch(options)(_ => new IndexRequest :: Nil)
     sc.close()
   }
 }

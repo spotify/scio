@@ -50,15 +50,9 @@ package object elasticsearch {
   case class ElasticsearchOptions(clusterName: String, servers: Seq[InetSocketAddress])
 
   implicit class ElasticsearchSCollection[T](val self: SCollection[T]) extends AnyVal {
-    /**
-     * Save this SCollection into Elasticsearch.
-     *
-     * @param esOptions Elasticsearch options
-     * @param f function to transform arbitrary type T to Elasticsearch [[ActionRequest]]
-     */
-    def saveAsElasticsearch(esOptions: ElasticsearchOptions,
-                            f: T => Iterable[ActionRequest[_]]):Future[Tap[T]] = {
-      val numOfWorkers = self.context.pipeline.getRunner match {
+
+    private def defaultNumOfShards: Int = {
+      self.context.pipeline.getRunner match {
         case _: DirectRunner => 1
         case _: DataflowRunner =>
           val opts = self.context.optionsAs[DataflowPipelineOptions]
@@ -70,8 +64,6 @@ package object elasticsearch {
         case r => throw new NotImplementedError(
           s"You must specify numWorkers explicitly for ${r.getClass}")
       }
-      saveAsElasticsearch(esOptions, f,
-        Duration.standardSeconds(1), numOfWorkers, m => throw m)
     }
 
     /**
@@ -80,15 +72,15 @@ package object elasticsearch {
      * @param esOptions Elasticsearch options
      * @param flushInterval delays to Elasticsearch writes for rate limiting purpose
      * @param f function to transform arbitrary type T to Elasticsearch [[ActionRequest]]
-     * @param numOfShard number of parallel writes to be performed, recommended setting is the
+     * @param numOfShards number of parallel writes to be performed, recommended setting is the
      *                   number of pipeline workers
-     * @param errorHandler function to handle error when performing Elasticsearch bulk writes
+     * @param errorFn function to handle error when performing Elasticsearch bulk writes
      */
     def saveAsElasticsearch(esOptions: ElasticsearchOptions,
-                            f: T => Iterable[ActionRequest[_]],
                             flushInterval: Duration = Duration.standardSeconds(1),
-                            numOfShard: Long,
-                            errorHandler: BulkExecutionException => Unit): Future[Tap[T]] = {
+                            numOfShards: Long = defaultNumOfShards,
+                            errorFn: BulkExecutionException => Unit = m => throw m)
+                           (f: T => Iterable[ActionRequest[_]]): Future[Tap[T]] = {
       if (self.context.isTest) {
         self.context.testOut(ElasticsearchIO[T](esOptions))(self)
       } else {
@@ -100,9 +92,9 @@ package object elasticsearch {
               override def apply(t: T): JIterable[ActionRequest[_]] = f(t).asJava
             })
             .withFlushInterval(flushInterval)
-            .withNumOfShard(numOfShard)
+            .withNumOfShard(numOfShards)
             .withError(new esio.ThrowingConsumer[BulkExecutionException] {
-              override def accept(t: BulkExecutionException): Unit = errorHandler(t)
+              override def accept(t: BulkExecutionException): Unit = errorFn(t)
             }))
       }
       Future.failed(new NotImplementedError("Custom future not implemented"))
