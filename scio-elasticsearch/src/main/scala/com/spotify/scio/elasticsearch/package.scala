@@ -51,7 +51,7 @@ package object elasticsearch {
 
   implicit class ElasticsearchSCollection[T](val self: SCollection[T]) extends AnyVal {
 
-    private def defaultNumOfShards(): Int = {
+    private def defaultNumOfShards: Int = {
       self.context.pipeline.getRunner match {
         case _: DirectRunner => 1
         case _: DataflowRunner =>
@@ -72,15 +72,15 @@ package object elasticsearch {
      * @param esOptions Elasticsearch options
      * @param flushInterval delays to Elasticsearch writes for rate limiting purpose
      * @param f function to transform arbitrary type T to Elasticsearch [[ActionRequest]]
-     * @param numOfShard number of parallel writes to be performed, recommended setting is the
+     * @param numOfShards number of parallel writes to be performed, recommended setting is the
      *                   number of pipeline workers
-     * @param e function to handle error when performing Elasticsearch bulk writes
+     * @param errorFn function to handle error when performing Elasticsearch bulk writes
      */
     def saveAsElasticsearch(esOptions: ElasticsearchOptions,
                             flushInterval: Duration = Duration.standardSeconds(1),
-                            numOfShard: Long = defaultNumOfShards())
-                           (f: T => Iterable[ActionRequest[_]],
-                            e: BulkExecutionException => Unit = m => throw m): Future[Tap[T]] = {
+                            numOfShards: Long = defaultNumOfShards,
+                            errorFn: BulkExecutionException => Unit = m => throw m)
+                           (f: T => Iterable[ActionRequest[_]]): Future[Tap[T]] = {
       if (self.context.isTest) {
         self.context.testOut(ElasticsearchIO[T](esOptions))(self)
       } else {
@@ -92,9 +92,9 @@ package object elasticsearch {
               override def apply(t: T): JIterable[ActionRequest[_]] = f(t).asJava
             })
             .withFlushInterval(flushInterval)
-            .withNumOfShard(numOfShard)
+            .withNumOfShard(numOfShards)
             .withError(new esio.ThrowingConsumer[BulkExecutionException] {
-              override def accept(t: BulkExecutionException): Unit = e(t)
+              override def accept(t: BulkExecutionException): Unit = errorFn(t)
             }))
       }
       Future.failed(new NotImplementedError("Custom future not implemented"))
