@@ -225,7 +225,8 @@ lazy val scioCore: Project = Project(
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion,
     "com.google.auto.service" % "auto-service" % autoServiceVersion,
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
-    "junit" % "junit" % junitVersion % "provided"
+    "junit" % "junit" % junitVersion % "provided",
+    "com.google.auto.value" % "auto-value" % autoValueVersion % "provided"
   )
 ).dependsOn(
   scioBigQuery
