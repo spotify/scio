@@ -20,11 +20,11 @@ package com.spotify.scio.bigquery
 import java.util.regex.Pattern
 
 import com.google.api.services.bigquery.model.TableReference
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 
 private[bigquery] object BigQueryPartitionUtil {
 
-  // Ported from com.google.cloud.dataflow.sdk.io.BigQueryIO
+  // Ported from com.google.cloud.dataflow.sdk.io.BigQueryHelpers
 
   private val PROJECT_ID_REGEXP = "[a-z][-a-z0-9:.]{4,61}[a-z0-9]"
   private val DATASET_REGEXP = "[-\\w.]{1,1024}"
@@ -43,12 +43,12 @@ private[bigquery] object BigQueryPartitionUtil {
     val m1 = QUERY_TABLE_SPEC_LEGACY.matcher(sqlQuery)
     while (m1.find()) {
       val t = m1.group(0)
-      b += (s"[$t]" -> BigQueryIO.parseTableSpec(t))
+      b += (s"[$t]" -> BigQueryHelpers.parseTableSpec(t))
     }
     val m2 = QUERY_TABLE_SPEC_STANDARD.matcher(sqlQuery)
     while (m2.find()) {
       val t = m2.group(0)
-      b += (s"`$t`" -> BigQueryIO.parseTableSpec(t.replaceFirst("\\.", ":")))
+      b += (s"`$t`" -> BigQueryHelpers.parseTableSpec(t.replaceFirst("\\.", ":")))
     }
     b.result()
   }
@@ -80,7 +80,7 @@ private[bigquery] object BigQueryPartitionUtil {
   }
 
   def latestTable(bq: BigQueryClient, tableSpec: String): String = {
-    val ref = BigQueryIO.parseTableSpec(tableSpec)
+    val ref = BigQueryHelpers.parseTableSpec(tableSpec)
     if (ref.getTableId.endsWith("$LATEST")) {
       val partitions = getPartitions(bq, ref)
       require(partitions.nonEmpty, s"Cannot find latest partition for $tableSpec")
