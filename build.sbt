@@ -213,7 +213,7 @@ lazy val scioCore: Project = Project(
 ).settings(
   commonSettings ++ macroSettings,
   description := "Scio - A Scala API for Google Cloud Dataflow",
-    libraryDependencies ++= beamDependencies,
+  libraryDependencies ++= beamDependencies,
   libraryDependencies ++= Seq(
     "com.twitter" %% "algebird-core" % algebirdVersion,
     "com.twitter" %% "chill" % chillVersion,
@@ -263,7 +263,7 @@ lazy val scioBigQuery: Project = Project(
 ).settings(
   commonSettings ++ macroSettings ++ itSettings,
   description := "Scio add-on for Google BigQuery",
-    libraryDependencies ++= beamDependencies,
+  libraryDependencies ++= beamDependencies,
   libraryDependencies ++= Seq(
     "commons-io" % "commons-io" % commonsIoVersion,
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
