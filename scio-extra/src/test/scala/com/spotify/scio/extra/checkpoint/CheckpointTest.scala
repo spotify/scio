@@ -20,25 +20,31 @@ package com.spotify.scio.extra.checkpoint
 import java.nio.file.Files
 
 import com.spotify.scio.ContextAndArgs
-import com.spotify.scio.testing.{ObjectFileIO, PipelineSpec, TextIO}
+import org.apache.beam.sdk.metrics.{Metrics, MetricsFilter}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.reflect.io.File
 
-class CheckpointTest extends FlatSpec with Matchers {
+import scala.collection.JavaConverters._
 
-  import com.spotify.scio.accumulators._
+class CheckpointTest extends FlatSpec with Matchers {
 
   private def runJob(checkpointArg: String,
                      tempLocation: String = null) = {
     val (sc, args) = ContextAndArgs(Array(s"--checkpoint=$checkpointArg") ++
       Option(tempLocation).map(e => s"--tempLocation=$e"))
-    val elemsBefore = sc.sumAccumulator[Long]("elemsBefore")
-    val elemsAfter = sc.sumAccumulator[Long]("elemsAfter")
-    sc.checkpoint(args("checkpoint"))(sc.parallelize(1 to 10).accumulateCount(elemsBefore))
-      .accumulateCount(elemsAfter)
+    val namespace = "checkpointTest"
+    val elemsBefore = Metrics.counter(namespace, "elemsBefore")
+    val elemsAfter = Metrics.counter(namespace, "elemsAfter")
+    sc.checkpoint(args("checkpoint"))(sc.parallelize(1 to 10)
+      .map(_ => elemsBefore.inc()))
+      .map(_ => elemsAfter.inc())
     val r = sc.close().waitUntilDone()
-    (r.accumulatorTotalValue(elemsBefore), r.accumulatorTotalValue(elemsAfter))
+    // TODO: convenience wrapper around metric API
+    val metricsIterator = r.internal.metrics().queryMetrics(MetricsFilter.builder().build())
+      .counters.iterator.asScala
+    (metricsIterator.find(_.name.name == "elemsBefore"),
+      metricsIterator.find(_.name.name == "elemsAfter"))
   }
 
   "checkpoint" should "work on path" in {
