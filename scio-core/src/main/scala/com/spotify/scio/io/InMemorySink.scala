@@ -19,8 +19,6 @@ package com.spotify.scio.io
 
 import com.spotify.scio.values.SCollection
 import org.apache.beam.runners.direct.DirectRunner
-import org.apache.beam.sdk.transforms.PTransform
-import org.apache.beam.sdk.values.{PCollection, PDone}
 
 import scala.collection.concurrent.TrieMap
 
@@ -39,9 +37,6 @@ private[scio] object InMemorySink {
         cache += (id -> values)
         ()
       }
-      .applyInternal(new PTransform[PCollection[Unit], PDone]() {
-        override def expand(input: PCollection[Unit]): PDone = PDone.in(input.getPipeline)
-      })
   }
 
   def get[T](id: String): Iterable[T] = cache(id).asInstanceOf[Iterable[T]]
