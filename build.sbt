@@ -200,10 +200,10 @@ lazy val root: Project = Project(
   scioBigtable,
   scioElasticsearch,
   scioExtra,
-  scioHdfs,
+//  scioHdfs,
   scioJdbc,
   scioRepl,
-  scioExamples,
+//  scioExamples,
   scioSchemas
 )
 
