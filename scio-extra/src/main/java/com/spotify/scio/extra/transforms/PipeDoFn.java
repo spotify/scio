@@ -51,6 +51,7 @@ public class PipeDoFn extends DoFn<String, String> {
   private final String[] envp;
   private final File dir;
 
+  private boolean isNewBundle;
   private transient Process pipeProcess;
   private transient ExecutorService executorService;
   private transient BufferedWriter stdIn;
@@ -174,20 +175,12 @@ public class PipeDoFn extends DoFn<String, String> {
   }
 
   @StartBundle
-  public void startBundle(ProcessContext c) {
-    try {
-      pipeProcess = Runtime.getRuntime().exec(cmdArray, envp, dir);
-      stdIn = new BufferedWriter(new OutputStreamWriter(pipeProcess.getOutputStream()));
-      BufferedReader out = new BufferedReader(new InputStreamReader(pipeProcess.getInputStream()));
-      stdOut = CompletableFuture.runAsync(() -> out.lines().forEach(c::output), executorService);
-      LOG.info("Process started: {}", ProcessUtil.join(cmdArray));
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+  public void startBundle() {
+    isNewBundle = true;
   }
 
   @FinishBundle
-  public void finishBundle(ProcessContext c) {
+  public void finishBundle() {
     try {
       stdIn.close();
       int exitCode = pipeProcess.waitFor();
@@ -207,6 +200,19 @@ public class PipeDoFn extends DoFn<String, String> {
 
   @ProcessElement
   public void processElement(ProcessContext c) {
+    if (isNewBundle) {
+      try {
+        pipeProcess = Runtime.getRuntime().exec(cmdArray, envp, dir);
+        stdIn = new BufferedWriter(new OutputStreamWriter(pipeProcess.getOutputStream()));
+        BufferedReader out = new BufferedReader(new InputStreamReader(pipeProcess.getInputStream()));
+        stdOut = CompletableFuture.runAsync(() -> out.lines().forEach(c::output), executorService);
+        LOG.info("Process started: {}", ProcessUtil.join(cmdArray));
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+      isNewBundle = false;
+    }
+
     try {
       stdIn.write(c.element());
       stdIn.newLine();
