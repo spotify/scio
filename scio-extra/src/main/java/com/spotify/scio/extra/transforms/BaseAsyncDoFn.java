@@ -20,6 +20,8 @@ package com.spotify.scio.extra.transforms;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
+import org.joda.time.Instant;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -45,7 +47,7 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
                                          Function<Throwable, Void> onFailure);
 
   private final ConcurrentMap<UUID, FutureT> futures = Maps.newConcurrentMap();
-  private final ConcurrentLinkedQueue<OutputT> results = Queues.newConcurrentLinkedQueue();
+  private final ConcurrentLinkedQueue<Result> results = Queues.newConcurrentLinkedQueue();
   private final ConcurrentLinkedQueue<Throwable> errors = Queues.newConcurrentLinkedQueue();
 
   @StartBundle
@@ -56,7 +58,7 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
   }
 
   @FinishBundle
-  public void finishBundle(ProcessContext c) {
+  public void finishBundle(FinishBundleContext c) {
     if (!futures.isEmpty()) {
       try {
         waitForFutures(futures.values());
@@ -71,12 +73,12 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
   }
 
   @ProcessElement
-  public void processElement(ProcessContext c) {
+  public void processElement(ProcessContext c, BoundedWindow window) {
     flush(c);
 
     final UUID uuid = UUID.randomUUID();
     FutureT future = addCallback(processElement(c.element()), r -> {
-      results.add(r);
+      results.add(new Result(r, c.timestamp(), window));
       futures.remove(uuid);
       return null;
     }, t -> {
@@ -101,10 +103,39 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
       }
       throw e;
     }
-    OutputT element = results.poll();
-    while (element != null) {
-      c.output(element);
-      element = results.poll();
+    Result r = results.poll();
+    while (r != null) {
+      c.output(r.output);
+      r = results.poll();
+    }
+  }
+
+  private void flush(FinishBundleContext c) {
+    if (!errors.isEmpty()) {
+      RuntimeException e = new RuntimeException("Failed to process futures");
+      Throwable t = errors.poll();
+      while (t != null) {
+        e.addSuppressed(t);
+        t = errors.poll();
+      }
+      throw e;
+    }
+    Result r = results.poll();
+    while (r != null) {
+      c.output(r.output, r.timestamp, r.window);
+      r = results.poll();
+    }
+  }
+
+  private class Result {
+    private OutputT output;
+    private Instant timestamp;
+    private BoundedWindow window;
+
+    public Result(OutputT output, Instant timestamp, BoundedWindow window) {
+      this.output = output;
+      this.timestamp = timestamp;
+      this.window = window;
     }
   }
 
