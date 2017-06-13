@@ -22,12 +22,16 @@ import com.spotify.scio.util.RemoteFileUtil;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.display.DisplayData;
+import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
+import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * A {@link DoFn} that downloads {@link URI} elements and processes them as local {@link Path}s.
@@ -36,7 +40,7 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileDownloadDoFn.class);
 
-  private final List<URI> batch;
+  private final List<Element> batch;
   private final RemoteFileUtil remoteFileUtil;
   private final SerializableFunction<Path, OutputT> fn;
   private final int batchSize;
@@ -69,20 +73,20 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
   }
 
   @StartBundle
-  public void startBundle(StartBundleContext c) {
+  public void startBundle() {
     this.batch.clear();
   }
 
   @ProcessElement
-  public void processElement(ProcessContext c) {
-    batch.add(c.element());
+  public void processElement(ProcessContext c, BoundedWindow window) {
+    batch.add(new Element(c.element(), c.timestamp(), window));
     if (batch.size() >= batchSize) {
       processBatch(c);
     }
   }
 
   @FinishBundle
-  public void finishBundle(ProcessContext c) {
+  public void finishBundle(FinishBundleContext c) {
     processBatch(c);
   }
 
@@ -99,14 +103,50 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
       return;
     }
     LOG.info("Processing batch of {}", batch.size());
-    remoteFileUtil.download(batch).stream()
+    List<URI> uris = batch.stream().map(e -> e.uri).collect(Collectors.toList());
+    remoteFileUtil.download(uris).stream()
         .map(fn::apply)
         .forEach(c::output);
     if (!keep) {
       LOG.info("Deleting batch of {}", batch.size());
-      remoteFileUtil.delete(batch);
+      remoteFileUtil.delete(uris);
     }
     batch.clear();
+  }
+
+  private void processBatch(FinishBundleContext c) {
+    if (batch.isEmpty()) {
+      return;
+    }
+    LOG.info("Processing batch of {}", batch.size());
+    List<URI> uris = batch.stream().map(e -> e.uri).collect(Collectors.toList());
+    List<OutputT> outputs = remoteFileUtil.download(uris).stream()
+        .map(fn::apply)
+        .collect(Collectors.toList());
+        //.forEach(c::output);
+    Iterator<OutputT> i1 = outputs.iterator();
+    Iterator<Element> i2 = batch.iterator();
+    while (i1.hasNext() && i2.hasNext()) {
+      Element e = i2.next();
+      c.output(i1.next(), e.timestamp, e.window);
+    }
+    if (!keep) {
+      LOG.info("Deleting batch of {}", batch.size());
+      remoteFileUtil.delete(uris);
+    }
+    batch.clear();
+  }
+
+  private class Element {
+    private URI uri;
+    private Instant timestamp;
+    private BoundedWindow window;
+
+    Element(URI uri, Instant timestamp, BoundedWindow window) {
+      this.uri = uri;
+      this.timestamp = timestamp;
+      this.window = window;
+    }
   }
 
 }
