@@ -23,8 +23,8 @@ if [ "$CI_PULL_REQUEST" = "" ]; then
   echo "Running test for branch: $CIRCLE_BRANCH"
   JSON_KEY=$(basename $GOOGLE_APPLICATION_CREDENTIALS)
   openssl aes-256-cbc -d -in "$DIR_OF_SCRIPT/$JSON_KEY.enc" -out "$DIR_OF_SCRIPT/$JSON_KEY" -k $ENCRYPTION_KEY
-  "$DIR_OF_SCRIPT/circleci_parallel_run.sh" 'sbt ++$CI_SCALA_VERSION -Dbigquery.project=data-integration-test '"-Dbigquery.secret=$DIR_OF_SCRIPT/$JSON_KEY"' scalastyle coverage test it:test coverageReport coverageAggregate'
+  "$DIR_OF_SCRIPT/circleci_parallel_run.sh" 'sbt -Dbigquery.project=data-integration-test '"-Dbigquery.secret=$DIR_OF_SCRIPT/$JSON_KEY"' ++$CI_SCALA_VERSION scalastyle coverage test it:test coverageReport coverageAggregate'
 else
   echo "Running test for PR: $CI_PULL_REQUEST"
-  "$DIR_OF_SCRIPT/circleci_parallel_run.sh" 'sbt ++$CI_SCALA_VERSION -Dbigquery.project=dummy-project scalastyle coverage test coverageReport coverageAggregate'
+  "$DIR_OF_SCRIPT/circleci_parallel_run.sh" 'sbt -Dbigquery.project=dummy-project ++$CI_SCALA_VERSION scalastyle coverage test coverageReport coverageAggregate'
 fi
