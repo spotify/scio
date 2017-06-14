@@ -42,8 +42,8 @@ import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.io.TFRecordIO.CompressionType
-import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub => psio}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
@@ -53,14 +53,12 @@ import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{io => gio}
 import org.joda.time.{Duration, Instant}
-import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
 import scala.concurrent._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.util.{Failure, Success}
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
@@ -109,8 +107,8 @@ object SCollection {
  */
 sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
-  import com.spotify.scio.Implicits._
   import TupleFunctions._
+  import com.spotify.scio.Implicits._
 
   // =======================================================================
   // Delegations for internal PCollection
