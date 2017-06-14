@@ -877,11 +877,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       saveAsInMemoryTap
     } else {
       val cls = ScioUtil.classOf[T]
-      if (classOf[GenericRecord] isAssignableFrom cls) {
-        val t = gio.AvroIO.writeGenericRecords(schema).asInstanceOf[gio.AvroIO.Write[T]]
+      if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+        val t = gio.AvroIO.write(cls)
         this.applyInternal(avroOut(t, path, numShards, suffix, codec, metadata))
       } else {
-        val t = gio.AvroIO.write(cls)
+        val t = gio.AvroIO.writeGenericRecords(schema).asInstanceOf[gio.AvroIO.Write[T]]
         this.applyInternal(avroOut(t, path, numShards, suffix, codec, metadata))
       }
       context.makeFuture(AvroTap(ScioUtil.addPartSuffix(path), schema))

@@ -37,7 +37,6 @@ import org.apache.commons.io.{FileUtils, IOUtils}
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 
-
 trait TapSpec extends PipelineSpec {
   def verifyTap[T: ClassTag](tap: Tap[T], expected: Set[T]): Unit = {
     SerializableUtils.ensureSerializable(tap)
@@ -63,7 +62,6 @@ trait TapSpec extends PipelineSpec {
     new File(sys.props("java.io.tmpdir")),
     "scio-test-" + UUID.randomUUID().toString)
 }
-
 
 class TapTest extends TapSpec {
 
