@@ -89,8 +89,9 @@ class NamedTransformTest extends PipelineSpec {
       val p2 = SideOutput[String]()
       val (main, side) = p1.withSideOutputs(p2)
         .withName("MakeSideOutput").map { (x, s) => s.output(p2, x + "2"); x + "1" }
+      val sideOutput = side(p2)
       assertTransformNameStartsWith(main, "MakeSideOutput")
-      assertTransformNameStartsWith(side(p2), "MakeSideOutput")
+      assertTransformNameStartsWith(sideOutput, "MakeSideOutput")
     }
   }
 
