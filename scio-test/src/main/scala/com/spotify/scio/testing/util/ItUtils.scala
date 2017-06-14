@@ -28,7 +28,7 @@ import com.google.common.collect.ImmutableList
 import com.spotify.scio.bigquery.BigQueryClient
 import org.apache.beam.sdk.extensions.gcp.auth.NullCredentialInitializer
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
-import org.apache.beam.sdk.extensions.gcp.options.{CloudResourceManagerOptions, GcpOptions, GcsOptions}
+import org.apache.beam.sdk.extensions.gcp.options._
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.{GcsUtil, RetryHttpRequestInitializer, Transport}
 
@@ -65,17 +65,17 @@ private[scio] object ItUtils {
 
   private def newCloudResourceManagerClient(options: CloudResourceManagerOptions):
   CloudResourceManager = {
-    val credentials = options.getGcpCredential()
+    val credentials = options.getGcpCredential
     if (credentials == null) {
       NullCredentialInitializer.throwNullCredentialException()
     }
-    new CloudResourceManager.Builder(Transport.getTransport(), Transport.getJsonFactory(),
+    new CloudResourceManager.Builder(Transport.getTransport, Transport.getJsonFactory,
       chainHttpRequestInitializer(
         credentials,
         // Do not log 404. It clutters the output and is possibly even required by the caller.
         new RetryHttpRequestInitializer(ImmutableList.of(404))))
-      .setApplicationName(options.getAppName())
-      .setGoogleClientRequestInitializer(options.getGoogleApiTrace())
+      .setApplicationName(options.getAppName)
+      .setGoogleClientRequestInitializer(options.getGoogleApiTrace)
     .build()
   }
 
