@@ -20,44 +20,48 @@ package com.spotify.scio.io
 import java.io._
 import java.net.URI
 import java.nio.ByteBuffer
-import java.nio.channels.Channels
-import java.nio.file.Path
+import java.nio.channels.{Channels, SeekableByteChannel}
 import java.util.Collections
-import java.util.regex.Pattern
 
 import com.google.api.client.util.Charsets
 import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
-import org.apache.avro.file.{DataFileReader, SeekableFileInput, SeekableInput}
+import org.apache.avro.file.{DataFileReader, SeekableInput}
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.specific.{SpecificDatumReader, SpecificRecordBase}
+import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.TFRecordIO.CompressionType
-import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
-import org.apache.beam.sdk.util.gcsfs.GcsPath
+import org.apache.beam.sdk.io.fs.MatchResult.Metadata
 import org.apache.commons.compress.compressors.CompressorStreamFactory
-import org.apache.commons.io.filefilter.WildcardFileFilter
-import org.apache.commons.io.{FileUtils, IOUtils}
+import org.apache.commons.io.IOUtils
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.util.Try
 
 private[scio] object FileStorage {
-  def apply(path: String): FileStorage =
-    if (new URI(path).getScheme == "gs") new GcsStorage(path) else new LocalStorage(path)
+  def apply(path: String): FileStorage = new FileStorage(path)
 }
 
-private[scio] trait FileStorage {
+private[scio] class FileStorage(protected val path: String) {
 
-  protected val path: String
+  private def listFiles: Seq[Metadata] = FileSystems.`match`(path).metadata().asScala
 
-  protected def listFiles: Seq[Path]
+  private def getObjectInputStream(meta: Metadata): InputStream =
+    Channels.newInputStream(FileSystems.open(meta.resourceId()))
 
-  protected def getObjectInputStream(path: Path): InputStream
-
-  protected def getAvroSeekableInput(path: Path): SeekableInput
+  private def getAvroSeekableInput(meta: Metadata): SeekableInput =
+    new SeekableInput {
+      require(meta.isReadSeekEfficient)
+      private val in = FileSystems.open(meta.resourceId()).asInstanceOf[SeekableByteChannel]
+      override def read(b: Array[Byte], off: Int, len: Int): Int =
+        in.read(ByteBuffer.wrap(b, off, len))
+      override def tell(): Long = in.position()
+      override def length(): Long = in.size()
+      override def seek(p: Long): Unit = in.position(p)
+      override def close(): Unit = in.close()
+    }
 
   def avroFile[T: ClassTag](schema: Schema = null): Iterator[T] = {
     val cls = ScioUtil.classOf[T]
@@ -67,7 +71,7 @@ private[scio] trait FileStorage {
       new GenericDatumReader[T](schema)
     }
 
-    listFiles.map(f => DataFileReader.openReader(getAvroSeekableInput(f), reader))
+    listFiles.map(m => DataFileReader.openReader(getAvroSeekableInput(m), reader))
       .map(_.iterator().asScala).reduce(_ ++ _)
   }
 
@@ -101,9 +105,9 @@ private[scio] trait FileStorage {
 
   def isDone: Boolean = {
     val partPattern = "([0-9]{5})-of-([0-9]{5})".r
-    val paths = listFiles
-    val nums = paths.flatMap { p =>
-      val m = partPattern.findAllIn(p.toString)
+    val metadata = listFiles
+    val nums = metadata.flatMap { meta =>
+      val m = partPattern.findAllIn(meta.resourceId().toString)
       if (m.hasNext) {
         Some(m.group(1).toInt, m.group(2).toInt)
       } else {
@@ -111,14 +115,14 @@ private[scio] trait FileStorage {
       }
     }
 
-    if (paths.isEmpty) {
+    if (metadata.isEmpty) {
       // empty list
       false
     } else if (nums.nonEmpty) {
       // found xxxxx-of-yyyyy pattern
       val parts = nums.map(_._1).sorted
       val total = nums.map(_._2).toSet
-      paths.size == nums.size &&  // all paths matched
+      metadata.size == nums.size &&  // all paths matched
         total.size == 1 && total.head == parts.size &&  // yyyyy part
         parts.head == 0 && parts.last + 1 == parts.size // xxxxx part
     } else {
@@ -132,83 +136,5 @@ private[scio] trait FileStorage {
     val inputs = listFiles.map(getObjectInputStream).map(wrapperFn).asJava
     new SequenceInputStream(Collections.enumeration(inputs))
   }
-
-}
-
-private class GcsStorage(protected val path: String) extends FileStorage {
-
-  private val uri = new URI(path)
-  require(ScioUtil.isGcsUri(uri), s"Not a GCS path: $path")
-
-  private lazy val gcs = new GcsUtilFactory().create(PipelineOptionsFactory.create())
-
-  private val GLOB_PREFIX = Pattern.compile("(?<PREFIX>[^\\[*?]*)[\\[*?].*")
-
-  override protected def listFiles: Seq[Path] = {
-    if (GLOB_PREFIX.matcher(path).matches()) {
-      gcs
-        .expand(GcsPath.fromUri(uri))
-        .asScala
-    } else {
-      // not a glob, GcsUtil may return non-existent files
-      val p = GcsPath.fromUri(path)
-      if (Try(gcs.fileSize(p)).isSuccess) Seq(p) else Seq.empty
-    }
-  }
-
-  override protected def getObjectInputStream(path: Path): InputStream =
-    Channels.newInputStream(gcs.open(GcsPath.fromUri(path.toUri)))
-
-  override protected def getAvroSeekableInput(path: Path): SeekableInput =
-    new SeekableInput {
-      private val in = gcs.open(GcsPath.fromUri(path.toUri))
-
-      override def tell(): Long = in.position()
-
-      override def length(): Long = in.size()
-
-      override def seek(p: Long): Unit = in.position(p)
-
-      override def read(b: Array[Byte], off: Int, len: Int): Int =
-        in.read(ByteBuffer.wrap(b, off, len))
-
-      override def close(): Unit = in.close()
-    }
-
-}
-
-private class LocalStorage(protected val path: String)  extends FileStorage {
-
-  private val uri = new URI(path)
-  require(ScioUtil.isLocalUri(uri), s"Not a local path: $path")
-
-  override protected def listFiles: Seq[Path] = {
-    val p = path.lastIndexOf("/")
-    val (dir, filter) = if (p == 0) {
-      // "/file.ext"
-      (new File("/"), new WildcardFileFilter(path.substring(p + 1)))
-    } else if (p > 0) {
-      // "/path/to/file.ext"
-      (new File(path.substring(0, p)), new WildcardFileFilter(path.substring(p + 1)))
-    } else {
-      // "file.ext"
-      (new File("."), new WildcardFileFilter(path))
-    }
-    if (dir.isDirectory) {
-      FileUtils
-        .listFiles(dir, filter, null)
-        .asScala
-        .toSeq
-        .map(_.toPath)
-    } else {
-      Seq.empty
-    }
-  }
-
-  override protected def getObjectInputStream(path: Path): InputStream =
-    new FileInputStream(path.toFile)
-
-  override protected def getAvroSeekableInput(path: Path): SeekableInput =
-    new SeekableFileInput(path.toFile)
 
 }
