@@ -44,9 +44,9 @@ class ScioContextIT extends FlatSpec with Matchers {
   }
 
   private def verify(options: PipelineOptions): Unit = {
-    val pipeline = ScioContext(options).pipeline
-    val tempLocation = pipeline.getOptions.getTempLocation
-    val gcpTempLocation = pipeline.getOptions.as(classOf[GcpOptions]).getGcpTempLocation
+    val sc = ScioContext(options)
+    val tempLocation = sc.options.getTempLocation
+    val gcpTempLocation = sc.optionsAs[GcpOptions].getGcpTempLocation
 
     tempLocation should not be null
     gcpTempLocation should not be null
