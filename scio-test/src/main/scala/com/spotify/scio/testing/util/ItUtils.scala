@@ -28,7 +28,7 @@ import com.google.common.collect.ImmutableList
 import com.spotify.scio.bigquery.BigQueryClient
 import org.apache.beam.sdk.extensions.gcp.auth.NullCredentialInitializer
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
-import org.apache.beam.sdk.extensions.gcp.options.{CloudResourceManagerOptions, GcpOptions, GcsOptions}
+import org.apache.beam.sdk.extensions.gcp.options._
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.{GcsUtil, RetryHttpRequestInitializer, Transport}
 
