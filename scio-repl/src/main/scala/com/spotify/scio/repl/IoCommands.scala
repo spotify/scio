@@ -18,19 +18,17 @@
 package com.spotify.scio.repl
 
 import java.io._
-import java.net.URI
 import java.nio.channels.Channels
 import java.nio.charset.StandardCharsets
 
-import org.apache.beam.sdk.options.PipelineOptions
-import org.apache.beam.sdk.util.GcsUtil
-import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
-import org.apache.beam.sdk.util.gcsfs.GcsPath
 import com.spotify.scio.util.ScioUtil
 import kantan.csv.{RowDecoder, RowEncoder, rfc}
 import org.apache.avro.file.{DataFileStream, DataFileWriter}
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
 import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter, SpecificRecordBase}
+import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.options.PipelineOptions
+import org.apache.beam.sdk.util.MimeTypes
 import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
 
@@ -42,11 +40,7 @@ class IoCommands(options: PipelineOptions) {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  private val TEXT = "text/plain"
-  private val BINARY = "application/octet-stream"
-
-  // TODO: figure out how to support HDFS without messing up dependencies
-  private lazy val gcsUtil: GcsUtil = new GcsUtilFactory().create(options)
+  FileSystems.setDefaultPipelineOptions(options)
 
   // =======================================================================
   // Read operations
@@ -95,7 +89,8 @@ class IoCommands(options: PipelineOptions) {
     } else {
       (new GenericDatumWriter[T](), data.head.asInstanceOf[GenericRecord].getSchema)
     }
-    val fileWriter = new DataFileWriter[T](writer).create(schema, outputStream(path, BINARY))
+    val fileWriter = new DataFileWriter[T](writer)
+      .create(schema, outputStream(path, MimeTypes.BINARY))
     data.foreach(fileWriter.append)
     fileWriter.close()
     logger.info(s"${data.size} record${plural(data)} written to $path")
@@ -104,7 +99,8 @@ class IoCommands(options: PipelineOptions) {
   /** Write to a text file on local filesystem or GCS. */
   def writeText(path: String, data: Seq[String]): Unit = {
     IOUtils.writeLines(
-      data.asJava, IOUtils.LINE_SEPARATOR, outputStream(path, TEXT), StandardCharsets.UTF_8)
+      data.asJava, IOUtils.LINE_SEPARATOR,
+      outputStream(path, MimeTypes.TEXT), StandardCharsets.UTF_8)
     logger.info(s"${data.size} record${plural(data)} written to $path")
   }
 
@@ -114,7 +110,8 @@ class IoCommands(options: PipelineOptions) {
                               header: Seq[String] = Seq.empty): Unit = {
     import kantan.csv.ops._
     implicit val codec = scala.io.Codec.UTF8
-    outputStream(path, TEXT).writeCsv(data, rfc.withColumnSeparator(sep).withHeader(header:_*))
+    outputStream(path, MimeTypes.TEXT)
+      .writeCsv(data, rfc.withColumnSeparator(sep).withHeader(header:_*))
     logger.info(s"${data.size} record${plural(data)} written to $path")
   }
 
@@ -128,26 +125,12 @@ class IoCommands(options: PipelineOptions) {
   // Utilities
   // =======================================================================
 
-  private def inputStream(path: String): InputStream = {
-    val uri = new URI(path)
-    if (ScioUtil.isGcsUri(uri)) {
-      Channels.newInputStream(gcsUtil.open(GcsPath.fromUri(uri)))
-    } else if (ScioUtil.isLocalUri(uri)) {
-      new FileInputStream(path)
-    } else {
-      throw new IllegalArgumentException(s"Unsupported path $path")
-    }
-  }
+  private def inputStream(path: String): InputStream =
+    Channels.newInputStream(
+      FileSystems.open(FileSystems.matchSingleFileSpec(path).resourceId()))
 
-  private def outputStream(path: String, contentType: String): OutputStream = {
-    val uri = new URI(path)
-    if (ScioUtil.isGcsUri(uri)) {
-      Channels.newOutputStream(gcsUtil.create(GcsPath.fromUri(uri), contentType))
-    } else if (ScioUtil.isLocalUri(uri)) {
-      new FileOutputStream(path)
-    } else {
-      throw new IllegalArgumentException(s"Unsupported path $path")
-    }
-  }
+  private def outputStream(path: String, mimeType: String): OutputStream =
+    Channels.newOutputStream(
+      FileSystems.create(FileSystems.matchNewResource(path, false), mimeType))
 
 }
