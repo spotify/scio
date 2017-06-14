@@ -20,15 +20,15 @@ package com.spotify.scio.testing.util
 import java.io.IOException
 import java.nio.file.FileAlreadyExistsException
 
-import com.google.api.client.util.{BackOff => GBackOff, Sleeper => GSleeper}
+import com.google.api.client.util.Sleeper
 import com.google.api.services.cloudresourcemanager.CloudResourceManager
 import com.google.api.services.storage.model.Bucket
 import com.google.cloud.hadoop.util.{ResilientOperation, RetryDeterminer}
 import com.google.common.base.Strings.isNullOrEmpty
 import org.apache.beam.sdk.extensions.gcp.options.{GcpOptions, GcsOptions}
 import org.apache.beam.sdk.options.PipelineOptions
-import org.apache.beam.sdk.util.{BackOff, FluentBackoff, Sleeper}
 import org.apache.beam.sdk.util.gcsfs.GcsPath
+import org.apache.beam.sdk.util.{BackOff, BackOffAdapter, FluentBackoff}
 import org.joda.time.Duration
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -67,8 +67,7 @@ object DefaultBucket {
     try {
       val owner = gcpOptions.getGcsUtil.bucketOwner(GcsPath.fromComponents(bucketName, ""))
       require(owner == projectNumber,
-        "Bucket owner does not match the project from --project:" +
-          s" ${owner} vs. ${projectNumber}")
+        s"Bucket owner does not match the project from --project: $owner vs. $projectNumber")
     } catch {
       case e: IOException =>
         throw new RuntimeException("Unable to determine the owner of the default bucket at gs://" +
@@ -94,10 +93,10 @@ object DefaultBucket {
     try {
       val project = ResilientOperation.retry(
         ResilientOperation.getGoogleRequestCallable(getProject),
-        backoff.asInstanceOf[GBackOff],
+        BackOffAdapter.toGcpBackOff(backoff),
         RetryDeterminer.SOCKET_ERRORS,
         classOf[IOException],
-        sleeper.asInstanceOf[GSleeper])
+        sleeper)
       project.getProjectNumber
     } catch {
       case e: Exception =>
@@ -107,7 +106,7 @@ object DefaultBucket {
 
   private def getRegionFromZone(zone: String): String = {
     val zoneParts = zone.split("-")
-    require(zoneParts.length >= 2, s"Invalid zone provided: ${zone}")
+    require(zoneParts.length >= 2, s"Invalid zone provided: $zone")
     zoneParts(0) + "-" + zoneParts(1)
   }
 }
