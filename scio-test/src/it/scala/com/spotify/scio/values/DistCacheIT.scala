@@ -22,9 +22,8 @@ import java.nio.ByteBuffer
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.testing.util.ItUtils
 import com.spotify.scio.{ScioContext, ScioResult}
-import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
+import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.util.MimeTypes
-import org.apache.beam.sdk.util.gcsfs.GcsPath
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -46,18 +45,16 @@ class DistCacheIT extends PipelineSpec {
     val cache = sc.distCache(uri) { f =>
       scala.io.Source.fromFile(f).getLines().toList
     }
-    val gcsUtil = new GcsUtilFactory().create(sc.options)
+    FileSystems.setDefaultPipelineOptions(sc.options)
+    val resourceId = FileSystems.matchNewResource(uri, false)
     try {
-      val channel = gcsUtil.create(GcsPath.fromUri(uri), MimeTypes.TEXT)
-      channel.write(ByteBuffer.wrap(data.mkString("\n").getBytes))
-      channel.close()
+      val ch = FileSystems.create(resourceId, MimeTypes.TEXT)
+      ch.write(ByteBuffer.wrap(data.mkString("\n").getBytes))
+      ch.close()
       fn(sc, cache)
       sc.close()
     } finally {
-      val gcsPath = GcsPath.fromUri(uri)
-      if (gcsUtil.bucketAccessible(gcsPath)) {
-        gcsUtil.remove(Seq(uri).asJava)
-      }
+      FileSystems.delete(Seq(resourceId).asJava)
     }
   }
 
