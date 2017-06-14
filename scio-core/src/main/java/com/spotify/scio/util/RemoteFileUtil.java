@@ -17,27 +17,27 @@
 
 package com.spotify.scio.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.MapMaker;
 import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.MoreExecutors;
-import org.apache.beam.sdk.extensions.gcp.options.GcsOptions;
+import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.io.fs.MatchResult;
+import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
+import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.PipelineOptions;
-import org.apache.beam.sdk.util.GcsUtil;
 import org.apache.beam.sdk.util.MimeTypes;
-import org.apache.beam.sdk.util.gcsfs.GcsPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.Serializable;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.channels.FileChannel;
-import java.nio.channels.SeekableByteChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
  * A utility class for handling remote file systems designed to be used in a
  * {@link org.apache.beam.sdk.transforms.DoFn}.
  */
-public abstract class RemoteFileUtil implements Serializable {
+public class RemoteFileUtil implements Serializable {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteFileUtil.class);
 
@@ -74,18 +74,21 @@ public abstract class RemoteFileUtil implements Serializable {
    * Create a new {@link RemoteFileUtil} instance.
    */
   public static RemoteFileUtil create(PipelineOptions options) {
-    // FIXME: how to handle other file systems?
-    try {
-      return new GcsRemoteFileUtil(options.as(GcsOptions.class));
-    } catch (JsonProcessingException e) {
-      throw new IllegalArgumentException(e);
-    }
+    FileSystems.setDefaultPipelineOptions(options);
+    return new RemoteFileUtil();
   }
 
   /**
    * Check if a remote {@link URI} exists.
    */
-  public abstract boolean remoteExists(URI uri) throws IOException;
+  public boolean remoteExists(URI uri) throws IOException {
+    try {
+      FileSystems.matchSingleFileSpec(uri.toString());
+      return true;
+    } catch (FileNotFoundException e) {
+      return false;
+    }
+  }
 
   /**
    * Download a single remote {@link URI}.
@@ -157,17 +160,7 @@ public abstract class RemoteFileUtil implements Serializable {
    * Upload a single local {@link Path} to a remote {@link URI}.
    */
   public void upload(Path src, URI dst) throws IOException {
-    boolean exists = true;
-    try {
-      getRemoteSize(dst);
-    } catch (IOException e) {
-      if (e instanceof FileNotFoundException) {
-        exists = false;
-      } else {
-        throw e;
-      }
-    }
-    if (exists) {
+    if (remoteExists(dst)) {
       String msg = String.format("Destination URI %s already exists", dst);
       throw new IllegalArgumentException(msg);
     }
@@ -189,7 +182,8 @@ public abstract class RemoteFileUtil implements Serializable {
         }
       } else {
         // Remote URI
-        long srcSize = getRemoteSize(src);
+        Metadata srcMeta = getMetadata(src);
+        long srcSize = srcMeta.sizeBytes();
         boolean shouldDownload = true;
         if (Files.exists(dst)) {
           long dstSize = Files.size(dst);
@@ -203,7 +197,7 @@ public abstract class RemoteFileUtil implements Serializable {
           }
         }
         if (shouldDownload) {
-          copyToLocal(src, dst);
+          copyToLocal(srcMeta, dst);
           LOG.info("Downloaded {} -> {} [{}B]", src, dst, srcSize);
         }
       }
@@ -238,89 +232,37 @@ public abstract class RemoteFileUtil implements Serializable {
   }
 
   // Copy a single file from remote source to local destination
-  protected abstract void copyToLocal(URI src, Path dst) throws IOException;
+  private void copyToLocal(Metadata src, Path dst) throws IOException {
+    FileChannel dstCh = FileChannel.open(
+        dst, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
+    ReadableByteChannel srcCh = FileSystems.open(src.resourceId());
+    long srcSize = src.sizeBytes();
+    long copied = 0;
+    do {
+      copied += dstCh.transferFrom(srcCh, copied, srcSize - copied);
+    } while (copied < srcSize);
+    dstCh.close();
+    srcCh.close();
+    Preconditions.checkState(copied == srcSize);
+  }
 
   // Copy a single file from local source to remote destination
-  protected abstract void copyToRemote(Path src, URI dst) throws IOException;
+  private void copyToRemote(Path src, URI dst) throws IOException {
+    ResourceId dstId = FileSystems.matchNewResource(dst.toString(), false);
+    WritableByteChannel dstCh = FileSystems.create(dstId, MimeTypes.BINARY);
+    FileChannel srcCh = FileChannel.open(src, StandardOpenOption.READ);
+    long srcSize = srcCh.size();
+    long copied = 0;
+    do {
+      copied += srcCh.transferTo(copied, srcSize - copied, dstCh);
+    } while (copied < srcSize);
+    dstCh.close();
+    srcCh.close();
+    Preconditions.checkState(copied == srcSize);
+  }
 
-  // Get size of a remote URI
-  protected abstract long getRemoteSize(URI src) throws IOException;
-
-  // =======================================================================
-  // Implementations
-  // =======================================================================
-
-  private static class GcsRemoteFileUtil extends RemoteFileUtil {
-
-    // GcsOptions is not serializable
-    private final String jsonGcsOptions;
-
-    // GcsUtil is not serializable
-    private final Supplier<GcsUtil> gcsUtil =
-        Suppliers.memoize((Supplier<GcsUtil> & Serializable) this::createGcsUtil);
-
-    GcsRemoteFileUtil(GcsOptions gcsOptions) throws JsonProcessingException {
-      jsonGcsOptions = new ObjectMapper().writeValueAsString(gcsOptions);
-    }
-
-    private GcsUtil createGcsUtil() {
-      try {
-        return new ObjectMapper()
-            .readValue(jsonGcsOptions, PipelineOptions.class)
-            .as(GcsOptions.class)
-            .getGcsUtil();
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    }
-
-    @Override
-    public boolean remoteExists(URI uri) throws IOException {
-      try {
-        getRemoteSize(uri);
-        return true;
-      } catch (IOException e) {
-        if (e instanceof FileNotFoundException) {
-          return false;
-        }
-        throw e;
-      }
-    }
-
-    @Override
-    protected void copyToLocal(URI src, Path dst) throws IOException {
-      FileChannel dstCh = FileChannel.open(
-          dst, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
-      SeekableByteChannel srcCh = gcsUtil.get().open(GcsPath.fromUri(src));
-      long srcSize = srcCh.size();
-      long copied = 0;
-      do {
-        copied += dstCh.transferFrom(srcCh, copied, srcSize - copied);
-      } while (copied < srcSize);
-      dstCh.close();
-      srcCh.close();
-      Preconditions.checkState(copied == srcSize);
-    }
-
-    @Override
-    protected void copyToRemote(Path src, URI dst) throws IOException {
-      WritableByteChannel dstCh = gcsUtil.get().create(GcsPath.fromUri(dst), MimeTypes.BINARY);
-      FileChannel srcCh = FileChannel.open(src, StandardOpenOption.READ);
-      long srcSize = srcCh.size();
-      long copied = 0;
-      do {
-        copied += srcCh.transferTo(copied, srcSize - copied, dstCh);
-      } while (copied < srcSize);
-      dstCh.close();
-      srcCh.close();
-      Preconditions.checkState(copied == srcSize);
-    }
-
-    @Override
-    protected long getRemoteSize(URI src) throws IOException {
-      return gcsUtil.get().fileSize(GcsPath.fromUri(src));
-    }
-
+  private Metadata getMetadata(URI src) throws IOException {
+    return FileSystems.matchSingleFileSpec(src.toString());
   }
 
 }
