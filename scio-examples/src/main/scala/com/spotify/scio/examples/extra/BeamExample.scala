@@ -18,11 +18,11 @@
 package com.spotify.scio.examples.extra
 
 import java.lang.{Double => JDouble}
+
 import com.spotify.scio._
 import com.spotify.scio.avro.Account
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.coders.{AvroCoder, DoubleCoder, KvCoder, StringUtf8Coder}
-import org.apache.beam.sdk.io.PubsubIO
+import org.apache.beam.sdk.io.gcp.pubsub.PubsubIO
 import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.transforms.{PTransform, Sum}
@@ -35,9 +35,7 @@ object BeamExample {
 
   // A Beam native source PTransform
   def pubsubIn(topic: String): PTransform[PBegin, PCollection[Account]] =
-    PubsubIO.read[Account]()
-      .topic(topic)
-      .withCoder(AvroCoder.of(classOf[Account]))
+    PubsubIO.readAvros(classOf[Account]).fromTopic(topic)
 
   // A Beam native windowing PTransform
   val window: PTransform[PCollection[Account], PCollection[Account]] =
@@ -61,10 +59,8 @@ object BeamExample {
     Sum.doublesPerKey[String]()
 
   // A Beam native sink PTransform
-  def pubsubOut(topic: String): PTransform[PCollection[KV[String, JDouble]], PDone] =
-    PubsubIO.write[KV[String, JDouble]]()
-      .topic(topic)
-      .withCoder(KvCoder.of(StringUtf8Coder.of(), DoubleCoder.of()))
+  def pubsubOut(topic: String): PTransform[PCollection[String], PDone] =
+    PubsubIO.writeStrings().to(topic)
 
   // scalastyle:off regex
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -78,7 +74,7 @@ object BeamExample {
 
     // Underlying Beam pipeline
     val pipeline: Pipeline = sc.pipeline
-    println(pipeline.getRunner)
+    println(pipeline)
 
     // Apply a Beam source PTransform and get a Scio SCollection
     val accounts: SCollection[Account] = sc.customInput("Input", pubsubIn(args("inputTopic")))
@@ -94,6 +90,7 @@ object BeamExample {
       .map(a => KV.of(a.getName.toString, a.getAmount))
       // Beam PTransform
       .applyTransform(sumByKey)
+      .map(_.toString)
       // Beam sink PTransform[PCollection[T], PDone]
       .saveAsCustomOutput("Output", pubsubOut(args("outputTopic")))
 

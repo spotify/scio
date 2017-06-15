@@ -17,6 +17,8 @@
 
 package com.spotify.scio.examples
 
+// FIXME: fix this example
+/*
 import java.util.regex.Pattern
 
 import com.spotify.scio._
@@ -72,3 +74,4 @@ object DebuggingWordCount {
   }
 
 }
+*/
