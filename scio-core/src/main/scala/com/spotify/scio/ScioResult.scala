@@ -30,6 +30,7 @@ import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.options.ApplicationNameOptions
 import org.apache.beam.sdk.PipelineResult
 import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.metrics.{Metrics => _, _}
 import org.apache.beam.sdk.util.MimeTypes
 import org.slf4j.LoggerFactory
 
@@ -147,5 +148,36 @@ class ScioResult private[scio] (val internal: PipelineResult,
       dfMetrics
     )
   }
+
+  /** Retrieve all the counter values from the pipeline.
+   *
+   * @return A map from the names given to the metrics to their corresponding [[MetricValue]].
+   */
+  def getCounters(): Map[String, MetricValue[Long]] =
+    getJobMetrics(internalMetrics.counters.asScala.asInstanceOf[Iterable[MetricResult[Long]]])
+
+  /** Retrieve all the distribution values from the pipeline.
+   *
+   * @return A map from the names given to the metrics to their corresponding [[MetricValue]].
+   */
+  def getDistributions(): Map[String, MetricValue[DistributionResult]] =
+    getJobMetrics(internalMetrics.distributions.asScala)
+
+  /** Retrieve all the gauge values from the pipeline.
+   *
+   * @return A map from the names given to the metrics to their corresponding [[MetricValue]].
+   */
+  def getGauges(): Map[String, MetricValue[GaugeResult]] =
+    getJobMetrics(internalMetrics.gauges.asScala)
+
+  private def getJobMetrics[T](results: Iterable[MetricResult[T]]): Map[String, MetricValue[T]] =
+    results.foldLeft(Map.empty[String, MetricValue[T]]) { case (vals, metric) =>
+        vals.updated(metric.name.name, MetricValue(metric))
+    }
+
+  private lazy val internalMetrics = internal.metrics.queryMetrics(
+    MetricsFilter.builder().addNameFilter(MetricNameFilter.inNamespace(Metrics.namespace))
+    .build()
+  )
 
 }
