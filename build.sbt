@@ -200,7 +200,6 @@ lazy val root: Project = Project(
   scioBigtable,
   scioElasticsearch,
   scioExtra,
-//  scioHdfs,
   scioJdbc,
   scioRepl,
 //  scioExamples,
@@ -334,23 +333,6 @@ lazy val scioExtra: Project = Project(
   scioTest % "it,test->test"
 ).configs(IntegrationTest)
 
-lazy val scioHdfs: Project = Project(
-  "scio-hdfs",
-  file("scio-hdfs")
-).settings(
-  commonSettings,
-  description := "Scio add-on for HDFS",
-  libraryDependencies ++= Seq(
-    "org.apache.avro" % "avro-mapred" % avroVersion classifier("hadoop2"),
-    "org.apache.avro" % "avro-ipc" % avroVersion % "test" classifier("tests"),
-    "com.google.auto.value" % "auto-value" % autoValueVersion % "provided"
-  )
-).dependsOn(
-  scioCore,
-  scioTest % "test->test",
-  scioSchemas % "test"
-)
-
 lazy val scioJdbc: Project = Project(
   "scio-jdbc",
   file("scio-jdbc")
@@ -404,7 +386,6 @@ lazy val scioExamples: Project = Project(
   scioCore,
   scioBigtable,
   scioSchemas,
-  scioHdfs,
   scioJdbc,
   scioElasticsearch,
   scioExtra,
