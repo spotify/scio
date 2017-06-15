@@ -21,11 +21,7 @@ import org.apache.beam.sdk.metrics.{Counter, Distribution, Gauge, MetricResult, 
 
 import scala.util.Try
 
-/**
- * This package contains the schema types for metrics collected during a pipeline run.
- *
- * See [[ScioResult.getMetrics]].
- */
+/** This package contains the schema types for metrics collected during a pipeline run. */
 package object metrics {
 
   /** Utility object for creating Metrics. The main types available are
@@ -39,7 +35,7 @@ package object metrics {
     def gauge(name: String): Gauge = BMetrics.gauge(namespace, name)
   }
 
-  /** Contains the aggregated value of a metric.
+  /** Contains the aggregated value of a metric. See (for example) [[ScioResult.getCounters]]
    *
    * @param attempted The value aggregated across all attempted steps, including failed steps.
    * @param committed The value aggregated across all completed steps.
@@ -51,7 +47,9 @@ package object metrics {
       new MetricValue(result.attempted, Try(result.committed).toOption)
   }
 
-  /** Case class holding metadata and service-level metrics of the job. */
+  /** Case class holding metadata and service-level metrics of the job.
+   * See [[ScioResult.getMetrics]].
+   */
   case class Metrics(version: String,
                      scalaVersion: String,
                      jobName: String,
