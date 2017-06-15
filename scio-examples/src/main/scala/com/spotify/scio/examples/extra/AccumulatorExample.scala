@@ -17,6 +17,8 @@
 
 package com.spotify.scio.examples.extra
 
+// FIXME: fix this example
+/*
 import com.spotify.scio._
 import com.spotify.scio.accumulators._
 import com.spotify.scio.values.Accumulator
@@ -105,3 +107,4 @@ object SimpleAccumulatorExample {
     // scalastyle:on regex
   }
 }
+*/

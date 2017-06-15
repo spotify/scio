@@ -17,6 +17,8 @@
 
 package com.spotify.scio.examples
 
+// FIXME: fix this example
+/*
 import com.spotify.scio._
 import com.spotify.scio.accumulators._
 import com.spotify.scio.examples.common.ExampleData
@@ -63,3 +65,4 @@ object WordCount {
     // scalastyle:on regex
   }
 }
+*/

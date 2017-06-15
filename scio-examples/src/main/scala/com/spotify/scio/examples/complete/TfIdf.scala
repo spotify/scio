@@ -23,7 +23,7 @@ import java.net.URI
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.options.GcsOptions
+import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 import org.apache.beam.sdk.util.gcsfs.GcsPath
 
 import scala.collection.JavaConverters._

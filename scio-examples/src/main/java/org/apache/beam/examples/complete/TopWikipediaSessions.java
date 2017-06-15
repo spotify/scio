@@ -18,11 +18,9 @@
 package org.apache.beam.examples.complete;
 
 import com.google.api.services.bigquery.model.TableRow;
-
 import java.io.IOException;
 import java.util.List;
 import org.apache.beam.sdk.Pipeline;
-import org.apache.beam.sdk.coders.TableRowJsonCoder;
 import org.apache.beam.sdk.io.TextIO;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
@@ -209,10 +207,10 @@ public class TopWikipediaSessions {
 
     double samplingThreshold = 0.1;
 
-    p.apply(TextIO.Read.from(options.getInput()))
+    p.apply(TextIO.read().from(options.getInput()))
         .apply(MapElements.via(new ParseTableRowJson()))
         .apply(new ComputeTopSessions(samplingThreshold))
-        .apply("Write", TextIO.Write.withoutSharding().to(options.getOutput()));
+        .apply("Write", TextIO.write().withoutSharding().to(options.getOutput()));
 
     p.run().waitUntilFinish();
   }
