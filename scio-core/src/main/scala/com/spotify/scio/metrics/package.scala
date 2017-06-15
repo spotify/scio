@@ -17,20 +17,47 @@
 
 package com.spotify.scio
 
+import org.apache.beam.sdk.metrics.{Counter, Distribution, Gauge, MetricResult, Metrics => BMetrics}
+
+import scala.util.Try
+
 /**
  * This package contains the schema types for metrics collected during a pipeline run.
  *
  * See [[ScioResult.getMetrics]].
  */
 package object metrics {
+
+  /** Utility object for creating Metrics. The main types available are
+   * [[org.apache.beam.sdk.metrics.Counter]], [[org.apache.beam.sdk.metrics.Distribution]] and
+   * [[org.apache.beam.sdk.metrics.Gauge]].
+   */
+  object Metrics {
+    private[scio] val namespace = "scio"
+    def counter(name: String): Counter = BMetrics.counter(namespace, name)
+    def distribution(name: String): Distribution = BMetrics.distribution(namespace, name)
+    def gauge(name: String): Gauge = BMetrics.gauge(namespace, name)
+  }
+
+  /** Contains the aggregated value of a metric.
+   *
+   * @param attempted The value aggregated across all attempted steps, including failed steps.
+   * @param committed The value aggregated across all completed steps.
+   */
+  case class MetricValue[T](attempted: T, committed: Option[T])
+
+  private[scio] object MetricValue {
+    def apply[T](result: MetricResult[T]): MetricValue[T] =
+      new MetricValue(result.attempted, Try(result.committed).toOption)
+  }
+
+  /** Case class holding metadata and service-level metrics of the job. */
   case class Metrics(version: String,
-      scalaVersion: String,
-      jobName: String,
-      jobId: String,
-      state: String,
-      cloudMetrics: Iterable[DFServiceMetrics])
-  case class DFServiceMetrics(name: DFMetricName,
-      scalar: AnyRef,
-      updateTime: String)
+                     scalaVersion: String,
+                     jobName: String,
+                     jobId: String,
+                     state: String,
+                     cloudMetrics: Iterable[DFServiceMetrics])
+  case class DFServiceMetrics(name: DFMetricName, scalar: AnyRef, updateTime: String)
   case class DFMetricName(name: String, origin: String, context: Map[String, String])
 }
