@@ -17,11 +17,9 @@
 
 package com.spotify.scio.examples
 
-// FIXME: fix this example
-/*
 import com.spotify.scio._
-import com.spotify.scio.accumulators._
 import com.spotify.scio.examples.common.ExampleData
+import com.spotify.scio.metrics.ScioMetric
 
 /*
 SBT
@@ -39,16 +37,27 @@ object WordCount {
     val input = args.getOrElse("input", ExampleData.KING_LEAR)
     val output = args("output")
 
-    // initialize accumulators
-    val max = sc.maxAccumulator[Int]("maxLineLength")
-    val min = sc.minAccumulator[Int]("minLineLength")
-    val sumNonEmpty = sc.sumAccumulator[Long]("nonEmptyLines")
-    val sumEmpty = sc.sumAccumulator[Long]("emptyLines")
+    val lineDist = ScioMetric.distribution("lineLength")
+    val sumNonEmpty = ScioMetric.counter("nonEmptyLines")
+    val sumEmpty = ScioMetric.counter("emptyLines")
 
     sc.textFile(input)
-      .map(_.trim)
-      .accumulateBy(max, min)(_.length)
-      .accumulateCountFilter(sumNonEmpty, sumEmpty)(_.nonEmpty)
+      .map { w =>
+        val trimmed = w.trim
+        val l = trimmed.length
+        lineDist.update(l)
+        trimmed
+      }
+      .filter { w =>
+        val r = w.nonEmpty
+        if (r) {
+          sumNonEmpty.inc()
+        }
+        else {
+          sumEmpty.inc()
+        }
+        r
+      }
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
       .map(t => t._1 + ": " + t._2)
@@ -58,11 +67,12 @@ object WordCount {
 
     // scalastyle:off regex
     // retrieve accumulator values
-    println("Max: " + result.accumulatorTotalValue(max))
-    println("Min: " + result.accumulatorTotalValue(min))
-    println("Sum non-empty: " + result.accumulatorTotalValue(sumNonEmpty))
-    println("Sum empty: " + result.accumulatorTotalValue(sumEmpty))
+    val counters = result.getCounters()
+    val distributions = result.getDistributions()
+    println("Max: " + distributions("lineLength").committed.get.max)
+    println("Min: " + distributions("lineLength").committed.get.min)
+    println("Sum non-empty: " + counters("nonEmptyLines").committed.get)
+    println("Sum empty: " + counters("emptyLines").committed.get)
     // scalastyle:on regex
   }
 }
-*/
