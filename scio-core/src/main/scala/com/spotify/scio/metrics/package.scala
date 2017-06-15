@@ -28,7 +28,7 @@ package object metrics {
    * [[org.apache.beam.sdk.metrics.Counter]], [[org.apache.beam.sdk.metrics.Distribution]] and
    * [[org.apache.beam.sdk.metrics.Gauge]].
    */
-  object Metrics {
+  object ScioMetric {
     private[scio] val namespace = "scio"
     def counter(name: String): Counter = BMetrics.counter(namespace, name)
     def distribution(name: String): Distribution = BMetrics.distribution(namespace, name)
@@ -50,12 +50,12 @@ package object metrics {
   /** Case class holding metadata and service-level metrics of the job.
    * See [[ScioResult.getMetrics]].
    */
-  case class Metrics(version: String,
-                     scalaVersion: String,
-                     jobName: String,
-                     jobId: String,
-                     state: String,
-                     cloudMetrics: Iterable[DFServiceMetrics])
+  case class ServiceMetrics(version: String,
+                            scalaVersion: String,
+                            jobName: String,
+                            jobId: String,
+                            state: String,
+                            cloudMetrics: Iterable[DFServiceMetrics])
   case class DFServiceMetrics(name: DFMetricName, scalar: AnyRef, updateTime: String)
   case class DFMetricName(name: String, origin: String, context: Map[String, String])
 }

@@ -30,7 +30,7 @@ import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.options.ApplicationNameOptions
 import org.apache.beam.sdk.PipelineResult
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.metrics.{Metrics => _, _}
+import org.apache.beam.sdk.metrics._
 import org.apache.beam.sdk.util.MimeTypes
 import org.slf4j.LoggerFactory
 
@@ -108,7 +108,7 @@ class ScioResult private[scio] (val internal: PipelineResult,
   }
 
   /** Get metrics of the finished pipeline. */
-  def getMetrics: Metrics = {
+  def getMetrics: ServiceMetrics = {
     require(isCompleted, "Pipeline has to be finished to get metrics.")
 
     val (jobId, dfMetrics) = if (ScioUtil.isLocalRunner(this.context.options)) {
@@ -140,7 +140,7 @@ class ScioResult private[scio] (val internal: PipelineResult,
       (jobId, dfMetrics)
     }
 
-    Metrics(scioVersion,
+    ServiceMetrics(scioVersion,
       scalaVersion,
       context.optionsAs[ApplicationNameOptions].getAppName,
       jobId,
@@ -176,7 +176,7 @@ class ScioResult private[scio] (val internal: PipelineResult,
     }
 
   private lazy val internalMetrics = internal.metrics.queryMetrics(
-    MetricsFilter.builder().addNameFilter(MetricNameFilter.inNamespace(Metrics.namespace))
+    MetricsFilter.builder().addNameFilter(MetricNameFilter.inNamespace(ScioMetric.namespace))
     .build()
   )
 

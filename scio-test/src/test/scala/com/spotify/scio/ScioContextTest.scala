@@ -20,7 +20,7 @@ package com.spotify.scio
 import java.nio.file.Files
 
 import com.google.common.collect.Lists
-import com.spotify.scio.metrics.Metrics
+import com.spotify.scio.metrics.ServiceMetrics
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.ScioUtil
@@ -121,7 +121,7 @@ class ScioContextTest extends PipelineSpec {
 
     val mapper = ScioUtil.getScalaJsonMapper
 
-    val metrics = mapper.readValue(metricsFile, classOf[Metrics])
+    val metrics = mapper.readValue(metricsFile, classOf[ServiceMetrics])
     metrics.version shouldBe scioVersion
   }
 

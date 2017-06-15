@@ -21,7 +21,7 @@ import java.util.regex.Pattern
 
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
-import com.spotify.scio.metrics.Metrics
+import com.spotify.scio.metrics.ScioMetric
 import org.apache.beam.sdk.testing.PAssert
 import org.slf4j.LoggerFactory
 
@@ -44,8 +44,8 @@ object DebuggingWordCount {
 
     val filter = Pattern.compile(args.getOrElse("filterPattern", "Flourish|stomach"))
 
-    val matchedWords = Metrics.counter("matchedWords")
-    val unmatchedWords = Metrics.counter("unmatchedWords")
+    val matchedWords = ScioMetric.counter("matchedWords")
+    val unmatchedWords = ScioMetric.counter("unmatchedWords")
 
     val filteredWords = sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
