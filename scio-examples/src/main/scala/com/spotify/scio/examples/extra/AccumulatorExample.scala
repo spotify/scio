@@ -17,11 +17,8 @@
 
 package com.spotify.scio.examples.extra
 
-// FIXME: fix this example
-/*
 import com.spotify.scio._
-import com.spotify.scio.accumulators._
-import com.spotify.scio.values.Accumulator
+import com.spotify.scio.metrics.ScioMetric
 
 // Update accumulators inside a job and retrieve values later
 object AccumulatorExample {
@@ -29,21 +26,17 @@ object AccumulatorExample {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     // create accumulators to be updated inside the pipeline
-    val max = sc.maxAccumulator[Int]("max")
-    val min = sc.minAccumulator[Int]("min")
-    val sum = sc.sumAccumulator[Int]("sum")
-    val count = sc.sumAccumulator[Int]("count")
+    val dist = ScioMetric.distribution("dist")  // This will track min, max, count, sum, mean
 
     sc.parallelize(1 to 100)
-      .withAccumulator(max, min, sum, count)  // accumulators to be used in the next transform
-      .filter { (i, c) =>  // accumulators available via the second argument AccumulatorContext
-      // update accumulators via the context
-      c.addValue(max, i).addValue(min, i).addValue(sum, i).addValue(count, 1)
-      i <= 50
-    }
-      .map { (i, c) =>
+      .filter { i =>
+      // update accumulators
+        dist.update(i)
+        i <= 50
+     }
+      .map { i =>
         // reuse some accumulators here
-        c.addValue(sum, i).addValue(count, 1)
+        dist.update(i)
         i
       }
 
@@ -51,16 +44,11 @@ object AccumulatorExample {
 
     // access accumulator values after job is submitted
     // scalastyle:off regex
-    println("Max: " + r.accumulatorTotalValue(max))
-    println("Min: " + r.accumulatorTotalValue(min))
-    println("Sum: " + r.accumulatorTotalValue(sum))
-    println("Count: " + r.accumulatorTotalValue(count))
-
-    println("Sum per step:")
-    r.accumulatorValuesAtSteps(sum).foreach(kv => println(kv._2 + " @ " + kv._1))
-
-    println("Count per step:")
-    r.accumulatorValuesAtSteps(count).foreach(kv => println(kv._2 + " @ " + kv._1))
+    val resultDist = r.getDistributions()("dist").committed.get
+    println("Max: " + resultDist.max)
+    println("Min: " + resultDist.min)
+    println("Sum: " + resultDist.sum)
+    println("Count: " + resultDist.count)
     // scalastyle:on regex
   }
 }
@@ -70,41 +58,20 @@ object SimpleAccumulatorExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    // create accumulators to be updated inside the pipeline
-    val max = sc.maxAccumulator[Int]("max")
-    val min = sc.minAccumulator[Int]("min")
-    val sum = sc.sumAccumulator[Int]("sum")
+    // create accumulator to be updated inside the pipeline
+    val dist = ScioMetric.distribution("dist")
 
     sc.parallelize(1 to 100)
-      .accumulate(max, min, sum)
-      .accumulateCount
-      .accumulateCountFilter(_ <= 50)
-      .accumulate(sum)
-      .accumulateCount
+      .map(dist.update(_))
 
     val r = sc.close().waitUntilFinish()
 
     // access accumulator values after job is submitted
     // scalastyle:off regex
-    println("Max: " + r.accumulatorTotalValue(max))
-    println("Min: " + r.accumulatorTotalValue(min))
-    println("Sum: " + r.accumulatorTotalValue(sum))
-
-    println("Sum per step:")
-    r.accumulatorValuesAtSteps(sum).foreach(kv => println(kv._2 + " @ " + kv._1))
-
-    println("Count:")
-    r.accumulators.filter(_.name.startsWith("accumulateCount")).foreach { a =>
-      val v = r.accumulatorTotalValue(a.asInstanceOf[Accumulator[Long]])
-      println(v + " @ " + a.name)
-    }
-
-    println("Filter:")
-    r.accumulators.filter(_.name.contains("accumulateCountFilter")).foreach { a =>
-      val v = r.accumulatorTotalValue(a.asInstanceOf[Accumulator[Long]])
-      println(v + " @ " + a.name)
-    }
+    val stats = r.getDistributions()("dist").committed.get
+    println("Max: " + stats.max)
+    println("Min: " + stats.min)
+    println("Sum: " + stats.sum)
     // scalastyle:on regex
   }
 }
-*/

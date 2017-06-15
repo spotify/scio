@@ -19,7 +19,6 @@ package com.spotify.scio.examples.extra
 
 import com.spotify.scio.testing.{JobTest, PipelineSpec}
 
-/*
 class AccumulatorExampleTest extends PipelineSpec {
 
   "AccumulatorExample" should "work" in {
@@ -37,4 +36,3 @@ class AccumulatorExampleTest extends PipelineSpec {
   }
 
 }
-*/
