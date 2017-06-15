@@ -96,9 +96,8 @@ private[types] object ConverterProvider {
     }
 
     def field(symbol: Symbol, fn: TermName): Tree = {
-      // TODO: figure out why there's trailing spaces
-      val name = symbol.name.toString.trim
-      val tpe = symbol.typeSignature
+      val name = symbol.name.toString
+      val tpe = symbol.asMethod.returnType
       val TypeRef(_, _, args) = tpe
 
       val tree = q"$fn.get($name)"
@@ -179,9 +178,8 @@ private[types] object ConverterProvider {
     def list(tree: Tree, tpe: Type): Tree = q"$tree.map(x => ${cast(q"x", tpe)}).asJava"
 
     def field(symbol: Symbol, fn: TermName): (String, Tree) = {
-      // TODO: figure out why there's trailing spaces
-      val name = symbol.name.toString.trim
-      val tpe = symbol.typeSignature
+      val name = symbol.name.toString
+      val tpe = symbol.asMethod.returnType
       val TypeRef(_, _, args) = tpe
 
       val tree = q"$fn.${TermName(name)}"

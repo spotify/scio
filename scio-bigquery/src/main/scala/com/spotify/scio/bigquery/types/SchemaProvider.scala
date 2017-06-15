@@ -72,9 +72,8 @@ private[types] object SchemaProvider {
 
   private def toField(f: (Symbol, Option[String])): TableFieldSchema = {
     val (symbol, desc) = f
-    // TODO: figure out why there's trailing spaces
-    val name = symbol.name.toString.trim
-    val tpe = symbol.typeSignature
+    val name = symbol.name.toString
+    val tpe = symbol.asMethod.returnType
     val TypeRef(_, _, args) = tpe
 
     val (mode, valType) = tpe match {
