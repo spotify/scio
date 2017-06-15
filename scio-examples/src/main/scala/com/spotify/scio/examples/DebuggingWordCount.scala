@@ -17,13 +17,11 @@
 
 package com.spotify.scio.examples
 
-// FIXME: fix this example
-/*
 import java.util.regex.Pattern
 
 import com.spotify.scio._
-import com.spotify.scio.accumulators._
 import com.spotify.scio.examples.common.ExampleData
+import com.spotify.scio.metrics.Metrics
 import org.apache.beam.sdk.testing.PAssert
 import org.slf4j.LoggerFactory
 
@@ -46,18 +44,20 @@ object DebuggingWordCount {
 
     val filter = Pattern.compile(args.getOrElse("filterPattern", "Flourish|stomach"))
 
-    val matchedWords = sc.sumAccumulator[Long]("matchedWords")
-    val unmatchedWords = sc.sumAccumulator[Long]("unmatchedWords")
+    val matchedWords = Metrics.counter("matchedWords")
+    val unmatchedWords = Metrics.counter("unmatchedWords")
 
     val filteredWords = sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
-      .accumulateCountFilter(matchedWords, unmatchedWords) { case (k, _) =>
+      .filter { case (k, _) =>
         val matched = filter.matcher(k).matches()
         if (matched) {
           logger.debug(s"Matched $k")
+          matchedWords.inc()
         } else {
           logger.trace(s"Did not match: $k")
+          unmatchedWords.inc()
         }
         matched
       }
@@ -69,9 +69,9 @@ object DebuggingWordCount {
     val result = sc.close().waitUntilFinish()
 
     // retrieve accumulator values
-    require(result.accumulatorTotalValue(matchedWords) == 2)
-    require(result.accumulatorTotalValue(unmatchedWords) > 100)
+    val counters = result.getCounters()
+    require(counters("matchedWords").committed.get == 2)
+    require(counters("unmatchedWords").committed.get > 100)
   }
 
 }
-*/
