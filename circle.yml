@@ -24,8 +24,6 @@ dependencies:
     - scio-bigtable/target/streams
     - scio-extra/target/resolution-cache
     - scio-extra/target/streams
-    - scio-hdfs/target/resolution-cache
-    - scio-hdfs/target/streams
     - scio-repl/target/resolution-cache
     - scio-repl/target/streams
     - scio-examples/target/resolution-cache
