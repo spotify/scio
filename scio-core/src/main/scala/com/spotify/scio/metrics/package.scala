@@ -17,20 +17,36 @@
 
 package com.spotify.scio
 
-/**
- * This package contains the schema types for metrics collected during a pipeline run.
- *
- * See [[ScioResult.getMetrics]].
- */
+import org.apache.beam.sdk.metrics.MetricResult
+
+import scala.util.Try
+
+/** This package contains the schema types for metrics collected during a pipeline run. */
 package object metrics {
-  case class Metrics(version: String,
-      scalaVersion: String,
-      jobName: String,
-      jobId: String,
-      state: String,
-      cloudMetrics: Iterable[DFServiceMetrics])
-  case class DFServiceMetrics(name: DFMetricName,
-      scalar: AnyRef,
-      updateTime: String)
+
+  /**
+   * Contains the aggregated value of a metric. See (for example) [[ScioResult.counters]]
+   * @param attempted The value aggregated across all attempted steps, including failed steps.
+   * @param committed The value aggregated across all completed steps.
+   */
+  case class MetricValue[T](attempted: T, committed: Option[T])
+
+  private[scio] object MetricValue {
+    def apply[T](result: MetricResult[T]): MetricValue[T] =
+      MetricValue(result.attempted, Try(result.committed).toOption)
+  }
+
+  /**
+   * Case class holding metadata and service-level metrics of the job. See
+   * [[ScioResult.getMetrics]].
+   */
+  case class ServiceMetrics(version: String,
+                            scalaVersion: String,
+                            jobName: String,
+                            jobId: String,
+                            state: String,
+                            cloudMetrics: Iterable[DFServiceMetrics])
+  case class DFServiceMetrics(name: DFMetricName, scalar: AnyRef, updateTime: String)
   case class DFMetricName(name: String, origin: String, context: Map[String, String])
+
 }

@@ -30,6 +30,7 @@ import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.options.ApplicationNameOptions
 import org.apache.beam.sdk.PipelineResult
 import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.metrics._
 import org.apache.beam.sdk.util.MimeTypes
 import org.slf4j.LoggerFactory
 
@@ -44,7 +45,6 @@ class ScioResult private[scio] (val internal: PipelineResult,
                                 val context: ScioContext) {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
-
 
   /**
    * `Future` for pipeline's final state. The `Future` will be completed once the pipeline
@@ -107,7 +107,7 @@ class ScioResult private[scio] (val internal: PipelineResult,
   }
 
   /** Get metrics of the finished pipeline. */
-  def getMetrics: Metrics = {
+  def getMetrics: ServiceMetrics = {
     require(isCompleted, "Pipeline has to be finished to get metrics.")
 
     val (jobId, dfMetrics) = if (ScioUtil.isLocalRunner(this.context.options)) {
@@ -139,7 +139,7 @@ class ScioResult private[scio] (val internal: PipelineResult,
       (jobId, dfMetrics)
     }
 
-    Metrics(scioVersion,
+    ServiceMetrics(scioVersion,
       scalaVersion,
       context.optionsAs[ApplicationNameOptions].getAppName,
       jobId,
@@ -147,5 +147,36 @@ class ScioResult private[scio] (val internal: PipelineResult,
       dfMetrics
     )
   }
+
+  /** Retrieve all the counter values from the pipeline. */
+  def counters: Map[String, MetricValue[Long]] =
+    getJobMetrics(internalMetrics.counters.asScala.asInstanceOf[Iterable[MetricResult[Long]]])
+
+  /** Retrieve a single counter value from the pipeline. */
+  def counter(c: Counter): MetricValue[Long] = counters(c.getName.name())
+
+  /** Retrieve all the distribution values from the pipeline. */
+  def distributions: Map[String, MetricValue[DistributionResult]] =
+    getJobMetrics(internalMetrics.distributions.asScala)
+
+  /** Retrieve a single distribution values from the pipeline. */
+  def distribution(d: Distribution): MetricValue[DistributionResult] =
+    distributions(d.getName.name())
+
+  /** Retrieve all the gauge values from the pipeline. */
+  def gauges: Map[String, MetricValue[GaugeResult]] =
+    getJobMetrics(internalMetrics.gauges.asScala)
+
+  /** Retrieve a single gauge value from the pipeline. */
+  def gauge(g: Gauge): MetricValue[GaugeResult] =
+    gauges(g.getName.name())
+
+  private def getJobMetrics[T](results: Iterable[MetricResult[T]]): Map[String, MetricValue[T]] =
+    results.map(m => (m.name().name(), MetricValue(m)))(scala.collection.breakOut)
+
+  private lazy val internalMetrics = internal.metrics.queryMetrics(
+    MetricsFilter.builder()
+      .addNameFilter(MetricNameFilter.inNamespace(ScioMetrics.namespace))
+      .build())
 
 }
