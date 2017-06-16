@@ -19,6 +19,7 @@ package com.spotify
 
 import com.spotify.scio.io.Tap
 import com.twitter.algebird.Semigroup
+import org.apache.beam.sdk.metrics.{Counter, Distribution, Gauge, Metrics => BMetrics}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -33,6 +34,18 @@ import scala.reflect.ClassTag
  * }}}
  */
 package object scio {
+
+  /**
+   * Utility object for creating metrics. The main types available are
+   * [[org.apache.beam.sdk.metrics.Counter]], [[org.apache.beam.sdk.metrics.Distribution]] and
+   * [[org.apache.beam.sdk.metrics.Gauge]].
+   */
+  object ScioMetrics {
+    private[scio] val namespace = "scio"
+    def counter(name: String): Counter = BMetrics.counter(namespace, name)
+    def distribution(name: String): Distribution = BMetrics.distribution(namespace, name)
+    def gauge(name: String): Gauge = BMetrics.gauge(namespace, name)
+  }
 
   /**
    * Wait for [[com.spotify.scio.io.Tap Tap]] to be available and get Tap reference from `Future`.

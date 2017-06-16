@@ -17,24 +17,15 @@
 
 package com.spotify.scio.examples.extra
 
-import com.spotify.scio.testing.{JobTest, PipelineSpec}
+import com.spotify.scio.testing._
 
-/*
-class AccumulatorExampleTest extends PipelineSpec {
+class MetricsExampleTest extends PipelineSpec {
 
   "AccumulatorExample" should "work" in {
     noException should be thrownBy {
-      JobTest[com.spotify.scio.examples.extra.AccumulatorExample.type]
-        .run()
-    }
-  }
-
-  "SimpleAccumulatorExample" should "work" in {
-    noException should be thrownBy {
-      JobTest[com.spotify.scio.examples.extra.SimpleAccumulatorExample.type]
+      JobTest[com.spotify.scio.examples.extra.MetricsExample.type]
         .run()
     }
   }
 
 }
-*/
