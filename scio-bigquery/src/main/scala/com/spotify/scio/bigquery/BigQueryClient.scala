@@ -82,7 +82,7 @@ class BigQueryClient private (private val projectId: String,
         .fromStream(new FileInputStream(secretFile))
         .createScoped(BigQueryClient.SCOPES))
 
-  private val credentials = Option(_credentials).getOrElse(
+  private lazy val credentials = Option(_credentials).getOrElse(
     GoogleCredentials.getApplicationDefault.createScoped(BigQueryClient.SCOPES))
 
   private lazy val bigquery: Bigquery = {
