@@ -1044,7 +1044,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       context.testOut(PubsubIO(topic))(this)
     } else {
       val cls = ScioUtil.classOf[T]
-      def setup[U](write: psio.PubsubIO.Write[U]) = {
+      def setup[U](write: psio.PubsubIO.Write[U]): psio.PubsubIO.Write[U] = {
         var w = write
         if (idAttribute != null) {
           w = w.withIdAttribute(idAttribute)
@@ -1052,7 +1052,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         if (timestampAttribute != null) {
           w = w.withTimestampAttribute(timestampAttribute)
         }
-        w
+        w.to(topic)
       }
       if (classOf[String] isAssignableFrom cls) {
         val t = setup(psio.PubsubIO.writeStrings())
@@ -1087,7 +1087,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (context.isTest) {
       context.testOut(PubsubIO(topic))(this)
     } else {
-      var transform = psio.PubsubIO.writeMessages()
+      var transform = psio.PubsubIO.writeMessages().to(topic)
       if (idAttribute != null) {
         transform = transform.withIdAttribute(idAttribute)
       }
