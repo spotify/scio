@@ -4,6 +4,7 @@ machine:
   environment:
     SBT_OPTS: "-XX:ReservedCodeCacheSize=256m"
     JAVA_OPTS: "-Xms1g -Xmx2g -Dsun.io.serialization.extendedDebugInfo=true"
+    GOOGLE_APPLICATION_CREDENTIALS: "scripts/data-integration-test.json"
 
 dependencies:
   cache_directories:
