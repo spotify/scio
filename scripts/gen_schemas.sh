@@ -2,6 +2,6 @@
 
 set -e
 
-# Cached schemas
+echo "Resorting cached BigQuery schemas"
 mkdir -p .bigquery
-cp scripts/bigquery/* .bigquery/
+cp -v scripts/bigquery/* .bigquery/
