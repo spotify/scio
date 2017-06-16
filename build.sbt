@@ -203,7 +203,8 @@ lazy val root: Project = Project(
   scioJdbc,
   scioRepl,
   scioExamples,
-  scioSchemas
+  scioSchemas,
+  scioHdfs
 )
 
 lazy val scioCore: Project = Project(
@@ -332,6 +333,18 @@ lazy val scioExtra: Project = Project(
   scioCore,
   scioTest % "it,test->test"
 ).configs(IntegrationTest)
+
+lazy val scioHdfs: Project = Project(
+  "scio-hdfs",
+  file("scio-hdfs")
+).settings(
+  commonSettings,
+  description := "Scio add-on for HDFS",
+  libraryDependencies ++= Seq(
+    "org.apache.beam" % "beam-sdks-java-io-hadoop-file-system" % beamVersion,
+    "org.apache.hadoop" % "hadoop-client" % hadoopVersion
+  )
+)
 
 lazy val scioJdbc: Project = Project(
   "scio-jdbc",
