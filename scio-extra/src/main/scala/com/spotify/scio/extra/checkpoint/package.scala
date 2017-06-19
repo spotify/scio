@@ -22,6 +22,7 @@ import com.spotify.scio.io.FileStorage
 import com.spotify.scio.testing.ObjectFileIO
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.io.FileSystems
 
 import scala.reflect.ClassTag
 
@@ -53,7 +54,7 @@ package object checkpoint {
      */
     def checkpoint[T: ClassTag](fileOrPath: String)
                                (fn: => SCollection[T]): SCollection[T] = {
-
+      FileSystems.setDefaultPipelineOptions(self.options)
       val path = if (self.isTest) {
         fileOrPath
       } else {
