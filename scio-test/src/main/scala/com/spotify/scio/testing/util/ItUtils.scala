@@ -30,7 +30,7 @@ import org.apache.beam.sdk.extensions.gcp.auth.NullCredentialInitializer
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.extensions.gcp.options._
 import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.apache.beam.sdk.util.{GcsUtil, RetryHttpRequestInitializer, Transport}
+import org.apache.beam.sdk.util.{RetryHttpRequestInitializer, Transport}
 
 /** Integration test utilities. */
 private[scio] object ItUtils {
@@ -44,13 +44,6 @@ private[scio] object ItUtils {
       // fallback to local setting
       new DefaultProjectFactory().create(null)
     }
-
-  /** Get [[org.apache.beam.sdk.util.GcsUtil GcsUtil]] for integration test. */
-  def gcsUtil: GcsUtil = {
-    val opts = PipelineOptionsFactory.as(classOf[GcsOptions])
-    opts.setProject(project)
-    opts.getGcsUtil
-  }
 
   /** Get GCP temp location for integration test. */
   def gcpTempLocation(prefix: String): String = {

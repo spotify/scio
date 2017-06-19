@@ -21,8 +21,8 @@ import java.nio.ByteBuffer
 
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.testing.util.ItUtils
+import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.util.MimeTypes
-import org.apache.beam.sdk.util.gcsfs.GcsPath
 
 import scala.collection.JavaConverters._
 
@@ -34,6 +34,7 @@ class SparkeyIT extends PipelineSpec {
 
   "SCollection" should "support .asSparkeySideInput using GCS tempLocation" in {
     runWithContext { sc =>
+      FileSystems.setDefaultPipelineOptions(sc.options)
       val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
       try {
         val p1 = sc.parallelize(Seq(1))
@@ -41,20 +42,22 @@ class SparkeyIT extends PipelineSpec {
         val s = p1.withSideInputs(p2).flatMap((_, si) => si(p2).map(_._2)).toSCollection
         s should containInAnyOrder (Seq("1", "2", "3"))
       } finally {
-        val gcs = ItUtils.gcsUtil
-        val files = gcs.expand(GcsPath.fromUri(tempLocation + "/sparkey-*")).asScala
-        gcs.remove(files.map(_.toString).asJava)
+        val files = FileSystems
+          .`match`(tempLocation + "/sparkey-*")
+          .metadata().asScala.map(_.resourceId())
+        FileSystems.delete(files.asJava)
       }
     }
   }
 
   it should "throw exception when Sparkey file exists" in {
     runWithContext { sc =>
+      FileSystems.setDefaultPipelineOptions(sc.options)
       val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
       val basePath = tempLocation + "/sparkey"
-      val gcs = ItUtils.gcsUtil
+      val resourceId = FileSystems.matchNewResource(basePath + ".spi", false)
       try {
-        val f = gcs.create(GcsPath.fromUri(basePath + ".spi"), MimeTypes.BINARY)
+        val f = FileSystems.create(resourceId, MimeTypes.BINARY)
         f.write(ByteBuffer.wrap("test-data".getBytes))
         f.close()
         // scalastyle:off no.whitespace.before.left.bracket
@@ -63,7 +66,7 @@ class SparkeyIT extends PipelineSpec {
         } should have message s"requirement failed: Sparkey URI $basePath already exists"
         // scalastyle:on no.whitespace.before.left.bracket
       } finally {
-        gcs.remove(Seq(basePath + ".spi").asJava)
+        FileSystems.delete(Seq(resourceId).asJava)
       }
     }
   }
