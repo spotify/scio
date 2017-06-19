@@ -518,7 +518,8 @@ val javaMappings = beamMappings ++ Seq(
   ("com.google.apis", "google-api-services-bigquery", "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest"),
   // FIXME: investigate why joda-time won't link
   ("joda-time", "joda-time", "http://www.joda.org/joda-time/apidocs"),
-  ("org.apache.avro", "avro", "https://avro.apache.org/docs/current/api/java"))
+  ("org.apache.avro", "avro", "https://avro.apache.org/docs/current/api/java"),
+  ("org.tensorflow", "libtensorflow", "https://www.tensorflow.org/api_docs/java/reference"))
 val scalaMappings = Seq(
   ("com.twitter", "algebird-core", "http://twitter.github.io/algebird/api"),
   ("org.scalanlp", "breeze", "http://www.scalanlp.org/api/breeze/"),
