@@ -17,14 +17,10 @@
 
 package com.spotify.scio.examples.complete
 
-import java.io.File
-import java.net.URI
-
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
-import org.apache.beam.sdk.util.gcsfs.GcsPath
+import org.apache.beam.sdk.io.FileSystems
 
 import scala.collection.JavaConverters._
 
@@ -42,35 +38,13 @@ object TfIdf {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    val uris = {
-      val base = new URI(args.getOrElse("input", ExampleData.SHAKESPEARE_PATH))
-      val absoluteUri = if (base.getScheme != null) {
-        base
-      } else {
-        new URI("file", base.getAuthority, base.getPath, base.getQuery, base.getFragment)
-      }
+    FileSystems.setDefaultPipelineOptions(sc.options)
 
-      if (absoluteUri.getScheme == "file") {
-        val dir = new File(absoluteUri)
-        dir.list().map(e => new File(dir, e).toURI).toSet
-      } else if (absoluteUri.getScheme == "gs") {
-        val glob = new URI(
-          absoluteUri.getScheme,
-          absoluteUri.getAuthority,
-          absoluteUri.getPath + "*",
-          absoluteUri.getQuery,
-          absoluteUri.getFragment)
-        sc.optionsAs[GcsOptions].getGcsUtil
-          .expand(GcsPath.fromUri(glob)).asScala.map(_.toUri).toSet
-      } else {
-        throw new IllegalArgumentException(s"Unsupported scheme ${absoluteUri.getScheme}")
-      }
-    }
+    val uris = FileSystems
+        .`match`(args.getOrElse("input", ExampleData.SHAKESPEARE_ALL))
+        .metadata().asScala.map(_.resourceId().toString)
 
-    val uriToContent = SCollection.unionAll(uris.map { uri =>
-      val uriString = if (uri.getScheme == "file") new File(uri).getPath else uri.toString
-      sc.textFile(uriString).keyBy(_ => uriString)
-    }.toSeq)
+    val uriToContent = SCollection.unionAll(uris.map(uri => sc.textFile(uri).keyBy(_ => uri)))
 
     computeTfIdf(uriToContent)
       .map { case (t, (d, tfIdf)) =>

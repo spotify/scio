@@ -19,7 +19,6 @@ package com.spotify.scio.examples.common
 
 object ExampleData {
 
-  val SHAKESPEARE_PATH = "gs://dataflow-samples/shakespeare/"
   val SHAKESPEARE_ALL = "gs://dataflow-samples/shakespeare/*"
   val KING_LEAR = "gs://dataflow-samples/shakespeare/kinglear.txt"
   val OTHELLO = "gs://dataflow-samples/shakespeare/othello.txt"
