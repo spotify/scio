@@ -17,24 +17,16 @@
 
 package com.spotify.scio
 
-import org.apache.beam.sdk.metrics.MetricResult
-
-import scala.util.Try
-
 /** This package contains the schema types for metrics collected during a pipeline run. */
 package object metrics {
 
   /**
-   * Contains the aggregated value of a metric. See (for example) [[ScioResult.counters]]
-   * @param attempted The value aggregated across all attempted steps, including failed steps.
-   * @param committed The value aggregated across all completed steps.
+   * Contains the aggregated value of a metric. See [[ScioResult.allCounters]],
+   * [[ScioResult.allDistributions]] and [[ScioResult.allGauges]].
+   * @param attempted The value across all attempts of executing all parts of the pipeline.
+   * @param committed The value across all successfully completed parts of the pipeline.
    */
   case class MetricValue[T](attempted: T, committed: Option[T])
-
-  private[scio] object MetricValue {
-    def apply[T](result: MetricResult[T]): MetricValue[T] =
-      MetricValue(result.attempted, Try(result.committed).toOption)
-  }
 
   /**
    * Case class holding metadata and service-level metrics of the job. See

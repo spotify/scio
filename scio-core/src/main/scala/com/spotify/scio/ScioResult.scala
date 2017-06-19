@@ -23,6 +23,7 @@ import java.nio.ByteBuffer
 import com.spotify.scio.metrics._
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.util.ScioUtil
+import com.twitter.algebird.Semigroup
 import org.apache.beam.runners.dataflow.DataflowPipelineJob
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
@@ -41,8 +42,7 @@ import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 /** Represent a Scio pipeline result. */
-class ScioResult private[scio] (val internal: PipelineResult,
-                                val context: ScioContext) {
+class ScioResult private[scio] (val internal: PipelineResult, val context: ScioContext) {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -131,10 +131,9 @@ class ScioResult private[scio] (val internal: PipelineResult,
           })
       } match {
         case Success(x) => x
-        case Failure(e) => {
+        case Failure(e) =>
           logger.error(s"Failed to fetch Dataflow metrics", e)
           Nil
-        }
       }
       (jobId, dfMetrics)
     }
@@ -148,35 +147,81 @@ class ScioResult private[scio] (val internal: PipelineResult,
     )
   }
 
-  /** Retrieve all the counter values from the pipeline. */
-  def counters: Map[String, MetricValue[Long]] =
-    getJobMetrics(internalMetrics.counters.asScala.asInstanceOf[Iterable[MetricResult[Long]]])
+  /** Retrieve aggregated value of a single counter from the pipeline. */
+  def counter(c: Counter): MetricValue[Long] = allCounters(c.getName)
 
-  /** Retrieve a single counter value from the pipeline. */
-  def counter(c: Counter): MetricValue[Long] = counters(c.getName.name())
+  /** Retrieve aggregated value of a single distribution from the pipeline. */
+  def distribution(d: Distribution): MetricValue[DistributionResult] = allDistributions(d.getName)
 
-  /** Retrieve all the distribution values from the pipeline. */
-  def distributions: Map[String, MetricValue[DistributionResult]] =
-    getJobMetrics(internalMetrics.distributions.asScala)
+  /** Retrieve latest value of a single gauge from the pipeline. */
+  def gauge(g: Gauge): MetricValue[GaugeResult] = allGauges(g.getName)
 
-  /** Retrieve a single distribution values from the pipeline. */
-  def distribution(d: Distribution): MetricValue[DistributionResult] =
-    distributions(d.getName.name())
+  /** Retrieve per step values of a single counter from the pipeline. */
+  def counterAtSteps(c: Counter): Map[String, MetricValue[Long]] = allCountersAtSteps(c.getName)
 
-  /** Retrieve all the gauge values from the pipeline. */
-  def gauges: Map[String, MetricValue[GaugeResult]] =
-    getJobMetrics(internalMetrics.gauges.asScala)
+  /** Retrieve per step values of a single distribution from the pipeline. */
+  def distributionAtSteps(d: Distribution): Map[String, MetricValue[DistributionResult]] =
+    allDistributionsAtSteps(d.getName)
 
-  /** Retrieve a single gauge value from the pipeline. */
-  def gauge(g: Gauge): MetricValue[GaugeResult] =
-    gauges(g.getName.name())
+  /** Retrieve per step values of a single gauge from the pipeline. */
+  def gaugeAtSteps(g: Gauge): Map[String, MetricValue[GaugeResult]] = allGaugesAtSteps(g.getName)
 
-  private def getJobMetrics[T](results: Iterable[MetricResult[T]]): Map[String, MetricValue[T]] =
-    results.map(m => (m.name().name(), MetricValue(m)))(scala.collection.breakOut)
+  /** Retrieve aggregated values of all counters from the pipeline. */
+  lazy val allCounters: Map[MetricName, MetricValue[Long]] =
+    allCountersAtSteps.mapValues(reduceMetricValues[Long])
+
+  /** Retrieve aggregated values of all distributions from the pipeline. */
+  lazy val allDistributions: Map[MetricName, MetricValue[DistributionResult]] =
+    allDistributionsAtSteps.mapValues(reduceMetricValues[DistributionResult])
+
+  /** Retrieve latest values of all gauges from the pipeline. */
+  lazy val allGauges: Map[MetricName, MetricValue[GaugeResult]] =
+    allGaugesAtSteps.mapValues(reduceMetricValues[GaugeResult])
+
+  /** Retrieve per step values of all counters from the pipeline. */
+  lazy val allCountersAtSteps: Map[MetricName, Map[String, MetricValue[Long]]] =
+    metricsAtSteps(internalMetrics.counters().asScala.asInstanceOf[Iterable[MetricResult[Long]]])
+
+  /** Retrieve per step values of all distributions from the pipeline. */
+  lazy val allDistributionsAtSteps: Map[MetricName, Map[String, MetricValue[DistributionResult]]] =
+    metricsAtSteps(internalMetrics.distributions().asScala)
+
+  /** Retrieve aggregated values of all gauges from the pipeline. */
+  lazy val allGaugesAtSteps: Map[MetricName, Map[String, MetricValue[GaugeResult]]] =
+    metricsAtSteps(internalMetrics.gauges().asScala)
 
   private lazy val internalMetrics = internal.metrics.queryMetrics(
-    MetricsFilter.builder()
-      .addNameFilter(MetricNameFilter.inNamespace(ScioMetrics.namespace))
-      .build())
+    MetricsFilter.builder().build())
+
+  private def metricsAtSteps[T](results: Iterable[MetricResult[T]])
+  : Map[MetricName, Map[String, MetricValue[T]]] =
+    results
+      .groupBy(_.name())
+      .mapValues { xs =>
+        val m: Map[String, MetricValue[T]] = xs.map { r =>
+          r.step() -> MetricValue(r.attempted(), Try(r.committed()).toOption)
+        } (scala.collection.breakOut)
+        m
+      }
+
+  private def reduceMetricValues[T: Semigroup](xs: Map[String, MetricValue[T]]) = {
+    val sg = Semigroup.from[MetricValue[T]] { (x, y) =>
+      val sg = implicitly[Semigroup[T]]
+      val sgO = implicitly[Semigroup[Option[T]]]
+      MetricValue(sg.plus(x.attempted, y.attempted), sgO.plus(x.committed, y.committed))
+    }
+    xs.values.reduce(sg.plus)
+  }
+
+  private implicit val distributionResultSg = Semigroup.from[DistributionResult] { (x, y) =>
+    DistributionResult.create(
+      x.sum() + y.sum(), x.count() + y.count(),
+      math.min(x.min(), y.min()), math.max(x.max(), y.max()))
+  }
+
+  private implicit val gaugeResultSg = Semigroup.from[GaugeResult] { (x, y) =>
+    // sum by taking the latest
+    if (x.timestamp() isAfter y.timestamp()) x else y
+  }
 
 }
