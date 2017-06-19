@@ -32,7 +32,7 @@ object DistinctExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    val in = args.getOrElse("input", ExampleData.SHAKESPEARE_PATH)
+    val in = args.getOrElse("input", ExampleData.SHAKESPEARE_ALL)
     val out = args("output")
 
     sc.textFile(in)
