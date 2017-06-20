@@ -727,22 +727,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
   }
 
   /**
-   * Get an SCollection for a TensorFlow TFRecord file. Note that TFRecord files are not
-   * splittable. The recommended record encoding is [[org.tensorflow.example.Example]] protocol
-   * buffers (which contain [[org.tensorflow.example.Features]] as a field) serialized as bytes.
-   * @group input
-   */
-  def tfRecordFile(path: String, compressionType: CompressionType = CompressionType.AUTO)
-  : SCollection[Array[Byte]] = requireNotClosed {
-    if (this.isTest) {
-      this.getTestInput(TFRecordIO(path))
-    } else {
-      wrap(this.applyInternal(gio.TFRecordIO.read().from(path)
-        .withCompressionType(compressionType)))
-    }
-  }
-
-  /**
    * Get an SCollection with a custom input transform. The transform should have a unique name.
    * @group input
    */

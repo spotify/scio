@@ -43,7 +43,7 @@ private[scio] object FileStorage {
   def apply(path: String): FileStorage = new FileStorage(path)
 }
 
-private[scio] class FileStorage(protected val path: String) {
+private[scio] class FileStorage(protected[io] val path: String) {
 
   private def listFiles: Seq[Metadata] = FileSystems.`match`(path).metadata().asScala
 
@@ -87,21 +87,6 @@ private[scio] class FileStorage(protected val path: String) {
   def tableRowJsonFile: Iterator[TableRow] =
     textFile.map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
 
-  def tfRecordFile: Iterator[Array[Byte]] = {
-    new Iterator[Array[Byte]] {
-      private def wrapInputStream(in: InputStream) =
-        TFRecordCodec.wrapInputStream(in, CompressionType.AUTO)
-      private val input = getDirectoryInputStream(path, wrapInputStream)
-      private var current: Array[Byte] = TFRecordCodec.read(input)
-      override def hasNext: Boolean = current != null
-      override def next(): Array[Byte] = {
-        val r = current
-        current = TFRecordCodec.read(input)
-        r
-      }
-    }
-  }
-
   def isDone: Boolean = {
     val partPattern = "([0-9]{5})-of-([0-9]{5})".r
     val metadata = listFiles
@@ -129,7 +114,7 @@ private[scio] class FileStorage(protected val path: String) {
     }
   }
 
-  private def getDirectoryInputStream(path: String,
+  private[io] def getDirectoryInputStream(path: String,
                                       wrapperFn: InputStream => InputStream = identity)
   : InputStream = {
     val inputs = listFiles.map(getObjectInputStream).map(wrapperFn).asJava

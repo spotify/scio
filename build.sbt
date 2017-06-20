@@ -56,7 +56,7 @@ val scalatestVersion = "3.0.3"
 val shapelessDatatypeVersion = "0.1.2"
 val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.1.3"
-val tensorflowVersion = "1.1.0"
+val tensorFlowVersion = "1.2.0"
 
 val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework")
 
@@ -204,7 +204,8 @@ lazy val root: Project = Project(
   scioRepl,
   scioExamples,
   scioSchemas,
-  scioHdfs
+  scioHdfs,
+  scioTensorFlow
 )
 
 lazy val scioCore: Project = Project(
@@ -221,7 +222,7 @@ lazy val scioCore: Project = Project(
     "com.twitter" % "chill-protobuf" % chillVersion,
     "commons-io" % "commons-io" % commonsIoVersion,
     "org.apache.commons" % "commons-math3" % commonsMath3Version,
-    "org.tensorflow" % "proto" % tensorflowVersion,
+    "org.tensorflow" % "proto" % tensorFlowVersion,
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion,
     "com.google.auto.service" % "auto-service" % autoServiceVersion,
     "com.google.auto.value" % "auto-value" % autoValueVersion,
@@ -333,6 +334,21 @@ lazy val scioExtra: Project = Project(
   scioCore,
   scioTest % "it,test->test"
 ).configs(IntegrationTest)
+
+lazy val scioTensorFlow: Project = Project(
+  "scio-tensorflow",
+  file("scio-tensorflow")
+).settings(
+  commonSettings,
+  description := "Scio add-on for TensorFlow",
+  libraryDependencies ++= Seq(
+    "org.tensorflow" % "tensorflow" % tensorFlowVersion,
+    "org.tensorflow" % "proto" % tensorFlowVersion
+  )
+).dependsOn(
+  scioCore,
+  scioTest % "test->test"
+)
 
 lazy val scioHdfs: Project = Project(
   "scio-hdfs",
@@ -493,7 +509,8 @@ val javaMappings = beamMappings ++ Seq(
   ("com.google.apis", "google-api-services-bigquery", "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest"),
   // FIXME: investigate why joda-time won't link
   ("joda-time", "joda-time", "http://www.joda.org/joda-time/apidocs"),
-  ("org.apache.avro", "avro", "https://avro.apache.org/docs/current/api/java"))
+  ("org.apache.avro", "avro", "https://avro.apache.org/docs/current/api/java"),
+  ("org.tensorflow", "libtensorflow", "https://www.tensorflow.org/api_docs/java/reference"))
 val scalaMappings = Seq(
   ("com.twitter", "algebird-core", "http://twitter.github.io/algebird/api"),
   ("org.scalanlp", "breeze", "http://www.scalanlp.org/api/breeze/"),
