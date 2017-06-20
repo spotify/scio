@@ -79,9 +79,19 @@ object DatastoreJob {
 object PubsubJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.pubsubTopic[String](args("input"), null)
+    sc.pubsubTopic[String](args("input"))
       .map(_ + "X")
       .saveAsPubsub(args("output"))
+    sc.close()
+  }
+}
+
+object PubsubWithAttributesJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.pubsubTopicWithAttributes[String](args("input"))
+      .map(kv => (kv._1 + "X", kv._2))
+      .saveAsPubsubWithAttributes(args("output"))
     sc.close()
   }
 }
@@ -269,6 +279,25 @@ class JobTestTest extends PipelineSpec {
   it should "fail incorrect PubsubIO" in {
     an [AssertionError] should be thrownBy { testPubsubJob("aX", "bX") }
     an [AssertionError] should be thrownBy { testPubsubJob("aX", "bX", "cX", "dX") }
+  }
+
+  def testPubsubWithAttributesJob(xs: String*): Unit = {
+    type M = Map[String, String]
+    val m = Map("a" -> "1", "b" -> "2", "c" -> "3")
+    JobTest[PubsubWithAttributesJob.type]
+      .args("--input=in", "--output=out")
+      .input(PubsubIO[(String, M)]("in"), Seq("a", "b", "c").map((_, m)))
+      .output[(String, M)](PubsubIO("out"))(_ should containInAnyOrder (xs.map((_, m))))
+      .run()
+  }
+
+  it should "pass correct PubsubIO with attributes" in {
+    testPubsubWithAttributesJob("aX", "bX", "cX")
+  }
+
+  it should "fail incorrect PubsubIO with attributes" in {
+    an [AssertionError] should be thrownBy { testPubsubWithAttributesJob("aX", "bX") }
+    an [AssertionError] should be thrownBy { testPubsubWithAttributesJob("aX", "bX", "cX", "dX") }
   }
 
   def testTableRowJson(xs: Seq[TableRow]): Unit = {
