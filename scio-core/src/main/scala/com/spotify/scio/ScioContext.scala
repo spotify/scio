@@ -76,6 +76,8 @@ object ContextAndArgs {
 /** Companion object for [[ScioContext]]. */
 object ScioContext {
 
+  private val log = LoggerFactory.getLogger(this.getClass)
+
   import org.apache.beam.sdk.options.PipelineOptionsFactory
 
   /** Create a new [[ScioContext]] instance. */
@@ -124,10 +126,11 @@ object ScioContext {
       cmdlineArgs.partition(arg => optPatterns.exists(_.findFirstIn(arg).isDefined))
 
     val pipelineOpts = PipelineOptionsFactory.fromArgs(optArgs: _*).as(optClass)
-    val configFile = pipelineOpts.as(classOf[ScioOptions]).getOptionsFile
-    if (configFile != null) {
-      parseArguments(cmdlineArgs.filterNot(_.startsWith("--configFile=")) ++
-        Source.fromFile(configFile).getLines())
+    val optionsFile = pipelineOpts.as(classOf[ScioOptions]).getOptionsFile
+    if (optionsFile != null) {
+      log.info(s"Appending options from $optionsFile")
+      parseArguments(cmdlineArgs.filterNot(_.startsWith("--optionsFile=")) ++
+        Source.fromFile(optionsFile).getLines())
     } else {
       val args = Args(appArgs)
       if (appArgs.nonEmpty) {
