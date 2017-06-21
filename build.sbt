@@ -225,7 +225,7 @@ lazy val scioCore: Project = Project(
     "org.tensorflow" % "proto" % tensorFlowVersion,
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion,
     "com.google.auto.service" % "auto-service" % autoServiceVersion,
-    "com.google.auto.value" % "auto-value" % autoValueVersion,
+    "com.google.auto.value" % "auto-value" % autoValueVersion % "provided",
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion
   )
 ).dependsOn(
