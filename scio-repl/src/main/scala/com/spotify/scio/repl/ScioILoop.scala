@@ -39,6 +39,8 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
                 out: JPrintWriter)
   extends ILoopCompat(reader, out) {
 
+  private var scioIsInitialized = false
+
   welcome()
 
   def this(scioCL: ScioReplClassLoader, args: List[String]) =
@@ -57,7 +59,11 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
 
   override def printWelcome() {}
 
-  override def prompt: String = Console.GREEN + "\nscio> " + Console.RESET
+  override def prompt: String = if (scioIsInitialized) {
+    Console.GREEN + "\nscio> " + Console.RESET
+  } else {
+    ""
+  }
 
   // Options for creating new Scio contexts
   private var scioOpts: Array[String] = args.toArray
@@ -245,7 +251,9 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
         "One possible reason is inconsistent Scala versions. Please use the exact same version of" +
         " Scala as scio-repl.")
     }
-    in.redrawLine()
+    scioIsInitialized = true
+    out.print(prompt)
+    out.flush()
   }
 
 }
