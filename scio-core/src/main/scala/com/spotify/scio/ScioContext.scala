@@ -54,9 +54,11 @@ import org.apache.beam.sdk.{Pipeline, io => gio}
 import org.joda.time.Instant
 import org.slf4j.LoggerFactory
 
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}
 import scala.concurrent.{Future, Promise}
+import scala.io.Source
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.util.Try
@@ -97,6 +99,7 @@ object ScioContext {
   }
 
   /** Parse PipelineOptions and application arguments from command line arguments. */
+  @tailrec
   def parseArguments[T <: PipelineOptions : ClassTag](cmdlineArgs: Array[String])
   : (T, Args) = {
     val optClass = ScioUtil.classOf[T]
@@ -120,11 +123,17 @@ object ScioContext {
       cmdlineArgs.partition(arg => optPatterns.exists(_.findFirstIn(arg).isDefined))
 
     val pipelineOpts = PipelineOptionsFactory.fromArgs(optArgs: _*).as(optClass)
-    val args = Args(appArgs)
-    if (appArgs.nonEmpty) {
-      pipelineOpts.as(classOf[ScioOptions]).setAppArguments(args.toString("", ", ", ""))
+    val configFile = pipelineOpts.as(classOf[ScioOptions]).getOptionsFile
+    if (configFile != null) {
+      parseArguments(cmdlineArgs.filterNot(_.startsWith("--configFile=")) ++
+        Source.fromFile(configFile).getLines())
+    } else {
+      val args = Args(appArgs)
+      if (appArgs.nonEmpty) {
+        pipelineOpts.as(classOf[ScioOptions]).setAppArguments(args.toString("", ", ", ""))
+      }
+      (pipelineOpts, args)
     }
-    (pipelineOpts, args)
   }
 
   import scala.language.implicitConversions
