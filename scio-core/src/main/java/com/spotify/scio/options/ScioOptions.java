@@ -46,5 +46,5 @@ public interface ScioOptions extends PipelineOptions {
   @JsonIgnore
   @Description("Path to newline separated file with command line options")
   String getOptionsFile();
-  void setOptionsFile(String configFile);
+  void setOptionsFile(String optionsFile);
 }
