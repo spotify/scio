@@ -53,6 +53,8 @@ Scio includes the following artifacts:
 - `scio-test`: test utilities, add to your project as a "test" dependency
 - `scio-bigquery`: Add-on for BigQuery, included in `scio-core` but can also be used standalone
 - `scio-bigtable`: Add-on for Bigtable
+- `scio-cassandra2`: Add-on for Cassandra 2.x
+- `scio-cassandra3`: Add-on for Cassandra 3.x
 - `scio-elasticsearch`: Add-on for Elasticsearch
 - `scio-extra`: Extra utilities for working with collections, Breeze, etc.
 - `scio-hdfs`: Add-on for HDFS IO
