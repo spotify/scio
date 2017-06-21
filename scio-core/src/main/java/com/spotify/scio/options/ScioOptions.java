@@ -17,6 +17,7 @@
 
 package com.spotify.scio.options;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 
@@ -41,4 +42,9 @@ public interface ScioOptions extends PipelineOptions {
   @Description("Custom application arguments")
   String getAppArguments();
   void setAppArguments(String arguments);
+
+  @JsonIgnore
+  @Description("Path to newline separated file with command line options")
+  String getOptionsFile();
+  void setOptionsFile(String configFile);
 }
