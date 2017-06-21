@@ -17,22 +17,19 @@
 
 package com.spotify.scio
 
+import java.io.PrintWriter
 import java.nio.file.Files
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.google.common.collect.Lists
 import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.ScioUtil
-import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.runners.direct.DirectRunner
-import org.apache.beam.sdk.options.PipelineOptionsFactory
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.transforms.Create
-import org.apache.commons.lang.exception.ExceptionUtils
 
 class ScioContextTest extends PipelineSpec {
 
@@ -148,5 +145,19 @@ class ScioContextTest extends PipelineSpec {
     val foo = sc1.maxAccumulator[Long]("foo")
     sc.containsAccumulator(max) shouldBe true
     sc.containsAccumulator(foo) shouldBe false
+  }
+
+  it should "support options from optionsFile" in {
+    val optionsFile = Files.createTempFile("scio-options", ".txt").toFile
+    val pw = new PrintWriter(optionsFile)
+    try {
+      pw.append("--foo=bar")
+      pw.flush()
+    } finally {
+      pw.close()
+    }
+    val (_, arg) = ScioContext.parseArguments[PipelineOptions](
+      Array(s"--optionsFile=${optionsFile.getAbsolutePath}"))
+    arg("foo") shouldBe "bar"
   }
 }
