@@ -101,6 +101,15 @@ class ClosureTest extends PipelineSpec {
     val msg = "unable to serialize anonymous function map@{ClosureTest.scala:"
     thrown.getMessage should startWith (msg)
   }
+
+  it should "support multi-nested closures" in {
+    runWithContext { sc =>
+      val fn = new NestedClosuresNotSerializable().getMapFn
+      val p = sc.parallelize(Seq(1, 2, 3))
+        .map(fn)
+      p should containInAnyOrder (Seq(3, 4, 5))
+    }
+  }
 }
 
 object ClosureTest {
@@ -119,4 +128,15 @@ class Foo extends Serializable {
 
 class NotSerializableObj {
   val x = 10
+}
+
+class NestedClosuresNotSerializable {
+  val irrelevantInt: Int = 1
+  def closure(name: String)(body: => Int => Int): Int => Int = body
+  def getMapFn: Int => Int = closure("one") {
+    def x = irrelevantInt
+    def y = 2
+    val fn = { a: Int => (a + y) }
+    fn
+  }
 }
