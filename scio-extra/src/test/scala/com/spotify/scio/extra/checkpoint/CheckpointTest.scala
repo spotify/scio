@@ -20,7 +20,6 @@ package com.spotify.scio.extra.checkpoint
 import java.nio.file.Files
 
 import com.spotify.scio.ContextAndArgs
-import com.spotify.scio.testing.{ObjectFileIO, PipelineSpec, TextIO}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.reflect.io.File

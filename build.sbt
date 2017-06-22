@@ -21,6 +21,7 @@ import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtSite.SiteKeys._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 
+val asmVersion = "5.2"
 val beamVersion = "0.6.0"
 val algebirdVersion = "0.13.0"
 val annoyVersion = "0.2.5"
@@ -226,6 +227,7 @@ lazy val scioCore: Project = Project(
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion,
     "com.google.auto.service" % "auto-service" % autoServiceVersion,
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
+    "org.ow2.asm" % "asm" % asmVersion,
     "junit" % "junit" % junitVersion % "provided",
     "com.google.auto.value" % "auto-value" % autoValueVersion % "provided"
   )
