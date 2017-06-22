@@ -57,6 +57,7 @@ Scio includes the following artifacts:
 - `scio-extra`: Extra utilities for working with collections, Breeze, etc.
 - `scio-hdfs`: Add-on for HDFS IO
 - `scio-jdbc`: Add-on for JDBC IO
+- `scio-tensorflow`: Add-on for [TensorFlow](http://tensorflow.org/) TFRecords IO and prediction
 
 # License
 
