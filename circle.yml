@@ -48,7 +48,7 @@ test:
     - ./scripts/circleci_parallel_run.sh './scripts/it-repl.sh $CI_SCALA_VERSION'
   post:
     - bash <(curl -s https://codecov.io/bash)
-    - if ( ( [ $CIRCLE_BRANCH = "master" ] || [ $CIRCLE_BRANCH = "apache-beam" ] ) && $(grep -q SNAPSHOT version.sbt) ); then ./scripts/circleci_parallel_run.sh 'sbt ++$CI_SCALA_VERSION publish'; fi:
+    - if ( ( [ $CIRCLE_BRANCH = "master" ] || [ $CIRCLE_BRANCH = "beam-2.0" ] ) && $(grep -q SNAPSHOT version.sbt) ); then ./scripts/circleci_parallel_run.sh 'sbt ++$CI_SCALA_VERSION publish'; fi:
         parallel: true
 
 deployment:
