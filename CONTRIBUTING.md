@@ -1,7 +1,7 @@
 Contributing
 ============
 
-Scio is developed and maintained by an infrasture team at Spotify. It is the preferred API for both batch and streaming data processing on Google Cloud Dataflow at Spotify and many other companies. The project wouldn't have been successful without contributions from all the external users.
+Scio is developed and maintained by an infrastructure team at Spotify. It is the preferred API for both batch and streaming data processing on Google Cloud Dataflow at Spotify and many other companies. The project wouldn't have been successful without contributions from all the external users.
 
 # Submitting issues
 
