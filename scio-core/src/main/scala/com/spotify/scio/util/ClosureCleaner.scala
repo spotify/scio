@@ -26,6 +26,7 @@ import org.objectweb.asm.Opcodes._
 
 import scala.annotation.tailrec
 import scala.collection.mutable.{Map => MMap, Set => MSet, Stack => MStack}
+import scala.language.existentials
 import scala.util.Try
 
 private[scio] object ClosureCleaner {
