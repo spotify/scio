@@ -12,7 +12,7 @@ SCALA_VERSION=$1
 
 echo "Will test scio REPL for scala ${SCALA_VERSION}"
 
-sbt ++$SCALA_VERSION "project scio-repl" coverage assembly
+sbt ++$SCALA_VERSION "project scio-repl" assembly
 
 echo "Test scripts:"
 find ./scio-repl/src/it/resources -type f
