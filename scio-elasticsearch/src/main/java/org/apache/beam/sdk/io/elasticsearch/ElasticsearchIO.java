@@ -19,10 +19,16 @@ package org.apache.beam.sdk.io.elasticsearch;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Spliterator;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.GroupByKey;
@@ -40,10 +46,12 @@ import com.twitter.jsr166e.ThreadLocalRandom;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
+import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
@@ -225,20 +233,41 @@ public class ElasticsearchIO {
       }
       @ProcessElement
       public void processElement(ProcessContext c) throws Exception {
-        final List<Iterable<ActionRequest>> actionRequests =
-            StreamSupport.stream(c.element().getValue().spliterator(), false)
-                .map(toActionRequests::apply)
-                .collect(Collectors.toList());
+        Stream<T> stream = null;
+        try {
+          stream = StreamSupport.stream(c.element().getValue().spliterator(), false);
+        } catch(Exception e) {
+          LOG.error("Exception inside stream: " + e.toString());
+        }
+        Stream<Iterable<ActionRequest>> iterableStream = null;
+        try {
+          iterableStream = stream.map(toActionRequests::apply);
+        } catch(Exception e) {
+          LOG.error("Exception inside iterableStream: " + e.toString());
+        }
+        List<Iterable<ActionRequest>> collect = null;
+        try {
+          collect = iterableStream.collect(Collectors.toList());
+        } catch(Exception e) {
+          LOG.error("Exception inside collect: " + e.toString());
+        }
+
 
         // Elasticsearch throws ActionRequestValidationException if bulk request is empty,
         // so do nothing if number of actions is zero.
-        if (actionRequests.isEmpty()) {
+        if (collect.isEmpty()) {
           LOG.info("ElasticsearchWriter: no requests to send");
           return;
         }
         final BulkRequest bulkRequest = new BulkRequest();
-        Iterables.concat(actionRequests).forEach(x -> addBulkRequest(bulkRequest, x));
-        final BulkResponse bulkItemResponse = clientSupplier.get().bulk(bulkRequest).get();
+        final Client client = clientSupplier.get();
+        BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
+        final HashMap<String, Object> finalMap = new HashMap<String, Object>();
+        final HashMap<String, Object> docMap = new HashMap<String, Object>();
+        finalMap.put("doc", docMap);
+        Iterables.concat(collect).forEach(x -> bulkRequestBuilder.add(client.prepareUpdate("TestIndex123", "TestType", "TestMessage").setDoc(docMap).setUpsert(finalMap)));
+        final BulkResponse bulkItemResponse = bulkRequestBuilder.execute().actionGet();
+
         if (bulkItemResponse.hasFailures()) {
           error.accept(new BulkExecutionException(bulkItemResponse));
         }
@@ -246,23 +275,28 @@ public class ElasticsearchIO {
     }
 
 
-    private static void addBulkRequest(BulkRequest bulkRequest, ActionRequest actionRequest) {
-      String simpleName = actionRequest.getClass().getSimpleName();
+    private static void addBulkRequest(BulkRequestBuilder bulkRequest, ActionRequest actionRequest) {
+      String simpleName;
       final Logger LOG = LoggerFactory.getLogger(ElasticsearchWriter.class);
-      LOG.error("SIMPLE NAME:" + simpleName);
-      switch(simpleName){
-//        case "IndexRequest" : bulkRequest.add((IndexRequest)actionRequest); break;
-        case "UpdateRequest" : bulkRequest.add((UpdateRequest)actionRequest); break;
-        case "DeleteRequest" : bulkRequest.add((DeleteRequest) actionRequest); break;
-        case "DocWriteRequest" : bulkRequest.add((DocWriteRequest)actionRequest); break;
-        default:
-          String message = String.format("Unsupported ActionRequest Type: %s.", simpleName);
-          throw new IllegalArgumentException(message);
-      }
+      try{
+        LOG.error("actionRequest: ", actionRequest);
+        Class simpleNameClass = actionRequest.getClass();
+        LOG.error("simpleNameClass: " + simpleNameClass);
+        simpleName = simpleNameClass.getSimpleName();
+        LOG.error("simpleName: " + simpleName);
 
-      actionRequest.getClass().getEnclosingClass().getName();
-      if (actionRequest instanceof IndexRequest) {
-        bulkRequest.add((IndexRequest)actionRequest);
+        switch(simpleName){
+          case "IndexRequest" : bulkRequest.add((IndexRequest)actionRequest); break;
+          case "UpdateRequest" : bulkRequest.add((UpdateRequest)actionRequest); break;
+          case "DeleteRequest" : bulkRequest.add((DeleteRequest) actionRequest); break;
+//          case "DocWriteRequest" : bulkRequest.add((DocWriteRequest)actionRequest); break;
+          default:
+            String message = String.format("Unsupported ActionRequest Type: %s.", simpleName);
+            throw new IllegalArgumentException(message);
+        }
+
+      } catch(Throwable e) {
+        LOG.error("NullPointer inside addBulkRequest: " + Throwables.getStackTraceAsString(e));
       }
 
     }

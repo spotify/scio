@@ -58,6 +58,7 @@ val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.1.3"
 val tensorFlowVersion = "1.2.0"
 val jsr166eVersion = "1.1.0"
+val log4jVersion = "2.7"
 
 val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework")
 
@@ -307,7 +308,9 @@ lazy val scioElasticsearch: Project = Project(
     "joda-time" % "joda-time" % jodaTimeVersion,
     "org.elasticsearch" % "elasticsearch" % elasticsearchVersion,
     "org.elasticsearch.client" % "transport" % elasticsearchVersion,
-    "com.twitter" % "jsr166e" % jsr166eVersion
+    "com.twitter" % "jsr166e" % jsr166eVersion,
+    "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
+    "org.apache.logging.log4j" % "log4j-core" % log4jVersion
   )
 ).dependsOn(
   scioCore,
