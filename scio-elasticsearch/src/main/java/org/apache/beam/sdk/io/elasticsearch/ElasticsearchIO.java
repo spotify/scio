@@ -41,8 +41,13 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.joda.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
@@ -54,6 +59,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.rmi.runtime.Log;
 
 public class ElasticsearchIO {
   public static class Write {
@@ -91,7 +97,7 @@ public class ElasticsearchIO {
      *
      * @param function creates IndexRequest required by Elasticsearch client
      */
-    public static<T> Bound withFunction(SerializableFunction<T, Iterable<ActionRequest<?>>> function) {
+    public static<T> Bound withFunction(SerializableFunction<T, Iterable<ActionRequest>> function) {
       return new Bound<T>().withFunction(function);
     }
 
@@ -119,14 +125,14 @@ public class ElasticsearchIO {
       private final String clusterName;
       private final InetSocketAddress[] servers;
       private final Duration flushInterval;
-      private final SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests;
+      private final SerializableFunction<T, Iterable<ActionRequest>> toActionRequests;
       private final Long numOfShard;
       private final ThrowingConsumer<BulkExecutionException> error;
 
       private Bound(final String clusterName,
                     final InetSocketAddress[] servers,
                     final Duration flushInterval,
-                    final SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests,
+                    final SerializableFunction<T, Iterable<ActionRequest>> toActionRequests,
                     final Long numOfShard,
                     final ThrowingConsumer<BulkExecutionException> error) {
         this.clusterName = clusterName;
@@ -153,7 +159,7 @@ public class ElasticsearchIO {
         return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard, error);
       }
 
-      public Bound<T> withFunction(SerializableFunction<T, Iterable<ActionRequest<?>>> toIndexRequest) {
+      public Bound<T> withFunction(SerializableFunction<T, Iterable<ActionRequest>> toIndexRequest) {
         return new Bound<>(clusterName, servers, flushInterval, toIndexRequest, numOfShard, error);
       }
 
@@ -206,12 +212,12 @@ public class ElasticsearchIO {
     private static class ElasticsearchWriter<T> extends DoFn<KV<Long, Iterable<T>>, Void> {
       private final Logger LOG = LoggerFactory.getLogger(ElasticsearchWriter.class);
       private final ClientSupplier clientSupplier;
-      private final SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests;
+      private final SerializableFunction<T, Iterable<ActionRequest>> toActionRequests;
       private final ThrowingConsumer<BulkExecutionException> error;
 
       public ElasticsearchWriter(String clusterName,
                                  InetSocketAddress[] servers,
-                                 SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests,
+                                 SerializableFunction<T, Iterable<ActionRequest>> toActionRequests,
                                  ThrowingConsumer<BulkExecutionException> error) {
         this.clientSupplier = new ClientSupplier(clusterName, servers);
         this.toActionRequests = toActionRequests;
@@ -219,7 +225,7 @@ public class ElasticsearchIO {
       }
       @ProcessElement
       public void processElement(ProcessContext c) throws Exception {
-        final List<Iterable<ActionRequest<?>>> actionRequests =
+        final List<Iterable<ActionRequest>> actionRequests =
             StreamSupport.stream(c.element().getValue().spliterator(), false)
                 .map(toActionRequests::apply)
                 .collect(Collectors.toList());
@@ -230,13 +236,35 @@ public class ElasticsearchIO {
           LOG.info("ElasticsearchWriter: no requests to send");
           return;
         }
-
-        final BulkRequest bulkRequest = new BulkRequest().add(Iterables.concat(actionRequests));
+        final BulkRequest bulkRequest = new BulkRequest();
+        Iterables.concat(actionRequests).forEach(x -> addBulkRequest(bulkRequest, x));
         final BulkResponse bulkItemResponse = clientSupplier.get().bulk(bulkRequest).get();
         if (bulkItemResponse.hasFailures()) {
           error.accept(new BulkExecutionException(bulkItemResponse));
         }
       }
+    }
+
+
+    private static void addBulkRequest(BulkRequest bulkRequest, ActionRequest actionRequest) {
+      String simpleName = actionRequest.getClass().getSimpleName();
+      final Logger LOG = LoggerFactory.getLogger(ElasticsearchWriter.class);
+      LOG.error("SIMPLE NAME:" + simpleName);
+      switch(simpleName){
+//        case "IndexRequest" : bulkRequest.add((IndexRequest)actionRequest); break;
+        case "UpdateRequest" : bulkRequest.add((UpdateRequest)actionRequest); break;
+        case "DeleteRequest" : bulkRequest.add((DeleteRequest) actionRequest); break;
+        case "DocWriteRequest" : bulkRequest.add((DocWriteRequest)actionRequest); break;
+        default:
+          String message = String.format("Unsupported ActionRequest Type: %s.", simpleName);
+          throw new IllegalArgumentException(message);
+      }
+
+      actionRequest.getClass().getEnclosingClass().getName();
+      if (actionRequest instanceof IndexRequest) {
+        bulkRequest.add((IndexRequest)actionRequest);
+      }
+
     }
 
     private static class ClientSupplier implements Supplier<Client>, Serializable {
@@ -261,7 +289,7 @@ public class ElasticsearchIO {
       }
 
       private TransportClient create(String clusterName, InetSocketAddress[] addresses) {
-        final Settings settings = Settings.settingsBuilder()
+        final Settings settings = Settings.builder()
             .put("cluster.name", clusterName)
             .build();
 
@@ -269,9 +297,7 @@ public class ElasticsearchIO {
             .map(InetSocketTransportAddress::new)
             .toArray(InetSocketTransportAddress[]::new);
 
-        return TransportClient.builder()
-            .settings(settings)
-            .build()
+        return new PreBuiltTransportClient(settings)
             .addTransportAddresses(transportAddresses);
       }
     }

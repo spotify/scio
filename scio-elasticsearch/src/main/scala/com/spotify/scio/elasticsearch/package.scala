@@ -80,7 +80,7 @@ package object elasticsearch {
                             flushInterval: Duration = Duration.standardSeconds(1),
                             numOfShards: Long = defaultNumOfShards,
                             errorFn: BulkExecutionException => Unit = m => throw m)
-                           (f: T => Iterable[ActionRequest[_]]): Future[Tap[T]] = {
+                           (f: T => Iterable[ActionRequest]): Future[Tap[T]] = {
       if (self.context.isTest) {
         self.context.testOut(ElasticsearchIO[T](esOptions))(self)
       } else {
@@ -88,8 +88,8 @@ package object elasticsearch {
           esio.ElasticsearchIO.Write
             .withClusterName(esOptions.clusterName)
             .withServers(esOptions.servers.toArray)
-            .withFunction(new SerializableFunction[T, JIterable[ActionRequest[_]]]() {
-              override def apply(t: T): JIterable[ActionRequest[_]] = f(t).asJava
+            .withFunction(new SerializableFunction[T, JIterable[ActionRequest]]() {
+              override def apply(t: T): JIterable[ActionRequest] = f(t).asJava
             })
             .withFlushInterval(flushInterval)
             .withNumOfShard(numOfShards)
