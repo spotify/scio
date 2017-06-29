@@ -622,6 +622,11 @@ public class PatchedBigtableIO {
           return;
         }
 
+        IOException failure = new IOException(
+            String.format(
+                "At least %d errors occurred writing to Bigtable. Some added to suppressed list.",
+                failures.size()));
+
         StringBuilder logEntry = new StringBuilder();
         int i = 0;
         for (; i < 10 && !failures.isEmpty(); ++i) {
@@ -630,6 +635,7 @@ public class PatchedBigtableIO {
           if (exc.getCause() != null) {
             logEntry.append(": ").append(exc.getCause().getMessage());
           }
+          failure.addSuppressed(exc);
         }
         String message =
             String.format(
@@ -638,7 +644,7 @@ public class PatchedBigtableIO {
                 i,
                 logEntry.toString());
         LOG.error(message);
-        throw new IOException(message);
+        throw failure;
       }
 
       private class WriteExceptionCallback implements FutureCallback<MutateRowResponse> {
