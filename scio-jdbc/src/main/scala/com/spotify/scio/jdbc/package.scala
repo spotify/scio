@@ -93,7 +93,7 @@ package object jdbc {
 
   /** Enhanced version of [[ScioContext]] with JDBC methods. */
   implicit class JdbcScioContext(@transient val self: ScioContext) extends Serializable {
-    /** Get an SCollection for JDBC query. */
+    /** Get an SCollection for a JDBC query. */
     def jdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T])
     : SCollection[T] = self.requireNotClosed {
       if (self.isTest) {
@@ -128,7 +128,7 @@ package object jdbc {
 
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JDBC methods. */
   implicit class JdbcSCollection[T](val self: SCollection[T]) {
-    /** Save this SCollection as a JDBC database entry. */
+    /** Save this SCollection as a JDBC database. */
     def saveAsJdbc(writeOptions: JdbcWriteOptions[T]): Future[Tap[T]] = {
       if (self.context.isTest) {
         self.context.testOut(JdbcIO[T](writeOptions))(self)
