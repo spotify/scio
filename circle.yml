@@ -5,6 +5,9 @@ machine:
     SBT_OPTS: "-XX:ReservedCodeCacheSize=256m"
     JAVA_OPTS: "-Xms1g -Xmx2g -Dsun.io.serialization.extendedDebugInfo=true"
     GOOGLE_APPLICATION_CREDENTIALS: "scripts/data-integration-test.json"
+  services:
+    - cassandra
+
 
 dependencies:
   cache_directories:
@@ -22,6 +25,10 @@ dependencies:
     - scio-bigquery/target/streams
     - scio-bigtable/target/resolution-cache
     - scio-bigtable/target/streams
+    - scio-cassandra2/target/resolution-cache
+    - scio-cassandra2/target/streams
+    - scio-cassandra3/target/resolution-cache
+    - scio-cassandra3/target/streams
     - scio-elasticsearch/target/resolution-cache
     - scio-elasticsearch/target/streams
     - scio-extra/target/resolution-cache
