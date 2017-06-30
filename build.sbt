@@ -48,6 +48,7 @@ val junitVersion = "4.12"
 val junitInterfaceVersion = "0.11"
 val mockitoVersion = "1.10.19"
 val nettyTcNativeVersion = "1.1.33.Fork26"
+val protobufVersion = "3.3.1"
 val protobufGenericVersion = "0.2.0"
 val scalaMacrosVersion = "2.1.0"
 val scalaMeterVersion = "0.8.2"
@@ -159,6 +160,7 @@ lazy val assemblySettings = Seq(
     case s if s.endsWith(".properties") => MergeStrategy.filterDistinctLines
     case s if s.endsWith("pom.xml") => MergeStrategy.last
     case s if s.endsWith(".class") => MergeStrategy.last
+    case s if s.endsWith(".proto") => MergeStrategy.last
     case s if s.endsWith("libjansi.jnilib") => MergeStrategy.last
     case s if s.endsWith("jansi.dll") => MergeStrategy.rename
     case s if s.endsWith("libjansi.so") => MergeStrategy.rename
@@ -229,6 +231,7 @@ lazy val scioCore: Project = Project(
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion,
     "com.google.auto.service" % "auto-service" % autoServiceVersion,
     "com.google.auto.value" % "auto-value" % autoValueVersion % "provided",
+    "com.google.protobuf" % "protobuf-java" % protobufVersion,
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
     "org.ow2.asm" % "asm" % asmVersion
   )
