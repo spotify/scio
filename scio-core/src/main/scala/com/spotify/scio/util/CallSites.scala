@@ -17,7 +17,9 @@
 
 package com.spotify.scio.util
 
-import scala.collection.mutable.{Map => MMap}
+import java.util.function.BiFunction
+
+import com.google.common.collect.Maps
 
 private[scio] object CallSites {
 
@@ -25,8 +27,7 @@ private[scio] object CallSites {
   private val beamNs = "org.apache.beam."
 
   private val methodMap = Map("$plus$plus" -> "++")
-
-  private val nameCache = MMap.empty[String, Int]
+  private val nameCache = Maps.newConcurrentMap[String, Int]()
 
   private def isExternalClass(c: String): Boolean =
     // Not in our code base or an interpreter
@@ -51,13 +52,10 @@ private[scio] object CallSites {
   def getCurrent: String = {
     val name = getCurrentName
 
-    if (!nameCache.contains(name)) {
-      nameCache(name) = 1
-      name
-    } else {
-      nameCache(name) += 1
-      name + nameCache(name)
-    }
+    val n = nameCache.merge(name, 1, new BiFunction[Int, Int, Int] {
+      override def apply(t: Int, u: Int): Int = t + u
+    })
+    if (n == 1) name else name + 1
   }
 
   /** Get current call site name in the form of "method@{file:line}". */
