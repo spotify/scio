@@ -28,6 +28,8 @@ import java.util.jar.{Attributes, JarFile}
 import com.google.api.services.bigquery.model.TableReference
 import com.google.datastore.v1.{Entity, Query}
 import com.google.protobuf.Message
+import com.spotify.scio.avro.types.AvroType
+import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.bigquery._
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.AvroBytesUtil
@@ -467,6 +469,23 @@ class ScioContext private[scio] (val options: PipelineOptions,
       }
       wrap(this.applyInternal(t)).setName(path)
     }
+  }
+
+  /**
+    * Get a typed SCollection from an Avro schema.
+    *
+    * Note that `T` must be annotated with
+    * [[AvroType.fromSchema]],
+    * [[AvroType.fromPath]], or
+    * [[AvroType.toSchema]].
+    *
+    * @group input
+    */
+  def typedAvroFile[T <: HasAvroAnnotation : ClassTag : TypeTag](path: String): SCollection[T] = {
+    val avroT = AvroType[T]
+
+    this.avroFile[GenericRecord](path, avroT.schema)
+      .map(avroT.fromGenericRecord)
   }
 
   /**

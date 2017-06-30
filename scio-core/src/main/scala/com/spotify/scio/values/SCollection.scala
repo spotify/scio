@@ -28,6 +28,8 @@ import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSc
 import com.google.datastore.v1.Entity
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
+import com.spotify.scio.avro.types.AvroType
+import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.AvroBytesUtil
@@ -919,6 +921,32 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       }
       context.makeFuture(AvroTap(ScioUtil.addPartSuffix(path), schema))
     }
+
+  /**
+    * Save this SCollection as an Avro file. Note that element type `T` must be a case class
+    * annotated with [[AvroType.toSchema]].
+    * @group output
+    */
+  def saveAsTypedAvroFile(path: String,
+                          numShards: Int = 0,
+                          suffix: String = "",
+                          codec: CodecFactory = CodecFactory.deflateCodec(6),
+                          metadata: Map[String, AnyRef] = Map.empty)
+                         (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAvroAnnotation)
+  : Future[Tap[T]] = {
+    val avroT = AvroType[T]
+
+    import scala.concurrent.ExecutionContext.Implicits.global
+    this
+      .map(avroT.toGenericRecord)
+      .saveAsAvroFile(path,
+        numShards,
+        avroT.schema,
+        suffix,
+        codec,
+        metadata)
+      .map(_.map(avroT.fromGenericRecord))
+  }
 
   /**
    * Save this SCollection as a Protobuf file.
