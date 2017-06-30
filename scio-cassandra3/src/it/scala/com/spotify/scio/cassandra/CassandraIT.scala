@@ -100,7 +100,7 @@ class CassandraIT extends FlatSpec with Matchers with BeforeAndAfterAll {
     }
   }
 
-  "Bulk write" should "work with single key" in {
+  ignore should "work with single key" in {
     val cql =
       """
         |INSERT INTO scio.table1
@@ -125,7 +125,7 @@ class CassandraIT extends FlatSpec with Matchers with BeforeAndAfterAll {
     }
   }
 
-  it should "work with composite key" in {
+  ignore should "work with composite key" in {
     val cql =
       """
         |INSERT INTO scio.table2
