@@ -216,7 +216,7 @@ lazy val scioCore: Project = Project(
   file("scio-core")
 ).settings(
   commonSettings ++ macroSettings,
-  description := "Scio - A Scala API for Google Cloud Dataflow",
+  description := "Scio - A Scala API for Apache Beam and Google Cloud Dataflow",
   libraryDependencies ++= beamDependencies,
   libraryDependencies ++= Seq(
     "com.twitter" %% "algebird-core" % algebirdVersion,
