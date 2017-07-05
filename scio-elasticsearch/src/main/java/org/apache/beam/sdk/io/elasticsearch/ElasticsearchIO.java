@@ -18,17 +18,13 @@
 package org.apache.beam.sdk.io.elasticsearch;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Objects;
-import java.util.Spliterator;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.GroupByKey;
@@ -46,15 +42,13 @@ import com.twitter.jsr166e.ThreadLocalRandom;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
-import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionRequest;
-import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
-import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.joda.time.Duration;
 import java.util.Arrays;
@@ -67,9 +61,9 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.rmi.runtime.Log;
 
 public class ElasticsearchIO {
+
   public static class Write {
 
     /**
@@ -86,7 +80,7 @@ public class ElasticsearchIO {
      *
      * @param servers endpoints for the Elasticsearch cluster
      */
-    public static<T> Bound<T> withServers(InetSocketAddress[] servers) {
+    public static <T> Bound<T> withServers(InetSocketAddress[] servers) {
       return new Bound<T>().withServers(servers);
     }
 
@@ -96,7 +90,7 @@ public class ElasticsearchIO {
      *
      * @param flushInterval delay applied to buffer elements. Defaulted to 1 seconds.
      */
-    public static<T> Bound withFlushInterval(Duration flushInterval) {
+    public static <T> Bound withFlushInterval(Duration flushInterval) {
       return new Bound<T>().withFlushInterval(flushInterval);
     }
 
@@ -105,7 +99,8 @@ public class ElasticsearchIO {
      *
      * @param function creates IndexRequest required by Elasticsearch client
      */
-    public static<T> Bound withFunction(SerializableFunction<T, Iterable<ActionRequest>> function) {
+    public static <T> Bound withFunction(
+        SerializableFunction<T, Iterable<ActionRequest>> function) {
       return new Bound<T>().withFunction(function);
     }
 
@@ -115,7 +110,7 @@ public class ElasticsearchIO {
      *
      * @param numOfShard to construct a batch to bulk write to Elasticsearch.
      */
-    public static<T> Bound withNumOfShard(Long numOfShard) {
+    public static <T> Bound withNumOfShard(Long numOfShard) {
       return new Bound<>().withNumOfShard(numOfShard);
     }
 
@@ -125,11 +120,12 @@ public class ElasticsearchIO {
      * @param error applies given function if specified in case of
      *              Elasticsearch error with bulk writes. Default behavior throws IOException.
      */
-    public static<T> Bound withError(ThrowingConsumer<BulkExecutionException> error) {
+    public static <T> Bound withError(ThrowingConsumer<BulkExecutionException> error) {
       return new Bound<>().withError(error);
     }
 
     public static class Bound<T> extends PTransform<PCollection<T>, PDone> {
+
       private final String clusterName;
       private final InetSocketAddress[] servers;
       private final Duration flushInterval;
@@ -156,27 +152,33 @@ public class ElasticsearchIO {
       }
 
       public Bound<T> withClusterName(String clusterName) {
-        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard, error);
+        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard,
+            error);
       }
 
       public Bound<T> withServers(InetSocketAddress[] servers) {
-        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard, error);
+        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard,
+            error);
       }
 
       public Bound<T> withFlushInterval(Duration flushInterval) {
-        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard, error);
+        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard,
+            error);
       }
 
-      public Bound<T> withFunction(SerializableFunction<T, Iterable<ActionRequest>> toIndexRequest) {
+      public Bound<T> withFunction(
+          SerializableFunction<T, Iterable<ActionRequest>> toIndexRequest) {
         return new Bound<>(clusterName, servers, flushInterval, toIndexRequest, numOfShard, error);
       }
 
       public Bound<T> withNumOfShard(Long numOfShard) {
-        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard, error);
+        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard,
+            error);
       }
 
       public Bound<T> withError(ThrowingConsumer<BulkExecutionException> error) {
-        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard, error);
+        return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard,
+            error);
       }
 
       @Override
@@ -196,13 +198,14 @@ public class ElasticsearchIO {
                 .discardingFiredPanes())
             .apply(GroupByKey.create())
             .apply("Write to Elasticesarch",
-                   ParDo.of(new ElasticsearchWriter<>
-                                (clusterName, servers, toActionRequests, error)));
+                ParDo.of(new ElasticsearchWriter<>
+                    (clusterName, servers, toActionRequests, error)));
         return PDone.in(input.getPipeline());
       }
     }
 
     private static class AssignToShard<T> extends DoFn<T, KV<Long, T>> {
+
       private final Long numOfShard;
 
       public AssignToShard(Long numOfShard) {
@@ -218,6 +221,7 @@ public class ElasticsearchIO {
     }
 
     private static class ElasticsearchWriter<T> extends DoFn<KV<Long, Iterable<T>>, Void> {
+
       private final Logger LOG = LoggerFactory.getLogger(ElasticsearchWriter.class);
       private final ClientSupplier clientSupplier;
       private final SerializableFunction<T, Iterable<ActionRequest>> toActionRequests;
@@ -231,42 +235,31 @@ public class ElasticsearchIO {
         this.toActionRequests = toActionRequests;
         this.error = error;
       }
+
       @ProcessElement
       public void processElement(ProcessContext c) throws Exception {
-        Stream<T> stream = null;
-        try {
-          stream = StreamSupport.stream(c.element().getValue().spliterator(), false);
-        } catch(Exception e) {
-          LOG.error("Exception inside stream: " + e.toString());
-        }
-        Stream<Iterable<ActionRequest>> iterableStream = null;
-        try {
-          iterableStream = stream.map(toActionRequests::apply);
-        } catch(Exception e) {
-          LOG.error("Exception inside iterableStream: " + e.toString());
-        }
-        List<Iterable<ActionRequest>> collect = null;
-        try {
-          collect = iterableStream.collect(Collectors.toList());
-        } catch(Exception e) {
-          LOG.error("Exception inside collect: " + e.toString());
-        }
-
-
+        final List<Iterable<ActionRequest>> actionRequests =
+            StreamSupport.stream(c.element().getValue().spliterator(), false)
+                .map(toActionRequests::apply)
+                .collect(Collectors.toList());
         // Elasticsearch throws ActionRequestValidationException if bulk request is empty,
         // so do nothing if number of actions is zero.
-        if (collect.isEmpty()) {
+        if (actionRequests.isEmpty()) {
           LOG.info("ElasticsearchWriter: no requests to send");
           return;
         }
-        final BulkRequest bulkRequest = new BulkRequest();
+
         final Client client = clientSupplier.get();
-        BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
-        final HashMap<String, Object> finalMap = new HashMap<String, Object>();
-        final HashMap<String, Object> docMap = new HashMap<String, Object>();
-        finalMap.put("doc", docMap);
-        Iterables.concat(collect).forEach(x -> bulkRequestBuilder.add(client.prepareUpdate("TestIndex123", "TestType", "TestMessage").setDoc(docMap).setUpsert(finalMap)));
-        final BulkResponse bulkItemResponse = bulkRequestBuilder.execute().actionGet();
+        final BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
+        Iterables.concat(actionRequests)
+            .forEach(x -> {
+              try {
+                addBulkRequest(client, bulkRequestBuilder, x);
+              } catch (IOException e) {
+                throw new UncheckedIOException(e);
+              }
+            });
+        final BulkResponse bulkItemResponse = bulkRequestBuilder.get();
 
         if (bulkItemResponse.hasFailures()) {
           error.accept(new BulkExecutionException(bulkItemResponse));
@@ -274,92 +267,113 @@ public class ElasticsearchIO {
       }
     }
 
-
-    private static void addBulkRequest(BulkRequestBuilder bulkRequest, ActionRequest actionRequest) {
-      String simpleName;
-      final Logger LOG = LoggerFactory.getLogger(ElasticsearchWriter.class);
-      try{
-        LOG.error("actionRequest: ", actionRequest);
-        Class simpleNameClass = actionRequest.getClass();
-        LOG.error("simpleNameClass: " + simpleNameClass);
-        simpleName = simpleNameClass.getSimpleName();
-        LOG.error("simpleName: " + simpleName);
-
-        switch(simpleName){
-          case "IndexRequest" : bulkRequest.add((IndexRequest)actionRequest); break;
-          case "UpdateRequest" : bulkRequest.add((UpdateRequest)actionRequest); break;
-          case "DeleteRequest" : bulkRequest.add((DeleteRequest) actionRequest); break;
-//          case "DocWriteRequest" : bulkRequest.add((DocWriteRequest)actionRequest); break;
-          default:
-            String message = String.format("Unsupported ActionRequest Type: %s.", simpleName);
-            throw new IllegalArgumentException(message);
-        }
-
-      } catch(Throwable e) {
-        LOG.error("NullPointer inside addBulkRequest: " + Throwables.getStackTraceAsString(e));
-      }
-
-    }
-
-    private static class ClientSupplier implements Supplier<Client>, Serializable {
-      private final AtomicReference<Client> CLIENT = new AtomicReference<>();
-      private final String clusterName;
-      private final InetSocketAddress[] addresses;
-
-      public ClientSupplier(final String clusterName, final InetSocketAddress[] addresses) {
-        this.clusterName = clusterName;
-        this.addresses = addresses;
-      }
-      @Override
-      public Client get() {
-        if (CLIENT.get() == null) {
-          synchronized (CLIENT) {
-            if (CLIENT.get() == null) {
-              CLIENT.set(create(clusterName, addresses));
-            }
+    private static void addBulkRequest(Client client, BulkRequestBuilder bulkRequest,
+                                       ActionRequest actionRequest) throws IOException {
+      String simpleName = actionRequest.getClass().getSimpleName();
+      XContentBuilder xContentBuilder;
+      switch (simpleName) {
+        case "IndexRequest":
+          IndexRequest indexRequest = (IndexRequest) actionRequest;
+          if (indexRequest.source() == null) {
+            xContentBuilder = jsonBuilder().startObject().endObject();
+          } else {
+            xContentBuilder = jsonBuilder().map(indexRequest.sourceAsMap());
           }
-        }
-        return CLIENT.get();
-      }
-
-      private TransportClient create(String clusterName, InetSocketAddress[] addresses) {
-        final Settings settings = Settings.builder()
-            .put("cluster.name", clusterName)
-            .build();
-
-        InetSocketTransportAddress[] transportAddresses = Arrays.stream(addresses)
-            .map(InetSocketTransportAddress::new)
-            .toArray(InetSocketTransportAddress[]::new);
-
-        return new PreBuiltTransportClient(settings)
-            .addTransportAddresses(transportAddresses);
-      }
-    }
-
-    private static ThrowingConsumer<BulkExecutionException> defaultErrorHandler() {
-      return throwable -> {
-        throw throwable;
-      };
-    }
-
-    /**
-     * An exception that puts information about the failures in the bulk execution.
-     */
-    public static class BulkExecutionException extends IOException {
-      private final Iterable<Throwable> failures;
-
-      BulkExecutionException(BulkResponse bulkResponse) {
-        super(bulkResponse.buildFailureMessage());
-        this.failures = Arrays.stream(bulkResponse.getItems())
-            .map(BulkItemResponse::getFailure)
-            .filter(Objects::nonNull)
-            .map(BulkItemResponse.Failure::getCause)
-            .collect(Collectors.toList());
-      }
-
-      public Iterable<Throwable> getFailures() {
-        return failures;
+          bulkRequest.add(
+              client.prepareIndex(indexRequest.index().toLowerCase(), indexRequest.type(),
+                  indexRequest.id())
+                  .setSource(xContentBuilder)
+          );
+          break;
+        case "UpdateRequest":
+          UpdateRequest updateRequest = (UpdateRequest) actionRequest;
+          if (updateRequest.doc() == null) {
+            xContentBuilder = jsonBuilder().startObject().endObject();
+          } else {
+            xContentBuilder = jsonBuilder().map(updateRequest.doc().sourceAsMap());
+          }
+          bulkRequest.add(
+              client.prepareUpdate(updateRequest.index().toLowerCase(), updateRequest.type(),
+                  updateRequest.id())
+                  .setDoc(xContentBuilder)
+          );
+          break;
+        case "DeleteRequest":
+          DeleteRequest deleteRequest = (DeleteRequest) actionRequest;
+          bulkRequest.add(client
+              .prepareDelete(deleteRequest.index().toLowerCase(), deleteRequest.type(),
+                  deleteRequest.id())
+          );
+          break;
+        default:
+          String message = String.format("Unsupported ActionRequest Type: %s.", simpleName);
+          throw new IllegalArgumentException(message);
       }
     }
   }
+
+  private static class ClientSupplier implements Supplier<Client>, Serializable {
+
+    private final AtomicReference<Client> CLIENT = new AtomicReference<>();
+    private final String clusterName;
+    private final InetSocketAddress[] addresses;
+
+    public ClientSupplier(final String clusterName, final InetSocketAddress[] addresses) {
+      this.clusterName = clusterName;
+      this.addresses = addresses;
+    }
+
+    @Override
+    public Client get() {
+      if (CLIENT.get() == null) {
+        synchronized (CLIENT) {
+          if (CLIENT.get() == null) {
+            CLIENT.set(create(clusterName, addresses));
+          }
+        }
+      }
+      return CLIENT.get();
+    }
+
+    private TransportClient create(String clusterName, InetSocketAddress[] addresses) {
+      final Settings settings = Settings.builder()
+          .put("cluster.name", clusterName)
+          .build();
+
+      InetSocketTransportAddress[] transportAddresses = Arrays.stream(addresses)
+          .map(InetSocketTransportAddress::new)
+          .toArray(InetSocketTransportAddress[]::new);
+
+      return new PreBuiltTransportClient(settings)
+          .addTransportAddresses(transportAddresses);
+    }
+  }
+
+  private static ThrowingConsumer<BulkExecutionException> defaultErrorHandler() {
+    return throwable -> {
+      throw throwable;
+    };
+  }
+
+  /**
+   * An exception that puts information about the failures in the bulk execution.
+   */
+  public static class BulkExecutionException extends IOException {
+
+    private final Iterable<Throwable> failures;
+
+    BulkExecutionException(BulkResponse bulkResponse) {
+      super(bulkResponse.buildFailureMessage());
+      this.failures = Arrays.stream(bulkResponse.getItems())
+          .map(BulkItemResponse::getFailure)
+          .filter(Objects::nonNull)
+          .map(BulkItemResponse.Failure::getCause)
+          .collect(Collectors.toList());
+    }
+
+    public Iterable<Throwable> getFailures() {
+      return failures;
+    }
+  }
 }
+
