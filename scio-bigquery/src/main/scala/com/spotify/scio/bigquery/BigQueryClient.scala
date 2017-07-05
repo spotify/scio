@@ -261,7 +261,9 @@ class BigQueryClient private (private val projectId: String,
     options.setProject(projectId)
     options.setGcpCredential(credentials)
     val service = new bq.BigQueryServicesWrapper(options)
-    service.createTable(table, schema)
+    if (createDisposition == CREATE_IF_NEEDED) {
+      service.createTable(table, schema)
+    }
     service.insertAll(table, rows.asJava)
   }
 
