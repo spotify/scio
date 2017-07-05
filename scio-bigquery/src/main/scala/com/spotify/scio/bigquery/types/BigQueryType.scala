@@ -118,11 +118,11 @@ object BigQueryType {
    * @BigQueryType.fromTable("project:dataset.%s", "table")
    * }}}
    *
-   * "$LATEST" can be used as a placeholder for table partitions. The latest partition available
+   * "\$LATEST" can be used as a placeholder for table partitions. The latest partition available
    * will be used. For example:
    *
    * {{{
-   * @BigQueryType.fromTable("project:dataset.table_%s", "$LATEST")
+   * @BigQueryType.fromTable("project:dataset.table_%s", "\$LATEST")
    * }}}
    *
    * Also generate a companion object with convenience methods.
@@ -176,13 +176,13 @@ object BigQueryType {
    * @BigQueryType.fromQuery("SELECT field1, field2 FROM [%s]", "table")
    * }}}
    *
-   * "$LATEST" can be used as a placeholder for table partitions. The latest common partition
+   * "\$LATEST" can be used as a placeholder for table partitions. The latest common partition
    * available for all tables with the placeholder will be used. For example:
    *
    * {{{
    * @BigQueryType.fromQuery(
    *   "SELECT field1, field2 FROM [project:d1.t1_%s] JOIN [project:d2.t2_%s] USING field3",
-   *   "$LATEST", "$LATEST")
+   *   "\$LATEST", "\$LATEST")
    * }}}
    *
    * Also generate a companion object with convenience methods.
