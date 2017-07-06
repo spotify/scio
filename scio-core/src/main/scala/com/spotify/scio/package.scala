@@ -67,6 +67,19 @@ package object scio {
     """version in .+"([^"]+)"""".r.findFirstMatchIn(line).get.group(1)
   }
 
+  /**
+   * Helper to submit and run a job in a context-manager style, which will automatically create
+   * a [[ScioContext]] for the given pipeline and close it afterwards. See
+   * [[com.spotify.scio.examples.extra.ContextManagerExample]] for an example of usage.
+   * @param pipelineFn The pipeline specification.
+   * @return The [[ScioResult]] obtained by closing the created [[ScioContext]].
+   */
+  def submitJob(cmdLineArgs: Array[String])(pipelineFn: (ScioContext, Args) => Unit): ScioResult = {
+    val (sc, args) = ContextAndArgs(cmdLineArgs)
+    pipelineFn(sc, args)
+    sc.close()
+  }
+
   /** [[com.twitter.algebird.Semigroup Semigroup]] for `Array[Int]`. */
   implicit val intArraySg: Semigroup[Array[Int]] = new ArraySemigroup[Int]
 
