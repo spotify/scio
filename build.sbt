@@ -72,6 +72,9 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   javacOptions                    ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
   javacOptions in (Compile, doc)  := Seq("-source", "1.8"),
 
+  // protobuf-lite is an older subset of protobuf-java and causes issues
+  excludeDependencies += "com.google.protobuf" % "protobuf-lite",
+
   scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value,
   testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
 
