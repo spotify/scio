@@ -395,9 +395,10 @@ class BigQueryClient private (private val projectId: String,
         }
       } else {
         logger.info(s"Cache invalid for query: `$sqlQuery`")
-        logger.info(s"New destination table: ${BigQueryIO.toTableSpec(temp)}")
-        setCacheDestinationTable(sqlQuery, temp)
-        delayedQueryJob(sqlQuery, temp, flattenResults)
+        val newTemp = temporaryTable(extractLocation(sqlQuery).getOrElse(DEFAULT_LOCATION))
+        logger.info(s"New destination table: ${BigQueryIO.toTableSpec(newTemp)}")
+        setCacheDestinationTable(sqlQuery, newTemp)
+        delayedQueryJob(sqlQuery, newTemp, flattenResults)
       }
     } catch {
       case NonFatal(e: GoogleJsonResponseException) if isInvalidQuery(e) => throw e
