@@ -35,7 +35,7 @@ val circeVersion = "0.8.0"
 val commonsIoVersion = "2.5"
 val commonsMath3Version = "3.6.1"
 val csvVersion = "0.1.19"
-val elasticsearchVersion = "2.1.0"
+val elasticsearchVersion = "5.3.0"
 val guavaVersion = "20.0"
 val hadoopVersion = "2.7.3"
 val hamcrestVersion = "1.3"
@@ -58,6 +58,8 @@ val shapelessDatatypeVersion = "0.1.2"
 val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.1.3"
 val tensorFlowVersion = "1.2.0"
+val jsr166eVersion = "1.1.0"
+val log4jVersion = "2.7"
 
 val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework")
 
@@ -343,7 +345,11 @@ lazy val scioElasticsearch: Project = Project(
   libraryDependencies ++= Seq(
     "com.google.guava" % "guava" % guavaVersion,
     "joda-time" % "joda-time" % jodaTimeVersion,
-    "org.elasticsearch" % "elasticsearch" % elasticsearchVersion
+    "org.elasticsearch" % "elasticsearch" % elasticsearchVersion,
+    "org.elasticsearch.client" % "transport" % elasticsearchVersion,
+    "com.twitter" % "jsr166e" % jsr166eVersion,
+    "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
+    "org.apache.logging.log4j" % "log4j-core" % log4jVersion
   )
 ).dependsOn(
   scioCore,
