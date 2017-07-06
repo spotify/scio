@@ -267,6 +267,15 @@ public class ElasticsearchIO {
       }
     }
 
+    /**
+     * Accepts a Client, a BulkRequestBuilder, and an ActionRequest.
+     * Properly typecasts & prepares an ActionRequest. Adds it to the BulkRequestBuilder.
+     * Return type is void.
+     *
+     * @param client        provides the ability to prepare requests for bulk execution
+     * @param bulkRequest   maintains an ordered list of ActionRequests to later be executed in bulk
+     * @param actionRequest the ActionRequest to be added to the bulkRequest
+     */
     private static void addBulkRequest(Client client, BulkRequestBuilder bulkRequest,
                                        ActionRequest actionRequest) throws IOException {
       String simpleName = actionRequest.getClass().getSimpleName();
