@@ -223,12 +223,11 @@ class BigQueryClient private (private val projectId: String,
     val b = Seq.newBuilder[TableReference]
     val req = bigquery.tables().list(projectId, datasetId)
     var rep = req.execute()
-    rep.getTables.asScala.foreach(t => b += t.getTableReference)
+    Option(rep.getTables).foreach(_.asScala.foreach(b += _.getTableReference))
     while (rep.getNextPageToken != null) {
       rep = req.setPageToken(rep.getNextPageToken).execute()
-      if (rep.getTables != null) {
-        rep.getTables.asScala.foreach(t => b += t.getTableReference)
-      }
+      Option(rep.getTables)
+        .foreach(_.asScala.foreach(b += _.getTableReference))
     }
     b.result()
   }
