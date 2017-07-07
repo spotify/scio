@@ -75,6 +75,8 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   // protobuf-lite is an older subset of protobuf-java and causes issues
   excludeDependencies += "com.google.protobuf" % "protobuf-lite",
 
+  resolvers += Resolver.sonatypeRepo("public"),
+
   scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value,
   testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
 
