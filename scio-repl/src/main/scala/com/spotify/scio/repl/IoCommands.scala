@@ -67,7 +67,7 @@ class IoCommands(options: PipelineOptions) {
                              header: Boolean = false): Iterator[T] = {
     import kantan.csv.ops._
     implicit val codec = scala.io.Codec.UTF8
-    inputStream(path).asUnsafeCsvReader(rfc.withColumnSeparator(sep).withHeader(header)).toIterator
+    inputStream(path).asUnsafeCsvReader(rfc.withCellSeparator(sep).withHeader(header)).toIterator
   }
 
   /** Read from a TSV file on local filesystem or GCS. */
@@ -111,7 +111,7 @@ class IoCommands(options: PipelineOptions) {
     import kantan.csv.ops._
     implicit val codec = scala.io.Codec.UTF8
     outputStream(path, MimeTypes.TEXT)
-      .writeCsv(data, rfc.withColumnSeparator(sep).withHeader(header:_*))
+      .writeCsv(data, rfc.withCellSeparator(sep).withHeader(header:_*))
     logger.info(s"${data.size} record${plural(data)} written to $path")
   }
 
