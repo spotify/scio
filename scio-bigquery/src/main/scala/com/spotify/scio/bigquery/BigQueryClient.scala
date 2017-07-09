@@ -38,6 +38,7 @@ import com.google.common.io.Files
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 import org.apache.beam.sdk.io.gcp.bigquery.PatchedBigQueryTableRowIterator
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
@@ -259,11 +260,16 @@ class BigQueryClient private (private val projectId: String,
     val options = PipelineOptionsFactory.create().as(classOf[bq.BigQueryOptions])
     options.setProject(projectId)
     options.setGcpCredential(credentials)
-    val service = new bq.BigQueryServicesWrapper(options)
-    if (createDisposition == CREATE_IF_NEEDED) {
-      service.createTable(table, schema)
+    try {
+      val service = new bq.BigQueryServicesWrapper(options)
+      if (createDisposition == CREATE_IF_NEEDED) {
+        service.createTable(table, schema)
+      }
+      service.insertAll(table, rows.asJava)
+    } finally {
+      Option(options.as(classOf[GcsOptions]).getExecutorService)
+        .foreach(_.shutdown())
     }
-    service.insertAll(table, rows.asJava)
   }
 
   /** Write rows to a table. */
