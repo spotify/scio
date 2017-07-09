@@ -19,7 +19,6 @@ package com.spotify.scio.bigquery
 
 import java.io.{File, FileInputStream, StringReader}
 import java.util.UUID
-import java.util.regex.Pattern
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.http.javanet.NetHttpTransport
@@ -39,6 +38,7 @@ import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryIO, PatchedBigQueryTableRowIterator}
 import org.apache.beam.sdk.options.GcpOptions.DefaultProjectFactory
+import org.apache.beam.sdk.options.{GcsOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.BigQueryTableInserter
 import org.apache.commons.io.FileUtils
 import org.joda.time.format.{DateTimeFormat, PeriodFormatterBuilder}
@@ -254,9 +254,14 @@ class BigQueryClient private (private val projectId: String,
   def writeTableRows(table: TableReference, rows: List[TableRow], schema: TableSchema,
                      writeDisposition: WriteDisposition,
                      createDisposition: CreateDisposition): Unit = {
-    val inserter = new BigQueryTableInserter(bigquery)
-    inserter.getOrCreateTable(table, writeDisposition, createDisposition, schema)
-    inserter.insertAll(table, rows.asJava)
+    try {
+      val inserter = new BigQueryTableInserter(bigquery)
+      inserter.getOrCreateTable(table, writeDisposition, createDisposition, schema)
+      inserter.insertAll(table, rows.asJava)
+    } finally {
+      val options = PipelineOptionsFactory.create().as(classOf[GcsOptions])
+      Option(options.getExecutorService).foreach(_.shutdown())
+    }
   }
 
   /** Write rows to a table. */
