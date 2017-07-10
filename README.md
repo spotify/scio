@@ -57,7 +57,8 @@ Scio includes the following artifacts:
 - `scio-bigtable`: add-on for Bigtable
 - `scio-cassandra2`: add-on for Cassandra 2.x
 - `scio-cassandra3`: add-on for Cassandra 3.x
-- `scio-elasticsearch`: add-on for Elasticsearch
+- `scio-elasticsearch2`: add-on for Elasticsearch 2.x
+- `scio-elasticsearch5`: add-on for Elasticsearch 5.x
 - `scio-extra`: extra utilities for working with collections, Breeze, etc.
 - `scio-hdfs`: add-on for HDFS IO
 - `scio-jdbc`: add-on for JDBC IO
