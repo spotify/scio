@@ -77,7 +77,7 @@ class HdfsTapTest extends TapSpec {
         .parallelize(Seq("a", "b", "c"))
         .map(s => ByteBuffer.wrap(s.getBytes))
         .saveAsHdfsAvroFile(dir.getPath, schema = new Schema.Parser().parse("\"bytes\""))
-    }.map(b => new String(b.array()))
+    }.map(bb => new String(bb.array(), bb.position(), bb.limit()))
     verifyTap(t, Set("a", "b", "c"))
     FileUtils.deleteDirectory(dir)
   }
