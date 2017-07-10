@@ -16,8 +16,6 @@
  */
 package com.spotify.scio.coders
 
-import java.nio.ByteBuffer
-
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.spotify.scio.util.ScioUtil
 import com.twitter.chill.{Kryo, KryoSerializer}
@@ -31,7 +29,7 @@ class JIterableWrapperSerializerTest extends FlatSpec with Matchers {
                                   elems: Iterable[T],
                                   k: Kryo = KryoSerializer.registered.newKryo(),
                                   bufferSize: Int = 1024): Unit = {
-    val o = ByteBuffer.allocate(bufferSize).array()
+    val o = new Array[Byte](bufferSize)
     ser.write(k, new Output(o), elems)
     elems should contain theSameElementsAs ser.read(k, new Input(o), ScioUtil.classOf[Iterable[T]])
   }

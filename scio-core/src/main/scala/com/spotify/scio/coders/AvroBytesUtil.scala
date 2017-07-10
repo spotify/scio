@@ -44,7 +44,8 @@ private[scio] object AvroBytesUtil {
   }
 
   def decode[T](coder: Coder[T], record: GenericRecord): T = {
-    val bytes = record.get("bytes").asInstanceOf[ByteBuffer].array()
+    val bb = record.get("bytes").asInstanceOf[ByteBuffer]
+    val bytes = java.util.Arrays.copyOfRange(bb.array(), bb.position(), bb.limit())
     CoderUtils.decodeFromByteArray(coder, bytes)
   }
 
