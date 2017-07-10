@@ -19,7 +19,6 @@ package com.spotify.scio.bigquery
 
 import java.io.{File, FileInputStream, StringReader}
 import java.util.UUID
-import java.util.regex.Pattern
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.http.javanet.NetHttpTransport
@@ -37,9 +36,8 @@ import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
-import org.apache.beam.sdk.io.gcp.bigquery.PatchedBigQueryTableRowIterator
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.commons.io.FileUtils
