@@ -36,7 +36,7 @@ val commonsIoVersion = "2.5"
 val commonsMath3Version = "3.6.1"
 val csvVersion = "0.2.0"
 val elasticsearch2Version = "2.1.0"
-val elasticsearch5Version = "5.3.0"
+val elasticsearch5Version = "5.5.0"
 val guavaVersion = "20.0"
 val hadoopVersion = "2.7.3"
 val hamcrestVersion = "1.3"
@@ -75,9 +75,9 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   javacOptions                    ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
   javacOptions in (Compile, doc)  := Seq("-source", "1.8"),
 
-  // protobuf-lite is an older subset of protobuf-java and causes issues
+// protobuf-lite is an older subset of protobuf-java and causes issues
   excludeDependencies += "com.google.protobuf" % "protobuf-lite",
-
+ 
   resolvers += Resolver.sonatypeRepo("public"),
 
   scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value,
@@ -372,10 +372,7 @@ lazy val scioElasticsearch5: Project = Project(
     "com.google.guava" % "guava" % guavaVersion,
     "joda-time" % "joda-time" % jodaTimeVersion,
     "org.elasticsearch" % "elasticsearch" % elasticsearch5Version,
-    "org.elasticsearch.client" % "transport" % elasticsearch5Version,
-    "com.twitter" % "jsr166e" % jsr166eVersion,
-    "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
-    "org.apache.logging.log4j" % "log4j-core" % log4jVersion
+    "org.elasticsearch.client" % "transport" % elasticsearch5Version
   )
 ).dependsOn(
   scioCore,
