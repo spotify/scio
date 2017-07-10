@@ -30,7 +30,7 @@ import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException
 import org.apache.beam.sdk.io.{elasticsearch => esio}
 import org.apache.beam.sdk.transforms.SerializableFunction
-import org.elasticsearch.action.ActionRequest
+import org.elasticsearch.action.DocWriteRequest
 
 import scala.concurrent.Future
 import scala.collection.JavaConverters._
@@ -63,7 +63,7 @@ package object elasticsearch {
           "Cannot determine number of workers, either numWorkers or maxNumWorkers must be set")
         n
       } else {
-        throw new NotImplementedError(s"You must specify numWorkers explicitly for ${runner}")
+        throw new NotImplementedError(s"You must specify numWorkers explicitly for $runner")
       }
     }
 
@@ -72,7 +72,7 @@ package object elasticsearch {
      *
      * @param esOptions Elasticsearch options
      * @param flushInterval delays to Elasticsearch writes for rate limiting purpose
-     * @param f function to transform arbitrary type T to Elasticsearch [[ActionRequest]]
+     * @param f function to transform arbitrary type T to Elasticsearch [[DocWriteRequest]]
      * @param numOfShards number of parallel writes to be performed, recommended setting is the
      *                   number of pipeline workers
      * @param errorFn function to handle error when performing Elasticsearch bulk writes
@@ -81,7 +81,7 @@ package object elasticsearch {
                             flushInterval: Duration = Duration.standardSeconds(1),
                             numOfShards: Long = defaultNumOfShards,
                             errorFn: BulkExecutionException => Unit = m => throw m)
-                           (f: T => Iterable[ActionRequest[_]]): Future[Tap[T]] = {
+                           (f: T => Iterable[DocWriteRequest[_]]): Future[Tap[T]] = {
       if (self.context.isTest) {
         self.context.testOut(ElasticsearchIO[T](esOptions))(self)
       } else {
@@ -89,8 +89,8 @@ package object elasticsearch {
           esio.ElasticsearchIO.Write
             .withClusterName(esOptions.clusterName)
             .withServers(esOptions.servers.toArray)
-            .withFunction(new SerializableFunction[T, JIterable[ActionRequest[_]]]() {
-              override def apply(t: T): JIterable[ActionRequest[_]] = f(t).asJava
+            .withFunction(new SerializableFunction[T, JIterable[DocWriteRequest[_]]]() {
+              override def apply(t: T): JIterable[DocWriteRequest[_]] = f(t).asJava
             })
             .withFlushInterval(flushInterval)
             .withNumOfShard(numOfShards)
