@@ -35,7 +35,7 @@ val circeVersion = "0.8.0"
 val commonsIoVersion = "2.5"
 val commonsMath3Version = "3.6.1"
 val csvVersion = "0.2.0"
-val elasticsearch2Version = "2.1.0"
+val elasticsearch2Version = "2.4.5"
 val elasticsearch5Version = "5.5.0"
 val guavaVersion = "20.0"
 val hadoopVersion = "2.7.3"
@@ -371,7 +371,6 @@ lazy val scioElasticsearch5: Project = Project(
   libraryDependencies ++= Seq(
     "com.google.guava" % "guava" % guavaVersion,
     "joda-time" % "joda-time" % jodaTimeVersion,
-    "org.elasticsearch" % "elasticsearch" % elasticsearch5Version,
     "org.elasticsearch.client" % "transport" % elasticsearch5Version
   )
 ).dependsOn(
