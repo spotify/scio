@@ -74,11 +74,10 @@ private[types] object SchemaProvider {
     val (symbol, desc) = f
     val name = symbol.name.toString
     val tpe = symbol.asMethod.returnType
-    val TypeRef(_, _, args) = tpe
 
     val (mode, valType) = tpe match {
-      case t if t.erasure =:= typeOf[Option[_]].erasure => ("NULLABLE", args.head)
-      case t if t.erasure =:= typeOf[List[_]].erasure => ("REPEATED", args.head)
+      case t if t.erasure =:= typeOf[Option[_]].erasure => ("NULLABLE", tpe.typeArgs.head)
+      case t if t.erasure =:= typeOf[List[_]].erasure => ("REPEATED", tpe.typeArgs.head)
       case _ => ("REQUIRED", tpe)
     }
     val (tpeParam, nestedParam) = rawType(valType)

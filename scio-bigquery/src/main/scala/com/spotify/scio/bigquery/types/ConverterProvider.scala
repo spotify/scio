@@ -98,13 +98,12 @@ private[types] object ConverterProvider {
     def field(symbol: Symbol, fn: TermName): Tree = {
       val name = symbol.name.toString
       val tpe = symbol.asMethod.returnType
-      val TypeRef(_, _, args) = tpe
 
       val tree = q"$fn.get($name)"
       if (tpe.erasure =:= typeOf[Option[_]].erasure) {
-        option(tree, args.head)
+        option(tree, tpe.typeArgs.head)
       } else if (tpe.erasure =:= typeOf[List[_]].erasure) {
-        list(tree, args.head)
+        list(tree, tpe.typeArgs.head)
       } else {
         cast(tree, tpe)
       }
@@ -180,13 +179,12 @@ private[types] object ConverterProvider {
     def field(symbol: Symbol, fn: TermName): (String, Tree) = {
       val name = symbol.name.toString
       val tpe = symbol.asMethod.returnType
-      val TypeRef(_, _, args) = tpe
 
       val tree = q"$fn.${TermName(name)}"
       if (tpe.erasure =:= typeOf[Option[_]].erasure) {
-        (name, option(tree, args.head))
+        (name, option(tree, tpe.typeArgs.head))
       } else if (tpe.erasure =:= typeOf[List[_]].erasure) {
-        (name, list(tree, args.head))
+        (name, list(tree, tpe.typeArgs.head))
       } else {
         (name, cast(tree, tpe))
       }
