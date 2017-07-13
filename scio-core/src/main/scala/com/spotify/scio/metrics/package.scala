@@ -17,6 +17,8 @@
 
 package com.spotify.scio
 
+import org.joda.time.Instant
+
 /** This package contains the schema types for metrics collected during a pipeline run. */
 package object metrics {
 
@@ -32,12 +34,21 @@ package object metrics {
    * Case class holding metadata and service-level metrics of the job. See
    * [[ScioResult.getMetrics]].
    */
-  case class ServiceMetrics(version: String,
-                            scalaVersion: String,
-                            jobName: String,
-                            jobId: String,
-                            state: String,
-                            cloudMetrics: Iterable[DFServiceMetrics])
+  case class Metrics(version: String,
+                     scalaVersion: String,
+                     jobName: String,
+                     jobId: String,
+                     state: String,
+                     beamMetrics: BeamMetrics,
+                     cloudMetrics: Iterable[DFServiceMetrics])
+
+  case class BeamMetrics(counters: Iterable[BeamMetric[Long]],
+                         distributions: Iterable[BeamMetric[BeamDistribution]],
+                         gauges: Iterable[BeamMetric[BeamGauge]])
+  case class BeamMetric[T](namespace: String, name: String, value: MetricValue[T])
+  case class BeamDistribution(sum: Long, count: Long, min: Long, max: Long, mean: Double)
+  case class BeamGauge(value: Long, timestamp: Instant)
+
   case class DFServiceMetrics(name: DFMetricName, scalar: AnyRef, updateTime: String)
   case class DFMetricName(name: String, origin: String, context: Map[String, String])
 
