@@ -17,12 +17,15 @@
 
 package com.spotify.scio.examples.complete
 
+import java.nio.channels.Channels
+
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.FileSystems
 
 import scala.collection.JavaConverters._
+import scala.io.Source
 
 /*
 SBT
@@ -41,10 +44,31 @@ object TfIdf {
     FileSystems.setDefaultPipelineOptions(sc.options)
 
     val uris = FileSystems
-        .`match`(args.getOrElse("input", ExampleData.SHAKESPEARE_ALL))
-        .metadata().asScala.map(_.resourceId().toString)
+      .`match`(args.getOrElse("input", ExampleData.SHAKESPEARE_ALL))
+      .metadata().asScala.map(_.resourceId().toString)
 
-    val uriToContent = SCollection.unionAll(uris.map(uri => sc.textFile(uri).keyBy(_ => uri)))
+    val uriToContent = args.getOrElse("mode", "union") match {
+      case "union" =>
+        // Read each file separately with `sc.textFile`, key by URI, and then merge with
+        // `SCollection.unionAll`. This works well for a small list of files. It can also handle
+        // large individual files as each `sc.textFile` can be dynamically split by the runner.
+        SCollection.unionAll(uris.map(uri => sc.textFile(uri).keyBy(_ => uri)))
+      case "fs" =>
+        // Create a single `SCollection[String]` of URIs, and read files on workers in `.map` and
+        // then key by URI. This works well for a large list of files. However each file is read by
+        // one worker thread and cannot be further split. Skew in file sizes may lead to unbalanced
+        // work load among workers.
+        sc.parallelize(uris)
+          .flatMap { uri =>
+            val rsrc = FileSystems.matchSingleFileSpec(uri).resourceId()
+            val in = Channels.newInputStream(FileSystems.open(rsrc))
+            Source.fromInputStream(in)
+              .getLines()
+              .map((uri, _))
+          }
+      // TODO: add splittable DoFn approach once available
+      case m => throw new IllegalArgumentException(s"Unkonwn mode: $m")
+    }
 
     computeTfIdf(uriToContent)
       .map { case (t, (d, tfIdf)) =>
