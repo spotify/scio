@@ -17,7 +17,6 @@
 
 package com.spotify.scio
 
-
 import java.nio.ByteBuffer
 
 import com.spotify.scio.metrics._
@@ -31,7 +30,7 @@ import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.options.ApplicationNameOptions
 import org.apache.beam.sdk.PipelineResult
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.metrics._
+import org.apache.beam.sdk.{metrics => bm}
 import org.apache.beam.sdk.util.MimeTypes
 import org.slf4j.LoggerFactory
 
@@ -107,7 +106,8 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
   }
 
   /** Get metrics of the finished pipeline. */
-  def getMetrics: ServiceMetrics = {
+  // scalastyle:off method.length
+  def getMetrics: Metrics = {
     require(isCompleted, "Pipeline has to be finished to get metrics.")
 
     val (jobId, dfMetrics) = if (ScioUtil.isLocalRunner(this.context.options)) {
@@ -138,63 +138,82 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
       (jobId, dfMetrics)
     }
 
-    ServiceMetrics(scioVersion,
+    def mkDist(d: bm.DistributionResult): BeamDistribution =
+      BeamDistribution(d.sum(), d.count(), d.min(), d.max(), d.mean())
+    def mkGauge(g: bm.GaugeResult): BeamGauge = BeamGauge(g.value(), g.timestamp())
+
+    val beamCounters = allCounters.map { case (k, v) =>
+      BeamMetric(k.namespace(), k.name(), v)
+    }
+    val beamDistributions = allDistributions.map { case (k, v) =>
+      BeamMetric(k.namespace(), k.name(), MetricValue(mkDist(v.attempted), v.committed.map(mkDist)))
+    }
+    val beamGauges = allGauges.map { case (k, v) =>
+      BeamMetric(k.namespace(), k.name(),
+        MetricValue(mkGauge(v.attempted), v.committed.map(mkGauge)))
+    }
+    Metrics(scioVersion,
       scalaVersion,
       context.optionsAs[ApplicationNameOptions].getAppName,
       jobId,
-      this.state.toString,
-      dfMetrics
-    )
+      state.toString,
+      BeamMetrics(beamCounters, beamDistributions, beamGauges),
+      dfMetrics)
   }
+  // scalastyle:on method.length
 
   /** Retrieve aggregated value of a single counter from the pipeline. */
-  def counter(c: Counter): MetricValue[Long] = allCounters(c.getName)
+  def counter(c: bm.Counter): MetricValue[Long] = allCounters(c.getName)
 
   /** Retrieve aggregated value of a single distribution from the pipeline. */
-  def distribution(d: Distribution): MetricValue[DistributionResult] = allDistributions(d.getName)
+  def distribution(d: bm.Distribution): MetricValue[bm.DistributionResult] =
+    allDistributions(d.getName)
 
   /** Retrieve latest value of a single gauge from the pipeline. */
-  def gauge(g: Gauge): MetricValue[GaugeResult] = allGauges(g.getName)
+  def gauge(g: bm.Gauge): MetricValue[bm.GaugeResult] = allGauges(g.getName)
 
   /** Retrieve per step values of a single counter from the pipeline. */
-  def counterAtSteps(c: Counter): Map[String, MetricValue[Long]] = allCountersAtSteps(c.getName)
+  def counterAtSteps(c: bm.Counter): Map[String, MetricValue[Long]] = allCountersAtSteps(c.getName)
 
   /** Retrieve per step values of a single distribution from the pipeline. */
-  def distributionAtSteps(d: Distribution): Map[String, MetricValue[DistributionResult]] =
+  def distributionAtSteps(d: bm.Distribution): Map[String, MetricValue[bm.DistributionResult]] =
     allDistributionsAtSteps(d.getName)
 
   /** Retrieve per step values of a single gauge from the pipeline. */
-  def gaugeAtSteps(g: Gauge): Map[String, MetricValue[GaugeResult]] = allGaugesAtSteps(g.getName)
+  def gaugeAtSteps(g: bm.Gauge): Map[String, MetricValue[bm.GaugeResult]] =
+    allGaugesAtSteps(g.getName)
 
   /** Retrieve aggregated values of all counters from the pipeline. */
-  lazy val allCounters: Map[MetricName, MetricValue[Long]] =
+  lazy val allCounters: Map[bm.MetricName, MetricValue[Long]] =
     allCountersAtSteps.mapValues(reduceMetricValues[Long])
 
   /** Retrieve aggregated values of all distributions from the pipeline. */
-  lazy val allDistributions: Map[MetricName, MetricValue[DistributionResult]] =
-    allDistributionsAtSteps.mapValues(reduceMetricValues[DistributionResult])
+  lazy val allDistributions: Map[bm.MetricName, MetricValue[bm.DistributionResult]] =
+    allDistributionsAtSteps.mapValues(reduceMetricValues[bm.DistributionResult])
 
   /** Retrieve latest values of all gauges from the pipeline. */
-  lazy val allGauges: Map[MetricName, MetricValue[GaugeResult]] =
-    allGaugesAtSteps.mapValues(reduceMetricValues[GaugeResult])
+  lazy val allGauges: Map[bm.MetricName, MetricValue[bm.GaugeResult]] =
+    allGaugesAtSteps.mapValues(reduceMetricValues[bm.GaugeResult])
 
   /** Retrieve per step values of all counters from the pipeline. */
-  lazy val allCountersAtSteps: Map[MetricName, Map[String, MetricValue[Long]]] =
-    metricsAtSteps(internalMetrics.counters().asScala.asInstanceOf[Iterable[MetricResult[Long]]])
+  lazy val allCountersAtSteps: Map[bm.MetricName, Map[String, MetricValue[Long]]] =
+    metricsAtSteps(
+      internalMetrics.counters().asScala.asInstanceOf[Iterable[bm.MetricResult[Long]]])
 
   /** Retrieve per step values of all distributions from the pipeline. */
-  lazy val allDistributionsAtSteps: Map[MetricName, Map[String, MetricValue[DistributionResult]]] =
+  lazy val allDistributionsAtSteps
+  : Map[bm.MetricName, Map[String, MetricValue[bm.DistributionResult]]] =
     metricsAtSteps(internalMetrics.distributions().asScala)
 
   /** Retrieve aggregated values of all gauges from the pipeline. */
-  lazy val allGaugesAtSteps: Map[MetricName, Map[String, MetricValue[GaugeResult]]] =
+  lazy val allGaugesAtSteps: Map[bm.MetricName, Map[String, MetricValue[bm.GaugeResult]]] =
     metricsAtSteps(internalMetrics.gauges().asScala)
 
   private lazy val internalMetrics = internal.metrics.queryMetrics(
-    MetricsFilter.builder().build())
+    bm.MetricsFilter.builder().build())
 
-  private def metricsAtSteps[T](results: Iterable[MetricResult[T]])
-  : Map[MetricName, Map[String, MetricValue[T]]] =
+  private def metricsAtSteps[T](results: Iterable[bm.MetricResult[T]])
+  : Map[bm.MetricName, Map[String, MetricValue[T]]] =
     results
       .groupBy(_.name())
       .mapValues { xs =>
@@ -213,13 +232,13 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
     xs.values.reduce(sg.plus)
   }
 
-  private implicit val distributionResultSg = Semigroup.from[DistributionResult] { (x, y) =>
-    DistributionResult.create(
+  private implicit val distributionResultSg = Semigroup.from[bm.DistributionResult] { (x, y) =>
+    bm.DistributionResult.create(
       x.sum() + y.sum(), x.count() + y.count(),
       math.min(x.min(), y.min()), math.max(x.max(), y.max()))
   }
 
-  private implicit val gaugeResultSg = Semigroup.from[GaugeResult] { (x, y) =>
+  private implicit val gaugeResultSg = Semigroup.from[bm.GaugeResult] { (x, y) =>
     // sum by taking the latest
     if (x.timestamp() isAfter y.timestamp()) x else y
   }

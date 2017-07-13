@@ -17,10 +17,9 @@
 
 package com.spotify.scio
 
+import com.spotify.scio.metrics.{BeamDistribution, MetricValue}
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.PipelineResult.State
-
-import scala.concurrent.Future
 
 class ScioResultTest extends PipelineSpec {
 
@@ -28,6 +27,34 @@ class ScioResultTest extends PipelineSpec {
     val r = runWithContext(_.parallelize(Seq(1, 2, 3)))
     r.isCompleted shouldBe true
     r.state shouldBe State.DONE
+  }
+
+  it should "expose Beam metrics" in {
+    val r = runWithContext { sc =>
+      val c = ScioMetrics.counter("c")
+      val d = ScioMetrics.distribution("d")
+      val g = ScioMetrics.gauge("g")
+      sc.parallelize(Seq(1, 2, 3))
+        .map { x =>
+          c.inc()
+          d.update(x)
+          g.set(x)
+          x
+        }
+    }
+    val m = r.getMetrics.beamMetrics
+
+    m.counters.map(_.name) shouldBe Iterable("c")
+    m.counters.map(_.value) shouldBe Iterable(MetricValue(3L, Some(3L)))
+
+    val dist = BeamDistribution(6L, 3L, 1L, 3L, 2L)
+    m.distributions.map(_.name) shouldBe Iterable("d")
+    m.distributions.map(_.value) shouldBe Iterable(MetricValue(dist, Some(dist)))
+
+    val gauge = m.gauges.map(_.value)
+    m.gauges.map(_.name) shouldBe Iterable("g")
+    gauge.forall(g => g.attempted.value >= 1 && g.attempted.value <= 3) shouldBe true
+    gauge.forall(g => g.committed.get.value >= 1 && g.committed.get.value <= 3) shouldBe true
   }
 
 }
