@@ -476,7 +476,9 @@ lazy val scioExamples: Project = Project(
 ).settings(
   commonSettings ++ noPublishSettings,
   libraryDependencies ++= Seq(
-    "me.lyh" %% "shapeless-datatype-datastore_1.3" % "0.1.2",
+    "me.lyh" %% "shapeless-datatype-avro" % shapelessDatatypeVersion,
+    "me.lyh" %% "shapeless-datatype-datastore_1.3" % shapelessDatatypeVersion,
+    "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
     "mysql" % "mysql-connector-java" % "5.1.+",
     "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.2",
     "org.slf4j" % "slf4j-simple" % slf4jVersion,
@@ -493,6 +495,7 @@ lazy val scioExamples: Project = Project(
   scioJdbc,
   scioElasticsearch5,
   scioExtra,
+  scioTensorFlow,
   scioTest % "test"
 )
 
