@@ -18,19 +18,17 @@ Scio 0.3.0 and future versions depend on Apache Beam (`org.apache.beam`) while e
 # Features
 
 - Scala API close to that of Spark and Scalding core APIs
-- Unified batch and streaming programming model<sup>1, 2</sup>
-- Fully managed service<sup>2</sup>
-- Integration with Google Cloud products: Cloud Storage, BigQuery, Pub/Sub, Datastore, Bigtable<sup>2</sup>
-- HDFS source/sink
+- Unified batch and streaming programming model
+- Fully managed service<sup>*</sup>
+- Integration with Google Cloud products: Cloud Storage, BigQuery, Pub/Sub, Datastore, Bigtable
+- HDFS, JDBC, [TensorFlow](http://tensorflow.org/) TFRecords, Cassandra and Elasticsearch I/O
 - Interactive mode with Scio REPL
 - Type safe BigQuery
 - Integration with [Algebird](https://github.com/twitter/algebird) and [Breeze](https://github.com/scalanlp/breeze)
 - Pipeline orchestration with [Scala Futures](http://docs.scala-lang.org/overviews/core/futures.html)
 - Distributed cache
 
-<sup>1</sup> provided by Apache Beam
-
-<sup>2</sup> provided by Google Cloud Dataflow
+<sup>*</sup> provided by Google Cloud Dataflow
 
 # Quick Start
 
@@ -62,7 +60,7 @@ Scio includes the following artifacts:
 - `scio-extra`: extra utilities for working with collections, Breeze, etc.
 - `scio-hdfs`: add-on for HDFS IO
 - `scio-jdbc`: add-on for JDBC IO
-- `scio-tensorflow`: add-on for [TensorFlow](http://tensorflow.org/) TFRecords IO and prediction
+- `scio-tensorflow`: add-on for TensorFlow TFRecords IO and prediction
 
 # License
 
