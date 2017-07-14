@@ -200,7 +200,8 @@ lazy val root: Project = Project(
 ).enablePlugins(ScalaUnidocPlugin).settings(
   commonSettings ++ siteSettings ++ noPublishSettings,
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
-    -- inProjects(scioCassandra2) -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples),
+    -- inProjects(scioCassandra2) -- inProjects(scioElasticsearch2)
+    -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples),
   aggregate in assembly := false
 ).aggregate(
   scioCore,
