@@ -22,6 +22,7 @@ import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
+import java.nio.file.Files;
 
 public class CqlBulkRecordWriterUtil {
   /** Workaround to expose package private constructor. */
@@ -48,6 +49,7 @@ public class CqlBulkRecordWriterUtil {
     ConfigHelper.setOutputPartitioner(conf, partitioner);
     CqlBulkOutputFormat.setTableSchema(conf, table, tableSchema);
     CqlBulkOutputFormat.setTableInsertStatement(conf, table, insertStatement);
+    conf.set(CqlBulkRecordWriter.OUTPUT_LOCATION, Files.createTempDirectory("scio-cassandra-").toString());
 
     // workaround for Hadoop static initialization
     if (!System.getProperties().containsKey("hadoop.home.dir") &&
