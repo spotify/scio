@@ -94,7 +94,7 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
   def saveMetrics(filename: String): Unit = {
     require(isCompleted, "Pipeline has to be finished to save metrics.")
     val mapper = ScioUtil.getScalaJsonMapper
-    val resourceId = FileSystems.matchSingleFileSpec(filename).resourceId
+    val resourceId = FileSystems.matchNewResource(filename, false)
     val out = FileSystems.create(resourceId, MimeTypes.TEXT)
     try {
       out.write(ByteBuffer.wrap(mapper.writeValueAsBytes(getMetrics)))
