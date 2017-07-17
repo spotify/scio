@@ -454,7 +454,7 @@ lazy val scioSchemas: Project = Project(
   "scio-schemas",
   file("scio-schemas")
 ).settings(
-  commonSettings ++ sbtavro.SbtAvro.avroSettings ++ noPublishSettings,
+  commonSettings ++ noPublishSettings,
   version in avroConfig := avroVersion, // Set avro version used by sbt-avro
   description := "Avro/Proto schemas for testing",
   // suppress warnings
