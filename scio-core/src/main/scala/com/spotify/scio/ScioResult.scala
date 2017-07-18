@@ -60,8 +60,9 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
       }
       this.state
     }
-    f.onFailure {
-      case NonFatal(_) => context.updateFutures(state)
+    f.onComplete {
+      case Success(_) => Unit
+      case Failure(NonFatal(_)) => context.updateFutures(state)
     }
     f
   }
@@ -188,12 +189,23 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
     allCountersAtSteps.mapValues(reduceMetricValues[Long])
 
   /** Retrieve aggregated values of all distributions from the pipeline. */
-  lazy val allDistributions: Map[bm.MetricName, MetricValue[bm.DistributionResult]] =
+  lazy val allDistributions: Map[bm.MetricName, MetricValue[bm.DistributionResult]] = {
+    implicit val distributionResultSg = Semigroup.from[bm.DistributionResult] { (x, y) =>
+      bm.DistributionResult.create(
+        x.sum() + y.sum(), x.count() + y.count(),
+        math.min(x.min(), y.min()), math.max(x.max(), y.max()))
+    }
     allDistributionsAtSteps.mapValues(reduceMetricValues[bm.DistributionResult])
+  }
 
   /** Retrieve latest values of all gauges from the pipeline. */
-  lazy val allGauges: Map[bm.MetricName, MetricValue[bm.GaugeResult]] =
+  lazy val allGauges: Map[bm.MetricName, MetricValue[bm.GaugeResult]] = {
+    implicit val gaugeResultSg = Semigroup.from[bm.GaugeResult] { (x, y) =>
+      // sum by taking the latest
+      if (x.timestamp() isAfter y.timestamp()) x else y
+    }
     allGaugesAtSteps.mapValues(reduceMetricValues[bm.GaugeResult])
+  }
 
   /** Retrieve per step values of all counters from the pipeline. */
   lazy val allCountersAtSteps: Map[bm.MetricName, Map[String, MetricValue[Long]]] =
@@ -230,17 +242,6 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
       MetricValue(sg.plus(x.attempted, y.attempted), sgO.plus(x.committed, y.committed))
     }
     xs.values.reduce(sg.plus)
-  }
-
-  private implicit val distributionResultSg = Semigroup.from[bm.DistributionResult] { (x, y) =>
-    bm.DistributionResult.create(
-      x.sum() + y.sum(), x.count() + y.count(),
-      math.min(x.min(), y.min()), math.max(x.max(), y.max()))
-  }
-
-  private implicit val gaugeResultSg = Semigroup.from[bm.GaugeResult] { (x, y) =>
-    // sum by taking the latest
-    if (x.timestamp() isAfter y.timestamp()) x else y
   }
 
 }

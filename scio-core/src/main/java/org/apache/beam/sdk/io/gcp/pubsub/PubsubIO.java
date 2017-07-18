@@ -851,7 +851,7 @@ public class PubsubIO {
       }
       switch (input.isBounded()) {
         case BOUNDED:
-          input.apply(ParDo.of(new PubsubBoundedWriter()));
+          input.apply(ParDo.of(new PatchedPubsubBoundedWriter()));
           return PDone.in(input.getPipeline());
         case UNBOUNDED:
           return input.apply(MapElements.via(getFormatFn())).apply(new PubsubUnboundedSink(
@@ -881,7 +881,7 @@ public class PubsubIO {
      *
      * <p>Public so can be suppressed by runners.
      */
-    public class PubsubBoundedWriter extends DoFn<T, Void> {
+    public class PatchedPubsubBoundedWriter extends DoFn<T, Void> {
 
       private static final int MAX_PUBLISH_BATCH_SIZE = 100;
       private transient List<OutgoingMessage> output;
