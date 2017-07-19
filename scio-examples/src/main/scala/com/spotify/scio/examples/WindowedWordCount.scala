@@ -45,6 +45,8 @@ object WindowedWordCount {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
+    FileSystems.setDefaultPipelineOptions(sc.options)
+
     val input = args.getOrElse("input", ExampleData.KING_LEAR)
     val windowSize = Duration.standardMinutes(args.long("windowSize", WINDOW_SIZE))
     val minTimestamp = args.long("minTimestampMillis", System.currentTimeMillis())
@@ -65,7 +67,7 @@ object WindowedWordCount {
       .map { case (w, vs) =>
         val outputShard = "%s-%s-%s".format(
           args("output"), formatter.print(w.start()), formatter.print(w.end()))
-        val resourceId = FileSystems.matchSingleFileSpec(outputShard).resourceId
+        val resourceId = FileSystems.matchNewResource(outputShard, false)
         val out = Channels.newOutputStream(FileSystems.create(resourceId, MimeTypes.TEXT))
         vs.foreach { case (k, v) => out.write(s"$k: $v\n".getBytes) }
         out.close()
