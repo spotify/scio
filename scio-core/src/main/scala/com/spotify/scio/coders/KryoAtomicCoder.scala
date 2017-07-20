@@ -122,10 +122,18 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
     val o = if (context.isWholeStream) {
       kryo.get().readClassAndObject(new Input(inStream))
     } else {
-      val is = new BufferedPrefixInputStream(inStream)
-      val obj = kryo.get().readClassAndObject(new Input(is))
-      is.finish()
-      obj
+      val length = VarInt.decodeInt(inStream)
+      if (length == -1) {
+        val is = new BufferedPrefixInputStream(inStream)
+        val obj = kryo.get().readClassAndObject(new Input(is))
+        is.finish()
+        obj
+      } else {
+        require(length > 0, "Invalid input stream")
+        val value = Array.ofDim[Byte](length)
+        ByteStreams.readFully(inStream, value)
+        kryo.get().readClassAndObject(new Input(value))
+      }
     }
     o.asInstanceOf[T]
   }
@@ -217,8 +225,6 @@ private class BufferedPrefixOutputStream(private val os: OutputStream)
 
 /** Counterpart for [[BufferedPrefixOutputStream]]. */
 private class BufferedPrefixInputStream(private val is: InputStream) extends InputStream {
-
-  require(VarInt.decodeInt(is) == -1, "Invalid input stream")
   inputBuffer()
 
   private var buffer: Array[Byte] = _
