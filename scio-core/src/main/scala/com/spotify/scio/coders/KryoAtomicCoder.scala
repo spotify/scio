@@ -114,10 +114,15 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
   }
 
   override def decode(inStream: InputStream): T = {
-    val is = new BufferedPrefixInputStream(inStream)
-    val obj = kryo.get().readClassAndObject(new Input(is))
-    is.finish()
-    obj.asInstanceOf[T]
+    val o = if (VarInt.decodeInt(inStream) == -1) {
+      val is = new BufferedPrefixInputStream(inStream)
+      val obj = kryo.get().readClassAndObject(new Input(is))
+      is.finish()
+      obj
+    } else {
+      kryo.get().readClassAndObject(new Input(inStream))
+    }
+    o.asInstanceOf[T]
   }
 
   // This method is called by PipelineRunner to sample elements in a PCollection and estimate
@@ -207,8 +212,6 @@ private class BufferedPrefixOutputStream(private val os: OutputStream)
 
 /** Counterpart for [[BufferedPrefixOutputStream]]. */
 private class BufferedPrefixInputStream(private val is: InputStream) extends InputStream {
-
-  require(VarInt.decodeInt(is) == -1, "Invalid input stream")
   inputBuffer()
 
   private var buffer: Array[Byte] = _
