@@ -42,7 +42,9 @@ import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options._
 import org.apache.beam.sdk.PipelineResult.State
+import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.extensions.gcp.options.{GcpOptions, GcsOptions}
+import org.apache.beam.sdk.extensions.protobuf.ProtoCoder
 import org.apache.beam.sdk.io.TFRecordIO.CompressionType
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub => psio}
 import org.apache.beam.sdk.options._
@@ -435,7 +437,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (this.isTest) {
       this.getTestInput(ObjectFileIO[T](path))
     } else {
-      val coder = pipeline.getCoderRegistry.getScalaCoder[T]
+      val cls = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[Message]]
+      val coder = ProtoCoder.of(cls).asInstanceOf[Coder[T]]
       this.avroFile[GenericRecord](path, AvroBytesUtil.schema)
         .parDo(new DoFn[GenericRecord, T] {
           @ProcessElement
