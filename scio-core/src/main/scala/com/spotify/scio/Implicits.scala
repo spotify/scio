@@ -22,7 +22,8 @@ import java.lang.{Float => JFloat}
 import com.spotify.scio.coders.KryoAtomicCoder
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.coders._
-import org.apache.beam.sdk.values.{KV, TypeDescriptor}
+import org.apache.beam.sdk.extensions.protobuf.ProtoCoder
+import org.apache.beam.sdk.values.KV
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
@@ -32,6 +33,9 @@ private[scio] object Implicits {
   private[scio] implicit class RichCoderRegistry(val r: CoderRegistry) extends AnyVal {
 
     def registerScalaCoders(): Unit = {
+      // FIXME: BEAM-2658 make sure ProtoCoder has higher precedence than SerializableCoder
+      r.registerCoderProvider(ProtoCoder.getCoderProvider)
+
       // Missing Coders from DataFlowJavaSDK
       r.registerCoderForClass(classOf[JFloat], FloatCoder.of())
 
