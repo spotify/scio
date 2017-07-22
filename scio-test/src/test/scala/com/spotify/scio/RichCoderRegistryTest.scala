@@ -17,11 +17,13 @@
 
 package com.spotify.scio
 
+import com.google.protobuf.Timestamp
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.avro.{Account, TestRecord}
 import com.spotify.scio.coders.CoderTestUtils._
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.coders.CoderRegistry
+import org.apache.beam.sdk.extensions.protobuf.ProtoCoder
 import org.apache.beam.sdk.testing.TestPipeline
 import org.scalatest.matchers.{MatchResult, Matcher}
 
@@ -91,6 +93,11 @@ class RichCoderRegistryTest extends PipelineSpec {
         .mapValues { case (account, name) => Account.newBuilder(account).setName(name).build() }
         .values should containInAnyOrder (expected)
     }
+  }
+
+  it should "give ProtoCoder higher precedence" in {
+    // FIXME: BEAM-2658 make sure ProtoCoder has higher precedence than SerializableCoder
+    registry.getScalaCoder[Timestamp] shouldBe ProtoCoder.of(classOf[Timestamp])
   }
 
 }
