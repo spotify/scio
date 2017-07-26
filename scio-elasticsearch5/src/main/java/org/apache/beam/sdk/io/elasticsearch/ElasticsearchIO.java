@@ -32,6 +32,7 @@ import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.windowing.AfterProcessingTime;
 import org.apache.beam.sdk.transforms.windowing.GlobalWindows;
 import org.apache.beam.sdk.transforms.windowing.Repeatedly;
+import org.apache.beam.sdk.transforms.windowing.TimestampCombiner;
 import org.apache.beam.sdk.transforms.windowing.Window;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
@@ -189,7 +190,8 @@ public class ElasticsearchIO {
                     AfterProcessingTime
                         .pastFirstElementInPane()
                         .plusDelayOf(flushInterval)))
-                .discardingFiredPanes())
+                .discardingFiredPanes()
+                .withTimestampCombiner(TimestampCombiner.END_OF_WINDOW))
             .apply(GroupByKey.create())
             .apply("Write to Elasticesarch",
                 ParDo.of(new ElasticsearchWriter<>
@@ -216,7 +218,7 @@ public class ElasticsearchIO {
 
     private static class ElasticsearchWriter<T> extends DoFn<KV<Long, Iterable<T>>, Void> {
 
-      private final Logger LOG = LoggerFactory.getLogger(ElasticsearchWriter.class);
+      private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchWriter.class);
       private final ClientSupplier clientSupplier;
       private final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests;
       private final ThrowingConsumer<BulkExecutionException> error;
@@ -229,6 +231,7 @@ public class ElasticsearchIO {
         this.toDocWriteRequests = toDocWriteRequests;
         this.error = error;
       }
+
 
       @ProcessElement
       public void processElement(ProcessContext c) throws Exception {
