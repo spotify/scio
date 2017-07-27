@@ -58,11 +58,10 @@ private class SpecificAvroSerializer[T <: SpecificRecordBase] extends KSerialize
   private lazy val cache: MMap[Class[T], AvroCoder[T]] = MMap()
 
   private def getCoder(cls: Class[T]): AvroCoder[T] =
-    cache.getOrElseUpdate(cls, {
+    cache.getOrElseUpdate(cls,
       Try(cls.getMethod("getClassSchema").invoke(null).asInstanceOf[Schema])
         .map(AvroCoder.of(cls, _))
-        .getOrElse(AvroCoder.of(cls))
-    })
+        .getOrElse(AvroCoder.of(cls)))
 
   override def write(kser: Kryo, out: Output, obj: T): Unit =
     this.getCoder(obj.getClass.asInstanceOf[Class[T]]).encode(obj, out, Context.NESTED)
