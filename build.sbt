@@ -440,7 +440,6 @@ lazy val scioAvro: Project = Project(
   libraryDependencies ++= beamDependencies,
   libraryDependencies ++= Seq(
     "org.apache.avro" % "avro" % avroVersion,
-    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
     "org.slf4j" % "slf4j-api" % slf4jVersion,
     "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
     "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",

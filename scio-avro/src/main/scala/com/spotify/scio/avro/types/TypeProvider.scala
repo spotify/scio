@@ -17,12 +17,9 @@
 
 package com.spotify.scio.avro.types
 
-import java.io.{File, FileInputStream}
 import java.nio.channels.Channels
 import java.util.{List => JList}
 
-import com.google.api.services.storage.StorageScopes
-import com.google.auth.oauth2.GoogleCredentials
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
@@ -31,8 +28,7 @@ import org.apache.avro.Schema
 import org.apache.avro.Schema.Type._
 import org.apache.avro.file.DataFileStream
 import org.apache.avro.generic.GenericDatumReader
-import org.apache.beam.sdk.options.{GcpOptions, PipelineOptionsFactory}
-import org.apache.beam.sdk.util.IOChannelUtils
+import org.apache.beam.sdk.io.FileSystemsUtil
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -42,27 +38,6 @@ import scala.reflect.macros._
 // scalastyle:off line.size.limit
 private[types] object TypeProvider {
   private val logger = LoggerFactory.getLogger(this.getClass)
-
-  private lazy val ioChannelFactoryGetter = {
-    java.lang.Thread.currentThread().setContextClassLoader(getClass.getClassLoader)
-
-    val gcpOptions = PipelineOptionsFactory.create().as(classOf[GcpOptions])
-
-    if (sys.props("bigquery.project") != null) {
-      gcpOptions.setProject(sys.props("bigquery.project"))
-    }
-
-    if (sys.props("bigquery.secret") != null) {
-      val credentials = GoogleCredentials
-        .fromStream(new FileInputStream(new File(sys.props("bigquery.secret"))))
-        .createScoped(StorageScopes.all())
-      gcpOptions.setGcpCredential(credentials)
-    }
-
-    IOChannelUtils.registerIOFactories(gcpOptions)
-
-    (spec: String) => IOChannelUtils.getFactory(spec)
-  }
 
   def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     val schemaString = extractStrings(c, "Missing schema").head
@@ -77,24 +52,21 @@ private[types] object TypeProvider {
   }
 
   private def schemaFromGcsFolder(path: String): Schema = {
-
-
     val trimmedPath = path.trim.replaceAll("\\s+", "")
-    assume(trimmedPath.endsWith("/"), s"Path '$trimmedPath' needs to end with a '/'")
+    require(trimmedPath.endsWith("/"), s"Path '$trimmedPath' needs to end with a '/'")
 
     val avroFilesGlob = s"$trimmedPath*.avro"
 
-    val factory = ioChannelFactoryGetter(avroFilesGlob)
-    val avroFiles = factory.`match`(avroFilesGlob).asScala.toList
-    assume(avroFiles.nonEmpty, s"No file was returned for glob '$trimmedPath'")
+    val avroFiles = FileSystemsUtil.`match`(avroFilesGlob).metadata().asScala.map(_.resourceId()).toList
+    require(avroFiles.nonEmpty, s"No file was returned for glob '$trimmedPath'")
 
-    val avroFile = avroFiles.max
+    val avroFile = avroFiles.maxBy(_.toString)
     logger.info(s"Trying to read Avro schema from file '$avroFile'")
 
     var reader : DataFileStream[Void] = null
     try {
       reader = new DataFileStream(
-        Channels.newInputStream(factory.open(avroFile)),
+        Channels.newInputStream(FileSystemsUtil.open(avroFile)),
         new GenericDatumReader[Void]())
       reader.getSchema
     } finally {
