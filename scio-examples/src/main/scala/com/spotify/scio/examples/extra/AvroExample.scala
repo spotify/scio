@@ -19,6 +19,7 @@ package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
 import com.spotify.scio.avro.Account
+import com.spotify.scio.avro.types.AvroType
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Parser
 import org.apache.avro.generic.{GenericData, GenericRecord}
@@ -27,6 +28,22 @@ import scala.collection.JavaConverters._
 
 // Read and write specific and generic Avro records
 object AvroExample {
+  @AvroType.fromSchema(
+    """{
+      | "type":"record",
+      | "name":"Account",
+      | "namespace":"com.spotify.scio.avro",
+      | "doc":"Record for an account",
+      | "fields":[
+      |   {"name":"id","type":"int"},
+      |   {"name":"type","type":"string"},
+      |   {"name":"name","type":"string"},
+      |   {"name":"amount","type":"double"}]}
+    """.stripMargin)
+  class AccountFromSchema
+
+  @AvroType.toSchema
+  case class AccountToSchema(id: Int, `type`: String, name: String, amount: Double)
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -44,6 +61,12 @@ object AvroExample {
 
       // read dummy generic records
       case "genericIn" => genericIn(sc, args)
+
+      // write typed generic records
+      case "typedOut" => typedOut(sc, args)
+
+      // read typed generic records
+      case "typedIn" => typedIn(sc, args)
 
       case _ => throw new RuntimeException(s"Invalid method $m")
     }
@@ -79,11 +102,27 @@ object AvroExample {
         val r = new GenericData.Record(s)
         r.put("id", i)
         r.put("amount", i.toDouble)
-        r.put("name", "user" + i)
+        r.put("name", "account" + i)
         r.put("type", "checking")
         r
       }
       .saveAsAvroFile(args("output"), schema = schema)
+  }
+
+  private def typedIn(sc: ScioContext, args: Args): Unit = {
+    sc.typedAvroFile[AccountFromSchema](args("input"))
+      .map(AccountFromSchema.toGenericRecord)
+      .saveAsTextFile(args("output"))
+  }
+
+  private def typedOut(sc: ScioContext, args: Args): Unit = {
+    sc.parallelize(1 to 100)
+      .map { i =>
+        AccountToSchema(id = i,
+          amount = i.toDouble,
+          name = "account" + i,
+          `type` = "checking") }
+      .saveAsTypedAvroFile(args("output"))
   }
 
   private def genericIn(sc: ScioContext, args: Args): Unit = {

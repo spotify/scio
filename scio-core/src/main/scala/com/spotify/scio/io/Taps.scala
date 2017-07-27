@@ -20,10 +20,13 @@ package com.spotify.scio.io
 import com.google.api.client.util.{BackOff, BackOffUtils, Sleeper}
 import com.google.api.services.bigquery.model.TableReference
 import com.google.protobuf.Message
+import com.spotify.scio.avro.types.AvroType
+import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
 import org.apache.avro.Schema
+import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
 import org.apache.beam.sdk.util.FluentBackoff
 import org.joda.time.Duration
@@ -43,6 +46,15 @@ trait Taps {
   /** Get a `Future[Tap[T]]` for an Avro file. */
   def avroFile[T: ClassTag](path: String, schema: Schema = null): Future[Tap[T]] =
     mkTap(s"Avro: $path", () => isPathDone(path), () => AvroTap[T](path, schema))
+
+  /** Get a `Future[Tap[T]]` for typed Avro source. */
+  def typedAvroFile[T <: HasAvroAnnotation : TypeTag: ClassTag](path: String): Future[Tap[T]] = {
+    val avroT = AvroType[T]
+
+    import scala.concurrent.ExecutionContext.Implicits.global
+    avroFile[GenericRecord](path, avroT.schema)
+      .map(_.map(avroT.fromGenericRecord))
+  }
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery SELECT query. */
   def bigQuerySelect(sqlQuery: String, flattenResults: Boolean = false): Future[Tap[TableRow]] =
