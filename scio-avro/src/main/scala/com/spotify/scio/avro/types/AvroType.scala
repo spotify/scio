@@ -133,8 +133,15 @@ object AvroType {
    *
    * {{{
    * @AvroType.toSchema
-   * case class Result(name: String, score: Double)
+   * case class Result(name: Optional[String] = None, score: Optional[Double] = None)
    * }}}
+   *
+   * It is recommended that you define all of your fields as Optional.
+   * This way you could stop populating them in the future if you notice that you don't need them.
+   *
+   * This macro doesn't help you with schema evolution.
+   * It's up to you to follow the best practices on how to evolution of Avro schemas.
+   * Rule of thumb is to only add new fields, without removing the old ones.
    * @group annotation
    */
   class toSchema extends StaticAnnotation {
