@@ -17,14 +17,10 @@
 
 package com.spotify.scio.avro.types
 
-import org.slf4j.LoggerFactory
-
 import scala.reflect.macros._
 import scala.reflect.runtime.universe._
 
 private[types] object MacroUtil {
-
-  private val logger = LoggerFactory.getLogger(this.getClass)
 
   // Case class helpers for runtime reflection
 
@@ -53,8 +49,6 @@ private[types] object MacroUtil {
 
   val ScioAvro = "_root_.com.spotify.scio.avro"
   val ApacheAvro = "_root_.org.apache.avro"
-  val ShapelessAvro = "_root_.shapeless.datatype.avro"
-  val BeamAvroIO = "_root_.org.apache.beam.sdk.io.AvroIO"
   val ScioAvroType = s"$ScioAvro.types.AvroType"
 
   def p(c: blackbox.Context, code: String): c.Tree = c.parse(code)
