@@ -25,125 +25,126 @@ import scala.language.experimental.macros
 import scala.reflect.runtime.universe._
 
 /**
-  * Macro annotations and converter generators for Avro types.
-  *
-  * The following table lists Avro types and their Scala counterparts.
-  * {{{
-  * Avro type      Scala type
-  * BOOLEAN        Boolean
-  * LONG           Long
-  * INT            Int
-  * DOUBLE         Double
-  * FLOAT          Float
-  * STRING, ENUM   String
-  * BYTES          com.google.protobuf.ByteString
-  * ARRAY          List[T]
-  * MAP            Map[String, T]
-  * UNION          Optional[T]
-  * RECORD         Nested case class
-  * }}}
-  *
-  * @groupname trait Traits for annotated types
-  * @groupname annotation Type annotations
-  * @groupname converters Converters
-  * @groupname Ungrouped Other Members
-  */
+ * Macro annotations and converter generators for Avro types.
+ *
+ * The following table lists Avro types and their Scala counterparts.
+ * {{{
+ * Avro type      Scala type
+ * BOOLEAN        Boolean
+ * LONG           Long
+ * INT            Int
+ * DOUBLE         Double
+ * FLOAT          Float
+ * STRING, ENUM   String
+ * BYTES          com.google.protobuf.ByteString
+ * ARRAY          List[T]
+ * MAP            Map[String, T]
+ * UNION          Optional[T]
+ * RECORD         Nested case class
+ * }}}
+ *
+ * @groupname trait Traits for annotated types
+ * @groupname annotation Type annotations
+ * @groupname converters Converters
+ * @groupname Ungrouped Other Members
+ */
 object AvroType {
+
   /**
-    * Macro annotation for an Avro schema.
-    *
-    * Generate case classes for an Avro schema. Note that `schema` must be a single string literal
-    * of the JSON schema with optional `.stripMargin` at the end. For example:
-    *
-    * {{{
-    *   @AvroType.fromSchema(
-    *       """
-    *         |{
-    *         |  "type": "record",
-    *         |  "namespace": "com.spotify.namespace",
-    *         |  "name": "RecordName",
-    *         |  "fields": [
-    *         |    { "name": "boolF", "type": "boolean"},
-    *         |    { "name": "intF", "type": "int"},
-    *         |    { "name": "longF", "type": "long"},
-    *         |    { "name": "floatF", "type": "float"},
-    *         |    { "name": "doubleF", "type": "double"},
-    *         |    { "name": "stringF", "type": "string"},
-    *         |    { "name": "byteStringF", "type": "bytes"}
-    *         |  ]
-    *         |}
-    *       """.stripMargin)
-    *   class MyRecord
-    * }}}
-    *
-    * Also generate a companion object with convenience methods.
-    * @group annotation
-    */
+   * Macro annotation for an Avro schema.
+   *
+   * Generate case classes for an Avro schema. Note that `schema` must be a single string literal
+   * of the JSON schema with optional `.stripMargin` at the end. For example:
+   *
+   * {{{
+   *   @AvroType.fromSchema(
+   *       """
+   *         |{
+   *         |  "type": "record",
+   *         |  "namespace": "com.spotify.namespace",
+   *         |  "name": "RecordName",
+   *         |  "fields": [
+   *         |    { "name": "boolF", "type": "boolean"},
+   *         |    { "name": "intF", "type": "int"},
+   *         |    { "name": "longF", "type": "long"},
+   *         |    { "name": "floatF", "type": "float"},
+   *         |    { "name": "doubleF", "type": "double"},
+   *         |    { "name": "stringF", "type": "string"},
+   *         |    { "name": "byteStringF", "type": "bytes"}
+   *         |  ]
+   *         |}
+   *       """.stripMargin)
+   *   class MyRecord
+   * }}}
+   *
+   * Also generate a companion object with convenience methods.
+   * @group annotation
+   */
   class fromSchema(schema: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.schemaImpl
   }
 
   /**
-    * Macro annotation for a path containing Avro files.
-    *
-    * Generates case classes from a path which contains Avro files.
-    * Path needs to represent a folder, hence it always needs to end with `/`.
-    * Inside of the folder needs to exist at least one file matching `*.avro` glob.
-    *
-    * Note that path must be a single string literal with optional `.stripMargin` at the end.
-    * For example:
-    *
-    * {{{
-    * @AvroType.fromPath("gs://myBucket/myFolder/")
-    * class MyRecord
-    * }}}
-    *
-    * or
-    *
-    * {{{
-    * @AvroType.fromPath(
-    *    """
-    *     | gs://myBucket/myFolder/
-    *     | myLooooooooooooooooongPath/
-    *    """.stripMargin)
-    * class MyRecord
-    * }}}
-    *
-    * Globs are supported as a part of the path. For example:
-    *
-    * {{{
-    * @AvroType.fromPath("gs://myBucket{@literal /}*{@literal /}*{@literal /}*{@literal /}")
-    * class MyRecord
-    * }}}
-    *
-    * Also generate a companion object with convenience methods.
-    * @group annotation
-    */
+   * Macro annotation for a path containing Avro files.
+   *
+   * Generates case classes from a path which contains Avro files.
+   * Path needs to represent a folder, hence it always needs to end with `/`.
+   * Inside of the folder needs to exist at least one file matching `*.avro` glob.
+   *
+   * Note that path must be a single string literal with optional `.stripMargin` at the end.
+   * For example:
+   *
+   * {{{
+   * @AvroType.fromPath("gs://myBucket/myFolder/")
+   * class MyRecord
+   * }}}
+   *
+   * or
+   *
+   * {{{
+   * @AvroType.fromPath(
+   *    """
+   *     | gs://myBucket/myFolder/
+   *     | myLooooooooooooooooongPath/
+   *    """.stripMargin)
+   * class MyRecord
+   * }}}
+   *
+   * Globs are supported as a part of the path. For example:
+   *
+   * {{{
+   * @AvroType.fromPath("gs://myBucket{@literal /}*{@literal /}*{@literal /}*{@literal /}")
+   * class MyRecord
+   * }}}
+   *
+   * Also generate a companion object with convenience methods.
+   * @group annotation
+   */
   class fromPath(folderGlob: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.pathImpl
   }
 
   /**
-    * Macro annotation for case classes to be saved to Avro files.
-    *
-    * Note that this annotation does not generate case classes, only a companion object with
-    * convenience methods. You need to define a complete case class for as output record. For
-    * example:
-    *
-    * {{{
-    * @AvroType.toSchema
-    * case class Result(name: String, score: Double)
-    * }}}
-    * @group annotation
-    */
+   * Macro annotation for case classes to be saved to Avro files.
+   *
+   * Note that this annotation does not generate case classes, only a companion object with
+   * convenience methods. You need to define a complete case class for as output record. For
+   * example:
+   *
+   * {{{
+   * @AvroType.toSchema
+   * case class Result(name: String, score: Double)
+   * }}}
+   * @group annotation
+   */
   class toSchema extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.toSchemaImpl
   }
 
   /**
-    * Trait for generated companion objects of case classes.
-    * @group trait
-    */
+   * Trait for generated companion objects of case classes.
+   * @group trait
+   */
   trait HasAvroSchema[T] {
     def schema: Schema
 
@@ -155,46 +156,48 @@ object AvroType {
   }
 
   /**
-    * Trait for companion objects of case classes generated with docs.
-    * @group trait
-    */
+   * Trait for companion objects of case classes generated with docs.
+   * @group trait
+   */
   trait HasAvroDoc {
     def doc: String
   }
 
   /**
-    * Trait for case classes with generated companion objects.
-    * @group trait
-    */
+   * Trait for case classes with generated companion objects.
+   * @group trait
+   */
   trait HasAvroAnnotation
 
   /**
-    * Generate [[Schema]] for a case class.
-    */
+   * Generate [[Schema]] for a case class.
+   */
   def schemaOf[T: TypeTag]: Schema = SchemaProvider.schemaOf[T]
 
   /**
-    * Generate a converter function from [[GenericRecord]] to the given case class `T`.
-    * @group converters
-    */
+   * Generate a converter function from [[GenericRecord]] to the given case class `T`.
+   * @group converters
+   */
   def fromGenericRecord[T]: (GenericRecord => T) = macro ConverterProvider.fromGenericRecordImpl[T]
 
   /**
-    * Generate a converter function from the given case class `T` to [[GenericRecord]].
-    * @group converters
-    */
+   * Generate a converter function from the given case class `T` to [[GenericRecord]].
+   * @group converters
+   */
   def toGenericRecord[T]: (T => GenericRecord) = macro ConverterProvider.toGenericRecordImpl[T]
 
   /** Create a new AvroType instance. */
   def apply[T: TypeTag]: AvroType[T] = new AvroType[T]
+
 }
 
 /**
-  * Type class for case class `T` annotated for Avro IO.
-  *
-  * This decouples generated fields and methods from macro expansion to keep core macro free.
-  */
+ * Type class for case class `T` annotated for Avro IO.
+ *
+ * This decouples generated fields and methods from macro expansion to keep core macro free.
+ */
 class AvroType[T: TypeTag] {
+
   private val instance = runtimeMirror(getClass.getClassLoader)
     .reflectModule(typeOf[T].typeSymbol.companion.asModule)
     .instance
@@ -211,4 +214,5 @@ class AvroType[T: TypeTag] {
 
   /** Schema of `T`. */
   def schema: Schema = AvroType.schemaOf[T]
+
 }

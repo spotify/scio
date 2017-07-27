@@ -25,7 +25,7 @@ import org.apache.avro.Schema.Type._
 
 import scala.collection.JavaConverters._
 
-/** Utility for BigQuery schemas. */
+/** Utility for Avro schemas. */
 object SchemaUtil {
 
   /** Convert schema to case class definitions. */
