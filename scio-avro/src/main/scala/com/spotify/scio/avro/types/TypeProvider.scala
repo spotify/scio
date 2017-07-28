@@ -29,12 +29,15 @@ import org.apache.avro.Schema.Type._
 import org.apache.avro.file.DataFileStream
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.io.fs.{MatchResult, ResourceId}
+import org.apache.beam.sdk.io.fs.MatchResult.Status
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Map => MMap}
 import scala.reflect.macros._
+import scala.util.Try
 
 // scalastyle:off line.size.limit
 private[types] object TypeProvider {
@@ -58,18 +61,28 @@ private[types] object TypeProvider {
     schemaToType(c)(schema, annottees)
   }
 
+  // scalastyle:off
   private def schemaFromGcsFolder(path: String): Schema = {
-    val trimmedPath = path.trim.replaceAll("\\s+", "")
-    require(trimmedPath.endsWith("/"), s"Path '$trimmedPath' needs to end with a '/'")
+    val p = path.trim.replaceAll("\n", "")
+    emitWarningIfGcsGlobPath(p)
 
-    emitWarningIfGcsGlobPath(trimmedPath)
+    val avroFile = {
+      def matchResult(r: MatchResult): Option[ResourceId] = {
+        if (r.status() != Status.OK || r.metadata().isEmpty) {
+          None
+        } else {
+          val last = r.metadata().asScala.maxBy(_.resourceId().toString)
+          if (last.sizeBytes() > 0) Some(last.resourceId()) else None
+        }
+      }
+      val r = matchResult(FileSystems.`match`(p)) match {
+        case Some(x) => Some(x)
+        case None => matchResult(FileSystems.`match`(p.replaceFirst("/?$", "/*.avro")))
+      }
+      require(r.isDefined, s"Unable to match Avro file from path '$p'")
+      r.get
+    }
 
-    val avroFilesGlob = s"$trimmedPath*.avro"
-
-    val avroFiles = FileSystems.`match`(avroFilesGlob).metadata().asScala.map(_.resourceId()).toList
-    require(avroFiles.nonEmpty, s"No file was returned for glob '$trimmedPath'")
-
-    val avroFile = avroFiles.maxBy(_.toString)
     logger.info(s"Reading Avro schema from file '$avroFile'")
 
     var reader : DataFileStream[Void] = null

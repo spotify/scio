@@ -22,17 +22,34 @@ import org.scalatest.{FlatSpec, Matchers}
 
 object AvroTypeIT {
   @AvroType.fromPath(
+    "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro")
+  class FromFile
+
+  @AvroType.fromPath(
+    "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b")
+  class FromPath1
+
+  @AvroType.fromPath(
     "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/")
-  class FromPath
+  class FromPath2
+
+  @AvroType.fromPath(
+    "gs://data-integration-test-eu/*/*/*")
+  class FromGlob1
 
   @AvroType.fromPath(
     "gs://data-integration-test-eu/*/*/*/")
-  class FromGlob
+  class FromGlob2
+
+  @AvroType.fromPath(
+    "gs://data-integration-test-eu/*/*/*/*.avro")
+  class FromGlob3
 
   @AvroType.fromPath(
     """
       |gs://data-integration-test-eu/
       |avro-integration-test/folder-a/folder-b/
+      |shakespeare.avro
     """.stripMargin)
   class FromPathMultiLine
 }
@@ -58,12 +75,19 @@ class AvroTypeIT extends FlatSpec with Matchers  {
                                                   |  } ]
                                                   |}""".stripMargin)
 
+  "fromPath" should "correctly read schema from GCS file" in {
+    FromFile.schema shouldBe expectedSchema
+  }
+
   "fromPath" should "correctly read schema from GCS path" in {
-    FromPath.schema shouldBe expectedSchema
+    FromPath1.schema shouldBe expectedSchema
+    FromPath2.schema shouldBe expectedSchema
   }
 
   it should "correctly read schema from GCS glob" in {
-    FromGlob.schema shouldBe expectedSchema
+    FromGlob1.schema shouldBe expectedSchema
+    FromGlob2.schema shouldBe expectedSchema
+    FromGlob3.schema shouldBe expectedSchema
   }
 
   it should "correctly read schema from multilne GCS path" in {
@@ -71,14 +95,14 @@ class AvroTypeIT extends FlatSpec with Matchers  {
   }
 
   it should "support roundtrip conversion when reading schema from GCS path" in {
-    val r1 = FromPath(Some("word"), Some(2L), Some("corpus"), Some(123L))
-    val r2 = FromPath.fromGenericRecord(FromPath.toGenericRecord(r1))
+    val r1 = FromPath1(Some("word"), Some(2L), Some("corpus"), Some(123L))
+    val r2 = FromPath1.fromGenericRecord(FromPath1.toGenericRecord(r1))
     r1 shouldBe r2
   }
 
   it should "support roundtrip conversion when reading schema from GCS glob" in {
-    val r1 = FromGlob(word=Some("word"), word_count=Some(2L))
-    val r2 = FromGlob.fromGenericRecord(FromGlob.toGenericRecord(r1))
+    val r1 = FromGlob1(word=Some("word"), word_count=Some(2L))
+    val r2 = FromGlob1.fromGenericRecord(FromGlob1.toGenericRecord(r1))
     r1 shouldBe r2
   }
 
