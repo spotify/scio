@@ -140,7 +140,7 @@ object AvroType {
    * This way you could stop populating them in the future if you notice that you don't need them.
    *
    * This macro doesn't help you with schema evolution.
-   * It's up to you to follow the best practices on how to evolution of Avro schemas.
+   * It's up to you to follow the best practices on how to do evolution of your Avro schemas.
    * Rule of thumb is to only add new fields, without removing the old ones.
    * @group annotation
    */
