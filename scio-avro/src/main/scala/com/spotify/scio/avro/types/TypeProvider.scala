@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Map => MMap}
 import scala.reflect.macros._
+import scala.util.Try
 
 // scalastyle:off line.size.limit
 private[types] object TypeProvider {
@@ -77,18 +78,28 @@ private[types] object TypeProvider {
   }
 
   private def schemaFromGcsFolder(path: String): Schema = {
-    val trimmedPath = path.trim.replaceAll("\\s+", "")
-    assume(trimmedPath.endsWith("/"), s"Path '$trimmedPath' needs to end with a '/'")
+    val p = path.trim.replaceAll("\n", "")
+    val factory = ioChannelFactoryGetter(p)
 
-    emitWarningIfGcsGlobPath(trimmedPath)
+    val avroFile = {
+      def matchResult(r: java.util.Collection[String]): Option[String] = {
+        if (r.isEmpty) {
+          None
+        } else {
+          val last = r.asScala.max
+          val size = Try(factory.getSizeBytes(last))
+          if (size.isSuccess && size.get > 0L) Some(last) else None
+        }
+      }
 
-    val avroFilesGlob = s"$trimmedPath*.avro"
+      val r = matchResult(factory.`match`(p)) match {
+        case Some(x) => Some(x)
+        case None => matchResult(factory.`match`(p.replaceFirst("/?$", "/*.avro")))
+      }
+      require(r.isDefined, s"Unable to match Avro file form path '$p'")
+      r.get
+    }
 
-    val factory = ioChannelFactoryGetter(avroFilesGlob)
-    val avroFiles = factory.`match`(avroFilesGlob).asScala.toList
-    assume(avroFiles.nonEmpty, s"No file was returned for glob '$trimmedPath'")
-
-    val avroFile = avroFiles.max
     logger.info(s"Reading Avro schema from file '$avroFile'")
 
     var reader : DataFileStream[Void] = null
