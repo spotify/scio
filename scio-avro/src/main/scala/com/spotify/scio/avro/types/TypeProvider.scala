@@ -77,10 +77,10 @@ private[types] object TypeProvider {
   }
 
   private def schemaFromGcsFolder(path: String): Schema = {
-
-
     val trimmedPath = path.trim.replaceAll("\\s+", "")
     assume(trimmedPath.endsWith("/"), s"Path '$trimmedPath' needs to end with a '/'")
+
+    emitWarningIfGcsGlobPath(trimmedPath)
 
     val avroFilesGlob = s"$trimmedPath*.avro"
 
@@ -89,7 +89,7 @@ private[types] object TypeProvider {
     assume(avroFiles.nonEmpty, s"No file was returned for glob '$trimmedPath'")
 
     val avroFile = avroFiles.max
-    logger.info(s"Trying to read Avro schema from file '$avroFile'")
+    logger.info(s"Reading Avro schema from file '$avroFile'")
 
     var reader : DataFileStream[Void] = null
     try {
@@ -101,6 +101,21 @@ private[types] object TypeProvider {
       if (reader != null) {
         reader.close()
       }
+    }
+  }
+
+  private def emitWarningIfGcsGlobPath(path: String) = {
+    val gcsGlobPathPattern = "(gs://[^\\[*?]*)[\\[*?].*".r
+    path match {
+      case gcsGlobPathPattern(pathPrefix) =>
+        logger.warn("Matching GCS wildcards might be inefficient " +
+          s"if you have many files which share prefix '$pathPrefix'.")
+        logger.warn(s"In case you have a lot of files sharing prefix '$pathPrefix', " +
+          s"macro expansion will be slow and it might not even finish " +
+          s"(ex. sbt's GCS overhead limit gets reached).")
+        logger.warn("If you notice any problem consider using more specific glob " +
+          "as your path specification.")
+      case _ =>
     }
   }
 
@@ -370,7 +385,7 @@ private[types] object TypeProvider {
     val classCacheDir = getBQClassCacheDir
     val genSrcFile = new java.io.File(s"$classCacheDir/$name-$hash.scala")
 
-    logger.info(s"Will dump generated $name of $owner from $srcFile to $genSrcFile")
+    logger.debug(s"Will dump generated $name of $owner from $srcFile to $genSrcFile")
 
     Files.createParentDirs(genSrcFile)
     Files.write(prettyCode, genSrcFile, Charsets.UTF_8)
