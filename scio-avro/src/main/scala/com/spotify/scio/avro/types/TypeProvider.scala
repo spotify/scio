@@ -28,7 +28,8 @@ import org.apache.avro.Schema
 import org.apache.avro.Schema.Type._
 import org.apache.avro.file.DataFileStream
 import org.apache.avro.generic.GenericDatumReader
-import org.apache.beam.sdk.io.FileSystemsUtil
+import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -38,6 +39,12 @@ import scala.reflect.macros._
 // scalastyle:off line.size.limit
 private[types] object TypeProvider {
   private val logger = LoggerFactory.getLogger(this.getClass)
+
+  /**
+   * In order to use FileSystems functions we first need to register
+   * all FileSystemRegistrars located on our class path.
+   */
+  registerFileSystemRegistrars
 
   def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     val schemaString = extractStrings(c, "Missing schema").head
@@ -55,24 +62,41 @@ private[types] object TypeProvider {
     val trimmedPath = path.trim.replaceAll("\\s+", "")
     require(trimmedPath.endsWith("/"), s"Path '$trimmedPath' needs to end with a '/'")
 
+    emitWarningIfGcsGlobPath(trimmedPath)
+
     val avroFilesGlob = s"$trimmedPath*.avro"
 
-    val avroFiles = FileSystemsUtil.`match`(avroFilesGlob).metadata().asScala.map(_.resourceId()).toList
+    val avroFiles = FileSystems.`match`(avroFilesGlob).metadata().asScala.map(_.resourceId()).toList
     require(avroFiles.nonEmpty, s"No file was returned for glob '$trimmedPath'")
 
     val avroFile = avroFiles.maxBy(_.toString)
-    logger.info(s"Trying to read Avro schema from file '$avroFile'")
+    logger.info(s"Reading Avro schema from file '$avroFile'")
 
     var reader : DataFileStream[Void] = null
     try {
       reader = new DataFileStream(
-        Channels.newInputStream(FileSystemsUtil.open(avroFile)),
+        Channels.newInputStream(FileSystems.open(avroFile)),
         new GenericDatumReader[Void]())
       reader.getSchema
     } finally {
       if (reader != null) {
         reader.close()
       }
+    }
+  }
+
+  private def emitWarningIfGcsGlobPath(path: String) = {
+    val gcsGlobPathPattern = "(gs://[^\\[*?]*)[\\[*?].*".r
+    path match {
+      case gcsGlobPathPattern(pathPrefix) =>
+        logger.warn("Matching GCS wildcards might be inefficient " +
+          s"if you have many files which share prefix '$pathPrefix'.")
+        logger.warn(s"In case you have a lot of files sharing prefix '$pathPrefix', " +
+          s"macro expansion will be slow and it might not even finish " +
+          s"(ex. sbt's GCS overhead limit gets reached).")
+        logger.warn("If you notice any problem consider using more specific glob " +
+          "as your path specification.")
+      case _ =>
     }
   }
 
@@ -342,12 +366,21 @@ private[types] object TypeProvider {
     val classCacheDir = getBQClassCacheDir
     val genSrcFile = new java.io.File(s"$classCacheDir/$name-$hash.scala")
 
-    logger.info(s"Will dump generated $name of $owner from $srcFile to $genSrcFile")
+    logger.debug(s"Will dump generated $name of $owner from $srcFile to $genSrcFile")
 
     Files.createParentDirs(genSrcFile)
     Files.write(prettyCode, genSrcFile, Charsets.UTF_8)
   }
 
+
+  private def registerFileSystemRegistrars = {
+    /*
+     * In order to find all the FileSystemRegistrars on the path we need to
+     * change ContextClassLoader to be the same as our ClassLoader.
+     */
+    java.lang.Thread.currentThread().setContextClassLoader(getClass.getClassLoader)
+    FileSystems.setDefaultPipelineOptions(PipelineOptionsFactory.create())
+  }
 }
 // scalastyle:on line.size.limit
 
