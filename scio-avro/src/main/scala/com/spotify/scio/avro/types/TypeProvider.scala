@@ -77,10 +77,10 @@ private[types] object TypeProvider {
   }
 
   private def schemaFromGcsFolder(path: String): Schema = {
-
-
     val trimmedPath = path.trim.replaceAll("\\s+", "")
     assume(trimmedPath.endsWith("/"), s"Path '$trimmedPath' needs to end with a '/'")
+
+    emitWarningIfGcsGlobPath(trimmedPath)
 
     val avroFilesGlob = s"$trimmedPath*.avro"
 
@@ -89,7 +89,7 @@ private[types] object TypeProvider {
     assume(avroFiles.nonEmpty, s"No file was returned for glob '$trimmedPath'")
 
     val avroFile = avroFiles.max
-    logger.info(s"Trying to read Avro schema from file '$avroFile'")
+    logger.info(s"Reading Avro schema from file '$avroFile'")
 
     var reader : DataFileStream[Void] = null
     try {
@@ -101,6 +101,19 @@ private[types] object TypeProvider {
       if (reader != null) {
         reader.close()
       }
+    }
+  }
+
+  private def emitWarningIfGcsGlobPath(path: String) = {
+    val gcsGlobPathPattern = "(gs://[^\\[*?]*)[\\[*?].*".r
+    path match {
+      case gcsGlobPathPattern(pathPrefix) =>
+        logger.warn("Matching GCS wildcards may be inefficient if there are many files that " +
+          s"share the prefix '$pathPrefix'.")
+        logger.warn(s"Macro expansion will be slow and might not even finish before hitting " +
+          "compiler GC limit.")
+        logger.warn("Consider using a more specific path glob.")
+      case _ =>
     }
   }
 
