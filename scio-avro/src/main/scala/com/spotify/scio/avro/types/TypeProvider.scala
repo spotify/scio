@@ -28,7 +28,8 @@ import org.apache.avro.Schema
 import org.apache.avro.Schema.Type._
 import org.apache.avro.file.DataFileStream
 import org.apache.avro.generic.GenericDatumReader
-import org.apache.beam.sdk.io.FileSystemsUtil
+import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -38,6 +39,12 @@ import scala.reflect.macros._
 // scalastyle:off line.size.limit
 private[types] object TypeProvider {
   private val logger = LoggerFactory.getLogger(this.getClass)
+
+  /**
+   * In order to use FileSystems functions we first need to register
+   * all FileSystemRegistrars located on our class path.
+   */
+  registerFileSystemRegistrars
 
   def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     val schemaString = extractStrings(c, "Missing schema").head
@@ -59,7 +66,7 @@ private[types] object TypeProvider {
 
     val avroFilesGlob = s"$trimmedPath*.avro"
 
-    val avroFiles = FileSystemsUtil.`match`(avroFilesGlob).metadata().asScala.map(_.resourceId()).toList
+    val avroFiles = FileSystems.`match`(avroFilesGlob).metadata().asScala.map(_.resourceId()).toList
     require(avroFiles.nonEmpty, s"No file was returned for glob '$trimmedPath'")
 
     val avroFile = avroFiles.maxBy(_.toString)
@@ -68,7 +75,7 @@ private[types] object TypeProvider {
     var reader : DataFileStream[Void] = null
     try {
       reader = new DataFileStream(
-        Channels.newInputStream(FileSystemsUtil.open(avroFile)),
+        Channels.newInputStream(FileSystems.open(avroFile)),
         new GenericDatumReader[Void]())
       reader.getSchema
     } finally {
@@ -357,12 +364,21 @@ private[types] object TypeProvider {
     val classCacheDir = getBQClassCacheDir
     val genSrcFile = new java.io.File(s"$classCacheDir/$name-$hash.scala")
 
-    logger.info(s"Will dump generated $name of $owner from $srcFile to $genSrcFile")
+    logger.debug(s"Will dump generated $name of $owner from $srcFile to $genSrcFile")
 
     Files.createParentDirs(genSrcFile)
     Files.write(prettyCode, genSrcFile, Charsets.UTF_8)
   }
 
+
+  private def registerFileSystemRegistrars = {
+    /*
+     * In order to find all the FileSystemRegistrars on the path we need to
+     * change ContextClassLoader to be the same as our ClassLoader.
+     */
+    java.lang.Thread.currentThread().setContextClassLoader(getClass.getClassLoader)
+    FileSystems.setDefaultPipelineOptions(PipelineOptionsFactory.create())
+  }
 }
 // scalastyle:on line.size.limit
 
