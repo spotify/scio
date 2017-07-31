@@ -19,9 +19,10 @@ package com.spotify.scio.util;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.MapMaker;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.hash.Hashing;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -33,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
-import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
@@ -42,10 +42,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.ExecutionException;
 
 /**
  * A utility class for handling remote file systems designed to be used in a
@@ -59,15 +57,15 @@ public class RemoteFileUtil implements Serializable {
   private static final int HASH_LENGTH = 8;
 
   // Mapping of remote sources to local destinations
-  private static final ConcurrentMap<URI, Path> paths =
-      new MapMaker()
-          .concurrencyLevel(CONCURRENCY_LEVEL)
-          .initialCapacity(CONCURRENCY_LEVEL * 8)
-          .makeMap();
-
-  // Globally shared thread pool
-  private static final ExecutorService executorService = MoreExecutors.getExitingExecutorService(
-      (ThreadPoolExecutor) Executors.newFixedThreadPool(CONCURRENCY_LEVEL));
+  private static final LoadingCache<URI, Path> paths = CacheBuilder.newBuilder()
+      .concurrencyLevel(CONCURRENCY_LEVEL)
+      .initialCapacity(CONCURRENCY_LEVEL * 8)
+      .build(new CacheLoader<URI, Path>() {
+        @Override
+        public Path load(URI key) throws Exception {
+          return downloadImpl(key);
+        }
+      });
 
   /**
    * Create a new {@link RemoteFileUtil} instance.
@@ -94,8 +92,11 @@ public class RemoteFileUtil implements Serializable {
    * @return {@link Path} to the downloaded local file.
    */
   public Path download(URI src) {
-    // Blocks on globally shared ConcurrentMap with concurrency determined by CONCURRENCY_LEVEL
-    return paths.computeIfAbsent(src, this::downloadImpl);
+    try {
+      return paths.get(src);
+    } catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -103,45 +104,26 @@ public class RemoteFileUtil implements Serializable {
    * @return {@link Path}s to the downloaded local files.
    */
   public List<Path> download(List<URI> srcs) {
-    // Blocks on globally shared ConcurrentMap with concurrency determined by CONCURRENCY_LEVEL
-    synchronized (paths) {
-      List<URI> missing = srcs.stream()
-          .filter(src -> !paths.containsKey(src))
-          .collect(Collectors.toList());
-
-      List<CompletableFuture<Path>> futures = missing.stream()
-          .map(uri -> CompletableFuture.supplyAsync(() -> downloadImpl(uri), executorService))
-          .collect(Collectors.toList());
-
-      try {
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).get();
-        List<Path> result = futures.stream()
-            .map(CompletableFuture::join)
-            .collect(Collectors.toList());
-
-        Iterator<URI> i = missing.iterator();
-        Iterator<Path> j = result.iterator();
-        while (i.hasNext() && j.hasNext()) {
-          paths.put(i.next(), j.next());
-        }
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new RuntimeException("Interrupted while executing batch download request", e);
-      } catch (ExecutionException e) {
-        throw new RuntimeException("Error executing batch download request", e);
-      }
+    try {
+      return paths.getAll(srcs).values().asList();
+    } catch (ExecutionException e) {
+      throw new RuntimeException(e);
     }
-
-    return srcs.stream().map(paths::get).collect(Collectors.toList());
   }
 
   /**
    * Delete a single downloaded local file.
    */
   public void delete(URI src) {
-    Path dst = paths.remove(src);
+    Path dst = null;
+    try {
+      dst = paths.get(src);
+    } catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
     try {
       Files.deleteIfExists(dst);
+      paths.invalidate(src);
     } catch (IOException e) {
       String msg = String.format("Failed to delete %s -> %s", src, dst);
       LOG.error(msg, e);
@@ -152,7 +134,10 @@ public class RemoteFileUtil implements Serializable {
    * Delete a batch of downloaded local files.
    */
   public void delete(List<URI> srcs) {
-    srcs.forEach(this::delete);
+    for (URI src : srcs) {
+      delete(src);
+    }
+    paths.invalidateAll(srcs);
   }
 
   /**
@@ -166,7 +151,7 @@ public class RemoteFileUtil implements Serializable {
     copyToRemote(src, dst);
   }
 
-  private Path downloadImpl(URI src) {
+  private static Path downloadImpl(URI src) {
     try {
       Path dst = getDestination(src);
 
@@ -203,11 +188,11 @@ public class RemoteFileUtil implements Serializable {
 
       return dst;
     } catch (IOException e) {
-      throw new UncheckedIOException(e);
+      throw new RuntimeException(e);
     }
   }
 
-  private Path getDestination(URI src) throws IOException {
+  private static Path getDestination(URI src) throws IOException {
     String scheme = src.getScheme();
     if (scheme == null) {
       scheme = "file";
@@ -231,7 +216,7 @@ public class RemoteFileUtil implements Serializable {
   }
 
   // Copy a single file from remote source to local destination
-  private void copyToLocal(Metadata src, Path dst) throws IOException {
+  private static void copyToLocal(Metadata src, Path dst) throws IOException {
     FileChannel dstCh = FileChannel.open(
         dst, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
     ReadableByteChannel srcCh = FileSystems.open(src.resourceId());
@@ -246,7 +231,7 @@ public class RemoteFileUtil implements Serializable {
   }
 
   // Copy a single file from local source to remote destination
-  private void copyToRemote(Path src, URI dst) throws IOException {
+  private static void copyToRemote(Path src, URI dst) throws IOException {
     ResourceId dstId = FileSystems.matchNewResource(dst.toString(), false);
     WritableByteChannel dstCh = FileSystems.create(dstId, MimeTypes.BINARY);
     FileChannel srcCh = FileChannel.open(src, StandardOpenOption.READ);
@@ -260,7 +245,7 @@ public class RemoteFileUtil implements Serializable {
     Preconditions.checkState(copied == srcSize);
   }
 
-  private Metadata getMetadata(URI src) throws IOException {
+  private static Metadata getMetadata(URI src) throws IOException {
     return FileSystems.matchSingleFileSpec(src.toString());
   }
 
