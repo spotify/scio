@@ -241,6 +241,7 @@ lazy val scioCore: Project = Project(
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion,
     "com.google.auto.service" % "auto-service" % autoServiceVersion,
     "com.google.auto.value" % "auto-value" % autoValueVersion % "provided",
+    "com.google.guava" % "guava" % guavaVersion,
     "com.google.protobuf" % "protobuf-java" % protobufVersion,
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
     "junit" % "junit" % junitVersion % "provided",
@@ -373,7 +374,6 @@ lazy val scioElasticsearch2: Project = Project(
   commonSettings,
   description := "Scio add-on for writing to Elasticsearch",
   libraryDependencies ++= Seq(
-    "com.google.guava" % "guava" % guavaVersion,
     "joda-time" % "joda-time" % jodaTimeVersion,
     "org.elasticsearch" % "elasticsearch" % elasticsearch2Version
   )
@@ -389,7 +389,6 @@ lazy val scioElasticsearch5: Project = Project(
   commonSettings,
   description := "Scio add-on for writing to Elasticsearch",
   libraryDependencies ++= Seq(
-    "com.google.guava" % "guava" % guavaVersion,
     "joda-time" % "joda-time" % jodaTimeVersion,
     "org.elasticsearch.client" % "transport" % elasticsearch5Version
   )
@@ -405,7 +404,6 @@ lazy val scioExtra: Project = Project(
   commonSettings ++ itSettings,
   description := "Scio extra utilities",
   libraryDependencies ++= Seq(
-    "com.google.guava" % "guava" % guavaVersion,
     "com.spotify.sparkey" % "sparkey" % sparkeyVersion,
     "com.twitter" %% "algebird-core" % algebirdVersion,
     "org.scalanlp" %% "breeze" % breezeVersion,
