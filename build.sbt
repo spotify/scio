@@ -25,7 +25,7 @@ val beamVersion = "2.0.0"
 
 val algebirdVersion = "0.13.0"
 val annoyVersion = "0.2.5"
-val asmVersion = "5.2"
+val asmVersion = "4.5"
 val autoServiceVersion = "1.0-rc3"
 val autoValueVersion = "1.3"
 val avroVersion = "1.8.1"
@@ -243,7 +243,7 @@ lazy val scioCore: Project = Project(
     "com.google.auto.value" % "auto-value" % autoValueVersion % "provided",
     "com.google.protobuf" % "protobuf-java" % protobufVersion,
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
-    "org.ow2.asm" % "asm" % asmVersion
+    "org.apache.xbean" % "xbean-asm5-shaded" % asmVersion
   )
 ).dependsOn(
   scioAvro,
