@@ -21,8 +21,8 @@ import java.io.NotSerializableException
 import java.lang.reflect.{Constructor, Field}
 
 import org.apache.beam.sdk.util.SerializableUtils
-import org.objectweb.asm.{ClassReader, ClassVisitor, MethodVisitor, Type}
-import org.objectweb.asm.Opcodes._
+import org.apache.xbean.asm5.{ClassReader, ClassVisitor, MethodVisitor, Type}
+import org.apache.xbean.asm5.Opcodes._
 
 import scala.annotation.tailrec
 import scala.collection.mutable.{Map => MMap, Set => MSet, Stack => MStack}
