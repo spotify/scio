@@ -39,8 +39,8 @@ dependencies:
     - scio-schemas/target/resolution-cache
     - scio-schemas/target/streams
   pre:
-    - wget -q https://dl.bintray.com/sbt/debian/sbt-0.13.15.deb
-    - sudo dpkg -i sbt-0.13.15.deb
+    - wget -q https://dl.bintray.com/sbt/debian/sbt-0.13.16.deb
+    - sudo dpkg -i sbt-0.13.16.deb
     - find ~/.sbt -name "*.lock" | xargs -r rm
     - find ~/.ivy2 -name "ivydata-*.properties" | xargs -r rm
   override:
