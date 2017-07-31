@@ -70,7 +70,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   scalaVersion       := "2.11.11",
   crossScalaVersions := Seq("2.11.11"),
   scalacOptions                   ++= Seq("-Xmax-classfile-name", "100", "-target:jvm-1.8", "-deprecation", "-feature", "-unchecked"),
-  scalacOptions in (Compile, doc) ++= Seq("-skip-packages", "org.apache.beam"),
+  scalacOptions in (Compile, doc) ++= Seq("-skip-packages", "org.apache"),
   javacOptions                    ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
   javacOptions in (Compile, doc)  := Seq("-source", "1.8"),
 
@@ -198,7 +198,7 @@ lazy val macroSettings = Seq(
 lazy val root: Project = Project(
   "scio",
   file(".")
-).enablePlugins(ScalaUnidocPlugin).settings(
+).enablePlugins(GhpagesPlugin, ScalaUnidocPlugin, SiteScaladocPlugin).settings(
   commonSettings ++ siteSettings ++ noPublishSettings,
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
     -- inProjects(scioCassandra2) -- inProjects(scioElasticsearch2)
@@ -567,9 +567,8 @@ def fixJavaDocLinks(bases: Seq[String], doc: String): String = {
   }
 }
 
-lazy val siteSettings = site.settings ++ ghpages.settings ++ Seq(
+lazy val siteSettings = Seq(
   autoAPIMappings := true,
-  site.addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), ""),
   gitRemoteRepo := "git@github.com:spotify/scio.git",
   makeSite := {
     // fix JavaDoc links before makeSite
@@ -600,7 +599,7 @@ val javaMappings = beamMappings ++ Seq(
   ("com.google.apis", "google-api-services-bigquery", "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest"),
   // FIXME: investigate why joda-time won't link
   ("joda-time", "joda-time", "http://www.joda.org/joda-time/apidocs"),
-  ("org.apache.avro", "avro", "https://avro.apache.org/docs/current/api/java"),
+  ("org.apache.avro", "avro", s"https://avro.apache.org/docs/$avroVersion/api/java"),
   ("org.tensorflow", "libtensorflow", "https://www.tensorflow.org/api_docs/java/reference"))
 val scalaMappings = Seq(
   ("com.twitter", "algebird-core", "http://twitter.github.io/algebird/api"),
