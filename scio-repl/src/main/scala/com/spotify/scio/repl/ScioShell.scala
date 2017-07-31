@@ -66,11 +66,11 @@ trait BaseScioShell extends MainGenericRunner {
     // Repl assembly includes paradise's scalac-plugin.xml - required for BigQuery macro
     // There should be no harm if we keep this for sbt launch.
     val thisJar = this.getClass.getProtectionDomain.getCodeSource.getLocation.getPath
-    command.settings.plugin.appendToValue(thisJar)
+    command.settings.plugin.tryToSet(List(thisJar))
 
     ClassPath.split(command.settings.classpath.value)
       .find(File(_).name.startsWith("paradise_"))
-      .foreach(command.settings.plugin.appendToValue)
+      .foreach(s => command.settings.plugin.tryToSet(List(s)))
 
     // Useful settings for debugging, dumping class files etc:
     /* command.settings.debug.value = true

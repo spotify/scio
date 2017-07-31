@@ -15,14 +15,8 @@
  * under the License.
  */
 
-try {
-  val readme = sc.textFile("README.md")
-  val wc = readme.flatMap(_.split("[^a-zA-Z]+")).filter(_.nonEmpty).countByValue.materialize
-  sc.close
-  wc.waitForResult().value.take(5).foreach(println)
-} catch {
-  case e: Throwable => {
-    e.printStackTrace
-    sys.exit(-1)
-  }
-}
+val readme = sc.textFile("README.md")
+val wc = readme.flatMap(_.split("[^a-zA-Z]+")).filter(_.nonEmpty).map(_.toLowerCase).countByValue.materialize
+sc.close()
+val w = wc.waitForResult().value.maxBy(_._2)._1
+println(s"SUCCESS: [$w]")

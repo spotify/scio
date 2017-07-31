@@ -17,4 +17,5 @@ sbt ++$SCALA_VERSION "project scio-repl" coverage assembly
 echo "Test scripts:"
 find ./scio-repl/src/it/resources -type f
 
-find ./scio-repl/src/it/resources -type f -exec sh -c "cat {} | java -jar ./scio-repl/target/scala-${SCALA_VERSION%.*}/scio-repl-*.jar" \;
+find ./scio-repl/src/it/resources -type f -exec sh -c "cat {} | java -jar ./scio-repl/target/scala-${SCALA_VERSION%.*}/scio-repl-*.jar" \; | tee repl-${SCALA_VERSION}.log
+grep 'SUCCESS: \[scio\]' repl-${SCALA_VERSION}.log
