@@ -573,6 +573,8 @@ def fixJavaDocLinks(bases: Seq[String], doc: String): String = {
 
 lazy val siteSettings = Seq(
   autoAPIMappings := true,
+  siteSubdirName in ScalaUnidoc := "",
+  addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
   gitRemoteRepo := "git@github.com:spotify/scio.git",
   makeSite := {
     // fix JavaDoc links before makeSite
