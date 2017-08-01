@@ -41,7 +41,7 @@ object BigtableIT {
   val clusterId = "scio-bigtable-it-cluster"
   val zoneId = "us-east1-b"
   val tableId = "scio-bigtable-it-counts"
-  val uuid = UUID.randomUUID()
+  val uuid = UUID.randomUUID().toString.substring(0, 8)
   val testData = Seq((s"$uuid-key1", 1L), (s"$uuid-key2", 2L), (s"$uuid-key3", 3L))
 
   val bigtableOptions = new BigtableOptions.Builder()
@@ -79,7 +79,8 @@ class BigtableIT extends PipelineSpec {
 
   import BigtableIT._
 
-  "Update number of bigtable nodes" should "work" in {
+  // "Update number of bigtable nodes" should "work" in {
+  ignore should "update number of bigtable nodes" in {
     val bt = new BigtableClusterUtilities(bigtableOptions)
     val sc = ScioContext()
     sc.updateNumberOfBigtableNodes(projectId, instanceId, 4, Duration.standardSeconds(10))
@@ -89,6 +90,7 @@ class BigtableIT extends PipelineSpec {
   }
 
   "BigtableIO" should "work" in {
+    TableAdmin.ensureTables(bigtableOptions, Map(tableId -> List(FAMILY_NAME)))
     try {
       // Write rows to table
       val sc1 = ScioContext()
@@ -120,18 +122,17 @@ class BigtableIT extends PipelineSpec {
 
   "TableAdmin" should "work" in {
     val tables = Map(
-      "scio-bigtable-empty-table" -> List(),
-      "scio-bigtable-one-cf-table" -> List("colfam1"),
-      "scio-bigtable-two-cf-table" -> List("colfam1", "colfam2")
+      s"scio-bigtable-empty-table-$uuid" -> List(),
+      s"scio-bigtable-one-cf-table-$uuid" -> List("colfam1"),
+      s"scio-bigtable-two-cf-table-$uuid" -> List("colfam1", "colfam2")
     )
     val channel = ChannelPoolCreator.createPool(bigtableOptions.getTableAdminHost)
     val client = new BigtableTableAdminGrpcClient(channel)
     val instancePath = s"projects/$projectId/instances/$instanceId"
     val tableIds = tables.keys.toSet
-    val tablePath = (table: String) => s"$instancePath/tables/$table"
-    val deleteTable = (table: String) =>
-      client.deleteTable(DeleteTableRequest.newBuilder()
-        .setName(tablePath(table)).build)
+    def tablePath(table: String): String = s"$instancePath/tables/$table"
+    def deleteTable(table: String): Unit =
+      client.deleteTable(DeleteTableRequest.newBuilder().setName(tablePath(table)).build)
 
     // Delete any tables that could be left around from previous IT run.
     val oldTables = listTables(client).toSet.intersect(tableIds)
