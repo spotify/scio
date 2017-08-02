@@ -27,10 +27,10 @@ val algebirdVersion = "0.13.0"
 val annoyVersion = "0.2.5"
 val asmVersion = "4.5"
 val autoServiceVersion = "1.0-rc3"
-val autoValueVersion = "1.3"
+val autoValueVersion = "1.4.1"
 val avroVersion = "1.8.1"
-val bigtableVersion = "1.0.0-pre1"
-val breezeVersion ="0.13"
+val bigtableVersion = "1.0.0-pre2"
+val breezeVersion ="0.13.1"
 val chillVersion = "0.9.2"
 val circeVersion = "0.8.0"
 val commonsIoVersion = "2.5"
@@ -41,7 +41,7 @@ val elasticsearch5Version = "5.5.0"
 val guavaVersion = "20.0"
 val hadoopVersion = "2.7.3"
 val hamcrestVersion = "1.3"
-val jacksonScalaModuleVersion = "2.8.8"
+val jacksonScalaModuleVersion = "2.8.9"
 val javaLshVersion = "0.10"
 val jlineVersion = "2.14.3"
 val jodaConvertVersion = "1.8.1"
@@ -49,10 +49,9 @@ val jodaTimeVersion = "2.9.9"
 val junitInterfaceVersion = "0.11"
 val junitVersion = "4.12"
 val mockitoVersion = "1.10.19"
-val nettyTcNativeVersion = "1.1.33.Fork26"
-val protobufGenericVersion = "0.2.0"
+val protobufGenericVersion = "0.2.1"
 val protobufVersion = "3.3.1"
-val scalacheckShapelessVersion = "1.1.5"
+val scalacheckShapelessVersion = "1.1.6"
 val scalacheckVersion = "1.13.5"
 val scalaMacrosVersion = "2.1.0"
 val scalaMeterVersion = "0.8.2"
@@ -60,7 +59,7 @@ val scalatestVersion = "3.0.3"
 val shapelessDatatypeVersion = "0.1.6"
 val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.1.3"
-val tensorFlowVersion = "1.2.0"
+val tensorFlowVersion = "1.2.1"
 
 val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework")
 
@@ -330,7 +329,6 @@ lazy val scioBigtable: Project = Project(
     "com.google.auto.value" % "auto-value" % autoValueVersion % "provided",
     "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableVersion,
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-    "io.netty" % "netty-tcnative-boringssl-static" % nettyTcNativeVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion % "test"
   )
 ).dependsOn(

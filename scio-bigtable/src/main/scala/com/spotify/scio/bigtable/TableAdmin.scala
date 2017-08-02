@@ -20,7 +20,7 @@ package com.spotify.scio.bigtable
 import com.google.bigtable.admin.v2._
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification
 import com.google.cloud.bigtable.config.BigtableOptions
-import com.google.cloud.bigtable.grpc.BigtableTableAdminGrpcClient
+import com.google.cloud.bigtable.grpc._
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
@@ -43,7 +43,8 @@ object TableAdmin {
                    tablesAndColumnFamilies: Map[String, List[String]]): Unit = {
 
     val channel = ChannelPoolCreator.createPool(bigtableOptions.getTableAdminHost)
-    val client = new BigtableTableAdminGrpcClient(channel)
+    val executorService = BigtableSessionSharedThreadPools.getInstance().getRetryExecutor
+    val client = new BigtableTableAdminGrpcClient(channel, executorService, bigtableOptions)
     val project = bigtableOptions.getProjectId
     val instance = bigtableOptions.getInstanceId
     val instancePath = s"projects/$project/instances/$instance"

@@ -22,15 +22,11 @@ import java.util.UUID
 import com.google.bigtable.admin.v2.{DeleteTableRequest, GetTableRequest, ListTablesRequest}
 import com.google.bigtable.v2.{Mutation, Row, RowFilter}
 import com.google.cloud.bigtable.config.BigtableOptions
-import com.google.cloud.bigtable.grpc.{BigtableClusterUtilities,
-                                       BigtableTableAdminGrpcClient,
-                                       BigtableTableName}
+import com.google.cloud.bigtable.grpc._
 import com.google.protobuf.ByteString
 import com.spotify.scio._
 import com.spotify.scio.testing._
 import org.joda.time.Duration
-
-import org.scalatest._
 
 import scala.collection.JavaConverters._
 
@@ -127,7 +123,8 @@ class BigtableIT extends PipelineSpec {
       s"scio-bigtable-two-cf-table-$uuid" -> List("colfam1", "colfam2")
     )
     val channel = ChannelPoolCreator.createPool(bigtableOptions.getTableAdminHost)
-    val client = new BigtableTableAdminGrpcClient(channel)
+    val executorService = BigtableSessionSharedThreadPools.getInstance().getRetryExecutor
+    val client = new BigtableTableAdminGrpcClient(channel, executorService, bigtableOptions)
     val instancePath = s"projects/$projectId/instances/$instanceId"
     val tableIds = tables.keys.toSet
     def tablePath(table: String): String = s"$instancePath/tables/$table"
