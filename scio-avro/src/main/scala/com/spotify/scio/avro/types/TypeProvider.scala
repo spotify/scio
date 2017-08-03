@@ -55,6 +55,20 @@ private[types] object TypeProvider {
     schemaToType(c)(schema, annottees)
   }
 
+  def fileImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+    val file = extractStrings(c, "Missing file").head.trim.replaceAll("\n", "")
+
+    val files = FileSystems.`match`(file)
+    assume(files.metadata().size() == 1,
+      s"File argument '$file' must match exactly one file. " +
+        s"We've matched ${files.metadata().size()} files.")
+    val fileInputStream =
+      Channels.newInputStream(FileSystems.open(files.metadata().get(0).resourceId()))
+
+    val schema = new Schema.Parser().parse(fileInputStream)
+    schemaToType(c)(schema, annottees)
+  }
+
   def pathImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     val path = extractStrings(c, "Missing path").head
     val schema = schemaFromGcsFolder(path)
