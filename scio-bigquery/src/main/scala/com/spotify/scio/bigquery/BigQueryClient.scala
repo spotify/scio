@@ -580,14 +580,18 @@ class BigQueryClient private (private val projectId: String,
   // Schema and query caching
   // =======================================================================
 
-  private def withCacheKey(key: String)
-                          (method: => TableSchema): TableSchema = getCacheSchema(key) match {
-    case Some(schema) => schema
-    case None =>
-      val schema = method
-      setCacheSchema(key, schema)
-      schema
-  }
+  private def withCacheKey(key: String)(method: => TableSchema): TableSchema =
+    if (isCacheEnabled) {
+      getCacheSchema(key) match {
+        case Some(schema) => schema
+        case None =>
+          val schema = method
+          setCacheSchema(key, schema)
+          schema
+      }
+    } else {
+      method
+    }
 
   private def setCacheSchema(key: String, schema: TableSchema): Unit =
     Files.write(schema.toPrettyString, schemaCacheFile(key), Charsets.UTF_8)
