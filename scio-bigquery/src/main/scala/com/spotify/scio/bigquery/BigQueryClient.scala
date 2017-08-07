@@ -115,13 +115,17 @@ class BigQueryClient private (private val projectId: String,
   private val DEFAULT_LOCATION = "US"
 
   private def isInteractive =
-    Thread
-      .currentThread()
-      .getStackTrace
-      .exists { e =>
-        e.getClassName.startsWith("scala.tools.nsc.interpreter.") ||
-          e.getClassName.startsWith("org.scalatest.tools.")
-      }
+    BigQueryClient.priority
+      .map(_.equals("INTERACTIVE"))
+      .getOrElse(
+        Thread
+          .currentThread()
+          .getStackTrace
+          .exists { e =>
+            e.getClassName.startsWith("scala.tools.nsc.interpreter.") ||
+            e.getClassName.startsWith("org.scalatest.tools.")
+          }
+      )
 
   private val PRIORITY = if (isInteractive) "INTERACTIVE" else "BATCH"
 
@@ -642,6 +646,9 @@ object BigQueryClient {
 
   /** Default cache behavior is enabled. */
   val CACHE_ENABLED_DEFAULT: Boolean = true
+  
+  /** System property key for priority */
+  val PRIORITY_KEY = "bigquery.priority"
 
 
   /**
@@ -715,6 +722,8 @@ object BigQueryClient {
   private def connectTimeoutMs: Option[Int] = Option(sys.props(CONNECT_TIMEOUT_MS_KEY)).map(_.toInt)
 
   private def readTimeoutMs: Option[Int] = Option(sys.props(READ_TIMEOUT_MS_KEY)).map(_.toInt)
+  
+  private def priority: Option[String] = Option(sys.props(PRIORITY_KEY))
 
   private def getPropOrElse(key: String, default: String): String = {
     val value = sys.props(key)
