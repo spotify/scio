@@ -51,9 +51,13 @@ object TopWikipediaSessions {
                          samplingThreshold: Double): SCollection[String] = {
     input
       .flatMap { row =>
-        Try {
-          (row.getString("contributor_username"), row.getLong("timestamp"))
-        }.toOption
+        val username = row.getString("contributor_username")
+        val timestamp = row.getLong("timestamp")
+        if (username == null) {
+          None
+        } else {
+         Some((username, timestamp))
+        }
       }
       .timestampBy(kv => new Instant(kv._2 * 1000L))  // add timestamp to values
       .map(_._1)
