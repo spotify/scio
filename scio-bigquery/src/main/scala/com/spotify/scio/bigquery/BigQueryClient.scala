@@ -116,7 +116,7 @@ class BigQueryClient private (private val projectId: String,
 
   private def isInteractive =
     BigQueryClient.priority
-      .map(_ == ("INTERACTIVE"))
+      .map(_ == "INTERACTIVE")
       .getOrElse(
         Thread
           .currentThread()
