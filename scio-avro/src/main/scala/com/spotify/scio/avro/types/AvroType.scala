@@ -39,7 +39,7 @@ import scala.reflect.runtime.universe._
  * BYTES          com.google.protobuf.ByteString
  * ARRAY          List[T]
  * MAP            Map[String, T]
- * UNION          Optional[T]
+ * UNION          Option[T]
  * RECORD         Nested case class
  * }}}
  *
@@ -133,10 +133,10 @@ object AvroType {
    *
    * {{{
    * @AvroType.toSchema
-   * case class Result(name: Optional[String] = None, score: Optional[Double] = None)
+   * case class Result(name: Option[String] = None, score: Option[Double] = None)
    * }}}
    *
-   * It is recommended that you define all of your fields as Optional.
+   * It is recommended that you define all of your fields as Option.
    * This way you could stop populating them in the future if you notice that you don't need them.
    *
    * This macro doesn't help you with schema evolution.
