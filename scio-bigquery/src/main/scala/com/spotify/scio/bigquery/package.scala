@@ -96,6 +96,13 @@ package object bigquery {
     def getTimestamp(name: AnyRef): Instant =
       this.getValue(name, v => Timestamp.parse(v.toString), null)
 
+    def getDate(name: AnyRef): LocalDate = this.getValue(name, v => Date.parse(v.toString), null)
+
+    def getTime(name: AnyRef): LocalTime = this.getValue(name, v => Time.parse(v.toString), null)
+
+    def getDateTime(name: AnyRef): LocalDateTime =
+      this.getValue(name, v => DateTime.parse(v.toString), null)
+
     def getRepeated(name: AnyRef): Seq[AnyRef] =
       this.getValue(name, _.asInstanceOf[java.util.List[AnyRef]].asScala, null)
 
