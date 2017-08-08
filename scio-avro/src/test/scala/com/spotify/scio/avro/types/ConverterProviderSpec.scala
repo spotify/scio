@@ -20,7 +20,7 @@ package com.spotify.scio.avro.types
 import com.google.protobuf.ByteString
 import shapeless.datatype.record._
 import org.scalacheck._
-import org.scalacheck.Shapeless._
+import org.scalacheck.ScalacheckShapeless._
 import org.scalatest._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
