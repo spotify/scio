@@ -55,14 +55,11 @@ val protobufVersion = "3.3.1"
 val scalacheckShapelessVersion = "1.1.6"
 val scalacheckVersion = "1.13.5"
 val scalaMacrosVersion = "2.1.0"
-val scalaMeterVersion = "0.8.2"
 val scalatestVersion = "3.0.3"
 val shapelessDatatypeVersion = "0.1.6"
 val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.1.3"
 val tensorFlowVersion = "1.2.1"
-
-val scalaMeterFramework = new TestFramework("org.scalameter.ScalaMeterFramework")
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
@@ -534,24 +531,6 @@ lazy val scioRepl: Project = Project(
   assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
 ).dependsOn(
   scioCore,
-  scioExtra
-)
-
-lazy val scioBench: Project = Project(
-  "scio-bench",
-  file("scio-bench")
-).settings(
-  commonSettings ++ noPublishSettings,
-  description := "Scio micro-benchmarks",
-  libraryDependencies ++= Seq(
-    "com.storm-enroute" %% "scalameter" % scalaMeterVersion % "test",
-    "com.google.guava" % "guava" % guavaVersion % "test"
-  ),
-  testFrameworks += scalaMeterFramework,
-  testOptions += Tests.Argument(scalaMeterFramework, "-silent"),
-  parallelExecution in Test := false,
-  logBuffered := false
-).dependsOn(
   scioExtra
 )
 
