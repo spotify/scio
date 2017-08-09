@@ -21,9 +21,14 @@ import com.google.api.services.bigquery.model.Table;
 import com.google.api.services.bigquery.model.TableReference;
 import com.google.api.services.bigquery.model.TableRow;
 import com.google.api.services.bigquery.model.TableSchema;
+import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
+import org.apache.beam.sdk.transforms.windowing.GlobalWindow;
+import org.apache.beam.sdk.transforms.windowing.PaneInfo;
+import org.apache.beam.sdk.values.ValueInSingleWindow;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Wrap {@link BigQueryServices} and expose package private methods.
@@ -48,7 +53,16 @@ public class BigQueryServicesWrapper {
 
   public long insertAll(TableReference ref, List<TableRow> rowList)
       throws IOException, InterruptedException {
-    return bqServices.getDatasetService(bqOptions).insertAll(ref, rowList, null);
+    List<ValueInSingleWindow<TableRow>> rows = rowList.stream()
+        .map(r ->
+            ValueInSingleWindow.of(
+                r,
+                BoundedWindow.TIMESTAMP_MIN_VALUE,
+                GlobalWindow.INSTANCE,
+                PaneInfo.NO_FIRING))
+        .collect(Collectors.toList());
+    return bqServices.getDatasetService(bqOptions)
+        .insertAll(ref, rows, null, InsertRetryPolicy.alwaysRetry(), null);
   }
 
 }
