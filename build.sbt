@@ -35,7 +35,6 @@ val chillVersion = "0.9.2"
 val circeVersion = "0.8.0"
 val commonsIoVersion = "2.5"
 val commonsMath3Version = "3.6.1"
-val csvVersion = "0.2.0"
 val elasticsearch2Version = "2.1.0"
 val elasticsearch5Version = "5.5.0"
 val guavaVersion = "20.0"
@@ -48,6 +47,7 @@ val jodaConvertVersion = "1.8.1"
 val jodaTimeVersion = "2.9.9"
 val junitInterfaceVersion = "0.11"
 val junitVersion = "4.12"
+val kantanCsvVersion = "0.2.1"
 val mockitoVersion = "1.10.19"
 val nettyTcNativeVersion = "1.1.33.Fork18"
 val protobufGenericVersion = "0.2.1"
@@ -525,7 +525,7 @@ lazy val scioRepl: Project = Project(
     "jline" % "jline" % jlineVersion,
     "org.scala-lang" % "scala-compiler" % scalaVersion.value,
     "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-    "com.nrinaudo" %% "kantan.csv" % csvVersion,
+    "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
     paradiseDependency
   ),
   assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
