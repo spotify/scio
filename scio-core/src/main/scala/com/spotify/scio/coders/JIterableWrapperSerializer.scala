@@ -30,8 +30,8 @@ import scala.collection.JavaConverters._
  * Based on [[org.apache.beam.sdk.coders.IterableLikeCoder]] and
  * [[org.apache.beam.sdk.util.BufferedElementCountingOutputStream]].
  */
-private class JIterableWrapperSerializer[T](bufferSize: Int = 64 * 1024,
-                                            maxBufferSize: Int = 1024 * 1024)
+private class JIterableWrapperSerializer[T](val bufferSize: Int = 64 * 1024,
+                                            val maxBufferSize: Int = 1024 * 1024)
   extends KSerializer[Iterable[T]] {
 
   override def write(kser: Kryo, out: Output, obj: Iterable[T]): Unit = {
