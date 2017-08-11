@@ -150,11 +150,6 @@ private[scio] object Functions {
     override def partitionFor(elem: T, numPartitions: Int): Int = g(elem)
   }
 
-  def simpleFn[T, U](f: T => U): NamedSimpleFn[T, U] = new NamedSimpleFn[T, U] {
-    val g = ClosureCleaner(f)  // defeat closure
-    override def apply(input: T): U = g(input)
-  }
-
   private abstract class ReduceFn[T] extends KryoCombineFn[T, JList[T], T] {
 
     override def createAccumulator(): JList[T] = Lists.newArrayList()
