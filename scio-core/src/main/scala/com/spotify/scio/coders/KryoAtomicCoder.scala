@@ -73,6 +73,8 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
 
   import KryoAtomicCoder.kryo
 
+  private val logger = LoggerFactory.getLogger(this.getClass)
+
   override def encode(value: T, outStream: OutputStream): Unit = {
     if (value == null) {
       throw new CoderException("cannot encode a null value")
@@ -105,9 +107,38 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
     case (key, wrapper: JIterableWrapper[_]) =>
       observer.update(kryoEncodedElementByteSize(key))
       // FIXME: handle ElementByteSizeObservableIterable[_, _]
+      var count = 0
+      var bytes = 0L
+      var warned = false
+      var aborted = false
+      val warningThreshold = 10000 // 10s
+      val abortThreshold = 60000 // 1min
+      val start = System.currentTimeMillis()
       val i = wrapper.underlying.iterator()
-      while (i.hasNext) {
-        observer.update(kryoEncodedElementByteSize(i.next()))
+      while (i.hasNext && !aborted) {
+        val size = kryoEncodedElementByteSize(i.next())
+        observer.update(size)
+        count += 1
+        bytes += size
+        val elapsed = System.currentTimeMillis() - start
+        if (elapsed > abortThreshold) {
+          aborted = true
+          logger.warn(s"Aborting size estimation for ${wrapper.underlying.getClass}, " +
+            s"elapsed: $elapsed ms, count: $count, bytes: $bytes")
+          wrapper.underlying match {
+            case c: _root_.java.util.Collection[_] =>
+              // interpolate remaining bytes in the collection
+              val remaining = (bytes.toDouble / count * (c.size - count)).toLong
+              observer.update(remaining)
+              logger.warn(s"Interpolated size estimation for ${wrapper.underlying.getClass} " +
+                s"count: ${c.size}, bytes: ${bytes + remaining}")
+            case _ =>
+          }
+        } else if (elapsed > warningThreshold && !warned) {
+          warned = true
+          logger.warn(s"Slow size estimation for ${wrapper.underlying.getClass}, " +
+            s"elapsed: $elapsed ms, count: $count, bytes: $bytes")
+        }
       }
     case _ =>
       observer.update(kryoEncodedElementByteSize(value))
