@@ -28,6 +28,7 @@ import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
+import org.apache.beam.sdk.coders.Coder.Context
 import org.apache.beam.sdk.coders._
 import org.apache.beam.sdk.util.VarInt
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
@@ -129,8 +130,8 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
       val start = System.currentTimeMillis()
       val i = wrapper.underlying.iterator()
       while (i.hasNext && !aborted) {
-        val size = kryoEncodedElementByteSize(i.next())
-        observer.update(size, Context.OUTER)
+        val size = kryoEncodedElementByteSize(i.next(), Context.OUTER)
+        observer.update(size)
         count += 1
         bytes += size
         val elapsed = System.currentTimeMillis() - start
