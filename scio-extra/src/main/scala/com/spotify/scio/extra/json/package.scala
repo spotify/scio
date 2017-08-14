@@ -22,6 +22,7 @@ import com.spotify.scio.io.{Tap, TextTap}
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
+import io.circe.Printer
 import io.circe.generic.AutoDerivation
 import io.circe.parser._
 import io.circe.syntax._
@@ -82,13 +83,15 @@ package object json extends AutoDerivation {
    */
   implicit class JsonSCollection[T: ClassTag : Encoder : Decoder]
   (@transient val self: SCollection[T]) extends Serializable {
-    def saveAsJsonFile(path: String, numShards: Int = 0): Future[Tap[T]] = {
+    def saveAsJsonFile(path: String,
+                       printer: Printer = Printer.noSpaces,
+                       numShards: Int = 0): Future[Tap[T]] = {
       if (self.context.isTest) {
         self.context.testOut(JsonIO[T](path))(self)
         self.saveAsInMemoryTap
       } else {
         self
-          .map(_.asJson.noSpaces)
+          .map(x => printer.pretty(x.asJson))
           .applyInternal(self.textOut(path, ".json", numShards))
         self.context.makeFuture(TextTap(ScioUtil.addPartSuffix(path)).map(decode[T](_).right.get))
       }
