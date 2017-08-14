@@ -21,11 +21,10 @@ import java.io.File
 import java.net.URI
 import java.nio.file.Path
 
-import com.spotify.scio.util.{Functions, RemoteFileUtil}
+import com.spotify.scio.util.{Functions, RemoteFileUtil, ScioUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
-import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.transforms.ParDo
 
 import scala.collection.JavaConverters._
@@ -141,7 +140,7 @@ package object transforms {
     def withRateLimit(maxElementsPerSecond: Double): SCollection[T] = {
       val runner = self.context.options.getRunner
       val maxNumWorkers = {
-        if (classOf[DirectRunner] isAssignableFrom runner) {
+        if (ScioUtil.isLocalRunner(runner)) {
           1
         }
         else if (classOf[DataflowRunner] isAssignableFrom runner) {
@@ -155,7 +154,7 @@ package object transforms {
         }
         else {
           throw new NotImplementedError(
-            s"rateLimitThroughput not implemented for runner ${runner}"
+            s"rateLimitThroughput not implemented for runner $runner"
           )
         }
       }

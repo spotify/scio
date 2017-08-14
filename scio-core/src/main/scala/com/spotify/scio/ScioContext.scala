@@ -217,7 +217,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   // if in local runner, temp location may be needed, but is not currently required by
   // the runner, which may end up with NPE. If not set but user generate new temp dir
-  if (ScioUtil.isLocalRunner(options) && options.getTempLocation == null) {
+  if (ScioUtil.isLocalRunner(options.getRunner) && options.getTempLocation == null) {
     val tmpDir = Files.createTempDirectory("scio-temp-")
     logger.debug(s"New temp directory at $tmpDir")
     options.setTempLocation(tmpDir.toString)

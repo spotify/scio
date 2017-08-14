@@ -23,10 +23,10 @@ import java.lang.{Iterable => JIterable}
 import org.joda.time.Duration
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
+import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
-import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException
 import org.apache.beam.sdk.io.{elasticsearch => esio}
 import org.apache.beam.sdk.transforms.SerializableFunction
@@ -53,7 +53,7 @@ package object elasticsearch {
 
     private def defaultNumOfShards: Int = {
       val runner = self.context.options.getRunner
-      if (classOf[DirectRunner] isAssignableFrom runner) {
+      if (ScioUtil.isLocalRunner(runner)) {
         1
       } else if (classOf[DataflowRunner] isAssignableFrom runner) {
         val opts = self.context.optionsAs[DataflowPipelineOptions]

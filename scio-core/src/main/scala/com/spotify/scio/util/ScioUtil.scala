@@ -28,6 +28,7 @@ import com.google.api.services.dataflow.model.JobMetrics
 import com.spotify.scio.ScioContext
 import org.apache.beam.runners.dataflow.options._
 import org.apache.beam.runners.direct.DirectRunner
+import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
 import org.apache.beam.sdk.coders.{Coder, CoderRegistry}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.bigquery.PatchedBigQueryTableRowIterator
@@ -47,13 +48,13 @@ private[scio] object ScioUtil {
 
   def isRemoteUri(uri: URI): Boolean = !isLocalUri(uri)
 
-  def isLocalRunner(options: PipelineOptions): Boolean = {
-    val runner = options.getRunner
+  def isLocalRunner(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Boolean = {
     require(runner != null, "Pipeline runner not set!")
-    runner.isAssignableFrom(classOf[DirectRunner])
+    classOf[DirectRunner] isAssignableFrom runner
   }
 
-  def isRemoteRunner(options: PipelineOptions): Boolean = !isLocalRunner(options)
+  def isRemoteRunner(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Boolean =
+    !isLocalRunner(runner)
 
   // FIXME: remove this
   def isGcsUri(uri: URI): Boolean = uri.getScheme == "gs"

@@ -41,7 +41,6 @@ import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
-import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.io.TFRecordIO.CompressionType
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
@@ -829,7 +828,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   private[values] def pathWithShards(path: String) = {
-    if ((classOf[DirectRunner] isAssignableFrom this.context.options.getRunner) &&
+    if (ScioUtil.isLocalRunner(this.context.options.getRunner) &&
       ScioUtil.isLocalUri(new URI(path))) {
       context.addPreRunFn(() => {
         // Create output directory when running locally with local file system

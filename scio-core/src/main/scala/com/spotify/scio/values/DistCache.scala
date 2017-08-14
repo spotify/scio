@@ -43,7 +43,7 @@ private[scio] abstract class FileDistCache[F](options: PipelineOptions) extends 
   protected lazy val data: F = init
 
   private val rfu = RemoteFileUtil.create(options)
-  private val isRemoteRunner = ScioUtil.isRemoteRunner(options)
+  private val isRemoteRunner = ScioUtil.isRemoteRunner(options.getRunner)
 
   protected def prepareFiles(uris: Seq[URI]): Seq[File] =
     rfu.download(uris.asJava).asScala.map(_.toFile)

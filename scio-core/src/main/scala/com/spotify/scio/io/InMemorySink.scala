@@ -17,8 +17,8 @@
 
 package com.spotify.scio.io
 
+import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import org.apache.beam.runners.direct.DirectRunner
 
 import scala.collection.concurrent.TrieMap
 
@@ -28,7 +28,7 @@ private[scio] object InMemorySink {
 
   def save[T](id: String, data: SCollection[T]): Unit = {
     require(
-      classOf[DirectRunner] isAssignableFrom data.context.options.getRunner,
+      ScioUtil.isLocalRunner(data.context.options.getRunner),
       "In memory sink can only be used with DirectRunner")
     data
       .groupBy(_ => ())

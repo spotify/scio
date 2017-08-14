@@ -111,7 +111,7 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
   def getMetrics: Metrics = {
     require(isCompleted, "Pipeline has to be finished to get metrics.")
 
-    val (jobId, dfMetrics) = if (ScioUtil.isLocalRunner(this.context.options)) {
+    val (jobId, dfMetrics) = if (ScioUtil.isLocalRunner(this.context.options.getRunner)) {
       // to be safe let's use app name at a cost of duplicate for local runner
       // there are no dataflow service metrics on local runner
       (context.optionsAs[ApplicationNameOptions].getAppName, Nil)
