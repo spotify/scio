@@ -17,10 +17,16 @@
 
 package com.spotify.scio.extra.json
 
+import java.nio.file.Files
+
+import io.circe.Printer
 import com.spotify.scio._
 import com.spotify.scio.io.TapSpec
 import com.spotify.scio.util.ScioUtil
 import org.apache.commons.io.FileUtils
+
+import scala.collection.JavaConverters._
+import scala.io.Source
 
 object JsonJob {
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -34,14 +40,14 @@ object JsonJob {
 }
 
 object JsonTest {
-  case class Record(i: Int, s: String)
+  case class Record(i: Int, s: String, o: Option[Int])
 }
 
 class JsonTest extends TapSpec {
 
   import JsonTest._
 
-  private val data = Seq(1, 2, 3).map(x => Record(x, x.toString))
+  private val data = Seq(1, 2, 3).map(x => Record(x, x.toString, if (x % 2 == 0) Some(x) else None))
 
   "Future" should "support saveAsJsonFile" in {
     val dir = tmpDir
@@ -51,6 +57,27 @@ class JsonTest extends TapSpec {
         .saveAsJsonFile(dir.getPath)
     }
     verifyTap(t, data.toSet)
+    FileUtils.deleteDirectory(dir)
+  }
+
+  it should "support custom printer" in {
+    val dir = tmpDir
+    val t = runWithFileFuture {
+      _
+        .parallelize(data)
+        .saveAsJsonFile(dir.getPath, printer = Printer.noSpaces.copy(dropNullKeys = true))
+    }
+    verifyTap(t, data.toSet)
+    val result = Files.list(dir.toPath).iterator().asScala
+      .flatMap(p => Source.fromFile(p.toFile).getLines())
+      .toSeq
+    val expected = Seq(
+      """{"i":1,"s":"1"}""",
+      """{"i":2,"s":"2","o":2}""",
+      """{"i":3,"s":"3"}"""
+    )
+    result should contain theSameElementsAs expected
+    FileUtils.deleteDirectory(dir)
   }
 
   "JobTest" should "pass correct JsonIO" in {
