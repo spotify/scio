@@ -37,6 +37,7 @@ val commonsIoVersion = "2.5"
 val commonsMath3Version = "3.6.1"
 val elasticsearch2Version = "2.1.0"
 val elasticsearch5Version = "5.5.0"
+val gcsConnectorVersion = "1.6.1-hadoop2"
 val guavaVersion = "20.0"
 val hadoopVersion = "2.7.3"
 val hamcrestVersion = "1.3"
@@ -49,6 +50,8 @@ val junitInterfaceVersion = "0.11"
 val junitVersion = "4.12"
 val kantanCsvVersion = "0.2.1"
 val mockitoVersion = "1.10.19"
+val parquetAvroExtraVersion = "0.2.1"
+val parquetVersion = "1.9.0"
 val protobufGenericVersion = "0.2.1"
 val protobufVersion = "3.3.1"
 val scalacheckShapelessVersion = "1.1.6"
@@ -219,6 +222,7 @@ lazy val root: Project = Project(
   scioExtra,
   scioHdfs,
   scioJdbc,
+  scioParquet,
   scioTensorFlow,
   scioSchemas,
   scioExamples,
@@ -446,6 +450,25 @@ lazy val scioJdbc: Project = Project(
 ).dependsOn(
   scioCore,
   scioTest % "test"
+)
+
+lazy val scioParquet: Project = Project(
+  "scio-parquet",
+  file("scio-parquet")
+).settings(
+  commonSettings,
+  description := "Scio add-on for Parquet",
+  libraryDependencies ++= Seq(
+    "me.lyh" %% "parquet-avro-extra" % parquetAvroExtraVersion,
+    "com.google.cloud.bigdataoss" % "gcs-connector" % gcsConnectorVersion,
+    "org.apache.beam" % "beam-sdks-java-io-hadoop-input-format" % beamVersion,
+    "org.apache.hadoop" % "hadoop-client" % hadoopVersion,
+    "org.apache.parquet" % "parquet-avro" % parquetVersion
+  )
+).dependsOn(
+  scioCore,
+  scioSchemas % "test",
+  scioTest % "test->test"
 )
 
 lazy val scioTensorFlow: Project = Project(
