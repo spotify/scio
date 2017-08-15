@@ -57,10 +57,10 @@ private[values] trait PCollectionWrapper[T] extends TransformNameable {
   private[scio] def parDo[U: ClassTag](fn: DoFn[T, U]): SCollection[U] =
     this.pApply(ParDo.of(fn)).setCoder(this.getCoder[U])
 
-  private[values] def getCoder[U: ClassTag]: Coder[U] =
+  private[scio] def getCoder[U: ClassTag]: Coder[U] =
     internal.getPipeline.getCoderRegistry.getScalaCoder[U]
 
-  private[values] def getKvCoder[K: ClassTag, V: ClassTag]: Coder[KV[K, V]] =
+  private[scio] def getKvCoder[K: ClassTag, V: ClassTag]: Coder[KV[K, V]] =
     internal.getPipeline.getCoderRegistry.getScalaKvCoder[K, V]
 
 }

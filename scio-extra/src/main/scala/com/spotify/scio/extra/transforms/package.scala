@@ -21,12 +21,14 @@ import java.io.File
 import java.net.URI
 import java.nio.file.Path
 
-import com.spotify.scio.util.{Functions, RemoteFileUtil}
+import com.spotify.scio.util.{ClosureCleaner, Functions, NamedDoFn, RemoteFileUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.runners.direct.DirectRunner
-import org.apache.beam.sdk.transforms.ParDo
+import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.{DoFn, ParDo}
+import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -118,7 +120,7 @@ package object transforms {
   /**
    * Enhanced version of [[SCollection]] with rate limiting methods.
    */
-  implicit class RateLimitingSCollection[T: ClassTag](val self: SCollection[T])  {
+  implicit class RateLimitingSCollection[T: ClassTag](val self: SCollection[T]) {
 
     /**
      * Rate limit the number of elements this step will process per second. Useful to rate limit
@@ -156,6 +158,46 @@ package object transforms {
       }
       self.applyTransform(ParDo.of(new RateLimiterDoFn[T](maxElementsPerSecond / maxNumWorkers)))
     }
+  }
+
+  /**
+   * Enhanced version of [[SCollection]] with specialized versions of flatMap.
+   */
+  implicit class SpecializedFlatMapSCollection[T: ClassTag](val self: SCollection[T]) {
+
+    /**
+     * Latency optimized flavor of [[self.flatMap]], it returns a new SCollection by first
+     * applying a function to all elements of this SCollection, and then flattening the results.
+     * If function throws an exception, instead of retrying, faulty element goes into given error
+     * side output.
+     *
+     * @group transform
+     */
+    def safeFlatMap[U: ClassTag](f: T => TraversableOnce[U])
+    : (SCollection[U], SCollection[(T, Throwable)]) = {
+      val (mainTag, errorTag) = (new TupleTag[U], new TupleTag[(T, Throwable)])
+      val doFn = new NamedDoFn[T, U] {
+        val g = ClosureCleaner(f) // defeat closure
+        @ProcessElement
+        private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
+          val i = try {
+            g(c.element()).toIterator
+          } catch {
+            case e: Throwable =>
+              c.sideOutput(errorTag, (c.element(), e))
+              Iterator.empty
+          }
+          while (i.hasNext) c.output(i.next())
+        }
+      }
+      val tuple = self.applyInternal(
+        ParDo.withOutputTags(mainTag, TupleTagList.of(errorTag)).of(doFn))
+      val main = tuple.get(mainTag).setCoder(self.getCoder[U])
+      val errorPipe = tuple.get(errorTag).setCoder(self.getCoder[(T, Throwable)])
+      (self.context.wrap(main), self.context.wrap(errorPipe))
+    }
+
+    //TODO(rav): resilientFlatMap
   }
 
 }

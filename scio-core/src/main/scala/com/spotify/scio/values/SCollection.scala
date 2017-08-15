@@ -22,7 +22,6 @@ package com.spotify.scio.values
 import java.io.{File, PrintStream}
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.net.URI
-import java.util.UUID
 
 import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
 import com.google.datastore.v1.Entity
@@ -47,7 +46,6 @@ import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.io.PubsubIO.PubsubMessage
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio}
-import org.apache.beam.sdk.options.GcpOptions
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
@@ -56,14 +54,12 @@ import org.apache.beam.sdk.util.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{io => gio}
 import org.joda.time.{Duration, Instant}
-import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
 import scala.concurrent._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.util.{Failure, Success}
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
