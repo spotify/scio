@@ -21,6 +21,7 @@ import com.google.bigtable.admin.v2.Cluster;
 import com.google.bigtable.admin.v2.ListClustersRequest;
 import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.grpc.BigtableClusterUtilities;
 import com.google.cloud.bigtable.grpc.BigtableInstanceClient;
 import com.google.cloud.bigtable.grpc.BigtableInstanceGrpcClient;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
@@ -31,6 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Utilities to deal with Bigtable.
@@ -100,6 +105,30 @@ public final class BigtableUtil {
       }
     } finally {
       channelPool.shutdownNow();
+    }
+  }
+
+  /**
+   * Get size of all clusters for specified Bigtable instance.
+   *
+   * @param projectId GCP projectId
+   * @param instanceId Bigtable instanceId
+   *
+   * @return map of clusterId to its number of nodes
+   * @throws IOException If setting up channel pool fails
+   * @throws GeneralSecurityException If security-related exceptions occurs
+   */
+  public static Map<String, Integer> getClusterSizes(
+      final String projectId,
+      final String instanceId
+  ) throws IOException, GeneralSecurityException {
+    try (BigtableClusterUtilities clusterUtil = BigtableClusterUtilities
+        .forInstance(projectId, instanceId)) {
+      return Collections.unmodifiableMap(
+          clusterUtil.getClusters().getClustersList().stream()
+              .collect(Collectors.toMap(
+                      cn -> cn.getName().substring(cn.getName().indexOf("/clusters/") + 10),
+                      Cluster::getServeNodes)));
     }
   }
 
