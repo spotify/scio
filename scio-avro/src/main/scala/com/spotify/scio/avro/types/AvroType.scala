@@ -220,6 +220,7 @@ class AvroType[T: TypeTag] {
     getField("toGenericRecord").asInstanceOf[(T => GenericRecord)]
 
   /** Schema of `T`. */
-  def schema: Schema = AvroType.schemaOf[T]
+  def schema: Schema =
+    getField("schema").asInstanceOf[Schema]
 
 }
