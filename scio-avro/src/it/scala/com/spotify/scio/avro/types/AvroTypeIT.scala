@@ -41,8 +41,7 @@ object AvroTypeIT {
     "gs://data-integration-test-eu/*/*/*/")
   class FromGlob2
 
-  @AvroType.fromPath(
-    "gs://data-integration-test-eu/*/*/*/*.avro")
+  @AvroType.fromPath("gs://data-integration-test-eu/*/*/*/*.avro")
   class FromGlob3
 
   @AvroType.fromPath(

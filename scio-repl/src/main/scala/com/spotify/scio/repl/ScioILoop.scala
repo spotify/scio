@@ -200,6 +200,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     intp.interpret(
       """
         |import com.spotify.scio._
+        |import com.spotify.scio.avro._
         |import com.spotify.scio.bigquery._
         |import com.spotify.scio.repl._
         |import scala.concurrent.ExecutionContext.Implicits.global
