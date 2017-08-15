@@ -177,6 +177,20 @@ package object bigtable {
     }
 
     /**
+     * Get size of all clusters for specified Bigtable instance.
+     *
+     * @return map of clusterId to its number of nodes
+     */
+    def getBigtableClusterSizes(projectId: String,
+                                instanceId: String): Map[String, Int] = {
+      if (!self.isTest) {
+        BigtableUtil.getClusterSizes(projectId, instanceId).asScala.toMap.mapValues(_.toInt)
+      } else {
+        Map.empty
+      }
+    }
+
+    /**
      * Ensure that tables and column families exist.
      * Checks for existence of tables or creates them if they do not exist.  Also checks for
      * existence of column families within each table and creates them if they do not exist.
