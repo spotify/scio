@@ -22,7 +22,7 @@ import java.nio.file.Files
 import javax.annotation.Nullable
 
 import com.spotify.scio.io.{TFRecordFileTap, Tap}
-import com.spotify.scio.testing.TFRecordIO
+import com.spotify.scio.tensorflow.TFRecordIO
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.io.TFRecordIO.CompressionType
 import org.apache.beam.sdk.transforms.DoFn

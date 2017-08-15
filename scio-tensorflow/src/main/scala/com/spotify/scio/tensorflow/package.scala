@@ -18,15 +18,16 @@
 package com.spotify.scio
 
 import com.spotify.scio.io.{FileStorage, TFFileStorageFunctions}
-import com.spotify.scio.values.{SCollection,
-                                TFRecordSCollectionFunctions,
-                                TensorFlowSCollectionFunctions}
+import com.spotify.scio.testing.TestIO
+import com.spotify.scio.values._
 
 import scala.reflect.ClassTag
 
 package object tensorflow {
 
   import scala.language.implicitConversions
+
+  case class TFRecordIO(path: String) extends TestIO[Array[Byte]](path)
 
   /** Implicit conversion from [[SCollection]] to [[TensorFlowSCollectionFunctions]]. */
   implicit def makeTensorFlowSCollectionFunctions[T: ClassTag](s: SCollection[T])

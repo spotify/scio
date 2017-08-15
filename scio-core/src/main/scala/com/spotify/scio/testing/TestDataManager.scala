@@ -142,8 +142,6 @@ case class TableRowJsonIO(path: String) extends TestIO[TableRow](path)
 
 case class TextIO(path: String) extends TestIO[String](path)
 
-case class TFRecordIO(path: String) extends TestIO[Array[Byte]](path)
-
 case class DistCacheIO[T](uri: String)
 
 object DistCacheIO {

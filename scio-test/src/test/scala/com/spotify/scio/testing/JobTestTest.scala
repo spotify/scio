@@ -657,7 +657,6 @@ class JobTestTest extends PipelineSpec {
     test(PubsubIO(null), "PubsubIO(null)")
     test(TableRowJsonIO(null), "TableRowJsonIO(null)")
     test(TextIO(null), "TextIO(null)")
-    test(TFRecordIO(null), "TFRecordIO(null)")
   }
 
   it should "not allow empty keys" in {
@@ -674,7 +673,6 @@ class JobTestTest extends PipelineSpec {
     test(PubsubIO(""), "PubsubIO()")
     test(TableRowJsonIO(""), "TableRowJsonIO()")
     test(TextIO(""), "TextIO()")
-    test(TFRecordIO(""), "TFRecordIO()")
   }
 
   "runWithContext" should "fail input with message" in {

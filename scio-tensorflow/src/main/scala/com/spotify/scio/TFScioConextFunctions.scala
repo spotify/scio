@@ -17,7 +17,7 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.testing.TFRecordIO
+import com.spotify.scio.tensorflow.TFRecordIO
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.TFRecordIO.CompressionType
 import org.apache.beam.sdk.{io => gio}
