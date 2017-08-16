@@ -197,6 +197,7 @@ private[scio] object Functions {
 
   def reduceFn[T](mon: Monoid[T]): CombineFn[T, JList[T], T] = new ReduceFn[T] {
     val _mon = ClosureCleaner(mon)  // defeat closure
-    override def reduceOption(accumulator: Iterable[T]): Option[T] = _mon.sumOption(accumulator)
+    override def reduceOption(accumulator: Iterable[T]): Option[T] =
+      _mon.sumOption(accumulator).orElse(Some(_mon.zero))
   }
 }
