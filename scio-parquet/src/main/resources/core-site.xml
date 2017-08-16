@@ -1,0 +1,15 @@
+<configuration>
+  <property>
+    <name>fs.gs.impl</name>
+    <value>com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem</value>
+    <description>Register GCS Hadoop filesystem</description>
+  </property>
+  <property>
+    <name>fs.gs.project.id</name>
+    <value>_THIS_VALUE_DOES_NOT_MATTER_</value>
+    <description>
+      This value is required by GCS connector, but not used in the tools provided here.
+      The value provided is actually an invalid project id (starts with `_`).
+    </description>
+  </property>
+</configuration>
