@@ -74,23 +74,7 @@ package object avro {
         val readSchema = cls.getMethod("getClassSchema").invoke(null).asInstanceOf[Schema]
 
         val job = Job.getInstance()
-
-        // Client id/secret of Google-managed project associated with the Cloud SDK
-        // These are needed since `FileInputFormat.setInputPaths` validates paths locally and
-        // requires the user's GCP credentials.
-        job.getConfiguration.setBoolean("fs.gs.auth.service.account.enable", false)
-        job.getConfiguration.set("fs.gs.auth.client.id", "32555940559.apps.googleusercontent.com")
-        job.getConfiguration.set("fs.gs.auth.client.secret", "ZmssLNjJy2998hD4CTg2ejr2")
-
-        FileInputFormat.setInputPaths(job, path)
-
-        // These will interfere with credentials in Dataflow workers
-        if (!ScioUtil.isLocalRunner(self.options.getRunner)) {
-          job.getConfiguration.unset("fs.gs.auth.service.account.enable")
-          job.getConfiguration.unset("fs.gs.auth.client.id")
-          job.getConfiguration.unset("fs.gs.auth.client.secret")
-        }
-
+        setInputPaths(job, path)
         job.setInputFormatClass(classOf[AvroParquetInputFormat[T]])
         job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
         job.getConfiguration.setClass("value.class", cls, cls)
@@ -113,6 +97,31 @@ package object avro {
           .map(_.getValue)
       }
     }
+
+    private def setInputPaths(job: Job, path: String): Unit = {
+      // These are needed since `FileInputFormat.setInputPaths` validates paths locally and
+      // requires the user's GCP credentials.
+      sys.env.get("GOOGLE_APPLICATION_CREDENTIALS") match {
+        case Some(json) =>
+          job.getConfiguration.set("fs.gs.auth.service.account.json.keyfile", json)
+        case None =>
+          // Client id/secret of Google-managed project associated with the Cloud SDK
+          job.getConfiguration.setBoolean("fs.gs.auth.service.account.enable", false)
+          job.getConfiguration.set("fs.gs.auth.client.id", "32555940559.apps.googleusercontent.com")
+          job.getConfiguration.set("fs.gs.auth.client.secret", "ZmssLNjJy2998hD4CTg2ejr2")
+      }
+
+      FileInputFormat.setInputPaths(job, path)
+
+      // These will interfere with credentials in Dataflow workers
+      if (!ScioUtil.isLocalRunner(self.options.getRunner)) {
+        job.getConfiguration.unset("fs.gs.auth.service.account.json.keyfile")
+        job.getConfiguration.unset("fs.gs.auth.service.account.enable")
+        job.getConfiguration.unset("fs.gs.auth.client.id")
+        job.getConfiguration.unset("fs.gs.auth.client.secret")
+      }
+    }
+
   }
 
 }
