@@ -21,6 +21,7 @@ import java.util.regex.Pattern
 
 import com.google.api.services.bigquery.model.TableReference
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
+import com.google.common.primitives.Longs
 
 private[bigquery] object BigQueryPartitionUtil {
 
@@ -59,6 +60,9 @@ private[bigquery] object BigQueryPartitionUtil {
       .filter(_.getTableId.startsWith(prefix))
       .map(_.getTableId.substring(prefix.length))
       .toSet
+      // get all table with prefix and filter only the day/date partitioned tables. Current
+      // format for date partition is YYYYMMDD, thus all numeric.
+      .filter(e => Longs.tryParse(e) != null)
   }
 
   def latestQuery(bq: BigQueryClient, sqlQuery: String): String = {
