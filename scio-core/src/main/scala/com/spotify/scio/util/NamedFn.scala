@@ -28,5 +28,5 @@ private[util] trait NamedFn {
 
 private[util] trait NamedSerializableFn[T, U] extends SerializableFunction[T, U] with NamedFn
 private[util] trait NamedPartitionFn[T] extends PartitionFn[T] with NamedFn
-private[util] class NamedDoFn[T, U] extends DoFn[T, U] with NamedFn
+private[scio] class NamedDoFn[T, U] extends DoFn[T, U] with NamedFn
 private[util] class NamedSimpleFn[T, U] extends SimpleFunction[T, U] with NamedFn
