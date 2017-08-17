@@ -245,7 +245,7 @@ public class ElasticsearchIO {
 
         // Elasticsearch throws ActionRequestValidationException if bulk request is empty,
         // so do nothing if number of actions is zero.
-        if (values.iterator().hasNext()) {
+        if (!values.iterator().hasNext()) {
           LOG.info("ElasticsearchWriter: no requests to send");
           return;
         }
