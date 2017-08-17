@@ -20,11 +20,10 @@ package org.apache.beam.sdk.io.elasticsearch;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.Iterables;
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import org.apache.beam.runners.dataflow.util.MonitoringUtil;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.GroupByKey;
 import org.apache.beam.sdk.transforms.PTransform;
@@ -222,19 +221,21 @@ public class ElasticsearchIO {
       }
       @ProcessElement
       public void processElement(ProcessContext c) throws Exception {
-        final List<Iterable<ActionRequest<?>>> actionRequests =
-            StreamSupport.stream(c.element().getValue().spliterator(), false)
-                .map(toActionRequests::apply)
-                .collect(Collectors.toList());
+        final Iterable<T> values = c.element().getValue();
 
         // Elasticsearch throws ActionRequestValidationException if bulk request is empty,
         // so do nothing if number of actions is zero.
-        if (actionRequests.isEmpty()) {
+        if (values.iterator().hasNext()) {
           LOG.info("ElasticsearchWriter: no requests to send");
           return;
         }
 
-        final BulkRequest bulkRequest = new BulkRequest().add(Iterables.concat(actionRequests));
+        final Stream<ActionRequest> actionRequests =
+            StreamSupport.stream(values.spliterator(), false)
+                .map(toActionRequests::apply)
+                .flatMap(ar -> StreamSupport.stream(ar.spliterator(), false));
+
+        final BulkRequest bulkRequest = new BulkRequest().add(actionRequests::iterator);
         final BulkResponse bulkItemResponse = clientSupplier.get().bulk(bulkRequest).get();
         if (bulkItemResponse.hasFailures()) {
           error.accept(new BulkExecutionException(bulkItemResponse));
