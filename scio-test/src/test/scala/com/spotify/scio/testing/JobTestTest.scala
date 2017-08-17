@@ -151,6 +151,28 @@ object JobWithoutClose {
   }
 }
 
+object JobWitDuplicateInput {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.textFile(args("input"))
+    sc.textFile(args("input"))
+    sc.close()
+  }
+}
+
+object JobWitDuplicateOutput {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.parallelize(1 to 10)
+      .saveAsTextFile(args("output"))
+
+    sc.parallelize(1 to 5)
+      .saveAsTextFile(args("output"))
+
+    sc.close()
+  }
+}
+
 // scalastyle:off no.whitespace.before.left.bracket
 class JobTestTest extends PipelineSpec {
 
@@ -666,6 +688,28 @@ class JobTestTest extends PipelineSpec {
     val msg = "requirement failed: Missing test data. Are you using dist cache outside of JobTest?"
     the [IllegalArgumentException] thrownBy {
       runWithContext(_.distCache("in.txt")(f => Source.fromFile(f).getLines().toSeq))
+    } should have message msg
+  }
+
+  it should "fail on duplicate inputs in the job itself" in {
+    val msg = "requirement failed: There already exists test input for TextIO(input), " +
+      "currently registered inputs: [TextIO(input)]"
+    the [IllegalArgumentException] thrownBy {
+      JobTest[JobWitDuplicateInput.type]
+        .args("--input=input")
+        .input(TextIO("input"), Seq("does", "not", "matter"))
+        .run()
+    } should have message msg
+  }
+
+  it should "fail on duplicate outputs in the job itself" in {
+    val msg = "requirement failed: There already exists test output for TextIO(output), " +
+      "currently registered outputs: [TextIO(output)]"
+    the [IllegalArgumentException] thrownBy {
+    JobTest[JobWitDuplicateOutput.type]
+      .args("--output=output")
+      .output[String](TextIO("output"))(_ should containSingleValue ("does not matter"))
+      .run()
     } should have message msg
   }
 
