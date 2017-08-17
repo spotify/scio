@@ -31,6 +31,9 @@ private[scio] class TestInput(val m: Map[TestIO[_], Iterable[_]]) {
     require(
       m.contains(key),
       s"Missing test input: $key, available: ${m.keys.mkString("[", ", ", "]")}")
+    require(!s.contains(key),
+      s"There already exists test input for $key, currently " +
+        s"registered inputs: ${s.mkString("[", ", ", "]")}")
     s.add(key)
     m(key).asInstanceOf[Iterable[T]]
   }
@@ -51,6 +54,9 @@ private[scio] class TestOutput(val m: Map[TestIO[_], SCollection[_] => Unit]) {
       require(
         m.contains(key),
         s"Missing test output: $key, available: ${m.keys.mkString("[", ", ", "]")}")
+      require(!s.contains(key),
+        s"There already exists test output for $key, currently " +
+          s"registered outputs: ${s.mkString("[", ", ", "]")}")
       s.add(key)
       m(key)
     }
