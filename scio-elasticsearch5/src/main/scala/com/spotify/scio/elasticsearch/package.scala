@@ -78,6 +78,7 @@ package object elasticsearch {
     def saveAsElasticsearch(esOptions: ElasticsearchOptions,
                             flushInterval: Duration = Duration.standardSeconds(1),
                             numOfShards: Long = defaultNumOfShards,
+                            maxBulkRequestSize: Int = 3000,
                             errorFn: BulkExecutionException => Unit = m => throw m)
                            (f: T => Iterable[DocWriteRequest[_]]): Future[Tap[T]] = {
       if (self.context.isTest) {
@@ -92,6 +93,7 @@ package object elasticsearch {
             })
             .withFlushInterval(flushInterval)
             .withNumOfShard(numOfShards)
+            .withMaxBulkRequestSize(maxBulkRequestSize)
             .withError(new esio.ThrowingConsumer[BulkExecutionException] {
               override def accept(t: BulkExecutionException): Unit = errorFn(t)
             }))

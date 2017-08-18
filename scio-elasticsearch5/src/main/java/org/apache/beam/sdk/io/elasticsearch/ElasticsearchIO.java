@@ -17,12 +17,21 @@
 
 package org.apache.beam.sdk.io.elasticsearch;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.Iterables;
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.GroupByKey;
@@ -36,23 +45,16 @@ import org.apache.beam.sdk.transforms.windowing.Window;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
-import java.util.concurrent.ThreadLocalRandom;
-import java.io.IOException;
-import java.io.Serializable;
-import java.net.InetSocketAddress;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
-import org.joda.time.Duration;
-import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,13 +120,19 @@ public class ElasticsearchIO {
       return new Bound<>().withError(error);
     }
 
+    public static<T> Bound withMaxBulkRequestSize(int maxBulkRequestSize) {
+      return new Bound<>().withMaxBulkRequestSize(maxBulkRequestSize);
+    }
+
     public static class Bound<T> extends PTransform<PCollection<T>, PDone> {
+      private static final int CHUNK_SIZE = 3000;
 
       private final String clusterName;
       private final InetSocketAddress[] servers;
       private final Duration flushInterval;
       private final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests;
       private final Long numOfShard;
+      private final int maxBulkRequestSize;
       private final ThrowingConsumer<BulkExecutionException> error;
 
       private Bound(final String clusterName,
@@ -132,47 +140,48 @@ public class ElasticsearchIO {
                     final Duration flushInterval,
                     final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
                     final Long numOfShard,
+                    final int maxBulkRequestSize,
                     final ThrowingConsumer<BulkExecutionException> error) {
         this.clusterName = clusterName;
         this.servers = servers;
         this.flushInterval = flushInterval;
         this.toDocWriteRequests = toDocWriteRequests;
         this.numOfShard = numOfShard;
+        this.maxBulkRequestSize = maxBulkRequestSize;
         this.error = error;
       }
 
       Bound() {
-        this(null, null, null, null, null, defaultErrorHandler());
+        this(null, null, null, null, null, CHUNK_SIZE, defaultErrorHandler());
       }
 
       public Bound<T> withClusterName(String clusterName) {
-        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard,
-            error);
+        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard, maxBulkRequestSize, error);
       }
 
       public Bound<T> withServers(InetSocketAddress[] servers) {
-        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard,
-            error);
+        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard, maxBulkRequestSize, error);
       }
 
       public Bound<T> withFlushInterval(Duration flushInterval) {
-        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard,
-            error);
+        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard, maxBulkRequestSize, error);
       }
 
       public Bound<T> withFunction(
           SerializableFunction<T, Iterable<DocWriteRequest<?>>> toIndexRequest) {
-        return new Bound<>(clusterName, servers, flushInterval, toIndexRequest, numOfShard, error);
+        return new Bound<>(clusterName, servers, flushInterval, toIndexRequest, numOfShard, maxBulkRequestSize, error);
       }
 
       public Bound<T> withNumOfShard(Long numOfShard) {
-        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard,
-            error);
+        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard, maxBulkRequestSize, error);
       }
 
       public Bound<T> withError(ThrowingConsumer<BulkExecutionException> error) {
-        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard,
-            error);
+        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard, maxBulkRequestSize, error);
+      }
+
+      public Bound<T> withMaxBulkRequestSize(int maxBulkRequestSize) {
+        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard, maxBulkRequestSize, error);
       }
 
       @Override
@@ -182,6 +191,7 @@ public class ElasticsearchIO {
         checkNotNull(toDocWriteRequests);
         checkNotNull(numOfShard);
         checkNotNull(flushInterval);
+        checkArgument(maxBulkRequestSize > 0);
         input
             .apply("Assign To Shard", ParDo.of(new AssignToShard<>(numOfShard)))
             .apply("Re-Window to Global Window", Window.<KV<Long, T>>into(new GlobalWindows())
@@ -193,7 +203,7 @@ public class ElasticsearchIO {
             .apply(GroupByKey.create())
             .apply("Write to Elasticesarch",
                 ParDo.of(new ElasticsearchWriter<>
-                    (clusterName, servers, toDocWriteRequests, error)));
+                    (clusterName, servers, maxBulkRequestSize, toDocWriteRequests, error)));
         return PDone.in(input.getPipeline());
       }
     }
@@ -220,11 +230,14 @@ public class ElasticsearchIO {
       private final ClientSupplier clientSupplier;
       private final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests;
       private final ThrowingConsumer<BulkExecutionException> error;
+      private final int maxBulkRequestSize;
 
       public ElasticsearchWriter(String clusterName,
                                  InetSocketAddress[] servers,
+                                 int maxBulkRequestSize,
                                  SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
                                  ThrowingConsumer<BulkExecutionException> error) {
+        this.maxBulkRequestSize = maxBulkRequestSize;
         this.clientSupplier = new ClientSupplier(clusterName, servers);
         this.toDocWriteRequests = toDocWriteRequests;
         this.error = error;
@@ -232,23 +245,33 @@ public class ElasticsearchIO {
 
       @ProcessElement
       public void processElement(ProcessContext c) throws Exception {
-        final List<Iterable<DocWriteRequest<?>>> docWriteRequests =
-            StreamSupport.stream(c.element().getValue().spliterator(), false)
-                .map(toDocWriteRequests::apply)
-                .collect(Collectors.toList());
+        final Iterable<T> values = c.element().getValue();
 
         // Elasticsearch throws ActionRequestValidationException if bulk request is empty,
         // so do nothing if number of actions is zero.
-        if (docWriteRequests.isEmpty()) {
+        if (!values.iterator().hasNext()) {
           LOG.info("ElasticsearchWriter: no requests to send");
           return;
         }
 
-        final BulkRequest bulkRequest = new BulkRequest().add(Iterables.concat(docWriteRequests));
-        final BulkResponse bulkItemResponse = clientSupplier.get().bulk(bulkRequest).get();
-        if (bulkItemResponse.hasFailures()) {
-          error.accept(new BulkExecutionException(bulkItemResponse));
-        }
+        final Stream<DocWriteRequest> docWriteRequests =
+            StreamSupport.stream(values.spliterator(), false)
+                .map(toDocWriteRequests::apply)
+                .flatMap(ar -> StreamSupport.stream(ar.spliterator(), false));
+
+        final Iterable<List<DocWriteRequest>> chunks =
+            Iterables.partition(docWriteRequests::iterator, maxBulkRequestSize);
+        chunks.forEach(chunk -> {
+          try {
+            final BulkRequest bulkRequest = new BulkRequest().add(chunk);
+            final BulkResponse bulkItemResponse = clientSupplier.get().bulk(bulkRequest).get();
+            if (bulkItemResponse.hasFailures()) {
+              error.accept(new BulkExecutionException(bulkItemResponse));
+            }
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        });
       }
     }
 

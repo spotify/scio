@@ -28,6 +28,7 @@ object ElasticsearchJobSpec {
   val options = ElasticsearchOptions("clusterName", Seq(new InetSocketAddress(8080)))
   val data = Seq(1, 2, 3)
   val shard = 2
+  val maxBulkRequestSize = 1000
   val flushInterval = Duration.standardSeconds(1)
 }
 
@@ -36,7 +37,7 @@ object ElasticsearchJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, _) = ContextAndArgs(cmdlineArgs)
     sc.parallelize(data)
-      .saveAsElasticsearch(options, flushInterval, shard, _ => ()) { _ =>
+      .saveAsElasticsearch(options, flushInterval, shard, maxBulkRequestSize, _ => ()) { _ =>
         new IndexRequest :: Nil
       }
     sc.close()
