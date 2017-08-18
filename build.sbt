@@ -24,6 +24,7 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 val beamVersion = "2.1.0"
 
 val algebirdVersion = "0.13.0"
+val annoy4sVersion = "0.5.0"
 val annoyVersion = "0.2.5"
 val asmVersion = "4.5"
 val autoServiceVersion = "1.0-rc3"
@@ -417,10 +418,12 @@ lazy val scioExtra: Project = Project(
   commonSettings ++ itSettings,
   description := "Scio extra utilities",
   libraryDependencies ++= Seq(
+    "com.spotify" % "annoy" % annoyVersion,
     "com.spotify.sparkey" % "sparkey" % sparkeyVersion,
     "com.twitter" %% "algebird-core" % algebirdVersion,
-    "org.scalanlp" %% "breeze" % breezeVersion,
     "info.debatty" % "java-lsh" % javaLshVersion,
+    "net.pishen" %% "annoy4s" % annoy4sVersion,
+    "org.scalanlp" %% "breeze" % breezeVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion % "test",
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
   ),
