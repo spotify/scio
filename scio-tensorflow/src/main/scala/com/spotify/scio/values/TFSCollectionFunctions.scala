@@ -134,14 +134,17 @@ class TFRecordSCollectionFunctions[T <: Array[Byte]](val self: SCollection[T]) {
    */
   def saveAsTfRecordFile(path: String,
                          suffix: String = ".tfrecords",
-                         tfRecordOptions: TFRecordOptions = TFRecordOptions.writeDefault)
+                         tfRecordOptions: TFRecordOptions = TFRecordOptions.writeDefault,
+                         numShards: Int = 0)
   : Future[Tap[Array[Byte]]] = {
     if (self.context.isTest) {
       self.context.testOut(TFRecordIO(path))(self.asInstanceOf[SCollection[Array[Byte]]])
       self.saveAsInMemoryTap.asInstanceOf[Future[Tap[Array[Byte]]]]
     } else {
       self.asInstanceOf[SCollection[Array[Byte]]].applyInternal(
-        gio.Write.to(new TFRecordSink(self.pathWithShards(path), suffix, tfRecordOptions)))
+        gio.Write
+          .to(new TFRecordSink(self.pathWithShards(path), suffix, tfRecordOptions))
+          .withNumShards(numShards))
       self.context.makeFuture(TFRecordFileTap(path + "/part-*"))
     }
   }
