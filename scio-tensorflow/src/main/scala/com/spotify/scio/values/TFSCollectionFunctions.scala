@@ -136,7 +136,8 @@ class TFRecordSCollectionFunctions[T <: Array[Byte]](val self: SCollection[T]) {
    */
   def saveAsTfRecordFile(path: String,
                          suffix: String = ".tfrecords",
-                         compressionType: CompressionType = CompressionType.NONE)
+                         compressionType: CompressionType = CompressionType.NONE,
+                         numShards: Int = 0)
                         (implicit ev: T <:< Array[Byte]): Future[Tap[Array[Byte]]] = {
     if (self.context.isTest) {
       self.context.testOut(TFRecordIO(path))(self.asInstanceOf[SCollection[Array[Byte]]])
@@ -145,6 +146,7 @@ class TFRecordSCollectionFunctions[T <: Array[Byte]](val self: SCollection[T]) {
       self.asInstanceOf[SCollection[Array[Byte]]].applyInternal(
         gio.TFRecordIO.write().to(self.pathWithShards(path))
           .withSuffix(suffix)
+          .withNumShards(numShards)
           .withCompressionType(compressionType))
       self.context.makeFuture(TFRecordFileTap(ScioUtil.addPartSuffix(path)))
     }
