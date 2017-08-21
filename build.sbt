@@ -47,6 +47,7 @@ val jodaConvertVersion = "1.8.1"
 val jodaTimeVersion = "2.9.9"
 val junitInterfaceVersion = "0.11"
 val junitVersion = "4.12"
+val powermockVersion = "1.7.0"
 val kantanCsvVersion = "0.2.1"
 val mockitoVersion = "1.10.19"
 val protobufGenericVersion = "0.2.1"
@@ -326,7 +327,9 @@ lazy val scioBigtable: Project = Project(
     "com.google.auto.value" % "auto-value" % autoValueVersion % "provided",
     "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableVersion,
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-    "org.scalatest" %% "scalatest" % scalatestVersion % "test"
+    "org.scalatest" %% "scalatest" % scalatestVersion % "test",
+    "org.powermock" % "powermock-api-mockito" % powermockVersion % "test",
+    "org.powermock" % "powermock-module-junit4" % powermockVersion % "test"
   )
 ).dependsOn(
   scioCore,
