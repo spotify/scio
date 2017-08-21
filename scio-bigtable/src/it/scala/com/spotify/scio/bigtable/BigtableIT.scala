@@ -81,12 +81,10 @@ class BigtableIT extends PipelineSpec {
     val sc = ScioContext()
     sc.updateNumberOfBigtableNodes(projectId, instanceId, 4, Duration.standardSeconds(10))
     sc.getBigtableClusterSizes(projectId, instanceId).get(clusterId).get  shouldBe 4
+    bt.getClusterNodeCount(clusterId, zoneId) shouldBe 4
     sc.updateNumberOfBigtableNodes(projectId, instanceId, 3, Duration.standardSeconds(10))
     sc.getBigtableClusterSizes(projectId, instanceId).get(clusterId).get shouldBe 3
-  }
-
-  "BigtableScioContext" should "fetch cluster sizes" in {
-    ScioContext().getBigtableClusterSizes(projectId, instanceId).get(clusterId).get should be >= 0
+    bt.getClusterNodeCount(clusterId, zoneId) shouldBe 3
   }
 
   "BigtableIO" should "work" in {
