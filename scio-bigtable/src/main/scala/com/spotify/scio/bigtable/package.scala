@@ -177,15 +177,17 @@ package object bigtable {
     }
 
     /**
-      * Get size of all clusters for specified Bigtable instance.
-      *
-      * @return map of cluster name to it's number of nodes
-      */
+     * Get size of all clusters for specified Bigtable instance.
+     *
+     * @return map of clusterId to its number of nodes
+     */
     def getBigtableClusterSizes(projectId: String,
-                                instanceId: String): Map[String, Int] = if (!self.isTest) {
-      BigtableUtil.getClusterSizes(projectId, instanceId).asScala.toMap.mapValues(_.toInt)
-    } else {
-      Map.empty
+                                instanceId: String): Map[String, Int] = {
+      if (!self.isTest) {
+        BigtableUtil.getClusterSizes(projectId, instanceId).asScala.toMap.mapValues(_.toInt)
+      } else {
+        Map.empty
+      }
     }
 
     /**

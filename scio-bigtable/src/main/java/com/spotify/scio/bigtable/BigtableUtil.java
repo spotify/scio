@@ -114,7 +114,7 @@ public final class BigtableUtil {
    * @param projectId GCP projectId
    * @param instanceId Bigtable instanceId
    *
-   * @return map of cluster name to it's number of nodes
+   * @return map of clusterId to its number of nodes
    * @throws IOException If setting up channel pool fails
    * @throws GeneralSecurityException If security-related exceptions occurs
    */
@@ -126,7 +126,9 @@ public final class BigtableUtil {
         .forInstance(projectId, instanceId)) {
       return Collections.unmodifiableMap(
           clusterUtil.getClusters().getClustersList().stream()
-              .collect(Collectors.toMap(Cluster::getName, Cluster::getServeNodes)));
+              .collect(Collectors.toMap(
+                      cn -> cn.getName().substring(cn.getName().indexOf("/clusters/") + 10),
+                      Cluster::getServeNodes)));
     }
   }
 
