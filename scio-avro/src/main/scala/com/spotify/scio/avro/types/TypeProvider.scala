@@ -55,7 +55,7 @@ private[types] object TypeProvider {
     schemaToType(c)(schema, annottees)
   }
 
-  def fileImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  def schemaFileImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     val file = extractStrings(c, "Missing file").head.trim.replaceAll("\n", "")
 
     val files = FileSystems.`match`(file)

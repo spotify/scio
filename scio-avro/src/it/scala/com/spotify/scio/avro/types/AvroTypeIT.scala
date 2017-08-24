@@ -52,7 +52,7 @@ object AvroTypeIT {
     """.stripMargin)
   class FromPathMultiLine
 
-  @AvroType.fromFile(
+  @AvroType.fromSchemaFile(
     """
       |gs://data-integration-test-eu/
       |avro-integration-test/folder-a/folder-b/
@@ -82,7 +82,7 @@ class AvroTypeIT extends FlatSpec with Matchers  {
                                                   |  } ]
                                                   |}""".stripMargin)
 
-  "fromFile" should "correctly read schema from GCS schema file" in {
+  "fromSchemaFile" should "correctly read schema from GCS schema file" in {
     FromFile.schema shouldBe expectedSchema
   }
 
