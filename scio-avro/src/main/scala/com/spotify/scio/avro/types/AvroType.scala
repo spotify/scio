@@ -125,6 +125,32 @@ object AvroType {
   }
 
   /**
+   * Macro annotation for a file which contains Avro schema.
+   *
+   * Generate case classes for an Avro schema. File can be either local or remote files.
+   * For example file can be located on Google Cloud Storage (GCS):
+   *
+   * {{{
+   *   @AvroType.fromSchemaFile("gs://myBucket/myFolder/schema-file.avsc")
+   *   class MyRecord
+   * }}}
+   *
+   * For local files, you need to either provide absolute path,
+   * or path relative to project root directory. For example:
+   *
+   * {{{
+   *   @AvroType.fromSchemaFile("sub-project/src/main/avro/schema-file.avsc")
+   *   class MyRecord
+   * }}}
+   *
+   * Also generate a companion object with convenience methods.
+   * @group annotation
+   */
+  class fromSchemaFile(schemaFile: String) extends StaticAnnotation {
+    def macroTransform(annottees: Any*): Any = macro TypeProvider.schemaFileImpl
+  }
+
+  /**
    * Macro annotation for case classes to be saved to Avro files.
    *
    * Note that this annotation does not generate case classes, only a companion object with

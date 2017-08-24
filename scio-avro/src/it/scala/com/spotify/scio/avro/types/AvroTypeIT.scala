@@ -23,7 +23,7 @@ import org.scalatest.{FlatSpec, Matchers}
 object AvroTypeIT {
   @AvroType.fromPath(
     "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro")
-  class FromFile
+  class FromPath
 
   @AvroType.fromPath(
     "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b")
@@ -41,8 +41,7 @@ object AvroTypeIT {
     "gs://data-integration-test-eu/*/*/*/")
   class FromGlob2
 
-  @AvroType.fromPath(
-    "gs://data-integration-test-eu/*/*/*/*.avro")
+  @AvroType.fromPath("gs://data-integration-test-eu/*/*/*/*.avro")
   class FromGlob3
 
   @AvroType.fromPath(
@@ -52,6 +51,14 @@ object AvroTypeIT {
       |shakespeare.avro
     """.stripMargin)
   class FromPathMultiLine
+
+  @AvroType.fromSchemaFile(
+    """
+      |gs://data-integration-test-eu/
+      |avro-integration-test/folder-a/folder-b/
+      |shakespeare-schema.avsc
+    """.stripMargin)
+  class FromFile
 }
 
 class AvroTypeIT extends FlatSpec with Matchers  {
@@ -75,11 +82,15 @@ class AvroTypeIT extends FlatSpec with Matchers  {
                                                   |  } ]
                                                   |}""".stripMargin)
 
-  "fromPath" should "correctly read schema from GCS file" in {
+  "fromSchemaFile" should "correctly read schema from GCS schema file" in {
     FromFile.schema shouldBe expectedSchema
   }
 
-  "fromPath" should "correctly read schema from GCS path" in {
+  "fromPath" should "correctly read schema from GCS file" in {
+    FromPath.schema shouldBe expectedSchema
+  }
+
+  it should "correctly read schema from GCS path" in {
     FromPath1.schema shouldBe expectedSchema
     FromPath2.schema shouldBe expectedSchema
   }
@@ -90,7 +101,7 @@ class AvroTypeIT extends FlatSpec with Matchers  {
     FromGlob3.schema shouldBe expectedSchema
   }
 
-  it should "correctly read schema from multilne GCS path" in {
+  it should "correctly read schema from multiline GCS path" in {
     FromPathMultiLine.schema shouldBe expectedSchema
   }
 

@@ -704,4 +704,24 @@ class TypeProviderTest extends FlatSpec with Matchers {
     DocumentedRecord.isInstanceOf[HasAvroDoc] shouldBe true
   }
 
+  @AvroType.fromSchemaFile(
+    """
+      |scio-avro/src/test/avro/
+      |scio-avro-test.avsc
+    """.stripMargin)
+  class FromResourceMultiLine
+
+  @AvroType.fromSchemaFile("scio-avro/src/test/avro/scio-avro-test.avsc")
+  class FromResource
+
+  "AvroType.fromSchemaFile" should "support reading schema from multiline resource" in {
+    val r = FromResourceMultiLine(1)
+    r.test shouldBe 1
+  }
+
+  it should "support reading schema from resource" in {
+    val r = FromResource(2)
+    r.test shouldBe 2
+  }
+
 }
