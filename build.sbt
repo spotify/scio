@@ -208,6 +208,14 @@ lazy val root: Project = Project(
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
     -- inProjects(scioCassandra2) -- inProjects(scioElasticsearch2)
     -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples),
+  // unidoc handles class paths differently than compile and may give older
+  // versions high precedence.
+  unidocAllClasspaths in (ScalaUnidoc, unidoc) := {
+    (unidocAllClasspaths in (ScalaUnidoc, unidoc)).value.map { cp =>
+      cp.filterNot(_.data.getCanonicalPath.matches(""".*guava-11\..*"""))
+        .filterNot(_.data.getCanonicalPath.matches(""".*bigtable-client-core-0\..*"""))
+    }
+  },
   aggregate in assembly := false
 ).aggregate(
   scioCore,
