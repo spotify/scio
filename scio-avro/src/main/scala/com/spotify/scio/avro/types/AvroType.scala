@@ -128,7 +128,7 @@ object AvroType {
    * Macro annotation for a file which contains Avro schema.
    *
    * Generate case classes for an Avro schema. File can be either local or remote files.
-   * For example file can be located on Google Cloud Storage:
+   * For example file can be located on Google Cloud Storage (GCS):
    *
    * {{{
    *   @AvroType.fromSchemaFile("gs://myBucket/myFolder/schema-file.avsc")
