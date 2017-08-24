@@ -28,7 +28,8 @@ import org.apache.hadoop.mapred.TaskAttemptContext
 
 import scala.collection.JavaConverters._
 
-private[cassandra] class BulkOperations(val opts: CassandraOptions) extends Serializable {
+private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallelism: Int)
+  extends Serializable {
 
   case class BulkConfig(protocol: ProtocolVersion, partitioner: String, numOfNodes: Int,
                         tableSchema: String, partitionKeyIndices: Seq[Int],
@@ -69,8 +70,6 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions) extends Seri
     BulkConfig(protocol, partitioner, numOfNodes, tableSchema, partitionKeyIndices, dataTypes)
   }
 
-  private def parallelism: Int = config.numOfNodes
-
   val serializeFn: Seq[Any] => Array[ByteBuffer] = (values: Seq[Any]) => {
     val b = Array.newBuilder[ByteBuffer]
     val i = values.iterator
@@ -87,7 +86,8 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions) extends Seri
     // clusters better
     val maxToken = BigInt(CompatUtil.maxToken(config.partitioner))
     val minToken = BigInt(CompatUtil.minToken(config.partitioner))
-    val (q, mod) = (maxToken - minToken + 1) /% parallelism
+    val numPartitions = if (parallelism > 0) parallelism else config.numOfNodes
+    val (q, mod) = (maxToken - minToken + 1) /% numPartitions
     val rangePerGroup = (if (mod != 0) q + 1 else q).bigInteger
 
     (values: Array[ByteBuffer]) => {

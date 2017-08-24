@@ -64,13 +64,17 @@ package object cassandra {
      * table partition key before written to the cluster. Therefore writes only occur at the end of
      * each window in streaming mode. The bulk writer writes to all nodes in a cluster so remote
      * nodes in a multi-datacenter cluster may become a bottleneck.
+     *
+     * @param opts Cassandra options
+     * @param parallelism number of concurrent bulk writers, default to number of Cassandra nodes
+     * @param f function to convert input data to values for the CQL statement
      */
-    def saveAsCassandra(opts: CassandraOptions)
+    def saveAsCassandra(opts: CassandraOptions, parallelism: Int = 0)
                        (f: T => Seq[Any]): Future[Tap[T]] = {
       if (self.context.isTest) {
         self.context.testOut(CassandraIO(opts))(self)
       } else {
-        val bulkOps = new BulkOperations(opts)
+        val bulkOps = new BulkOperations(opts, parallelism)
         self
           .map(f.andThen(bulkOps.serializeFn))
           .groupBy(bulkOps.partitionFn)
