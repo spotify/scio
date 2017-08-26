@@ -291,8 +291,8 @@ class TypeProviderTest extends FlatSpec with Matchers {
   class RecordWithRecords
 
   it should "support nested records" in {
-    val r = RecordWithRecords(Basic$1(1), Optional$1(Some(1)),
-      Array$1(List(1)), Map$1(Map("int" -> 1)))
+    val r = RecordWithRecords(RecordWithRecords$Basic(1), RecordWithRecords$Optional(Some(1)),
+      RecordWithRecords$Array(List(1)), RecordWithRecords$Map(Map("int" -> 1)))
     r.basic.intF shouldBe 1
     r.optional.intF shouldBe Some(1)
     r.array.intF shouldBe List(1)
@@ -392,12 +392,14 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   it should "support optional nested records" in {
     val r = RecordWithOptionalRecords(
-      Some(Basic$2(1)), Some(Optional$2(Some(1))),
-      Some(Array$2(List(1))), Some(Map$2(Map("int" -> 1))))
-    r.basic shouldBe Some(Basic$2(1))
-    r.optional shouldBe Some(Optional$2(Some(1)))
-    r.array shouldBe Some(Array$2(List(1)))
-    r.map shouldBe Some(Map$2(Map("int" -> 1)))
+      Some(RecordWithOptionalRecords$Basic(1)),
+      Some(RecordWithOptionalRecords$Optional(Some(1))),
+      Some(RecordWithOptionalRecords$Array(List(1))),
+      Some(RecordWithOptionalRecords$Map(Map("int" -> 1))))
+    r.basic shouldBe Some(RecordWithOptionalRecords$Basic(1))
+    r.optional shouldBe Some(RecordWithOptionalRecords$Optional(Some(1)))
+    r.array shouldBe Some(RecordWithOptionalRecords$Array(List(1)))
+    r.map shouldBe Some(RecordWithOptionalRecords$Map(Map("int" -> 1)))
   }
 
   @AvroType.fromSchema(
@@ -445,12 +447,14 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   it should "support nested record arrays" in {
     val r = RecordWithRecordArrays(
-      List(Basic$3(1)), List(Optional$3(Some(1))),
-      List(Array$3(List(1))), List(Map$3(Map("int" -> 1))))
-    r.basic shouldBe List(Basic$3(1))
-    r.optional shouldBe List(Optional$3(Some(1)))
-    r.array shouldBe List(Array$3(List(1)))
-    r.map shouldBe List(Map$3(Map("int" -> 1)))
+      List(RecordWithRecordArrays$Basic(1)),
+      List(RecordWithRecordArrays$Optional(Some(1))),
+      List(RecordWithRecordArrays$Array(List(1))),
+      List(RecordWithRecordArrays$Map(Map("int" -> 1))))
+    r.basic shouldBe List(RecordWithRecordArrays$Basic(1))
+    r.optional shouldBe List(RecordWithRecordArrays$Optional(Some(1)))
+    r.array shouldBe List(RecordWithRecordArrays$Array(List(1)))
+    r.map shouldBe List(RecordWithRecordArrays$Map(Map("int" -> 1)))
   }
 
   @AvroType.fromSchema(
@@ -498,12 +502,56 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   it should "support nested record maps" in {
     val r = RecordWithRecordMaps(
-      Map("basic" -> Basic$4(1)), Map("optional" -> Optional$4(Some(1))),
-      Map("array" -> Array$4(List(1))), Map("map" -> Map$4(Map("int" -> 1))))
-    r.basic shouldBe Map("basic" -> Basic$4(1))
-    r.optional shouldBe Map("optional" -> Optional$4(Some(1)))
-    r.array shouldBe  Map("array" -> Array$4(List(1)))
-    r.map shouldBe Map("map" -> Map$4(Map("int" -> 1)))
+      Map("basic" -> RecordWithRecordMaps$Basic(1)),
+      Map("optional" -> RecordWithRecordMaps$Optional(Some(1))),
+      Map("array" -> RecordWithRecordMaps$Array(List(1))),
+      Map("map" -> RecordWithRecordMaps$Map(Map("int" -> 1))))
+    r.basic shouldBe Map("basic" -> RecordWithRecordMaps$Basic(1))
+    r.optional shouldBe Map("optional" -> RecordWithRecordMaps$Optional(Some(1)))
+    r.array shouldBe  Map("array" -> RecordWithRecordMaps$Array(List(1)))
+    r.map shouldBe Map("map" -> RecordWithRecordMaps$Map(Map("int" -> 1)))
+  }
+
+  @AvroType.fromSchema(
+    """
+      |{
+      |  "type" : "record",
+      |  "name" : "Record",
+      |  "fields" : [
+      |    { "name" : "level1",
+      |      "type" : {
+      |        "type": "record",
+      |        "name": "Level1",
+      |        "fields": [
+      |           { "name" : "level2",
+      |             "type" : {
+      |               "type": "record",
+      |               "name": "Level2",
+      |               "fields": [
+      |                 { "name" : "level3",
+      |                   "type" : {
+      |                     "type": "record",
+      |                     "name": "Level3",
+      |                     "fields": [
+      |                       { "name": "intF", "type": "int"}
+      |                     ]}
+      |                 }
+      |               ]}
+      |           }
+      |        ]}
+      |    }
+      |  ]
+      |}
+      |""".stripMargin)
+  class RecordWithNestedRecords
+
+  it should "support multiple levels of nesting records" in {
+    val r =
+      RecordWithNestedRecords(
+        RecordWithNestedRecords$Level1(
+          RecordWithNestedRecords$Level1$Level2(
+            RecordWithNestedRecords$Level1$Level2$Level3(1))))
+    r.level1.level2.level3.intF shouldBe 1
   }
 
   @AvroType.fromSchema(

@@ -17,10 +17,7 @@
 
 package com.spotify.scio.avro.types
 
-import java.util.{List => JList}
-
 import org.apache.avro.Schema
-import org.apache.avro.Schema.Field
 import org.apache.avro.Schema.Type._
 
 import scala.collection.JavaConverters._
@@ -29,11 +26,12 @@ import scala.collection.JavaConverters._
 object SchemaUtil {
 
   /** Convert schema to case class definitions. */
-  def toPrettyString(schema: Schema, indent: Int = 0): String =
-    getCaseClass(schema.getFields, schema.getName, indent)
+  def toPrettyString(className: String, schema: Schema, indent: Int = 0): String =
+    getCaseClass(className, schema, indent)
 
   // scalastyle:off cyclomatic.complexity
-  private def getFieldType(fieldName: String,
+  private def getFieldType(className: String,
+                           fieldName: String,
                            fieldSchema: Schema,
                            indent: Int): (String, Seq[String]) = {
     fieldSchema.getType match {
@@ -45,11 +43,13 @@ object SchemaUtil {
       case STRING | ENUM => ("String", Seq.empty)
       case BYTES => ("ByteString", Seq.empty)
       case ARRAY =>
-        val (fieldType, nested) = getFieldType(fieldName, fieldSchema.getElementType, indent)
+        val (fieldType, nested) =
+          getFieldType(className, fieldName, fieldSchema.getElementType, indent)
         (s"List[$fieldType]", nested)
       case MAP =>
-        val (fieldType, nested) = getFieldType(fieldName, fieldSchema.getValueType, indent)
-        (s"Map[String, $fieldType]", nested)
+        val (fieldType, nested) =
+          getFieldType(className, fieldName, fieldSchema.getValueType, indent)
+        (s"Map[String,$fieldType]", nested)
       case UNION =>
         val unionTypes = fieldSchema.getTypes.asScala.map(_.getType).distinct
         if (unionTypes.size != 2 || !unionTypes.contains(NULL)) {
@@ -57,28 +57,38 @@ object SchemaUtil {
             s"type: ${fieldSchema.getType} is not supported. " +
             s"Union type needs to contain exactly one 'null' type and one non null type.")
         }
-        val (fieldType, nested) = getFieldType(fieldName, fieldSchema.getTypes.get(1), indent)
+        val (fieldType, nested) =
+          getFieldType(className,
+            fieldName,
+            fieldSchema.getTypes.asScala.filter(_.getType != NULL).head,
+            indent)
         (s"Option[$fieldType] = None", nested)
       case RECORD =>
-        val className = NameProvider.getUniqueName(fieldSchema.getName)
-        val nested = getCaseClass(fieldSchema.getFields, className, indent)
-        (className, Seq(nested))
+        val nestedClassName = s"$className$$${fieldSchema.getName}"
+        val nested =
+          getCaseClass(nestedClassName,
+            fieldSchema,
+            indent)
+        (nestedClassName, Seq(nested))
       case t => throw new IllegalArgumentException(s"Type: $t not supported")
     }
   }
   // scalastyle:on cyclomatic.complexity
 
-  private def getCaseClass(fields: JList[Field], name: String, indent: Int): String = {
-    val xs = fields.asScala
+  private def getCaseClass(className: String,
+                           schema: Schema,
+                           indent: Int): String = {
+    val xs = schema.getFields.asScala
       .map { f =>
-        val (fieldType, nested) = getFieldType(f.name, f.schema, indent)
+        val (fieldType, nested) =
+          getFieldType(className, f.name, f.schema, indent)
         (escapeNameIfReserved(f.name) + ": " + fieldType, nested)
       }
     val lines = xs.map(_._1)
     val nested = xs.flatMap(_._2)
 
     val sb = StringBuilder.newBuilder
-    sb.append(s"case class $name(")
+    sb.append(s"case class $className(")
     if (indent > 0) {
       sb.append("\n")
     }
