@@ -28,85 +28,121 @@ import scala.collection.JavaConverters._
 class SchemaUtilTest extends FlatSpec with Matchers {
 
   "toPrettyString()" should "support primitive types" in {
-    SchemaUtil.toPrettyString(parseSchema(s"${basicFields()}")) should equal (
+    SchemaUtil.toPrettyString("BasicRecord", parseSchema(s"${basicFields()}")) should equal (
       """
-        |case class BasicFields(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
+        |case class BasicRecord(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
       """.stripMargin.trim)
   }
 
   it should "support optional primitive types" in {
-    SchemaUtil.toPrettyString(parseSchema(s"${basicFields(OPTIONAL)}")) should equal (
+    SchemaUtil.toPrettyString("OptionalRecord", parseSchema(s"${basicFields(OPTIONAL)}")) should equal (
       """
-        |case class OptionalFields(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
+        |case class OptionalRecord(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
       """.stripMargin.trim)
   }
 
   it should "support primitive type arrays" in {
-    SchemaUtil.toPrettyString(parseSchema(s"${basicFields(ARRAY)}")) should equal (
+    SchemaUtil.toPrettyString("ArrayRecord", parseSchema(s"${basicFields(ARRAY)}")) should equal (
       """
-        |case class ArrayFields(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
+        |case class ArrayRecord(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
       """.stripMargin.trim)
   }
 
   it should "support primitive type maps" in {
-    SchemaUtil.toPrettyString(parseSchema(s"${basicFields(MAP)}")) should equal (
+    SchemaUtil.toPrettyString("MapRecord", parseSchema(s"${basicFields(MAP)}")) should equal (
       """
-        |case class MapFields(boolF: Map[String, Boolean], intF: Map[String, Int], longF: Map[String, Long], floatF: Map[String, Float], doubleF: Map[String, Double], stringF: Map[String, String], byteStringF: Map[String, ByteString])
+        |case class MapRecord(boolF: Map[String,Boolean], intF: Map[String,Int], longF: Map[String,Long], floatF: Map[String,Float], doubleF: Map[String,Double], stringF: Map[String,String], byteStringF: Map[String,ByteString])
       """.stripMargin.trim)
   }
 
   it should "support nested records" in {
-    NameProvider.reset()
-    SchemaUtil.toPrettyString(parseSchema(recordFields())) should equal (
+    SchemaUtil.toPrettyString("NestedRecord", parseSchema(recordFields())) should equal (
       """
-        |case class NestedFields(basic: BasicFields$1, optional: OptionalFields$1, array: ArrayFields$1, map: MapFields$1)
-        |case class BasicFields$1(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
-        |case class OptionalFields$1(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
-        |case class ArrayFields$1(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
-        |case class MapFields$1(boolF: Map[String, Boolean], intF: Map[String, Int], longF: Map[String, Long], floatF: Map[String, Float], doubleF: Map[String, Double], stringF: Map[String, String], byteStringF: Map[String, ByteString])
+        |case class NestedRecord(basic: NestedRecord$BasicFields, optional: NestedRecord$OptionalFields, array: NestedRecord$ArrayFields, map: NestedRecord$MapFields)
+        |case class NestedRecord$BasicFields(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
+        |case class NestedRecord$OptionalFields(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
+        |case class NestedRecord$ArrayFields(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
+        |case class NestedRecord$MapFields(boolF: Map[String,Boolean], intF: Map[String,Int], longF: Map[String,Long], floatF: Map[String,Float], doubleF: Map[String,Double], stringF: Map[String,String], byteStringF: Map[String,ByteString])
       """.stripMargin.trim)
   }
 
   it should "support nested optional records" in {
-    NameProvider.reset()
-    SchemaUtil.toPrettyString(parseSchema(recordFields(OPTIONAL))) should equal (
+    SchemaUtil.toPrettyString("OptionalNestedRecord", parseSchema(recordFields(OPTIONAL))) should equal (
       """
-        |case class OptionalNestedFields(basic: Option[BasicFields$1] = None, optional: Option[OptionalFields$1] = None, array: Option[ArrayFields$1] = None, map: Option[MapFields$1] = None)
-        |case class BasicFields$1(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
-        |case class OptionalFields$1(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
-        |case class ArrayFields$1(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
-        |case class MapFields$1(boolF: Map[String, Boolean], intF: Map[String, Int], longF: Map[String, Long], floatF: Map[String, Float], doubleF: Map[String, Double], stringF: Map[String, String], byteStringF: Map[String, ByteString])
+        |case class OptionalNestedRecord(basic: Option[OptionalNestedRecord$BasicFields] = None, optional: Option[OptionalNestedRecord$OptionalFields] = None, array: Option[OptionalNestedRecord$ArrayFields] = None, map: Option[OptionalNestedRecord$MapFields] = None)
+        |case class OptionalNestedRecord$BasicFields(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
+        |case class OptionalNestedRecord$OptionalFields(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
+        |case class OptionalNestedRecord$ArrayFields(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
+        |case class OptionalNestedRecord$MapFields(boolF: Map[String,Boolean], intF: Map[String,Int], longF: Map[String,Long], floatF: Map[String,Float], doubleF: Map[String,Double], stringF: Map[String,String], byteStringF: Map[String,ByteString])
       """.stripMargin.trim)
   }
 
   it should "support nested record arrays" in {
-    NameProvider.reset()
-    SchemaUtil.toPrettyString(parseSchema(recordFields(ARRAY))) should equal (
+    SchemaUtil.toPrettyString("ArrayNestedRecord", parseSchema(recordFields(ARRAY))) should equal (
       """
-        |case class ArrayNestedFields(basic: List[BasicFields$1], optional: List[OptionalFields$1], array: List[ArrayFields$1], map: List[MapFields$1])
-        |case class BasicFields$1(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
-        |case class OptionalFields$1(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
-        |case class ArrayFields$1(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
-        |case class MapFields$1(boolF: Map[String, Boolean], intF: Map[String, Int], longF: Map[String, Long], floatF: Map[String, Float], doubleF: Map[String, Double], stringF: Map[String, String], byteStringF: Map[String, ByteString])
+        |case class ArrayNestedRecord(basic: List[ArrayNestedRecord$BasicFields], optional: List[ArrayNestedRecord$OptionalFields], array: List[ArrayNestedRecord$ArrayFields], map: List[ArrayNestedRecord$MapFields])
+        |case class ArrayNestedRecord$BasicFields(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
+        |case class ArrayNestedRecord$OptionalFields(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
+        |case class ArrayNestedRecord$ArrayFields(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
+        |case class ArrayNestedRecord$MapFields(boolF: Map[String,Boolean], intF: Map[String,Int], longF: Map[String,Long], floatF: Map[String,Float], doubleF: Map[String,Double], stringF: Map[String,String], byteStringF: Map[String,ByteString])
       """.stripMargin.trim)
   }
 
   it should "support nested record maps" in {
-    NameProvider.reset()
-    SchemaUtil.toPrettyString(parseSchema(recordFields(MAP))) should equal (
+    SchemaUtil.toPrettyString("MapNestedRecord", parseSchema(recordFields(MAP))) should equal (
       """
-        |case class MapNestedFields(basic: Map[String, BasicFields$1], optional: Map[String, OptionalFields$1], array: Map[String, ArrayFields$1], map: Map[String, MapFields$1])
-        |case class BasicFields$1(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
-        |case class OptionalFields$1(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
-        |case class ArrayFields$1(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
-        |case class MapFields$1(boolF: Map[String, Boolean], intF: Map[String, Int], longF: Map[String, Long], floatF: Map[String, Float], doubleF: Map[String, Double], stringF: Map[String, String], byteStringF: Map[String, ByteString])
+        |case class MapNestedRecord(basic: Map[String,MapNestedRecord$BasicFields], optional: Map[String,MapNestedRecord$OptionalFields], array: Map[String,MapNestedRecord$ArrayFields], map: Map[String,MapNestedRecord$MapFields])
+        |case class MapNestedRecord$BasicFields(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
+        |case class MapNestedRecord$OptionalFields(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
+        |case class MapNestedRecord$ArrayFields(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
+        |case class MapNestedRecord$MapFields(boolF: Map[String,Boolean], intF: Map[String,Int], longF: Map[String,Long], floatF: Map[String,Float], doubleF: Map[String,Double], stringF: Map[String,String], byteStringF: Map[String,ByteString])
+      """.stripMargin.trim)
+  }
+
+  it should "support multiple levels of nested records" in {
+    val schema = parseSchema("""
+                               |{
+                               |  "type" : "record",
+                               |  "name" : "Record",
+                               |  "fields" : [
+                               |    { "name" : "level1",
+                               |      "type" : {
+                               |        "type": "record",
+                               |        "name": "Level1",
+                               |        "fields": [
+                               |           { "name" : "level2",
+                               |             "type" : {
+                               |               "type": "record",
+                               |               "name": "Level2",
+                               |               "fields": [
+                               |                 { "name" : "level3",
+                               |                   "type" : {
+                               |                     "type": "record",
+                               |                     "name": "Level3",
+                               |                     "fields": [
+                               |                       { "name": "intF", "type": "int"}
+                               |                     ]}
+                               |                 }
+                               |               ]}
+                               |           }
+                               |        ]}
+                               |    }
+                               |  ]
+                               |}
+                               |""".stripMargin)
+    SchemaUtil.toPrettyString("Record", schema) should equal (
+      """
+        |case class Record(level1: Record$Level1)
+        |case class Record$Level1(level2: Record$Level1$Level2)
+        |case class Record$Level1$Level2(level3: Record$Level1$Level2$Level3)
+        |case class Record$Level1$Level2$Level3(intF: Int)
       """.stripMargin.trim)
   }
 
   it should "support indent" in {
-    SchemaUtil.toPrettyString(parseSchema(s"${basicFields()}"), 2) should equal (
+    SchemaUtil.toPrettyString("BasicRecord", parseSchema(s"${basicFields()}"), 2) should equal (
       """
-        |case class BasicFields(
+        |case class BasicRecord(
         |  boolF: Boolean,
         |  intF: Int,
         |  longF: Long,
@@ -129,8 +165,8 @@ class SchemaUtilTest extends FlatSpec with Matchers {
           name =>
             new Schema.Field(name, Schema.create(Schema.Type.LONG), null, null.asInstanceOf[Any])
         }.asJava)
-    SchemaUtil.toPrettyString(schema) should equal (
-      s"""|case class Row($expectedFields)""".stripMargin
+    SchemaUtil.toPrettyString("Record", schema) should equal (
+      s"""|case class Record($expectedFields)""".stripMargin
     )
   }
 

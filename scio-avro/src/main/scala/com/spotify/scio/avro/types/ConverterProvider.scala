@@ -139,11 +139,11 @@ private[types] object ConverterProvider {
 
     def cast(tree: Tree, tpe: Type): Tree = {
       tpe match {
-        case t if t =:= typeOf[Boolean] => tree
-        case t if t =:= typeOf[Int] => tree
-        case t if t =:= typeOf[Long] => tree
-        case t if t =:= typeOf[Float] => tree
-        case t if t =:= typeOf[Double] => tree
+        case t if t =:= typeOf[Boolean] => q"Boolean.box($tree)"
+        case t if t =:= typeOf[Int] => q"Int.box($tree)"
+        case t if t =:= typeOf[Long] => q"Long.box($tree)"
+        case t if t =:= typeOf[Float] => q"Float.box($tree)"
+        case t if t =:= typeOf[Double] => q"Double.box($tree)"
         case t if t =:= typeOf[String] => tree
 
         case t if t =:= typeOf[ByteString] =>
@@ -193,9 +193,9 @@ private[types] object ConverterProvider {
       }
       val schemaOf = q"${p(c, ScioAvroType)}.schemaOf[$tpe]"
       val header = q"val result = new ${p(c, ApacheAvro)}.generic.GenericData.Record($schemaOf)"
-      val body = sets.map { case (fieldName, value) =>
-
-        q"if ($value != null) result.put($fieldName, $value)"
+      val body = sets.map {
+        case (fieldName, value) =>
+          q"if ($value != null) result.put($fieldName, $value)"
       }
       val footer = q"result"
       q"{$header; ..$body; $footer}"

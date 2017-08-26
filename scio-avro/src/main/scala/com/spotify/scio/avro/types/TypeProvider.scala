@@ -129,7 +129,7 @@ private[types] object TypeProvider {
     import c.universe._
     checkMacroEnclosed(c)
 
-    val (r, caseClassTree, name) = annottees.map(_.tree) match {
+    val r = annottees.map(_.tree) match {
       case l @ List(q"$mods class $name[..$tparams] $ctorMods(..$fields) extends { ..$earlydefns } with ..$parents { $self => ..$body }") if mods.asInstanceOf[Modifiers].hasFlag(Flag.CASE) =>
         if (parents.map(_.toString()).toSet != Set("scala.Product", "scala.Serializable")) {
           c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the case class $l")
@@ -149,15 +149,18 @@ private[types] object TypeProvider {
                  ${p(c, ScioAvroType)}.schemaOf[$name]""")
 
         val caseClassTree = q"""${caseClass(c)(name, fields, body)}"""
-        (q"""$caseClassTree
+
+        if (shouldDumpClassesForPlugin) {
+          dumpCodeForScalaPlugin(c)(Seq.empty, caseClassTree, name.toString)
+        }
+
+        q"""$caseClassTree
             ${companion(c)(name, docTrait ++ fnTrait,
           schemaMethod ++ docMethod,
           fields.asInstanceOf[Seq[c.Tree]])}
-        """, caseClassTree, name.toString())
+        """
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
-
-    if (shouldDumpClassesForPlugin) { dumpCodeForScalaPlugin(c)(Seq.empty, caseClassTree, name) }
 
     c.Expr[Any](r)
   }
@@ -170,7 +173,8 @@ private[types] object TypeProvider {
     checkMacroEnclosed(c)
 
     // Returns: (raw type, e.g. Int, String, NestedRecord, nested case class definitions)
-    def getField(fieldName: String, fieldSchema: Schema): (Tree, Seq[Tree]) = {
+    def getField(className: String, fieldName: String, fieldSchema: Schema)
+    : (Tree, Seq[Tree]) = {
       fieldSchema.getType match {
         case UNION =>
           val unionTypes = fieldSchema.getTypes.asScala.map(_.getType).distinct
@@ -180,7 +184,9 @@ private[types] object TypeProvider {
               s"Union type needs to contain exactly one 'null' type and one non null type.")
           }
           val (field, recordClasses) =
-            getField(fieldName, fieldSchema.getTypes.asScala.filter(_.getType != NULL).head)
+            getField(className,
+              fieldName,
+              fieldSchema.getTypes.asScala.filter(_.getType != NULL).head)
           (tq"_root_.scala.Option[$field]", recordClasses)
         case BOOLEAN =>
           (tq"_root_.scala.Boolean", Nil)
@@ -197,23 +203,28 @@ private[types] object TypeProvider {
         case BYTES =>
           (tq"_root_.com.google.protobuf.ByteString", Nil)
         case ARRAY =>
-          val (field, generatedCaseClasses) = getField(fieldName, fieldSchema.getElementType)
+          val (field, generatedCaseClasses) =
+            getField(className, fieldName, fieldSchema.getElementType)
           (tq"_root_.scala.List[$field]", generatedCaseClasses)
         case MAP =>
-          val (fieldType, recordCaseClasses) = getField(fieldName, fieldSchema.getValueType)
+          val (fieldType, recordCaseClasses) =
+            getField(className, fieldName, fieldSchema.getValueType)
           (tq"_root_.scala.collection.Map[_root_.java.lang.String,$fieldType]", recordCaseClasses)
         case RECORD =>
-          val name = NameProvider.getUniqueName(fieldSchema.getName)
-          val (fields, recordClasses) = extractFields(fieldSchema.getFields)
-          (q"${Ident(TypeName(name))}", Seq(q"case class ${TypeName(name)}(..$fields)") ++ recordClasses)
+          val nestedClassName = s"$className$$${fieldSchema.getName}"
+          val (fields, recordClasses) =
+            extractFields(nestedClassName, fieldSchema)
+          (q"${Ident(TypeName(nestedClassName))}", Seq(q"case class ${TypeName(nestedClassName)}(..$fields)") ++ recordClasses)
         case t =>
           c.abort(c.enclosingPosition, s"type: $t not supported")
       }
     }
 
     // Returns: ("fieldName: fieldType", nested case class definitions)
-    def extractField(fieldName: String, fieldSchema: Schema): (Tree, Seq[Tree]) = {
-      val (fieldType, recordClasses) = getField(SchemaUtil.unescapeNameIfReserved(fieldName), fieldSchema)
+    def extractField(className: String, fieldName: String, fieldSchema: Schema)
+    : (Tree, Seq[Tree]) = {
+      val (fieldType, recordClasses) =
+        getField(className, SchemaUtil.unescapeNameIfReserved(fieldName), fieldSchema)
       fieldSchema.getType match {
         case UNION =>
           (q"val ${TermName(fieldName)}: $fieldType = None", recordClasses)
@@ -222,14 +233,14 @@ private[types] object TypeProvider {
       }
     }
 
-    def extractFields(fields: JList[Schema.Field]): (Seq[Tree], Seq[Tree]) = {
-      val f = fields.asScala.map(s => extractField(s.name, s.schema))
+    def extractFields(className: String, schema: Schema)
+    : (Seq[Tree], Seq[Tree]) = {
+      val f = schema.getFields.asScala
+        .map(f => extractField(className, f.name, f.schema))
       (f.map(_._1), f.flatMap(_._2))
     }
 
-    val (fields, recordClasses) = extractFields(schema.getFields)
-
-    val (r, caseClassTree, name) = annottees.map(_.tree) match {
+    val r = annottees.map(_.tree) match {
       case l @ List(q"$mods class $name[..$tparams] $ctorMods(..$cfields) extends { ..$earlydefns } with ..$parents { $self => ..$body }") if mods.asInstanceOf[Modifiers].flags == NoFlags =>
         if (parents.map(_.toString()).toSet != Set("scala.AnyRef")) {
           c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the case class $l")
@@ -237,6 +248,8 @@ private[types] object TypeProvider {
         if (cfields.nonEmpty) {
           c.abort(c.enclosingPosition, s"Invalid annotation, don't provide class fields $l")
         }
+
+        val (fields, recordClasses) = extractFields(name.toString, schema)
 
         val docs = getRecordDocs(c)(l)
         val docMethod = docs.headOption
@@ -250,14 +263,17 @@ private[types] object TypeProvider {
                  new ${p(c, ApacheAvro)}.Schema.Parser().parse(${schema.toString})""")
 
         val caseClassTree = q"${caseClass(c)(name, fields, Nil)}"
-        (q"""$caseClassTree
+
+        if (shouldDumpClassesForPlugin) {
+          dumpCodeForScalaPlugin(c)(recordClasses, caseClassTree, name.toString())
+        }
+
+        q"""$caseClassTree
            ${companion(c)(name, docTrait, schemaMethod ++ docMethod, fields)}
            ..$recordClasses
-         """, caseClassTree, name.toString())
+         """
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
-
-    if (shouldDumpClassesForPlugin) { dumpCodeForScalaPlugin(c)(recordClasses, caseClassTree, name) }
 
     c.Expr[Any](r)
   }
@@ -287,7 +303,7 @@ private[types] object TypeProvider {
 
     q"""object ${TermName(name.toString)} extends ${p(c, ScioAvroType)}.HasAvroSchema[$name] with ..$traits {
           override def toPrettyString(indent: Int = 0): String =
-            ${p(c, s"$ScioAvro.types.SchemaUtil")}.toPrettyString(this.schema, indent)
+            ${p(c, s"$ScioAvro.types.SchemaUtil")}.toPrettyString(this.getClass.getName, this.schema, indent)
           override def fromGenericRecord: (${p(c, ApacheAvro)}.generic.GenericRecord => $name) =
             ${p(c, ScioAvroType)}.fromGenericRecord[$name]
           override def toGenericRecord: ($name => ${p(c, ApacheAvro)}.generic.GenericRecord) =
@@ -356,7 +372,6 @@ private[types] object TypeProvider {
     }
   }
 
-  // scalastyle:off line.size.limit
   private def pShowCode(c: blackbox.Context)(records: Seq[c.Tree], caseClass: c.Tree): Seq[String] = {
     // print only records and case class and do it nicely so that we can just inject those
     // in scala plugin.
@@ -371,7 +386,6 @@ private[types] object TypeProvider {
       case _ => ""
     }
   }
-  // scalastyle:on line.size.limit
 
   private def genHashForMacro(owner: String, srcFile: String): String = {
     Hashing.murmur3_32().newHasher()
@@ -408,20 +422,3 @@ private[types] object TypeProvider {
   }
 }
 // scalastyle:on line.size.limit
-
-private[types] object NameProvider {
-
-  private val m = MMap.empty[String, Int].withDefaultValue(0)
-
-  def reset() : Unit = m.clear
-
-  /**
-   * Generate a unique name for a nested record.
-   * This is necessary since we create case classes for nested records and name them with their
-   * field names.
-   */
-  def getUniqueName(name: String): String = m.synchronized {
-    m(name) += 1
-    name + "$" + m(name)
-  }
-}
