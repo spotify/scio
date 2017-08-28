@@ -56,9 +56,6 @@ private[scio] object ScioUtil {
   def isRemoteRunner(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Boolean =
     !isLocalRunner(runner)
 
-  // FIXME: remove this
-  def isGcsUri(uri: URI): Boolean = uri.getScheme == "gs"
-
   def classOf[T: ClassTag]: Class[T] = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
 
   def getScalaCoder[T: ClassTag]: Coder[T] = {
