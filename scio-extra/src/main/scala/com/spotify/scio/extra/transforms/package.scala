@@ -118,54 +118,6 @@ package object transforms {
   }
 
   /**
-   * Enhanced version of [[SCollection]] with rate limiting methods.
-   */
-  implicit class RateLimitingSCollection[T: ClassTag](val self: SCollection[T]) {
-
-    /**
-     * Rate limit the number of elements this step will process per second. Useful to rate limit
-     * throughput for a job writing to a database or making calls to external services. This is
-     * a way to attempt to make some surrounding steps obey the same rate limit however there are
-     * no guarantees.
-     *
-     * Note that this only limits the throughput for the current step as well as any steps
-     * running within the same machine (within a serialization boundary). Therefore any maps
-     * and filters surrounding this will be somewhat rate limited usually until a groupBy, reduce,
-     * or join (or anything that uses those under the hood e.g. distinct, fold) is hit.
-     *
-     * DUE TO THE ARCHITECTURE OF DOFNs IN BEAM, THIS DOES NOT GUARANTEE THAT A SURROUNDING
-     * MAP/TRANSFORM WILL ACTUALLY BE RATE LIMITED. IT FOR THE MOST PART WORKS HOWEVER YOU SHOULD
-     * BE ESPECIALLY CAREFUL. FOR BEST RESULTS, TURN OFF AUTOSCALING.
-     *
-     * @param maxElementsPerSecond The maxmimum number of elements which should be processed
-     *                             per second
-     */
-    def withRateLimit(maxElementsPerSecond: Double): SCollection[T] = {
-      val runner = self.context.options.getRunner
-      val maxNumWorkers = {
-        if (ScioUtil.isLocalRunner(runner)) {
-          1
-        }
-        else if (classOf[DataflowRunner] isAssignableFrom runner) {
-          val pipelineOptions = self.context.optionsAs[DataflowPipelineOptions]
-          val numWorkers = Math.max(pipelineOptions.getNumWorkers, pipelineOptions.getMaxNumWorkers)
-          require(
-            numWorkers != 0,
-            "Rate limiting only available when numWorkers or maxNumWorkers is explicitly set"
-          )
-          numWorkers
-        }
-        else {
-          throw new NotImplementedError(
-            s"rateLimitThroughput not implemented for runner $runner"
-          )
-        }
-      }
-      self.applyTransform(ParDo.of(new RateLimiterDoFn[T](maxElementsPerSecond / maxNumWorkers)))
-    }
-  }
-
-  /**
    * Enhanced version of [[SCollection]] with specialized versions of flatMap.
    */
   implicit class SpecializedFlatMapSCollection[T: ClassTag](val self: SCollection[T]) {
