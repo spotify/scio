@@ -45,10 +45,8 @@ import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options._
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.extensions.gcp.options.{GcpOptions, GcsOptions}
-import org.apache.beam.sdk.io.TFRecordIO.CompressionType
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub => psio}
 import org.apache.beam.sdk.options._
-import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
 import org.apache.beam.sdk.util.CoderUtils
