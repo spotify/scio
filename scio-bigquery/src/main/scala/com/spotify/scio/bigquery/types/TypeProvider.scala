@@ -67,10 +67,9 @@ private[types] object TypeProvider {
     schemaToType(c)(schema, annottees, traits, overrides)
   }
 
-  private def getTableDescription(c: blackbox.Context)(tree: Seq[c.universe.Tree])
+  private def getTableDescription(c: blackbox.Context)(cd: c.universe.ClassDef)
   : List[c.universe.Tree] = {
-    import c.universe._
-    tree.head.asInstanceOf[ClassDef].mods.annotations
+    cd.mods.annotations
       .filter(_.children.head.toString().matches("^new description$"))
       .map(_.children.tail.head)
   }
@@ -81,20 +80,25 @@ private[types] object TypeProvider {
     checkMacroEnclosed(c)
 
     val (r, caseClassTree, name) = annottees.map(_.tree) match {
-      case l @ List(q"$mods class $name[..$tparams] $ctorMods(..$fields) extends { ..$earlydefns } with ..$parents { $self => ..$body }") if mods.asInstanceOf[Modifiers].hasFlag(Flag.CASE) =>
+      case (clazzDef @ q"$mods class $cName[..$tparams] $ctorMods(..$fields) extends { ..$earlydefns } with ..$parents { $self => ..$body }") :: tail if mods.asInstanceOf[Modifiers].hasFlag(Flag.CASE) =>
         if (parents.map(_.toString()).toSet != Set("scala.Product", "scala.Serializable")) {
-          c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the case class $l")
+          c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the case class $clazzDef")
         }
-        val desc = getTableDescription(c)(l)
-        val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SType)}.schemaOf[$name]"
+        val desc = getTableDescription(c)(clazzDef.asInstanceOf[ClassDef])
+        val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SType)}.schemaOf[$cName]"
         val defTblDesc = desc.headOption.map(d => q"override def tableDescription: _root_.java.lang.String = $d")
-        val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${name.toString}, indent)"
-        val fnTrait = tq"${TypeName(s"Function${fields.size}")}[..${fields.map(_.children.head)}, $name]"
+        val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${cName.toString}, indent)"
+        val fnTrait = tq"${TypeName(s"Function${fields.size}")}[..${fields.map(_.children.head)}, $cName]"
         val traits = (if (fields.size <= 22) Seq(fnTrait) else Seq()) ++ defTblDesc.map(_ => tq"${p(c, SType)}.HasTableDescription")
-        val caseClassTree = q"""${caseClass(c)(name, fields, body)}"""
+        val taggedFields = fields.map {
+          case ValDef(m, n, tpt, rhs) =>
+            c.universe.ValDef(c.universe.Modifiers(m.flags, m.privateWithin, m.annotations), n, tq"$tpt @${typeOf[BigQueryTag]}", rhs)
+        }
+        val caseClassTree = q"""${caseClass(c)(cName, taggedFields, body)}"""
+        val maybeCompanion = tail.headOption
         (q"""$caseClassTree
-            ${companion(c)(name, traits, Seq(defSchema, defToPrettyString) ++ defTblDesc, fields.asInstanceOf[Seq[Tree]].size)}
-        """, caseClassTree, name.toString())
+            ${companion(c)(cName, traits, Seq(defSchema, defToPrettyString) ++ defTblDesc, taggedFields.asInstanceOf[Seq[Tree]].size, maybeCompanion)}
+        """, caseClassTree, cName.toString())
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
     debug(s"TypeProvider.toTableImpl:")
@@ -146,7 +150,8 @@ private[types] object TypeProvider {
     // Returns: ("fieldName: fieldType", nested case class definitions)
     def toField(tfs: TableFieldSchema): (Tree, Seq[Tree]) = {
       val (ft, r) = getFieldType(tfs)
-      (q"${TermName(tfs.getName)}: $ft", r)
+      val params = q"val ${TermName(tfs.getName)}: $ft @${typeOf[BigQueryTag]}"
+      (params, r)
     }
 
     def toFields(fields: JList[TableFieldSchema]): (Seq[Tree], Seq[Tree]) = {
@@ -157,25 +162,26 @@ private[types] object TypeProvider {
     val (fields, records) = toFields(schema.getFields)
 
     val (r, caseClassTree, name) = annottees.map(_.tree) match {
-      case l @ List(q"$mods class $name[..$tparams] $ctorMods(..$cfields) extends { ..$earlydefns } with ..$parents { $self => ..$body }") if mods.asInstanceOf[Modifiers].flags == NoFlags =>
+      case (clazzDef @ q"$mods class $cName[..$tparams] $ctorMods(..$cfields) extends { ..$earlydefns } with ..$parents { $self => ..$body }") :: tail if mods.asInstanceOf[Modifiers].flags == NoFlags =>
         if (parents.map(_.toString()).toSet != Set("scala.AnyRef")) {
-          c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the case class $l")
+          c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the class $clazzDef")
         }
         if (cfields.nonEmpty) {
-          c.abort(c.enclosingPosition, s"Invalid annotation, don't provide class fields $l")
+          c.abort(c.enclosingPosition, s"Invalid annotation, don't provide class fields $clazzDef")
         }
 
-        val desc = getTableDescription(c)(l)
+        val desc = getTableDescription(c)(clazzDef.asInstanceOf[ClassDef])
         val defTblDesc = desc.headOption.map(d => q"override def tableDescription: _root_.java.lang.String = $d")
         val defTblTrait = defTblDesc.map(_ => tq"${p(c, SType)}.HasTableDescription").toSeq
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SUtil)}.parseSchema(${schema.toString})"
-        val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${name.toString}, indent)"
+        val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${cName.toString}, indent)"
 
-        val caseClassTree = q"""${caseClass(c)(name, fields, Nil)}"""
+        val caseClassTree = q"""${caseClass(c)(cName, fields, body)}"""
+        val maybeCompanion = tail.headOption
         (q"""$caseClassTree
-            ${companion(c)(name, traits ++ defTblTrait, Seq(defSchema, defToPrettyString) ++ overrides ++ defTblDesc, fields.size)}
+            ${companion(c)(cName, traits ++ defTblTrait, Seq(defSchema, defToPrettyString) ++ overrides ++ defTblDesc, fields.size, maybeCompanion)}
             ..$records
-        """, caseClassTree, name.toString())
+        """, caseClassTree, cName.toString)
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
     debug(s"TypeProvider.schemaToType[$schema]:")
@@ -217,11 +223,11 @@ private[types] object TypeProvider {
   private def caseClass(c: blackbox.Context)
                        (name: c.TypeName, fields: Seq[c.Tree], body: Seq[c.Tree]): c.Tree = {
     import c.universe._
-    q"case class $name(..$fields) extends ${p(c, SType)}.HasAnnotation { ..$body }"
+    q"@_root_.com.spotify.scio.bigquery.types.BigQueryTag case class $name(..$fields) extends ${p(c, SType)}.HasAnnotation { ..$body }"
   }
   /** Generate a companion object. */
   private def companion(c: blackbox.Context)
-                       (name: c.TypeName, traits: Seq[c.Tree], methods: Seq[c.Tree], numFields: Int): c.Tree = {
+                       (name: c.TypeName, traits: Seq[c.Tree], methods: Seq[c.Tree], numFields: Int, originalCompanion: Option[c.Tree]): c.Tree = {
     import c.universe._
 
     val overrideFlag = if (traits.exists(_.toString().contains("Function"))) Flag.OVERRIDE else NoFlags
@@ -229,10 +235,21 @@ private[types] object TypeProvider {
 
     val m = converters(c)(name) ++ tupled ++ methods
     val tn = TermName(name.toString)
-    q"""object $tn extends ${p(c, SType)}.HasSchema[$name] with ..$traits {
+
+    if (originalCompanion.isDefined) {
+      val q"$mods object $cName extends { ..$_ } with ..$parents { $_ => ..$body }" = originalCompanion.get
+      // need to filter out Object, otherwise get duplicate Object error
+      // also can't get a FQN of scala.AnyRef which gets erased to java.lang.Object, can't find a
+      // sane way to =:= scala.AnyRef
+      val filteredTraits = (traits ++ parents).toSet.filterNot(_.toString == "scala.AnyRef")
+      q"""$mods object $cName extends ${p(c, SType)}.HasSchema[$name] with ..$filteredTraits {
+          ..${body ++ m}
+        }"""
+    } else {
+      q"""object $tn extends ${p(c, SType)}.HasSchema[$name] with ..$traits {
           ..$m
-        }
-    """
+        }"""
+    }
   }
   /** Generate override converter methods for HasSchema[T]. */
   private def converters(c: blackbox.Context)(name: c.TypeName): Seq[c.Tree] = {
