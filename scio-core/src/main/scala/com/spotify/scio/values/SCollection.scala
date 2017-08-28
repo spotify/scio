@@ -19,9 +19,8 @@
 
 package com.spotify.scio.values
 
-import java.io.{File, PrintStream}
+import java.io.PrintStream
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
-import java.net.URI
 
 import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
 import com.google.datastore.v1.Entity
@@ -826,20 +825,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     }
   }
 
-  private[scio] def pathWithShards(path: String) = {
-    if (ScioUtil.isLocalRunner(this.context.options.getRunner) &&
-      ScioUtil.isLocalUri(new URI(path))) {
-      context.addPreRunFn(() => {
-        // Create output directory when running locally with local file system
-        val f = new File(path)
-        if (f.exists()) {
-          throw new RuntimeException(s"Output directory $path already exists")
-        }
-        f.mkdirs()
-      })
-    }
-    path.replaceAll("\\/+$", "") + "/part"
-  }
+  private[scio] def pathWithShards(path: String) = path.replaceAll("\\/+$", "") + "/part"
 
   private def avroOut[U](write: gio.AvroIO.Write[U], path: String, numShards: Int, suffix: String,
                          codec: CodecFactory,
