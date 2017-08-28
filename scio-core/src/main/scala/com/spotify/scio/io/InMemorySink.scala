@@ -17,7 +17,6 @@
 
 package com.spotify.scio.io
 
-import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 
 import scala.collection.concurrent.TrieMap
@@ -26,10 +25,7 @@ private[scio] object InMemorySink {
 
   private val cache: TrieMap[String, Iterable[Any]] = TrieMap.empty
 
-  def save[T](id: String, data: SCollection[T]): Unit = {
-    require(
-      ScioUtil.isLocalRunner(data.context.options.getRunner),
-      "In memory sink can only be used with DirectRunner")
+  def save[T](id: String, data: SCollection[T]): Unit =
     data
       .groupBy(_ => ())
       .values
@@ -37,7 +33,6 @@ private[scio] object InMemorySink {
         cache += (id -> values)
         ()
       }
-  }
 
   def get[T](id: String): Iterable[T] = cache(id).asInstanceOf[Iterable[T]]
 
