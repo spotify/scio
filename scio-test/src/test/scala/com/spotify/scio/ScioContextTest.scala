@@ -99,19 +99,6 @@ class ScioContextTest extends PipelineSpec {
     output.delete()
   }
 
-  // scalastyle:off no.whitespace.before.left.bracket
-  it should "fail on close() if output directory exists" in {
-    val output = Files.createTempDirectory("scio-output").toFile
-
-    val sc = ScioContext()
-    sc.parallelize(Seq("a", "b", "c")).saveAsTextFile(output.toString)
-
-    the [RuntimeException] thrownBy sc.close() should have message
-      s"Output directory ${output.toString} already exists"
-    output.delete()
-  }
-  // scalastyle:on no.whitespace.before.left.bracket
-
   it should "support save metrics on close for finished pipeline" in {
     val metricsFile = Files.createTempFile("scio-metrics-dump", ".json").toFile
     val opts = PipelineOptionsFactory.create()
