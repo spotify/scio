@@ -296,7 +296,6 @@ lazy val scioAvro: Project = Project(
 ).settings(
   commonSettings ++ macroSettings ++ itSettings,
   description := "Scio add-on for working with Avro",
-  libraryDependencies ++= beamDependencies,
   libraryDependencies ++= Seq(
     "org.apache.avro" % "avro" % avroVersion,
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
@@ -314,7 +313,6 @@ lazy val scioBigQuery: Project = Project(
 ).settings(
   commonSettings ++ macroSettings ++ itSettings,
   description := "Scio add-on for Google BigQuery",
-  libraryDependencies ++= beamDependencies,
   libraryDependencies ++= Seq(
     "commons-io" % "commons-io" % commonsIoVersion,
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
