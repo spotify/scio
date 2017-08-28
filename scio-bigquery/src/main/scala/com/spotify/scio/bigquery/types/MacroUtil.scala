@@ -25,6 +25,7 @@ import scala.reflect.runtime.universe._
 private[types] object MacroUtil {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
+  private val bqAnn = Annotation(q"new ${typeOf[BigQueryTag]}")
 
   // Case class helpers for runtime reflection
 
@@ -46,8 +47,18 @@ private[types] object MacroUtil {
 
   def isField(c: blackbox.Context)(s: c.Symbol): Boolean =
     s.isPublic && s.isMethod && !s.isSynthetic && !s.isConstructor
-  def getFields(c: blackbox.Context)(t: c.Type): Iterable[c.Symbol] =
-    t.decls.filter(isField(c))
+  def getFields(c: blackbox.Context)(t: c.Type): Iterable[c.Symbol] = {
+    val fields = t.decls.filter(isField(c))
+    // if type was macro generated it should have bigquery tag on it
+    if (t.typeSymbol.annotations.map(_.toString).contains(bqAnn.toString)) {
+      fields.filter(_.info.resultType.isInstanceOf[c.universe.AnnotatedType])
+        .filter(_.info.resultType.asInstanceOf[c.universe.AnnotatedType]
+          // Annotation does not have a sane equals thus string comparison
+          .annotations.map(_.toString).contains(bqAnn.toString))
+    } else {
+      fields
+    }
+  }
 
   // Debugging
 

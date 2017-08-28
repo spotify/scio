@@ -63,6 +63,9 @@ package object bigquery {
   /** Typed BigQuery annotations and converters. */
   val BigQueryType = com.spotify.scio.bigquery.types.BigQueryType
 
+  /** BigQuery tag for macro generated classes/fields. */
+  type BigQueryTag = com.spotify.scio.bigquery.types.BigQueryTag
+
   /**
    * Annotation for BigQuery field [[com.spotify.scio.bigquery.types.description description]].
    */
