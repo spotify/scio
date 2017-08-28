@@ -20,7 +20,7 @@ package com.spotify.scio.values
 import java.io.File
 import java.net.URI
 
-import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
+import com.spotify.scio.util.RemoteFileUtil
 import org.apache.beam.sdk.options.PipelineOptions
 
 import scala.collection.JavaConverters._
@@ -43,16 +43,9 @@ private[scio] abstract class FileDistCache[F](options: PipelineOptions) extends 
   protected lazy val data: F = init
 
   private val rfu = RemoteFileUtil.create(options)
-  private val isRemoteRunner = ScioUtil.isRemoteRunner(options.getRunner)
 
   protected def prepareFiles(uris: Seq[URI]): Seq[File] =
     rfu.download(uris.asJava).asScala.map(_.toFile)
-
-  protected def verifyUri(uri: URI): Unit =
-    if (isRemoteRunner) {
-      require(ScioUtil.isRemoteUri(uri), s"Unsupported path $uri")
-    }
-
 }
 
 private[scio] class MockDistCache[F](val value: F) extends DistCache[F] {
@@ -67,7 +60,6 @@ private[scio] class DistCacheSingle[F](val uri: URI,
                                        val initFn: File => F,
                                        options: PipelineOptions)
   extends FileDistCache[F](options) {
-  verifyUri(uri)
   override protected def init: F = initFn(prepareFiles(Seq(uri)).head)
 }
 
@@ -75,6 +67,5 @@ private[scio] class DistCacheMulti[F](val uris: Seq[URI],
                                       val initFn: Seq[File] => F,
                                       options: PipelineOptions)
   extends FileDistCache[F](options) {
-  uris.foreach(verifyUri)
   override protected def init: F = initFn(prepareFiles(uris))
 }
