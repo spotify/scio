@@ -17,23 +17,20 @@
 
 package com.spotify.scio
 
-import java.net.InetSocketAddress
 import java.lang.{Iterable => JIterable}
+import java.net.InetSocketAddress
 
-import org.joda.time.Duration
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
-import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import org.apache.beam.runners.dataflow.DataflowRunner
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException
 import org.apache.beam.sdk.io.{elasticsearch => esio}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.elasticsearch.action.ActionRequest
+import org.joda.time.Duration
 
-import scala.concurrent.Future
 import scala.collection.JavaConverters._
+import scala.concurrent.Future
 
 /**
  * Main package for Elasticsearch APIs. Import all.
@@ -51,22 +48,6 @@ package object elasticsearch {
 
   implicit class ElasticsearchSCollection[T](val self: SCollection[T]) extends AnyVal {
 
-    private def defaultNumOfShards: Int = {
-      val runner = self.context.options.getRunner
-      if (ScioUtil.isLocalRunner(runner)) {
-        1
-      } else if (classOf[DataflowRunner] isAssignableFrom runner) {
-        val opts = self.context.optionsAs[DataflowPipelineOptions]
-        val n = math.max(opts.getNumWorkers, opts.getMaxNumWorkers)
-        require(
-          n != 0,
-          "Cannot determine number of workers, either numWorkers or maxNumWorkers must be set")
-        n
-      } else {
-        throw new NotImplementedError(s"You must specify numWorkers explicitly for $runner")
-      }
-    }
-
     /**
      * Save this SCollection into Elasticsearch.
      *
@@ -79,13 +60,14 @@ package object elasticsearch {
      */
     def saveAsElasticsearch(esOptions: ElasticsearchOptions,
                             flushInterval: Duration = Duration.standardSeconds(1),
-                            numOfShards: Long = defaultNumOfShards,
+                            numOfShards: Long = 0,
                             maxBulkRequestSize: Int = 3000,
                             errorFn: BulkExecutionException => Unit = m => throw m)
                            (f: T => Iterable[ActionRequest[_]]): Future[Tap[T]] = {
       if (self.context.isTest) {
         self.context.testOut(ElasticsearchIO[T](esOptions))(self)
       } else {
+        val shards = if (numOfShards > 0) numOfShards else esOptions.servers.size
         self.applyInternal(
           esio.ElasticsearchIO.Write
             .withClusterName(esOptions.clusterName)
@@ -94,7 +76,7 @@ package object elasticsearch {
               override def apply(t: T): JIterable[ActionRequest[_]] = f(t).asJava
             })
             .withFlushInterval(flushInterval)
-            .withNumOfShard(numOfShards)
+            .withNumOfShard(shards)
             .withMaxBulkRequestSize(maxBulkRequestSize)
             .withError(new esio.ThrowingConsumer[BulkExecutionException] {
               override def accept(t: BulkExecutionException): Unit = errorFn(t)
