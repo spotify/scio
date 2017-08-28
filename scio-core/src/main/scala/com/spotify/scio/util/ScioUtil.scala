@@ -46,15 +46,10 @@ private[scio] object ScioUtil {
 
   def isLocalUri(uri: URI): Boolean = uri.getScheme == null || uri.getScheme == "file"
 
-  def isRemoteUri(uri: URI): Boolean = !isLocalUri(uri)
-
   def isLocalRunner(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Boolean = {
     require(runner != null, "Pipeline runner not set!")
     classOf[DirectRunner] isAssignableFrom runner
   }
-
-  def isRemoteRunner(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Boolean =
-    !isLocalRunner(runner)
 
   // FIXME: remove this
   def isGcsUri(uri: URI): Boolean = uri.getScheme == "gs"
