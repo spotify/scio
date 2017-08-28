@@ -826,7 +826,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     }
   }
 
-  private[values] def pathWithShards(path: String) = {
+  private[scio] def pathWithShards(path: String) = {
     if (ScioUtil.isLocalRunner(this.context.options.getRunner) &&
       ScioUtil.isLocalUri(new URI(path))) {
       context.addPreRunFn(() => {

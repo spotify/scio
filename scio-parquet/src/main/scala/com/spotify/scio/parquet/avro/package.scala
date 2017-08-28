@@ -20,12 +20,16 @@ package com.spotify.scio.parquet
 import java.lang.{Boolean => JBoolean}
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.AvroIO
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
+import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.io.hadoop.inputformat.HadoopInputFormatIO
+import org.apache.beam.sdk.io.{DefaultFilenamePolicy, FileBasedSink, HadoopWriteFiles}
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
@@ -33,6 +37,7 @@ import org.apache.parquet.avro.AvroParquetInputFormat
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 
+import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 /**
@@ -99,6 +104,60 @@ package object avro {
     }
 
     private def setInputPaths(job: Job, path: String): Unit = {
+      // This is needed since `FileInputFormat.setInputPaths` validates paths locally and requires
+      // the user's GCP credentials.
+      GcsConnectorUtil.setCredentials(job)
+
+      FileInputFormat.setInputPaths(job, path)
+
+      // It will interfere with credentials in Dataflow workers
+      if (!ScioUtil.isLocalRunner(self.options.getRunner)) {
+        GcsConnectorUtil.unsetCredentials(job)
+      }
+    }
+
+  }
+
+  /** Enhanced version of [[SCollection]] with Parquet Avro methods. */
+  implicit class ParquetAvroSCollection[T : ClassTag]
+  (val self: SCollection[T]) {
+    /**
+     * Save this SCollection of Avro records as a Parquet file.
+     * @param schema must be not null if `T` is of type
+     *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
+     */
+    def saveAsParquetAvroFile(path: String,
+                              numShards: Int = 0,
+                              schema: Schema = null,
+                              suffix: String = ""): Future[Tap[T]] = {
+      if (self.context.isTest) {
+        self.context.testOut(AvroIO(path))(self)
+      } else {
+        val job = Job.getInstance()
+        if (ScioUtil.isLocalRunner(self.context.options.getRunner)) {
+          GcsConnectorUtil.setCredentials(job)
+        }
+
+        val cls = ScioUtil.classOf[T]
+        val writerSchema = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+          ReflectData.get().getSchema(cls)
+        } else {
+          schema
+        }
+        val resource = FileBasedSink.convertToFileResourceIfPossible(self.pathWithShards(path))
+        val prefix = StaticValueProvider.of(resource)
+        val policy = DefaultFilenamePolicy.constructUsingStandardParameters(
+          prefix, null, ".parquet", false)
+        val sink = new ParquetAvroSink[T](prefix, policy, writerSchema, job.getConfiguration)
+        val t = HadoopWriteFiles.to(sink).withNumShards(numShards)
+        self.applyInternal(t)
+      }
+      Future.failed(new NotImplementedError("Parquet Avro future not implemented"))
+    }
+  }
+
+  private object GcsConnectorUtil {
+    def setCredentials(job: Job): Unit = {
       // These are needed since `FileInputFormat.setInputPaths` validates paths locally and
       // requires the user's GCP credentials.
       sys.env.get("GOOGLE_APPLICATION_CREDENTIALS") match {
@@ -110,18 +169,14 @@ package object avro {
           job.getConfiguration.set("fs.gs.auth.client.id", "32555940559.apps.googleusercontent.com")
           job.getConfiguration.set("fs.gs.auth.client.secret", "ZmssLNjJy2998hD4CTg2ejr2")
       }
-
-      FileInputFormat.setInputPaths(job, path)
-
-      // These will interfere with credentials in Dataflow workers
-      if (!ScioUtil.isLocalRunner(self.options.getRunner)) {
-        job.getConfiguration.unset("fs.gs.auth.service.account.json.keyfile")
-        job.getConfiguration.unset("fs.gs.auth.service.account.enable")
-        job.getConfiguration.unset("fs.gs.auth.client.id")
-        job.getConfiguration.unset("fs.gs.auth.client.secret")
-      }
     }
 
+    def unsetCredentials(job: Job): Unit = {
+      job.getConfiguration.unset("fs.gs.auth.service.account.json.keyfile")
+      job.getConfiguration.unset("fs.gs.auth.service.account.enable")
+      job.getConfiguration.unset("fs.gs.auth.client.id")
+      job.getConfiguration.unset("fs.gs.auth.client.secret")
+    }
   }
 
 }
