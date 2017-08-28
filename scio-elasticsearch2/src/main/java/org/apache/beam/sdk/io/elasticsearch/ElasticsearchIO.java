@@ -104,7 +104,7 @@ public class ElasticsearchIO {
      *
      * @param numOfShard to construct a batch to bulk write to Elasticsearch.
      */
-    public static<T> Bound withNumOfShard(Long numOfShard) {
+    public static<T> Bound withNumOfShard(long numOfShard) {
       return new Bound<>().withNumOfShard(numOfShard);
     }
 
@@ -129,7 +129,7 @@ public class ElasticsearchIO {
       private final InetSocketAddress[] servers;
       private final Duration flushInterval;
       private final SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests;
-      private final Long numOfShard;
+      private final long numOfShard;
       private final int maxBulkRequestSize;
       private final ThrowingConsumer<BulkExecutionException> error;
 
@@ -137,7 +137,7 @@ public class ElasticsearchIO {
                     final InetSocketAddress[] servers,
                     final Duration flushInterval,
                     final SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests,
-                    final Long numOfShard,
+                    final long numOfShard,
                     final int maxBulkRequestSize,
                     final ThrowingConsumer<BulkExecutionException> error) {
         this.clusterName = clusterName;
@@ -150,7 +150,7 @@ public class ElasticsearchIO {
       }
 
       Bound() {
-        this(null, null, null, null, null, CHUNK_SIZE, defaultErrorHandler());
+        this(null, null, null, null, 0, CHUNK_SIZE, defaultErrorHandler());
       }
 
       public Bound<T> withClusterName(String clusterName) {
@@ -169,7 +169,7 @@ public class ElasticsearchIO {
         return new Bound<>(clusterName, servers, flushInterval, toIndexRequest, numOfShard, maxBulkRequestSize, error);
       }
 
-      public Bound<T> withNumOfShard(Long numOfShard) {
+      public Bound<T> withNumOfShard(long numOfShard) {
         return new Bound<>(clusterName, servers, flushInterval, toActionRequests, numOfShard, maxBulkRequestSize, error);
       }
 
@@ -186,8 +186,8 @@ public class ElasticsearchIO {
         checkNotNull(clusterName);
         checkNotNull(servers);
         checkNotNull(toActionRequests);
-        checkNotNull(numOfShard);
         checkNotNull(flushInterval);
+        checkArgument(numOfShard > 0);
         checkArgument(maxBulkRequestSize > 0);
         input
             .apply("Assign To Shard", ParDo.of(new AssignToShard<>(numOfShard)))
@@ -207,9 +207,9 @@ public class ElasticsearchIO {
     }
 
     private static class AssignToShard<T> extends DoFn<T, KV<Long, T>> {
-      private final Long numOfShard;
+      private final long numOfShard;
 
-      public AssignToShard(Long numOfShard) {
+      public AssignToShard(long numOfShard) {
         this.numOfShard = numOfShard;
       }
 
