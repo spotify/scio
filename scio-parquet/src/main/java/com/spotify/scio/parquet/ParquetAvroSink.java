@@ -42,7 +42,7 @@ public class ParquetAvroSink<T> extends HadoopFileBasedSink<T> {
   }
 
   @Override
-  public WriteOperation<T> createWriteOperation() {
+  public HadoopFileBasedSink.WriteOperation<T> createWriteOperation() {
     return new ParquetAvroWriteOperation<T>(this, schemaString, conf);
   }
 
@@ -64,7 +64,7 @@ public class ParquetAvroSink<T> extends HadoopFileBasedSink<T> {
     }
 
     @Override
-    public Writer<T> createWriter() throws Exception {
+    public HadoopFileBasedSink.Writer<T> createWriter() throws Exception {
       return new ParquetAvroWriter<>(this, new Schema.Parser().parse(schemaString), conf);
     }
   }
