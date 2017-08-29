@@ -17,8 +17,19 @@
 
 package com.spotify.scio
 
+/**
+ * Main package for Avro APIs. Import all.
+ *
+ * {{{
+ * import com.spotify.scio.avro._
+ * }}}
+ */
 package object avro {
+
+  /** Typed Avro annotations and converters. */
   val AvroType = com.spotify.scio.avro.types.AvroType
 
+  /** Annotation for Avro field and record documentation. */
   type doc = com.spotify.scio.avro.types.doc
+
 }

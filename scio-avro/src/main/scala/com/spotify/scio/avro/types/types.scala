@@ -22,20 +22,21 @@ import scala.annotation.StaticAnnotation
 package object types {
 
   /**
-    * Case class and argument annotation to get Avro field and record docs.
-    *
-    * To be used with case class fields annotated with [[AvroType.toSchema]], For example:
-    *
-    * Example:
-    *
-    * {{{
-    * AvroType.toSchema
-    * @doc("User Record")
-    * case class User(@doc("user name") name: String,
-    *                 @doc("user age") age: Int)
-    * }}}
-    */
+   * Case class and argument annotation to get Avro field and record docs.
+   *
+   * To be used with case class fields annotated with [[AvroType.toSchema]], For example:
+   *
+   * Example:
+   *
+   * {{{
+   * AvroType.toSchema
+   * @doc("User Record")
+   * case class User(@doc("user name") name: String,
+   *                 @doc("user age") age: Int)
+   * }}}
+   */
   // scalastyle:off class.name
   class doc(value: String) extends StaticAnnotation
   // scalastyle:on class.name
+
 }
