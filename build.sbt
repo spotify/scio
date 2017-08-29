@@ -491,7 +491,8 @@ lazy val scioTensorFlow: Project = Project(
   description := "Scio add-on for TensorFlow",
   libraryDependencies ++= Seq(
     "org.tensorflow" % "tensorflow" % tensorFlowVersion,
-    "org.tensorflow" % "proto" % tensorFlowVersion
+    "org.tensorflow" % "proto" % tensorFlowVersion,
+    "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion
   )
 ).dependsOn(
   scioCore,

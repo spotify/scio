@@ -18,18 +18,24 @@
 package com.spotify.scio.values
 
 import java.io.IOException
+import java.nio.ByteBuffer
 import java.nio.file.Files
 import javax.annotation.Nullable
 
-import com.spotify.scio.io.{TFRecordFileTap, Tap}
-import com.spotify.scio.tensorflow.TFRecordIO
+import com.google.common.base.Charsets
+import com.spotify.scio.io.{TFRecordFileTap, Tap, TextTap}
+import com.spotify.scio.tensorflow.{TFExampleIO, TFRecordIO}
+import com.spotify.scio.testing.TextIO
 import com.spotify.scio.util.ScioUtil
+import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.TFRecordIO.CompressionType
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Setup, Teardown}
+import org.apache.beam.sdk.util.MimeTypes
 import org.apache.beam.sdk.{io => gio}
 import org.slf4j.LoggerFactory
 import org.tensorflow._
+import org.tensorflow.example.Example
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -118,12 +124,118 @@ class TensorFlowSCollectionFunctions[T: ClassTag](@transient val self: SCollecti
    */
   def predict[V: ClassTag](graphUri: String,
                            fetchOps: Seq[String],
-                           @Nullable config: Array[Byte] = null)
+                           config: Array[Byte] = null)
                           (inFn: T => Map[String, Tensor])
                           (outFn: Map[String, Tensor] => V): SCollection[V] = {
     val graphBytes = self.context.distCache(graphUri)(f => Files.readAllBytes(f.toPath))
     self.parDo(new PredictDoFn[T, V](graphBytes, fetchOps, config, inFn, outFn))
   }
+}
+
+private[scio] object TFExampleSCollectionFunctions {
+
+  sealed trait FeatureSpec
+  final case class SeqStrFeatureSpec(x: Seq[String]) extends FeatureSpec
+  final case class SColSeqStrFeatureSpec(x: SCollection[Seq[String]]) extends FeatureSpec
+
+  /**
+   * Feature specification factory for [[TFExampleSCollectionFunctions.saveAsTfExampleFile]].
+   * In most cases you want to use [[https://github.com/spotify/featran featran]] and
+   * [[FeatureSpec.fromSCollection]], which would give you feature specification for free.
+   */
+  object FeatureSpec {
+
+    /**
+     * [[Seq]] based feature specification.
+     *
+     * @param seq [[Seq]] containing feature specifications.
+     */
+    def fromSeq(seq: Seq[String]): FeatureSpec = SeqStrFeatureSpec(seq)
+
+    /**
+     * [[SCollection]] based feature specification.
+     *
+     * @param scol [[SCollection]] with a single element of [[Seq]] containing feature
+     *             specifications.
+     */
+    def fromSCollection(scol: SCollection[Seq[String]]): FeatureSpec = SColSeqStrFeatureSpec(scol)
+
+    /**
+     * Case class field name based feature specification.
+     *
+     * @note uses reflection to fetch field names, should not be used in performance critical path.
+     */
+    import scala.reflect.runtime.universe._
+    def fromCaseClass[T: TypeTag]: FeatureSpec = {
+      require(typeOf[T].typeSymbol.isClass && typeOf[T].typeSymbol.asClass.isCaseClass,
+        "Type must be a case class")
+      val s = typeOf[T].members.collect {
+        case m: MethodSymbol if m.isCaseAccessor => m.name.decodedName.toString
+      }.toSeq
+      SeqStrFeatureSpec(s)
+    }
+  }
+
+}
+
+class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
+  import TFExampleSCollectionFunctions._
+
+  /**
+   * Save this SCollection of [[org.tensorflow.example.Example]] as a TensorFlow TFRecord file.
+   *
+   * @param featureSpec feature spec for the Examples, use the
+   *                    [[com.spotify.scio.tensorflow.FeatureSpec]] to define a specification.
+   * @param featureSpecPath path to save the feature specification to, by default it will be
+   *                        `${path}/_feature_spec`
+   *
+   * @group output
+   */
+  def saveAsTfExampleFile(path: String,
+                          featureSpec: FeatureSpec,
+                          suffix: String = ".tfrecords",
+                          compressionType: CompressionType = CompressionType.NONE,
+                          numShards: Int = 0,
+                          featureSpecPath: String = null)
+                         (implicit ev: T <:< Example)
+  : (Future[Tap[Example]], Future[Tap[String]]) = {
+    require(featureSpec != null, "Feature spec can't be null")
+    require(path != null, "Path can't be null")
+    val _featureSpecPath =
+      Option(featureSpecPath).getOrElse(path.replaceAll("\\/+$", "") + "/_feature_spec")
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val fs: SCollection[Seq[String]] = featureSpec match {
+      case SeqStrFeatureSpec(x) => self.context.parallelize(Seq(x))
+      case SColSeqStrFeatureSpec(x) => x
+    }
+    val singletonFeatureSpec = fs
+      .groupBy(_ => ())
+      .flatMap { case (_, e) =>
+        require(e.size == 1, "Feature specification must contain a single element")
+        e
+      }
+    if (self.context.isTest) {
+      self.context.testOut(TextIO(_featureSpecPath))(fs.flatMap(identity))
+      self.context.testOut(TFExampleIO(path))(self.asInstanceOf[SCollection[Example]])
+      (self.saveAsInMemoryTap.asInstanceOf[Future[Tap[Example]]],
+        singletonFeatureSpec.saveAsInMemoryTap.asInstanceOf[Future[Tap[String]]])
+    } else {
+      singletonFeatureSpec.map { e =>
+        val featureSpecResource = FileSystems.matchNewResource(_featureSpecPath, false)
+        val writer = FileSystems.create(featureSpecResource, MimeTypes.TEXT)
+        try {
+          e.foreach(p => writer.write(ByteBuffer.wrap(s"$p\n".getBytes(Charsets.UTF_8))))
+        } finally {
+          writer.close()
+        }
+      }
+      val featureSpecFuture = Future(TextTap(_featureSpecPath))
+      import com.spotify.scio.tensorflow._
+      val r = self.map(_.toByteArray).saveAsTfRecordFile(path, suffix, compressionType, numShards)
+      (r.map(_.map(Example.parseFrom)), featureSpecFuture)
+    }
+  }
+
 }
 
 class TFRecordSCollectionFunctions[T <: Array[Byte]](val self: SCollection[T]) {
