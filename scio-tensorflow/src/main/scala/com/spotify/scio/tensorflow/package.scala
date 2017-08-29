@@ -20,6 +20,7 @@ package com.spotify.scio
 import com.spotify.scio.io.{FileStorage, TFFileStorageFunctions}
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values._
+import org.tensorflow.example.Example
 
 import scala.reflect.ClassTag
 
@@ -28,6 +29,12 @@ package object tensorflow {
   import scala.language.implicitConversions
 
   case class TFRecordIO(path: String) extends TestIO[Array[Byte]](path)
+
+  case class TFExampleIO(path: String) extends TestIO[Example](path)
+
+  /** Expose [[TFExampleSCollectionFunctions.FeatureSpec]]. */
+  val FeatureSpec: TFExampleSCollectionFunctions.FeatureSpec.type =
+    TFExampleSCollectionFunctions.FeatureSpec
 
   /** Implicit conversion from [[SCollection]] to [[TensorFlowSCollectionFunctions]]. */
   implicit def makeTensorFlowSCollectionFunctions[T: ClassTag](s: SCollection[T])
@@ -44,4 +51,8 @@ package object tensorflow {
   /** Implicit conversion from [[FileStorage]] to [[TFFileStorageFunctions]]. */
   implicit def makeTFFileStorageFunctions(s: FileStorage): TFFileStorageFunctions =
     new TFFileStorageFunctions(s)
+
+  /** Implicit conversion from [[SCollection]] to [[TFExampleSCollectionFunctions]]. */
+  implicit def makeTFExampleSCollectionFunctions[T <: Example](s: SCollection[T])
+  : TFExampleSCollectionFunctions[T] = new TFExampleSCollectionFunctions(s)
 }
