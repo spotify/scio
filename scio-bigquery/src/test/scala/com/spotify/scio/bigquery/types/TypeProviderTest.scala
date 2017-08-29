@@ -401,4 +401,53 @@ class TypeProviderTest extends FlatSpec with Matchers {
     DescriptionTbl.tableDescription shouldBe "Foo bar table description"
   }
 
+  @BigQueryType.fromSchema(
+    """
+      |{
+      |  "fields": [ {"mode": "REQUIRED", "name": "f1", "type": "INTEGER"} ]
+      |}
+    """.stripMargin)
+  class Artisanal1FieldWithBody {
+    object InnerObject {
+      def innerObjectInnerMethod: String = "so artisanal"
+    }
+    val bar: Long = 42L
+    def foo: String = "foo"
+  }
+
+  it should "support user defined body in fromSchema" in {
+    Artisanal1Field.getClass.getMethods.map(_.getName) should not contain "tupled"
+    RecordWithRequiredPrimitives.schema should not be null
+    (classOf[(TableRow => RecordWithRequiredPrimitives)]
+      isAssignableFrom RecordWithRequiredPrimitives.fromTableRow.getClass) shouldBe true
+    (classOf[(ToTable => RecordWithRequiredPrimitives)]
+      isAssignableFrom RecordWithRequiredPrimitives.toTableRow.getClass) shouldBe true
+    Artisanal1FieldWithBody(3).bar shouldBe 42L
+    Artisanal1FieldWithBody(3).foo shouldBe "foo"
+    Artisanal1FieldWithBody(3).InnerObject.innerObjectInnerMethod shouldBe "so artisanal"
+  }
+
+  @BigQueryType.toTable
+  case class Artisanal1ToTableWithBody(a1: Int) {
+    object InnerObject {
+      def innerObjectInnerMethod: String = "so artisanal"
+    }
+    val bar: Long = 42L
+    def foo: String = "foo"
+  }
+
+  object Artisanal1ToTableWithBody {
+    def foo(o: Artisanal1ToTableWithBody): Int = o.a1
+  }
+
+  it should "support user defined body in toTable and custom object method"  in {
+    classOf[Function1[Int, Artisanal1ToTableWithBody]] isAssignableFrom
+      Artisanal1ToTableWithBody.getClass
+    Artisanal1ToTableWithBody(10).a1 shouldBe 10
+    Artisanal1ToTableWithBody(3).bar shouldBe 42L
+    Artisanal1ToTableWithBody(3).foo shouldBe "foo"
+    Artisanal1ToTableWithBody(3).InnerObject.innerObjectInnerMethod shouldBe "so artisanal"
+    Artisanal1ToTableWithBody.foo(Artisanal1ToTableWithBody(3)) shouldBe 3
+  }
+
 }
