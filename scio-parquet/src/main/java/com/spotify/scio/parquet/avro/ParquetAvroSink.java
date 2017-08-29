@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.parquet;
+package com.spotify.scio.parquet.avro;
 
 import org.apache.avro.Schema;
 import org.apache.beam.sdk.io.FileBasedSink;
