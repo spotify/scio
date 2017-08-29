@@ -193,11 +193,11 @@ private[types] object ConverterProvider {
     def constructor(tpe: Type, fn: TermName): Tree = {
       val sets = tpe.erasure match {
         case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
-        case t => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
+        case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
       val header = q"val result = new ${p(c, GModel)}.TableRow()"
       val body = sets.map { case (name, value) =>
-        q"if ($value != null) result.set($name, $value)"
+        q"if (${p(c, SBQ)}.types.ConverterUtil.notNull($value)) result.set($name, $value)"
       }
       val footer = q"result"
       q"{$header; ..$body; $footer}"
@@ -217,4 +217,8 @@ private[types] object ConverterProvider {
   // scalastyle:on cyclomatic.complexity
   // scalastyle:on method.length
 
+}
+
+object ConverterUtil {
+  @inline def notNull[@specialized(Boolean, Int, Long, Float, Double) T](x: T): Boolean = x != null
 }
