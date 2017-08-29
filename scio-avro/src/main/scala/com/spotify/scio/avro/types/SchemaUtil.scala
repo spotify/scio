@@ -26,7 +26,11 @@ import scala.collection.JavaConverters._
 object SchemaUtil {
 
   /** Convert schema to case class definitions. */
-  def toPrettyString(className: String, schema: Schema, indent: Int = 0): String =
+  def toPrettyString1(schema: Schema, indent: Int = 0): String =
+    toPrettyString(schema.getName, schema, indent)
+
+  /** Convert schema to case class definitions. */
+  def toPrettyString(className: String, schema: Schema, indent: Int): String =
     getCaseClass(className, schema, indent)
 
   // scalastyle:off cyclomatic.complexity

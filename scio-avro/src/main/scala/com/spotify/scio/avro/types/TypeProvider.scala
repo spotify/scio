@@ -18,7 +18,6 @@
 package com.spotify.scio.avro.types
 
 import java.nio.channels.Channels
-import java.util.{List => JList}
 
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
@@ -29,24 +28,20 @@ import org.apache.avro.Schema.Type._
 import org.apache.avro.file.DataFileStream
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.io.fs.{MatchResult, ResourceId}
 import org.apache.beam.sdk.io.fs.MatchResult.Status
+import org.apache.beam.sdk.io.fs.{MatchResult, ResourceId}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.{Map => MMap}
 import scala.reflect.macros._
-import scala.util.Try
 
 // scalastyle:off line.size.limit
 private[types] object TypeProvider {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  /**
-   * In order to use FileSystems functions we first need to register
-   * all FileSystemRegistrars located on our class path.
-   */
+  // In order to use FileSystems functions we first need to register all FileSystemRegistrars
+  // located on our class path.
   registerFileSystemRegistrars
 
   def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
@@ -412,13 +407,12 @@ private[types] object TypeProvider {
   }
 
 
-  private def registerFileSystemRegistrars = {
-    /*
-     * In order to find all the FileSystemRegistrars on the path we need to
-     * change ContextClassLoader to be the same as our ClassLoader.
-     */
+  private def registerFileSystemRegistrars: Unit = {
+    // In order to find all the FileSystemRegistrars on the path we need to change
+    // ContextClassLoader to be the same as our ClassLoader.
     java.lang.Thread.currentThread().setContextClassLoader(getClass.getClassLoader)
     FileSystems.setDefaultPipelineOptions(PipelineOptionsFactory.create())
   }
+
 }
 // scalastyle:on line.size.limit
