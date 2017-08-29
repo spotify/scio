@@ -244,9 +244,9 @@ private[types] object TypeProvider {
 
   /** Enforce that the macro is not enclosed by a package, but a class or object instead. */
   private def checkMacroEnclosed(c: blackbox.Context): Unit = {
-    if (!c.internal.enclosingOwner.isClass) {
-      c.abort(c.enclosingPosition,
-      s"@BigQueryType declaration must be inside a class or object.")
+    val owner = c.internal.enclosingOwner
+    if (owner.isPackage || !owner.isClass) {
+      c.abort(c.enclosingPosition, s"@BigQueryType declaration must be inside a class or object.")
     }
   }
 
