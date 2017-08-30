@@ -29,7 +29,7 @@ val annoyVersion = "0.2.5"
 val asmVersion = "4.5"
 val autoServiceVersion = "1.0-rc3"
 val autoValueVersion = "1.4.1"
-val avroVersion = "1.8.1"
+val avroVersion = "1.8.2"
 val bigtableVersion = "1.0.0-pre2"
 val breezeVersion ="0.13.1"
 val chillVersion = "0.9.2"
@@ -97,6 +97,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   coverageHighlighting := true,
 
   // Release settings
+  publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeSnapshots else Opts.resolver.sonatypeStaging),
   releaseCrossBuild             := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   publishMavenStyle             := true,
@@ -502,12 +503,12 @@ lazy val scioSchemas: Project = Project(
   file("scio-schemas")
 ).settings(
   commonSettings ++ noPublishSettings,
-  version in avroConfig := avroVersion, // Set avro version used by sbt-avro
+  version in AvroConfig := avroVersion, // Set avro version used by sbt-avro
   description := "Avro/Proto schemas for testing",
   // suppress warnings
   sources in doc in Compile := List(),
   // generate both Avro and Protobuf sources in src_managed/main to avoid confusing IntelliJ
-  javaSource in avroConfig := (sourceManaged in Compile).value,
+  javaSource in AvroConfig := (sourceManaged in Compile).value,
   // Avro and Protobuf
   compileOrder := CompileOrder.JavaThenScala,
   PB.targets in Compile := Seq(
