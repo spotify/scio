@@ -23,6 +23,7 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 /**
  * Main package for BigQuery APIs. Import all.
@@ -87,7 +88,8 @@ package object bigquery {
 
     def getBoolean(name: AnyRef): Boolean = this.getValue(name, _.toString.toBoolean, false)
 
-    def getBooleanOpt(name: AnyRef): Option[Boolean] = this.getValueOpt(name, _.toString.toBoolean)
+    def getBooleanOpt(name: AnyRef): Option[Boolean] =
+      this.getValueOpt(name, _.toString.toBoolean)
 
     def getLong(name: AnyRef): Long = this.getValue(name, _.toString.toLong, 0L)
 
@@ -142,7 +144,7 @@ package object bigquery {
       if (o == null) {
         None
       } else {
-        Some(fn(o))
+        Try(fn(o)).toOption
       }
     }
 
