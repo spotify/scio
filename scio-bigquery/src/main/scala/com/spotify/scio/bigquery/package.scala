@@ -23,6 +23,7 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 /**
  * Main package for BigQuery APIs. Import all.
@@ -87,21 +88,42 @@ package object bigquery {
 
     def getBoolean(name: AnyRef): Boolean = this.getValue(name, _.toString.toBoolean, false)
 
+    def getBooleanOpt(name: AnyRef): Option[Boolean] =
+      this.getValueOpt(name, _.toString.toBoolean)
+
     def getLong(name: AnyRef): Long = this.getValue(name, _.toString.toLong, 0L)
+
+    def getLongOpt(name: AnyRef): Option[Long] = this.getValueOpt(name, _.toString.toLong)
 
     def getDouble(name: AnyRef): Double = this.getValue(name, _.toString.toDouble, 0.0)
 
+    def getDoubleOpt(name: AnyRef): Option[Double] = this.getValueOpt(name, _.toString.toDouble)
+
     def getString(name: AnyRef): String = this.getValue(name, _.toString, null)
+
+    def getStringOpt(name: AnyRef): Option[String] = this.getValueOpt(name, _.toString)
 
     def getTimestamp(name: AnyRef): Instant =
       this.getValue(name, v => Timestamp.parse(v.toString), null)
 
+    def getTimestampOpt(name: AnyRef): Option[Instant] =
+      this.getValueOpt(name, v => Timestamp.parse(v.toString))
+
     def getDate(name: AnyRef): LocalDate = this.getValue(name, v => Date.parse(v.toString), null)
+
+    def getDateOpt(name: AnyRef): Option[LocalDate] =
+      this.getValueOpt(name, v => Date.parse(v.toString))
 
     def getTime(name: AnyRef): LocalTime = this.getValue(name, v => Time.parse(v.toString), null)
 
+    def getTimeOpt(name: AnyRef): Option[LocalTime] =
+      this.getValueOpt(name, v => Time.parse(v.toString))
+
     def getDateTime(name: AnyRef): LocalDateTime =
       this.getValue(name, v => DateTime.parse(v.toString), null)
+
+    def getDateTimeOpt(name: AnyRef): Option[LocalDateTime] =
+      this.getValueOpt(name, v => DateTime.parse(v.toString))
 
     def getRepeated(name: AnyRef): Seq[AnyRef] =
       this.getValue(name, _.asInstanceOf[java.util.List[AnyRef]].asScala, null)
@@ -114,6 +136,15 @@ package object bigquery {
         default
       } else {
         fn(o)
+      }
+    }
+
+    private def getValueOpt[T](name: AnyRef, fn: AnyRef => T): Option[T] = {
+      val o = r.get(name)
+      if (o == null) {
+        None
+      } else {
+        Try(fn(o)).toOption
       }
     }
 
