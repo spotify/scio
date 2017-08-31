@@ -39,10 +39,27 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
 
   protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
 
-  private def parDo[T, U](fn: DoFn[T, U]) = ParDo.of(fn).withSideInputs(sides.map(_.view).asJava)
+  private def parDo[U](fn: DoFn[T, U]) = ParDo.of(fn).withSideInputs(sides.map(_.view).asJava)
+
+  // Native Beam style ParDo that allows access to the underlying context, useful for cases like
+  // flatMap, join, etc.
+  private[values] def nativeParDo[U: ClassTag](f: SideInputContext[T, U] => Unit)
+  : SCollectionWithSideInput[U] = {
+    val fn = new SideInputDoFn[T, U] {
+      private val g = ClosureCleaner(f)  // defeat closure
+      @ProcessElement
+      private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
+        g(sideInputContext(c))
+      }
+    }
+    val o = this
+      .pApply(parDo(fn))
+      .internal.setCoder(this.getCoder)
+    new SCollectionWithSideInput[U](o, context, sides)
+  }
 
   /** [[SCollection.filter]] with an additional [[SideInputContext]] argument. */
-  def filter(f: (T, SideInputContext[T]) => Boolean): SCollectionWithSideInput[T] = {
+  def filter(f: (T, SideInputContext[T, T]) => Boolean): SCollectionWithSideInput[T] = {
     val o = this
       .pApply(parDo(FunctionsWithSideInput.filterFn(f)))
       .internal.setCoder(this.getCoder[T])
@@ -50,7 +67,7 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
   }
 
   /** [[SCollection.flatMap]] with an additional [[SideInputContext]] argument. */
-  def flatMap[U: ClassTag](f: (T, SideInputContext[T]) => TraversableOnce[U])
+  def flatMap[U: ClassTag](f: (T, SideInputContext[T, _]) => TraversableOnce[U])
   : SCollectionWithSideInput[U] = {
     val o = this
       .pApply(parDo(FunctionsWithSideInput.flatMapFn(f)))
@@ -59,11 +76,11 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
   }
 
   /** [[SCollection.keyBy]] with an additional [[SideInputContext]] argument. */
-  def keyBy[K: ClassTag](f: (T, SideInputContext[T]) => K): SCollectionWithSideInput[(K, T)] =
+  def keyBy[K: ClassTag](f: (T, SideInputContext[T, _]) => K): SCollectionWithSideInput[(K, T)] =
     this.map((x, s) => (f(x, s), x))
 
   /** [[SCollection.map]] with an additional [[SideInputContext]] argument. */
-  def map[U: ClassTag](f: (T, SideInputContext[T]) => U): SCollectionWithSideInput[U] = {
+  def map[U: ClassTag](f: (T, SideInputContext[T, _]) => U): SCollectionWithSideInput[U] = {
     val o = this
       .pApply(parDo(FunctionsWithSideInput.mapFn(f)))
       .internal.setCoder(this.getCoder[U])
@@ -77,7 +94,7 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
    */
   private[values] def transformWithSideOutputs(sideOutputs: Seq[SideOutput[T]],
                                                name: String = "TransformWithSideOutputs")
-                                              (f: (T, SideInputContext[T]) => SideOutput[T])
+                                              (f: (T, SideInputContext[T, T]) => SideOutput[T])
   : Map[SideOutput[T], SCollection[T]] = {
     val _mainTag = SideOutput[T]()
     val tagToSide = sideOutputs.map(e => e.tupleTag.getId -> e).toMap +
@@ -87,7 +104,7 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
       e.tupleTag.asInstanceOf[TupleTag[_]]).asJava)
 
     def transformWithSideOutputsFn(partitions: Seq[SideOutput[T]],
-                                   f: (T, SideInputContext[T]) => SideOutput[T])
+                                   f: (T, SideInputContext[T, T]) => SideOutput[T])
     : DoFn[T, T] = new SideInputDoFn[T, T] {
       val g = ClosureCleaner(f) // defeat closure
 
@@ -104,7 +121,7 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
       }
     }
 
-    val transform = parDo[T, T](transformWithSideOutputsFn(sideOutputs, f))
+    val transform = parDo[T](transformWithSideOutputsFn(sideOutputs, f))
       .withOutputTags(_mainTag.tupleTag, sideTags)
 
     val pCollectionWrapper = this.internal.apply(name, transform)

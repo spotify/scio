@@ -508,12 +508,13 @@ trait MultiJoin extends Serializable {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b))
+      } context.output((key, (a, b)))
     }
   }
 
@@ -524,13 +525,14 @@ trait MultiJoin extends Serializable {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c))
+      } context.output((key, (a, b, c)))
     }
   }
 
@@ -542,14 +544,15 @@ trait MultiJoin extends Serializable {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         d <- result.getAll(tagD).asScala.iterator
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d))
+      } context.output((key, (a, b, c, d)))
     }
   }
 
@@ -562,7 +565,8 @@ trait MultiJoin extends Serializable {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         e <- result.getAll(tagE).asScala.iterator
@@ -570,7 +574,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e))
+      } context.output((key, (a, b, c, d, e)))
     }
   }
 
@@ -584,7 +588,8 @@ trait MultiJoin extends Serializable {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         f <- result.getAll(tagF).asScala.iterator
@@ -593,7 +598,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f))
+      } context.output((key, (a, b, c, d, e, f)))
     }
   }
 
@@ -608,7 +613,8 @@ trait MultiJoin extends Serializable {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         g <- result.getAll(tagG).asScala.iterator
@@ -618,7 +624,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g))
+      } context.output((key, (a, b, c, d, e, f, g)))
     }
   }
 
@@ -634,7 +640,8 @@ trait MultiJoin extends Serializable {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         h <- result.getAll(tagH).asScala.iterator
@@ -645,7 +652,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h))
+      } context.output((key, (a, b, c, d, e, f, g, h)))
     }
   }
 
@@ -662,7 +669,8 @@ trait MultiJoin extends Serializable {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         i <- result.getAll(tagI).asScala.iterator
@@ -674,7 +682,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i))
+      } context.output((key, (a, b, c, d, e, f, g, h, i)))
     }
   }
 
@@ -692,7 +700,8 @@ trait MultiJoin extends Serializable {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         j <- result.getAll(tagJ).asScala.iterator
@@ -705,7 +714,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j)))
     }
   }
 
@@ -724,7 +733,8 @@ trait MultiJoin extends Serializable {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         k <- result.getAll(tagK).asScala.iterator
@@ -738,7 +748,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k)))
     }
   }
 
@@ -758,7 +768,8 @@ trait MultiJoin extends Serializable {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         l <- result.getAll(tagL).asScala.iterator
@@ -773,7 +784,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l)))
     }
   }
 
@@ -794,7 +805,8 @@ trait MultiJoin extends Serializable {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         m <- result.getAll(tagM).asScala.iterator
@@ -810,7 +822,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m)))
     }
   }
 
@@ -832,7 +844,8 @@ trait MultiJoin extends Serializable {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         n <- result.getAll(tagN).asScala.iterator
@@ -849,7 +862,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n)))
     }
   }
 
@@ -872,7 +885,8 @@ trait MultiJoin extends Serializable {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         o <- result.getAll(tagO).asScala.iterator
@@ -890,7 +904,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o)))
     }
   }
 
@@ -914,7 +928,8 @@ trait MultiJoin extends Serializable {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         p <- result.getAll(tagP).asScala.iterator
@@ -933,7 +948,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)))
     }
   }
 
@@ -958,7 +973,8 @@ trait MultiJoin extends Serializable {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         q <- result.getAll(tagQ).asScala.iterator
@@ -978,7 +994,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q)))
     }
   }
 
@@ -1004,7 +1020,8 @@ trait MultiJoin extends Serializable {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         r <- result.getAll(tagR).asScala.iterator
@@ -1025,7 +1042,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r)))
     }
   }
 
@@ -1052,7 +1069,8 @@ trait MultiJoin extends Serializable {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         s <- result.getAll(tagS).asScala.iterator
@@ -1074,7 +1092,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s)))
     }
   }
 
@@ -1102,7 +1120,8 @@ trait MultiJoin extends Serializable {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         t <- result.getAll(tagT).asScala.iterator
@@ -1125,7 +1144,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t)))
     }
   }
 
@@ -1154,7 +1173,8 @@ trait MultiJoin extends Serializable {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         u <- result.getAll(tagU).asScala.iterator
@@ -1178,7 +1198,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u)))
     }
   }
 
@@ -1208,7 +1228,8 @@ trait MultiJoin extends Serializable {
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         v <- result.getAll(tagV).asScala.iterator
@@ -1233,7 +1254,7 @@ trait MultiJoin extends Serializable {
         c <- result.getAll(tagC).asScala.iterator
         b <- result.getAll(tagB).asScala.iterator
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v)))
     }
   }
 
@@ -1243,12 +1264,13 @@ trait MultiJoin extends Serializable {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b))
+      } context.output((key, (a, b)))
     }
   }
 
@@ -1259,13 +1281,14 @@ trait MultiJoin extends Serializable {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c))
+      } context.output((key, (a, b, c)))
     }
   }
 
@@ -1277,14 +1300,15 @@ trait MultiJoin extends Serializable {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         d <- toOptions(result.getAll(tagD).asScala.iterator)
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d))
+      } context.output((key, (a, b, c, d)))
     }
   }
 
@@ -1297,7 +1321,8 @@ trait MultiJoin extends Serializable {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         e <- toOptions(result.getAll(tagE).asScala.iterator)
@@ -1305,7 +1330,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e))
+      } context.output((key, (a, b, c, d, e)))
     }
   }
 
@@ -1319,7 +1344,8 @@ trait MultiJoin extends Serializable {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         f <- toOptions(result.getAll(tagF).asScala.iterator)
@@ -1328,7 +1354,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f))
+      } context.output((key, (a, b, c, d, e, f)))
     }
   }
 
@@ -1343,7 +1369,8 @@ trait MultiJoin extends Serializable {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         g <- toOptions(result.getAll(tagG).asScala.iterator)
@@ -1353,7 +1380,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g))
+      } context.output((key, (a, b, c, d, e, f, g)))
     }
   }
 
@@ -1369,7 +1396,8 @@ trait MultiJoin extends Serializable {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         h <- toOptions(result.getAll(tagH).asScala.iterator)
@@ -1380,7 +1408,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h))
+      } context.output((key, (a, b, c, d, e, f, g, h)))
     }
   }
 
@@ -1397,7 +1425,8 @@ trait MultiJoin extends Serializable {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         i <- toOptions(result.getAll(tagI).asScala.iterator)
@@ -1409,7 +1438,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i))
+      } context.output((key, (a, b, c, d, e, f, g, h, i)))
     }
   }
 
@@ -1427,7 +1456,8 @@ trait MultiJoin extends Serializable {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         j <- toOptions(result.getAll(tagJ).asScala.iterator)
@@ -1440,7 +1470,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j)))
     }
   }
 
@@ -1459,7 +1489,8 @@ trait MultiJoin extends Serializable {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         k <- toOptions(result.getAll(tagK).asScala.iterator)
@@ -1473,7 +1504,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k)))
     }
   }
 
@@ -1493,7 +1524,8 @@ trait MultiJoin extends Serializable {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         l <- toOptions(result.getAll(tagL).asScala.iterator)
@@ -1508,7 +1540,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l)))
     }
   }
 
@@ -1529,7 +1561,8 @@ trait MultiJoin extends Serializable {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         m <- toOptions(result.getAll(tagM).asScala.iterator)
@@ -1545,7 +1578,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m)))
     }
   }
 
@@ -1567,7 +1600,8 @@ trait MultiJoin extends Serializable {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         n <- toOptions(result.getAll(tagN).asScala.iterator)
@@ -1584,7 +1618,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n)))
     }
   }
 
@@ -1607,7 +1641,8 @@ trait MultiJoin extends Serializable {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         o <- toOptions(result.getAll(tagO).asScala.iterator)
@@ -1625,7 +1660,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o)))
     }
   }
 
@@ -1649,7 +1684,8 @@ trait MultiJoin extends Serializable {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         p <- toOptions(result.getAll(tagP).asScala.iterator)
@@ -1668,7 +1704,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)))
     }
   }
 
@@ -1693,7 +1729,8 @@ trait MultiJoin extends Serializable {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         q <- toOptions(result.getAll(tagQ).asScala.iterator)
@@ -1713,7 +1750,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q)))
     }
   }
 
@@ -1739,7 +1776,8 @@ trait MultiJoin extends Serializable {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         r <- toOptions(result.getAll(tagR).asScala.iterator)
@@ -1760,7 +1798,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r)))
     }
   }
 
@@ -1787,7 +1825,8 @@ trait MultiJoin extends Serializable {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         s <- toOptions(result.getAll(tagS).asScala.iterator)
@@ -1809,7 +1848,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s)))
     }
   }
 
@@ -1837,7 +1876,8 @@ trait MultiJoin extends Serializable {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         t <- toOptions(result.getAll(tagT).asScala.iterator)
@@ -1860,7 +1900,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t)))
     }
   }
 
@@ -1889,7 +1929,8 @@ trait MultiJoin extends Serializable {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         u <- toOptions(result.getAll(tagU).asScala.iterator)
@@ -1913,7 +1954,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u)))
     }
   }
 
@@ -1943,7 +1984,8 @@ trait MultiJoin extends Serializable {
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         v <- toOptions(result.getAll(tagV).asScala.iterator)
@@ -1968,7 +2010,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- result.getAll(tagA).asScala.iterator
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v)))
     }
   }
 
@@ -1978,12 +2020,13 @@ trait MultiJoin extends Serializable {
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b))
+      } context.output((key, (a, b)))
     }
   }
 
@@ -1994,13 +2037,14 @@ trait MultiJoin extends Serializable {
       .and(tagB, b.toKV.internal)
       .and(tagC, c.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c))
+      } context.output((key, (a, b, c)))
     }
   }
 
@@ -2012,14 +2056,15 @@ trait MultiJoin extends Serializable {
       .and(tagC, c.toKV.internal)
       .and(tagD, d.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         d <- toOptions(result.getAll(tagD).asScala.iterator)
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d))
+      } context.output((key, (a, b, c, d)))
     }
   }
 
@@ -2032,7 +2077,8 @@ trait MultiJoin extends Serializable {
       .and(tagD, d.toKV.internal)
       .and(tagE, e.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         e <- toOptions(result.getAll(tagE).asScala.iterator)
@@ -2040,7 +2086,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e))
+      } context.output((key, (a, b, c, d, e)))
     }
   }
 
@@ -2054,7 +2100,8 @@ trait MultiJoin extends Serializable {
       .and(tagE, e.toKV.internal)
       .and(tagF, f.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         f <- toOptions(result.getAll(tagF).asScala.iterator)
@@ -2063,7 +2110,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f))
+      } context.output((key, (a, b, c, d, e, f)))
     }
   }
 
@@ -2078,7 +2125,8 @@ trait MultiJoin extends Serializable {
       .and(tagF, f.toKV.internal)
       .and(tagG, g.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         g <- toOptions(result.getAll(tagG).asScala.iterator)
@@ -2088,7 +2136,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f, g))
+      } context.output((key, (a, b, c, d, e, f, g)))
     }
   }
 
@@ -2104,7 +2152,8 @@ trait MultiJoin extends Serializable {
       .and(tagG, g.toKV.internal)
       .and(tagH, h.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         h <- toOptions(result.getAll(tagH).asScala.iterator)
@@ -2115,7 +2164,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f, g, h))
+      } context.output((key, (a, b, c, d, e, f, g, h)))
     }
   }
 
@@ -2132,7 +2181,8 @@ trait MultiJoin extends Serializable {
       .and(tagH, h.toKV.internal)
       .and(tagI, i.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         i <- toOptions(result.getAll(tagI).asScala.iterator)
@@ -2144,7 +2194,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f, g, h, i))
+      } context.output((key, (a, b, c, d, e, f, g, h, i)))
     }
   }
 
@@ -2162,7 +2212,8 @@ trait MultiJoin extends Serializable {
       .and(tagI, i.toKV.internal)
       .and(tagJ, j.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         j <- toOptions(result.getAll(tagJ).asScala.iterator)
@@ -2175,7 +2226,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f, g, h, i, j))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j)))
     }
   }
 
@@ -2194,7 +2245,8 @@ trait MultiJoin extends Serializable {
       .and(tagJ, j.toKV.internal)
       .and(tagK, k.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         k <- toOptions(result.getAll(tagK).asScala.iterator)
@@ -2208,7 +2260,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k)))
     }
   }
 
@@ -2228,7 +2280,8 @@ trait MultiJoin extends Serializable {
       .and(tagK, k.toKV.internal)
       .and(tagL, l.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         l <- toOptions(result.getAll(tagL).asScala.iterator)
@@ -2243,7 +2296,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l)))
     }
   }
 
@@ -2264,7 +2317,8 @@ trait MultiJoin extends Serializable {
       .and(tagL, l.toKV.internal)
       .and(tagM, m.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         m <- toOptions(result.getAll(tagM).asScala.iterator)
@@ -2280,7 +2334,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m)))
     }
   }
 
@@ -2302,7 +2356,8 @@ trait MultiJoin extends Serializable {
       .and(tagM, m.toKV.internal)
       .and(tagN, n.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         n <- toOptions(result.getAll(tagN).asScala.iterator)
@@ -2319,7 +2374,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n)))
     }
   }
 
@@ -2342,7 +2397,8 @@ trait MultiJoin extends Serializable {
       .and(tagN, n.toKV.internal)
       .and(tagO, o.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         o <- toOptions(result.getAll(tagO).asScala.iterator)
@@ -2360,7 +2416,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o)))
     }
   }
 
@@ -2384,7 +2440,8 @@ trait MultiJoin extends Serializable {
       .and(tagO, o.toKV.internal)
       .and(tagP, p.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         p <- toOptions(result.getAll(tagP).asScala.iterator)
@@ -2403,7 +2460,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)))
     }
   }
 
@@ -2428,7 +2485,8 @@ trait MultiJoin extends Serializable {
       .and(tagP, p.toKV.internal)
       .and(tagQ, q.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         q <- toOptions(result.getAll(tagQ).asScala.iterator)
@@ -2448,7 +2506,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q)))
     }
   }
 
@@ -2474,7 +2532,8 @@ trait MultiJoin extends Serializable {
       .and(tagQ, q.toKV.internal)
       .and(tagR, r.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         r <- toOptions(result.getAll(tagR).asScala.iterator)
@@ -2495,7 +2554,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r)))
     }
   }
 
@@ -2522,7 +2581,8 @@ trait MultiJoin extends Serializable {
       .and(tagR, r.toKV.internal)
       .and(tagS, s.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         s <- toOptions(result.getAll(tagS).asScala.iterator)
@@ -2544,7 +2604,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s)))
     }
   }
 
@@ -2572,7 +2632,8 @@ trait MultiJoin extends Serializable {
       .and(tagS, s.toKV.internal)
       .and(tagT, t.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         t <- toOptions(result.getAll(tagT).asScala.iterator)
@@ -2595,7 +2656,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t)))
     }
   }
 
@@ -2624,7 +2685,8 @@ trait MultiJoin extends Serializable {
       .and(tagT, t.toKV.internal)
       .and(tagU, u.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         u <- toOptions(result.getAll(tagU).asScala.iterator)
@@ -2648,7 +2710,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u)))
     }
   }
 
@@ -2678,7 +2740,8 @@ trait MultiJoin extends Serializable {
       .and(tagU, u.toKV.internal)
       .and(tagV, v.toKV.internal)
       .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())
-    a.context.wrap(keyed).withName(tfName).flatMap { kv =>
+    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>
+      val kv = context.element()
       val (key, result) = (kv.getKey, kv.getValue)
       for {
         v <- toOptions(result.getAll(tagV).asScala.iterator)
@@ -2703,7 +2766,7 @@ trait MultiJoin extends Serializable {
         c <- toOptions(result.getAll(tagC).asScala.iterator)
         b <- toOptions(result.getAll(tagB).asScala.iterator)
         a <- toOptions(result.getAll(tagA).asScala.iterator)
-      } yield (key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v))
+      } context.output((key, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v)))
     }
   }
 
