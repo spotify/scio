@@ -242,17 +242,31 @@ class BigQueryClient private (private val projectId: String,
    * returned instead if one exists.
    */
   def query(sqlQuery: String,
-            destinationTable: String = null,
+            destinationTable: TableReference = null,
             flattenResults: Boolean = false): TableReference =
     if (destinationTable != null) {
-      val tableRef = bq.BigQueryHelpers.parseTableSpec(destinationTable)
-      val queryJob = delayedQueryJob(sqlQuery, tableRef, flattenResults)
+      val queryJob = delayedQueryJob(sqlQuery, destinationTable, flattenResults)
       queryJob.waitForResult()
-      tableRef
+      destinationTable
     } else {
       val queryJob = newQueryJob(sqlQuery, flattenResults)
       queryJob.waitForResult()
       queryJob.table
+    }
+
+  /**
+   * Make a query and save results to a destination table.
+   *
+   * A temporary table will be created if `destinationTable` is `null` and a cached table will be
+   * returned instead if one exists.
+   */
+  def query(sqlQuery: String,
+            destinationTable: String = null,
+            flattenResults: Boolean = false): TableReference =
+    if (destinationTable != null) {
+      query(sqlQuery, bq.BigQueryHelpers.parseTableSpec(destinationTable), flattenResults)
+    } else {
+      query(sqlQuery, null.asInstanceOf[TableReference], flattenResults)
     }
 
   /** Write rows to a table. */
