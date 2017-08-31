@@ -17,7 +17,7 @@
 
 package com.spotify.scio
 
-import com.google.api.services.bigquery.model.{TableRow => GTableRow}
+import com.google.api.services.bigquery.model.{TableReference, TableRow => GTableRow}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
@@ -68,6 +68,25 @@ package object bigquery {
    */
   type description = com.spotify.scio.bigquery.types.description
 
+  /** Enhanced version of [[TableReference]]. */
+  implicit class RichTableReference(private val r: TableReference) extends AnyVal {
+
+    /**
+     * Return table specification in the form of "[project_id]:[dataset_id].[table_id]" or
+     * "[dataset_id].[table_id]".
+     */
+    def asTableSpec: String = {
+      require(r.getDatasetId != null, "Dataset can't be null")
+      require(r.getTableId != null, "Table can't be null")
+
+      if (r.getProjectId != null) {
+        s"${r.getProjectId}:${r.getDatasetId}.${r.getTableId}"
+      } else {
+        s"${r.getDatasetId}.${r.getTableId}"
+      }
+    }
+  }
+
   /**
    * Create a [[TableRow]] with `Map`-like syntax. For example:
    *
@@ -84,7 +103,7 @@ package object bigquery {
   type TableRow = GTableRow
 
   /** Enhanced version of [[TableRow]] with typed getters. */
-  implicit class RichTableRow(val r: TableRow) extends AnyVal {
+  implicit class RichTableRow(private val r: TableRow) extends AnyVal {
 
     def getBoolean(name: AnyRef): Boolean = this.getValue(name, _.toString.toBoolean, false)
 
