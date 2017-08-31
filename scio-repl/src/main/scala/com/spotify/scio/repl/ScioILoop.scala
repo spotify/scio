@@ -199,7 +199,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
   private def addImports(): IR.Result =
     intp.interpret(
       """
-        |import com.spotify.scio._
+        |import com.spotify.scio.{io => _, _}
         |import com.spotify.scio.avro._
         |import com.spotify.scio.bigquery._
         |import com.spotify.scio.repl._
