@@ -49,6 +49,7 @@ val jodaTimeVersion = "2.9.9"
 val junitInterfaceVersion = "0.11"
 val junitVersion = "4.12"
 val kantanCsvVersion = "0.2.1"
+val kryoVersion = "4.0.1" // explicitly depend on 4.0.1 due to https://github.com/EsotericSoftware/kryo/pull/516
 val mockitoVersion = "1.10.19"
 val parquetAvroExtraVersion = "0.2.1"
 val parquetVersion = "1.9.0"
@@ -250,6 +251,7 @@ lazy val scioCore: Project = Project(
     "com.twitter" %% "chill" % chillVersion,
     "com.twitter" %% "chill-algebird" % chillVersion,
     "com.twitter" % "chill-protobuf" % chillVersion,
+    "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
     "commons-io" % "commons-io" % commonsIoVersion,
     "org.apache.commons" % "commons-math3" % commonsMath3Version,
     "org.tensorflow" % "proto" % tensorFlowVersion,
