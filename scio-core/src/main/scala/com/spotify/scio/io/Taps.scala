@@ -42,6 +42,8 @@ class TapNotAvailableException(msg: String) extends Exception(msg)
 /** Utility for managing `Future[Tap[T]]`s. */
 trait Taps {
 
+  private lazy val bqc = BigQueryClient.defaultInstance()
+
   /** Get a `Future[Tap[T]]` for an Avro file. */
   def avroFile[T: ClassTag](path: String, schema: Schema = null): Future[Tap[T]] =
     mkTap(s"Avro: $path", () => isPathDone(path), () => AvroTap[T](path, schema))
@@ -64,7 +66,7 @@ trait Taps {
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
   def bigQueryTable(table: TableReference): Future[Tap[TableRow]] =
-    mkTap(s"BigQuery Table: $table", () => tableExists(table), () => BigQueryTap(table))
+    mkTap(s"BigQuery Table: $table", () => bqc.tableExists(table), () => BigQueryTap(table))
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
   def bigQueryTable(tableSpec: String): Future[Tap[TableRow]] =
@@ -115,14 +117,10 @@ trait Taps {
   private def isPathDone(path: String): Boolean = FileStorage(path).isDone
 
   private def isQueryDone(sqlQuery: String): Boolean =
-    BigQueryClient.defaultInstance().extractTables(sqlQuery).forall(tableExists)
-
-  private def tableExists(table: TableReference): Boolean =
-    Try(BigQueryClient.defaultInstance().getTableSchema(table)).isSuccess
+    bqc.extractTables(sqlQuery).forall(bqc.tableExists)
 
   private def bigQueryTap(sqlQuery: String, flattenResults: Boolean): BigQueryTap = {
-    val bq = BigQueryClient.defaultInstance()
-    val table = bq.query(sqlQuery, flattenResults = flattenResults)
+    val table = bqc.query(sqlQuery, flattenResults = flattenResults)
     BigQueryTap(table)
   }
 
