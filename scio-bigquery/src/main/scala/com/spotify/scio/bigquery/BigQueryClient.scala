@@ -236,6 +236,26 @@ class BigQueryClient private (private val projectId: String,
   }
 
   /**
+   * Check if table exists. Returns `true` if table exists, `false` is table definitely does not
+   * exist, throws in other cases (BigQuery exception, network issue etc.).
+   */
+  def tableExists(table: TableReference): Boolean = try {
+    getTable(table)
+    true
+  } catch {
+    case e: GoogleJsonResponseException if e.getDetails.getErrors.get(0).getReason == "notFound" =>
+      false
+    case e: Throwable => throw e
+  }
+
+  /**
+   * Check if table exists. Returns `true` if table exists, `false` is table definitely does not
+   * exist, throws in other cases (BigQuery exception, network issue etc.).
+   */
+  def tableExists(tableSpec: String): Boolean =
+    tableExists(bq.BigQueryHelpers.parseTableSpec(tableSpec))
+
+  /**
    * Make a query and save results to a destination table.
    *
    * A temporary table will be created if `destinationTable` is `null` and a cached table will be
