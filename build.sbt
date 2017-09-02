@@ -191,7 +191,8 @@ lazy val root: Project = Project(
   commonSettings ++ siteSettings ++ noPublishSettings,
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
     -- inProjects(scioCassandra2) -- inProjects(scioElasticsearch2)
-    -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples),
+    -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples)
+    -- inProjects(scioBenchJmh),
   // unidoc handles class paths differently than compile and may give older
   // versions high precedence.
   unidocAllClasspaths in (ScalaUnidoc, unidoc) := {
@@ -218,7 +219,8 @@ lazy val root: Project = Project(
   scioTensorFlow,
   scioSchemas,
   scioExamples,
-  scioRepl
+  scioRepl,
+  scioBenchJmh
 )
 
 lazy val scioCore: Project = Project(
@@ -549,6 +551,23 @@ lazy val scioRepl: Project = Project(
   scioCore,
   scioExtra
 )
+
+lazy val scioBenchJmh: Project = Project(
+  "scio-bench-jmh",
+  file("scio-bench-jmh")
+).settings(
+  commonSettings ++ noPublishSettings,
+  description := "Scio JMH Microbenchmarks",
+  addCompilerPlugin(paradiseDependency),
+  sourceDirectory in Jmh := (sourceDirectory in Test).value,
+  classDirectory in Jmh := (classDirectory in Test).value,
+  dependencyClasspath in Jmh := (dependencyClasspath in Test).value,
+  libraryDependencies ++= Seq(
+    "org.slf4j" % "slf4j-nop" % slf4jVersion
+  )
+).dependsOn(
+  scioCore
+).enablePlugins(JmhPlugin)
 
 // =======================================================================
 // Site settings
