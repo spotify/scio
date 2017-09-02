@@ -4,3 +4,4 @@ target
 .DS_Store
 .bigquery
 .scio_repl
+*.jfr
