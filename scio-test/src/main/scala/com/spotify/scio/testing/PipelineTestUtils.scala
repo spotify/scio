@@ -127,7 +127,16 @@ trait PipelineTestUtils {
     }
   }
 
-  private def runWithLocalOutput[U](fn: ScioContext => SCollection[U]): Seq[U] = {
+  /**
+   * Test pipeline components with materialized resulting collection.
+   *
+   * The result [[com.spotify.scio.values.SCollection SCollection]] from `fn` is extracted and to be
+   * verified.
+   *
+   * @param fn Scio Job
+   * @return Job results in an in-memory Scala list
+   */
+  def runWithLocalOutput[U](fn: ScioContext => SCollection[U]): Seq[U] = {
     val sc = ScioContext()
     val f = fn(sc).materialize
     sc.close().waitUntilFinish()  // block non-test runner
