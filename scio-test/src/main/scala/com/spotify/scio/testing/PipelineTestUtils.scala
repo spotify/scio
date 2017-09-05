@@ -133,7 +133,7 @@ trait PipelineTestUtils {
    * The result [[com.spotify.scio.values.SCollection SCollection]] from `fn` is extracted and to be
    * verified.
    *
-   * @param fn Scio Job
+   * @param fn transform to be tested
    * @return Job results in an in-memory Scala list
    */
   def runWithLocalOutput[U](fn: ScioContext => SCollection[U]): Seq[U] = {
