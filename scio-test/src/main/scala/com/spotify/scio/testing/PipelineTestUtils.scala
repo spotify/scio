@@ -60,7 +60,7 @@ trait PipelineTestUtils {
    */
   def runWithData[T: ClassTag, U: ClassTag](data: Iterable[T])
                                            (fn: SCollection[T] => SCollection[U]): Seq[U] = {
-    runWithLocalOutput { sc => fn(sc.parallelize(data)) }
+    runWithLocalOutput { sc => fn(sc.parallelize(data)) }._2
   }
 
   /**
@@ -80,7 +80,7 @@ trait PipelineTestUtils {
   (fn: (SCollection[T1], SCollection[T2]) => SCollection[U]): Seq[U] = {
     runWithLocalOutput { sc =>
       fn(sc.parallelize(data1), sc.parallelize(data2))
-    }
+    }._2
   }
 
   /**
@@ -101,7 +101,7 @@ trait PipelineTestUtils {
   (fn: (SCollection[T1], SCollection[T2], SCollection[T3]) => SCollection[U]): Seq[U] = {
     runWithLocalOutput { sc =>
       fn(sc.parallelize(data1), sc.parallelize(data2), sc.parallelize(data3))
-    }
+    }._2
   }
 
   /**
@@ -124,14 +124,23 @@ trait PipelineTestUtils {
   : Seq[U] = {
     runWithLocalOutput { sc =>
       fn(sc.parallelize(data1), sc.parallelize(data2), sc.parallelize(data3), sc.parallelize(data4))
-    }
+    }._2
   }
 
-  private def runWithLocalOutput[U](fn: ScioContext => SCollection[U]): Seq[U] = {
+  /**
+   * Test pipeline components with a [[ScioContext]] and materialized resulting collection.
+   *
+   * The result [[com.spotify.scio.values.SCollection SCollection]] from `fn` is extracted and to be
+   * verified.
+   *
+   * @param fn transform to be tested
+   * @return a tuple containing the [[ScioResult]] and the materialized result of fn as a [[Seq[U]]]
+   */
+  def runWithLocalOutput[U](fn: ScioContext => SCollection[U]): (ScioResult, Seq[U]) = {
     val sc = ScioContext()
     val f = fn(sc).materialize
-    sc.close().waitUntilFinish()  // block non-test runner
-    f.waitForResult().value.toSeq
+    val result = sc.close().waitUntilFinish()  // block non-test runner
+    (result, f.waitForResult().value.toSeq)
   }
 
 }
