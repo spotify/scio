@@ -128,13 +128,13 @@ trait PipelineTestUtils {
   }
 
   /**
-   *  Test pipeline components with a [[ScioContext]] and materialized resulting collection.
+   * Test pipeline components with a [[ScioContext]] and materialized resulting collection.
    *
    * The result [[com.spotify.scio.values.SCollection SCollection]] from `fn` is extracted and to be
    * verified.
    *
    * @param fn transform to be tested
-   * @return a tuple containing the [[ScioResult]] and the materialized result of fn as a [[Seq[T]]]
+   * @return a tuple containing the [[ScioResult]] and the materialized result of fn as a [[Seq[U]]]
    */
   def runWithLocalOutput[U](fn: ScioContext => SCollection[U]): (ScioResult, Seq[U]) = {
     val sc = ScioContext()
