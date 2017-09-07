@@ -28,6 +28,7 @@ import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
+import org.apache.beam.sdk.coders.Coder.Context
 import org.apache.beam.sdk.coders._
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.util.VarInt
@@ -71,7 +72,35 @@ private object KryoRegistrarLoader {
 
 private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
 
-  import KryoAtomicCoder.kryo
+  @transient
+  private lazy val kryo: ThreadLocal[Kryo] = new ThreadLocal[Kryo] {
+    override def initialValue(): Kryo = {
+      val k = KryoSerializer.registered.newKryo()
+
+      k.forClass(new CoderSerializer(InstantCoder.of()))
+      k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
+
+      // java.lang.Iterable.asScala returns JIterableWrapper which causes problem.
+      // Treat it as standard Iterable instead.
+      k.register(classOf[JIterableWrapper[_]], new JIterableWrapperSerializer())
+
+      k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
+      k.forSubclass[GenericRecord](new GenericAvroSerializer)
+      k.forSubclass[Message](new ProtobufSerializer)
+
+      k.forSubclass[LocalDateTime](new JodaLocalDateTimeSerializer)
+      k.forSubclass[LocalDate](new JodaLocalDateSerializer)
+
+      k.forClass(new KVSerializer)
+      // TODO:
+      // TimestampedValueCoder
+
+      new AlgebirdRegistrar()(k)
+      KryoRegistrarLoader.load(k)
+
+      k
+    }
+  }
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -156,35 +185,6 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
 
 private[scio] object KryoAtomicCoder {
   def apply[T]: Coder[T] = new KryoAtomicCoder[T]
-
-  private val kryo: ThreadLocal[Kryo] = new ThreadLocal[Kryo] {
-    override def initialValue(): Kryo = {
-      val k = KryoSerializer.registered.newKryo()
-
-      k.forClass(new CoderSerializer(InstantCoder.of()))
-      k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
-
-      // java.lang.Iterable.asScala returns JIterableWrapper which causes problem.
-      // Treat it as standard Iterable instead.
-      k.register(classOf[JIterableWrapper[_]], new JIterableWrapperSerializer())
-
-      k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
-      k.forSubclass[GenericRecord](new GenericAvroSerializer)
-      k.forSubclass[Message](new ProtobufSerializer)
-
-      k.forSubclass[LocalDateTime](new JodaLocalDateTimeSerializer)
-      k.forSubclass[LocalDate](new JodaLocalDateSerializer)
-
-      k.forClass(new KVSerializer)
-      // TODO:
-      // TimestampedValueCoder
-
-      new AlgebirdRegistrar()(k)
-      KryoRegistrarLoader.load(k)
-
-      k
-    }
-  }
 }
 
 /**
