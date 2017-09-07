@@ -239,8 +239,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   def hashJoin[W: ClassTag](that: SCollection[(K, W)])
   : SCollection[(K, (V, W))] = self.transform { in =>
     val side = that.asMultiMapSideInput
-    in.withSideInputs(side).flatMap[(K, (V, W))] { (kv, s) =>
-      s(side).getOrElse(kv._1, Iterable()).toSeq.map(w => (kv._1, (kv._2, w)))
+    in.withSideInputs(side).nativeParDo[(K, (V, W))] { s =>
+      val kv = s.context.element()
+      s(side).get(kv._1).foreach(_.foreach(w => s.context.output((kv._1, (kv._2, w)))))
     }.toSCollection
   }
 
@@ -253,10 +254,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   def hashLeftJoin[W: ClassTag](that: SCollection[(K, W)])
   : SCollection[(K, (V, Option[W]))] = self.transform { in =>
     val side = that.asMultiMapSideInput
-    in.withSideInputs(side).flatMap[(K, (V, Option[W]))] { (kv, s) =>
-      val (k, v) = kv
+    in.withSideInputs(side).nativeParDo[(K, (V, Option[W]))] { s =>
+      val (k, v) = s.context.element()
       val m = s(side)
-      if (m.contains(k)) m(k).map(w => (k, (v, Some(w)))) else Seq((k, (v, None)))
+      m.get(k) match {
+        case Some(ws) => ws.foreach(w => s.context.output((k, (v, Some(w)))))
+        case None => s.context.output((k, (v, None)))
+      }
     }.toSCollection
   }
 
@@ -551,7 +555,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group transform
    */
   def flatMapValues[U: ClassTag](f: V => TraversableOnce[U]): SCollection[(K, U)] =
-    self.flatMap(kv => f(kv._2).map(v => (kv._1, v)))
+    self.nativeParDo { context =>
+      val (k, v) = context.element()
+      f(v).foreach(u => context.output((k, u)))
+    }
 
   /**
    * Merge the values for each key using an associative function and a neutral "zero value" which
@@ -593,8 +600,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group per_key
    */
   def intersectByKey(that: SCollection[K]): SCollection[(K, V)] = self.transform {
-    _.cogroup(that.map((_, ()))).flatMap { t =>
-      if (t._2._1.nonEmpty && t._2._2.nonEmpty) t._2._1.map((t._1, _)) else Seq.empty
+    _.cogroup(that.map((_, ()))).nativeParDo { context =>
+      val t = context.element()
+      if (t._2._1.nonEmpty && t._2._2.nonEmpty) {
+        t._2._1.foreach(v => context.output((t._1, v)))
+      }
     }
   }
 
@@ -671,8 +681,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group per_key
    */
   def subtractByKey(that: SCollection[K]): SCollection[(K, V)] = self.transform {
-    _.cogroup(that.map((_, ()))).flatMap { t =>
-      if (t._2._1.nonEmpty && t._2._2.isEmpty) t._2._1.map((t._1, _)) else Seq.empty
+    _.cogroup(that.map((_, ()))).nativeParDo { context =>
+      val t = context.element()
+      if (t._2._1.nonEmpty && t._2._2.isEmpty) {
+        t._2._1.foreach(v => context.output((t._1, v)))
+      }
     }
   }
 

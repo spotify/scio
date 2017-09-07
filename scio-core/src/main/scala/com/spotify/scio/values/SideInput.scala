@@ -75,7 +75,7 @@ private[values] class MultiMapSideInput[K, V](val view: PCollectionView[JMap[K, 
 }
 
 /** Encapsulate context of one or more [[SideInput]]s in an [[SCollectionWithSideInput]]. */
-class SideInputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessContext) {
+class SideInputContext[T, U] private[scio] (private[scio] val context: DoFn[T, U]#ProcessContext) {
   /** Extract the value of a given [[SideInput]]. */
   def apply[S](side: SideInput[S]): S = side.getCache(context)
 }

@@ -87,12 +87,13 @@ def join(out, n):
         print >> out, '      .and(tag%s, %s.toKV.internal)' % (x, x.lower())
     print >> out, '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())'
 
-    print >> out, '    a.context.wrap(keyed).withName(tfName).flatMap { kv =>'
+    print >> out, '    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>'
+    print >> out, '      val kv = context.element()'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
     print >> out, '      for {'
     for x in reversed(vals):
         print >> out, '        %s <- result.getAll(tag%s).asScala.iterator' % (x.lower(), x)
-    print >> out, '      } yield (key, (%s))' % mkArgs(n)
+    print >> out, '      } context.output((key, (%s)))' % mkArgs(n)
     print >> out, '    }'
     print >> out, '  }'
     print >> out
@@ -113,7 +114,8 @@ def left(out, n):
         print >> out, '      .and(tag%s, %s.toKV.internal)' % (x, x.lower())
     print >> out, '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())'
 
-    print >> out, '    a.context.wrap(keyed).withName(tfName).flatMap { kv =>'
+    print >> out, '    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>'
+    print >> out, '      val kv = context.element()'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
     print >> out, '      for {'
     for (i, x) in enumerate(reversed(vals)):
@@ -121,7 +123,7 @@ def left(out, n):
             print >> out, '        %s <- result.getAll(tag%s).asScala.iterator' % (x.lower(), x)
         else:
             print >> out, '        %s <- toOptions(result.getAll(tag%s).asScala.iterator)' % (x.lower(), x)
-    print >> out, '      } yield (key, (%s))' % mkArgs(n)
+    print >> out, '      } context.output((key, (%s)))' % mkArgs(n)
     print >> out, '    }'
     print >> out, '  }'
     print >> out
@@ -142,12 +144,13 @@ def outer(out, n):
         print >> out, '      .and(tag%s, %s.toKV.internal)' % (x, x.lower())
     print >> out, '      .apply(s"CoGroupByKey@$tfName", CoGroupByKey.create())'
 
-    print >> out, '    a.context.wrap(keyed).withName(tfName).flatMap { kv =>'
+    print >> out, '    a.context.wrap(keyed).withName(tfName).nativeParDo { context =>'
+    print >> out, '      val kv = context.element()'
     print >> out, '      val (key, result) = (kv.getKey, kv.getValue)'
     print >> out, '      for {'
     for (i, x) in enumerate(reversed(vals)):
         print >> out, '        %s <- toOptions(result.getAll(tag%s).asScala.iterator)' % (x.lower(), x)
-    print >> out, '      } yield (key, (%s))' % mkArgs(n)
+    print >> out, '      } context.output((key, (%s)))' % mkArgs(n)
     print >> out, '    }'
     print >> out, '  }'
     print >> out

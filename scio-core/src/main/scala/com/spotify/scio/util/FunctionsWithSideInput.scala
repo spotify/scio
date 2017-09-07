@@ -24,17 +24,17 @@ import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 private[scio] object FunctionsWithSideInput {
 
   trait SideInputDoFn[T, U] extends NamedDoFn[T, U] {
-    private var ctx: SideInputContext[T] = _
-    def sideInputContext(c: DoFn[T, U]#ProcessContext): SideInputContext[T] = {
+    private var ctx: SideInputContext[T, U] = _
+    def sideInputContext(c: DoFn[T, U]#ProcessContext): SideInputContext[T, U] = {
       if (ctx == null || ctx.context != c) {
         // Workaround for type inference limit
-        ctx = new SideInputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])
+        ctx = new SideInputContext(c.asInstanceOf[DoFn[T, U]#ProcessContext])
       }
       ctx
     }
   }
 
-  def filterFn[T](f: (T, SideInputContext[T]) => Boolean): DoFn[T, T] = new SideInputDoFn[T, T] {
+  def filterFn[T](f: (T, SideInputContext[T, T]) => Boolean): DoFn[T, T] = new SideInputDoFn[T, T] {
     val g = ClosureCleaner(f)  // defeat closure
     @ProcessElement
     private[scio] def processElement(c: DoFn[T, T]#ProcessContext): Unit =
@@ -43,7 +43,7 @@ private[scio] object FunctionsWithSideInput {
       }
   }
 
-  def flatMapFn[T, U](f: (T, SideInputContext[T]) => TraversableOnce[U])
+  def flatMapFn[T, U](f: (T, SideInputContext[T, U]) => TraversableOnce[U])
   : DoFn[T, U] = new SideInputDoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
     @ProcessElement
@@ -53,7 +53,7 @@ private[scio] object FunctionsWithSideInput {
     }
   }
 
-  def mapFn[T, U](f: (T, SideInputContext[T]) => U): DoFn[T, U] = new SideInputDoFn[T, U] {
+  def mapFn[T, U](f: (T, SideInputContext[T, U]) => U): DoFn[T, U] = new SideInputDoFn[T, U] {
     val g = ClosureCleaner(f)  // defeat closure
     @ProcessElement
     private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit =
