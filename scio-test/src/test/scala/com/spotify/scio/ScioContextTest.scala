@@ -87,7 +87,7 @@ class ScioContextTest extends PipelineSpec {
   }
 
   it should "create local output directory on close()" in {
-    val output = Files.createTempDirectory("scio-output").toFile
+    val output = Files.createTempDirectory("scio-output-").toFile
     output.delete()
 
     val sc = ScioContext()
@@ -100,7 +100,7 @@ class ScioContextTest extends PipelineSpec {
   }
 
   it should "support save metrics on close for finished pipeline" in {
-    val metricsFile = Files.createTempFile("scio-metrics-dump", ".json").toFile
+    val metricsFile = Files.createTempFile("scio-metrics-dump-", ".json").toFile
     val opts = PipelineOptionsFactory.create()
     opts.setRunner(classOf[DirectRunner])
     opts.as(classOf[ScioOptions]).setMetricsLocation(metricsFile.toString)
@@ -124,7 +124,7 @@ class ScioContextTest extends PipelineSpec {
   // scalastyle:on no.whitespace.before.left.bracket
 
   it should "support options from optionsFile" in {
-    val optionsFile = Files.createTempFile("scio-options", ".txt").toFile
+    val optionsFile = Files.createTempFile("scio-options-", ".txt").toFile
     val pw = new PrintWriter(optionsFile)
     try {
       pw.append("--foo=bar")

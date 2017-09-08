@@ -36,7 +36,7 @@ class FileFormatTest extends PipelineSpec {
 
   // Object file is NOT backwards compatible
   "Object file" should "round trip latest file format" in {
-    val temp = Files.createTempDirectory("object-file")
+    val temp = Files.createTempDirectory("object-file-")
     Files.delete(temp)
 
     val sc1 = ScioContext()
@@ -58,7 +58,7 @@ class FileFormatTest extends PipelineSpec {
   }
 
   it should "round trip latest file format" in {
-    val temp = Files.createTempDirectory("object-file")
+    val temp = Files.createTempDirectory("object-file-")
     Files.delete(temp)
 
     val sc1 = ScioContext()

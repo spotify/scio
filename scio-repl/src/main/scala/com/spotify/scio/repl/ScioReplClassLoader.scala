@@ -17,11 +17,11 @@
 
 package com.spotify.scio.repl
 
-import java.io.{FileOutputStream, File}
-import java.net.{URLClassLoader, URL}
+import java.io.{File, FileOutputStream}
+import java.net.{URL, URLClassLoader}
+import java.nio.file.Files
 import java.util.jar.{JarEntry, JarOutputStream}
 
-import com.google.common.io.Files
 import org.slf4j.LoggerFactory
 
 import scala.tools.nsc.interpreter.ILoop
@@ -70,7 +70,7 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent:
     }
   }
 
-  def genNextReplCodeJarDir: File = Files.createTempDir()
+  def genNextReplCodeJarDir: File = Files.createTempDirectory("scio-repl-").toFile
   def getNextReplCodeJarPath: String = new File(nextReplJarDir, replJarName).getAbsolutePath
 
   /**

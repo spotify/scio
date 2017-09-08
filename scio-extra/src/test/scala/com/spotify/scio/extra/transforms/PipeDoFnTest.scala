@@ -38,7 +38,7 @@ class PipeDoFnTest extends PipelineSpec {
   }
 
   it should "support environment" in {
-    val tmpDir = Files.createTempDirectory("pipedofn")
+    val tmpDir = Files.createTempDirectory("pipedofn-")
     val file = tmpDir.resolve("tr.sh")
     GFiles.write("tr $PARG1 $PARG2", file.toFile, Charsets.UTF_8)
     val env = Map("PARG1" -> "[:lower:]", "PARG2" -> "[:upper:]")
@@ -56,7 +56,7 @@ class PipeDoFnTest extends PipelineSpec {
   }
 
   it should "support working directory" in {
-    val tmpDir = Files.createTempDirectory("pipedofn")
+    val tmpDir = Files.createTempDirectory("pipedofn-")
     val file = tmpDir.resolve("tr.sh")
     GFiles.write("tr '[:lower:]' '[:upper:]'", file.toFile, Charsets.UTF_8)
 
@@ -74,7 +74,7 @@ class PipeDoFnTest extends PipelineSpec {
 
   it should "support setup and teardown commands" in {
     runWithContext { sc =>
-      val tmpDir = Files.createTempDirectory("pipedofn").toFile
+      val tmpDir = Files.createTempDirectory("pipedofn-").toFile
       tmpDir.deleteOnExit()  // teardown happens asynchronously
       val p1 = sc.parallelize(input)
         .pipe(

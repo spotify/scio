@@ -28,7 +28,7 @@ import scala.collection.JavaConverters._
 class FileDownloadDoFnTest extends PipelineSpec {
 
   "FileDownloadDoFn" should "work" in {
-    val tmpDir = Files.createTempDirectory("filedofn")
+    val tmpDir = Files.createTempDirectory("filedofn-")
     val files = createFiles(tmpDir, 100)
     runWithContext { sc =>
       val p = sc.parallelize(files.map(_.toUri)).flatMapFile(fn)
@@ -42,7 +42,7 @@ class FileDownloadDoFnTest extends PipelineSpec {
   }
 
   it should "support batch" in {
-    val tmpDir = Files.createTempDirectory("filedofn")
+    val tmpDir = Files.createTempDirectory("filedofn-")
     val files = createFiles(tmpDir, 100)
     runWithContext { sc =>
       val p = sc.parallelize(files.map(_.toUri)).flatMapFile(fn, 10, false)
@@ -56,7 +56,7 @@ class FileDownloadDoFnTest extends PipelineSpec {
   }
 
   it should "support keeping downloaded files" in {
-    val tmpDir = Files.createTempDirectory("filedofn")
+    val tmpDir = Files.createTempDirectory("filedofn-")
     val files = createFiles(tmpDir, 100)
     runWithContext { sc =>
       val p = sc.parallelize(files.map(_.toUri)).flatMapFile(fn, 10, true)
