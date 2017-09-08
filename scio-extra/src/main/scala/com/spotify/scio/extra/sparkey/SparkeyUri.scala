@@ -23,7 +23,6 @@ import java.nio.file.{Files, Paths}
 
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.sparkey.{Sparkey, SparkeyReader}
-import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 import org.apache.beam.sdk.options.PipelineOptions
 
 import scala.collection.JavaConverters._
@@ -47,7 +46,7 @@ private[sparkey] object SparkeyUri {
     if (ScioUtil.isLocalUri(new URI(basePath))) {
       new LocalSparkeyUri(basePath)
     } else {
-      new RemoteSparkeyUri(basePath, opts.as(classOf[GcsOptions]))
+      new RemoteSparkeyUri(basePath, opts)
     }
   def extensions: Seq[String] = Seq(".spi", ".spl")
 }
@@ -77,7 +76,7 @@ private[sparkey] class SparkeyWriter(val uri: SparkeyUri) {
 
   private val localFile = uri match {
     case u: LocalSparkeyUri => u.basePath
-    case _: RemoteSparkeyUri => Files.createTempDirectory("sparkey").resolve("data").toString
+    case _: RemoteSparkeyUri => Files.createTempDirectory("sparkey-").resolve("data").toString
   }
 
   private lazy val delegate = Sparkey.createNew(new File(localFile))

@@ -18,12 +18,12 @@
 package com.spotify.scio.extra.sparkey
 
 import java.io.File
-import java.util
+import java.nio.file.Files
+import java.util.Arrays
 
-import com.google.common.io.Files
-import com.spotify.scio.ScioContext
-import com.spotify.scio.testing.PipelineSpec
-import com.spotify.sparkey.Sparkey
+import com.spotify.scio._
+import com.spotify.scio.testing._
+import com.spotify.sparkey._
 
 class SparkeyTest extends PipelineSpec {
 
@@ -42,8 +42,8 @@ class SparkeyTest extends PipelineSpec {
   }
 
   it should "support .asSparkey with specified local file" in {
-    val tmpDir = Files.createTempDir()
-    val basePath = tmpDir + "/my-sparkey-file"
+    val tmpDir = Files.createTempDirectory("sparkey-test-")
+    val basePath = tmpDir.resolve("sparkey").toString
     runWithContext { sc =>
       sc.parallelize(sideData).asSparkey(basePath)
     }
@@ -55,10 +55,10 @@ class SparkeyTest extends PipelineSpec {
   }
 
   it should "throw exception when Sparkey file exists" in {
-    val tmpDir = Files.createTempDir()
-    val basePath = tmpDir + "/my-sparkey-file"
+    val tmpDir = Files.createTempDirectory("sparkey-test-")
+    val basePath = tmpDir.resolve("sparkey").toString
     val index = new File(basePath + ".spi")
-    val sparkey = Files.touch(index)
+    Files.createFile(index.toPath)
     // scalastyle:off no.whitespace.before.left.bracket
     the [IllegalArgumentException] thrownBy {
       runWithContext {
@@ -70,9 +70,9 @@ class SparkeyTest extends PipelineSpec {
   }
 
   it should "support .asSparkey with Array[Byte] key, value" in {
-    val tmpDir = Files.createTempDir()
-    val sideDataBytes = sideData.map {case (key, value) =>
-      (key.toCharArray.map(_.toByte), value.toCharArray.map(_.toByte))
+    val tmpDir = Files.createTempDirectory("sparkey-test-")
+    val sideDataBytes = sideData.map { kv =>
+      (kv._1.getBytes, kv._2.getBytes)
     }
     val basePath = tmpDir + "/my-sparkey-file"
     runWithContext { sc =>
@@ -80,7 +80,7 @@ class SparkeyTest extends PipelineSpec {
     }
     val reader = Sparkey.open(new File(basePath + ".spi"))
     sideDataBytes.foreach { kv =>
-      util.Arrays.equals(reader.getAsByteArray(kv._1), kv._2) shouldBe true
+      Arrays.equals(reader.getAsByteArray(kv._1), kv._2) shouldBe true
     }
     for (ext <- Seq(".spi", ".spl")) {
       new File(basePath + ext).delete()
