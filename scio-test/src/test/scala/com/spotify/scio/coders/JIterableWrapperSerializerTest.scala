@@ -17,7 +17,6 @@
 package com.spotify.scio.coders
 
 import com.esotericsoftware.kryo.io.{Input, Output}
-import com.spotify.scio.util.ScioUtil
 import com.twitter.chill.{Kryo, KryoSerializer}
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -31,7 +30,9 @@ class JIterableWrapperSerializerTest extends FlatSpec with Matchers {
                                   bufferSize: Int = 1024): Unit = {
     val o = new Array[Byte](bufferSize)
     ser.write(k, new Output(o), elems)
-    elems should contain theSameElementsAs ser.read(k, new Input(o), ScioUtil.classOf[Iterable[T]])
+    val back = ser.read(k, new Input(o), classOf[Iterable[T]])
+    elems.size shouldBe back.size
+    elems should contain theSameElementsAs back
   }
 
   "JIterableWrapperSerializer" should "cope with the internal buffer overflow" in {
@@ -48,7 +49,7 @@ class JIterableWrapperSerializerTest extends FlatSpec with Matchers {
 
   it should "be able to serialize a object larger than max capacity of the internal buffer" in {
     val ser = new JIterableWrapperSerializer[String](5, 10)
-    val input = Seq("o" * 10)
+    val input = Seq("before", "o" * 10, "after")
     testRoundTrip(ser, input)
   }
 

@@ -40,9 +40,6 @@ private class JIterableWrapperSerializer[T](val bufferSize: Int = 64 * 1024,
     val i = obj.iterator
     while (i.hasNext) {
       val bufferPos = buffer.position()
-      if (bufferPos >= bufferSize) {
-        writeOutBuffer(buffer, bufferPos)
-      }
       val toSer = i.next()
       var retry = true
       while (retry) {
@@ -53,10 +50,11 @@ private class JIterableWrapperSerializer[T](val bufferSize: Int = 64 * 1024,
         } catch {
           case e: KryoException if e.getMessage.startsWith("Buffer overflow") =>
             if (count == 0) {
-              // buffer is empty but it's still not enough to serialize current object
+              // buffer was empty but it still wasn't enough to serialize current object
               // just serialize it straight to the final output
               out.writeInt(1)
               kser.writeClassAndObject(out, toSer)
+              buffer.clear() // clear possibly corrupted buffer
               retry = false
             } else {
               // write up to the position before failed serialization and retry with empty buffer
@@ -65,13 +63,13 @@ private class JIterableWrapperSerializer[T](val bufferSize: Int = 64 * 1024,
         }
       }
     }
-    if (buffer.position() > 0) {
-      out.writeInt(count)
-      out.write(buffer.getBuffer, 0, buffer.position())
+    if (count > 0) {
+      writeOutBuffer(buffer, buffer.position())
     }
     out.writeInt(0)
 
     def writeOutBuffer(buffer: Output, length: Int): Unit = {
+      assume(count > 0, "Count can't be zero")
       out.writeInt(count)
       out.write(buffer.getBuffer, 0, length)
       buffer.clear()
