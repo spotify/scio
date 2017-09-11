@@ -156,12 +156,13 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
             s"elapsed: $elapsed ms, count: $count, bytes: $bytes")
           wrapper.underlying match {
             case c: _root_.java.util.Collection[_] =>
-              // interpolate remaining bytes in the collection
+              // extrapolate remaining bytes in the collection
               val remaining = (bytes.toDouble / count * (c.size - count)).toLong
               observer.update(remaining)
-              logger.warn(s"Interpolated size estimation for ${wrapper.underlying.getClass} " +
+              logger.warn(s"Extrapolated size estimation for ${wrapper.underlying.getClass} " +
                 s"count: ${c.size}, bytes: ${bytes + remaining}")
             case _ =>
+              logger.warn("Can't get size of internal collection, thus can't extrapolate size")
           }
         } else if (elapsed > warningThreshold && !warned) {
           warned = true
