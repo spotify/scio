@@ -501,21 +501,20 @@ lazy val scioTensorFlow: Project = Project(
 lazy val scioSchemas: Project = Project(
   "scio-schemas",
   file("scio-schemas")
-).settings(
+).enablePlugins(ProtobufPlugin).settings(
   commonSettings ++ noPublishSettings,
-  version in AvroConfig := avroVersion, // Set avro version used by sbt-avro
   description := "Avro/Proto schemas for testing",
-  // suppress warnings
-  sources in doc in Compile := List(),
-  // generate both Avro and Protobuf sources in src_managed/main to avoid confusing IntelliJ
-  javaSource in AvroConfig := (sourceManaged in Compile).value,
-  // Avro and Protobuf
-  compileOrder := CompileOrder.JavaThenScala,
-  PB.targets in Compile := Seq(
-    PB.gens.java -> (sourceManaged in Compile).value
+  version in AvroConfig := avroVersion,
+  version in ProtobufConfig := protobufVersion,
+  protobufRunProtoc in ProtobufConfig := (args =>
+    com.github.os72.protocjar.Protoc.runProtoc("-v3.3.0" +: args.toArray)
   ),
-  // avoid accidentally deleting Avro sources
-  PB.deleteTargetDirectory := false
+  // Avro and Protobuf files are compiled to src_managed/main/compiled_{avro,protobuf}
+  // Exclude their parent to avoid confusing IntelliJ
+  sourceDirectories in Compile := (sourceDirectories in Compile).value.filterNot(_.getPath.endsWith("/src_managed/main")),
+  managedSourceDirectories in Compile := (managedSourceDirectories in Compile).value.filterNot(_.getPath.endsWith("/src_managed/main")),
+  sources in doc in Compile := List(),  // suppress warnings
+  compileOrder := CompileOrder.JavaThenScala
 )
 
 lazy val scioExamples: Project = Project(
