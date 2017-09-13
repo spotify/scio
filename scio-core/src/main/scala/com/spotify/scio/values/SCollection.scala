@@ -312,6 +312,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.parDo(Functions.flatMapFn(f))
 
   /**
+   * Return a new SCollection[U] by flattening each element of an SCollection[Traversable[U]]
+   * @group transform
+   */
+  def flatten[U: ClassTag](implicit ev: T <:< TraversableOnce[U]): SCollection[U] =
+    flatMap(_.asInstanceOf[TraversableOnce[U]])
+
+  /**
    * Aggregate the elements using a given associative function and a neutral "zero value". The
    * function op(t1, t2) is allowed to modify t1 and return it as its result value to avoid object
    * allocation; however, it should not modify t2.
