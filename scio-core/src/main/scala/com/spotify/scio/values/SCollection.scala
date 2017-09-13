@@ -837,11 +837,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .withCodec(codec)
       .withMetadata(metadata.asJava)
 
-  private[scio] def textOut(path: String, suffix: String, numShards: Int) =
+  private[scio] def textOut(path: String, suffix: String, numShards: Int,
+                            header: Option[String] = None,
+                            footer: Option[String] = None) =
     gio.TextIO.write()
       .to(pathWithShards(path))
       .withSuffix(suffix)
       .withNumShards(numShards)
+      .withHeader(header.orNull)
+      .withFooter(footer.orNull)
 
   /**
    * Save this SCollection as an Avro file.
@@ -1140,7 +1144,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group output
    */
   def saveAsTextFile(path: String,
-                     suffix: String = ".txt", numShards: Int = 0): Future[Tap[String]] = {
+                     suffix: String = ".txt",
+                     numShards: Int = 0,
+                     header: Option[String] = None,
+                     footer: Option[String] = None): Future[Tap[String]] = {
     val s = if (classOf[String] isAssignableFrom this.ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
     } else {
@@ -1150,7 +1157,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       context.testOut(TextIO(path))(s)
       s.saveAsInMemoryTap
     } else {
-      s.applyInternal(textOut(path, suffix, numShards))
+      s.applyInternal(textOut(path, suffix, numShards, header, footer))
       context.makeFuture(TextTap(ScioUtil.addPartSuffix(path)))
     }
   }
