@@ -507,6 +507,7 @@ lazy val scioSchemas: Project = Project(
   version in AvroConfig := avroVersion,
   version in ProtobufConfig := protobufVersion,
   protobufRunProtoc in ProtobufConfig := (args =>
+    // protoc-jar does not include 3.3.1 binary
     com.github.os72.protocjar.Protoc.runProtoc("-v3.3.0" +: args.toArray)
   ),
   // Avro and Protobuf files are compiled to src_managed/main/compiled_{avro,protobuf}
