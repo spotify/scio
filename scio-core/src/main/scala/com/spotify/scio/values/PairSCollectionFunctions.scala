@@ -707,6 +707,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   // Scala lambda is simpler and more powerful than transforms.Values
   def values: SCollection[V] = self.map(_._2)
 
+  /**
+   * Return an SCollection having its values flattened.
+   * @group transform
+   */
+  def flattenValues[U: ClassTag](implicit ev: V <:< TraversableOnce[U]): SCollection[(K, U)] =
+    self.flatMapValues(_.asInstanceOf[TraversableOnce[U]])
+
   // =======================================================================
   // Side input operations
   // =======================================================================

@@ -436,6 +436,13 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  it should "support flattenValues()" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq(("a", Seq(1, 2, 3)), ("b", Seq(4, 5, 6)))).flattenValues
+      p should containInAnyOrder (Seq(("a", 1), ("a", 2), ("a", 3), ("b", 4), ("b", 5), ("b", 6)))
+    }
+  }
+
   it should "support hashJoin()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
