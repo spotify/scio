@@ -64,8 +64,8 @@ class TFTapTest extends TapSpec {
     for (
       compressionType <- Seq(CType.NONE, CType.ZLIB, CType.GZIP);
       featureSpec <- Seq(
-        FeatureSpec.fromCaseClass[TestFeatureSpec.TestFeatures],
-        FeatureSpec.fromSeq(Seq("f1", "f2")))
+        FeatureDesc.fromCaseClass[TestFeatureSpec.TestFeatures],
+        FeatureDesc.fromSeq(Seq("f1", "f2")))
         ) {
       val dir = tmpDir
       val sc = ScioContext()
@@ -92,7 +92,7 @@ class TFTapTest extends TapSpec {
       val (out, spec) = sc.parallelize(examples)
         .saveAsTfExampleFile(
           dir.getPath,
-          FeatureSpec.fromSCollection(featureSpec),
+          FeatureDesc.fromSCollection(featureSpec),
           compressionType = compressionType)
       sc.close().waitUntilDone()
       verifyTap(out.waitForResult(), examples.toSet)
@@ -115,10 +115,10 @@ class TFTapTest extends TapSpec {
       sc.parallelize(examples)
         .saveAsTfExampleFile(
           dir.getPath,
-          FeatureSpec.fromSCollection(featureSpec),
+          FeatureDesc.fromSCollection(featureSpec),
           compressionType = CompressionType.NONE)
       sc.close()
-    } should have message s"java.lang.IllegalArgumentException: requirement failed: Feature specification must contain a single element"
+    } should have message s"java.lang.IllegalArgumentException: requirement failed: Feature description must contain a single element"
     // scalastyle:on no.whitespace.before.left.bracket
     // scalastyle:off line.size.limit
     FileUtils.deleteDirectory(dir)

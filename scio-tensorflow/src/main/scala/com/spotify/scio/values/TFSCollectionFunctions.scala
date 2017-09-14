@@ -134,45 +134,45 @@ class TensorFlowSCollectionFunctions[T: ClassTag](@transient val self: SCollecti
 
 private[scio] object TFExampleSCollectionFunctions {
 
-  sealed trait FeatureSpec
-  final case class SeqStrFeatureSpec(x: Seq[String]) extends FeatureSpec
-  final case class SColSeqStrFeatureSpec(x: SCollection[Seq[String]]) extends FeatureSpec
+  sealed trait FeatureDesc
+  final case class SeqStrFeatureDesc(x: Seq[String]) extends FeatureDesc
+  final case class SColSeqStrFeatureDesc(x: SCollection[Seq[String]]) extends FeatureDesc
 
   /**
-   * Feature specification factory for [[TFExampleSCollectionFunctions.saveAsTfExampleFile]].
+   * Feature description factory for [[TFExampleSCollectionFunctions.saveAsTfExampleFile]].
    * In most cases you want to use [[https://github.com/spotify/featran featran]] and
-   * [[FeatureSpec.fromSCollection]], which would give you feature specification for free.
+   * [[FeatureDesc.fromSCollection]], which would give you feature description for free.
    */
-  object FeatureSpec {
+  object FeatureDesc {
 
     /**
-     * [[Seq]] based feature specification.
+     * [[Seq]] based feature description.
      *
-     * @param seq [[Seq]] containing feature specifications.
+     * @param seq [[Seq]] containing feature descriptions.
      */
-    def fromSeq(seq: Seq[String]): FeatureSpec = SeqStrFeatureSpec(seq)
+    def fromSeq(seq: Seq[String]): FeatureDesc = SeqStrFeatureDesc(seq)
 
     /**
-     * [[SCollection]] based feature specification.
+     * [[SCollection]] based feature description.
      *
      * @param scol [[SCollection]] with a single element of [[Seq]] containing feature
-     *             specifications.
+     *             description.
      */
-    def fromSCollection(scol: SCollection[Seq[String]]): FeatureSpec = SColSeqStrFeatureSpec(scol)
+    def fromSCollection(scol: SCollection[Seq[String]]): FeatureDesc = SColSeqStrFeatureDesc(scol)
 
     /**
-     * Case class field name based feature specification.
+     * Case class field name based feature description.
      *
      * @note uses reflection to fetch field names, should not be used in performance critical path.
      */
     import scala.reflect.runtime.universe._
-    def fromCaseClass[T: TypeTag]: FeatureSpec = {
+    def fromCaseClass[T: TypeTag]: FeatureDesc = {
       require(typeOf[T].typeSymbol.isClass && typeOf[T].typeSymbol.asClass.isCaseClass,
         "Type must be a case class")
       val s = typeOf[T].members.collect {
         case m: MethodSymbol if m.isCaseAccessor => m.name.decodedName.toString
       }.toSeq
-      SeqStrFeatureSpec(s)
+      SeqStrFeatureDesc(s)
     }
   }
 
@@ -184,34 +184,34 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
   /**
    * Save this SCollection of [[org.tensorflow.example.Example]] as a TensorFlow TFRecord file.
    *
-   * @param featureSpec feature spec for the Examples, use the
-   *                    [[com.spotify.scio.tensorflow.FeatureSpec]] to define a specification.
-   * @param featureSpecPath path to save the feature specification to, by default it will be
-   *                        `${path}/_feature_spec`
+   * @param featureDesc     feature description for the Examples, use the
+   *                        [[com.spotify.scio.tensorflow.FeatureDesc]] to define a description.
+   * @param featureDescPath path to save the feature description to, by default it will be
+   *                        `${path}/_feature_desc`
    *
    * @group output
    */
   def saveAsTfExampleFile(path: String,
-                          featureSpec: FeatureSpec,
+                          featureDesc: FeatureDesc,
                           suffix: String = ".tfrecords",
                           compressionType: CompressionType = CompressionType.NONE,
                           numShards: Int = 0,
-                          featureSpecPath: String = null)
+                          featureDescPath: String = null)
                          (implicit ev: T <:< Example)
   : (Future[Tap[Example]], Future[Tap[String]]) = {
-    require(featureSpec != null, "Feature spec can't be null")
+    require(featureDesc != null, "Feature spec can't be null")
     require(path != null, "Path can't be null")
     val _featureSpecPath =
-      Option(featureSpecPath).getOrElse(path.replaceAll("\\/+$", "") + "/_feature_spec")
+      Option(featureDescPath).getOrElse(path.replaceAll("\\/+$", "") + "/_feature_desc")
     import scala.concurrent.ExecutionContext.Implicits.global
-    val fs: SCollection[Seq[String]] = featureSpec match {
-      case SeqStrFeatureSpec(x) => self.context.parallelize(Seq(x))
-      case SColSeqStrFeatureSpec(x) => x
+    val fs: SCollection[Seq[String]] = featureDesc match {
+      case SeqStrFeatureDesc(x) => self.context.parallelize(Seq(x))
+      case SColSeqStrFeatureDesc(x) => x
     }
     val singletonFeatureSpec = fs
       .groupBy(_ => ())
       .flatMap { case (_, e) =>
-        require(e.size == 1, "Feature specification must contain a single element")
+        require(e.size == 1, "Feature description must contain a single element")
         e
       }
     if (self.context.isTest) {

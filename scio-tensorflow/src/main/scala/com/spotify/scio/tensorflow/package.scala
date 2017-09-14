@@ -32,9 +32,9 @@ package object tensorflow {
 
   case class TFExampleIO(path: String) extends TestIO[Example](path)
 
-  /** Expose [[TFExampleSCollectionFunctions.FeatureSpec]]. */
-  val FeatureSpec: TFExampleSCollectionFunctions.FeatureSpec.type =
-    TFExampleSCollectionFunctions.FeatureSpec
+  /** Expose [[TFExampleSCollectionFunctions.FeatureDesc]]. */
+  val FeatureDesc: TFExampleSCollectionFunctions.FeatureDesc.type =
+    TFExampleSCollectionFunctions.FeatureDesc
 
   /** Implicit conversion from [[SCollection]] to [[TensorFlowSCollectionFunctions]]. */
   implicit def makeTensorFlowSCollectionFunctions[T: ClassTag](s: SCollection[T])
