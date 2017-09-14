@@ -23,7 +23,7 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 
 val beamVersion = "2.1.0"
 
-val algebirdVersion = "0.13.0"
+val algebirdVersion = "0.13.2"
 val annoy4sVersion = "0.5.0"
 val annoyVersion = "0.2.5"
 val asmVersion = "4.5"
