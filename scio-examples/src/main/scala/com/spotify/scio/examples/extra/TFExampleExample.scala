@@ -41,7 +41,7 @@ runMain
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
   --input=gs://dataflow-samples/shakespeare/kinglear.txt
   --output=gs://[BUCKET]/[PATH]/tf-example-features
-  --feature-spec-path=gs://[BUCKET]/[PATH]/tf-example-features/_features
+  --feature-desc-path=gs://[BUCKET]/[PATH]/tf-example-features/_features
 */
 
 object TFExampleExample {
@@ -58,8 +58,8 @@ object TFExampleExample {
       .map(featuresType.toExample(_))
       .saveAsTfExampleFile(
         args("output"),
-        FeatureSpec.fromCaseClass[WordCountFeatures],
-        featureSpecPath = args.optional("feature-spec-path").orNull)
+        FeatureDesc.fromCaseClass[WordCountFeatures],
+        featureDescPath = args.optional("feature-desc-path").orNull)
     sc.close()
   }
 }
