@@ -733,10 +733,10 @@ class JobTestTest extends PipelineSpec {
     val msg = "requirement failed: There already exists test output for TextIO(output), " +
       "currently registered outputs: [TextIO(output)]"
     the [IllegalArgumentException] thrownBy {
-    JobTest[JobWitDuplicateOutput.type]
-      .args("--output=output")
-      .output[String](TextIO("output"))(_ should containSingleValue ("does not matter"))
-      .run()
+      JobTest[JobWitDuplicateOutput.type]
+        .args("--output=output")
+        .output[String](TextIO("output"))(_ should containSingleValue ("does not matter"))
+        .run()
     } should have message msg
   }
 
