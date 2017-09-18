@@ -17,15 +17,36 @@
 
 package com.spotify.scio.examples.extra
 
+import com.spotify.scio._
 import com.spotify.scio.testing._
 
 class MetricsExampleTest extends PipelineSpec {
 
-  "AccumulatorExample" should "work" in {
-    noException should be thrownBy {
-      JobTest[com.spotify.scio.examples.extra.MetricsExample.type]
-        .run()
-    }
+  "MetricsExample" should "work" in {
+    JobTest[com.spotify.scio.examples.extra.MetricsExample.type]
+      // static metrics
+      .counter(MetricsExample.sum)(_.committed shouldBe Some((1 to 100).sum))
+      .counter(MetricsExample.sum2)(_.committed shouldBe Some((1 to 100).sum + (1 to 50).sum))
+      .counter(MetricsExample.count)(_.committed shouldBe Some(100))
+      .distribution(MetricsExample.dist) { r =>
+        val d = r.committed.get
+        d.count() shouldBe 100
+        d.min() shouldBe 1
+        d.max() shouldBe 100
+        d.sum() shouldBe (1 to 100).sum
+        d.mean() shouldBe (1 to 100).sum / 100.0
+      }
+      .gauge(MetricsExample.gauge) { r =>
+        val g = r.committed.get.value()
+        g should be >= 1L
+        g should be <= 100L
+      }
+      // dynamic metrics
+      .counter(ScioMetrics.counter("even_2"))(_.committed shouldBe Some(1))
+      .counter(ScioMetrics.counter("even_4"))(_.committed shouldBe Some(1))
+      .counter(ScioMetrics.counter("even_6"))(_.committed shouldBe Some(1))
+      .counter(ScioMetrics.counter("even_8"))(_.committed shouldBe Some(1))
+      .run()
   }
 
 }

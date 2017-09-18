@@ -19,8 +19,11 @@ package com.spotify.scio.testing
 
 import java.lang.reflect.InvocationTargetException
 
+import com.spotify.scio.ScioResult
+import com.spotify.scio.metrics.MetricValue
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.{metrics => bm}
 
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
@@ -65,10 +68,16 @@ import scala.util.control.NonFatal
  */
 object JobTest {
 
-  private case class BuilderState(className: String, cmdlineArgs: Array[String],
+  private case class BuilderState(className: String,
+                                  cmdlineArgs: Array[String],
                                   inputs: Map[TestIO[_], Iterable[_]],
                                   outputs: Map[TestIO[_], SCollection[_] => Unit],
                                   distCaches: Map[DistCacheIO[_], _],
+                                  counters: Map[bm.Counter, MetricValue[Long] => Unit],
+                                  // scalastyle:off line.size.limit
+                                  distributions: Map[bm.Distribution, MetricValue[bm.DistributionResult] => Unit],
+                                  // scalastyle:on line.size.limit
+                                  gauges: Map[bm.Gauge, MetricValue[bm.GaugeResult] => Unit],
                                   wasRunInvoked: Boolean = false)
 
   class Builder(private var state: BuilderState) {
@@ -100,13 +109,13 @@ object JobTest {
      * used inside the pipeline, e.g. `AvroIO[MyRecord]("out.avro")` with
      * `data.saveAsAvroFile("out.avro")` where `data` is of type `SCollection[MyRecord]`.
      *
-     * @param value assertions for output data. See [[SCollectionMatchers]] for available matchers
-     *              on an [[com.spotify.scio.values.SCollection SCollection]].
+     * @param assertion assertion for output data. See [[SCollectionMatchers]] for available
+     *                  matchers on an [[com.spotify.scio.values.SCollection SCollection]].
      */
-    def output[T](key: TestIO[T])(value: SCollection[T] => Unit): Builder = {
+    def output[T](key: TestIO[T])(assertion: SCollection[T] => Unit): Builder = {
       require(!state.outputs.contains(key), "Duplicate test output: " + key)
       state = state
-        .copy(outputs = state.outputs + (key -> value.asInstanceOf[SCollection[_] => Unit]))
+        .copy(outputs = state.outputs + (key -> assertion.asInstanceOf[SCollection[_] => Unit]))
       this
     }
 
@@ -122,6 +131,43 @@ object JobTest {
     }
 
     /**
+     * Evaluate a [[org.apache.beam.sdk.metrics.Counter Counter]] in the pipeline being tested.
+     * @param counter counter to be evaluated
+     * @param assertion assertion for counter result
+     */
+    def counter(counter: bm.Counter)(assertion: MetricValue[Long] => Unit): Builder = {
+      require(!state.counters.contains(counter), "Duplicate test counter: " + counter.getName)
+      state = state.copy(counters = state.counters + (counter -> assertion))
+      this
+    }
+
+    /**
+     * Evaluate a [[org.apache.beam.sdk.metrics.Distribution Distribution]] in the pipeline being
+     * tested.
+     * @param distribution distribution to be evaluated
+     * @param assertion assertion for distribution result
+     */
+    def distribution(distribution: bm.Distribution)
+                    (assertion: MetricValue[bm.DistributionResult] => Unit): Builder = {
+      require(
+        !state.distributions.contains(distribution),
+        "Duplicate test distribution: " + distribution.getName)
+      state = state.copy(distributions = state.distributions + (distribution -> assertion))
+      this
+    }
+
+    /**
+     * Evaluate a [[org.apache.beam.sdk.metrics.Gauge Gauge]] in the pipeline being tested.
+     * @param gauge gauge to be evaluated
+     * @param assertion assertion for gauge result
+     */
+    def gauge(gauge: bm.Gauge)(assertion: MetricValue[bm.GaugeResult] => Unit): Builder = {
+      require(!state.gauges.contains(gauge), "Duplicate test gauge: " + gauge.getName)
+      state = state.copy(gauges = state.gauges + (gauge -> assertion))
+      this
+    }
+
+    /**
      * Set up test wiring. Use this only if you have custom pipeline wiring and are bypassing
      * [[run]]. Make sure [[tearDown]] is called afterwards.
      */
@@ -132,7 +178,14 @@ object JobTest {
      * Tear down test wiring. Use this only if you have custom pipeline wiring and are bypassing
      * [[run]]. Make sure [[setUp]] is called before.
      */
-    def tearDown(): Unit = TestDataManager.tearDown(testId)
+    def tearDown(): Unit = {
+      val metricsFn = (result: ScioResult) => {
+        state.counters.foreach { case (k, v) => v(result.counter(k)) }
+        state.distributions.foreach { case (k, v) => v(result.distribution(k)) }
+        state.gauges.foreach { case (k, v) => v(result.gauge(k)) }
+      }
+      TestDataManager.tearDown(testId, metricsFn)
+    }
 
     /** Run the pipeline with test wiring. */
     def run(): Unit = {
@@ -163,12 +216,14 @@ object JobTest {
 
   /** Create a new JobTest.Builder instance. */
   def apply(className: String): Builder =
-    new Builder(BuilderState(className, Array(), Map.empty, Map.empty, Map.empty))
+    new Builder(BuilderState(
+      className, Array(), Map.empty, Map.empty, Map.empty, Map.empty, Map.empty, Map.empty))
 
   /** Create a new JobTest.Builder instance. */
   def apply[T: ClassTag]: Builder = {
     val className= ScioUtil.classOf[T].getName.replaceAll("\\$$", "")
-    new Builder(BuilderState(className, Array(), Map.empty, Map.empty, Map.empty))
+    new Builder(BuilderState(
+      className, Array(), Map.empty, Map.empty, Map.empty, Map.empty, Map.empty, Map.empty))
   }
 
 }

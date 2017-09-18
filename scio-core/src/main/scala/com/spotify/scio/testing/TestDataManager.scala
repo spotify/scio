@@ -19,6 +19,7 @@ package com.spotify.scio.testing
 
 import com.google.api.services.bigquery.model.TableRow
 import com.google.datastore.v1.{Entity, Query}
+import com.spotify.scio.ScioResult
 import com.spotify.scio.values.SCollection
 
 import scala.collection.concurrent.TrieMap
@@ -88,6 +89,7 @@ private[scio] object TestDataManager {
   private val outputs = TrieMap.empty[String, TestOutput]
   private val distCaches = TrieMap.empty[String, TestDistCache]
   private val closed = TrieMap.empty[String, Boolean]
+  private val results = TrieMap.empty[String, ScioResult]
 
   private def getValue[V](key: String, m: TrieMap[String, V], ioMsg: String): V = {
     require(m.contains(key), s"Missing test data. Are you $ioMsg outside of JobTest?")
@@ -108,15 +110,21 @@ private[scio] object TestDataManager {
     distCaches += (testId -> new TestDistCache(dcs))
   }
 
-  def tearDown(testId: String): Unit = {
+  def tearDown(testId: String, f: ScioResult => Unit = _ => Unit): Unit = {
     inputs.remove(testId).get.validate()
     outputs.remove(testId).get.validate()
     distCaches.remove(testId).get.validate()
     ensureClosed(testId)
+    val result = results.remove(testId).get
+    f(result)
   }
 
   def startTest(testId: String): Unit = closed(testId) = false
-  def closeTest(testId: String): Unit = closed(testId) = true
+  def closeTest(testId: String, result: ScioResult): Unit = {
+    closed(testId) = true
+    results(testId) = result
+  }
+
   def ensureClosed(testId: String): Unit = {
     require(closed(testId), "ScioContext was not closed. Did you forget close()?")
     closed -= testId
