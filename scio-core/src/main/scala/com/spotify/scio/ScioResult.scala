@@ -164,25 +164,34 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
   // scalastyle:on method.length
 
   /** Retrieve aggregated value of a single counter from the pipeline. */
-  def counter(c: bm.Counter): MetricValue[Long] = allCounters(c.getName)
+  def counter(c: bm.Counter): MetricValue[Long] = getMetric(allCounters, c.getName)
 
   /** Retrieve aggregated value of a single distribution from the pipeline. */
   def distribution(d: bm.Distribution): MetricValue[bm.DistributionResult] =
-    allDistributions(d.getName)
+    getMetric(allDistributions, d.getName)
 
   /** Retrieve latest value of a single gauge from the pipeline. */
-  def gauge(g: bm.Gauge): MetricValue[bm.GaugeResult] = allGauges(g.getName)
+  def gauge(g: bm.Gauge): MetricValue[bm.GaugeResult] = getMetric(allGauges, g.getName)
 
   /** Retrieve per step values of a single counter from the pipeline. */
-  def counterAtSteps(c: bm.Counter): Map[String, MetricValue[Long]] = allCountersAtSteps(c.getName)
+  def counterAtSteps(c: bm.Counter): Map[String, MetricValue[Long]] =
+    getMetric(allCountersAtSteps, c.getName)
 
   /** Retrieve per step values of a single distribution from the pipeline. */
   def distributionAtSteps(d: bm.Distribution): Map[String, MetricValue[bm.DistributionResult]] =
-    allDistributionsAtSteps(d.getName)
+    getMetric(allDistributionsAtSteps, d.getName)
 
   /** Retrieve per step values of a single gauge from the pipeline. */
   def gaugeAtSteps(g: bm.Gauge): Map[String, MetricValue[bm.GaugeResult]] =
-    allGaugesAtSteps(g.getName)
+    getMetric(allGaugesAtSteps, g.getName)
+
+  private def getMetric[V](m: Map[bm.MetricName, V], k: bm.MetricName): V = m.get(k) match {
+    case Some(value) => value
+    case None =>
+      val e = new NoSuchElementException(
+        s"metric not found: $k, the metric might not have been accessed inside the pipeline")
+      throw e
+  }
 
   /** Retrieve aggregated values of all counters from the pipeline. */
   lazy val allCounters: Map[bm.MetricName, MetricValue[Long]] =
