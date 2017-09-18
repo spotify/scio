@@ -22,18 +22,19 @@ import com.spotify.scio._
 // scalastyle:off
 // Update metrics inside a job and retrieve values later
 object MetricsExample {
+
+  // Create metrics to be updated inside the pipeline
+  val sum = ScioMetrics.counter("sum")
+  val sum2 = ScioMetrics.counter("sum2")
+  val count = ScioMetrics.counter("count")
+  // With optional namespace
+  // This will track min, max, count, sum, mean
+  val dist = ScioMetrics.distribution("com.spotify.scio.examples.extra.MetricsExample", "dist")
+  // Using class type as namespace
+  val gauge = ScioMetrics.gauge[MetricsExample.type]("gauge")
+
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-
-    // Create metrics to be updated inside the pipeline
-    val sum = ScioMetrics.counter("sum")
-    val sum2 = ScioMetrics.counter("sum2")
-    val count = ScioMetrics.counter("count")
-    // With optional namespace
-    // This will track min, max, count, sum, mean
-    val dist = ScioMetrics.distribution("com.spotify.scio.examples.extra.MetricsExample", "dist")
-    // Using class type as namespace
-    val gauge = ScioMetrics.gauge[MetricsExample.type]("gauge")
 
     sc.parallelize(1 to 100)
       .filter { i =>

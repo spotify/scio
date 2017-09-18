@@ -363,7 +363,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     val result = new ScioResult(this.pipeline.run(), context)
 
     if (this.isTest) {
-      TestDataManager.closeTest(testId.get)
+      TestDataManager.closeTest(testId.get, result)
     }
 
     if (this.isTest || this.optionsAs[ScioOptions].isBlocking) {
