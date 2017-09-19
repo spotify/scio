@@ -194,7 +194,6 @@ lazy val paradiseDependency =
   "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full
 lazy val beamDependencies = Seq(
   "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-  "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
   "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion
 )
 
@@ -276,6 +275,7 @@ lazy val scioTest: Project = Project(
   commonSettings ++ itSettings,
   description := "Scio helpers for ScalaTest",
   libraryDependencies ++= Seq(
+    "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
     "org.scalatest" %% "scalatest" % scalatestVersion,
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
@@ -554,6 +554,7 @@ lazy val scioRepl: Project = Project(
 ).settings(
   commonSettings,
   libraryDependencies ++= Seq(
+    "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
     "org.slf4j" % "slf4j-simple" % slf4jVersion,
     "jline" % "jline" % jlineVersion,
     "org.scala-lang" % "scala-compiler" % scalaVersion.value,

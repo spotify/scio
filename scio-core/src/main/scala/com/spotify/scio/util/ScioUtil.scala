@@ -27,7 +27,6 @@ import com.google.api.services.dataflow.Dataflow
 import com.google.api.services.dataflow.model.JobMetrics
 import com.spotify.scio.ScioContext
 import org.apache.beam.runners.dataflow.options._
-import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
 import org.apache.beam.sdk.coders.{Coder, CoderRegistry}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
@@ -50,7 +49,8 @@ private[scio] object ScioUtil {
 
   def isLocalRunner(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Boolean = {
     require(runner != null, "Pipeline runner not set!")
-    classOf[DirectRunner] isAssignableFrom runner
+    // FIXME: cover Flink, Spark, etc. in local mode
+    runner.getName == "org.apache.beam.runners.direct.DirectRunner"
   }
 
   def isRemoteRunner(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Boolean =
