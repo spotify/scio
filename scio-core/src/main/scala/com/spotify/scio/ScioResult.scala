@@ -23,20 +23,19 @@ import com.spotify.scio.metrics._
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.util.ScioUtil
 import com.twitter.algebird.Semigroup
-import org.apache.beam.runners.dataflow.{DataflowClient, DataflowPipelineJob}
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import org.apache.beam.runners.dataflow.{DataflowClient, DataflowPipelineJob}
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.PipelineResult.State
-import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
-import org.apache.beam.sdk.PipelineResult
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.{metrics => bm}
+import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.MimeTypes
+import org.apache.beam.sdk.{PipelineResult, metrics => bm}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
@@ -46,12 +45,12 @@ object ScioResult {
     options.setProject(projectId)
     val client = DataflowClient.create(options)
     val job = new DataflowPipelineJob(client, jobId, options, null)
-    new AsyncScioResult(job, options)
+    new AsyncScioResult(job)
   }
 }
 
-private class AsyncScioResult(internal: PipelineResult, options: PipelineOptions)
-  extends ScioResult(internal, options) {
+private class AsyncScioResult(internal: PipelineResult)
+  extends ScioResult(internal) {
   override val finalState: Future[State] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     Future {
@@ -59,10 +58,15 @@ private class AsyncScioResult(internal: PipelineResult, options: PipelineOptions
       this.state
     }
   }
+  override def saveMetrics(filename: String): Unit = ???
+  override def getMetrics: Metrics = ???
 }
 
 private[scio] class BlockingScioResult(internal: PipelineResult, val context: ScioContext)
-  extends ScioResult(internal, context.options) {
+  extends ScioResult(internal) {
+
+  private val logger = LoggerFactory.getLogger(this.getClass)
+
   override val finalState: Future[State] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     val f = Future {
@@ -80,46 +84,8 @@ private[scio] class BlockingScioResult(internal: PipelineResult, val context: Sc
     }
     f
   }
-}
 
-/** Represent a Scio pipeline result. */
-abstract class ScioResult private[scio] (val internal: PipelineResult,
-                                         val options: PipelineOptions) {
-
-  private val logger = LoggerFactory.getLogger(this.getClass)
-
-  /**
-   * `Future` for pipeline's final state. The `Future` will be completed once the pipeline
-   * completes successfully.
-   */
-  val finalState: Future[State]
-
-  /** Wait until the pipeline finishes. */
-  def waitUntilFinish(duration: Duration = Duration.Inf): ScioResult = {
-    Await.ready(finalState, duration)
-    this
-  }
-
-  /**
-   * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
-   * `FAILED`). Throw exception otherwise.
-   */
-  def waitUntilDone(duration: Duration = Duration.Inf): ScioResult = {
-    waitUntilFinish(duration)
-    if (!this.state.equals(State.DONE)) {
-      throw new PipelineExecutionException(new Exception(s"Job finished with state ${this.state}"))
-    }
-    this
-  }
-
-  /** Whether the pipeline is completed. */
-  def isCompleted: Boolean = internal.getState.isTerminal
-
-  /** Pipeline's current state. */
-  def state: State = Try(internal.getState).getOrElse(State.UNKNOWN)
-
-  /** Save metrics of the finished pipeline to a file. */
-  def saveMetrics(filename: String): Unit = {
+  override def saveMetrics(filename: String): Unit = {
     require(isCompleted, "Pipeline has to be finished to save metrics.")
     val mapper = ScioUtil.getScalaJsonMapper
     val resourceId = FileSystems.matchNewResource(filename, false)
@@ -133,28 +99,27 @@ abstract class ScioResult private[scio] (val internal: PipelineResult,
     }
   }
 
-  /** Get metrics of the finished pipeline. */
   // scalastyle:off method.length
-  def getMetrics: Metrics = {
+  override def getMetrics: Metrics = {
     require(isCompleted, "Pipeline has to be finished to get metrics.")
 
-    val (jobId, dfMetrics) = if (ScioUtil.isLocalRunner(this.options.getRunner)) {
+    val (jobId, dfMetrics) = if (ScioUtil.isLocalRunner(this.context.options.getRunner)) {
       // to be safe let's use app name at a cost of duplicate for local runner
       // there are no dataflow service metrics on local runner
-      (this.options.as(classOf[ApplicationNameOptions]).getAppName, Nil)
+      (this.context.optionsAs[ApplicationNameOptions].getAppName, Nil)
     } else {
       val jobId = internal.asInstanceOf[DataflowPipelineJob].getJobId
       // given that this depends on internals of dataflow service - handle failure gracefully
       // if there is an error - no dataflow service metrics will be saved
       val dfMetrics = Try {
         ScioUtil
-          .getDataflowServiceMetrics(this.options.as(classOf[DataflowPipelineOptions]), jobId)
+          .getDataflowServiceMetrics(this.context.optionsAs[DataflowPipelineOptions], jobId)
           .getMetrics.asScala
           .map(e => {
             val name = DFMetricName(e.getName.getName,
               e.getName.getOrigin,
               Option(e.getName.getContext)
-                    .getOrElse(Map.empty[String, String].asJava).asScala.toMap)
+                .getOrElse(Map.empty[String, String].asJava).asScala.toMap)
             DFServiceMetrics(name, e.getScalar, e.getUpdateTime)
           })
       } match {
@@ -182,13 +147,54 @@ abstract class ScioResult private[scio] (val internal: PipelineResult,
     }
     Metrics(scioVersion,
       scalaVersion,
-      this.options.as(classOf[ApplicationNameOptions]).getAppName,
+      this.context.optionsAs[ApplicationNameOptions].getAppName,
       jobId,
       state.toString,
       BeamMetrics(beamCounters, beamDistributions, beamGauges),
       dfMetrics)
   }
   // scalastyle:on method.length
+
+}
+
+/** Represent a Scio pipeline result. */
+abstract class ScioResult private[scio] (val internal: PipelineResult) {
+
+  /**
+   * `Future` for pipeline's final state. The `Future` will be completed once the pipeline
+   * completes successfully.
+   */
+  val finalState: Future[State]
+
+  /** Save metrics of the finished pipeline to a file. */
+  def saveMetrics(filename: String): Unit
+
+  /** Get metrics of the finished pipeline. */
+  def getMetrics: Metrics
+
+  /** Wait until the pipeline finishes. */
+  def waitUntilFinish(duration: Duration = Duration.Inf): ScioResult = {
+    Await.ready(finalState, duration)
+    this
+  }
+
+  /**
+   * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
+   * `FAILED`). Throw exception otherwise.
+   */
+  def waitUntilDone(duration: Duration = Duration.Inf): ScioResult = {
+    waitUntilFinish(duration)
+    if (!this.state.equals(State.DONE)) {
+      throw new PipelineExecutionException(new Exception(s"Job finished with state ${this.state}"))
+    }
+    this
+  }
+
+  /** Whether the pipeline is completed. */
+  def isCompleted: Boolean = internal.getState.isTerminal
+
+  /** Pipeline's current state. */
+  def state: State = Try(internal.getState).getOrElse(State.UNKNOWN)
 
   /** Retrieve aggregated value of a single counter from the pipeline. */
   def counter(c: bm.Counter): MetricValue[Long] = allCounters(c.getName)
