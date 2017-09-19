@@ -23,9 +23,6 @@ import java.nio.file.Path
 
 import com.spotify.scio.util._
 import com.spotify.scio.values.SCollection
-import org.apache.beam.runners.dataflow.DataflowRunner
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
-import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
