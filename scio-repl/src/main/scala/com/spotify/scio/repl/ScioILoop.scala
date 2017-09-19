@@ -19,7 +19,6 @@ package com.spotify.scio.repl
 
 import java.io.BufferedReader
 
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import com.spotify.scio.bigquery.BigQueryClient
 import com.spotify.scio.{scalaVersion, scioVersion}
@@ -48,7 +47,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
 
   // Fail fast for illegal arguments
   try {
-    PipelineOptionsFactory.fromArgs(args: _*).as(classOf[DataflowPipelineOptions])
+    PipelineOptionsFactory.fromArgs(args: _*).create()
   } catch {
     case e: Throwable =>
       echo(e.getMessage)
@@ -172,9 +171,8 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
 
   private def optsFromArgs(args: Seq[String]): String = {
     val factory = "org.apache.beam.sdk.options.PipelineOptionsFactory"
-    val options = "org.apache.beam.runners.dataflow.options.DataflowPipelineOptions"
     val argsStr = args.mkString("\"", "\", \"", "\"")
-    s"""$factory.fromArgs($argsStr).as(classOf[$options])"""
+    s"""$factory.fromArgs($argsStr).create()"""
   }
 
   private def welcome(): Unit = {
