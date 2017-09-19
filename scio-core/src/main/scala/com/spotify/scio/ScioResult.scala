@@ -23,11 +23,11 @@ import com.spotify.scio.metrics._
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.util.ScioUtil
 import com.twitter.algebird.Semigroup
-import org.apache.beam.runners.dataflow.DataflowPipelineJob
+import org.apache.beam.runners.dataflow.{DataflowClient, DataflowPipelineJob}
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.PipelineResult.State
-import org.apache.beam.sdk.options.ApplicationNameOptions
+import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.PipelineResult
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.{metrics => bm}
@@ -40,16 +40,30 @@ import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
-/** Represent a Scio pipeline result. */
-class ScioResult private[scio] (val internal: PipelineResult, val context: ScioContext) {
+object ScioResult {
+  def forDataflow(projectId: String, jobId: String): ScioResult = {
+    val options = PipelineOptionsFactory.create().as(classOf[DataflowPipelineOptions])
+    options.setProject(projectId)
+    val client = DataflowClient.create(options)
+    val job = new DataflowPipelineJob(client, jobId, options, null)
+    new AsyncScioResult(job, options)
+  }
+}
 
-  private val logger = LoggerFactory.getLogger(this.getClass)
+private class AsyncScioResult(internal: PipelineResult, options: PipelineOptions)
+  extends ScioResult(internal, options) {
+  override val finalState: Future[State] = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    Future {
+      internal.waitUntilFinish()
+      this.state
+    }
+  }
+}
 
-  /**
-   * `Future` for pipeline's final state. The `Future` will be completed once the pipeline
-   * completes successfully.
-   */
-  val finalState: Future[State] = {
+private[scio] class BlockingScioResult(internal: PipelineResult, val context: ScioContext)
+  extends ScioResult(internal, context.options) {
+  override val finalState: Future[State] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     val f = Future {
       val state = internal.waitUntilFinish()
@@ -66,6 +80,19 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
     }
     f
   }
+}
+
+/** Represent a Scio pipeline result. */
+abstract class ScioResult private[scio] (val internal: PipelineResult,
+                                         val options: PipelineOptions) {
+
+  private val logger = LoggerFactory.getLogger(this.getClass)
+
+  /**
+   * `Future` for pipeline's final state. The `Future` will be completed once the pipeline
+   * completes successfully.
+   */
+  val finalState: Future[State]
 
   /** Wait until the pipeline finishes. */
   def waitUntilFinish(duration: Duration = Duration.Inf): ScioResult = {
@@ -111,17 +138,17 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
   def getMetrics: Metrics = {
     require(isCompleted, "Pipeline has to be finished to get metrics.")
 
-    val (jobId, dfMetrics) = if (ScioUtil.isLocalRunner(this.context.options.getRunner)) {
+    val (jobId, dfMetrics) = if (ScioUtil.isLocalRunner(this.options.getRunner)) {
       // to be safe let's use app name at a cost of duplicate for local runner
       // there are no dataflow service metrics on local runner
-      (context.optionsAs[ApplicationNameOptions].getAppName, Nil)
+      (this.options.as(classOf[ApplicationNameOptions]).getAppName, Nil)
     } else {
       val jobId = internal.asInstanceOf[DataflowPipelineJob].getJobId
       // given that this depends on internals of dataflow service - handle failure gracefully
       // if there is an error - no dataflow service metrics will be saved
       val dfMetrics = Try {
         ScioUtil
-          .getDataflowServiceMetrics(context.optionsAs[DataflowPipelineOptions], jobId)
+          .getDataflowServiceMetrics(this.options.as(classOf[DataflowPipelineOptions]), jobId)
           .getMetrics.asScala
           .map(e => {
             val name = DFMetricName(e.getName.getName,
@@ -155,7 +182,7 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
     }
     Metrics(scioVersion,
       scalaVersion,
-      context.optionsAs[ApplicationNameOptions].getAppName,
+      this.options.as(classOf[ApplicationNameOptions]).getAppName,
       jobId,
       state.toString,
       BeamMetrics(beamCounters, beamDistributions, beamGauges),
