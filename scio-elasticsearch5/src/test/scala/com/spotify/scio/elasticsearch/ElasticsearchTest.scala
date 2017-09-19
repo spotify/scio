@@ -19,8 +19,8 @@ package com.spotify.scio.elasticsearch
 
 import java.net.InetSocketAddress
 
-import com.spotify.scio.ContextAndArgs
-import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio._
+import com.spotify.scio.testing._
 import org.elasticsearch.action.index.IndexRequest
 import org.joda.time.Duration
 
@@ -44,29 +44,11 @@ object ElasticsearchJob {
   }
 }
 
-object ElasticsearchDirectRunnerJob {
-  import ElasticsearchJobSpec._
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, _) = ContextAndArgs(cmdlineArgs)
-    sc.parallelize(data)
-      .saveAsElasticsearch(options)(_ => new IndexRequest :: Nil)
-    sc.close()
-  }
-}
-
 class ElasticsearchTest extends PipelineSpec {
   import ElasticsearchJobSpec._
-
   "ElasticsearchIO" should "work" in {
     JobTest[ElasticsearchJob.type]
       .output(ElasticsearchIO[Int](options))(_ should containInAnyOrder (data))
       .run()
   }
-
-  "ElasticsearchIO with DirectRunner" should "work" in {
-    JobTest[ElasticsearchDirectRunnerJob.type]
-      .output(ElasticsearchIO[Int](options))(_ should containInAnyOrder (data))
-      .run()
-  }
-
 }
