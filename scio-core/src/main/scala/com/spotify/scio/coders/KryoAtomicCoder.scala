@@ -72,6 +72,8 @@ private object KryoRegistrarLoader {
 
 private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
 
+  import KryoAtomicCoder.logger
+
   @transient
   private lazy val kryo: ThreadLocal[Kryo] = new ThreadLocal[Kryo] {
     override def initialValue(): Kryo = {
@@ -102,7 +104,6 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
     }
   }
 
-  private val logger = LoggerFactory.getLogger(this.getClass)
 
   override def encode(value: T, outStream: OutputStream): Unit = {
     if (value == null) {
@@ -185,7 +186,11 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
 }
 
 private[scio] object KryoAtomicCoder {
+
+  private val logger = LoggerFactory.getLogger(this.getClass)
+
   def apply[T]: Coder[T] = new KryoAtomicCoder[T]
+
 }
 
 /**
