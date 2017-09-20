@@ -102,7 +102,6 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
     }
   }
 
-  private val logger = LoggerFactory.getLogger(this.getClass)
 
   override def encode(value: T, outStream: OutputStream): Unit = {
     if (value == null) {
@@ -152,21 +151,21 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
         val elapsed = System.currentTimeMillis() - start
         if (elapsed > abortThreshold) {
           aborted = true
-          logger.warn(s"Aborting size estimation for ${wrapper.underlying.getClass}, " +
+          KryoAtomicCoder.logger.warn(s"Aborting size estimation for ${wrapper.underlying.getClass}, " +
             s"elapsed: $elapsed ms, count: $count, bytes: $bytes")
           wrapper.underlying match {
             case c: _root_.java.util.Collection[_] =>
               // extrapolate remaining bytes in the collection
               val remaining = (bytes.toDouble / count * (c.size - count)).toLong
               observer.update(remaining)
-              logger.warn(s"Extrapolated size estimation for ${wrapper.underlying.getClass} " +
+              KryoAtomicCoder.logger.warn(s"Extrapolated size estimation for ${wrapper.underlying.getClass} " +
                 s"count: ${c.size}, bytes: ${bytes + remaining}")
             case _ =>
-              logger.warn("Can't get size of internal collection, thus can't extrapolate size")
+              KryoAtomicCoder.logger.warn("Can't get size of internal collection, thus can't extrapolate size")
           }
         } else if (elapsed > warningThreshold && !warned) {
           warned = true
-          logger.warn(s"Slow size estimation for ${wrapper.underlying.getClass}, " +
+          KryoAtomicCoder.logger.warn(s"Slow size estimation for ${wrapper.underlying.getClass}, " +
             s"elapsed: $elapsed ms, count: $count, bytes: $bytes")
         }
       }
@@ -185,7 +184,11 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
 }
 
 private[scio] object KryoAtomicCoder {
+
+  private val logger = LoggerFactory.getLogger(this.getClass)
+
   def apply[T]: Coder[T] = new KryoAtomicCoder[T]
+
 }
 
 /**
