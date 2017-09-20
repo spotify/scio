@@ -72,6 +72,8 @@ private object KryoRegistrarLoader {
 
 private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
 
+  import KryoAtomicCoder.logger
+
   @transient
   private lazy val kryo: ThreadLocal[Kryo] = new ThreadLocal[Kryo] {
     override def initialValue(): Kryo = {
@@ -151,21 +153,21 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
         val elapsed = System.currentTimeMillis() - start
         if (elapsed > abortThreshold) {
           aborted = true
-          KryoAtomicCoder.logger.warn(s"Aborting size estimation for ${wrapper.underlying.getClass}, " +
+          logger.warn(s"Aborting size estimation for ${wrapper.underlying.getClass}, " +
             s"elapsed: $elapsed ms, count: $count, bytes: $bytes")
           wrapper.underlying match {
             case c: _root_.java.util.Collection[_] =>
               // extrapolate remaining bytes in the collection
               val remaining = (bytes.toDouble / count * (c.size - count)).toLong
               observer.update(remaining)
-              KryoAtomicCoder.logger.warn(s"Extrapolated size estimation for ${wrapper.underlying.getClass} " +
+              logger.warn(s"Extrapolated size estimation for ${wrapper.underlying.getClass} " +
                 s"count: ${c.size}, bytes: ${bytes + remaining}")
             case _ =>
-              KryoAtomicCoder.logger.warn("Can't get size of internal collection, thus can't extrapolate size")
+              logger.warn("Can't get size of internal collection, thus can't extrapolate size")
           }
         } else if (elapsed > warningThreshold && !warned) {
           warned = true
-          KryoAtomicCoder.logger.warn(s"Slow size estimation for ${wrapper.underlying.getClass}, " +
+          logger.warn(s"Slow size estimation for ${wrapper.underlying.getClass}, " +
             s"elapsed: $elapsed ms, count: $count, bytes: $bytes")
         }
       }
