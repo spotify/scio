@@ -767,19 +767,17 @@ class JobTestTest extends PipelineSpec {
 
   it should "pass correct metrics test" in {
     JobTest[MetricsJob.type]
-      .counter(MetricsJob.counter)(_.committed shouldBe Some(10))
-      .distribution(MetricsJob.distribution) { r =>
-        val d = r.committed.get
+      .counter(MetricsJob.counter)(_ shouldBe 10)
+      .distribution(MetricsJob.distribution) { d =>
         d.count() shouldBe 10
         d.min() shouldBe 1
         d.max() shouldBe 10
         d.sum() shouldBe 55
         d.mean() shouldBe 5.5
       }
-      .gauge(MetricsJob.gauge) { r =>
-        val g = r.committed.get.value()
-        g should be >= 1L
-        g should be <= 10L
+      .gauge(MetricsJob.gauge) { g =>
+        g.value() should be >= 1L
+        g.value() should be <= 10L
       }
       .run()
   }
@@ -787,15 +785,15 @@ class JobTestTest extends PipelineSpec {
   it should "fail incorrect counter test" in {
     the [TestFailedException] thrownBy {
       JobTest[MetricsJob.type]
-        .counter(MetricsJob.counter)(_.committed shouldBe Some(100))
+        .counter(MetricsJob.counter)(_ shouldBe 100)
         .run()
-    } should have message "Some(10) was not equal to Some(100)"
+    } should have message "10 was not equal to 100"
   }
 
   it should "fail incorrect distribution test" in {
     the [TestFailedException] thrownBy {
       JobTest[MetricsJob.type]
-        .distribution(MetricsJob.distribution)(_.committed.get.max shouldBe 100)
+        .distribution(MetricsJob.distribution)(_.max() shouldBe 100)
         .run()
     } should have message "10 was not equal to 100"
   }
@@ -803,7 +801,7 @@ class JobTestTest extends PipelineSpec {
   it should "fail incorrect gauge test" in {
     val e = the [TestFailedException] thrownBy {
       JobTest[MetricsJob.type]
-        .gauge(MetricsJob.gauge)(_.committed.get.value() should be >= 100L)
+        .gauge(MetricsJob.gauge)(_.value() should be >= 100L)
         .run()
     }
     e.getMessage should endWith (" was not greater than or equal to 100")
