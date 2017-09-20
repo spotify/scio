@@ -20,7 +20,6 @@ package com.spotify.scio.testing
 import java.lang.reflect.InvocationTargetException
 
 import com.spotify.scio.ScioResult
-import com.spotify.scio.metrics.MetricValue
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.{metrics => bm}
@@ -73,11 +72,11 @@ object JobTest {
                                   inputs: Map[TestIO[_], Iterable[_]],
                                   outputs: Map[TestIO[_], SCollection[_] => Unit],
                                   distCaches: Map[DistCacheIO[_], _],
-                                  counters: Map[bm.Counter, MetricValue[Long] => Unit],
+                                  counters: Map[bm.Counter, Long => Unit],
                                   // scalastyle:off line.size.limit
-                                  distributions: Map[bm.Distribution, MetricValue[bm.DistributionResult] => Unit],
+                                  distributions: Map[bm.Distribution, bm.DistributionResult => Unit],
                                   // scalastyle:on line.size.limit
-                                  gauges: Map[bm.Gauge, MetricValue[bm.GaugeResult] => Unit],
+                                  gauges: Map[bm.Gauge, bm.GaugeResult => Unit],
                                   wasRunInvoked: Boolean = false)
 
   class Builder(private var state: BuilderState) {
@@ -133,9 +132,9 @@ object JobTest {
     /**
      * Evaluate a [[org.apache.beam.sdk.metrics.Counter Counter]] in the pipeline being tested.
      * @param counter counter to be evaluated
-     * @param assertion assertion for counter result
+     * @param assertion assertion for the counter result's committed value
      */
-    def counter(counter: bm.Counter)(assertion: MetricValue[Long] => Unit): Builder = {
+    def counter(counter: bm.Counter)(assertion: Long => Unit): Builder = {
       require(!state.counters.contains(counter), "Duplicate test counter: " + counter.getName)
       state = state.copy(counters = state.counters + (counter -> assertion))
       this
@@ -145,10 +144,10 @@ object JobTest {
      * Evaluate a [[org.apache.beam.sdk.metrics.Distribution Distribution]] in the pipeline being
      * tested.
      * @param distribution distribution to be evaluated
-     * @param assertion assertion for distribution result
+     * @param assertion assertion for the distribution result's committed value
      */
     def distribution(distribution: bm.Distribution)
-                    (assertion: MetricValue[bm.DistributionResult] => Unit): Builder = {
+                    (assertion: bm.DistributionResult => Unit): Builder = {
       require(
         !state.distributions.contains(distribution),
         "Duplicate test distribution: " + distribution.getName)
@@ -159,9 +158,9 @@ object JobTest {
     /**
      * Evaluate a [[org.apache.beam.sdk.metrics.Gauge Gauge]] in the pipeline being tested.
      * @param gauge gauge to be evaluated
-     * @param assertion assertion for gauge result
+     * @param assertion assertion for the gauge result's committed value
      */
-    def gauge(gauge: bm.Gauge)(assertion: MetricValue[bm.GaugeResult] => Unit): Builder = {
+    def gauge(gauge: bm.Gauge)(assertion: bm.GaugeResult => Unit): Builder = {
       require(!state.gauges.contains(gauge), "Duplicate test gauge: " + gauge.getName)
       state = state.copy(gauges = state.gauges + (gauge -> assertion))
       this
@@ -180,9 +179,9 @@ object JobTest {
      */
     def tearDown(): Unit = {
       val metricsFn = (result: ScioResult) => {
-        state.counters.foreach { case (k, v) => v(result.counter(k)) }
-        state.distributions.foreach { case (k, v) => v(result.distribution(k)) }
-        state.gauges.foreach { case (k, v) => v(result.gauge(k)) }
+        state.counters.foreach { case (k, v) => v(result.counter(k).committed.get) }
+        state.distributions.foreach { case (k, v) => v(result.distribution(k).committed.get) }
+        state.gauges.foreach { case (k, v) => v(result.gauge(k).committed.get) }
       }
       TestDataManager.tearDown(testId, metricsFn)
     }
