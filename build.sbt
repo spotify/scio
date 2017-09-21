@@ -103,36 +103,18 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   publishMavenStyle             := true,
   publishArtifact in Test       := false,
   sonatypeProfileName           := "com.spotify",
-  pomExtra                      := {
-    <url>https://github.com/spotify/scio</url>
-    <licenses>
-      <license>
-        <name>Apache 2</name>
-        <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      </license>
-    </licenses>
-    <scm>
-      <url>git@github.com/spotify/scio.git</url>
-      <connection>scm:git:git@github.com:spotify/scio.git</connection>
-    </scm>
-    <developers>
-      <developer>
-        <id>sinisa_lyh</id>
-        <name>Neville Li</name>
-        <url>https://twitter.com/sinisa_lyh</url>
-      </developer>
-      <developer>
-        <id>ravwojdyla</id>
-        <name>Rafal Wojdyla</name>
-        <url>https://twitter.com/ravwojdyla</url>
-      </developer>
-      <developer>
-        <id>andrewsmartin</id>
-        <name>Andrew Martin</name>
-        <url>https://twitter.com/andrew_martin92</url>
-      </developer>
-    </developers>
-  },
+
+  licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
+  homepage := Some(url("https://github.com/spotify/featran")),
+  scmInfo := Some(ScmInfo(
+    url("https://github.com/spotify/featran.git"),
+    "scm:git:git@github.com:spotify/featran.git")),
+  developers := List(
+    Developer(id="sinisa_lyh", name="Neville Li", email="neville.lyh@gmail.com", url=url("https://twitter.com/sinisa_lyh")),
+    Developer(id="ravwojdyla", name="Rafal Wojdyla", email="ravwojdyla@gmail.com", url=url("https://twitter.com/ravwojdyla")),
+    Developer(id="andrewsmartin", name="Andrew Martin", email="andrewsmartin.mg@gmail.com", url=url("https://twitter.com/andrew_martin92")),
+    Developer(id="fallonfofallon", name="Fallon Chen", email="fallon@spotify.com", url=url("https://twitter.com/fallonfofallon"))
+  ),
 
   credentials ++= (for {
     username <- sys.env.get("SONATYPE_USERNAME")
