@@ -460,9 +460,10 @@ class ScioContext private[scio] (val options: PipelineOptions,
     } else {
       val cls = ScioUtil.classOf[T]
       val t = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-        gio.AvroIO.read(cls).from(path)
+        gio.PatchedAvroIO.read(cls).from(path)
       } else {
-        gio.AvroIO.readGenericRecords(schema).from(path).asInstanceOf[gio.AvroIO.Read[T]]
+        gio.PatchedAvroIO.readGenericRecords(schema).from(path)
+          .asInstanceOf[gio.PatchedAvroIO.Read[T]]
       }
       wrap(this.applyInternal(t)).setName(path)
     }

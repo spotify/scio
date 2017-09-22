@@ -123,7 +123,7 @@ import org.apache.commons.compress.utils.IOUtils;
  */
 // CHECKSTYLE.ON: JavadocStyle
 @Experimental(Experimental.Kind.SOURCE_SINK)
-public class AvroSource<T> extends BlockBasedSource<T> {
+public class PatchedAvroSource<T> extends BlockBasedSource<T> {
   // Default minimum bundle size (chosen as two default-size Avro blocks to attempt to
   // ensure that every source has at least one block of records).
   // The default sync interval is 64k.
@@ -140,25 +140,25 @@ public class AvroSource<T> extends BlockBasedSource<T> {
    * Reads from the given file name or pattern ("glob"). The returned source can be further
    * configured by calling {@link #withSchema} to return a type other than {@link GenericRecord}.
    */
-  public static AvroSource<GenericRecord> from(String fileNameOrPattern) {
-    return new AvroSource<>(fileNameOrPattern, DEFAULT_MIN_BUNDLE_SIZE, null, GenericRecord.class);
+  public static PatchedAvroSource<GenericRecord> from(String fileNameOrPattern) {
+    return new PatchedAvroSource<>(fileNameOrPattern, DEFAULT_MIN_BUNDLE_SIZE, null, GenericRecord.class);
   }
 
   /** Reads files containing records that conform to the given schema. */
-  public AvroSource<GenericRecord> withSchema(String schema) {
-    return new AvroSource<>(
+  public PatchedAvroSource<GenericRecord> withSchema(String schema) {
+    return new PatchedAvroSource<>(
         getFileOrPatternSpec(), getMinBundleSize(), schema, GenericRecord.class);
   }
 
   /** Like {@link #withSchema(String)}. */
-  public AvroSource<GenericRecord> withSchema(Schema schema) {
-    return new AvroSource<>(
+  public PatchedAvroSource<GenericRecord> withSchema(Schema schema) {
+    return new PatchedAvroSource<>(
         getFileOrPatternSpec(), getMinBundleSize(), schema.toString(), GenericRecord.class);
   }
 
   /** Reads files containing records of the given class. */
-  public <X> AvroSource<X> withSchema(Class<X> clazz) {
-    return new AvroSource<>(
+  public <X> PatchedAvroSource<X> withSchema(Class<X> clazz) {
+    return new PatchedAvroSource<>(
         getFileOrPatternSpec(),
         getMinBundleSize(),
         ReflectData.get().getSchema(clazz).toString(),
@@ -169,12 +169,12 @@ public class AvroSource<T> extends BlockBasedSource<T> {
    * Sets the minimum bundle size. Refer to {@link OffsetBasedSource} for a description of {@code
    * minBundleSize} and its use.
    */
-  public AvroSource<T> withMinBundleSize(long minBundleSize) {
-    return new AvroSource<>(getFileOrPatternSpec(), minBundleSize, readerSchemaString, type);
+  public PatchedAvroSource<T> withMinBundleSize(long minBundleSize) {
+    return new PatchedAvroSource<>(getFileOrPatternSpec(), minBundleSize, readerSchemaString, type);
   }
 
   /** Constructor for FILEPATTERN mode. */
-  private AvroSource(
+  private PatchedAvroSource(
       String fileNameOrPattern, long minBundleSize, String readerSchemaString, Class<T> type) {
     super(fileNameOrPattern, minBundleSize);
     this.readerSchemaString = internSchemaString(readerSchemaString);
@@ -182,7 +182,7 @@ public class AvroSource<T> extends BlockBasedSource<T> {
   }
 
   /** Constructor for SINGLE_FILE_OR_SUBRANGE mode. */
-  private AvroSource(
+  private PatchedAvroSource(
       Metadata metadata,
       long minBundleSize,
       long startOffset,
@@ -215,7 +215,7 @@ public class AvroSource<T> extends BlockBasedSource<T> {
 
   @Override
   public BlockBasedSource<T> createForSubrangeOfFile(Metadata fileMetadata, long start, long end) {
-    return new AvroSource<>(fileMetadata, getMinBundleSize(), start, end, readerSchemaString, type);
+    return new PatchedAvroSource<>(fileMetadata, getMinBundleSize(), start, end, readerSchemaString, type);
   }
 
   @Override
@@ -369,7 +369,7 @@ public class AvroSource<T> extends BlockBasedSource<T> {
   private Object readResolve() throws ObjectStreamException {
     switch (getMode()) {
       case SINGLE_FILE_OR_SUBRANGE:
-        return new AvroSource<>(
+        return new PatchedAvroSource<>(
             getSingleFileMetadata(),
             getMinBundleSize(),
             getStartOffset(),
@@ -377,7 +377,7 @@ public class AvroSource<T> extends BlockBasedSource<T> {
             readerSchemaString,
             type);
       case FILEPATTERN:
-        return new AvroSource<>(
+        return new PatchedAvroSource<>(
             getFileOrPatternSpec(), getMinBundleSize(), readerSchemaString, type);
         default:
           throw new InvalidObjectException(
@@ -525,13 +525,13 @@ public class AvroSource<T> extends BlockBasedSource<T> {
     /**
      * Reads Avro records of type {@code T} from the specified source.
      */
-    public AvroReader(AvroSource<T> source) {
+    public AvroReader(PatchedAvroSource<T> source) {
       super(source);
     }
 
     @Override
-    public synchronized AvroSource<T> getCurrentSource() {
-      return (AvroSource<T>) super.getCurrentSource();
+    public synchronized PatchedAvroSource<T> getCurrentSource() {
+      return (PatchedAvroSource<T>) super.getCurrentSource();
     }
 
     // Precondition: the stream is positioned after the sync marker in the current (about to be

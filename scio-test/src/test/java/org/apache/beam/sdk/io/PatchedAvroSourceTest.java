@@ -50,9 +50,9 @@ import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.reflect.ReflectDatumWriter;
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.DefaultCoder;
-import org.apache.beam.sdk.io.AvroSource.AvroMetadata;
-import org.apache.beam.sdk.io.AvroSource.AvroReader;
-import org.apache.beam.sdk.io.AvroSource.AvroReader.Seeker;
+import org.apache.beam.sdk.io.PatchedAvroSource.AvroMetadata;
+import org.apache.beam.sdk.io.PatchedAvroSource.AvroReader;
+import org.apache.beam.sdk.io.PatchedAvroSource.AvroReader.Seeker;
 import org.apache.beam.sdk.io.BlockBasedSource.BlockBasedReader;
 import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
@@ -73,7 +73,7 @@ import org.junit.runners.JUnit4;
  * Tests for AvroSource.
  */
 @RunWith(JUnit4.class)
-public class AvroSourceTest {
+public class PatchedAvroSourceTest {
   @Rule
   public TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -153,7 +153,7 @@ public class AvroSourceTest {
     for (String codec : codecs) {
       String filename = generateTestFile(
           codec, expected, SyncBehavior.SYNC_DEFAULT, 0, AvroCoder.of(Bird.class), codec);
-      AvroSource<Bird> source = AvroSource.from(filename).withSchema(Bird.class);
+      PatchedAvroSource<Bird> source = PatchedAvroSource.from(filename).withSchema(Bird.class);
       List<Bird> actual = SourceTestUtils.readFromSource(source, null);
       assertThat(expected, containsInAnyOrder(actual.toArray()));
     }
@@ -170,7 +170,7 @@ public class AvroSourceTest {
         AvroCoder.of(FixedRecord.class), DataFileConstants.NULL_CODEC);
     File file = new File(filename);
 
-    AvroSource<FixedRecord> source = AvroSource.from(filename).withSchema(FixedRecord.class);
+    PatchedAvroSource<FixedRecord> source = PatchedAvroSource.from(filename).withSchema(FixedRecord.class);
     List<? extends BoundedSource<FixedRecord>> splits =
         source.split(file.length() / 3, null);
     for (BoundedSource<FixedRecord> subSource : splits) {
@@ -199,7 +199,7 @@ public class AvroSourceTest {
         AvroCoder.of(FixedRecord.class), DataFileConstants.NULL_CODEC);
     File file = new File(filename);
 
-    AvroSource<FixedRecord> source = AvroSource.from(filename).withSchema(FixedRecord.class);
+    PatchedAvroSource<FixedRecord> source = PatchedAvroSource.from(filename).withSchema(FixedRecord.class);
     try (BoundedSource.BoundedReader<FixedRecord> reader = source.createReader(null)) {
       assertEquals(Double.valueOf(0.0), reader.getFractionConsumed());
     }
@@ -220,7 +220,7 @@ public class AvroSourceTest {
     String filename = generateTestFile("tmp.avro", records, SyncBehavior.SYNC_REGULAR, 2,
         AvroCoder.of(FixedRecord.class), DataFileConstants.NULL_CODEC);
 
-    AvroSource<FixedRecord> source = AvroSource.from(filename).withSchema(FixedRecord.class);
+    PatchedAvroSource<FixedRecord> source = PatchedAvroSource.from(filename).withSchema(FixedRecord.class);
     try (BoundedSource.BoundedReader<FixedRecord> readerOrig = source.createReader(null)) {
       assertThat(readerOrig, Matchers.instanceOf(BlockBasedReader.class));
       BlockBasedReader<FixedRecord> reader = (BlockBasedReader<FixedRecord>) readerOrig;
@@ -273,7 +273,7 @@ public class AvroSourceTest {
     String filename = generateTestFile("tmp.avro", records, SyncBehavior.SYNC_REGULAR, 2,
         AvroCoder.of(FixedRecord.class), DataFileConstants.NULL_CODEC);
 
-    AvroSource<FixedRecord> source = AvroSource.from(filename).withSchema(FixedRecord.class);
+    PatchedAvroSource<FixedRecord> source = PatchedAvroSource.from(filename).withSchema(FixedRecord.class);
     try (BoundedSource.BoundedReader<FixedRecord> readerOrig = source.createReader(null)) {
       assertThat(readerOrig, Matchers.instanceOf(BlockBasedReader.class));
       BlockBasedReader<FixedRecord> reader = (BlockBasedReader<FixedRecord>) readerOrig;
@@ -299,7 +299,7 @@ public class AvroSourceTest {
     String filename = generateTestFile("tmp.avro", records, SyncBehavior.SYNC_DEFAULT, 1000,
         AvroCoder.of(FixedRecord.class), DataFileConstants.NULL_CODEC);
 
-    AvroSource<FixedRecord> source = AvroSource.from(filename).withSchema(FixedRecord.class);
+    PatchedAvroSource<FixedRecord> source = PatchedAvroSource.from(filename).withSchema(FixedRecord.class);
     try (BlockBasedSource.BlockBasedReader<FixedRecord> reader =
         (BlockBasedSource.BlockBasedReader<FixedRecord>) source.createReader(null)) {
       assertEquals(null, reader.getCurrentBlock());
@@ -317,7 +317,7 @@ public class AvroSourceTest {
     String filename = generateTestFile("tmp.avro", expected, SyncBehavior.SYNC_REGULAR, 5,
         AvroCoder.of(FixedRecord.class), DataFileConstants.NULL_CODEC);
 
-    AvroSource<FixedRecord> source = AvroSource.from(filename).withSchema(FixedRecord.class);
+    PatchedAvroSource<FixedRecord> source = PatchedAvroSource.from(filename).withSchema(FixedRecord.class);
     SourceTestUtils.assertSplitAtFractionExhaustive(source, null);
   }
 
@@ -333,8 +333,8 @@ public class AvroSourceTest {
     File file = new File(filename);
 
     // Small minimum bundle size
-    AvroSource<Bird> source =
-        AvroSource.from(filename).withSchema(Bird.class).withMinBundleSize(100L);
+    PatchedAvroSource<Bird> source =
+        PatchedAvroSource.from(filename).withSchema(Bird.class).withMinBundleSize(100L);
 
     // Assert that the source produces the expected records
     assertEquals(expected, SourceTestUtils.readFromSource(source, options));
@@ -383,8 +383,8 @@ public class AvroSourceTest {
           AvroCoder.of(Bird.class), DataFileConstants.NULL_CODEC);
     }
 
-    AvroSource<Bird> source =
-        AvroSource.from(new File(tmpFolder.getRoot().toString(), baseName + "*").toString())
+    PatchedAvroSource<Bird> source =
+        PatchedAvroSource.from(new File(tmpFolder.getRoot().toString(), baseName + "*").toString())
             .withSchema(Bird.class);
     List<Bird> actual = SourceTestUtils.readFromSource(source, null);
     assertThat(actual, containsInAnyOrder(expected.toArray()));
@@ -398,18 +398,18 @@ public class AvroSourceTest {
 
     // Create a source with a schema object
     Schema schema = ReflectData.get().getSchema(Bird.class);
-    AvroSource<GenericRecord> source = AvroSource.from(filename).withSchema(schema);
+    PatchedAvroSource<GenericRecord> source = PatchedAvroSource.from(filename).withSchema(schema);
     List<GenericRecord> records = SourceTestUtils.readFromSource(source, null);
     assertEqualsWithGeneric(expected, records);
 
     // Create a source with a JSON schema
     String schemaString = ReflectData.get().getSchema(Bird.class).toString();
-    source = AvroSource.from(filename).withSchema(schemaString);
+    source = PatchedAvroSource.from(filename).withSchema(schemaString);
     records = SourceTestUtils.readFromSource(source, null);
     assertEqualsWithGeneric(expected, records);
 
     // Create a source with no schema
-    source = AvroSource.from(filename);
+    source = PatchedAvroSource.from(filename);
     records = SourceTestUtils.readFromSource(source, null);
     assertEqualsWithGeneric(expected, records);
   }
@@ -420,7 +420,7 @@ public class AvroSourceTest {
     String filename = generateTestFile("tmp.avro", birds, SyncBehavior.SYNC_DEFAULT, 0,
         AvroCoder.of(Bird.class), DataFileConstants.NULL_CODEC);
 
-    AvroSource<FancyBird> source = AvroSource.from(filename).withSchema(FancyBird.class);
+    PatchedAvroSource<FancyBird> source = PatchedAvroSource.from(filename).withSchema(FancyBird.class);
     List<FancyBird> actual = SourceTestUtils.readFromSource(source, null);
 
     List<FancyBird> expected = new ArrayList<>();
@@ -438,14 +438,14 @@ public class AvroSourceTest {
     String filename = generateTestFile("tmp.avro", birds, SyncBehavior.SYNC_DEFAULT, 0,
         AvroCoder.of(Bird.class), DataFileConstants.NULL_CODEC);
     Metadata fileMetadata = FileSystems.matchSingleFileSpec(filename);
-    String schema = AvroSource.readMetadataFromFile(fileMetadata.resourceId()).getSchemaString();
+    String schema = PatchedAvroSource.readMetadataFromFile(fileMetadata.resourceId()).getSchemaString();
     // Add "" to the schema to make sure it is not interned.
-    AvroSource<GenericRecord> sourceA = AvroSource.from(filename).withSchema("" + schema);
-    AvroSource<GenericRecord> sourceB = AvroSource.from(filename).withSchema("" + schema);
+    PatchedAvroSource<GenericRecord> sourceA = PatchedAvroSource.from(filename).withSchema("" + schema);
+    PatchedAvroSource<GenericRecord> sourceB = PatchedAvroSource.from(filename).withSchema("" + schema);
     assertSame(sourceA.getReaderSchemaString(), sourceB.getReaderSchemaString());
 
     // Ensure that deserialization still goes through interning
-    AvroSource<GenericRecord> sourceC = SerializableUtils.clone(sourceB);
+    PatchedAvroSource<GenericRecord> sourceC = SerializableUtils.clone(sourceB);
     assertSame(sourceA.getReaderSchemaString(), sourceC.getReaderSchemaString());
   }
 
@@ -626,7 +626,7 @@ public class AvroSourceTest {
 
   @Test
   public void testDisplayData() {
-    AvroSource<Bird> source = AvroSource
+    PatchedAvroSource<Bird> source = PatchedAvroSource
         .from("foobar.txt")
         .withSchema(Bird.class)
         .withMinBundleSize(1234);
@@ -649,7 +649,7 @@ public class AvroSourceTest {
           codec, expected, SyncBehavior.SYNC_DEFAULT, 0, AvroCoder.of(Bird.class), codec);
 
       Metadata fileMeta = FileSystems.matchSingleFileSpec(filename);
-      AvroMetadata metadata = AvroSource.readMetadataFromFile(fileMeta.resourceId());
+      AvroMetadata metadata = PatchedAvroSource.readMetadataFromFile(fileMeta.resourceId());
       assertEquals(codec, metadata.getCodec());
     }
   }
@@ -661,7 +661,7 @@ public class AvroSourceTest {
     String filename = generateTestFile(
         codec, expected, SyncBehavior.SYNC_DEFAULT, 0, AvroCoder.of(Bird.class), codec);
     Metadata fileMeta = FileSystems.matchSingleFileSpec(filename);
-    AvroMetadata metadata = AvroSource.readMetadataFromFile(fileMeta.resourceId());
+    AvroMetadata metadata = PatchedAvroSource.readMetadataFromFile(fileMeta.resourceId());
     // By default, parse validates the schema, which is what we want.
     Schema schema = new Schema.Parser().parse(metadata.getSchemaString());
     assertEquals(4, schema.getFields().size());
