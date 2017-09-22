@@ -834,7 +834,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   private[scio] def pathWithShards(path: String) = path.replaceAll("\\/+$", "") + "/part"
 
-  private def avroOut[U](write: gio.AvroIO.Write[U], path: String, numShards: Int, suffix: String,
+  private def avroOut[U](write: gio.PatchedAvroIO.Write[U],
+                         path: String, numShards: Int, suffix: String,
                          codec: CodecFactory,
                          metadata: Map[String, AnyRef]) =
     write
@@ -869,10 +870,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     } else {
       val cls = ScioUtil.classOf[T]
       if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-        val t = gio.AvroIO.write(cls)
+        val t = gio.PatchedAvroIO.write(cls)
         this.applyInternal(avroOut(t, path, numShards, suffix, codec, metadata))
       } else {
-        val t = gio.AvroIO.writeGenericRecords(schema).asInstanceOf[gio.AvroIO.Write[T]]
+        val t = gio.PatchedAvroIO.writeGenericRecords(schema)
+          .asInstanceOf[gio.PatchedAvroIO.Write[T]]
         this.applyInternal(avroOut(t, path, numShards, suffix, codec, metadata))
       }
       context.makeFuture(AvroTap(ScioUtil.addPartSuffix(path), schema))
