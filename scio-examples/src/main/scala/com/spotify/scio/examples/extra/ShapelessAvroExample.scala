@@ -18,6 +18,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
+import com.spotify.scio.examples.common.ExampleData
 import org.apache.avro.generic.GenericRecord
 import shapeless.datatype.avro._
 
@@ -48,7 +49,7 @@ object ShapelessAvroWriteExample {
     import ShapelessAvroExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.textFile(args("input"))
+    sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
       .map(t => wordCountType.toGenericRecord(WordCount.tupled(t)))

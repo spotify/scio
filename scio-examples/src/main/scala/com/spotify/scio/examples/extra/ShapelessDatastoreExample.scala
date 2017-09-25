@@ -19,6 +19,7 @@ package com.spotify.scio.examples.extra
 
 import com.google.datastore.v1.Query
 import com.spotify.scio._
+import com.spotify.scio.examples.common.ExampleData
 import shapeless.datatype.datastore._
 
 /*
@@ -47,7 +48,7 @@ object ShapelessDatastoreWriteExample {
     import ShapelessDatastoreExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.textFile(args("input"))
+    sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
       .map(t => wordCountType.toEntity(WordCount.tupled(t)))

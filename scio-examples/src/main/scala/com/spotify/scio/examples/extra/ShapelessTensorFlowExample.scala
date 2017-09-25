@@ -18,6 +18,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
+import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.tensorflow._
 import org.tensorflow.example.Example
 import shapeless.datatype.tensorflow._
@@ -48,7 +49,7 @@ object ShapelessTensorFlowWriteExample {
     import ShapelessTensorFlowExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.textFile(args("input"))
+    sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
       .map(t => wordCountType.toExample(WordCount.tupled(t)).toByteArray)
