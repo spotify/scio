@@ -44,15 +44,20 @@ public abstract class GuavaAsyncDoFn<InputT, OutputT, ResourceT>
                                                   Function<Throwable, Void> onFailure) {
     Futures.addCallback(future, new FutureCallback<OutputT>() {
       @Override
-      public void onSuccess(@Nullable OutputT result) {
-        onSuccess.apply(result);
-      }
+      public void onSuccess(@Nullable OutputT result) {}
 
       @Override
       public void onFailure(Throwable t) {
         onFailure.apply(t);
       }
     });
-    return future;
+    return Futures.transform(future, new com.google.common.base.Function<OutputT, OutputT>() {
+      @Nullable
+      @Override
+      public OutputT apply(@Nullable OutputT input) {
+        onSuccess.apply(input);
+        return input;
+      }
+    });
   }
 }
