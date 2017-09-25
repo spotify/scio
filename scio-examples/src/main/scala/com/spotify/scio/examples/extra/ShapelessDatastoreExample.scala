@@ -17,6 +17,7 @@
 
 package com.spotify.scio.examples.extra
 
+import com.google.datastore.v1.client.DatastoreHelper.makeKey
 import com.google.datastore.v1.Query
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
@@ -29,6 +30,7 @@ import shapeless.datatype.datastore._
  * https://github.com/nevillelyh/shapeless-datatype
  */
 object ShapelessDatastoreExample {
+  val kind = "shapeless"
   val wordCountType = DatastoreType[WordCount]
   case class WordCount(word: String, count: Long)
 }
@@ -51,7 +53,11 @@ object ShapelessDatastoreWriteExample {
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
-      .map(t => wordCountType.toEntity(WordCount.tupled(t)))
+      .map { t =>
+        wordCountType.toEntityBuilder(WordCount.tupled(t))
+          .setKey(makeKey(kind, t._1))
+          .build()
+      }
       .saveAsDatastore(args("output"))
     sc.close()
   }

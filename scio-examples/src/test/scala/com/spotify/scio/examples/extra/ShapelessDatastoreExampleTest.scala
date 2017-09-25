@@ -17,8 +17,8 @@
 
 package com.spotify.scio.examples.extra
 
+import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.google.datastore.v1.{Entity, Query}
-import com.google.datastore.v1.client.DatastoreHelper.makeValue
 import com.spotify.scio.testing._
 
 class ShapelessDatastoreExampleTest extends PipelineSpec {
@@ -27,6 +27,7 @@ class ShapelessDatastoreExampleTest extends PipelineSpec {
   val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
   val entities = wordCount.map { kv =>
     Entity.newBuilder()
+      .setKey(makeKey(ShapelessDatastoreExample.kind, kv._1))
       .putProperties("word", makeValue(kv._1).build())
       .putProperties("count", makeValue(kv._2).build())
       .build()
