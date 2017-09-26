@@ -89,7 +89,11 @@ private[scio] class FileStorage(protected[io] val path: String) {
 
   def isDone: Boolean = {
     val partPattern = "([0-9]{5})-of-([0-9]{5})".r
-    val metadata = listFiles
+    val metadata = try {
+      listFiles
+    } catch {
+      case e: FileNotFoundException => Seq.empty
+    }
     val nums = metadata.flatMap { meta =>
       val m = partPattern.findAllIn(meta.resourceId().toString)
       if (m.hasNext) {
