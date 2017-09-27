@@ -507,6 +507,7 @@ lazy val scioExamples: Project = Project(
 ).settings(
   commonSettings ++ noPublishSettings,
   libraryDependencies ++= Seq(
+    "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
     "me.lyh" %% "shapeless-datatype-avro" % shapelessDatatypeVersion,
     "me.lyh" %% "shapeless-datatype-datastore_1.3" % shapelessDatatypeVersion,
     "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
