@@ -60,6 +60,9 @@ object Args {
 /** Encapsulate parsed commandline arguments. */
 class Args private (private val m: Map[String, List[String]]) extends Serializable {
 
+  /** All arguments as a map. */
+  def asMap: Map[String, List[String]] = m
+
   def toString(start: String, sep: String, end: String): String = {
     m.keys.toArray.sorted.map { k =>
       val values = m(k) match {
