@@ -189,7 +189,6 @@ lazy val root: Project = Project(
   file(".")
 ).enablePlugins(GhpagesPlugin, ScalaUnidocPlugin, SiteScaladocPlugin).settings(
   commonSettings ++ siteSettings ++ noPublishSettings,
-  scalacOptions in (ScalaUnidoc, unidoc) += "-Ymacro-no-expand",
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
     -- inProjects(scioCassandra2) -- inProjects(scioElasticsearch2)
     -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples),
