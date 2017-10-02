@@ -15,9 +15,9 @@
  * under the License.
  */
 
-package com.spotify.scio
+package com.spotify.scio.tensorflow
 
-import com.spotify.scio.tensorflow.TFRecordIO
+import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.TFRecordIO.CompressionType
 import org.apache.beam.sdk.{io => gio}

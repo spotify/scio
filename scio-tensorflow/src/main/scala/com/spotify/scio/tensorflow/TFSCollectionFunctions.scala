@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.values
+package com.spotify.scio.tensorflow
 
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -23,10 +23,10 @@ import java.nio.file.Files
 import javax.annotation.Nullable
 
 import com.google.common.base.Charsets
-import com.spotify.scio.io.{TFRecordFileTap, Tap, TextTap}
-import com.spotify.scio.tensorflow.{TFExampleIO, TFRecordIO}
+import com.spotify.scio.io.{Tap, TextTap}
 import com.spotify.scio.testing.TextIO
 import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.values.{DistCache, SCollection}
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.TFRecordIO.CompressionType
 import org.apache.beam.sdk.transforms.DoFn
@@ -59,9 +59,8 @@ private class PredictDoFn[T, V](graphBytes: DistCache[Array[Byte]],
       g.importGraphDef(graphBytes())
       log.info(s"TensorFlow graph loaded in ${System.currentTimeMillis - loadStart} ms")
     } catch {
-      case e: IllegalArgumentException => {
+      case e: IllegalArgumentException =>
         throw new IOException("Not a valid TensorFlow Graph serialization: " + e.getMessage)
-      }
     }
   }
 
@@ -230,7 +229,6 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
         }
       }
       val featureSpecFuture = Future(TextTap(_featureSpecPath))
-      import com.spotify.scio.tensorflow._
       val r = self.map(_.toByteArray).saveAsTfRecordFile(path, suffix, compressionType, numShards)
       (r.map(_.map(Example.parseFrom)), featureSpecFuture)
     }

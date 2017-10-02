@@ -15,12 +15,12 @@
  * under the License.
  */
 
-package com.spotify.scio.io
+package com.spotify.scio.tensorflow
 
 import java.io.InputStream
 
+import com.spotify.scio.io.FileStorage
 import org.apache.beam.sdk.io.TFRecordIO.CompressionType
-
 
 /** File storage functions for Tensorflow TFRecord files. */
 class TFFileStorageFunctions(self: FileStorage) {

@@ -30,7 +30,6 @@ import org.apache.avro.file.{DataFileReader, SeekableInput}
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.specific.{SpecificDatumReader, SpecificRecordBase}
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.io.TFRecordIO.CompressionType
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.IOUtils
@@ -43,7 +42,7 @@ private[scio] object FileStorage {
   def apply(path: String): FileStorage = new FileStorage(path)
 }
 
-private[scio] class FileStorage(protected[io] val path: String) {
+private[scio] class FileStorage(protected[scio] val path: String) {
 
   private def listFiles: Seq[Metadata] = FileSystems.`match`(path).metadata().asScala
 
@@ -118,8 +117,8 @@ private[scio] class FileStorage(protected[io] val path: String) {
     }
   }
 
-  private[io] def getDirectoryInputStream(path: String,
-                                      wrapperFn: InputStream => InputStream = identity)
+  private[scio] def getDirectoryInputStream(path: String,
+                                            wrapperFn: InputStream => InputStream = identity)
   : InputStream = {
     val inputs = listFiles.map(getObjectInputStream).map(wrapperFn).asJava
     new SequenceInputStream(Collections.enumeration(inputs))
