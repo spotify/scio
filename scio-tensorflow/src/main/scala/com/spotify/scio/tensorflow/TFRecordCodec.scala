@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.io
+package com.spotify.scio.tensorflow
 
 import java.io.{InputStream, PushbackInputStream}
 import java.nio.{ByteBuffer, ByteOrder}

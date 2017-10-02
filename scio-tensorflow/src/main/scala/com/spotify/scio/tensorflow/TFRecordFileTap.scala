@@ -15,14 +15,14 @@
  * under the License.
  */
 
-package com.spotify.scio.io
+package com.spotify.scio.tensorflow
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.io.{FileStorage, Tap}
 import com.spotify.scio.values.SCollection
 
 /** Tap for Tensorflow TFRecord files. */
 case class TFRecordFileTap(path: String) extends Tap[Array[Byte]] {
-  import com.spotify.scio.tensorflow._
   override def value: Iterator[Array[Byte]] = FileStorage(path).tfRecordFile
   override def open(sc: ScioContext): SCollection[Array[Byte]] = sc.tfRecordFile(path)
 }

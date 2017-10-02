@@ -17,7 +17,7 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.io.{FileStorage, TFFileStorageFunctions}
+import com.spotify.scio.io.FileStorage
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values._
 import org.tensorflow.example.Example

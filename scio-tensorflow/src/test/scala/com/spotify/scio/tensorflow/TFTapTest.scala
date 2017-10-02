@@ -15,15 +15,16 @@
  * under the License.
  */
 
-package com.spotify.scio.io
+package com.spotify.scio.tensorflow
 
 import java.util.UUID
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.io.TapSpec
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.io.TFRecordIO.CompressionType
 import org.apache.commons.io.FileUtils
-import shapeless.datatype.tensorflow.TensorFlowType
+import shapeless.datatype.tensorflow._
 
 class TFTapTest extends TapSpec {
 
@@ -34,14 +35,11 @@ class TFTapTest extends TapSpec {
 
   private def getDummyExample = {
     import TestFeatureSpec._
-    import com.spotify.scio.tensorflow._
-    import shapeless.datatype.tensorflow._
     val features = Seq(TestFeatures(1.0F, 2.0F), TestFeatures(5.0F, 3.0F))
     features.map(featuresType.toExample(_))
   }
 
   "SCollection" should "support saveAsTFRecordFile" in {
-    import com.spotify.scio.tensorflow._
     val data = Seq.fill(100)(UUID.randomUUID().toString)
     import org.apache.beam.sdk.io.TFRecordIO.{CompressionType => CType}
     for (compressionType <- Seq(CType.NONE, CType.ZLIB, CType.GZIP)) {
@@ -58,7 +56,6 @@ class TFTapTest extends TapSpec {
   }
 
   it should "support saveAsTfExampleFile with case class or Seq feature spec" in {
-    import com.spotify.scio.tensorflow._
     val examples = getDummyExample
     import org.apache.beam.sdk.io.TFRecordIO.{CompressionType => CType}
     for (
@@ -82,7 +79,6 @@ class TFTapTest extends TapSpec {
   }
 
   it should "support saveAsTfExampleFile with SCollection based feature spec" in {
-    import com.spotify.scio.tensorflow._
     val examples = getDummyExample
     import org.apache.beam.sdk.io.TFRecordIO.{CompressionType => CType}
     for (compressionType <- Seq(CType.NONE, CType.ZLIB, CType.GZIP)) {
@@ -102,7 +98,6 @@ class TFTapTest extends TapSpec {
   }
 
   it should "throw on multiple feature specifications" in {
-    import com.spotify.scio.tensorflow._
     val examples = getDummyExample
     val dir = tmpDir
     // using my own ScioContext cause error is thrown during the pipeline execution not, not DAG
