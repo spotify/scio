@@ -17,7 +17,7 @@
 
 package com.spotify.scio.bigquery
 
-import java.io.{File, FileInputStream, StringReader}
+import java.io.{File, FileInputStream, IOException, StringReader}
 import java.util.UUID
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
@@ -306,20 +306,25 @@ class BigQueryClient private (private val projectId: String,
   def waitForJobs(jobs: QueryJob*): Unit = {
     val numTotal = jobs.size
     var pendingJobs = jobs.filter(_.jobReference.isDefined)
-
     while (pendingJobs.nonEmpty) {
       val remainingJobs = pendingJobs.filter { j =>
         val jobId = j.jobReference.get.getJobId
-        val poll = bigquery.jobs().get(projectId, jobId).execute()
-        val error = poll.getStatus.getErrorResult
-        if (error != null) {
-          throw new RuntimeException(s"Query job failed: id: $jobId, error: $error")
-        }
-        if (poll.getStatus.getState == "DONE") {
-          logJobStatistics(j.query, poll)
-          false
-        } else {
-          true
+        try {
+          val poll = bigquery.jobs().get(projectId, jobId).execute()
+          val error = poll.getStatus.getErrorResult
+          if (error != null) {
+            throw new RuntimeException(s"Query job failed: id: $jobId, error: $error")
+          }
+          if (poll.getStatus.getState == "DONE") {
+            logJobStatistics(j.query, poll)
+            false
+          } else {
+            true
+          }
+        } catch {
+          case e: IOException =>
+            logger.warn(s"BigQuery request failed: id: $jobId, error: $e")
+            true
         }
       }
 
