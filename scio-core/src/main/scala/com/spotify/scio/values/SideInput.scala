@@ -30,12 +30,14 @@ import scala.collection.JavaConverters._
 trait SideInput[T] extends Serializable {
 
   private var cache: T = null.asInstanceOf[T]
+  private var context: AnyRef = null
 
   protected def get[I, O](context: DoFn[I, O]#ProcessContext): T
 
   private[values] def getCache[I, O](context: DoFn[I, O]#ProcessContext): T = {
-    if (cache == null) {
+    if (cache == null || !this.context.eq(context)) {
       // this is called once per DoFn instance, which means once per CPU core on Dataflow
+      this.context = context
       cache = get(context)
     }
     cache
