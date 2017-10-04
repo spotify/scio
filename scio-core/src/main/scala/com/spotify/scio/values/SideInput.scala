@@ -28,21 +28,18 @@ import scala.collection.JavaConverters._
 
 /** Encapsulate an SCollection when it is being used as a side input. */
 trait SideInput[T] extends Serializable {
+  private var cache: T = _
+  private var context: AnyRef = _
 
-  private var cache: T = null.asInstanceOf[T]
-
-  protected def get[I, O](context: DoFn[I, O]#ProcessContext): T
-
-  private[values] def getCache[I, O](context: DoFn[I, O]#ProcessContext): T = {
-    if (cache == null) {
-      // this is called once per DoFn instance, which means once per CPU core on Dataflow
+  private[values] def get[I, O](context: DoFn[I, O]#ProcessContext): T
+  def getCache[I, O](context: DoFn[I, O]#ProcessContext): T = {
+    if (cache == null || this.context.ne(context)) {
+      this.context = context
       cache = get(context)
     }
     cache
   }
-
   private[values] val view: PCollectionView[_]
-
 }
 
 private[values] class SingletonSideInput[T](val view: PCollectionView[T])
