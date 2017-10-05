@@ -26,7 +26,7 @@ private[scio] object FunctionsWithSideInput {
   trait SideInputDoFn[T, U] extends NamedDoFn[T, U] {
     private var ctx: SideInputContext[T] = _
     def sideInputContext(c: DoFn[T, U]#ProcessContext): SideInputContext[T] = {
-      if (ctx == null || ctx.context != c) {
+      if (ctx == null || !ctx.context.eq(c)) {
         // Workaround for type inference limit
         ctx = new SideInputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])
       }
