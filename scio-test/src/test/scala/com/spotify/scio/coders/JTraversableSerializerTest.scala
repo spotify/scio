@@ -22,33 +22,33 @@ import org.scalatest.{FlatSpec, Matchers}
 
 import scala.reflect.ClassTag
 
-class JIterableWrapperSerializerTest extends FlatSpec with Matchers {
+class JTraversableSerializerTest extends FlatSpec with Matchers {
 
-  private def testRoundTrip[T : ClassTag](ser: JIterableWrapperSerializer[T],
-                                  elems: Iterable[T],
-                                  k: Kryo = KryoSerializer.registered.newKryo(),
-                                  bufferSize: Int = 1024): Unit = {
+  private def testRoundTrip[T : ClassTag, C <: Traversable[T]]
+  (ser: JTraversableSerializer[T, C], elems: C): Unit = {
+    val k: Kryo = KryoSerializer.registered.newKryo()
+    val bufferSize: Int = 1024
     val o = new Array[Byte](bufferSize)
     ser.write(k, new Output(o), elems)
-    val back = ser.read(k, new Input(o), classOf[Iterable[T]])
+    val back = ser.read(k, new Input(o), null)
     elems.size shouldBe back.size
     elems should contain theSameElementsAs back
   }
 
   "JIterableWrapperSerializer" should "cope with the internal buffer overflow" in {
-    val ser = new JIterableWrapperSerializer[String](128, 128)
+    val ser = new JTraversableSerializer[String, Seq[String]](128, 128)
     val input = List.fill(100)("foo")
     testRoundTrip(ser, input)
   }
 
   it should "be able to serialize a object larger than initial capacity of the internal buffer" in {
-    val ser = new JIterableWrapperSerializer[String](1)
+    val ser = new JTraversableSerializer[String, Seq[String]](1)
     val input = Seq("o" * 3)
     testRoundTrip(ser, input)
   }
 
   it should "be able to serialize a object larger than max capacity of the internal buffer" in {
-    val ser = new JIterableWrapperSerializer[String](5, 10)
+    val ser = new JTraversableSerializer[String, Seq[String]](5, 10)
     val input = Seq("before", "o" * 10, "after")
     testRoundTrip(ser, input)
   }

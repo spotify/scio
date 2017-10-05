@@ -17,34 +17,32 @@
 
 package com.spotify.scio.coders
 
-import java.lang.{Iterable => JIterable}
-
-import com.esotericsoftware.kryo.{Kryo, KryoException}
 import com.esotericsoftware.kryo.io.{Input, Output}
-import com.google.common.collect.Lists
+import com.esotericsoftware.kryo.{Kryo, KryoException}
 import com.twitter.chill.KSerializer
 
 import scala.collection.JavaConverters._
+import scala.collection.generic.CanBuildFrom
+import scala.collection.mutable
 
 /**
  * Based on [[org.apache.beam.sdk.coders.IterableLikeCoder]] and
  * [[org.apache.beam.sdk.util.BufferedElementCountingOutputStream]].
  */
-private class JIterableWrapperSerializer[T](val bufferSize: Int = 64 * 1024,
-                                            val maxBufferSize: Int = 1024 * 1024)
-  extends KSerializer[Iterable[T]] {
+private class JTraversableSerializer[T, C <: Traversable[T]]
+(val bufferSize: Int = 64 * 1024, val maxBufferSize: Int = 1024 * 1024)
+(implicit cbf: CanBuildFrom[C, T, C])
+  extends KSerializer[C] {
 
-  override def write(kser: Kryo, out: Output, obj: Iterable[T]): Unit = {
+  override def write(kser: Kryo, out: Output, obj: C): Unit = {
     val buffer = new Output(bufferSize, maxBufferSize)
     var count = 0
-    val i = obj.iterator
-    while (i.hasNext) {
+    obj.foreach { elem =>
       val bufferPos = buffer.position()
-      val toSer = i.next()
       var retry = true
       while (retry) {
         try {
-          kser.writeClassAndObject(buffer, toSer)
+          kser.writeClassAndObject(buffer, elem)
           retry = false
           count += 1
         } catch {
@@ -53,7 +51,7 @@ private class JIterableWrapperSerializer[T](val bufferSize: Int = 64 * 1024,
               // buffer was empty but it still wasn't enough to serialize current object
               // just serialize it straight to the final output
               out.writeInt(1)
-              kser.writeClassAndObject(out, toSer)
+              kser.writeClassAndObject(out, elem)
               buffer.clear() // clear possibly corrupted buffer
               retry = false
             } else {
@@ -77,19 +75,52 @@ private class JIterableWrapperSerializer[T](val bufferSize: Int = 64 * 1024,
     }
   }
 
-  override def read(kser: Kryo, in: Input, cls: Class[Iterable[T]]): Iterable[T] = {
-    val list = Lists.newArrayList[T]
+  override def read(kser: Kryo, in: Input, cls: Class[C]): C = {
+    val b = cbf()
     var count = in.readInt()
     while (count > 0) {
       var i = 0
       while (i < count) {
         val item = kser.readClassAndObject(in).asInstanceOf[T]
-        list.add(item)
+        b += item
         i += 1
       }
       count = in.readInt()
     }
-    list.asInstanceOf[JIterable[T]].asScala
+    b.result()
   }
 
+}
+
+// workaround for Java Iterable/Collection missing proper equality check
+private abstract class JWrapperCBF[T] extends CanBuildFrom[Iterable[T], T, Iterable[T]] {
+  override def apply(from: Iterable[T]): mutable.Builder[T, Iterable[T]] = {
+    val b = new JIterableWrapperBuilder
+    from.foreach(b += _)
+    b
+  }
+  override def apply(): mutable.Builder[T, Iterable[T]] = new JIterableWrapperBuilder
+  def asScala(xs: java.util.List[T]): Iterable[T]
+
+  class JIterableWrapperBuilder extends mutable.Builder[T, Iterable[T]] {
+    private val xs = new java.util.ArrayList[T]()
+    // scalastyle:off method.name
+    override def +=(elem: T): this.type = {
+      xs.add(elem)
+      this
+    }
+    // scalastyle:on method.name
+    override def clear(): Unit = xs.clear()
+    override def result(): Iterable[T] = asScala(xs)
+  }
+}
+
+private class JIterableWrapperCBF[T] extends JWrapperCBF[T] {
+  override def asScala(xs: java.util.List[T]): Iterable[T] =
+    xs.asInstanceOf[java.lang.Iterable[T]].asScala
+}
+
+private class JCollectionWrapperCBF[T] extends JWrapperCBF[T] {
+  override def asScala(xs: java.util.List[T]): Iterable[T] =
+    xs.asInstanceOf[java.util.Collection[T]].asScala
 }
