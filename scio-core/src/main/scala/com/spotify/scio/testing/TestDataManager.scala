@@ -70,12 +70,12 @@ private[scio] class TestOutput(val m: Map[TestIO[_], SCollection[_] => Unit]) {
 
 private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {
   val s: MSet[DistCacheIO[_]] = MSet.empty
-  def apply[T](key: DistCacheIO[T]): T = {
+  def apply[T](key: DistCacheIO[T]): () => T = {
     require(
       m.contains(key),
       s"Missing test dist cache: $key, available: ${m.keys.mkString("[", ", ", "]")}")
     s.add(key)
-    m(key).asInstanceOf[T]
+    m(key).asInstanceOf[() => T]
   }
   def validate(): Unit = {
     val d = m.keySet -- s

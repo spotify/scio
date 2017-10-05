@@ -122,10 +122,25 @@ object JobTest {
      * Feed an distributed cache to the pipeline being tested. Note that `DistCacheIO[T]` must
      * match the one used inside the pipeline, e.g. `DistCacheIO[Set[String]]("dc.txt")` with
      * `sc.distCache("dc.txt")(f => scala.io.Source.fromFile(f).getLines().toSet)`.
+     *
+     * @param value mock value, must be serializable.
      */
     def distCache[T](key: DistCacheIO[T], value: T): Builder = {
       require(!state.distCaches.contains(key), "Duplicate test dist cache: " + key)
-      state = state.copy(distCaches = state.distCaches + (key -> value))
+      state = state.copy(distCaches = state.distCaches + (key -> (() => value)))
+      this
+    }
+
+    /**
+     * Feed an distributed cache to the pipeline being tested. Note that `DistCacheIO[T]` must
+     * match the one used inside the pipeline, e.g. `DistCacheIO[Set[String]]("dc.txt")` with
+     * `sc.distCache("dc.txt")(f => scala.io.Source.fromFile(f).getLines().toSet)`.
+     *
+     * @param initFn init function, must be serializable.
+     */
+    def distCacheFunc[T](key: DistCacheIO[T], initFn: () => T): Builder = {
+      require(!state.distCaches.contains(key), "Duplicate test dist cache: " + key)
+      state = state.copy(distCaches = state.distCaches + (key -> initFn))
       this
     }
 
