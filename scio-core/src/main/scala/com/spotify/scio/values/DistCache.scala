@@ -59,8 +59,25 @@ private[scio] class MockDistCache[F](val value: F) extends DistCache[F] {
   override def apply(): F = value
 }
 
+private[scio] class MockDistCacheFunc[F](val value: () => F) extends DistCache[F] {
+  override def apply(): F = value()
+}
+
 object MockDistCache {
+
+  /**
+   * Mock distCache by returning given value.
+   *
+   * @param value mock value, must be serializable.
+   */
   def apply[F](value: F): DistCache[F] = new MockDistCache(value)
+
+  /**
+   * Mock distCache by returning result of given init function.
+   *
+   * @param initFn init function, must be serializable.
+   */
+  def apply[F](initFn: () => F): DistCache[F] = new MockDistCacheFunc[F](initFn)
 }
 
 private[scio] class DistCacheSingle[F](val uri: URI,

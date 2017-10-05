@@ -856,7 +856,7 @@ class DistCacheScioContext private[scio] (self: ScioContext) {
    */
   def distCache[F](uri: String)(initFn: File => F): DistCache[F] = self.requireNotClosed {
     if (self.isTest) {
-      new MockDistCache(testDistCache(DistCacheIO(uri)))
+      new MockDistCacheFunc(testDistCache(DistCacheIO(uri)))
     } else {
       new DistCacheSingle(new URI(uri), initFn, self.optionsAs[GcsOptions])
     }
@@ -871,7 +871,7 @@ class DistCacheScioContext private[scio] (self: ScioContext) {
   def distCache[F](uris: Seq[String])(initFn: Seq[File] => F): DistCache[F] =
     self.requireNotClosed {
       if (self.isTest) {
-        new MockDistCache(testDistCache(DistCacheIO(uris)))
+        new MockDistCacheFunc(testDistCache(DistCacheIO(uris)))
       } else {
         new DistCacheMulti(uris.map(new URI(_)), initFn, self.optionsAs[GcsOptions])
       }

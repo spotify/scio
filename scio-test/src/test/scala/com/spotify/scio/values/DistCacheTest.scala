@@ -41,6 +41,21 @@ object SimpleDistCacheJob {
   }
 }
 
+class NonSerializable(val noDefaultCntr: String) extends Serializable {
+  private val t = new Thread() // make sure it's not kryo/java serializable
+}
+
+object NonSerializableDistCacheJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val dc = sc.distCache(args("distCache"))(f => new NonSerializable("foobar"))
+    sc.textFile(args("input"))
+      .map(_ => dc().noDefaultCntr)
+      .saveAsTextFile(args("output"))
+    sc.close()
+  }
+}
+
 object AnnoyDistCacheJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -124,6 +139,22 @@ class DistCacheTest extends PipelineSpec {
     runWithData(Seq("a", "b")) {
       _.flatMap(x => dc().map(x + _))
     } should contain theSameElementsAs Seq("a1", "a2", "b1", "b2")
+  }
+
+  it should "work with runWithData and non-serializable dist cache" in {
+    val dc = MockDistCache(() => new NonSerializable("foobar"))
+    runWithData(Seq("a", "b")) {
+      _.map(x => dc().noDefaultCntr)
+    } should contain theSameElementsAs Seq("foobar", "foobar")
+  }
+
+  it should "work for non-serializable dist cache" in {
+    JobTest[NonSerializableDistCacheJob.type]
+      .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
+      .input(TextIO("in.txt"), Seq("a", "b"))
+      .distCacheFunc(DistCacheIO("dc.txt"), () => new NonSerializable("foobar"))
+      .output[String](TextIO("out.txt"))(_ should containInAnyOrder (Seq("foobar", "foobar")))
+      .run()
   }
 
   // =======================================================================
