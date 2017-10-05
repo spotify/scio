@@ -36,7 +36,8 @@ import org.joda.time.{LocalDate, LocalDateTime}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.collection.convert.Wrappers.JIterableWrapper
+import scala.collection.convert.Wrappers
+import scala.collection.mutable
 
 private object KryoRegistrarLoader {
 
@@ -82,9 +83,18 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
         k.forClass(new CoderSerializer(InstantCoder.of()))
         k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
 
-        // java.lang.Iterable.asScala returns JIterableWrapper which causes problem.
-        // Treat it as standard Iterable instead.
-        k.register(classOf[JIterableWrapper[_]], new JIterableWrapperSerializer())
+        // Java Iterable/Collection are missing proper equality check, use custom CBF as a
+        // workaround
+        k.register(
+          classOf[Wrappers.JIterableWrapper[_]],
+          new JTraversableSerializer[Any, Iterable[Any]]()(new JIterableWrapperCBF[Any]))
+        k.register(
+          classOf[Wrappers.JCollectionWrapper[_]],
+          new JTraversableSerializer[Any, Iterable[Any]]()(new JCollectionWrapperCBF[Any]))
+        // Wrapped Java collections may have immutable implementations, i.e. Guava, treat them as
+        // regular Scala collections as a workaround
+        k.register(
+          classOf[Wrappers.JListWrapper[_]], new JTraversableSerializer[Any, mutable.Buffer[Any]])
 
         k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
         k.forSubclass[GenericRecord](new GenericAvroSerializer)
@@ -147,7 +157,7 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
                                         observer: ElementByteSizeObserver): Unit = value match {
     // (K, Iterable[V]) is the return type of `groupBy` or `groupByKey`. This could be very slow
     // when there're few keys with many values.
-    case (key, wrapper: JIterableWrapper[_]) =>
+    case (key, wrapper: Wrappers.JIterableWrapper[_]) =>
       observer.update(kryoEncodedElementByteSize(key))
       // FIXME: handle ElementByteSizeObservableIterable[_, _]
       var count = 0

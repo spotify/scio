@@ -17,6 +17,8 @@
 
 package com.spotify.scio.coders
 
+import java.{lang => jl, util => ju}
+
 import com.google.api.services.bigquery.model.TableRow
 import com.google.common.collect.ImmutableList
 import com.spotify.scio.avro.AvroUtils._
@@ -30,6 +32,7 @@ import org.apache.beam.sdk.values.KV
 import org.joda.time.Instant
 import org.scalatest.matchers.{MatchResult, Matcher}
 
+import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 class KryoAtomicCoderTest extends PipelineSpec {
@@ -66,7 +69,13 @@ class KryoAtomicCoderTest extends PipelineSpec {
   }
 
   it should "support wrapped iterables" in {
-    cf should roundTrip (iterable(1, 2, 3))
+    // handle immutable underlying Java collections
+    val list = ImmutableList.of(1, 2, 3)
+
+    // Iterable/Collection should have proper equality
+    cf should roundTrip (list.asInstanceOf[jl.Iterable[Int]].asScala)
+    cf should roundTrip (list.asInstanceOf[ju.Collection[Int]].asScala)
+    cf should roundTrip (list.asScala)
   }
 
   it should "support Avro GenericRecord" in {
