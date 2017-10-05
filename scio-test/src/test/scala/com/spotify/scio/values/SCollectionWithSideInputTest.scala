@@ -18,6 +18,7 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.testing.PipelineSpec
+import org.joda.time.{DateTimeConstants, Duration, Instant}
 
 class SCollectionWithSideInputTest extends PipelineSpec {
 
@@ -132,6 +133,95 @@ class SCollectionWithSideInputTest extends PipelineSpec {
       s1 should containInAnyOrder (Seq(("k1", "a1x", 1), ("k1", "a1y", 1)))
       s2 should containInAnyOrder (Seq(("k6", "a6x", 6), ("k6", "a6y", 6)))
       s3 should containInAnyOrder (Seq(("k6", "a1x", 6), ("k6", "a1y", 6)))
+    }
+  }
+
+  val timestampedData =
+    (1 to 3).map(x => (x, new Instant(x * DateTimeConstants.MILLIS_PER_SECOND)))
+
+  it should "support windowed asSingletonSideInput" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelizeTimestamped(timestampedData)
+        .withFixedWindows(Duration.standardSeconds(1))
+        .map("a" + _)
+      val p2 = sc.parallelizeTimestamped(timestampedData)
+        .withFixedWindows(Duration.standardSeconds(1))
+        .map("b" + _)
+        .asSingletonSideInput
+      val s = p1.withSideInputs(p2).map(_ + _(p2)).toSCollection
+      s should containInAnyOrder (Seq("a1b1", "a2b2", "a3b3"))
+    }
+  }
+
+  it should "support windowed asListSideInput" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelizeTimestamped(timestampedData)
+        .withFixedWindows(Duration.standardSeconds(1))
+        .map("a" + _)
+      val p2 = sc.parallelizeTimestamped(timestampedData)
+        .withFixedWindows(Duration.standardSeconds(1))
+        .flatMap(x => Seq("b" + x, "c" + x))
+        .asListSideInput
+      val s = p1.withSideInputs(p2)
+        .map { case (x, s) =>
+          x + s(p2).sorted.mkString
+        }
+        .toSCollection
+      s should containInAnyOrder (Seq("a1b1c1", "a2b2c2", "a3b3c3"))
+    }
+  }
+
+  it should "support windowed asIterableSideInput" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelizeTimestamped(timestampedData)
+        .withFixedWindows(Duration.standardSeconds(1))
+        .map("a" + _)
+      val p2 = sc.parallelizeTimestamped(timestampedData)
+        .withFixedWindows(Duration.standardSeconds(1))
+        .flatMap(x => Seq("b" + x, "c" + x))
+        .asIterableSideInput
+      val s = p1.withSideInputs(p2)
+        .map { case (x, s) =>
+          x + s(p2).toList.sorted.mkString
+        }
+        .toSCollection
+      s should containInAnyOrder (Seq("a1b1c1", "a2b2c2", "a3b3c3"))
+    }
+  }
+
+  it should "support windowed asMapSideInput" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelizeTimestamped(timestampedData)
+        .withFixedWindows(Duration.standardSeconds(1))
+        .map("a" + _)
+      val p2 = sc.parallelizeTimestamped(timestampedData)
+        .withFixedWindows(Duration.standardSeconds(1))
+        .flatMap(x => Seq(("b", x), ("c", x)))
+        .asMapSideInput
+      val s = p1.withSideInputs(p2)
+        .map { case (x, s) =>
+          x + s(p2).map(kv => kv._1 + kv._2).toList.sorted.mkString
+        }
+        .toSCollection
+      s should containInAnyOrder (Seq("a1b1c1", "a2b2c2", "a3b3c3"))
+    }
+  }
+
+  it should "support windowed asMultiMapSideInput" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelizeTimestamped(timestampedData)
+        .withFixedWindows(Duration.standardSeconds(1))
+        .map("a" + _)
+      val p2 = sc.parallelizeTimestamped(timestampedData)
+        .withFixedWindows(Duration.standardSeconds(1))
+        .flatMap(x => Seq(("b", x), ("b", x + 1)))
+        .asMultiMapSideInput
+      val s = p1.withSideInputs(p2)
+        .map { case (x, s) =>
+          x + s(p2).map(kv => kv._2.toList.sorted.map(kv._1 + _).mkString).mkString
+        }
+        .toSCollection
+      s should containInAnyOrder (Seq("a1b1b2", "a2b2b3", "a3b3b4"))
     }
   }
 
