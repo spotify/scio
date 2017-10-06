@@ -11,8 +11,8 @@ dependencies:
     - "~/.ivy2"
     - "~/.sbt"
   pre:
-    - wget -q https://dl.bintray.com/sbt/debian/sbt-0.13.16.deb
-    - sudo dpkg -i sbt-0.13.16.deb
+    - wget -q https://dl.bintray.com/sbt/debian/sbt-1.0.2.deb
+    - sudo dpkg -i sbt-1.0.2.deb
     - find ~/.sbt -name "*.lock" | xargs -r rm
     - find ~/.ivy2 -name "ivydata-*.properties" | xargs -r rm
   override:
