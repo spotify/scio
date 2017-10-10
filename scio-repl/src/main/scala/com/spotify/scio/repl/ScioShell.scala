@@ -49,11 +49,6 @@ trait BaseScioShell extends MainGenericRunner {
       command.settings.usejavacp.value = true
     }
 
-    // For scala 2.12 - use Yreplclassbased (https://github.com/scala/bug/issues/10064)
-    if (scala.util.Properties.versionString.contains("2.12.")) {
-      command.settings.Yreplclassbased.value = true
-    }
-
     def classLoaderURLs(cl: ClassLoader): Array[java.net.URL] = cl match {
       case null => Array()
       case u: java.net.URLClassLoader => u.getURLs ++ classLoaderURLs(cl.getParent)
