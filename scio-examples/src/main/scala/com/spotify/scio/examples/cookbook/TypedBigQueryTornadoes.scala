@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.examples.extra
+package com.spotify.scio.examples.cookbook
 
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
