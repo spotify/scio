@@ -94,20 +94,21 @@ private object TFRecordCodec {
   private def hashBytes(x: Array[Byte]): Int = mask(crc32c.hashBytes(x).asInt())
 
   private def isGzipInputStream(pushback: PushbackInputStream): Boolean = {
-    val headerBytes = Array.ofDim[Byte](2)
-    pushback.read(headerBytes)
+    val b1 = pushback.read()
+    val b2 = pushback.read()
+    if (b2 != -1) pushback.unread(b2)
+    if (b1 != -1) pushback.unread(b1)
     val zero: Byte = 0x00
-    val header = Ints.fromBytes(zero, zero, headerBytes(1), headerBytes(0))
-    pushback.unread(headerBytes)
-    header == GZIPInputStream.GZIP_MAGIC
+    val header = Ints.fromBytes(zero, zero, b2.toByte, b1.toByte)
+    (b1 != -1 && b2 != -1) && header == GZIPInputStream.GZIP_MAGIC
   }
 
   private def isInflaterInputStream(pushback: PushbackInputStream): Boolean = {
     val b1 = pushback.read()
     val b2 = pushback.read()
-    pushback.unread(b2)
-    pushback.unread(b1)
-    b1 == 0x78 && (b1 * 256 + b2) % 31 == 0
+    if (b2 != -1) pushback.unread(b2)
+    if (b1 != -1) pushback.unread(b1)
+    (b1 != -1 && b2 != -1) && (b1 == 0x78 && (b1 * 256 + b2) % 31 == 0)
   }
 
 }
