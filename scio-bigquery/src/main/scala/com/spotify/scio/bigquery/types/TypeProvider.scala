@@ -292,12 +292,19 @@ private[types] object TypeProvider {
     // in scala plugin.
     import c.universe._
     (Seq(caseClass) ++ records).map {
-      case q"case class $name(..$fields) { ..$body }" =>
-        s"case class $name(${fields.map{case ValDef(mods, fname, ftpt, _) =>
-          s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"}.mkString(", ")})"
-      case q"case class $name(..$fields) extends $annotation { ..$body }" =>
-        s"case class $name(${fields.map{case ValDef(mods, fname, ftpt, _) =>
-          s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"}.mkString(", ")}) extends $annotation"
+      case q"$mods class $name[..$_] $_(..$fields) extends { ..$_ } with ..$parents { $_ => ..$_ }" if mods.asInstanceOf[Modifiers].hasFlag(Flag.CASE) =>
+        val f = fields.map {
+          case ValDef(_, fname, ftpt, _) => s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"
+        }.mkString(", ")
+          .replaceAll(s"@${classOf[BigQueryTag].getName}", "") //BQ plugin does not need to know about BQTag
+        parents match {
+          case Nil =>
+            s"case class $name($f)"
+          case h :: Nil =>
+            s"case class $name($f) extends $h"
+          case h :: t =>
+            s"case class $name($f) extends $h ${t.mkString(" with ", " with ", "")}"
+        }
       case _ => ""
     }
   }
