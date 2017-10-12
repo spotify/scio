@@ -27,7 +27,7 @@ SBT
 runMain
   com.spotify.scio.examples.extra.DistCacheExample
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://dataflow-samples/wikipedia_edits/wiki_data-*.json
+  --input=gs://apache-beam-samples/wikipedia_edits/wiki_data-*.json
   --output=gs://[BUCKET]/[PATH]/dist_cache_example
 */
 

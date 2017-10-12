@@ -39,7 +39,7 @@ SBT
 runMain
   com.spotify.scio.examples.extra.ShapelessAvroWriteExample
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://dataflow-samples/shakespeare/kinglear.txt
+  --input=gs://apache-beam-samples/shakespeare/kinglear.txt
   --output=gs://[BUCKET]/[PATH]/wordcount-avro
 */
 

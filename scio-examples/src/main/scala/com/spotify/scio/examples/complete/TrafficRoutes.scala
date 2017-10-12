@@ -32,7 +32,7 @@ SBT
 runMain
   com.spotify.scio.examples.complete.TrafficRoutes
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://dataflow-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv
+  --input=gs://apache-beam-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv
   --output=[DATASET].traffic_routes
 */
 

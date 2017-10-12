@@ -31,7 +31,7 @@ SBT
 runMain
   com.spotify.scio.examples.complete.TopWikipediaSessions
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://dataflow-samples/wikipedia_edits/wiki_data-*.json
+  --input=gs://apache-beam-samples/wikipedia_edits/wiki_data-*.json
   --output=gs://[BUCKET]/[PATH]/top_wikipedia_sessions
 */
 

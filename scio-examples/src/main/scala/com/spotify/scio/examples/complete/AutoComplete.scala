@@ -36,7 +36,7 @@ SBT
 runMain
   com.spotify.scio.examples.complete.AutoComplete
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://dataflow-samples/shakespeare/kinglear.txt
+  --input=gs://apache-beam-samples/shakespeare/kinglear.txt
   --outputToBigqueryTable=true
   --outputToDatastore=false
   --output=[DATASET].auto_complete

@@ -32,7 +32,7 @@ SBT
 runMain
   com.spotify.scio.examples.complete.TfIdf
   --project=[PROJECT] --runner=DataflowPRunner --zone=[ZONE]
-  --input=gs://dataflow-samples/shakespeare/?*.txt
+  --input=gs://apache-beam-samples/shakespeare/?*.txt
   --output=gs://[BUCKET]/[PATH]/tf_idf
 */
 

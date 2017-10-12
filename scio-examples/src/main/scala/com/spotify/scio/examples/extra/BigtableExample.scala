@@ -50,7 +50,7 @@ SBT
 runMain
   com.spotify.scio.examples.extra.BigtableWriteExample
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://dataflow-samples/shakespeare/kinglear.txt
+  --input=gs://apache-beam-samples/shakespeare/kinglear.txt
   --bigtableProjectId=[BIG_TABLE_PROJECT_ID]
   --bigtableInstanceId=[BIG_TABLE_INSTANCE_ID]
   --bigtableTableId=[BIG_TABLE_TABLE_ID]

@@ -19,15 +19,15 @@ package com.spotify.scio.examples.common
 
 object ExampleData {
 
-  val SHAKESPEARE_ALL = "gs://dataflow-samples/shakespeare/*"
-  val KING_LEAR = "gs://dataflow-samples/shakespeare/kinglear.txt"
-  val OTHELLO = "gs://dataflow-samples/shakespeare/othello.txt"
+  val SHAKESPEARE_ALL = "gs://apache-beam-samples/shakespeare/*"
+  val KING_LEAR = "gs://apache-beam-samples/shakespeare/kinglear.txt"
+  val OTHELLO = "gs://apache-beam-samples/shakespeare/othello.txt"
 
-  val EXPORTED_WIKI_TABLE = "gs://dataflow-samples/wikipedia_edits/*.json"
+  val EXPORTED_WIKI_TABLE = "gs://apache-beam-samples/wikipedia_edits/*.json"
   val MONTHS = "gs://dataflow-samples/samples/misc/months.txt"
   val TRAFFIC =
-    "gs://dataflow-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv"
-  val GAMING = "gs://dataflow-samples/game/gaming_data*.csv"
+    "gs://apache-beam-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv"
+  val GAMING = "gs://apache-beam-samples/game/gaming_data*.csv"
 
   val WEATHER_SAMPLES_TABLE = "clouddataflow-readonly:samples.weather_stations"
   val SHAKESPEARE_TABLE = "publicdata:samples.shakespeare"

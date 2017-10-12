@@ -33,7 +33,7 @@ SBT
 runMain
   com.spotify.scio.examples.WindowedWordCount
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://dataflow-samples/shakespeare/kinglear.txt
+  --input=gs://apache-beam-samples/shakespeare/kinglear.txt
   --output=gs://[BUCKET]/[PATH]/windowed_wordcount
 */
 

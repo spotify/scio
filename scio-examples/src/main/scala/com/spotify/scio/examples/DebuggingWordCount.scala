@@ -31,7 +31,7 @@ SBT
 runMain
   com.spotify.scio.examples.DebuggingWordCount
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://dataflow-samples/shakespeare/kinglear.txt
+  --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 */
 
 object DebuggingWordCount {

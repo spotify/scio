@@ -26,7 +26,7 @@ SBT
 runMain
   com.spotify.scio.examples.MinimalWordCount
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://dataflow-samples/samples/misc/months.txt
+  --input=gs://apache-beam-samples/shakespeare/kinglear.txt
   --output=gs://[BUCKET]/[PATH]/safe_flat_map
 */
 
