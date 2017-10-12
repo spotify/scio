@@ -518,7 +518,6 @@ lazy val scioExamples: Project = Project(
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
     "org.mockito" % "mockito-all" % mockitoVersion % "test"
   ),
-  fork in run := true,
   addCompilerPlugin(paradiseDependency),
   sources in doc in Compile := List()
 ).dependsOn(
