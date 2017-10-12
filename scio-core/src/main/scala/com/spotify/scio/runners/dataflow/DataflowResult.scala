@@ -17,24 +17,61 @@
 
 package com.spotify.scio.runners.dataflow
 
+import java.util.Collections
+
+import com.google.api.services.dataflow.Dataflow
 import com.google.api.services.dataflow.model.{Job, JobMetrics}
-import com.spotify.scio.RunnerResult
+import com.spotify.scio.metrics.Metrics
+import com.spotify.scio.{RunnerResult, ScioResult}
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.runners.dataflow.{DataflowClient, DataflowPipelineJob}
-import org.apache.beam.sdk.PipelineResult
 import org.apache.beam.sdk.options.PipelineOptionsFactory
+import org.apache.beam.sdk.runners.AppliedPTransform
+import org.apache.beam.sdk.transforms.PTransform
+import org.apache.beam.sdk.values.{PInput, POutput}
+import org.apache.beam.sdk.{Pipeline, PipelineResult}
+
+import scala.collection.JavaConverters._
+import scala.concurrent.Future
 
 /** Represent a Dataflow runner specific result. */
 class DataflowResult(val internal: DataflowPipelineJob) extends RunnerResult {
-  def this(result: PipelineResult) = this(result.asInstanceOf[DataflowPipelineJob])
 
-  private val client = DataflowClient.create(DataflowResult.getOptions(internal.getProjectId))
+  def this(internal: PipelineResult) = this(internal.asInstanceOf[DataflowPipelineJob])
 
-  /**  Get Dataflow [[Job]]. */
-  def getJob: Job = client.getJob(internal.getJobId)
+  private val client = DataflowResult.getOptions(internal.getProjectId).getDataflowClient
 
-  /**  Get Dataflow [[JobMetrics]]. */
-  def getJobMetrics: JobMetrics = client.getJobMetrics(internal.getJobId)
+  /** Get Dataflow [[Job]]. */
+  def getJob: Job = DataflowResult.getJob(client, internal.getProjectId, internal.getJobId)
+
+  /** Get Dataflow [[JobMetrics]]. */
+  def getJobMetrics: JobMetrics =
+    DataflowResult.getJobMetrics(client, internal.getProjectId, internal.getJobId)
+
+  /** Get a generic [[ScioResult]]. */
+  override def asScioResult: ScioResult = new DataflowScioResult(internal)
+
+  private class DataflowScioResult(internal: PipelineResult) extends ScioResult(internal) {
+    override val finalState: Future[PipelineResult.State] = {
+      import scala.concurrent.ExecutionContext.Implicits.global
+      Future {
+        internal.waitUntilFinish()
+        this.state
+      }
+    }
+
+    override def getMetrics: Metrics = {
+      val options = getJob.getEnvironment.getSdkPipelineOptions.get("options")
+        .asInstanceOf[java.util.Map[String, AnyRef]]
+      Metrics(
+        options.get("scioVersion").toString,
+        options.get("scalaVersion").toString,
+        options.get("appName").toString,
+        internal.getState.toString,
+        getBeamMetrics)
+    }
+  }
+
 }
 
 /** Companion object for [[DataflowResult]]. */
@@ -42,9 +79,26 @@ object DataflowResult {
   /** Create a new [[DataflowResult]] instance. */
   def apply(projectId: String, jobId: String): DataflowResult = {
     val options = getOptions(projectId)
+
+    val job = DataflowResult.getJob(options.getDataflowClient, options.getProject, jobId)
+    // DataflowPipelineJob require a mapping of human-readable transform names via
+    // AppliedPTransform#getUserName, e.g. flatMap@MyJob.scala:12, to Dataflow service generated
+    // transform names, e.g. s12
+    val transformStepNames: Map[AppliedPTransform[_, _, _], String] =
+      job.getPipelineDescription.getExecutionPipelineStage.asScala
+        .flatMap { s =>
+          if (s.getComponentTransform != null) {
+            s.getComponentTransform.asScala.map { t =>
+              newAppliedPTransform(t.getUserName) -> t.getName
+            }
+          } else {
+            Nil
+          }
+        }(scala.collection.breakOut)
+
     val client = DataflowClient.create(options)
-    val job = new DataflowPipelineJob(client, jobId, options, null)
-    new DataflowResult(job)
+    val internal = new DataflowPipelineJob(client, jobId, options, transformStepNames.asJava)
+    new DataflowResult(internal)
   }
 
   private def getOptions(projectId: String): DataflowPipelineOptions = {
@@ -52,4 +106,24 @@ object DataflowResult {
     options.setProject(projectId)
     options
   }
+
+  private def getJob(dataflow: Dataflow, projectId: String, jobId: String): Job =
+    dataflow.projects().jobs().get(projectId, jobId).setView("JOB_VIEW_ALL").execute()
+
+  private def getJobMetrics(dataflow: Dataflow, projectId: String, jobId: String): JobMetrics =
+    dataflow.projects().jobs().getMetrics(projectId, jobId).execute()
+
+  // wiring to reconstruct AppliedPTransform for name mapping
+
+  private def newAppliedPTransform(fullName: String)
+  : AppliedPTransform[PInput, POutput, EmptyPTransform] = AppliedPTransform.of(
+    fullName, Collections.emptyMap(), Collections.emptyMap(),
+    new EmptyPTransform, new EmptyPipeline)
+
+  private class EmptyPTransform extends PTransform[PInput, POutput] {
+    override def expand(input: PInput): POutput = ???
+  }
+
+  private class EmptyPipeline extends Pipeline(null)
+
 }

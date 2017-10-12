@@ -33,6 +33,7 @@ import com.spotify.scio.bigquery._
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io.Tap
+import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
@@ -48,7 +49,7 @@ import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values._
-import org.apache.beam.sdk.{Pipeline, io => gio}
+import org.apache.beam.sdk.{Pipeline, PipelineResult, io => gio}
 import org.joda.time.Instant
 import org.slf4j.LoggerFactory
 
@@ -59,7 +60,8 @@ import scala.concurrent.{Future, Promise}
 import scala.io.Source
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
+import scala.util.control.NonFatal
 
 /** Runner specific context. */
 trait RunnerContext {
@@ -332,7 +334,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     _isClosed = true
 
     _preRunFns.foreach(_())
-    val result = new ScioResult(this.pipeline.run(), context)
+    val result = new ContextScioResult(this.pipeline.run(), context)
 
     if (this.isTest) {
       TestDataManager.closeTest(testId.get, result)
@@ -343,6 +345,35 @@ class ScioContext private[scio] (val options: PipelineOptions,
     } else {
       result
     }
+  }
+
+  private class ContextScioResult(internal: PipelineResult,
+                                  val context: ScioContext) extends ScioResult(internal) {
+    override val finalState: Future[State] = {
+      import scala.concurrent.ExecutionContext.Implicits.global
+      val f = Future {
+        val state = internal.waitUntilFinish()
+        context.updateFutures(state)
+        val metricsLocation = context.optionsAs[ScioOptions].getMetricsLocation
+        if (metricsLocation != null) {
+          saveMetrics(metricsLocation)
+        }
+        this.state
+      }
+      f.onComplete {
+        case Success(_) => Unit
+        case Failure(NonFatal(_)) => context.updateFutures(state)
+      }
+      f
+    }
+
+    override def getMetrics: Metrics =
+      Metrics(
+        scioVersion,
+        scalaVersion,
+        context.optionsAs[ApplicationNameOptions].getAppName,
+        state.toString,
+        getBeamMetrics)
   }
 
   /** Whether the context is closed. */

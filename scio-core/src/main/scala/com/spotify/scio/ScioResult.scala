@@ -20,29 +20,28 @@ package com.spotify.scio
 import java.nio.ByteBuffer
 
 import com.spotify.scio.metrics._
-import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.util.ScioUtil
 import com.twitter.algebird.Semigroup
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.PipelineResult.State
-import org.apache.beam.sdk.options.ApplicationNameOptions
-import org.apache.beam.sdk.PipelineResult
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.{metrics => bm}
 import org.apache.beam.sdk.util.MimeTypes
+import org.apache.beam.sdk.{PipelineResult, metrics => bm}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scala.reflect.ClassTag
-import scala.util.control.NonFatal
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 /** Represent a Beam runner specific result. */
-trait RunnerResult
+trait RunnerResult {
+  /** Get a generic [[ScioResult]]. */
+  def asScioResult: ScioResult
+}
 
 /** Represent a Scio pipeline result. */
-class ScioResult private[scio] (val internal: PipelineResult, val context: ScioContext) {
+abstract class ScioResult private[scio] (val internal: PipelineResult) {
 
   /** Get a Beam runner specific result. */
   def as[T <: RunnerResult : ClassTag]: T = {
@@ -59,23 +58,10 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
    * `Future` for pipeline's final state. The `Future` will be completed once the pipeline
    * completes successfully.
    */
-  val finalState: Future[State] = {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val f = Future {
-      val state = internal.waitUntilFinish()
-      context.updateFutures(state)
-      val metricsLocation = context.optionsAs[ScioOptions].getMetricsLocation
-      if (metricsLocation != null) {
-        saveMetrics(metricsLocation)
-      }
-      this.state
-    }
-    f.onComplete {
-      case Success(_) => Unit
-      case Failure(NonFatal(_)) => context.updateFutures(state)
-    }
-    f
-  }
+  val finalState: Future[State]
+
+  /** Get metrics of the finished pipeline. */
+  def getMetrics: Metrics
 
   /** Wait until the pipeline finishes. */
   def waitUntilFinish(duration: Duration = Duration.Inf): ScioResult = {
@@ -116,9 +102,7 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
     }
   }
 
-  /** Get metrics of the finished pipeline. */
-  // scalastyle:off method.length
-  def getMetrics: Metrics = {
+  protected def getBeamMetrics: BeamMetrics = {
     require(isCompleted, "Pipeline has to be finished to get metrics.")
 
     def mkDist(d: bm.DistributionResult): BeamDistribution =
@@ -135,13 +119,8 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
       BeamMetric(k.namespace(), k.name(),
         MetricValue(mkGauge(v.attempted), v.committed.map(mkGauge)))
     }
-    Metrics(scioVersion,
-      scalaVersion,
-      context.optionsAs[ApplicationNameOptions].getAppName,
-      state.toString,
-      BeamMetrics(beamCounters, beamDistributions, beamGauges))
+    BeamMetrics(beamCounters, beamDistributions, beamGauges)
   }
-  // scalastyle:on method.length
 
   /** Retrieve aggregated value of a single counter from the pipeline. */
   def counter(c: bm.Counter): MetricValue[Long] = getMetric(allCounters, c.getName)
