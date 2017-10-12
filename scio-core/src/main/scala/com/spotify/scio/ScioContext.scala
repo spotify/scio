@@ -358,7 +358,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     _isClosed = true
 
     _preRunFns.foreach(_())
-    val result = new ScioResult(this.pipeline.run(), context)
+    val result = new BlockingScioResult(this.pipeline.run(), context)
 
     if (this.isTest) {
       TestDataManager.closeTest(testId.get, result)
