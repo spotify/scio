@@ -57,7 +57,7 @@ import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
-import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}
+import scala.collection.mutable.{Buffer => MBuffer}
 import scala.concurrent.{Future, Promise}
 import scala.io.Source
 import scala.reflect.ClassTag
