@@ -37,10 +37,8 @@ package object metrics {
   case class Metrics(version: String,
                      scalaVersion: String,
                      jobName: String,
-                     jobId: String,
                      state: String,
-                     beamMetrics: BeamMetrics,
-                     cloudMetrics: Iterable[DFServiceMetrics])
+                     beamMetrics: BeamMetrics)
 
   case class BeamMetrics(counters: Iterable[BeamMetric[Long]],
                          distributions: Iterable[BeamMetric[BeamDistribution]],
@@ -48,8 +46,5 @@ package object metrics {
   case class BeamMetric[T](namespace: String, name: String, value: MetricValue[T])
   case class BeamDistribution(sum: Long, count: Long, min: Long, max: Long, mean: Double)
   case class BeamGauge(value: Long, timestamp: Instant)
-
-  case class DFServiceMetrics(name: DFMetricName, scalar: AnyRef, updateTime: String)
-  case class DFMetricName(name: String, origin: String, context: Map[String, String])
 
 }

@@ -23,6 +23,7 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.dataflow.Dataflow
 import com.spotify.scio._
+import com.spotify.scio.runners.dataflow.DataflowResult
 import com.spotify.scio.values.SCollection
 import org.apache.beam.runners.dataflow.DataflowPipelineJob
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
@@ -30,6 +31,7 @@ import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat, PeriodFormat}
 import org.joda.time.{DateTimeZone, Seconds}
 
+import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.Random
@@ -94,9 +96,11 @@ object ScioBenchmark {
       val elapsed = PeriodFormat.getDefault.print(Seconds.secondsBetween(start, finish))
       prettyPrint("Elapsed", elapsed)
 
-      r.result.getMetrics.cloudMetrics
-        .filter(m => m.name.name.startsWith("Total") && !m.name.context.contains("tentative"))
-        .map(m => (m.name.name, m.scalar.toString))
+      r.result.as[DataflowResult].getJobMetrics.getMetrics.asScala
+        .filter { m =>
+          m.getName.getName.startsWith("Total") && !m.getName.getContext.containsKey("tentative")
+        }
+        .map(m => (m.getName.getName, m.getScalar.toString))
         .toSeq.sortBy(_._1)
         .foreach(kv => prettyPrint(kv._1, kv._2))
     }
