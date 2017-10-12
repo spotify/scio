@@ -174,10 +174,6 @@ lazy val assemblySettings = Seq(
 
 lazy val paradiseDependency =
   "org.scalamacros" % "paradise" % scalaMacrosVersion cross CrossVersion.full
-lazy val beamDependencies = Seq(
-  "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-  "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion
-)
 
 lazy val macroSettings = Seq(
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
@@ -229,8 +225,9 @@ lazy val scioCore: Project = Project(
 ).settings(
   commonSettings ++ macroSettings,
   description := "Scio - A Scala API for Apache Beam and Google Cloud Dataflow",
-  libraryDependencies ++= beamDependencies,
   libraryDependencies ++= Seq(
+    "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+    "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "provided",
     "com.twitter" %% "algebird-core" % algebirdVersion,
     "com.twitter" %% "chill" % chillVersion,
     "com.twitter" %% "chill-algebird" % chillVersion,
