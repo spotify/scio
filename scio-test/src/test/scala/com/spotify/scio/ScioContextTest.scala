@@ -25,7 +25,6 @@ import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.ScioUtil
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.testing.PAssert
@@ -60,29 +59,29 @@ class ScioContextTest extends PipelineSpec {
 
   it should "support user defined job name via options" in {
     val jobName = "test-job-1"
-    val opts = PipelineOptionsFactory.create().as(classOf[DataflowPipelineOptions])
+    val opts = PipelineOptionsFactory.create()
     opts.setJobName(jobName)
-    val pipelineOpts = ScioContext(opts).optionsAs[DataflowPipelineOptions]
+    val pipelineOpts = ScioContext(opts).options
     pipelineOpts.getJobName shouldBe jobName
   }
 
   it should "support user defined job name via context" in {
     val jobName = "test-job-1"
-    val opts = PipelineOptionsFactory.create().as(classOf[DataflowPipelineOptions])
+    val opts = PipelineOptionsFactory.create()
     val sc = ScioContext(opts)
     sc.setJobName(jobName)
-    val pipelineOpts = ScioContext(opts).optionsAs[DataflowPipelineOptions]
+    val pipelineOpts = ScioContext(opts).options
     pipelineOpts.getJobName shouldBe jobName
   }
 
   it should "support user defined job name via options then context" in {
     val jobName1 = "test-job-1"
     val jobName2 = "test-job-2"
-    val opts = PipelineOptionsFactory.create().as(classOf[DataflowPipelineOptions])
+    val opts = PipelineOptionsFactory.create()
     opts.setJobName(jobName1)
     val sc = ScioContext(opts)
     sc.setJobName(jobName2)
-    val pipelineOpts = ScioContext(opts).optionsAs[DataflowPipelineOptions]
+    val pipelineOpts = ScioContext(opts).options
     pipelineOpts.getJobName shouldBe jobName2
   }
 

@@ -42,7 +42,7 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.runners.dataflow.DataflowRunner
-import org.apache.beam.runners.dataflow.options._
+import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.extensions.gcp.options.{GcpOptions, GcsOptions}
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub => psio}
@@ -180,11 +180,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
     }
   }
 
-  // Set default Dataflow job name if none specified by user
-  Try(optionsAs[DataflowPipelineOptions]).foreach { o =>
-    if (o.getJobName == null) {
-      this.setJobName(o.getAppName) // appName already set
-    }
+  // Set default job name if none specified by user
+  if (options.getJobName == null) {
+    options.setJobName(optionsAs[ApplicationNameOptions].getAppName) // appName already set
   }
 
   {
@@ -343,12 +341,12 @@ class ScioContext private[scio] (val options: PipelineOptions,
     Try(optionsAs[ApplicationNameOptions]).foreach(_.setAppName(name))
   }
 
-  /** Set job name for the context (Dataflow only) */
+  /** Set job name for the context. */
   def setJobName(name: String): Unit = {
     if (_pipeline != null) {
       throw new RuntimeException("Cannot set job name once pipeline is initialized")
     }
-    Try(optionsAs[DataflowPipelineOptions]).foreach(_.setJobName(name))
+    options.setJobName(name)
   }
 
   /** Close the context. No operation can be performed once the context is closed. */
