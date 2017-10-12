@@ -28,23 +28,23 @@ package object metrics {
    * @param attempted The value across all attempts of executing all parts of the pipeline.
    * @param committed The value across all successfully completed parts of the pipeline.
    */
-  case class MetricValue[T](attempted: T, committed: Option[T])
+  final case class MetricValue[T](attempted: T, committed: Option[T])
 
   /**
    * Case class holding metadata and service-level metrics of the job. See
    * [[ScioResult.getMetrics]].
    */
-  case class Metrics(version: String,
-                     scalaVersion: String,
-                     jobName: String,
-                     state: String,
-                     beamMetrics: BeamMetrics)
+  final case class Metrics(version: String,
+                           scalaVersion: String,
+                           appName: String,
+                           state: String,
+                           beamMetrics: BeamMetrics)
 
-  case class BeamMetrics(counters: Iterable[BeamMetric[Long]],
-                         distributions: Iterable[BeamMetric[BeamDistribution]],
-                         gauges: Iterable[BeamMetric[BeamGauge]])
-  case class BeamMetric[T](namespace: String, name: String, value: MetricValue[T])
-  case class BeamDistribution(sum: Long, count: Long, min: Long, max: Long, mean: Double)
-  case class BeamGauge(value: Long, timestamp: Instant)
+  final case class BeamMetrics(counters: Iterable[BeamMetric[Long]],
+                               distributions: Iterable[BeamMetric[BeamDistribution]],
+                               gauges: Iterable[BeamMetric[BeamGauge]])
+  final case class BeamMetric[T](namespace: String, name: String, value: MetricValue[T])
+  final case class BeamDistribution(sum: Long, count: Long, min: Long, max: Long, mean: Double)
+  final case class BeamGauge(value: Long, timestamp: Instant)
 
 }
