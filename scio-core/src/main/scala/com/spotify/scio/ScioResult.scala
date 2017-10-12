@@ -23,8 +23,6 @@ import com.spotify.scio.metrics._
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.util.ScioUtil
 import com.twitter.algebird.Semigroup
-import org.apache.beam.runners.dataflow.DataflowPipelineJob
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.options.ApplicationNameOptions
@@ -32,18 +30,30 @@ import org.apache.beam.sdk.PipelineResult
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.{metrics => bm}
 import org.apache.beam.sdk.util.MimeTypes
-import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
+
+/** Represent a Beam runner specific result. */
+trait RunnerResult
 
 /** Represent a Scio pipeline result. */
 class ScioResult private[scio] (val internal: PipelineResult, val context: ScioContext) {
 
-  private val logger = LoggerFactory.getLogger(this.getClass)
+  /** Get a Beam runner specific result. */
+  def as[T <: RunnerResult : ClassTag]: T = {
+    val cls = ScioUtil.classOf[T]
+    try {
+      cls.getConstructor(classOf[PipelineResult]).newInstance(internal)
+    } catch {
+      case e: Throwable =>
+        throw new RuntimeException(s"Failed to construct runner specific result $cls", e)
+    }
+  }
 
   /**
    * `Future` for pipeline's final state. The `Future` will be completed once the pipeline
@@ -111,34 +121,6 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
   def getMetrics: Metrics = {
     require(isCompleted, "Pipeline has to be finished to get metrics.")
 
-    val (jobId, dfMetrics) = if (ScioUtil.isLocalRunner(this.context.options.getRunner)) {
-      // to be safe let's use app name at a cost of duplicate for local runner
-      // there are no dataflow service metrics on local runner
-      (context.optionsAs[ApplicationNameOptions].getAppName, Nil)
-    } else {
-      val jobId = internal.asInstanceOf[DataflowPipelineJob].getJobId
-      // given that this depends on internals of dataflow service - handle failure gracefully
-      // if there is an error - no dataflow service metrics will be saved
-      val dfMetrics = Try {
-        ScioUtil
-          .getDataflowServiceMetrics(context.optionsAs[DataflowPipelineOptions], jobId)
-          .getMetrics.asScala
-          .map(e => {
-            val name = DFMetricName(e.getName.getName,
-              e.getName.getOrigin,
-              Option(e.getName.getContext)
-                    .getOrElse(Map.empty[String, String].asJava).asScala.toMap)
-            DFServiceMetrics(name, e.getScalar, e.getUpdateTime)
-          })
-      } match {
-        case Success(x) => x
-        case Failure(e) =>
-          logger.error(s"Failed to fetch Dataflow metrics", e)
-          Nil
-      }
-      (jobId, dfMetrics)
-    }
-
     def mkDist(d: bm.DistributionResult): BeamDistribution =
       BeamDistribution(d.sum(), d.count(), d.min(), d.max(), d.mean())
     def mkGauge(g: bm.GaugeResult): BeamGauge = BeamGauge(g.value(), g.timestamp())
@@ -156,10 +138,8 @@ class ScioResult private[scio] (val internal: PipelineResult, val context: ScioC
     Metrics(scioVersion,
       scalaVersion,
       context.optionsAs[ApplicationNameOptions].getAppName,
-      jobId,
       state.toString,
-      BeamMetrics(beamCounters, beamDistributions, beamGauges),
-      dfMetrics)
+      BeamMetrics(beamCounters, beamDistributions, beamGauges))
   }
   // scalastyle:on method.length
 

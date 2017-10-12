@@ -21,9 +21,8 @@ package com.spotify.scio
 
 import java.beans.Introspector
 import java.io.File
-import java.net.{URI, URLClassLoader}
+import java.net.URI
 import java.nio.file.Files
-import java.util.jar.{Attributes, JarFile}
 
 import com.google.api.services.bigquery.model.TableReference
 import com.google.datastore.v1.{Entity, Query}
@@ -41,8 +40,6 @@ import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
-import org.apache.beam.runners.dataflow.DataflowRunner
-import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.extensions.gcp.options.{GcpOptions, GcsOptions}
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub => psio}
@@ -63,6 +60,44 @@ import scala.io.Source
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.util.Try
+
+/** Runner specific context. */
+trait RunnerContext {
+  def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit
+}
+
+private case object NoOpContext extends RunnerContext {
+  override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit = Unit
+}
+
+/** Direct runner specific context. */
+private case object DirectContext extends RunnerContext {
+  override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit = Unit
+}
+
+/** Companion object for [[RunnerContext]]. */
+private object RunnerContext {
+  private val mapping = Map(
+    "DirectRunner" -> DirectContext.getClass.getName,
+    "DataflowRunner" -> "com.spotify.scio.runners.dataflow.DataflowContext$")
+    .withDefaultValue(NoOpContext.getClass.getName)
+
+  // FIXME: this is ugly, is there a better way?
+  private def get(options: PipelineOptions): RunnerContext = {
+    val runner = options.getRunner.getName
+    val cls = mapping(runner)
+    try {
+      Class.forName(cls).getField("MODULE$").get(null).asInstanceOf[RunnerContext]
+    } catch {
+      case e: Throwable =>
+        throw new RuntimeException(
+          s"Failed to load runner specific context $cls for $runner", e)
+    }
+  }
+
+  def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit =
+    get(options).prepareOptions(options, artifacts)
+}
 
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
 object ContextAndArgs {
@@ -223,8 +258,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   def pipeline: Pipeline = {
     if (_pipeline == null) {
       // TODO: make sure this works for other PipelineOptions
-      Try(optionsAs[DataflowPipelineWorkerPoolOptions])
-        .foreach(_.setFilesToStage(getFilesToStage(artifacts).asJava))
+      RunnerContext.prepareOptions(options, artifacts)
       _pipeline = if (testId.isEmpty) {
         Pipeline.create(options)
       } else {
@@ -259,66 +293,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
   /** Wrap a [[org.apache.beam.sdk.values.PCollection PCollection]]. */
   def wrap[T: ClassTag](p: PCollection[T]): SCollection[T] =
     new SCollectionImpl[T](p, this)
-
-  // =======================================================================
-  // Extra artifacts - jars/files etc
-  // =======================================================================
-
-  /** Borrowed from DataflowRunner. */
-  private def detectClassPathResourcesToStage(classLoader: ClassLoader): List[String] = {
-    require(classLoader.isInstanceOf[URLClassLoader],
-      "Current ClassLoader is '" + classLoader + "' only URLClassLoaders are supported")
-
-    // exclude jars from JAVA_HOME and files from current directory
-    val javaHome = new File(sys.props("java.home")).getCanonicalPath
-    val userDir = new File(sys.props("user.dir")).getCanonicalPath
-
-    val classPathJars = classLoader.asInstanceOf[URLClassLoader]
-      .getURLs
-      .map(url => new File(url.toURI).getCanonicalPath)
-      .filter(p => !p.startsWith(javaHome) && p != userDir)
-      .toList
-
-    // fetch jars from classpath jar's manifest Class-Path if present
-    val manifestJars =  classPathJars
-      .filter(_.endsWith(".jar"))
-      .map(p => (p, new JarFile(p).getManifest))
-      .filter { case (p, manifest) =>
-        manifest != null && manifest.getMainAttributes.containsKey(Attributes.Name.CLASS_PATH)}
-      .map { case (p, manifest) => (new File(p).getParentFile,
-        manifest.getMainAttributes.getValue(Attributes.Name.CLASS_PATH).split(" ")) }
-      .flatMap { case (parent, jars) => jars.map(jar =>
-        if (jar.startsWith("/")) {
-          jar // accept absolute path as is
-        } else {
-          new File(parent, jar).getCanonicalPath  // relative path
-        })
-      }
-
-    logger.debug(s"Classpath jars: ${classPathJars.mkString(":")}")
-    logger.debug(s"Manifest jars: ${manifestJars.mkString(":")}")
-
-    // no need to care about duplicates here - should be solved by the SDK uploader
-    classPathJars ++ manifestJars
-  }
-
-  /** Compute list of local files to make available to workers. */
-  private def getFilesToStage(extraLocalArtifacts: List[String]): List[String] = {
-    val finalLocalArtifacts = detectClassPathResourcesToStage(
-      classOf[DataflowRunner].getClassLoader) ++ extraLocalArtifacts
-
-    logger.debug(s"Final list of extra artifacts: ${finalLocalArtifacts.mkString(":")}")
-    finalLocalArtifacts
-  }
-
-  /**
-   * Add artifact to stage in workers. Artifact can be jar/text-files etc.
-   * NOTE: currently one can only add artifacts before pipeline object is created.
-   */
-  def addArtifacts(extraLocalArtifacts: List[String]): Unit = {
-    require(_pipeline == null, "Cannot add artifacts once pipeline is initialized")
-    artifacts ++= extraLocalArtifacts
-  }
 
   // =======================================================================
   // Miscellaneous

@@ -256,6 +256,7 @@ lazy val scioTest: Project = Project(
   description := "Scio helpers for ScalaTest",
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
+    "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "it",
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
     "org.scalatest" %% "scalatest" % scalatestVersion,
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
@@ -535,6 +536,7 @@ lazy val scioRepl: Project = Project(
   commonSettings,
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
+    "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
     "org.slf4j" % "slf4j-simple" % slf4jVersion,
     "jline" % "jline" % jlineVersion,
     "org.scala-lang" % "scala-compiler" % scalaVersion.value,
