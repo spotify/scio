@@ -17,8 +17,8 @@
 
 package com.spotify.scio.coders
 
-import com.esotericsoftware.kryo.io.{Input, Output}
-import com.esotericsoftware.kryo.{Kryo, KryoException}
+import com.esotericsoftware.kryo.Kryo
+import com.esotericsoftware.kryo.io.{Input, InputChunked, Output, OutputChunked}
 import com.twitter.chill.KSerializer
 
 import scala.collection.JavaConverters._
@@ -29,63 +29,27 @@ import scala.collection.mutable
  * Based on [[org.apache.beam.sdk.coders.IterableLikeCoder]] and
  * [[org.apache.beam.sdk.util.BufferedElementCountingOutputStream]].
  */
-private class JTraversableSerializer[T, C <: Traversable[T]]
-(val bufferSize: Int = 64 * 1024, val maxBufferSize: Int = 1024 * 1024)
+private class JTraversableSerializer[T, C <: Traversable[T]](val bufferSize: Int = 64 * 1024)
 (implicit cbf: CanBuildFrom[C, T, C])
   extends KSerializer[C] {
 
   override def write(kser: Kryo, out: Output, obj: C): Unit = {
-    val buffer = new Output(bufferSize, maxBufferSize)
-    var count = 0
-    obj.foreach { elem =>
-      val bufferPos = buffer.position()
-      var retry = true
-      while (retry) {
-        try {
-          kser.writeClassAndObject(buffer, elem)
-          retry = false
-          count += 1
-        } catch {
-          case e: KryoException if e.getMessage.startsWith("Buffer overflow") =>
-            if (count == 0) {
-              // buffer was empty but it still wasn't enough to serialize current object
-              // just serialize it straight to the final output
-              out.writeInt(1)
-              kser.writeClassAndObject(out, elem)
-              buffer.clear() // clear possibly corrupted buffer
-              retry = false
-            } else {
-              // write up to the position before failed serialization and retry with empty buffer
-              writeOutBuffer(buffer, bufferPos)
-            }
-        }
-      }
+    val i = obj.toIterator
+    val chunked = new OutputChunked(out, bufferSize)
+    while (i.hasNext) {
+      chunked.writeBoolean(true)
+      kser.writeClassAndObject(chunked, i.next())
     }
-    if (count > 0) {
-      writeOutBuffer(buffer, buffer.position())
-    }
-    out.writeInt(0)
-
-    def writeOutBuffer(buffer: Output, length: Int): Unit = {
-      assume(count > 0, "Count can't be zero")
-      out.writeInt(count)
-      out.write(buffer.getBuffer, 0, length)
-      buffer.clear()
-      count = 0
-    }
+    chunked.writeBoolean(false)
+    chunked.endChunks()
+    chunked.flush()
   }
 
   override def read(kser: Kryo, in: Input, cls: Class[C]): C = {
     val b = cbf()
-    var count = in.readInt()
-    while (count > 0) {
-      var i = 0
-      while (i < count) {
-        val item = kser.readClassAndObject(in).asInstanceOf[T]
-        b += item
-        i += 1
-      }
-      count = in.readInt()
+    val chunked = new InputChunked(in, bufferSize)
+    while (chunked.readBoolean()) {
+      b += kser.readClassAndObject(chunked).asInstanceOf[T]
     }
     b.result()
   }

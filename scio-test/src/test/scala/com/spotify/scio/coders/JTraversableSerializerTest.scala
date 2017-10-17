@@ -36,20 +36,14 @@ class JTraversableSerializerTest extends FlatSpec with Matchers {
   }
 
   "JIterableWrapperSerializer" should "cope with the internal buffer overflow" in {
-    val ser = new JTraversableSerializer[String, Seq[String]](128, 128)
+    val ser = new JTraversableSerializer[String, Seq[String]](128)
     val input = List.fill(100)("foo")
     testRoundTrip(ser, input)
   }
 
-  it should "be able to serialize a object larger than initial capacity of the internal buffer" in {
+  it should "be able to serialize a object larger than capacity of the internal buffer" in {
     val ser = new JTraversableSerializer[String, Seq[String]](1)
     val input = Seq("o" * 3)
-    testRoundTrip(ser, input)
-  }
-
-  it should "be able to serialize a object larger than max capacity of the internal buffer" in {
-    val ser = new JTraversableSerializer[String, Seq[String]](5, 10)
-    val input = Seq("before", "o" * 10, "after")
     testRoundTrip(ser, input)
   }
 
