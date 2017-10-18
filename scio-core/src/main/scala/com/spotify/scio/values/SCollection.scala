@@ -315,8 +315,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Return a new SCollection[U] by flattening each element of an SCollection[Traversable[U]].
    * @group transform
    */
-  def flatten[U: ClassTag](implicit ev: T <:< TraversableOnce[U]): SCollection[U] =
-    flatMap(_.asInstanceOf[TraversableOnce[U]])
+  def flatten[U: ClassTag](implicit ev: T => TraversableOnce[U]): SCollection[U] =
+    flatMap(ev)
 
   /**
    * Aggregate the elements using a given associative function and a neutral "zero value". The
