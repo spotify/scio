@@ -196,8 +196,11 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support flatten()" in {
     runWithContext { sc =>
-      val p = sc.parallelize(Seq(Seq("a b", "c d"), Seq("e f", "g h"))).flatten
-      p should containInAnyOrder(Seq("a b", "c d", "e f", "g h"))
+      val p1 = sc.parallelize(Seq(Seq("a b", "c d"), Seq("e f", "g h"))).flatten
+      p1 should containInAnyOrder(Seq("a b", "c d", "e f", "g h"))
+
+      val p2 = sc.parallelize(Seq(Some(1), None)).flatten
+      p2 should containInAnyOrder(Seq(1))
     }
   }
 
