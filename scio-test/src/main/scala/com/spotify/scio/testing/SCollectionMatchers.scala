@@ -18,11 +18,14 @@
 package com.spotify.scio.testing
 
 import java.lang.{Iterable => JIterable}
+import java.util.{Map => JMap}
 
 import com.spotify.scio.util.ClosureCleaner
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.testing.PAssert
+import org.apache.beam.sdk.testing.PAssert.{IterableAssert, SingletonAssert}
 import org.apache.beam.sdk.transforms.SerializableFunction
+import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.util.CoderUtils
 import org.scalatest.matchers.{MatchResult, Matcher}
 
@@ -35,6 +38,29 @@ import scala.reflect.ClassTag
  */
 trait SCollectionMatchers {
 
+  import scala.language.higherKinds
+
+  sealed trait MatcherBuilder[T, B, A[_]] {
+    _: Matcher[T] =>
+    type AssertBuilder = A[B] => A[B]
+
+    def matcher(builder: AssertBuilder): Matcher[T]
+
+    def matcher: Matcher[T] = matcher(identity)
+  }
+
+  sealed trait IterableMatcher[T, B]
+    extends MatcherBuilder[T, B, IterableAssert]
+      with Matcher[T] {
+    override def apply(left: T): MatchResult = matcher(left)
+  }
+
+  sealed trait SingleMatcher[T, B]
+    extends MatcherBuilder[T, B, SingletonAssert]
+      with Matcher[T] {
+    override def apply(left: T): MatchResult = matcher(left)
+  }
+
   /*
   Wrapper for PAssert statements. PAssert does not perform assertions or throw exceptions until
   sc.close() is called. So MatchResult should always match true for "a should $Matcher" cases and
@@ -42,9 +68,12 @@ trait SCollectionMatchers {
   (shouldFn) and negative (shouldNotFn) cases.
    */
   private def m(shouldFn: () => Any, shouldNotFn: () => Any): MatchResult = {
-    val isShouldNot = Thread.currentThread()
+    val isShouldNot = Thread
+      .currentThread()
       .getStackTrace
-      .exists(e => e.getClassName.startsWith("org.scalatest.") && e.getMethodName == "shouldNot")
+      .exists(e =>
+        e.getClassName
+          .startsWith("org.scalatest.") && e.getMethodName == "shouldNot")
     val r = if (isShouldNot) {
       shouldNotFn()
       false
@@ -68,89 +97,209 @@ trait SCollectionMatchers {
   private def serDeCycle[T: ClassTag](scollection: SCollection[T]): SCollection[T] = {
     val coder = scollection.internal.getCoder
     scollection
-      .map(e => CoderUtils.decodeFromByteArray(coder, CoderUtils.encodeToByteArray(coder, e)))
+      .map(
+        e =>
+          CoderUtils
+            .decodeFromByteArray(coder, CoderUtils.encodeToByteArray(coder, e)))
   }
+
+  /**
+   * SCollection assertion only applied to the specified window,
+   * running the checker only on the on-time pane for each key.
+   */
+  def inOnTimePane[T: ClassTag, B: ClassTag, A[_]](window: BoundedWindow)
+                                                  (matcher: MatcherBuilder[T, B, A]): Matcher[T] =
+    if (matcher.isInstanceOf[IterableMatcher[T, B]]) {
+      matcher
+        .asInstanceOf[IterableMatcher[T, B]]
+        .matcher(_.inOnTimePane(window))
+    } else {
+      matcher
+        .asInstanceOf[SingleMatcher[T, B]]
+        .matcher(_.inOnTimePane(window))
+    }
+
+  /** SCollection assertion only applied to the specified window. */
+  def inWindow[T: ClassTag, B: ClassTag](window: BoundedWindow)
+                                        (matcher: IterableMatcher[T, B]): Matcher[T] =
+    matcher.matcher(_.inWindow(window))
+
+  /**
+   * SCollection assertion only applied to the specified window across
+   * all panes that were not produced by the arrival of late data.
+   */
+  def inCombinedNonLatePanes[T: ClassTag, B: ClassTag](window: BoundedWindow)
+                                                      (matcher: IterableMatcher[T, B])
+  : Matcher[T] =
+    matcher.matcher(_.inCombinedNonLatePanes(window))
+
+  /**
+   * SCollection assertion only applied to the specified window,
+   * running the checker only on the final pane for each key.
+   */
+  def inFinalPane[T: ClassTag, B: ClassTag, A[_]](window: BoundedWindow)
+                                                 (matcher: MatcherBuilder[T, B, A]): Matcher[T] =
+    if (matcher.isInstanceOf[IterableMatcher[T, B]]) {
+      matcher
+        .asInstanceOf[IterableMatcher[T, B]]
+        .matcher(_.inFinalPane(window))
+    } else {
+      matcher
+        .asInstanceOf[SingleMatcher[T, B]]
+        .matcher(_.inFinalPane(window))
+    }
+
+  /**
+   * SCollection assertion only applied to the specified window.
+   * The assertion expect outputs to be produced to the provided window exactly once.
+   */
+  def inOnlyPane[T: ClassTag, B: ClassTag](window: BoundedWindow)
+                                          (matcher: SingleMatcher[T, B]): Matcher[T] =
+    matcher.matcher(_.inOnlyPane(window))
+
+  /** SCollection assertion only applied to early timing global window. */
+  def inEarlyGlobalWindowPanes[T: ClassTag, B: ClassTag](matcher: IterableMatcher[T, B])
+  : Matcher[T] =
+    matcher.matcher(_.inEarlyGlobalWindowPanes)
 
   /** Assert that the SCollection in question contains the provided elements. */
-  def containInAnyOrder[T: ClassTag](value: Iterable[T])
-  : Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
-    override def apply(left: SCollection[T]): MatchResult = {
-      val v = value // defeat closure
-      val f = makeFn[T] { in =>
-        import org.hamcrest.Matchers
-        import org.junit.Assert
-        Assert.assertThat(in, Matchers.not(Matchers.containsInAnyOrder(v.toSeq: _*)))
-      }
-      m(
-        () => PAssert.that(serDeCycle(left).internal).containsInAnyOrder(value.asJava),
-        () => PAssert.that(serDeCycle(left).internal).satisfies(f))
+  def containInAnyOrder[T: ClassTag](value: Iterable[T]): IterableMatcher[SCollection[T], T] =
+    new IterableMatcher[SCollection[T], T] {
+      override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
+        new Matcher[SCollection[T]] {
+          override def apply(left: SCollection[T]): MatchResult = {
+            val v = value // defeat closure
+            val f = makeFn[T] { in =>
+              import org.hamcrest.Matchers
+              import org.junit.Assert
+              Assert.assertThat(
+                in,
+                Matchers.not(Matchers.containsInAnyOrder(v.toSeq: _*)))
+            }
+            m(
+              () =>
+                builder(PAssert.that(serDeCycle(left).internal))
+                  .containsInAnyOrder(value.asJava),
+              () =>
+                builder(PAssert.that(serDeCycle(left).internal))
+                  .satisfies(f)
+            )
+          }
+        }
     }
-  }
 
   /** Assert that the SCollection in question contains a single provided element. */
-  def containSingleValue[T: ClassTag](value: T)
-  : Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
-    override def apply(left: SCollection[T]): MatchResult = m(
-      () => PAssert.thatSingleton(serDeCycle(left).internal).isEqualTo(value),
-      () => PAssert.thatSingleton(serDeCycle(left).internal).notEqualTo(value))
-  }
+  def containSingleValue[T: ClassTag](value: T): SingleMatcher[SCollection[T], T] =
+    new SingleMatcher[SCollection[T], T] {
+      override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
+        new Matcher[SCollection[T]] {
+          override def apply(left: SCollection[T]): MatchResult =
+            m(
+              () =>
+                builder(PAssert.thatSingleton(serDeCycle(left).internal))
+                  .isEqualTo(value),
+              () =>
+                builder(PAssert.thatSingleton(serDeCycle(left).internal))
+                  .notEqualTo(value)
+            )
+        }
+    }
 
   /** Assert that the SCollection in question is empty. */
-  val beEmpty = new Matcher[SCollection[_]] {
-    override def apply(left: SCollection[_]): MatchResult = m(
-      () => PAssert.that(left.internal).empty(),
-      () => PAssert.that(left.asInstanceOf[SCollection[Any]].internal).satisfies(makeFn(in =>
-        assert(in.iterator().hasNext, "SCollection is empty"))))
-  }
+  val beEmpty: IterableMatcher[SCollection[_], Any] =
+    new IterableMatcher[SCollection[_], Any] {
+      override def matcher(builder: AssertBuilder): Matcher[SCollection[_]] =
+        new Matcher[SCollection[_]] {
+          override def apply(left: SCollection[_]): MatchResult =
+            m(
+              () =>
+                builder(
+                  PAssert.that(left.asInstanceOf[SCollection[Any]].internal))
+                  .empty(),
+              () =>
+                builder(
+                  PAssert.that(left.asInstanceOf[SCollection[Any]].internal))
+                  .satisfies(makeFn(in =>
+                    assert(in.iterator().hasNext, "SCollection is empty")))
+            )
+        }
+    }
 
   /** Assert that the SCollection in question has provided size. */
-  def haveSize(size: Int): Matcher[SCollection[_]] = new Matcher[SCollection[_]] {
-    override def apply(left: SCollection[_]): MatchResult = {
-      val s = size  // defeat closure
-      val f = makeFn[Any] { in =>
-        val inSize = in.asScala.size
-        assert(inSize == s, s"SCollection expected size: $s, actual: $inSize")
-      }
-      val g = makeFn[Any] { in =>
-        val inSize = in.asScala.size
-        assert(inSize != s, s"SCollection expected size: not $s, actual: $inSize")
-      }
-      m(
-        () => PAssert.that(left.asInstanceOf[SCollection[Any]].internal).satisfies(f),
-        () => PAssert.that(left.asInstanceOf[SCollection[Any]].internal).satisfies(g))
+  def haveSize(size: Int): IterableMatcher[SCollection[_], Any] =
+    new IterableMatcher[SCollection[_], Any] {
+      override def matcher(builder: AssertBuilder): Matcher[SCollection[_]] =
+        new Matcher[SCollection[_]] {
+          override def apply(left: SCollection[_]): MatchResult = {
+            val s = size // defeat closure
+            val f = makeFn[Any] { in =>
+              val inSize = in.asScala.size
+              assert(inSize == s,
+                s"SCollection expected size: $s, actual: $inSize")
+            }
+            val g = makeFn[Any] { in =>
+              val inSize = in.asScala.size
+              assert(inSize != s,
+                s"SCollection expected size: not $s, actual: $inSize")
+            }
+            m(
+              () =>
+                builder(
+                  PAssert.that(left.asInstanceOf[SCollection[Any]].internal))
+                  .satisfies(f),
+              () =>
+                builder(
+                  PAssert.that(left.asInstanceOf[SCollection[Any]].internal))
+                  .satisfies(g)
+            )
+          }
+        }
     }
-  }
 
   /** Assert that the SCollection in question is equivalent to the provided map. */
   def equalMapOf[K: ClassTag, V: ClassTag](value: Map[K, V])
-  : Matcher[SCollection[(K, V)]] = new Matcher[SCollection[(K, V)]] {
-    override def apply(left: SCollection[(K, V)]): MatchResult = m(
-      () => PAssert.thatMap(serDeCycle(left).toKV.internal).isEqualTo(value.asJava),
-      () => PAssert.thatMap(serDeCycle(left).toKV.internal).notEqualTo(value.asJava)
-    )
-  }
+  : SingleMatcher[SCollection[(K, V)], JMap[K, V]] =
+    new SingleMatcher[SCollection[(K, V)], JMap[K, V]] {
+      override def matcher(builder: AssertBuilder): Matcher[SCollection[(K, V)]] =
+        new Matcher[SCollection[(K, V)]] {
+          override def apply(left: SCollection[(K, V)]): MatchResult =
+            m(
+              () =>
+                builder(PAssert.thatMap(serDeCycle(left).toKV.internal))
+                  .isEqualTo(value.asJava),
+              () =>
+                builder(PAssert.thatMap(serDeCycle(left).toKV.internal))
+                  .notEqualTo(value.asJava)
+            )
+        }
+    }
 
   // TODO: investigate why multi-map doesn't work
 
   /** Assert that the SCollection in question satisfies the provided function. */
   def satisfy[T: ClassTag](predicate: Iterable[T] => Boolean)
-  : Matcher[SCollection[T]] = new Matcher[SCollection[T]] {
-    override def apply(left: SCollection[T]): MatchResult = {
-      val p = ClosureCleaner(predicate)
-      val f = makeFn[T](in => assert(p(in.asScala)))
-      val g = makeFn[T](in => assert(!p(in.asScala)))
-      m(
-        () => PAssert.that(serDeCycle(left).internal).satisfies(f),
-        () => PAssert.that(serDeCycle(left).internal).satisfies(g))
+  : IterableMatcher[SCollection[T], T] =
+    new IterableMatcher[SCollection[T], T] {
+      override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
+        new Matcher[SCollection[T]] {
+          override def apply(left: SCollection[T]): MatchResult = {
+            val p = ClosureCleaner(predicate)
+            val f = makeFn[T](in => assert(p(in.asScala)))
+            val g = makeFn[T](in => assert(!p(in.asScala)))
+            m(() =>
+              builder(PAssert.that(serDeCycle(left).internal)).satisfies(f),
+              () =>
+                builder(PAssert.that(serDeCycle(left).internal)).satisfies(g))
+          }
+        }
     }
-  }
 
   /** Assert that all elements of the SCollection in question satisfy the provided function. */
-  def forAll[T: ClassTag](predicate: T => Boolean): Matcher[SCollection[T]] =
+  def forAll[T: ClassTag](predicate: T => Boolean): IterableMatcher[SCollection[T], T] =
     satisfy(_.forall(predicate))
 
   /** Assert that some elements of the SCollection in question satisfy the provided function. */
-  def exist[T: ClassTag](predicate: T => Boolean): Matcher[SCollection[T]] =
+  def exist[T: ClassTag](predicate: T => Boolean): IterableMatcher[SCollection[T], T] =
     satisfy(_.exists(predicate))
 
 }

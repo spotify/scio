@@ -19,7 +19,6 @@ package com.spotify.scio.examples.complete.game
 
 import com.spotify.scio.examples.complete.game.UserScore.GameActionInfo
 import com.spotify.scio.testing._
-import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.transforms.windowing.IntervalWindow
 import org.apache.beam.sdk.values.TimestampedValue
 import org.joda.time.{Duration, Instant}
@@ -65,9 +64,11 @@ class LeaderBoardTest extends PipelineSpec {
     runWithContext { sc =>
       val teamScores = LeaderBoard.calculateTeamScores(
         sc.testStream(stream), teamWindowDuration, allowedLateness)
-      PAssert.that(teamScores.internal)
-        .inOnTimePane(new IntervalWindow(baseTime, teamWindowDuration))
-        .containsInAnyOrder((blueOne.team, 12), (redOne.team, 4))
+
+      val window = new IntervalWindow(baseTime, teamWindowDuration)
+      teamScores should inOnTimePane(window) {
+        containInAnyOrder (Seq((blueOne.team, 12), (redOne.team, 4)))
+      }
     }
   }
 
