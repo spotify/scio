@@ -38,26 +38,29 @@ import scala.reflect.ClassTag
  */
 trait SCollectionMatchers {
 
-  import scala.language.higherKinds
-
-  sealed trait MatcherBuilder[T, B, A[_]] {
+  sealed trait MatcherBuilder[T] {
     _: Matcher[T] =>
-    type AssertBuilder = A[B] => A[B]
+
+    type From
+    type To >: From
+    type AssertBuilder = From => To
 
     def matcher(builder: AssertBuilder): Matcher[T]
 
     def matcher: Matcher[T] = matcher(identity)
   }
 
-  sealed trait IterableMatcher[T, B]
-    extends MatcherBuilder[T, B, IterableAssert]
-      with Matcher[T] {
+  sealed trait IterableMatcher[T, B] extends MatcherBuilder[T] with Matcher[T] {
+    type From = IterableAssert[B]
+    type To = From
+
     override def apply(left: T): MatchResult = matcher(left)
   }
 
-  sealed trait SingleMatcher[T, B]
-    extends MatcherBuilder[T, B, SingletonAssert]
-      with Matcher[T] {
+  sealed trait SingleMatcher[T, B] extends MatcherBuilder[T] with Matcher[T] {
+    type From = SingletonAssert[B]
+    type To = From
+
     override def apply(left: T): MatchResult = matcher(left)
   }
 
@@ -107,16 +110,13 @@ trait SCollectionMatchers {
    * SCollection assertion only applied to the specified window,
    * running the checker only on the on-time pane for each key.
    */
-  def inOnTimePane[T: ClassTag, B: ClassTag, A[_]](window: BoundedWindow)
-                                                  (matcher: MatcherBuilder[T, B, A]): Matcher[T] =
-    if (matcher.isInstanceOf[IterableMatcher[T, B]]) {
-      matcher
-        .asInstanceOf[IterableMatcher[T, B]]
-        .matcher(_.inOnTimePane(window))
-    } else {
-      matcher
-        .asInstanceOf[SingleMatcher[T, B]]
-        .matcher(_.inOnTimePane(window))
+  def inOnTimePane[T: ClassTag](window: BoundedWindow)
+                               (matcher: MatcherBuilder[T]): Matcher[T] =
+    matcher match {
+      case value: SingleMatcher[T, _] =>
+        value.matcher(_.inOnTimePane(window))
+      case value: IterableMatcher[T, _] =>
+        value.matcher(_.inOnTimePane(window))
     }
 
   /** SCollection assertion only applied to the specified window. */
@@ -137,16 +137,13 @@ trait SCollectionMatchers {
    * SCollection assertion only applied to the specified window,
    * running the checker only on the final pane for each key.
    */
-  def inFinalPane[T: ClassTag, B: ClassTag, A[_]](window: BoundedWindow)
-                                                 (matcher: MatcherBuilder[T, B, A]): Matcher[T] =
-    if (matcher.isInstanceOf[IterableMatcher[T, B]]) {
-      matcher
-        .asInstanceOf[IterableMatcher[T, B]]
-        .matcher(_.inFinalPane(window))
-    } else {
-      matcher
-        .asInstanceOf[SingleMatcher[T, B]]
-        .matcher(_.inFinalPane(window))
+  def inFinalPane[T: ClassTag, B: ClassTag](window: BoundedWindow)
+                                           (matcher: MatcherBuilder[T]): Matcher[T] =
+    matcher match {
+      case value: SingleMatcher[T, _] =>
+        value.matcher(_.inFinalPane(window))
+      case value: IterableMatcher[T, _] =>
+        value.matcher(_.inFinalPane(window))
     }
 
   /**
