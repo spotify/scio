@@ -17,7 +17,16 @@
 
 package com.spotify.scio.testing
 
+import com.spotify.scio.streaming.ACCUMULATING_FIRED_PANES
+import com.spotify.scio.values.WindowOptions
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
+import org.apache.beam.sdk.transforms.windowing.{
+  AfterProcessingTime,
+  AfterWatermark,
+  IntervalWindow
+}
+import org.apache.beam.sdk.values.TimestampedValue
+import org.joda.time.{Duration, Instant}
 
 // scalastyle:off no.whitespace.before.left.bracket
 class SCollectionMatchersTest extends PipelineSpec {
@@ -222,6 +231,100 @@ class SCollectionMatchersTest extends PipelineSpec {
 
     an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(1 to 100) shouldNot exist[Int] (_ > 99)}
+    }
+  }
+
+  it should "support windowing" in {
+    val allowedLateness = Duration.standardHours(1)
+    val teamWindowDuration = Duration.standardMinutes(20)
+    val baseTime = new Instant(0)
+    def event[A](elem: A, baseTimeOffset: Duration): TimestampedValue[A] =
+      TimestampedValue.of(elem, baseTime.plus(baseTimeOffset))
+
+    val stream = testStreamOf[Int]
+      // Start at the epoch
+      .advanceWatermarkTo(baseTime)
+      // add some elements ahead of the watermark
+      .addElements(event(1, Duration.standardSeconds(3)),
+      event(2, Duration.standardMinutes(1)),
+      event(3, Duration.standardSeconds(22)),
+      event(4, Duration.standardSeconds(3)))
+      // The watermark advances slightly, but not past the end of the window
+      .advanceWatermarkTo(baseTime.plus(Duration.standardMinutes(3)))
+      .addElements(event(1, Duration.standardMinutes(4)),
+        event(2, Duration.standardSeconds(270)))
+
+    runWithContext { sc =>
+      val windowedStream = sc
+        .testStream(stream.advanceWatermarkToInfinity())
+        .withFixedWindows(
+          teamWindowDuration,
+          options = WindowOptions(
+            trigger = AfterWatermark
+              .pastEndOfWindow()
+              .withEarlyFirings(AfterProcessingTime
+                .pastFirstElementInPane()
+                .plusDelayOf(Duration.standardMinutes(5)))
+              .withLateFirings(AfterProcessingTime
+                .pastFirstElementInPane()
+                .plusDelayOf(Duration.standardMinutes(10))),
+            accumulationMode = ACCUMULATING_FIRED_PANES,
+            allowedLateness = allowedLateness
+          )
+        )
+        .withTimestamp
+
+      val window = new IntervalWindow(baseTime, teamWindowDuration)
+      windowedStream.groupByKey.keys should inOnTimePane(window) {
+        containInAnyOrder(Seq(1, 2, 3, 4))
+      }
+
+      windowedStream.groupByKey should inFinalPane(window) {
+        haveSize(4)
+      }
+
+      windowedStream.map(_._1).sum should inOnlyPane(window) {
+        containSingleValue(13)
+      }
+
+      an [ClassCastException] should be thrownBy {
+        windowedStream.groupByKey should inEarlyGlobalWindowPanes {
+          haveSize(4)
+        }
+      }
+
+      windowedStream.groupByKey should inWindow(window) {
+        forAll[(Int, Iterable[Instant])] {
+          case (_, seq) => seq.nonEmpty
+        }
+      }
+
+    }
+
+    runWithContext { sc =>
+      val windowedStream = sc
+        .testStream(
+          stream
+            .advanceProcessingTime(Duration.standardMinutes(21))
+            .advanceWatermarkToInfinity())
+        .withGlobalWindow(options = WindowOptions(
+          trigger = AfterWatermark
+            .pastEndOfWindow()
+            .withEarlyFirings(AfterProcessingTime
+              .pastFirstElementInPane()
+              .plusDelayOf(Duration.standardMinutes(5))),
+          accumulationMode = ACCUMULATING_FIRED_PANES,
+          allowedLateness = allowedLateness
+        ))
+
+      windowedStream.sum should inEarlyGlobalWindowPanes {
+        containInAnyOrder(Iterable(13))
+      }
+
+      windowedStream.sum shouldNot inEarlyGlobalWindowPanes {
+        beEmpty
+      }
+
     }
   }
 
