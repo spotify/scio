@@ -192,7 +192,7 @@ lazy val root: Project = Project(
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
     -- inProjects(scioCassandra2) -- inProjects(scioElasticsearch2)
     -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples)
-    -- inProjects(scioBenchJmh),
+    -- inProjects(scioJmh),
   // unidoc handles class paths differently than compile and may give older
   // versions high precedence.
   unidocAllClasspaths in (ScalaUnidoc, unidoc) := {
@@ -220,7 +220,7 @@ lazy val root: Project = Project(
   scioSchemas,
   scioExamples,
   scioRepl,
-  scioBenchJmh
+  scioJmh
 )
 
 lazy val scioCore: Project = Project(
@@ -551,9 +551,9 @@ lazy val scioRepl: Project = Project(
   scioExtra
 )
 
-lazy val scioBenchJmh: Project = Project(
-  "scio-bench-jmh",
-  file("scio-bench-jmh")
+lazy val scioJmh: Project = Project(
+  "scio-jmh",
+  file("scio-jmh")
 ).settings(
   commonSettings ++ noPublishSettings,
   description := "Scio JMH Microbenchmarks",
