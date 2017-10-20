@@ -33,6 +33,16 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     }
   }
 
+  it should "support asSingletonSideInput with default value" in {
+    runWithContext { sc =>
+      val defSideInput = Seq(("a", 1))
+      val p1 = sc.parallelize(Seq(1))
+      val p2 = sc.parallelize(Option.empty[Seq[(String, Int)]]).asSingletonSideInput(defSideInput)
+      val s = p1.withSideInputs(p2).map((i, s) => (i, s(p2))).toSCollection
+      s should containSingleValue ((1, defSideInput))
+    }
+  }
+
   it should "support asListSideInput" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
