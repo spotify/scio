@@ -197,7 +197,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   def fullOuterJoin[W: ClassTag](that: SCollection[(K, W)])
   : SCollection[(K, (Option[V], Option[W]))] =
-    MultiJoin.withName(self.tfName).outer(self, that)
+    ArtisanJoin.outer(self.tfName, self, that)
 
   /**
    * Return an SCollection containing all pairs of elements with matching keys in `this` and
@@ -206,7 +206,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group join
    */
   def join[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, W))] =
-    MultiJoin.withName(self.tfName)(self, that)
+    ArtisanJoin(self.tfName, self, that)
 
   /**
    * Perform a left outer join of `this` and `that`. For each element (k, v) in `this`, the
@@ -215,7 +215,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group join
    */
   def leftOuterJoin[W: ClassTag](that: SCollection[(K, W)]): SCollection[(K, (V, Option[W]))] =
-    MultiJoin.withName(self.tfName).left(self, that)
+    ArtisanJoin.left(self.tfName, self, that)
 
   /**
    * Perform a right outer join of `this` and `that`. For each element (k, w) in `that`, the
@@ -224,9 +224,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    * @group join
    */
   def rightOuterJoin[W: ClassTag](that: SCollection[(K, W)])
-  : SCollection[(K, (Option[V], W))] = self.transform {
-    MultiJoin.withName(self.tfName).left(that, _).mapValues(kv => (kv._2, kv._1))
-  }
+  : SCollection[(K, (Option[V], W))] =
+    ArtisanJoin.right(self.tfName, self, that)
 
   /* Hash operations */
 
