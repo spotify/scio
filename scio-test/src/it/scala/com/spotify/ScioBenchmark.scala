@@ -64,15 +64,16 @@ object ScioBenchmark {
   }
 
   def main(args: Array[String]): Unit = {
+    val argz = Args(args)
+    val name = argz("name")
+    val regex = argz.getOrElse("regex", ".*")
+
     val timestamp = DateTimeFormat.forPattern("MMddHHmmss")
       .withZone(DateTimeZone.UTC)
       .print(System.currentTimeMillis())
-    val prefix = s"ScioBenchmark-$timestamp"
-
-    val argz = Args(args)
-    val name = argz.getOrElse("name", ".*")
+    val prefix = s"ScioBenchmark-$name-$timestamp"
     val results = benchmarks
-      .filter(_.name.matches(name))
+      .filter(_.name.matches(regex))
       .flatMap(_.run(prefix))
 
     import scala.concurrent.ExecutionContext.Implicits.global
