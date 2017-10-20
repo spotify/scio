@@ -553,6 +553,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     new SingletonSideInput[T](this.applyInternal(View.asSingleton()))
 
   /**
+   * Convert this SCollection of a single value per window to a [[SideInput]] with a default value,
+   * to be used with [[withSideInputs]].
+   * @group side
+   */
+  def asSingletonSideInput(defaultValue: T): SideInput[T] =
+    new SingletonSideInput[T](this.applyInternal(View.asSingleton().withDefaultValue(defaultValue)))
+
+  /**
    * Convert this SCollection to a [[SideInput]], mapping each window to a `Seq`, to be used with
    * [[withSideInputs]].
    *
