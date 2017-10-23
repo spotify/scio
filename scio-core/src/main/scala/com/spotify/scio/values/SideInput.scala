@@ -42,6 +42,43 @@ trait SideInput[T] extends Serializable {
   private[values] val view: PCollectionView[_]
 }
 
+/** Companion object of [[SideInput]]. */
+object SideInput {
+
+  /**
+   * Wrap a view of a singleton as a [[SideInput]]. In most cases you want to use
+   * [[SCollection.asSingletonSideInput]].
+   */
+  def wrapSingleton[T](view: PCollectionView[T]): SideInput[T] = new SingletonSideInput[T](view)
+
+  /**
+   * Wrap a view of a [[JList]] as a [[SideInput]]. In most cases you want to use
+   * [[SCollection.asListSideInput]].
+   */
+  def wrapList[T](view: PCollectionView[JList[T]]): SideInput[Seq[T]] = new ListSideInput[T](view)
+
+  /**
+   * Wrap a view of a [[JIterable]] as a [[SideInput]]. In most cases you want to use
+   * [[SCollection.asIterableSideInput]].
+   */
+  def wrapIterable[T](view: PCollectionView[JIterable[T]]): SideInput[Iterable[T]] =
+    new IterableSideInput[T](view)
+
+  /**
+   * Wrap a view of a [[JMap]] as a [[SideInput]]. In most cases you want to use
+   * [[PairSCollectionFunctions.asMapSideInput]].
+   */
+  def wrapMap[K, V](view: PCollectionView[JMap[K, V]]): SideInput[Map[K, V]] =
+    new MapSideInput[K, V](view)
+
+  /**
+   * Wrap a view of a multi-map as a [[SideInput]]. In most cases you want to use
+   * [[PairSCollectionFunctions.asMultiMapSideInput]].
+   */
+  def wrapMultiMap[K, V](view: PCollectionView[JMap[K, JIterable[V]]])
+  : SideInput[Map[K, Iterable[V]]] = new MultiMapSideInput[K, V](view)
+}
+
 private[values] class SingletonSideInput[T](val view: PCollectionView[T])
   extends SideInput[T] {
   override def get[I, O](context: DoFn[I, O]#ProcessContext): T = context.sideInput(view)
