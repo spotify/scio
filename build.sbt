@@ -59,7 +59,7 @@ val protobufVersion = "3.3.1"
 val scalacheckShapelessVersion = "1.1.6"
 val scalacheckVersion = "1.13.5"
 val scalaMacrosVersion = "2.1.0"
-val scalatestVersion = "3.0.3"
+val scalatestVersion = "3.0.4"
 val shapelessDatatypeVersion = "0.1.7"
 val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.1.3"
@@ -68,8 +68,8 @@ val tensorFlowVersion = "1.3.0"
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
 
-  scalaVersion       := "2.12.3",
-  crossScalaVersions := Seq("2.11.11", "2.12.3"),
+  scalaVersion       := "2.12.4",
+  crossScalaVersions := Seq("2.11.11", "2.12.4"),
   scalacOptions                   ++= {
     Seq("-Xmax-classfile-name", "100", "-target:jvm-1.8", "-deprecation", "-feature", "-unchecked") ++
       (if (scalaBinaryVersion.value == "2.12") Seq("-Ydelambdafy:inline") else Nil)
@@ -192,7 +192,7 @@ lazy val root: Project = Project(
   unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
     -- inProjects(scioCassandra2) -- inProjects(scioElasticsearch2)
     -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples)
-    -- inProjects(scioBenchJmh),
+    -- inProjects(scioJmh),
   // unidoc handles class paths differently than compile and may give older
   // versions high precedence.
   unidocAllClasspaths in (ScalaUnidoc, unidoc) := {
@@ -220,7 +220,7 @@ lazy val root: Project = Project(
   scioSchemas,
   scioExamples,
   scioRepl,
-  scioBenchJmh
+  scioJmh
 )
 
 lazy val scioCore: Project = Project(
@@ -551,9 +551,9 @@ lazy val scioRepl: Project = Project(
   scioExtra
 )
 
-lazy val scioBenchJmh: Project = Project(
-  "scio-bench-jmh",
-  file("scio-bench-jmh")
+lazy val scioJmh: Project = Project(
+  "scio-jmh",
+  file("scio-jmh")
 ).settings(
   commonSettings ++ noPublishSettings,
   description := "Scio JMH Microbenchmarks",

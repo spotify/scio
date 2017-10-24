@@ -20,7 +20,7 @@ set -e
 case $CIRCLE_NODE_INDEX in
   0) export CI_SCALA_VERSION="2.11.11"
     ;;
-  1) export CI_SCALA_VERSION="2.12.3"
+  1) export CI_SCALA_VERSION="2.12.4"
     ;;
   *)
     exit 1
