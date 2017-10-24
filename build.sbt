@@ -86,7 +86,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
 
   resolvers += Resolver.sonatypeRepo("public"),
 
-  resolvers += Resolver.url("apache-snapshots", url("https://repository.apache.org/snapshots/")),
+  resolvers += Resolver.url("apache-snapshots", url("https://repository.apache.org/content/repositories/snapshots/")),
 
   scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value,
   testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
