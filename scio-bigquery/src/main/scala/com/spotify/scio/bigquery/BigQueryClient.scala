@@ -419,6 +419,16 @@ class BigQueryClient private (private val projectId: String,
   // =======================================================================
 
   private[scio] def newQueryJob(sqlQuery: String, flattenResults: Boolean): QueryJob = {
+    if (isCacheEnabled) {
+      newCachedQueryJob(sqlQuery, flattenResults)
+    } else {
+      logger.info(s"BigQuery caching is disabled")
+      val tempTable = temporaryTable(extractLocation(sqlQuery).getOrElse(DEFAULT_LOCATION))
+      delayedQueryJob(sqlQuery, tempTable, flattenResults)
+    }
+  }
+
+  private[scio] def newCachedQueryJob(sqlQuery: String, flattenResults: Boolean): QueryJob = {
     try {
       val sourceTimes = extractTables(sqlQuery)
         .map(t => BigInt(getTable(t).getLastModifiedTime))
