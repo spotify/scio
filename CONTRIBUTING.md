@@ -18,3 +18,9 @@ If there is already a GitHub issue for the task you are working on, leave a comm
 # Contributing documentation
 
 You can contribute to Scio documentation by editing the wiki pages. You can also help us improve the API documentation. Run `sbt make-site` in the project root. The generated site is under `target/site/index.html`.
+
+# Code of Conduct
+
+This project adheres to the [Open Code of Conduct][code-of-conduct]. By participating, you are expected to honor this code.
+
+[code-of-conduct]: https://github.com/spotify/code-of-conduct/blob/master/code-of-conduct.md
