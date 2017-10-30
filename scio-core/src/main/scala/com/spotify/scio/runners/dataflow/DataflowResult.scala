@@ -41,10 +41,10 @@ class DataflowResult(val internal: DataflowPipelineJob) extends RunnerResult {
 
   private val client = DataflowResult.getOptions(internal.getProjectId).getDataflowClient
 
-  /** Get Dataflow [[Job]]. */
+  /** Get Dataflow [[com.google.api.services.dataflow.model.Job Job]]. */
   def getJob: Job = DataflowResult.getJob(client, internal.getProjectId, internal.getJobId)
 
-  /** Get Dataflow [[JobMetrics]]. */
+  /** Get Dataflow [[com.google.api.services.dataflow.model.JobMetrics JobMetrics]]. */
   def getJobMetrics: JobMetrics =
     DataflowResult.getJobMetrics(client, internal.getProjectId, internal.getJobId)
 

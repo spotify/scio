@@ -36,11 +36,12 @@ import scala.reflect.ClassTag
 package object transforms {
 
   /**
-   * Enhanced version of [[SCollection]] with [[URI]] methods.
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with
+   * [[java.net.URI URI]] methods.
    */
   implicit class URISCollection(val self: SCollection[URI]) extends AnyVal {
     /**
-     * Download [[URI]] elements and process as local [[Path]]s.
+     * Download [[java.net.URI URI]] elements and process as local [[java.nio.file.Path Path]]s.
      * @param batchSize batch size when downloading files
      * @param keep keep downloaded files after processing
      */
@@ -53,7 +54,7 @@ package object transforms {
         batchSize, keep)))
 
     /**
-     * Download [[URI]] elements and process as local [[Path]]s.
+     * Download [[java.net.URI URI]] elements and process as local [[java.nio.file.Path Path]]s.
      * @param batchSize batch size when downloading files
      * @param keep keep downloaded files after processing
      */
@@ -70,7 +71,7 @@ package object transforms {
   }
 
   /**
-   * Enhanced version of [[SCollection]] with pipe methods.
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with pipe methods.
    */
   implicit class PipeSCollection(val self: SCollection[String]) extends AnyVal {
 
@@ -115,15 +116,17 @@ package object transforms {
   }
 
   /**
-   * Enhanced version of [[SCollection]] with specialized versions of flatMap.
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with specialized
+   * versions of flatMap.
    */
   implicit class SpecializedFlatMapSCollection[T: ClassTag](val self: SCollection[T]) {
 
     /**
-     * Latency optimized flavor of [[self.flatMap]], it returns a new SCollection by first
-     * applying a function to all elements of this SCollection, and then flattening the results.
-     * If function throws an exception, instead of retrying, faulty element goes into given error
-     * side output.
+     * Latency optimized flavor of
+     * [[com.spotify.scio.values.SCollection.flatMap SCollection.flatMap]], it returns a new
+     * SCollection by first applying a function to all elements of this SCollection, and then
+     * flattening the results. If function throws an exception, instead of retrying, faulty element
+     * goes into given error side output.
      *
      * @group transform
      */

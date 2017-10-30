@@ -71,7 +71,9 @@ package object bigquery {
    */
   type description = com.spotify.scio.bigquery.types.description
 
-  /** Enhanced version of [[TableReference]]. */
+  /**
+   * Enhanced version of [[com.google.api.services.bigquery.model.TableReference TableReference]].
+   */
   implicit class RichTableReference(private val r: TableReference) extends AnyVal {
 
     /**

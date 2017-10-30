@@ -890,7 +890,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /**
     * Save this SCollection as an Avro file. Note that element type `T` must be a case class
-    * annotated with [[AvroType.toSchema]].
+    * annotated with [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
     * @group output
     */
   def saveAsTypedAvroFile(path: String,

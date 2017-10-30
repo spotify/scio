@@ -134,7 +134,8 @@ trait PipelineTestUtils {
    * verified.
    *
    * @param fn transform to be tested
-   * @return a tuple containing the [[ScioResult]] and the materialized result of fn as a [[Seq[U]]]
+   * @return a tuple containing the [[ScioResult]] and the materialized result of fn as a
+   *         [[scala.collection.Seq Seq]]
    */
   def runWithLocalOutput[U](fn: ScioContext => SCollection[U]): (ScioResult, Seq[U]) = {
     val sc = ScioContext()

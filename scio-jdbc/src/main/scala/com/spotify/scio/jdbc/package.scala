@@ -58,8 +58,8 @@ package object jdbc {
    *
    * @param connectionOptions connection options
    * @param query query string
-   * @param statementPreparator function to prepare a [[PreparedStatement]]
-   * @param rowMapper function to map from a SQL [[ResultSet]] to `T`
+   * @param statementPreparator function to prepare a [[java.sql.PreparedStatement]]
+   * @param rowMapper function to map from a SQL [[java.sql.ResultSet]] to `T`
    */
   case class JdbcReadOptions[T](connectionOptions: JdbcConnectionOptions,
                                 query: String,
@@ -71,7 +71,7 @@ package object jdbc {
    *
    * @param connectionOptions connection options
    * @param statement query statement
-   * @param preparedStatementSetter function to set values in a [[PreparedStatement]]
+   * @param preparedStatementSetter function to set values in a [[java.sql.PreparedStatement]]
    */
   case class JdbcWriteOptions[T](connectionOptions: JdbcConnectionOptions,
                                  statement: String,

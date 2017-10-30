@@ -476,9 +476,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
     * Get a typed SCollection from an Avro schema.
     *
     * Note that `T` must be annotated with
-    * [[AvroType.fromSchema]],
-    * [[AvroType.fromPath]], or
-    * [[AvroType.toSchema]].
+    * [[com.spotify.scio.avro.types.AvroType AvroType.fromSchema]],
+    * [[com.spotify.scio.avro.types.AvroType AvroType.fromPath]], or
+    * [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
     *
     * @group input
     */

@@ -24,7 +24,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 /**
- * Trait that enforces [[JobTest.Builder.run()]] is called.
+ * Trait that enforces [[JobTest.Builder.run]] is called.
  */
 trait RunEnforcementJobTest extends FlatSpec { this: Suite =>
 

@@ -26,8 +26,8 @@ class TFScioConextFunctions(val self: ScioContext) extends AnyVal {
 
   /**
    * Get an SCollection for a TensorFlow TFRecord file. Note that TFRecord files are not
-   * splittable. The recommended record encoding is [[org.tensorflow.example.Example]] protocol
-   * buffers (which contain [[org.tensorflow.example.Features]] as a field) serialized as bytes.
+   * splittable. The recommended record encoding is `org.tensorflow.example.Example` protocol
+   * buffers (which contain `org.tensorflow.example.Features` as a field) serialized as bytes.
    * @group input
    */
   def tfRecordFile(path: String, compressionType: CompressionType = CompressionType.AUTO)

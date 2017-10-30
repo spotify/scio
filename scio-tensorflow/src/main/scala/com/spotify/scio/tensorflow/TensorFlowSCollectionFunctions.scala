@@ -105,7 +105,9 @@ private class PredictDoFn[T, V](graphBytes: DistCache[Array[Byte]],
   }
 }
 
-/** Enhanced version of [[SCollection]] with TensorFlow methods. */
+/**
+ * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with TensorFlow methods.
+ */
 class TensorFlowSCollectionFunctions[T: ClassTag](@transient val self: SCollection[T])
   extends Serializable {
 
@@ -115,11 +117,13 @@ class TensorFlowSCollectionFunctions[T: ClassTag](@transient val self: SCollecti
    * @param graphUri URI of pre-trained/saved TensorFlow model
    * @param fetchOps names of [[org.tensorflow.Operation]]s to fetch the results from
    * @param config configuration parameters for the session specified as a serialized
-   *               [[org.tensorflow.framework.ConfigProto]] protocol buffer.
-   * @param inFn translates input elements of T to map of input-operation -> [[Tensor]]. This method
-   *             takes ownership of the [[Tensor]]s.
-   * @param outFn translates output of prediction from map of output-operation -> [[Tensor]], to
-   *              elements of V. This method takes ownership of the [[Tensor]]s.
+   *               `org.tensorflow.framework.ConfigProto` protocol buffer.
+   * @param inFn translates input elements of T to map of input-operation ->
+   *             [[org.tensorflow.Tensor Tensor]]. This method takes ownership of the
+   *             [[org.tensorflow.Tensor Tensor]]s.
+   * @param outFn translates output of prediction from map of output-operation ->
+   *              [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes ownership
+   *              of the [[org.tensorflow.Tensor Tensor]]s.
    */
   def predict[V: ClassTag](graphUri: String,
                            fetchOps: Seq[String],
@@ -181,12 +185,12 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
   import TFExampleSCollectionFunctions._
 
   /**
-   * Save this SCollection of [[org.tensorflow.example.Example]] as a TensorFlow TFRecord file.
+   * Save this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
    *
    * @param featureDesc     feature description for the Examples, use the
    *                        [[com.spotify.scio.tensorflow.FeatureDesc]] to define a description.
    * @param featureDescPath path to save the feature description to, by default it will be
-   *                        `${path}/_feature_desc`
+   *                        `<PATH>/_feature_desc`
    *
    * @group output
    */
@@ -240,8 +244,8 @@ class TFRecordSCollectionFunctions[T <: Array[Byte]](val self: SCollection[T]) {
 
   /**
    * Save this SCollection as a TensorFlow TFRecord file. Note that elements must be of type
-   * `Array[Byte]`. The recommended record encoding is [[org.tensorflow.example.Example]] protocol
-   * buffers (which contain [[org.tensorflow.example.Features]] as a field) serialized as bytes.
+   * `Array[Byte]`. The recommended record encoding is `org.tensorflow.example.Example` protocol
+   * buffers (which contain `org.tensorflow.example.Features` as a field) serialized as bytes.
    * @group output
    */
   def saveAsTfRecordFile(path: String,

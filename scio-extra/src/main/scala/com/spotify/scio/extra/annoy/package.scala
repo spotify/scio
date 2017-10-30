@@ -236,7 +236,8 @@ package object annoy {
    */
   implicit class AnnoySCollection(val self: SCollection[AnnoyUri]) extends AnyVal {
     /**
-     * Load Annoy index stored at [[AnnoyUri]] in this [[SCollection]].
+     * Load Annoy index stored at [[AnnoyUri]] in this
+     * [[com.spotify.scio.values.SCollection SCollection]].
      * @param metric Metric (Angular, Euclidean) used to build the Annoy index
      * @param dim Number of dimensions in vectors used to build the Annoy index
      * @return SideInput[AnnoyReader]

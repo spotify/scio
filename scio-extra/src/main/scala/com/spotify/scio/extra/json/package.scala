@@ -56,7 +56,7 @@ package object json extends AutoDerivation {
   type Encoder[T] = io.circe.Encoder[T]
   type Decoder[T] = io.circe.Decoder[T]
 
-  /** A wrapper for [[io.circe.Error]] that also retains the original input string. */
+  /** A wrapper for `io.circe.Error` that also retains the original input string. */
   case class DecodeError(error: io.circe.Error, input: String)
 
   /** Enhanced version of [[ScioContext]] with JSON methods. */
@@ -79,7 +79,7 @@ package object json extends AutoDerivation {
   }
 
   /**
-   * Enhanced version of [[SCollection]] with JSON methods.
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JSON methods.
    */
   implicit class JsonSCollection[T: ClassTag : Encoder : Decoder]
   (@transient val self: SCollection[T]) extends Serializable {

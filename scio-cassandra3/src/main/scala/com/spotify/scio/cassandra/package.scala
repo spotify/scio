@@ -53,17 +53,20 @@ package object cassandra {
     }
   }
 
-  /** Enhanced version of [[SCollection]] with Cassandra methods. */
+  /**
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Cassandra
+   * methods.
+   */
   implicit class CassandraSCollection[T](@transient val self: SCollection[T])
     extends Serializable {
     /**
      * Save this SCollection as a Cassandra table.
      *
-     * Cassandra [[org.apache.cassandra.hadoop.cql3.CqlBulkRecordWriter CqlBulkRecordWriter]] is
-     * used to perform bulk writes for better throughput. The [[SCollection]] is grouped by the
-     * table partition key before written to the cluster. Therefore writes only occur at the end of
-     * each window in streaming mode. The bulk writer writes to all nodes in a cluster so remote
-     * nodes in a multi-datacenter cluster may become a bottleneck.
+     * Cassandra `org.apache.cassandra.hadoop.cql3.CqlBulkRecordWriter` is used to perform bulk
+     * writes for better throughput. The [[com.spotify.scio.values.SCollection SCollection]] is
+     * grouped by the table partition key before written to the cluster. Therefore writes only
+     * occur at the end of each window in streaming mode. The bulk writer writes to all nodes in a
+     * cluster so remote nodes in a multi-datacenter cluster may become a bottleneck.
      *
      * @param opts Cassandra options
      * @param parallelism number of concurrent bulk writers, default to number of Cassandra nodes

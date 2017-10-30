@@ -47,25 +47,25 @@ object SideInput {
 
   /**
    * Wrap a view of a singleton as a [[SideInput]]. In most cases you want to use
-   * [[SCollection.asSingletonSideInput]].
+   * [[SCollection.asSingletonSideInput(*]].
    */
   def wrapSingleton[T](view: PCollectionView[T]): SideInput[T] = new SingletonSideInput[T](view)
 
   /**
-   * Wrap a view of a [[JList]] as a [[SideInput]]. In most cases you want to use
+   * Wrap a view of a [[java.util.List]] as a [[SideInput]]. In most cases you want to use
    * [[SCollection.asListSideInput]].
    */
   def wrapList[T](view: PCollectionView[JList[T]]): SideInput[Seq[T]] = new ListSideInput[T](view)
 
   /**
-   * Wrap a view of a [[JIterable]] as a [[SideInput]]. In most cases you want to use
+   * Wrap a view of a [[java.lang.Iterable]] as a [[SideInput]]. In most cases you want to use
    * [[SCollection.asIterableSideInput]].
    */
   def wrapIterable[T](view: PCollectionView[JIterable[T]]): SideInput[Iterable[T]] =
     new IterableSideInput[T](view)
 
   /**
-   * Wrap a view of a [[JMap]] as a [[SideInput]]. In most cases you want to use
+   * Wrap a view of a [[java.util.Map]] as a [[SideInput]]. In most cases you want to use
    * [[PairSCollectionFunctions.asMapSideInput]].
    */
   def wrapMap[K, V](view: PCollectionView[JMap[K, V]]): SideInput[Map[K, V]] =

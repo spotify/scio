@@ -203,18 +203,20 @@ object AvroType {
   trait HasAvroAnnotation
 
   /**
-   * Generate [[Schema]] for a case class.
+   * Generate [[org.apache.avro.Schema Schema]] for a case class.
    */
   def schemaOf[T: TypeTag]: Schema = SchemaProvider.schemaOf[T]
 
   /**
-   * Generate a converter function from [[GenericRecord]] to the given case class `T`.
+   * Generate a converter function from [[org.apache.avro.generic.GenericRecord GenericRecord]]
+   * to the given case class `T`.
    * @group converters
    */
   def fromGenericRecord[T]: (GenericRecord => T) = macro ConverterProvider.fromGenericRecordImpl[T]
 
   /**
-   * Generate a converter function from the given case class `T` to [[GenericRecord]].
+   * Generate a converter function from the given case class `T` to
+   * [[org.apache.avro.generic.GenericRecord GenericRecord]].
    * @group converters
    */
   def toGenericRecord[T]: (T => GenericRecord) = macro ConverterProvider.toGenericRecordImpl[T]
