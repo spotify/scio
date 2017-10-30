@@ -49,10 +49,10 @@ import scala.reflect.ClassTag
  */
 package object avro {
 
-  /** Alias for [[me.lyh.parquet.avro.Projection]]. */
+  /** Alias for `me.lyh.parquet.avro.Projection`. */
   val Projection = me.lyh.parquet.avro.Projection
 
-  /** Alias for [[me.lyh.parquet.avro.Predicate]]. */
+  /** Alias for `me.lyh.parquet.avro.Predicate`. */
   val Predicate = me.lyh.parquet.avro.Predicate
 
   /** Enhanced version of [[ScioContext]] with Parquet Avro methods. */
@@ -61,7 +61,7 @@ package object avro {
     /**
      * Get an SCollection for a Parquet file as Avro records.
      *
-     * Note that due to limitations of the underlying [[HadoopInputFormatIO]],
+     * Note that due to limitations of the underlying `HadoopInputFormatIO`,
      * Avro [[org.apache.avro.generic.GenericRecord GenericRecord]] and dynamic work rebalancing
      * are not supported. Without the latter, pipelines may not autoscale up or down during the
      * initial read and subsequent fused transforms.
@@ -118,7 +118,10 @@ package object avro {
 
   }
 
-  /** Enhanced version of [[SCollection]] with Parquet Avro methods. */
+  /**
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Parquet Avro
+   * methods.
+   */
   implicit class ParquetAvroSCollection[T : ClassTag]
   (val self: SCollection[T]) {
     /**

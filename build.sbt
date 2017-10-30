@@ -128,16 +128,17 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
 
   // Mappings from dependencies to external ScalaDoc/JavaDoc sites
   apiMappings ++= {
-    val mappinngFn = (organization: String, name: String, apiUrl: String) => {
+    def mappingFn(organization: String, name: String, apiUrl: String) = {
       (for {
         entry <- (fullClasspath in Compile).value
         module <- entry.get(moduleID.key)
         if module.organization == organization
         if module.name.startsWith(name)
-          jarFile = entry.data
-      } yield jarFile).headOption.map((_, url(apiUrl)))
+      } yield entry.data).toList.map((_, url(apiUrl)))
     }
-    docMappings.map(mappinngFn.tupled).flatten.toMap
+    val bootClasspath = System.getProperty("sun.boot.class.path").split(":").map(file(_))
+    val jdkMapping = Map(bootClasspath.find(_.getPath.endsWith("rt.jar")).get -> url("http://docs.oracle.com/javase/8/docs/api/"))
+    docMappings.flatMap((mappingFn _).tupled).toMap ++ jdkMapping
   }
 )
 
@@ -617,9 +618,10 @@ val beamMappings = Seq(
 }
 val javaMappings = beamMappings ++ Seq(
   ("com.google.apis", "google-api-services-bigquery", "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest"),
+  ("com.google.apis", "google-api-services-dataflow", "https://developers.google.com/resources/api-libraries/documentation/dataflow/v1b3/java/latest"),
   // FIXME: investigate why joda-time won't link
   ("joda-time", "joda-time", "http://www.joda.org/joda-time/apidocs"),
-  ("org.apache.avro", "avro", s"https://avro.apache.org/docs/$avroVersion/api/java"),
+  ("org.apache.avro", "avro", "https://avro.apache.org/docs/current/api/java"),
   ("org.tensorflow", "libtensorflow", "https://www.tensorflow.org/api_docs/java/reference"))
 val scalaMappings = Seq(
   ("com.twitter", "algebird-core", "http://twitter.github.io/algebird/api"),

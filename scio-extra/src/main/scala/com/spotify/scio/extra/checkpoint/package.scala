@@ -36,21 +36,24 @@ import scala.reflect.ClassTag
 package object checkpoint {
 
   // scalastyle:off method.name
+  // scalastyle:off line.size.limit
   /**
-   * For use in testing, see [[CheckpointExampleTest]].
+   * For use in testing, see [[https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/CheckpointExampleTest.scala CheckpointExampleTest]].
    */
   def CheckpointIO[T](fileOrPath: String): ObjectFileIO[T] = ObjectFileIO[T](fileOrPath)
+  // scalastyle:on line.size.limit
   // scalastyle:on method.name
 
   implicit class CheckpointScioContext(val self: ScioContext) extends AnyVal {
 
     /**
      * Checkpoints are useful for debugging one part of a long flow, when you would otherwise have
-     * to run many steps to get to the one you care about.  To enable checkpoints, sprinkle calls to
-     * [[checkpoint[T]()]] throughout your flow, ideally after expensive steps.
+     * to run many steps to get to the one you care about. To enable checkpoints, sprinkle calls to
+     * `checkpoint` throughout your flow, ideally after expensive steps.
      *
      * @param fileOrPath filename or fully qualified path to the checkpoint
-     * @param fn result of this arbitrary => [[SCollection[T]] flow is what is checkpointed
+     * @param fn result of this arbitrary => [[com.spotify.scio.values.SCollection SCollection]]
+     *           flow is what is checkpointed
      */
     def checkpoint[T: ClassTag](fileOrPath: String)
                                (fn: => SCollection[T]): SCollection[T] = {
