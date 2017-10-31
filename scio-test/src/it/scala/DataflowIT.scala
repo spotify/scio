@@ -22,7 +22,7 @@ import org.scalatest._
 import scala.collection.JavaConverters._
 
 object DataflowIT {
-  val projectId = "scio-playground"
+  val projectId = "data-integration-test"
 
   def run(): ScioResult = {
     val (sc, _) = ContextAndArgs(Array(s"--project=$projectId", "--runner=DataflowRunner"))
