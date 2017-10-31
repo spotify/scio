@@ -42,23 +42,23 @@ object DataflowIT {
 
 class DataflowIT extends FlatSpec with Matchers {
 
-  private val scioResult = DataflowIT.run()
-  private val dfResult = scioResult.as[DataflowResult]
+  private lazy val scioResult = DataflowIT.run()
+  private lazy val dfResult = scioResult.as[DataflowResult]
 
-  "DataflowResult" should "have Dataflow data" in {
+  ignore should "have Dataflow data" in {
     dfResult.internal.getState shouldBe scioResult.state
     dfResult.getJob.getProjectId shouldBe DataflowIT.projectId
     dfResult.getJobMetrics.getMetrics.asScala should not be empty
   }
 
-  it should "round trip ScioResult" in {
+  ignore should "round trip ScioResult" in {
     val r = dfResult.asScioResult
     r.state shouldBe scioResult.state
     r.getMetrics shouldBe scioResult.getMetrics
     r.allCountersAtSteps shouldBe scioResult.allCountersAtSteps
   }
 
-  it should "work independently" in {
+  ignore should "work independently" in {
     val r = DataflowResult(dfResult.internal.getProjectId, dfResult.internal.getJobId)
     r.getJob.getProjectId shouldBe dfResult.internal.getProjectId
     r.getJobMetrics.getMetrics.asScala should not be empty
