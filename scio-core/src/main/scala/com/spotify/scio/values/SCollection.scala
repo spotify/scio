@@ -21,6 +21,7 @@ package com.spotify.scio.values
 
 import java.io.PrintStream
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
+import java.util.concurrent.ThreadLocalRandom
 
 import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
 import com.google.datastore.v1.Entity
@@ -422,7 +423,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     val (head, tail) = this
       .withSideOutputs(sides: _*)
       .flatMap { (x, c) =>
-        val i = m.to(scala.util.Random.nextDouble()).last._2
+        val i = m.to(ThreadLocalRandom.current().nextDouble()).last._2
         if (i == 0) {
           Seq(x)  // Main output
         } else {
