@@ -39,7 +39,7 @@ private[scio] object JMapWrapper {
         self.asScala.mapValues(_.asScala).toMap - key
       // scalastyle:on method.name
 
-      // lazy transform underlying j.l.Map
+      // lazy transform underlying j.u.Map
       override def get(key: A): Option[Iterable[B]] = Option(self.get(key)).map(_.asScala)
       override def iterator: Iterator[(A, Iterable[B])] =
         self.asScala.iterator.map(kv => (kv._1, kv._2.asScala))
@@ -53,7 +53,7 @@ private[scio] object JMapWrapper {
       override def -(key: K): Map[K, V] = self.asScala.toMap - key
       // scalastyle:on method.name
 
-      // lazy transform underlying j.l.Map
+      // lazy transform underlying j.u.Map
       override def get(key: K): Option[V] = Option(self.get(key))
       override def iterator: Iterator[(K, V)] = self.asScala.iterator
     }
