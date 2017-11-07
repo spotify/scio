@@ -28,6 +28,7 @@ import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable.{ArrayBuffer, Map => MMap}
 import scala.reflect.ClassTag
 
 private object PairSCollectionFunctions {
@@ -237,9 +238,18 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   def hashJoin[W: ClassTag](that: SCollection[(K, W)])
   : SCollection[(K, (V, W))] = self.transform { in =>
-    val side = that.asMultiMapSideInput
+    val side = that.combine { case (k, v) =>
+      MMap(k -> ArrayBuffer(v))
+    } { case (combiner, (k, v)) =>
+      combiner.getOrElseUpdate(k, ArrayBuffer.empty[W]) += v
+      combiner
+    } { case (left, right) =>
+        right.foreach { case (k, vs) => left.getOrElseUpdate(k, ArrayBuffer.empty[W]) ++= vs }
+        left
+    }.asSingletonSideInput
+
     in.withSideInputs(side).flatMap[(K, (V, W))] { (kv, s) =>
-      s(side).getOrElse(kv._1, Iterable()).iterator.map(w => (kv._1, (kv._2, w)))
+      s(side).getOrElse(kv._1, ArrayBuffer.empty[W]).iterator.map(w => (kv._1, (kv._2, w)))
     }.toSCollection
   }
 
@@ -251,11 +261,20 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   def hashLeftJoin[W: ClassTag](that: SCollection[(K, W)])
   : SCollection[(K, (V, Option[W]))] = self.transform { in =>
-    val side = that.asMultiMapSideInput
+    val side = that.combine { case (k, v) =>
+      MMap(k -> ArrayBuffer(v))
+    } { case (combiner, (k, v)) =>
+      combiner.getOrElseUpdate(k, ArrayBuffer.empty[W]) += v
+      combiner
+    } { case (left, right) =>
+      right.foreach { case (k, vs) => left.getOrElseUpdate(k, ArrayBuffer.empty[W]) ++= vs }
+      left
+    }.asSingletonSideInput
+
     in.withSideInputs(side).flatMap[(K, (V, Option[W]))] { (kv, s) =>
       val (k, v) = kv
       val m = s(side)
-      if (m.contains(k)) m(k).iterator.map(w => (k, (v, Some(w)))) else Seq((k, (v, None)))
+      if (m.contains(k)) m(k).iterator.map(w => (k, (v, Some(w)))) else Iterator((k, (v, None)))
     }.toSCollection
   }
 
