@@ -48,7 +48,7 @@ cat wc/part-00000-of-00001.txt
 Example Scio pipelines and tests can be found under [scio-examples](https://github.com/spotify/scio/tree/master/scio-examples/src). A lot of them are direct ports from Beam's Java [examples](https://github.com/apache/beam/tree/master/examples). Also see [Big Data Rosetta Code](https://github.com/spotify/big-data-rosetta-code) for common data processing code snippets in Scio, Scalding and Spark.
 
 - [Scio Wiki](https://github.com/spotify/scio/wiki) - wiki page
-- [Scio Scaladocs](http://spotify.github.io/scio/com/spotify/scio/) - current API documentation
+- [Scio Scaladocs](http://spotify.github.io/scio) - current API documentation
 
 # Artifacts
 
