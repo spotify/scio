@@ -226,6 +226,7 @@ lazy val scioCore: Project = Project(
 ).settings(
   commonSettings ++ macroSettings,
   description := "Scio - A Scala API for Apache Beam and Google Cloud Dataflow",
+  resources in Compile += (baseDirectory in ThisBuild).value / "version.sbt",
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "provided",
