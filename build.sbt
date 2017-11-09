@@ -136,8 +136,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
         if module.name.startsWith(name)
       } yield entry.data).toList.map((_, url(apiUrl)))
     }
-    val separator = if(System.getProperty("os.name").toLowerCase.contains("windows")) ";" else ":"
-    val bootClasspath = System.getProperty("sun.boot.class.path").split(separator).map(file(_))
+    val bootClasspath = System.getProperty("sun.boot.class.path").split(sys.props("path.separator")).map(file(_))
     val jdkMapping = Map(bootClasspath.find(_.getPath.endsWith("rt.jar")).get -> url("http://docs.oracle.com/javase/8/docs/api/"))
     docMappings.flatMap((mappingFn _).tupled).toMap ++ jdkMapping
   }
