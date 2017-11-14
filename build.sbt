@@ -635,7 +635,7 @@ val javaMappings = beamMappings ++ Seq(
   ("org.apache.avro", "avro", "https://avro.apache.org/docs/current/api/java"),
   ("org.tensorflow", "libtensorflow", "https://www.tensorflow.org/api_docs/java/reference"))
 val scalaMappings = Seq(
-  ("com.twitter", "algebird-core", "http://twitter.github.io/algebird/api"),
-  ("org.scalanlp", "breeze", "http://www.scalanlp.org/api/breeze/"),
-  ("org.scalatest", "scalatest", s"http://doc.scalatest.org/$scalatestVersion/"))
+  ("com.twitter", "algebird-core", "https://twitter.github.io/algebird/api"),
+  ("org.scalanlp", "breeze", "http://www.scalanlp.org/api/breeze"),
+  ("org.scalatest", "scalatest", "http://doc.scalatest.org/3.0.0"))
 val docMappings = javaMappings ++ scalaMappings
