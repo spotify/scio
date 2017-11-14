@@ -513,7 +513,7 @@ lazy val scioExamples: Project = Project(
   "scio-examples",
   file("scio-examples")
 ).settings(
-  commonSettings ++ noPublishSettings,
+  commonSettings ++ noPublishSettings ++ soccoSettings,
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
     "me.lyh" %% "shapeless-datatype-avro" % shapelessDatatypeVersion,
@@ -594,16 +594,19 @@ def fixJavaDocLinks(bases: Seq[String], doc: String): String = {
   }
 }
 
+lazy val soccoIndex = taskKey[File]("Generates examples/index.html")
+
 lazy val siteSettings = Seq(
   autoAPIMappings := true,
   siteSubdirName in ScalaUnidoc := "api",
   addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
   gitRemoteRepo := "git@github.com:spotify/scio.git",
   mappings in makeSite ++= Seq(
-    file("site/index.html") -> "index.html"
-  ),
+    file("site/index.html") -> "index.html",
+    file("scio-examples/target/site/index.html") -> "examples/index.html"
+  ) ++ SoccoIndex.mappings,
   makeSite := {
-    // fix JavaDoc links before makeSite
+    // Fix JavaDoc links before makeSite
     (doc in ScalaUnidoc).value
     val bases = javaMappings.map(m => m._3 + "/index.html")
     val t = (target in ScalaUnidoc).value
@@ -614,6 +617,25 @@ lazy val siteSettings = Seq(
     makeSite.value
   }
 )
+
+lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
+  Seq(
+    scalacOptions ++= Seq(
+      "-P:socco:out:scio-examples/target/site",
+      "-P:socco:package_com.spotify.scio:https://spotify.github.io/scio/api"
+    ),
+    autoCompilerPlugins := true,
+    addCompilerPlugin("com.criteo.socco" %% "socco-plugin" % "0.1.9"),
+    // Generate scio-examples/target/site/index.html
+    soccoIndex := SoccoIndex.generate(target.value / "site" / "index.html"),
+    compile in Compile := {
+      soccoIndex.value
+      (compile in Compile).value
+    }
+  )
+} else {
+  Nil
+}
 
 // =======================================================================
 // API mappings

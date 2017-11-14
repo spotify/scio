@@ -45,10 +45,11 @@ cat wc/part-00000-of-00001.txt
 
 [Getting Started](https://github.com/spotify/scio/wiki/Getting-Started) is the best place to start with Scio. If you are new to Apache Beam and distributed data processing, check out the [Beam Programming Guide](https://beam.apache.org/documentation/programming-guide/) first for a detailed explanation of the Beam programming model and concepts. If you have experience with other Scala data processing libraries, check out this comparison between [Scio, Scalding and Spark](https://github.com/spotify/scio/wiki/Scio%2C-Scalding-and-Spark). Finally check out this document about the relationship between [Scio, Beam and Dataflow](https://github.com/spotify/scio/wiki/Scio,-Beam-and-Dataflow).
 
-Example Scio pipelines and tests can be found under [scio-examples](https://github.com/spotify/scio/tree/master/scio-examples/src). A lot of them are direct ports from Beam's Java [examples](https://github.com/apache/beam/tree/master/examples). Also see [Big Data Rosetta Code](https://github.com/spotify/big-data-rosetta-code) for common data processing code snippets in Scio, Scalding and Spark.
+Example Scio pipelines and tests can be found under [scio-examples](https://github.com/spotify/scio/tree/master/scio-examples/src). A lot of them are direct ports from Beam's Java [examples](https://github.com/apache/beam/tree/master/examples). See this [page](http://spotify.github.io/scio/examples/) for some of them with side-by-side explanation. Also see [Big Data Rosetta Code](https://github.com/spotify/big-data-rosetta-code) for common data processing code snippets in Scio, Scalding and Spark.
 
 - [Scio Wiki](https://github.com/spotify/scio/wiki) - wiki page
 - [Scio Scaladocs](http://spotify.github.io/scio) - current API documentation
+- [Scio Examples](http://spotify.github.io/scio/examples/) - examples with side-by-side explanation
 
 # Artifacts
 
