@@ -15,30 +15,33 @@
  * under the License.
  */
 
+// Example: Distinct Example
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.cookbook.DistinctExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+//--output=gs://[BUCKET]/output/path"`
 package com.spotify.scio.examples.cookbook
 
 import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.examples.common.ExampleData
 
-/*
-SBT
-runMain
-  com.spotify.scio.examples.cookbook.DistinctExample
-  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --output=gs://[BUCKET]/output/path
-*/
-
 object DistinctExample {
   def main(cmdlineArgs: Array[String]): Unit = {
+    // Create `ScioContext` and `Args`
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val in = args.getOrElse("input", ExampleData.SHAKESPEARE_ALL)
     val out = args("output")
 
+    // Open text files a `SCollection[String]`
     sc.textFile(in)
+      // Remove duplicate lines
       .distinct
+      // Save result as text files under the output path
       .saveAsTextFile(out)
 
+    // Close the context and execute the pipeline
     sc.close()
   }
 }

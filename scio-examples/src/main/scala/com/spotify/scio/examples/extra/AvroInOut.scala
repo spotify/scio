@@ -15,18 +15,34 @@
  * under the License.
  */
 
+// Example: Avro Input and Output
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
 import com.spotify.scio.avro.{Account, TestRecord}
 
-// Read and write specific Avro records
 object AvroInOut {
   def main(cmdlineArgs: Array[String]): Unit = {
+    // Create `ScioContext` and `Args`
     val (sc, args) = ContextAndArgs(cmdlineArgs)
+
+    // Open Avro files as a `SCollection[TestRecord]` where `TestRecord` is an Avro specific record
+    // Java class compiled from Avro schema.
     sc.avroFile[TestRecord](args("input"))
-      .map(r => new Account(r.getIntField, "checking", r.getStringField, r.getDoubleField))
+      .map { r =>
+        // Create a new `Account` Avro specific record. It is recommended to use the builder over
+        // constructor since it's more backwards compatible.
+        Account.newBuilder()
+          .setId(r.getIntField)
+          .setType("checking")
+          .setName(r.getStringField)
+          .setAmount(r.getDoubleField)
+          .build()
+      }
+      // Save result as Avro files
       .saveAsAvroFile(args("output"))
+
+    // Close the context and execute the pipeline
     sc.close()
   }
 }

@@ -15,6 +15,13 @@
  * under the License.
  */
 
+// Example: Word Count Example with Windowing
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.WindowedWordCount
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --input=gs://apache-beam-samples/shakespeare/kinglear.txt
+// --output=gs://[BUCKET]/[PATH]/wordcount"`
 package com.spotify.scio.examples
 
 import java.nio.channels.Channels
@@ -28,42 +35,45 @@ import org.apache.beam.sdk.util.MimeTypes
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{Duration, Instant}
 
-/*
-SBT
-runMain
-  com.spotify.scio.examples.WindowedWordCount
-  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://apache-beam-samples/shakespeare/kinglear.txt
-  --output=gs://[BUCKET]/[PATH]/windowed_wordcount
-*/
-
 object WindowedWordCount {
 
   private val WINDOW_SIZE = 10L
   private val formatter = ISODateTimeFormat.hourMinute
 
   def main(cmdlineArgs: Array[String]): Unit = {
+    // Create `ScioContext` and `Args`
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
+    // Initialize `FileSystem` abstraction
     FileSystems.setDefaultPipelineOptions(sc.options)
 
+    // Parse command line arguments
     val input = args.getOrElse("input", ExampleData.KING_LEAR)
     val windowSize = Duration.standardMinutes(args.long("windowSize", WINDOW_SIZE))
     val minTimestamp = args.long("minTimestampMillis", System.currentTimeMillis())
     val maxTimestamp = args.long(
       "maxTimestampMillis", minTimestamp + Duration.standardHours(1).getMillis)
 
-    sc
-      .textFile(input)
+    // Open text files a `SCollection[String]`
+    sc.textFile(input)
+      // Assign random timestamps to each element
       .timestampBy {
         _ => new Instant(ThreadLocalRandom.current().nextLong(minTimestamp, maxTimestamp))
       }
-      .withFixedWindows(windowSize)  // apply windowing logic
+      // Apply windowing logic
+      .withFixedWindows(windowSize)
+      // Split input lines, filter out empty tokens and expand into a collection of tokens
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
+      // Count occurrences of each unique `String` within each window to get `(String, Long)`
       .countByValue
+      // Expose window infomation as `IntervalWindow`
       .withWindow[IntervalWindow]
+      // Swap keys and values, i.e. `((String, Long), IntervalWindow)` => `(IntervalWindow,
+      // (String, Long))`
       .swap
+      // Group elements by window to get `(IntervalWindow, Iterable[(String, Long)])
       .groupByKey
+      // Write values in each group to a separate text file
       .map { case (w, vs) =>
         val outputShard = "%s-%s-%s".format(
           args("output"), formatter.print(w.start()), formatter.print(w.end()))
@@ -73,6 +83,7 @@ object WindowedWordCount {
         out.close()
       }
 
+    // Close the context and execute the pipeline
     sc.close()
   }
 
