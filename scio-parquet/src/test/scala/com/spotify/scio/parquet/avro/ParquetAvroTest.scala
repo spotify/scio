@@ -18,7 +18,7 @@
 package com.spotify.scio.parquet.avro
 
 import com.spotify.scio._
-import com.spotify.scio.avro.{AvroUtils, TestRecord}
+import com.spotify.scio.avro.{Account, AvroUtils, TestRecord}
 import com.spotify.scio.io.TapSpec
 import com.spotify.scio.testing._
 import org.apache.avro.generic.GenericRecord
@@ -62,7 +62,7 @@ class ParquetAvroTest extends TapSpec with BeforeAndAfterAll {
   "ParquetAvro" should "read specific records" in {
     val sc = ScioContext()
     val data = sc.parquetAvroFile[TestRecord](dir + "/*.parquet")
-    data should containInAnyOrder (specificRecords)
+    data.map(identity) should containInAnyOrder (specificRecords)
     sc.close()
   }
 
@@ -71,7 +71,7 @@ class ParquetAvroTest extends TapSpec with BeforeAndAfterAll {
     val projection = Projection[TestRecord](_.getIntField)
     val data = sc.parquetAvroFile[TestRecord](dir + "/*.parquet", projection = projection)
     data.map(_.getIntField.toInt) should containInAnyOrder (1 to 10)
-    data should forAll[TestRecord] { r =>
+    data.map(identity) should forAll[TestRecord] { r =>
       r.getLongField == null && r.getFloatField == null && r.getDoubleField == null &&
         r.getBooleanField == null && r.getStringField == null
     }
@@ -82,7 +82,7 @@ class ParquetAvroTest extends TapSpec with BeforeAndAfterAll {
     val sc = ScioContext()
     val predicate = Predicate[TestRecord](_.getIntField <= 5)
     val data = sc.parquetAvroFile[TestRecord](dir + "/*.parquet", predicate = predicate)
-    data should containInAnyOrder (specificRecords.filter(_.getIntField <= 5))
+    data.map(identity) should containInAnyOrder (specificRecords.filter(_.getIntField <= 5))
     sc.close()
   }
 
@@ -92,11 +92,29 @@ class ParquetAvroTest extends TapSpec with BeforeAndAfterAll {
     val predicate = Predicate[TestRecord](_.getIntField <= 5)
     val data = sc.parquetAvroFile[TestRecord](dir + "/*.parquet", projection, predicate)
     data.map(_.getIntField.toInt) should containInAnyOrder (1 to 5)
-    data should forAll[TestRecord] { r =>
+    data.map(identity) should forAll[TestRecord] { r =>
       r.getLongField == null && r.getFloatField == null && r.getDoubleField == null &&
         r.getBooleanField == null && r.getStringField == null
     }
     sc.close()
+  }
+
+  it should "read with incomplete projection" in {
+    val dir = tmpDir
+
+    val sc1 = ScioContext()
+    val nestedRecords = (1 to 10).map(x => new Account(x, x.toString, x.toString, x.toDouble))
+    sc1.parallelize(nestedRecords)
+      .saveAsParquetAvroFile(dir.toString)
+    sc1.close()
+
+    val sc2 = ScioContext()
+    val projection = Projection[Account](_.getName)
+    val data = sc2.parquetAvroFile[Account](dir + "/*.parquet", projection = projection)
+    data.map(_.getName.toString) should containInAnyOrder (nestedRecords.map(_.getName.toString))
+    sc2.close()
+
+    FileUtils.deleteDirectory(dir)
   }
 
   it should "write generic records" in {
