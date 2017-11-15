@@ -80,10 +80,10 @@ class BigtableIT extends PipelineSpec {
     val bt = new BigtableClusterUtilities(bigtableOptions)
     val sc = ScioContext()
     sc.updateNumberOfBigtableNodes(projectId, instanceId, 4, Duration.standardSeconds(10))
-    sc.getBigtableClusterSizes(projectId, instanceId).get(clusterId).get  shouldBe 4
+    sc.getBigtableClusterSizes(projectId, instanceId)(clusterId)  shouldBe 4
     bt.getClusterNodeCount(clusterId, zoneId) shouldBe 4
     sc.updateNumberOfBigtableNodes(projectId, instanceId, 3, Duration.standardSeconds(10))
-    sc.getBigtableClusterSizes(projectId, instanceId).get(clusterId).get shouldBe 3
+    sc.getBigtableClusterSizes(projectId, instanceId)(clusterId) shouldBe 3
     bt.getClusterNodeCount(clusterId, zoneId) shouldBe 3
   }
 
@@ -134,7 +134,7 @@ class BigtableIT extends PipelineSpec {
       client.deleteTable(DeleteTableRequest.newBuilder().setName(tablePath(table)).build)
 
     // Delete any tables that could be left around from previous IT run.
-    val oldTables = listTables(client).toSet.intersect(tableIds)
+    val oldTables = listTables(client).intersect(tableIds)
     oldTables.foreach(deleteTable)
 
     // Ensure that the tables don't exist now
