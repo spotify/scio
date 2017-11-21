@@ -86,7 +86,7 @@ private object RunnerContext {
 
   // FIXME: this is ugly, is there a better way?
   private def get(options: PipelineOptions): RunnerContext = {
-    val runner = options.getRunner.getName
+    val runner = options.getRunner.getSimpleName
     val cls = mapping(runner)
     try {
       Class.forName(cls).getField("MODULE$").get(null).asInstanceOf[RunnerContext]
