@@ -37,7 +37,7 @@ class SCollectionWithSideOutput[T: ClassTag] private[values]
  sides: Iterable[SideOutput[_]])
   extends PCollectionWrapper[T] {
 
-  protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
+  val ct: ClassTag[T] = implicitly[ClassTag[T]]
 
   private val sideTags = TupleTagList.of(sides.map(_.tupleTag).toList.asJava)
 

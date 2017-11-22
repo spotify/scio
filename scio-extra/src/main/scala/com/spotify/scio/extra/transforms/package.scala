@@ -119,7 +119,7 @@ package object transforms {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with specialized
    * versions of flatMap.
    */
-  implicit class SpecializedFlatMapSCollection[T: ClassTag](val self: SCollection[T]) {
+  implicit class SpecializedFlatMapSCollection[T](val self: SCollection[T]) extends AnyVal {
 
     /**
      * Latency optimized flavor of

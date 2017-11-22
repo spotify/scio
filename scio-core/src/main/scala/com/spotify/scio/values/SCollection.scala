@@ -1199,7 +1199,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 private[scio] class SCollectionImpl[T: ClassTag](val internal: PCollection[T],
                                                  val context: ScioContext)
   extends SCollection[T] {
-  protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
+  val ct: ClassTag[T] = implicitly[ClassTag[T]]
 }
 
 // scalastyle:on file.size.limit
