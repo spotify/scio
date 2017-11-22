@@ -81,7 +81,7 @@ package object json extends AutoDerivation {
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JSON methods.
    */
-  implicit class JsonSCollection[T: ClassTag : Encoder : Decoder]
+  implicit class JsonSCollection[T : Encoder : Decoder]
   (@transient val self: SCollection[T]) extends Serializable {
     def saveAsJsonFile(path: String,
                        printer: Printer = Printer.noSpaces,
@@ -93,6 +93,7 @@ package object json extends AutoDerivation {
         self
           .map(x => printer.pretty(x.asJson))
           .applyInternal(self.textOut(path, ".json", numShards))
+        implicit val ct = self.ct
         self.context.makeFuture(TextTap(ScioUtil.addPartSuffix(path)).map(decode[T](_).right.get))
       }
     }

@@ -19,12 +19,9 @@ package com.spotify.scio
 
 import com.spotify.scio.values.SCollection
 
-import scala.reflect.ClassTag
-
 package object repl {
 
-  // Cannot extend AnyVal due to ClassTag
-  implicit class ReplSCollection[T: ClassTag](val self: SCollection[T]) {
+  implicit class ReplSCollection[T](val self: SCollection[T]) extends AnyVal {
 
     /** Convenience method to close the current [[ScioContext]] and collect elements. */
     def closeAndCollect(): Iterator[T] = {

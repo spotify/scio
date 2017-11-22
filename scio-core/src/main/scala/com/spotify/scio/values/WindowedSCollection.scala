@@ -56,7 +56,7 @@ class WindowedSCollection[T: ClassTag] private[values] (val internal: PCollectio
                                                         val context: ScioContext)
   extends PCollectionWrapper[T] {
 
-  protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
+  val ct: ClassTag[T] = implicitly[ClassTag[T]]
 
   /** [[SCollection.filter]] with access to window information via [[WindowedValue]]. */
   def filter(f: WindowedValue[T] => Boolean): WindowedSCollection[T] =

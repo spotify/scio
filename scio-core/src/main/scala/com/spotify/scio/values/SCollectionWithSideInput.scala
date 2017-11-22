@@ -37,7 +37,7 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
                                                              sides: Iterable[SideInput[_]])
   extends PCollectionWrapper[T] {
 
-  protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
+  val ct: ClassTag[T] = implicitly[ClassTag[T]]
 
   private def parDo[T, U](fn: DoFn[T, U]) = ParDo.of(fn).withSideInputs(sides.map(_.view).asJava)
 

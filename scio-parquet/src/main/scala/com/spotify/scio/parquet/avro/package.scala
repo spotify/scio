@@ -154,7 +154,7 @@ package object avro {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Parquet Avro
    * methods.
    */
-  implicit class ParquetAvroSCollection[T : ClassTag](val self: SCollection[T]) {
+  implicit class ParquetAvroSCollection[T](val self: SCollection[T]) extends AnyVal {
     /**
      * Save this SCollection of Avro records as a Parquet file.
      * @param schema must be not null if `T` is of type
@@ -172,7 +172,7 @@ package object avro {
           GcsConnectorUtil.setCredentials(job)
         }
 
-        val cls = ScioUtil.classOf[T]
+        val cls = self.ct.runtimeClass
         val writerSchema = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
           ReflectData.get().getSchema(cls)
         } else {

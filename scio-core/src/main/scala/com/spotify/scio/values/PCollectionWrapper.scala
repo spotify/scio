@@ -37,7 +37,7 @@ private[values] trait PCollectionWrapper[T] extends TransformNameable {
    */
   val context: ScioContext
 
-  implicit protected val ct: ClassTag[T]
+  implicit val ct: ClassTag[T]
 
   private[scio] def applyInternal[Output <: POutput]
   (transform: PTransform[_ >: PCollection[T], Output]): Output =

@@ -34,7 +34,7 @@ class SCollectionWithFanout[T: ClassTag] private[values] (val internal: PCollect
                                                           private val fanout: Int)
   extends PCollectionWrapper[T] {
 
-  protected val ct: ClassTag[T] = implicitly[ClassTag[T]]
+  val ct: ClassTag[T] = implicitly[ClassTag[T]]
 
   /** [[SCollection.aggregate[U]* SCollection.aggregate]] with fan out. */
   def aggregate[U: ClassTag](zeroValue: U)(seqOp: (U, T) => U,
