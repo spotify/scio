@@ -34,8 +34,14 @@ trait SideInput[T] extends Serializable {
   private[values] def get[I, O](context: DoFn[I, O]#ProcessContext): T
   def getCache[I, O](context: DoFn[I, O]#ProcessContext): T = {
     if (cache == null || this.context.ne(context)) {
-      this.context = context
-      cache = get(context)
+      // TODO(rav): reference equality might be too strict, we might want to check pane equality
+      //            instead.
+      context.synchronized {
+        if (cache == null || this.context.ne(context)) {
+          this.context = context
+          cache = get(context)
+        }
+      }
     }
     cache
   }
