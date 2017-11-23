@@ -44,7 +44,7 @@ private class PredictDoFn[T, V](graphBytes: DistCache[Array[Byte]],
                                 fetchOp: Seq[String],
                                 @Nullable config: Array[Byte],
                                 inFn: T => Map[String, Tensor],
-                                outFn: Map[String, Tensor] => V) extends DoFn[T, V] {
+                                outFn: (T, Map[String, Tensor]) => V) extends DoFn[T, V] {
   @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
   @transient private var g: Graph = _
   @transient private var s: Session = _
@@ -68,14 +68,15 @@ private class PredictDoFn[T, V](graphBytes: DistCache[Array[Byte]],
   def process(c: DoFn[T, V]#ProcessContext): Unit = {
     val runner = s.runner()
     import scala.collection.JavaConverters._
-    val i = inFn(c.element())
+    val input = c.element()
+    val i = inFn(input)
     try {
       i.foreach { case (op, t) => runner.feed(op, t) }
       fetchOp.foreach(runner.fetch)
       val outTensors = runner.run()
       try {
         import scala.collection.breakOut
-        c.output(outFn((fetchOp zip outTensors.asScala)(breakOut)))
+        c.output(outFn(input, (fetchOp zip outTensors.asScala)(breakOut)))
       } finally {
         log.debug("Closing down output tensors")
         outTensors.asScala.foreach(_.close())
@@ -129,7 +130,7 @@ class TensorFlowSCollectionFunctions[T: ClassTag](@transient val self: SCollecti
                            fetchOps: Seq[String],
                            config: Array[Byte] = null)
                           (inFn: T => Map[String, Tensor])
-                          (outFn: Map[String, Tensor] => V): SCollection[V] = {
+                          (outFn: (T, Map[String, Tensor]) => V): SCollection[V] = {
     val graphBytes = self.context.distCache(graphUri)(f => Files.readAllBytes(f.toPath))
     self.parDo(new PredictDoFn[T, V](graphBytes, fetchOps, config, inFn, outFn))
   }
