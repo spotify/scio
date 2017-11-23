@@ -24,6 +24,7 @@ import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.concurrent.ThreadLocalRandom
 
 import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
+import com.google.common.collect.Lists
 import com.google.datastore.v1.Entity
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
@@ -485,7 +486,34 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Return a sampled subset of any `num` elements of the SCollection.
    * @group transform
    */
-  def take(num: Long): SCollection[T] = this.pApply(Sample.any(num))
+  def take(num: Long): SCollection[T] = this.transform { in =>
+    val limit = num
+    in
+      .applyTransform(ParDo.of(new DoFn[T, T] {
+        private var count = 0L
+        @ProcessElement
+        private[scio] def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
+          if (count < limit) {
+            c.output(c.element())
+          }
+          count += 1
+        }
+      }))
+      .combine(Lists.newArrayList(_))((c, t) => {
+        if (c.size() < limit) {
+          c.add(t)
+        }
+        c
+      })((c1, c2) => {
+        val (large, small) = if (c1.size() > c2.size()) (c1, c2) else (c2, c1)
+        val i = small.iterator()
+        while (large.size() < limit && i.hasNext) {
+          large.add(i.next())
+        }
+        large
+      })
+      .flatMap(_.asScala)
+  }
 
   /**
    * Return the top k (largest) elements from this SCollection as defined by the specified
