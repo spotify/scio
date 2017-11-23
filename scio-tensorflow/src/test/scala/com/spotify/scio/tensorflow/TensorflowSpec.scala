@@ -29,7 +29,7 @@ private object TFJob {
     sc.parallelize(1L to 10)
       .predict(args("graphURI"), Seq("multiply"))
       {e => Map("input" -> Tensor.create(e))}
-      {o => o.map{case (_, t) => t.longValue()}.head}
+      {(r, o) => (r, o.map{case (_, t) => t.longValue()}.head)}
       .saveAsTextFile(args("output"))
     sc.close()
   }
@@ -42,7 +42,7 @@ private object TFJob2Inputs {
       .predict(args("graphURI"), Seq("multiply"))
       {e => Map("input" -> Tensor.create(e),
                 "input2" -> Tensor.create(3L))}
-      {o => o.map{case (_, t) => t.longValue()}.head}
+      {(r, o) => (r, o.map{case (_, t) => t.longValue()}.head)}
       .saveAsTextFile(args("output"))
     sc.close()
   }
@@ -99,7 +99,9 @@ class TensorflowSpec extends PipelineSpec {
     JobTest[TFJob2Inputs.type]
       .distCache(DistCacheIO[Array[Byte]]("tf-graph.bin"), g.toGraphDef)
       .args("--graphURI=tf-graph.bin", "--output=output")
-      .output(TextIO("output"))(_ should containInAnyOrder((1L to 10).map(_ * 3).map(_.toString)))
+      .output(TextIO("output")){
+        _ should containInAnyOrder((1L to 10).map(x => (x, x * 3)).map(_.toString))
+      }
       .run()
   }
 
