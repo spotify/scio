@@ -22,6 +22,7 @@ import java.net.URI
 import java.nio.file.{Files, Paths}
 
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
+import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
 import com.spotify.sparkey.{Sparkey, SparkeyReader}
 import org.apache.beam.sdk.options.PipelineOptions
 
@@ -52,7 +53,7 @@ private[sparkey] object SparkeyUri {
 }
 
 private class LocalSparkeyUri(val basePath: String) extends SparkeyUri {
-  override def getReader: SparkeyReader = Sparkey.open(new File(basePath))
+  override def getReader: SparkeyReader = new ThreadLocalSparkeyReader(new File(basePath))
   override private[sparkey] def exists: Boolean = {
     SparkeyUri.extensions.map(e => new File(basePath + e)).exists(_.exists)
   }
@@ -65,7 +66,7 @@ private class RemoteSparkeyUri(val basePath: String, options: PipelineOptions) e
   override def getReader: SparkeyReader = {
     val uris = SparkeyUri.extensions.map(e => new URI(basePath + e))
     val paths = rfu.download(uris.asJava).asScala
-    Sparkey.open(paths.head.toFile)
+    new ThreadLocalSparkeyReader(paths.head.toFile)
   }
   override private[sparkey] def exists: Boolean =
     SparkeyUri.extensions
