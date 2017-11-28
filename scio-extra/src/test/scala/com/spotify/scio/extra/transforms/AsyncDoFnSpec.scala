@@ -100,7 +100,7 @@ trait AsyncDoFnCommands extends Commands {
   case class AsyncDoFnState(total: Int, pending: Int)
 
   override type State = AsyncDoFnState
-  override type Sut = DoFnTester
+  override type Sut = BaseDoFnTester
 
   override def canCreateNewSut(newState: State,
                                initSuts: Traversable[State],
@@ -146,13 +146,13 @@ trait AsyncDoFnCommands extends Commands {
 
 }
 
-trait DoFnTester {
+trait BaseDoFnTester {
   def request(): Unit
   def complete(n: Int): Unit
   def nextBundle(): Seq[String]
 }
 
-abstract class AsyncDoFnTester[P[_], F[_]] extends DoFnTester {
+abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
 
   private var nextElement = 0
   protected val pending: MBuffer[(Int, P[String])] = MBuffer.empty
