@@ -102,7 +102,7 @@ object ScioBenchmark {
           m.getName.getName.startsWith("Total") && !m.getName.getContext.containsKey("tentative")
         }
         .map(m => (m.getName.getName, m.getScalar.toString))
-        .toSeq.sortBy(_._1)
+        .sortBy(_._1)
         .foreach(kv => prettyPrint(kv._1, kv._2))
     }
     // scalastyle:on regex
