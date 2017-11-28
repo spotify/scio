@@ -239,7 +239,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   : SCollection[(K, (V, W))] = self.transform { in =>
     val side = that.asMultiMapSideInput
     in.withSideInputs(side).flatMap[(K, (V, W))] { (kv, s) =>
-      s(side).getOrElse(kv._1, Iterable()).toSeq.map(w => (kv._1, (kv._2, w)))
+      s(side).getOrElse(kv._1, Iterable()).iterator.map(w => (kv._1, (kv._2, w)))
     }.toSCollection
   }
 
@@ -255,7 +255,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     in.withSideInputs(side).flatMap[(K, (V, Option[W]))] { (kv, s) =>
       val (k, v) = kv
       val m = s(side)
-      if (m.contains(k)) m(k).map(w => (k, (v, Some(w)))) else Seq((k, (v, None)))
+      if (m.contains(k)) m(k).iterator.map(w => (k, (v, Some(w)))) else Seq((k, (v, None)))
     }.toSCollection
   }
 
