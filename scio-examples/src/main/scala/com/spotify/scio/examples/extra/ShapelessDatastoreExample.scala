@@ -15,6 +15,11 @@
  * under the License.
  */
 
+// Example: Handling Datastore Types with Shapeless
+
+// Official Datastore API uses Protobuf heavily but is very verbose. By using
+// [shapeless-datatype](https://github.com/nevillelyh/shapeless-datatype), one can seamlessly
+// convert between case classes and Datastore entities.
 package com.spotify.scio.examples.extra
 
 import com.google.datastore.v1.client.DatastoreHelper.makeKey
@@ -23,26 +28,20 @@ import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
 import shapeless.datatype.datastore._
 
-/*
- * Datastore examples using shapeless-datatype to seamlessly convert between case classes and
- * Datastore entities.
- *
- * https://github.com/nevillelyh/shapeless-datatype
- */
 object ShapelessDatastoreExample {
   val kind = "shapeless"
-  val wordCountType = DatastoreType[WordCount]
+  // Define case class representation of Datastore entities
   case class WordCount(word: String, count: Long)
+  // `DatastoreType` provides mapping between case classes and Datatore entities
+  val wordCountType = DatastoreType[WordCount]
 }
 
-/*
-SBT
-runMain
-  com.spotify.scio.examples.extra.ShapelessDatastoreWriteExample
-  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://apache-beam-samples/shakespeare/kinglear.txt
-  --output=[PROJECT]
-*/
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.extra.ShapelessDatastoreWriteExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --input=gs://apache-beam-samples/shakespeare/kinglear.txt
+// --output=[PROJECT]"`
 
 // Count words and save result to Datastore
 object ShapelessDatastoreWriteExample {
@@ -54,7 +53,9 @@ object ShapelessDatastoreWriteExample {
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
       .map { t =>
+        // Convert case class to `Entity.Builder`
         wordCountType.toEntityBuilder(WordCount.tupled(t))
+          // Set entity key
           .setKey(makeKey(kind, t._1))
           .build()
       }
@@ -63,14 +64,12 @@ object ShapelessDatastoreWriteExample {
   }
 }
 
-/*
-SBT
-runMain
-  com.spotify.scio.examples.extra.ShapelessDatastoreReadExample
-  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=[PROJECT]
-  --output=gs://[BUCKET]/[PATH]/wordcount
-*/
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.extra.ShapelessDatastoreReadExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --input=[PROJECT]
+// --output=gs://[BUCKET]/[PATH]/wordcount"`
 
 // Read word count result back from Datastore
 object ShapelessDatastoreReadExample {
@@ -79,6 +78,7 @@ object ShapelessDatastoreReadExample {
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.datastore(args("input"), Query.getDefaultInstance)
+      // Convert `Entity` to case class
       .flatMap(e => wordCountType.fromEntity(e))
       .map(wc => wc.word + ": " + wc.count)
       .saveAsTextFile(args("output"))

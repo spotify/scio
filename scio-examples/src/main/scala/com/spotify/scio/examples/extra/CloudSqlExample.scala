@@ -15,6 +15,7 @@
  * under the License.
  */
 
+// Example: Cloud SQL Input and Output
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.ScioContext
@@ -26,7 +27,7 @@ import scala.language.existentials
 object CloudSqlExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    // Ensure this has been called with required database connection details
+    // Parse database connection details as `CloudSqlOptions`
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](cmdlineArgs)
 
     val sc = ScioContext(opts)
@@ -34,20 +35,25 @@ object CloudSqlExample {
     val readOptions = getReadOptions(connOptions)
     val writeOptions = getWriteOptions(connOptions)
 
+    // Read from Cloud SQL
     sc.jdbcSelect(readOptions)
       .map(kv => (kv._1.toUpperCase, kv._2))
+      // Write to Cloud SQL
       .saveAsJdbc(writeOptions)
     sc.close()
   }
 
+  // `socketFactory=com.google.cloud.sql.mysql.SocketFactory` enables a secure connection to a
+  // Cloud SQL instance using Cloud SDK credential. With this option you don't need to white
+  // list your IP to access the database.
+  //
+  // - See this [page](https://cloud.google.com/sql/docs/mysql/connect-external-app#java) for more
+  // details
+  // - See this [page](https://cloud.google.com/sql/docs/mysql/external-connection-methods) for
+  // other options
+  // - See this [page](https://github.com/GoogleCloudPlatform/cloud-sql-mysql-socket-factory) for
+  // more information on socket factory
   def getJdbcUrl(opts: CloudSqlOptions): String = {
-    // socketFactory=com.google.cloud.sql.mysql.SocketFactory enables a secure connection to a
-    // Cloud SQL instance using Cloud SDK credential. With this option you don't need to white
-    // list your IP to access the database.
-    // For more details: https://cloud.google.com/sql/docs/mysql/connect-external-app#java
-    // For other options: https://cloud.google.com/sql/docs/mysql/external-connection-methods
-    // For more information on socketFactory:
-    // https://github.com/GoogleCloudPlatform/cloud-sql-mysql-socket-factory
     s"jdbc:mysql://google/${opts.getCloudSqlDb}?" +
       s"cloudSqlInstance=${opts.getCloudSqlInstanceConnectionName}&" +
       s"socketFactory=com.google.cloud.sql.mysql.SocketFactory"
@@ -61,14 +67,14 @@ object CloudSqlExample {
       driverClass = classOf[com.mysql.jdbc.Driver],
       connectionUrl = getJdbcUrl(opts))
 
-  // Read from a table called `word_count` with two columns 'word' and 'count'
+  // Read from a table called `word_count` with two columns `word` and `count`
   def getReadOptions(connOpts: JdbcConnectionOptions): JdbcReadOptions[(String, Long)] =
     JdbcReadOptions(
       connectionOptions = connOpts,
       query = "SELECT * FROM word_count",
       rowMapper = r => (r.getString(1), r.getLong(2)))
 
-  // Write to a table called `result_word_count` with two columns 'word' and 'count'
+  // Write to a table called `result_word_count` with two columns `word` and `count`
   def getWriteOptions(connOpts: JdbcConnectionOptions): JdbcWriteOptions[(String, Long)] =
     JdbcWriteOptions(
       connectionOptions = connOpts,

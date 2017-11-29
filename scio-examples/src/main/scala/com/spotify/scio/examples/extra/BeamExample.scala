@@ -15,6 +15,7 @@
  * under the License.
  */
 
+// Example: Mix Beam Java SDK and Scio Code
 package com.spotify.scio.examples.extra
 
 import java.lang.{Double => JDouble}
@@ -30,14 +31,13 @@ import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{Pipeline, PipelineResult}
 import org.joda.time.Duration
 
-// Use Beam Java SDK code inside a Scio job
 object BeamExample {
 
-  // A Beam native source PTransform
+  // A Beam native source `PTransform` where the input type is `PBegin`
   def pubsubIn(topic: String): PTransform[PBegin, PCollection[Account]] =
     PubsubIO.readAvros(classOf[Account]).fromTopic(topic)
 
-  // A Beam native windowing PTransform
+  // A Beam native windowing `PTransform`
   val window: PTransform[PCollection[Account], PCollection[Account]] =
     Window
       .into[Account](FixedWindows.of(Duration.standardMinutes(60)))
@@ -54,52 +54,54 @@ object BeamExample {
               .plusDelayOf(Duration.standardMinutes(10))))
       .accumulatingFiredPanes()
 
-  // A Beam native aggregation PTransform
+  // A Beam native aggregation `PTransform`
+  //
+  // `Sum.doublesPerKey()` sums `java.lang.Double` which is a different type from `scala.Double`
   val sumByKey: PTransform[PCollection[KV[String, JDouble]], PCollection[KV[String, JDouble]]] =
     Sum.doublesPerKey[String]()
 
-  // A Beam native sink PTransform
+  // A Beam native sink `PTransform` where the output type is `PDone`
   def pubsubOut(topic: String): PTransform[PCollection[String], PDone] =
     PubsubIO.writeStrings().to(topic)
 
-  // scalastyle:off regex
   def main(cmdlineArgs: Array[String]): Unit = {
     // Parse command line arguments and create Beam specific options plus application specific
-    // arguments.
-    // opts: PipelineOptions - Beam PipelineOptions
-    // args: Args - application specific arguments
+    // arguments
+    //
+    // - opts: `PipelineOptions` or its subtype - Beam pipeline options, where field names and types
+    // are defined as setters and getters in the Java interface
+    // - args: `Args` - application specific arguments, anything not covered by `opts` ends up here
     val (opts, args) = ScioContext.parseArguments[PipelineOptions](cmdlineArgs)
 
-    val sc = ScioContext.apply(opts)
+    // Create a new `ScioContext` with the given `PipelineOptions`
+    val sc = ScioContext(opts)
 
-    // Underlying Beam pipeline
+    // Underlying Beam `Pipeline`
     val pipeline: Pipeline = sc.pipeline
-    println(pipeline)
 
-    // Apply a Beam source PTransform and get a Scio SCollection
+    // Custom input with a Beam source `PTransform`
     val accounts: SCollection[Account] = sc.customInput("Input", pubsubIn(args("inputTopic")))
 
-    // Underlying Beam PCollection
+    // Underlying Beam `PCollection`
     val p: PCollection[Account] = accounts.internal
-    println(p.getName)
 
     accounts
-      // Beam PTransform
+      // Beam `PTransform`
       .applyTransform(window)
-      // Scio transform
+      // Scio `map` transform
       .map(a => KV.of(a.getName.toString, a.getAmount))
-      // Beam PTransform
+      // Beam `PTransform`
       .applyTransform(sumByKey)
-      .map(_.toString)
-      // Beam sink PTransform[PCollection[T], PDone]
+      // Scio `map` transform
+      .map(kv => kv.getKey + "_" + kv.getValue)
+      // Custom output with a Beam sink `PTransform`
       .saveAsCustomOutput("Output", pubsubOut(args("outputTopic")))
 
+    // This calls sc.pipeline.run() under the hood
     val result = sc.close()
 
     // Underlying Beam pipeline result
     val pipelineResult: PipelineResult = result.internal
-    println(pipelineResult.getState)
   }
-  // scalastyle:on regex
 
 }

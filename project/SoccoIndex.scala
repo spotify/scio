@@ -97,7 +97,7 @@ object SoccoIndex {
     val out = new PrintWriter(outFile)
     out.println(header)
     var section = ""
-    sources.foreach { s =>
+    sources.sortBy(s => (s.section, s.file)).foreach { s =>
       if (section != s.section) {
         section = s.section
         out.println()

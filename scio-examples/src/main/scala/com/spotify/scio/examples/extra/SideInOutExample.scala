@@ -63,7 +63,7 @@ object SideInOutExample {
           // Filter stop words using the map side input
           .filter(!stop.contains(_))
         }
-        // End of side input operation, convert back to regular `SCollection`
+        // End of side input operation, convert back to a regular `SCollection`
         .toSCollection
         .countByValue
 

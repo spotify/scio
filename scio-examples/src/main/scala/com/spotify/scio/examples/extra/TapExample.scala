@@ -15,6 +15,9 @@
  * under the License.
  */
 
+// scalastyle:off regex
+
+// Example: Handling Output with Tap and Future
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
@@ -22,36 +25,38 @@ import com.spotify.scio._
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-// Chain two jobs together with Futures and Taps
 object TapExample {
-  // scalastyle:off regex
   def main(cmdlineArgs: Array[String]): Unit = {
-    // first job
+    // Each `ScioContext` instance maps to a unique pipeline
+
+    // First job and its associated `ScioContext`
     val (sc1, args) = ContextAndArgs(cmdlineArgs)
     val f1 = sc1.parallelize(1 to 10)
       .sum
-      .materialize  // save data to a temporary location for use later
+      // Save data to a temporary location for use later as a `Future[Tap[T]]`
+      .materialize
     val f2 = sc1.parallelize(1 to 100)
       .sum
       .map(_.toString)
-      .saveAsTextFile(args("output"))  // save data for use later
+      // Save data for use later as a `Future[Tap[T]]`
+      .saveAsTextFile(args("output"))
     sc1.close()
 
-    // wait for future completion in case job is non-blocking
+    // Wait for future completions, which should happen when `sc1` finishes
     val t1 = f1.waitForResult()
     val t2 = f2.waitForResult()
 
-    // fetch tap values directly
+    // Fetch `Tap` values directly
     println(t1.value.mkString(", "))
     println(t2.value.mkString(", "))
 
-    // second job
+    // Second job and its associated `ScioContext`
     val (sc2, _) = ContextAndArgs(cmdlineArgs)
-    // re-open taps in new context
+    // Re-open taps in new `ScioContext`
     val s = (t1.open(sc2) ++ t2.open(sc2).map(_.toInt)).sum
+    // Block until job finishes
     val result = sc2.close().waitUntilFinish()
 
     println(result.finalState)
   }
-  // scalastyle:on regex
 }

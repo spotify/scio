@@ -15,29 +15,36 @@
  * under the License.
  */
 
+// scalastyle:off method.length
+// scalastyle:off regex
+
+// Example: Metrics Example
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
 
-// scalastyle:off
-// Update metrics inside a job and retrieve values later
 object MetricsExample {
 
-  // Create metrics to be updated inside the pipeline
+  // ## Creating metrics
+
+  // Create counters to be incremented inside the pipeline
   val sum = ScioMetrics.counter("sum")
   val sum2 = ScioMetrics.counter("sum2")
   val count = ScioMetrics.counter("count")
-  // With optional namespace
-  // This will track min, max, count, sum, mean
+
+  // Distribution to track min, max, count, sum, mean, with optional namespace
   val dist = ScioMetrics.distribution("com.spotify.scio.examples.extra.MetricsExample", "dist")
-  // Using class type as namespace
+
+  // Gauge to track a changing value, with job class as namespace
   val gauge = ScioMetrics.gauge[MetricsExample.type]("gauge")
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
+    // ## Accessing metrics
     sc.parallelize(1 to 100)
       .filter { i =>
+        // Access metrics inside a lambda function
         sum.inc(i)
         sum2.inc(i)
         count.inc()
@@ -47,27 +54,35 @@ object MetricsExample {
       }
       .map { i =>
         if (i % 2 == 0) {
-          ScioMetrics.counter("even_" + i).inc() // Dynamic metric creation
+          // Create a metric on the fly with dynamic name
+          ScioMetrics.counter("even_" + i).inc()
         }
-        sum2.inc(i) // reuse metric
+        // Reuse a metric, this will show up as a separate step in the results
+        sum2.inc(i)
       }
 
     val result = sc.close().waitUntilFinish()
 
+    // # Retrieving metrics
+
     // Access metric values after job is submitted
-    // scalastyle:off regex
     val s = result.counter(sum).committed.get
     println("sum: " + s)
     require(s == (1 to 100).sum)
 
-    // s2 is used in 2 different steps in the pipeline
-    val s2 = result.counter(sum2).committed.get // Aggregated value
+    // `s2` is used in 2 different steps in the pipeline
+
+    // Aggregated value
+    val s2 = result.counter(sum2).committed.get
     println("sum2: " + s2)
-    val s2steps = result.counterAtSteps(sum2).mapValues(_.committed.get) // Values at steps
+
+    // Values at steps
+    val s2steps = result.counterAtSteps(sum2).mapValues(_.committed.get)
     s2steps.foreach { case (step, value) =>
       println(s"sum2 at $step: " + value)
     }
-    // s2 should contain 2 steps
+
+    // `s2` should contain 2 steps
     require(s2 == (1 to 100).sum + (1 to 50).sum)
     require(s2steps.values.toSet == Set((1 to 100).sum, (1 to 50).sum))
 
@@ -90,13 +105,12 @@ object MetricsExample {
     require(d.sum() == (1 to 100).sum)
     require(d.mean() == (1 to 100).sum / 100.0)
 
-    // Dynamically created metrics
+    // Dynamic metrics
     result.allCounters
       .filterKeys(_.name().startsWith("even_"))
       .foreach { case (name, value) =>
         println(name.name() + ": " + value.committed.get)
       }
-    // scalastyle:on regex
   }
 
 }

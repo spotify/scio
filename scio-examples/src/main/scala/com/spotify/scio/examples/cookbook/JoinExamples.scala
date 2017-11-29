@@ -15,7 +15,7 @@
  * under the License.
  */
 
-// Example: Join Examples
+// Example: Different Types of Joins
 // Usage:
 
 // `sbt runMain "com.spotify.scio.examples.cookbook.JoinExamples
