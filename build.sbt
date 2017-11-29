@@ -21,7 +21,7 @@ import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtSite.SiteKeys._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 
-val beamVersion = "2.1.0"
+val beamVersion = "2.2.0-SNAPSHOT"
 
 val algebirdVersion = "0.13.2"
 val annoy4sVersion = "0.5.0"
@@ -85,6 +85,8 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   excludeDependencies += "com.google.protobuf" % "protobuf-lite",
 
   resolvers += Resolver.sonatypeRepo("public"),
+
+  resolvers += Resolver.url("apache-snapshots", url("https://repository.apache.org/content/repositories/snapshots/")),
 
   scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value,
   testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
