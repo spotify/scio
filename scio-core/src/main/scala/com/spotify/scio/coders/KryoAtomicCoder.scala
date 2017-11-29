@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 import scala.collection.convert.Wrappers
 import scala.collection.mutable
+import scala.util.{Success, Try}
 
 private object KryoRegistrarLoader {
 
@@ -79,6 +80,13 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
     new EmptyOnDeserializationThreadLocal[KryoState] {
       override def initialValue(): KryoState = {
         val k = KryoSerializer.registered.newKryo()
+
+        val registrationRequired = sys.props.get("kryo.registration.required")
+          .map(x => Try(x.toBoolean))
+          .contains(Success(true))
+        if (registrationRequired) {
+          k.setRegistrationRequired(true)
+        }
 
         k.forClass(new CoderSerializer(InstantCoder.of()))
         k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
