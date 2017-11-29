@@ -266,7 +266,7 @@ public class HadoopWriteFiles<T> extends PTransform<PCollection<T>, PDone> {
    * Writes all the elements in a bundle using a {@link Writer} produced by the
    * {@link WriteOperation} associated with the {@link FileBasedSink} with windowed writes enabled.
    */
-  private class WriteWindowedBundles extends DoFn<T, FileResult> {
+  private class WriteWindowedBundles extends DoFn<T, FileResult<Void>> {
     private final TupleTag<KV<Integer, T>> unwrittedRecordsTag;
     private Map<KV<BoundedWindow, PaneInfo>, Writer<T>> windowedWriters;
     int spilledShardNum = UNKNOWN_SHARDNUM;
@@ -318,7 +318,7 @@ public class HadoopWriteFiles<T> extends PTransform<PCollection<T>, PDone> {
     @FinishBundle
     public void finishBundle(FinishBundleContext c) throws Exception {
       for (Map.Entry<KV<BoundedWindow, PaneInfo>, Writer<T>> entry : windowedWriters.entrySet()) {
-        FileResult result = entry.getValue().close();
+        FileResult<Void> result = entry.getValue().close();
         BoundedWindow window = entry.getKey().getKey();
         c.output(result, window.maxTimestamp(), window);
       }
@@ -334,7 +334,7 @@ public class HadoopWriteFiles<T> extends PTransform<PCollection<T>, PDone> {
    * Writes all the elements in a bundle using a {@link Writer} produced by the
    * {@link WriteOperation} associated with the {@link FileBasedSink} with windowed writes disabled.
    */
-  private class WriteUnwindowedBundles extends DoFn<T, FileResult> {
+  private class WriteUnwindowedBundles extends DoFn<T, FileResult<Void>> {
     // Writer that will write the records in this bundle. Lazily
     // initialized in processElement.
     private Writer<T> writer = null;
@@ -364,7 +364,7 @@ public class HadoopWriteFiles<T> extends PTransform<PCollection<T>, PDone> {
       if (writer == null) {
         return;
       }
-      FileResult result = writer.close();
+      FileResult<Void> result = writer.close();
       c.output(result, window.maxTimestamp(), window);
     }
 
@@ -380,7 +380,7 @@ public class HadoopWriteFiles<T> extends PTransform<PCollection<T>, PDone> {
    * Like {@link WriteWindowedBundles} and {@link WriteUnwindowedBundles}, but where the elements
    * for each shard have been collected into a single iterable.
    */
-  private class WriteShardedBundles extends DoFn<KV<Integer, Iterable<T>>, FileResult> {
+  private class WriteShardedBundles extends DoFn<KV<Integer, Iterable<T>>, FileResult<Void>> {
     ShardAssignment shardNumberAssignment;
     WriteShardedBundles(ShardAssignment shardNumberAssignment) {
       this.shardNumberAssignment = shardNumberAssignment;
@@ -406,7 +406,7 @@ public class HadoopWriteFiles<T> extends PTransform<PCollection<T>, PDone> {
         }
 
         // Close the writer; if this throws let the error propagate.
-        FileResult result = writer.close();
+        FileResult<Void> result = writer.close();
         c.output(result);
       } catch (Exception e) {
         // If anything goes wrong, make sure to delete the temporary file.
@@ -521,7 +521,7 @@ public class HadoopWriteFiles<T> extends PTransform<PCollection<T>, PDone> {
     // PCollection. There is a dependency between this ParDo and the first (the
     // WriteOperation PCollection as a side input), so this will happen after the
     // initial ParDo.
-    PCollection<FileResult> results;
+    PCollection<FileResult<Void>> results;
     final PCollectionView<Integer> numShardsView;
     @SuppressWarnings("unchecked")
     Coder<BoundedWindow> shardedWindowCoder =
@@ -529,25 +529,25 @@ public class HadoopWriteFiles<T> extends PTransform<PCollection<T>, PDone> {
     if (computeNumShards == null && numShardsProvider == null) {
       numShardsView = null;
       if (windowedWrites) {
-        TupleTag<FileResult> writtenRecordsTag = new TupleTag<>("writtenRecordsTag");
+        TupleTag<FileResult<Void>> writtenRecordsTag = new TupleTag<>("writtenRecordsTag");
         TupleTag<KV<Integer, T>> unwrittedRecordsTag = new TupleTag<>("unwrittenRecordsTag");
         PCollectionTuple writeTuple = input.apply("WriteWindowedBundles", ParDo.of(
             new WriteWindowedBundles(unwrittedRecordsTag))
             .withOutputTags(writtenRecordsTag, TupleTagList.of(unwrittedRecordsTag)));
-        PCollection<FileResult> writtenBundleFiles = writeTuple.get(writtenRecordsTag)
-            .setCoder(FileResultCoder.of(shardedWindowCoder));
+        PCollection<FileResult<Void>> writtenBundleFiles = writeTuple.get(writtenRecordsTag)
+            .setCoder(FileResultCoder.of(shardedWindowCoder, VoidCoder.of()));
         // Any "spilled" elements are written using WriteShardedBundles. Assign shard numbers in
         // finalize to stay consistent with what WriteWindowedBundles does.
-        PCollection<FileResult> writtenGroupedFiles =
+        PCollection<FileResult<Void>> writtenGroupedFiles =
             writeTuple
                 .get(unwrittedRecordsTag)
                 .setCoder(KvCoder.of(VarIntCoder.of(), input.getCoder()))
                 .apply("GroupUnwritten", GroupByKey.<Integer, T>create())
                 .apply("WriteUnwritten", ParDo.of(
                     new WriteShardedBundles(ShardAssignment.ASSIGN_IN_FINALIZE)))
-                .setCoder(FileResultCoder.of(shardedWindowCoder));
+                .setCoder(FileResultCoder.of(shardedWindowCoder, VoidCoder.of()));
         results = PCollectionList.of(writtenBundleFiles).and(writtenGroupedFiles)
-            .apply(Flatten.<FileResult>pCollections());
+            .apply(Flatten.<FileResult<Void>>pCollections());
       } else {
         results =
             input.apply("WriteUnwindowedBundles", ParDo.of(new WriteUnwindowedBundles()));
@@ -576,7 +576,7 @@ public class HadoopWriteFiles<T> extends PTransform<PCollection<T>, PDone> {
       results = sharded.apply("WriteShardedBundles",
           ParDo.of(new WriteShardedBundles(ShardAssignment.ASSIGN_WHEN_WRITING)));
     }
-    results.setCoder(FileResultCoder.of(shardedWindowCoder));
+    results.setCoder(FileResultCoder.of(shardedWindowCoder, VoidCoder.of()));
 
     if (windowedWrites) {
       // When processing streaming windowed writes, results will arrive multiple times. This
@@ -584,26 +584,26 @@ public class HadoopWriteFiles<T> extends PTransform<PCollection<T>, PDone> {
       // as new data arriving into a side input does not trigger the listening DoFn. Instead
       // we aggregate the result set using a singleton GroupByKey, so the DoFn will be triggered
       // whenever new data arrives.
-      PCollection<KV<Void, FileResult>> keyedResults =
-          results.apply("AttachSingletonKey", WithKeys.<Void, FileResult>of((Void) null));
+      PCollection<KV<Void, FileResult<Void>>> keyedResults =
+          results.apply("AttachSingletonKey", WithKeys.<Void, FileResult<Void>>of((Void) null));
       keyedResults.setCoder(KvCoder.of(VoidCoder.of(),
-          FileResultCoder.of(shardedWindowCoder)));
+          FileResultCoder.of(shardedWindowCoder, VoidCoder.of())));
 
       // Is the continuation trigger sufficient?
       keyedResults
-          .apply("FinalizeGroupByKey", GroupByKey.<Void, FileResult>create())
-          .apply("Finalize", ParDo.of(new DoFn<KV<Void, Iterable<FileResult>>, Integer>() {
+          .apply("FinalizeGroupByKey", GroupByKey.<Void, FileResult<Void>>create())
+          .apply("Finalize", ParDo.of(new DoFn<KV<Void, Iterable<FileResult<Void>>>, Integer>() {
             @ProcessElement
             public void processElement(ProcessContext c) throws Exception {
               LOG.info("Finalizing write operation {}.", writeOperation);
-              List<FileResult> results = Lists.newArrayList(c.element().getValue());
+              List<FileResult<Void>> results = Lists.newArrayList(c.element().getValue());
               writeOperation.finalize(results);
               LOG.debug("Done finalizing write operation");
             }
           }));
     } else {
-      final PCollectionView<Iterable<FileResult>> resultsView =
-          results.apply(View.<FileResult>asIterable());
+      final PCollectionView<Iterable<FileResult<Void>>> resultsView =
+          results.apply(View.<FileResult<Void>>asIterable());
       ImmutableList.Builder<PCollectionView<?>> sideInputs =
           ImmutableList.<PCollectionView<?>>builder().add(resultsView);
       if (numShardsView != null) {
@@ -624,7 +624,7 @@ public class HadoopWriteFiles<T> extends PTransform<PCollection<T>, PDone> {
             @ProcessElement
             public void processElement(ProcessContext c) throws Exception {
               LOG.info("Finalizing write operation {}.", writeOperation);
-              List<FileResult> results = Lists.newArrayList(c.sideInput(resultsView));
+              List<FileResult<Void>> results = Lists.newArrayList(c.sideInput(resultsView));
               LOG.debug("Side input initialized to finalize write operation {}.", writeOperation);
 
               // We must always output at least 1 shard, and honor user-specified numShards if
@@ -645,7 +645,7 @@ public class HadoopWriteFiles<T> extends PTransform<PCollection<T>, PDone> {
                 for (int i = 0; i < extraShardsNeeded; ++i) {
                   Writer<T> writer = writeOperation.createWriter();
                   writer.openUnwindowed(UUID.randomUUID().toString(), UNKNOWN_SHARDNUM);
-                  FileResult emptyWrite = writer.close();
+                  FileResult<Void> emptyWrite = writer.close();
                   results.add(emptyWrite);
                 }
                 LOG.debug("Done creating extra shards.");
