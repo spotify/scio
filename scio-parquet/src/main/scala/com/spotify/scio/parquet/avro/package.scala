@@ -180,7 +180,7 @@ package object avro {
         }
         val resource = FileBasedSink.convertToFileResourceIfPossible(self.pathWithShards(path))
         val prefix = StaticValueProvider.of(resource)
-        val policy = DefaultFilenamePolicy.constructUsingStandardParameters(
+        val policy = DefaultFilenamePolicy.fromStandardParameters(
           prefix, null, ".parquet", false)
         val sink = new ParquetAvroSink[T](prefix, policy, writerSchema, job.getConfiguration)
         val t = HadoopWriteFiles.to(sink).withNumShards(numShards)

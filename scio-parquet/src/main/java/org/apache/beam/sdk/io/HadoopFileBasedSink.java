@@ -39,6 +39,7 @@ import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.HasDisplayData;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.beam.sdk.transforms.windowing.PaneInfo;
+import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.hadoop.fs.Path;
 import org.joda.time.Instant;
 import org.joda.time.format.DateTimeFormat;
@@ -153,7 +154,7 @@ public abstract class HadoopFileBasedSink<T> implements Serializable, HasDisplay
       this.windowedWrites = windowedWrites;
     }
 
-    public void finalize(Iterable<FileResult> writerResults) throws Exception {
+    public void finalize(Iterable<FileResult<Void>> writerResults) throws Exception {
       // Collect names of temporary files and rename them.
       Map<ResourceId, ResourceId> outputFilenames = buildOutputFilenames(writerResults);
       copyToOutputFiles(outputFilenames);
@@ -172,7 +173,7 @@ public abstract class HadoopFileBasedSink<T> implements Serializable, HasDisplay
 
     @Experimental(Kind.FILESYSTEM)
     protected final Map<ResourceId, ResourceId> buildOutputFilenames(
-        Iterable<FileResult> writerResults) {
+        Iterable<FileResult<Void>> writerResults) {
       int numShards = Iterables.size(writerResults);
       Map<ResourceId, ResourceId> outputFilenames = new HashMap<>();
 
@@ -182,7 +183,7 @@ public abstract class HadoopFileBasedSink<T> implements Serializable, HasDisplay
       // Either all results have a shard number set (if the sink is configured with a fixed
       // number of shards), or they all don't (otherwise).
       Boolean isShardNumberSetEverywhere = null;
-      for (FileResult result : writerResults) {
+      for (FileResult<Void> result : writerResults) {
         boolean isShardNumberSetHere = (result.getShard() != UNKNOWN_SHARDNUM);
         if (isShardNumberSetEverywhere == null) {
           isShardNumberSetEverywhere = isShardNumberSetHere;
@@ -198,7 +199,7 @@ public abstract class HadoopFileBasedSink<T> implements Serializable, HasDisplay
         isShardNumberSetEverywhere = true;
       }
 
-      List<FileResult> resultsWithShardNumbers = Lists.newArrayList();
+      List<FileResult<Void>> resultsWithShardNumbers = Lists.newArrayList();
       if (isShardNumberSetEverywhere) {
         resultsWithShardNumbers = Lists.newArrayList(writerResults);
       } else {
@@ -207,11 +208,11 @@ public abstract class HadoopFileBasedSink<T> implements Serializable, HasDisplay
         // case of triggers, the list of FileResult objects in the Finalize iterable is not
         // deterministic, and might change over retries. This breaks the assumption below that
         // sorting the FileResult objects provides idempotency.
-        List<FileResult> sortedByTempFilename =
+        List<FileResult<Void>> sortedByTempFilename =
             Ordering.from(
-                new Comparator<FileResult>() {
+                new Comparator<FileResult<Void>>() {
                   @Override
-                  public int compare(FileResult first, FileResult second) {
+                  public int compare(FileResult<Void> first, FileResult<Void> second) {
                     String firstFilename = first.getTempFilename().toString();
                     String secondFilename = second.getTempFilename().toString();
                     return firstFilename.compareTo(secondFilename);
@@ -223,13 +224,25 @@ public abstract class HadoopFileBasedSink<T> implements Serializable, HasDisplay
         }
       }
 
-      for (FileResult result : resultsWithShardNumbers) {
+      for (FileResult<Void> result : resultsWithShardNumbers) {
         checkArgument(
             result.getShard() != UNKNOWN_SHARDNUM, "Should have set shard number on %s", result);
         outputFilenames.put(
             result.getTempFilename(),
-            result.getDestinationFile(
-                policy, baseOutputDir, numShards, ""));
+            result.getDestinationFile(DynamicFileDestinations.<T>constant(policy), numShards,
+                new FileBasedSink.OutputFileHints() {
+                  @Nullable
+                  @Override
+                  public String getMimeType() {
+                    return MimeTypes.BINARY;
+                  }
+
+                  @Nullable
+                  @Override
+                  public String getSuggestedFilenameSuffix() {
+                    return "";
+                  }
+                }));
       }
 
       int numDistinctShards = new HashSet<>(outputFilenames.values()).size();
@@ -400,13 +413,13 @@ public abstract class HadoopFileBasedSink<T> implements Serializable, HasDisplay
       }
     }
 
-    public final FileResult close() throws Exception {
+    public final FileResult<Void> close() throws Exception {
       checkState(outputFile != null, "FileResult.close cannot be called with a null outputFile");
 
       LOG.debug("Finishing write to {}.", outputFile);
       finishWrite();
 
-      FileResult result = new FileResult(outputFile, shard, window, paneInfo);
+      FileResult<Void> result = new FileResult<>(outputFile, shard, window, paneInfo, null);
       LOG.debug("Result for bundle {}: {}", this.id, outputFile);
       return result;
     }
