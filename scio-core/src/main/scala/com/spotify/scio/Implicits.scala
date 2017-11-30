@@ -19,9 +19,10 @@ package com.spotify.scio
 
 import java.lang.{Float => JFloat}
 
-import com.spotify.scio.coders.KryoAtomicCoder
+import com.spotify.scio.coders.{KryoAtomicCoder, KryoOptions}
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.coders._
+import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.values.KV
 
 import scala.language.implicitConversions
@@ -41,7 +42,7 @@ private[scio] object Implicits {
       r.registerCoderForClass(classOf[Double], DoubleCoder.of())
     }
 
-    def getScalaCoder[T: ClassTag]: Coder[T] = {
+    def getScalaCoder[T: ClassTag](options: PipelineOptions): Coder[T] = {
       val coder = try {
         // This may fail in come cases, i.e. Malformed class name in REPL
         // Always fall back to Kryo
@@ -52,14 +53,14 @@ private[scio] object Implicits {
       }
 
       if (coder == null || coder.getClass == classOf[SerializableCoder[T]]) {
-        KryoAtomicCoder[T]
+        new KryoAtomicCoder[T](KryoOptions(options))
       } else {
         coder
       }
     }
 
-    def getScalaKvCoder[K: ClassTag, V: ClassTag]: Coder[KV[K, V]] =
-      KvCoder.of(getScalaCoder[K], getScalaCoder[V])
+    def getScalaKvCoder[K: ClassTag, V: ClassTag](options: PipelineOptions): Coder[KV[K, V]] =
+      KvCoder.of(getScalaCoder[K](options), getScalaCoder[V](options))
 
   }
 

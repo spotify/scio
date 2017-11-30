@@ -46,10 +46,10 @@ class KryoAtomicCoderBenchmark {
   // use hand-optimized coders
   val specializedUser = SpecializedUser(userId, "johndoe", "johndoe@spotify.com")
 
-  val kryoCoder = KryoAtomicCoder[User]
+  val kryoCoder = new KryoAtomicCoder[User](KryoOptions())
   val javaCoder = SerializableCoder.of(classOf[User])
   val specializedCoder = new SpecializedCoder
-  val specializedKryoCoder = KryoAtomicCoder[SpecializedUser]
+  val specializedKryoCoder = new KryoAtomicCoder[SpecializedUser](KryoOptions())
 
   @Benchmark
   def kryoEncode: Array[Byte] = {

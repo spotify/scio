@@ -22,7 +22,7 @@ import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 
 @Description("Internal options for Scio")
-public interface ScioOptions extends PipelineOptions {
+public interface ScioOptions extends PipelineOptions, KryoOptions {
   @Description("Scio version")
   String getScioVersion();
   void setScioVersion(String version);
