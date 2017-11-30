@@ -246,7 +246,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     } { case (left, right) =>
         right.foreach { case (k, vs) => left.getOrElseUpdate(k, ArrayBuffer.empty[W]) ++= vs }
         left
-    }.asSingletonSideInput
+    }.asSingletonSideInput(MMap.empty[K, ArrayBuffer[W]])
 
     in.withSideInputs(side).flatMap[(K, (V, W))] { (kv, s) =>
       s(side).getOrElse(kv._1, ArrayBuffer.empty[W]).iterator.map(w => (kv._1, (kv._2, w)))
@@ -269,7 +269,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     } { case (left, right) =>
       right.foreach { case (k, vs) => left.getOrElseUpdate(k, ArrayBuffer.empty[W]) ++= vs }
       left
-    }.asSingletonSideInput
+    }.asSingletonSideInput(MMap.empty[K, ArrayBuffer[W]])
 
     in.withSideInputs(side).flatMap[(K, (V, Option[W]))] { (kv, s) =>
       val (k, v) = kv

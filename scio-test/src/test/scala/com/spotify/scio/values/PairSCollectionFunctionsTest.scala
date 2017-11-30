@@ -462,12 +462,31 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  it should "support hashJoin() with empty RHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
+      val p2 = sc.parallelize(Seq.empty[(String, Int)])
+      val p = p1.hashJoin(p2)
+      p should haveSize(0)
+    }
+  }
+
   it should "support hashLeftJoin()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
       val p = p1.hashLeftJoin(p2)
       p should containInAnyOrder (Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
+    }
+  }
+
+  it should "support hashLeftJoin() with empty RHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
+      val p2 = sc.parallelize(Seq.empty[(String, Int)])
+      val p = p1.hashLeftJoin(p2)
+      val empty = Option.empty[Int]
+      p should containInAnyOrder (Seq(("a", (1, empty)), ("b", (2, empty)), ("c", (3, empty))))
     }
   }
 
