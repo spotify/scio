@@ -100,7 +100,7 @@ package object jdbc {
       if (self.isTest) {
         self.getTestInput(JdbcIO[T](readOptions))
       } else {
-        val coder = self.pipeline.getCoderRegistry.getScalaCoder[T]
+        val coder = self.pipeline.getCoderRegistry.getScalaCoder[T](self.options)
         val connOpts = readOptions.connectionOptions
         var transform = jio.JdbcIO.read[T]()
           .withCoder(coder)

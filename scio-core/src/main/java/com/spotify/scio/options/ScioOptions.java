@@ -18,6 +18,7 @@
 package com.spotify.scio.options;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 
@@ -47,4 +48,28 @@ public interface ScioOptions extends PipelineOptions {
   @Description("Path to newline separated file with command line options")
   String getOptionsFile();
   void setOptionsFile(String optionsFile);
+
+  @JsonIgnore
+  @Description("Set buffer size in KryoAtomicCoder")
+  @Default.Integer(64 * 1024)
+  int getKryoBufferSize();
+  void setKryoBufferSize(int bufferSize);
+
+  @JsonIgnore
+  @Description("Set maximum buffer size in KryoAtomicCoder")
+  @Default.Integer(64 * 1024 * 1024)
+  int getKryoMaxBufferSize();
+  void setKryoMaxBufferSize(int bufferSize);
+
+  @JsonIgnore
+  @Description("Set to false to disable reference tracking in KryoAtomicCoder")
+  @Default.Boolean(true)
+  boolean getKryoReferenceTracking();
+  void setKryoReferenceTracking(boolean referenceTracking);
+
+  @JsonIgnore
+  @Description("Set to true to require registration in KryoAtomicCoder")
+  @Default.Boolean(false)
+  boolean getKryoRegistrationRequired();
+  void setKryoRegistrationRequired(boolean registrationRequired);
 }

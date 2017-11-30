@@ -23,6 +23,7 @@ import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
 import com.google.common.io.{ByteStreams, CountingOutputStream}
 import com.google.common.reflect.ClassPath
 import com.google.protobuf.Message
+import com.spotify.scio.options.ScioOptions
 import com.twitter.chill._
 import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
@@ -30,8 +31,9 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.coders._
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
-import org.apache.beam.sdk.util.{EmptyOnDeserializationThreadLocal, VarInt}
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
+import org.apache.beam.sdk.util.{EmptyOnDeserializationThreadLocal, VarInt}
 import org.joda.time.{LocalDate, LocalDateTime}
 import org.slf4j.LoggerFactory
 
@@ -70,8 +72,7 @@ private object KryoRegistrarLoader {
 
 }
 
-private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
-  private val bufferSize = 64 * 1024
+private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends AtomicCoder[T] {
 
   import KryoAtomicCoder.logger
 
@@ -79,6 +80,9 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
     new EmptyOnDeserializationThreadLocal[KryoState] {
       override def initialValue(): KryoState = {
         val k = KryoSerializer.registered.newKryo()
+
+        k.setReferences(options.referenceTracking)
+        k.setRegistrationRequired(options.registrationRequired)
 
         k.forClass(new CoderSerializer(InstantCoder.of()))
         k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
@@ -110,8 +114,8 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
         new AlgebirdRegistrar()(k)
         KryoRegistrarLoader.load(k)
 
-        val input = new InputChunked(bufferSize)
-        val output = new OutputChunked(bufferSize)
+        val input = new InputChunked(options.bufferSize)
+        val output = new OutputChunked(options.bufferSize)
 
         KryoState(k, input, output)
       }
@@ -200,7 +204,8 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
 
   private def kryoEncodedElementByteSize(obj: Any): Long = {
     val s = new CountingOutputStream(ByteStreams.nullOutputStream())
-    val output = new Output(s)
+    val output = new Output(options.bufferSize, options.maxBufferSize)
+    output.setOutputStream(s)
     kryoState.get().kryo.writeClassAndObject(output, obj)
     output.flush()
     s.getCount + VarInt.getLength(s.getCount)
@@ -208,13 +213,26 @@ private[scio] class KryoAtomicCoder[T] extends AtomicCoder[T] {
 
 }
 
-/** Used for sharing Kryo instance and buffers */
+/** Used for sharing Kryo instance and buffers. */
 private[scio] final case class KryoState(kryo: Kryo, input: InputChunked, output: OutputChunked)
 
 private[scio] object KryoAtomicCoder {
-
   private val logger = LoggerFactory.getLogger(this.getClass)
+}
 
-  def apply[T]: Coder[T] = new KryoAtomicCoder[T]
+private[scio] case class KryoOptions(bufferSize: Int,
+                                     maxBufferSize: Int,
+                                     referenceTracking: Boolean,
+                                     registrationRequired: Boolean)
 
+private[scio] object KryoOptions {
+  def apply(): KryoOptions = KryoOptions(PipelineOptionsFactory.create())
+  def apply(options: PipelineOptions): KryoOptions = {
+    val o = options.as(classOf[ScioOptions])
+    KryoOptions(
+      o.getKryoBufferSize,
+      o.getKryoMaxBufferSize,
+      o.getKryoReferenceTracking,
+      o.getKryoRegistrationRequired)
+  }
 }

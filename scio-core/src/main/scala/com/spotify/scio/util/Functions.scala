@@ -21,7 +21,7 @@ import java.lang.{Iterable => JIterable}
 import java.util.{List => JList}
 
 import com.google.common.collect.Lists
-import com.spotify.scio.coders.KryoAtomicCoder
+import com.spotify.scio.coders.{KryoAtomicCoder, KryoOptions}
 import com.twitter.algebird.{Monoid, Semigroup}
 import org.apache.beam.sdk.coders.{Coder, CoderRegistry}
 import org.apache.beam.sdk.transforms.Combine.CombineFn
@@ -39,10 +39,10 @@ private[scio] object Functions {
   private abstract class KryoCombineFn[VI, VA, VO] extends CombineFn[VI, VA, VO] with NamedFn {
 
     override def getAccumulatorCoder(registry: CoderRegistry, inputCoder: Coder[VI]): Coder[VA] =
-      KryoAtomicCoder[VA]
+      new KryoAtomicCoder[VA](KryoOptions())
 
     override def getDefaultOutputCoder(registry: CoderRegistry, inputCoder: Coder[VI]): Coder[VO] =
-      KryoAtomicCoder[VO]
+      new KryoAtomicCoder[VO](KryoOptions())
 
   }
 

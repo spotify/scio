@@ -53,7 +53,7 @@ class JodaSerializerTest extends FlatSpec with Checkers {
     Arbitrary.arbitrary[LocalDateTime].map(_.toLocalDate)
   }
 
-  val coder = KryoAtomicCoder[Any]
+  val coder = new KryoAtomicCoder[Any](KryoOptions())
 
   def roundTripProp[T](value: T): Prop = Prop.secure {
     CoderTestUtils.testRoundTrip(coder, value)

@@ -21,12 +21,15 @@ import java.{lang => jl, util => ju}
 
 import com.google.api.services.bigquery.model.TableRow
 import com.google.common.collect.ImmutableList
+import com.spotify.scio.ScioContext
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.avro.TestRecord
 import com.spotify.scio.coders.CoderTestUtils._
 import com.spotify.scio.testing.PipelineSpec
 import com.twitter.chill._
+import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.coders.Coder
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values.KV
 import org.joda.time.Instant
@@ -40,7 +43,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
   import com.spotify.scio.testing.TestingUtils._
 
   type CoderFactory = () => Coder[Any]
-  val cf = () => KryoAtomicCoder[Any]
+  val cf = () => new KryoAtomicCoder[Any](KryoOptions())
 
   private def roundTrip[T: ClassTag](value: T) = new Matcher[CoderFactory] {
     override def apply(left: CoderFactory): MatchResult = {
@@ -133,6 +136,19 @@ class KryoAtomicCoderTest extends PipelineSpec {
 
     // class does not extend IKryoRegistrar
     "@KryoRegistrar class FooKryoRegistrar extends Product {}" shouldNot compile
+  }
+
+  it should "support kryo registration required option" in {
+    val options = PipelineOptionsFactory.fromArgs("--kryoRegistrationRequired=true").create()
+    val sc = ScioContext(options)
+    sc.parallelize(1 to 10).map(x => RecordB(x.toString, x))
+
+    // scalastyle:off no.whitespace.before.left.bracket
+    val e = the [PipelineExecutionException] thrownBy { sc.close() }
+    // scalastyle:on no.whitespace.before.left.bracket
+
+    val msg = "Class is not registered: com.spotify.scio.coders.RecordB"
+    e.getCause.getMessage should startWith (msg)
   }
 
 }

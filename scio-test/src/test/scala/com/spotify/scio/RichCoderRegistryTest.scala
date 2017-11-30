@@ -24,6 +24,7 @@ import com.spotify.scio.coders.CoderTestUtils._
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.coders.CoderRegistry
 import org.apache.beam.sdk.extensions.protobuf.ProtoCoder
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.testing.TestPipeline
 import org.scalatest.matchers.{MatchResult, Matcher}
 
@@ -35,11 +36,12 @@ class RichCoderRegistryTest extends PipelineSpec {
 
   val pipeline = TestPipeline.create()
   val registry = pipeline.getCoderRegistry
+  val options = PipelineOptionsFactory.create()
   registry.registerScalaCoders()
 
   private def roundTrip[T: ClassTag](value: T) = new Matcher[CoderRegistry] {
     override def apply(left: CoderRegistry): MatchResult = {
-      val coder = left.getScalaCoder[T]
+      val coder = left.getScalaCoder[T](options)
       coder should not be null
       MatchResult(
         testRoundTrip(coder, value),
@@ -97,7 +99,7 @@ class RichCoderRegistryTest extends PipelineSpec {
 
   it should "give ProtoCoder higher precedence" in {
     // FIXME: BEAM-2658 make sure ProtoCoder has higher precedence than SerializableCoder
-    registry.getScalaCoder[Timestamp] shouldBe ProtoCoder.of(classOf[Timestamp])
+    registry.getScalaCoder[Timestamp](options) shouldBe ProtoCoder.of(classOf[Timestamp])
   }
 
 }

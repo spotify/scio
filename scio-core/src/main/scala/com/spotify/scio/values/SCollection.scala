@@ -1126,7 +1126,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         val t = setup(psio.PubsubIO.writeProtos(cls.asInstanceOf[Class[Message]]))
         this.asInstanceOf[SCollection[Message]].applyInternal(t)
       } else {
-        val coder = internal.getPipeline.getCoderRegistry.getScalaCoder[T]
+        val coder = internal.getPipeline.getCoderRegistry.getScalaCoder[T](context.options)
         val t = setup(psio.PubsubIO.writeMessages())
         this.map { t =>
           val payload = CoderUtils.encodeToByteArray(coder, t)
@@ -1156,7 +1156,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       if (timestampAttribute != null) {
         transform = transform.withTimestampAttribute(timestampAttribute)
       }
-      val coder = internal.getPipeline.getCoderRegistry.getScalaCoder[V]
+      val coder = internal.getPipeline.getCoderRegistry.getScalaCoder[V](context.options)
       this.map { t =>
         val kv = t.asInstanceOf[(V, Map[String, String])]
         val payload = CoderUtils.encodeToByteArray(coder, kv._1)
