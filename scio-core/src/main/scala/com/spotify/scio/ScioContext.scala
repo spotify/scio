@@ -519,13 +519,13 @@ class ScioContext private[scio] (val options: PipelineOptions,
     } else if (this.bigQueryClient.isCacheEnabled) {
       val queryJob = this.bigQueryClient.newQueryJob(sqlQuery, flattenResults)
       _queryJobs.append(queryJob)
-      wrap(this.applyInternal(bqio.BigQueryIO.read().from(queryJob.table).withoutValidation()))
-        .setName(sqlQuery)
+      val read = bqio.BigQueryIO.readTableRows().from(queryJob.table).withoutValidation()
+      wrap(this.applyInternal(read)).setName(sqlQuery)
     } else {
       val baseQuery = if (!flattenResults) {
-        bqio.BigQueryIO.read().fromQuery(sqlQuery).withoutResultFlattening()
+        bqio.BigQueryIO.readTableRows().fromQuery(sqlQuery).withoutResultFlattening()
       } else {
-        bqio.BigQueryIO.read().fromQuery(sqlQuery)
+        bqio.BigQueryIO.readTableRows().fromQuery(sqlQuery)
       }
       val query = if (this.bigQueryClient.isLegacySql(sqlQuery, flattenResults)) {
         baseQuery
@@ -545,7 +545,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (this.isTest) {
       this.getTestInput(BigQueryIO(tableSpec))
     } else {
-      wrap(this.applyInternal(bqio.BigQueryIO.read().from(table))).setName(tableSpec)
+      wrap(this.applyInternal(bqio.BigQueryIO.readTableRows().from(table))).setName(tableSpec)
     }
   }
 
@@ -748,13 +748,13 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group input
    */
   def textFile(path: String,
-               compressionType: gio.TextIO.CompressionType = gio.TextIO.CompressionType.AUTO)
+               compression: gio.Compression = gio.Compression.AUTO)
   : SCollection[String] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(TextIO(path))
     } else {
       wrap(this.applyInternal(gio.TextIO.read().from(path)
-        .withCompressionType(compressionType))).setName(path)
+        .withCompression(compression))).setName(path)
     }
   }
 
