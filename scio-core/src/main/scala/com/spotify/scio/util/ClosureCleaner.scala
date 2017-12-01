@@ -139,21 +139,17 @@ private class TransitiveClosureCleaner(val func: AnyRef) extends ClosureCleaner 
       getOutersOf(myOuter, (outerType, myOuter) :: hierarchy)
   }
 
-  private def classReader(cls: Class[_]): ClassReader = {
-    val className = cls.getName.replaceFirst("^.*\\.", "") + ".class"
-    new ClassReader(cls.getResourceAsStream(className))
-  }
-
   private def innerClasses: Set[Class[_]] = {
     val seen = MSet[Class[_]](funcClass)
     val stack = MStack[Class[_]](funcClass)
     while (stack.nonEmpty) {
-      val cr = classReader(stack.pop())
+      val cr = AsmUtil.classReader(stack.pop())
       val set = MSet[Class[_]]()
-      cr.accept(new InnerClosureFinder(set), 0)
-      (set -- seen).foreach { cls =>
-        seen += cls
-        stack.push(cls)
+      cr.foreach { reader => reader.accept(new InnerClosureFinder(set), 0)
+        (set -- seen).foreach { cls =>
+          seen += cls
+          stack.push(cls)
+        }
       }
     }
     (seen - funcClass).toSet
@@ -164,8 +160,9 @@ private class TransitiveClosureCleaner(val func: AnyRef) extends ClosureCleaner 
       .foldLeft(MMap[Class[_], MSet[String]]()) { (m, cls) =>
         m += ((cls, MSet[String]()))
       }
-    (innerClasses + funcClass).foreach(classReader(_).accept(
-      new AccessedFieldsVisitor(af)(classReader), 0))
+    (innerClasses + funcClass).foreach(AsmUtil.classReader(_).foreach { reader =>
+      reader.accept(new AccessedFieldsVisitor(af), 0)
+    })
     af
   }
 
@@ -186,7 +183,7 @@ private case class MethodIdentifier[T](cls: Class[T], name: String, desc: String
 private class AccessedFieldsVisitor(output: MMap[Class[_], MSet[String]],
                                     specificMethod: Option[MethodIdentifier[_]] = None,
                                     visitedMethods: MSet[MethodIdentifier[_]] = MSet.empty)
-                                   (clsReader: Class[_] => ClassReader) extends ClassVisitor(ASM5) {
+  extends ClassVisitor(ASM5) {
   override def visitMethod(access: Int, name: String, desc: String,
                            sig: String, exceptions: Array[String]): MethodVisitor = {
     if (specificMethod.isDefined &&
@@ -214,8 +211,9 @@ private class AccessedFieldsVisitor(output: MMap[Class[_], MSet[String]],
             if (!visitedMethods.contains(m)) {
               // Keep track of visited methods to avoid potential infinite cycles
               visitedMethods += m
-              clsReader(cl).accept(
-                new AccessedFieldsVisitor(output, Some(m), visitedMethods)(clsReader), 0)
+              AsmUtil.classReader(cl).foreach { reader =>
+                reader.accept(new AccessedFieldsVisitor(output, Some(m), visitedMethods), 0)
+              }
             }
           }
         }
@@ -224,7 +222,7 @@ private class AccessedFieldsVisitor(output: MMap[Class[_], MSet[String]],
   }
 }
 
-class InnerClosureFinder(output: MSet[Class[_]]) extends ClassVisitor(ASM5) {
+private class InnerClosureFinder(output: MSet[Class[_]]) extends ClassVisitor(ASM5) {
   var myName: String = _
 
   override def visit(version: Int, access: Int, name: String, sig: String,
@@ -246,4 +244,11 @@ class InnerClosureFinder(output: MSet[Class[_]]) extends ClassVisitor(ASM5) {
         }
       }
     }
+}
+
+private object AsmUtil {
+  def classReader(cls: Class[_]): Option[ClassReader] = {
+    val className = cls.getName.replaceFirst("^.*\\.", "") + ".class"
+    Try(new ClassReader(cls.getResourceAsStream(className))).toOption
+  }
 }
