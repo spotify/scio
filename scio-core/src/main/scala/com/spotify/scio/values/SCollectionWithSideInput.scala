@@ -21,6 +21,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.util.FunctionsWithSideInput.SideInputDoFn
 import com.spotify.scio.util.{ClosureCleaner, FunctionsWithSideInput}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{PCollection, TupleTag, TupleTagList}
 
@@ -92,9 +93,9 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
       val g = ClosureCleaner(f) // defeat closure
 
       @ProcessElement
-      private[scio] def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
+      private[scio] def processElement(c: DoFn[T, T]#ProcessContext, w: BoundedWindow): Unit = {
         val elem = c.element()
-        val partition = g(elem, sideInputContext(c))
+        val partition = g(elem, sideInputContext(c, w))
         if (!partitions.exists(_.tupleTag == partition.tupleTag)) {
           throw new IllegalStateException(s"""${partition.tupleTag.getId} is not part of
             ${partitions.map(_.tupleTag.getId).mkString}""")

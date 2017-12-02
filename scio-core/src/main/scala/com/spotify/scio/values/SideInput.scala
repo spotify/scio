@@ -22,6 +22,7 @@ import java.util.{List => JList, Map => JMap}
 
 import com.spotify.scio.util.JMapWrapper
 import org.apache.beam.sdk.transforms.DoFn
+import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.values.PCollectionView
 
 import scala.collection.JavaConverters._
@@ -29,12 +30,12 @@ import scala.collection.JavaConverters._
 /** Encapsulate an SCollection when it is being used as a side input. */
 trait SideInput[T] extends Serializable {
   private var cache: T = _
-  private var context: AnyRef = _
+  @transient private var window: BoundedWindow = _
 
   private[values] def get[I, O](context: DoFn[I, O]#ProcessContext): T
-  def getCache[I, O](context: DoFn[I, O]#ProcessContext): T = {
-    if (cache == null || this.context.ne(context)) {
-      this.context = context
+  def getCache[I, O](context: DoFn[I, O]#ProcessContext, window: BoundedWindow): T = {
+    if (cache == null || this.window != window) {
+      this.window = window
       cache = get(context)
     }
     cache
@@ -109,7 +110,8 @@ private[values] class MultiMapSideInput[K, V](val view: PCollectionView[JMap[K, 
 }
 
 /** Encapsulate context of one or more [[SideInput]]s in an [[SCollectionWithSideInput]]. */
-class SideInputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessContext) {
+class SideInputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessContext,
+                                         val window: BoundedWindow) {
   /** Extract the value of a given [[SideInput]]. */
-  def apply[S](side: SideInput[S]): S = side.getCache(context)
+  def apply[S](side: SideInput[S]): S = side.getCache(context, window)
 }
