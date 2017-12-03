@@ -17,13 +17,11 @@
 
 package com.spotify.scio.pubsub
 
-import java.util.concurrent.Executors
-
 import com.google.pubsub.v1.PublisherGrpc.PublisherBlockingStub
 import com.google.pubsub.v1.SubscriberGrpc.SubscriberBlockingStub
 import com.google.pubsub.v1.{PublisherGrpc, SubscriberGrpc, Subscription, Topic}
 import io.grpc.ManagedChannel
-import io.grpc.auth.ClientAuthInterceptor
+import io.grpc.auth.MoreCallCredentials
 import io.grpc.netty.{GrpcSslContexts, NegotiationType, NettyChannelBuilder}
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubOptions
 
@@ -33,19 +31,18 @@ object PubSubAdmin {
 
   private object GrpcClient {
     private def newChannel(pubsubOptions: PubsubOptions): ManagedChannel = {
-      val interceptor =
-        new ClientAuthInterceptor(pubsubOptions.getGcpCredential, Executors.newSingleThreadExecutor)
       NettyChannelBuilder
         .forAddress("pubsub.googleapis.com", 443)
         .negotiationType(NegotiationType.TLS)
         .sslContext(GrpcSslContexts.forClient.ciphers(null).build)
-        .intercept(interceptor)
         .build
     }
 
     def subscriber[A](pubsubOptions: PubsubOptions)(f: SubscriberBlockingStub => A): Try[A] = {
       val channel = newChannel(pubsubOptions)
-      val client = SubscriberGrpc.newBlockingStub(channel)
+      val client = SubscriberGrpc
+        .newBlockingStub(channel)
+        .withCallCredentials(MoreCallCredentials.from(pubsubOptions.getGcpCredential))
 
       val result = Try(f(client))
       channel.shutdownNow()
@@ -54,7 +51,9 @@ object PubSubAdmin {
 
     def publisher[A](pubsubOptions: PubsubOptions)(f: PublisherBlockingStub => A): Try[A] = {
       val channel = newChannel(pubsubOptions)
-      val client = PublisherGrpc.newBlockingStub(channel)
+      val client = PublisherGrpc
+        .newBlockingStub(channel)
+        .withCallCredentials(MoreCallCredentials.from(pubsubOptions.getGcpCredential))
 
       val result = Try(f(client))
       channel.shutdownNow()
