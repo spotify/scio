@@ -15,10 +15,9 @@
  * under the License.
  */
 
-import sbt._
+import sbt.{Def, _}
 import Keys._
 import sbtassembly.AssemblyPlugin.autoImport._
-import com.typesafe.sbt.SbtSite.SiteKeys._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 
 val beamVersion = "2.2.0"
@@ -185,6 +184,29 @@ lazy val paradiseDependency =
 lazy val macroSettings = Seq(
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
   addCompilerPlugin(paradiseDependency)
+)
+
+lazy val directRunnerDependency =
+  "org.apache.beam" % "beam-runners-direct-java" % beamVersion
+lazy val dataflowRunnerDependency =
+  "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion
+lazy val beamRunners = settingKey[Seq[ModuleID]]("beam runners")
+
+def beamRunnerSettings: Seq[Setting[_]] = Seq(
+  beamRunners := {
+    sys.props.get("beamRunners")
+      .orElse(sys.env.get("BEAM_RUNNERS"))
+      .map(_.split(","))
+      .map {
+        _.flatMap {
+          case "DirectRunner" => Some(directRunnerDependency)
+          case "DataflowRunner" => Some(dataflowRunnerDependency)
+          case unkown => None
+        }.toSeq
+      }
+      .getOrElse(Seq(directRunnerDependency))
+  },
+  libraryDependencies ++= beamRunners.value
 )
 
 lazy val root: Project = Project(
@@ -510,9 +532,8 @@ lazy val scioExamples: Project = Project(
   "scio-examples",
   file("scio-examples")
 ).settings(
-  commonSettings ++ noPublishSettings ++ soccoSettings,
+  commonSettings ++ noPublishSettings ++ soccoSettings ++ beamRunnerSettings,
   libraryDependencies ++= Seq(
-    "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
     "me.lyh" %% "shapeless-datatype-avro" % shapelessDatatypeVersion,
     "me.lyh" %% "shapeless-datatype-datastore_1.3" % shapelessDatatypeVersion,
     "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
@@ -529,7 +550,6 @@ lazy val scioExamples: Project = Project(
   scioBigtable,
   scioSchemas,
   scioJdbc,
-  scioElasticsearch5,
   scioExtra,
   scioTensorFlow,
   scioTest % "test"
