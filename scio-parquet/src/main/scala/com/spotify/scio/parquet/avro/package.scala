@@ -86,7 +86,8 @@ package object avro {
                                                    projection: Schema,
                                                    predicate: FilterPredicate) {
     /**
-     * Get an SCollection by applying a function to all Parquet Avro records of this Parquet file.
+     * Return a new SCollection by applying a function to all Parquet Avro records of this Parquet
+     * file.
      */
     def map[U: ClassTag](f: T => U): SCollection[U] = if (self.isTest) {
       self.getTestInput(AvroIO[U](path))
@@ -127,6 +128,17 @@ package object avro {
         .wrap(self.applyInternal(source))
         .map(_.getValue)
     }
+
+    /**
+     * Return a new SCollection by first applying a function to all Parquet Avro records of
+     * this Parquet file, and then flattening the results.
+     */
+    def flatMap[U: ClassTag](f: T => TraversableOnce[U]): SCollection[U] =
+      this
+        // HadoopInputFormatIO does not support custom coder, force SerializableCoder
+        .map(x => f(x).asInstanceOf[Serializable])
+        .asInstanceOf[SCollection[TraversableOnce[U]]]
+        .flatten
 
     private def setInputPaths(job: Job, path: String): Unit = {
       // This is needed since `FileInputFormat.setInputPaths` validates paths locally and requires

@@ -111,7 +111,9 @@ class ParquetAvroTest extends TapSpec with BeforeAndAfterAll {
     val sc2 = ScioContext()
     val projection = Projection[Account](_.getName)
     val data = sc2.parquetAvroFile[Account](dir + "/*.parquet", projection = projection)
-    data.map(_.getName.toString) should containInAnyOrder (nestedRecords.map(_.getName.toString))
+    val expected = nestedRecords.map(_.getName.toString)
+    data.map(_.getName.toString) should containInAnyOrder (expected)
+    data.flatMap(a => Some(a.getName.toString)) should containInAnyOrder (expected)
     sc2.close()
 
     FileUtils.deleteDirectory(dir)
