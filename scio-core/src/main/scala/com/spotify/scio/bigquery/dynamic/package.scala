@@ -40,20 +40,23 @@ import scala.reflect.runtime.universe._
  */
 package object dynamic {
 
+  /**
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
+   * destinations methods.
+   */
   implicit class DynamicBigQuerySCollection[T](val self: SCollection[T]) extends AnyVal {
 
     /**
-     * Save this SCollection to dynamic BigQuery tables using the table and schema
-     * specified by the [[org.apache.beam.sdk.io.gcp.bigquery.DynamicDestinations]] object.
+     * Save this SCollection to dynamic BigQuery tables using the table and schema specified by the
+     * [[org.apache.beam.sdk.io.gcp.bigquery.DynamicDestinations DynamicDestinations]].
      */
-    def saveAsBigQuery(name: String,
-                       destinations: DynamicDestinations[T, _],
+    def saveAsBigQuery(destinations: DynamicDestinations[T, _],
                        formatFn: T => TableRow,
                        writeDisposition: WriteDisposition,
                        createDisposition: CreateDisposition): Future[Tap[T]] = {
       if (self.context.isTest) {
           throw new NotImplementedError(
-            "BigQuery with dynamic destinations cant be used in a test context")
+            "BigQuery with dynamic destinations cannot be used in a test context")
       } else {
         var transform = bqio.BigQueryIO.write()
           .to(destinations)
@@ -76,14 +79,12 @@ package object dynamic {
      * Note that elements must be of type
      * [[com.google.api.services.bigquery.model.TableRow TableRow]].
      */
-    def saveAsBigQuery(name: String,
-                       tableFn: ValueInSingleWindow[T] => TableDestination,
-                       schema: TableSchema,
+    def saveAsBigQuery(schema: TableSchema,
                        writeDisposition: WriteDisposition,
                        createDisposition: CreateDisposition)
+                      (tableFn: ValueInSingleWindow[T] => TableDestination)
                       (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
       saveAsBigQuery(
-        name,
         DynamicDestinationsUtil.tableFn(tableFn, schema),
         (t: T) => t.asInstanceOf[TableRow],
         writeDisposition,
@@ -96,17 +97,15 @@ package object dynamic {
      * Note that element type `T` must be annotated with
      * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
      */
-    def saveAsTypedBigQuery(name: String,
-                            tableFn: ValueInSingleWindow[T] => TableDestination,
-                            writeDisposition: WriteDisposition,
+    def saveAsTypedBigQuery(writeDisposition: WriteDisposition,
                             createDisposition: CreateDisposition)
+                           (tableFn: ValueInSingleWindow[T] => TableDestination)
                            (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
     : Future[Tap[T]] = {
       val bqt = BigQueryType[T]
       val destinations = DynamicDestinationsUtil.tableFn(tableFn, bqt.schema)
 
       saveAsBigQuery(
-        name,
         destinations,
         bqt.toTableRow,
         writeDisposition,
