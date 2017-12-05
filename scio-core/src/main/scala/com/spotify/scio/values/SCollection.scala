@@ -911,13 +911,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       saveAsInMemoryTap
     } else {
       val cls = ScioUtil.classOf[T]
-      if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-        val t = gio.AvroIO.write(cls)
-        this.applyInternal(avroOut(t, path, numShards, suffix, codec, metadata))
+      val t = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+        gio.AvroIO.write(cls)
       } else {
-        val t = gio.AvroIO.writeGenericRecords(schema).asInstanceOf[gio.AvroIO.Write[T]]
-        this.applyInternal(avroOut(t, path, numShards, suffix, codec, metadata))
+        gio.AvroIO.writeGenericRecords(schema).asInstanceOf[gio.AvroIO.Write[T]]
       }
+      this.applyInternal(avroOut(t, path, numShards, suffix, codec, metadata))
       context.makeFuture(AvroTap(ScioUtil.addPartSuffix(path), schema))
     }
 
