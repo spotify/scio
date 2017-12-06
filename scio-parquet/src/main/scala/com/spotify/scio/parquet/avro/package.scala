@@ -37,6 +37,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.parquet.avro.AvroParquetInputFormat
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 import scala.language.implicitConversions
@@ -81,16 +82,19 @@ package object avro {
 
   }
 
-  class ParquetAvroFile[T: ClassTag] private[avro](self: ScioContext,
+  class ParquetAvroFile[T: ClassTag] private[avro](context: ScioContext,
                                                    path: String,
                                                    projection: Schema,
                                                    predicate: FilterPredicate) {
+
+    private val logger = LoggerFactory.getLogger(this.getClass)
+
     /**
      * Return a new SCollection by applying a function to all Parquet Avro records of this Parquet
      * file.
      */
-    def map[U: ClassTag](f: T => U): SCollection[U] = if (self.isTest) {
-      self.getTestInput(AvroIO[U](path))
+    def map[U: ClassTag](f: T => U): SCollection[U] = if (context.isTest) {
+      context.getTestInput(AvroIO[U](path))
     } else {
       val cls = ScioUtil.classOf[T]
       val readSchema = cls.getMethod("getClassSchema").invoke(null).asInstanceOf[Schema]
@@ -117,15 +121,15 @@ package object avro {
         })
         .withValueTranslation(new SimpleFunction[T, U]() {
           // Workaround for incomplete Avro objects
-          // `SCollection#map` might throw NPE on incomplement Avro objects when the runner tries
+          // `SCollection#map` might throw NPE on incomplete Avro objects when the runner tries
           // to serialized them. Lifting the mapping function here fixes the problem.
           val g = ClosureCleaner(f)  // defeat closure
           override def apply(input: T): U = g(input)
           override def getInputTypeDescriptor = TypeDescriptor.of(cls)
           override def getOutputTypeDescriptor = TypeDescriptor.of(uCls)
         })
-      self
-        .wrap(self.applyInternal(source))
+      context
+        .wrap(context.applyInternal(source))
         .map(_.getValue)
     }
 
@@ -140,6 +144,15 @@ package object avro {
         .asInstanceOf[SCollection[TraversableOnce[U]]]
         .flatten
 
+    private def toSCollection: SCollection[T] = {
+      if (projection != null) {
+        logger.warn("Materializing Parquet Avro records with projection may cause " +
+          "NullPointerException. Perform a `map` or `flatMap` immediately after " +
+          "`parquetAvroFile` to map out projected fields.")
+      }
+      this.map(identity)
+    }
+
     private def setInputPaths(job: Job, path: String): Unit = {
       // This is needed since `FileInputFormat.setInputPaths` validates paths locally and requires
       // the user's GCP credentials.
@@ -148,7 +161,7 @@ package object avro {
       FileInputFormat.setInputPaths(job, path)
 
       // It will interfere with credentials in Dataflow workers
-      if (!ScioUtil.isLocalRunner(self.options.getRunner)) {
+      if (!ScioUtil.isLocalRunner(context.options.getRunner)) {
         GcsConnectorUtil.unsetCredentials(job)
       }
     }
@@ -157,9 +170,9 @@ package object avro {
 
   object ParquetAvroFile {
     implicit def parquetAvroFileToSCollection[T: ClassTag](self: ParquetAvroFile[T])
-    : SCollection[T] = self.map(identity)
+    : SCollection[T] = self.toSCollection
     implicit def parquetAvroFileToParquetAvroSCollection[T: ClassTag](self: ParquetAvroFile[T])
-    : ParquetAvroSCollection[T] = new ParquetAvroSCollection(self.map(identity))
+    : ParquetAvroSCollection[T] = new ParquetAvroSCollection(self.toSCollection)
   }
 
   /**
