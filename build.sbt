@@ -15,7 +15,7 @@
  * under the License.
  */
 
-import sbt.{Def, _}
+import sbt._
 import Keys._
 import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
@@ -190,12 +190,15 @@ lazy val directRunnerDependency =
   "org.apache.beam" % "beam-runners-direct-java" % beamVersion
 lazy val dataflowRunnerDependency =
   "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion
-lazy val beamRunners = settingKey[Seq[ModuleID]]("beam runners")
+lazy val beamRunners = settingKey[String]("beam runners")
+lazy val beamRunnersEval = settingKey[Seq[ModuleID]]("beam runners")
 
 def beamRunnerSettings: Seq[Setting[_]] = Seq(
-  beamRunners := {
+  beamRunners := "",
+  beamRunnersEval := {
     sys.props.get("beamRunners")
       .orElse(sys.env.get("BEAM_RUNNERS"))
+      .orElse(Option(beamRunners.value))
       .map(_.split(","))
       .map {
         _.flatMap {
@@ -206,7 +209,7 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
       }
       .getOrElse(Seq(directRunnerDependency))
   },
-  libraryDependencies ++= beamRunners.value
+  libraryDependencies ++= beamRunnersEval.value
 )
 
 lazy val root: Project = Project(
