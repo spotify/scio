@@ -196,9 +196,10 @@ lazy val beamRunnersEval = settingKey[Seq[ModuleID]]("beam runners")
 def beamRunnerSettings: Seq[Setting[_]] = Seq(
   beamRunners := "",
   beamRunnersEval := {
-    sys.props.get("beamRunners")
+    Option(beamRunners.value)
+      .filter(_.nonEmpty)
+      .orElse(sys.props.get("beamRunners"))
       .orElse(sys.env.get("BEAM_RUNNERS"))
-      .orElse(Option(beamRunners.value))
       .map(_.split(","))
       .map {
         _.flatMap {
