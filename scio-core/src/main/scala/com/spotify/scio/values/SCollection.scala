@@ -46,6 +46,7 @@ import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub => psio}
+import org.apache.beam.sdk.io.{Compression, FileBasedSink}
 import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Setup}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
@@ -887,11 +888,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .withCodec(codec)
       .withMetadata(metadata.asJava)
 
-  private[scio] def textOut(path: String, suffix: String, numShards: Int) =
+  private[scio] def textOut(path: String,
+                            suffix: String,
+                            numShards: Int,
+                            compression: Compression) = {
     gio.TextIO.write()
       .to(pathWithShards(path))
       .withSuffix(suffix)
       .withNumShards(numShards)
+      .withWritableByteChannelFactory(FileBasedSink.CompressionType.fromCanonical(compression))
+  }
 
   /**
    * Save this SCollection as an Avro file.
@@ -1171,7 +1177,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * type [[com.google.api.services.bigquery.model.TableRow TableRow]].
    * @group output
    */
-  def saveAsTableRowJsonFile(path: String, numShards: Int = 0)
+  def saveAsTableRowJsonFile(path: String,
+                             numShards: Int = 0,
+                             compression: Compression = Compression.UNCOMPRESSED)
                             (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
     if (context.isTest) {
       context.testOut(TableRowJsonIO(path))(this.asInstanceOf[SCollection[TableRow]])
@@ -1179,7 +1187,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     } else {
       this.asInstanceOf[SCollection[TableRow]]
         .map(e => ScioUtil.jsonFactory.toString(e))
-        .applyInternal(textOut(path, ".json", numShards))
+        .applyInternal(textOut(path, ".json", numShards, compression))
       context.makeFuture(TableRowJsonTap(ScioUtil.addPartSuffix(path)))
     }
   }
@@ -1189,7 +1197,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group output
    */
   def saveAsTextFile(path: String,
-                     suffix: String = ".txt", numShards: Int = 0): Future[Tap[String]] = {
+                     suffix: String = ".txt",
+                     numShards: Int = 0,
+                     compression: Compression = Compression.UNCOMPRESSED)
+  : Future[Tap[String]] = {
     val s = if (classOf[String] isAssignableFrom this.ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
     } else {
@@ -1199,7 +1210,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       context.testOut(TextIO(path))(s)
       s.saveAsInMemoryTap
     } else {
-      s.applyInternal(textOut(path, suffix, numShards))
+      s.applyInternal(textOut(path, suffix, numShards, compression))
       context.makeFuture(TextTap(ScioUtil.addPartSuffix(path)))
     }
   }

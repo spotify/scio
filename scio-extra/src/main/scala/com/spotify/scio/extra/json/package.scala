@@ -26,6 +26,7 @@ import io.circe.Printer
 import io.circe.generic.AutoDerivation
 import io.circe.parser._
 import io.circe.syntax._
+import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.{io => gio}
 
 import scala.concurrent.Future
@@ -85,14 +86,15 @@ package object json extends AutoDerivation {
   (@transient val self: SCollection[T]) extends Serializable {
     def saveAsJsonFile(path: String,
                        printer: Printer = Printer.noSpaces,
-                       numShards: Int = 0): Future[Tap[T]] = {
+                       numShards: Int = 0,
+                       compression: Compression = Compression.UNCOMPRESSED): Future[Tap[T]] = {
       if (self.context.isTest) {
         self.context.testOut(JsonIO[T](path))(self)
         self.saveAsInMemoryTap
       } else {
         self
           .map(x => printer.pretty(x.asJson))
-          .applyInternal(self.textOut(path, ".json", numShards))
+          .applyInternal(self.textOut(path, ".json", numShards, compression))
         implicit val ct = self.ct
         self.context.makeFuture(TextTap(ScioUtil.addPartSuffix(path)).map(decode[T](_).right.get))
       }
