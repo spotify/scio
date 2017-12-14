@@ -470,9 +470,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def subtract(that: SCollection[T]): SCollection[T] = this.transform {
-    _.map((_, 1)).cogroup(that.map((_, 1))).flatMap { t =>
-      if (t._2._1.nonEmpty && t._2._2.isEmpty) Seq(t._1) else Seq.empty
-    }
+    _.map((_, ())).subtractByKey(that).keys
   }
 
   /**

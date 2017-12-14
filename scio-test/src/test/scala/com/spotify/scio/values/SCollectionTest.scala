@@ -336,7 +336,7 @@ class SCollectionTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(1, 2, 3, 4, 5, 1, 3, 5))
       val p2 = sc.parallelize(Seq(2, 4, 6, 8, 10))
       val p = p1.subtract(p2)
-      p should containInAnyOrder (Seq(1, 3, 5))
+      p should containInAnyOrder (Seq(1, 3, 5, 1, 3, 5))
     }
   }
 
