@@ -21,46 +21,78 @@ import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
 import org.apache.beam.sdk.{io => gio}
 
-/*
-SBT
-runMain
-  com.spotify.scio.examples.extra.TsvExample
-  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://apache-beam-samples/shakespeare/kinglear.txt
-  --output=gs://[BUCKET]/[PATH]/wordcount
-*/
+// Example: Word Count Example writing to TSV file
+// Usage:
 
-/**
- * Word count example writing to TSV file.
- * To read TSV/CSV see the TrafficRoutes.scala example.
- * Currently there is no simple way on Beam SDK to read TSV/CSV skiping header row.
- * See:
- * - https://issues.apache.org/jira/browse/BEAM-51
- * - https://issues.apache.org/jira/browse/BEAM-123
- */
-object TsvExample {
-
-  private def pathWithShards(path: String) =
-    path.replaceAll("\\/+$", "") + "/part"
-
+// `sbt runMain "com.spotify.scio.examples.extra.TsvExampleWrite
+//   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+//   --input=gs://apache-beam-samples/shakespeare/kinglear.txt
+//   --output=gs://[BUCKET]/[PATH]/wordcount"`
+object TsvExampleWrite {
   def main(cmdlineArgs: Array[String]): Unit = {
+    // Create `ScioContext` and `Args`
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    val output: String = args("output")
+    // Parse input and output path from command line arguments
+    val input = args.getOrElse("input", ExampleData.KING_LEAR)
+    val output = args("output")
 
+    // Create a Write Transformation with tsv suffix, single file and specific header.
     val transform = gio.TextIO.write()
       .to(pathWithShards(output))
       .withSuffix(".tsv")
       .withNumShards(1)
       .withHeader("word\tcount")
 
-    sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
+    // Open text files as an `SCollection[String]`
+    sc.textFile(input)
+      // Split input lines, filter out empty tokens and expand into a collection of tokens
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
+      // Count occurrences of each unique `String` to get `(String, Long)`
       .countByValue
-      .map(t => Seq(t._1, t._2.toString))
-      .map(_.mkString("\t"))
+      // Map `(String, Long)` tuples into strings
+      .map(t => t._1 + "\t" + t._2)
+      // Save result as a text files under the output path
       .saveAsCustomOutput(output, transform)
+
+    // Close the context
     sc.close()
   }
 
+  // Shard output filename generator function. See `TypedWrite.to`.
+  private def pathWithShards(path: String) =
+    path.replaceAll("\\/+$", "") + "/part"
+}
+
+// # Reading TSV data Example
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.extra.TsvExampleRead
+//   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+//   --input=gs://[BUCKET]/word_count_data.tsv
+//   --output=gs://[BUCKET]/[PATH]/word_count_sum"`
+object TsvExampleRead {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    // Create `ScioContext` and `Args`
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+
+    // Open text files as an `SCollection[String]`
+    sc.textFile(args("input"))
+      // Filter out the header
+      .filter(!_.contains("word\tcount"))
+      // Parse TSV data: split text line into separate elements and trim whitespaces
+      .map(l => l.split("\t").map(e => e.trim))
+      // Parse count (second element) as `Int` to get a `SCollection[Long]`
+      .map { e =>
+        // Fail on invalid records
+        assume(e.length == 2, "Invalid record, should be two fields separated by '\\t'")
+        e(1).toLong
+      }
+      // Sum the content to get a single `Long` element in a `SCollection[Long]`
+      .sum
+      // Save result as a text files under the output path
+      .saveAsTextFile(args("output"))
+    // Close the context
+    sc.close()
+  }
 }
