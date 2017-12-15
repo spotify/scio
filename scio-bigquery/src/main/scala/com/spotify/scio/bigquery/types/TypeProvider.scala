@@ -321,7 +321,7 @@ private[types] object TypeProvider {
                                                  caseClassTree: c.universe.Tree,
                                                  name: String): Unit = {
     val owner = c.internal.enclosingOwner.fullName
-    val srcFile = c.macroApplication.pos.source.path
+    val srcFile = c.macroApplication.pos.source.file.canonicalPath
     val hash = genHashForMacro(owner, srcFile)
 
     val prettyCode = pShowCode(c)(records, caseClassTree).mkString("\n")
