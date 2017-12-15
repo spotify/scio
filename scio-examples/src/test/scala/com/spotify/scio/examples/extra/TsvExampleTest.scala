@@ -17,18 +17,27 @@
 
 package com.spotify.scio.examples
 
+import com.spotify.scio.examples.extra.{TsvExampleRead, TsvExampleWrite}
 import com.spotify.scio.testing._
 
 class TsvExampleTest extends PipelineSpec {
 
   val inData = Seq("a b c d e", "a b a b", "")
-  val expected = Seq("a\t3", "b\t3", "c\t1", "d\t1", "e\t1")
+  val tsvData = Seq("a\t3", "b\t3", "c\t1", "d\t1", "e\t1")
 
-  "TsvExample" should "work" in {
-    JobTest[com.spotify.scio.examples.extra.TsvExample.type]
+  "TsvExample" should "write a TSV data" in {
+    JobTest[TsvExampleWrite.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), inData)
-      .output[String](CustomIO("out.txt"))(_ should containInAnyOrder (expected))
+      .output[String](CustomIO("out.txt"))(_ should containInAnyOrder (tsvData))
+      .run()
+  }
+
+  it should "read a TSV data" in {
+    JobTest[TsvExampleRead.type]
+      .args("--input=in.txt", "--output=out.txt")
+      .input(TextIO("in.txt"), tsvData)
+      .output(TextIO("out.txt"))(_ should containSingleValue ("9"))
       .run()
   }
 
