@@ -48,7 +48,7 @@ object WordCount {
     val sumNonEmpty = ScioMetrics.counter("nonEmptyLines")
     val sumEmpty = ScioMetrics.counter("emptyLines")
 
-    // Open text files a `SCollection[String]`
+    // Open text files as an `SCollection[String]`
     sc.textFile(input)
       .map { w =>
         // Trim input lines, update distribution metric

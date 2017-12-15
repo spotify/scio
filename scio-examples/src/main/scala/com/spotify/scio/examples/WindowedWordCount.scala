@@ -54,7 +54,7 @@ object WindowedWordCount {
     val maxTimestamp = args.long(
       "maxTimestampMillis", minTimestamp + Duration.standardHours(1).getMillis)
 
-    // Open text files a `SCollection[String]`
+    // Open text files as an `SCollection[String]`
     sc.textFile(input)
       // Assign random timestamps to each element
       .timestampBy {
@@ -66,7 +66,7 @@ object WindowedWordCount {
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       // Count occurrences of each unique `String` within each window to get `(String, Long)`
       .countByValue
-      // Expose window infomation as `IntervalWindow`
+      // Expose window infomation as a `IntervalWindow`
       .withWindow[IntervalWindow]
       // Swap keys and values, i.e. `((String, Long), IntervalWindow)` => `(IntervalWindow,
       // (String, Long))`
