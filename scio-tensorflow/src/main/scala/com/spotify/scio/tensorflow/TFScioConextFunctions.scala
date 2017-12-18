@@ -19,7 +19,7 @@ package com.spotify.scio.tensorflow
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.TFRecordIO.CompressionType
+import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.{io => gio}
 
 class TFScioConextFunctions(val self: ScioContext) extends AnyVal {
@@ -30,13 +30,13 @@ class TFScioConextFunctions(val self: ScioContext) extends AnyVal {
    * buffers (which contain `org.tensorflow.example.Features` as a field) serialized as bytes.
    * @group input
    */
-  def tfRecordFile(path: String, compressionType: CompressionType = CompressionType.AUTO)
+  def tfRecordFile(path: String, compression: Compression = Compression.AUTO)
   : SCollection[Array[Byte]] = self.requireNotClosed {
     if (self.isTest) {
       self.getTestInput(TFRecordIO(path))
     } else {
       self.wrap(self.applyInternal(gio.TFRecordIO.read().from(path)
-        .withCompressionType(compressionType)))
+          .withCompression(compression)))
     }
   }
 
