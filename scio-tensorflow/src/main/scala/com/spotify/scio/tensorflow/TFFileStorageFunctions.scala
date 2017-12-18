@@ -20,7 +20,7 @@ package com.spotify.scio.tensorflow
 import java.io.InputStream
 
 import com.spotify.scio.io.FileStorage
-import org.apache.beam.sdk.io.TFRecordIO.CompressionType
+import org.apache.beam.sdk.io.Compression
 
 /** File storage functions for Tensorflow TFRecord files. */
 class TFFileStorageFunctions(self: FileStorage) {
@@ -28,7 +28,7 @@ class TFFileStorageFunctions(self: FileStorage) {
   def tfRecordFile: Iterator[Array[Byte]] = {
     new Iterator[Array[Byte]] {
       private def wrapInputStream(in: InputStream) =
-        TFRecordCodec.wrapInputStream(in, CompressionType.AUTO)
+        TFRecordCodec.wrapInputStream(in, Compression.AUTO)
       private val input = self.getDirectoryInputStream(self.path, wrapInputStream)
       private var current: Array[Byte] = TFRecordCodec.read(input)
       override def hasNext: Boolean = current != null

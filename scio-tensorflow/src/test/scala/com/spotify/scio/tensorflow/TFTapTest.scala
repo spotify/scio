@@ -22,7 +22,7 @@ import java.util.UUID
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.TapSpec
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
-import org.apache.beam.sdk.io.TFRecordIO.CompressionType
+import org.apache.beam.sdk.io.Compression
 import org.apache.commons.io.FileUtils
 import shapeless.datatype.tensorflow._
 
@@ -41,14 +41,14 @@ class TFTapTest extends TapSpec {
 
   "SCollection" should "support saveAsTFRecordFile" in {
     val data = Seq.fill(100)(UUID.randomUUID().toString)
-    import org.apache.beam.sdk.io.TFRecordIO.{CompressionType => CType}
-    for (compressionType <- Seq(CType.NONE, CType.ZLIB, CType.GZIP)) {
+    import org.apache.beam.sdk.io.{Compression => CType}
+    for (compressionType <- Seq(CType.UNCOMPRESSED, CType.DEFLATE, CType.GZIP)) {
       val dir = tmpDir
       val t = runWithFileFuture {
         _
           .parallelize(data)
           .map(_.getBytes)
-          .saveAsTfRecordFile(dir.getPath, compressionType = compressionType)
+          .saveAsTfRecordFile(dir.getPath, compression = compressionType)
       }
       verifyTap(t.map(new String(_)), data.toSet)
       FileUtils.deleteDirectory(dir)
@@ -57,9 +57,9 @@ class TFTapTest extends TapSpec {
 
   it should "support saveAsTfExampleFile with case class or Seq feature spec" in {
     val examples = getDummyExample
-    import org.apache.beam.sdk.io.TFRecordIO.{CompressionType => CType}
+    import org.apache.beam.sdk.io.{Compression => CType}
     for (
-      compressionType <- Seq(CType.NONE, CType.ZLIB, CType.GZIP);
+      compressionType <- Seq(CType.UNCOMPRESSED, CType.DEFLATE, CType.GZIP);
       featureSpec <- Seq(
         FeatureDesc.fromCaseClass[TestFeatureSpec.TestFeatures],
         FeatureDesc.fromSeq(Seq("f1", "f2")))
@@ -70,7 +70,7 @@ class TFTapTest extends TapSpec {
           .saveAsTfExampleFile(
             dir.getPath,
             featureSpec,
-            compressionType = compressionType)
+            compression = compressionType)
       sc.close().waitUntilDone()
       verifyTap(out.waitForResult(), examples.toSet)
       verifyTap(spec.waitForResult(), Set("f1", "f2"))
@@ -80,8 +80,8 @@ class TFTapTest extends TapSpec {
 
   it should "support saveAsTfExampleFile with SCollection based feature spec" in {
     val examples = getDummyExample
-    import org.apache.beam.sdk.io.TFRecordIO.{CompressionType => CType}
-    for (compressionType <- Seq(CType.NONE, CType.ZLIB, CType.GZIP)) {
+    import org.apache.beam.sdk.io.{Compression => CType}
+    for (compressionType <- Seq(CType.UNCOMPRESSED, CType.DEFLATE, CType.GZIP)) {
       val dir = tmpDir
       val sc = ScioContext()
       val featureSpec = sc.parallelize(Option(Seq("f1", "f2")))
@@ -89,7 +89,7 @@ class TFTapTest extends TapSpec {
         .saveAsTfExampleFile(
           dir.getPath,
           FeatureDesc.fromSCollection(featureSpec),
-          compressionType = compressionType)
+          compression = compressionType)
       sc.close().waitUntilDone()
       verifyTap(out.waitForResult(), examples.toSet)
       verifyTap(spec.waitForResult(), Set("f1", "f2"))
@@ -111,7 +111,7 @@ class TFTapTest extends TapSpec {
         .saveAsTfExampleFile(
           dir.getPath,
           FeatureDesc.fromSCollection(featureSpec),
-          compressionType = CompressionType.NONE)
+          compression = Compression.UNCOMPRESSED)
       sc.close()
     } should have message s"java.lang.IllegalArgumentException: requirement failed: Feature description must contain a single element"
     // scalastyle:on no.whitespace.before.left.bracket

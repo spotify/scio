@@ -18,12 +18,13 @@
 package com.spotify.scio.tensorflow
 
 import java.io.{InputStream, PushbackInputStream}
+import java.nio.channels.Channels
 import java.nio.{ByteBuffer, ByteOrder}
 import java.util.zip.GZIPInputStream
 
 import com.google.common.hash.Hashing
 import com.google.common.primitives.Ints
-import org.apache.beam.sdk.io.TFRecordIO.CompressionType
+import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.repackaged.org.apache.commons.compress.compressors.deflate._
 import org.apache.commons.compress.compressors.gzip._
 
@@ -70,12 +71,12 @@ private object TFRecordCodec {
     if (n <= 0) null else data
   }
 
-  def wrapInputStream(stream: InputStream, compressionType: CompressionType): InputStream = {
+  def wrapInputStream(stream: InputStream, compression: Compression): InputStream = {
     val deflateParam = new DeflateParameters()
     deflateParam.setWithZlibHeader(true)
 
-    compressionType match {
-      case CompressionType.AUTO =>
+    compression match {
+      case Compression.AUTO =>
         val pushback = new PushbackInputStream(stream, 2)
         if (isInflaterInputStream(pushback)) {
           new DeflateCompressorInputStream(pushback, deflateParam)
@@ -84,9 +85,8 @@ private object TFRecordCodec {
         } else {
           pushback
         }
-      case CompressionType.NONE => stream
-      case CompressionType.ZLIB => new DeflateCompressorInputStream(stream, deflateParam)
-      case CompressionType.GZIP => new GzipCompressorInputStream(stream)
+      case Compression.UNCOMPRESSED => stream
+      case _ => Channels.newInputStream(compression.readDecompressed(Channels.newChannel(stream)))
     }
   }
 
