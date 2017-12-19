@@ -140,7 +140,8 @@ object ScioContext {
 
   /** Parse PipelineOptions and application arguments from command line arguments. */
   @tailrec
-  def parseArguments[T <: PipelineOptions : ClassTag](cmdlineArgs: Array[String])
+  def parseArguments[T <: PipelineOptions : ClassTag](cmdlineArgs: Array[String],
+                                                      withValidation: Boolean = false)
   : (T, Args) = {
     val optClass = ScioUtil.classOf[T]
 
@@ -162,7 +163,12 @@ object ScioContext {
     val (optArgs, appArgs) =
       cmdlineArgs.partition(arg => optPatterns.exists(_.findFirstIn(arg).isDefined))
 
-    val pipelineOpts = PipelineOptionsFactory.fromArgs(optArgs: _*).as(optClass)
+    val pipelineOpts = if(withValidation) {
+      PipelineOptionsFactory.fromArgs(optArgs: _*).withValidation().as(optClass)
+    } else {
+      PipelineOptionsFactory.fromArgs(optArgs: _*).as(optClass)
+    }
+
     val optionsFile = pipelineOpts.as(classOf[ScioOptions]).getOptionsFile
     if (optionsFile != null) {
       log.info(s"Appending options from $optionsFile")
