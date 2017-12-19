@@ -28,7 +28,7 @@ import scala.reflect.ClassTag;
 public interface TestValidationOptions extends PipelineOptions {
 
   @Validation.Required
-  @Description("Required argumet to test validation")
+  @Description("Required argument to test validation")
   String getRequiredArgument();
   void setRequiredArgument(String requiredArgument);
 }
