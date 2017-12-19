@@ -23,7 +23,7 @@ import java.nio.file.Files
 import com.google.common.collect.Lists
 import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
-import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.testing.{PipelineSpec, TestValidationOptions}
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
@@ -134,6 +134,12 @@ class ScioContextTest extends PipelineSpec {
     val (_, arg) = ScioContext.parseArguments[PipelineOptions](
       Array(s"--optionsFile=${optionsFile.getAbsolutePath}"))
     arg("foo") shouldBe "bar"
+  }
+
+  it should "invalidate options where required arguments are missing" in {
+    assertThrows[IllegalArgumentException] {
+      ScioContext.parseArguments[TestValidationOptions](Array("--foo=bar"), true)
+    }
   }
 
 }
