@@ -136,7 +136,7 @@ class ScioContextTest extends PipelineSpec {
     arg("foo") shouldBe "bar"
   }
 
-  it should "invalidate options in which required arguments is missing" in {
+  it should "invalidate options where required arguments are missing" in {
     assertThrows[IllegalArgumentException] {
       ScioContext.parseArguments[TestValidationOptions](Array("--foo=bar"), true)
     }
