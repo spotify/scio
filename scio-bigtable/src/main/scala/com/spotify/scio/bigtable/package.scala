@@ -30,6 +30,7 @@ import org.joda.time.Duration
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 /**
  * Main package for Bigtable APIs. Import all.
@@ -272,5 +273,11 @@ package object bigtable {
 
   case class BigtableOutput[T <: Mutation](projectId: String, instanceId: String, tableId: String)
     extends TestIO[(ByteString, Iterable[T])](s"$projectId\t$instanceId\t$tableId")
+
+  /** Enhanced version of `BigtableDoFn.Try` with convenience methods. */
+  implicit class RichBigtableDoFnTry[A](val self: BigtableDoFn.Try[A]) extends AnyVal {
+    /** Convert this `BigtableDoFn.Try` to a Scala `Try`. */
+    def asScala: Try[A] = if (self.isSuccess) Success(self.get()) else Failure(self.getException)
+  }
 
 }

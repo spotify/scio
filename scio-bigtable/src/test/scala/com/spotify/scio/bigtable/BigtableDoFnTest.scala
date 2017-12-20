@@ -33,14 +33,28 @@ class BigtableDoFnTest extends FlatSpec with Matchers {
   "BigtableDoFn" should "work" in {
     val fn = new TestBigtableDoFn
     val output = DoFnTester.of(fn).processBundle((1 to 10).asJava)
-    output shouldBe (1 to 10).map(x => KV.of(x, x.toString)).asJava
+      .asScala.map(kv => (kv.getKey, kv.getValue.get()))
+    output shouldBe (1 to 10).map(x => (x, x.toString))
   }
 
   it should "work with cache" in {
     val fn = new TestCachingBigtableDoFn
     val output = DoFnTester.of(fn).processBundle(((1 to 10) ++ (5 to 15)).asJava)
-    output shouldBe ((1 to 10) ++ (5 to 15)).map(x => KV.of(x, x.toString)).asJava
+      .asScala.map(kv => (kv.getKey, kv.getValue.get()))
+    output shouldBe ((1 to 10) ++ (5 to 15)).map(x => (x, x.toString))
     BigtableDoFnTest.queue shouldBe (1 to 15)
+  }
+
+  it should "work with failures" in {
+    val fn = new TestFailingBigtableDoFn
+    val output = DoFnTester.of(fn).processBundle((1 to 10).asJava).asScala.map { kv =>
+      val v = kv.getValue
+      (kv.getKey, if (v.isSuccess) v.get() else v.getException.getMessage)
+    }
+    output shouldBe (1 to 10).map { x =>
+      val prefix = if (x % 2 == 0) "success" else "failure"
+      (x, prefix + x.toString)
+    }
   }
 }
 
@@ -58,6 +72,15 @@ class TestCachingBigtableDoFn extends BigtableDoFn[Int, String](null, 100, new T
     BigtableDoFnTest.queue.enqueue(input)
     Futures.immediateFuture(input.toString)
   }
+}
+
+class TestFailingBigtableDoFn extends BigtableDoFn[Int, String](null) {
+  override def asyncLookup(session: BigtableSession, input: Int): ListenableFuture[String] =
+    if (input % 2 == 0) {
+      Futures.immediateFuture("success" + input)
+    } else {
+      Futures.immediateFailedFuture(new RuntimeException("failure" + input))
+    }
 }
 
 class TestCacheSupplier extends CacheSupplier[Int, String, java.lang.Long] {

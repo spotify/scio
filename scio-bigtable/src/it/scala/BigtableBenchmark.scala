@@ -26,6 +26,9 @@ import com.spotify.scio._
 import com.spotify.scio.bigtable._
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
+import org.apache.beam.sdk.values.KV
+
+import scala.util.{Failure, Success}
 
 object BigtableBenchmark {
   val projectId: String = "scio-playground"
@@ -65,27 +68,41 @@ object BigtableBenchmark {
     }
   }
 
-  def bigtableLookup(session: BigtableSession, input: String): ListenableFuture[String] = {
-    val s = input
-    val key = ByteString.copyFromUtf8(s"key-$s")
-    val expected = ByteString.copyFromUtf8(s"val-$s")
-    val request = readRowsRequestTemplate.toBuilder
-      .setRows(RowSet.newBuilder().addRowKeys(key).build())
-      .build()
-    val future = session.getDataClient.readFlatRowsAsync(request)
-    Futures.transform(future,
-      new com.google.common.base.Function[java.util.List[FlatRow], String] {
-        override def apply(input: java.util.List[FlatRow]) = {
-          val result = input
-          assert(result.size() == 1)
-          val cells = result.get(0).getCells
-          assert(result.get(0).getCells.size() == 1)
-          val value = cells.get(0).getValue
-          assert(value == expected)
-          value.toStringUtf8
-        }
-      })
-  }
+  def bigtableLookup(session: BigtableSession, input: String): ListenableFuture[String] =
+    if (input.endsWith("0000000000")) {
+      Futures.immediateFailedFuture(new RuntimeException(input))
+    } else {
+      val s = input
+      val key = ByteString.copyFromUtf8(s"key-$s")
+      val expected = ByteString.copyFromUtf8(s"val-$s")
+      val request = readRowsRequestTemplate.toBuilder
+        .setRows(RowSet.newBuilder().addRowKeys(key).build())
+        .build()
+      val future = session.getDataClient.readFlatRowsAsync(request)
+      Futures.transform(future,
+        new com.google.common.base.Function[java.util.List[FlatRow], String] {
+          override def apply(input: java.util.List[FlatRow]) = {
+            val result = input
+            assert(result.size() == 1)
+            val cells = result.get(0).getCells
+            assert(result.get(0).getCells.size() == 1)
+            val value = cells.get(0).getValue
+            assert(value == expected)
+            value.toStringUtf8
+          }
+        })
+    }
+
+  def checkResult(kv: KV[String, BigtableDoFn.Try[String]]): (Int, Int) =
+    kv.getValue.asScala match {
+      case Success(value) =>
+        require(kv.getKey == value.substring(4))
+        (1, 0)
+      case Failure(exception) =>
+        require(kv.getKey.endsWith("0000000000"))
+        require(kv.getKey == exception.getMessage)
+        (0, 1)
+    }
 }
 
 // Generate 52 million key value pairs
@@ -119,7 +136,8 @@ object AsyncBigtableRead {
         override def asyncLookup(session: BigtableSession, input: String) =
           bigtableLookup(session, input)
       }))
-      .count
+      .map(checkResult)
+      .sum
     sc.close()
   }
 }
@@ -144,7 +162,8 @@ object AsyncCachingBigtableRead {
         override def asyncLookup(session: BigtableSession, input: String) =
           bigtableLookup(session, input)
       }))
-      .count
+      .map(checkResult)
+      .sum
     sc.close()
   }
 }
@@ -163,7 +182,8 @@ object BlockingBigtableRead {
           Futures.immediateFuture(output)
         }
       }))
-      .count
+      .map(checkResult)
+      .sum
     sc.close()
   }
 }
@@ -190,7 +210,8 @@ object BlockingCachingBigtableRead {
           Futures.immediateFuture(output)
         }
       }))
-      .count
+      .map(checkResult)
+      .sum
     sc.close()
   }
 }

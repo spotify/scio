@@ -49,7 +49,7 @@ import java.util.function.Consumer;
  * @param <A> input element type.
  * @param <B> Bigtable lookup value type.
  */
-public abstract class BigtableDoFn<A, B> extends DoFn<A, KV<A, B>> {
+public abstract class BigtableDoFn<A, B> extends DoFn<A, KV<A, BigtableDoFn.Try<B>>> {
   private static final Logger LOG = LoggerFactory.getLogger(BigtableDoFn.class);
 
   // DoFn is deserialized once per CPU core. We assign a unique UUID to each DoFn instance upon
@@ -66,7 +66,6 @@ public abstract class BigtableDoFn<A, B> extends DoFn<A, KV<A, B>> {
   private final Semaphore semaphore;
   private final ConcurrentMap<UUID, ListenableFuture<B>> futures = Maps.newConcurrentMap();
   private final ConcurrentLinkedQueue<Result> results = Queues.newConcurrentLinkedQueue();
-  private final ConcurrentLinkedQueue<Throwable> errors = Queues.newConcurrentLinkedQueue();
   private long requestCount;
   private long resultCount;
 
@@ -132,12 +131,10 @@ public abstract class BigtableDoFn<A, B> extends DoFn<A, KV<A, B>> {
     LOG.info("Start bundle for {}", this);
     futures.clear();
     results.clear();
-    errors.clear();
     requestCount = 0;
     resultCount = 0;
   }
 
-  @SuppressWarnings("unchecked")
   @ProcessElement
   public void processElement(ProcessContext c, BoundedWindow window) {
     flush(r -> c.output(KV.of(r.input, r.output)));
@@ -145,7 +142,7 @@ public abstract class BigtableDoFn<A, B> extends DoFn<A, KV<A, B>> {
     final A input = c.element();
     B cached = cacheSupplier.get(instanceId, input);
     if (cached != null) {
-      c.output(KV.of(input, cached));
+      c.output(KV.of(input, new Try<>(cached)));
       return;
     }
 
@@ -176,7 +173,7 @@ public abstract class BigtableDoFn<A, B> extends DoFn<A, KV<A, B>> {
       @Override
       public void onFailure(Throwable t) {
         semaphore.release();
-        errors.add(t);
+        results.add(new Result(input, new Try<>(t), c.timestamp(), window));
         futures.remove(uuid);
       }
     });
@@ -187,7 +184,7 @@ public abstract class BigtableDoFn<A, B> extends DoFn<A, KV<A, B>> {
       @Override
       public B apply(@Nullable B output) {
         cacheSupplier.put(instanceId, input, output);
-        results.add(new Result(input, output, c.timestamp(), window));
+        results.add(new Result(input, new Try<>(output), c.timestamp(), window));
         futures.remove(uuid);
         return output;
       }
@@ -206,7 +203,7 @@ public abstract class BigtableDoFn<A, B> extends DoFn<A, KV<A, B>> {
     if (!futures.isEmpty()) {
       try {
         // Block until all pending futures are complete
-        Futures.allAsList(futures.values()).get();
+        Futures.successfulAsList(futures.values()).get();
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         LOG.error("Failed to process futures", e);
@@ -224,16 +221,6 @@ public abstract class BigtableDoFn<A, B> extends DoFn<A, KV<A, B>> {
 
   // Flush pending errors and results
   private void flush(Consumer<Result> outputFn) {
-    if (!errors.isEmpty()) {
-      RuntimeException e = new RuntimeException("Failed to process futures");
-      Throwable t = errors.poll();
-      while (t != null) {
-        e.addSuppressed(t);
-        t = errors.poll();
-      }
-      LOG.error("Failed to process futures", e);
-      throw e;
-    }
     Result r = results.poll();
     while (r != null) {
       outputFn.accept(r);
@@ -244,16 +231,52 @@ public abstract class BigtableDoFn<A, B> extends DoFn<A, KV<A, B>> {
 
   private class Result {
     private A input;
-    private B output;
+    private Try<B> output;
     private Instant timestamp;
     private BoundedWindow window;
 
-    Result(A input, B output, Instant timestamp, BoundedWindow window) {
+    Result(A input, Try<B> output, Instant timestamp, BoundedWindow window) {
       this.input  = input;
       this.output = output;
       this.timestamp = timestamp;
       this.window = window;
     }
+  }
+
+  /**
+   * Encapsulate Bigtable lookup that may be success or failure.
+   * @param <A> Bigtable lookup value type.
+   */
+  public static class Try<A> implements Serializable {
+    private final boolean isSuccess;
+    private final A value;
+    private final Throwable exception;
+
+    private Try(A value) {
+      isSuccess = true;
+      this.value = value;
+      this.exception = null;
+    }
+
+    private Try(Throwable exception) {
+      isSuccess = false;
+      this.value = null;
+      this.exception = exception;
+    }
+
+    public A get() {
+      return value;
+    }
+
+    public Throwable getException() {
+      return exception;
+    }
+
+    public boolean isSuccess() {
+      return isSuccess;
+    }
+
+    public boolean isFailure() { return !isSuccess; }
   }
 
   /**
