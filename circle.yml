@@ -2,8 +2,8 @@ machine:
   java:
     version: oraclejdk8
   environment:
-    SBT_OPTS: "-XX:ReservedCodeCacheSize=256m"
-    JAVA_OPTS: "-Xms1g -Xmx2g -Dsun.io.serialization.extendedDebugInfo=true"
+    SBT_OPTS: "-XX:ReservedCodeCacheSize=256m -Xms1g -Xmx2g"
+    JAVA_OPTS: "-Dsun.io.serialization.extendedDebugInfo=true"
     GOOGLE_APPLICATION_CREDENTIALS: "scripts/data-integration-test.json"
 
 dependencies:
