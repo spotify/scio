@@ -50,12 +50,13 @@ private[scio] object ArtisanJoin {
           val result = kv.getValue
           val as = result.getAll(tagA)
           val bs = result.getAll(tagB)
-          val ai = leftFn(as.iterator())
-          while (ai.hasNext) {
-            val a = ai.next()
-            val bi = rightFn(bs.iterator())
-            while (bi.hasNext) {
-              c.output((key, (a, bi.next())))
+          val bi = rightFn(bs.iterator())
+          while (bi.hasNext) {
+            val b = bi.next()
+            val ai = leftFn(as.iterator())
+            while (ai.hasNext) {
+              val a = ai.next()
+              c.output((key, (a, b)))
             }
           }
         }
@@ -82,13 +83,15 @@ private[scio] object ArtisanJoin {
                                                      b: SCollection[(KEY, B)])
   : SCollection[(KEY, (Option[A], Option[B]))] = cogroup(name, a, b)(toOptions, toOptions)
 
+  private val emptyList = java.util.Collections.singletonList(Option.empty)
+
   private def toOptions[A](xs: JIterator[A]): JIterator[Option[A]] =
     if (xs.hasNext) {
       Iterators.transform(xs, new com.google.common.base.Function[A, Option[A]] {
         override def apply(input: A) = Some(input)
       })
     } else {
-      java.util.Collections.singletonList(Option.empty[A]).iterator()
+      emptyList.iterator().asInstanceOf[JIterator[Option[A]]]
     }
 
 }
