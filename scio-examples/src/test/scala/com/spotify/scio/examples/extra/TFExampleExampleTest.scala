@@ -27,23 +27,25 @@ class TFExampleExampleTest extends PipelineSpec {
   val input = Seq("foo", "bar", "foo")
   val output = Seq(WordCountFeatures(3.0f, 2.0f), WordCountFeatures(3.0f, 1.0f))
     .map(featuresType.toExample(_))
-  val featureNameDesc = Seq("wordLength", "count")
+  val featureNameDesc = Seq("{\"version\":1," +
+    "\"features\":[[\"FloatList\",\"count\"],[\"FloatList\",\"wordLength\"]]," +
+    "\"compression\":\"DEFLATE\"}")
 
   "TFExampleExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.TFExampleExample.type]
       .args("--input=in", "--output=out")
       .input(TextIO("in"), input)
       .output(TFExampleIO("out"))(_ should containInAnyOrder (output))
-      .output(TextIO("out/_feature_desc"))(_ should containInAnyOrder (featureNameDesc))
+      .output(TextIO("out/_tf_record_spec.json"))(_ should containInAnyOrder (featureNameDesc))
       .run()
   }
 
   it should "work with custom feature desc path" in {
     JobTest[com.spotify.scio.examples.extra.TFExampleExample.type]
-      .args("--input=in", "--output=out", "--feature-desc-path=out/custom_path_features")
+      .args("--input=in", "--output=out", "--feature-desc-path=out/my_tf_record_spec.json")
       .input(TextIO("in"), input)
       .output(TFExampleIO("out"))(_ should containInAnyOrder (output))
-      .output(TextIO("out/custom_path_features"))(_ should containInAnyOrder (featureNameDesc))
+      .output(TextIO("out/my_tf_record_spec.json"))(_ should containInAnyOrder (featureNameDesc))
       .run()
   }
 

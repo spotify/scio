@@ -21,8 +21,6 @@ import java.util.UUID
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.TapSpec
-import org.apache.beam.sdk.Pipeline.PipelineExecutionException
-import org.apache.beam.sdk.io.Compression
 import org.apache.commons.io.FileUtils
 import shapeless.datatype.tensorflow._
 
@@ -30,7 +28,9 @@ class TFTapTest extends TapSpec {
 
   object TestFeatureSpec {
     val featuresType: TensorFlowType[TestFeatures] = TensorFlowType[TestFeatures]
+
     case class TestFeatures(f1: Float, f2: Float)
+
   }
 
   private def getDummyExample = {
@@ -58,22 +58,20 @@ class TFTapTest extends TapSpec {
   it should "support saveAsTfExampleFile with case class or Seq feature spec" in {
     val examples = getDummyExample
     import org.apache.beam.sdk.io.{Compression => CType}
-    for (
-      compressionType <- Seq(CType.UNCOMPRESSED, CType.DEFLATE, CType.GZIP);
-      featureSpec <- Seq(
-        FeatureDesc.fromCaseClass[TestFeatureSpec.TestFeatures],
-        FeatureDesc.fromSeq(Seq("f1", "f2")))
-        ) {
+    for (compressionType <- Seq(CType.UNCOMPRESSED, CType.DEFLATE, CType.GZIP)) {
       val dir = tmpDir
       val sc = ScioContext()
       val (out, spec) = sc.parallelize(examples)
-          .saveAsTfExampleFile(
-            dir.getPath,
-            featureSpec,
-            compression = compressionType)
+        .saveAsTfExampleFile(
+          dir.getPath,
+          TFRecordSpec.fromCaseClass[TestFeatureSpec.TestFeatures](compressionType))
       sc.close().waitUntilDone()
       verifyTap(out.waitForResult(), examples.toSet)
-      verifyTap(spec.waitForResult(), Set("f1", "f2"))
+      verifyTap(spec.waitForResult(), Set(
+        s"""{"version":1,""" +
+          """"features":[["FloatList","f2"],["FloatList","f1"]],""" +
+          s""""compression":"$compressionType"}"""
+      ))
       FileUtils.deleteDirectory(dir)
     }
   }
@@ -88,35 +86,16 @@ class TFTapTest extends TapSpec {
       val (out, spec) = sc.parallelize(examples)
         .saveAsTfExampleFile(
           dir.getPath,
-          FeatureDesc.fromSCollection(featureSpec),
-          compression = compressionType)
+          TFRecordSpec.fromFeatran(featureSpec, compressionType))
       sc.close().waitUntilDone()
       verifyTap(out.waitForResult(), examples.toSet)
-      verifyTap(spec.waitForResult(), Set("f1", "f2"))
+      verifyTap(spec.waitForResult(), Set(
+        s"""{"version":1,""" +
+          """"features":[["FloatList","f1"],["FloatList","f2"]],""" +
+          s""""compression":"$compressionType"}"""
+      ))
       FileUtils.deleteDirectory(dir)
     }
-  }
-
-  it should "throw on multiple feature specifications" in {
-    val examples = getDummyExample
-    val dir = tmpDir
-    // using my own ScioContext cause error is thrown during the pipeline execution not, not DAG
-    // construction. Also don't want to specify expected in/out.
-    val sc = ScioContext()
-    // scalastyle:off no.whitespace.before.left.bracket
-    // scalastyle:off line.size.limit
-    the [PipelineExecutionException] thrownBy {
-      val featureSpec = sc.parallelize(Seq(Seq("f1", "f2"), Seq("f1", "f3")))
-      sc.parallelize(examples)
-        .saveAsTfExampleFile(
-          dir.getPath,
-          FeatureDesc.fromSCollection(featureSpec),
-          compression = Compression.UNCOMPRESSED)
-      sc.close()
-    } should have message s"java.lang.IllegalArgumentException: requirement failed: Feature description must contain a single element"
-    // scalastyle:on no.whitespace.before.left.bracket
-    // scalastyle:off line.size.limit
-    FileUtils.deleteDirectory(dir)
   }
 
 }

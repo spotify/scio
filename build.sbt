@@ -506,7 +506,12 @@ lazy val scioTensorFlow: Project = Project(
     "org.tensorflow" % "tensorflow" % tensorFlowVersion,
     "org.tensorflow" % "proto" % tensorFlowVersion,
     "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion
-  )
+  ),
+  libraryDependencies ++= Seq(
+    "io.circe" %% "circe-core",
+    "io.circe" %% "circe-generic",
+    "io.circe" %% "circe-parser"
+  ).map(_ % circeVersion)
 ).dependsOn(
   scioCore,
   scioTest % "test->test"
