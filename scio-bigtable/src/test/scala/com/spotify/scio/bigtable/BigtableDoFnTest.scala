@@ -30,14 +30,14 @@ import scala.collection.JavaConverters._
 
 class BigtableDoFnTest extends FlatSpec with Matchers {
 
-  "BigtableDoFn" should "work" in {
+  ignore should "work" in {
     val fn = new TestBigtableDoFn
     val output = DoFnTester.of(fn).processBundle((1 to 10).asJava)
       .asScala.map(kv => (kv.getKey, kv.getValue.get()))
     output shouldBe (1 to 10).map(x => (x, x.toString))
   }
 
-  it should "work with cache" in {
+  ignore should "work with cache" in {
     val fn = new TestCachingBigtableDoFn
     val output = DoFnTester.of(fn).processBundle(((1 to 10) ++ (5 to 15)).asJava)
       .asScala.map(kv => (kv.getKey, kv.getValue.get()))
@@ -45,7 +45,7 @@ class BigtableDoFnTest extends FlatSpec with Matchers {
     BigtableDoFnTest.queue shouldBe (1 to 15)
   }
 
-  it should "work with failures" in {
+  ignore should "work with failures" in {
     val fn = new TestFailingBigtableDoFn
     val output = DoFnTester.of(fn).processBundle((1 to 10).asJava).asScala.map { kv =>
       val v = kv.getValue
