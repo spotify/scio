@@ -24,12 +24,10 @@ import com.spotify.scio.testing.util.ItUtils
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.util.MimeTypes
 
-import scala.util.Random
 import scala.collection.JavaConverters._
+import scala.util.Random
 
 class AnnoyIT extends PipelineSpec {
-
-  import com.spotify.scio.extra.annoy._
 
   val dim = 40
   val seed = 42
