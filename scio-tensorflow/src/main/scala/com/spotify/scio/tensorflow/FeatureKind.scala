@@ -18,11 +18,10 @@
 package com.spotify.scio.tensorflow
 
 import com.google.protobuf.ByteString
-import com.spotify.scio.tensorflow.FeatureKind.FeatureKind
 
 import scala.reflect.runtime.universe._
 
-object FeatureKind extends Enumeration {
+private object FeatureKind extends Enumeration {
   type FeatureKind = Value
   val BytesList, FloatList, Int64List = Value
 

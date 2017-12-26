@@ -27,9 +27,9 @@ class TFExampleExampleTest extends PipelineSpec {
   val input = Seq("foo", "bar", "foo")
   val output = Seq(WordCountFeatures(3.0f, 2.0f), WordCountFeatures(3.0f, 1.0f))
     .map(featuresType.toExample(_))
-  val featureNameDesc = Seq("{\"version\":1," +
-    "\"features\":[[\"FloatList\",\"count\"],[\"FloatList\",\"wordLength\"]]," +
-    "\"compression\":\"DEFLATE\"}")
+  val featureNameDesc = Seq("""{"version":1,""" +
+    """"features":[["FloatList","count"],["FloatList","wordLength"]],""" +
+    """"compression":"DEFLATE"}""")
 
   "TFExampleExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.TFExampleExample.type]

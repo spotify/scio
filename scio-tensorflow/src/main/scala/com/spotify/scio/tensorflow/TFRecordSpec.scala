@@ -23,13 +23,29 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import org.apache.beam.sdk.io.Compression
 
+/**
+ * Metadata about TFRecords. Useful to read the records later on.
+ */
 object TFRecordSpec {
 
   import scala.reflect.runtime.universe._
 
-
+  /**
+   * Infer TFRecordSpec from case class (Using default compression).
+   *
+   * @tparam T Case class to use for TFRecordSpec inference
+   * @return Inferred TFRecordSpec
+   */
   def fromCaseClass[T: TypeTag]: TFRecordSpec = fromCaseClass(Compression.DEFLATE)
 
+
+  /**
+   * Infer TFRecordSpec from case class.
+   *
+   * @param compression Type of [[org.apache.beam.sdk.io.Compression]] used to save these TFRecords
+   * @tparam T Case class to use for TFRecordSpec inference
+   * @return Inferred TFRecordSpec
+   */
   def fromCaseClass[T: TypeTag](compression: Compression): TFRecordSpec = {
     require(typeOf[T].typeSymbol.isClass && typeOf[T].typeSymbol.asClass.isCaseClass,
       "Type must be a case class")
@@ -42,6 +58,14 @@ object TFRecordSpec {
     CaseClassTFRecordSpec(s, compression)
   }
 
+  /**
+   * Infer TFRecordSpec from Featran's featureNames.
+   *
+   * @param featureNames Feature names
+   * @param compression  Type of [[org.apache.beam.sdk.io.Compression]] used to save these
+   *                     TFRecords
+   * @return Inferred TFRecordSpec
+   */
   def fromFeatran(featureNames: SCollection[Seq[String]],
                   compression: Compression = Compression.DEFLATE): TFRecordSpec = {
     FeatranTFRecordSpec(
@@ -55,17 +79,17 @@ sealed trait TFRecordSpec {
   def compression: Compression
 }
 
-final case class CaseClassTFRecordSpec(x: Seq[(FeatureKind, String)],
-                                       compression: Compression) extends TFRecordSpec
+private final case class CaseClassTFRecordSpec(x: Seq[(FeatureKind, String)],
+                                               compression: Compression) extends TFRecordSpec
 
-final case class FeatranTFRecordSpec(x: SCollection[Seq[(FeatureKind, String)]],
-                                     compression: Compression) extends TFRecordSpec
+private final case class FeatranTFRecordSpec(x: SCollection[Seq[(FeatureKind, String)]],
+                                             compression: Compression) extends TFRecordSpec
 
 private final case class TFRecordSpecConfig(version: Int,
                                             features: Seq[(FeatureKind, String)],
                                             compression: Compression) {
 
-  // Circe struggles with Compression (Java Enum)
+  // Circe struggles with Java Enum, the easiest is to turn all Enums into Strings.
   case class Str(version: Int,
                  features: Seq[(String, String)],
                  compression: String)
