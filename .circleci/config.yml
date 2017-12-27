@@ -1,0 +1,98 @@
+defaults: &defaults
+  docker:
+    - image: circleci/openjdk:8-jdk
+      environment:
+        SBT_OPTS: "-XX:ReservedCodeCacheSize=256m -Xms2g -Xmx2g"
+        JAVA_OPTS: "-Dsun.io.serialization.extendedDebugInfo=true"
+        GOOGLE_APPLICATION_CREDENTIALS: scripts/data-integration-test.json
+  working_directory: ~/scio
+  steps:
+    - checkout
+    - restore_cache:
+        keys:
+          - scio-{{ .Environment.CIRCLE_JOB }}-{{ .Branch }}-{{ checksum "build.sbt" }}
+          - scio-{{ .Environment.CIRCLE_JOB }}-
+    - run:
+        name: Unpacking sbt cache
+        command: |
+          ls ~/*.tar.gz
+          if [ -f ~/resolution-cache.tar.gz ]; then tar xzf ~/resolution-cache.tar.gz; fi
+          if [ -f ~/stream.tar.gz ]; then tar xzf ~/stream.tar.gz; fi
+    - run: ./scripts/circleci_test.sh
+    - run: ./scripts/circleci_repl.sh
+    - run:
+        name: Publishing SNAPSHOTs
+        command: |
+          if ( [ $CIRCLE_BRANCH = "master" ] && $(grep -q SNAPSHOT version.sbt) ); then
+            sbt ++$SCALA_VERSION publish
+          fi
+    - run:
+        name: Packing sbt cache
+        command: |
+          find ~/.sbt -name "*.lock" -delete
+          find ~/.ivy2 -name "ivydata-*.properties" -delete
+          tar czf ~/resolution-cache.tar.gz $(find . -type d -name resolution-cache)
+          tar czf ~/stream.tar.gz $(find . -type d -path "*/target/streams")
+          ls ~/*.tar.gz
+    - run: if [ $SCOVERAGE -eq 1 ]; then bash <(curl -s https://codecov.io/bash); fi
+    - save_cache:
+        key: scio-{{ .Environment.CIRCLE_JOB }}-{{ .Branch }}-{{ checksum "build.sbt" }}
+        paths:
+          - ~/.ivy2
+          - ~/.sbt
+          - ~/resolution-cache.tar.gz
+          - ~/stream.tar.gz
+
+version: 2
+jobs:
+  scala_211:
+    <<: *defaults
+    environment:
+      - SCALA_VERSION: 2.11.11
+      - SCOVERAGE: 0
+
+  scala_212:
+    <<: *defaults
+    environment:
+      - SCALA_VERSION: 2.12.4
+      - SCOVERAGE: 1
+
+  deploy:
+    # Workaround for sbt-assembly hitting Docker aufs file name length limit
+    # https://github.com/sbt/sbt-assembly/issues/69
+    machine: true
+    working_directory: ~/scio
+    environment:
+      - SCALA_VERSION: 2.11.11
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - scio-scala_211-{{ .Branch }}-{{ checksum "build.sbt" }}
+            - scio-scala_211-
+      - run: sbt ++$SCALA_VERSION scio-repl/assembly
+      - run: go get -u github.com/tcnksm/ghr
+      - run: ghr -u spotify -draft $CIRCLE_TAG scio-repl/target/scala-*/scio-repl-*.jar
+
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - scala_211:
+          filters:
+            tags:
+              only: /.*/
+      - scala_212:
+          filters:
+            tags:
+              only: /.*/
+      - deploy:
+          requires:
+            - scala_211
+            - scala_212
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
