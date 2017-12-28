@@ -21,6 +21,7 @@ import java.util.UUID
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.TapSpec
+import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.commons.io.FileUtils
 import shapeless.datatype.tensorflow._
 
@@ -69,7 +70,7 @@ class TFTapTest extends TapSpec {
       verifyTap(out.waitForResult(), examples.toSet)
       verifyTap(spec.waitForResult(), Set(
         s"""{"version":1,""" +
-          """"features":[["FloatList","f2"],["FloatList","f1"]],""" +
+          """"features":[["f2","FloatList",{}],["f1","FloatList",{}]],""" +
           s""""compression":"$compressionType"}"""
       ))
       FileUtils.deleteDirectory(dir)
@@ -86,12 +87,37 @@ class TFTapTest extends TapSpec {
       val (out, spec) = sc.parallelize(examples)
         .saveAsTfExampleFile(
           dir.getPath,
-          TFRecordSpec.fromFeatran(featureSpec, compressionType))
+          TFRecordSpec.fromFeatureSpec(featureSpec, compressionType))
       sc.close().waitUntilDone()
       verifyTap(out.waitForResult(), examples.toSet)
       verifyTap(spec.waitForResult(), Set(
         s"""{"version":1,""" +
-          """"features":[["FloatList","f1"],["FloatList","f2"]],""" +
+          """"features":[["f1","FloatList",{}],["f2","FloatList",{}]],""" +
+          s""""compression":"$compressionType"}"""
+      ))
+      FileUtils.deleteDirectory(dir)
+    }
+  }
+
+  it should "support saveAsTfExampleFile with SCollection based feature MultiSpec" in {
+    val examples = getDummyExample
+    import org.apache.beam.sdk.io.{Compression => CType}
+    for (compressionType <- Seq(CType.UNCOMPRESSED, CType.DEFLATE, CType.GZIP)) {
+      val dir = tmpDir
+      val sc = ScioContext()
+      val featureSpec = sc.parallelize(Option(Seq(Seq("f1", "f2"), Seq("f3", "f4"))))
+      val (out, spec) = sc.parallelize(examples)
+        .saveAsTfExampleFile(
+          dir.getPath,
+          TFRecordSpec.fromMultiSpec(featureSpec, compressionType))
+      sc.close().waitUntilDone()
+      verifyTap(out.waitForResult(), examples.toSet)
+      verifyTap(spec.waitForResult(), Set(
+        s"""{"version":1,""" +
+          """"features":[["f1","FloatList",{"multispec-id":"0"}],""" +
+          """["f2","FloatList",{"multispec-id":"0"}],""" +
+          """["f3","FloatList",{"multispec-id":"1"}],""" +
+          """["f4","FloatList",{"multispec-id":"1"}]],""" +
           s""""compression":"$compressionType"}"""
       ))
       FileUtils.deleteDirectory(dir)

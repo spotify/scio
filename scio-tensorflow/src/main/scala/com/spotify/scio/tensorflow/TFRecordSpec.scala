@@ -51,9 +51,10 @@ object TFRecordSpec {
       "Type must be a case class")
 
     val s = typeOf[T].members.collect {
-      case m: MethodSymbol if m.isCaseAccessor => (
+      case m: MethodSymbol if m.isCaseAccessor => FeatureInfo(
+        m.name.decodedName.toString,
         FeatureKind(m.returnType),
-        m.name.decodedName.toString)
+        Map())
     }.toSeq
     CaseClassTFRecordSpec(s, compression)
   }
@@ -66,11 +67,28 @@ object TFRecordSpec {
    *                     TFRecords
    * @return Inferred TFRecordSpec
    */
-  def fromFeatran(featureNames: SCollection[Seq[String]],
-                  compression: Compression = Compression.DEFLATE): TFRecordSpec = {
+  def fromFeatureSpec(featureNames: SCollection[Seq[String]],
+                      compression: Compression = Compression.DEFLATE): TFRecordSpec = {
     FeatranTFRecordSpec(
-      featureNames.map(_.map(n => (FeatureKind.FloatList, n))),
+      featureNames.map(_.map(n => FeatureInfo(n, FeatureKind.FloatList, Map()))),
       compression)
+  }
+
+  /**
+   * Infer TFRecordSpec from Featran's featureNames (For MultiSpec).
+   *
+   * @param featureNames Feature names
+   * @param compression  Type of [[org.apache.beam.sdk.io.Compression]] used to save these
+   *                     TFRecords
+   * @return Inferred TFRecordSpec
+   */
+  def fromMultiSpec(featureNames: SCollection[Seq[Seq[String]]],
+                    compression: Compression = Compression.DEFLATE): TFRecordSpec = {
+    val featureInfos = featureNames.map(_.zipWithIndex.flatMap {
+      case (sss, i) => sss.map(n =>
+        FeatureInfo(n, FeatureKind.FloatList, Map("multispec-id" -> i.toString)))
+    })
+    FeatranTFRecordSpec(featureInfos, compression)
   }
 }
 
@@ -79,24 +97,27 @@ sealed trait TFRecordSpec {
   def compression: Compression
 }
 
-private final case class CaseClassTFRecordSpec(x: Seq[(FeatureKind, String)],
+private final case class FeatureInfo(name: String, kind: FeatureKind, tags: Map[String, String])
+
+private final case class CaseClassTFRecordSpec(x: Seq[FeatureInfo],
                                                compression: Compression) extends TFRecordSpec
 
-private final case class FeatranTFRecordSpec(x: SCollection[Seq[(FeatureKind, String)]],
+private final case class FeatranTFRecordSpec(x: SCollection[Seq[FeatureInfo]],
                                              compression: Compression) extends TFRecordSpec
 
 private final case class TFRecordSpecConfig(version: Int,
-                                            features: Seq[(FeatureKind, String)],
+                                            features: Seq[FeatureInfo],
                                             compression: Compression) {
 
   // Circe struggles with Java Enum, the easiest is to turn all Enums into Strings.
   case class Str(version: Int,
-                 features: Seq[(String, String)],
+                 features: Seq[(String, String, Map[String, String])],
                  compression: String)
 
 
-  def asJson: String = Str(version,
-    features.map(t => (t._1.toString, t._2)),
+  def asJson: String = Str(
+    version,
+    features.map(t => (t.name, t.kind.toString, t.tags)),
     compression.toString
   ).asJson.noSpaces
 
