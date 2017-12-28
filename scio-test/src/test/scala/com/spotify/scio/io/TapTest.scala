@@ -60,7 +60,7 @@ trait TapSpec extends PipelineSpec {
 
   def tmpDir: File = new File(
     new File(sys.props("java.io.tmpdir")),
-    "scio-test-" + UUID.randomUUID().toString)
+    "scio-test-" + UUID.randomUUID())
 }
 
 class TapTest extends TapSpec {
@@ -240,6 +240,21 @@ class TapTest extends TapSpec {
     t.parent.get.isInstanceOf[TextTap] shouldBe true
     t.parent.get.asInstanceOf[TextTap].path shouldBe ScioUtil.addPartSuffix(dir.getPath)
     FileUtils.deleteDirectory(dir)
+  }
+
+  it should "support waitForResult" in {
+    val sc = ScioContext()
+    val f = sc.parallelize(1 to 10).materialize
+    sc.close()
+    f.waitForResult().value.toSet shouldBe (1 to 10).toSet
+  }
+
+  it should "support nested waitForResult" in {
+    val sc = ScioContext()
+    val f = sc.parallelize(1 to 10).materialize
+    sc.close()
+    import scala.concurrent.ExecutionContext.Implicits.global
+    Future(f).waitForResult().value.toSet shouldBe (1 to 10).toSet
   }
 
 }

@@ -36,7 +36,7 @@ class SingleGZipFileExampleTest extends PipelineSpec {
   }
 
   it should "output compressed data" in {
-    val tempDir = Files.createTempDirectory("single-gzip-file")
+    val tempDir = Files.createTempDirectory("single-gzip-file-")
     val in = tempDir.resolve("input").toFile
     val inFOS = new FileOutputStream(in.getAbsolutePath)
     inFOS.write(inData.mkString.getBytes)

@@ -22,34 +22,37 @@ import com.google.common.cache.{Cache, CacheBuilder}
 import com.google.common.util.concurrent.{Futures, ListenableFuture}
 import com.spotify.scio.bigtable.BigtableDoFn.CacheSupplier
 import org.apache.beam.sdk.transforms.DoFnTester
-import org.apache.beam.sdk.values.KV
 import org.scalatest._
 
 import scala.collection.mutable
 import scala.collection.JavaConverters._
+import scala.util.{Failure, Success}
 
 class BigtableDoFnTest extends FlatSpec with Matchers {
 
-  ignore should "work" in {
+  "BigtableDoFn" should "work" in {
     val fn = new TestBigtableDoFn
     val output = DoFnTester.of(fn).processBundle((1 to 10).asJava)
       .asScala.map(kv => (kv.getKey, kv.getValue.get()))
     output shouldBe (1 to 10).map(x => (x, x.toString))
   }
 
-  ignore should "work with cache" in {
+  it should "work with cache" in {
     val fn = new TestCachingBigtableDoFn
     val output = DoFnTester.of(fn).processBundle(((1 to 10) ++ (5 to 15)).asJava)
-      .asScala.map(kv => (kv.getKey, kv.getValue.get()))
+      .asScala.map(kv => (kv.getKey, kv.getValue.asScala.get))
     output shouldBe ((1 to 10) ++ (5 to 15)).map(x => (x, x.toString))
     BigtableDoFnTest.queue shouldBe (1 to 15)
   }
 
-  ignore should "work with failures" in {
+  it should "work with failures" in {
     val fn = new TestFailingBigtableDoFn
     val output = DoFnTester.of(fn).processBundle((1 to 10).asJava).asScala.map { kv =>
-      val v = kv.getValue
-      (kv.getKey, if (v.isSuccess) v.get() else v.getException.getMessage)
+      val r = kv.getValue.asScala match {
+        case Success(v) => v
+        case Failure(e) => e.getMessage
+      }
+      (kv.getKey, r)
     }
     output shouldBe (1 to 10).map { x =>
       val prefix = if (x % 2 == 0) "success" else "failure"
@@ -63,11 +66,13 @@ object BigtableDoFnTest {
 }
 
 class TestBigtableDoFn extends BigtableDoFn[Int, String](null) {
+  override protected def newSession(): BigtableSession = null
   override def asyncLookup(session: BigtableSession, input: Int): ListenableFuture[String] =
     Futures.immediateFuture(input.toString)
 }
 
 class TestCachingBigtableDoFn extends BigtableDoFn[Int, String](null, 100, new TestCacheSupplier) {
+  override protected def newSession(): BigtableSession = null
   override def asyncLookup(session: BigtableSession, input: Int): ListenableFuture[String] = {
     BigtableDoFnTest.queue.enqueue(input)
     Futures.immediateFuture(input.toString)
@@ -75,6 +80,7 @@ class TestCachingBigtableDoFn extends BigtableDoFn[Int, String](null, 100, new T
 }
 
 class TestFailingBigtableDoFn extends BigtableDoFn[Int, String](null) {
+  override protected def newSession(): BigtableSession = null
   override def asyncLookup(session: BigtableSession, input: Int): ListenableFuture[String] =
     if (input % 2 == 0) {
       Futures.immediateFuture("success" + input)

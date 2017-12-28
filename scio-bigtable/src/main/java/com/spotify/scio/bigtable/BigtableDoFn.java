@@ -109,6 +109,10 @@ public abstract class BigtableDoFn<A, B> extends DoFn<A, KV<A, BigtableDoFn.Try<
     this.semaphore = new Semaphore(maxPendingRequests);
   }
 
+  protected BigtableSession newSession() throws IOException {
+    return new BigtableSession(options);
+  }
+
   @Setup
   public void setup() {
     LOG.info("Setup for {}", this);
@@ -116,7 +120,7 @@ public abstract class BigtableDoFn<A, B> extends DoFn<A, KV<A, BigtableDoFn.Try<
       LOG.info("Creating BigtableSession with BigtableOptions {}", options);
       try {
         // options can be null for testing
-        return options == null ? null : new BigtableSession(options);
+        return options == null ? null : newSession();
       } catch (IOException e) {
         e.printStackTrace();
         LOG.error("Failed to create BigtableSession", e);

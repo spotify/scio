@@ -32,7 +32,7 @@ import org.apache.beam.sdk.util.{BackOff, BackOffAdapter, FluentBackoff}
 import org.joda.time.Duration
 import org.slf4j.{Logger, LoggerFactory}
 
-object DefaultBucket {
+private object DefaultBucket {
 
   def tryCreateDefaultBucket(options: PipelineOptions, crmClient: CloudResourceManager): String = {
     val gcpOptions = options.as(classOf[GcsOptions])

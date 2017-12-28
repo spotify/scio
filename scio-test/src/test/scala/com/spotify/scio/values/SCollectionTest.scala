@@ -534,7 +534,7 @@ class SCollectionTest extends PipelineSpec {
   }
 
   it should "support debug to a file" in {
-    val outFile = Files.createTempFile("debug_test", "txt")
+    val outFile = Files.createTempFile("debug-test-", "txt")
     val fileStream = new PrintStream(outFile.toFile)
     Console.withOut(fileStream){
       runWithContext { sc =>

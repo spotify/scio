@@ -48,7 +48,7 @@ class CheckpointTest extends FlatSpec with Matchers {
   import CheckpointMetrics._
 
   "checkpoint" should "work on path" in {
-    val tmpDir = Files.createTempDirectory("checkpoint-dir").resolve("checkpoint").toString
+    val tmpDir = Files.createTempDirectory("checkpoint-").resolve("checkpoint").toString
     runJob(tmpDir) shouldBe (10L, 10L)
     runJob(tmpDir) shouldBe (0L, 10L)
     File(tmpDir).deleteRecursively()

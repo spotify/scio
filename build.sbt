@@ -388,7 +388,8 @@ lazy val scioCassandra3: Project = Project(
     ("org.apache.cassandra" % "cassandra-all" % "3.11.0")
       .exclude("ch.qos.logback", "logback-classic")
       .exclude("org.slf4j", "log4j-over-slf4j"),
-    "org.apache.hadoop" % "hadoop-client" % hadoopVersion
+    "org.apache.hadoop" % "hadoop-client" % hadoopVersion,
+    "org.scalatest" %% "scalatest" % scalatestVersion % "test"
   )
 ).dependsOn(
   scioCore,
@@ -448,7 +449,7 @@ lazy val scioExtra: Project = Project(
   ).map(_ % circeVersion)
 ).dependsOn(
   scioCore,
-  scioTest % "it,test->test"
+  scioTest % "it->it;test->test"
 ).configs(IntegrationTest)
 
 lazy val scioHdfs: Project = Project(

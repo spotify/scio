@@ -24,19 +24,19 @@ import org.scalatest.{FlatSpec, Matchers}
 class FileStorageTest extends FlatSpec with Matchers {
 
   "FileStorage.isDone" should "return true on an empty directory" in {
-    val dir = Files.createTempDirectory("ratatool-")
+    val dir = Files.createTempDirectory("file-storage-")
     dir.toFile.deleteOnExit()
     FileStorage(dir.toFile.getAbsolutePath).isDone shouldBe true
   }
 
   it should "return false on non existing files" in {
-    val dir = Files.createTempDirectory("ratatool-")
+    val dir = Files.createTempDirectory("file-storage-")
     dir.toFile.deleteOnExit()
     FileStorage(dir.toFile.getAbsolutePath + "/*").isDone shouldBe false
   }
 
   it should "return true on existing files" in {
-    val dir = Files.createTempDirectory("ratatool-")
+    val dir = Files.createTempDirectory("file-storage-")
     val f1 = Files.createTempFile(dir, "part", ".avro")
     val f2 = Files.createTempFile(dir, "part", ".avro")
     dir.toFile.deleteOnExit()
