@@ -18,6 +18,7 @@
 package com.spotify.scio.bigquery.types
 
 import com.google.api.services.bigquery.model.{TableRow, TableSchema}
+import org.apache.avro.generic.GenericRecord
 
 import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros
@@ -66,6 +67,9 @@ object BigQueryType {
   trait HasSchema[T] {
     /** Case class schema. */
     def schema: TableSchema
+
+    /** Avro [[GenericRecord]] to `T` converter. */
+    def fromAvro: (GenericRecord => T)
 
     /** TableRow to `T` converter. */
     def fromTableRow: (TableRow => T)
@@ -220,6 +224,12 @@ object BigQueryType {
   def schemaOf[T: TypeTag]: TableSchema = SchemaProvider.schemaOf[T]
 
   /**
+    * Generate a converter function from Avro [[GenericRecord]] to the given case class `T`.
+    * @group converters
+    */
+  def fromAvro[T]: (GenericRecord => T) = macro ConverterProvider.fromAvroImpl[T]
+
+  /**
    * Generate a converter function from [[TableRow]] to the given case class `T`.
    * @group converters
    */
@@ -266,6 +276,9 @@ class BigQueryType[T: TypeTag] {
   /** Table description from the annotation. */
   def tableDescription: Option[String] =
     Try(getField("tableDescription").asInstanceOf[String]).toOption
+
+  /** Avro [[GenericRecord]] to `T` converter. */
+  def fromAvro: (GenericRecord => T) = getField("fromAvro").asInstanceOf[(GenericRecord => T)]
 
   /** TableRow to `T` converter. */
   def fromTableRow: (TableRow => T) = getField("fromTableRow").asInstanceOf[(TableRow => T)]

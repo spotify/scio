@@ -31,7 +31,7 @@ import com.spotify.scio.avro.types.AvroType
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.bigquery._
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.coders.AvroBytesUtil
+import com.spotify.scio.coders.{AvroBytesUtil, KryoAtomicCoder, KryoOptions}
 import com.spotify.scio.io.Tap
 import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
@@ -43,10 +43,11 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.extensions.gcp.options.{GcpOptions, GcsOptions}
+import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub => psio}
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform}
+import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform, SerializableFunction}
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{Pipeline, PipelineResult, io => gio}
@@ -510,28 +511,31 @@ class ScioContext private[scio] (val options: PipelineOptions,
       }
     }
 
-  /**
-   * Get an SCollection for a BigQuery SELECT query.
-   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
-   * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
-   * supported. By default the query dialect will be automatically detected. To override this
-   * behavior, start the query string with `#legacysql` or `#standardsql`.
-   * @group input
-   */
-  def bigQuerySelect(sqlQuery: String,
-                     flattenResults: Boolean = false): SCollection[TableRow] = requireNotClosed {
+  private def avroBigQueryRead[T <: HasAnnotation : ClassTag : TypeTag] = {
+    val fn = BigQueryType[T].fromAvro
+    bqio.BigQueryIO
+      .read(new SerializableFunction[SchemaAndRecord, T] {
+        override def apply(input: SchemaAndRecord): T = fn(input.getRecord)
+      })
+      .withCoder(new KryoAtomicCoder[T](KryoOptions(this.options)))
+  }
+
+  private def bqReadQuery[T: ClassTag](typedRead: bqio.BigQueryIO.TypedRead[T],
+                                       sqlQuery: String,
+                                       flattenResults: Boolean  = false)
+  : SCollection[T] = requireNotClosed {
     if (this.isTest) {
-      this.getTestInput(BigQueryIO(sqlQuery))
+      this.getTestInput(BigQueryIO[T](sqlQuery))
     } else if (this.bigQueryClient.isCacheEnabled) {
       val queryJob = this.bigQueryClient.newQueryJob(sqlQuery, flattenResults)
       _queryJobs.append(queryJob)
-      val read = bqio.BigQueryIO.readTableRows().from(queryJob.table).withoutValidation()
+      val read = typedRead.from(queryJob.table).withoutValidation()
       wrap(this.applyInternal(read)).setName(sqlQuery)
     } else {
       val baseQuery = if (!flattenResults) {
-        bqio.BigQueryIO.readTableRows().fromQuery(sqlQuery).withoutResultFlattening()
+        typedRead.fromQuery(sqlQuery).withoutResultFlattening()
       } else {
-        bqio.BigQueryIO.readTableRows().fromQuery(sqlQuery)
+        typedRead.fromQuery(sqlQuery)
       }
       val query = if (this.bigQueryClient.isLegacySql(sqlQuery, flattenResults)) {
         baseQuery
@@ -542,18 +546,35 @@ class ScioContext private[scio] (val options: PipelineOptions,
     }
   }
 
+  private def bqReadTable[T: ClassTag](typedRead: bqio.BigQueryIO.TypedRead[T],
+                                       table: TableReference)
+  : SCollection[T] = requireNotClosed {
+    val tableSpec: String = bqio.BigQueryHelpers.toTableSpec(table)
+    if (this.isTest) {
+      this.getTestInput(BigQueryIO[T](tableSpec))
+    } else {
+      wrap(this.applyInternal(typedRead.from(table))).setName(tableSpec)
+    }
+  }
+
+  /**
+   * Get an SCollection for a BigQuery SELECT query.
+   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
+   * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
+   * supported. By default the query dialect will be automatically detected. To override this
+   * behavior, start the query string with `#legacysql` or `#standardsql`.
+   * @group input
+   */
+  def bigQuerySelect(sqlQuery: String,
+                     flattenResults: Boolean = false): SCollection[TableRow] =
+    bqReadQuery(bqio.BigQueryIO.readTableRows(), sqlQuery, flattenResults)
+
   /**
    * Get an SCollection for a BigQuery table.
    * @group input
    */
-  def bigQueryTable(table: TableReference): SCollection[TableRow] = requireNotClosed {
-    val tableSpec: String = bqio.BigQueryHelpers.toTableSpec(table)
-    if (this.isTest) {
-      this.getTestInput(BigQueryIO(tableSpec))
-    } else {
-      wrap(this.applyInternal(bqio.BigQueryIO.readTableRows().from(table))).setName(tableSpec)
-    }
-  }
+  def bigQueryTable(table: TableReference): SCollection[TableRow] =
+    bqReadTable(bqio.BigQueryIO.readTableRows(), table)
 
   /**
    * Get an SCollection for a BigQuery table.
@@ -596,12 +617,13 @@ class ScioContext private[scio] (val options: PipelineOptions,
   def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null)
   : SCollection[T] = {
     val bqt = BigQueryType[T]
-    val rows = if (newSource == null) {
+    val typedRead = avroBigQueryRead[T]
+    if (newSource == null) {
       // newSource is missing, T's companion object must have either table or query
       if (bqt.isTable) {
-        this.bigQueryTable(bqt.table.get)
+        this.bqReadTable(typedRead, bqio.BigQueryHelpers.parseTableSpec(bqt.table.get))
       } else if (bqt.isQuery) {
-        this.bigQuerySelect(bqt.query.get)
+        this.bqReadQuery(typedRead, bqt.query.get)
       } else {
         throw new IllegalArgumentException(s"Missing table or query field in companion object")
       }
@@ -609,12 +631,11 @@ class ScioContext private[scio] (val options: PipelineOptions,
       // newSource can be either table or query
       val table = scala.util.Try(bqio.BigQueryHelpers.parseTableSpec(newSource)).toOption
       if (table.isDefined) {
-        this.bigQueryTable(table.get)
+        this.bqReadTable(typedRead, table.get)
       } else {
-        this.bigQuerySelect(newSource)
+        this.bqReadQuery(typedRead, newSource)
       }
     }
-    rows.map(bqt.fromTableRow)
   }
 
   /**

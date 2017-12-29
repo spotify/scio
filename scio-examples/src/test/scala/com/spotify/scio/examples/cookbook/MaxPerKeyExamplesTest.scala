@@ -33,7 +33,7 @@ class MaxPerKeyExamplesTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.cookbook.MaxPerKeyExamples.type]
       .args("--output=dataset.table")
       .input(BigQueryIO(ExampleData.WEATHER_SAMPLES_TABLE), input)
-      .output(BigQueryIO("dataset.table"))(_ should containInAnyOrder (expected))
+      .output(BigQueryIO[TableRow]("dataset.table"))(_ should containInAnyOrder (expected))
       .run()
   }
 

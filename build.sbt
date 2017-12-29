@@ -293,8 +293,8 @@ lazy val scioTest: Project = Project(
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "it",
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
     "org.scalatest" %% "scalatest" % scalatestVersion,
-    "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
-    "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
+    "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
+    "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test,it",
     // DataFlow testing requires junit and hamcrest
     "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
     "com.spotify" % "annoy" % annoyVersion % "test",

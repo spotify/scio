@@ -18,12 +18,12 @@
 package com.spotify.scio.bigquery.types
 
 import com.google.protobuf.ByteString
-import shapeless.datatype.record._
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
-import org.scalacheck._
 import org.scalacheck.ScalacheckShapeless._
+import org.scalacheck._
 import org.scalatest._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import shapeless.datatype.record._
 
 class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matchers {
 
@@ -33,9 +33,9 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
 
   import Schemas._
 
-  implicit val arbInstant = Arbitrary(Gen.const(Instant.now()))
   implicit val arbByteArray = Arbitrary(Gen.alphaStr.map(_.getBytes))
   implicit val arbByteString = Arbitrary(Gen.alphaStr.map(ByteString.copyFromUtf8))
+  implicit val arbInstant = Arbitrary(Gen.const(Instant.now()))
   implicit val arbDate = Arbitrary(Gen.const(LocalDate.now()))
   implicit val arbTime = Arbitrary(Gen.const(LocalTime.now()))
   implicit val arbDatetime = Arbitrary(Gen.const(LocalDateTime.now()))
@@ -49,7 +49,6 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
       RecordMatcher[Required](r1, r2) shouldBe true
     }
   }
-
 
   property("round trip optional primitive types") {
     forAll { r1: Optional =>
