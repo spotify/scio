@@ -21,12 +21,6 @@ defaults: &defaults
     - run: ./scripts/circleci_test.sh
     - run: ./scripts/circleci_repl.sh
     - run:
-        name: Publishing SNAPSHOTs
-        command: |
-          if ( [ $CIRCLE_BRANCH = "master" ] && $(grep -q SNAPSHOT version.sbt) ); then
-            sbt ++$SCALA_VERSION publish
-          fi
-    - run:
         name: Packing sbt cache
         command: |
           find ~/.sbt -name "*.lock" -delete
