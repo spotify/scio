@@ -51,9 +51,9 @@ package object tensorflow {
   implicit def makeTFRecordSCollectionFunctions[T <: Array[Byte]](s: SCollection[T])
   : TFRecordSCollectionFunctions[T] = new TFRecordSCollectionFunctions(s)
 
-  /** Implicit conversion from [[ScioContext]] to [[TFRecordSCollectionFunctions]]. */
-  implicit def makeTFScioContextFunctions(s: ScioContext): TFScioConextFunctions =
-    new TFScioConextFunctions(s)
+  /** Implicit conversion from [[ScioContext]] to [[TFScioContextFunctions]]. */
+  implicit def makeTFScioContextFunctions(s: ScioContext): TFScioContextFunctions =
+    new TFScioContextFunctions(s)
 
   /**
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
