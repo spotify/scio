@@ -32,12 +32,6 @@ package object tensorflow {
   case class TFExampleIO(path: String) extends TestIO[Example](path)
 
   /**
-   * Expose `com.spotify.scio.tensorflow.TFExampleSCollectionFunctions.FeatureDesc`.
-   */
-  val FeatureDesc: TFExampleSCollectionFunctions.FeatureDesc.type =
-    TFExampleSCollectionFunctions.FeatureDesc
-
-  /**
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
    * [[TensorFlowSCollectionFunctions]].
    */

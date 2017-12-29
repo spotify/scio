@@ -58,8 +58,8 @@ object TFExampleExample {
       .map(featuresType.toExample(_))
       .saveAsTfExampleFile(
         args("output"),
-        FeatureDesc.fromCaseClass[WordCountFeatures],
-        featureDescPath = args.optional("feature-desc-path").orNull)
+        TFRecordSpec.fromCaseClass[WordCountFeatures],
+        tfRecordSpecPath = args.optional("feature-desc-path").orNull)
     sc.close()
   }
 }
