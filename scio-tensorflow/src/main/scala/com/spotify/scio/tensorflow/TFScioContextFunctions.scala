@@ -22,7 +22,7 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.{io => gio}
 
-class TFScioConextFunctions(val self: ScioContext) extends AnyVal {
+class TFScioContextFunctions(val self: ScioContext) extends AnyVal {
 
   /**
    * Get an SCollection for a TensorFlow TFRecord file. Note that TFRecord files are not
