@@ -73,6 +73,10 @@ object Schemas {
                              array: Map[String, ArrayFields],
                              map: Map[String, MapFields])
 
+  case class ByteArrayFields(required: Array[Byte],
+                             optional: Option[Array[Byte]],
+                             repeated: List[Array[Byte]])
+
   object FieldMode extends Enumeration {
     type FieldMode = Value
     val ARRAY, MAP, OPTIONAL, NONE = Value

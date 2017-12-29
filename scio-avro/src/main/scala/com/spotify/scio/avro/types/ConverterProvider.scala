@@ -50,18 +50,21 @@ private[types] object ConverterProvider {
     // =======================================================================
 
     def cast(tree: Tree, tpe: Type): Tree = {
-      val s = q"$tree.toString"
       tpe match {
-        case t if t =:= typeOf[Boolean] => q"$s.toBoolean"
-        case t if t =:= typeOf[Int] => q"$s.toInt"
-        case t if t =:= typeOf[Long] => q"$s.toLong"
-        case t if t =:= typeOf[Float] => q"$s.toFloat"
-        case t if t =:= typeOf[Double] => q"$s.toDouble"
-        case t if t =:= typeOf[String] => q"$s"
+        case t if t =:= typeOf[Boolean] => q"$tree.asInstanceOf[Boolean]"
+        case t if t =:= typeOf[Int] => q"$tree.asInstanceOf[Int]"
+        case t if t =:= typeOf[Long] => q"$tree.asInstanceOf[Long]"
+        case t if t =:= typeOf[Float] => q"$tree.asInstanceOf[Float]"
+        case t if t =:= typeOf[Double] => q"$tree.asInstanceOf[Double]"
+        case t if t =:= typeOf[String] => q"$tree.toString"
 
         case t if t =:= typeOf[ByteString] =>
-          val bb = tq"_root_.java.nio.ByteBuffer"
-          q"_root_.com.google.protobuf.ByteString.copyFrom($tree.asInstanceOf[$bb])"
+          val bb = q"$tree.asInstanceOf[_root_.java.nio.ByteBuffer]"
+          q"_root_.com.google.protobuf.ByteString.copyFrom($bb)"
+
+        case t if t =:= typeOf[Array[Byte]] =>
+          val bb = q"$tree.asInstanceOf[_root_.java.nio.ByteBuffer]"
+          q"_root_.java.util.Arrays.copyOfRange($bb.array(), $bb.position(), $bb.limit())"
 
         case t if t.erasure <:< typeOf[scala.collection.Map[String,_]].erasure =>
           map(tree, tpe.typeArgs.tail.head)
@@ -139,15 +142,15 @@ private[types] object ConverterProvider {
 
     def cast(tree: Tree, tpe: Type): Tree = {
       tpe match {
-        case t if t =:= typeOf[Boolean] => q"$tree"
-        case t if t =:= typeOf[Int] => q"$tree"
-        case t if t =:= typeOf[Long] => q"$tree"
-        case t if t =:= typeOf[Float] => q"$tree"
-        case t if t =:= typeOf[Double] => q"$tree"
+        case t if t =:= typeOf[Boolean] => tree
+        case t if t =:= typeOf[Int] => tree
+        case t if t =:= typeOf[Long] => tree
+        case t if t =:= typeOf[Float] => tree
+        case t if t =:= typeOf[Double] => tree
         case t if t =:= typeOf[String] => tree
 
-        case t if t =:= typeOf[ByteString] =>
-          q"$tree.asReadOnlyByteBuffer"
+        case t if t =:= typeOf[ByteString] => q"$tree.asReadOnlyByteBuffer"
+        case t if t =:= typeOf[Array[Byte]] => q"_root_.java.nio.ByteBuffer.wrap($tree)"
 
         case t if t.erasure <:< typeOf[scala.collection.Map[String,_]].erasure =>
           map(tree, tpe.typeArgs.tail.head)

@@ -48,6 +48,7 @@ private[types] object SchemaProvider {
     case t if t =:= typeOf[Double] => (Schema.create(Schema.Type.DOUBLE), null)
     case t if t =:= typeOf[String] => (Schema.create(Schema.Type.STRING), null)
     case t if t =:= typeOf[ByteString] => (Schema.create(Schema.Type.BYTES), null)
+    case t if t =:= typeOf[Array[Byte]] => (Schema.create(Schema.Type.BYTES), null)
 
     case t if t.erasure =:= typeOf[Option[_]].erasure =>
       val s = toSchema(t.typeArgs.head)._1

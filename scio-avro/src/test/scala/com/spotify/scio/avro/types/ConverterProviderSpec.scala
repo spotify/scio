@@ -18,11 +18,11 @@
 package com.spotify.scio.avro.types
 
 import com.google.protobuf.ByteString
-import shapeless.datatype.record._
-import org.scalacheck._
 import org.scalacheck.ScalacheckShapeless._
+import org.scalacheck._
 import org.scalatest._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import shapeless.datatype.record._
 
 class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matchers {
 
@@ -32,7 +32,11 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
 
   import Schemas._
 
+  implicit val arbByteArray = Arbitrary(Gen.alphaStr.map(_.getBytes))
   implicit val arbByteString = Arbitrary(Gen.alphaStr.map(ByteString.copyFromUtf8))
+
+  implicit def compareByteArrays(x: Array[Byte], y: Array[Byte]): Boolean =
+    ByteString.copyFrom(x) == ByteString.copyFrom(y)
 
   property("round trip basic primitive types") {
     forAll { r1: BasicFields =>
@@ -40,7 +44,6 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
       RecordMatcher[BasicFields](r1, r2) shouldBe true
     }
   }
-
 
   property("round trip optional primitive types") {
     forAll { r1: OptionalFields =>
@@ -119,6 +122,14 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
       val r2 = AvroType.fromGenericRecord[MapNestedFields](
         AvroType.toGenericRecord[MapNestedFields](r1))
       RecordMatcher[MapNestedFields](r1, r2) shouldBe true
+    }
+  }
+
+  property("round trip byte array types") {
+    forAll { r1: ByteArrayFields =>
+      val r2 = AvroType.fromGenericRecord[ByteArrayFields](
+        AvroType.toGenericRecord[ByteArrayFields](r1))
+      RecordMatcher[ByteArrayFields](r1, r2) shouldBe true
     }
   }
 
