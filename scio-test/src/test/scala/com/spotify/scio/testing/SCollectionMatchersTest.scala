@@ -133,6 +133,50 @@ class SCollectionMatchersTest extends PipelineSpec {
     }
   }
 
+  it should "support allBeCloseTo" in {
+    // should cases
+    runWithContext {
+      _.parallelize(Seq(9, 10, 11)) should allBeCloseTo[Int](9, 3)
+    }
+
+    runWithContext {
+      _.parallelize(Seq(9.1)) should allBeCloseTo[Double](9.0, 0.1)
+    }
+
+    an [AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq(9.1)) should allBeCloseTo[Double](9.0, 0.05) }
+    }
+
+    an [AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq(9, 10, 13, 5)) should allBeCloseTo[Int](9, 3) }
+    }
+
+    // shouldNot cases
+    runWithContext {
+      _.parallelize(Seq(3, 5, 13)) shouldNot allBeCloseTo[Int](9, 3)
+    }
+
+    runWithContext {
+      _.parallelize(Seq(9.1)) shouldNot allBeCloseTo[Double](9.0, 0.05)
+    }
+
+    an [AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(Seq(6, 7, 8, 9, 10, 11, 12)) shouldNot allBeCloseTo[Int](9, 3)
+      }
+    }
+
+    an [AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq(9.1)) shouldNot allBeCloseTo[Double](9, 0.1) }
+    }
+
+    an [AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(Seq(8.9, 8.95, 9.0, 9.05, 9.1)) shouldNot allBeCloseTo[Double](9, 0.1)
+      }
+    }
+  }
+
   it should "support equalMapOf" in {
     // should cases
     val s = Seq("a" -> 1, "b" -> 2, "c" -> 3)

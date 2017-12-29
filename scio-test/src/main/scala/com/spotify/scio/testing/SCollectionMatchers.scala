@@ -27,6 +27,7 @@ import org.apache.beam.sdk.testing.PAssert.{IterableAssert, SingletonAssert}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.util.CoderUtils
+import org.hamcrest.Matchers
 import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.collection.JavaConverters._
@@ -247,6 +248,38 @@ trait SCollectionMatchers {
               () =>
                 builder(
                   PAssert.that(left.asInstanceOf[SCollection[Any]].internal))
+                  .satisfies(g)
+            )
+          }
+        }
+    }
+
+  def allBeCloseTo[T](target: Double, delta: Double)(implicit num: Numeric[T])
+  : IterableMatcher[SCollection[T], Any] =
+    new IterableMatcher[SCollection[T], Any] {
+      override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
+        new Matcher[SCollection[T]] {
+          override def apply(left: SCollection[T]): MatchResult = {
+            // defeat closures
+            val t = target
+            val d = delta
+            val n = num
+            val f = makeFn[Any] { in =>
+              val r = in.asScala.filterNot(Matchers.closeTo(t, d).matches)
+              assert(r.isEmpty, s"${r.mkString("[", ", ", "]")} is/are not close to ($t +- $d)")
+            }
+            val g = makeFn[Any] { in =>
+              val r = in.asScala.filter(Matchers.closeTo(t, d).matches)
+              assert(r.isEmpty, s"${r.mkString("[", ", ", "]")} is/are close to ($t +- $d)")
+            }
+            m(
+              () =>
+                builder(
+                  PAssert.that(left.map(n.toDouble).asInstanceOf[SCollection[Any]].internal))
+                  .satisfies(f),
+              () =>
+                builder(
+                  PAssert.that(left.map(n.toDouble).asInstanceOf[SCollection[Any]].internal))
                   .satisfies(g)
             )
           }
