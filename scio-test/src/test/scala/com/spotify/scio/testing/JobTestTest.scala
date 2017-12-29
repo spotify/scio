@@ -272,7 +272,7 @@ class JobTestTest extends PipelineSpec {
     JobTest[BigQueryJob.type]
       .args("--input=table.in", "--output=table.out")
       .input(BigQueryIO("table.in"), (1 to 3).map(newTableRow))
-      .output(BigQueryIO("table.out"))(_ should containInAnyOrder (xs))
+      .output(BigQueryIO[TableRow]("table.out"))(_ should containInAnyOrder (xs))
       .run()
   }
 

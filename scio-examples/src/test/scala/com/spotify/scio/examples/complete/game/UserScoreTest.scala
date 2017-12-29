@@ -45,14 +45,13 @@ class UserScoreTest extends PipelineSpec {
     UserScoreSums("user6_AmberNumbat", 11),
     UserScoreSums("user7_AlmondWallaby", 15),
     UserScoreSums("user7_AndroidGreenKookaburra", 23),
-    UserScoreSums("user19_BisqueBilby", 14)
-  ).map(UserScoreSums.toTableRow)
+    UserScoreSums("user19_BisqueBilby", 14))
 
   "UserScore" should "work" in {
     JobTest[com.spotify.scio.examples.complete.game.UserScore.type]
       .args("--input=in.txt", "--output=dataset.table")
       .input(TextIO("in.txt"), inData1)
-      .output(BigQueryIO("dataset.table"))(_ should containInAnyOrder (expected))
+      .output(BigQueryIO[UserScoreSums]("dataset.table"))(_ should containInAnyOrder (expected))
       .run()
   }
 
@@ -60,7 +59,7 @@ class UserScoreTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.complete.game.UserScore.type]
       .args("--input=in.txt", "--output=dataset.table")
       .input(TextIO("in.txt"), inData2)
-      .output(BigQueryIO("dataset.table"))(_ should beEmpty)
+      .output(BigQueryIO[UserScoreSums]("dataset.table"))(_ should beEmpty)
       .run()
   }
 

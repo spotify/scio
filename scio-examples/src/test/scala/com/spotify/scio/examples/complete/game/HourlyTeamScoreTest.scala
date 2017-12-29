@@ -17,6 +17,7 @@
 
 package com.spotify.scio.examples.complete.game
 
+import com.spotify.scio.bigquery.TableRow
 import com.spotify.scio.examples.complete.game.HourlyTeamScore.TeamScoreSums
 import com.spotify.scio.testing._
 
@@ -51,14 +52,13 @@ class HourlyTeamScoreTest extends PipelineSpec {
     TeamScoreSums("BananaEmu", 25, "2015-11-19 12:00:00.000"),
     TeamScoreSums("BisqueBilby", 14, "2015-11-19 09:00:00.000"),
     TeamScoreSums("MagentaKangaroo", 3, "2015-11-19 09:00:00.000"),
-    TeamScoreSums("MagentaKangaroo", 4, "2015-11-19 12:00:00.000")
-  ).map(TeamScoreSums.toTableRow)
+    TeamScoreSums("MagentaKangaroo", 4, "2015-11-19 12:00:00.000"))
 
   "HourlyTeamScore" should "work" in {
     JobTest[com.spotify.scio.examples.complete.game.HourlyTeamScore.type]
       .args("--input=in.txt", "--output=dataset.table")
       .input(TextIO("in.txt"), inData)
-      .output(BigQueryIO("dataset.table"))(_ should containInAnyOrder (expected))
+      .output(BigQueryIO[TeamScoreSums]("dataset.table"))(_ should containInAnyOrder (expected))
       .run()
   }
 

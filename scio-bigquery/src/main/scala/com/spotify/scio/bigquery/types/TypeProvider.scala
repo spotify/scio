@@ -255,6 +255,7 @@ private[types] object TypeProvider {
   private def converters(c: blackbox.Context)(name: c.TypeName): Seq[c.Tree] = {
     import c.universe._
     List(
+      q"override def fromAvro: (_root_.org.apache.avro.generic.GenericRecord => $name) = ${p(c, SType)}.fromAvro[$name]",
       q"override def fromTableRow: (${p(c, GModel)}.TableRow => $name) = ${p(c, SType)}.fromTableRow[$name]",
       q"override def toTableRow: ($name => ${p(c, GModel)}.TableRow) = ${p(c, SType)}.toTableRow[$name]")
   }

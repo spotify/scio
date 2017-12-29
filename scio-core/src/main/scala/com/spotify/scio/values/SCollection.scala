@@ -1011,7 +1011,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
     val tableSpec = bqio.BigQueryHelpers.toTableSpec(table)
     if (context.isTest) {
-      context.testOut(BigQueryIO(tableSpec))(this.asInstanceOf[SCollection[TableRow]])
+      context.testOut(BigQueryIO[TableRow](tableSpec))(this.asInstanceOf[SCollection[TableRow]])
 
       if (writeDisposition == WriteDisposition.WRITE_APPEND) {
         Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
@@ -1060,17 +1060,28 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                           createDisposition: CreateDisposition)
                          (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
   : Future[Tap[T]] = {
-    val bqt = BigQueryType[T]
-    import scala.concurrent.ExecutionContext.Implicits.global
-    this
-      .map(bqt.toTableRow)
-      .saveAsBigQuery(
-        table,
-        bqt.schema,
-        writeDisposition,
-        createDisposition,
-        bqt.tableDescription.orNull)
-      .map(_.map(bqt.fromTableRow))
+    val tableSpec = bqio.BigQueryHelpers.toTableSpec(table)
+    if (context.isTest) {
+      context.testOut(BigQueryIO[T](tableSpec))(this.asInstanceOf[SCollection[T]])
+
+      if (writeDisposition == WriteDisposition.WRITE_APPEND) {
+        Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
+      } else {
+        saveAsInMemoryTap
+      }
+    } else {
+      val bqt = BigQueryType[T]
+      import scala.concurrent.ExecutionContext.Implicits.global
+      this
+        .map(bqt.toTableRow)
+        .saveAsBigQuery(
+          table,
+          bqt.schema,
+          writeDisposition,
+          createDisposition,
+          bqt.tableDescription.orNull)
+        .map(_.map(bqt.fromTableRow))
+    }
   }
 
   /**

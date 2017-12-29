@@ -20,12 +20,22 @@ package com.spotify.scio.bigquery.types
 import com.google.api.services.bigquery.model.TableRow
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery.types.MacroUtil._
+import org.apache.avro.generic.GenericRecord
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 import scala.language.experimental.macros
 import scala.reflect.macros._
 
 private[types] object ConverterProvider {
+
+  def fromAvroImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(GenericRecord => T)] = {
+    import c.universe._
+    val tpe = implicitly[c.WeakTypeTag[T]].tpe
+    val r = fromAvroInternal(c)(tpe)
+    debug(s"ConverterProvider.fromAvroImpl[${weakTypeOf[T]}]:")
+    debug(r)
+    c.Expr[(GenericRecord => T)](r)
+  }
 
   def fromTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(TableRow => T)] = {
     import c.universe._
@@ -44,6 +54,101 @@ private[types] object ConverterProvider {
     debug(r)
     c.Expr[(T => TableRow)](r)
   }
+
+  // =======================================================================
+
+  // scalastyle:off cyclomatic.complexity
+  // scalastyle:off method.length
+  private def fromAvroInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
+    import c.universe._
+
+    // =======================================================================
+    // Converter helpers
+    // =======================================================================
+
+    def cast(tree: Tree, tpe: Type): Tree = {
+      tpe match {
+        case t if t =:= typeOf[Boolean] => q"$tree.asInstanceOf[Boolean]"
+        case t if t =:= typeOf[Int] => q"$tree.asInstanceOf[Long].toInt"
+        case t if t =:= typeOf[Long] => q"$tree.asInstanceOf[Long]"
+        case t if t =:= typeOf[Float] => q"$tree.asInstanceOf[Double].toFloat"
+        case t if t =:= typeOf[Double] => q"$tree.asInstanceOf[Double]"
+        case t if t =:= typeOf[String] => q"$tree.toString"
+
+        case t if t =:= typeOf[ByteString] =>
+          val b = q"$tree.asInstanceOf[_root_.java.nio.ByteBuffer]"
+          q"_root_.com.google.protobuf.ByteString.copyFrom($b)"
+        case t if t =:= typeOf[Array[Byte]] =>
+          val b = q"$tree.asInstanceOf[_root_.java.nio.ByteBuffer]"
+          q"_root_.java.util.Arrays.copyOfRange($b.array(), $b.position(), $b.limit())"
+
+        case t if t =:= typeOf[Instant] =>
+          q"new _root_.org.joda.time.Instant($tree.asInstanceOf[Long] / 1000)"
+        case t if t =:= typeOf[LocalDate] =>
+          q"_root_.com.spotify.scio.bigquery.Date.parse($tree.toString)"
+        case t if t =:= typeOf[LocalTime] =>
+          q"_root_.com.spotify.scio.bigquery.Time.parse($tree.toString)"
+        case t if t =:= typeOf[LocalDateTime] =>
+          q"_root_.com.spotify.scio.bigquery.DateTime.parse($tree.toString)"
+
+        case t if isCaseClass(c)(t) =>
+          val fn = TermName("r" + t.typeSymbol.name)
+          q"""{
+                val $fn = $tree.asInstanceOf[_root_.org.apache.avro.generic.GenericRecord]
+                ${constructor(t, fn)}
+              }
+          """
+        case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
+      }
+    }
+
+    def option(tree: Tree, tpe: Type): Tree =
+      q"if ($tree == null) None else Some(${cast(tree, tpe)})"
+
+    def list(tree: Tree, tpe: Type): Tree = {
+      val jl = tq"_root_.org.apache.avro.generic.GenericData.Array[AnyRef]"
+      val bo = q"_root_.scala.collection.breakOut"
+      q"$tree.asInstanceOf[$jl].asScala.map(x => ${cast(q"x", tpe)})($bo)"
+    }
+
+    def field(symbol: Symbol, fn: TermName): Tree = {
+      val name = symbol.name.toString
+      val tpe = symbol.asMethod.returnType
+
+      val tree = q"$fn.get($name)"
+      if (tpe.erasure =:= typeOf[Option[_]].erasure) {
+        option(tree, tpe.typeArgs.head)
+      } else if (tpe.erasure =:= typeOf[List[_]].erasure) {
+        list(tree, tpe.typeArgs.head)
+      } else {
+        cast(tree, tpe)
+      }
+    }
+
+    def constructor(tpe: Type, fn: TermName): Tree = {
+      val companion = tpe.typeSymbol.companion
+      val gets = tpe.erasure match {
+        case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
+        case t => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
+      }
+      q"$companion(..$gets)"
+    }
+
+    // =======================================================================
+    // Entry point
+    // =======================================================================
+
+    val tn = TermName("r")
+    q"""(r: _root_.org.apache.avro.generic.GenericRecord) => {
+          import _root_.scala.collection.JavaConverters._
+          ${constructor(tpe, tn)}
+        }
+    """
+  }
+  // scalastyle:on cyclomatic.complexity
+  // scalastyle:on method.length
+
+  // =======================================================================
 
   // scalastyle:off cyclomatic.complexity
   // scalastyle:off method.length
@@ -79,7 +184,7 @@ private[types] object ConverterProvider {
         case t if isCaseClass(c)(t) =>
           val fn = TermName("r" + t.typeSymbol.name)
           q"""{
-                val $fn = $tree.asInstanceOf[java.util.Map[String, AnyRef]]
+                val $fn = $tree.asInstanceOf[_root_.java.util.Map[String, AnyRef]]
                 ${constructor(t, fn)}
               }
           """
@@ -124,7 +229,7 @@ private[types] object ConverterProvider {
     // =======================================================================
 
     val tn = TermName("r")
-    q"""(r: java.util.Map[String, AnyRef]) => {
+    q"""(r: _root_.java.util.Map[String, AnyRef]) => {
           import _root_.scala.collection.JavaConverters._
           ${constructor(tpe, tn)}
         }
@@ -132,6 +237,8 @@ private[types] object ConverterProvider {
   }
   // scalastyle:on cyclomatic.complexity
   // scalastyle:on method.length
+
+  // =======================================================================
 
   // scalastyle:off cyclomatic.complexity
   // scalastyle:off method.length
