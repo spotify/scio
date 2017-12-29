@@ -84,7 +84,7 @@ class JsonTest extends TapSpec {
     JobTest[JsonJob.type]
       .args("--input=in.json", "--output=out.json")
       .input(JsonIO("in.json"), data)
-      .output[Record](JsonIO("out.json"))(_ should containInAnyOrder (data))
+      .output(JsonIO[Record]("out.json"))(_ should containInAnyOrder (data))
       .run()
   }
 

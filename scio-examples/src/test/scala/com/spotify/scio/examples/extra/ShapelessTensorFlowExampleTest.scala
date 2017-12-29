@@ -40,7 +40,7 @@ class ShapelessTensorFlowExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.ShapelessTensorFlowWriteExample.type]
       .args("--input=in.txt", "--output=wc.tfrecords")
       .input(TextIO("in.txt"), textIn)
-      .output[Array[Byte]](TFRecordIO("wc.tfrecords")) {
+      .output(TFRecordIO("wc.tfrecords")) {
         _.map(Example.parseFrom) should containInAnyOrder (examples)
       }
       .run()

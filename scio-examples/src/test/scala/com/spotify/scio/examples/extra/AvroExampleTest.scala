@@ -32,7 +32,7 @@ class AvroExampleTest extends PipelineSpec {
 
     JobTest[com.spotify.scio.examples.extra.AvroExample.type]
       .args("--input=in.avro", "--output=out.txt", "--method=specificIn")
-      .input(AvroIO[Account]("in.avro"), input)
+      .input(AvroIO("in.avro"), input)
       .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
@@ -50,7 +50,7 @@ class AvroExampleTest extends PipelineSpec {
 
     JobTest[com.spotify.scio.examples.extra.AvroExample.type]
       .args("--output=out.avro", "--method=specificOut")
-      .output[Account](AvroIO[Account]("out.avro"))(_ should containInAnyOrder (expected))
+      .output(AvroIO[Account]("out.avro"))(_ should containInAnyOrder (expected))
       .run()
   }
 
@@ -63,7 +63,7 @@ class AvroExampleTest extends PipelineSpec {
 
     JobTest[com.spotify.scio.examples.extra.AvroExample.type]
       .args("--input=in.avro", "--output=out.txt", "--method=typedIn")
-      .input(AvroIO[Account]("in.avro"), input)
+      .input(AvroIO("in.avro"), input)
       .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
@@ -81,7 +81,7 @@ class AvroExampleTest extends PipelineSpec {
 
     JobTest[com.spotify.scio.examples.extra.AvroExample.type]
       .args("--output=out.avro", "--method=typedOut")
-      .output[GenericRecord](AvroIO[GenericRecord]("out.avro"))(
+      .output(AvroIO[GenericRecord]("out.avro"))(
         _.map(_.toString) should containInAnyOrder (expected.map(_.toString)))
       .run()
   }

@@ -38,14 +38,14 @@ class ShapelessAvroExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.ShapelessAvroWriteExample.type]
       .args("--input=in.txt", "--output=wc.avro")
       .input(TextIO("in.txt"), textIn)
-      .output[GenericRecord](AvroIO[GenericRecord]("wc.avro"))(_ should containInAnyOrder (records))
+      .output(AvroIO[GenericRecord]("wc.avro"))(_ should containInAnyOrder (records))
       .run()
   }
 
   "ShapelessAvroReadExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.ShapelessAvroReadExample.type]
       .args("--input=wc.avro", "--output=out.txt")
-      .input(AvroIO[GenericRecord]("wc.avro"), records)
+      .input(AvroIO("wc.avro"), records)
       .output(TextIO("out.txt"))(_ should containInAnyOrder (textOut))
       .run()
   }

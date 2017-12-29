@@ -33,8 +33,8 @@ class AvroInOutTest extends PipelineSpec {
   "AvroInOut" should "work" in {
     JobTest[com.spotify.scio.examples.extra.AvroInOut.type]
       .args("--input=in.avro", "--output=out.avro")
-      .input(AvroIO[TestRecord]("in.avro"), input)
-      .output[Account](AvroIO[Account]("out.avro"))(_ should containInAnyOrder (expected))
+      .input(AvroIO("in.avro"), input)
+      .output(AvroIO[Account]("out.avro"))(_ should containInAnyOrder (expected))
       .run()
   }
 
