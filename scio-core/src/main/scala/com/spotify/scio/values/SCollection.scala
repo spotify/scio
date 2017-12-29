@@ -437,6 +437,35 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /**
+   * Randomly splits this SCollection into two parts.
+   *
+   * @param weight weight for left hand side SCollection, should be in the range `(0, 1)`
+   * @return split SCollections in a Tuple2
+   * @group transform
+   */
+  def randomSplit(weight: Double): (SCollection[T], SCollection[T]) = {
+    require(weight > 0.0 && weight < 1.0)
+    val splits = randomSplit(Array(weight, 1d - weight))
+    (splits(0), splits(1))
+  }
+
+  /**
+   * Randomly splits this SCollection into three parts.
+   * Note: `0 < weightA + weightB < 1`
+   *
+   * @param weightA weight for first SCollection, should be in the range `(0, 1)`
+   * @param weightB weight for second SCollection, should be in the range `(0, 1)`
+   * @return split SCollections in a Tuple3
+   * @group transform
+   */
+  def randomSplit(weightA: Double, weightB: Double):
+  (SCollection[T], SCollection[T], SCollection[T]) = {
+    require(weightA > 0.0 && weightB > 0.0 && (weightA + weightB) < 1.0)
+    val splits = randomSplit(Array(weightA, weightB, 1d - (weightA + weightB)))
+    (splits(0), splits(1), splits(2))
+  }
+
+  /**
    * Reduce the elements of this SCollection using the specified commutative and associative
    * binary operator.
    * @group transform
