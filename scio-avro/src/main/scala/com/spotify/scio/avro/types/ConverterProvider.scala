@@ -88,7 +88,8 @@ private[types] object ConverterProvider {
 
     def list(tree: Tree, tpe: Type): Tree = {
       val jl = tq"_root_.java.util.List[AnyRef]"
-      q"$tree.asInstanceOf[$jl].asScala.map(x => ${cast(q"x", tpe)}).toList"
+      val bo = q"_root_.scala.collection.breakOut"
+      q"$tree.asInstanceOf[$jl].asScala.map(x => ${cast(q"x", tpe)})($bo)"
     }
 
     def map(tree: Tree, tpe: Type): Tree = {
