@@ -34,7 +34,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.util.{EmptyOnDeserializationThreadLocal, VarInt}
-import org.joda.time.{LocalDate, LocalDateTime}
+import org.joda.time.{LocalDate, LocalDateTime, LocalTime}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -104,8 +104,9 @@ private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends
         k.forSubclass[GenericRecord](new GenericAvroSerializer)
         k.forSubclass[Message](new ProtobufSerializer)
 
-        k.forSubclass[LocalDateTime](new JodaLocalDateTimeSerializer)
         k.forSubclass[LocalDate](new JodaLocalDateSerializer)
+        k.forSubclass[LocalTime](new JodaLocalTimeSerializer)
+        k.forSubclass[LocalDateTime](new JodaLocalDateTimeSerializer)
 
         k.forClass(new KVSerializer)
         // TODO:
