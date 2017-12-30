@@ -17,7 +17,7 @@
 
 package com.spotify.scio.coders
 
-import org.joda.time.{LocalDate, LocalDateTime}
+import org.joda.time.{LocalDate, LocalDateTime, LocalTime}
 import org.scalacheck._
 import org.scalatest._
 import org.scalatest.prop.Checkers
@@ -49,6 +49,10 @@ class JodaSerializerTest extends FlatSpec with Checkers {
     } yield attempt
   }
 
+  implicit val localTimeArb = Arbitrary {
+    Arbitrary.arbitrary[LocalDateTime].map(_.toLocalTime)
+  }
+
   implicit val localDateArb = Arbitrary {
     Arbitrary.arbitrary[LocalDateTime].map(_.toLocalDate)
   }
@@ -61,6 +65,10 @@ class JodaSerializerTest extends FlatSpec with Checkers {
 
   "KryoAtomicCoder" should "roundtrip LocalDate" in {
     check(roundTripProp[LocalDate] _)
+  }
+
+  it should "roundtrip LocalTime" in {
+    check(roundTripProp[LocalTime] _)
   }
 
   it should "roundtrip LocalDateTime" in {

@@ -19,7 +19,7 @@ package com.spotify.scio.coders
 
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
-import org.joda.time.{LocalDate, LocalDateTime}
+import org.joda.time.{LocalDate, LocalDateTime, LocalTime}
 import org.joda.time.chrono.ISOChronology
 
 class JodaLocalDateTimeSerializer extends Serializer[LocalDateTime] {
@@ -51,6 +51,24 @@ class JodaLocalDateTimeSerializer extends Serializer[LocalDateTime] {
     new LocalDateTime(year, month, day, hour, minute, second, ms)
   }
 }
+
+class JodaLocalTimeSerializer extends Serializer[LocalTime] {
+  setImmutable(true)
+
+  def write(kryo: Kryo, output: Output, lt: LocalTime): Unit = {
+    output.writeInt(lt.getMillisOfDay, /*optimizePositive=*/ false)
+
+    val chronology = lt.getChronology
+    if (chronology != null && chronology != ISOChronology.getInstanceUTC) {
+      sys.error(s"Unsupported chronology: $chronology")
+    }
+  }
+
+  def read(kryo: Kryo, input: Input, tpe: Class[LocalTime]): LocalTime = {
+    LocalTime.fromMillisOfDay(input.readInt(/*optimizePositive=*/ false))
+  }
+}
+
 
 class JodaLocalDateSerializer extends Serializer[LocalDate] {
   setImmutable(true)
