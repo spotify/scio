@@ -22,12 +22,12 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 
 val beamVersion = "2.2.0"
 
-val algebirdVersion = "0.13.2"
+val algebirdVersion = "0.13.3"
 val annoy4sVersion = "0.5.0"
 val annoyVersion = "0.2.5"
 val asmVersion = "4.5"
 val autoServiceVersion = "1.0-rc3"
-val autoValueVersion = "1.4.1"
+val autoValueVersion = "1.5.3"
 val avroVersion = "1.8.2"
 val breezeVersion ="0.13.1"
 val chillVersion = "0.9.2"
@@ -40,7 +40,7 @@ val gcsConnectorVersion = "1.6.1-hadoop2"
 val guavaVersion = "20.0"
 val hadoopVersion = "2.7.3"
 val hamcrestVersion = "1.3"
-val jacksonScalaModuleVersion = "2.8.9"
+val jacksonScalaModuleVersion = "2.9.2"
 val javaLshVersion = "0.10"
 val jlineVersion = "2.14.3"
 val jodaConvertVersion = "1.8.1"
@@ -54,20 +54,20 @@ val parquetAvroExtraVersion = "0.2.2"
 val parquetVersion = "1.9.0"
 val protobufGenericVersion = "0.2.2"
 val protobufVersion = "3.3.1"
-val scalacheckShapelessVersion = "1.1.6"
+val scalacheckShapelessVersion = "1.1.7"
 val scalacheckVersion = "1.13.5"
 val scalaMacrosVersion = "2.1.0"
 val scalatestVersion = "3.0.4"
 val shapelessDatatypeVersion = "0.1.7"
 val slf4jVersion = "1.7.25"
-val sparkeyVersion = "2.1.3"
+val sparkeyVersion = "2.2.0"
 val tensorFlowVersion = "1.3.0"
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
 
   scalaVersion       := "2.12.4",
-  crossScalaVersions := Seq("2.11.11", "2.12.4"),
+  crossScalaVersions := Seq("2.11.12", "2.12.4"),
   scalacOptions                   ++= {
     Seq("-Xmax-classfile-name", "100", "-target:jvm-1.8", "-deprecation", "-feature", "-unchecked") ++
       (if (scalaBinaryVersion.value == "2.12") Seq("-Ydelambdafy:inline") else Nil)
