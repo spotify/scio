@@ -17,45 +17,24 @@
 
 package com.spotify.scio.tensorflow
 
-import com.spotify.scio.ScioContext
 import com.spotify.scio.tensorflow.FeatureKind._
 import com.spotify.scio.values.SCollection
-import io.circe.generic.auto._
-import io.circe.syntax._
+
 import org.apache.beam.sdk.io.Compression
 
 /** Contains metadata about TFRecords. Useful to read the records later on. */
-trait TFRecordSpec {
+sealed trait TFRecordSpec {
   val LATEST_VERSION: Int = 1
-  def toJson(sc: ScioContext, compression: Compression): SCollection[String]
 }
 
-/** Information necessary to extract a given feature in TF. */
-final case class FeatureInfo(name: String, kind: FeatureKind, tags: Map[String, String])
+private final case class SCollectionSeqFeatureInfo(@transient x: SCollection[Seq[FeatureInfo]])
+  extends TFRecordSpec
 
-/** TFRecord metadata that will end up serialized. */
-final case class TFRecordSpecConfig(version: Int,
-                                    features: Seq[FeatureInfo],
-                                    compression: Compression) {
+private final case class SeqFeatureInfo(x: Seq[FeatureInfo]) extends TFRecordSpec
 
-  // Circe struggles with Java Enum, the easiest workaround is to turn all Enums into Strings.
-  case class Str(version: Int,
-                 features: Seq[(String, String, Map[String, String])],
-                 compression: String)
-
-
-  def asJson: String = Str(
-    version,
-    features.map(t => (t.name, t.kind.toString, t.tags)),
-    compression.toString
-  ).asJson.noSpaces
-
-}
-
-private final case class SeqFeatureInfo(x: Seq[FeatureInfo]) extends TFRecordSpec {
-  override def toJson(sc: ScioContext, compression: Compression): SCollection[String] =
-    sc.parallelize(Seq(TFRecordSpecConfig(LATEST_VERSION, x, compression).asJson))
-}
+private final case class TFRecordSpecConfig(version: Int,
+                                            features: Seq[FeatureInfo],
+                                            compression: Compression)
 
 object TFRecordSpec {
 
@@ -74,4 +53,8 @@ object TFRecordSpec {
     }.toSeq
     SeqFeatureInfo(s)
   }
+
+  /** Pass useful information about each Feature. */
+  def fromSColSeqFeatureInfo(x: SCollection[Seq[FeatureInfo]]): TFRecordSpec =
+    SCollectionSeqFeatureInfo(x)
 }

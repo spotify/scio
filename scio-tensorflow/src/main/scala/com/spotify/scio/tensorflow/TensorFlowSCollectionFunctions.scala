@@ -27,6 +27,8 @@ import com.spotify.scio.io.{Tap, TextTap}
 import com.spotify.scio.testing.TextIO
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.{DistCache, SCollection}
+import io.circe.generic.auto._
+import io.circe.syntax._
 import org.apache.beam.sdk.io.{Compression, FileSystems}
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Setup, Teardown}
@@ -116,14 +118,14 @@ class TensorFlowSCollectionFunctions[T: ClassTag](@transient val self: SCollecti
    *
    * @param graphUri URI of pre-trained/saved TensorFlow model
    * @param fetchOps names of [[org.tensorflow.Operation]]s to fetch the results from
-   * @param config   configuration parameters for the session specified as a serialized
-   *                 `org.tensorflow.framework.ConfigProto` protocol buffer.
-   * @param inFn     translates input elements of T to map of input-operation ->
-   *                 [[org.tensorflow.Tensor Tensor]]. This method takes ownership of the
-   *                 [[org.tensorflow.Tensor Tensor]]s.
-   * @param outFn    translates output of prediction from map of output-operation ->
-   *                 [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
-   *                 ownership of the [[org.tensorflow.Tensor Tensor]]s.
+   * @param config configuration parameters for the session specified as a serialized
+   * `org.tensorflow.framework.ConfigProto` protocol buffer.
+   * @param inFn translates input elements of T to map of input-operation ->
+   * [[org.tensorflow.Tensor Tensor]]. This method takes ownership of the
+   * [[org.tensorflow.Tensor Tensor]]s.
+   * @param outFn translates output of prediction from map of output-operation ->
+   * [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
+   * ownership of the [[org.tensorflow.Tensor Tensor]]s.
    */
   def predict[V: ClassTag](graphUri: String,
                            fetchOps: Seq[String],
@@ -140,10 +142,10 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
   /**
    * Save this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
    *
-   * @param tFRecordSpec     TF Record description for the Examples, use the
-   *                         [[com.spotify.scio.tensorflow.TFRecordSpec]] to define a description.
+   * @param tFRecordSpec TF Record description for the Examples, use the
+   * [[com.spotify.scio.tensorflow.TFRecordSpec]] to define a description.
    * @param tfRecordSpecPath path to save the TF Record description to, by default it will be
-   *                         `<PATH>/_tf_record_spec.json`
+   * `<PATH>/_tf_record_spec.json`
    * @group output
    */
   def saveAsTfExampleFile(path: String,
@@ -160,7 +162,15 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
       Option(tfRecordSpecPath).getOrElse(path.replaceAll("\\/+$", "") + "/_tf_record_spec.json")
     import scala.concurrent.ExecutionContext.Implicits.global
 
-    val tfrs: SCollection[String] = tFRecordSpec.toJson(self.context, compression)
+
+    val fi: SCollectionSeqFeatureInfo = tFRecordSpec match {
+      case SeqFeatureInfo(x) => SCollectionSeqFeatureInfo(self.context.parallelize(Seq(x)))
+      case SCollectionSeqFeatureInfo(x) => SCollectionSeqFeatureInfo(x)
+    }
+
+    import CustomCirceEncoders._
+    val tfrs: SCollection[String] = fi.x.map(
+      TFRecordSpecConfig(fi.LATEST_VERSION, _, compression).asJson.noSpaces)
 
     if (self.context.isTest) {
       self.context.testOut(TextIO(_tfRecordSpecPath))(tfrs)

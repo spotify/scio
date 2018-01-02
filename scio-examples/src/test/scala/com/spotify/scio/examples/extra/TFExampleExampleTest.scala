@@ -28,7 +28,8 @@ class TFExampleExampleTest extends PipelineSpec {
   val output = Seq(WordCountFeatures(3.0f, 2.0f), WordCountFeatures(3.0f, 1.0f))
     .map(featuresType.toExample(_))
   val featureNameDesc = Seq("""{"version":1,""" +
-    """"features":[["count","FloatList",{}],["wordLength","FloatList",{}]],""" +
+    """"features":[{"name":"count","kind":"FloatList","tags":{}},""" +
+    """{"name":"wordLength","kind":"FloatList","tags":{}}],""" +
     """"compression":"UNCOMPRESSED"}""")
 
   "TFExampleExample" should "work" in {

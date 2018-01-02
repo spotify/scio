@@ -18,8 +18,14 @@
 package com.spotify.scio.tensorflow
 
 import com.google.protobuf.ByteString
+import com.spotify.scio.tensorflow.FeatureKind.FeatureKind
+import io.circe.{Encoder, Json}
+import org.apache.beam.sdk.io.Compression
 
 import scala.reflect.runtime.universe._
+
+/** Information necessary to extract a given feature in TF. */
+final case class FeatureInfo(name: String, kind: FeatureKind, tags: Map[String, String])
 
 /** Mapping between Scala types and TF types */
 object FeatureKind extends Enumeration {
@@ -42,4 +48,14 @@ object FeatureKind extends Enumeration {
   }
 
   // scalastyle:on cyclomatic.complexity
+}
+
+private object CustomCirceEncoders {
+  implicit val compressionEncoder: Encoder[Compression] = new Encoder[Compression] {
+    override def apply(a: Compression): Json = Json.fromString(a.toString)
+  }
+
+  implicit val featureKindEncoder: Encoder[FeatureKind] = new Encoder[FeatureKind] {
+    override def apply(a: FeatureKind): Json = Json.fromString(a.toString)
+  }
 }

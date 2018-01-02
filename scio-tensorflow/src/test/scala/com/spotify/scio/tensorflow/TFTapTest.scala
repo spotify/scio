@@ -70,7 +70,8 @@ class TFTapTest extends TapSpec {
       verifyTap(out.waitForResult(), examples.toSet)
       verifyTap(spec.waitForResult(), Set(
         s"""{"version":1,""" +
-          """"features":[["f2","FloatList",{}],["f1","FloatList",{}]],""" +
+          """"features":[{"name":"f2","kind":"FloatList","tags":{}},""" +
+          """{"name":"f1","kind":"FloatList","tags":{}}],""" +
           s""""compression":"$compressionType"}"""
       ))
       FileUtils.deleteDirectory(dir)
