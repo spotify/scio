@@ -24,36 +24,40 @@ import org.apache.beam.sdk.options.ValueProvider
 
 private[dynamic] object DynamicDestinationsUtil {
 
-  def fileFn[T](path: String, suffix: String, windowedWrites: Boolean,
-                 defaultDestination: String, destinationFn: T => String)
+  def fileFn[T](fileDestination: FileDestinations, suffix: String, destinationFn: T => String)
   : DynamicDestinations[T, String, T] = new DynamicDestinations[T, String, T] {
     override def formatRecord(record: T): T = record
     override def getDestination(element: T): String = destinationFn(element)
-    override def getDefaultDestination: String = defaultDestination
+    override def getDefaultDestination: String = fileDestination.default
     override def getFilenamePolicy(destination: String): FileBasedSink.FilenamePolicy = {
-      val prefix = s"$path/$destination/part" + (if (windowedWrites) "-" else "")
+      val prefix = s"${fileDestination.path}/$destination/part" +
+        (if (fileDestination.windowedWrites) "-" else "")
       DefaultFilenamePolicy.fromStandardParameters(
         ValueProvider.StaticValueProvider.of(
           FileSystems.matchNewResource(prefix, false)),
-        null, suffix, windowedWrites)
+        null, suffix, fileDestination.windowedWrites)
     }
   }
 
-  def avroFn[T](path: String, suffix: String, windowedWrites: Boolean,
-                defaultDestination: String, destinationFn: T => String,
+  def avroFn[T](fileDestination: FileDestinations, suffix: String, destinationFn: T => String,
                 schema: Schema)
-  : DynamicAvroDestinations[T, String, T] = new DynamicAvroDestinations[T, String, T] {
-    override def formatRecord(record: T): T = record
-    override def getDestination(element: T): String = destinationFn(element)
-    override def getDefaultDestination: String = defaultDestination
-    override def getFilenamePolicy(destination: String): FileBasedSink.FilenamePolicy = {
-      val prefix = s"$path/$destination/part" + (if (windowedWrites) "-" else "")
-      DefaultFilenamePolicy.fromStandardParameters(
-        ValueProvider.StaticValueProvider.of(
-          FileSystems.matchNewResource(prefix, false)),
-        null, suffix, windowedWrites)
+  : DynamicAvroDestinations[T, String, T] = {
+    val schemaString = schema.toString
+    new DynamicAvroDestinations[T, String, T] {
+      override def formatRecord(record: T): T = record
+      override def getDestination(element: T): String = destinationFn(element)
+      override def getDefaultDestination: String = fileDestination.default
+      override def getFilenamePolicy(destination: String): FileBasedSink.FilenamePolicy = {
+        val prefix = s"${fileDestination.path}/$destination/part" +
+          (if (fileDestination.windowedWrites) "-" else "")
+        DefaultFilenamePolicy.fromStandardParameters(
+          ValueProvider.StaticValueProvider.of(
+            FileSystems.matchNewResource(prefix, false)),
+          null, suffix, fileDestination.windowedWrites)
+      }
+
+      override def getSchema(destination: String) = new Schema.Parser().parse(schemaString)
     }
-    override def getSchema(destination: String) = schema
   }
 
 }

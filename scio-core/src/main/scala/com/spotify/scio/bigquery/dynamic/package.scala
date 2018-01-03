@@ -80,8 +80,8 @@ package object dynamic {
      * [[com.google.api.services.bigquery.model.TableRow TableRow]].
      */
     def saveAsBigQuery(schema: TableSchema,
-                       writeDisposition: WriteDisposition,
-                       createDisposition: CreateDisposition)
+                       writeDisposition: WriteDisposition = null,
+                       createDisposition: CreateDisposition = null)
                       (tableFn: ValueInSingleWindow[T] => TableDestination)
                       (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
       saveAsBigQuery(
@@ -97,8 +97,8 @@ package object dynamic {
      * Note that element type `T` must be annotated with
      * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
      */
-    def saveAsTypedBigQuery(writeDisposition: WriteDisposition,
-                            createDisposition: CreateDisposition)
+    def saveAsTypedBigQuery(writeDisposition: WriteDisposition = null,
+                            createDisposition: CreateDisposition = null)
                            (tableFn: ValueInSingleWindow[T] => TableDestination)
                            (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
     : Future[Tap[T]] = {

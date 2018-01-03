@@ -294,6 +294,7 @@ lazy val scioTest: Project = Project(
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
     "org.scalatest" %% "scalatest" % scalatestVersion,
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
+    "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
     // DataFlow testing requires junit and hamcrest
     "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
     "com.spotify" % "annoy" % annoyVersion % "test",
@@ -306,7 +307,7 @@ lazy val scioTest: Project = Project(
   IntegrationTest
 ).dependsOn(
   scioCore,
-  scioSchemas % "test"
+  scioSchemas % "test,it"
 )
 
 lazy val scioAvro: Project = Project(
