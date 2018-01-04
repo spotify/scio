@@ -15,6 +15,8 @@
  * under the License.
  */
 
+import java.util.{List => JList}
+
 import com.google.bigtable.v2.{ReadRowsRequest, RowFilter, RowSet}
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.cloud.bigtable.grpc.scanner.FlatRow
@@ -68,20 +70,37 @@ object BigtableBenchmark {
     }
   }
 
-  def bigtableLookup(session: BigtableSession, input: String): ListenableFuture[String] =
+  def bigtableLookup(session: BigtableSession, input: String): ListenableFuture[String] = {
+    // Perform lookup and recover from non-fatal exception with a fallback
+    val future = readFlatRowsAsync(session, input)
+    Futures.catching(future, classOf[NonFatalException],
+      new com.google.common.base.Function[NonFatalException, String] {
+        override def apply(input: NonFatalException): String = {
+          assert(input.getMessage.endsWith("0000000001"))
+          "fallback"
+        }
+      })
+  }
+
+  class NonFatalException(msg: String) extends RuntimeException(msg)
+  class FatalException(msg: String) extends RuntimeException(msg)
+
+  def readFlatRowsAsync(session: BigtableSession, input: String): ListenableFuture[String] =
     if (input.endsWith("0000000000")) {
-      Futures.immediateFailedFuture(new RuntimeException(input))
+      // Simulate a fatal exception, to be propagated via `BigtableDoFn.Try`
+      Futures.immediateFailedFuture(new FatalException(input))
+    } else if (input.endsWith("0000000001")) {
+      // Simulate a non-fatal exception, to be recovered with a fallback
+      Futures.immediateFailedFuture(new NonFatalException(input))
     } else {
-      val s = input
-      val key = ByteString.copyFromUtf8(s"key-$s")
-      val expected = ByteString.copyFromUtf8(s"val-$s")
+      val key = ByteString.copyFromUtf8(s"key-$input")
+      val expected = ByteString.copyFromUtf8(s"val-$input")
       val request = readRowsRequestTemplate.toBuilder
         .setRows(RowSet.newBuilder().addRowKeys(key).build())
         .build()
-      val future = session.getDataClient.readFlatRowsAsync(request)
-      Futures.transform(future,
-        new com.google.common.base.Function[java.util.List[FlatRow], String] {
-          override def apply(input: java.util.List[FlatRow]) = {
+      Futures.transform(session.getDataClient.readFlatRowsAsync(request),
+        new com.google.common.base.Function[JList[FlatRow], String] {
+          override def apply(input: JList[FlatRow]): String = {
             val result = input
             assert(result.size() == 1)
             val cells = result.get(0).getCells
@@ -96,11 +115,13 @@ object BigtableBenchmark {
   def checkResult(kv: KV[String, BigtableDoFn.Try[String]]): (Int, Int) =
     kv.getValue.asScala match {
       case Success(value) =>
-        require(kv.getKey == value.substring(4))
+        val expected = if (kv.getKey.endsWith("0000000001")) "fallback" else s"val-${kv.getKey}"
+        assert(value == expected)
         (1, 0)
       case Failure(exception) =>
-        require(kv.getKey.endsWith("0000000000"))
-        require(kv.getKey == exception.getMessage)
+        assert(exception.isInstanceOf[FatalException])
+        assert(kv.getKey.endsWith("0000000000"))
+        assert(kv.getKey == exception.getMessage)
         (0, 1)
     }
 }
