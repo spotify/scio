@@ -32,6 +32,7 @@ build_settings: &build_settings
   steps:
     - checkout
     - restore_cache: *restore_cache_settings
+    - run: if [ "$CIRCLE_BRANCH" == "beam-master" ]; then ./scripts/circleci_snapshot.sh; fi
     - run:
         name: Unpacking sbt cache
         command: |
@@ -110,6 +111,7 @@ jobs:
 workflows:
   version: 2
 
+  # Per commit build
   build:
     jobs:
       - build_211:
@@ -130,6 +132,7 @@ workflows:
             branches:
               ignore: /.*/
 
+  # Nightly build to publish Scio SNAPSHOTs
   publish:
     triggers:
       - schedule:
@@ -141,3 +144,16 @@ workflows:
     jobs:
       - publish_211
       - publish_212
+
+  # Nightly build with latest Beam SNAPSHOTs
+  snapshot:
+    triggers:
+      - schedule:
+          cron: "0 12 * * *"
+          filters:
+            branches:
+              only:
+                - beam-master
+    jobs:
+      - build_211
+      - build_212
