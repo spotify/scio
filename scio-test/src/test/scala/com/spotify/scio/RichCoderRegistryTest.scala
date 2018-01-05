@@ -19,7 +19,7 @@ package com.spotify.scio
 
 import com.google.protobuf.Timestamp
 import com.spotify.scio.avro.AvroUtils._
-import com.spotify.scio.avro.{Account, TestRecord}
+import com.spotify.scio.avro.Account
 import com.spotify.scio.coders.CoderTestUtils._
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.coders.CoderRegistry
@@ -75,7 +75,7 @@ class RichCoderRegistryTest extends PipelineSpec {
   }
 
   it should "support Avro SpecificRecord" in {
-    val r = new TestRecord(1, 1L, 1F, 1.0, true, "hello")
+    val r = newSpecificRecord(1)
     registry should roundTrip (r)
     registry should roundTrip (("key", r))
     registry should roundTrip (CaseClassWithSpecificRecord("record", 10, r))

@@ -23,13 +23,12 @@ import com.google.api.services.bigquery.model.TableRow
 import com.google.common.collect.ImmutableList
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro.AvroUtils._
-import com.spotify.scio.avro.TestRecord
 import com.spotify.scio.coders.CoderTestUtils._
 import com.spotify.scio.testing.PipelineSpec
 import com.twitter.chill._
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.coders.Coder
-import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values.KV
 import org.joda.time.Instant
@@ -89,7 +88,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
   }
 
   it should "support Avro SpecificRecord" in {
-    val r = new TestRecord(1, 1L, 1F, 1.0, true, "hello")
+    val r = newSpecificRecord(1)
     cf should roundTrip (r)
     cf should roundTrip (("key", r))
     cf should roundTrip (CaseClassWithSpecificRecord("record", 10, r))
