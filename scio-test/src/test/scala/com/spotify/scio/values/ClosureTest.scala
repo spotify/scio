@@ -98,8 +98,8 @@ class ClosureTest extends PipelineSpec {
         sc.parallelize(Seq(1, 2, 3))
           .map(_ * o.x)
       }
-    val msg = "unable to serialize anonymous function map@{ClosureTest.scala:"
-    thrown.getMessage should startWith (msg)
+    val fnString = "map@{ClosureTest.scala:"
+    thrown.getMessage should include (fnString)
   }
 
   it should "support multi-nested closures" in {
