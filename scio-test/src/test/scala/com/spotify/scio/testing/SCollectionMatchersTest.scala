@@ -31,7 +31,7 @@ import org.joda.time.{Duration, Instant}
 // scalastyle:off no.whitespace.before.left.bracket
 class SCollectionMatchersTest extends PipelineSpec {
 
-  "SCollectionMatch" should "support containInAnyOrder" in {
+  "SCollectionMatchers" should "support containInAnyOrder" in {
     // should cases
     runWithContext {
       _.parallelize(1 to 100) should containInAnyOrder (1 to 100)
@@ -204,33 +204,33 @@ class SCollectionMatchersTest extends PipelineSpec {
 
   it should "support forAll" in {
     // should cases
-    runWithContext { _.parallelize(1 to 100) should forAll[Int] (_ > 0)}
+    runWithContext { _.parallelize(1 to 100) should forAll[Int] (_ > 0) }
 
     an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(1 to 100) should forAll[Int] (_ > 10)}
+      runWithContext { _.parallelize(1 to 100) should forAll[Int] (_ > 10) }
     }
 
     // shouldNot cases
-    runWithContext { _.parallelize(1 to 100) shouldNot forAll[Int] (_ > 10)}
+    runWithContext { _.parallelize(1 to 100) shouldNot forAll[Int] (_ > 10) }
 
     an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(1 to 100) shouldNot forAll[Int] (_ > 0)}
+      runWithContext { _.parallelize(1 to 100) shouldNot forAll[Int] (_ > 0) }
     }
   }
 
   it should "support exist" in {
     // should cases
-    runWithContext { _.parallelize(1 to 100) should exist[Int] (_ > 99)}
+    runWithContext { _.parallelize(1 to 100) should exist[Int] (_ > 99) }
 
     an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(1 to 100) should exist[Int] (_ > 100)}
+      runWithContext { _.parallelize(1 to 100) should exist[Int] (_ > 100) }
     }
 
     // shouldNot cases
-    runWithContext { _.parallelize(1 to 100) shouldNot exist[Int] (_ > 100)}
+    runWithContext { _.parallelize(1 to 100) shouldNot exist[Int] (_ > 100) }
 
     an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(1 to 100) shouldNot exist[Int] (_ > 99)}
+      runWithContext { _.parallelize(1 to 100) shouldNot exist[Int] (_ > 99) }
     }
   }
 
