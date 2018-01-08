@@ -218,6 +218,40 @@ class SCollectionMatchersTest extends PipelineSpec {
     }
   }
 
+  it should "support tolerance" in {
+    val xs = Seq(1.4, 1.5, 1.6)
+
+    // should cases
+    runWithContext { _.parallelize(xs) should forAll[Double] (_ === 1.5+-0.1) }
+    runWithContext { _.parallelize(xs) should exist[Double] (_ === 1.5+-0.1) }
+    runWithContext { _.parallelize(xs) should satisfy[Double] (_.sum === 5.0+-0.5) }
+
+    an [AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(xs) should forAll[Double] (_ === 1.4+-0.1) }
+    }
+    an [AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(xs) should exist[Double] (_ === 1.0+-0.1) }
+    }
+    an [AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(xs) should satisfy[Double] (_.sum === 1.0+-0.5) }
+    }
+
+    // shouldNot cases
+    runWithContext { _.parallelize(xs) shouldNot forAll[Double] (_ === 1.4+-0.1) }
+    runWithContext { _.parallelize(xs) shouldNot exist[Double] (_ === 1.0+-0.1) }
+    runWithContext { _.parallelize(xs) shouldNot satisfy[Double] (_.sum === 1.0+-0.5) }
+
+    an [AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(xs) shouldNot forAll[Double] (_ === 1.5+-0.1) }
+    }
+    an [AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(xs) shouldNot exist[Double] (_ === 1.5+-0.1) }
+    }
+    an [AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(xs) shouldNot satisfy[Double] (_.sum === 5.0+-0.5) }
+    }
+  }
+
   it should "support exist" in {
     // should cases
     runWithContext { _.parallelize(1 to 100) should exist[Int] (_ > 99) }

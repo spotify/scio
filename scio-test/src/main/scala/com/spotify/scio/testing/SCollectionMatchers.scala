@@ -292,11 +292,15 @@ trait SCollectionMatchers {
     }
 
   /** Assert that all elements of the SCollection in question satisfy the provided function. */
-  def forAll[T: ClassTag](predicate: T => Boolean): IterableMatcher[SCollection[T], T] =
-    satisfy(_.forall(predicate))
+  def forAll[T: ClassTag](predicate: T => Boolean): IterableMatcher[SCollection[T], T] = {
+    val f = ClosureCleaner(predicate)
+    satisfy(_.forall(f))
+  }
 
   /** Assert that some elements of the SCollection in question satisfy the provided function. */
-  def exist[T: ClassTag](predicate: T => Boolean): IterableMatcher[SCollection[T], T] =
-    satisfy(_.exists(predicate))
+  def exist[T: ClassTag](predicate: T => Boolean): IterableMatcher[SCollection[T], T] = {
+    val f = ClosureCleaner(predicate)
+    satisfy(_.exists(f))
+  }
 
 }
