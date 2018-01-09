@@ -18,44 +18,65 @@
 package com.spotify.scio.parquet.avro;
 
 import org.apache.avro.Schema;
-import org.apache.beam.sdk.io.FileBasedSink;
+import org.apache.beam.sdk.io.FileBasedSink.DynamicDestinations;
+import org.apache.beam.sdk.io.FileBasedSink.OutputFileHints;
 import org.apache.beam.sdk.io.HadoopFileBasedSink;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
 import org.apache.beam.sdk.options.ValueProvider;
+import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.hadoop.ParquetWriter;
 
-public class ParquetAvroSink<T> extends HadoopFileBasedSink<T> {
+import javax.annotation.Nullable;
+
+public class ParquetAvroSink<T> extends HadoopFileBasedSink<T, Void, T> {
 
   private final String schemaString;
   private final SerializableConfiguration conf;
 
-  public ParquetAvroSink(ValueProvider<ResourceId> baseOutputDirectoryProvider,
-                         FileBasedSink.FilenamePolicy filenamePolicy,
+  public ParquetAvroSink(ValueProvider<ResourceId> baseOutputFileName,
+                         DynamicDestinations<T, Void, T> dynamicDestinations,
                          Schema schema,
                          Configuration conf) {
-    super(baseOutputDirectoryProvider, filenamePolicy);
+    super(baseOutputFileName, dynamicDestinations);
     schemaString = schema.toString();
     this.conf = new SerializableConfiguration(conf);
   }
 
   @Override
-  public HadoopFileBasedSink.WriteOperation<T> createWriteOperation() {
+  public WriteOperation<Void, T> createWriteOperation() {
     return new ParquetAvroWriteOperation<T>(this, schemaString, conf);
+  }
+
+  @Override
+  public OutputFileHints getOutputFileHints() {
+    return new OutputFileHints() {
+      @Nullable
+      @Override
+      public String getMimeType() {
+        return MimeTypes.BINARY;
+      }
+
+      @Nullable
+      @Override
+      public String getSuggestedFilenameSuffix() {
+        return ".parquet";
+      }
+    };
   }
 
   // =======================================================================
   // WriteOperation
   // =======================================================================
 
-  static class ParquetAvroWriteOperation<T> extends WriteOperation<T> {
+  static class ParquetAvroWriteOperation<T> extends WriteOperation<Void, T> {
 
     private final String schemaString;
     private final SerializableConfiguration conf;
 
-    public ParquetAvroWriteOperation(HadoopFileBasedSink<T> sink,
+    public ParquetAvroWriteOperation(HadoopFileBasedSink<T, Void, T> sink,
                                      String schemaString,
                                      SerializableConfiguration conf) {
       super(sink);
@@ -64,7 +85,7 @@ public class ParquetAvroSink<T> extends HadoopFileBasedSink<T> {
     }
 
     @Override
-    public HadoopFileBasedSink.Writer<T> createWriter() throws Exception {
+    public Writer<Void, T> createWriter() throws Exception {
       return new ParquetAvroWriter<>(this, new Schema.Parser().parse(schemaString), conf);
     }
   }
@@ -73,13 +94,13 @@ public class ParquetAvroSink<T> extends HadoopFileBasedSink<T> {
   // Writer
   // =======================================================================
 
-  static class ParquetAvroWriter<T> extends Writer<T> {
+  static class ParquetAvroWriter<T> extends Writer<Void, T> {
 
     private final Schema schema;
     private final SerializableConfiguration conf;
     private ParquetWriter<T> writer;
 
-    public ParquetAvroWriter(WriteOperation<T> writeOperation,
+    public ParquetAvroWriter(WriteOperation<Void, T> writeOperation,
                              Schema schema,
                              SerializableConfiguration conf) {
       super(writeOperation);
