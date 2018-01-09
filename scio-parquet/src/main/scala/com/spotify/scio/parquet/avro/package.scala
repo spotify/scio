@@ -28,7 +28,7 @@ import org.apache.avro.Schema
 import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.io.hadoop.inputformat.HadoopInputFormatIO
-import org.apache.beam.sdk.io.{DefaultFilenamePolicy, FileBasedSink, HadoopWriteFiles}
+import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.beam.sdk.values.TypeDescriptor
@@ -205,9 +205,10 @@ package object avro {
         }
         val resource = FileBasedSink.convertToFileResourceIfPossible(self.pathWithShards(path))
         val prefix = StaticValueProvider.of(resource)
-        val policy = DefaultFilenamePolicy.fromStandardParameters(
+        val usedFilenamePolicy = DefaultFilenamePolicy.fromStandardParameters(
           prefix, null, ".parquet", false)
-        val sink = new ParquetAvroSink[T](prefix, policy, writerSchema, job.getConfiguration)
+        val destinations = DynamicFileDestinations.constant[T](usedFilenamePolicy)
+        val sink = new ParquetAvroSink[T](prefix, destinations, writerSchema, job.getConfiguration)
         val t = HadoopWriteFiles.to(sink).withNumShards(numShards)
         self.applyInternal(t)
       }

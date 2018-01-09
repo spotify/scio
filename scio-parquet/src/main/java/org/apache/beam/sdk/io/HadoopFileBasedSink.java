@@ -18,13 +18,12 @@
 package org.apache.beam.sdk.io;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Ordering;
+import com.google.common.collect.*;
 import org.apache.beam.sdk.annotations.Experimental;
 import org.apache.beam.sdk.annotations.Experimental.Kind;
+import org.apache.beam.sdk.io.FileBasedSink.DynamicDestinations;
 import org.apache.beam.sdk.io.FileBasedSink.FileResult;
-import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy;
+import org.apache.beam.sdk.io.FileBasedSink.OutputFileHints;
 import org.apache.beam.sdk.io.fs.MatchResult;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.MoveOptions.StandardMoveOptions;
@@ -38,8 +37,9 @@ import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.HasDisplayData;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
+import org.apache.beam.sdk.transforms.windowing.GlobalWindow;
 import org.apache.beam.sdk.transforms.windowing.PaneInfo;
-import org.apache.beam.sdk.util.MimeTypes;
+import org.apache.beam.sdk.values.KV;
 import org.apache.hadoop.fs.Path;
 import org.joda.time.Instant;
 import org.joda.time.format.DateTimeFormat;
@@ -58,19 +58,24 @@ import static com.google.common.base.Verify.verifyNotNull;
 import static org.apache.beam.sdk.io.WriteFiles.UNKNOWN_SHARDNUM;
 
 @Experimental(Kind.FILESYSTEM)
-public abstract class HadoopFileBasedSink<T> implements Serializable, HasDisplayData {
+public abstract class HadoopFileBasedSink<UserT, DestinationT, OutputT>
+    implements Serializable, HasDisplayData {
   private static final Logger LOG = LoggerFactory.getLogger(HadoopFileBasedSink.class);
-
-  private final FilenamePolicy filenamePolicy;
-  private final ValueProvider<ResourceId> baseOutputDirectoryProvider;
+  static final String TEMP_DIRECTORY_PREFIX = ".temp-beam";
 
   @Experimental(Kind.FILESYSTEM)
-  public HadoopFileBasedSink(
-      ValueProvider<ResourceId> baseOutputDirectoryProvider, FilenamePolicy filenamePolicy) {
-    this.baseOutputDirectoryProvider =
-        NestedValueProvider.of(baseOutputDirectoryProvider, new ExtractDirectory());
-    this.filenamePolicy = filenamePolicy;
+  public static ResourceId convertToFileResourceIfPossible(String outputPrefix) {
+    try {
+      return FileSystems.matchNewResource(outputPrefix, false /* isDirectory */);
+    } catch (Exception e) {
+      return FileSystems.matchNewResource(outputPrefix, true /* isDirectory */);
+    }
   }
+
+  private final DynamicDestinations<?, DestinationT, OutputT> dynamicDestinations;
+
+  /** The directory to which files will be written. */
+  private final ValueProvider<ResourceId> tempDirectoryProvider;
 
   private static class ExtractDirectory implements SerializableFunction<ResourceId, ResourceId> {
     @Override
@@ -80,25 +85,37 @@ public abstract class HadoopFileBasedSink<T> implements Serializable, HasDisplay
   }
 
   @Experimental(Kind.FILESYSTEM)
-  public ValueProvider<ResourceId> getBaseOutputDirectoryProvider() {
-    return baseOutputDirectoryProvider;
+  public HadoopFileBasedSink(
+      ValueProvider<ResourceId> tempDirectoryProvider,
+      DynamicDestinations<?, DestinationT, OutputT> dynamicDestinations) {
+    this.tempDirectoryProvider =
+        NestedValueProvider.of(tempDirectoryProvider, new ExtractDirectory());
+    this.dynamicDestinations = checkNotNull(dynamicDestinations);
+  }
+
+  /** Return the {@link DynamicDestinations} used. */
+  @SuppressWarnings("unchecked")
+  public DynamicDestinations<UserT, DestinationT, OutputT> getDynamicDestinations() {
+    return (DynamicDestinations<UserT, DestinationT, OutputT>) dynamicDestinations;
   }
 
   @Experimental(Kind.FILESYSTEM)
-  public final FilenamePolicy getFilenamePolicy() {
-    return filenamePolicy;
+  public ValueProvider<ResourceId> getTempDirectoryProvider() {
+    return tempDirectoryProvider;
   }
 
   public void validate(PipelineOptions options) {}
 
-  public abstract WriteOperation<T> createWriteOperation();
+  public abstract WriteOperation<DestinationT, OutputT> createWriteOperation();
+
+  public abstract OutputFileHints getOutputFileHints();
 
   public void populateDisplayData(DisplayData.Builder builder) {
-    getFilenamePolicy().populateDisplayData(builder);
+    getDynamicDestinations().populateDisplayData(builder);
   }
 
-  public abstract static class WriteOperation<T> implements Serializable {
-    protected final HadoopFileBasedSink<T> sink;
+  public abstract static class WriteOperation<DestinationT, OutputT> implements Serializable {
+    protected final HadoopFileBasedSink<?, DestinationT, OutputT> sink;
 
     protected final ValueProvider<ResourceId> tempDirectory;
 
@@ -111,16 +128,17 @@ public abstract class HadoopFileBasedSink<T> implements Serializable, HasDisplay
       return tempDirectory.resolve(filename, StandardResolveOptions.RESOLVE_FILE);
     }
 
-    public WriteOperation(HadoopFileBasedSink<T> sink) {
-      this(sink, NestedValueProvider.of(
-          sink.getBaseOutputDirectoryProvider(), new TemporaryDirectoryBuilder()));
+    public WriteOperation(HadoopFileBasedSink<?, DestinationT, OutputT> sink) {
+      this(
+          sink,
+          NestedValueProvider.of(sink.getTempDirectoryProvider(), new TemporaryDirectoryBuilder()));
     }
 
     private static class TemporaryDirectoryBuilder
         implements SerializableFunction<ResourceId, ResourceId> {
       private static final AtomicLong TEMP_COUNT = new AtomicLong(0);
       private static final DateTimeFormatter TEMPDIR_TIMESTAMP =
-          DateTimeFormat.forPattern("yyyy-MM-DD_HH-mm-ss");
+          DateTimeFormat.forPattern("yyyy-MM-dd_HH-mm-ss");
       // The intent of the code is to have a consistent value of tempDirectory across
       // all workers, which wouldn't happen if now() was called inline.
       private final String timestamp = Instant.now().toString(TEMPDIR_TIMESTAMP);
@@ -129,155 +147,208 @@ public abstract class HadoopFileBasedSink<T> implements Serializable, HasDisplay
       private final Long tempId = TEMP_COUNT.getAndIncrement();
 
       @Override
-      public ResourceId apply(ResourceId baseOutputDirectory) {
+      public ResourceId apply(ResourceId tempDirectory) {
         // Temp directory has a timestamp and a unique ID
-        String tempDirName = String.format(".temp-beam-%s-%s", timestamp, tempId);
-        return baseOutputDirectory.resolve(tempDirName, StandardResolveOptions.RESOLVE_DIRECTORY);
+        String tempDirName = String.format(TEMP_DIRECTORY_PREFIX + "-%s-%s", timestamp, tempId);
+        return tempDirectory
+            .getCurrentDirectory()
+            .resolve(tempDirName, StandardResolveOptions.RESOLVE_DIRECTORY);
       }
     }
 
     @Experimental(Kind.FILESYSTEM)
-    public WriteOperation(HadoopFileBasedSink<T> sink, ResourceId tempDirectory) {
+    public WriteOperation(HadoopFileBasedSink<?, DestinationT, OutputT> sink, ResourceId tempDirectory) {
       this(sink, StaticValueProvider.of(tempDirectory));
     }
 
     private WriteOperation(
-        HadoopFileBasedSink<T> sink, ValueProvider<ResourceId> tempDirectory) {
+            HadoopFileBasedSink<?, DestinationT, OutputT> sink, ValueProvider<ResourceId> tempDirectory) {
       this.sink = sink;
       this.tempDirectory = tempDirectory;
       this.windowedWrites = false;
     }
 
-    public abstract Writer<T> createWriter() throws Exception;
+    public abstract Writer<DestinationT, OutputT> createWriter() throws Exception;
 
+    /** Indicates that the operation will be performing windowed writes. */
     public void setWindowedWrites(boolean windowedWrites) {
       this.windowedWrites = windowedWrites;
     }
 
-    public void finalize(Iterable<FileResult<Void>> writerResults) throws Exception {
-      // Collect names of temporary files and rename them.
-      Map<ResourceId, ResourceId> outputFilenames = buildOutputFilenames(writerResults);
-      copyToOutputFiles(outputFilenames);
-
-      // Optionally remove temporary files.
-      // We remove the entire temporary directory, rather than specifically removing the files
-      // from writerResults, because writerResults includes only successfully completed bundles,
-      // and we'd like to clean up the failed ones too.
-      // Note that due to GCS eventual consistency, matching files in the temp directory is also
-      // currently non-perfect and may fail to delete some files.
-      //
-      // When windows or triggers are specified, files are generated incrementally so deleting
-      // the entire directory in finalize is incorrect.
-      removeTemporaryFiles(outputFilenames.keySet(), !windowedWrites);
+    public void removeTemporaryFiles(Collection<ResourceId> filenames) throws IOException {
+      removeTemporaryFiles(filenames, !windowedWrites);
     }
 
     @Experimental(Kind.FILESYSTEM)
-    protected final Map<ResourceId, ResourceId> buildOutputFilenames(
-        Iterable<FileResult<Void>> writerResults) {
-      int numShards = Iterables.size(writerResults);
-      Map<ResourceId, ResourceId> outputFilenames = new HashMap<>();
+    protected final List<KV<FileResult<DestinationT>, ResourceId>> finalizeDestination(
+        @Nullable DestinationT dest,
+        @Nullable BoundedWindow window,
+        @Nullable Integer numShards,
+        Collection<FileResult<DestinationT>> existingResults) throws Exception {
+      Collection<FileResult<DestinationT>> completeResults =
+          windowedWrites
+              ? existingResults
+              : createMissingEmptyShards(dest, numShards, existingResults);
 
-      FilenamePolicy policy = getSink().getFilenamePolicy();
-      ResourceId baseOutputDir = getSink().getBaseOutputDirectoryProvider().get();
+      for (FileResult<DestinationT> res : completeResults) {
+        checkArgument(
+            Objects.equals(dest, res.getDestination()),
+            "File result has wrong destination: expected %s, got %s",
+            dest, res.getDestination());
+        checkArgument(
+            Objects.equals(window, res.getWindow()),
+            "File result has wrong window: expected %s, got %s",
+            window, res.getWindow());
+      }
+      List<KV<FileResult<DestinationT>, ResourceId>> outputFilenames = Lists.newArrayList();
 
-      // Either all results have a shard number set (if the sink is configured with a fixed
-      // number of shards), or they all don't (otherwise).
-      Boolean isShardNumberSetEverywhere = null;
-      for (FileResult<Void> result : writerResults) {
-        boolean isShardNumberSetHere = (result.getShard() != UNKNOWN_SHARDNUM);
-        if (isShardNumberSetEverywhere == null) {
-          isShardNumberSetEverywhere = isShardNumberSetHere;
-        } else {
+      final int effectiveNumShards;
+      if (numShards != null) {
+        effectiveNumShards = numShards;
+        for (FileResult<DestinationT> res : completeResults) {
           checkArgument(
-              isShardNumberSetEverywhere == isShardNumberSetHere,
-              "Found a mix of files with and without shard number set: %s",
-              result);
+              res.getShard() != UNKNOWN_SHARDNUM,
+              "Fixed sharding into %s shards was specified, "
+                  + "but file result %s does not specify a shard",
+              numShards,
+              res);
         }
-      }
-
-      if (isShardNumberSetEverywhere == null) {
-        isShardNumberSetEverywhere = true;
-      }
-
-      List<FileResult<Void>> resultsWithShardNumbers = Lists.newArrayList();
-      if (isShardNumberSetEverywhere) {
-        resultsWithShardNumbers = Lists.newArrayList(writerResults);
       } else {
-        // Sort files for idempotence. Sort by temporary filename.
-        // Note that this codepath should not be used when processing triggered windows. In the
-        // case of triggers, the list of FileResult objects in the Finalize iterable is not
-        // deterministic, and might change over retries. This breaks the assumption below that
-        // sorting the FileResult objects provides idempotency.
-        List<FileResult<Void>> sortedByTempFilename =
-            Ordering.from(
-                new Comparator<FileResult<Void>>() {
-                  @Override
-                  public int compare(FileResult<Void> first, FileResult<Void> second) {
-                    String firstFilename = first.getTempFilename().toString();
-                    String secondFilename = second.getTempFilename().toString();
-                    return firstFilename.compareTo(secondFilename);
-                  }
-                })
-                .sortedCopy(writerResults);
-        for (int i = 0; i < sortedByTempFilename.size(); i++) {
-          resultsWithShardNumbers.add(sortedByTempFilename.get(i).withShard(i));
+        effectiveNumShards = Iterables.size(completeResults);
+        for (FileResult<DestinationT> res : completeResults) {
+          checkArgument(
+              res.getShard() == UNKNOWN_SHARDNUM,
+              "Runner-chosen sharding was specified, "
+                  + "but file result %s explicitly specifies a shard",
+              res);
         }
       }
 
-      for (FileResult<Void> result : resultsWithShardNumbers) {
+      List<FileResult<DestinationT>> resultsWithShardNumbers = Lists.newArrayList();
+      if (numShards != null) {
+        resultsWithShardNumbers = Lists.newArrayList(completeResults);
+      } else {
+        int i = 0;
+        for (FileResult<DestinationT> res : completeResults) {
+          resultsWithShardNumbers.add(res.withShard(i++));
+        }
+      }
+
+      Map<ResourceId, FileResult<DestinationT>> distinctFilenames = Maps.newHashMap();
+      for (FileResult<DestinationT> result : resultsWithShardNumbers) {
         checkArgument(
             result.getShard() != UNKNOWN_SHARDNUM, "Should have set shard number on %s", result);
-        outputFilenames.put(
-            result.getTempFilename(),
-            result.getDestinationFile(DynamicFileDestinations.<T>constant(policy), numShards,
-                new FileBasedSink.OutputFileHints() {
-                  @Nullable
-                  @Override
-                  public String getMimeType() {
-                    return MimeTypes.BINARY;
-                  }
-
-                  @Nullable
-                  @Override
-                  public String getSuggestedFilenameSuffix() {
-                    return "";
-                  }
-                }));
+        ResourceId finalFilename = result.getDestinationFile(
+            windowedWrites,
+            getSink().getDynamicDestinations(),
+            effectiveNumShards,
+            getSink().getOutputFileHints());
+        checkArgument(
+            !distinctFilenames.containsKey(finalFilename),
+            "Filename policy must generate unique filenames, but generated the same name %s "
+                + "for file results %s and %s",
+            finalFilename,
+            result,
+            distinctFilenames.get(finalFilename));
+        distinctFilenames.put(finalFilename, result);
+        outputFilenames.add(KV.of(result, finalFilename));
       }
-
-      int numDistinctShards = new HashSet<>(outputFilenames.values()).size();
-      checkState(numDistinctShards == outputFilenames.size(),
-          "Only generated %s distinct file names for %s files.",
-          numDistinctShards, outputFilenames.size());
-
       return outputFilenames;
+    }
+
+    private Collection<FileResult<DestinationT>> createMissingEmptyShards(
+        @Nullable DestinationT dest,
+        @Nullable Integer numShards,
+        Collection<FileResult<DestinationT>> existingResults)
+        throws Exception {
+      Collection<FileResult<DestinationT>> completeResults;
+      LOG.info("Finalizing for destination {} num shards {}.", dest, existingResults.size());
+      if (numShards != null) {
+        checkArgument(
+            existingResults.size() <= numShards,
+            "Fixed sharding into %s shards was specified, but got %s file results",
+            numShards,
+            existingResults.size());
+      }
+      // We must always output at least 1 shard, and honor user-specified numShards
+      // if set.
+      Set<Integer> missingShardNums;
+      if (numShards == null) {
+        missingShardNums =
+            existingResults.isEmpty()
+                ? ImmutableSet.of(UNKNOWN_SHARDNUM)
+                : ImmutableSet.<Integer>of();
+      } else {
+        missingShardNums = Sets.newHashSet();
+        for (int i = 0; i < numShards; ++i) {
+          missingShardNums.add(i);
+        }
+        for (FileResult<DestinationT> res : existingResults) {
+          checkArgument(
+              res.getShard() != UNKNOWN_SHARDNUM,
+              "Fixed sharding into %s shards was specified, "
+                  + "but file result %s does not specify a shard",
+              numShards,
+              res);
+          missingShardNums.remove(res.getShard());
+        }
+      }
+      completeResults = Lists.newArrayList(existingResults);
+      if (!missingShardNums.isEmpty()) {
+        LOG.info(
+            "Creating {} empty output shards in addition to {} written for destination {}.",
+            missingShardNums.size(),
+            existingResults.size(),
+            dest);
+        for (int shard : missingShardNums) {
+          String uuid = UUID.randomUUID().toString();
+          LOG.info("Opening empty writer {} for destination {}", uuid, dest);
+          Writer<DestinationT, ?> writer = createWriter();
+          writer.setDestination(dest);
+          // Currently this code path is only called in the unwindowed case.
+          writer.open(uuid);
+          writer.close();
+          completeResults.add(
+              new FileResult<>(
+                  writer.getOutputFile(),
+                  shard,
+                  GlobalWindow.INSTANCE,
+                  PaneInfo.ON_TIME_AND_ONLY_FIRING,
+                  dest));
+        }
+        LOG.debug("Done creating extra shards for {}.", dest);
+      }
+      return completeResults;
     }
 
     @VisibleForTesting
     @Experimental(Kind.FILESYSTEM)
-    final void copyToOutputFiles(Map<ResourceId, ResourceId> filenames)
-        throws IOException {
-      int numFiles = filenames.size();
-      if (numFiles > 0) {
+    final void moveToOutputFiles(
+        List<KV<FileResult<DestinationT>, ResourceId>> resultsToFinalFilenames) throws IOException {
+      int numFiles = resultsToFinalFilenames.size();
+
         LOG.debug("Copying {} files.", numFiles);
-        List<ResourceId> srcFiles = new ArrayList<>(filenames.size());
-        List<ResourceId> dstFiles = new ArrayList<>(filenames.size());
-        for (Map.Entry<ResourceId, ResourceId> srcDestPair : filenames.entrySet()) {
-          srcFiles.add(srcDestPair.getKey());
-          dstFiles.add(srcDestPair.getValue());
+        List<ResourceId> srcFiles = new ArrayList<>();
+        List<ResourceId> dstFiles = new ArrayList<>();
+        for (KV<FileResult<DestinationT>, ResourceId> entry : resultsToFinalFilenames) {
+          srcFiles.add(entry.getKey().getTempFilename());
+          dstFiles.add(entry.getValue());
+          LOG.info(
+              "Will copy temporary file {} to final location {}",
+              entry.getKey(),
+              entry.getValue());
         }
         // During a failure case, files may have been deleted in an earlier step. Thus
         // we ignore missing files here.
         FileSystems.copy(srcFiles, dstFiles, StandardMoveOptions.IGNORE_MISSING_FILES);
-      } else {
-        LOG.info("No output files to write.");
-      }
+      removeTemporaryFiles(srcFiles);
     }
 
     @VisibleForTesting
     @Experimental(Kind.FILESYSTEM)
     final void removeTemporaryFiles(
-        Set<ResourceId> knownFiles, boolean shouldRemoveTemporaryDirectory) throws IOException {
+        Collection<ResourceId> knownFiles, boolean shouldRemoveTemporaryDirectory)
+        throws IOException {
       ResourceId tempDir = tempDirectory.get();
       LOG.debug("Removing temporary bundle output files in {}.", tempDir);
 
@@ -288,145 +359,126 @@ public abstract class HadoopFileBasedSink<T> implements Serializable, HasDisplay
 
       // This may still fail to remove temporary outputs of some failed bundles, but at least
       // the common case (where all bundles succeed) is guaranteed to be fully addressed.
-      Set<ResourceId> matches = new HashSet<>();
+      Set<ResourceId> allMatches = new HashSet<>(knownFiles);
+      for (ResourceId match : allMatches) {
+        LOG.info("Will remove known temporary file {}", match);
+      }
       // TODO: Windows OS cannot resolves and matches '*' in the path,
       // ignore the exception for now to avoid failing the pipeline.
       if (shouldRemoveTemporaryDirectory) {
         try {
-          MatchResult singleMatch = Iterables.getOnlyElement(
-              FileSystems.match(Collections.singletonList(tempDir.toString() + "*")));
+          MatchResult singleMatch =
+              Iterables.getOnlyElement(
+                  FileSystems.match(Collections.singletonList(tempDir.toString() + "*")));
           for (Metadata matchResult : singleMatch.metadata()) {
-            matches.add(matchResult.resourceId());
+            if (allMatches.add(matchResult.resourceId())) {
+              LOG.info("Will also remove unknown temporary file {}", matchResult.resourceId());
+            }
           }
         } catch (Exception e) {
           LOG.warn("Failed to match temporary files under: [{}].", tempDir);
         }
       }
-      Set<ResourceId> allMatches = new HashSet<>(matches);
-      allMatches.addAll(knownFiles);
-      LOG.debug(
-          "Removing {} temporary files found under {} ({} matched glob, {} known files)",
-          allMatches.size(),
-          tempDir,
-          matches.size(),
-          allMatches.size() - matches.size());
       FileSystems.delete(allMatches, StandardMoveOptions.IGNORE_MISSING_FILES);
 
-      // Deletion of the temporary directory might fail, if not all temporary files are removed.
-      try {
-        FileSystems.delete(
-            Collections.singletonList(tempDir), StandardMoveOptions.IGNORE_MISSING_FILES);
-      } catch (Exception e) {
-        LOG.warn("Failed to remove temporary directory: [{}].", tempDir);
+      if (shouldRemoveTemporaryDirectory) {
+        // Deletion of the temporary directory might fail, if not all temporary files are removed.
+        try {
+          FileSystems.delete(
+              Collections.singletonList(tempDir), StandardMoveOptions.IGNORE_MISSING_FILES);
+        } catch (Exception e) {
+          LOG.warn("Failed to remove temporary directory: [{}].", tempDir);
+        }
       }
     }
 
-    public HadoopFileBasedSink<T> getSink() {
+    public HadoopFileBasedSink<?, DestinationT, OutputT> getSink() {
       return sink;
     }
 
     @Override
     public String toString() {
-      String tempDirectoryStr =
-          tempDirectory.isAccessible() ? tempDirectory.get().toString() : tempDirectory.toString();
       return getClass().getSimpleName()
           + "{"
           + "tempDirectory="
-          + tempDirectoryStr
+          + tempDirectory
           + ", windowedWrites="
           + windowedWrites
           + '}';
     }
   }
 
-  public abstract static class Writer<T> {
+  public abstract static class Writer<DestinationT, OutputT> {
     private static final Logger LOG = LoggerFactory.getLogger(Writer.class);
 
-    private final WriteOperation<T> writeOperation;
+    private final WriteOperation<DestinationT, OutputT> writeOperation;
 
-    private String id;
-
-    private BoundedWindow window;
-    private PaneInfo paneInfo;
-    private int shard = -1;
-
+    private @Nullable String id;
+    private @Nullable DestinationT destination;
     private @Nullable ResourceId outputFile;
+    private @Nullable Path path;
 
-    private Path path;
+    @Nullable private final String mimeType;
 
-    public Writer(WriteOperation<T> writeOperation) {
+    public Writer(WriteOperation<DestinationT, OutputT> writeOperation) {
       checkNotNull(writeOperation);
       this.writeOperation = writeOperation;
+      this.mimeType = writeOperation.getSink().getOutputFileHints().getMimeType();
     }
 
     protected abstract void prepareWrite(Path path) throws Exception;
 
     protected void finishWrite() throws Exception {}
 
-    public final void openWindowed(String uId, BoundedWindow window, PaneInfo paneInfo, int shard)
-        throws Exception {
-      if (!getWriteOperation().windowedWrites) {
-        throw new IllegalStateException("openWindowed called a non-windowed sink.");
-      }
-      open(uId, window, paneInfo, shard);
-    }
-
-    public abstract void write(T value) throws Exception;
-
-    public final void openUnwindowed(String uId, int shard) throws Exception {
-      if (getWriteOperation().windowedWrites) {
-        throw new IllegalStateException("openUnwindowed called a windowed sink.");
-      }
-      open(uId, null, null, shard);
-    }
-
-    private void open(String uId,
-                      @Nullable BoundedWindow window,
-                      @Nullable PaneInfo paneInfo,
-                      int shard) throws Exception {
+    public final void open(String uId) throws Exception {
       this.id = uId;
-      this.window = window;
-      this.paneInfo = paneInfo;
-      this.shard = shard;
       ResourceId tempDirectory = getWriteOperation().tempDirectory.get();
       outputFile = tempDirectory.resolve(id, StandardResolveOptions.RESOLVE_FILE);
       verifyNotNull(
           outputFile, "FileSystems are not allowed to return null from resolve: %s", tempDirectory);
 
-      LOG.debug("Opening {} for write", outputFile);
       path = new Path(outputFile.toString());
 
-
-      // The caller shouldn't have to close() this Writer if it fails to open(), so close
-      // the channel if prepareWrite() or writeHeader() fails.
       LOG.debug("Preparing write to {}.", outputFile);
       prepareWrite(path);
 
       LOG.debug("Starting write of bundle {} to {}.", this.id, outputFile);
     }
 
+    public abstract void write(OutputT value) throws Exception;
+
+    public ResourceId getOutputFile() {
+      return outputFile;
+    }
+
     public final void cleanup() throws Exception {
       if (outputFile != null) {
+        LOG.info("Deleting temporary file {}", outputFile);
         // outputFile may be null if open() was not called or failed.
         FileSystems.delete(
-            Collections.singletonList(outputFile), StandardMoveOptions.IGNORE_MISSING_FILES);
+                Collections.singletonList(outputFile), StandardMoveOptions.IGNORE_MISSING_FILES);
       }
     }
 
-    public final FileResult<Void> close() throws Exception {
+    public final void close() throws Exception {
       checkState(outputFile != null, "FileResult.close cannot be called with a null outputFile");
+      LOG.debug("Closing {}", outputFile);
 
-      LOG.debug("Finishing write to {}.", outputFile);
       finishWrite();
 
-      FileResult<Void> result = new FileResult<>(outputFile, shard, window, paneInfo, null);
-      LOG.debug("Result for bundle {}: {}", this.id, outputFile);
-      return result;
+      LOG.info("Successfully wrote temporary file {}", outputFile);
     }
 
-    public WriteOperation<T> getWriteOperation() {
+    public WriteOperation<DestinationT, OutputT> getWriteOperation() {
       return writeOperation;
     }
-  }
 
+    void setDestination(DestinationT destination) {
+      this.destination = destination;
+    }
+
+    public DestinationT getDestination() {
+      return destination;
+    }
+  }
 }
