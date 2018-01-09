@@ -23,6 +23,7 @@ import java.nio.file.Files
 import javax.annotation.Nullable
 
 import com.google.common.base.Charsets
+import com.spotify.featran.{FeatureExtractor, MultiFeatureExtractor}
 import com.spotify.scio.io.{Tap, TextTap}
 import com.spotify.scio.testing.TextIO
 import com.spotify.scio.util.ScioUtil
@@ -192,6 +193,75 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
         path, suffix, compression, numShards)
       (r.map(_.map(Example.parseFrom)), featureSpecFuture)
     }
+  }
+
+  /**
+   *
+   * Save this SCollection of [[Example]] as TensorFlow TFRecord files.
+   * @param fe FeatureExtractor, obtained from Featran after calling extract on a
+   *           [[com.spotify.featran.FeatureSpec]]
+   * @group output
+   */
+  def saveAsTfExampleFile(path: String,
+                          fe: FeatureExtractor[SCollection, _]):
+  (Future[Tap[Example]], Future[Tap[String]]) = {
+    saveAsTfExampleFile(path, fe, Compression.UNCOMPRESSED)
+  }
+
+  /**
+   * Save this SCollection of [[Example]] as TensorFlow TFRecord files.
+   *
+   * @param fe FeatureExtractor, obtained from Featran after calling extract on a
+   *           [[com.spotify.featran.FeatureSpec]]
+   * @group output
+   */
+  def saveAsTfExampleFile(path: String,
+                          fe: FeatureExtractor[SCollection, _],
+                          compression: Compression):
+  (Future[Tap[Example]], Future[Tap[String]]) = {
+    self.saveAsTfExampleFile(path,
+      FeatranTFRecordSpec.fromFeatureSpec(fe.featureNames),
+      compression = compression)
+  }
+}
+
+class SeqTFExampleSCollectionFunctions[T <: Example]
+(@transient val self: SCollection[Seq[T]]) extends Serializable {
+
+  def mergeExamples(e: Seq[Example]): Example = e
+    .foldLeft(Example.newBuilder)((b, i) => b.mergeFrom(i))
+    .build()
+
+  /**
+    * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
+    * Caveat: If some feature names are repeated in different feature specs, they will be collapsed.
+    *
+    * @param fe FeatureExtractor, obtained from Featran after calling extract on a
+    *           [[com.spotify.featran.MultiFeatureSpec]]
+    * @group output
+    */
+  def saveAsTfExampleFile(path: String,
+                          fe: MultiFeatureExtractor[SCollection, _]):
+  (Future[Tap[Example]], Future[Tap[String]]) = {
+    saveAsTfExampleFile(path, fe, Compression.UNCOMPRESSED)
+  }
+
+  /**
+    * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
+    * Caveat: If some feature names are repeated in different feature specs, they will be collapsed.
+    *
+    * @param fe FeatureExtractor, obtained from Featran after calling extract on a
+    *           [[com.spotify.featran.MultiFeatureSpec]]
+    * @group output
+    */
+  def saveAsTfExampleFile(path: String,
+                          fe: MultiFeatureExtractor[SCollection, _],
+                          compression: Compression):
+  (Future[Tap[Example]], Future[Tap[String]]) = {
+    self.map(mergeExamples)
+      .saveAsTfExampleFile(path,
+        FeatranTFRecordSpec.fromMultiSpec(fe.featureNames),
+        compression = compression)
   }
 
 }

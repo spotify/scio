@@ -17,7 +17,6 @@
 
 package com.spotify.scio.tensorflow
 
-import com.spotify.scio.tensorflow.FeatureKind._
 import com.spotify.scio.values.SCollection
 
 import org.apache.beam.sdk.io.Compression
@@ -55,6 +54,22 @@ object TFRecordSpec {
   }
 
   /** Pass useful information about each Feature. */
-  def fromSColSeqFeatureInfo(x: SCollection[Seq[FeatureInfo]]): TFRecordSpec =
+  private[scio] def fromSColSeqFeatureInfo(x: SCollection[Seq[FeatureInfo]]): TFRecordSpec =
     SCollectionSeqFeatureInfo(x)
+}
+
+private object FeatranTFRecordSpec {
+
+  def fromFeatureSpec(featureNames: SCollection[Seq[String]]): TFRecordSpec = {
+    TFRecordSpec.fromSColSeqFeatureInfo(
+      featureNames.map(_.map(n => FeatureInfo(n, FeatureKind.FloatList, Map()))))
+  }
+
+  def fromMultiSpec(featureNames: SCollection[Seq[Seq[String]]]): TFRecordSpec = {
+    val featureInfos = featureNames.map(_.zipWithIndex.flatMap {
+      case (sss, i) => sss.map(n =>
+        FeatureInfo(n, FeatureKind.FloatList, Map("multispec-id" -> i.toString)))
+    })
+    TFRecordSpec.fromSColSeqFeatureInfo(featureInfos)
+  }
 }
