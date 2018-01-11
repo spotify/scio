@@ -510,8 +510,8 @@ lazy val scioTensorFlow: Project = Project(
     "org.tensorflow" % "proto" % tensorFlowVersion,
     "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
     "com.spotify" %% "featran-core" % featranVersion,
-    "com.spotify" %% "featran-scio" % featranVersion % "test",
-    "com.spotify" %% "featran-tensorflow" % featranVersion % "test"
+    "com.spotify" %% "featran-scio" % featranVersion,
+    "com.spotify" %% "featran-tensorflow" % featranVersion
   ),
   libraryDependencies ++= Seq(
     "io.circe" %% "circe-core",

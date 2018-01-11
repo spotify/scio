@@ -233,13 +233,13 @@ class SeqTFExampleSCollectionFunctions[T <: Example]
     .build()
 
   /**
-    * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
-    * Caveat: If some feature names are repeated in different feature specs, they will be collapsed.
-    *
-    * @param fe FeatureExtractor, obtained from Featran after calling extract on a
-    *           [[com.spotify.featran.MultiFeatureSpec]]
-    * @group output
-    */
+   * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
+   * Caveat: If some feature names are repeated in different feature specs, they will be collapsed.
+   *
+   * @param fe FeatureExtractor, obtained from Featran after calling extract on a
+   *           [[com.spotify.featran.MultiFeatureSpec]]
+   * @group output
+   */
   def saveAsTfExampleFile(path: String,
                           fe: MultiFeatureExtractor[SCollection, _]):
   (Future[Tap[Example]], Future[Tap[String]]) = {
@@ -247,13 +247,13 @@ class SeqTFExampleSCollectionFunctions[T <: Example]
   }
 
   /**
-    * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
-    * Caveat: If some feature names are repeated in different feature specs, they will be collapsed.
-    *
-    * @param fe FeatureExtractor, obtained from Featran after calling extract on a
-    *           [[com.spotify.featran.MultiFeatureSpec]]
-    * @group output
-    */
+   * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
+   * Caveat: If some feature names are repeated in different feature specs, they will be collapsed.
+   *
+   * @param fe FeatureExtractor, obtained from Featran after calling extract on a
+   *           [[com.spotify.featran.MultiFeatureSpec]]
+   * @group output
+   */
   def saveAsTfExampleFile(path: String,
                           fe: MultiFeatureExtractor[SCollection, _],
                           compression: Compression):

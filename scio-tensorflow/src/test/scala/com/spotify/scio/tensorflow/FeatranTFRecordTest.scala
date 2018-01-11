@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2018 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.spotify.featran.transformers.Identity
 import com.spotify.featran.{FeatureSpec, MultiFeatureSpec}
 import com.spotify.scio._
 import com.spotify.scio.testing.{PipelineSpec, TextIO}
+import com.spotify.scio.values.SCollection
+import org.tensorflow.example.Example
 import org.tensorflow.{example => tf}
 
 case class TrainingPoint(x1: Double, label: Double)
@@ -99,8 +101,8 @@ class FeatranTFRecordTest extends PipelineSpec {
       .input(TextIO("in.txt"), in)
       .output(TextIO("out/train/_tf_record_spec.json"))(_ should containSingleValue(tfRecordSpec))
       .output(TextIO("out/test/_tf_record_spec.json"))(_ should containSingleValue(tfRecordSpec))
-      .output(TFExampleIO("out/train"))(_.count should forAll[Long](c => c > 8500 && c < 9500))
-      .output(TFExampleIO("out/test"))(_.count should forAll[Long](c => c > 500 && c < 1500))
+      .output(TFExampleIO("out/train"))(_ should satisfy[Example](_.size === 9000+-500))
+      .output(TFExampleIO("out/test"))(_ should satisfy[Example](_.size === 1000+-500))
       .run()
   }
 
@@ -116,8 +118,8 @@ class FeatranTFRecordTest extends PipelineSpec {
       .input(TextIO("in.txt"), in)
       .output(TextIO("out/train/_tf_record_spec.json"))(_ should containSingleValue(tfRecordMSpec))
       .output(TextIO("out/test/_tf_record_spec.json"))(_ should containSingleValue(tfRecordMSpec))
-      .output(TFExampleIO("out/train"))(_.count should forAll[Long](c => c > 8500 && c < 9500))
-      .output(TFExampleIO("out/test"))(_.count should forAll[Long](c => c > 500 && c < 1500))
+      .output(TFExampleIO("out/train"))(_ should satisfy[Example](_.size === 9000+-500))
+      .output(TFExampleIO("out/test"))(_ should satisfy[Example](_.size === 1000+-500))
       .run()
   }
 
