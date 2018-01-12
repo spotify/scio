@@ -34,6 +34,7 @@ import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, KryoAtomicCoder, KryoOptions}
 import com.spotify.scio.io.Tap
 import com.spotify.scio.metrics.Metrics
+import com.spotify.scio.nio.ScioIO
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
@@ -872,6 +873,24 @@ class ScioContext private[scio] (val options: PipelineOptions,
       this.getTestInput(CustomIO[T](name))
     } else {
       wrap(this.pipeline.apply(name, transform))
+    }
+  }
+
+  /**
+   * Generic read method for all `ScioIO[T]` implementations, if it is test pipeline this will
+   * feed value of pre-registered input Nio implementation which match for the passing `ScioIO[T]`
+   * implementation. if not this will invoke [[com.spotify.scio.nio.ScioIO[T]#read]] method along
+   * with read configurations passed by.
+   *
+   * @param io     an implementation of `ScioIO[T]` trait
+   * @param params configurations need to pass to perform underline read implementation
+   */
+  def read[T](io: ScioIO[T])(params: io.ReadP): SCollection[T] = requireNotClosed {
+    if (this.isTest) {
+      // TODO: support test with nio
+      throw new UnsupportedOperationException("Test on nio is not supported yet")
+    } else {
+      io.read(this, params)
     }
   }
 

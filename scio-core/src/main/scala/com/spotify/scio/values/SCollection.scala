@@ -33,6 +33,7 @@ import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io._
+import com.spotify.scio.nio.ScioIO
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
@@ -1321,6 +1322,24 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     val tap = new InMemoryTap[T]
     InMemorySink.save(tap.id, this)
     context.makeFuture(tap)
+  }
+
+  /**
+   * Generic write method for all `ScioIO[T]` implementations, if it is test pipeline this will
+   * evaluate pre-registered output Nio implementation which match for the passing `ScioIO[T]`
+   * implementation. if not this will invoke [[com.spotify.scio.nio.ScioIO[T]#write]] method along
+   * with write configurations passed by.
+   *
+   * @param io     an implementation of `ScioIO[T]` trait
+   * @param params configurations need to pass to perform underline write implementation
+   */
+  def write(io: ScioIO[T])(params: io.WriteP): Future[Tap[T]] = {
+    if (context.isTest) {
+      // TODO: support test with nio
+      throw new UnsupportedOperationException("Test on nio is not supported yet")
+    } else {
+      io.write(this, params)
+    }
   }
 
 }
