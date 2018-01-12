@@ -18,18 +18,24 @@
 package com.spotify.scio.nio
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
+
+import scala.concurrent.Future
 
 /**
  * Base trait for all Read Write IO classes, every IO connector must implement this.
- * This trait has two abstract implicit methods #read, #write that need be implement
- * in every subtype. Look at the [[com.spotify.scio.nio.TextIO]] sub class as reference
+ * This trait has two abstract implicit methods #read, #write that need be implemented
+ * in every subtype. Look at the [[com.spotify.scio.nio.TextIO]] subclass as reference
  * implementation.
  */
 trait ScioIO[T] {
 
-  implicit def read(context: ScioContext): Any
+// abstract types for read/write params.
+  type ReadP
+  type WriteP
 
-  implicit def write(collection: SCollection[T]): Any
+  def read(sc: ScioContext, params: ReadP): SCollection[T]
 
+  def write(data: SCollection[T], params: WriteP): Future[Tap[T]]
 }
