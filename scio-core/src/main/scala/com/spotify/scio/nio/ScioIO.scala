@@ -31,7 +31,7 @@ import scala.concurrent.Future
  */
 trait ScioIO[T] {
 
-// abstract types for read/write params.
+  // abstract types for read/write params.
   type ReadP
   type WriteP
 
