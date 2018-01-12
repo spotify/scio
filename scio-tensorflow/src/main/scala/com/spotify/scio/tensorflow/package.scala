@@ -55,4 +55,11 @@ package object tensorflow {
    */
   implicit def makeTFExampleSCollectionFunctions[T <: Example](s: SCollection[T])
   : TFExampleSCollectionFunctions[T] = new TFExampleSCollectionFunctions(s)
+
+  /**
+   * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
+   * [[TFExampleSCollectionFunctions]].
+   */
+  implicit def makeSeqTFExampleSCollectionFunctions[T <: Example](s: SCollection[Seq[T]])
+  : SeqTFExampleSCollectionFunctions[T] = new SeqTFExampleSCollectionFunctions(s)
 }

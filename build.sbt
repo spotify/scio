@@ -36,6 +36,7 @@ val commonsIoVersion = "2.5"
 val commonsMath3Version = "3.6.1"
 val elasticsearch2Version = "2.1.0"
 val elasticsearch5Version = "5.5.0"
+val featranVersion = "0.1.16"
 val gcsConnectorVersion = "1.6.1-hadoop2"
 val guavaVersion = "20.0"
 val hadoopVersion = "2.7.3"
@@ -507,7 +508,10 @@ lazy val scioTensorFlow: Project = Project(
   libraryDependencies ++= Seq(
     "org.tensorflow" % "tensorflow" % tensorFlowVersion,
     "org.tensorflow" % "proto" % tensorFlowVersion,
-    "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion
+    "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
+    "com.spotify" %% "featran-core" % featranVersion,
+    "com.spotify" %% "featran-scio" % featranVersion,
+    "com.spotify" %% "featran-tensorflow" % featranVersion
   ),
   libraryDependencies ++= Seq(
     "io.circe" %% "circe-core",

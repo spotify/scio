@@ -25,10 +25,10 @@ import org.apache.beam.sdk.io.Compression
 import scala.reflect.runtime.universe._
 
 /** Information necessary to extract a given feature in TF. */
-final case class FeatureInfo(name: String, kind: FeatureKind, tags: Map[String, String])
+private final case class FeatureInfo(name: String, kind: FeatureKind, tags: Map[String, String])
 
 /** Mapping between Scala types and TF types */
-object FeatureKind extends Enumeration {
+private object FeatureKind extends Enumeration {
   type FeatureKind = Value
   val BytesList, FloatList, Int64List = Value
 
