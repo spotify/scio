@@ -25,7 +25,7 @@ import org.apache.beam.sdk.io.{Compression, FileBasedSink, TextIO => BTextIO}
 
 import scala.concurrent.Future
 
-case class TextIO(name: String, path: String) extends ScioIO[String] with Tap[String] {
+case class TextIO(path: String) extends ScioIO[String] with Tap[String] {
 
   case class ReadParams(compression: Compression = Compression.AUTO)
 
@@ -37,12 +37,12 @@ case class TextIO(name: String, path: String) extends ScioIO[String] with Tap[St
   type WriteP = WriteParams
 
   def read(sc: ScioContext, params: ReadParams): SCollection[String] = sc.requireNotClosed {
-    if(sc.isTest) {
+    if (sc.isTest) {
       // TODO: support test
       throw new UnsupportedOperationException("TextIO test is not yet supported")
     } else {
       sc.wrap(sc.applyInternal(BTextIO.read().from(path)
-        .withCompression(params.compression))).setName(name)
+        .withCompression(params.compression))).setName(path)
     }
   }
 
@@ -52,7 +52,7 @@ case class TextIO(name: String, path: String) extends ScioIO[String] with Tap[St
       throw new UnsupportedOperationException("TextIO test is not yet supported")
     } else {
       pipeline.applyInternal(textOut(path, params))
-      pipeline.context.makeFuture(TextIO(name, ScioUtil.addPartSuffix(path)))
+      pipeline.context.makeFuture(TextIO(ScioUtil.addPartSuffix(path)))
     }
   }
 
