@@ -18,7 +18,7 @@
 package com.spotify.scio.nio
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.{FileStorage, Tap}
+import com.spotify.scio.io.{FileStorage, InMemorySink, InMemoryTap, Tap}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.{Compression, FileBasedSink, TextIO => BTextIO}
@@ -38,8 +38,7 @@ case class TextIO(path: String) extends ScioIO[String] with Tap[String] {
 
   def read(sc: ScioContext, params: ReadParams): SCollection[String] = sc.requireNotClosed {
     if (sc.isTest) {
-      // TODO: support test
-      throw new UnsupportedOperationException("TextIO test is not yet supported")
+      sc.getTestInputNio(this)
     } else {
       sc.wrap(sc.applyInternal(BTextIO.read().from(path)
         .withCompression(params.compression))).setName(path)
@@ -48,8 +47,9 @@ case class TextIO(path: String) extends ScioIO[String] with Tap[String] {
 
   def write(pipeline: SCollection[String], params: WriteParams): Future[Tap[String]] = {
     if (pipeline.context.isTest) {
-      // TODO: support test
-      throw new UnsupportedOperationException("TextIO test is not yet supported")
+      pipeline.context.testOutNio(this)(pipeline)
+      // TODO: replace this with ScioIO[T] subclass when we have nio InMemoryIO[T]
+      pipeline.saveAsInMemoryTap
     } else {
       pipeline.applyInternal(textOut(path, params))
       pipeline.context.makeFuture(TextIO(ScioUtil.addPartSuffix(path)))
