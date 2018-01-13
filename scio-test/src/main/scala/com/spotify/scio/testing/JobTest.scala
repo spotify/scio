@@ -20,6 +20,7 @@ package com.spotify.scio.testing
 import java.lang.reflect.InvocationTargetException
 
 import com.spotify.scio.ScioResult
+import com.spotify.scio.nio.ScioIO
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.{metrics => bm}
@@ -70,15 +71,17 @@ object JobTest {
   case class BeamOptions(opts: List[String])
 
   private case class BuilderState(className: String,
-                                  cmdlineArgs: Array[String],
-                                  inputs: Map[TestIO[_], Iterable[_]],
-                                  outputs: Map[TestIO[_], SCollection[_] => Unit],
-                                  distCaches: Map[DistCacheIO[_], _],
-                                  counters: Map[bm.Counter, Long => Unit],
+                                  cmdlineArgs: Array[String] = Array(),
+                                  inputs: Map[TestIO[_], Iterable[_]] = Map.empty,
+                                  outputs: Map[TestIO[_], SCollection[_] => Unit] = Map.empty,
+                                  inputNio: Map[ScioIO[_], Iterable[_]] = Map.empty,
+                                  outputNio: Map[ScioIO[_], SCollection[_] => Unit] = Map.empty,
+                                  distCaches: Map[DistCacheIO[_], _] = Map.empty,
+                                  counters: Map[bm.Counter, Long => Unit] = Map.empty,
                                   // scalastyle:off line.size.limit
-                                  distributions: Map[bm.Distribution, bm.DistributionResult => Unit],
+                                  distributions: Map[bm.Distribution, bm.DistributionResult => Unit] = Map.empty,
                                   // scalastyle:on line.size.limit
-                                  gauges: Map[bm.Gauge, bm.GaugeResult => Unit],
+                                  gauges: Map[bm.Gauge, bm.GaugeResult => Unit] = Map.empty,
                                   wasRunInvoked: Boolean = false)
 
   class Builder(private var state: BuilderState) {
@@ -117,6 +120,37 @@ object JobTest {
       require(!state.outputs.contains(key), "Duplicate test output: " + key)
       state = state
         .copy(outputs = state.outputs + (key -> assertion.asInstanceOf[SCollection[_] => Unit]))
+      this
+    }
+
+    /**
+     * Feed an input to the pipeline being tested, Note that `ScioIO[T]` must match the one used
+     * inside the pipeline. e.g.
+     * TODO: add an example once we have complete nio integration with ScioContext
+     * @param nio an implementation of `ScioIO[T]`.
+     * @param value iterable to return when this input nio is called
+     * @return
+     */
+    def inputNio[T](nio: ScioIO[T], value: Iterable[T]): Builder = {
+      require(!state.inputNio.contains(nio), s"Duplicate nio test input: $nio")
+      state = state.copy(inputNio = state.inputNio + (nio -> value))
+      this
+    }
+
+    /**
+     * Evaluate and outptu of the pipeline being tested. Note that `ScioIO[T]` must match the one
+     * used inside the pipeline, e.g
+     * TODO: add and example once we have complete nio integration with SCollection
+     * @param nio an implementation of `ScioIO[T]`.
+     * @param assertion assertion for output data. See [[SCollectionMatchers]] for available
+     *                  matchers on an [[com.spotify.scio.values.SCollection SCollection]].
+     * @tparam T
+     * @return
+     */
+    def outputNio[T](nio: ScioIO[T])(assertion: SCollection[T] => Unit): Builder = {
+      require(!state.outputNio.contains(nio), s"Duplicate nio test output $nio")
+      state = state
+        .copy(outputNio = state.outputNio + (nio -> assertion.asInstanceOf[SCollection[_] => Unit]))
       this
     }
 
@@ -187,8 +221,8 @@ object JobTest {
      * Set up test wiring. Use this only if you have custom pipeline wiring and are bypassing
      * [[run]]. Make sure [[tearDown]] is called afterwards.
      */
-    def setUp(): Unit =
-      TestDataManager.setup(testId, state.inputs, state.outputs, state.distCaches)
+    def setUp(): Unit = TestDataManager.setup(testId,
+      state.inputs, state.outputs, state.inputNio, state.outputNio, state.distCaches)
 
     /**
      * Tear down test wiring. Use this only if you have custom pipeline wiring and are bypassing
@@ -232,16 +266,13 @@ object JobTest {
 
   /** Create a new JobTest.Builder instance. */
   def apply(className: String)(implicit bm: BeamOptions): Builder =
-    new Builder(BuilderState(
-      className, Array(), Map.empty, Map.empty, Map.empty, Map.empty, Map.empty, Map.empty))
-        .args(bm.opts:_*)
+    new Builder(BuilderState(className))
+      .args(bm.opts:_*)
 
   /** Create a new JobTest.Builder instance. */
   def apply[T: ClassTag](implicit bm: BeamOptions): Builder = {
-    val className= ScioUtil.classOf[T].getName.replaceAll("\\$$", "")
-    new Builder(BuilderState(
-      className, Array(), Map.empty, Map.empty, Map.empty, Map.empty, Map.empty, Map.empty))
-        .args(bm.opts:_*)
+    val className=  ScioUtil.classOf[T].getName.replaceAll("\\$$", "")
+    apply(className).args(bm.opts:_*)
   }
 
 }
