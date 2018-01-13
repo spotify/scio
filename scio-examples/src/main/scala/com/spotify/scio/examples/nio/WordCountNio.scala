@@ -18,7 +18,7 @@
 // Example: Word Count Example with Metrics
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.WordCount
+// `sbt runMain "com.spotify.scio.examples.WordCountNio
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
@@ -49,9 +49,10 @@ object WordCountNio {
     val sumNonEmpty = ScioMetrics.counter("nonEmptyLines")
     val sumEmpty = ScioMetrics.counter("emptyLines")
 
+    // Create IO classes to read and write
     val inputTextIO = TextIO(input)
     val outputTextIO = TextIO(output)
-    // Open text files as an `SCollection[String]`
+    // Open text files as an `SCollection[String]` passing Read Params
     sc.read(inputTextIO)(inputTextIO.ReadParams())
       .map { w =>
         // Trim input lines, update distribution metric
@@ -71,7 +72,7 @@ object WordCountNio {
       .countByValue
       // Map `(String, Long)` tuples into strings
       .map(t => t._1 + ": " + t._2)
-      // Save result as text files under the output path
+      // Save result as text files under the output path by passing write params
       .write(outputTextIO)(outputTextIO.WriteParams())
 
     // Close the context, execute the pipeline and block until it finishes

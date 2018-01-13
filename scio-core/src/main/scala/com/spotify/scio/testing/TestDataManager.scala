@@ -111,6 +111,7 @@ private[scio] class TestOutputNio(val m: Map[ScioIO[_], SCollection[_] => Unit])
     require(d.isEmpty, "Unmatched test output: " + d.mkString(", "))
   }
 }
+
 private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {
   val s: MSet[DistCacheIO[_]] = MSet.empty
   def apply[T](key: DistCacheIO[T]): () => T = {
