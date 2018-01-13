@@ -1335,8 +1335,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def write(io: ScioIO[T])(params: io.WriteP): Future[Tap[T]] = {
     if (context.isTest) {
-      // TODO: support test with nio
-      throw new UnsupportedOperationException("Test on nio is not supported yet")
+      context.testOutNio(io)
+      this.saveAsInMemoryTap
     } else {
       io.write(this, params)
     }
