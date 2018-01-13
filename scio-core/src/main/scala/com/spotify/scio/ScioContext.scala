@@ -496,11 +496,15 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   private[scio] def testIn: TestInput = TestDataManager.getInput(testId.get)
   private[scio] def testOut: TestOutput = TestDataManager.getOutput(testId.get)
+  private[scio] def testInNio: TestInputNio = TestDataManager.getInputNio(testId.get)
+  private[scio] def testOutNio: TestOutputNio = TestDataManager.getOutputNio(testId.get)
   private[scio] def testDistCache: TestDistCache = TestDataManager.getDistCache(testId.get)
 
   private[scio] def getTestInput[T: ClassTag](key: TestIO[T]): SCollection[T] =
     this.parallelize(testIn(key).asInstanceOf[Seq[T]])
 
+  private[scio] def getTestInputNio[T: ClassTag](key: ScioIO[T]): SCollection[T] =
+    this.parallelize(testInNio(key).asInstanceOf[Seq[T]])
   // =======================================================================
   // Read operations
   // =======================================================================
@@ -885,10 +889,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @param io     an implementation of `ScioIO[T]` trait
    * @param params configurations need to pass to perform underline read implementation
    */
-  def read[T](io: ScioIO[T])(params: io.ReadP): SCollection[T] = requireNotClosed {
+  def read[T: ClassTag](io: ScioIO[T])(params: io.ReadP): SCollection[T] = requireNotClosed {
     if (this.isTest) {
-      // TODO: support test with nio
-      throw new UnsupportedOperationException("Test on nio is not supported yet")
+      this.getTestInputNio(io)
     } else {
       io.read(this, params)
     }
