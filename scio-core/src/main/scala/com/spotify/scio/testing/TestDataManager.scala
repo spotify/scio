@@ -20,6 +20,7 @@ package com.spotify.scio.testing
 import com.google.api.services.bigquery.model.TableRow
 import com.google.datastore.v1.{Entity, Query}
 import com.spotify.scio.ScioResult
+import com.spotify.scio.nio.ScioIO
 import com.spotify.scio.values.SCollection
 
 import scala.collection.concurrent.TrieMap
@@ -68,6 +69,49 @@ private[scio] class TestOutput(val m: Map[TestIO[_], SCollection[_] => Unit]) {
   }
 }
 
+/* Inputs are Scala Iterables to be parallelized for TestPipeline */
+private[scio] class TestInputNio(val m: Map[ScioIO[_], Iterable[_]]) {
+  val s: MSet[ScioIO[_]] = MSet.empty
+
+  def apply[T](key: ScioIO[T]): Iterable[T] = {
+    require(
+      m.contains(key),
+      s"Missing test input: $key, available: ${m.keys.mkString("[", ", ", "]")}")
+    require(!s.contains(key),
+      s"There already exists test input for $key, currently " +
+        s"registered inputs: ${s.mkString("[", ", ", "]")}")
+    s.add(key)
+    m(key).asInstanceOf[Iterable[T]]
+  }
+
+  def validate(): Unit = {
+    val d = m.keySet -- s
+    require(d.isEmpty, "Unmatched test input: " + d.mkString(", "))
+  }
+}
+
+/* Outputs are lambdas that apply assertions on SCollections */
+private[scio] class TestOutputNio(val m: Map[ScioIO[_], SCollection[_] => Unit]) {
+  val s: MSet[ScioIO[_]] = MSet.empty
+
+  def apply[T](key: ScioIO[T]): SCollection[T] => Unit = {
+    // TODO: support Materialize outputs, maybe Materialized[T]?
+    require(
+      m.contains(key),
+      s"Missing test output: $key, available: ${m.keys.mkString("[", ", ", "]")}")
+    require(!s.contains(key),
+      s"There already exists test output for $key, currently " +
+        s"registered outputs: ${s.mkString("[", ", ", "]")}")
+    s.add(key)
+    m(key)
+  }
+
+  def validate(): Unit = {
+    val d = m.keySet -- s
+    require(d.isEmpty, "Unmatched test output: " + d.mkString(", "))
+  }
+}
+
 private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {
   val s: MSet[DistCacheIO[_]] = MSet.empty
   def apply[T](key: DistCacheIO[T]): () => T = {
@@ -87,6 +131,8 @@ private[scio] object TestDataManager {
 
   private val inputs = TrieMap.empty[String, TestInput]
   private val outputs = TrieMap.empty[String, TestOutput]
+  private val inputNios = TrieMap.empty[String, TestInputNio]
+  private val outputNios = TrieMap.empty[String, TestOutputNio]
   private val distCaches = TrieMap.empty[String, TestDistCache]
   private val closed = TrieMap.empty[String, Boolean]
   private val results = TrieMap.empty[String, ScioResult]
@@ -96,6 +142,12 @@ private[scio] object TestDataManager {
     m(key)
   }
 
+  def getInputNio(testId: String)
+  : TestInputNio = getValue(testId, inputNios, "reading nio input")
+
+  def getOutputNio(testId: String)
+  : TestOutputNio = getValue(testId, outputNios, "writing nio output")
+
   def getInput(testId: String): TestInput = getValue(testId, inputs, "reading input")
   def getOutput(testId: String): TestOutput = getValue(testId, outputs, "writing output")
   def getDistCache(testId: String): TestDistCache =
@@ -104,15 +156,21 @@ private[scio] object TestDataManager {
   def setup(testId: String,
             ins: Map[TestIO[_], Iterable[_]],
             outs: Map[TestIO[_], SCollection[_] => Unit],
+            inNios: Map[ScioIO[_], Iterable[_]],
+            outNios: Map[ScioIO[_], SCollection[_] => Unit],
             dcs: Map[DistCacheIO[_], _]): Unit = {
     inputs += (testId -> new TestInput(ins))
     outputs += (testId -> new TestOutput(outs))
+    inputNios += (testId -> new TestInputNio(inNios))
+    outputNios += (testId -> new TestOutputNio(outNios))
     distCaches += (testId -> new TestDistCache(dcs))
   }
 
   def tearDown(testId: String, f: ScioResult => Unit = _ => Unit): Unit = {
     inputs.remove(testId).get.validate()
     outputs.remove(testId).get.validate()
+    inputNios.remove(testId).foreach(_.validate())
+    outputNios.remove(testId).foreach(_.validate())
     distCaches.remove(testId).get.validate()
     ensureClosed(testId)
     val result = results.remove(testId).get
