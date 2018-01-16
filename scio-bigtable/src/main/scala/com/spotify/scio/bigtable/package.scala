@@ -20,6 +20,7 @@ package com.spotify.scio
 import com.google.bigtable.v2._
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
+import com.spotify.scio.extra.transforms.AsyncLookupDoFn
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
@@ -274,9 +275,9 @@ package object bigtable {
   case class BigtableOutput[T <: Mutation](projectId: String, instanceId: String, tableId: String)
     extends TestIO[(ByteString, Iterable[T])](s"$projectId\t$instanceId\t$tableId")
 
-  /** Enhanced version of `BigtableDoFn.Try` with convenience methods. */
-  implicit class RichBigtableDoFnTry[A](val self: BigtableDoFn.Try[A]) extends AnyVal {
-    /** Convert this `BigtableDoFn.Try` to a Scala `Try`. */
+  /** Enhanced version of `AsyncLookupDoFn.Try` with convenience methods. */
+  implicit class RichAsyncLookupDoFnTry[A](val self: AsyncLookupDoFn.Try[A]) extends AnyVal {
+    /** Convert this `AsyncLookupDoFn.Try` to a Scala `Try`. */
     def asScala: Try[A] = if (self.isSuccess) Success(self.get()) else Failure(self.getException)
   }
 

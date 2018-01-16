@@ -359,6 +359,7 @@ lazy val scioBigtable: Project = Project(
   )
 ).dependsOn(
   scioCore,
+  scioExtra,
   scioTest % "it"
 ).configs(IntegrationTest)
 
