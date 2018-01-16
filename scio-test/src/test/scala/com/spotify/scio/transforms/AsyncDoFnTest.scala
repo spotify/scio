@@ -15,13 +15,13 @@
  * under the License.
  */
 
-package com.spotify.scio.extra.transforms
+package com.spotify.scio.transforms
 
 import java.util.concurrent.{Callable, CompletableFuture, Executors, ThreadPoolExecutor}
 import java.util.function.Supplier
 
 import com.google.common.util.concurrent.{ListenableFuture, MoreExecutors}
-import com.spotify.scio.extra.transforms.DoFnWithResource.ResourceType
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.testing._
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}

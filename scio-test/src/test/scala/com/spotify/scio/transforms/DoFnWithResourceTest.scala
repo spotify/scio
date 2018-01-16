@@ -15,11 +15,11 @@
  * under the License.
  */
 
-package com.spotify.scio.extra.transforms
+package com.spotify.scio.transforms
 
 import java.util.UUID
 
-import com.spotify.scio.extra.transforms.DoFnWithResource.ResourceType
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.DoFnTester
 import org.apache.beam.sdk.util.SerializableUtils

@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.extra
+package com.spotify.scio
 
 import java.io.File
 import java.net.URI
@@ -29,6 +29,7 @@ import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import scala.util.{Failure, Success, Try}
 
 /**
  * Main package for transforms APIs. Import all.
@@ -155,6 +156,12 @@ package object transforms {
     }
 
     //TODO(rav): resilientFlatMap
+  }
+
+  /** Enhanced version of `AsyncLookupDoFn.Try` with convenience methods. */
+  implicit class RichAsyncLookupDoFnTry[A](val self: AsyncLookupDoFn.Try[A]) extends AnyVal {
+    /** Convert this `AsyncLookupDoFn.Try` to a Scala `Try`. */
+    def asScala: Try[A] = if (self.isSuccess) Success(self.get()) else Failure(self.getException)
   }
 
 }

@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.{Futures, ListenableFuture}
 import com.google.protobuf.ByteString
 import com.spotify.scio._
 import com.spotify.scio.bigtable._
+import com.spotify.scio.transforms.AsyncLookupDoFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.KV
@@ -112,7 +113,7 @@ object BigtableBenchmark {
         })
     }
 
-  def checkResult(kv: KV[String, BigtableDoFn.Try[String]]): (Int, Int) =
+  def checkResult(kv: KV[String, AsyncLookupDoFn.Try[String]]): (Int, Int) =
     kv.getValue.asScala match {
       case Success(value) =>
         val expected = if (kv.getKey.endsWith("0000000001")) "fallback" else s"val-${kv.getKey}"
@@ -169,7 +170,7 @@ object AsyncCachingBigtableRead {
     import BigtableBenchmark._
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    val cache = new BigtableDoFn.CacheSupplier[String, String, String] {
+    val cache = new AsyncLookupDoFn.CacheSupplier[String, String, String] {
       override def createCache() = CacheBuilder.newBuilder()
         .maximumSize(1000000)
         .build[String, String]()
@@ -215,7 +216,7 @@ object BlockingCachingBigtableRead {
     import BigtableBenchmark._
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    val cache = new BigtableDoFn.CacheSupplier[String, String, String] {
+    val cache = new AsyncLookupDoFn.CacheSupplier[String, String, String] {
       override def createCache() = CacheBuilder.newBuilder()
         .maximumSize(1000000)
         .build[String, String]()

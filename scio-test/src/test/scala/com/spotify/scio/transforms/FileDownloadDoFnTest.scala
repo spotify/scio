@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.extra.transforms
+package com.spotify.scio.transforms
 
 import java.nio.file.{Files, Path}
 

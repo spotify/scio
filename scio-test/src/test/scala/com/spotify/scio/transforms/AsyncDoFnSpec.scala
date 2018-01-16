@@ -15,12 +15,12 @@
  * under the License.
  */
 
-package com.spotify.scio.extra.transforms
+package com.spotify.scio.transforms
 
 import java.util.concurrent.CompletableFuture
 
 import com.google.common.util.concurrent.{ListenableFuture, SettableFuture}
-import com.spotify.scio.extra.transforms.DoFnWithResource.ResourceType
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 import org.apache.beam.sdk.values.{PCollectionView, TupleTag}
