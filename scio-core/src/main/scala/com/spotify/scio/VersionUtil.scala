@@ -17,16 +17,38 @@
 
 package com.spotify.scio
 
+import java.util.Properties
+
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.http.{GenericUrl, HttpRequest, HttpRequestInitializer}
 import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.jackson2.JacksonFactory
+import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
-private object VersionUtil {
+private[scio] object VersionUtil {
+
+  val scioVersion: String = {
+    val stream = this.getClass.getResourceAsStream("/version.sbt")
+    val line = scala.io.Source.fromInputStream(stream).getLines().next()
+    """version in .+"([^"]+)"""".r.findFirstMatchIn(line) match {
+      case Some(m) => m.group(1)
+      case None => throw new IllegalStateException("Cannot find Scio version")
+    }
+  }
+
+  val beamVersion: String = {
+    val stream = this.getClass.getResourceAsStream("/build.sbt")
+    val line = scala.io.Source.fromInputStream(stream).getLines()
+      .filter(_.startsWith("val beamVersion = ")).next()
+    """val beamVersion = "([^"]+)"""".r.findFirstMatchIn(line) match {
+      case Some(m) => m.group(1)
+      case None => throw new IllegalStateException("Cannot find Scio version")
+    }
+  }
 
   case class SemVer(major: Int, minor: Int, rev: Int, suffix: String) extends Ordered[SemVer] {
     def compare(that: SemVer): Int = {
@@ -82,5 +104,43 @@ private object VersionUtil {
 
   def checkVersion(): Unit =
     checkVersion(scioVersion, getLatest).foreach(logger.warn)
+
+  private def getRunnerVersion(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]])
+  : Try[String] = Try {
+    val clsName = "/" + runner.getName.replace(".", "/") + ".class"
+    val path = runner.getResource(clsName).getPath
+    val file = path.substring(0, path.lastIndexOf('!'))
+    val jar = file.substring(file.lastIndexOf('/') + 1)
+    val regex = """(beam-runners-.*-java).*\.jar""".r
+    val matches = regex.findAllIn(jar).matchData
+    val artifactId = if (matches.hasNext) {
+      matches.next().group(1)
+    } else {
+      // jar name does not match `beam-runners-.*-java.*.jar`, probably in a REPL or assembly jar
+      runner.getSimpleName match {
+        case "DirectRunner" => "beam-runners-direct-java"
+        case "DataflowRunner" => "beam-runners-google-cloud-dataflow-java"
+        case r => new IllegalStateException(s"Unknown runner $r")
+      }
+    }
+
+    val props = new Properties()
+    props.load(runner.getResourceAsStream(
+      s"/META-INF/maven/org.apache.beam/$artifactId/pom.properties"))
+    props.getProperty("version")
+  }
+
+  def checkRunnerVersion(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]])
+  : Unit = {
+    val name = runner.getSimpleName
+    getRunnerVersion(runner) match {
+      case Success(version) =>
+        require(
+          version == beamVersion,
+          s"Mismatched version for $name, expected: $beamVersion, actual: $version")
+      case Failure(e) =>
+        logger.warn(s"Failed to get version for $name", e)
+    }
+  }
 
 }

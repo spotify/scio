@@ -55,11 +55,10 @@ package object scio {
   val scalaVersion: String = scala.util.Properties.versionNumberString
 
   /** Scio version. */
-  val scioVersion: String = {
-    val stream = this.getClass.getResourceAsStream("/version.sbt")
-    val line = scala.io.Source.fromInputStream(stream).getLines().next()
-    """version in .+"([^"]+)"""".r.findFirstMatchIn(line).get.group(1)
-  }
+  val scioVersion: String = VersionUtil.scioVersion
+
+  /** Beam version. */
+  val beamVersion: String = VersionUtil.beamVersion
 
   /** [[com.twitter.algebird.Monoid Monoid]] for `Array[Int]`. */
   implicit val intArrayMon: Monoid[Array[Int]] = new ArrayMonoid[Int]
