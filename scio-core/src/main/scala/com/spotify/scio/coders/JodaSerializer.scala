@@ -22,7 +22,7 @@ import com.esotericsoftware.kryo.{Kryo, Serializer}
 import org.joda.time.{LocalDate, LocalDateTime, LocalTime, DateTime, DateTimeZone}
 import org.joda.time.chrono.ISOChronology
 
-class JodaLocalDateTimeSerializer extends Serializer[LocalDateTime] {
+private class JodaLocalDateTimeSerializer extends Serializer[LocalDateTime] {
   setImmutable(true)
 
   def write(kryo: Kryo, output: Output, ldt: LocalDateTime): Unit = {
@@ -52,7 +52,7 @@ class JodaLocalDateTimeSerializer extends Serializer[LocalDateTime] {
   }
 }
 
-class JodaLocalTimeSerializer extends Serializer[LocalTime] {
+private class JodaLocalTimeSerializer extends Serializer[LocalTime] {
   setImmutable(true)
 
   def write(kryo: Kryo, output: Output, lt: LocalTime): Unit = {
@@ -70,7 +70,7 @@ class JodaLocalTimeSerializer extends Serializer[LocalTime] {
 }
 
 
-class JodaLocalDateSerializer extends Serializer[LocalDate] {
+private class JodaLocalDateSerializer extends Serializer[LocalDate] {
   setImmutable(true)
 
   def write(kryo: Kryo, output: Output, ld: LocalDate): Unit = {
