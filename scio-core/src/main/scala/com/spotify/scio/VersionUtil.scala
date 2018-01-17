@@ -46,7 +46,7 @@ private[scio] object VersionUtil {
       .filter(_.startsWith("val beamVersion = ")).next()
     """val beamVersion = "([^"]+)"""".r.findFirstMatchIn(line) match {
       case Some(m) => m.group(1)
-      case None => throw new IllegalStateException("Cannot find Scio version")
+      case None => throw new IllegalStateException("Cannot find Beam version")
     }
   }
 
