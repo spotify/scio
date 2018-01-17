@@ -93,7 +93,7 @@ private class JodaLocalDateSerializer extends Serializer[LocalDate] {
   }
 }
 
-class JodaDateTimeSerializer extends Serializer[DateTime] {
+private class JodaDateTimeSerializer extends Serializer[DateTime] {
   setImmutable(true)
 
   def write(kryo: Kryo, output: Output, dt: DateTime): Unit = {
