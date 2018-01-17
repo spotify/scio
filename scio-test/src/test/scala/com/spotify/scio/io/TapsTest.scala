@@ -81,7 +81,7 @@ class TapsTest extends FlatSpec with Matchers {
     val f = tmpFile
     val future = Taps().textFile(f.toString)
     future.isCompleted shouldBe false
-    Thread.sleep(2000)
+    Thread.sleep(5000)
     future.isCompleted shouldBe true
   }
 
