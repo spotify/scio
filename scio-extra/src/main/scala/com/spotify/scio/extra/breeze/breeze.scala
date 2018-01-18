@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2018 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 
 package com.spotify.scio.extra
 
-import breeze.linalg.operators.OpAdd
-import breeze.linalg.support.CanCopy
+import _root_.breeze.linalg.operators.OpAdd
+import _root_.breeze.linalg.support.CanCopy
 import com.twitter.algebird.Semigroup
 
 import scala.language.higherKinds
@@ -28,7 +28,7 @@ import scala.reflect.ClassTag
  * Utilities for Breeze.
  *
  * Includes [[com.twitter.algebird.Semigroup Semigroup]]s for Breeze data types like
- * [[breeze.linalg.DenseVector DenseVector]]s and [[breeze.linalg.DenseMatrix DenseMatrix]]s.
+ * [[_root_.breeze.linalg.DenseVector DenseVector]]s and [[_root_.breeze.linalg.DenseMatrix DenseMatrix]]s.
  *
  * {{{
  * import com.spotify.scio.extra.Breeze._
@@ -37,7 +37,7 @@ import scala.reflect.ClassTag
  * vectors.sum  // implicit Semigroup[T]
  * }}}
  */
-object Breeze {
+package object breeze {
 
   implicit def breezeSemigroup[M[_], T: ClassTag](implicit
                                                   add: OpAdd.Impl2[M[T], M[T], M[T]],
