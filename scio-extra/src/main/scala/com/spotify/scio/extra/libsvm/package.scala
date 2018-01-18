@@ -17,7 +17,7 @@
 
 package com.spotify.scio.extra
 
-import breeze.linalg.SparseVector
+import _root_.breeze.linalg.SparseVector
 import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 import com.twitter.algebird.Max

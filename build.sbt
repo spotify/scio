@@ -434,7 +434,7 @@ lazy val scioExtra: Project = Project(
   "scio-extra",
   file("scio-extra")
 ).settings(
-  commonSettings ++ itSettings,
+  commonSettings ++ itSettings ++ macroSettings,
   description := "Scio extra utilities",
   libraryDependencies ++= Seq(
     "com.spotify" % "annoy" % annoyVersion,

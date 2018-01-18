@@ -17,9 +17,9 @@
 
 package com.spotify.scio.extra
 
-import breeze.linalg.{DenseMatrix, DenseVector, SparseVector}
-import breeze.stats.distributions.Rand
-import com.spotify.scio.extra.Breeze._
+import _root_.breeze.linalg.{DenseMatrix, DenseVector, SparseVector}
+import _root_.breeze.stats.distributions.Rand
+import com.spotify.scio.extra.breeze._
 import com.twitter.algebird.Semigroup
 import org.scalacheck._
 
