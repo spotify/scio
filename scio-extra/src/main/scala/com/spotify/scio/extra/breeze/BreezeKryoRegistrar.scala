@@ -24,7 +24,6 @@ import com.esotericsoftware.kryo.io.{Input, Output}
 import com.spotify.scio.coders.KryoRegistrar
 import com.twitter.chill._
 
-import scala.collection.mutable
 import scala.reflect.ClassTag
 
 @KryoRegistrar
@@ -37,17 +36,17 @@ class BreezeKryoRegistrar extends IKryoRegistrar {
 private class SparseVectorSerializer[T] extends KSerializer[SparseVector[T]] {
   override def read(kryo: Kryo, input: Input, tpe: Class[SparseVector[T]]): SparseVector[T] = {
     val zero = kryo.readClassAndObject(input).asInstanceOf[T]
+    implicit val ct = ClassTag[T](zero.getClass)
     val len = input.read()
-    val data = new mutable.ArrayBuffer[T](len)
-    val index = new mutable.ArrayBuffer[Int](len)
+    val data = new Array[T](len)
+    val index = new Array[Int](len)
     var i = 0
     while (i < len) {
-      index.insert(i, input.read())
-      data.insert(i, kryo.readClassAndObject(input).asInstanceOf[T])
+      index(i) = input.read()
+      data(i) = kryo.readClassAndObject(input).asInstanceOf[T]
       i += 1
     }
-    implicit val ct = ClassTag[T](zero.getClass)
-    new SparseVector[T](index.toArray, data.toArray, len)(Zero(zero))
+    new SparseVector[T](index, data, len)(Zero(zero))
   }
 
   override def write(kryo: Kryo, output: Output, vec: SparseVector[T]): Unit = {
