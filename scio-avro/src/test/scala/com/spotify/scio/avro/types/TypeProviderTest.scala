@@ -772,4 +772,26 @@ class TypeProviderTest extends FlatSpec with Matchers {
     r.test shouldBe 2
   }
 
+  @AvroType.fromSchema(
+    """
+      |{
+      |  "name": "A", "namespace": "outer",
+      |  "type": "record", "fields": [
+      |    {
+      |      "name": "a",
+      |      "type": {
+      |        "type": "record",
+      |        "name": "A", "namespace": "inner",
+      |        "fields": [{"name": "intF", "type": "int"}]
+      |      }
+      |    }
+      |  ]
+      |}
+    """.stripMargin)
+  class SameName
+
+  it should "support nested record with same name as enclosing record" in {
+    val r = SameName(SameName$A(2))
+    SameName.toGenericRecord(r).getSchema.toString
+  }
 }
