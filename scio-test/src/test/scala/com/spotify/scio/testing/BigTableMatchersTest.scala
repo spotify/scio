@@ -23,14 +23,14 @@ import com.google.protobuf.ByteString
 
 // scalastyle:off no.whitespace.before.left.bracket
 class BigTableMatchersTest extends PipelineSpec with BigTableMatchers {
-  private lazy val key1 = "k1"
-  private lazy val key2 = "k2"
+  private lazy val key1 = ByteString.copyFromUtf8("k1")
+  private lazy val key2 = ByteString.copyFromUtf8("k2")
   private lazy val emptyCell = Seq(Mutation.newBuilder().build())
 
   "BigTableMatchers" should "support containRowKeys" in {
     val tableData: Seq[BTRow] = Seq(
-      (ByteString.copyFromUtf8(key1), emptyCell),
-      (ByteString.copyFromUtf8(key2), emptyCell)
+      (key1, emptyCell),
+      (key2, emptyCell)
     )
 
     // should cases
@@ -71,8 +71,8 @@ class BigTableMatchersTest extends PipelineSpec with BigTableMatchers {
       .build()
 
     val tableData: Seq[BTRow] = Seq(
-      (ByteString.copyFromUtf8(key1), Seq(cell1)),
-      (ByteString.copyFromUtf8(key2), Seq(cell2))
+      (key1, Seq(cell1)),
+      (key2, Seq(cell2))
     )
 
     // should cases
@@ -117,7 +117,7 @@ class BigTableMatchersTest extends PipelineSpec with BigTableMatchers {
       ).build()
 
     val tableData: Seq[BTRow] = Seq(
-      (ByteString.copyFromUtf8(key1), Seq(cell1, cell2))
+      (key1, Seq(cell1, cell2))
     )
 
     // should cases
@@ -150,7 +150,7 @@ class BigTableMatchersTest extends PipelineSpec with BigTableMatchers {
       .build()
 
     val tableData: Seq[BTRow] = Seq(
-      (ByteString.copyFromUtf8(key1), Seq(cell))
+      (key1, Seq(cell))
     )
 
     // should cases
