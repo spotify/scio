@@ -85,6 +85,21 @@ class SCollectionMatchersTest extends PipelineSpec {
     }
   }
 
+  it should "support containValue" in {
+    // should cases
+    runWithContext { _.parallelize(Seq(1, 2, 3)) should containValue (1) }
+
+    an [AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq(1)) should containValue (10) }
+    }
+    // shouldNot cases
+    runWithContext { _.parallelize(Seq(1, 2, 3)) shouldNot containValue (4) }
+
+    an [AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq(1, 2, 3)) shouldNot containValue (1) }
+    }
+  }
+
   it should "support beEmpty" in {
     // should cases
     runWithContext { _.parallelize(Seq.empty[Int]) should beEmpty }
