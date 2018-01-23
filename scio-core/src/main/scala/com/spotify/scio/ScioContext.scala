@@ -57,6 +57,7 @@ import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.collection.mutable.{Buffer => MBuffer}
 import scala.concurrent.{Future, Promise}
 import scala.io.Source
@@ -300,6 +301,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   private val _promises: MBuffer[(Promise[Tap[_]], Tap[_])] = MBuffer.empty
   private val _queryJobs: MBuffer[QueryJob] = MBuffer.empty
   private val _preRunFns: MBuffer[() => Unit] = MBuffer.empty
+  private val _counters: MBuffer[Counter] = MBuffer.empty
 
   /** Wrap a [[org.apache.beam.sdk.values.PCollection PCollection]]. */
   def wrap[T: ClassTag](p: PCollection[T]): SCollection[T] =
@@ -338,6 +340,13 @@ class ScioContext private[scio] (val options: PipelineOptions,
   def close(): ScioResult = requireNotClosed {
     if (_queryJobs.nonEmpty) {
       bigQueryClient.waitForJobs(_queryJobs: _*)
+    }
+
+    if (_counters.nonEmpty) {
+      val counters = _counters.toArray
+      this.parallelize(Seq(0)).map { _ =>
+        counters.foreach(_.inc(0))
+      }
     }
 
     _isClosed = true
@@ -867,14 +876,14 @@ class ScioContext private[scio] (val options: PipelineOptions,
    */
   def initCounter[T : ClassTag](name: String): Counter = {
     val counter = ScioMetrics.counter[T](name)
-    parallelize(Seq(0)).map(_ => counter.inc(0))
+    _counters.append(counter)
     counter
   }
 
   /** Initialize a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric. */
   def initCounter(namespace: String, name: String): Counter = {
     val counter = ScioMetrics.counter(namespace, name)
-    parallelize(Seq(0)).map(_ => counter.inc(0))
+    _counters.append(counter)
     counter
   }
 
