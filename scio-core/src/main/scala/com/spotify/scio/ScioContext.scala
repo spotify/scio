@@ -45,6 +45,7 @@ import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.extensions.gcp.options.{GcpOptions, GcsOptions}
 import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub => psio}
+import org.apache.beam.sdk.metrics.{Counter, Distribution}
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform, SerializableFunction}
@@ -854,6 +855,27 @@ class ScioContext private[scio] (val options: PipelineOptions,
     val v = elems.zip(timestamps).map(t => TimestampedValue.of(t._1, t._2))
     wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder)))
       .setName(truncate(elems.toString()))
+  }
+
+  // =======================================================================
+  // Metrics
+  // =======================================================================
+
+  /**
+   * Initialize a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric using `T` as namespace.
+   * Default is the package name at the callsite if `T` is not specified.
+   */
+  def initCounter[T : ClassTag](name: String): Counter = {
+    val counter = ScioMetrics.counter[T](name)
+    parallelize(Seq(0)).map(_ => counter.inc(0))
+    counter
+  }
+
+  /** Initialize a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric. */
+  def initCounter(namespace: String, name: String): Counter = {
+    val counter = ScioMetrics.counter(namespace, name)
+    parallelize(Seq(0)).map(_ => counter.inc(0))
+    counter
   }
 
 }

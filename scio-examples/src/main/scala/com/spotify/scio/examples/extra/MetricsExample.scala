@@ -22,6 +22,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
+import com.spotify.scio.util.CallSites
 
 object MetricsExample {
 
@@ -40,6 +41,10 @@ object MetricsExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
+
+    // Create and initialize counters from ScioContext
+    val ctxCount1 = sc.initCounter("ctxcount")
+    val ctxCount2 = sc.initCounter("namespace", "ctxcount")
 
     // ## Accessing metrics
     sc.parallelize(1 to 100)
