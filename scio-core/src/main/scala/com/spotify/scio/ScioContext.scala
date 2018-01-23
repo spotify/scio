@@ -872,7 +872,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   /**
    * Initialize a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric using `T` as namespace.
-   * Default is the package name at the callsite if `T` is not specified.
+   * Default is "com.spotify.scio.ScioMetrics" if `T` is not specified.
    */
   def initCounter[T : ClassTag](name: String): Counter = {
     val counter = ScioMetrics.counter[T](name)
