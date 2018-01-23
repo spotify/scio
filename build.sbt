@@ -61,7 +61,7 @@ val scalaMacrosVersion = "2.1.0"
 val scalatestVersion = "3.0.4"
 val shapelessDatatypeVersion = "0.1.7"
 val slf4jVersion = "1.7.25"
-val sparkeyVersion = "2.2.0"
+val sparkeyVersion = "2.2.1"
 val tensorFlowVersion = "1.3.0"
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
