@@ -62,15 +62,21 @@ case class TextIO(path: String) extends ScioIO[String] {
       pipeline.saveAsInMemoryTap
     } else {
       pipeline.applyInternal(textOut(path, params))
-      pipeline.context.makeFuture(TextIO(ScioUtil.addPartSuffix(path)))
+      pipeline.context.makeFuture(tap(ReadParams()))
     }
   }
 
-  /** Read data set into memory. */
-  def value: Iterator[String] = TextIO.textFile(path)
+  def tap(params: ReadParams): Tap[String] = new Tap[String] {
+    /** Read data set into memory. */
+    override def value: Iterator[String] = TextIO.textFile(path)
 
-  /** Open data set as an [[com.spotify.scio.values.SCollection SCollection]]. */
-  def open(sc: ScioContext): SCollection[String] = read(sc, ReadParams())
+    /** Open data set as an [[com.spotify.scio.values.SCollection SCollection]]. */
+    override def open(sc: ScioContext): SCollection[String] = {
+      val textIO = TextIO(ScioUtil.addPartSuffix(path))
+      val readParams = textIO.ReadParams(compression = params.compression)
+      textIO.read(sc, readParams)
+    }
+  }
 
   private[scio] def textOut(path: String,
                             params: WriteParams) = {
