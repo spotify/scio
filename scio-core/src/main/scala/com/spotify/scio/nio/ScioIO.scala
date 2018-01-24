@@ -29,7 +29,7 @@ import scala.concurrent.Future
  * in every subtype. Look at the [[com.spotify.scio.nio.TextIO]] subclass as reference
  * implementation.
  */
-trait ScioIO[T] extends Tap[T] {
+trait ScioIO[T] {
 
   // abstract types for read/write params.
   type ReadP
@@ -38,4 +38,7 @@ trait ScioIO[T] extends Tap[T] {
   def read(sc: ScioContext, params: ReadP): SCollection[T]
 
   def write(data: SCollection[T], params: WriteP): Future[Tap[T]]
+
+  def tap(read: ReadP): Tap[T]
+
 }
