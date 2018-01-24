@@ -45,6 +45,7 @@ import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.extensions.gcp.options.{GcpOptions, GcsOptions}
 import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub => psio}
+import org.apache.beam.sdk.metrics.Counter
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform, SerializableFunction}
@@ -299,6 +300,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   private val _promises: MBuffer[(Promise[Tap[_]], Tap[_])] = MBuffer.empty
   private val _queryJobs: MBuffer[QueryJob] = MBuffer.empty
   private val _preRunFns: MBuffer[() => Unit] = MBuffer.empty
+  private val _counters: MBuffer[Counter] = MBuffer.empty
 
   /** Wrap a [[org.apache.beam.sdk.values.PCollection PCollection]]. */
   def wrap[T: ClassTag](p: PCollection[T]): SCollection[T] =
@@ -337,6 +339,13 @@ class ScioContext private[scio] (val options: PipelineOptions,
   def close(): ScioResult = requireNotClosed {
     if (_queryJobs.nonEmpty) {
       bigQueryClient.waitForJobs(_queryJobs: _*)
+    }
+
+    if (_counters.nonEmpty) {
+      val counters = _counters.toArray
+      this.parallelize(Seq(0)).map { _ =>
+        counters.foreach(_.inc(0))
+      }
     }
 
     _isClosed = true
@@ -854,6 +863,27 @@ class ScioContext private[scio] (val options: PipelineOptions,
     val v = elems.zip(timestamps).map(t => TimestampedValue.of(t._1, t._2))
     wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder)))
       .setName(truncate(elems.toString()))
+  }
+
+  // =======================================================================
+  // Metrics
+  // =======================================================================
+
+  /**
+   * Initialize a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric using `T` as namespace.
+   * Default is "com.spotify.scio.ScioMetrics" if `T` is not specified.
+   */
+  def initCounter[T : ClassTag](name: String): Counter = {
+    val counter = ScioMetrics.counter[T](name)
+    _counters.append(counter)
+    counter
+  }
+
+  /** Initialize a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric. */
+  def initCounter(namespace: String, name: String): Counter = {
+    val counter = ScioMetrics.counter(namespace, name)
+    _counters.append(counter)
+    counter
   }
 
 }

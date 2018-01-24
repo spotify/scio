@@ -44,6 +44,9 @@ class MetricsExampleTest extends PipelineSpec {
       .counter(ScioMetrics.counter("even_4"))(_ shouldBe 1)
       .counter(ScioMetrics.counter("even_6"))(_ shouldBe 1)
       .counter(ScioMetrics.counter("even_8"))(_ shouldBe 1)
+      // context-initialized metrics
+      .counter(ScioMetrics.counter("ctxcount"))(_ shouldBe 0)
+      .counter(ScioMetrics.counter("namespace", "ctxcount"))(_ shouldBe 0)
       .run()
   }
 
