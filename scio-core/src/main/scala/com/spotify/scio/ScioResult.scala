@@ -25,6 +25,7 @@ import com.twitter.algebird.Semigroup
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.metrics.{DistributionResult, GaugeResult}
 import org.apache.beam.sdk.util.MimeTypes
 import org.apache.beam.sdk.{PipelineResult, metrics => bm}
 
@@ -105,10 +106,14 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
   protected def getBeamMetrics: BeamMetrics = {
     require(isCompleted, "Pipeline has to be finished to get metrics.")
 
-    def mkDist(d: bm.DistributionResult): BeamDistribution =
-      BeamDistribution(d.sum(), d.count(), d.min(), d.max(), d.mean())
-    def mkGauge(g: bm.GaugeResult): BeamGauge = BeamGauge(g.value(), g.timestamp())
-
+    def mkDist(d: bm.DistributionResult): BeamDistribution = {
+      val dist = Option(d).getOrElse(DistributionResult.ZERO)
+      BeamDistribution(dist.sum(), dist.count(), dist.min(), dist.max(), dist.mean())
+    }
+    def mkGauge(g: bm.GaugeResult): BeamGauge = {
+      val gauge = Option(g).getOrElse(GaugeResult.empty())
+      BeamGauge(gauge.value(), gauge.timestamp())
+    }
     val beamCounters = allCounters.map { case (k, v) =>
       BeamMetric(k.namespace(), k.name(), v)
     }
