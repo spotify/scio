@@ -130,8 +130,23 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * [[SCollection]].
    */
   def applyTransform[U: ClassTag](transform: PTransform[_ >: PCollection[T], PCollection[U]])
-  : SCollection[U] =
+  : SCollection[U] = {
+    val uCls = implicitly[ClassTag[U]].runtimeClass
+    require(
+      !(classOf[KV[_, _]] isAssignableFrom uCls),
+      "Applying a transform with KV[K, V] output, use applyKvTransform instead")
     this.pApply(transform).setCoder(this.getCoder[U])
+  }
+
+  /**
+   * Apply a [[org.apache.beam.sdk.transforms.PTransform PTransform]] and wrap the output in an
+   * [[SCollection]]. This is a special case of [[applyTransform]] for transforms with [[KV]]
+   * output.
+   */
+  def applyKvTransform[K: ClassTag, V: ClassTag]
+  (transform: PTransform[_ >: PCollection[T], PCollection[KV[K, V]]])
+  : SCollection[KV[K, V]] =
+    this.pApply(transform).setCoder(this.getKvCoder[K, V])
 
   /** Apply a transform. */
   private[scio] def transform[U: ClassTag](f: SCollection[T] => SCollection[U])

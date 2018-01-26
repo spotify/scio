@@ -25,13 +25,16 @@ import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.MockedPrintStream
 import com.spotify.scio.util.random.RandomSamplerUtils
 import com.twitter.algebird.{Aggregator, Semigroup}
-import org.apache.beam.sdk.transforms.Count
+import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.{Count, DoFn, GroupByKey, ParDo}
 import org.apache.beam.sdk.transforms.windowing.PaneInfo.Timing
 import org.apache.beam.sdk.transforms.windowing.{
   BoundedWindow, GlobalWindow, IntervalWindow, PaneInfo
 }
+import org.apache.beam.sdk.values.KV
 import org.joda.time.{DateTimeConstants, Duration, Instant}
 
+import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 class SCollectionTest extends PipelineSpec {
@@ -49,6 +52,37 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).applyTransform(Count.globally())
       p should containSingleValue (5L.asInstanceOf[java.lang.Long])
+    }
+  }
+
+  private def newKvDoFn = new DoFn[Int, KV[Int, String]] {
+    @ProcessElement
+    def processElement(c: DoFn[Int, KV[Int, String]]#ProcessContext): Unit = {
+      val x = c.element()
+      c.output(KV.of(x, x.toString))
+    }
+  }
+
+  it should "fail applyTransform() with KV output" in {
+    // scalastyle:off no.whitespace.before.left.bracket
+    val e = the [IllegalArgumentException] thrownBy {
+      runWithContext { sc =>
+        val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).applyTransform(ParDo.of(newKvDoFn))
+      }
+    }
+    val msg = "requirement failed: Applying a transform with KV[K, V] output, " +
+      "use applyKvTransform instead"
+    e.getMessage shouldBe msg
+    // scalastyle:on no.whitespace.before.left.bracket
+  }
+
+  it should "support applyKvTransform()" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq(1, 2, 3, 4, 5))
+        .applyKvTransform(ParDo.of(newKvDoFn))
+        .applyKvTransform(GroupByKey.create())
+        .map(kv => (kv.getKey, kv.getValue.asScala.toList))
+      p should containInAnyOrder (Seq(1, 2, 3, 4, 5).map(x => (x, List(x.toString))))
     }
   }
 
