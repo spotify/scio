@@ -38,7 +38,7 @@ private[scio] object ArtisanJoin {
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)
-      .apply(name, CoGroupByKey.create())
+      .apply(s"CoGroupByKey@$name", CoGroupByKey.create())
 
     type DF = DoFn[KV[KEY, CoGbkResult], (KEY, (A1, B1))]
     a.context.wrap(keyed).withName(name)
