@@ -111,7 +111,6 @@ object AvroExample {
 
   private def typedIn(sc: ScioContext, args: Args): Unit = {
     sc.typedAvroFile[AccountFromSchema](args("input"))
-      .map(AccountFromSchema.toGenericRecord)
       .saveAsTextFile(args("output"))
   }
 
