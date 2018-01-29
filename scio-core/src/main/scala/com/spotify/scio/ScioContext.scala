@@ -498,11 +498,15 @@ class ScioContext private[scio] (val options: PipelineOptions,
     *
     * @group input
     */
-  def typedAvroFile[T <: HasAvroAnnotation : ClassTag : TypeTag](path: String): SCollection[T] = {
-    val avroT = AvroType[T]
-
-    this.avroFile[GenericRecord](path, avroT.schema)
-      .map(avroT.fromGenericRecord)
+  def typedAvroFile[T <: HasAvroAnnotation : ClassTag : TypeTag](path: String)
+  : SCollection[T] = requireNotClosed {
+    if (this.isTest) {
+      this.getTestInput(AvroIO[T](path))
+    } else {
+      val avroT = AvroType[T]
+      val t = gio.AvroIO.readGenericRecords(avroT.schema).from(path)
+      wrap(this.applyInternal(t)).setName(path).map(avroT.fromGenericRecord)
+    }
   }
 
   /**

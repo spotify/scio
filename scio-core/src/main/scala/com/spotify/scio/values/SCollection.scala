@@ -930,6 +930,17 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .withCodec(codec)
       .withMetadata(metadata.asJava)
 
+  private def typedAvroOut[U](write: gio.AvroIO.TypedWrite[U, Void, GenericRecord],
+                         path: String, numShards: Int, suffix: String,
+                         codec: CodecFactory,
+                         metadata: Map[String, AnyRef]) =
+    write
+      .to(pathWithShards(path))
+      .withNumShards(numShards)
+      .withSuffix(suffix + ".avro")
+      .withCodec(codec)
+      .withMetadata(metadata.asJava)
+
   private[scio] def textOut(path: String,
                             suffix: String,
                             numShards: Int,
@@ -981,17 +992,17 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                          (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAvroAnnotation)
   : Future[Tap[T]] = {
     val avroT = AvroType[T]
-
-    import scala.concurrent.ExecutionContext.Implicits.global
-    this
-      .map(avroT.toGenericRecord)
-      .saveAsAvroFile(path,
-        numShards,
-        avroT.schema,
-        suffix,
-        codec,
-        metadata)
-      .map(_.map(avroT.fromGenericRecord))
+    if (context.isTest) {
+      context.testOut(AvroIO(path))(this)
+      saveAsInMemoryTap
+    } else {
+      val t = gio.AvroIO.writeCustomTypeToGenericRecords()
+        .withFormatFunction(new SerializableFunction[T, GenericRecord] {
+          override def apply(input: T): GenericRecord = avroT.toGenericRecord(input)
+        })
+      this.applyInternal(typedAvroOut(t, path, numShards, suffix, codec, metadata))
+      context.makeFuture(AvroTap(ScioUtil.addPartSuffix(path), avroT.schema))
+    }
   }
 
   /**
