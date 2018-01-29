@@ -104,6 +104,21 @@ class NamedTransformTest extends PipelineSpec {
     }
   }
 
+  "Joins" should "support custom transform names" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
+      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13), ("d", 14)))
+      val inner = p1.withName("inner").join(p2)
+      val left = p1.withName("left").leftOuterJoin(p2)
+      val right = p1.withName("right").rightOuterJoin(p2)
+      val full = p1.withName("full").fullOuterJoin(p2)
+      assertTransformNameStartsWith(inner, "inner")
+      assertTransformNameStartsWith(left, "left")
+      assertTransformNameStartsWith(right, "right")
+      assertTransformNameStartsWith(full, "full")
+    }
+  }
+
   "MultiJoin" should "support custom transform name" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
