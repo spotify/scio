@@ -17,10 +17,11 @@
 
 package com.spotify.scio.coders
 
-import org.joda.time.{LocalDate, LocalDateTime, LocalTime}
+import org.joda.time.{LocalDate, LocalDateTime, LocalTime, DateTime, DateTimeZone}
 import org.scalacheck._
 import org.scalatest._
 import org.scalatest.prop.Checkers
+import scala.collection.JavaConverters._
 
 import scala.util.Try
 
@@ -30,7 +31,7 @@ class JodaSerializerTest extends FlatSpec with Checkers {
   override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 100)
 
-  implicit val localDateTimeArb = Arbitrary {
+  implicit val dateTimeArb = Arbitrary {
     for {
       year <- Gen.choose(-292275054, 292278993)
       month <- Gen.choose(1, 12)
@@ -42,11 +43,16 @@ class JodaSerializerTest extends FlatSpec with Checkers {
       minute <- Gen.choose(0, 59)
       second <- Gen.choose(0, 59)
       ms <- Gen.choose(0, 999)
+      tz <- Gen.oneOf(DateTimeZone.getAvailableIDs.asScala.toSeq)
       attempt <- Try {
-        val ldt = new LocalDateTime(year, month, day, hour, minute, second, ms)
+        val ldt = new DateTime(year, month, day, hour, minute, second, ms,DateTimeZone.forID(tz))
         Gen.const(ldt)
       }.getOrElse(Gen.fail)
     } yield attempt
+  }
+
+  implicit val localDateTimeArb = Arbitrary {
+    Arbitrary.arbitrary[DateTime].map(_.toLocalDateTime)
   }
 
   implicit val localTimeArb = Arbitrary {
@@ -73,6 +79,10 @@ class JodaSerializerTest extends FlatSpec with Checkers {
 
   it should "roundtrip LocalDateTime" in {
     check(roundTripProp[LocalDateTime] _)
+  }
+
+  it should "roundtrip DateTime" in {
+    check(roundTripProp[DateTime] _)
   }
 
 }
