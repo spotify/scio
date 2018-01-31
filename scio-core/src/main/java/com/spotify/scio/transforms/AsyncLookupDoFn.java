@@ -152,10 +152,15 @@ public abstract class AsyncLookupDoFn<A, B, C> extends DoFn<A, KV<A, AsyncLookup
       @Nullable
       @Override
       public B apply(@Nullable B output) {
-        cacheSupplier.put(instanceId, input, output);
-        results.add(new Result(input, new Try<>(output), c.timestamp(), window));
-        futures.remove(uuid);
-        return output;
+        try {
+          cacheSupplier.put(instanceId, input, output);
+          results.add(new Result(input, new Try<>(output), c.timestamp(), window));
+          futures.remove(uuid);
+          return output;
+        } catch (Exception e) {
+          LOG.error("Failed to cache result", e);
+          throw e;
+        }
       }
     });
 
