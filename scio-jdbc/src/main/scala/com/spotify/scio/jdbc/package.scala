@@ -23,6 +23,7 @@ import com.spotify.scio.Implicits._
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.io.jdbc.JdbcIO.DataSourceConfiguration
 import org.apache.beam.sdk.io.{jdbc => jio}
 
 import scala.concurrent.Future
@@ -42,12 +43,12 @@ package object jdbc {
    * Options for a JDBC connection.
    *
    * @param username database login username
-   * @param password database login password
+   * @param password database login password if exists
    * @param connectionUrl connection url, i.e "jdbc:mysql://[host]:[port]/db?"
    * @param driverClass subclass of [[java.sql.Driver]]
    */
   case class JdbcConnectionOptions(username: String,
-                                   password: String,
+                                   password: Option[String],
                                    connectionUrl: String,
                                    driverClass: Class[_ <: Driver])
 
@@ -84,12 +85,33 @@ package object jdbc {
     def apply[T](jdbcIoOptions: JdbcIoOptions): JdbcIO[T] = JdbcIO[T](jdbcIoId(jdbcIoOptions))
   }
 
-  private def jdbcIoId(opts: JdbcConnectionOptions, query: String): String =
-    s"${opts.username}:${opts.password}@${opts.connectionUrl}:$query"
+  private[jdbc] def jdbcIoId(opts: JdbcConnectionOptions, query: String): String = {
+    val user = opts.password
+      .fold(s"${opts.username}")(password => s"${opts.username}:${password}")
+    s"$user@${opts.connectionUrl}:$query"
+  }
 
   private def jdbcIoId(opts: JdbcIoOptions): String = opts match {
     case JdbcReadOptions(connOpts, query, _, _) => jdbcIoId(connOpts, query)
     case JdbcWriteOptions(connOpts, statement, _) => jdbcIoId(connOpts, statement)
+  }
+
+  private[jdbc] def getDataSourceConfig(
+                                         opts: jdbc.JdbcConnectionOptions
+                                       ): DataSourceConfiguration = {
+    opts.password match {
+      case Some(password) => {
+        jio.JdbcIO.DataSourceConfiguration
+          .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
+          .withUsername(opts.username)
+          .withPassword(opts.password.get)
+      }
+      case None => {
+        jio.JdbcIO.DataSourceConfiguration
+          .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
+          .withUsername(opts.username)
+      }
+    }
   }
 
   /** Enhanced version of [[ScioContext]] with JDBC methods. */
@@ -104,10 +126,7 @@ package object jdbc {
         val connOpts = readOptions.connectionOptions
         var transform = jio.JdbcIO.read[T]()
           .withCoder(coder)
-          .withDataSourceConfiguration(jio.JdbcIO.DataSourceConfiguration
-            .create(connOpts.driverClass.getCanonicalName, connOpts.connectionUrl)
-            .withUsername(connOpts.username)
-            .withPassword(connOpts.password))
+          .withDataSourceConfiguration(getDataSourceConfig(readOptions.connectionOptions))
           .withQuery(readOptions.query)
           .withRowMapper(new jio.JdbcIO.RowMapper[T] {
             override def mapRow(resultSet: ResultSet): T = {
@@ -136,10 +155,7 @@ package object jdbc {
       } else {
         val connOpts = writeOptions.connectionOptions
         var transform = jio.JdbcIO.write[T]()
-          .withDataSourceConfiguration(jio.JdbcIO.DataSourceConfiguration
-            .create(connOpts.driverClass.getCanonicalName, connOpts.connectionUrl)
-            .withUsername(connOpts.username).withPassword(connOpts.password))
-          .withStatement(writeOptions.statement)
+          .withDataSourceConfiguration(getDataSourceConfig(writeOptions.connectionOptions))
         if (writeOptions.preparedStatementSetter != null) {
           transform = transform
             .withPreparedStatementSetter(new jio.JdbcIO.PreparedStatementSetter[T] {
@@ -155,3 +171,4 @@ package object jdbc {
   }
 
 }
+

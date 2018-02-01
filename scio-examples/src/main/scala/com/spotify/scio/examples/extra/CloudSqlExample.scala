@@ -63,7 +63,7 @@ object CloudSqlExample {
   def getConnectionOptions(opts: CloudSqlOptions): JdbcConnectionOptions =
     JdbcConnectionOptions(
       username = opts.getCloudSqlUsername,
-      password = opts.getCloudSqlPassword,
+      password = Some(opts.getCloudSqlPassword),
       driverClass = classOf[com.mysql.jdbc.Driver],
       connectionUrl = getJdbcUrl(opts))
 

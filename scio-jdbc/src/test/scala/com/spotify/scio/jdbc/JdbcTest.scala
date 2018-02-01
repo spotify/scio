@@ -20,6 +20,7 @@ package com.spotify.scio.jdbc
 import java.sql.ResultSet
 
 import com.spotify.scio.ScioContext
+import org.apache.beam.sdk.io.{jdbc => jio}
 import com.spotify.scio.testing.PipelineSpec
 
 object JdbcJob {
@@ -51,7 +52,7 @@ object JdbcJob {
 
   def getConnectionOptions(opts: CloudSqlOptions): JdbcConnectionOptions =
     JdbcConnectionOptions(username = opts.getCloudSqlUsername,
-      password = opts.getCloudSqlPassword,
+      password = Some(opts.getCloudSqlPassword),
       connectionUrl = connectionUrl(opts),
       classOf[java.sql.Driver])
 
@@ -85,6 +86,73 @@ class JdbcTest extends PipelineSpec {
     an [AssertionError] should be thrownBy { testJdbc("aJ", "bJ") }
     an [AssertionError] should be thrownBy { testJdbc("aJ", "bJ", "cJ", "dJ") }
     // scalastyle:on no.whitespace.before.left.bracket
+  }
+
+  it should "connnect via JDBC without a password" in {
+    val args = Array(
+      "--cloudSqlUsername=john",
+      "--cloudSqlDb=mydb",
+      "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name")
+    val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
+    val readOpts = JdbcJob.getReadOptions(opts)
+    val writeOpts = JdbcJob.getWriteOptions(opts)
+
+    val expected = Seq("aJ", "bJ", "cJ")
+
+    JobTest[JdbcJob.type]
+      .args(args: _*)
+      .input(JdbcIO(readOpts), Seq("a", "b", "c"))
+      .output(JdbcIO[String](writeOpts))(_ should containInAnyOrder (expected))
+      .run()
+  }
+
+  it should "generate connection string with password" in {
+    val password = JdbcConnectionOptions(
+      username = "user",
+      password = Some("pass"),
+      connectionUrl = "foo",
+      driverClass = classOf[java.sql.Driver]
+    )
+    jdbcIoId(password, "query") shouldEqual "user:pass@foo:query"
+  }
+
+  it should "generate connection string without password" in {
+    val noPassword = JdbcConnectionOptions(
+      username = "user",
+      password = None,
+      connectionUrl = "foo",
+      driverClass = classOf[java.sql.Driver]
+    )
+    jdbcIoId(noPassword, "query") shouldEqual "user@foo:query"
+  }
+
+  it should "generate datasource config with password" in {
+    val opts = JdbcConnectionOptions(
+      username = "user",
+      password = Some("pass"),
+      connectionUrl = "foo",
+      driverClass = classOf[java.sql.Driver]
+    )
+    val expected = jio.JdbcIO.DataSourceConfiguration
+      .create(classOf[java.sql.Driver].getCanonicalName, "foo")
+      .withUsername("user")
+      .withPassword("pass")
+
+    getDataSourceConfig(opts) shouldEqual expected
+  }
+
+  it should "generate datasource config without password" in {
+    val opts = JdbcConnectionOptions(
+      username = "user",
+      password = None,
+      connectionUrl = "foo",
+      driverClass = classOf[java.sql.Driver]
+    )
+    val expected = jio.JdbcIO.DataSourceConfiguration
+      .create(classOf[java.sql.Driver].getCanonicalName, "foo")
+      .withUsername("user")
+
+    getDataSourceConfig(opts) shouldEqual expected
   }
 
 }

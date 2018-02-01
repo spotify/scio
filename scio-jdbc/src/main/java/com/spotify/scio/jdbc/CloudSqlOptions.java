@@ -30,7 +30,6 @@ public interface CloudSqlOptions extends PipelineOptions {
   void setCloudSqlUsername(String value);
 
   @Description("Cloud SQL database password")
-  @Validation.Required
   String getCloudSqlPassword();
 
   void setCloudSqlPassword(String value);
