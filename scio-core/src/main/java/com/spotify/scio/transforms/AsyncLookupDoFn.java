@@ -86,17 +86,12 @@ public abstract class AsyncLookupDoFn<A, B, C> extends DoFn<A, KV<A, AsyncLookup
 
   @Setup
   public void setup() {
-    LOG.info("Setup for {}", this);
-    client.computeIfAbsent(instanceId, instanceId -> {
-      LOG.info("Creating Client");
-      return newClient();
-    });
+    client.computeIfAbsent(instanceId, instanceId -> newClient());
     cache.computeIfAbsent(instanceId, instanceId -> cacheSupplier.createCache());
   }
 
   @StartBundle
   public void startBundle() {
-    LOG.info("Start bundle for {}", this);
     futures.clear();
     results.clear();
     requestCount = 0;
@@ -173,7 +168,6 @@ public abstract class AsyncLookupDoFn<A, B, C> extends DoFn<A, KV<A, AsyncLookup
 
   @FinishBundle
   public void finishBundle(FinishBundleContext c) {
-    LOG.info("Finish bundle for {}", this);
     if (!futures.isEmpty()) {
       try {
         // Block until all pending futures are complete
