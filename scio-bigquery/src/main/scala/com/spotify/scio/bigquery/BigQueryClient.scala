@@ -74,6 +74,9 @@ private[scio] trait QueryJob {
 class BigQueryClient private (private val projectId: String,
                               _credentials: Credentials = null) { self =>
 
+  require(projectId != null && projectId.nonEmpty, "Invalid projectId. " +
+    "It should be a non-empty string")
+
   def this(projectId: String, secretFile: File) =
     this(
       projectId,
