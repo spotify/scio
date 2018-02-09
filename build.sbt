@@ -272,7 +272,6 @@ lazy val scioCore: Project = Project(
     "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
     "commons-io" % "commons-io" % commonsIoVersion,
     "org.apache.commons" % "commons-math3" % commonsMath3Version,
-    "org.tensorflow" % "proto" % tensorFlowVersion,
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion,
     "com.google.auto.service" % "auto-service" % autoServiceVersion,
     "com.google.guava" % "guava" % guavaVersion,
