@@ -40,7 +40,6 @@ import org.apache.beam.sdk.values.PCollection;
 import org.joda.time.Duration;
 import org.joda.time.Instant;
 
-
 /**
  * An example that counts words in text, and can run over either unbounded or bounded input
  * collections.
@@ -98,7 +97,6 @@ public class WindowedWordCount {
    * 2-hour period.
    */
   static class AddTimestampFn extends DoFn<String, String> {
-    private static final Duration RAND_RANGE = Duration.standardHours(1);
     private final Instant minTimestamp;
     private final Instant maxTimestamp;
 
@@ -162,7 +160,7 @@ public class WindowedWordCount {
     Long getMaxTimestampMillis();
     void setMaxTimestampMillis(Long value);
 
-    @Description("Fixed number of shards to produce per window, or null for runner-chosen sharding")
+    @Description("Fixed number of shards to produce per window")
     Integer getNumShards();
     void setNumShards(Integer numShards);
   }
@@ -194,8 +192,7 @@ public class WindowedWordCount {
      */
     PCollection<String> windowedWords =
         input.apply(
-            Window.<String>into(
-                FixedWindows.of(Duration.standardMinutes(options.getWindowSize()))));
+            Window.into(FixedWindows.of(Duration.standardMinutes(options.getWindowSize()))));
 
     /**
      * Concept #4: Re-use our existing CountWords transform that does not have knowledge of
