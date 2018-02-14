@@ -23,6 +23,9 @@ import java.util.UUID
 
 import org.scalatest._
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
 class TapsTest extends FlatSpec with Matchers {
 
   val data = Seq("a", "b", "c")
@@ -67,10 +70,10 @@ class TapsTest extends FlatSpec with Matchers {
     val future = Taps().textFile(f.toString)
     future.isCompleted shouldBe false
     writeText(f, data)
-    Thread.sleep(2000)
-    future.isCompleted shouldBe true
-    future.value.get.isSuccess shouldBe true
-    future.waitForResult().value.toSeq shouldBe data
+
+    val result = Await.result(future, 5.seconds)
+    result.value.toSeq shouldBe data
+
     Files.delete(f)
   }
 
@@ -81,8 +84,8 @@ class TapsTest extends FlatSpec with Matchers {
     val f = tmpFile
     val future = Taps().textFile(f.toString)
     future.isCompleted shouldBe false
-    Thread.sleep(2000)
-    future.isCompleted shouldBe true
+
+    Await.ready(future, 5.seconds)
   }
 
 }
