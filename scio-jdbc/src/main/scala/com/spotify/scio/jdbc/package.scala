@@ -156,6 +156,7 @@ package object jdbc {
         val connOpts = writeOptions.connectionOptions
         var transform = jio.JdbcIO.write[T]()
           .withDataSourceConfiguration(getDataSourceConfig(writeOptions.connectionOptions))
+          .withStatement(writeOptions.statement)
         if (writeOptions.preparedStatementSetter != null) {
           transform = transform
             .withPreparedStatementSetter(new jio.JdbcIO.PreparedStatementSetter[T] {
