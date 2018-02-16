@@ -124,7 +124,7 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
     require(isCompleted, "Pipeline has to be finished to get metrics.")
 
     def mkDist(d: bm.DistributionResult): BeamDistribution = {
-      val dist = Option(d).getOrElse(DistributionResult.ZERO)
+      val dist = Option(d).getOrElse(DistributionResult.IDENTITY_ELEMENT)
       BeamDistribution(dist.sum(), dist.count(), dist.min(), dist.max(), dist.mean())
     }
     def mkGauge(g: bm.GaugeResult): BeamGauge = {
