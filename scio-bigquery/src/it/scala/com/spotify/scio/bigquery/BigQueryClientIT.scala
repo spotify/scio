@@ -17,12 +17,17 @@
 
 package com.spotify.scio.bigquery
 
+import java.util.UUID
+
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import com.google.cloud.storage.Storage.BlobListOption
+import com.google.cloud.storage.{Blob, StorageOptions}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.JavaConverters._
+import scala.util.{Failure, Success}
 
 class BigQueryClientIT extends FlatSpec with Matchers {
 
@@ -114,6 +119,162 @@ class BigQueryClientIT extends FlatSpec with Matchers {
     val rows = bq.getTableRows("bigquery-public-data:samples.shakespeare").take(10).toList
     val columns = Set("word", "word_count", "corpus", "corpus_date")
     all(rows.map(_.keySet().asScala)) shouldBe columns
+  }
+
+  "load.csv" should "work" in {
+
+    val schema = BigQueryUtil.parseSchema(
+      """
+        |{
+        |  "fields": [
+        |    {"mode": "NULLABLE", "name": "word", "type": "STRING"},
+        |    {"mode": "NULLABLE", "name": "word_count", "type": "INTEGER"},
+        |    {"mode": "NULLABLE", "name": "corpus", "type": "STRING"},
+        |    {"mode": "NULLABLE", "name": "corpus_date", "type": "INTEGER"}
+        |  ]
+        |}
+      """.stripMargin)
+
+    val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.csv")
+    val table = bq.temporaryTable(location = "US")
+    val destinationTable = s"${table.getProjectId}:${table.getDatasetId}.${table.getTableId}"
+
+    val result = bq.load.csv(sources, destinationTable, skipLeadingRows = 1,
+      schema = Some(schema))
+
+    result match {
+      case Success(tableRef) =>
+
+        val createdTable = bq.getTable(tableRef)
+        BigInt(createdTable.getNumRows) shouldBe BigInt(10)
+        bq.deleteTable(tableRef)
+
+      case Failure(e) => fail(e)
+    }
+  }
+
+  "load.json" should "work" in {
+
+    val schema = BigQueryUtil.parseSchema(
+      """
+        |{
+        |  "fields": [
+        |    {"mode": "NULLABLE", "name": "word", "type": "STRING"},
+        |    {"mode": "NULLABLE", "name": "word_count", "type": "INTEGER"},
+        |    {"mode": "NULLABLE", "name": "corpus", "type": "STRING"},
+        |    {"mode": "NULLABLE", "name": "corpus_date", "type": "INTEGER"}
+        |  ]
+        |}
+      """.stripMargin)
+
+    val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.json")
+    val table = bq.temporaryTable(location = "US")
+    val destinationTable = s"${table.getProjectId}:${table.getDatasetId}.${table.getTableId}"
+
+    val result = bq.load.json(sources, destinationTable, schema = Some(schema))
+
+    result match {
+      case Success(tableRef) =>
+
+        val createdTable = bq.getTable(tableRef)
+        BigInt(createdTable.getNumRows) shouldBe BigInt(10)
+        bq.deleteTable(tableRef)
+
+      case Failure(e) => throw e
+    }
+  }
+
+  "load.avro" should "work" in {
+
+    val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.avro")
+    val table = bq.temporaryTable(location = "US")
+    val destinationTable = s"${table.getProjectId}:${table.getDatasetId}.${table.getTableId}"
+
+    val result = bq.load.avro(sources, destinationTable)
+
+    result match {
+      case Success(tableRef) =>
+
+        val createdTable = bq.getTable(tableRef)
+        BigInt(createdTable.getNumRows) shouldBe BigInt(10)
+        bq.deleteTable(tableRef)
+
+      case Failure(e) => throw e
+    }
+  }
+
+  "extract.asCsv" should "work" in {
+
+    val sourceTable = "bigquery-public-data:samples.shakespeare"
+    val (bucket, prefix) = ("data-integration-test-eu", s"extract/csv/${UUID.randomUUID}")
+
+    GcsUtils.exists(bucket, prefix) shouldBe false
+
+    val destination = List(
+      s"gs://$bucket/$prefix"
+    )
+
+    bq.extract.asCsv(sourceTable, destination)
+
+    GcsUtils.exists(bucket, prefix) shouldBe true
+    GcsUtils.remove(bucket, prefix)
+
+  }
+
+  "extract.asJson" should "work" in {
+
+    val sourceTable = "bigquery-public-data:samples.shakespeare"
+    val (bucket, prefix) = ("data-integration-test-eu", s"extract/json/${UUID.randomUUID}")
+
+    GcsUtils.exists(bucket, prefix) shouldBe false
+
+    val destination = List(
+      s"gs://$bucket/$prefix"
+    )
+
+    bq.extract.asJson(sourceTable, destination)
+
+    GcsUtils.exists(bucket, prefix) shouldBe true
+    GcsUtils.remove(bucket, prefix)
+
+  }
+
+  "extract.asAvro" should "work" in {
+
+    val sourceTable = "bigquery-public-data:samples.shakespeare"
+    val (bucket, prefix) = ("data-integration-test-eu", s"extract/avro/${UUID.randomUUID}")
+
+    GcsUtils.exists(bucket, prefix) shouldBe false
+
+    val destination = List(
+      s"gs://$bucket/$prefix"
+    )
+
+    bq.extract.asAvro(sourceTable, destination)
+
+    GcsUtils.exists(bucket, prefix) shouldBe true
+    GcsUtils.remove(bucket, prefix)
+
+  }
+
+  object GcsUtils {
+
+    private val storage = StorageOptions.getDefaultInstance.getService
+
+    private def list(bucket: String, prefix: String): Iterable[Blob] = {
+      storage.list(bucket, BlobListOption.prefix(prefix))
+        .iterateAll()
+        .asScala
+    }
+
+    def exists(bucket: String, prefix: String): Boolean = {
+      list(bucket, prefix)
+        .nonEmpty
+    }
+
+    def remove(bucket: String, prefix: String): Unit = {
+      storage.delete(list(bucket, prefix).map(_.getBlobId).toSeq: _*)
+    }
   }
 
 }

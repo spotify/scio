@@ -38,6 +38,7 @@ val elasticsearch2Version = "2.1.0"
 val elasticsearch5Version = "5.5.0"
 val featranVersion = "0.1.16"
 val gcsConnectorVersion = "1.6.1-hadoop2"
+val gcsVersion = "1.8.0"
 val guavaVersion = "20.0"
 val hadoopVersion = "2.7.3"
 val hamcrestVersion = "1.3"
@@ -343,6 +344,7 @@ lazy val scioBigQuery: Project = Project(
     "org.slf4j" % "slf4j-api" % slf4jVersion,
     "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
     "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
+    "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test",
     "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
   )
