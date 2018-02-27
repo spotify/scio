@@ -772,10 +772,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group window
    */
   def withSlidingWindows(size: Duration,
-                         period: Duration = Duration.millis(1),
+                         period: Duration = null,
                          offset: Duration = Duration.ZERO,
-                         options: WindowOptions = WindowOptions()): SCollection[T] =
-    this.withWindowFn(SlidingWindows.of(size).every(period).withOffset(offset), options)
+                         options: WindowOptions = WindowOptions()): SCollection[T] = {
+    var transform = SlidingWindows.of(size).withOffset(offset)
+    if (period != null) {
+      transform = transform.every(period)
+    }
+    this.withWindowFn(transform, options)
+  }
 
   /**
    * Window values based on sessions.
