@@ -356,7 +356,15 @@ lazy val scioBigtable: Project = Project(
   description := "Scio add-on for Google Cloud Bigtable",
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-    "org.scalatest" %% "scalatest" % scalatestVersion % "test"
+    "org.scalatest" %% "scalatest" % scalatestVersion % "test",
+    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+    "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test",
+    "org.mockito" % "mockito-all" % mockitoVersion % "test",
+    "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
+    "org.apache.beam" % "beam-runners-direct-java" % beamVersion % "test",
+    "junit" % "junit" % junitVersion % "test",
+    "com.novocode" % "junit-interface" % junitInterfaceVersion,
+    "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion % "test" classifier "tests"
   )
 ).dependsOn(
   scioCore,
