@@ -17,9 +17,18 @@
 
 package com.spotify.scio
 
+import java.util.concurrent.TimeUnit
+
 import com.spotify.scio.metrics.{BeamDistribution, MetricValue}
 import com.spotify.scio.testing.PipelineSpec
+import org.apache.beam.sdk.Pipeline.PipelineExecutionException
+import org.apache.beam.sdk.PipelineResult
 import org.apache.beam.sdk.PipelineResult.State
+import org.apache.beam.sdk.metrics.MetricResults
+import org.joda.time
+
+import scala.concurrent.Future
+import scala.concurrent.duration.Duration
 
 class ScioResultTest extends PipelineSpec {
 
@@ -27,6 +36,39 @@ class ScioResultTest extends PipelineSpec {
     val r = runWithContext(_.parallelize(Seq(1, 2, 3)))
     r.isCompleted shouldBe true
     r.state shouldBe State.DONE
+  }
+
+  it should "respect waitUntilDone() with doCancelJob passed in" in {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val mockPipeline = new PipelineResult {
+      private var _state = State.RUNNING
+      override def cancel(): State = {
+        _state = State.CANCELLED
+        _state
+      }
+      override def waitUntilFinish(duration: time.Duration): State = null
+      override def waitUntilFinish(): State = null
+      override def getState: State = _state
+      override def metrics(): MetricResults = null
+    }
+
+    // Mock Scio result takes 100 milliseconds to complete
+    val mockScioResult = new ScioResult(mockPipeline) {
+      override def getMetrics: metrics.Metrics = null
+      override val finalState: Future[State] = Future {
+        Thread.sleep(100L)
+        State.DONE
+      }
+    }
+
+    // Give the ScioResult a 10 nanosecond timeout and verify job is cancelled after timeout
+    val nanos = Duration.create(10L, TimeUnit.NANOSECONDS)
+
+    the[PipelineExecutionException] thrownBy {
+      mockScioResult.waitUntilDone(nanos, doCancelJob = true)
+    } should have message s"java.lang.Exception: Job cancelled after exceeding timeout value $nanos"
+
+    mockScioResult.state shouldBe State.CANCELLED
   }
 
   it should "expose Beam metrics" in {
