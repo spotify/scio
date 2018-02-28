@@ -357,7 +357,6 @@ lazy val scioBigtable: Project = Project(
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion % "test",
-    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
     "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test",
     "org.mockito" % "mockito-all" % mockitoVersion % "test",
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
