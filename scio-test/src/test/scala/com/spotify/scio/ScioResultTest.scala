@@ -29,6 +29,7 @@ import org.joda.time
 
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class ScioResultTest extends PipelineSpec {
 
@@ -39,16 +40,15 @@ class ScioResultTest extends PipelineSpec {
   }
 
   it should "respect waitUntilDone() with doCancelJob passed in" in {
-    import scala.concurrent.ExecutionContext.Implicits.global
     val mockPipeline = new PipelineResult {
-      private var _state = State.RUNNING
+      private var state = State.RUNNING
       override def cancel(): State = {
-        _state = State.CANCELLED
-        _state
+        state = State.CANCELLED
+        state
       }
       override def waitUntilFinish(duration: time.Duration): State = null
       override def waitUntilFinish(): State = null
-      override def getState: State = _state
+      override def getState: State = state
       override def metrics(): MetricResults = null
     }
 

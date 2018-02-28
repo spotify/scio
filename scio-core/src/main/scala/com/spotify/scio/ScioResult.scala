@@ -65,19 +65,12 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
   /** Get metrics of the finished pipeline. */
   def getMetrics: Metrics
 
-  /** Wait until the pipeline finishes. */
-  def waitUntilFinish(duration: Duration = Duration.Inf): ScioResult = {
-    Await.ready(finalState, duration)
-    this
-  }
-
-  /**
-   * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
-   * `FAILED`). Throw exception otherwise. If `doCancelJob` is set, cancel the [[PipelineResult]].
-   */
-  def waitUntilDone(duration: Duration = Duration.Inf, doCancelJob: Boolean = false): ScioResult = {
+  /** Wait until the pipeline finishes. If timeout duration is exceeded and `doCancelJob` is set,
+    * cancel the internal [[PipelineResult]]. */
+  def waitUntilFinish(duration: Duration = Duration.Inf, doCancelJob: Boolean = false):
+  ScioResult = {
     try {
-      waitUntilFinish(duration)
+      Await.ready(finalState, duration)
     } catch {
       case e: TimeoutException =>
         if (doCancelJob) {
@@ -86,6 +79,15 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
             new Exception(s"Job cancelled after exceeding timeout value $duration"))
         }
     }
+    this
+  }
+
+  /**
+   * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
+   * `FAILED`). Throw exception otherwise.
+   */
+  def waitUntilDone(duration: Duration = Duration.Inf, doCancelJob: Boolean = false): ScioResult = {
+    waitUntilFinish(duration, doCancelJob)
 
     if (!this.state.equals(State.DONE)) {
       throw new PipelineExecutionException(new Exception(s"Job finished with state ${this.state}"))
