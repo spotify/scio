@@ -39,7 +39,7 @@ class ScioResultTest extends PipelineSpec {
     r.state shouldBe State.DONE
   }
 
-  it should "respect waitUntilDone() with doCancelJob passed in" in {
+  it should "respect waitUntilDone() with cancelJob passed in" in {
     val mockPipeline = new PipelineResult {
       private var state = State.RUNNING
       override def cancel(): State = {
@@ -65,7 +65,7 @@ class ScioResultTest extends PipelineSpec {
     val nanos = Duration.create(10L, TimeUnit.NANOSECONDS)
 
     the[PipelineExecutionException] thrownBy {
-      mockScioResult.waitUntilDone(nanos, doCancelJob = true)
+      mockScioResult.waitUntilDone(nanos, cancelJob = true)
     } should have message s"java.lang.Exception: Job cancelled after exceeding timeout value $nanos"
 
     mockScioResult.state shouldBe State.CANCELLED
