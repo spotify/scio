@@ -18,6 +18,7 @@
 package com.spotify.scio
 
 import java.nio.ByteBuffer
+import java.util.concurrent.TimeoutException
 
 import com.spotify.scio.metrics._
 import com.spotify.scio.util.ScioUtil
@@ -64,9 +65,20 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
   /** Get metrics of the finished pipeline. */
   def getMetrics: Metrics
 
-  /** Wait until the pipeline finishes. */
-  def waitUntilFinish(duration: Duration = Duration.Inf): ScioResult = {
-    Await.ready(finalState, duration)
+  /** Wait until the pipeline finishes. If timeout duration is exceeded and `cancelJob` is set,
+    * cancel the internal [[PipelineResult]]. */
+  def waitUntilFinish(duration: Duration = Duration.Inf, cancelJob: Boolean = false):
+  ScioResult = {
+    try {
+      Await.ready(finalState, duration)
+    } catch {
+      case e: TimeoutException =>
+        if (cancelJob) {
+          internal.cancel()
+          throw new PipelineExecutionException(
+            new Exception(s"Job cancelled after exceeding timeout value $duration"))
+        }
+    }
     this
   }
 
@@ -74,8 +86,9 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
    * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
    * `FAILED`). Throw exception otherwise.
    */
-  def waitUntilDone(duration: Duration = Duration.Inf): ScioResult = {
-    waitUntilFinish(duration)
+  def waitUntilDone(duration: Duration = Duration.Inf, cancelJob: Boolean = false): ScioResult = {
+    waitUntilFinish(duration, cancelJob)
+
     if (!this.state.equals(State.DONE)) {
       throw new PipelineExecutionException(new Exception(s"Job finished with state ${this.state}"))
     }
