@@ -30,6 +30,8 @@ import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.transforms.Create
 
+import scala.concurrent.duration.Duration
+
 class ScioContextTest extends PipelineSpec {
 
   "ScioContext" should "support pipeline" in {
@@ -142,4 +144,27 @@ class ScioContextTest extends PipelineSpec {
     }
   }
 
+  it should "parse jobTimeout argument passed from command line" in {
+    ScioContext.parseArguments[PipelineOptions](Array(s"--jobTimeout=1h"))
+      ._1.as(classOf[ScioOptions]).getJobTimeout shouldBe "1h"
+
+    ScioContext.parseArguments[PipelineOptions](Array())
+      ._1.as(classOf[ScioOptions]).getJobTimeout shouldBe null
+  }
+
+  it should "throw an IllegalArgumentException when calling ContextScioResult#getJobTimeout " +
+    "with invalid jobTimeout param" in {
+    val sc = ScioContext()
+    sc.optionsAs[ScioOptions].setJobTimeout("foo")
+
+    the[IllegalArgumentException] thrownBy {
+      sc.close().getJobTimeout
+    } should have message s"jobTimeout param foo cannot be cast to type " +
+      s"scala.concurrent.duration.Duration"
+  }
+
+  it should "default to Duration.Inf in ContextScioResult if jobTimeout param isn't supplied" in {
+    val sc = ScioContext() // don't set jobTimeout param
+    sc.close().getJobTimeout shouldBe Duration.Inf
+  }
 }

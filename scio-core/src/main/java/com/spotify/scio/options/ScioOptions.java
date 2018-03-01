@@ -39,6 +39,10 @@ public interface ScioOptions extends PipelineOptions, KryoOptions {
   boolean isBlocking();
   void setBlocking(boolean value);
 
+  @Description("Time period in scala.concurrent.duration.Duration style to wait for job completion")
+  String getJobTimeout();
+  void setJobTimeout(String value);
+
   @Description("Custom application arguments")
   String getAppArguments();
   void setAppArguments(String arguments);

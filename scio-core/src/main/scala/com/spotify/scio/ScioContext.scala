@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer}
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Future, Promise}
 import scala.io.Source
 import scala.reflect.ClassTag
@@ -357,7 +358,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
       TestDataManager.closeTest(testId.get, result)
     }
 
-    if (this.isTest || this.optionsAs[ScioOptions].isBlocking) {
+    if (this.isTest || (this.optionsAs[ScioOptions].isBlocking &&
+      Option(this.optionsAs[ScioOptions].getJobTimeout).isEmpty)) {
       result.waitUntilDone()  // block local runner for JobTest to work
     } else {
       result
@@ -391,6 +393,19 @@ class ScioContext private[scio] (val options: PipelineOptions,
         context.optionsAs[ApplicationNameOptions].getAppName,
         state.toString,
         getBeamMetrics)
+
+    override def getJobTimeout: Duration = {
+      Option(optionsAs[ScioOptions].getJobTimeout) match {
+        case Some(duration) => try {
+          Duration.apply(duration)
+        } catch {
+          case e: NumberFormatException =>
+            throw new IllegalArgumentException(s"jobTimeout param $duration cannot be cast to " +
+              s"type scala.concurrent.duration.Duration")
+        }
+        case _ => Duration.Inf
+      }
+    }
   }
 
   /** Whether the context is closed. */
