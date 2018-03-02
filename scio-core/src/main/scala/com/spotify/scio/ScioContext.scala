@@ -258,6 +258,20 @@ class ScioContext private[scio] (val options: PipelineOptions,
       }
     }
 
+  /** Amount of time to block job for. */
+  private[scio] val awaitDuration: Duration = {
+    val blockFor = optionsAs[ScioOptions].getBlockFor
+    try {
+      Option(blockFor)
+        .map(Duration(_))
+        .getOrElse(Duration.Inf)
+    } catch {
+      case e: NumberFormatException =>
+        throw new IllegalArgumentException(s"blockFor param $blockFor cannot be cast to " +
+          s"type scala.concurrent.duration.Duration")
+    }
+  }
+
   // if in local runner, temp location may be needed, but is not currently required by
   // the runner, which may end up with NPE. If not set but user generate new temp dir
   if (ScioUtil.isLocalRunner(options.getRunner) && options.getTempLocation == null) {
@@ -358,9 +372,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
       TestDataManager.closeTest(testId.get, result)
     }
 
-    if (this.isTest || (this.optionsAs[ScioOptions].isBlocking &&
-      Option(this.optionsAs[ScioOptions].getJobTimeout).isEmpty)) {
-      result.waitUntilDone()  // block local runner for JobTest to work
+    if (this.isTest || (this.optionsAs[ScioOptions].isBlocking && awaitDuration == Duration.Inf)) {
+      result.waitUntilDone()
     } else {
       result
     }
@@ -394,18 +407,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
         state.toString,
         getBeamMetrics)
 
-    override def getJobTimeout: Duration = {
-      Option(optionsAs[ScioOptions].getJobTimeout) match {
-        case Some(duration) => try {
-          Duration.apply(duration)
-        } catch {
-          case e: NumberFormatException =>
-            throw new IllegalArgumentException(s"jobTimeout param $duration cannot be cast to " +
-              s"type scala.concurrent.duration.Duration")
-        }
-        case _ => Duration.Inf
-      }
-    }
+    override def getAwaitDuration: Duration = awaitDuration
   }
 
   /** Whether the context is closed. */

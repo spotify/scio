@@ -63,7 +63,7 @@ class ScioResultTest extends PipelineSpec {
         State.DONE
       }
 
-      override def getJobTimeout: Duration = nanos
+      override def getAwaitDuration: Duration = nanos
     }
 
     the[PipelineExecutionException] thrownBy {

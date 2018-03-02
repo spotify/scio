@@ -144,27 +144,15 @@ class ScioContextTest extends PipelineSpec {
     }
   }
 
-  it should "parse jobTimeout argument passed from command line" in {
-    ScioContext.parseArguments[PipelineOptions](Array(s"--jobTimeout=1h"))
-      ._1.as(classOf[ScioOptions]).getJobTimeout shouldBe "1h"
+  it should "parse valid, invalid, and missing blockFor argument passed from command line" in {
+    val (validOpts, _) = ScioContext.parseArguments[PipelineOptions](Array(s"--blockFor=1h"))
+    ScioContext.apply(validOpts).close().getAwaitDuration shouldBe Duration("1h")
 
-    ScioContext.parseArguments[PipelineOptions](Array())
-      ._1.as(classOf[ScioOptions]).getJobTimeout shouldBe null
-  }
+    val (missingOpts, _) = ScioContext.parseArguments[PipelineOptions](Array())
+    ScioContext.apply(missingOpts).close().getAwaitDuration shouldBe Duration.Inf
 
-  it should "throw an IllegalArgumentException when calling ContextScioResult#getJobTimeout " +
-    "with invalid jobTimeout param" in {
-    val sc = ScioContext()
-    sc.optionsAs[ScioOptions].setJobTimeout("foo")
-
-    the[IllegalArgumentException] thrownBy {
-      sc.close().getJobTimeout
-    } should have message s"jobTimeout param foo cannot be cast to type " +
-      s"scala.concurrent.duration.Duration"
-  }
-
-  it should "default to Duration.Inf in ContextScioResult if jobTimeout param isn't supplied" in {
-    val sc = ScioContext() // don't set jobTimeout param
-    sc.close().getJobTimeout shouldBe Duration.Inf
+    val (invalidOpts, _) = ScioContext.parseArguments[PipelineOptions](Array(s"--blockFor=foo"))
+    the[IllegalArgumentException] thrownBy { ScioContext.apply(invalidOpts) } should have message
+      s"blockFor param foo cannot be cast to type scala.concurrent.duration.Duration"
   }
 }
