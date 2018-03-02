@@ -17,6 +17,7 @@
 
 package com.spotify.scio.bigquery.types
 
+import java.nio.file.{Path, Paths}
 import java.util.{List => JList}
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
@@ -278,12 +279,12 @@ private[types] object TypeProvider {
       !sys.props("bigquery.plugin.disable.dump").toBoolean
   }
 
-  private def getBQClassCacheDir = {
+  private def getBQClassCacheDir: Path = {
     // TODO: add this as key/value settings with default etc
     if (sys.props("bigquery.class.cache.directory") != null) {
-      sys.props("bigquery.class.cache.directory")
+      Paths.get(sys.props("bigquery.class.cache.directory"))
     } else {
-      sys.props("java.io.tmpdir") + "/bigquery-classes"
+      Paths.get(sys.props("java.io.tmpdir")).resolve("bigquery-classes")
     }
   }
 
@@ -327,7 +328,7 @@ private[types] object TypeProvider {
 
     val prettyCode = pShowCode(c)(records, caseClassTree).mkString("\n")
     val classCacheDir = getBQClassCacheDir
-    val genSrcFile = new java.io.File(s"$classCacheDir/$name-$hash.scala")
+    val genSrcFile = classCacheDir.resolve(s"$name-$hash.scala").toFile
 
     logger.info(s"Will dump generated $name of $owner from $srcFile to $genSrcFile")
 
