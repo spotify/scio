@@ -52,6 +52,9 @@ class ScioResultTest extends PipelineSpec {
       override def metrics(): MetricResults = null
     }
 
+    // Give the ScioResult a 10 nanosecond timeout and verify job is cancelled after timeout
+    val nanos = Duration.create(10L, TimeUnit.NANOSECONDS)
+
     // Mock Scio result takes 100 milliseconds to complete
     val mockScioResult = new ScioResult(mockPipeline) {
       override def getMetrics: metrics.Metrics = null
@@ -59,13 +62,12 @@ class ScioResultTest extends PipelineSpec {
         Thread.sleep(100L)
         State.DONE
       }
+
+      override def getAwaitDuration: Duration = nanos
     }
 
-    // Give the ScioResult a 10 nanosecond timeout and verify job is cancelled after timeout
-    val nanos = Duration.create(10L, TimeUnit.NANOSECONDS)
-
     the[PipelineExecutionException] thrownBy {
-      mockScioResult.waitUntilDone(nanos, cancelJob = true)
+      mockScioResult.waitUntilDone(cancelJob = true)
     } should have message s"java.lang.Exception: Job cancelled after exceeding timeout value $nanos"
 
     mockScioResult.state shouldBe State.CANCELLED

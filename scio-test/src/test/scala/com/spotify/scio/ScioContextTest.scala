@@ -30,6 +30,8 @@ import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.transforms.Create
 
+import scala.concurrent.duration.Duration
+
 class ScioContextTest extends PipelineSpec {
 
   "ScioContext" should "support pipeline" in {
@@ -142,4 +144,15 @@ class ScioContextTest extends PipelineSpec {
     }
   }
 
+  it should "parse valid, invalid, and missing blockFor argument passed from command line" in {
+    val (validOpts, _) = ScioContext.parseArguments[PipelineOptions](Array(s"--blockFor=1h"))
+    ScioContext.apply(validOpts).close().getAwaitDuration shouldBe Duration("1h")
+
+    val (missingOpts, _) = ScioContext.parseArguments[PipelineOptions](Array())
+    ScioContext.apply(missingOpts).close().getAwaitDuration shouldBe Duration.Inf
+
+    val (invalidOpts, _) = ScioContext.parseArguments[PipelineOptions](Array(s"--blockFor=foo"))
+    the[IllegalArgumentException] thrownBy { ScioContext.apply(invalidOpts) } should have message
+      s"blockFor param foo cannot be cast to type scala.concurrent.duration.Duration"
+  }
 }
