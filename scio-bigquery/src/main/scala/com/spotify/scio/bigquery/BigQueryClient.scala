@@ -515,22 +515,6 @@ class BigQueryClient private (private val projectId: String,
     override val table: TableReference = destinationTable
   }
 
-  private def logJobStatistics(sqlQuery: String, job: Job): Unit = {
-    val jobId = job.getJobReference.getJobId
-    val stats = job.getStatistics
-    logger.info(s"Query completed: jobId: $jobId")
-    logger.info(s"Query: `$sqlQuery`")
-
-    val elapsed = PERIOD_FORMATTER.print(new Period(stats.getEndTime - stats.getCreationTime))
-    val pending = PERIOD_FORMATTER.print(new Period(stats.getStartTime - stats.getCreationTime))
-    val execution = PERIOD_FORMATTER.print(new Period(stats.getEndTime - stats.getStartTime))
-    logger.info(s"Elapsed: $elapsed, pending: $pending, execution: $execution")
-
-    val bytes = FileUtils.byteCountToDisplaySize(stats.getQuery.getTotalBytesProcessed)
-    val cacheHit = stats.getQuery.getCacheHit
-    logger.info(s"Total bytes processed: $bytes, cache hit: $cacheHit")
-  }
-
   // =======================================================================
   // Query handling
   // =======================================================================
