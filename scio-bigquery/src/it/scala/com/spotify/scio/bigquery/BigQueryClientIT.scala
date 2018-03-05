@@ -121,7 +121,6 @@ class BigQueryClientIT extends FlatSpec with Matchers {
   }
 
   "loadTableFromCsv" should "work" in {
-
     val schema = BigQueryUtil.parseSchema(
       """
         |{
@@ -133,20 +132,16 @@ class BigQueryClientIT extends FlatSpec with Matchers {
         |  ]
         |}
       """.stripMargin)
-
     val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.csv")
     val table = bq.temporaryTable(location = "US")
-
     val tableRef = bq.loadTableFromCsv(sources, table.asTableSpec, skipLeadingRows = 1,
       schema = Some(schema))
-
     val createdTable = bq.getTable(tableRef)
     createdTable.getNumRows.intValue() shouldBe 10
     bq.deleteTable(tableRef)
   }
 
   "loadTableFromJson" should "work" in {
-
     val schema = BigQueryUtil.parseSchema(
       """
         |{
@@ -158,81 +153,57 @@ class BigQueryClientIT extends FlatSpec with Matchers {
         |  ]
         |}
       """.stripMargin)
-
     val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.json")
     val table = bq.temporaryTable(location = "US")
-
     val tableRef = bq.loadTableFromJson(sources, table.asTableSpec, schema = Some(schema))
-
     val createdTable = bq.getTable(tableRef)
     createdTable.getNumRows.intValue() shouldBe 10
     bq.deleteTable(tableRef)
   }
 
   "loadTableFromAvro" should "work" in {
-
     val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.avro")
     val table = bq.temporaryTable(location = "US")
-
     val tableRef = bq.loadTableFromAvro(sources, table.asTableSpec)
-
     val createdTable = bq.getTable(tableRef)
     createdTable.getNumRows.intValue() shouldBe 10
     bq.deleteTable(tableRef)
   }
 
   "exportTableAsCsv" should "work" in {
-
     val sourceTable = "bigquery-public-data:samples.shakespeare"
     val (bucket, prefix) = ("data-integration-test-eu", s"extract/csv/${UUID.randomUUID}")
-
     GcsUtils.exists(bucket, prefix) shouldBe false
-
     val destination = List(
       s"gs://$bucket/$prefix"
     )
-
     bq.exportTableAsCsv(sourceTable, destination)
-
     GcsUtils.exists(bucket, prefix) shouldBe true
     GcsUtils.remove(bucket, prefix)
-
   }
 
   "exportTableAsJson" should "work" in {
-
     val sourceTable = "bigquery-public-data:samples.shakespeare"
     val (bucket, prefix) = ("data-integration-test-eu", s"extract/json/${UUID.randomUUID}")
-
     GcsUtils.exists(bucket, prefix) shouldBe false
-
     val destination = List(
       s"gs://$bucket/$prefix"
     )
-
     bq.exportTableAsJson(sourceTable, destination)
-
     GcsUtils.exists(bucket, prefix) shouldBe true
     GcsUtils.remove(bucket, prefix)
-
   }
 
   "exportTableAsAvro" should "work" in {
-
     val sourceTable = "bigquery-public-data:samples.shakespeare"
     val (bucket, prefix) = ("data-integration-test-eu", s"extract/avro/${UUID.randomUUID}")
-
     GcsUtils.exists(bucket, prefix) shouldBe false
-
     val destination = List(
       s"gs://$bucket/$prefix"
     )
-
     bq.exportTableAsAvro(sourceTable, destination)
-
     GcsUtils.exists(bucket, prefix) shouldBe true
     GcsUtils.remove(bucket, prefix)
-
   }
 
   object GcsUtils {
