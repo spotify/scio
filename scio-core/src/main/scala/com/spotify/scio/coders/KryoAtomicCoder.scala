@@ -17,8 +17,9 @@
 
 package com.spotify.scio.coders
 
-import java.io.{InputStream, OutputStream}
+import java.io.{InputStream, OutputStream, EOFException}
 
+import com.esotericsoftware.kryo.KryoException
 import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
 import com.google.common.io.{ByteStreams, CountingOutputStream}
 import com.google.common.reflect.ClassPath
@@ -137,9 +138,21 @@ private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends
     val chunked = state.output
     chunked.setOutputStream(os)
 
-    state.kryo.writeClassAndObject(chunked, value)
-    chunked.endChunks()
-    chunked.flush()
+    try {
+      state.kryo.writeClassAndObject(chunked, value)
+      chunked.endChunks()
+      chunked.flush()
+    } catch {
+      case ke: KryoException =>
+        // make sure that the Kryo output buffer is cleared in case that we can recover from
+        // the exception (e.g. EOFException which denotes buffer full)
+        chunked.clear();
+
+        ke.getCause() match {
+          case e: EOFException => throw e
+          case _ => throw ke
+        }
+    }
   }
 
   override def decode(is: InputStream): T = {
