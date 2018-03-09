@@ -1102,10 +1102,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       }
     } else {
       val bqt = BigQueryType[T]
+      val initialTfName = this.tfName
       import scala.concurrent.ExecutionContext.Implicits.global
       this
         .map(bqt.toTableRow)
-        .withName(s"${this.tfName.replaceFirst("@.*", "")}$$Write").saveAsBigQuery(
+        .withName(s"$initialTfName$$Write").saveAsBigQuery(
           table,
           bqt.schema,
           writeDisposition,
