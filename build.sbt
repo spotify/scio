@@ -252,7 +252,8 @@ lazy val root: Project = Project(
   scioSchemas,
   scioExamples,
   scioRepl,
-  scioJmh
+  scioJmh,
+  scioBigQueryTestPipeline
 )
 
 lazy val scioCore: Project = Project(
@@ -330,6 +331,25 @@ lazy val scioAvro: Project = Project(
     "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
   )
 ).configs(IntegrationTest)
+
+lazy val scioBigQueryTestPipeline: Project = Project(
+  "scio-bigquery-test-pipeline",
+  file("scio-bigquery-test-pipeline")
+).settings(
+  commonSettings ++ macroSettings ++ itSettings,
+  description := "Scio add-on for Google BigQuery Test Pipeline",
+  libraryDependencies ++= Seq(
+    "commons-io" % "commons-io" % commonsIoVersion,
+    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+    "joda-time" % "joda-time" % jodaTimeVersion,
+    "org.joda" % "joda-convert" % jodaConvertVersion,
+    "org.slf4j" % "slf4j-api" % slf4jVersion,
+    "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
+    "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
+    "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it"
+  )
+).configs(IntegrationTest)
+  .dependsOn(scioBigQuery % "test->test")
 
 lazy val scioBigQuery: Project = Project(
   "scio-bigquery",
