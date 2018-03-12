@@ -257,6 +257,7 @@ private[types] object ConverterProvider {
     def cast(tree: Tree, tpe: Type): Tree = {
       val provider: ValidationProvider = ValidationProviderFinder.getProvider
       tpe match {
+        case t if provider.shouldOverrideType(c)(t) => q"$tree.toString"
         case t if t =:= typeOf[Boolean] => tree
         case t if t =:= typeOf[Int] => tree
         case t if t =:= typeOf[Long] => tree
@@ -282,7 +283,6 @@ private[types] object ConverterProvider {
                 ${constructor(t, fn)}
               }
           """
-        case t if provider.shouldOverrideType(c)(t) => q"$tree.toString"
         case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
     }
