@@ -65,7 +65,7 @@ class JsonTest extends TapSpec {
     val t = runWithFileFuture {
       _
         .parallelize(data)
-        .saveAsJsonFile(dir.getPath, printer = Printer.noSpaces.copy(dropNullKeys = true))
+        .saveAsJsonFile(dir.getPath, printer = Printer.noSpaces.copy(dropNullValues = true))
     }
     verifyTap(t, data.toSet)
     val result = Files.list(dir.toPath).iterator().asScala
