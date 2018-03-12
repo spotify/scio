@@ -24,7 +24,6 @@ import com.spotify.scio.bigquery.validation.{ValidationProvider, ValidationProvi
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 import scala.collection.JavaConverters._
-
 import scala.reflect.runtime.universe._
 
 private[types] object SchemaProvider {
@@ -50,28 +49,28 @@ private[types] object SchemaProvider {
     s
   }
 
+  val provider: ValidationProvider = ValidationProviderFinder.getProvider
+
   // scalastyle:off cyclomatic.complexity
-  private def rawType(tpe: Type): (String, Iterable[TableFieldSchema]) = {
-    val provider: ValidationProvider = ValidationProviderFinder.getProvider
-    tpe match {
-      case t if t =:= typeOf[Boolean] => ("BOOLEAN", Iterable.empty)
-      case t if t =:= typeOf[Int] => ("INTEGER", Iterable.empty)
-      case t if t =:= typeOf[Long] => ("INTEGER", Iterable.empty)
-      case t if t =:= typeOf[Float] => ("FLOAT", Iterable.empty)
-      case t if t =:= typeOf[Double]  => ("FLOAT", Iterable.empty)
-      case t if t =:= typeOf[String] => ("STRING", Iterable.empty)
-      case t if provider.shouldOverrideType(t) => (provider.getBigQueryType(t), Iterable.empty)
-      case t if t =:= typeOf[ByteString] => ("BYTES", Iterable.empty)
-      case t if t =:= typeOf[Array[Byte]] => ("BYTES", Iterable.empty)
+  private def rawType(tpe: Type): (String, Iterable[TableFieldSchema]) = tpe match {
+    case t if provider.shouldOverrideType(t) => (provider.getBigQueryType(t), Iterable.empty)
+    case t if t =:= typeOf[Boolean] => ("BOOLEAN", Iterable.empty)
+    case t if t =:= typeOf[Int] => ("INTEGER", Iterable.empty)
+    case t if t =:= typeOf[Long] => ("INTEGER", Iterable.empty)
+    case t if t =:= typeOf[Float] => ("FLOAT", Iterable.empty)
+    case t if t =:= typeOf[Double]  => ("FLOAT", Iterable.empty)
+    case t if t =:= typeOf[String] => ("STRING", Iterable.empty)
 
-      case t if t =:= typeOf[Instant] => ("TIMESTAMP", Iterable.empty)
-      case t if t =:= typeOf[LocalDate] => ("DATE", Iterable.empty)
-      case t if t =:= typeOf[LocalTime] => ("TIME", Iterable.empty)
-      case t if t =:= typeOf[LocalDateTime] => ("DATETIME", Iterable.empty)
+    case t if t =:= typeOf[ByteString] => ("BYTES", Iterable.empty)
+    case t if t =:= typeOf[Array[Byte]] => ("BYTES", Iterable.empty)
 
-      case t if isCaseClass(t) => ("RECORD", toFields(t))
-      case _ => throw new RuntimeException(s"Unsupported type: $tpe")
-    }
+    case t if t =:= typeOf[Instant] => ("TIMESTAMP", Iterable.empty)
+    case t if t =:= typeOf[LocalDate] => ("DATE", Iterable.empty)
+    case t if t =:= typeOf[LocalTime] => ("TIME", Iterable.empty)
+    case t if t =:= typeOf[LocalDateTime] => ("DATETIME", Iterable.empty)
+
+    case t if isCaseClass(t) => ("RECORD", toFields(t))
+    case _ => throw new RuntimeException(s"Unsupported type: $tpe")
   }
   // scalastyle:on cyclomatic.complexity
 

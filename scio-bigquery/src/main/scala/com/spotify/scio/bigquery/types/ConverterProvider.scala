@@ -70,6 +70,7 @@ private[types] object ConverterProvider {
     def cast(tree: Tree, tpe: Type): Tree = {
       val provider: ValidationProvider = ValidationProviderFinder.getProvider
       tpe match {
+        case t if provider.shouldOverrideType(c)(t) => provider.createInstance(c)(t, tree.toString)
         case t if t =:= typeOf[Boolean] => q"$tree.asInstanceOf[Boolean]"
         case t if t =:= typeOf[Int] => q"$tree.asInstanceOf[Long].toInt"
         case t if t =:= typeOf[Long] => q"$tree.asInstanceOf[Long]"
@@ -83,7 +84,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Array[Byte]] =>
           val b = q"$tree.asInstanceOf[_root_.java.nio.ByteBuffer]"
           q"_root_.java.util.Arrays.copyOfRange($b.array(), $b.position(), $b.limit())"
-        case t if provider.shouldOverrideType(c)(t) => provider.createInstance(c)(t, tree.toString)
+
         case t if t =:= typeOf[Instant] =>
           q"new _root_.org.joda.time.Instant($tree.asInstanceOf[Long] / 1000)"
         case t if t =:= typeOf[LocalDate] =>
@@ -165,13 +166,14 @@ private[types] object ConverterProvider {
       val provider: ValidationProvider = ValidationProviderFinder.getProvider
       val s = q"$tree.toString"
       tpe match {
+        case t if provider.shouldOverrideType(c)(t) => provider.createInstance(c)(t, tree.toString)
         case t if t =:= typeOf[Boolean] => q"$s.toBoolean"
         case t if t =:= typeOf[Int] => q"$s.toInt"
         case t if t =:= typeOf[Long] => q"$s.toLong"
         case t if t =:= typeOf[Float] => q"$s.toFloat"
         case t if t =:= typeOf[Double] => q"$s.toDouble"
         case t if t =:= typeOf[String] => q"$s"
-        case t if provider.shouldOverrideType(c)(t) => provider.createInstance(c)(t, tree.toString)
+
         case t if t =:= typeOf[ByteString] =>
           val b = q"_root_.com.google.common.io.BaseEncoding.base64().decode($s)"
           q"_root_.com.google.protobuf.ByteString.copyFrom($b)"
