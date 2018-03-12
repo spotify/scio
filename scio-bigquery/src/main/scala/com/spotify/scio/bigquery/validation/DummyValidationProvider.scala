@@ -5,6 +5,7 @@ import com.google.api.services.bigquery.model.TableFieldSchema
 import scala.reflect.macros.blackbox
 import scala.reflect.runtime.universe
 
+// A ValidationProvider that does the default behavior
 class DummyValidationProvider extends ValidationProvider {
   override def shouldOverrideType(tfs: TableFieldSchema): Boolean = false
 
