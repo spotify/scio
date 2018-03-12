@@ -17,6 +17,7 @@
 
 package com.spotify.scio.bigquery.validation
 
+// Common Finder to return the proper ValidationProvider
 object ValidationProviderFinder {
 
   def getProvider: ValidationProvider = {
