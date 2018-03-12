@@ -20,6 +20,7 @@ package com.spotify.scio.bigquery.types
 import com.google.api.services.bigquery.model.TableRow
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery.types.MacroUtil._
+import com.spotify.scio.bigquery.validation.{ValidationProvider, ValidationProviderFinder}
 import org.apache.avro.generic.GenericRecord
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
@@ -67,6 +68,7 @@ private[types] object ConverterProvider {
     // =======================================================================
 
     def cast(tree: Tree, tpe: Type): Tree = {
+      val provider: ValidationProvider = ValidationProviderFinder.getProvider
       tpe match {
         case t if t =:= typeOf[Boolean] => q"$tree.asInstanceOf[Boolean]"
         case t if t =:= typeOf[Int] => q"$tree.asInstanceOf[Long].toInt"
@@ -81,7 +83,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Array[Byte]] =>
           val b = q"$tree.asInstanceOf[_root_.java.nio.ByteBuffer]"
           q"_root_.java.util.Arrays.copyOfRange($b.array(), $b.position(), $b.limit())"
-
+        case t if provider.shouldOverrideType(c)(t) => provider.createInstance(c)(t, tree.toString)
         case t if t =:= typeOf[Instant] =>
           q"new _root_.org.joda.time.Instant($tree.asInstanceOf[Long] / 1000)"
         case t if t =:= typeOf[LocalDate] =>
@@ -160,6 +162,7 @@ private[types] object ConverterProvider {
     // =======================================================================
 
     def cast(tree: Tree, tpe: Type): Tree = {
+      val provider: ValidationProvider = ValidationProviderFinder.getProvider
       val s = q"$tree.toString"
       tpe match {
         case t if t =:= typeOf[Boolean] => q"$s.toBoolean"
@@ -168,7 +171,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Float] => q"$s.toFloat"
         case t if t =:= typeOf[Double] => q"$s.toDouble"
         case t if t =:= typeOf[String] => q"$s"
-
+        case t if provider.shouldOverrideType(c)(t) => provider.createInstance(c)(t, tree.toString)
         case t if t =:= typeOf[ByteString] =>
           val b = q"_root_.com.google.common.io.BaseEncoding.base64().decode($s)"
           q"_root_.com.google.protobuf.ByteString.copyFrom($b)"
@@ -250,6 +253,7 @@ private[types] object ConverterProvider {
     // =======================================================================
 
     def cast(tree: Tree, tpe: Type): Tree = {
+      val provider: ValidationProvider = ValidationProviderFinder.getProvider
       tpe match {
         case t if t =:= typeOf[Boolean] => tree
         case t if t =:= typeOf[Int] => tree
@@ -266,6 +270,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Instant] => q"_root_.com.spotify.scio.bigquery.Timestamp($tree)"
         case t if t =:= typeOf[LocalDate] => q"_root_.com.spotify.scio.bigquery.Date($tree)"
         case t if t =:= typeOf[LocalTime] => q"_root_.com.spotify.scio.bigquery.Time($tree)"
+
         case t if t =:= typeOf[LocalDateTime] => q"_root_.com.spotify.scio.bigquery.DateTime($tree)"
 
         case t if isCaseClass(c)(t) =>
@@ -275,6 +280,7 @@ private[types] object ConverterProvider {
                 ${constructor(t, fn)}
               }
           """
+        case t if provider.shouldOverrideType(c)(t) => q"$tree.toString"
         case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
     }

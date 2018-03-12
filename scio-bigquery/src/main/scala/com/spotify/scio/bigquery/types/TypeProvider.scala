@@ -25,11 +25,13 @@ import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import com.spotify.scio.bigquery.types.MacroUtil._
+import com.spotify.scio.bigquery.validation.{ValidationProvider, ValidationProviderFinder}
 import com.spotify.scio.bigquery.{BigQueryClient, BigQueryPartitionUtil, BigQueryUtil}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Map => MMap}
+
 import scala.reflect.macros._
 
 // scalastyle:off line.size.limit
@@ -119,21 +121,25 @@ private[types] object TypeProvider {
     checkMacroEnclosed(c)
 
     // Returns: (raw type, e.g. Int, String, NestedRecord, nested case class definitions)
-    def getRawType(tfs: TableFieldSchema): (Tree, Seq[Tree]) = tfs.getType match {
-      case "BOOLEAN" | "BOOL" => (tq"_root_.scala.Boolean", Nil)
-      case "INTEGER" | "INT64" => (tq"_root_.scala.Long", Nil)
-      case "FLOAT" | "FLOAT64" => (tq"_root_.scala.Double", Nil)
-      case "STRING" => (tq"_root_.java.lang.String", Nil)
-      case "BYTES" => (tq"_root_.com.google.protobuf.ByteString", Nil)
-      case "TIMESTAMP" => (tq"_root_.org.joda.time.Instant", Nil)
-      case "DATE" => (tq"_root_.org.joda.time.LocalDate", Nil)
-      case "TIME" => (tq"_root_.org.joda.time.LocalTime", Nil)
-      case "DATETIME" => (tq"_root_.org.joda.time.LocalDateTime", Nil)
-      case "RECORD" | "STRUCT" =>
-        val name = NameProvider.getUniqueName(tfs.getName)
-        val (fields, records) = toFields(tfs.getFields)
-        (q"${Ident(TypeName(name))}", Seq(q"case class ${TypeName(name)}(..$fields)") ++ records)
-      case t => c.abort(c.enclosingPosition, s"type: $t not supported")
+    def getRawType(tfs: TableFieldSchema): (Tree, Seq[Tree]) = {
+      val provider: ValidationProvider = ValidationProviderFinder.getProvider
+      tfs.getType match {
+        case t if provider.shouldOverrideType(tfs) => (provider.getScalaType(c)(tfs), Nil)
+        case "BOOLEAN" | "BOOL" => (tq"_root_.scala.Boolean", Nil)
+        case "INTEGER" | "INT64" => (tq"_root_.scala.Long", Nil)
+        case "FLOAT" | "FLOAT64" => (tq"_root_.scala.Double", Nil)
+        case "STRING" => (tq"_root_.java.lang.String", Nil)
+        case "BYTES" => (tq"_root_.com.google.protobuf.ByteString", Nil)
+        case "TIMESTAMP" => (tq"_root_.org.joda.time.Instant", Nil)
+        case "DATE" => (tq"_root_.org.joda.time.LocalDate", Nil)
+        case "TIME" => (tq"_root_.org.joda.time.LocalTime", Nil)
+        case "DATETIME" => (tq"_root_.org.joda.time.LocalDateTime", Nil)
+        case "RECORD" | "STRUCT" =>
+          val name = NameProvider.getUniqueName(tfs.getName)
+          val (fields, records) = toFields(tfs.getFields)
+          (q"${Ident(TypeName(name))}", Seq(q"case class ${TypeName(name)}(..$fields)") ++ records)
+        case t => c.abort(c.enclosingPosition, s"type: $t not supported")
+      }
     }
 
     // Returns: (field type, e.g. T/Option[T]/List[T], nested case class definitions)
@@ -192,6 +198,7 @@ private[types] object TypeProvider {
 
     c.Expr[Any](r)
   }
+
   // scalastyle:on cyclomatic.complexity
   // scalastyle:on method.length
 
