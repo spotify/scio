@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2018 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,17 +23,20 @@ import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 
 object JavaConverters {
 
-  implicit def toResourceId(filenamePrefix: String): ResourceId =
-    FileBasedSink.convertToFileResourceIfPossible(filenamePrefix)
+  implicit class RichString(s: String) {
+    def toResourceId(): ResourceId = FileBasedSink.convertToFileResourceIfPossible(s)
+    def toFilenamePolicy: DefaultFilenamePolicy = DefaultFilenamePolicy.fromStandardParameters(
+        StaticValueProvider.of(s.toResourceId()), null, null, false)
+  }
 
   case class FilenamePolicy(baseFilename: String,
                             shardTemplate: String = null,
                             templateSuffix: String = null,
                             windowedWrites: Boolean = false)
 
-  implicit def toFilenamePolicy(policy: FilenamePolicy): DefaultFilenamePolicy = {
-    DefaultFilenamePolicy.fromStandardParameters(
-      StaticValueProvider.of(policy.baseFilename),
+  implicit class RichFilenamePolicy(policy: FilenamePolicy) {
+    def toJava(): DefaultFilenamePolicy = DefaultFilenamePolicy.fromStandardParameters(
+      StaticValueProvider.of(policy.baseFilename.toResourceId()),
       policy.shardTemplate,
       policy.templateSuffix,
       policy.windowedWrites)

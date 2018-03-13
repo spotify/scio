@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2018 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@ import com.spotify.scio.JavaConverters._
 object JavaConvertersExample {
 
   val path: String = "gs://foobar/path/to/file"
-  TextIO.writeCustomType().toResource(StaticValueProvider.of(path))
+  TextIO.writeCustomType().toResource(StaticValueProvider.of(path.toResourceId()))
 
-  AvroIO.writeCustomType().to(FilenamePolicy(path))
-  TextIO.writeCustomType().to(FilenamePolicy(path, "-SSSSS-of-NNNNN", ".csv", true))
-  AvroIO.writeCustomType().to(FilenamePolicy(path, templateSuffix = ".tsv"))
+  AvroIO.writeCustomType().to(path.toFilenamePolicy)
+  TextIO.writeCustomType().to(FilenamePolicy(path, "-SSSSS-of-NNNNN", ".csv", true).toJava())
+  AvroIO.writeCustomType().to(FilenamePolicy(path, templateSuffix = ".tsv").toJava())
 
 }
