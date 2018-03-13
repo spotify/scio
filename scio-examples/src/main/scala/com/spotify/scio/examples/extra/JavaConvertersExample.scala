@@ -30,4 +30,6 @@ object JavaConvertersExample {
   TextIO.writeCustomType().to(FilenamePolicy(path, "-SSSSS-of-NNNNN", ".csv", true).toJava())
   AvroIO.writeCustomType().to(FilenamePolicy(path, templateSuffix = ".tsv").toJava())
 
+  AvroIO.read(classOf[String]).from(path.toStaticValueProvider())
+
 }

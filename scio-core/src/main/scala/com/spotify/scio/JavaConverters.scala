@@ -42,5 +42,9 @@ object JavaConverters {
       policy.windowedWrites)
   }
 
+  implicit class RichAny[T](value: T) {
+    def toStaticValueProvider(): StaticValueProvider[T] = StaticValueProvider.of(value)
+  }
+
 }
 
