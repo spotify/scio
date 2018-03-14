@@ -28,9 +28,11 @@ class BigQueryValidationTest extends FlatSpec with Matchers with GeneratorDriven
   @BigQueryType.fromSchema(
     """
       |{
-      |  "fields": [ {"mode": "REQUIRED", "name": "country", "type": "STRING", "description": "COUNTRY"},
-      |              {"mode": "REQUIRED", "name": "countryString", "type": "STRING"},
-      |              {"mode": "REQUIRED", "name": "noCountry", "type": "STRING", "description": "NOCOUNTRY"} ]
+      |  "fields":
+      |  [ {"mode": "REQUIRED", "name": "country", "type": "STRING", "description": "COUNTRY"},
+      |    {"mode": "REQUIRED", "name": "countryString", "type": "STRING"},
+      |    {"mode": "REQUIRED", "name": "noCountry", "type": "STRING", "description": "NOCOUNTRY"}
+      |  ]
       |}
     """.stripMargin)
   class CountryInput
