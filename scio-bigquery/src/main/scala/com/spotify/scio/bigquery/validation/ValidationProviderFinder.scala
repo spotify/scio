@@ -29,7 +29,8 @@ object ValidationProviderFinder {
         .newInstance()
         .asInstanceOf[ValidationProvider]
     } catch {
-      case NonFatal(exception) => exception.printStackTrace(); new DummyValidationProvider
+      case NonFatal(exception) => println("Using old")
+        new DummyValidationProvider
     }
   }
 }
