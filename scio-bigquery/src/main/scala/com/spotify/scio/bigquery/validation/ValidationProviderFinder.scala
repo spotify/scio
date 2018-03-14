@@ -25,7 +25,7 @@ object ValidationProviderFinder {
   def getProvider: ValidationProvider = {
     try {
       // Load the class dynamically at compile time and runtime
-      Class.forName(System.getProperty("VALIDATION_PROVIDER"))
+      Class.forName(System.getProperty("VALIDATION_PROVIDER", ""))
         .newInstance()
         .asInstanceOf[ValidationProvider]
     } catch {
