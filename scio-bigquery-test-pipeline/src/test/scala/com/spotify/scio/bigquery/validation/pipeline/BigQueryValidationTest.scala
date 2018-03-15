@@ -16,9 +16,10 @@
  */
 
 
-package com.spotify.scio.bigquery.validation
+package com.spotify.scio.bigquery.validation.pipeline
 
 import com.spotify.scio.bigquery.types.BigQueryType
+import com.spotify.scio.bigquery.validation.Country
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{FlatSpec, Matchers}
 

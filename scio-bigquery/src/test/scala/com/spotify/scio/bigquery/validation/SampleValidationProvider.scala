@@ -25,7 +25,8 @@ import scala.reflect.runtime.universe._
 
 class SampleValidationProvider extends ValidationProvider {
 
-  System.setProperty("VALIDATION_PROVIDER", this.getClass.getCanonicalName)
+  System.setProperty("VALIDATION_PROVIDER",
+    "com.spotify.scio.bigquery.validation.SampleValidationProvider")
 
   private def getBySemanticTypeString(tfs: TableFieldSchema): Option[Class[_]] = {
     Option(tfs.getDescription)

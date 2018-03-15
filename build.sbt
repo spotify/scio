@@ -349,7 +349,7 @@ lazy val scioBigQueryTestPipeline: Project = Project(
     "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it"
   )
 ).configs(IntegrationTest)
-  .dependsOn(scioBigQuery % "test->test")
+  .dependsOn(scioBigQuery % "compile->compile;test->test")
 
 lazy val scioBigQuery: Project = Project(
   "scio-bigquery",
