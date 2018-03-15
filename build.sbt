@@ -336,6 +336,7 @@ lazy val scioBigQueryTestPipeline: Project = Project(
   "scio-bigquery-test-pipeline",
   file("scio-bigquery-test-pipeline")
 ).settings(
+  // necessary to properly test
   initialize in Test ~= { _ =>
     System.setProperty( "VALIDATION_PROVIDER", "com.spotify.scio.bigquery.validation.SampleValidationProvider" )
   },
