@@ -25,7 +25,6 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class BigQueryValidationTest extends FlatSpec with Matchers with GeneratorDrivenPropertyChecks  {
 
-
   @BigQueryType.fromSchema(
     """
       |{
