@@ -32,7 +32,7 @@ object JavaConvertersExample {
       case "String#toResourceId" => t.toResource(StaticValueProvider.of(output.toResourceId))
       case "String#toFilenamePolicy" => t.to(output.toFilenamePolicy)
       case "String#toStaticValueProvider" => t.to(output.toStaticValueProvider)
-      case "FilenamePolicy#toJava" => t.to(FilenamePolicy(output, "-SSSSS-of-NNNNN", ".csv").toJava)
+      case "FilenamePolicy#toJava" => t.to(FilenamePolicy(output, "-SSSSS-of-NNNNN", ".csv").asJava)
     }
 
     // In prod, TextIO transform converts Int -> String before write.

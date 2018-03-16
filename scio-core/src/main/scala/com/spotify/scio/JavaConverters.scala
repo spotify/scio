@@ -23,7 +23,7 @@ import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 
 object JavaConverters {
 
-  implicit class RichString(s: String) extends AnyVal {
+  implicit class RichString(val s: String) extends AnyVal {
     def toResourceId(): ResourceId = FileBasedSink.convertToFileResourceIfPossible(s)
     def toFilenamePolicy: DefaultFilenamePolicy = DefaultFilenamePolicy.fromStandardParameters(
         StaticValueProvider.of(s.toResourceId()), null, null, false)
@@ -40,7 +40,7 @@ object JavaConverters {
       windowedWrites)
   }
 
-  implicit class RichAny[T](value: T) extends AnyVal {
+  implicit class RichAny[T](val value: T) extends AnyVal {
     def toStaticValueProvider(): StaticValueProvider[T] = StaticValueProvider.of(value)
   }
 
