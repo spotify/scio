@@ -17,19 +17,30 @@
 
 package com.spotify.scio.examples.extra
 
-import org.apache.beam.sdk.io.{AvroIO, TextIO}
-import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.JavaConverters._
+import org.apache.beam.sdk.io.TextIO
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 
 object JavaConvertersExample {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-  val path: String = "gs://foobar/path/to/file"
-  TextIO.writeCustomType().toResource(StaticValueProvider.of(path.toResourceId()))
+    val output = args("output")
+    val t: TextIO.TypedWrite[String, Void] = TextIO.writeCustomType()
+    val transform = args("converter") match {
+      case "String#toResourceId" => t.toResource(StaticValueProvider.of(output.toResourceId))
+      case "String#toFilenamePolicy" => t.to(output.toFilenamePolicy)
+      case "String#toStaticValueProvider" => t.to(output.toStaticValueProvider)
+      case "FilenamePolicy#toJava" => t.to(FilenamePolicy(output, "-SSSSS-of-NNNNN", ".csv").toJava)
+    }
 
-  AvroIO.writeCustomType().to(path.toFilenamePolicy)
-  TextIO.writeCustomType().to(FilenamePolicy(path, "-SSSSS-of-NNNNN", ".csv", true).toJava())
-  AvroIO.writeCustomType().to(FilenamePolicy(path, templateSuffix = ".tsv").toJava())
-
-  AvroIO.read(classOf[String]).from(path.toStaticValueProvider())
+    // In prod, TextIO transform converts Int -> String before write.
+    // Test does not apply transform, compares SCol prior to output to expected. Need manual cast.
+    sc.parallelize(1 to 10)
+      .map(_.toString)
+      .saveAsCustomOutput(output, transform)
+    sc.close()
+  }
 
 }
