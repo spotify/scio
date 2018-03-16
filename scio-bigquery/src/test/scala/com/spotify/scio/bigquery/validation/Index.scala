@@ -29,7 +29,7 @@ object Index {
   }
 
   def getIndexClass: mutable.Map[String, Class[_]] = {
-    mutable.Map[String, Class[_]](Country.semanticType -> classOf[Country])
+    mutable.Map[String, Class[_]](Country.stringType -> classOf[Country])
   }
 
   def getIndexRuntimeTypes: mutable.Map[Type, Class[_]] = {

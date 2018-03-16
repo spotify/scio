@@ -253,7 +253,7 @@ lazy val root: Project = Project(
   scioExamples,
   scioRepl,
   scioJmh,
-  scioBigQueryTestPipeline
+  scioBigQueryTestValidation
 )
 
 lazy val scioCore: Project = Project(
@@ -332,13 +332,13 @@ lazy val scioAvro: Project = Project(
   )
 ).configs(IntegrationTest)
 
-lazy val scioBigQueryTestPipeline: Project = Project(
-  "scio-bigquery-test-pipeline",
-  file("scio-bigquery-test-pipeline")
+lazy val scioBigQueryTestValidation: Project = Project(
+  "scio-bigquery-test-validation",
+  file("scio-bigquery-test-validation")
 ).settings(
-  // necessary to properly test
+  // necessary to properly test since we need this value at compile time
   initialize in Test ~= { _ =>
-    System.setProperty( "VALIDATION_PROVIDER", "com.spotify.scio.bigquery.validation.SampleValidationProvider" )
+    System.setProperty( "OVERRIDE_TYPE_PROVIDER", "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider" )
   },
   commonSettings ++ macroSettings ++ itSettings,
   description := "Scio add-on for Google BigQuery Test Pipeline",

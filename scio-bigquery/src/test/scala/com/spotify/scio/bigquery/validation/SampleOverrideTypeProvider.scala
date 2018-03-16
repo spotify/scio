@@ -23,7 +23,7 @@ import com.google.api.services.bigquery.model.TableFieldSchema
 import scala.reflect.macros.blackbox
 import scala.reflect.runtime.universe._
 
-class SampleValidationProvider extends ValidationProvider {
+class SampleOverrideTypeProvider extends OverrideTypeProvider {
 
   private def getByTypeString(tfs: TableFieldSchema): Option[Class[_]] = {
     Option(tfs.getDescription)

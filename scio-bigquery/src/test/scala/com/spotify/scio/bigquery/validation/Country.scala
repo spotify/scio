@@ -37,7 +37,7 @@ object Country {
 
   def parse(data: String): Country = new Country(data)
 
-  def semanticType: String = "COUNTRY"
+  def stringType: String = "COUNTRY"
 
   def bigQueryType: String = "STRING"
 

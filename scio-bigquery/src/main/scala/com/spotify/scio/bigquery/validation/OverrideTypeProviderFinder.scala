@@ -21,16 +21,16 @@ import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
 // Common Finder to return the proper ValidationProvider
-object ValidationProviderFinder {
+object OverrideTypeProviderFinder {
 
-  def getProvider: ValidationProvider = {
+  def getProvider: OverrideTypeProvider = {
       // Load the class dynamically at compile time and runtime
-    val classInstance = Try(Class.forName(System.getProperty("VALIDATION_PROVIDER", ""))
+    val classInstance = Try(Class.forName(System.getProperty("OVERRIDE_TYPE_PROVIDER", ""))
         .newInstance()
-        .asInstanceOf[ValidationProvider])
+        .asInstanceOf[OverrideTypeProvider])
     classInstance match {
       case Success(value) => value
-      case Failure(NonFatal(exception)) => new DummyValidationProvider
+      case Failure(NonFatal(exception)) => new DummyOverrideTypeProvider
     }
   }
 }

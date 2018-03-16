@@ -20,7 +20,7 @@ package com.spotify.scio.bigquery.types
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery.types.MacroUtil._
-import com.spotify.scio.bigquery.validation.{ValidationProvider, ValidationProviderFinder}
+import com.spotify.scio.bigquery.validation.{OverrideTypeProvider, OverrideTypeProviderFinder}
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
 import scala.collection.JavaConverters._
@@ -49,7 +49,7 @@ private[types] object SchemaProvider {
     s
   }
 
-  val provider: ValidationProvider = ValidationProviderFinder.getProvider
+  val provider: OverrideTypeProvider = OverrideTypeProviderFinder.getProvider
 
   // scalastyle:off cyclomatic.complexity
   private def rawType(tpe: Type): (String, Iterable[TableFieldSchema]) = tpe match {

@@ -23,7 +23,7 @@ import scala.reflect.macros.blackbox
 import scala.reflect.runtime.universe
 
 // A ValidationProvider that does the default behavior
-class DummyValidationProvider extends ValidationProvider {
+class DummyOverrideTypeProvider extends OverrideTypeProvider {
   override def shouldOverrideType(tfs: TableFieldSchema): Boolean = false
 
   override def shouldOverrideType(c: blackbox.Context)(tpe: c.Type): Boolean = false

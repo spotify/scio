@@ -16,15 +16,18 @@
  */
 
 
-package com.spotify.scio.bigquery.validation.pipeline
+package com.spotify.scio.bigquery.validation
 
 import com.spotify.scio.bigquery.description
-import com.spotify.scio.bigquery.types.{BigQueryType, SchemaProvider}
-import com.spotify.scio.bigquery.validation.Country
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import com.spotify.scio.bigquery.types.BigQueryType
 import org.scalatest.{FlatSpec, Matchers}
 
-class BigQueryValidationTest extends FlatSpec with Matchers with GeneratorDrivenPropertyChecks  {
+/**
+  * This test shows how you can utilize the `SampleOverrideTypeProvider` to override types
+  * using properties on the individual field level processing data
+  *
+  */
+class BigQueryValidationTest extends FlatSpec with Matchers  {
 
   @BigQueryType.fromSchema(
     """
@@ -40,8 +43,8 @@ class BigQueryValidationTest extends FlatSpec with Matchers with GeneratorDriven
 
   @BigQueryType.toTable
   case class CountryOutput(@description("COUNTRY") country: Country,
-                                  countryString: String,
-                                  @description("NOCOUNTRY") noCountry: String)
+                           countryString: String,
+                           @description("NOCOUNTRY") noCountry: String)
 
   "ValidationProvider" should "override types using SampleValidationProvider for fromSchema" in {
     val countryInput = CountryInput(Country("US"), "UK", "No Country")

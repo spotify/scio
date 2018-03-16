@@ -22,8 +22,8 @@ import com.google.api.services.bigquery.model.TableFieldSchema
 import scala.reflect.macros.blackbox
 import scala.reflect.runtime.universe._
 
-// Interface for all ValidationProvider implementations
-trait ValidationProvider {
+/** Interface for all ValidationProvider implementations */
+trait OverrideTypeProvider {
 
   // Returns true if we should override default mapping
   // Uses schema directly from BigQuery loading

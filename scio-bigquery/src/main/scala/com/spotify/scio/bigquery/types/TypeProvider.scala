@@ -25,7 +25,7 @@ import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import com.spotify.scio.bigquery.types.MacroUtil._
-import com.spotify.scio.bigquery.validation.{ValidationProvider, ValidationProviderFinder}
+import com.spotify.scio.bigquery.validation.{OverrideTypeProvider, OverrideTypeProviderFinder}
 import com.spotify.scio.bigquery.{BigQueryClient, BigQueryPartitionUtil, BigQueryUtil}
 import org.slf4j.LoggerFactory
 
@@ -119,7 +119,7 @@ private[types] object TypeProvider {
     import c.universe._
     checkMacroEnclosed(c)
 
-    val provider: ValidationProvider = ValidationProviderFinder.getProvider
+    val provider: OverrideTypeProvider = OverrideTypeProviderFinder.getProvider
 
     // Returns: (raw type, e.g. Int, String, NestedRecord, nested case class definitions)
     def getRawType(tfs: TableFieldSchema): (Tree, Seq[Tree]) = tfs.getType match {
