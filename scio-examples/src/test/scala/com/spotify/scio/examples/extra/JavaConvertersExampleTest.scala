@@ -17,7 +17,7 @@
 
 package com.spotify.scio.examples.extra
 
-import com.spotify.scio.testing.{CustomIO, PipelineSpec, TextIO}
+import com.spotify.scio.testing._
 
 class JavaConvertersExampleTest extends PipelineSpec {
 

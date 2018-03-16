@@ -23,26 +23,24 @@ import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 
 object JavaConverters {
 
-  implicit class RichString(s: String) {
+  implicit class RichString(s: String) extends AnyVal {
     def toResourceId(): ResourceId = FileBasedSink.convertToFileResourceIfPossible(s)
     def toFilenamePolicy: DefaultFilenamePolicy = DefaultFilenamePolicy.fromStandardParameters(
         StaticValueProvider.of(s.toResourceId()), null, null, false)
   }
 
-  case class FilenamePolicy(baseFilename: String,
+  final case class FilenamePolicy(baseFilename: String,
                             shardTemplate: String = null,
                             templateSuffix: String = null,
-                            windowedWrites: Boolean = false)
-
-  implicit class RichFilenamePolicy(policy: FilenamePolicy) {
+                            windowedWrites: Boolean = false) {
     def toJava(): DefaultFilenamePolicy = DefaultFilenamePolicy.fromStandardParameters(
-      StaticValueProvider.of(policy.baseFilename.toResourceId()),
-      policy.shardTemplate,
-      policy.templateSuffix,
-      policy.windowedWrites)
+      StaticValueProvider.of(baseFilename.toResourceId()),
+      shardTemplate,
+      templateSuffix,
+      windowedWrites)
   }
 
-  implicit class RichAny[T](value: T) {
+  implicit class RichAny[T](value: T) extends AnyVal {
     def toStaticValueProvider(): StaticValueProvider[T] = StaticValueProvider.of(value)
   }
 
