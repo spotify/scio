@@ -23,6 +23,7 @@ import com.google.api.services.bigquery.model.TableFieldSchema
 import scala.reflect.macros.blackbox
 import scala.reflect.runtime.universe._
 
+/** A sample implementation to override types under certain conditions */
 class SampleOverrideTypeProvider extends OverrideTypeProvider {
 
   private def getByTypeString(tfs: TableFieldSchema): Option[Class[_]] = {
@@ -31,7 +32,7 @@ class SampleOverrideTypeProvider extends OverrideTypeProvider {
   }
 
   private def getByTypeObject(c: blackbox.Context)
-                                     (tpe: c.Type): Option[(c.Type, Class[_])] = {
+                             (tpe: c.Type): Option[(c.Type, Class[_])] = {
     val compileTimeType = Index.getIndexCompileTimeTypes(c).find(a => a._1 =:= tpe)
     compileTimeType
   }

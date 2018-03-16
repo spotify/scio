@@ -20,7 +20,7 @@ package com.spotify.scio.bigquery.validation
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
-// Common Finder to return the proper ValidationProvider
+/** Common Finder to return the proper ValidationProvider */
 object OverrideTypeProviderFinder {
 
   def getProvider: OverrideTypeProvider = {

@@ -22,6 +22,7 @@ import scala.collection.mutable
 import scala.reflect.macros.blackbox
 import scala.reflect.runtime.universe._
 
+/** Internal index to keep track of class mappings this can be done in a number of ways */
 object Index {
   def getIndexCompileTimeTypes(c: blackbox.Context): mutable.Map[c.Type, Class[_]] = {
     import c.universe._
