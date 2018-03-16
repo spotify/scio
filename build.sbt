@@ -252,8 +252,7 @@ lazy val root: Project = Project(
   scioSchemas,
   scioExamples,
   scioRepl,
-  scioJmh,
-  scioBigQueryTestValidation
+  scioJmh
 )
 
 lazy val scioCore: Project = Project(
@@ -293,6 +292,10 @@ lazy val scioTest: Project = Project(
 ).settings(
   commonSettings ++ itSettings,
   description := "Scio helpers for ScalaTest",
+  // necessary to properly test since we need this value at compile time
+  initialize in Test ~= { _ =>
+    System.setProperty( "OVERRIDE_TYPE_PROVIDER", "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider" )
+  },
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "it",
@@ -331,29 +334,6 @@ lazy val scioAvro: Project = Project(
     "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
   )
 ).configs(IntegrationTest)
-
-lazy val scioBigQueryTestValidation: Project = Project(
-  "scio-bigquery-test-validation",
-  file("scio-bigquery-test-validation")
-).settings(
-  // necessary to properly test since we need this value at compile time
-  initialize in Test ~= { _ =>
-    System.setProperty( "OVERRIDE_TYPE_PROVIDER", "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider" )
-  },
-  commonSettings ++ macroSettings ++ itSettings,
-  description := "Scio add-on for Google BigQuery Test Pipeline",
-  libraryDependencies ++= Seq(
-    "commons-io" % "commons-io" % commonsIoVersion,
-    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-    "joda-time" % "joda-time" % jodaTimeVersion,
-    "org.joda" % "joda-convert" % jodaConvertVersion,
-    "org.slf4j" % "slf4j-api" % slf4jVersion,
-    "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
-    "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-    "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it"
-  )
-).configs(IntegrationTest)
-  .dependsOn(scioBigQuery % "compile->compile;test->test")
 
 lazy val scioBigQuery: Project = Project(
   "scio-bigquery",
