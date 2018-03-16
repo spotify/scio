@@ -18,7 +18,8 @@
 
 package com.spotify.scio.bigquery.validation.pipeline
 
-import com.spotify.scio.bigquery.types.BigQueryType
+import com.spotify.scio.bigquery.description
+import com.spotify.scio.bigquery.types.{BigQueryType, SchemaProvider}
 import com.spotify.scio.bigquery.validation.Country
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{FlatSpec, Matchers}
@@ -37,10 +38,29 @@ class BigQueryValidationTest extends FlatSpec with Matchers with GeneratorDriven
     """.stripMargin)
   class CountryInput
 
-  "validation" should "actually validate" in {
+  @BigQueryType.toTable
+  case class CountryOutput(@description("COUNTRY") country: Country,
+                                  countryString: String,
+                                  @description("NOCOUNTRY") noCountry: String)
+
+  "ValidationProvider" should "override types using SampleValidationProvider for fromSchema" in {
     val countryInput = CountryInput(Country("US"), "UK", "No Country")
     countryInput.country.getData shouldBe "US"
     countryInput.countryString shouldBe "UK"
     countryInput.noCountry shouldBe "No Country"
   }
+
+  "ValidationProvider" should "override types using SampleValidationProvider for toTable" in {
+    CountryOutput.schema.getFields.get(0).getType shouldBe "STRING"
+    CountryOutput.schema.getFields.get(1).getType shouldBe "STRING"
+    CountryOutput.schema.getFields.get(2).getType shouldBe "STRING"
+  }
+
+  "ValidationProvider" should "properly validate data" in {
+    assertThrows[IllegalArgumentException]{
+      CountryInput(Country("USA"), "UK", "No Country")
+    }
+  }
+
+
 }
