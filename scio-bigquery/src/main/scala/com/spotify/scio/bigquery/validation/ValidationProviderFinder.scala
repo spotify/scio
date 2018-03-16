@@ -17,19 +17,20 @@
 
 package com.spotify.scio.bigquery.validation
 
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
 // Common Finder to return the proper ValidationProvider
 object ValidationProviderFinder {
 
   def getProvider: ValidationProvider = {
-    try {
       // Load the class dynamically at compile time and runtime
-      Class.forName(System.getProperty("VALIDATION_PROVIDER", ""))
+    val classInstance = Try(Class.forName(System.getProperty("VALIDATION_PROVIDER", ""))
         .newInstance()
-        .asInstanceOf[ValidationProvider]
-    } catch {
-      case NonFatal(exception) => new DummyValidationProvider
+        .asInstanceOf[ValidationProvider])
+    classInstance match {
+      case Success(value) => value
+      case Failure(NonFatal(exception)) => new DummyValidationProvider
     }
   }
 }

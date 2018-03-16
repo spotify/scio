@@ -25,43 +25,47 @@ import scala.reflect.runtime.universe._
 
 class SampleValidationProvider extends ValidationProvider {
 
-  private def getBySemanticTypeString(tfs: TableFieldSchema): Option[Class[_]] = {
+  private def getByTypeString(tfs: TableFieldSchema): Option[Class[_]] = {
     Option(tfs.getDescription)
       .flatMap(overrideType => Index.getIndexClass.get(overrideType))
   }
 
-  private def getBySemanticTypeObject(c: blackbox.Context)
+  private def getByTypeObject(c: blackbox.Context)
                                      (tpe: c.Type): Option[(c.Type, Class[_])] = {
-    Index.getIndexCompileTimeTypes(c).find(a => a._1 =:= tpe)
+    val compileTimeType = Index.getIndexCompileTimeTypes(c).find(a => a._1 =:= tpe)
+    compileTimeType
   }
 
-  private def getBySemanticTypeObject(tpe: Type): Option[(Type, Class[_])] = {
-    Index.getIndexRuntimeTypes.find(a => a._1 =:= tpe)
+  private def getByTypeObject(tpe: Type): Option[(Type, Class[_])] = {
+    val runtimeType = Index.getIndexRuntimeTypes.find(a => a._1 =:= tpe)
+    runtimeType
   }
 
   def shouldOverrideType(tfs: TableFieldSchema): Boolean = {
-    getBySemanticTypeString(tfs).nonEmpty
+    getByTypeString(tfs).nonEmpty
   }
 
   def shouldOverrideType(c: blackbox.Context)(tpe: c.Type): Boolean = {
-    getBySemanticTypeObject(c)(tpe).nonEmpty
+    getByTypeObject(c)(tpe).nonEmpty
   }
 
   def shouldOverrideType(tpe: Type): Boolean = {
-    getBySemanticTypeObject(tpe).nonEmpty
+    getByTypeObject(tpe).nonEmpty
   }
 
   def getBigQueryType(tpe: Type): String = {
-    val optionalTuple = getBySemanticTypeObject(tpe)
+    val optionalTuple = getByTypeObject(tpe)
     optionalTuple match {
-      case Some(tuple) => tuple._2.getMethod ("bigQueryType").invoke (null).asInstanceOf[String]
+      case Some(tuple) =>
+        val bigQueryType = tuple._2.getMethod("bigQueryType").invoke(null).asInstanceOf[String]
+        bigQueryType
       case None => throw new IllegalArgumentException("Should never be here")
     }
   }
 
   def getScalaType(c: blackbox.Context)(tfs: TableFieldSchema): c.Tree = {
     import c.universe._
-    val typeClassOption: Option[Class[_]] = getBySemanticTypeString(tfs)
+    val typeClassOption: Option[Class[_]] = getByTypeString(tfs)
     typeClassOption match {
       case Some(typeClass) => val packageName = typeClass.getPackage.getName
         val className = TypeName(typeClass.getSimpleName)
@@ -72,10 +76,14 @@ class SampleValidationProvider extends ValidationProvider {
 
   def createInstance(c: blackbox.Context)(tpe: c.Type, s: String): c.Tree = {
     import c.universe._
-    val optionalTuple = getBySemanticTypeObject(c)(tpe)
+    val optionalTuple = getByTypeObject(c)(tpe)
     optionalTuple match {
-      case Some(tuple) => q"${c.parse(tuple._2
-        .getPackage.getName + "." + tuple._2.getSimpleName)}.parse($s)"
+      case Some(tuple) =>
+        val instanceOfType = q"${
+          c.parse(tuple._2
+            .getPackage.getName + "." + tuple._2.getSimpleName)
+        }.parse($s)"
+        instanceOfType
       case None => throw new IllegalArgumentException("Should never be here")
     }
   }
