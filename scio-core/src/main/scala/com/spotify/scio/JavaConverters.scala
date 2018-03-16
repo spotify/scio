@@ -33,7 +33,7 @@ object JavaConverters {
                             shardTemplate: String = null,
                             templateSuffix: String = null,
                             windowedWrites: Boolean = false) {
-    def toJava(): DefaultFilenamePolicy = DefaultFilenamePolicy.fromStandardParameters(
+    def asJava(): DefaultFilenamePolicy = DefaultFilenamePolicy.fromStandardParameters(
       StaticValueProvider.of(baseFilename.toResourceId()),
       shardTemplate,
       templateSuffix,
