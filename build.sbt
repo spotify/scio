@@ -283,7 +283,7 @@ lazy val scioCore: Project = Project(
   )
 ).dependsOn(
   scioAvro,
-  scioBigQuery
+  scioBigQuery % "test->test;compile->compile"
 )
 
 lazy val scioTest: Project = Project(
@@ -314,7 +314,7 @@ lazy val scioTest: Project = Project(
 ).configs(
   IntegrationTest
 ).dependsOn(
-  scioCore,
+  scioCore % "test->test;compile->compile",
   scioSchemas % "test,it"
 )
 

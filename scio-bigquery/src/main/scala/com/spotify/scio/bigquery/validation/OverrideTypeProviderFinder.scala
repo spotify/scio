@@ -30,8 +30,7 @@ object OverrideTypeProviderFinder {
         .asInstanceOf[OverrideTypeProvider])
     classInstance match {
       case Success(value) => value
-      case Failure(NonFatal(_)) => println("Using old")
-        new DummyOverrideTypeProvider
+      case Failure(NonFatal(_)) => new DummyOverrideTypeProvider
     }
   }
 }

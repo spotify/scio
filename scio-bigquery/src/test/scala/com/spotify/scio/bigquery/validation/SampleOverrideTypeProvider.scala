@@ -33,13 +33,17 @@ class SampleOverrideTypeProvider extends OverrideTypeProvider {
 
   private def getByTypeObject(c: blackbox.Context)
                              (tpe: c.Type): Option[(c.Type, Class[_])] = {
-    val compileTimeType = Index.getIndexCompileTimeTypes(c).find(a => a._1 =:= tpe)
-    compileTimeType
+    Index.getIndexCompileTimeTypes(c).find(a => {
+      val compileTimeType = a._1
+      compileTimeType =:= tpe
+    })
   }
 
   private def getByTypeObject(tpe: Type): Option[(Type, Class[_])] = {
-    val runtimeType = Index.getIndexRuntimeTypes.find(a => a._1 =:= tpe)
-    runtimeType
+    Index.getIndexRuntimeTypes.find(a => {
+      val runtimeType = a._1
+      runtimeType =:= tpe
+    })
   }
 
   def shouldOverrideType(tfs: TableFieldSchema): Boolean = {
@@ -58,8 +62,8 @@ class SampleOverrideTypeProvider extends OverrideTypeProvider {
     val optionalTuple = getByTypeObject(tpe)
     optionalTuple match {
       case Some(tuple) =>
-        val bigQueryType = tuple._2.getMethod("bigQueryType").invoke(null).asInstanceOf[String]
-        bigQueryType
+        val correspondingType = tuple._2
+        correspondingType.getMethod("bigQueryType").invoke(null).asInstanceOf[String]
       case None => throw new IllegalArgumentException("Should never be here")
     }
   }
@@ -80,9 +84,10 @@ class SampleOverrideTypeProvider extends OverrideTypeProvider {
     val optionalTuple = getByTypeObject(c)(tpe)
     optionalTuple match {
       case Some(tuple) =>
+        val correspondingType = tuple._2
         val instanceOfType = q"${
-          c.parse(tuple._2
-            .getPackage.getName + "." + tuple._2.getSimpleName)
+          c.parse(correspondingType
+            .getPackage.getName + "." + correspondingType.getSimpleName)
         }.parse($s)"
         instanceOfType
       case None => throw new IllegalArgumentException("Should never be here")

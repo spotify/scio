@@ -38,11 +38,11 @@ trait OverrideTypeProvider {
   def shouldOverrideType(tpe: Type): Boolean
 
   // Returns a context.Tree representing the Scala type
-  // This is called at macro compile time
+  // This is called at macro expansion time
   def getScalaType(c: blackbox.Context)(tfs: TableFieldSchema): c.Tree
 
   // Returns a context.Tree representing a new instance of whatever type is appropriate
-  // This is called at macro compile time
+  // This is called at macro expansion time
   def createInstance(c: blackbox.Context)(tpe: c.Type, s: String): c.Tree
 
   // Returns the String representation of the BigQuery column type
