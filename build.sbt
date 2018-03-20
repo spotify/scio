@@ -68,8 +68,8 @@ val tensorFlowVersion = "1.3.0"
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
 
-  scalaVersion       := "2.12.4",
-  crossScalaVersions := Seq("2.11.12", "2.12.4"),
+  scalaVersion       := "2.12.5",
+  crossScalaVersions := Seq("2.11.12", "2.12.5"),
   scalacOptions                   ++= {
     Seq("-Xmax-classfile-name", "100", "-target:jvm-1.8", "-deprecation", "-feature", "-unchecked") ++
       (if (scalaBinaryVersion.value == "2.12") Seq("-Ydelambdafy:inline") else Nil)
