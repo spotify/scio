@@ -34,14 +34,14 @@ class SampleOverrideTypeProvider extends OverrideTypeProvider {
   private def getByTypeObject(c: blackbox.Context)
                              (tpe: c.Type): Option[(c.Type, Class[_])] = {
     Index.getIndexCompileTimeTypes(c).find(a => {
-      val compileTimeType = a._1
+      val (compileTimeType, _) = a
       compileTimeType =:= tpe
     })
   }
 
   private def getByTypeObject(tpe: Type): Option[(Type, Class[_])] = {
     Index.getIndexRuntimeTypes.find(a => {
-      val runtimeType = a._1
+      val (runtimeType, _) = a
       runtimeType =:= tpe
     })
   }
@@ -62,7 +62,7 @@ class SampleOverrideTypeProvider extends OverrideTypeProvider {
     val optionalTuple = getByTypeObject(tpe)
     optionalTuple match {
       case Some(tuple) =>
-        val correspondingType = tuple._2
+        val (_, correspondingType) = tuple
         correspondingType.getMethod("bigQueryType").invoke(null).asInstanceOf[String]
       case None => throw new IllegalArgumentException("Should never be here")
     }
@@ -84,7 +84,7 @@ class SampleOverrideTypeProvider extends OverrideTypeProvider {
     val optionalTuple = getByTypeObject(c)(tpe)
     optionalTuple match {
       case Some(tuple) =>
-        val correspondingType = tuple._2
+        val (_, correspondingType) = tuple
         val instanceOfType = q"${
           c.parse(correspondingType
             .getPackage.getName + "." + correspondingType.getSimpleName)
