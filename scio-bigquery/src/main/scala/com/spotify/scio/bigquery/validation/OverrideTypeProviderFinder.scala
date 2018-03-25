@@ -23,14 +23,16 @@ import scala.util.control.NonFatal
 /** Common Finder to return the proper ValidationProvider */
 object OverrideTypeProviderFinder {
 
-  def getProvider: OverrideTypeProvider = {
-      // Load the class dynamically at compile time and runtime
+  private val _instance = {
+    // Load the class dynamically at compile time and runtime
     val classInstance = Try(Class.forName(System.getProperty("OVERRIDE_TYPE_PROVIDER", ""))
-        .newInstance()
-        .asInstanceOf[OverrideTypeProvider])
+      .newInstance()
+      .asInstanceOf[OverrideTypeProvider])
     classInstance match {
       case Success(value) => value
       case Failure(NonFatal(_)) => new DummyOverrideTypeProvider
     }
   }
+
+  def getProvider: OverrideTypeProvider = _instance
 }
