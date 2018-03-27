@@ -41,4 +41,6 @@ trait ScioIO[T] {
 
   def tap(read: ReadP): Tap[T]
 
+  def id: String
+
 }

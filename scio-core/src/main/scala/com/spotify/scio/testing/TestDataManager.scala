@@ -70,10 +70,10 @@ private[scio] class TestOutput(val m: Map[TestIO[_], SCollection[_] => Unit]) {
 }
 
 /* Inputs are Scala Iterables to be parallelized for TestPipeline */
-private[scio] class TestInputNio(val m: Map[ScioIO[_], Iterable[_]]) {
-  val s: MSet[ScioIO[_]] = MSet.empty
+private[scio] class TestInputNio(val m: Map[String, Iterable[_]]) {
+  val s: MSet[String] = MSet.empty
 
-  def apply[T](key: ScioIO[T]): Iterable[T] = {
+  def apply[T](key: String): Iterable[T] = {
     require(
       m.contains(key),
       s"Missing test input: $key, available: ${m.keys.mkString("[", ", ", "]")}")
@@ -91,10 +91,10 @@ private[scio] class TestInputNio(val m: Map[ScioIO[_], Iterable[_]]) {
 }
 
 /* Outputs are lambdas that apply assertions on SCollections */
-private[scio] class TestOutputNio(val m: Map[ScioIO[_], SCollection[_] => Unit]) {
-  val s: MSet[ScioIO[_]] = MSet.empty
+private[scio] class TestOutputNio(val m: Map[String, SCollection[_] => Unit]) {
+  val s: MSet[String] = MSet.empty
 
-  def apply[T](key: ScioIO[T]): SCollection[T] => Unit = {
+  def apply[T](key: String): SCollection[T] => Unit = {
     // TODO: support Materialize outputs, maybe Materialized[T]?
     require(
       m.contains(key),
@@ -156,8 +156,8 @@ private[scio] object TestDataManager {
   def setup(testId: String,
             ins: Map[TestIO[_], Iterable[_]],
             outs: Map[TestIO[_], SCollection[_] => Unit],
-            inNios: Map[ScioIO[_], Iterable[_]],
-            outNios: Map[ScioIO[_], SCollection[_] => Unit],
+            inNios: Map[String, Iterable[_]],
+            outNios: Map[String, SCollection[_] => Unit],
             dcs: Map[DistCacheIO[_], _]): Unit = {
     inputs += (testId -> new TestInput(ins))
     outputs += (testId -> new TestOutput(outs))
