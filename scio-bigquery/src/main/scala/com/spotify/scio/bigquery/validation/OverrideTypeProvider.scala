@@ -43,7 +43,7 @@ trait OverrideTypeProvider {
 
   // Returns a context.Tree representing a new instance of whatever type is appropriate
   // This is called at macro expansion time
-  def createInstance(c: blackbox.Context)(tpe: c.Type, s: String): c.Tree
+  def createInstance(c: blackbox.Context)(tpe: c.Type, s: c.Tree): c.Tree
 
   // Returns the String representation of the BigQuery column type
   // This is called at runtime

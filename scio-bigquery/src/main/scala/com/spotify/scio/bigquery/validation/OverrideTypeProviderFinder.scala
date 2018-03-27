@@ -23,7 +23,7 @@ import scala.util.control.NonFatal
 /** Common Finder to return the proper ValidationProvider */
 object OverrideTypeProviderFinder {
 
-  private val _instance = {
+  private val instance = {
     // Load the class dynamically at compile time and runtime
     val classInstance = Try(Class.forName(System.getProperty("OVERRIDE_TYPE_PROVIDER", ""))
       .newInstance()
@@ -34,5 +34,5 @@ object OverrideTypeProviderFinder {
     }
   }
 
-  def getProvider: OverrideTypeProvider = _instance
+  def getProvider: OverrideTypeProvider = instance
 }

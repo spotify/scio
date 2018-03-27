@@ -79,7 +79,7 @@ class SampleOverrideTypeProvider extends OverrideTypeProvider {
     }
   }
 
-  def createInstance(c: blackbox.Context)(tpe: c.Type, s: String): c.Tree = {
+  def createInstance(c: blackbox.Context)(tpe: c.Type, tree: c.Tree): c.Tree = {
     import c.universe._
     val optionalTuple = getByTypeObject(c)(tpe)
     optionalTuple match {
@@ -88,7 +88,7 @@ class SampleOverrideTypeProvider extends OverrideTypeProvider {
         val instanceOfType = q"${
           c.parse(correspondingType
             .getPackage.getName + "." + correspondingType.getSimpleName)
-        }.parse($s)"
+        }.parse($tree)"
         instanceOfType
       case None => throw new IllegalArgumentException("Should never be here")
     }
