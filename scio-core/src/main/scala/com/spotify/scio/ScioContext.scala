@@ -501,7 +501,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   private[scio] def getTestInput[T: ClassTag](key: TestIO[T]): SCollection[T] =
     this.parallelize(testIn(key).asInstanceOf[Seq[T]])
 
-  private[scio] def getTestInputNio[T: ClassTag](key: ScioIO[T]): SCollection[T] =
+  private[scio] def getTestInputNio[T: ClassTag](key: String): SCollection[T] =
     this.parallelize(testInNio(key).asInstanceOf[Seq[T]])
   // =======================================================================
   // Read operations
@@ -890,7 +890,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    */
   def read[T: ClassTag](io: ScioIO[T])(params: io.ReadP): SCollection[T] = requireNotClosed {
     if (this.isTest) {
-      this.getTestInputNio(io)
+      this.getTestInputNio(io.id)
     } else {
       io.read(this, params)
     }
