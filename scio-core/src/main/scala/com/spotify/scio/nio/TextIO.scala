@@ -48,7 +48,7 @@ case class TextIO(path: String) extends ScioIO[String] {
 
   def read(sc: ScioContext, params: ReadParams): SCollection[String] = sc.requireNotClosed {
     if (sc.isTest) {
-      sc.getTestInputNio(this)
+      sc.getTestInputNio(this.id)
     } else {
       sc.wrap(sc.applyInternal(BTextIO.read().from(path)
         .withCompression(params.compression))).setName(path)
@@ -57,7 +57,7 @@ case class TextIO(path: String) extends ScioIO[String] {
 
   def write(pipeline: SCollection[String], params: WriteParams): Future[Tap[String]] = {
     if (pipeline.context.isTest) {
-      pipeline.context.testOutNio(this)(pipeline)
+      pipeline.context.testOutNio(this.id)(pipeline)
       // TODO: replace this with ScioIO[T] subclass when we have nio InMemoryIO[T]
       pipeline.saveAsInMemoryTap
     } else {
@@ -90,6 +90,7 @@ case class TextIO(path: String) extends ScioIO[String] {
 
   private[scio] def pathWithShards(path: String) = path.replaceAll("\\/+$", "") + "/part"
 
+  def id: String = path
 }
 
 object TextIO {
