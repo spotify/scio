@@ -74,8 +74,8 @@ object JobTest {
                                   cmdlineArgs: Array[String] = Array(),
                                   inputs: Map[TestIO[_], Iterable[_]] = Map.empty,
                                   outputs: Map[TestIO[_], SCollection[_] => Unit] = Map.empty,
-                                  inputNio: Map[ScioIO[_], Iterable[_]] = Map.empty,
-                                  outputNio: Map[ScioIO[_], SCollection[_] => Unit] = Map.empty,
+                                  inputNio: Map[String, Iterable[_]] = Map.empty,
+                                  outputNio: Map[String, SCollection[_] => Unit] = Map.empty,
                                   distCaches: Map[DistCacheIO[_], _] = Map.empty,
                                   counters: Map[bm.Counter, Long => Unit] = Map.empty,
                                   // scalastyle:off line.size.limit
@@ -127,13 +127,13 @@ object JobTest {
      * Feed an input to the pipeline being tested, Note that `ScioIO[T]` must match the one used
      * inside the pipeline. e.g.
      * TODO: add an example once we have complete nio integration with ScioContext
-     * @param nio an implementation of `ScioIO[T]`.
+     * @param id input identifier.
      * @param value iterable to return when this input nio is called
      * @return
      */
-    def inputNio[T](nio: ScioIO[T], value: Iterable[T]): Builder = {
-      require(!state.inputNio.contains(nio), s"Duplicate nio test input: $nio")
-      state = state.copy(inputNio = state.inputNio + (nio -> value))
+    def inputNio[T](id: String, value: Iterable[T]): Builder = {
+      require(!state.inputNio.contains(id), s"Duplicate nio test input: $id")
+      state = state.copy(inputNio = state.inputNio + (id -> value))
       this
     }
 
@@ -141,16 +141,16 @@ object JobTest {
      * Evaluate and outptu of the pipeline being tested. Note that `ScioIO[T]` must match the one
      * used inside the pipeline, e.g
      * TODO: add and example once we have complete nio integration with SCollection
-     * @param nio an implementation of `ScioIO[T]`.
+     * @param id output identifier.
      * @param assertion assertion for output data. See [[SCollectionMatchers]] for available
      *                  matchers on an [[com.spotify.scio.values.SCollection SCollection]].
      * @tparam T
      * @return
      */
-    def outputNio[T](nio: ScioIO[T])(assertion: SCollection[T] => Unit): Builder = {
-      require(!state.outputNio.contains(nio), s"Duplicate nio test output $nio")
+    def outputNio[T](id: String)(assertion: SCollection[T] => Unit): Builder = {
+      require(!state.outputNio.contains(id), s"Duplicate nio test output $id")
       state = state
-        .copy(outputNio = state.outputNio + (nio -> assertion.asInstanceOf[SCollection[_] => Unit]))
+        .copy(outputNio = state.outputNio + (id -> assertion.asInstanceOf[SCollection[_] => Unit]))
       this
     }
 
