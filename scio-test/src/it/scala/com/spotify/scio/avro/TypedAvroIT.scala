@@ -19,18 +19,20 @@ package com.spotify.scio.avro
 
 import com.google.common.io.Files
 import com.spotify.scio.{ContextAndArgs, ScioResult}
-import org.scalatest.FlatSpec
+import org.scalatest.{FlatSpec, Matchers}
 
-class TypedAvroIT extends FlatSpec {
+class TypedAvroIT extends FlatSpec with Matchers {
   "Typed Avro IO" should "not throw exception" in {
-    val tempDir = Files.createTempDir()
-    TypedAvroJob.main(Array("--runner=DirectRunner", s"--output=${tempDir.getAbsolutePath}"))
-    tempDir.deleteOnExit()
+    noException should be thrownBy {
+      val tempDir = Files.createTempDir()
+      TypedAvroJob.main(Array("--runner=DirectRunner", s"--output=${tempDir.getAbsolutePath}"))
+      tempDir.deleteOnExit()
+    }
   }
 }
 
 object TypedAvroJob {
-  def main(cmdLineArgs: Array[String]): ScioResult = {
+  def main(cmdLineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdLineArgs)
     sc.parallelize(Seq("a", "b", "c")).map(Record(_))
       .saveAsTypedAvroFile(args("output"))
