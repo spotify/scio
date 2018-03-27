@@ -231,7 +231,7 @@ object AvroType {
  *
  * This decouples generated fields and methods from macro expansion to keep core macro free.
  */
-class AvroType[T: TypeTag] {
+class AvroType[T: TypeTag] extends Serializable {
 
   private val instance = runtimeMirror(getClass.getClassLoader)
     .reflectModule(typeOf[T].typeSymbol.companion.asModule)
