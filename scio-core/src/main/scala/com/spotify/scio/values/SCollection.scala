@@ -903,9 +903,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .withMetadata(metadata.asJava)
 
   private def typedAvroOut[U](write: gio.AvroIO.TypedWrite[U, Void, GenericRecord],
-                         path: String, numShards: Int, suffix: String,
-                         codec: CodecFactory,
-                         metadata: Map[String, AnyRef]) =
+                              path: String, numShards: Int, suffix: String,
+                              codec: CodecFactory,
+                              metadata: Map[String, AnyRef]) =
     write
       .to(pathWithShards(path))
       .withNumShards(numShards)
@@ -972,6 +972,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         .withFormatFunction(new SerializableFunction[T, GenericRecord] {
           override def apply(input: T): GenericRecord = avroT.toGenericRecord(input)
         })
+        .withSchema(avroT.schema)
       this.applyInternal(typedAvroOut(t, path, numShards, suffix, codec, metadata))
       context.makeFuture(AvroTap(ScioUtil.addPartSuffix(path), avroT.schema))
     }
