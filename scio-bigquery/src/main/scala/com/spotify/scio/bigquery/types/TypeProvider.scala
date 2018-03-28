@@ -93,8 +93,10 @@ private[types] object TypeProvider {
         val fnTrait = tq"${TypeName(s"Function${fields.size}")}[..${fields.map(_.children.head)}, $cName]"
         val traits = (if (fields.size <= 22) Seq(fnTrait) else Seq()) ++ defTblDesc.map(_ => tq"${p(c, SType)}.HasTableDescription")
         val taggedFields = fields.map {
-          case ValDef(m, n, tpt, rhs) =>
+          case ValDef(m, n, tpt, rhs) => {
+
             c.universe.ValDef(c.universe.Modifiers(m.flags, m.privateWithin, m.annotations), n, tq"$tpt @${typeOf[BigQueryTag]}", rhs)
+          }
         }
         val caseClassTree = q"""${caseClass(c)(cName, taggedFields, body)}"""
         val maybeCompanion = tail.headOption
