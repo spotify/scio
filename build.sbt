@@ -282,8 +282,7 @@ lazy val scioCore: Project = Project(
     "org.apache.xbean" % "xbean-asm5-shaded" % asmVersion
   )
 ).dependsOn(
-  scioAvro,
-  scioBigQuery % "test->test;compile->compile"
+  scioAvro
 )
 
 lazy val scioTest: Project = Project(
@@ -315,6 +314,7 @@ lazy val scioTest: Project = Project(
   IntegrationTest
 ).dependsOn(
   scioCore % "test->test;compile->compile",
+  scioBigQuery % "test->test;compile->compile",
   scioSchemas % "test,it"
 )
 
@@ -353,7 +353,10 @@ lazy val scioBigQuery: Project = Project(
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test",
     "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
   )
+).dependsOn(
+  scioCore
 ).configs(IntegrationTest)
+
 
 lazy val scioBigtable: Project = Project(
   "scio-bigtable",
@@ -571,6 +574,7 @@ lazy val scioExamples: Project = Project(
   sources in doc in Compile := List()
 ).dependsOn(
   scioCore,
+  scioBigQuery,
   scioBigtable,
   scioSchemas,
   scioJdbc,
@@ -597,6 +601,7 @@ lazy val scioRepl: Project = Project(
   assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
 ).dependsOn(
   scioCore,
+  scioBigQuery,
   scioExtra
 )
 
