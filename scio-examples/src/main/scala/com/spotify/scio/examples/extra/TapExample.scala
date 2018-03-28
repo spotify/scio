@@ -21,6 +21,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
+import com.spotify.scio.avro._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
