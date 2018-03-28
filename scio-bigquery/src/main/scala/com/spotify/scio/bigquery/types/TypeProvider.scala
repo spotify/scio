@@ -81,6 +81,7 @@ private[types] object TypeProvider {
     import c.universe._
     checkMacroEnclosed(c)
 
+    val provider: OverrideTypeProvider = OverrideTypeProviderFinder.getProvider
     val (r, caseClassTree, name) = annottees.map(_.tree) match {
       case (clazzDef @ q"$mods class $cName[..$tparams] $ctorMods(..$fields) extends { ..$earlydefns } with ..$parents { $self => ..$body }") :: tail if mods.asInstanceOf[Modifiers].hasFlag(Flag.CASE) =>
         if (parents.map(_.toString()).toSet != Set("scala.Product", "scala.Serializable")) {
@@ -94,7 +95,7 @@ private[types] object TypeProvider {
         val traits = (if (fields.size <= 22) Seq(fnTrait) else Seq()) ++ defTblDesc.map(_ => tq"${p(c, SType)}.HasTableDescription")
         val taggedFields = fields.map {
           case ValDef(m, n, tpt, rhs) => {
-
+            provider.initializeToTable(c)(m, n, tpt)
             c.universe.ValDef(c.universe.Modifiers(m.flags, m.privateWithin, m.annotations), n, tq"$tpt @${typeOf[BigQueryTag]}", rhs)
           }
         }
