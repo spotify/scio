@@ -17,9 +17,10 @@
 
 package com.spotify.scio.coders
 
-import java.io.{InputStream, OutputStream, EOFException}
-import java.io.{InputStream, OutputStream}
+import java.io.{EOFException, InputStream, OutputStream}
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Function
 
 import com.esotericsoftware.kryo.KryoException
 import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
@@ -35,8 +36,14 @@ import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.coders._
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
+import org.apache.beam.sdk.util.VarInt
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
-import org.apache.beam.sdk.util.{EmptyOnDeserializationThreadLocal, VarInt}
+import org.apache.commons.pool2.impl.{
+  DefaultPooledObject,
+  GenericObjectPool,
+  GenericObjectPoolConfig
+}
+import org.apache.commons.pool2.{BasePooledObjectFactory, ObjectPool, PooledObject}
 import org.joda.time.{DateTime, LocalDate, LocalDateTime, LocalTime}
 import org.slf4j.LoggerFactory
 
@@ -56,7 +63,11 @@ private object KryoRegistrarLoader {
   private val registrars: Seq[IKryoRegistrar] = {
     logger.debug("Initializing KryoRegistrars")
     val classLoader = Thread.currentThread().getContextClassLoader
-    ClassPath.from(classLoader).getAllClasses.asScala.toSeq
+    ClassPath
+      .from(classLoader)
+      .getAllClasses
+      .asScala
+      .toSeq
       .filter(_.getName.endsWith("KryoRegistrar"))
       .flatMap { clsInfo =>
         val optCls: Option[IKryoRegistrar] = try {
@@ -77,167 +88,196 @@ private object KryoRegistrarLoader {
 
 private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends AtomicCoder[T] {
 
-  import KryoAtomicCoder.logger
-
-  private val kryoState: ThreadLocal[KryoState] =
-    new EmptyOnDeserializationThreadLocal[KryoState] {
-      override def initialValue(): KryoState = {
-        val k = KryoSerializer.registered.newKryo()
-
-        k.setReferences(options.referenceTracking)
-        k.setRegistrationRequired(options.registrationRequired)
-
-        k.forClass(new CoderSerializer(InstantCoder.of()))
-        k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
-
-        // Java Iterable/Collection are missing proper equality check, use custom CBF as a
-        // workaround
-        k.register(
-          classOf[Wrappers.JIterableWrapper[_]],
-          new JTraversableSerializer[Any, Iterable[Any]]()(new JIterableWrapperCBF[Any]))
-        k.register(
-          classOf[Wrappers.JCollectionWrapper[_]],
-          new JTraversableSerializer[Any, Iterable[Any]]()(new JCollectionWrapperCBF[Any]))
-        // Wrapped Java collections may have immutable implementations, i.e. Guava, treat them as
-        // regular Scala collections as a workaround
-        k.register(
-          classOf[Wrappers.JListWrapper[_]], new JTraversableSerializer[Any, mutable.Buffer[Any]])
-
-        k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
-        k.forSubclass[GenericRecord](new GenericAvroSerializer)
-        k.forSubclass[Message](new ProtobufSerializer)
-
-        k.forSubclass[LocalDate](new JodaLocalDateSerializer)
-        k.forSubclass[LocalTime](new JodaLocalTimeSerializer)
-        k.forSubclass[LocalDateTime](new JodaLocalDateTimeSerializer)
-        k.forSubclass[DateTime](new JodaDateTimeSerializer)
-
-        k.forSubclass[Path](new JPathSerializer)
-        k.forSubclass[ByteString](new ByteStringSerializer)
-
-        k.forClass(new KVSerializer)
-        // TODO:
-        // TimestampedValueCoder
-
-        new AlgebirdRegistrar()(k)
-        KryoRegistrarLoader.load(k)
-
-        val input = new InputChunked(options.bufferSize)
-        val output = new OutputChunked(options.bufferSize)
-
-        KryoState(k, input, output)
-      }
-    }
+  import KryoAtomicCoder._
 
   private val header = -1
 
-  override def encode(value: T, os: OutputStream): Unit = {
+  override def encode(value: T, os: OutputStream): Unit = withKryoState(options) { kryoState =>
     if (value == null) {
       throw new CoderException("cannot encode a null value")
     }
 
     VarInt.encode(header, os)
-
-    val state = kryoState.get()
-
-    val chunked = state.output
+    val chunked = kryoState.outputChunked(options)
     chunked.setOutputStream(os)
 
     try {
-      state.kryo.writeClassAndObject(chunked, value)
+      kryoState.kryo.writeClassAndObject(chunked, value)
       chunked.endChunks()
       chunked.flush()
     } catch {
       case ke: KryoException =>
         // make sure that the Kryo output buffer is cleared in case that we can recover from
         // the exception (e.g. EOFException which denotes buffer full)
-        chunked.clear();
-
-        ke.getCause() match {
-          case e: EOFException => throw e
-          case _ => throw ke
+        chunked.clear()
+        ke.getCause match {
+          case ex: EOFException => throw ex
+          case _                => throw ke
         }
     }
   }
 
-  override def decode(is: InputStream): T = {
-    val state = kryoState.get()
-
+  override def decode(is: InputStream): T = withKryoState(options) { kryoState =>
+    val chunked = kryoState.inputChunked(options)
     val o = if (VarInt.decodeInt(is) == header) {
-      val chunked = state.input
       chunked.setInputStream(is)
 
-      state.kryo.readClassAndObject(chunked)
+      kryoState.kryo.readClassAndObject(chunked)
     } else {
-      state.kryo.readClassAndObject(new Input(state.input.getBuffer))
+      kryoState.kryo.readClassAndObject(new Input(chunked.getBuffer))
     }
-
     o.asInstanceOf[T]
   }
 
   // This method is called by PipelineRunner to sample elements in a PCollection and estimate
   // size. This could be expensive for collections with small number of very large elements.
-  override def registerByteSizeObserver(value: T,
-                                        observer: ElementByteSizeObserver): Unit = value match {
-    // (K, Iterable[V]) is the return type of `groupBy` or `groupByKey`. This could be very slow
-    // when there're few keys with many values.
-    case (key, wrapper: Wrappers.JIterableWrapper[_]) =>
-      observer.update(kryoEncodedElementByteSize(key))
-      // FIXME: handle ElementByteSizeObservableIterable[_, _]
-      var count = 0
-      var bytes = 0L
-      var warned = false
-      var aborted = false
-      val warningThreshold = 10000 // 10s
-      val abortThreshold = 60000 // 1min
-      val start = System.currentTimeMillis()
-      val i = wrapper.underlying.iterator()
-      while (i.hasNext && !aborted) {
-        val size = kryoEncodedElementByteSize(i.next())
-        observer.update(size)
-        count += 1
-        bytes += size
-        val elapsed = System.currentTimeMillis() - start
-        if (elapsed > abortThreshold) {
-          aborted = true
-          logger.warn(s"Aborting size estimation for ${wrapper.underlying.getClass}, " +
-            s"elapsed: $elapsed ms, count: $count, bytes: $bytes")
-          wrapper.underlying match {
-            case c: _root_.java.util.Collection[_] =>
-              // extrapolate remaining bytes in the collection
-              val remaining = (bytes.toDouble / count * (c.size - count)).toLong
-              observer.update(remaining)
-              logger.warn(s"Extrapolated size estimation for ${wrapper.underlying.getClass} " +
-                s"count: ${c.size}, bytes: ${bytes + remaining}")
-            case _ =>
-              logger.warn("Can't get size of internal collection, thus can't extrapolate size")
+  override def registerByteSizeObserver(value: T, observer: ElementByteSizeObserver): Unit =
+    value match {
+      // (K, Iterable[V]) is the return type of `groupBy` or `groupByKey`. This could be very slow
+      // when there're few keys with many values.
+      case (key, wrapper: Wrappers.JIterableWrapper[_]) =>
+        observer.update(kryoEncodedElementByteSize(key))
+        // FIXME: handle ElementByteSizeObservableIterable[_, _]
+        var count = 0
+        var bytes = 0L
+        var warned = false
+        var aborted = false
+        val warningThreshold = 10000 // 10s
+        val abortThreshold = 60000 // 1min
+        val start = System.currentTimeMillis()
+        val i = wrapper.underlying.iterator()
+        while (i.hasNext && !aborted) {
+          val size = kryoEncodedElementByteSize(i.next())
+          observer.update(size)
+          count += 1
+          bytes += size
+          val elapsed = System.currentTimeMillis() - start
+          if (elapsed > abortThreshold) {
+            aborted = true
+            logger.warn(
+              s"Aborting size estimation for ${wrapper.underlying.getClass}, " +
+                s"elapsed: $elapsed ms, count: $count, bytes: $bytes")
+            wrapper.underlying match {
+              case c: _root_.java.util.Collection[_] =>
+                // extrapolate remaining bytes in the collection
+                val remaining = (bytes.toDouble / count * (c.size - count)).toLong
+                observer.update(remaining)
+                logger.warn(
+                  s"Extrapolated size estimation for ${wrapper.underlying.getClass} " +
+                    s"count: ${c.size}, bytes: ${bytes + remaining}")
+              case _ =>
+                logger.warn("Can't get size of internal collection, thus can't extrapolate size")
+            }
+          } else if (elapsed > warningThreshold && !warned) {
+            warned = true
+            logger.warn(
+              s"Slow size estimation for ${wrapper.underlying.getClass}, " +
+                s"elapsed: $elapsed ms, count: $count, bytes: $bytes")
           }
-        } else if (elapsed > warningThreshold && !warned) {
-          warned = true
-          logger.warn(s"Slow size estimation for ${wrapper.underlying.getClass}, " +
-            s"elapsed: $elapsed ms, count: $count, bytes: $bytes")
         }
-      }
-    case _ =>
-      observer.update(kryoEncodedElementByteSize(value))
-  }
+      case _ =>
+        observer.update(kryoEncodedElementByteSize(value))
+    }
 
-  private def kryoEncodedElementByteSize(obj: Any): Long = {
-    val s = new CountingOutputStream(ByteStreams.nullOutputStream())
-    val output = new Output(options.bufferSize, options.maxBufferSize)
-    output.setOutputStream(s)
-    kryoState.get().kryo.writeClassAndObject(output, obj)
-    output.flush()
-    s.getCount + VarInt.getLength(s.getCount)
+  private def kryoEncodedElementByteSize(obj: Any): Long = withKryoState(options) {
+    kryoState: KryoState =>
+      val s = new CountingOutputStream(ByteStreams.nullOutputStream())
+      val output = new Output(options.bufferSize, options.maxBufferSize)
+      output.setOutputStream(s)
+      kryoState.kryo.writeClassAndObject(output, obj)
+      output.flush()
+      s.getCount + VarInt.getLength(s.getCount)
   }
 
 }
 
 /** Used for sharing Kryo instance and buffers. */
-private[scio] final case class KryoState(kryo: Kryo, input: InputChunked, output: OutputChunked)
+private[scio] final case class KryoState(kryo: Kryo) {
+
+  val inputChunked: KryoOptions => InputChunked = memoize { options =>
+    new InputChunked(options.bufferSize)
+  }
+
+  val outputChunked: KryoOptions => OutputChunked = memoize { options =>
+    new OutputChunked(options.bufferSize)
+  }
+
+  private[this] def memoize[T, U](f: T => U): T => U = {
+    lazy val cache = new ConcurrentHashMap[T, U]()
+    t =>
+      cache.computeIfAbsent(t, new Function[T, U] {
+        override def apply(tt: T): U = f(tt)
+      })
+  }
+}
 
 private[scio] object KryoAtomicCoder {
   private val logger = LoggerFactory.getLogger(this.getClass)
+
+  private[this] val defaultPoolConfig = {
+    val config = new GenericObjectPoolConfig()
+    config.setMaxTotal(Integer.MAX_VALUE)
+    config.setJmxEnabled(false)
+    config.setMaxIdle(Integer.MAX_VALUE)
+    config.setMinIdle(Integer.MAX_VALUE)
+    config
+  }
+
+  final case class KryStatePoolFactory(f: () => KryoState)
+      extends BasePooledObjectFactory[KryoState] {
+    override def create(): KryoState = f()
+
+    override def wrap(obj: KryoState): PooledObject[KryoState] =
+      new DefaultPooledObject[KryoState](obj)
+  }
+
+  private[this] val kryoPool: ObjectPool[KryoState] = {
+    val factory = KryStatePoolFactory(() => {
+      val k = KryoSerializer.registered.newKryo()
+      k.forClass(new CoderSerializer(InstantCoder.of()))
+      k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
+      // Java Iterable/Collection are missing proper equality check, use custom CBF as a
+      // workaround
+      k.register(classOf[Wrappers.JIterableWrapper[_]],
+                 new JTraversableSerializer[Any, Iterable[Any]]()(new JIterableWrapperCBF[Any]))
+      k.register(classOf[Wrappers.JCollectionWrapper[_]],
+                 new JTraversableSerializer[Any, Iterable[Any]]()(new JCollectionWrapperCBF[Any]))
+      // Wrapped Java collections may have immutable implementations, i.e. Guava, treat them
+      // as regular Scala collections as a workaround
+      k.register(classOf[Wrappers.JListWrapper[_]],
+                 new JTraversableSerializer[Any, mutable.Buffer[Any]])
+      k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
+      k.forSubclass[GenericRecord](new GenericAvroSerializer)
+      k.forSubclass[Message](new ProtobufSerializer)
+      k.forSubclass[LocalDate](new JodaLocalDateSerializer)
+      k.forSubclass[LocalTime](new JodaLocalTimeSerializer)
+      k.forSubclass[LocalDateTime](new JodaLocalDateTimeSerializer)
+      k.forSubclass[DateTime](new JodaDateTimeSerializer)
+      k.forSubclass[Path](new JPathSerializer)
+      k.forSubclass[ByteString](new ByteStringSerializer)
+      k.forClass(new KVSerializer)
+      // TODO:
+      // TimestampedValueCoder
+      new AlgebirdRegistrar()(k)
+      KryoRegistrarLoader.load(k)
+
+      KryoState(k)
+    })
+
+    new GenericObjectPool[KryoState](factory, defaultPoolConfig)
+  }
+
+  def withKryoState[R](options: KryoOptions)(f: KryoState => R): R = {
+    val kryoState = kryoPool.borrowObject()
+    kryoState.kryo.setReferences(options.referenceTracking)
+    kryoState.kryo.setRegistrationRequired(options.registrationRequired)
+
+    try {
+      f(kryoState)
+    } finally {
+      kryoPool.returnObject(kryoState)
+    }
+  }
 }
 
 private[scio] case class KryoOptions(bufferSize: Int,
@@ -247,12 +287,12 @@ private[scio] case class KryoOptions(bufferSize: Int,
 
 private[scio] object KryoOptions {
   def apply(): KryoOptions = KryoOptions(PipelineOptionsFactory.create())
+
   def apply(options: PipelineOptions): KryoOptions = {
     val o = options.as(classOf[ScioOptions])
-    KryoOptions(
-      o.getKryoBufferSize,
-      o.getKryoMaxBufferSize,
-      o.getKryoReferenceTracking,
-      o.getKryoRegistrationRequired)
+    KryoOptions(o.getKryoBufferSize,
+                o.getKryoMaxBufferSize,
+                o.getKryoReferenceTracking,
+                o.getKryoRegistrationRequired)
   }
 }
