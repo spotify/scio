@@ -60,6 +60,10 @@ class KryoAtomicCoderTest extends PipelineSpec {
     cf should roundTrip (Map("a" -> 1, "b" -> 2, "c" -> 3))
   }
 
+  it should "registered case classes" in {
+    cf should roundTrip (RecordC("test", 1))
+  }
+
   it should "support Scala tuples" in {
     cf should roundTrip (("hello", 10))
     cf should roundTrip (("hello", 10, 10.0))
@@ -154,10 +158,12 @@ class KryoAtomicCoderTest extends PipelineSpec {
 
 case class RecordA(name: String, value: Int)
 case class RecordB(name: String, value: Int)
+case class RecordC(name: String, value: Int)
 
 @KryoRegistrar
 class RecordAKryoRegistrar extends IKryoRegistrar {
-  override def apply(k: Kryo): Unit =
+  override def apply(k: Kryo): Unit = {
+    k.addDefaultSerializer(classOf[RecordC], new CaseClassSerializer[RecordC](k))
     k.forClass(new KSerializer[RecordA] {
       override def write(k: Kryo, output: Output, obj: RecordA): Unit = {
         output.writeString(obj.name)
@@ -166,6 +172,8 @@ class RecordAKryoRegistrar extends IKryoRegistrar {
       override def read(kryo: Kryo, input: Input, tpe: Class[RecordA]): RecordA =
         RecordA(input.readString(), input.readInt() + 10)
     })
+  }
+
 }
 
 class RecordBKryoRegistrar extends IKryoRegistrar {
