@@ -44,7 +44,9 @@ trait OverrideTypeProvider {
   // Returns a context.Tree representing a new instance of whatever type is appropriate
   // This is called at macro expansion time
   def createInstance(c: blackbox.Context)(tpe: c.Type, s: c.Tree): c.Tree
-
+  
+  // When we need to initialize the toTable method
+  // This is called at macro expansion time
   def initializeToTable(c: blackbox.Context)(modifiers: c.universe.Modifiers,
                                              variableName: c.universe.TermName,
                                              tpe: c.universe.Tree): Unit
