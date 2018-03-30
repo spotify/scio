@@ -29,7 +29,7 @@ import scala.reflect.ClassTag
 class CaseClassSerializer[T: ClassTag](kryo: Kryo)
   extends FieldSerializer[T](kryo, ScioUtil.classOf[T]) {
 
-  val objectCreator: ObjectInstantiator[T] =
+  private val objectCreator: ObjectInstantiator[T] =
     new SunReflectionFactoryInstantiator[T](ScioUtil.classOf[T])
 
   override def create(kryo: Kryo, input: Input, classType: Class[T]): T = {
