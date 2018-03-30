@@ -181,8 +181,8 @@ private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends
       var warned = false
       var aborted = false
       val warningThreshold = 10000 // 10s
-    val abortThreshold = 60000 // 1min
-    val start = System.currentTimeMillis()
+      val abortThreshold = 60000 // 1min
+      val start = System.currentTimeMillis()
       val i = wrapper.underlying.iterator()
       while (i.hasNext && !aborted) {
         val size = kryoEncodedElementByteSize(i.next())
