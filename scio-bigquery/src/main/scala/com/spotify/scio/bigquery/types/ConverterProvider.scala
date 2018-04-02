@@ -274,7 +274,6 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Instant] => q"_root_.com.spotify.scio.bigquery.Timestamp($tree)"
         case t if t =:= typeOf[LocalDate] => q"_root_.com.spotify.scio.bigquery.Date($tree)"
         case t if t =:= typeOf[LocalTime] => q"_root_.com.spotify.scio.bigquery.Time($tree)"
-
         case t if t =:= typeOf[LocalDateTime] => q"_root_.com.spotify.scio.bigquery.DateTime($tree)"
 
         case t if isCaseClass(c)(t) =>
