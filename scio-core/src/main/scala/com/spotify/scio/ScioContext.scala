@@ -48,7 +48,7 @@ import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub =
 import org.apache.beam.sdk.metrics.Counter
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform, SerializableFunction}
+import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{Pipeline, PipelineResult, io => gio}
@@ -839,6 +839,15 @@ class ScioContext private[scio] (val options: PipelineOptions,
     val maxLength = 256
     if (name.length <= maxLength) name else name.substring(0, maxLength - 3) + "..."
   }
+
+  /** Create a union of multiple SCollections. Supports empty lists. */
+  def unionAll[T: ClassTag](scs: Iterable[SCollection[T]]): SCollection[T] = scs match {
+    case Nil => empty()
+    case contents => SCollection.unionAll(contents)
+  }
+
+  /** Form an empty SCollection. */
+  def empty[T: ClassTag](): SCollection[T] = parallelize(Seq())
 
   /**
    * Distribute a local Scala `Iterable` to form an SCollection.
