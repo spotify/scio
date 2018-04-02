@@ -846,7 +846,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     case contents => SCollection.unionAll(contents)
   }
 
-  /** Form a empty SCollection. */
+  /** Form an empty SCollection. */
   def empty[T: ClassTag](): SCollection[T] = parallelize(Seq())
 
   /**
