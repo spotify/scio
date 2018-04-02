@@ -66,7 +66,6 @@ object SCollection {
 
   /**
    * Create a union of multiple [[SCollection]] instances.
-   * 
    * Will throw an exception if the provided iterable is empty.
    * For a version that accepts empty iterables, see [[ScioContext#unionAll]].
    */
