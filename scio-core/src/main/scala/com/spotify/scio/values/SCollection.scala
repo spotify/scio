@@ -64,7 +64,9 @@ import scala.reflect.runtime.universe._
 /** Convenience functions for creating SCollections. */
 object SCollection {
 
-  /** Create a union of multiple SCollections */
+  /** Create a union of multiple SCollections.
+    * Will throw an exception if the provided iterable is empty.
+    * For a version that accepts an empty list, call unionAll on a ScioContext instance. */
   def unionAll[T: ClassTag](scs: Iterable[SCollection[T]]): SCollection[T] = {
     val o = PCollectionList
       .of(scs.map(_.internal).asJava)

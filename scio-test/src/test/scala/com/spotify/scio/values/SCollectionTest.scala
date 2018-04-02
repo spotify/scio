@@ -103,6 +103,23 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support unionAll() when called on ScioContext" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq("a", "b", "c"))
+      val p2 = sc.parallelize(Seq("d", "e", "f"))
+      val p3 = sc.parallelize(Seq("g", "h", "i"))
+      val r = sc.unionAll(Seq(p1, p2, p3))
+      val expected = Seq("a", "b", "c", "d", "e", "f", "g", "h", "i")
+      r should containInAnyOrder (expected)
+    }
+  }
+
+  it should "support unionAll() with an empty list" in {
+    runWithContext { sc =>
+      sc.unionAll(Seq()) should beEmpty
+    }
+  }
+
   it should "support ++ operator" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "c"))
