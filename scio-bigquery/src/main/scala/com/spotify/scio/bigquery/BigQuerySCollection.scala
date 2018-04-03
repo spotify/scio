@@ -15,8 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio
-package bigquery
+package com.spotify.scio.bigquery
 
 import java.io.PrintStream
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
