@@ -23,6 +23,7 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory
 import com.spotify.scio.bigquery.BigQueryClient
 import com.spotify.scio.{scalaVersion, scioVersion}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
+import org.apache.commons.lang.StringEscapeUtils
 
 import scala.tools.nsc.GenericRunnerSettings
 import scala.tools.nsc.interpreter.{IR, JPrintWriter}
@@ -89,7 +90,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
     val sc = if (name.nonEmpty) name else "sc"
     val rsc = "com.spotify.scio.repl.ReplScioContext"
     val opts = optsFromArgs(scioOpts)
-    val nextReplJar = scioClassLoader.getNextReplCodeJarPath
+    val nextReplJar = StringEscapeUtils.escapeJava(scioClassLoader.getNextReplCodeJarPath)
     intp.beQuietDuring {
       intp.interpret(s"""val $sc: ScioContext = new $rsc($opts, List("$nextReplJar"))""")
     }
