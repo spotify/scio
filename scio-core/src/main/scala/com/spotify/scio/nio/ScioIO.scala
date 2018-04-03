@@ -45,16 +45,18 @@ trait ScioIO[T] {
 }
 
 object ScioIO {
+  // scalastyle:off structural.type
   type ReadOnly[T, R] =
     ScioIO[T] {
       type ReadP = R
       type WriteP = Nothing
     }
 
-  type Aux[T, R, W] = ScioIO[T]{
-    type ReadP = R
-    type WriteP = W
-  }
+  type Aux[T, R, W] =
+    ScioIO[T] {
+      type ReadP = R
+      type WriteP = W
+    }
 
   def ro[T](io: ScioIO[T]): ScioIO.ReadOnly[T, io.ReadP] =
     new ScioIO[T] {
@@ -71,4 +73,5 @@ object ScioIO {
 
       def id: String = io.id
     }
+  // scalastyle:off structural.type
 }

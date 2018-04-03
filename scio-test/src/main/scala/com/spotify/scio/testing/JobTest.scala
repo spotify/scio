@@ -219,7 +219,13 @@ object JobTest {
      * [[run]]. Make sure [[tearDown]] is called afterwards.
      */
     def setUp(): Unit =
-      TestDataManager.setup(testId, state.outputs, state.inputNio, state.outputNio, state.distCaches)
+      TestDataManager.setup(
+        testId,
+        state.outputs,
+        state.inputNio,
+        state.outputNio,
+        state.distCaches
+      )
 
 
     /**

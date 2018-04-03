@@ -210,7 +210,9 @@ object Typed {
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
-  def apply[T <: HasAnnotation with HasQuery : ClassTag : TypeTag](implicit dummy: DummyImplicit): ScioIO.ReadOnly[T, Unit] = {
+  def apply[T <: HasAnnotation with HasQuery : ClassTag : TypeTag](
+    implicit dummy: DummyImplicit)
+  : ScioIO.ReadOnly[T, Unit] = {
     val bqt = BigQueryType[T]
     val _query = bqt.query.get
     query(_query)
