@@ -15,18 +15,15 @@
  * under the License.
  */
 
-package com.spotify.scio
-package bigquery
-package io
+package com.spotify.scio.bigquery.io
 
 import java.util.UUID
 import scala.concurrent.Future
 
 import com.spotify.scio.io.{Tap, Taps, FileStorage}
 import com.google.api.services.bigquery.model.TableReference
-import com.spotify.scio.bigquery.BigQueryScioContext
+import com.spotify.scio.bigquery._
 import com.spotify.scio.ScioContext
-import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection

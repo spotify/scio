@@ -15,8 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio
-package bigquery
+package com.spotify.scio.bigquery
 
 import java.beans.Introspector
 import java.io.File
@@ -26,6 +25,7 @@ import java.nio.file.Files
 import com.google.api.services.bigquery.model.TableReference
 import com.google.datastore.v1.{Entity, Query}
 import com.google.protobuf.Message
+import com.spotify.scio.ScioContext
 import com.spotify.scio.avro.types.AvroType
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, KryoAtomicCoder, KryoOptions}
@@ -66,10 +66,6 @@ import scala.util.control.NonFatal
 
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
 final class BigQueryScioContext(@transient val self: ScioContext) extends Serializable {
-
-    // =======================================================================
-    // Miscellaneous
-    // =======================================================================
 
   /**
    * Get an SCollection for a BigQuery SELECT query.

@@ -15,10 +15,11 @@
  * under the License.
  */
 
-package com.spotify.scio
-package bigquery
-package nio
+package com.spotify.scio.bigquery.nio
 
+import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.ScioContext
+import com.spotify.scio.bigquery.{BigQueryType, BigQueryClient}
 import com.spotify.scio.bigquery.types.BigQueryType.{HasAnnotation, HasTable, HasQuery}
 import com.spotify.scio.nio.ScioIO
 import com.spotify.scio.io.Tap
@@ -91,13 +92,13 @@ private object Reads {
 }
 
  /**
-   * Get an SCollection for a BigQuery SELECT query.
-   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
-   * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
-   * supported. By default the query dialect will be automatically detected. To override this
-   * behavior, start the query string with `#legacysql` or `#standardsql`.
-   * @group input
-   */
+  * Get an SCollection for a BigQuery SELECT query.
+  * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
+  * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
+  * supported. By default the query dialect will be automatically detected. To override this
+  * behavior, start the query string with `#legacysql` or `#standardsql`.
+  * @group input
+  */
 final case class Select(sqlQuery: String) extends ScioIO[TableRow] {
   import Select._
   type ReadP = ReadParam
@@ -121,9 +122,9 @@ object Select {
 }
 
 /**
-   * Get an SCollection for a BigQuery table.
-   * @group input
-   */
+ * Get an SCollection for a BigQuery table.
+ * @group input
+ */
 final case class TableRef(table: TableReference) extends ScioIO[TableRow] {
   type ReadP = Unit
   type WriteP = Nothing // TODO
@@ -138,9 +139,9 @@ final case class TableRef(table: TableReference) extends ScioIO[TableRow] {
 }
 
 /**
-  * Get an SCollection for a BigQuery table.
-  * @group input
-  */
+ * Get an SCollection for a BigQuery table.
+ * @group input
+ */
 final case class TableSpec(tableSpec: String) extends ScioIO[TableRow] {
   type ReadP = Unit
   type WriteP = Nothing // TODO
@@ -157,9 +158,9 @@ final case class TableSpec(tableSpec: String) extends ScioIO[TableRow] {
 }
 
 /**
-   * Get an SCollection for a BigQuery TableRow JSON file.
-   * @group input
-   */
+ * Get an SCollection for a BigQuery TableRow JSON file.
+ * @group input
+ */
 final case class TableRowJsonFile(path: String) extends ScioIO[TableRow] {
   type ReadP = Unit
   type WriteP = Nothing // TODO
@@ -169,7 +170,7 @@ final case class TableRowJsonFile(path: String) extends ScioIO[TableRow] {
   def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     sc.requireNotClosed {
       sc.wrap(sc.applyInternal(gio.TextIO.read().from(path))).setName(path)
-        .map(e => util.ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
+        .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
     }
 
   def tap(read: ReadP): Tap[TableRow] = ???
@@ -261,6 +262,7 @@ object Typed {
     newSource: String
   ): ScioIO.ReadOnly[T, Unit] = {
     val bqt = BigQueryType[T]
+    lazy val _table = scala.util.Try(bqio.BigQueryHelpers.parseTableSpec(newSource)).toOption
     newSource match {
       // newSource is missing, T's companion object must have either table or query
       // The case where newSource is null is only there
@@ -274,13 +276,10 @@ object Typed {
         query[T](_query)
       case null =>
         throw new IllegalArgumentException(s"Missing table or query field in companion object")
+      case _ if _table.isDefined =>
+        table[T](newSource)
       case _ =>
-        val _table = scala.util.Try(bqio.BigQueryHelpers.parseTableSpec(newSource)).toOption
-        if (_table.isDefined) {
-          table[T](newSource)
-        } else {
-          query[T](newSource)
-        }
+        query[T](newSource)
     }
   }
 }
