@@ -727,8 +727,10 @@ class ScioContext private[scio] (val options: PipelineOptions,
       }
     }
 
+  // scalastyle:off structural.type
   def read[T: ClassTag](io: ScioIO[T]{ type ReadP = Unit }): SCollection[T] =
     readImpl[T](io)(())
+  // scalastyle:on structural.type
 
   private[scio] def addPreRunFn(f: () => Unit): Unit = _preRunFns += f
 
