@@ -33,7 +33,6 @@ import com.spotify.scio.io.Tap
 import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.nio.ScioIO
 import com.spotify.scio.options.ScioOptions
-import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.values._
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
@@ -68,67 +67,9 @@ import scala.util.control.NonFatal
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
 final class BigQueryScioContext(@transient val self: ScioContext) extends Serializable {
 
-    import self.{wrap, requireNotClosed, optionsAs}
-
     // =======================================================================
     // Miscellaneous
     // =======================================================================
-
-    private lazy val bigQueryClient: BigQueryClient =
-      self.cached[BigQueryClient]{
-        val o = optionsAs[GcpOptions]
-        BigQueryClient(o.getProject, o.getGcpCredential)
-      }
-
-    private def bqReadQuery[T: ClassTag](typedRead: bqio.BigQueryIO.TypedRead[T],
-                                       sqlQuery: String,
-                                       flattenResults: Boolean  = false)
-  : SCollection[T] = requireNotClosed {
-    if (self.isTest) {
-      self.getTestInput(BigQueryIO[T](sqlQuery))
-    } else if (bigQueryClient.isCacheEnabled) {
-      val queryJob = bigQueryClient.newQueryJob(sqlQuery, flattenResults)
-
-      self.onClose{ _ =>
-        bigQueryClient.waitForJobs(queryJob)
-      }
-
-      val read = typedRead.from(queryJob.table).withoutValidation()
-      wrap(self.applyInternal(read)).setName(sqlQuery)
-    } else {
-      val baseQuery = if (!flattenResults) {
-        typedRead.fromQuery(sqlQuery).withoutResultFlattening()
-      } else {
-        typedRead.fromQuery(sqlQuery)
-      }
-      val query = if (bigQueryClient.isLegacySql(sqlQuery, flattenResults)) {
-        baseQuery
-      } else {
-        baseQuery.usingStandardSql()
-      }
-      wrap(self.applyInternal(query)).setName(sqlQuery)
-    }
-  }
-
-  private def avroBigQueryRead[T <: HasAnnotation : ClassTag : TypeTag] = {
-    val fn = BigQueryType[T].fromAvro
-    bqio.BigQueryIO
-      .read(new SerializableFunction[SchemaAndRecord, T] {
-        override def apply(input: SchemaAndRecord): T = fn(input.getRecord)
-      })
-      .withCoder(new KryoAtomicCoder[T](KryoOptions(self.options)))
-  }
-
-  private def bqReadTable[T: ClassTag](typedRead: bqio.BigQueryIO.TypedRead[T],
-                                       table: TableReference)
-  : SCollection[T] = requireNotClosed {
-    val tableSpec: String = bqio.BigQueryHelpers.toTableSpec(table)
-    if (self.isTest) {
-      self.getTestInput(BigQueryIO[T](tableSpec))
-    } else {
-      wrap(self.applyInternal(typedRead.from(table))).setName(tableSpec)
-    }
-  }
 
   /**
    * Get an SCollection for a BigQuery SELECT query.
@@ -140,21 +81,21 @@ final class BigQueryScioContext(@transient val self: ScioContext) extends Serial
    */
   def bigQuerySelect(sqlQuery: String,
                      flattenResults: Boolean = false): SCollection[TableRow] =
-    bqReadQuery(bqio.BigQueryIO.readTableRows(), sqlQuery, flattenResults)
+    self.read(nio.Select(sqlQuery))(nio.Select.FlattenResults(flattenResults))
 
   /**
    * Get an SCollection for a BigQuery table.
    * @group input
    */
   def bigQueryTable(table: TableReference): SCollection[TableRow] =
-    bqReadTable(bqio.BigQueryIO.readTableRows(), table)
+    self.read(nio.TableRef(table))
 
   /**
    * Get an SCollection for a BigQuery table.
    * @group input
    */
   def bigQueryTable(tableSpec: String): SCollection[TableRow] =
-    bigQueryTable(bqio.BigQueryHelpers.parseTableSpec(tableSpec))
+    self.read(nio.TableSpec(tableSpec))
 
   /**
    * Get a typed SCollection for a BigQuery SELECT query or table.
@@ -188,40 +129,13 @@ final class BigQueryScioContext(@transient val self: ScioContext) extends Serial
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
   def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null)
-  : SCollection[T] = {
-    val bqt = BigQueryType[T]
-    val typedRead = avroBigQueryRead[T]
-    if (newSource == null) {
-      // newSource is missing, T's companion object must have either table or query
-      if (bqt.isTable) {
-        bqReadTable(typedRead, bqio.BigQueryHelpers.parseTableSpec(bqt.table.get))
-      } else if (bqt.isQuery) {
-        bqReadQuery(typedRead, bqt.query.get)
-      } else {
-        throw new IllegalArgumentException(s"Missing table or query field in companion object")
-      }
-    } else {
-      // newSource can be either table or query
-      val table = scala.util.Try(bqio.BigQueryHelpers.parseTableSpec(newSource)).toOption
-      if (table.isDefined) {
-        bqReadTable(typedRead, table.get)
-      } else {
-        bqReadQuery(typedRead, newSource)
-      }
-    }
-  }
+    : SCollection[T] = self.read(nio.Typed.dynamic[T](newSource))
 
   /**
    * Get an SCollection for a BigQuery TableRow JSON file.
    * @group input
    */
-  def tableRowJsonFile(path: String): SCollection[TableRow] = requireNotClosed {
-    if (self.isTest) {
-      self.getTestInput[TableRow](TableRowJsonIO(path))
-    } else {
-      wrap(self.applyInternal(gio.TextIO.read().from(path))).setName(path)
-        .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
-    }
-  }
+  def tableRowJsonFile(path: String): SCollection[TableRow] =
+    self.read(nio.TableRowJsonFile(path))
 
 }
