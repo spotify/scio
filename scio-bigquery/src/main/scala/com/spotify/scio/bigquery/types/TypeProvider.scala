@@ -25,6 +25,7 @@ import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import com.spotify.scio.bigquery.types.MacroUtil._
+import com.spotify.scio.bigquery.validation.{OverrideTypeProvider, OverrideTypeProviderFinder}
 import com.spotify.scio.bigquery.{BigQueryClient, BigQueryPartitionUtil, BigQueryUtil}
 import org.slf4j.LoggerFactory
 
@@ -80,6 +81,7 @@ private[types] object TypeProvider {
     import c.universe._
     checkMacroEnclosed(c)
 
+    val provider: OverrideTypeProvider = OverrideTypeProviderFinder.getProvider
     val (r, caseClassTree, name) = annottees.map(_.tree) match {
       case (clazzDef @ q"$mods class $cName[..$tparams] $ctorMods(..$fields) extends { ..$earlydefns } with ..$parents { $self => ..$body }") :: tail if mods.asInstanceOf[Modifiers].hasFlag(Flag.CASE) =>
         if (parents.map(_.toString()).toSet != Set("scala.Product", "scala.Serializable")) {
@@ -92,8 +94,10 @@ private[types] object TypeProvider {
         val fnTrait = tq"${TypeName(s"Function${fields.size}")}[..${fields.map(_.children.head)}, $cName]"
         val traits = (if (fields.size <= 22) Seq(fnTrait) else Seq()) ++ defTblDesc.map(_ => tq"${p(c, SType)}.HasTableDescription")
         val taggedFields = fields.map {
-          case ValDef(m, n, tpt, rhs) =>
+          case ValDef(m, n, tpt, rhs) => {
+            provider.initializeToTable(c)(m, n, tpt)
             c.universe.ValDef(c.universe.Modifiers(m.flags, m.privateWithin, m.annotations), n, tq"$tpt @${typeOf[BigQueryTag]}", rhs)
+          }
         }
         val caseClassTree = q"""${caseClass(c)(cName, taggedFields, body)}"""
         val maybeCompanion = tail.headOption
@@ -118,8 +122,11 @@ private[types] object TypeProvider {
     import c.universe._
     checkMacroEnclosed(c)
 
+    val provider: OverrideTypeProvider = OverrideTypeProviderFinder.getProvider
+
     // Returns: (raw type, e.g. Int, String, NestedRecord, nested case class definitions)
     def getRawType(tfs: TableFieldSchema): (Tree, Seq[Tree]) = tfs.getType match {
+      case t if provider.shouldOverrideType(tfs) => (provider.getScalaType(c)(tfs), Nil)
       case "BOOLEAN" | "BOOL" => (tq"_root_.scala.Boolean", Nil)
       case "INTEGER" | "INT64" => (tq"_root_.scala.Long", Nil)
       case "FLOAT" | "FLOAT64" => (tq"_root_.scala.Double", Nil)
