@@ -17,52 +17,13 @@
 
 package com.spotify.scio.bigquery
 
-import java.beans.Introspector
-import java.io.File
-import java.net.URI
-import java.nio.file.Files
-
 import com.google.api.services.bigquery.model.TableReference
-import com.google.datastore.v1.{Entity, Query}
-import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
-import com.spotify.scio.avro.types.AvroType
-import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.coders.{AvroBytesUtil, KryoAtomicCoder, KryoOptions}
-import com.spotify.scio.io.Tap
-import com.spotify.scio.metrics.Metrics
-import com.spotify.scio.nio.ScioIO
-import com.spotify.scio.options.ScioOptions
-import com.spotify.scio.util._
 import com.spotify.scio.values._
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import org.apache.avro.Schema
-import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
-import org.apache.beam.sdk.PipelineResult.State
-import org.apache.beam.sdk.extensions.gcp.options.{GcpOptions, GcsOptions}
-import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
-import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub => psio}
-import org.apache.beam.sdk.metrics.Counter
-import org.apache.beam.sdk.options._
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform, SerializableFunction}
-import org.apache.beam.sdk.util.CoderUtils
-import org.apache.beam.sdk.values._
-import org.apache.beam.sdk.{Pipeline, PipelineResult, io => gio}
-import org.joda.time.Instant
-import org.slf4j.LoggerFactory
 
-import scala.annotation.tailrec
-import scala.collection.JavaConverters._
-import scala.collection.mutable.{Buffer => MBuffer}
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Future, Promise}
-import scala.io.Source
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.util.{Failure, Success, Try}
-import scala.util.control.NonFatal
 
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
 final class BigQueryScioContext(@transient val self: ScioContext) extends Serializable {

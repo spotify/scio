@@ -17,19 +17,13 @@
 
 package com.spotify.scio.bigquery.io
 
-import java.util.UUID
 import scala.concurrent.Future
 
 import com.spotify.scio.io.{Tap, Taps, FileStorage}
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.bigquery._
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.AvroBytesUtil
-import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import org.apache.avro.Schema
-import com.twitter.chill.Externalizer
-import org.apache.avro.generic.GenericRecord
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
