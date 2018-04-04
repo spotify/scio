@@ -24,15 +24,15 @@ import com.spotify.scio.bigquery.{BigQueryType, BigQueryClient}
 import com.spotify.scio.bigquery.types.BigQueryType.{HasAnnotation, HasTable, HasQuery}
 import com.spotify.scio.bigquery.io.{BigQueryTap, TableRowJsonTap}
 import com.spotify.scio.nio.ScioIO
-import com.spotify.scio.io.{Tap, Taps}
+import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.coders.{AvroBytesUtil, KryoAtomicCoder, KryoOptions}
+import com.spotify.scio.coders.{KryoAtomicCoder, KryoOptions}
 import com.google.api.services.bigquery.model.{TableRow, TableReference, TableSchema}
-import org.apache.beam.sdk.extensions.gcp.options.{GcpOptions, GcsOptions}
+import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio}
 import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform, SerializableFunction}
+import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.{io => gio}
 import scala.concurrent.Future
