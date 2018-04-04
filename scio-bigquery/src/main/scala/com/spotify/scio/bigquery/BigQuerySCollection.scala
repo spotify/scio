@@ -77,29 +77,9 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
                      createDisposition: CreateDisposition,
                      tableDescription: String)
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
-    val tableSpec = bqio.BigQueryHelpers.toTableSpec(table)
-    if (context.isTest) {
-      context.testOut(BigQueryIO[TableRow](tableSpec))(self.asInstanceOf[SCollection[TableRow]])
-
-      if (writeDisposition == WriteDisposition.WRITE_APPEND) {
-        Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
-      } else {
-        saveAsInMemoryTap.asInstanceOf[Future[Tap[TableRow]]]
-      }
-    } else {
-      var transform = bqio.BigQueryIO.writeTableRows().to(table)
-      if (schema != null) transform = transform.withSchema(schema)
-      if (createDisposition != null) transform = transform.withCreateDisposition(createDisposition)
-      if (writeDisposition != null) transform = transform.withWriteDisposition(writeDisposition)
-      if (tableDescription != null) transform = transform.withTableDescription(tableDescription)
-      self.asInstanceOf[SCollection[TableRow]].applyInternal(transform)
-
-      if (writeDisposition == WriteDisposition.WRITE_APPEND) {
-        Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
-      } else {
-        context.makeFuture(io.BigQueryTap(table))
-      }
-    }
+    val params =
+      nio.TableRef.Parameters(schema, writeDisposition, createDisposition, tableDescription)
+    nio.TableRef(table).write(self.asInstanceOf[SCollection[TableRow]], params)
   }
 
   /**
@@ -111,13 +91,18 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
                      writeDisposition: WriteDisposition = null,
                      createDisposition: CreateDisposition = null,
                      tableDescription: String = null)
-                    (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
-    saveAsBigQuery(
-      bqio.BigQueryHelpers.parseTableSpec(tableSpec),
-      schema,
-      writeDisposition,
-      createDisposition,
-      tableDescription)
+                    (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
+    val params =
+      nio.TableSpec.Parameters(schema, writeDisposition, createDisposition, tableDescription)
+    nio.TableSpec(tableSpec).write(self.asInstanceOf[SCollection[TableRow]], params)
+  }
+
+  private def cast[T](
+    f: SCollection[T with HasAnnotation] => Future[Tap[T with HasAnnotation]]
+  )(implicit ev: T <:< HasAnnotation): SCollection[T] => Future[Tap[T]] = { sc =>
+    f(sc.asInstanceOf[SCollection[T with HasAnnotation]])
+      .asInstanceOf[Future[Tap[T]]]
+  }
 
   /**
    * Save this SCollection as a BigQuery table. Note that element type `T` must be a case class
@@ -128,31 +113,8 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
                           createDisposition: CreateDisposition)
                          (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
   : Future[Tap[T]] = {
-    val tableSpec = bqio.BigQueryHelpers.toTableSpec(table)
-    if (context.isTest) {
-      context.testOut(BigQueryIO[T](tableSpec))(self.asInstanceOf[SCollection[T]])
-
-      if (writeDisposition == WriteDisposition.WRITE_APPEND) {
-        Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
-      } else {
-        saveAsInMemoryTap
-      }
-    } else {
-      val bqt = BigQueryType[T]
-      val initialTfName = self.tfName
-      import scala.concurrent.ExecutionContext.Implicits.global
-      val scoll =
-        self
-          .map(bqt.toTableRow)
-          .withName(s"$initialTfName$$Write")
-      scoll.saveAsBigQuery(
-          table,
-          bqt.schema,
-          writeDisposition,
-          createDisposition,
-          bqt.tableDescription.orNull)
-        .map(_.map(bqt.fromTableRow))
-    }
+    val params = nio.Typed.Table.Parameters(writeDisposition, createDisposition)
+    cast[T](nio.Typed.Table(table).write(_, params)).apply(self)
   }
 
   /**
@@ -189,10 +151,10 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
                           writeDisposition: WriteDisposition = null,
                           createDisposition: CreateDisposition = null)
                          (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
-  : Future[Tap[T]] =
-    saveAsTypedBigQuery(
-      bqio.BigQueryHelpers.parseTableSpec(tableSpec),
-      writeDisposition, createDisposition)
+  : Future[Tap[T]] = {
+    val params = nio.Typed.Table.Parameters(writeDisposition, createDisposition)
+    cast[T](nio.Typed.Table(tableSpec).write(_, params)).apply(self)
+  }
 
 
   /**
@@ -204,14 +166,7 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
                              numShards: Int = 0,
                              compression: Compression = Compression.UNCOMPRESSED)
                             (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
-    if (context.isTest) {
-      context.testOut(TableRowJsonIO(path))(self.asInstanceOf[SCollection[TableRow]])
-      saveAsInMemoryTap.asInstanceOf[Future[Tap[TableRow]]]
-    } else {
-      self.asInstanceOf[SCollection[TableRow]]
-        .map(e => ScioUtil.jsonFactory.toString(e))
-        .applyInternal(self.textOut(path, ".json", numShards, compression))
-      context.makeFuture(io.TableRowJsonTap(ScioUtil.addPartSuffix(path)))
-    }
+    val params = nio.TableRowJsonFile.Parameters(numShards, compression)
+    nio.TableRowJsonFile(path).write(self.asInstanceOf[SCollection[TableRow]], params)
   }
 }
