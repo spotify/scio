@@ -97,7 +97,4 @@ class SampleOverrideTypeProvider extends OverrideTypeProvider {
   def initializeToTable(c: blackbox.Context)(modifiers: c.universe.Modifiers,
                                              variableName: c.universe.TermName,
                                              tpe: c.universe.Tree): Unit = Unit
-
-
-
 }

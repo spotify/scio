@@ -19,18 +19,20 @@
 package com.spotify.scio.bigquery.validation
 
 
-class Country(data: String) {
-  if (!Country.isValid(data)) {
-    throw new IllegalArgumentException("Not valid")
-  }
-
-  def getData: String = data
-}
+class Country(val data: String) extends AnyVal
 
 object Country {
+
+  def apply(data: String): Country = {
+    if (!isValid(data)) {
+      throw new IllegalArgumentException("Not valid")
+    }
+    new Country(data)
+  }
+
   def isValid(data: String): Boolean = data.length == 2
 
-  def parse(data: String): Country = new Country(data)
+  def parse(data: String): Country = Country(data)
 
   def stringType: String = "COUNTRY"
 

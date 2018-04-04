@@ -47,8 +47,8 @@ class BigQueryValidationTest extends FlatSpec with Matchers  {
                            @description("NOCOUNTRY") noCountry: String)
 
   "ValidationProvider" should "override types using SampleValidationProvider for fromSchema" in {
-    val countryInput = CountryInput(new Country("US"), "UK", "No Country")
-    countryInput.country.getData shouldBe "US"
+    val countryInput = CountryInput(Country("US"), "UK", "No Country")
+    countryInput.country.data shouldBe "US"
     countryInput.countryString shouldBe "UK"
     countryInput.noCountry shouldBe "No Country"
   }
@@ -61,7 +61,7 @@ class BigQueryValidationTest extends FlatSpec with Matchers  {
 
   "ValidationProvider" should "properly validate data" in {
     assertThrows[IllegalArgumentException]{
-      CountryInput(new Country("USA"), "UK", "No Country")
+      CountryInput(Country("USA"), "UK", "No Country")
     }
   }
 
@@ -75,10 +75,5 @@ class BigQueryValidationTest extends FlatSpec with Matchers  {
   "ValidationProvider" should "no error thrown converting valid data" in {
     val tableRow = TableRow("country" -> "US", "countryString" -> "USA", "noCountry" -> "USA")
     CountryInput.fromTableRow(tableRow)
-    //val inputTableRow = CountryInput.toTableRow(inputWithExtra)
-
-
   }
-
-
 }

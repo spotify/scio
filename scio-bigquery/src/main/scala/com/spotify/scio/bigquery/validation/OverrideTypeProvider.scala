@@ -26,46 +26,46 @@ import scala.reflect.runtime.universe._
 trait OverrideTypeProvider {
 
   /**
-    * Returns true if we should override default mapping
-    * Uses schema directly from BigQuery loading
-    */
+   * Returns true if we should override default mapping
+   * Uses schema directly from BigQuery loading
+   */
   def shouldOverrideType(tfs: TableFieldSchema): Boolean
 
   /**
-    * Returns true if we should override default mapping
-    * Uses compile time types
-    */
+   * Returns true if we should override default mapping
+   * Uses compile time types
+   */
   def shouldOverrideType(c: blackbox.Context)(tpe: c.Type): Boolean
 
   /**
-    * Returns true if we should override default mapping
-    * Uses runtime types
-    */
+   * Returns true if we should override default mapping
+   * Uses runtime types
+   */
   def shouldOverrideType(tpe: Type): Boolean
 
   /**
-    * Returns a context.Tree representing the Scala type
-    * This is called at macro expansion time
-    */
+   * Returns a context.Tree representing the Scala type
+   * This is called at macro expansion time
+   */
   def getScalaType(c: blackbox.Context)(tfs: TableFieldSchema): c.Tree
 
   /**
-    * Returns a context.Tree representing a new instance of whatever type is appropriate
-    * This is called at macro expansion time
-    */
+   * Returns a context.Tree representing a new instance of whatever type is appropriate
+   * This is called at macro expansion time
+   */
   def createInstance(c: blackbox.Context)(tpe: c.Type, tree: c.Tree): c.Tree
 
   /**
-    * When we need to initialize the toTable method using annotations
-    * This is called at macro expansion time
-    */
+   * When we need to initialize the toTable method using annotations
+   * This is called at macro expansion time
+   */
   def initializeToTable(c: blackbox.Context)(modifiers: c.universe.Modifiers,
                                              variableName: c.universe.TermName,
                                              tpe: c.universe.Tree): Unit
 
   /**
-    * Returns the String representation of the BigQuery column type
-    * This is called at runtime
-    */
+   * Returns the String representation of the BigQuery column type
+   * This is called at runtime
+   */
   def getBigQueryType(tpe: Type): String
 }
