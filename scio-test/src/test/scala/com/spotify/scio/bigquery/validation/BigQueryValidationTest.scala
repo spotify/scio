@@ -18,7 +18,7 @@
 
 package com.spotify.scio.bigquery.validation
 
-import com.spotify.scio.bigquery.description
+import com.spotify.scio.bigquery.{TableRow, description}
 import com.spotify.scio.bigquery.types.BigQueryType
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -47,7 +47,7 @@ class BigQueryValidationTest extends FlatSpec with Matchers  {
                            @description("NOCOUNTRY") noCountry: String)
 
   "ValidationProvider" should "override types using SampleValidationProvider for fromSchema" in {
-    val countryInput = CountryInput(Country("US"), "UK", "No Country")
+    val countryInput = CountryInput(new Country("US"), "UK", "No Country")
     countryInput.country.getData shouldBe "US"
     countryInput.countryString shouldBe "UK"
     countryInput.noCountry shouldBe "No Country"
@@ -61,8 +61,23 @@ class BigQueryValidationTest extends FlatSpec with Matchers  {
 
   "ValidationProvider" should "properly validate data" in {
     assertThrows[IllegalArgumentException]{
-      CountryInput(Country("USA"), "UK", "No Country")
+      CountryInput(new Country("USA"), "UK", "No Country")
     }
+  }
+
+  "ValidationProvider" should "throw an error when converting invalid data" in {
+    assertThrows[IllegalArgumentException] {
+      val tableRow = TableRow("country" -> "USA", "countryString" -> "USA", "noCountry" -> "USA")
+      val input = CountryInput.fromTableRow(tableRow)
+    }
+  }
+
+  "ValidationProvider" should "no error thrown converting valid data" in {
+    val tableRow = TableRow("country" -> "US", "countryString" -> "USA", "noCountry" -> "USA")
+    CountryInput.fromTableRow(tableRow)
+    //val inputTableRow = CountryInput.toTableRow(inputWithExtra)
+
+
   }
 
 
