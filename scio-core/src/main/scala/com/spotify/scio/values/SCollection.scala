@@ -872,7 +872,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   private def internalSaveAsObjectFile(path: String, numShards: Int = 0, suffix: String = ".obj",
                                        metadata: Map[String, AnyRef] = Map.empty,
-                                       isCheckpoint: Boolean = false, isMaterialized: Boolean = false)
+                                       isCheckpoint: Boolean = false,
+                                       isMaterialized: Boolean = false)
   : Future[Tap[T]] = {
     if (context.isTest) {
       (isCheckpoint, isMaterialized) match {
