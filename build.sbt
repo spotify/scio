@@ -314,7 +314,6 @@ lazy val scioTest: Project = Project(
   IntegrationTest
 ).dependsOn(
   scioCore % "test->test;compile->compile",
-  scioBigQuery % "test->test;compile->compile",
   scioSchemas % "test,it"
 )
 
@@ -354,7 +353,8 @@ lazy val scioBigQuery: Project = Project(
     "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
   )
 ).dependsOn(
-  scioCore
+  scioCore,
+  scioTest % "test"
 ).configs(IntegrationTest)
 
 
