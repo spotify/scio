@@ -23,7 +23,6 @@ import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro.{AvroUtils, TestRecord}
-import com.spotify.scio.bigquery._
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.{io => gio}
@@ -61,15 +60,6 @@ object GenericAvroFileJob {
   }
 }
 
-object BigQueryJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.bigQueryTable(args("input"))
-      .saveAsBigQuery(args("output"))
-    sc.close()
-  }
-}
-
 object DatastoreJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -95,15 +85,6 @@ object PubsubWithAttributesJob {
     sc.pubsubTopicWithAttributes[String](args("input"))
       .map(kv => (kv._1 + "X", kv._2))
       .saveAsPubsubWithAttributes(args("output"))
-    sc.close()
-  }
-}
-
-object TableRowJsonJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.tableRowJsonFile(args("input"))
-      .saveAsTableRowJsonFile(args("output"))
     sc.close()
   }
 }
@@ -266,25 +247,6 @@ class JobTestTest extends PipelineSpec {
     }
   }
 
-  def newTableRow(i: Int): TableRow = TableRow("int_field" -> i)
-
-  def testBigQuery(xs: Seq[TableRow]): Unit = {
-    JobTest[BigQueryJob.type]
-      .args("--input=table.in", "--output=table.out")
-      .input(BigQueryIO("table.in"), (1 to 3).map(newTableRow))
-      .output(BigQueryIO[TableRow]("table.out"))(_ should containInAnyOrder (xs))
-      .run()
-  }
-
-  it should "pass correct BigQueryJob" in {
-    testBigQuery((1 to 3).map(newTableRow))
-  }
-
-  it should "fail incorrect BigQueryJob" in {
-    an [AssertionError] should be thrownBy { testBigQuery((1 to 2).map(newTableRow)) }
-    an [AssertionError] should be thrownBy { testBigQuery((1 to 4).map(newTableRow)) }
-  }
-
   def newEntity(i: Int): Entity = Entity.newBuilder()
     .setKey(makeKey())
     .putAllProperties(ImmutableMap.of("int_field", makeValue(i).build()))
@@ -341,23 +303,6 @@ class JobTestTest extends PipelineSpec {
   it should "fail incorrect PubsubIO with attributes" in {
     an [AssertionError] should be thrownBy { testPubsubWithAttributesJob("aX", "bX") }
     an [AssertionError] should be thrownBy { testPubsubWithAttributesJob("aX", "bX", "cX", "dX") }
-  }
-
-  def testTableRowJson(xs: Seq[TableRow]): Unit = {
-    JobTest[TableRowJsonJob.type]
-      .args("--input=in.json", "--output=out.json")
-      .input(TableRowJsonIO("in.json"), (1 to 3).map(newTableRow))
-      .output(TableRowJsonIO("out.json"))(_ should containInAnyOrder (xs))
-      .run()
-  }
-
-  it should "pass correct TableRowJsonIO" in {
-    testTableRowJson((1 to 3).map(newTableRow))
-  }
-
-  it should "fail incorrect TableRowJsonIO" in {
-    an [AssertionError] should be thrownBy { testTableRowJson((1 to 2).map(newTableRow)) }
-    an [AssertionError] should be thrownBy { testTableRowJson((1 to 4).map(newTableRow)) }
   }
 
   def testTextFileJob(xs: String*): Unit = {
@@ -606,7 +551,7 @@ class JobTestTest extends PipelineSpec {
         .input(ObjectFileIO("in.avro"), Seq(1, 2, 3))
         .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder (Seq(1, 2, 3)))
 
-      testBigQuery((1 to 3).map(newTableRow))
+      // testBigQuery((1 to 3).map(newTableRow))
 
       JobTest[ObjectFileJob.type]
         .args("--input=in2.avro", "--output=out2.avro")
