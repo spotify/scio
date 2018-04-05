@@ -857,7 +857,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def materialize: Future[Tap[T]] = materialize(ScioUtil.getTempFile(context), isCheckpoint = false)
   private[scio] def materialize(path: String, isCheckpoint: Boolean): Future[Tap[T]] =
-    internalSaveAsObjectFile(path, isCheckpoint = isCheckpoint)
+    internalSaveAsObjectFile(path, isCheckpoint = isCheckpoint, isMaterialized = true)
 
   /**
    * Save this SCollection as an object file using default serialization.
@@ -872,11 +872,17 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   private def internalSaveAsObjectFile(path: String, numShards: Int = 0, suffix: String = ".obj",
                                        metadata: Map[String, AnyRef] = Map.empty,
-                                       isCheckpoint: Boolean = false)
+                                       isCheckpoint: Boolean = false, isMaterialized: Boolean = false)
   : Future[Tap[T]] = {
     if (context.isTest) {
-      // if it's a test and checkpoint - no need to test checkpoint data
-      if (!isCheckpoint) context.testOut(ObjectFileIO(path))(this)
+      (isCheckpoint, isMaterialized) match {
+        // if it's a test and checkpoint - no need to test checkpoint data
+        case (true, _) => ()
+        // Do not run assertions on materilized value but still access test context to trigger
+        // the test checking if we're running inside a JobTest
+        case (_, true) => context.testOutNio
+        case _ => context.testOut(ObjectFileIO(path))(this)
+      }
       saveAsInMemoryTap
     } else {
       val elemCoder = this.getCoder[T]
@@ -1141,7 +1147,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def write(io: ScioIO[T])(params: io.WriteP): Future[Tap[T]] = {
     if (context.isTest) {
-      context.testOutNio(io.id)
+      context.testOutNio(io.id)(this)
       this.saveAsInMemoryTap
     } else {
       io.write(this, params)

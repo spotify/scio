@@ -457,10 +457,12 @@ class ScioContext private[scio] (val options: PipelineOptions,
   /**  Whether this is a test context. */
   def isTest: Boolean = testId.isDefined
 
-  private[scio] def testOut: TestOutput = TestDataManager.getOutput(testId.get)
   private[scio] def testInNio: TestInputNio = TestDataManager.getInputNio(testId.get)
   private[scio] def testOutNio: TestOutputNio = TestDataManager.getOutputNio(testId.get)
   private[scio] def testDistCache: TestDistCache = TestDataManager.getDistCache(testId.get)
+
+  private[scio] def testOut[T](key: TestIO[T]): SCollection[T] => Unit =
+    testOutNio(key.key)
 
   private[scio] def getTestInput[T: ClassTag](key: TestIO[T]): SCollection[T] =
     getTestInputNio(key.key)

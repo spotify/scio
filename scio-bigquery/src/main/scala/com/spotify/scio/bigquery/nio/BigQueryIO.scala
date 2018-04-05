@@ -148,38 +148,26 @@ final case class TableRef(table: TableReference) extends ScioIO[TableRow] {
   def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
     params match {
       case TableRef.Parameters(schema, writeDisposition, createDisposition, tableDescription) =>
-        val tableSpec = bqio.BigQueryHelpers.toTableSpec(table)
-        if (data.context.isTest) {
-          data.context.testOut(BigQueryIO[TableRow](tableSpec))(data)
-
-          if (writeDisposition == WriteDisposition.WRITE_APPEND) {
-            Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
-          } else {
-            data.saveAsInMemoryTap
-          }
-        } else {
-          var transform = bqio.BigQueryIO.writeTableRows().to(table)
-          if (schema != null) {
-            transform = transform.withSchema(schema)
-          }
-          if (createDisposition != null) {
-            transform = transform.withCreateDisposition(createDisposition)
-          }
-          if (writeDisposition != null) {
-            transform = transform.withWriteDisposition(writeDisposition)
-          }
-          if (tableDescription != null) {
-            transform = transform.withTableDescription(tableDescription)
-          }
-          data.applyInternal(transform)
-
-          if (writeDisposition == WriteDisposition.WRITE_APPEND) {
-            Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
-          } else {
-            data.context.makeFuture(BigQueryTap(table))
-          }
+        var transform = bqio.BigQueryIO.writeTableRows().to(table)
+        if (schema != null) {
+          transform = transform.withSchema(schema)
         }
+        if (createDisposition != null) {
+          transform = transform.withCreateDisposition(createDisposition)
+        }
+        if (writeDisposition != null) {
+          transform = transform.withWriteDisposition(writeDisposition)
+        }
+        if (tableDescription != null) {
+          transform = transform.withTableDescription(tableDescription)
+        }
+        data.applyInternal(transform)
 
+        if (writeDisposition == WriteDisposition.WRITE_APPEND) {
+          Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
+        } else {
+          data.context.makeFuture(BigQueryTap(table))
+        }
     }
 }
 
@@ -249,16 +237,10 @@ final case class TableRowJsonFile(path: String) extends ScioIO[TableRow] {
   def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
     params match {
       case TableRowJsonFile.Parameters(numShards, compression) =>
-        if (data.context.isTest) {
-          data.context.testOut(TableRowJsonIO(path))(data)
-          data.saveAsInMemoryTap
-        } else {
-          data
-            .map(e => ScioUtil.jsonFactory.toString(e))
-            .applyInternal(data.textOut(path, ".json", numShards, compression))
-          data.context.makeFuture(TableRowJsonTap(ScioUtil.addPartSuffix(path)))
-        }
-
+        data
+          .map(e => ScioUtil.jsonFactory.toString(e))
+          .applyInternal(data.textOut(path, ".json", numShards, compression))
+        data.context.makeFuture(TableRowJsonTap(ScioUtil.addPartSuffix(path)))
     }
 }
 
@@ -350,34 +332,24 @@ object Typed {
     def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
       params match {
         case Table.Parameters(writeDisposition, createDisposition) =>
-          if (data.context.isTest) {
-            val tableSpec = bqio.BigQueryHelpers.toTableSpec(table)
-            data.context.testOut(BigQueryIO[T](tableSpec))(data)
-            if (writeDisposition == WriteDisposition.WRITE_APPEND) {
-              Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
-            } else {
-              data.saveAsInMemoryTap
-            }
-          } else {
-            val bqt = BigQueryType[T]
-            val initialTfName = data.tfName
-            import scala.concurrent.ExecutionContext.Implicits.global
-            val scoll =
-              data
-                .map(bqt.toTableRow)
-                .withName(s"$initialTfName$$Write")
+          val bqt = BigQueryType[T]
+          val initialTfName = data.tfName
+          import scala.concurrent.ExecutionContext.Implicits.global
+          val scoll =
+            data
+              .map(bqt.toTableRow)
+              .withName(s"$initialTfName$$Write")
 
-            val ps =
-              TableRef.Parameters(
-                bqt.schema,
-                writeDisposition,
-                createDisposition,
-                bqt.tableDescription.orNull)
+          val ps =
+            TableRef.Parameters(
+              bqt.schema,
+              writeDisposition,
+              createDisposition,
+              bqt.tableDescription.orNull)
 
-            TableRef(table)
-              .write(scoll, ps)
-              .map(_.map(bqt.fromTableRow))
-          }
+          TableRef(table)
+            .write(scoll, ps)
+            .map(_.map(bqt.fromTableRow))
       }
 
     def tap(read: ReadP): Tap[T] = ???

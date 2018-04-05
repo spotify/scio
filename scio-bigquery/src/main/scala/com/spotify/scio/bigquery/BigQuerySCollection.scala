@@ -43,7 +43,7 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
     val params =
       nio.TableRef.Parameters(schema, writeDisposition, createDisposition, tableDescription)
-    nio.TableRef(table).write(self.asInstanceOf[SCollection[TableRow]], params)
+    self.asInstanceOf[SCollection[TableRow]].write(nio.TableRef(table))(params)
   }
 
   /**
@@ -58,14 +58,7 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
     val params =
       nio.TableSpec.Parameters(schema, writeDisposition, createDisposition, tableDescription)
-    nio.TableSpec(tableSpec).write(self.asInstanceOf[SCollection[TableRow]], params)
-  }
-
-  private def cast[T](
-    f: SCollection[T with HasAnnotation] => Future[Tap[T with HasAnnotation]]
-  )(implicit ev: T <:< HasAnnotation): SCollection[T] => Future[Tap[T]] = { sc =>
-    f(sc.asInstanceOf[SCollection[T with HasAnnotation]])
-      .asInstanceOf[Future[Tap[T]]]
+    self.asInstanceOf[SCollection[TableRow]].write(nio.TableSpec(tableSpec))(params)
   }
 
   /**
@@ -78,7 +71,9 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
                          (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
   : Future[Tap[T]] = {
     val params = nio.Typed.Table.Parameters(writeDisposition, createDisposition)
-    cast[T](nio.Typed.Table(table).write(_, params)).apply(self)
+    self.asInstanceOf[SCollection[T with HasAnnotation]]
+      .write(nio.Typed.Table(table))(params)
+      .asInstanceOf[Future[Tap[T]]]
   }
 
   /**
@@ -117,7 +112,9 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
                          (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
   : Future[Tap[T]] = {
     val params = nio.Typed.Table.Parameters(writeDisposition, createDisposition)
-    cast[T](nio.Typed.Table(tableSpec).write(_, params)).apply(self)
+    self.asInstanceOf[SCollection[T with HasAnnotation]]
+      .write(nio.Typed.Table(tableSpec))(params)
+      .asInstanceOf[Future[Tap[T]]]
   }
 
 
@@ -131,6 +128,6 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
                              compression: Compression = Compression.UNCOMPRESSED)
                             (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
     val params = nio.TableRowJsonFile.Parameters(numShards, compression)
-    nio.TableRowJsonFile(path).write(self.asInstanceOf[SCollection[TableRow]], params)
+    self.asInstanceOf[SCollection[TableRow]].write(nio.TableRowJsonFile(path))(params)
   }
 }

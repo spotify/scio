@@ -70,7 +70,6 @@ object JobTest {
 
   private case class BuilderState(className: String,
                                   cmdlineArgs: Array[String] = Array(),
-                                  outputs: Map[TestIO[_], SCollection[_] => Unit] = Map.empty,
                                   inputNio: Map[String, Iterable[_]] = Map.empty,
                                   outputNio: Map[String, SCollection[_] => Unit] = Map.empty,
                                   distCaches: Map[DistCacheIO[_], _] = Map.empty,
@@ -114,9 +113,10 @@ object JobTest {
      *                  matchers on an [[com.spotify.scio.values.SCollection SCollection]].
      */
     def output[T](key: TestIO[T])(assertion: SCollection[T] => Unit): Builder = {
-      require(!state.outputs.contains(key), "Duplicate test output: " + key)
+      require(!state.outputNio.contains(key.key), "Duplicate test output: " + key.key)
       state = state
-        .copy(outputs = state.outputs + (key -> assertion.asInstanceOf[SCollection[_] => Unit]))
+        .copy(outputNio =
+          state.outputNio + (key.key -> assertion.asInstanceOf[SCollection[_] => Unit]))
       this
     }
 
@@ -221,7 +221,6 @@ object JobTest {
     def setUp(): Unit =
       TestDataManager.setup(
         testId,
-        state.outputs,
         state.inputNio,
         state.outputNio,
         state.distCaches
