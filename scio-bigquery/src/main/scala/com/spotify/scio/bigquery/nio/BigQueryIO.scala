@@ -118,16 +118,20 @@ final case class Select(sqlQuery: String) extends ScioIO[TableRow] {
 
   private lazy val bqc = BigQueryClient.defaultInstance()
 
-  // TODO: should it be returning {{Future[Tap[TableRow]]}}
   def tap(params: ReadParam): Tap[TableRow] =
-    ???
+    params match {
+        case FlattenResults(f) =>
+          val table = bqc.query(sqlQuery, flattenResults = f)
+          BigQueryTap(table)
+    }
 
-  def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] = ???
+  def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
+    throw new IllegalStateException("Select queries are read-only")
 }
 
 object Select {
   sealed trait ReadParam
-  final case class FlattenResults(value: Boolean) extends ReadParam
+  final case class FlattenResults(value: Boolean = false) extends ReadParam
 }
 
 /**
@@ -143,7 +147,8 @@ final case class TableRef(table: TableReference) extends ScioIO[TableRow] {
   def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     Reads.bqReadTable(sc)(bqio.BigQueryIO.readTableRows(), table)
 
-  def tap(read: ReadP): Tap[TableRow] = ???
+  def tap(read: ReadP): Tap[TableRow] =
+    BigQueryTap(table)
 
   def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
     params match {
@@ -189,18 +194,17 @@ final case class TableSpec(tableSpec: String) extends ScioIO[TableRow] {
   type WriteP = TableSpec.WriteParam
 
   def id: String = tableSpec
+  private lazy val ref = bqio.BigQueryHelpers.parseTableSpec(tableSpec)
 
-  def read(sc: ScioContext, params: ReadP): SCollection[TableRow] = {
-    val ref = bqio.BigQueryHelpers.parseTableSpec(tableSpec)
-    TableRef(ref).read(sc, ())
-  }
+  def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
+    TableRef(ref).read(sc, params)
 
-  def tap(read: ReadP): Tap[TableRow] = ???
+  def tap(read: ReadP): Tap[TableRow] =
+    TableRef(ref).tap(read)
 
   def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
     params match {
       case TableSpec.Parameters(schema, writeDisposition, createDisposition, tableDescription) =>
-        val ref = bqio.BigQueryHelpers.parseTableSpec(tableSpec)
         val p = TableRef.Parameters(schema, writeDisposition, createDisposition, tableDescription)
         TableRef(ref).write(data, p)
     }
@@ -232,7 +236,8 @@ final case class TableRowJsonFile(path: String) extends ScioIO[TableRow] {
         .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
     }
 
-  def tap(read: ReadP): Tap[TableRow] = ???
+  def tap(read: ReadP): Tap[TableRow] =
+    TableRowJsonTap(path)
 
   def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
     params match {
@@ -305,13 +310,21 @@ object Typed {
     type WriteP = Nothing // ReadOnly
 
     def id: String = query
+    private lazy val bqt = BigQueryType[T]
+
     def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-      @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
-      Reads.bqReadQuery(sc)(typedRead(sc), query)
+        @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
+        Reads.bqReadQuery(sc)(typedRead(sc), query)
     }
 
-    def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = ???
-    def tap(read: ReadP): Tap[T] = ???
+    def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
+      throw new IllegalStateException("Select queries are read-only")
+
+    def tap(params: ReadP): Tap[T] = {
+      Select(query)
+        .tap(Select.FlattenResults())
+        .map(bqt.fromTableRow)
+    }
   }
 
   /**
@@ -323,6 +336,7 @@ object Typed {
     type WriteP = Table.WriteParam
 
     def id: String = bqio.BigQueryHelpers.toTableSpec(table)
+    private lazy val bqt = BigQueryType[T]
 
     def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
@@ -332,7 +346,6 @@ object Typed {
     def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
       params match {
         case Table.Parameters(writeDisposition, createDisposition) =>
-          val bqt = BigQueryType[T]
           val initialTfName = data.tfName
           import scala.concurrent.ExecutionContext.Implicits.global
           val scoll =
@@ -352,7 +365,10 @@ object Typed {
             .map(_.map(bqt.fromTableRow))
       }
 
-    def tap(read: ReadP): Tap[T] = ???
+    def tap(read: ReadP): Tap[T] =
+      TableRef(table)
+        .tap(read)
+        .map(bqt.fromTableRow)
   }
 
   object Table {
@@ -369,21 +385,21 @@ object Typed {
     newSource: String
   ): ScioIO.ReadOnly[T, Unit] = {
     val bqt = BigQueryType[T]
-    lazy val _table = scala.util.Try(bqio.BigQueryHelpers.parseTableSpec(newSource)).toOption
+    lazy val table = scala.util.Try(bqio.BigQueryHelpers.parseTableSpec(newSource)).toOption
     newSource match {
       // newSource is missing, T's companion object must have either table or query
       // The case where newSource is null is only there
       // for legacy support and should not exists once
       // BigQueryScioContext.typedBigQuery is removed
       case null if bqt.isTable =>
-        val _table = bqt.table.get
-        ScioIO.ro(Table(_table))
+        val table = bqt.table.get
+        ScioIO.ro(Table(table))
       case null if bqt.isQuery =>
         val _query = bqt.query.get
         Query[T](_query)
       case null =>
         throw new IllegalArgumentException(s"Missing table or query field in companion object")
-      case _ if _table.isDefined =>
+      case _ if table.isDefined =>
         ScioIO.ro(Table[T](newSource))
       case _ =>
         Query[T](newSource)

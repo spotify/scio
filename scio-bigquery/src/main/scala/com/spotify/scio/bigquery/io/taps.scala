@@ -56,11 +56,13 @@ final case class BigQueryTaps[T <: Taps](self: T) {
     mkTap(
       s"BigQuery SELECT: $sqlQuery",
       () => isQueryDone(sqlQuery),
-      () => bigQueryTap(sqlQuery, flattenResults))
+      () => nio.Select(sqlQuery).tap(nio.Select.FlattenResults(flattenResults)))
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
   def bigQueryTable(table: TableReference): Future[Tap[TableRow]] =
-    mkTap(s"BigQuery Table: $table", () => bqc.tableExists(table), () => BigQueryTap(table))
+    mkTap(s"BigQuery Table: $table",
+      () => bqc.tableExists(table),
+      () => nio.TableRef(table).tap(()))
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
   def bigQueryTable(tableSpec: String): Future[Tap[TableRow]] =
@@ -70,39 +72,33 @@ final case class BigQueryTaps[T <: Taps](self: T) {
   def typedBigQuery[T <: HasAnnotation : TypeTag : ClassTag](newSource: String = null)
   : Future[Tap[T]] = {
     val bqt = BigQueryType[T]
-    val rows = if (newSource == null) {
-      // newSource is missing, T's companion object must have either table or query
-      if (bqt.isTable) {
-        bigQueryTable(bqt.table.get)
-      } else if (bqt.isQuery) {
-        bigQuerySelect(bqt.query.get)
-      } else {
-        throw new IllegalArgumentException(s"Missing table or query field in companion object")
+    lazy val table = scala.util.Try(BigQueryHelpers.parseTableSpec(newSource)).toOption
+    val rows =
+      newSource match {
+        // newSource is missing, T's companion object must have either table or query
+        case null if bqt.isTable =>
+          bigQueryTable(bqt.table.get)
+        case null if bqt.isQuery =>
+          bigQuerySelect(bqt.query.get)
+        case null =>
+          throw new IllegalArgumentException(s"Missing table or query field in companion object")
+        case _ if table.isDefined =>
+          bigQueryTable(table.get)
+        case _ =>
+          bigQuerySelect(newSource)
       }
-    } else {
-      // newSource can be either table or query
-      val table = scala.util.Try(BigQueryHelpers.parseTableSpec(newSource)).toOption
-      if (table.isDefined) {
-        bigQueryTable(table.get)
-      } else {
-        bigQuerySelect(newSource)
-      }
-    }
     import scala.concurrent.ExecutionContext.Implicits.global
     rows.map(_.map(bqt.fromTableRow))
   }
 
   /** Get a `Future[Tap[TableRow]]` for a BigQuery TableRow JSON file. */
   def tableRowJsonFile(path: String): Future[Tap[TableRow]] =
-    mkTap(s"TableRowJson: $path", () => self.isPathDone(path), () => TableRowJsonTap(path))
+    mkTap(s"TableRowJson: $path",
+      () => self.isPathDone(path),
+      () => nio.TableRowJsonFile(path).tap(()))
 
   private def isQueryDone(sqlQuery: String): Boolean =
     bqc.extractTables(sqlQuery).forall(bqc.tableExists)
-
-  private def bigQueryTap(sqlQuery: String, flattenResults: Boolean): BigQueryTap = {
-    val table = bqc.query(sqlQuery, flattenResults = flattenResults)
-    BigQueryTap(table)
-  }
 }
 
 object BigQueryTaps {
