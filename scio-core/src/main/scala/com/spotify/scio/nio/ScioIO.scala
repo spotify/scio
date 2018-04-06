@@ -74,5 +74,5 @@ object ScioIO {
 
       def id: String = io.id
     }
-  // scalastyle:off structural.type
+  // scalastyle:on structural.type
 }

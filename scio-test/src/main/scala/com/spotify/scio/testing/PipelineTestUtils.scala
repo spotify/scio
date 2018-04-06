@@ -41,6 +41,12 @@ trait PipelineTestUtils {
     sc.close()
   }
 
+  def runWithContext[T](tempLocation: String)(fn: ScioContext => T): ScioResult = {
+    val sc = ScioContext.forTest(tempLocation)
+    fn(sc)
+    sc.close()
+  }
+
   /**
    * Test pipeline components with in-memory data.
    *

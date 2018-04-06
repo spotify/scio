@@ -354,7 +354,7 @@ lazy val scioBigQuery: Project = Project(
   )
 ).dependsOn(
   scioCore,
-  scioTest % "test"
+  scioTest % "test,it->test"
 ).configs(IntegrationTest)
 
 

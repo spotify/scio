@@ -257,45 +257,51 @@ object TableRowJsonFile {
 }
 
 object Typed {
+  import scala.language.higherKinds
 
-  /**
-   * Get a typed SCollection for a BigQuery table.
-   *
-   * Note that `T` must be annotated with
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromTable]]
-   *
-   * The source (table) specified in the annotation will be used
-   *
-   * {{{
-   * @BigQueryType.fromTable("publicdata:samples.gsod")
-   * class Row
-   * }}}
-   *
-   */
-  def apply[T <: HasAnnotation with HasTable : ClassTag : TypeTag]: Table[T] = {
-    val bqt = BigQueryType[T]
-    val _table: String = bqt.table.get
-    Table[T](_table)
+  @annotation.implicitNotFound("""
+    Can't find annotation for type ${T}.
+    Make sure this class is annotated with BigQueryType.fromTable or with BigQueryType.fromQuery
+    Alternatively, use Typed.Query("<sqlQuery>") or Typed.Table("<bigquery table>")
+    to get a ScioIO instance.
+  """)
+  trait IO[T <: HasAnnotation] {
+    type F[_ <: HasAnnotation] <: ScioIO[_]
+    def impl: F[T]
   }
 
+  // scalastyle:off structural.type
+  object IO {
+    type Aux[T <: HasAnnotation, F0[_ <: HasAnnotation] <: ScioIO[_]] =
+      IO[T]{ type F[A <: HasAnnotation] = F0[A] }
+
+    implicit def tableIO[T <: HasAnnotation : ClassTag : TypeTag](
+      implicit t: BigQueryType.Table[T]): Aux[T, Table] =
+        new IO[T] {
+          type F[A <: HasAnnotation] = Table[A]
+          def impl: Table[T] = Table(t.table)
+        }
+
+    implicit def queryIO[T <: HasAnnotation : ClassTag : TypeTag](
+      implicit t: BigQueryType.Query[T]): Aux[T, Query] =
+        new IO[T] {
+          type F[A <: HasAnnotation] = Query[A]
+          def impl: Query[T] = Query(t.query)
+        }
+  }
+  // scalastyle:on structural.type
+
   /**
-   * Get a typed SCollection for a BigQuery SELECT query
+   * Get a typed SCollection for a BigQuery table or a SELECT query.
    *
    * Note that `T` must be annotated with
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromTable]] or
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]
    *
-   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
-   * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
-   * supported. By default the query dialect will be automatically detected. To override this
-   * behavior, start the query string with `#legacysql` or `#standardsql`.
+   * The source (table) specified in the annotation will be used
    */
-  def apply[T <: HasAnnotation with HasQuery : ClassTag : TypeTag](
-    implicit dummy: DummyImplicit)
-  : ScioIO.ReadOnly[T, Unit] = {
-    val bqt = BigQueryType[T]
-    val _query = bqt.query.get
-    Query(_query)
-  }
+  def apply[T <: HasAnnotation : ClassTag : TypeTag](implicit t: IO[T]): t.F[T] =
+    t.impl
 
   /**
    * Get a typed SCollection for a BigQuery SELECT query
@@ -313,8 +319,8 @@ object Typed {
     private lazy val bqt = BigQueryType[T]
 
     def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-        @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
-        Reads.bqReadQuery(sc)(typedRead(sc), query)
+      @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
+      Reads.bqReadQuery(sc)(typedRead(sc), query)
     }
 
     def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
