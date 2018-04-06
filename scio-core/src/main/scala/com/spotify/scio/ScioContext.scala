@@ -140,6 +140,14 @@ object ScioContext {
     new ScioContext(opts, List[String]())
   }
 
+  def forTest(tempLocation: String): ScioContext = {
+    val opts = PipelineOptionsFactory
+      .fromArgs(s"""--appName="${TestUtil.newTestId()}" --tempLocation="$tempLocation"""")
+      .as(classOf[PipelineOptions])
+    opts.setTempLocation(tempLocation)
+    new ScioContext(opts, List[String]())
+  }
+
   /** Parse PipelineOptions and application arguments from command line arguments. */
   @tailrec
   def parseArguments[T <: PipelineOptions : ClassTag](cmdlineArgs: Array[String],
