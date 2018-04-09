@@ -291,6 +291,10 @@ lazy val scioTest: Project = Project(
 ).settings(
   commonSettings ++ itSettings,
   description := "Scio helpers for ScalaTest",
+  // necessary to properly test since we need this value at compile time
+  initialize in Test ~= { _ =>
+    System.setProperty( "OVERRIDE_TYPE_PROVIDER", "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider" )
+  },
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "it",
@@ -330,16 +334,27 @@ lazy val scioAvro: Project = Project(
   )
 ).configs(IntegrationTest)
 
+lazy val PreTest =
+  config("pre-test")
+    .describedAs("Create a new compilation unit so that SampleOverrideTypeProvider is compiled before OverrideTypeProviderFinder's lookup.")
+
+
 lazy val scioBigQuery: Project = Project(
   "scio-bigquery",
   file("scio-bigquery")
 ).settings(
+  inConfig(PreTest)(Defaults.configSettings),
   commonSettings ++ macroSettings ++ itSettings,
   description := "Scio add-on for Google BigQuery",
   // necessary to properly test since we need this value at compile time
   initialize in Test ~= { _ =>
     System.setProperty( "OVERRIDE_TYPE_PROVIDER", "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider" )
   },
+  addCompilerPlugin(paradiseDependency),
+  (compile in PreTest) := (compile in PreTest).dependsOn(compile in Compile).value,
+  (unmanagedClasspath in PreTest) += (classDirectory in Compile).value,
+  (compile in Test) := (compile in Test).dependsOn(compile in PreTest).value,
+  (unmanagedClasspath in Test) += (classDirectory in PreTest).value,
   libraryDependencies ++= Seq(
     "commons-io" % "commons-io" % commonsIoVersion,
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
