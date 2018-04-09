@@ -26,6 +26,47 @@ import org.objenesis.instantiator.sun.SunReflectionFactoryInstantiator
 
 import scala.reflect.ClassTag
 
+/**
+  * Optimized serializer that can be used for case classes.
+  * Has lower memory and CPU overhead than the Kryo default.
+  * {{{
+  * import com.spotify.scio._
+  * import com.spotify.scio.coders.{CaseClassSerializer, KryoRegistrar}
+  * import com.spotify.scio.examples.common.ExampleData
+  * import com.twitter.chill.{IKryoRegistrar, Kryo}
+  *
+  * object WordCount {
+  *
+  * @KryoRegistrar
+  * class OptimizedKryoRegistrar extends IKryoRegistrar {
+  *     override def apply(k: Kryo): Unit = {
+  *       k.addDefaultSerializer(classOf[Tuple2[_,_]],  new CaseClassSerializer[Tuple2[_,_]](k))
+  *     }
+  *   }
+  *
+  * def main(cmdlineArgs: Array[String]): Unit = {
+  *     val (sc, args) = ContextAndArgs(cmdlineArgs)
+  *     val input = args.getOrElse("input", ExampleData.KING_LEAR)
+  *     val output = args("output")
+  *     sc.textFile(input)
+  *       .map { w =>
+  *         val trimmed = w.trim
+  *         trimmed
+  *       }
+  *       .filter { w => w.nonEmpty}
+  *       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
+  *       .countByValue
+  *       .map(t => t._1 + ": " + t._2)
+  *       .saveAsTextFile(output)
+  *     sc.close().waitUntilFinish()
+  * }
+  *
+  * }
+  * }}}
+  *
+  * @param kryo Kryo instance to be used for underlying serialization
+  * @tparam T Underlying type
+  */
 class CaseClassSerializer[T: ClassTag](kryo: Kryo)
   extends FieldSerializer[T](kryo, ScioUtil.classOf[T]) {
 
