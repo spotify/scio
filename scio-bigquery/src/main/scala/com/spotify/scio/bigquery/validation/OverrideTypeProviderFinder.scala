@@ -35,7 +35,7 @@ object OverrideTypeProviderFinder {
             value.newInstance()
               .asInstanceOf[OverrideTypeProvider]
           case Failure(ex @ NonFatal(_)) =>
-            logger.error(s"Class not found: $n", ex)
+            logger.warn(s"Class not found: $n")
             default
         }
       }.getOrElse(default)
