@@ -41,7 +41,7 @@ import scala.reflect.runtime.universe._
 
 private object Reads {
   private def client(sc: ScioContext) =
-    sc.cached[BigQueryClient]{
+    sc.cached[BigQueryClient] {
       val o = sc.optionsAs[GcpOptions]
       BigQueryClient(o.getProject, o.getGcpCredential)
     }
