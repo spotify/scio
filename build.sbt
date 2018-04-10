@@ -259,7 +259,7 @@ lazy val scioCore: Project = Project(
   "scio-core",
   file("scio-core")
 ).settings(
-  commonSettings ++ macroSettings,
+  commonSettings ++ macroSettings ++ itSettings,
   description := "Scio - A Scala API for Apache Beam and Google Cloud Dataflow",
   resources in Compile ++= Seq(
     (baseDirectory in ThisBuild).value / "build.sbt",
@@ -281,6 +281,8 @@ lazy val scioCore: Project = Project(
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
     "org.apache.xbean" % "xbean-asm5-shaded" % asmVersion
   )
+).configs(
+  IntegrationTest
 ).dependsOn(
   scioAvro
 )
@@ -309,7 +311,7 @@ lazy val scioTest: Project = Project(
 ).configs(
   IntegrationTest
 ).dependsOn(
-  scioCore % "test->test;compile->compile",
+  scioCore % "test->test;compile->compile;it->it",
   scioSchemas % "test,it"
 )
 
@@ -340,7 +342,7 @@ lazy val scioBigQuery: Project = Project(
   file("scio-bigquery")
 ).settings(
   inConfig(PreTest)(Defaults.configSettings),
-  commonSettings ++ macroSettings ++ itSettings,
+  commonSettings ++ macroSettings ++ itSettings ++ beamRunnerSettings,
   description := "Scio add-on for Google BigQuery",
   // necessary to properly test since we need this value at compile time
   (initialize in Test) ~= { _ =>
@@ -361,13 +363,16 @@ lazy val scioBigQuery: Project = Project(
     "org.slf4j" % "slf4j-api" % slf4jVersion,
     "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
     "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
+    "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
     "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
-    "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test",
+    // DataFlow testing requires junit and hamcrest
+    "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test,it",
+    "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test,it",
     "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
   )
 ).dependsOn(
-  scioCore,
-  scioTest % "test,it->test"
+  scioCore % "compile,it->it",
+  scioTest % "compile,test->test,it->test"
 ).configs(IntegrationTest)
 
 

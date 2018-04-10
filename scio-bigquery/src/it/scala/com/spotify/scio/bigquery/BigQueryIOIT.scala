@@ -32,7 +32,7 @@ object BigQueryIOIT {
   """)
   class ShakespeareFromQuery
 
-  val tempLocation = "gs://data-integration-test-eu/temp"
+  val tempLocation = com.spotify.scio.testing.util.ItUtils.gcpTempLocation("bigquery-it")
 }
 
 class BigQueryIOIT extends PipelineSpec {
