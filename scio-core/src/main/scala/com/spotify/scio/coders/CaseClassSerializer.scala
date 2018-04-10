@@ -28,7 +28,9 @@ import scala.reflect.ClassTag
 
 /**
   * Optimized serializer that can be used for case classes.
-  * Has lower memory and CPU overhead than the Kryo default.
+  * Has lower memory and CPU overhead than default serialization.
+  * Sample usage:
+  *
   * {{{
   * import com.spotify.scio._
   * import com.spotify.scio.coders.{CaseClassSerializer, KryoRegistrar}
@@ -65,7 +67,7 @@ import scala.reflect.ClassTag
   * }}}
   *
   * @param kryo Kryo instance to be used for underlying serialization
-  * @tparam T Underlying type
+  * @tparam T Underlying serialized type
   */
 class CaseClassSerializer[T: ClassTag](kryo: Kryo)
   extends FieldSerializer[T](kryo, ScioUtil.classOf[T]) {

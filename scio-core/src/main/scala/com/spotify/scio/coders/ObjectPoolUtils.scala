@@ -17,9 +17,10 @@
 
 package com.spotify.scio.coders
 
-import org.apache.commons.pool2.impl.{DefaultPooledObject, GenericObjectPool}
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig
+import org.apache.commons.pool2.impl.{DefaultPooledObject, GenericObjectPool,
+  GenericObjectPoolConfig}
 import org.apache.commons.pool2.{ObjectPool, PooledObject, PooledObjectFactory}
+import scala.util.Try
 
 object ObjectPoolUtils {
 
@@ -42,11 +43,9 @@ object ObjectPoolUtils {
 
   def withPool[T,R](pool: ObjectPool[T])(user: T => R) : R = {
     val value = pool.borrowObject()
-    try {
-      user.apply(value)
-    } finally {
-      pool.returnObject(value)
-    }
+    val work = Try(user.apply(value))
+    pool.returnObject(value)
+    work.get
   }
 
   def config() : GenericObjectPoolConfig = {
