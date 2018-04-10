@@ -1,7 +1,7 @@
 # Same JVM opts as https://github.com/typelevel/cats/blob/master/.jvmopts
 -Dfile.encoding=UTF8
 -Xms1G
--Xmx6G
+-Xmx3G
 -XX:ReservedCodeCacheSize=250M
 -XX:+TieredCompilation
 -XX:-UseGCOverheadLimit
