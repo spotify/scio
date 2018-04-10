@@ -25,7 +25,6 @@ import com.google.auth.Credentials
 import com.google.auth.http.HttpCredentialsAdapter
 import com.google.cloud.hadoop.util.ChainingHttpRequestInitializer
 import com.google.common.collect.ImmutableList
-import com.spotify.scio.bigquery.BigQueryClient
 import org.apache.beam.sdk.extensions.gcp.auth.NullCredentialInitializer
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.extensions.gcp.options._
@@ -35,11 +34,14 @@ import org.apache.beam.sdk.util.{RetryHttpRequestInitializer, Transport}
 /** Integration test utilities. */
 private[scio] object ItUtils {
 
+  // XXX: Copied from BigQueryClient
+  val PROJECT_KEY: String = "bigquery.project"
+
   /** Get project for integration test. */
   def project: String =
-    if (sys.props(BigQueryClient.PROJECT_KEY) != null) {
+    if (sys.props(PROJECT_KEY) != null) {
       // this is usually set by CI script
-      sys.props(BigQueryClient.PROJECT_KEY)
+      sys.props(PROJECT_KEY)
     } else {
       // fallback to local setting
       new DefaultProjectFactory().create(null)
