@@ -19,8 +19,10 @@ package com.spotify.scio.bigquery
 
 import java.util.UUID
 
+import org.apache.beam.sdk.options._
 import com.spotify.scio.testing._
 import com.spotify.scio.bigquery.nio._
+import com.spotify.scio.testing.util.ItUtils
 
 object BigQueryIOIT {
 
@@ -32,15 +34,23 @@ object BigQueryIOIT {
   """)
   class ShakespeareFromQuery
 
-  val tempLocation = com.spotify.scio.testing.util.ItUtils.gcpTempLocation("bigquery-it")
+  val tempLocation = ItUtils.gcpTempLocation("bigquery-it")
 }
 
 class BigQueryIOIT extends PipelineSpec {
   import BigQueryIOIT._
+  import ItUtils.project
+
+  val options = PipelineOptionsFactory
+      .fromArgs(
+        s"--project=$project",
+        s"--tempLocation=$tempLocation")
+      .create()
+
 
   "Select" should "read typed values from a sql query" in
-    runWithContext(tempLocation) { sc =>
-      val scoll = sc.read(Typed[ShakespeareFromQuery])
+    runWithRealContext(options) { sc =>
+      val scoll = Typed[ShakespeareFromQuery].read(sc, ())
       scoll should haveSize (10)
       scoll should satisfy[ShakespeareFromQuery] {
         _.forall(_.getClass == classOf[ShakespeareFromQuery])
@@ -48,8 +58,8 @@ class BigQueryIOIT extends PipelineSpec {
     }
 
   "TableRef" should "read typed values from table" in
-    runWithContext(tempLocation) { sc =>
-      val scoll = sc.read(Typed[ShakespeareFromTable])
+    runWithRealContext(options) { sc =>
+      val scoll = Typed[ShakespeareFromTable].read(sc, ())
       scoll.take(10) should haveSize (10)
       scoll should satisfy[ShakespeareFromTable] {
         _.forall(_.getClass == classOf[ShakespeareFromTable])

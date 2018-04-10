@@ -42,13 +42,8 @@ import scala.reflect.runtime.universe._
 private object Reads {
   private def client(sc: ScioContext) =
     sc.cached[BigQueryClient] {
-      // XXX: BigQueryClient should be a parameters
-      if(sc.isTest) {
-        BigQueryClient.defaultInstance()
-      } else {
-        val o = sc.optionsAs[GcpOptions]
-        BigQueryClient(o.getProject, o.getGcpCredential)
-      }
+      val o = sc.optionsAs[GcpOptions]
+      BigQueryClient(o.getProject, o.getGcpCredential)
     }
 
   private[scio] def bqReadQuery[T: ClassTag](sc: ScioContext)(

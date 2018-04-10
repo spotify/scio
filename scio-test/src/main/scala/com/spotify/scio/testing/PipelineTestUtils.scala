@@ -17,6 +17,7 @@
 
 package com.spotify.scio.testing
 
+import org.apache.beam.sdk.options._
 import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 
@@ -41,8 +42,8 @@ trait PipelineTestUtils {
     sc.close()
   }
 
-  def runWithContext[T](tempLocation: String)(fn: ScioContext => T): ScioResult = {
-    val sc = ScioContext.forTest(tempLocation)
+  def runWithRealContext[T](options: PipelineOptions)(fn: ScioContext => T): ScioResult = {
+    val sc = ScioContext(options)
     fn(sc)
     sc.close()
   }
