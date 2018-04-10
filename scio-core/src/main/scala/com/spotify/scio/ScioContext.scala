@@ -141,8 +141,9 @@ object ScioContext {
   }
 
   def forTest(tempLocation: String): ScioContext = {
+    val projectId = TestUtil.newTestId()
     val opts = PipelineOptionsFactory
-      .fromArgs(s"""--appName="${TestUtil.newTestId()}" --tempLocation="$tempLocation"""")
+      .fromArgs(s"--appName=$projectId --tempLocation=$tempLocation")
       .as(classOf[PipelineOptions])
     opts.setTempLocation(tempLocation)
     new ScioContext(opts, List[String]())
