@@ -95,25 +95,25 @@ object MetricsExample {
     require(c == 100)
 
     val g = result.gauge(gauge).committed.get
-    println("gauge timestamp: " + g.getTimestamp())
-    println("gauge value: " + g.getValue())
+    println("gauge timestamp: " + g.getTimestamp)
+    println("gauge value: " + g.getValue)
 
     val d = result.distribution(dist).committed.get
-    println("dist min: " + d.getMin())
-    println("dist max: " + d.getMax())
-    println("dist count: " + d.getCount())
-    println("dist sum: " + d.getSum())
-    println("dist mean: " + d.getMean())
-    require(d.getMin() == 1 && d.getMax() == 100)
-    require(d.getCount() == 100)
-    require(d.getSum() == (1 to 100).sum)
-    require(d.getMean() == (1 to 100).sum / 100.0)
+    println("dist min: " + d.getMin)
+    println("dist max: " + d.getMax)
+    println("dist count: " + d.getCount)
+    println("dist sum: " + d.getSum)
+    println("dist mean: " + d.getMean)
+    require(d.getMin == 1 && d.getMax == 100)
+    require(d.getCount == 100)
+    require(d.getSum == (1 to 100).sum)
+    require(d.getMean == (1 to 100).sum / 100.0)
 
     // Dynamic metrics
     result.allCounters
       .filterKeys(_.getName.startsWith("even_"))
       .foreach { case (name, value) =>
-        println(name.getName() + ": " + value.committed.get)
+        println(name.getName + ": " + value.committed.get)
       }
   }
 
