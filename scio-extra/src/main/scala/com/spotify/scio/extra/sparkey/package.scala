@@ -102,17 +102,27 @@ package object sparkey {
     /**
      * Write the key-value pairs of this SCollection as a Sparkey file to a specific location.
      *
+     * @param path where to write the sparkey files. Defaults to a temporary location.
+     * @param maxMemoryUsage (optional) how much memory (in bytes) is allowed for writing
+     *                       the index file
      * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
-    def asSparkey(basePath: String)(implicit w: SparkeyWritable[K, V])
-    : SCollection[SparkeyUri] = {
+    def asSparkey(path: String = null, maxMemoryUsage: Long = -1)
+                 (implicit w: SparkeyWritable[K, V]): SCollection[SparkeyUri] = {
+      val basePath = if (path == null) {
+        val uuid = UUID.randomUUID()
+        self.context.options.getTempLocation + s"/sparkey-$uuid"
+      } else {
+        path
+      }
+
       val uri = SparkeyUri(basePath, self.context.options)
       require(!uri.exists, s"Sparkey URI ${uri.basePath} already exists")
       logger.info(s"Saving as Sparkey: $uri")
       self.transform { in =>
         in.groupBy(_ => ())
           .map { case (_, xs) =>
-            val writer = new SparkeyWriter(uri)
+            val writer = new SparkeyWriter(uri, maxMemoryUsage)
             val it = xs.iterator
             while (it.hasNext) {
               val kv = it.next()
@@ -129,11 +139,7 @@ package object sparkey {
      *
      * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
-    def asSparkey(implicit w: SparkeyWritable[K, V]): SCollection[SparkeyUri] = {
-      val uuid = UUID.randomUUID()
-      val basePath = self.context.options.getTempLocation + s"/sparkey-$uuid"
-      this.asSparkey(basePath)
-    }
+    def asSparkey(implicit w: SparkeyWritable[K, V]): SCollection[SparkeyUri] = this.asSparkey()
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
