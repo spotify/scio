@@ -297,6 +297,7 @@ lazy val scioTest: Project = Project(
     System.setProperty( "OVERRIDE_TYPE_PROVIDER", "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider" )
   },
   libraryDependencies ++= Seq(
+    "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "it",
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
