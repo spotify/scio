@@ -23,6 +23,7 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.io.gcp.bigtable.BigtableIO
 import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.apache.beam.sdk.values.KV
 import org.joda.time.Duration
@@ -124,7 +125,7 @@ package object bigtable {
           tableId)
         self.getTestInput[Row](input)
       } else {
-        var read =org.apache.beam.sdk.io.gcp.bigtable.BigtableIO.read()
+        var read = BigtableIO.read()
           .withBigtableOptions(bigtableOptions)
           .withTableId(tableId)
         if (keyRange != null) {
@@ -258,7 +259,7 @@ package object bigtable {
           bigtableOptions.getProjectId, bigtableOptions.getInstanceId, tableId)
         self.context.testOut(output.asInstanceOf[TestIO[(ByteString, Iterable[T])]])(self)
       } else {
-        val sink = org.apache.beam.sdk.io.gcp.bigtable.BigtableIO.write()
+        val sink = BigtableIO.write()
           .withBigtableOptions(bigtableOptions)
           .withTableId(tableId)
         self
@@ -269,7 +270,7 @@ package object bigtable {
     }
 
     /**
-      * Enhanced version to save this SCollection as a Bigtable table. Allows for creation of large
+      * Enhanced version to save this SCollection as a Bigtable table. Allows for creation of
       * bulk writes to Bigtable. Note that elements must be of type `Mutation`.
       */
     def saveAsBigtable(tableId: String,
