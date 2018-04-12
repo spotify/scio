@@ -577,15 +577,25 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /**
    * Print content of an SCollection to `out()`.
+   * @param out where to write the debug information. Default: stdout
+   * @param prefix prefix for each logged entry. Default: empty string
+   * @param enabled if debugging is enabled or not. Default: true.
+   *                It can be useful to set this to sc.isTest to avoid
+   *                debugging when running in production.
    * @group debug
    */
-  def debug(out: () => PrintStream = () => Console.out, prefix: String = ""): SCollection[T] =
-    this.filter { e =>
-      // scalastyle:off regex
-      out().println(prefix + e)
-      // scalastyle:on regex
-      // filter that never removes
-      true
+  def debug(out: () => PrintStream = () => Console.out, prefix: String = "",
+            enabled: Boolean = true): SCollection[T] =
+    if (enabled) {
+      this.filter { e =>
+        // scalastyle:off regex
+        out().println(prefix + e)
+        // scalastyle:on regex
+        // filter that never removes
+        true
+      }
+    } else {
+      this
     }
 
   // =======================================================================
