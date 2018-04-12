@@ -34,12 +34,21 @@ Scio 0.3.0 and future versions depend on Apache Beam (`org.apache.beam`) while e
 
 # Quick Start
 
-The ubiquitous word count example can be run directly with SBT in local mode, using `README.md` as input.
+Use our [giter8 template](https://github.com/spotify/scio.g8) to quickly setup a project:  
 
-```bash
-sbt "scio-examples/run-main com.spotify.scio.examples.WordCount --input=README.md --output=wc"
-cat wc/part-00000-of-00001.txt
-```
+`sbt new spotify/scio.g8`
+
+Compile it:
+
+`sbt pack`
+
+Run the included word count example:
+
+`target/pack/bin/word-count --output=wc`
+
+Inspect the results:
+
+`cat wc/part-00000-of-00001.txt`
 
 # Documentation
 

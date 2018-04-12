@@ -48,7 +48,7 @@ import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub =
 import org.apache.beam.sdk.metrics.Counter
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.{Create, DoFn, PTransform, SerializableFunction}
+import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{Pipeline, PipelineResult, io => gio}
@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer}
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Future, Promise}
 import scala.io.Source
 import scala.reflect.ClassTag
@@ -257,6 +258,20 @@ class ScioContext private[scio] (val options: PipelineOptions,
       }
     }
 
+  /** Amount of time to block job for. */
+  private[scio] val awaitDuration: Duration = {
+    val blockFor = optionsAs[ScioOptions].getBlockFor
+    try {
+      Option(blockFor)
+        .map(Duration(_))
+        .getOrElse(Duration.Inf)
+    } catch {
+      case e: NumberFormatException =>
+        throw new IllegalArgumentException(s"blockFor param $blockFor cannot be cast to " +
+          s"type scala.concurrent.duration.Duration")
+    }
+  }
+
   // if in local runner, temp location may be needed, but is not currently required by
   // the runner, which may end up with NPE. If not set but user generate new temp dir
   if (ScioUtil.isLocalRunner(options.getRunner) && options.getTempLocation == null) {
@@ -357,8 +372,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
       TestDataManager.closeTest(testId.get, result)
     }
 
-    if (this.isTest || this.optionsAs[ScioOptions].isBlocking) {
-      result.waitUntilDone()  // block local runner for JobTest to work
+    if (this.isTest || (this.optionsAs[ScioOptions].isBlocking && awaitDuration == Duration.Inf)) {
+      result.waitUntilDone()
     } else {
       result
     }
@@ -391,6 +406,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
         context.optionsAs[ApplicationNameOptions].getAppName,
         state.toString,
         getBeamMetrics)
+
+    override def getAwaitDuration: Duration = awaitDuration
   }
 
   /** Whether the context is closed. */
@@ -822,6 +839,15 @@ class ScioContext private[scio] (val options: PipelineOptions,
     val maxLength = 256
     if (name.length <= maxLength) name else name.substring(0, maxLength - 3) + "..."
   }
+
+  /** Create a union of multiple SCollections. Supports empty lists. */
+  def unionAll[T: ClassTag](scs: Iterable[SCollection[T]]): SCollection[T] = scs match {
+    case Nil => empty()
+    case contents => SCollection.unionAll(contents)
+  }
+
+  /** Form an empty SCollection. */
+  def empty[T: ClassTag](): SCollection[T] = parallelize(Seq())
 
   /**
    * Distribute a local Scala `Iterable` to form an SCollection.

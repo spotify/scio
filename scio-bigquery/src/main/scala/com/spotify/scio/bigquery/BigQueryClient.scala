@@ -54,23 +54,52 @@ import scala.util.{Failure, Random, Success, Try}
 /** Utility for BigQuery data types. */
 object BigQueryUtil {
 
+  private lazy val jsonObjectParser = new JsonObjectParser(new JacksonFactory)
+
   /** Parse a schema string. */
   def parseSchema(schemaString: String): TableSchema =
-    new JsonObjectParser(new JacksonFactory)
+    jsonObjectParser
       .parseAndClose(new StringReader(schemaString), classOf[TableSchema])
 
 }
 
+/** A BigQueryJob */
+private[scio] sealed trait BigQueryJob {
+  val jobReference: Option[JobReference]
+  val jobType: String
+  val table: TableReference
+}
+
+/* Extract Job Container */
+private[scio] case class ExtractJob(destinationUris: List[String],
+                                    jobReference: Option[JobReference],
+                                    table: TableReference)
+  extends BigQueryJob {
+
+  val jobType = "Extract"
+}
+
+/* Load Job Container */
+private[scio] case class LoadJob(sources: List[String],
+                                 jobReference: Option[JobReference],
+                                 table: TableReference)
+  extends BigQueryJob {
+
+  val jobType = "Load"
+}
+
 /** A query job that may delay execution. */
-private[scio] trait QueryJob {
+private[scio] trait QueryJob extends BigQueryJob {
   def waitForResult(): Unit
   val jobReference: Option[JobReference]
   val query: String
   val table: TableReference
+  val jobType: String = "Query"
 }
 
 /** A simple BigQuery client. */
 // scalastyle:off number.of.methods
+// scalastyle:off file.size.limit
 class BigQueryClient private (private val projectId: String,
                               _credentials: Credentials = null) { self =>
 
@@ -258,6 +287,12 @@ class BigQueryClient private (private val projectId: String,
   def tableExists(tableSpec: String): Boolean =
     tableExists(bq.BigQueryHelpers.parseTableSpec(tableSpec))
 
+  /** Deletes a table */
+  private[bigquery] def deleteTable(table: TableReference): Unit = {
+    bigquery.tables().delete(table.getProjectId, table.getDatasetId, table.getTableId)
+      .execute()
+  }
+
   /**
    * Make a query and save results to a destination table.
    *
@@ -304,41 +339,6 @@ class BigQueryClient private (private val projectId: String,
     writeTableRows(
       bq.BigQueryHelpers.parseTableSpec(tableSpec),
       rows, schema, writeDisposition, createDisposition)
-
-  /** Wait for all jobs to finish. */
-  def waitForJobs(jobs: QueryJob*): Unit = {
-    val numTotal = jobs.size
-    var pendingJobs = jobs.filter(_.jobReference.isDefined)
-    while (pendingJobs.nonEmpty) {
-      val remainingJobs = pendingJobs.filter { j =>
-        val jobId = j.jobReference.get.getJobId
-        try {
-          val poll = bigquery.jobs().get(projectId, jobId).execute()
-          val error = poll.getStatus.getErrorResult
-          if (error != null) {
-            throw new RuntimeException(s"Query job failed: id: $jobId, error: $error")
-          }
-          if (poll.getStatus.getState == "DONE") {
-            logJobStatistics(j.query, poll)
-            false
-          } else {
-            true
-          }
-        } catch {
-          case e: IOException =>
-            logger.warn(s"BigQuery request failed: id: $jobId, error: $e")
-            true
-        }
-      }
-
-      pendingJobs = remainingJobs
-      val numDone = numTotal - pendingJobs.size
-      logger.info(s"Query: $numDone out of $numTotal completed")
-      if (pendingJobs.nonEmpty) {
-        Thread.sleep(10000)
-      }
-    }
-  }
 
   // =======================================================================
   // Type safe API
@@ -515,22 +515,6 @@ class BigQueryClient private (private val projectId: String,
     override val table: TableReference = destinationTable
   }
 
-  private def logJobStatistics(sqlQuery: String, job: Job): Unit = {
-    val jobId = job.getJobReference.getJobId
-    val stats = job.getStatistics
-    logger.info(s"Query completed: jobId: $jobId")
-    logger.info(s"Query: `$sqlQuery`")
-
-    val elapsed = PERIOD_FORMATTER.print(new Period(stats.getEndTime - stats.getCreationTime))
-    val pending = PERIOD_FORMATTER.print(new Period(stats.getStartTime - stats.getCreationTime))
-    val execution = PERIOD_FORMATTER.print(new Period(stats.getEndTime - stats.getStartTime))
-    logger.info(s"Elapsed: $elapsed, pending: $pending, execution: $execution")
-
-    val bytes = FileUtils.byteCountToDisplaySize(stats.getQuery.getTotalBytesProcessed)
-    val cacheHit = stats.getQuery.getCacheHit
-    logger.info(s"Total bytes processed: $bytes, cache hit: $cacheHit")
-  }
-
   // =======================================================================
   // Query handling
   // =======================================================================
@@ -668,8 +652,283 @@ class BigQueryClient private (private val projectId: String,
 
   private def tableCacheFile(key: String): File = cacheFile(key, ".table.txt")
 
+  // =======================================================================
+  // Export
+  // =======================================================================
+
+  /** Export a table as Csv */
+  def exportTableAsCsv(sourceTable: String,
+                       destinationUris: List[String],
+                       gzipCompression: Boolean = false,
+                       fieldDelimiter: Option[String] = None,
+                       printHeader: Option[Boolean] = None): Unit = {
+
+    exportTable(sourceTable = sourceTable,
+      destinationUris = destinationUris,
+      format = "CSV",
+      gzipCompression = gzipCompression,
+      fieldDelimiter = fieldDelimiter,
+      printHeader = printHeader)
+  }
+
+  /** Export a table as Json */
+  def exportTableAsJson(sourceTable: String,
+                        destinationUris: List[String],
+                        gzipCompression: Boolean = false): Unit = {
+
+    exportTable(sourceTable = sourceTable,
+      destinationUris = destinationUris,
+      format = "NEWLINE_DELIMITED_JSON",
+      gzipCompression = gzipCompression)
+  }
+
+  /** Export a table as Avro */
+  def exportTableAsAvro(sourceTable: String,
+                        destinationUris: List[String],
+                        gzipCompression: Boolean = false): Unit = {
+
+    exportTable(sourceTable = sourceTable,
+      destinationUris = destinationUris,
+      format = "AVRO",
+      gzipCompression = gzipCompression)
+  }
+
+  private def exportTable(sourceTable: String,
+                          destinationUris: List[String],
+                          format: String,
+                          gzipCompression: Boolean = false,
+                          fieldDelimiter: Option[String] = None,
+                          printHeader: Option[Boolean] = None): Unit = {
+
+    val tableRef = bq.BigQueryHelpers.parseTableSpec(sourceTable)
+
+    val jobConfigExtract = new JobConfigurationExtract()
+      .setSourceTable(tableRef)
+      .setDestinationUris(destinationUris.asJava)
+      .setDestinationFormat(format)
+
+    if (gzipCompression) jobConfigExtract.setCompression("GZIP")
+    fieldDelimiter.foreach(jobConfigExtract.setFieldDelimiter)
+    printHeader.foreach(jobConfigExtract.setPrintHeader(_))
+
+    val jobConfig = new JobConfiguration()
+      .setExtract(jobConfigExtract)
+
+    val fullJobId = projectId + "-" + UUID.randomUUID().toString
+    val jobReference = new JobReference().setProjectId(projectId).setJobId(fullJobId)
+    val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
+
+    logger.info(s"Extracting table $sourceTable to ${destinationUris.mkString(", ")}")
+
+    bigquery.jobs().insert(projectId, job).execute()
+
+    val extractJob = ExtractJob(destinationUris, Some(jobReference), tableRef)
+
+    waitForJobs(extractJob)
+  }
+
+  // =======================================================================
+  // Load
+  // =======================================================================
+
+  // scalastyle:off parameter.number
+  // scalastyle:off method.length
+  def loadTableFromCsv(sources: List[String],
+                       destinationTable: String,
+                       createDisposition: CreateDisposition = CREATE_IF_NEEDED,
+                       writeDisposition: WriteDisposition = WRITE_APPEND,
+                       schema: Option[TableSchema] = None,
+                       autodetect: Boolean = false,
+                       allowJaggedRows: Boolean = false,
+                       allowQuotedNewLines: Boolean = false,
+                       quote: Option[String] = None,
+                       maxBadRecords: Int = 0,
+                       skipLeadingRows: Int = 0,
+                       fieldDelimiter: Option[String] = None,
+                       ignoreUnknownValues: Boolean = false,
+                       encoding: Option[String] = None): TableReference = {
+
+    loadTable(sources = sources, sourceFormat = "CSV", destinationTable = destinationTable,
+      createDisposition = createDisposition, writeDisposition = writeDisposition,
+      schema = schema, autodetect = Some(autodetect), allowJaggedRows = Some(allowJaggedRows),
+      allowQuotedNewLines = Some(allowQuotedNewLines), quote = quote,
+      maxBadRecords = maxBadRecords, skipLeadingRows = Some(skipLeadingRows),
+      fieldDelimiter = fieldDelimiter,
+      ignoreUnknownValues = Some(ignoreUnknownValues), encoding = encoding)
+  }
+
+  def loadTableFromJson(sources: List[String],
+                        destinationTable: String,
+                        createDisposition: CreateDisposition = CREATE_IF_NEEDED,
+                        writeDisposition: WriteDisposition = WRITE_APPEND,
+                        schema: Option[TableSchema] = None,
+                        autodetect: Boolean = false,
+                        maxBadRecords: Int = 0,
+                        ignoreUnknownValues: Boolean = false,
+                        encoding: Option[String] = None): TableReference = {
+
+    loadTable(sources = sources, sourceFormat = "NEWLINE_DELIMITED_JSON",
+      destinationTable = destinationTable,
+      createDisposition = createDisposition, writeDisposition = writeDisposition,
+      schema = schema, autodetect = Some(autodetect),
+      maxBadRecords = maxBadRecords,
+      ignoreUnknownValues = Some(ignoreUnknownValues), encoding = encoding)
+  }
+
+  def loadTableFromAvro(sources: List[String],
+                        destinationTable: String,
+                        createDisposition: CreateDisposition = CREATE_IF_NEEDED,
+                        writeDisposition: WriteDisposition = WRITE_APPEND,
+                        schema: Option[TableSchema] = None,
+                        maxBadRecords: Int = 0,
+                        encoding: Option[String] = None): TableReference = {
+
+    loadTable(sources = sources, sourceFormat = "AVRO",
+      destinationTable = destinationTable,
+      createDisposition = createDisposition, writeDisposition = writeDisposition,
+      schema = schema, maxBadRecords = maxBadRecords, encoding = encoding)
+  }
+
+  private def loadTable(sources: List[String],
+                        sourceFormat: String,
+                        destinationTable: String,
+                        createDisposition: CreateDisposition = CREATE_IF_NEEDED,
+                        writeDisposition: WriteDisposition = WRITE_APPEND,
+                        schema: Option[TableSchema] = None,
+                        autodetect: Option[Boolean] = None,
+                        allowJaggedRows: Option[Boolean] = None,
+                        allowQuotedNewLines: Option[Boolean] = None,
+                        quote: Option[String] = None,
+                        maxBadRecords: Int = 0,
+                        skipLeadingRows: Option[Int] = None,
+                        fieldDelimiter: Option[String] = None,
+                        ignoreUnknownValues: Option[Boolean] = None,
+                        encoding: Option[String] = None): TableReference = {
+
+    val tableRef = bq.BigQueryHelpers.parseTableSpec(destinationTable)
+
+    val jobConfigLoad = new JobConfigurationLoad()
+      .setSourceUris(sources.asJava)
+      .setSourceFormat(sourceFormat)
+      .setDestinationTable(tableRef)
+      .setCreateDisposition(createDisposition.toString)
+      .setWriteDisposition(writeDisposition.toString)
+      .setMaxBadRecords(maxBadRecords)
+      .setSchema(schema.orNull)
+      .setQuote(quote.orNull)
+      .setFieldDelimiter(fieldDelimiter.orNull)
+      .setEncoding(encoding.orNull)
+
+    autodetect.foreach(jobConfigLoad.setAutodetect(_))
+    allowJaggedRows.foreach(jobConfigLoad.setAllowJaggedRows(_))
+    allowQuotedNewLines.foreach(jobConfigLoad.setAllowQuotedNewlines(_))
+    skipLeadingRows.foreach(jobConfigLoad.setSkipLeadingRows(_))
+    ignoreUnknownValues.foreach(jobConfigLoad.setIgnoreUnknownValues(_))
+
+    val jobConfig = new JobConfiguration()
+      .setLoad(jobConfigLoad)
+
+    val fullJobId = projectId + "-" + UUID.randomUUID().toString
+    val jobReference = new JobReference().setProjectId(projectId).setJobId(fullJobId)
+    val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
+
+    logger.info(s"Loading data into $destinationTable from ${sources.mkString(", ")}")
+
+    bigquery.jobs().insert(projectId, job).execute()
+
+    val loadJob = LoadJob(sources, Some(jobReference), tableRef)
+
+    waitForJobs(loadJob)
+
+    tableRef
+  }
+
+  // scalastyle:on parameter.number
+  // scalastyle:on method.length
+
+  // =======================================================================
+  // Job handling
+  // =======================================================================
+
+  /** Wait for all jobs to finish. */
+  def waitForJobs(jobs: BigQueryJob*): Unit = {
+    val numTotal = jobs.size
+    var pendingJobs = jobs.flatMap {
+      job =>
+        job.jobReference match {
+          case Some(reference) => Some(job, reference)
+          case None => None
+        }
+    }
+
+    while (pendingJobs.nonEmpty) {
+      val remainingJobs = pendingJobs.filter {
+        case (bqJob, jobReference) =>
+          val jobId = jobReference.getJobId
+          try {
+            val poll = bigquery.jobs().get(projectId, jobId).execute()
+            val error = poll.getStatus.getErrorResult
+            if (error != null) {
+              throw new RuntimeException(
+                s"${bqJob.jobType} Job failed: id: $jobId, error: $error")
+            }
+            if (poll.getStatus.getState == "DONE") {
+              logJobStatistics(bqJob, poll)
+              false
+            } else {
+              true
+            }
+          } catch {
+            case e: IOException =>
+              logger.warn(s"BigQuery request failed: id: $jobId, error: $e")
+              true
+          }
+      }
+
+      pendingJobs = remainingJobs
+      val numDone = numTotal - pendingJobs.size
+      logger.info(s"Job: $numDone out of $numTotal completed")
+      if (pendingJobs.nonEmpty) {
+        Thread.sleep(10000)
+      }
+    }
+  }
+
+  private def logJobStatistics(bqJob: BigQueryJob, job: Job): Unit = {
+
+    val jobId = job.getJobReference.getJobId
+    val stats = job.getStatistics
+    logger.info(s"${bqJob.jobType} completed: jobId: $jobId")
+
+    bqJob match {
+      case _: ExtractJob =>
+        val destinationFileCount = stats.getExtract.getDestinationUriFileCounts
+          .asScala.reduce(_ + _)
+
+        logger.info(s"Total destination file count: $destinationFileCount")
+
+      case _: LoadJob =>
+        val inputFileBytes = FileUtils.byteCountToDisplaySize(stats.getLoad.getInputFileBytes)
+        val outputBytes = FileUtils.byteCountToDisplaySize(stats.getLoad.getOutputBytes)
+        val outputRows = stats.getLoad.getOutputRows
+        logger.info(s"Input file bytes: $inputFileBytes, output bytes: $outputBytes, " +
+          s"output rows: $outputRows")
+
+      case queryJob: QueryJob =>
+        logger.info(s"Query: `${queryJob.query}`")
+        val bytes = FileUtils.byteCountToDisplaySize(stats.getQuery.getTotalBytesProcessed)
+        val cacheHit = stats.getQuery.getCacheHit
+        logger.info(s"Total bytes processed: $bytes, cache hit: $cacheHit")
+    }
+
+    val elapsed = PERIOD_FORMATTER.print(new Period(stats.getEndTime - stats.getCreationTime))
+    val pending = PERIOD_FORMATTER.print(new Period(stats.getStartTime - stats.getCreationTime))
+    val execution = PERIOD_FORMATTER.print(new Period(stats.getEndTime - stats.getStartTime))
+    logger.info(s"Elapsed: $elapsed, pending: $pending, execution: $execution")
+  }
 }
 // scalastyle:on number.of.methods
+// scalastyle:on file.size.limit
 
 /** Companion object for [[BigQueryClient]]. */
 object BigQueryClient {

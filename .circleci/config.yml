@@ -3,14 +3,13 @@
 ####################
 
 scala_211_version: &scala_211_version 2.11.12
-scala_212_version: &scala_212_version 2.12.4
+scala_212_version: &scala_212_version 2.12.5
 
 docker_settings: &docker_settings
   docker:
     - image: circleci/openjdk:8-jdk
       environment:
-        SBT_OPTS: "-XX:ReservedCodeCacheSize=256m -Xms2g -Xmx2g"
-        JAVA_OPTS: "-Dsun.io.serialization.extendedDebugInfo=true"
+        SBT_OPTS: "-Xms2g -Xmx2g"
         GOOGLE_APPLICATION_CREDENTIALS: scripts/data-integration-test.json
   working_directory: ~/scio
 

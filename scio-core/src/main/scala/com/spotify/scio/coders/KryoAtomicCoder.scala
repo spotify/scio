@@ -17,12 +17,15 @@
 
 package com.spotify.scio.coders
 
+import java.io.{InputStream, OutputStream, EOFException}
 import java.io.{InputStream, OutputStream}
+import java.nio.file.Path
 
+import com.esotericsoftware.kryo.KryoException
 import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
 import com.google.common.io.{ByteStreams, CountingOutputStream}
 import com.google.common.reflect.ClassPath
-import com.google.protobuf.Message
+import com.google.protobuf.{ByteString, Message}
 import com.spotify.scio.options.ScioOptions
 import com.twitter.chill._
 import com.twitter.chill.algebird.AlgebirdRegistrar
@@ -109,6 +112,9 @@ private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends
         k.forSubclass[LocalDateTime](new JodaLocalDateTimeSerializer)
         k.forSubclass[DateTime](new JodaDateTimeSerializer)
 
+        k.forSubclass[Path](new JPathSerializer)
+        k.forSubclass[ByteString](new ByteStringSerializer)
+
         k.forClass(new KVSerializer)
         // TODO:
         // TimestampedValueCoder
@@ -137,9 +143,21 @@ private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends
     val chunked = state.output
     chunked.setOutputStream(os)
 
-    state.kryo.writeClassAndObject(chunked, value)
-    chunked.endChunks()
-    chunked.flush()
+    try {
+      state.kryo.writeClassAndObject(chunked, value)
+      chunked.endChunks()
+      chunked.flush()
+    } catch {
+      case ke: KryoException =>
+        // make sure that the Kryo output buffer is cleared in case that we can recover from
+        // the exception (e.g. EOFException which denotes buffer full)
+        chunked.clear();
+
+        ke.getCause() match {
+          case e: EOFException => throw e
+          case _ => throw ke
+        }
+    }
   }
 
   override def decode(is: InputStream): T = {

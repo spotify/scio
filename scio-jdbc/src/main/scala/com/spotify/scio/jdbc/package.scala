@@ -100,11 +100,11 @@ package object jdbc {
                                          opts: jdbc.JdbcConnectionOptions
                                        ): DataSourceConfiguration = {
     opts.password match {
-      case Some(password) => {
+      case Some(pass) => {
         jio.JdbcIO.DataSourceConfiguration
           .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
           .withUsername(opts.username)
-          .withPassword(opts.password.get)
+          .withPassword(pass)
       }
       case None => {
         jio.JdbcIO.DataSourceConfiguration
