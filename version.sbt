@@ -1,1 +1,1 @@
-version in ThisBuild := "0.5.3-courage-bt"
+version in ThisBuild := "0.5.3"
