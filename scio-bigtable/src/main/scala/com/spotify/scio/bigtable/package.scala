@@ -272,11 +272,9 @@ package object bigtable {
       * Enhanced version to save this SCollection as a Bigtable table. Allows for creation of large
       * bulk writes to Bigtable. Note that elements must be of type `Mutation`.
       */
-    def saveAsBigtable(projectId: String,
-                       instanceId: String,
-                       tableId: String,
-                       bigtableOptions: BigtableOptions,
+    def saveAsBigtable(tableId: String,
                        numOfShards: Int = 0,
+                       bigtableOptions: BigtableOptions,
                        flushInterval: Duration = Duration.standardSeconds(1))
                       (implicit ev: T <:< Mutation)
     : Future[Tap[(ByteString, Iterable[Mutation])]] = {
@@ -285,19 +283,13 @@ package object bigtable {
           bigtableOptions.getProjectId, bigtableOptions.getInstanceId, tableId)
         self.context.testOut(output.asInstanceOf[TestIO[(ByteString, Iterable[T])]])(self)
       } else {
-        val sink = BulkBigtableIO.Write.withBigtableOptions(bigtableOptions)
-          .withProjectId(projectId)
-          .withInstanceId(instanceId)
-          .withTableId(tableId)
-          .withNumOfShards(numOfShards)
-          .withFlushInterval(flushInterval)
+        val sink = new BigtableBulkWriter(tableId, bigtableOptions, numOfShards, flushInterval)
         self
           .map(kv => KV.of(kv._1, kv._2.asJava.asInstanceOf[java.lang.Iterable[Mutation]]))
           .applyInternal(sink)
       }
       Future.failed(new NotImplementedError("Bigtable future not implemented"))
     }
-
   }
 
   case class BigtableInput(projectId: String, instanceId: String, tableId: String)
