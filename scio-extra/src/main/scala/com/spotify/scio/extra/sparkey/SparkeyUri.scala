@@ -88,6 +88,8 @@ private[sparkey] class SparkeyWriter(val uri: SparkeyUri) {
 
   def close(): Unit = {
     delegate.flush()
+    // TODO: configure how much memory to use for hash table
+    // delegate.setMaxMemory(max memory usage in bytes)
     delegate.writeHash()
     delegate.close()
     uri match {

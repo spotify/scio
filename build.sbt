@@ -20,7 +20,7 @@ import Keys._
 import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 
-val beamVersion = "2.4.0"
+val beamVersion = "2.5.0-SNAPSHOT"
 
 val algebirdVersion = "0.13.4"
 val annoy4sVersion = "0.6.0"
@@ -62,7 +62,7 @@ val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.0.5"
 val shapelessDatatypeVersion = "0.1.8"
 val slf4jVersion = "1.7.25"
-val sparkeyVersion = "2.2.1"
+val sparkeyVersion = "2.3.0"
 val tensorFlowVersion = "1.3.0"
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
@@ -297,6 +297,7 @@ lazy val scioTest: Project = Project(
     System.setProperty( "OVERRIDE_TYPE_PROVIDER", "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider" )
   },
   libraryDependencies ++= Seq(
+    "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "it",
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
