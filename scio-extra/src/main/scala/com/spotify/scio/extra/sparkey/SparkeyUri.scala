@@ -73,7 +73,7 @@ private class RemoteSparkeyUri(val basePath: String, options: PipelineOptions) e
       .exists(e => rfu.remoteExists(new URI(basePath + e)))
 }
 
-private[sparkey] class SparkeyWriter(val uri: SparkeyUri) {
+private[sparkey] class SparkeyWriter(val uri: SparkeyUri, maxMemoryUsage: Long = -1) {
 
   private val localFile = uri match {
     case u: LocalSparkeyUri => u.basePath
@@ -88,8 +88,9 @@ private[sparkey] class SparkeyWriter(val uri: SparkeyUri) {
 
   def close(): Unit = {
     delegate.flush()
-    // TODO: configure how much memory to use for hash table
-    // delegate.setMaxMemory(max memory usage in bytes)
+    if (maxMemoryUsage > 0) {
+      delegate.setMaxMemory(maxMemoryUsage)
+    }
     delegate.writeHash()
     delegate.close()
     uri match {
