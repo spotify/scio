@@ -34,14 +34,14 @@ object AvroTypeIT {
   class FromPath2
 
   @AvroType.fromPath(
-    "gs://data-integration-test-eu/*/*/*")
+    "gs://data-integration-test-eu/avro-*/*/*")
   class FromGlob1
 
   @AvroType.fromPath(
-    "gs://data-integration-test-eu/*/*/*/")
+    "gs://data-integration-test-eu/avro-*/*/*/")
   class FromGlob2
 
-  @AvroType.fromPath("gs://data-integration-test-eu/*/*/*/*.avro")
+  @AvroType.fromPath("gs://data-integration-test-eu/avro-*/*/*/*.avro")
   class FromGlob3
 
   @AvroType.fromPath(

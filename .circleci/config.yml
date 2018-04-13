@@ -56,6 +56,7 @@ publish_settings: &publish_settings
   steps:
     - checkout
     - restore_cache: *restore_cache_settings
+    - run: ./scripts/circleci_publish.sh
     - run: sbt ++$SCALA_VERSION publish
 
 ####################
@@ -140,6 +141,7 @@ workflows:
             branches:
               only:
                 - master
+                - nio
     jobs:
       - publish_211
       - publish_212
