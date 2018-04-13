@@ -105,8 +105,7 @@ package object bigtable {
                  tableId: String,
                  keyRange: ByteKeyRange = null,
                  rowFilter: RowFilter = null): SCollection[Row] = {
-      val bigtableOptions = new BigtableOptions.Builder()
-        .setProjectId(projectId)
+      val bigtableOptions = new BigtableOptions.Builder().setProjectId(projectId)
         .setInstanceId(instanceId)
         .build
       this.bigtable(bigtableOptions, tableId, keyRange, rowFilter)
@@ -125,9 +124,7 @@ package object bigtable {
           tableId)
         self.getTestInput[Row](input)
       } else {
-        var read = BigtableIO.read()
-          .withBigtableOptions(bigtableOptions)
-          .withTableId(tableId)
+        var read = BigtableIO.read().withBigtableOptions(bigtableOptions).withTableId(tableId)
         if (keyRange != null) {
           read = read.withKeyRange(keyRange)
         }
@@ -259,9 +256,7 @@ package object bigtable {
           bigtableOptions.getProjectId, bigtableOptions.getInstanceId, tableId)
         self.context.testOut(output.asInstanceOf[TestIO[(ByteString, Iterable[T])]])(self)
       } else {
-        val sink = BigtableIO.write()
-          .withBigtableOptions(bigtableOptions)
-          .withTableId(tableId)
+        val sink = BigtableIO.write().withBigtableOptions(bigtableOptions).withTableId(tableId)
         self
           .map(kv => KV.of(kv._1, kv._2.asJava.asInstanceOf[java.lang.Iterable[Mutation]]))
           .applyInternal(sink)
@@ -270,9 +265,9 @@ package object bigtable {
     }
 
     /**
-      * Enhanced version to save this SCollection as a Bigtable table. Allows for creation of
-      * bulk writes to Bigtable. Note that elements must be of type `Mutation`.
-      */
+     * Enhanced version to save this SCollection as a Bigtable table. Allows for
+     * creation of bulk writes to Bigtable. Note that elements must be of type `Mutation`.
+     */
     def saveAsBigtable(tableId: String,
                        numOfShards: Int = 0,
                        bigtableOptions: BigtableOptions,
@@ -280,7 +275,7 @@ package object bigtable {
                       (implicit ev: T <:< Mutation)
     : Future[Tap[(ByteString, Iterable[Mutation])]] = {
       if (self.context.isTest) {
-        val output = BigtableBulkOutput(
+        val output = BigtableOutput(
           bigtableOptions.getProjectId, bigtableOptions.getInstanceId, tableId)
         self.context.testOut(output.asInstanceOf[TestIO[(ByteString, Iterable[T])]])(self)
       } else {
@@ -298,9 +293,4 @@ package object bigtable {
 
   case class BigtableOutput[T <: Mutation](projectId: String, instanceId: String, tableId: String)
     extends TestIO[(ByteString, Iterable[T])](s"$projectId\t$instanceId\t$tableId")
-
-  case class BigtableBulkOutput[T <: Mutation]
-  (projectId: String, instanceId: String, tableId: String)
-    extends TestIO[Iterable[(ByteString, Iterable[T])]](s"$projectId\t$instanceId\t$tableId")
-
 }
