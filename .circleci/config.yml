@@ -9,7 +9,7 @@ docker_settings: &docker_settings
   docker:
     - image: circleci/openjdk:8-jdk
       environment:
-        SBT_OPTS: "-Xms2g -Xmx2g"
+        SBT_OPTS: "-Xms2g -Xmx2g -XX:ReservedCodeCacheSize=250M"
         GOOGLE_APPLICATION_CREDENTIALS: scripts/data-integration-test.json
   working_directory: ~/scio
 
