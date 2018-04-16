@@ -28,7 +28,7 @@ object OverrideTypeProviderFinder {
   private val instance = {
     val default: OverrideTypeProvider = new DummyOverrideTypeProvider
 
-    Option(System.getProperty("OVERRIDE_TYPE_PROVIDER"))
+    Option(sys.props("OVERRIDE_TYPE_PROVIDER"))
       .map { n =>
         Try(Class.forName(n)) match {
           case Success(value) =>

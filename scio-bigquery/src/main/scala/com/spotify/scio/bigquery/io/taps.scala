@@ -31,13 +31,13 @@ import scala.language.implicitConversions
 
 
 /** Tap for BigQuery TableRow JSON files on local file system or GCS. */
-case class TableRowJsonTap(path: String) extends Tap[TableRow] {
+final case class TableRowJsonTap(path: String) extends Tap[TableRow] {
   override def value: Iterator[TableRow] = FileStorage(path).tableRowJsonFile
   override def open(sc: ScioContext): SCollection[TableRow] = sc.tableRowJsonFile(path)
 }
 
 /** Tap for BigQuery tables. */
-case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
+final case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
   override def value: Iterator[TableRow] = BigQueryClient.defaultInstance().getTableRows(table)
   override def open(sc: ScioContext): SCollection[TableRow] = sc.bigQueryTable(table)
 }
