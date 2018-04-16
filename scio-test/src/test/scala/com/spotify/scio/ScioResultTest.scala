@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2018 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import org.apache.beam.sdk.metrics.MetricResults
 import org.joda.time
 
 import scala.concurrent.Future
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, DurationInt}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class ScioResultTest extends PipelineSpec {
@@ -64,7 +64,7 @@ class ScioResultTest extends PipelineSpec {
     val mockScioResult = new ScioResult(mockPipeline) {
       override def getMetrics: metrics.Metrics = null
       override val finalState: Future[State] = Future {
-        Thread.sleep(100L)
+        Thread.sleep(10.seconds.toMillis)
         State.DONE
       }(dedicatedEx)
 

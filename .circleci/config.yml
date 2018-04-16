@@ -9,8 +9,7 @@ docker_settings: &docker_settings
   docker:
     - image: circleci/openjdk:8-jdk
       environment:
-        SBT_OPTS: "-XX:ReservedCodeCacheSize=256m -Xms2g -Xmx2g"
-        JAVA_OPTS: "-Dsun.io.serialization.extendedDebugInfo=true"
+        SBT_OPTS: "-Xms2g -Xmx2g -XX:ReservedCodeCacheSize=250M"
         GOOGLE_APPLICATION_CREDENTIALS: scripts/data-integration-test.json
   working_directory: ~/scio
 
@@ -57,6 +56,7 @@ publish_settings: &publish_settings
   steps:
     - checkout
     - restore_cache: *restore_cache_settings
+    - run: ./scripts/circleci_publish.sh
     - run: sbt ++$SCALA_VERSION publish
 
 ####################
@@ -141,6 +141,7 @@ workflows:
             branches:
               only:
                 - master
+                - nio
     jobs:
       - publish_211
       - publish_212

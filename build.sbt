@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2018 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.0.5"
 val shapelessDatatypeVersion = "0.1.8"
 val slf4jVersion = "1.7.25"
-val sparkeyVersion = "2.2.1"
+val sparkeyVersion = "2.3.0"
 val tensorFlowVersion = "1.3.0"
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(

@@ -34,7 +34,7 @@ Scio 0.3.0 and future versions depend on Apache Beam (`org.apache.beam`) while e
 
 # Quick Start
 
-Use our [giter8 template](https://github.com/spotify/scio.g8) to quickly setup a project:  
+Use our [giter8 template](https://github.com/spotify/scio.g8) to quickly setup a project:
 
 `sbt new spotify/scio.g8`
 
@@ -81,6 +81,6 @@ Scio includes the following artifacts:
 
 # License
 
-Copyright 2016 Spotify AB.
+Copyright 2018 Spotify AB.
 
 Licensed under the Apache License, Version 2.0: http://www.apache.org/licenses/LICENSE-2.0
