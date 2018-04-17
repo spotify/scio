@@ -23,14 +23,11 @@ import java.io.PrintStream
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.concurrent.ThreadLocalRandom
 
-import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
 import com.google.datastore.v1.Entity
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro.types.AvroType
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.bigquery.types.BigQueryType
-import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io._
 import com.spotify.scio.nio.ScioIO
@@ -906,7 +903,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def materialize: Future[Tap[T]] = materialize(ScioUtil.getTempFile(context), isCheckpoint = false)
   private[scio] def materialize(path: String, isCheckpoint: Boolean): Future[Tap[T]] =
-    internalSaveAsObjectFile(path, isCheckpoint = isCheckpoint)
+    internalSaveAsObjectFile(path, isCheckpoint = isCheckpoint, isMaterialized = true)
 
   /**
    * Save this SCollection as an object file using default serialization.
@@ -921,11 +918,18 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   private def internalSaveAsObjectFile(path: String, numShards: Int = 0, suffix: String = ".obj",
                                        metadata: Map[String, AnyRef] = Map.empty,
-                                       isCheckpoint: Boolean = false)
+                                       isCheckpoint: Boolean = false,
+                                       isMaterialized: Boolean = false)
   : Future[Tap[T]] = {
     if (context.isTest) {
-      // if it's a test and checkpoint - no need to test checkpoint data
-      if (!isCheckpoint) context.testOut(ObjectFileIO(path))(this)
+      (isCheckpoint, isMaterialized) match {
+        // if it's a test and checkpoint - no need to test checkpoint data
+        case (true, _) => ()
+        // Do not run assertions on materilized value but still access test context to trigger
+        // the test checking if we're running inside a JobTest
+        case (_, true) => context.testOutNio
+        case _ => context.testOut(ObjectFileIO(path))(this)
+      }
       saveAsInMemoryTap
     } else {
       val elemCoder = this.getCoder[T]
@@ -1050,131 +1054,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /**
-   * Save this SCollection as a BigQuery table. Note that elements must be of type
-   * [[com.google.api.services.bigquery.model.TableRow TableRow]].
-   * @group output
-   */
-  def saveAsBigQuery(table: TableReference, schema: TableSchema,
-                     writeDisposition: WriteDisposition,
-                     createDisposition: CreateDisposition,
-                     tableDescription: String)
-                    (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
-    val tableSpec = bqio.BigQueryHelpers.toTableSpec(table)
-    if (context.isTest) {
-      context.testOut(BigQueryIO[TableRow](tableSpec))(this.asInstanceOf[SCollection[TableRow]])
-
-      if (writeDisposition == WriteDisposition.WRITE_APPEND) {
-        Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
-      } else {
-        saveAsInMemoryTap.asInstanceOf[Future[Tap[TableRow]]]
-      }
-    } else {
-      var transform = bqio.BigQueryIO.writeTableRows().to(table)
-      if (schema != null) transform = transform.withSchema(schema)
-      if (createDisposition != null) transform = transform.withCreateDisposition(createDisposition)
-      if (writeDisposition != null) transform = transform.withWriteDisposition(writeDisposition)
-      if (tableDescription != null) transform = transform.withTableDescription(tableDescription)
-      this.asInstanceOf[SCollection[TableRow]].applyInternal(transform)
-
-      if (writeDisposition == WriteDisposition.WRITE_APPEND) {
-        Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
-      } else {
-        context.makeFuture(BigQueryTap(table))
-      }
-    }
-  }
-
-  /**
-   * Save this SCollection as a BigQuery table. Note that elements must be of type
-   * [[com.google.api.services.bigquery.model.TableRow TableRow]].
-   * @group output
-   */
-  def saveAsBigQuery(tableSpec: String, schema: TableSchema = null,
-                     writeDisposition: WriteDisposition = null,
-                     createDisposition: CreateDisposition = null,
-                     tableDescription: String = null)
-                    (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
-    saveAsBigQuery(
-      bqio.BigQueryHelpers.parseTableSpec(tableSpec),
-      schema,
-      writeDisposition,
-      createDisposition,
-      tableDescription)
-
-  /**
-   * Save this SCollection as a BigQuery table. Note that element type `T` must be a case class
-   * annotated with [[com.spotify.scio.bigquery.types.BigQueryType.toTable BigQueryType.toTable]].
-   */
-  def saveAsTypedBigQuery(table: TableReference,
-                          writeDisposition: WriteDisposition,
-                          createDisposition: CreateDisposition)
-                         (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
-  : Future[Tap[T]] = {
-    val tableSpec = bqio.BigQueryHelpers.toTableSpec(table)
-    if (context.isTest) {
-      context.testOut(BigQueryIO[T](tableSpec))(this.asInstanceOf[SCollection[T]])
-
-      if (writeDisposition == WriteDisposition.WRITE_APPEND) {
-        Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
-      } else {
-        saveAsInMemoryTap
-      }
-    } else {
-      val bqt = BigQueryType[T]
-      val initialTfName = this.tfName
-      import scala.concurrent.ExecutionContext.Implicits.global
-      this
-        .withName(initialTfName).map(bqt.toTableRow)
-        .withName(s"$initialTfName$$Write").saveAsBigQuery(
-          table,
-          bqt.schema,
-          writeDisposition,
-          createDisposition,
-          bqt.tableDescription.orNull)
-        .map(_.map(bqt.fromTableRow))
-    }
-  }
-
-  /**
-   * Save this SCollection as a BigQuery table. Note that element type `T` must be annotated with
-   * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
-   *
-   * This could be a complete case class with
-   * [[com.spotify.scio.bigquery.types.BigQueryType.toTable BigQueryType.toTable]]. For example:
-   *
-   * {{{
-   * @BigQueryType.toTable
-   * case class Result(name: String, score: Double)
-   *
-   * val p: SCollection[Result] = // process data and convert elements to Result
-   * p.saveAsTypedBigQuery("myproject:mydataset.mytable")
-   * }}}
-   *
-   * It could also be an empty class with schema from
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromSchema]],
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromTable]], or
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]. For
-   * example:
-   *
-   * {{{
-   * @BigQueryType.fromTable("publicdata:samples.gsod")
-   * class Row
-   *
-   * sc.typedBigQuery[Row]()
-   *   .sample(withReplacement = false, fraction = 0.1)
-   *   .saveAsTypedBigQuery("myproject:samples.gsod")
-   * }}}
-   */
-  def saveAsTypedBigQuery(tableSpec: String,
-                          writeDisposition: WriteDisposition = null,
-                          createDisposition: CreateDisposition = null)
-                         (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
-  : Future[Tap[T]] =
-    saveAsTypedBigQuery(
-      bqio.BigQueryHelpers.parseTableSpec(tableSpec),
-      writeDisposition, createDisposition)
-
-  /**
    * Save this SCollection as a Datastore dataset. Note that elements must be of type `Entity`.
    * @group output
    */
@@ -1262,26 +1141,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /**
-   * Save this SCollection as a BigQuery TableRow JSON text file. Note that elements must be of
-   * type [[com.google.api.services.bigquery.model.TableRow TableRow]].
-   * @group output
-   */
-  def saveAsTableRowJsonFile(path: String,
-                             numShards: Int = 0,
-                             compression: Compression = Compression.UNCOMPRESSED)
-                            (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
-    if (context.isTest) {
-      context.testOut(TableRowJsonIO(path))(this.asInstanceOf[SCollection[TableRow]])
-      saveAsInMemoryTap.asInstanceOf[Future[Tap[TableRow]]]
-    } else {
-      this.asInstanceOf[SCollection[TableRow]]
-        .map(e => ScioUtil.jsonFactory.toString(e))
-        .applyInternal(textOut(path, ".json", numShards, compression))
-      context.makeFuture(TableRowJsonTap(ScioUtil.addPartSuffix(path)))
-    }
-  }
-
-  /**
    * Save this SCollection as a text file. Note that elements must be of type `String`.
    * @group output
    */
@@ -1335,7 +1194,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def write(io: ScioIO[T])(params: io.WriteP): Future[Tap[T]] = {
     if (context.isTest) {
-      context.testOutNio(io.id)
+      context.testOutNio(io.id)(this)
       this.saveAsInMemoryTap
     } else {
       io.write(this, params)

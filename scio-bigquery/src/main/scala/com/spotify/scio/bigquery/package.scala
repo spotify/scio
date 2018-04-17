@@ -17,11 +17,13 @@
 
 package com.spotify.scio
 
+import com.spotify.scio.values.SCollection
 import com.google.api.services.bigquery.model.{TableReference, TableRow => GTableRow}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
+import scala.language.implicitConversions
 import scala.collection.JavaConverters._
 import scala.util.Try
 
@@ -70,6 +72,11 @@ package object bigquery {
    * Annotation for BigQuery field [[com.spotify.scio.bigquery.types.description description]].
    */
   type description = com.spotify.scio.bigquery.types.description
+
+  implicit def toBigQueryScioContext(c: ScioContext): BigQueryScioContext =
+    new BigQueryScioContext(c)
+  implicit def toBigQuerySCollection[T](c: SCollection[T]): BigQuerySCollection[T] =
+    new BigQuerySCollection[T](c)
 
   /**
    * Enhanced version of [[com.google.api.services.bigquery.model.TableReference TableReference]].
