@@ -304,7 +304,7 @@ lazy val scioCore: Project = Project(
   "scio-core",
   file("scio-core")
 ).settings(
-  commonSettings ++ macroSettings,
+  commonSettings ++ macroSettings ++ itSettings,
   description := "Scio - A Scala API for Apache Beam and Google Cloud Dataflow",
   resources in Compile ++= Seq(
     (baseDirectory in ThisBuild).value / "build.sbt",
@@ -328,9 +328,8 @@ lazy val scioCore: Project = Project(
     "io.grpc" % "grpc-all" % grpcVersion exclude("io.opencensus", "opencensus-api"),
     "com.github.alexarchambault" %% "case-app" % caseappVersion
   )
-).dependsOn(
-  scioAvro,
-  scioBigQuery % "test->test;compile->compile"
+).configs(
+  IntegrationTest
 ).enablePlugins(BuildInfoPlugin)
 
 lazy val scioTest: Project = Project(
@@ -359,7 +358,7 @@ lazy val scioTest: Project = Project(
 ).configs(
   IntegrationTest
 ).dependsOn(
-  scioCore % "test->test;compile->compile",
+  scioCore % "test->test;compile->compile;it->it",
   scioSchemas % "test,it"
 )
 
@@ -379,12 +378,29 @@ lazy val scioAvro: Project = Project(
   ) ++ beamSDKIO
 ).configs(IntegrationTest)
 
+lazy val PreTest =
+  config("pre-test")
+    .describedAs("Create a new compilation unit so that SampleOverrideTypeProvider is compiled before OverrideTypeProviderFinder's lookup.")
+
+
 lazy val scioBigQuery: Project = Project(
   "scio-bigquery",
   file("scio-bigquery")
 ).settings(
-  commonSettings ++ macroSettings ++ itSettings,
+  inConfig(PreTest)(Defaults.configSettings),
+  commonSettings ++ macroSettings ++ itSettings ++ beamRunnerSettings,
   description := "Scio add-on for Google BigQuery",
+  // necessary to properly test since we need this value at compile time
+  (initialize in Test) ~= { _ =>
+    System.setProperty("OVERRIDE_TYPE_PROVIDER", "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
+  },
+  addCompilerPlugin(paradiseDependency),
+  (compile in PreTest) := (compile in PreTest).dependsOn(compile in Compile).value,
+  (unmanagedClasspath in PreTest) += (classDirectory in Compile).value,
+  (compile in Test) := (compile in Test).dependsOn(compile in PreTest).value,
+  (unmanagedClasspath in Test) += (classDirectory in PreTest).value,
+  (compile in IntegrationTest) := (compile in IntegrationTest).dependsOn(compile in PreTest).value,
+  (unmanagedClasspath in IntegrationTest) += (classDirectory in PreTest).value,
   libraryDependencies ++= Seq(
     "commons-io" % "commons-io" % commonsIoVersion,
     "joda-time" % "joda-time" % jodaTimeVersion,
@@ -392,11 +408,18 @@ lazy val scioBigQuery: Project = Project(
     "org.slf4j" % "slf4j-api" % slf4jVersion,
     "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
     "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
+    "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
     "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
-    "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test",
+    // DataFlow testing requires junit and hamcrest
+    "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test,it",
+    "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test,it",
     "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
-  ) ++ beamSDKIO
+  )
+).dependsOn(
+  scioCore % "compile,it->it",
+  scioTest % "compile,test->test,it->test"
 ).configs(IntegrationTest)
+
 
 lazy val scioBigtable: Project = Project(
   "scio-bigtable",
@@ -647,6 +670,7 @@ lazy val scioExamples: Project = Project(
   sources in doc in Compile := List()
 ).dependsOn(
   scioCore,
+  scioBigQuery,
   scioBigtable,
   scioSchemas,
   scioJdbc,
@@ -673,6 +697,7 @@ lazy val scioRepl: Project = Project(
   assemblyJarName in assembly := s"scio-repl-${version.value}.jar"
 ).dependsOn(
   scioCore,
+  scioBigQuery,
   scioExtra
 )
 

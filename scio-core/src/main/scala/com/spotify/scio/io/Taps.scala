@@ -21,9 +21,6 @@ import com.google.api.services.bigquery.model.TableReference
 import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.bigquery.types.BigQueryType
-import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
 import org.apache.avro.Schema
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.apache.beam.sdk.util.{BackOff, BackOffUtils, FluentBackoff, Sleeper}
@@ -41,66 +38,6 @@ class TapNotAvailableException(msg: String) extends Exception(msg)
 /** Utility for managing `Future[Tap[T]]`s. */
 trait Taps {
 
-  private lazy val bqc = BigQueryClient.defaultInstance()
-
-  /** Get a `Future[Tap[T]]` for an Avro file. */
-  def avroFile[T: ClassTag](path: String, schema: Schema = null): Future[Tap[T]] =
-    mkTap(s"Avro: $path", () => isPathDone(path), () => AvroTap[T](path, schema))
-
-  /** Get a `Future[Tap[T]]` for typed Avro source. */
-  def typedAvroFile[T <: HasAvroAnnotation : TypeTag: ClassTag](path: String): Future[Tap[T]] = {
-    val avroT = AvroType[T]
-
-    import scala.concurrent.ExecutionContext.Implicits.global
-    avroFile[GenericRecord](path, avroT.schema)
-      .map(_.map(avroT.fromGenericRecord))
-  }
-
-  /** Get a `Future[Tap[TableRow]]` for BigQuery SELECT query. */
-  def bigQuerySelect(sqlQuery: String, flattenResults: Boolean = false): Future[Tap[TableRow]] =
-    mkTap(
-      s"BigQuery SELECT: $sqlQuery",
-      () => isQueryDone(sqlQuery),
-      () => bigQueryTap(sqlQuery, flattenResults))
-
-  /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
-  def bigQueryTable(table: TableReference): Future[Tap[TableRow]] =
-    mkTap(s"BigQuery Table: $table", () => bqc.tableExists(table), () => BigQueryTap(table))
-
-  /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
-  def bigQueryTable(tableSpec: String): Future[Tap[TableRow]] =
-    bigQueryTable(BigQueryHelpers.parseTableSpec(tableSpec))
-
-  /** Get a `Future[Tap[T]]` for typed BigQuery source. */
-  def typedBigQuery[T <: HasAnnotation : TypeTag : ClassTag](newSource: String = null)
-  : Future[Tap[T]] = {
-    val bqt = BigQueryType[T]
-    val rows = if (newSource == null) {
-      // newSource is missing, T's companion object must have either table or query
-      if (bqt.isTable) {
-        bigQueryTable(bqt.table.get)
-      } else if (bqt.isQuery) {
-        bigQuerySelect(bqt.query.get)
-      } else {
-        throw new IllegalArgumentException(s"Missing table or query field in companion object")
-      }
-    } else {
-      // newSource can be either table or query
-      val table = scala.util.Try(BigQueryHelpers.parseTableSpec(newSource)).toOption
-      if (table.isDefined) {
-        bigQueryTable(table.get)
-      } else {
-        bigQuerySelect(newSource)
-      }
-    }
-    import scala.concurrent.ExecutionContext.Implicits.global
-    rows.map(_.map(bqt.fromTableRow))
-  }
-
-  /** Get a `Future[Tap[TableRow]]` for a BigQuery TableRow JSON file. */
-  def tableRowJsonFile(path: String): Future[Tap[TableRow]] =
-    mkTap(s"TableRowJson: $path", () => isPathDone(path), () => TableRowJsonTap(path))
-
   /** Get a `Future[Tap[String]]` for a text file. */
   def textFile(path: String): Future[Tap[String]] =
     mkTap(s"Text: $path", () => isPathDone(path), () => TextTap(path))
@@ -113,14 +50,19 @@ trait Taps {
   def objectFile[T: ClassTag](path: String): Future[Tap[T]] =
     mkTap(s"Object file: $path", () => isPathDone(path), () => ObjectFileTap[T](path))
 
-  private def isPathDone(path: String): Boolean = FileStorage(path).isDone
+  private[scio] def isPathDone(path: String): Boolean = FileStorage(path).isDone
 
-  private def isQueryDone(sqlQuery: String): Boolean =
-    bqc.extractTables(sqlQuery).forall(bqc.tableExists)
+  /** Get a `Future[Tap[T]]` for an Avro file. */
+  def avroFile[T: ClassTag](path: String, schema: Schema = null): Future[Tap[T]] =
+    mkTap(s"Avro: $path", () => isPathDone(path), () => AvroTap[T](path, schema))
 
-  private def bigQueryTap(sqlQuery: String, flattenResults: Boolean): BigQueryTap = {
-    val table = bqc.query(sqlQuery, flattenResults = flattenResults)
-    BigQueryTap(table)
+  /** Get a `Future[Tap[T]]` for typed Avro source. */
+  def typedAvroFile[T <: HasAvroAnnotation : TypeTag: ClassTag](path: String): Future[Tap[T]] = {
+    val avroT = AvroType[T]
+
+    import scala.concurrent.ExecutionContext.Implicits.global
+    avroFile[GenericRecord](path, avroT.schema)
+      .map(_.map(avroT.fromGenericRecord))
   }
 
   /**

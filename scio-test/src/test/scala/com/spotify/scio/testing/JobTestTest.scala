@@ -23,7 +23,6 @@ import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro.{AvroUtils, TestRecord}
-import com.spotify.scio.bigquery._
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.{io => gio}
@@ -61,15 +60,6 @@ object GenericAvroFileJob {
   }
 }
 
-object BigQueryJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.bigQueryTable(args("input"))
-      .saveAsBigQuery(args("output"))
-    sc.close()
-  }
-}
-
 object DatastoreJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -95,15 +85,6 @@ object PubsubWithAttributesJob {
     sc.pubsubTopicWithAttributes[String](args("input"))
       .map(kv => (kv._1 + "X", kv._2))
       .saveAsPubsubWithAttributes(args("output"))
-    sc.close()
-  }
-}
-
-object TableRowJsonJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.tableRowJsonFile(args("input"))
-      .saveAsTableRowJsonFile(args("output"))
     sc.close()
   }
 }
@@ -266,25 +247,6 @@ class JobTestTest extends PipelineSpec {
     }
   }
 
-  def newTableRow(i: Int): TableRow = TableRow("int_field" -> i)
-
-  def testBigQuery(xs: Seq[TableRow]): Unit = {
-    JobTest[BigQueryJob.type]
-      .args("--input=table.in", "--output=table.out")
-      .input(BigQueryIO("table.in"), (1 to 3).map(newTableRow))
-      .output(BigQueryIO[TableRow]("table.out"))(_ should containInAnyOrder (xs))
-      .run()
-  }
-
-  it should "pass correct BigQueryJob" in {
-    testBigQuery((1 to 3).map(newTableRow))
-  }
-
-  it should "fail incorrect BigQueryJob" in {
-    an [AssertionError] should be thrownBy { testBigQuery((1 to 2).map(newTableRow)) }
-    an [AssertionError] should be thrownBy { testBigQuery((1 to 4).map(newTableRow)) }
-  }
-
   def newEntity(i: Int): Entity = Entity.newBuilder()
     .setKey(makeKey())
     .putAllProperties(ImmutableMap.of("int_field", makeValue(i).build()))
@@ -341,23 +303,6 @@ class JobTestTest extends PipelineSpec {
   it should "fail incorrect PubsubIO with attributes" in {
     an [AssertionError] should be thrownBy { testPubsubWithAttributesJob("aX", "bX") }
     an [AssertionError] should be thrownBy { testPubsubWithAttributesJob("aX", "bX", "cX", "dX") }
-  }
-
-  def testTableRowJson(xs: Seq[TableRow]): Unit = {
-    JobTest[TableRowJsonJob.type]
-      .args("--input=in.json", "--output=out.json")
-      .input(TableRowJsonIO("in.json"), (1 to 3).map(newTableRow))
-      .output(TableRowJsonIO("out.json"))(_ should containInAnyOrder (xs))
-      .run()
-  }
-
-  it should "pass correct TableRowJsonIO" in {
-    testTableRowJson((1 to 3).map(newTableRow))
-  }
-
-  it should "fail incorrect TableRowJsonIO" in {
-    an [AssertionError] should be thrownBy { testTableRowJson((1 to 2).map(newTableRow)) }
-    an [AssertionError] should be thrownBy { testTableRowJson((1 to 4).map(newTableRow)) }
   }
 
   def testTextFileJob(xs: String*): Unit = {
@@ -423,7 +368,7 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
-    } should have message "requirement failed: Missing test input: TextIO(in.txt), available: []"
+    } should have message "requirement failed: Missing test input: in.txt, available: []"
   }
 
   it should "fail misspelled test input" in {
@@ -435,7 +380,7 @@ class JobTestTest extends PipelineSpec {
         .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
     } should have message
-      "requirement failed: Missing test input: TextIO(in.txt), available: [TextIO(bad-in.txt)]"
+      "requirement failed: Missing test input: in.txt, available: [bad-in.txt]"
   }
 
   it should "fail unmatched test input" in {
@@ -447,7 +392,7 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
-    } should have message "requirement failed: Unmatched test input: TextIO(unmatched.txt)"
+    } should have message "requirement failed: Unmatched test input: unmatched.txt"
   }
 
   it should "fail duplicate test input" in {
@@ -459,7 +404,7 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
-    } should have message "requirement failed: Duplicate test input: TextIO(in.txt)"
+    } should have message "requirement failed: Duplicate test input: in.txt"
   }
 
   it should "fail missing test output" in {
@@ -469,7 +414,7 @@ class JobTestTest extends PipelineSpec {
         .input(TextIO("in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .run()
-    } should have message "requirement failed: Missing test output: TextIO(out.txt), available: []"
+    } should have message "requirement failed: Missing test output: out.txt, available: []"
   }
 
   it should "fail misspelled test output" in {
@@ -482,7 +427,7 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .run()
     } should have message
-      "requirement failed: Missing test output: TextIO(out.txt), available: [TextIO(bad-out.txt)]"
+      "requirement failed: Missing test output: out.txt, available: [bad-out.txt]"
   }
 
   it should "fail unmatched test output" in {
@@ -494,7 +439,7 @@ class JobTestTest extends PipelineSpec {
         .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .output(TextIO("unmatched.txt"))(_ should containInAnyOrder (Seq("X", "Y")))
         .run()
-    } should have message "requirement failed: Unmatched test output: TextIO(unmatched.txt)"
+    } should have message "requirement failed: Unmatched test output: unmatched.txt"
   }
 
   it should "fail duplicate test output" in {
@@ -506,7 +451,7 @@ class JobTestTest extends PipelineSpec {
         .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("X", "Y")))
         .run()
-    } should have message "requirement failed: Duplicate test output: TextIO(out.txt)"
+    } should have message "requirement failed: Duplicate test output: out.txt"
   }
 
   it should "fail missing test dist cache" in {
@@ -606,7 +551,7 @@ class JobTestTest extends PipelineSpec {
         .input(ObjectFileIO("in.avro"), Seq(1, 2, 3))
         .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder (Seq(1, 2, 3)))
 
-      testBigQuery((1 to 3).map(newTableRow))
+      // testBigQuery((1 to 3).map(newTableRow))
 
       JobTest[ObjectFileJob.type]
         .args("--input=in2.avro", "--output=out2.avro")
@@ -632,7 +577,7 @@ class JobTestTest extends PipelineSpec {
                                     |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
                                     |  	args: --input=in.avro --output=out.avro
                                     |  	distCache: Map\(\)
-                                    |  	inputs: ObjectFileIO\(in.avro\) -> List\(1, 2, 3\) \(JobTestTest.scala:.*\)""".stripMargin
+                                    |  	inputs: in.avro -> List\(1, 2, 3\) \(JobTestTest.scala:.*\)""".stripMargin
   // scalastyle:on line.size.limit
   // scalastyle:on line.contains.tab
 
@@ -656,11 +601,11 @@ class JobTestTest extends PipelineSpec {
                  |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
                  |  	args: --input=in.avro --output=out.avro
                  |  	distCache: Map\(\)
-                 |  	inputs: ObjectFileIO\(in.avro\) -> List\(1, 2, 3\)
+                 |  	inputs: in.avro -> List\(1, 2, 3\)
                  |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
                  |  	args: --input=in2.avro --output=out2.avro
                  |  	distCache: Map\(\)
-                 |  	inputs: ObjectFileIO\(in2.avro\) -> List\(1, 2, 3\) \(JobTestTest.scala:.*\)""".stripMargin
+                 |  	inputs: in2.avro -> List\(1, 2, 3\) \(JobTestTest.scala:.*\)""".stripMargin
     // scalastyle:on line.size.limit
     // scalastyle:on line.contains.tab
     stdOutMock.message.mkString("") should include regex msg
@@ -740,8 +685,8 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail on duplicate inputs in the job itself" in {
-    val msg = "requirement failed: There already exists test input for TextIO(input), " +
-      "currently registered inputs: [TextIO(input)]"
+    val msg = "requirement failed: There already exists test input for input, " +
+      "currently registered inputs: [input]"
     the [IllegalArgumentException] thrownBy {
       JobTest[JobWitDuplicateInput.type]
         .args("--input=input")
@@ -751,8 +696,8 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail on duplicate outputs in the job itself" in {
-    val msg = "requirement failed: There already exists test output for TextIO(output), " +
-      "currently registered outputs: [TextIO(output)]"
+    val msg = "requirement failed: There already exists test output for output, " +
+      "currently registered outputs: [output]"
     the [IllegalArgumentException] thrownBy {
       JobTest[JobWitDuplicateOutput.type]
         .args("--output=output")

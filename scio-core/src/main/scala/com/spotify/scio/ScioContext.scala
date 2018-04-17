@@ -29,8 +29,6 @@ import com.google.datastore.v1.{Entity, Query}
 import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.bigquery._
-import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, KryoAtomicCoder, KryoOptions}
 import com.spotify.scio.io.Tap
 import com.spotify.scio.metrics.Metrics
@@ -359,22 +357,36 @@ class ScioContext private[scio] (val options: PipelineOptions,
   private var _pipeline: Pipeline = _
   private var _isClosed: Boolean = false
   private val _promises: MBuffer[(Promise[Tap[_]], Tap[_])] = MBuffer.empty
-  private val _queryJobs: MBuffer[QueryJob] = MBuffer.empty
   private val _preRunFns: MBuffer[() => Unit] = MBuffer.empty
   private val _counters: MBuffer[Counter] = MBuffer.empty
+  private var _onClose: Unit => Unit = identity
+  private val _localInstancesCache: scala.collection.mutable.Map[ClassTag[_], Any] =
+    scala.collection.mutable.Map.empty
 
   /** Wrap a [[org.apache.beam.sdk.values.PCollection PCollection]]. */
   def wrap[T: ClassTag](p: PCollection[T]): SCollection[T] =
     new SCollectionImpl[T](p, this)
 
-  // =======================================================================
-  // Miscellaneous
-  // =======================================================================
+  /**
+  * Add callbacks calls when the context is closed.
+  */
+  private[scio] def onClose(f: Unit => Unit): Unit =
+    _onClose = _onClose compose f
 
-  private lazy val bigQueryClient: BigQueryClient = {
-    val o = optionsAs[GcpOptions]
-    BigQueryClient(o.getProject, o.getGcpCredential)
+  /**
+  * Get from or put in an object in this context local cache
+  * This method is used un scio-bigquery to only instanciate the bigquery client once
+  * even if there's multiple implicit conversions from [[ScioContext]] to [[BigQueryScioContext]]
+  */
+  private[scio] def cached[T: ClassTag](t: => T): T = {
+    val key = implicitly[ClassTag[T]]
+    _localInstancesCache.get(key).getOrElse {
+      _localInstancesCache += key -> t
+      t
+    }.asInstanceOf[T]
   }
+
+
 
   // =======================================================================
   // States
@@ -398,9 +410,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   /** Close the context. No operation can be performed once the context is closed. */
   def close(): ScioResult = requireNotClosed {
-    if (_queryJobs.nonEmpty) {
-      bigQueryClient.waitForJobs(_queryJobs: _*)
-    }
+    _onClose(())
 
     if (_counters.nonEmpty) {
       val counters = _counters.toArray
@@ -494,17 +504,19 @@ class ScioContext private[scio] (val options: PipelineOptions,
   /**  Whether this is a test context. */
   def isTest: Boolean = testId.isDefined
 
-  private[scio] def testIn: TestInput = TestDataManager.getInput(testId.get)
-  private[scio] def testOut: TestOutput = TestDataManager.getOutput(testId.get)
   private[scio] def testInNio: TestInputNio = TestDataManager.getInputNio(testId.get)
   private[scio] def testOutNio: TestOutputNio = TestDataManager.getOutputNio(testId.get)
   private[scio] def testDistCache: TestDistCache = TestDataManager.getDistCache(testId.get)
 
+  private[scio] def testOut[T](key: TestIO[T]): SCollection[T] => Unit =
+    testOutNio(key.key)
+
   private[scio] def getTestInput[T: ClassTag](key: TestIO[T]): SCollection[T] =
-    this.parallelize(testIn(key).asInstanceOf[Seq[T]])
+    getTestInputNio(key.key)
 
   private[scio] def getTestInputNio[T: ClassTag](key: String): SCollection[T] =
     this.parallelize(testInNio(key).asInstanceOf[Seq[T]])
+
   // =======================================================================
   // Read operations
   // =======================================================================
@@ -593,132 +605,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
       }
     }
 
-  private def avroBigQueryRead[T <: HasAnnotation : ClassTag : TypeTag] = {
-    val fn = BigQueryType[T].fromAvro
-    bqio.BigQueryIO
-      .read(new SerializableFunction[SchemaAndRecord, T] {
-        override def apply(input: SchemaAndRecord): T = fn(input.getRecord)
-      })
-      .withCoder(new KryoAtomicCoder[T](KryoOptions(this.options)))
-  }
-
-  private def bqReadQuery[T: ClassTag](typedRead: bqio.BigQueryIO.TypedRead[T],
-                                       sqlQuery: String,
-                                       flattenResults: Boolean  = false)
-  : SCollection[T] = requireNotClosed {
-    if (this.isTest) {
-      this.getTestInput(BigQueryIO[T](sqlQuery))
-    } else if (this.bigQueryClient.isCacheEnabled) {
-      val queryJob = this.bigQueryClient.newQueryJob(sqlQuery, flattenResults)
-      _queryJobs.append(queryJob)
-      val read = typedRead.from(queryJob.table).withoutValidation()
-      wrap(this.applyInternal(read)).setName(sqlQuery)
-    } else {
-      val baseQuery = if (!flattenResults) {
-        typedRead.fromQuery(sqlQuery).withoutResultFlattening()
-      } else {
-        typedRead.fromQuery(sqlQuery)
-      }
-      val query = if (this.bigQueryClient.isLegacySql(sqlQuery, flattenResults)) {
-        baseQuery
-      } else {
-        baseQuery.usingStandardSql()
-      }
-      wrap(this.applyInternal(query)).setName(sqlQuery)
-    }
-  }
-
-  private def bqReadTable[T: ClassTag](typedRead: bqio.BigQueryIO.TypedRead[T],
-                                       table: TableReference)
-  : SCollection[T] = requireNotClosed {
-    val tableSpec: String = bqio.BigQueryHelpers.toTableSpec(table)
-    if (this.isTest) {
-      this.getTestInput(BigQueryIO[T](tableSpec))
-    } else {
-      wrap(this.applyInternal(typedRead.from(table))).setName(tableSpec)
-    }
-  }
-
-  /**
-   * Get an SCollection for a BigQuery SELECT query.
-   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
-   * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
-   * supported. By default the query dialect will be automatically detected. To override this
-   * behavior, start the query string with `#legacysql` or `#standardsql`.
-   * @group input
-   */
-  def bigQuerySelect(sqlQuery: String,
-                     flattenResults: Boolean = false): SCollection[TableRow] =
-    bqReadQuery(bqio.BigQueryIO.readTableRows(), sqlQuery, flattenResults)
-
-  /**
-   * Get an SCollection for a BigQuery table.
-   * @group input
-   */
-  def bigQueryTable(table: TableReference): SCollection[TableRow] =
-    bqReadTable(bqio.BigQueryIO.readTableRows(), table)
-
-  /**
-   * Get an SCollection for a BigQuery table.
-   * @group input
-   */
-  def bigQueryTable(tableSpec: String): SCollection[TableRow] =
-    this.bigQueryTable(bqio.BigQueryHelpers.parseTableSpec(tableSpec))
-
-  /**
-   * Get a typed SCollection for a BigQuery SELECT query or table.
-   *
-   * Note that `T` must be annotated with
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromSchema]],
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromTable]],
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]], or
-   * [[com.spotify.scio.bigquery.types.BigQueryType.toTable BigQueryType.toTable]].
-   *
-   * By default the source (table or query) specified in the annotation will be used, but it can
-   * be overridden with the `newSource` parameter. For example:
-   *
-   * {{{
-   * @BigQueryType.fromTable("publicdata:samples.gsod")
-   * class Row
-   *
-   * // Read from [publicdata:samples.gsod] as specified in the annotation.
-   * sc.typedBigQuery[Row]()
-   *
-   * // Read from [myproject:samples.gsod] instead.
-   * sc.typedBigQuery[Row]("myproject:samples.gsod")
-   *
-   * // Read from a query instead.
-   * sc.typedBigQuery[Row]("SELECT * FROM [publicdata:samples.gsod] LIMIT 1000")
-   * }}}
-   *
-   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
-   * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
-   * supported. By default the query dialect will be automatically detected. To override this
-   * behavior, start the query string with `#legacysql` or `#standardsql`.
-   */
-  def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null)
-  : SCollection[T] = {
-    val bqt = BigQueryType[T]
-    val typedRead = avroBigQueryRead[T]
-    if (newSource == null) {
-      // newSource is missing, T's companion object must have either table or query
-      if (bqt.isTable) {
-        this.bqReadTable(typedRead, bqio.BigQueryHelpers.parseTableSpec(bqt.table.get))
-      } else if (bqt.isQuery) {
-        this.bqReadQuery(typedRead, bqt.query.get)
-      } else {
-        throw new IllegalArgumentException(s"Missing table or query field in companion object")
-      }
-    } else {
-      // newSource can be either table or query
-      val table = scala.util.Try(bqio.BigQueryHelpers.parseTableSpec(newSource)).toOption
-      if (table.isDefined) {
-        this.bqReadTable(typedRead, table.get)
-      } else {
-        this.bqReadQuery(typedRead, newSource)
-      }
-    }
-  }
 
   /**
    * Get an SCollection for a Datastore query.
@@ -839,18 +725,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
   : SCollection[(T, Map[String, String])] =
     pubsubInWithAttributes(isSubscription = false, topic, idAttribute, timestampAttribute)
 
-  /**
-   * Get an SCollection for a BigQuery TableRow JSON file.
-   * @group input
-   */
-  def tableRowJsonFile(path: String): SCollection[TableRow] = requireNotClosed {
-    if (this.isTest) {
-      this.getTestInput[TableRow](TableRowJsonIO(path))
-    } else {
-      wrap(this.applyInternal(gio.TextIO.read().from(path))).setName(path)
-        .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
-    }
-  }
 
   /**
    * Get an SCollection for a text file.
@@ -889,13 +763,22 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @param io     an implementation of `ScioIO[T]` trait
    * @param params configurations need to pass to perform underline read implementation
    */
-  def read[T: ClassTag](io: ScioIO[T])(params: io.ReadP): SCollection[T] = requireNotClosed {
-    if (this.isTest) {
-      this.getTestInputNio(io.id)
-    } else {
-      io.read(this, params)
+  def read[T: ClassTag](io: ScioIO[T])(params: io.ReadP): SCollection[T] =
+    readImpl[T](io)(params)
+
+  private def readImpl[T: ClassTag](io: ScioIO[T])(params: io.ReadP): SCollection[T] =
+    requireNotClosed {
+      if (this.isTest) {
+        this.getTestInputNio(io.id)
+      } else {
+        io.read(this, params)
+      }
     }
-  }
+
+  // scalastyle:off structural.type
+  def read[T: ClassTag](io: ScioIO[T]{ type ReadP = Unit }): SCollection[T] =
+    readImpl[T](io)(())
+  // scalastyle:on structural.type
 
   private[scio] def addPreRunFn(f: () => Unit): Unit = _preRunFns += f
 
