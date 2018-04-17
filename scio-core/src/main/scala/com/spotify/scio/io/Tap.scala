@@ -21,7 +21,6 @@ import java.util.UUID
 
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.ScioContext
-import com.spotify.scio.bigquery.{BigQueryClient, TableRow}
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
@@ -79,18 +78,6 @@ case class AvroTap[T: ClassTag](path: String,
   override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path, s.get)
 }
 
-/** Tap for BigQuery TableRow JSON files on local file system or GCS. */
-case class TableRowJsonTap(path: String) extends Tap[TableRow] {
-  override def value: Iterator[TableRow] = FileStorage(path).tableRowJsonFile
-  override def open(sc: ScioContext): SCollection[TableRow] = sc.tableRowJsonFile(path)
-}
-
-/** Tap for BigQuery tables. */
-case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
-  override def value: Iterator[TableRow] = BigQueryClient.defaultInstance().getTableRows(table)
-  override def open(sc: ScioContext): SCollection[TableRow] = sc.bigQueryTable(table)
-}
-
 /**
  * Tap for object files on local file system or GCS. Note that serialization is not guaranteed to
  * be compatible across Scio releases.
@@ -104,8 +91,6 @@ case class ObjectFileTap[T: ClassTag](path: String) extends Tap[T] {
   }
   override def open(sc: ScioContext): SCollection[T] = sc.objectFile(path)
 }
-
-
 
 private[scio] class InMemoryTap[T: ClassTag] extends Tap[T] {
   private[scio] val id: String = UUID.randomUUID().toString

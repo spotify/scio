@@ -42,5 +42,37 @@ trait ScioIO[T] {
   def tap(read: ReadP): Tap[T]
 
   def id: String
+}
 
+object ScioIO {
+  // scalastyle:off structural.type
+  type ReadOnly[T, R] =
+    ScioIO[T] {
+      type ReadP = R
+      type WriteP = Nothing
+    }
+
+  type Aux[T, R, W] =
+    ScioIO[T] {
+      type ReadP = R
+      type WriteP = W
+    }
+
+  def ro[T](io: ScioIO[T]): ScioIO.ReadOnly[T, io.ReadP] =
+    new ScioIO[T] {
+      type ReadP = io.ReadP
+      type WriteP = Nothing
+
+      def read(sc: ScioContext, params: ReadP): SCollection[T] =
+        io.read(sc, params)
+
+      def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
+        throw new IllegalStateException("read-only IO. This code should be unreachable")
+
+      def tap(read: ReadP): Tap[T] =
+        io.tap(read)
+
+      def id: String = io.id
+    }
+  // scalastyle:on structural.type
 }

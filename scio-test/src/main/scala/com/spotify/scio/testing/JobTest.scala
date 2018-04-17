@@ -72,8 +72,6 @@ object JobTest {
 
   private case class BuilderState(className: String,
                                   cmdlineArgs: Array[String] = Array(),
-                                  inputs: Map[TestIO[_], Iterable[_]] = Map.empty,
-                                  outputs: Map[TestIO[_], SCollection[_] => Unit] = Map.empty,
                                   inputNio: Map[String, Iterable[_]] = Map.empty,
                                   outputNio: Map[String, SCollection[_] => Unit] = Map.empty,
                                   distCaches: Map[DistCacheIO[_], _] = Map.empty,
@@ -103,8 +101,8 @@ object JobTest {
      * `sc.avroFile[MyRecord]("in.avro")`.
      */
     def input[T](key: TestIO[T], value: Iterable[T]): Builder = {
-      require(!state.inputs.contains(key), "Duplicate test input: " + key)
-      state = state.copy(inputs = state.inputs + (key -> value))
+      require(!state.inputNio.contains(key.key), "Duplicate test input: " + key.key)
+      state = state.copy(inputNio = state.inputNio + (key.key -> value))
       this
     }
 
@@ -117,9 +115,10 @@ object JobTest {
      *                  matchers on an [[com.spotify.scio.values.SCollection SCollection]].
      */
     def output[T](key: TestIO[T])(assertion: SCollection[T] => Unit): Builder = {
-      require(!state.outputs.contains(key), "Duplicate test output: " + key)
+      require(!state.outputNio.contains(key.key), "Duplicate test output: " + key.key)
       state = state
-        .copy(outputs = state.outputs + (key -> assertion.asInstanceOf[SCollection[_] => Unit]))
+        .copy(outputNio =
+          state.outputNio + (key.key -> assertion.asInstanceOf[SCollection[_] => Unit]))
       this
     }
 
@@ -221,8 +220,14 @@ object JobTest {
      * Set up test wiring. Use this only if you have custom pipeline wiring and are bypassing
      * [[run]]. Make sure [[tearDown]] is called afterwards.
      */
-    def setUp(): Unit = TestDataManager.setup(testId,
-      state.inputs, state.outputs, state.inputNio, state.outputNio, state.distCaches)
+    def setUp(): Unit =
+      TestDataManager.setup(
+        testId,
+        state.inputNio,
+        state.outputNio,
+        state.distCaches
+      )
+
 
     /**
      * Tear down test wiring. Use this only if you have custom pipeline wiring and are bypassing
@@ -260,7 +265,7 @@ object JobTest {
       s"""|JobTest[${state.className}](
           |\targs: ${state.cmdlineArgs.mkString(" ")}
           |\tdistCache: ${state.distCaches}
-          |\tinputs: ${state.inputs.mkString(", ")}""".stripMargin
+          |\tinputs: ${state.inputNio.mkString(", ")}""".stripMargin
 
   }
 
