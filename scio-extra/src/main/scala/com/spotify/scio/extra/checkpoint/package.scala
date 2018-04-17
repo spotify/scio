@@ -74,7 +74,7 @@ package object checkpoint {
     }
 
     private def isCheckpointAvailable(path: String): Boolean = {
-      if (self.isTest && self.testIn.m.contains(ObjectFileIO(path))) {
+      if (self.isTest && self.testInNio.m.contains(path)) {
         // if it's test and checkpoint was registered in test
         true
       } else {
