@@ -22,7 +22,6 @@ import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
-import com.spotify.scio.transforms.AsyncLookupDoFn
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.bigtable.BigtableIO
 import org.apache.beam.sdk.io.range.ByteKeyRange
@@ -31,7 +30,6 @@ import org.joda.time.Duration
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
 
 /**
  * Main package for Bigtable APIs. Import all.
@@ -267,6 +265,28 @@ package object bigtable {
       Future.failed(new NotImplementedError("Bigtable future not implemented"))
     }
 
+    /**
+     * Save this SCollection as a Bigtable table. This version supports batching. Note that
+     * elements must be of type `Mutation`.
+     */
+    def saveAsBigtable(bigtableOptions: BigtableOptions,
+                       tableId: String,
+                       numOfShards: Int,
+                       flushInterval: Duration = Duration.standardSeconds(1))
+                      (implicit ev: T <:< Mutation)
+    : Future[Tap[(ByteString, Iterable[Mutation])]] = {
+      if (self.context.isTest) {
+        val output = BigtableOutput(
+          bigtableOptions.getProjectId, bigtableOptions.getInstanceId, tableId)
+        self.context.testOut(output.asInstanceOf[TestIO[(ByteString, Iterable[T])]])(self)
+      } else {
+        val sink = new BigtableBulkWriter(tableId, bigtableOptions, numOfShards, flushInterval)
+        self
+          .map(kv => KV.of(kv._1, kv._2.asJava.asInstanceOf[java.lang.Iterable[Mutation]]))
+          .applyInternal(sink)
+      }
+      Future.failed(new NotImplementedError("Bigtable future not implemented"))
+    }
   }
 
   case class BigtableInput(projectId: String, instanceId: String, tableId: String)
