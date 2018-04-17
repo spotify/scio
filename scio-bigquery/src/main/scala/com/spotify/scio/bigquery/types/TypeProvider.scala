@@ -46,8 +46,23 @@ private[types] object TypeProvider {
     val tableSpec = BigQueryPartitionUtil.latestTable(bigquery, formatString(args))
     val schema = bigquery.getTableSchema(tableSpec)
     val traits = List(tq"${p(c, SType)}.HasTable")
-    val overrides = List(q"override def table: _root_.java.lang.String = ${args.head}")
 
+    val tableDef = q"override def table: _root_.java.lang.String = ${args.head}"
+
+    val ta =
+      annottees.map(_.tree) match {
+        case (q"class $cName") :: tail =>
+          List(q"""
+            implicit def bqTable: ${p(c, SType)}.Table[$cName] =
+              new ${p(c, SType)}.Table[$cName]{
+                $tableDef
+              }
+          """)
+        case _ =>
+          Nil
+      }
+
+    val overrides = List(tableDef) ++ ta
     schemaToType(c)(schema, annottees, traits, overrides)
   }
 
@@ -63,8 +78,23 @@ private[types] object TypeProvider {
     val args = extractStrings(c, "Missing query")
     val query = BigQueryPartitionUtil.latestQuery(bigquery, formatString(args))
     val schema = bigquery.getQuerySchema(query)
-    val traits = Seq(tq"${p(c, SType)}.HasQuery")
-    val overrides = Seq(q"override def query: _root_.java.lang.String = ${args.head}")
+    val traits = List(tq"${p(c, SType)}.HasQuery")
+
+    val queryDef = q"override def query: _root_.java.lang.String = ${args.head}"
+
+    val qa =
+      annottees.map(_.tree) match {
+        case (q"class $cName") :: tail =>
+          List(q"""
+            implicit def bqQuery: ${p(c, SType)}.Query[$cName] =
+              new ${p(c, SType)}.Query[$cName]{
+                $queryDef
+              }
+          """)
+        case _ =>
+          Nil
+      }
+    val overrides = List(queryDef) ++ qa
 
     schemaToType(c)(schema, annottees, traits, overrides)
   }
