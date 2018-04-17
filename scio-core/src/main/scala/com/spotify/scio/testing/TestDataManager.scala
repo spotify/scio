@@ -27,49 +27,6 @@ import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.{Set => MSet}
 
 /* Inputs are Scala Iterables to be parallelized for TestPipeline */
-private[scio] class TestInput(val m: Map[TestIO[_], Iterable[_]]) {
-  val s: MSet[TestIO[_]] = MSet.empty
-  def apply[T](key: TestIO[T]): Iterable[T] = {
-    require(
-      m.contains(key),
-      s"Missing test input: $key, available: ${m.keys.mkString("[", ", ", "]")}")
-    require(!s.contains(key),
-      s"There already exists test input for $key, currently " +
-        s"registered inputs: ${s.mkString("[", ", ", "]")}")
-    s.add(key)
-    m(key).asInstanceOf[Iterable[T]]
-  }
-  def validate(): Unit = {
-    val d = m.keySet -- s
-    require(d.isEmpty, "Unmatched test input: " + d.mkString(", "))
-  }
-}
-
-/* Outputs are lambdas that apply assertions on SCollections */
-private[scio] class TestOutput(val m: Map[TestIO[_], SCollection[_] => Unit]) {
-  val s: MSet[TestIO[_]] = MSet.empty
-  def apply[T](key: TestIO[T]): SCollection[T] => Unit = {
-    if (key.key.contains("scio-materialize-")) {
-      // dummy matcher for materialize output
-      _ => Unit
-    } else {
-      require(
-        m.contains(key),
-        s"Missing test output: $key, available: ${m.keys.mkString("[", ", ", "]")}")
-      require(!s.contains(key),
-        s"There already exists test output for $key, currently " +
-          s"registered outputs: ${s.mkString("[", ", ", "]")}")
-      s.add(key)
-      m(key)
-    }
-  }
-  def validate(): Unit = {
-    val d = m.keySet -- s
-    require(d.isEmpty, "Unmatched test output: " + d.mkString(", "))
-  }
-}
-
-/* Inputs are Scala Iterables to be parallelized for TestPipeline */
 private[scio] class TestInputNio(val m: Map[String, Iterable[_]]) {
   val s: MSet[String] = MSet.empty
 
@@ -129,8 +86,6 @@ private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {
 
 private[scio] object TestDataManager {
 
-  private val inputs = TrieMap.empty[String, TestInput]
-  private val outputs = TrieMap.empty[String, TestOutput]
   private val inputNios = TrieMap.empty[String, TestInputNio]
   private val outputNios = TrieMap.empty[String, TestOutputNio]
   private val distCaches = TrieMap.empty[String, TestDistCache]
@@ -143,32 +98,24 @@ private[scio] object TestDataManager {
   }
 
   def getInputNio(testId: String)
-  : TestInputNio = getValue(testId, inputNios, "reading nio input")
+  : TestInputNio = getValue(testId, inputNios, "reading input")
 
   def getOutputNio(testId: String)
-  : TestOutputNio = getValue(testId, outputNios, "writing nio output")
+  : TestOutputNio = getValue(testId, outputNios, "writing output")
 
-  def getInput(testId: String): TestInput = getValue(testId, inputs, "reading input")
-  def getOutput(testId: String): TestOutput = getValue(testId, outputs, "writing output")
   def getDistCache(testId: String): TestDistCache =
     getValue(testId, distCaches, "using dist cache")
 
   def setup(testId: String,
-            ins: Map[TestIO[_], Iterable[_]],
-            outs: Map[TestIO[_], SCollection[_] => Unit],
             inNios: Map[String, Iterable[_]],
             outNios: Map[String, SCollection[_] => Unit],
             dcs: Map[DistCacheIO[_], _]): Unit = {
-    inputs += (testId -> new TestInput(ins))
-    outputs += (testId -> new TestOutput(outs))
     inputNios += (testId -> new TestInputNio(inNios))
     outputNios += (testId -> new TestOutputNio(outNios))
     distCaches += (testId -> new TestDistCache(dcs))
   }
 
   def tearDown(testId: String, f: ScioResult => Unit = _ => Unit): Unit = {
-    inputs.remove(testId).get.validate()
-    outputs.remove(testId).get.validate()
     inputNios.remove(testId).foreach(_.validate())
     outputNios.remove(testId).foreach(_.validate())
     distCaches.remove(testId).get.validate()
