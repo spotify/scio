@@ -55,13 +55,18 @@ class ScioResultTest extends PipelineSpec {
     // Give the ScioResult a 10 nanosecond timeout and verify job is cancelled after timeout
     val nanos = Duration.create(10L, TimeUnit.NANOSECONDS)
 
+    // Create a dedicated ExecutionContext to make this test deterministic.
+    // otherwise, thread starvation could make this test fail randomly
+    val executor = java.util.concurrent.Executors.newFixedThreadPool(1)
+    implicit val dedicatedEx = scala.concurrent.ExecutionContext.fromExecutor(executor)
+
     // Mock Scio result takes 100 milliseconds to complete
     val mockScioResult = new ScioResult(mockPipeline) {
       override def getMetrics: metrics.Metrics = null
       override val finalState: Future[State] = Future {
         Thread.sleep(10.seconds.toMillis)
         State.DONE
-      }
+      }(dedicatedEx)
 
       override def getAwaitDuration: Duration = nanos
     }

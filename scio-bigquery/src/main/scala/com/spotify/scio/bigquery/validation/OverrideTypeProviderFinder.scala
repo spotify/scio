@@ -19,19 +19,26 @@ package com.spotify.scio.bigquery.validation
 
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
+import org.slf4j.LoggerFactory
 
 /** Common finder for the proper [[OverrideTypeProvider]]. */
 object OverrideTypeProviderFinder {
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   private val instance = {
-    // Load the class dynamically at compile time and runtime
-    val classInstance = Try(Class.forName(System.getProperty("OVERRIDE_TYPE_PROVIDER", ""))
-      .newInstance()
-      .asInstanceOf[OverrideTypeProvider])
-    classInstance match {
-      case Success(value) => value
-      case Failure(NonFatal(_)) => new DummyOverrideTypeProvider
-    }
+    val default: OverrideTypeProvider = new DummyOverrideTypeProvider
+
+    Option(sys.props("OVERRIDE_TYPE_PROVIDER"))
+      .map { n =>
+        Try(Class.forName(n)) match {
+          case Success(value) =>
+            value.newInstance()
+              .asInstanceOf[OverrideTypeProvider]
+          case Failure(ex @ NonFatal(_)) =>
+            logger.warn(s"Class not found: $n")
+            default
+        }
+      }.getOrElse(default)
   }
 
   def getProvider: OverrideTypeProvider = instance

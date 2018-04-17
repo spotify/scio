@@ -61,6 +61,14 @@ object BigQueryType {
   }
 
   /**
+   * Trait for companion objects of case classes generated with table.
+   * Instance of this trait are provided as implicits alowing static discovery.
+   * That trait provide evidence that a BQ table is statically known for a given type T.
+   * @group trait
+   */
+  trait Table[T] extends HasTable
+
+  /**
    * Trait for companion objects of case classes generated with schema.
    * @group trait
    */
@@ -89,6 +97,14 @@ object BigQueryType {
     /** SELECT query for case class schema. */
     def query: String
   }
+
+  /**
+   * Trait for companion objects of case classes generated with query.
+   * Instance of this trait are provided as implicits alowing static discovery.
+   * That trait provide evidence that a BQ query is statically known for a given type T.
+   * @group trait
+   */
+  trait Query[T] extends HasQuery
 
   /**
    * Trait for companion objects of case classes generated with table description.
