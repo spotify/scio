@@ -24,7 +24,6 @@ import com.spotify.scio.bigquery.validation.{OverrideTypeProvider, OverrideTypeP
 import org.apache.avro.generic.GenericRecord
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
-import scala.language.experimental.macros
 import scala.reflect.macros._
 
 private[types] object ConverterProvider {
