@@ -25,6 +25,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
+import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.common.ExampleData
 
 // Read and write BigQuery `TableRow` JSON files
