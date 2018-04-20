@@ -18,6 +18,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
+import com.spotify.scio.avro.{AvroType => _, _}
 import com.spotify.scio.examples.common.ExampleData
 import org.apache.avro.generic.GenericRecord
 import shapeless.datatype.avro._
