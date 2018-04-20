@@ -22,7 +22,7 @@ import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
-import com.spotify.scio.avro.{AvroUtils, TestRecord}
+import com.spotify.scio.avro._
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.{io => gio}

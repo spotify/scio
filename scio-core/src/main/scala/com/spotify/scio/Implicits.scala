@@ -25,7 +25,6 @@ import org.apache.beam.sdk.coders._
 import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.values.KV
 
-import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 private[scio] object Implicits {

@@ -18,6 +18,7 @@
 package com.spotify.scio.extra
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.avro._
 import com.spotify.scio.io.FileStorage
 import com.spotify.scio.testing.ObjectFileIO
 import com.spotify.scio.util.ScioUtil
