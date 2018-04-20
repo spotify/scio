@@ -1010,7 +1010,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @param io     an implementation of `ScioIO[T]` trait
    * @param params configurations need to pass to perform underline write implementation
    */
-  def write(io: ScioIO[T])(params: io.WriteP): Future[Tap[T]] = {
+  def write(io: ScioIO[T])(params: io.WriteP): Future[Tap[T]] =
+    writeImpl(io)(params)
+
+  private def writeImpl(io: ScioIO[T])(params: io.WriteP): Future[Tap[T]] = {
     if (context.isTest) {
       context.testOutNio(io.id)(this)
       this.saveAsInMemoryTap
@@ -1018,6 +1021,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       io.write(this, params)
     }
   }
+
+  // scalastyle:off structural.type
+  def write(io: ScioIO[T]{ type WriteP = Unit }): Future[Tap[T]] =
+    writeImpl(io)(())
+  // scalastyle:on structural.type
 
 }
 // scalastyle:on number.of.methods
