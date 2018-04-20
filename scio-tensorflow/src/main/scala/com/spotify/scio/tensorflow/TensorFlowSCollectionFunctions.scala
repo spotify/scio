@@ -45,8 +45,8 @@ import scala.reflect.ClassTag
 private class PredictDoFn[T, V](graphBytes: DistCache[Array[Byte]],
                                 fetchOp: Seq[String],
                                 @Nullable config: Array[Byte],
-                                inFn: T => Map[String, Tensor],
-                                outFn: (T, Map[String, Tensor]) => V) extends DoFn[T, V] {
+                                inFn: T => Map[String, Tensor[_]],
+                                outFn: (T, Map[String, Tensor[_]]) => V) extends DoFn[T, V] {
   @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
   @transient private var g: Graph = _
   @transient private var s: Session = _
@@ -128,11 +128,11 @@ class TensorFlowSCollectionFunctions[T: ClassTag](@transient val self: SCollecti
    * [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
    * ownership of the [[org.tensorflow.Tensor Tensor]]s.
    */
-  def predict[V: ClassTag](graphUri: String,
-                           fetchOps: Seq[String],
-                           config: Array[Byte] = null)
-                          (inFn: T => Map[String, Tensor])
-                          (outFn: (T, Map[String, Tensor]) => V): SCollection[V] = {
+  def predict[V: ClassTag, W](graphUri: String,
+                              fetchOps: Seq[String],
+                              config: Array[Byte] = null)
+                              (inFn: T => Map[String, Tensor[_]])
+                              (outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] = {
     val graphBytes = self.context.distCache(graphUri)(f => Files.readAllBytes(f.toPath))
     self.parDo(new PredictDoFn[T, V](graphBytes, fetchOps, config, inFn, outFn))
   }
