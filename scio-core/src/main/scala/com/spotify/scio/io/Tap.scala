@@ -66,32 +66,6 @@ case class TextTap(path: String) extends Tap[String] {
   override def open(sc: ScioContext): SCollection[String] = sc.textFile(path)
 }
 
-/**
- * Tap for Avro files on local file system or GCS.
- * @param schema must be not null if `T` is of type
- *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
- */
-case class AvroTap[T: ClassTag](path: String,
-                                @transient private val schema: Schema = null) extends Tap[T] {
-  private lazy val s = Externalizer(schema)
-  override def value: Iterator[T] = FileStorage(path).avroFile(s.get)
-  override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path, s.get)
-}
-
-/**
- * Tap for object files on local file system or GCS. Note that serialization is not guaranteed to
- * be compatible across Scio releases.
- */
-case class ObjectFileTap[T: ClassTag](path: String) extends Tap[T] {
-  override def value: Iterator[T] = {
-    val elemCoder = ScioUtil.getScalaCoder[T]
-    FileStorage(path).avroFile[GenericRecord](AvroBytesUtil.schema).map { r =>
-      AvroBytesUtil.decode(elemCoder, r)
-    }
-  }
-  override def open(sc: ScioContext): SCollection[T] = sc.objectFile(path)
-}
-
 private[scio] class InMemoryTap[T: ClassTag] extends Tap[T] {
   private[scio] val id: String = UUID.randomUUID().toString
   override def value: Iterator[T] = InMemorySink.get(id).iterator

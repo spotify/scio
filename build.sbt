@@ -282,6 +282,7 @@ lazy val scioCore: Project = Project(
     (baseDirectory in ThisBuild).value / "version.sbt"),
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "provided",
     "com.twitter" %% "algebird-core" % algebirdVersion,
     "com.twitter" %% "chill" % chillVersion,
@@ -300,8 +301,6 @@ lazy val scioCore: Project = Project(
   )
 ).configs(
   IntegrationTest
-).dependsOn(
-  scioAvro
 )
 
 lazy val scioTest: Project = Project(
@@ -313,6 +312,7 @@ lazy val scioTest: Project = Project(
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "it",
+    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
     "org.scalatest" %% "scalatest" % scalatestVersion,
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
@@ -329,7 +329,8 @@ lazy val scioTest: Project = Project(
   IntegrationTest
 ).dependsOn(
   scioCore % "test->test;compile->compile;it->it",
-  scioSchemas % "test,it"
+  scioSchemas % "test,it",
+  scioAvro
 )
 
 lazy val scioAvro: Project = Project(
@@ -347,12 +348,14 @@ lazy val scioAvro: Project = Project(
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test",
     "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
   )
+)
+.dependsOn(
+  scioCore % "compile,it->it"
 ).configs(IntegrationTest)
 
 lazy val PreTest =
   config("pre-test")
     .describedAs("Create a new compilation unit so that SampleOverrideTypeProvider is compiled before OverrideTypeProviderFinder's lookup.")
-
 
 lazy val scioBigQuery: Project = Project(
   "scio-bigquery",
@@ -501,7 +504,8 @@ lazy val scioExtra: Project = Project(
   ).map(_ % circeVersion)
 ).dependsOn(
   scioCore,
-  scioTest % "it->it;test->test"
+  scioTest % "it->it;test->test",
+  scioAvro
 ).configs(IntegrationTest)
 
 lazy val scioHdfs: Project = Project(
