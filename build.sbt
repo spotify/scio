@@ -63,7 +63,7 @@ val scalatestVersion = "3.0.5"
 val shapelessDatatypeVersion = "0.1.9"
 val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.3.0"
-val tensorFlowVersion = "1.3.0"
+val tensorFlowVersion = "1.7.0"
 
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
