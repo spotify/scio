@@ -21,6 +21,7 @@ import java.nio.file.Files
 
 import io.circe.Printer
 import com.spotify.scio._
+import com.spotify.scio.avro._
 import com.spotify.scio.io.TapSpec
 import com.spotify.scio.util.ScioUtil
 import org.apache.commons.io.FileUtils
