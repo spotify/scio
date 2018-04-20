@@ -24,12 +24,9 @@ import java.io.File
 import java.net.URI
 import java.nio.file.Files
 
-import com.google.api.services.bigquery.model.TableReference
+import org.apache.avro.specific.SpecificRecordBase
 import com.google.datastore.v1.{Entity, Query}
 import com.google.protobuf.Message
-import com.spotify.scio.avro.types.AvroType
-import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.coders.{AvroBytesUtil, KryoAtomicCoder, KryoOptions}
 import com.spotify.scio.io.Tap
 import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.nio.ScioIO
@@ -37,16 +34,11 @@ import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.values._
-import org.apache.avro.Schema
-import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.PipelineResult.State
-import org.apache.beam.sdk.extensions.gcp.options.{GcpOptions, GcsOptions}
-import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
-import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub => psio}
+import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
+import org.apache.beam.sdk.io.gcp.{datastore => dsio, pubsub => psio}
 import org.apache.beam.sdk.metrics.Counter
 import org.apache.beam.sdk.options._
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values._
@@ -524,87 +516,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
   private[scio] def applyInternal[Output <: POutput](root: PTransform[_ >: PBegin, Output])
   : Output =
     pipeline.apply(this.tfName, root)
-
-  /**
-   * Get an SCollection for an object file using default serialization.
-   *
-   * Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
-   * serialization is not guaranteed to be compatible across Scio releases.
-   * @group input
-   */
-  def objectFile[T: ClassTag](path: String): SCollection[T] = requireNotClosed {
-    if (this.isTest) {
-      this.getTestInput(ObjectFileIO[T](path))
-    } else {
-      val coder = pipeline.getCoderRegistry.getScalaCoder[T](options)
-      this.avroFile[GenericRecord](path, AvroBytesUtil.schema)
-        .parDo(new DoFn[GenericRecord, T] {
-          @ProcessElement
-          private[scio] def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit = {
-            c.output(AvroBytesUtil.decode(coder, c.element()))
-          }
-        })
-    }
-  }
-
-  /**
-   * Get an SCollection for an Avro file.
-   * @param schema must be not null if `T` is of type
-   *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
-   * @group input
-   */
-  def avroFile[T: ClassTag](path: String, schema: Schema = null): SCollection[T] =
-  requireNotClosed {
-    if (this.isTest) {
-      this.getTestInput(AvroIO[T](path))
-    } else {
-      val cls = ScioUtil.classOf[T]
-      val t = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-        gio.AvroIO.read(cls).from(path)
-      } else {
-        gio.AvroIO.readGenericRecords(schema).from(path).asInstanceOf[gio.AvroIO.Read[T]]
-      }
-      wrap(this.applyInternal(t)).setName(path)
-    }
-  }
-
-  /**
-    * Get a typed SCollection from an Avro schema.
-    *
-    * Note that `T` must be annotated with
-    * [[com.spotify.scio.avro.types.AvroType AvroType.fromSchema]],
-    * [[com.spotify.scio.avro.types.AvroType AvroType.fromPath]], or
-    * [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
-    *
-    * @group input
-    */
-  def typedAvroFile[T <: HasAvroAnnotation : ClassTag : TypeTag](path: String)
-  : SCollection[T] = requireNotClosed {
-    if (this.isTest) {
-      this.getTestInput(AvroIO[T](path))
-    } else {
-      val avroT = AvroType[T]
-      val t = gio.AvroIO.readGenericRecords(avroT.schema).from(path)
-      wrap(this.applyInternal(t)).setName(path).map(avroT.fromGenericRecord)
-    }
-  }
-
-  /**
-   * Get an SCollection for a Protobuf file.
-   *
-   * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage
-   * Avro's block file format.
-   * @group input
-   */
-  def protobufFile[T: ClassTag](path: String)(implicit ev: T <:< Message): SCollection[T] =
-    requireNotClosed {
-      if (this.isTest) {
-        this.getTestInput(ProtobufIO[T](path))
-      } else {
-        objectFile(path)
-      }
-    }
-
 
   /**
    * Get an SCollection for a Datastore query.

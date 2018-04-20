@@ -21,6 +21,7 @@ import java.nio.file.Files
 
 import com.google.protobuf.Timestamp
 import com.spotify.scio.ScioContext
+import com.spotify.scio.avro._
 import com.spotify.scio.testing.PipelineSpec
 
 class FileFormatTest extends PipelineSpec {

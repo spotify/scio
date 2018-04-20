@@ -22,6 +22,7 @@ import java.nio.file.Files
 import java.util.Arrays
 
 import com.spotify.scio._
+import com.spotify.scio.avro._
 import com.spotify.scio.testing._
 import com.spotify.sparkey._
 
