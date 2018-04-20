@@ -21,7 +21,7 @@ import java.nio.file.{Files, Path}
 
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils._
-import com.spotify.scio.avro.TestRecord
+import com.spotify.scio.avro._
 import com.spotify.scio.testing._
 import com.spotify.scio.values.WindowOptions
 import org.apache.avro.generic.GenericRecord
