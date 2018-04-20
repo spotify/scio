@@ -93,7 +93,7 @@ class TensorflowSpec extends PipelineSpec {
 
   it should "allow to predict" in {
     val g = new Graph()
-    val t3 = Tensors.create(4L)
+    val t3 = Tensors.create(3L)
     try {
       val input = g.opBuilder("Placeholder", "input").setAttr("dtype", t3.dataType).build.output(0)
       val c3 = g.opBuilder("Const", "c3")
@@ -104,7 +104,7 @@ class TensorflowSpec extends PipelineSpec {
         .distCache(DistCacheIO[Array[Byte]]("tf-graph.bin"), g.toGraphDef)
         .args("--graphURI=tf-graph.bin", "--output=output")
         .output(TextIO("output")) {
-          _ should containInAnyOrder((1L to 10).map(x => (x, x * 4)).map(_.toString))
+          _ should containInAnyOrder((1L to 10).map(x => (x, x * 3)).map(_.toString))
         }
         .run()
     } finally {
