@@ -17,7 +17,12 @@
 
 package com.spotify.scio.coders
 
-import java.io.{IOException, ObjectInputStream, ObjectOutputStream, ObjectStreamException}
+import java.io.{
+  IOException,
+  ObjectInputStream,
+  ObjectOutputStream,
+  ObjectStreamException
+}
 import java.util.concurrent.atomic.AtomicReference
 
 private abstract class EmptyOnSerializeAtomicReference[T] extends Serializable {
@@ -26,15 +31,14 @@ private abstract class EmptyOnSerializeAtomicReference[T] extends Serializable {
 
   reference.set(create())
 
-  def get() : T = {
+  def get(): T = {
     reference.get()
   }
 
-  def create() : T
+  def create(): T
 
   @throws[IOException]
-  private def writeObject(out: ObjectOutputStream): Unit = {
-  }
+  private def writeObject(out: ObjectOutputStream): Unit = {}
 
   @throws[IOException]
   @throws[ClassNotFoundException]
@@ -44,7 +48,6 @@ private abstract class EmptyOnSerializeAtomicReference[T] extends Serializable {
   }
 
   @throws[ObjectStreamException]
-  private def readObjectNoData(): Unit = {
-  }
+  private def readObjectNoData(): Unit = {}
 
 }
