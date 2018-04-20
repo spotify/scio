@@ -18,6 +18,7 @@
 package com.spotify.scio
 
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.avro._
 
 package object repl {
 

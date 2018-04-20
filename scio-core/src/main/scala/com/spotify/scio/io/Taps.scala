@@ -19,8 +19,6 @@ package com.spotify.scio.io
 
 import com.google.api.services.bigquery.model.TableReference
 import com.google.protobuf.Message
-import com.spotify.scio.avro.types.AvroType
-import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import org.apache.avro.Schema
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.apache.beam.sdk.util.{BackOff, BackOffUtils, FluentBackoff, Sleeper}
@@ -42,28 +40,7 @@ trait Taps {
   def textFile(path: String): Future[Tap[String]] =
     mkTap(s"Text: $path", () => isPathDone(path), () => TextTap(path))
 
-  /** Get a `Future[Tap[T]]` of a Protobuf file. */
-  def protobufFile[T: ClassTag](path: String)(implicit ev: T <:< Message): Future[Tap[T]] =
-    mkTap(s"Protobuf: $path", () => isPathDone(path), () => ObjectFileTap[T](path))
-
-  /** Get a `Future[Tap[T]]` of an object file. */
-  def objectFile[T: ClassTag](path: String): Future[Tap[T]] =
-    mkTap(s"Object file: $path", () => isPathDone(path), () => ObjectFileTap[T](path))
-
   private[scio] def isPathDone(path: String): Boolean = FileStorage(path).isDone
-
-  /** Get a `Future[Tap[T]]` for an Avro file. */
-  def avroFile[T: ClassTag](path: String, schema: Schema = null): Future[Tap[T]] =
-    mkTap(s"Avro: $path", () => isPathDone(path), () => AvroTap[T](path, schema))
-
-  /** Get a `Future[Tap[T]]` for typed Avro source. */
-  def typedAvroFile[T <: HasAvroAnnotation : TypeTag: ClassTag](path: String): Future[Tap[T]] = {
-    val avroT = AvroType[T]
-
-    import scala.concurrent.ExecutionContext.Implicits.global
-    avroFile[GenericRecord](path, avroT.schema)
-      .map(_.map(avroT.fromGenericRecord))
-  }
 
   /**
    * Make a tap, to be implemented by concrete classes.
