@@ -23,6 +23,7 @@ import java.util.UUID
 
 import com.google.api.client.util.Charsets
 import com.spotify.scio._
+import com.spotify.scio.avro._
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.proto.SimpleV2.{SimplePB => SimplePBV2}
 import com.spotify.scio.proto.SimpleV3.{SimplePB => SimplePBV3}
