@@ -1087,7 +1087,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       val initialTfName = this.tfName
       import scala.concurrent.ExecutionContext.Implicits.global
       this
-        .map(bqt.toTableRow)
+        .withName(initialTfName).map(bqt.toTableRow)
         .withName(s"$initialTfName$$Write").saveAsBigQuery(
           table,
           bqt.schema,
