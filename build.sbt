@@ -33,6 +33,7 @@ val breezeVersion ="1.0-RC2"
 val chillVersion = "0.9.2"
 val circeVersion = "0.9.1"
 val commonsIoVersion = "2.6"
+val commonsPoolVersion = "2.5.0"
 val commonsMath3Version = "3.6.1"
 val elasticsearch2Version = "2.1.0"
 val elasticsearch5Version = "5.5.0"
@@ -279,7 +280,8 @@ lazy val scioCore: Project = Project(
     "com.google.guava" % "guava" % guavaVersion,
     "com.google.protobuf" % "protobuf-java" % protobufVersion,
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
-    "org.apache.xbean" % "xbean-asm5-shaded" % asmVersion
+    "org.apache.xbean" % "xbean-asm5-shaded" % asmVersion,
+    "org.apache.commons" % "commons-pool2" %  commonsPoolVersion
   )
 ).dependsOn(
   scioAvro,
