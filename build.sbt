@@ -65,6 +65,23 @@ val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.3.0"
 val tensorFlowVersion = "1.7.0"
 
+lazy val mimaSettings = Seq(
+  mimaPreviousArtifacts :=
+    previousVersion(version.value)
+      .filter(_ => publishArtifact.value)
+      .map { pv =>
+        organization.value % (normalizedName.value + "_" + scalaBinaryVersion.value) % pv
+      }.toSet,
+  mimaBinaryIssueFilters ++= Seq()
+)
+
+def previousVersion(currentVersion: String): Option[String] = {
+  val Version = """(\d+)\.(\d+)\.(\d+).*""".r
+  val Version(x, y, z) = currentVersion
+  if (z == "0") None
+  else Some(s"$x.$y.${z.toInt - 1}")
+}
+
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
 
@@ -148,7 +165,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
     val jdkMapping = Map(bootClasspath.find(_.getPath.endsWith("rt.jar")).get -> url("http://docs.oracle.com/javase/8/docs/api/"))
     docMappings.flatMap((mappingFn _).tupled).toMap ++ jdkMapping
   }
-)
+) ++ mimaSettings
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
   scalastyleSources in Compile ++= (unmanagedSourceDirectories in IntegrationTest).value
