@@ -17,19 +17,15 @@
 
 package com.spotify.scio
 
-import java.lang.{Iterable => JIterable}
+
 import java.net.InetSocketAddress
 
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException
-import org.apache.beam.sdk.io.{elasticsearch => esio}
-import org.apache.beam.sdk.transforms.SerializableFunction
 import org.elasticsearch.action.ActionRequest
 import org.joda.time.Duration
-
-import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 /**
@@ -64,26 +60,15 @@ package object elasticsearch {
                             maxBulkRequestSize: Int = 3000,
                             errorFn: BulkExecutionException => Unit = m => throw m)
                            (f: T => Iterable[ActionRequest[_]]): Future[Tap[T]] = {
-      if (self.context.isTest) {
-        self.context.testOut(ElasticsearchIO[T](esOptions))(self)
-      } else {
-        val shards = if (numOfShards > 0) numOfShards else esOptions.servers.size
-        self.applyInternal(
-          esio.ElasticsearchIO.Write
-            .withClusterName(esOptions.clusterName)
-            .withServers(esOptions.servers.toArray)
-            .withFunction(new SerializableFunction[T, JIterable[ActionRequest[_]]]() {
-              override def apply(t: T): JIterable[ActionRequest[_]] = f(t).asJava
-            })
-            .withFlushInterval(flushInterval)
-            .withNumOfShard(shards)
-            .withMaxBulkRequestSize(maxBulkRequestSize)
-            .withError(new esio.ThrowingConsumer[BulkExecutionException] {
-              override def accept(t: BulkExecutionException): Unit = errorFn(t)
-            }))
-      }
-      Future.failed(new NotImplementedError("Custom future not implemented"))
+      val io = nio.ElacticsearchIO[T](
+        esOptions,
+        flushInterval,
+        numOfShards,
+        maxBulkRequestSize,
+        errorFn)(f)
+      self.write(io)(())
     }
   }
 
 }
+
