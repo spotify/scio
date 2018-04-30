@@ -25,11 +25,9 @@ import com.spotify.scio.testing.AvroIO
 import com.spotify.scio.util.{ClosureCleaner, ScioUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
-import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.io.hadoop.inputformat.HadoopInputFormatIO
 import org.apache.beam.sdk.io._
-import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.mapreduce.Job
@@ -189,34 +187,12 @@ package object avro {
                               numShards: Int = 0,
                               schema: Schema = null,
                               suffix: String = ""): Future[Tap[T]] = {
-      if (self.context.isTest) {
-        self.context.testOut(AvroIO(path))(self)
-      } else {
-        val job = Job.getInstance()
-        if (ScioUtil.isLocalRunner(self.context.options.getRunner)) {
-          GcsConnectorUtil.setCredentials(job)
-        }
-
-        val cls = self.ct.runtimeClass
-        val writerSchema = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-          ReflectData.get().getSchema(cls)
-        } else {
-          schema
-        }
-        val resource = FileBasedSink.convertToFileResourceIfPossible(self.pathWithShards(path))
-        val prefix = StaticValueProvider.of(resource)
-        val usedFilenamePolicy = DefaultFilenamePolicy.fromStandardParameters(
-          prefix, null, ".parquet", false)
-        val destinations = DynamicFileDestinations.constant[T](usedFilenamePolicy)
-        val sink = new ParquetAvroSink[T](prefix, destinations, writerSchema, job.getConfiguration)
-        val t = HadoopWriteFiles.to(sink).withNumShards(numShards)
-        self.applyInternal(t)
-      }
-      Future.failed(new NotImplementedError("Parquet Avro future not implemented"))
+      val params = nio.ParquetAvroFile.Parameters(numShards, schema, suffix)
+      self.write(nio.ParquetAvroFile[T](path))(params)
     }
   }
 
-  private object GcsConnectorUtil {
+  private[avro] object GcsConnectorUtil {
     def setCredentials(job: Job): Unit = {
       // These are needed since `FileInputFormat.setInputPaths` validates paths locally and
       // requires the user's GCP credentials.
