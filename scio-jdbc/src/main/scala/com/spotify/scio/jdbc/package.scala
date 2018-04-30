@@ -117,57 +117,15 @@ package object jdbc {
   implicit class JdbcScioContext(@transient val self: ScioContext) extends Serializable {
     /** Get an SCollection for a JDBC query. */
     def jdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T])
-    : SCollection[T] = self.requireNotClosed {
-      if (self.isTest) {
-        self.getTestInput(JdbcIO[T](readOptions))
-      } else {
-        val coder = self.pipeline.getCoderRegistry.getScalaCoder[T](self.options)
-        val connOpts = readOptions.connectionOptions
-        var transform = jio.JdbcIO.read[T]()
-          .withCoder(coder)
-          .withDataSourceConfiguration(getDataSourceConfig(readOptions.connectionOptions))
-          .withQuery(readOptions.query)
-          .withRowMapper(new jio.JdbcIO.RowMapper[T] {
-            override def mapRow(resultSet: ResultSet): T = {
-              readOptions.rowMapper(resultSet)
-            }
-          })
-        if (readOptions.statementPreparator != null) {
-          transform = transform
-            .withStatementPreparator(new jio.JdbcIO.StatementPreparator {
-              override def setParameters(preparedStatement: PreparedStatement): Unit = {
-                readOptions.statementPreparator(preparedStatement)
-              }
-            })
-        }
-        self.wrap(self.applyInternal(transform)).setName(self.tfName)
-      }
-    }
+    : SCollection[T] =
+      self.read(nio.Select(readOptions))
   }
 
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JDBC methods. */
   implicit class JdbcSCollection[T](val self: SCollection[T]) {
     /** Save this SCollection as a JDBC database. */
-    def saveAsJdbc(writeOptions: JdbcWriteOptions[T]): Future[Tap[T]] = {
-      if (self.context.isTest) {
-        self.context.testOut(JdbcIO[T](writeOptions))(self)
-      } else {
-        val connOpts = writeOptions.connectionOptions
-        var transform = jio.JdbcIO.write[T]()
-          .withDataSourceConfiguration(getDataSourceConfig(writeOptions.connectionOptions))
-          .withStatement(writeOptions.statement)
-        if (writeOptions.preparedStatementSetter != null) {
-          transform = transform
-            .withPreparedStatementSetter(new jio.JdbcIO.PreparedStatementSetter[T] {
-              override def setParameters(element: T, preparedStatement: PreparedStatement): Unit = {
-                writeOptions.preparedStatementSetter(element, preparedStatement)
-              }
-            })
-        }
-        self.applyInternal(transform)
-      }
-      Future.failed(new NotImplementedError("JDBC future is not implemented"))
-    }
+    def saveAsJdbc(writeOptions: JdbcWriteOptions[T]): Future[Tap[T]] =
+      self.write(nio.Write(writeOptions))(())
   }
 
 }
