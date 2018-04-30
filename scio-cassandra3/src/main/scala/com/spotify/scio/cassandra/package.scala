@@ -76,18 +76,7 @@ package object cassandra {
      * @param f function to convert input data to values for the CQL statement
      */
     def saveAsCassandra(opts: CassandraOptions, parallelism: Int = 0)
-                       (f: T => Seq[Any]): Future[Tap[T]] = {
-      if (self.context.isTest) {
-        self.context.testOut(CassandraIO(opts))(self)
-      } else {
-        val bulkOps = new BulkOperations(opts, parallelism)
-        self
-          .map(f.andThen(bulkOps.serializeFn))
-          .groupBy(bulkOps.partitionFn)
-          .map(bulkOps.writeFn)
-      }
-      Future.failed(new NotImplementedError("Cassandra future is not implemented"))
+                       (f: T => Seq[Any]): Future[Tap[T]] =
+      self.write(nio.Cassandra[T](opts, parallelism)(f))(())
     }
-  }
-
 }
