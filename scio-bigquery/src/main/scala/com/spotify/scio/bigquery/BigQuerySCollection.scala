@@ -72,7 +72,7 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
   : Future[Tap[T]] = {
     val params = nio.Typed.Table.Parameters(writeDisposition, createDisposition)
     self.asInstanceOf[SCollection[T with HasAnnotation]]
-      .write(nio.Typed.Table(table))(params)
+      .write(nio.Typed.Table[T with HasAnnotation](table))(params)
       .asInstanceOf[Future[Tap[T]]]
   }
 
@@ -113,7 +113,7 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
   : Future[Tap[T]] = {
     val params = nio.Typed.Table.Parameters(writeDisposition, createDisposition)
     self.asInstanceOf[SCollection[T with HasAnnotation]]
-      .write(nio.Typed.Table(tableSpec))(params)
+      .write(nio.Typed.Table[T with HasAnnotation](tableSpec))(params)
       .asInstanceOf[Future[Tap[T]]]
   }
 
