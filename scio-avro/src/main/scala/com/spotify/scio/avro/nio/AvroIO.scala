@@ -90,7 +90,7 @@ case class ObjectFile[T: ClassTag](path: String)
             private[scio] def processElement(c: DoFn[T, GenericRecord]#ProcessContext): Unit =
               c.output(AvroBytesUtil.encode(elemCoder, c.element()))
           })
-          .write(AvroFile(path, AvroBytesUtil.schema))(parameters)
+          .write(AvroFile[GenericRecord](path, AvroBytesUtil.schema))(parameters)
         sc.context.makeFuture(ObjectFileTap[T](ScioUtil.addPartSuffix(path)))
     }
 }
