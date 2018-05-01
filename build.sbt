@@ -518,7 +518,6 @@ lazy val scioTensorFlow: Project = Project(
 ).settings(
   commonSettings,
   description := "Scio add-on for TensorFlow",
-  Test / fork := true,
   libraryDependencies ++= Seq(
     "org.tensorflow" % "tensorflow" % tensorFlowVersion,
     "org.tensorflow" % "proto" % tensorFlowVersion,
