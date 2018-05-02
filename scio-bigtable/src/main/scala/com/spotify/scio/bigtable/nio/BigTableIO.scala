@@ -30,6 +30,7 @@ import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.apache.beam.sdk.values.KV
 import scala.concurrent.Future
 import scala.collection.JavaConverters._
+import org.joda.time.Duration
 
 final case class Row(bigtableOptions: BigtableOptions, tableId: String) extends ScioIO[BTRow] {
 
@@ -84,7 +85,7 @@ final case class Mutate[T](
   tableId: String)(implicit ev: T <:< Mutation) extends ScioIO[(ByteString, Iterable[T])] {
 
   type ReadP = Nothing
-  type WriteP = Unit
+  type WriteP = Mutate.WriteParam
 
   import bigtableOptions._
   def id: String = s"$getProjectId\t$getInstanceId\t$tableId"
@@ -99,7 +100,13 @@ final case class Mutate[T](
     sc: SCollection[(ByteString, Iterable[T])],
     params: WriteP
   ): Future[Tap[(ByteString, Iterable[T])]] = {
-    val sink = new BigtableBulkWriter(tableId, bigtableOptions, numOfShards, flushInterval)
+    val sink =
+      params match {
+        case Mutate.Default =>
+          BigtableIO.write().withBigtableOptions(bigtableOptions).withTableId(tableId)
+        case Mutate.Bulk(numOfShards, flushInterval) =>
+          new BigtableBulkWriter(tableId, bigtableOptions, numOfShards, flushInterval)
+      }
     sc.map(kv => KV.of(kv._1, kv._2.asJava.asInstanceOf[java.lang.Iterable[Mutation]]))
       .applyInternal(sink)
     Future.failed(new NotImplementedError("Bigtable future not implemented"))
@@ -107,6 +114,12 @@ final case class Mutate[T](
 }
 
 object Mutate {
+  sealed trait WriteParam
+  object Default extends WriteParam
+  final case class Bulk(
+    numOfShards: Int,
+    flushInterval: Duration = Duration.standardSeconds(1)) extends WriteParam
+
   def apply[T](
             projectId: String,
             instanceId: String,

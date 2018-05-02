@@ -66,7 +66,7 @@ package object elasticsearch {
         numOfShards,
         maxBulkRequestSize,
         errorFn)(f)
-      self.write(io)(())
+      self.write(io)
     }
   }
 
