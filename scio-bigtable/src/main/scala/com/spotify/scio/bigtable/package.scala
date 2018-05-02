@@ -219,7 +219,8 @@ package object bigtable {
                        tableId: String)
                       (implicit ev: T <:< Mutation)
     : Future[Tap[(ByteString, Iterable[Mutation])]] = {
-      self.write(nio.Mutate[T](projectId, instanceId, tableId))
+      val params = nio.Mutate.Default
+      self.write(nio.Mutate[T](projectId, instanceId, tableId))(params)
         .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
     }
 
@@ -230,7 +231,23 @@ package object bigtable {
                        tableId: String)
                       (implicit ev: T <:< Mutation)
     : Future[Tap[(ByteString, Iterable[Mutation])]] = {
-      self.write(nio.Mutate[T](bigtableOptions, tableId))
+      val params = nio.Mutate.Default
+      self.write(nio.Mutate[T](bigtableOptions, tableId))(params)
+        .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
+    }
+
+    /**
+     * Save this SCollection as a Bigtable table. This version supports batching. Note that
+     * elements must be of type `Mutation`.
+     */
+    def saveAsBigtable(bigtableOptions: BigtableOptions,
+                       tableId: String,
+                       numOfShards: Int,
+                       flushInterval: Duration = Duration.standardSeconds(1))
+                      (implicit ev: T <:< Mutation)
+    : Future[Tap[(ByteString, Iterable[Mutation])]] = {
+      val params = nio.Mutate.Bulk(numOfShards, flushInterval)
+      self.write(nio.Mutate[T](bigtableOptions, tableId))(params)
         .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
     }
   }
