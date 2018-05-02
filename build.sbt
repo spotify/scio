@@ -85,8 +85,8 @@ def previousVersion(currentVersion: String): Option[String] = {
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization       := "com.spotify",
 
-  scalaVersion       := "2.12.5",
-  crossScalaVersions := Seq("2.11.12", "2.12.5"),
+  scalaVersion       := "2.12.6",
+  crossScalaVersions := Seq("2.11.12", "2.12.6"),
   scalacOptions                   ++= {
     Seq("-Xmax-classfile-name", "100", "-target:jvm-1.8", "-deprecation", "-feature", "-unchecked") ++
       (if (scalaBinaryVersion.value == "2.12") Seq("-Ydelambdafy:inline") else Nil)
