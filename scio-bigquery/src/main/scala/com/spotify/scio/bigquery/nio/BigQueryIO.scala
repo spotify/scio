@@ -155,7 +155,9 @@ final case class TableRef(table: TableReference) extends ScioIO[TableRow] {
       case TableRef.Parameters(schema, writeDisposition, createDisposition, tableDescription) =>
         var transform = bqio.BigQueryIO.writeTableRows().to(table)
         if (schema != null) transform = transform.withSchema(schema)
-        if (createDisposition != null) transform = transform.withCreateDisposition(createDisposition)
+        if (createDisposition != null) {
+          transform = transform.withCreateDisposition(createDisposition)
+        }
         if (writeDisposition != null) transform = transform.withWriteDisposition(writeDisposition)
         if (tableDescription != null) transform = transform.withTableDescription(tableDescription)
         data.applyInternal(transform)
