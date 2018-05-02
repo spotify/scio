@@ -77,6 +77,6 @@ package object cassandra {
      */
     def saveAsCassandra(opts: CassandraOptions, parallelism: Int = 0)
                        (f: T => Seq[Any]): Future[Tap[T]] =
-      self.write(nio.Cassandra[T](opts, parallelism)(f))(())
+      self.write(nio.Cassandra[T](opts, parallelism)(f))
     }
 }
