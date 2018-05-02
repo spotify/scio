@@ -43,7 +43,7 @@ import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class BigtableBulkWriter
+public class BigtableBulkWriter
         extends PTransform<PCollection<KV<ByteString, Iterable<Mutation>>>, PDone> {
 
   private static final Logger LOG = LoggerFactory.getLogger(BigtableBulkWriter.class);
