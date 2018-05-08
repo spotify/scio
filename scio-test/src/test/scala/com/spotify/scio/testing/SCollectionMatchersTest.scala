@@ -217,6 +217,34 @@ class SCollectionMatchersTest extends PipelineSpec {
     }
   }
 
+  it should "support satisfySingleValue" in {
+    // should cases
+    runWithContext { _.parallelize(Seq(1)) should satisfySingleValue[Int] (_ == 1) }
+
+    an [AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq(1)) should satisfySingleValue[Int] (_ == 10) }
+    }
+    an [PipelineExecutionException] should be thrownBy {
+      runWithContext { _.parallelize(1 to 10) should satisfySingleValue[Int] (_ == 1) }
+    }
+    an [PipelineExecutionException] should be thrownBy {
+      runWithContext { _.parallelize(Seq.empty[Int]) should satisfySingleValue[Int] (_ == 1) }
+    }
+
+    // shouldNot cases
+    runWithContext { _.parallelize(Seq(10)) shouldNot satisfySingleValue[Int] (_ == 1) }
+
+    an [AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq(1)) shouldNot satisfySingleValue[Int] (_ == 1) }
+    }
+    an [PipelineExecutionException] should be thrownBy {
+      runWithContext { _.parallelize(1 to 10) shouldNot satisfySingleValue[Int] (_ == 1) }
+    }
+    an [PipelineExecutionException] should be thrownBy {
+      runWithContext { _.parallelize(Seq.empty[Int]) shouldNot satisfySingleValue[Int] (_ == 1) }
+    }
+  }
+
   it should "support forAll" in {
     // should cases
     runWithContext { _.parallelize(1 to 100) should forAll[Int] (_ > 0) }
