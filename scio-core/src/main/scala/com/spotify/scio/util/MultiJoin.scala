@@ -26,7 +26,6 @@
 
 package com.spotify.scio.util
 
-import com.google.common.collect.Lists
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}
 import org.apache.beam.sdk.values.TupleTag

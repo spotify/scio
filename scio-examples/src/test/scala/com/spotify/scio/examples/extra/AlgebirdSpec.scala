@@ -160,7 +160,7 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
       val minOp = Aggregator.min[Double].composePrepare[C](_._3)
       val avgOp = AveragedValue.aggregator.composePrepare[C](_._4)
       // Combine 4 Aggregator[C, Double, Double] into 1 Aggregator[C, C, C]
-      val colAgg = MultiAggregator(sumOp, maxOp, minOp, avgOp)
+      val colAgg = MultiAggregator((sumOp, maxOp, minOp, avgOp))
 
       val expected = (
         xs.internal.map(_._1).sum,
@@ -181,7 +181,7 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
       val maxOp = Aggregator.max[Double]
       val minOp = Aggregator.min[Double]
       val momentsOp = Moments.aggregator
-      val colAgg = MultiAggregator(maxOp, minOp, momentsOp)
+      val colAgg = MultiAggregator((maxOp, minOp, momentsOp))
         .andThenPresent { case (max, min, moments) =>
           // Present mean and stddev in Moments
           (max, min, moments.mean, moments.stddev)

@@ -18,8 +18,6 @@
 package com.spotify.scio
 
 import org.apache.beam.sdk.metrics.{Counter, Distribution, Gauge, Metrics}
-
-import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 /**

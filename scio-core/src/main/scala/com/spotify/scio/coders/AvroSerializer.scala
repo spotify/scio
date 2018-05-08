@@ -24,7 +24,6 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.coders.AvroCoder
-import org.apache.beam.sdk.coders.Coder.Context
 
 import scala.collection.mutable.{Map => MMap}
 import scala.util.Try

@@ -17,9 +17,6 @@
 
 package com.spotify.scio.testing
 
-import java.lang.{Iterable => JIterable}
-import java.util.{Map => JMap}
-
 import com.google.bigtable.v2.Mutation
 import com.google.bigtable.v2.Mutation.MutationCase
 import com.google.protobuf.ByteString

@@ -25,7 +25,6 @@ import com.google.common.collect.{ImmutableList, ImmutableSet, Lists}
 import com.twitter.chill._
 
 import scala.collection.JavaConverters._
-import scala.language.higherKinds
 
 private[cassandra] object DataTypeExternalizer {
   def apply(dt: DataType): DataTypeExternalizer = {

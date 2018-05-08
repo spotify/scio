@@ -22,9 +22,6 @@ package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
 
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-
 object TapExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     // Each `ScioContext` instance maps to a unique pipeline
