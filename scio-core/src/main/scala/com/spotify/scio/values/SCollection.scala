@@ -259,14 +259,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /**
-   * Filter the elements for which the given `PartialFunction` is defined, and then map.
-   * MaxDoFns limits the number of concurrent doFns to that amount per worker.
-   * @group transform
-   */
-  def collectWithParallelism[U: ClassTag](maxDoFns: Int)(pfn: PartialFunction[T, U])
-  :SCollection[U] = this.parDo(Functions.parallelCollectFn(maxDoFns)(pfn))
-
-  /**
    * Generic function to combine the elements using a custom set of aggregation functions. Turns
    * an `SCollection[T]` into a result of type `SCollection[C]`, for a "combined type" `C`. Note
    * that `V` and `C` can be different -- for example, one might combine an SCollection of type
@@ -333,29 +325,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.pApply(Filter.by(Functions.serializableFn(f.asInstanceOf[T => JBoolean])))
 
   /**
-   * Return a new SCollection containing only the elements that satisfy a predicate.
-   * MaxDoFns limits the number of concurrent doFns to that amount per worker.
-   * @group transform
-   */
-  def filterWithParallelism(maxDoFns: Int)(fn: T => Boolean): SCollection[T] =
-    this.parDo(Functions.parallelFilterFn(maxDoFns)(fn))
-
-  /**
    * Return a new SCollection by first applying a function to all elements of
    * this SCollection, and then flattening the results.
    * @group transform
    */
   def flatMap[U: ClassTag](f: T => TraversableOnce[U]): SCollection[U] =
     this.parDo(Functions.flatMapFn(f))
-
-  /**
-   * Return a new SCollection by first applying a function to all elements of
-   * this SCollection, and then flattening the results.
-   * MaxDoFns limits the number of concurrent doFns to that amount per worker.
-   * @group transform
-   */
-  def flatMapWithParallelism[U: ClassTag](maxDoFns: Int)(fn: T => TraversableOnce[U])
-  : SCollection[U] = this.parDo(Functions.parallelFlatMapFn(maxDoFns)(fn))
 
   /**
    * Return a new SCollection[U] by flattening each element of an SCollection[Traversable[U]].
@@ -410,14 +385,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def map[U: ClassTag](f: T => U): SCollection[U] = this.parDo(Functions.mapFn(f))
-
-  /**
-   * Return a new SCollection by applying a function to all elements of this SCollection.
-   * MaxDoFns limits the number of concurrent doFns to that amount per worker.
-   * @group transform
-   */
-  def mapWithParallelism[U: ClassTag](maxDoFns: Int)(fn: T => U): SCollection[U] =
-    this.parDo(Functions.parallelMapFn(maxDoFns)(fn))
 
   /**
    * Return the max of this SCollection as defined by the implicit `Ordering[T]`.

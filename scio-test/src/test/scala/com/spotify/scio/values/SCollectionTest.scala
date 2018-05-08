@@ -19,7 +19,6 @@ package com.spotify.scio.values
 
 import java.io.PrintStream
 import java.nio.file.Files
-import java.util.concurrent.atomic.AtomicInteger
 
 import com.google.api.client.util.Charsets
 import com.spotify.scio.testing.PipelineSpec
@@ -29,7 +28,9 @@ import com.twitter.algebird.{Aggregator, Semigroup}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{Count, DoFn, GroupByKey, ParDo}
 import org.apache.beam.sdk.transforms.windowing.PaneInfo.Timing
-import org.apache.beam.sdk.transforms.windowing._
+import org.apache.beam.sdk.transforms.windowing.{
+  BoundedWindow, GlobalWindow, IntervalWindow, PaneInfo
+}
 import org.apache.beam.sdk.values.KV
 import org.joda.time.{DateTimeConstants, Duration, Instant}
 
@@ -193,18 +194,6 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support collectWithParallelism" in {
-    runWithContext { sc =>
-      val records = Seq(
-        ("test1", 1),
-        ("test2", 2),
-        ("test3", 3)
-      )
-      val p = sc.parallelize(records).collectWithParallelism(1) { case ("test2", x) => 2 * x }
-      p should containSingleValue (4)
-    }
-  }
-
   it should "support combine()" in {
     runWithContext { sc =>
       val p = sc.parallelize(1 to 100).combine(_.toDouble)(_ + _)(_ + _)
@@ -249,23 +238,9 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support filterWithParallelism()" in {
-    runWithContext { sc =>
-      val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).filterWithParallelism(1)(_ % 2 == 0)
-      p should containInAnyOrder (Seq(2, 4))
-    }
-  }
-
   it should "support flatMap()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq("a b c", "d e", "f")).flatMap(_.split(" "))
-      p should containInAnyOrder (Seq("a", "b", "c", "d", "e", "f"))
-    }
-  }
-
-  it should "support flatMapWithParallelism()" in {
-    runWithContext { sc =>
-      val p = sc.parallelize(Seq("a b c", "d e", "f")).flatMapWithParallelism(1)(_.split(" "))
       p should containInAnyOrder (Seq("a", "b", "c", "d", "e", "f"))
     }
   }
@@ -307,16 +282,6 @@ class SCollectionTest extends PipelineSpec {
   it should "support map()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq("1", "2", "3")).map(_.toInt)
-      p should containInAnyOrder (Seq(1, 2, 3))
-    }
-  }
-
-  it should "support mapWithParallelism()" in {
-    @transient lazy val processing = new AtomicInteger()
-    runWithContext { sc =>
-      val p = sc
-        .parallelize(Seq("1", "2", "3"))
-        .mapWithParallelism(2)(_.toInt)
       p should containInAnyOrder (Seq(1, 2, 3))
     }
   }

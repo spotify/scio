@@ -71,6 +71,78 @@ package object transforms {
 
   }
 
+  implicit class LimitedParallelismDoFns[T: ClassTag](val self: SCollection[T]) {
+    def parallelCollectFn[U](maxDoFns: Int)(pfn: PartialFunction[T, U]): DoFn[T, U] =
+      new ParallelLimitedFn[T, U](maxDoFns) {
+        val isDefined = ClosureCleaner(pfn.isDefinedAt(_)) // defeat closure
+        val g = ClosureCleaner(pfn) // defeat closure
+        def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
+          if(isDefined(c.element())){
+            c.output(g(c.element()))
+          }
+        }
+      }
+
+    def parallelFilterFn(maxDoFns: Int)(f: T => Boolean): DoFn[T, T] =
+      new ParallelLimitedFn[T, T](maxDoFns) {
+        val g = ClosureCleaner(f) // defeat closure
+        def parallelProcessElement(c: DoFn[T, T]#ProcessContext): Unit = {
+          if(g(c.element())){
+            c.output(c.element())
+          }
+        }
+      }
+
+    def parallelMapFn[U](maxDoFns: Int)(f: T => U): DoFn[T, U] =
+      new ParallelLimitedFn[T, U](maxDoFns) {
+        val g = ClosureCleaner(f) // defeat closure
+        def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit =
+          c.output(g(c.element()))
+      }
+
+    def parallelFlatMapFn[U](maxDoFns: Int)(f: T => TraversableOnce[U]): DoFn[T, U] =
+      new ParallelLimitedFn[T, U](maxDoFns: Int) {
+        val g = ClosureCleaner(f) // defeat closure
+        def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
+          val i = g(c.element()).toIterator
+          while (i.hasNext) c.output(i.next())
+        }
+      }
+
+    /**
+     * Return a new SCollection by first applying a function to all elements of
+     * this SCollection, and then flattening the results.
+     * MaxDoFns limits the number of concurrent doFns to that amount per worker.
+     * @group transform
+     */
+    def flatMapWithParallelism[U: ClassTag](maxDoFns: Int)(fn: T => TraversableOnce[U])
+    :SCollection[U] = self.parDo(parallelFlatMapFn(maxDoFns)(fn))
+
+    /**
+     * Return a new SCollection containing only the elements that satisfy a predicate.
+     * MaxDoFns limits the number of concurrent doFns to that amount per worker.
+     * @group transform
+     */
+    def filterWithParallelism(maxDoFns: Int)(fn: T => Boolean): SCollection[T] =
+      self.parDo(parallelFilterFn(maxDoFns)(fn))
+
+    /**
+     * Return a new SCollection by applying a function to all elements of this SCollection.
+     * MaxDoFns limits the number of concurrent doFns to that amount per worker.
+     * @group transform
+     */
+    def mapWithParallelism[U: ClassTag](maxDoFns: Int)(fn: T => U): SCollection[U] =
+      self.parDo(parallelMapFn(maxDoFns)(fn))
+
+    /**
+     * Filter the elements for which the given `PartialFunction` is defined, and then map.
+     * MaxDoFns limits the number of concurrent doFns to that amount per worker.
+     * @group transform
+     */
+    def collectWithParallelism[U: ClassTag](maxDoFns: Int)(pfn: PartialFunction[T, U])
+    :SCollection[U] = self.parDo(parallelCollectFn(maxDoFns)(pfn))
+  }
+
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with pipe methods.
    */
