@@ -20,7 +20,6 @@ package com.spotify.scio.testing
 import com.google.api.services.bigquery.model.TableRow
 import com.google.datastore.v1.{Entity, Query}
 import com.spotify.scio.ScioResult
-import com.spotify.scio.nio.ScioIO
 import com.spotify.scio.values.SCollection
 
 import scala.collection.concurrent.TrieMap

@@ -19,7 +19,6 @@ package com.spotify.scio
 
 import java.sql.{Driver, PreparedStatement, ResultSet}
 
-import com.spotify.scio.Implicits._
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
