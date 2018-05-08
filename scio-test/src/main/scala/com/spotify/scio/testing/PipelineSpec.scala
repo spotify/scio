@@ -17,7 +17,8 @@
 
 package com.spotify.scio.testing
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Matchers, ConfigMap, Status, Args}
+import JobTest.BeamOptions
 
 /**
   * Trait for unit testing pipelines.
@@ -33,5 +34,43 @@ import org.scalatest.{FlatSpec, Matchers}
   * }
   * }}}
   */
-trait PipelineSpec extends FlatSpec
-  with Matchers with SCollectionMatchers with PipelineTestUtils with RunEnforcementJobTest
+trait PipelineSpec
+    extends FlatSpec
+    with Matchers
+    with SCollectionMatchers
+    with PipelineTestUtils
+    with RunEnforcementJobTest {
+
+  private val Beam = """beam\.(.*)""".r
+
+  private var beamOpts: BeamOptions = _
+
+  private val aliases =
+    Map(
+      "flink" ->
+        List("runner" -> "FlinkRunner", "flinkMaster" -> "[local]"))
+
+  private def getBeamOptions(m: ConfigMap): List[String] =
+    m.collect { case (Beam(k), v) => k -> v }
+      .flatMap {
+        case (k, v) =>
+          aliases
+            .get(k)
+            .getOrElse(List(k -> v))
+      }
+      .map { case (k, v) => s"--$k=$v" }
+      .toList
+
+  implicit def beamOptions: BeamOptions = {
+    assume(beamOpts != null)
+    beamOpts
+  }
+
+  override def run(testName: Option[String], args: Args): Status = {
+    if (beamOpts == null && !args.runTestInNewInstance && (expectedTestCount(args.filter) > 0)) {
+      beamOpts = BeamOptions(getBeamOptions(args.configMap))
+    }
+    super.run(testName, args)
+  }
+
+}

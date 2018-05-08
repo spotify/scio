@@ -67,6 +67,8 @@ import scala.util.control.NonFatal
  */
 object JobTest {
 
+  case class BeamOptions(opts: List[String])
+
   private case class BuilderState(className: String,
                                   cmdlineArgs: Array[String],
                                   inputs: Map[TestIO[_], Iterable[_]],
@@ -229,15 +231,17 @@ object JobTest {
   }
 
   /** Create a new JobTest.Builder instance. */
-  def apply(className: String): Builder =
+  def apply(className: String)(implicit bm: BeamOptions): Builder =
     new Builder(BuilderState(
       className, Array(), Map.empty, Map.empty, Map.empty, Map.empty, Map.empty, Map.empty))
+        .args(bm.opts:_*)
 
   /** Create a new JobTest.Builder instance. */
-  def apply[T: ClassTag]: Builder = {
+  def apply[T: ClassTag](implicit bm: BeamOptions): Builder = {
     val className= ScioUtil.classOf[T].getName.replaceAll("\\$$", "")
     new Builder(BuilderState(
       className, Array(), Map.empty, Map.empty, Map.empty, Map.empty, Map.empty, Map.empty))
+        .args(bm.opts:_*)
   }
 
 }
