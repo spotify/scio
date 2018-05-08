@@ -17,18 +17,11 @@
 
 package com.spotify.scio.io
 
-import com.google.api.services.bigquery.model.TableReference
-import com.google.protobuf.Message
-import org.apache.avro.Schema
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.apache.beam.sdk.util.{BackOff, BackOffUtils, FluentBackoff, Sleeper}
-import org.apache.avro.generic.GenericRecord
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{Future, Promise}
-import scala.reflect.ClassTag
-import scala.reflect.runtime.universe._
 
 /** Exception for when a tap is not available. */
 class TapNotAvailableException(msg: String) extends Exception(msg)

@@ -17,14 +17,9 @@
 
 package com.spotify.scio.bigquery.testing
 
-import com.google.common.collect.ImmutableMap
 import com.spotify.scio._
 import com.spotify.scio.testing._
 import com.spotify.scio.bigquery._
-import org.apache.beam.sdk.{io => gio}
-import org.scalatest.exceptions.TestFailedException
-
-import scala.io.Source
 
 // scalastyle:off file.size.limit
 

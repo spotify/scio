@@ -20,7 +20,6 @@ package com.spotify.scio.testing
 import java.lang.reflect.InvocationTargetException
 
 import com.spotify.scio.ScioResult
-import com.spotify.scio.nio.ScioIO
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.{metrics => bm}

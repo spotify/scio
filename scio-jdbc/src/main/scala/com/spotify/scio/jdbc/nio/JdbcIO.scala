@@ -24,14 +24,10 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.ScioContext
 import com.spotify.scio.nio.ScioIO
 import com.spotify.scio.io.Tap
-import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.io.{jdbc => jio}
-import org.joda.time.Duration
 import scala.concurrent.Future
 import scala.reflect.ClassTag
-import scala.collection.JavaConverters._
-import java.sql.{Driver, PreparedStatement, ResultSet}
-import java.lang.{Iterable => JIterable}
+import java.sql.{PreparedStatement, ResultSet}
 
 final case class Select[T: ClassTag](readOptions: JdbcReadOptions[T])
   extends ScioIO[T] {
