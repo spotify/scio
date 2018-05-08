@@ -20,7 +20,12 @@ import sbt._, Keys._
 object Scalac {
 
   // see: https://tpolecat.github.io/2017/04/25/scalac-flags.html
-  val extraOptions = List(
+  val baseOptions = List(
+    "-Xmax-classfile-name", "100",
+    "-target:jvm-1.8",
+    "-deprecation", // Emit warning and location for usages of deprecated APIs.
+    "-feature", // Emit warning and location for usages of features that should be imported explicitly.
+    "-unchecked", // Enable additional warnings where generated code depends on assumptions.
     "-encoding", "utf-8", // Specify character encoding used by source files.
     "-explaintypes", // Explain type errors in more detail.
     // "-language:existentials", // Existential types (besides wildcard types) can be written and inferred
@@ -50,7 +55,7 @@ object Scalac {
     // "-Ypartial-unification", // Enable partial unification in type constructor inference
     // "-Ywarn-dead-code", // Warn when dead code is identified.
     "-Ywarn-inaccessible", // Warn about inaccessible types in method signatures.
-    "-Ywarn-infer-any", // Warn when a type argument is inferred to be `Any`.
+    "-Ywarn-infer-any" // Warn when a type argument is inferred to be `Any`.
     // "-Ywarn-numeric-widen", // Warn when numerics are widened.
     // "-Ywarn-unused:implicits", // Warn if an implicit parameter is unused.
     // "-Ywarn-unused:locals", // Warn if a local definition is unused.
@@ -61,26 +66,15 @@ object Scalac {
   )
 
   def scala212settings = Def.setting {
-    if (scalaBinaryVersion.value == "2.12")
-      List(
-        "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
-        "-Ywarn-extra-implicit" // Warn when more than one implicit parameter section is defined.
-      )
-    else Nil
-  }
-
-  def baseScioOptions = Def.setting {
     List(
-      "-Xmax-classfile-name", "100",
-      "-target:jvm-1.8",
-      "-deprecation", // Emit warning and location for usages of deprecated APIs.
-      "-feature", // Emit warning and location for usages of features that should be imported explicitly.
-      "-unchecked") ++ // Enable additional warnings where generated code depends on assumptions.
-      (if (scalaBinaryVersion.value == "2.12") List("-Ydelambdafy:inline") else Nil)
+      "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
+      "-Ywarn-extra-implicit", // Warn when more than one implicit parameter section is defined.,
+      "-Ydelambdafy:inline" // Set the strategy used for translating lambdas into JVM code to "inline"
+    )
   }
 
   def commonsOptions = Def.setting {
-    baseScioOptions.value ++ extraOptions ++ scala212settings.value
+    baseOptions ++ (if (scalaBinaryVersion.value == "2.12") scala212settings.value else Nil)
   }
 
   def compileDocOptions = Def.setting {
