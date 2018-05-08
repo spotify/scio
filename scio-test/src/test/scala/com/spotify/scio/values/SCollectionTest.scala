@@ -29,7 +29,7 @@ import com.twitter.algebird.{Aggregator, Semigroup}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{Count, DoFn, GroupByKey, ParDo}
 import org.apache.beam.sdk.transforms.windowing.PaneInfo.Timing
-import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, GlobalWindow, IntervalWindow, PaneInfo}
+import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.values.KV
 import org.joda.time.{DateTimeConstants, Duration, Instant}
 
