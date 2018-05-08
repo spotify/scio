@@ -23,9 +23,7 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.gcp.bigtable.BigtableIO
 import org.apache.beam.sdk.io.range.ByteKeyRange
-import org.apache.beam.sdk.values.KV
 import org.joda.time.Duration
 
 import scala.collection.JavaConverters._
