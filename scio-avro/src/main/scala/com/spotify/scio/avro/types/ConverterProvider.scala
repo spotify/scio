@@ -21,7 +21,6 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.avro.types.MacroUtil._
 import org.apache.avro.generic.GenericRecord
 
-import scala.language.experimental.macros
 import scala.reflect.macros._
 
 private[types] object ConverterProvider {

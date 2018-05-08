@@ -27,7 +27,6 @@ import org.apache.beam.sdk.io.jdbc.JdbcIO.DataSourceConfiguration
 import org.apache.beam.sdk.io.{jdbc => jio}
 
 import scala.concurrent.Future
-import scala.language.existentials
 import scala.reflect.ClassTag
 
 /**

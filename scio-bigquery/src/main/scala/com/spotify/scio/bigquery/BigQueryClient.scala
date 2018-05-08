@@ -856,7 +856,7 @@ class BigQueryClient private (private val projectId: String,
     var pendingJobs = jobs.flatMap {
       job =>
         job.jobReference match {
-          case Some(reference) => Some(job, reference)
+          case Some(reference) => Some((job, reference))
           case None => None
         }
     }

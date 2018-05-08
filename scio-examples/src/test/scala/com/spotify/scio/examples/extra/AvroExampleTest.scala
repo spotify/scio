@@ -20,7 +20,6 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio.avro.Account
 import com.spotify.scio.examples.extra.AvroExample.{AccountFromSchema, AccountToSchema}
 import com.spotify.scio.testing.{AvroIO, PipelineSpec, TextIO}
-import org.apache.avro.generic.{GenericData, GenericRecord}
 
 class AvroExampleTest extends PipelineSpec {
 

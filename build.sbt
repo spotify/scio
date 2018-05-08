@@ -88,14 +88,8 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
 
   scalaVersion       := "2.12.6",
   crossScalaVersions := Seq("2.11.12", "2.12.6"),
-  scalacOptions                   ++= {
-    Seq("-Xmax-classfile-name", "100", "-target:jvm-1.8", "-deprecation", "-feature", "-unchecked") ++
-      (if (scalaBinaryVersion.value == "2.12") Seq("-Ydelambdafy:inline") else Nil)
-    },
-  scalacOptions in (Compile, doc) ++= {
-    Seq("-skip-packages", "org.apache") ++
-      (if (scalaBinaryVersion.value == "2.12") Seq("-no-java-comments") else Nil)
-    },
+  scalacOptions                   ++= Scalac.commonsOptions.value,
+  scalacOptions in (Compile, doc) ++= Scalac.compileDocOptions.value,
   javacOptions                    ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
   javacOptions in (Compile, doc)  := Seq("-source", "1.8"),
 
