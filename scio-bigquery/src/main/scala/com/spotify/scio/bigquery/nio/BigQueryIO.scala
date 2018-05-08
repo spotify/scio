@@ -19,9 +19,8 @@ package com.spotify.scio.bigquery.nio
 
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.ScioContext
-import com.spotify.scio.testing.{BigQueryIO, TableRowJsonIO}
 import com.spotify.scio.bigquery.{BigQueryType, BigQueryClient}
-import com.spotify.scio.bigquery.types.BigQueryType.{HasAnnotation, HasTable, HasQuery}
+import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.io.{BigQueryTap, TableRowJsonTap}
 import com.spotify.scio.nio.ScioIO
 import com.spotify.scio.io.Tap

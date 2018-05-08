@@ -30,7 +30,6 @@ import org.joda.time
 
 import scala.concurrent.Future
 import scala.concurrent.duration.{Duration, DurationInt}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class ScioResultTest extends PipelineSpec {
 
