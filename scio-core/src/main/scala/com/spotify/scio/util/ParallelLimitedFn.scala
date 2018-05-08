@@ -19,6 +19,8 @@ package com.spotify.scio.util
 
 import java.util.concurrent.Semaphore
 
+import com.spotify.scio.transforms.DoFnWithResource
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 
@@ -27,13 +29,16 @@ import org.apache.beam.sdk.transforms.DoFn.ProcessElement
  * @param maxDoFns Max number of doFns
  */
 private[scio] abstract class ParallelLimitedFn[T, U](maxDoFns: Int)
-  extends DoFn[T, U] with NamedFn {
+  extends DoFnWithResource[T, U, Semaphore] with NamedFn {
 
-  private val semaphore: Semaphore = new Semaphore(maxDoFns, true)
+  def getResourceType: ResourceType = ResourceType.PER_CLASS
+
+  def createResource: Semaphore = new Semaphore(maxDoFns, true)
 
   def parallelProcessElement(x: DoFn[T, U]#ProcessContext): Unit
 
   @ProcessElement def processElement(x: DoFn[T, U]#ProcessContext): Unit = {
+    val semaphore = getResource
     try {
       semaphore.acquire()
       parallelProcessElement(x)
