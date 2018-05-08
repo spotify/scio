@@ -72,6 +72,85 @@ package object transforms {
   }
 
   /**
+    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with custom
+    * parallelism, where `parallelism` is the number of concurrent `DoFn` threads per worker
+    * (default to number of CPU cores).
+   */
+  implicit class CustomParallelismSCollection[T](val self: SCollection[T]) {
+    private def parallelCollectFn[U](parallelism: Int)(pfn: PartialFunction[T, U]): DoFn[T, U] =
+      new ParallelLimitedFn[T, U](parallelism) {
+        val isDefined = ClosureCleaner(pfn.isDefinedAt(_)) // defeat closure
+        val g = ClosureCleaner(pfn) // defeat closure
+        def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
+          if(isDefined(c.element())){
+            c.output(g(c.element()))
+          }
+        }
+      }
+
+    private def parallelFilterFn(parallelism: Int)(f: T => Boolean): DoFn[T, T] =
+      new ParallelLimitedFn[T, T](parallelism) {
+        val g = ClosureCleaner(f) // defeat closure
+        def parallelProcessElement(c: DoFn[T, T]#ProcessContext): Unit = {
+          if(g(c.element())){
+            c.output(c.element())
+          }
+        }
+      }
+
+    private def parallelMapFn[U](parallelism: Int)(f: T => U): DoFn[T, U] =
+      new ParallelLimitedFn[T, U](parallelism) {
+        val g = ClosureCleaner(f) // defeat closure
+        def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit =
+          c.output(g(c.element()))
+      }
+
+    private def parallelFlatMapFn[U](parallelism: Int)(f: T => TraversableOnce[U]): DoFn[T, U] =
+      new ParallelLimitedFn[T, U](parallelism: Int) {
+        val g = ClosureCleaner(f) // defeat closure
+        def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
+          val i = g(c.element()).toIterator
+          while (i.hasNext) c.output(i.next())
+        }
+      }
+
+    /**
+     * Return a new SCollection by first applying a function to all elements of
+     * this SCollection, and then flattening the results.
+     * `parallelism` is the number of concurrent `DoFn`s per worker.
+     * @group transform
+     */
+    def flatMapWithParallelism[U: ClassTag](parallelism: Int)(fn: T => TraversableOnce[U])
+    :SCollection[U] = self.parDo(parallelFlatMapFn(parallelism)(fn))
+
+    /**
+     * Return a new SCollection containing only the elements that satisfy a predicate.
+     * `parallelism` is the number of concurrent `DoFn`s per worker.
+     * @group transform
+     */
+    def filterWithParallelism(parallelism: Int)(fn: T => Boolean): SCollection[T] = {
+      implicit val ct = self.ct
+      self.parDo(parallelFilterFn(parallelism)(fn))
+    }
+
+    /**
+     * Return a new SCollection by applying a function to all elements of this SCollection.
+     * `parallelism` is the number of concurrent `DoFn`s per worker.
+     * @group transform
+     */
+    def mapWithParallelism[U: ClassTag](parallelism: Int)(fn: T => U): SCollection[U] =
+      self.parDo(parallelMapFn(parallelism)(fn))
+
+    /**
+     * Filter the elements for which the given `PartialFunction` is defined, and then map.
+     * `parallelism` is the number of concurrent `DoFn`s per worker.
+     * @group transform
+     */
+    def collectWithParallelism[U: ClassTag](parallelism: Int)(pfn: PartialFunction[T, U])
+    :SCollection[U] = self.parDo(parallelCollectFn(parallelism)(pfn))
+  }
+
+  /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with pipe methods.
    */
   implicit class PipeSCollection(val self: SCollection[String]) extends AnyVal {
