@@ -150,6 +150,43 @@ private[scio] object Functions {
     override def partitionFor(elem: T, numPartitions: Int): Int = g(elem)
   }
 
+  def parallelCollectFn[T, U](maxDoFns: Int)(pfn: PartialFunction[T, U]): DoFn[T, U] =
+    new ParallelLimitedFn[T, U](maxDoFns) {
+      val isDefined = ClosureCleaner(pfn.isDefinedAt(_)) // defeat closure
+      val g = ClosureCleaner(pfn) // defeat closure
+      def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
+        if(isDefined(c.element())){
+          c.output(g(c.element()))
+        }
+      }
+    }
+
+  def parallelFilterFn[T](maxDoFns: Int)(f: T => Boolean): DoFn[T, T] =
+    new ParallelLimitedFn[T, T](maxDoFns) {
+      val g = ClosureCleaner(f) // defeat closure
+      def parallelProcessElement(c: DoFn[T, T]#ProcessContext): Unit = {
+        if(g(c.element())){
+          c.output(c.element())
+        }
+      }
+    }
+
+  def parallelMapFn[T, U](maxDoFns: Int)(f: T => U): DoFn[T, U] =
+    new ParallelLimitedFn[T, U](maxDoFns) {
+      val g = ClosureCleaner(f) // defeat closure
+      def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit =
+        c.output(g(c.element()))
+    }
+
+  def parallelFlatMapFn[T, U](maxDoFns: Int)(f: T => TraversableOnce[U]): DoFn[T, U] =
+    new ParallelLimitedFn[T, U](maxDoFns: Int) {
+      val g = ClosureCleaner(f) // defeat closure
+      def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
+        val i = g(c.element()).toIterator
+        while (i.hasNext) c.output(i.next())
+      }
+    }
+
   private abstract class ReduceFn[T] extends KryoCombineFn[T, JList[T], T] {
 
     override def createAccumulator(): JList[T] = Lists.newArrayList()
