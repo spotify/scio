@@ -70,7 +70,7 @@ private[types] object ConverterProvider {
       val provider: OverrideTypeProvider = OverrideTypeProviderFinder.getProvider
       tpe match {
         case t if provider.shouldOverrideType(c)(t) =>
-          provider.createInstance(c)(t, q"$tree.toString")
+          provider.createInstance(c)(t, q"$tree")
         case t if t =:= typeOf[Boolean] => q"$tree.asInstanceOf[Boolean]"
         case t if t =:= typeOf[Int] => q"$tree.asInstanceOf[Long].toInt"
         case t if t =:= typeOf[Long] => q"$tree.asInstanceOf[Long]"
@@ -166,7 +166,7 @@ private[types] object ConverterProvider {
       val s = q"$tree.toString"
       tpe match {
         case t if provider.shouldOverrideType(c)(t) =>
-          provider.createInstance(c)(t, q"$tree.toString")
+          provider.createInstance(c)(t, q"$tree")
         case t if t =:= typeOf[Boolean] => q"$s.toBoolean"
         case t if t =:= typeOf[Int] => q"$s.toInt"
         case t if t =:= typeOf[Long] => q"$s.toLong"

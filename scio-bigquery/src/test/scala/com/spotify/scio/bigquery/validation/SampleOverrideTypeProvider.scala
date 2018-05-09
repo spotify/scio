@@ -88,7 +88,7 @@ class SampleOverrideTypeProvider extends OverrideTypeProvider {
         val instanceOfType = q"${
           c.parse(correspondingType
             .getPackage.getName + "." + correspondingType.getSimpleName)
-        }.parse($tree)"
+        }.parse(${tree.toString})"
         instanceOfType
       case None => throw new IllegalArgumentException("Should never be here")
     }
