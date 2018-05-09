@@ -221,6 +221,20 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.applyInternal(Partition.of[T](numPartitions, Functions.partitionFn[T](numPartitions, f)))
       .getAll.asScala.map(p => context.wrap(p))
 
+  /**
+   * Partition this SCollection into a pair of SCollections according to a predicate.
+   *
+   * @param p predicate on which to partition
+   * @return a pair of SCollections: the first SCollection consists of all elements that satisfy
+   * the predicate p and the second consists of all element that do not.
+   * @group collection
+   */
+  def partition(p: T => Boolean): (SCollection[T], SCollection[T]) = {
+    val Seq(left, right) = partition(2, t => if (p(t)) 0 else 1)
+    (left, right)
+  }
+
+
   // =======================================================================
   // Transformations
   // =======================================================================
