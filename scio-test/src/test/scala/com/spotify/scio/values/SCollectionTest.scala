@@ -170,6 +170,14 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support partition() according to a predicate" in {
+    runWithContext { sc =>
+      val (p1, p2) = sc.parallelize(Seq(1, 2, 3, 4, 5, 6)).partition(_ % 2 == 0)
+      p1 should containInAnyOrder (Seq(2, 4, 6))
+      p2 should containInAnyOrder (Seq(1, 3, 5))
+    }
+  }
+
   it should "support aggregate()" in {
     runWithContext { sc =>
       val p = sc.parallelize(1 to 100)
