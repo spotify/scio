@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2018 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 package com.spotify.scio.tensorflow
 
 import java.nio.ByteBuffer
-import java.nio.file.Files
 import java.util.concurrent.{CompletableFuture, CompletionStage}
 
 import com.google.common.base.Charsets
@@ -28,9 +27,9 @@ import com.spotify.scio.testing.TextIO
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.transforms.{DoFnWithResource, JavaAsyncDoFn}
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.values.{DistCache, SCollection}
-import com.spotify.zoltar.tf.TensorFlowGraphModel
-import com.spotify.zoltar.{ModelLoader, Models}
+import com.spotify.scio.values.SCollection
+import com.spotify.zoltar.tf.{TensorFlowGraphModel, TensorFlowModel}
+import com.spotify.zoltar.{Model, ModelLoader, Models}
 import io.circe.generic.auto._
 import io.circe.syntax._
 import javax.annotation.Nullable
@@ -45,34 +44,24 @@ import org.tensorflow.framework.ConfigProto
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
+import scala.collection.JavaConverters._
 
-private class PredictDoFn[T, V](graphBytes: DistCache[Array[Byte]],
-                                fetchOp: Seq[String],
-                                @Nullable config: Array[Byte],
-                                inFn: T => Map[String, Tensor[_]],
-                                outFn: (T, Map[String, Tensor[_]]) => V)
-    extends JavaAsyncDoFn[T, V, ModelLoader[TensorFlowGraphModel]] {
+private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
+  fetchOp: Seq[String],
+  inFn: T => Map[String, Tensor[_]],
+  outFn: (T, Map[String, Tensor[_]]) => V)
+    extends JavaAsyncDoFn[T, V, ModelLoader[M]] {
   @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
 
-  override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_INSTANCE
+  def withResourceRunner(f: Session#Runner => V): CompletableFuture[V]
 
-  /**
-   * Create resource.
-   */
-  override def createResource(): ModelLoader[TensorFlowGraphModel] = {
-    log.info("Loading TensorFlow graph")
-    val configOpt = Option(config).map(ConfigProto.parseFrom)
-    Models.tensorFlowGraph(graphBytes(), configOpt.orNull, null)
-  }
+  override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_INSTANCE
 
   /**
    * Process an element asynchronously.
    */
   override def processElement(input: T): CompletableFuture[V] = {
-    val result: CompletionStage[V] = getResource.get().thenApply { model =>
-      val runner = model.instance().runner()
-      import scala.collection.JavaConverters._
-
+    val result: CompletionStage[V] = withResourceRunner { runner =>
       val i = inFn(input)
       var result: V = null.asInstanceOf[V]
 
@@ -105,16 +94,74 @@ private class PredictDoFn[T, V](graphBytes: DistCache[Array[Byte]],
   }
 }
 
+private[tensorflow] class SavedBundlePredictDoFn[T, V](uri: String,
+                                                       options: TensorFlowModel.Options,
+                                                       fetchOp: Seq[String],
+                                                       inFn: T => Map[String, Tensor[_]],
+                                                       outFn: (T, Map[String, Tensor[_]]) => V)
+    extends PredictDoFn[T, V, TensorFlowModel](fetchOp, inFn, outFn) {
+  @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
+
+  override def withResourceRunner(f: Session#Runner => V): CompletableFuture[V] =
+    getResource
+      .get()
+      .thenApply[V](model => f(model.instance().session().runner()))
+      .toCompletableFuture
+
+  override def createResource(): ModelLoader[TensorFlowModel] = Models.tensorFlow(uri, options)
+}
+
+private[tensorflow] class GraphPredictDoFn[T, V](uri: String,
+                                                 fetchOp: Seq[String],
+                                                 @Nullable config: Array[Byte],
+                                                 inFn: T => Map[String, Tensor[_]],
+                                                 outFn: (T, Map[String, Tensor[_]]) => V)
+    extends PredictDoFn[T, V, TensorFlowGraphModel](fetchOp, inFn, outFn) {
+  @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
+
+  override def createResource(): ModelLoader[TensorFlowGraphModel] = {
+    val configOpt = Option(config).map(ConfigProto.parseFrom)
+    Models.tensorFlowGraph(uri, configOpt.orNull, null)
+  }
+
+  override def withResourceRunner(f: Session#Runner => V): CompletableFuture[V] =
+    getResource
+      .get()
+      .thenApply[V](model => f(model.instance().runner()))
+      .toCompletableFuture
+}
+
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with TensorFlow methods.
  */
-class TensorFlowSCollectionFunctions[T: ClassTag](@transient val self: SCollection[T])
+private[tensorflow] class PredictSCollectionFunctions[T: ClassTag](
+  @transient val self: SCollection[T])
     extends Serializable {
 
   /**
-   * Predict/infer/forward-pass on pre-trained GraphDef.
+   * Predict/infer/forward-pass on a TensorFlow Saved Model.
    *
-   * @param graphUri URI of pre-trained/saved TensorFlow model
+   * @param savedModelUri URI of Saved TensorFlow model
+   * @param fetchOps names of [[org.tensorflow.Operation]]s to fetch the results from
+   * @param options   configuration parameters for the session specified as a
+   *                 `com.spotify.zoltar.tf.TensorFlowModel.Options`.
+   * @param inFn     translates input elements of T to map of input-operation ->
+   *                 [[org.tensorflow.Tensor Tensor]]. This method takes ownership of the
+   *                 [[org.tensorflow.Tensor Tensor]]s.
+   * @param outFn    translates output of prediction from map of output-operation ->
+   *                 [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
+   *                 ownership of the [[org.tensorflow.Tensor Tensor]]s.
+   */
+  def predict[V: ClassTag, W](savedModelUri: String,
+                              fetchOps: Seq[String],
+                              options: TensorFlowModel.Options)(inFn: T => Map[String, Tensor[_]])(
+    outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
+    self.parDo(new SavedBundlePredictDoFn[T, V](savedModelUri, options, fetchOps, inFn, outFn))
+
+  /**
+   * Predict/infer/forward-pass on TensorFlow Graph.
+   *
+   * @param graphUri URI of Graph TensorFlow model
    * @param fetchOps names of [[org.tensorflow.Operation]]s to fetch the results from
    * @param config   configuration parameters for the session specified as a serialized
    *                 `org.tensorflow.framework.ConfigProto` protocol buffer.
@@ -125,11 +172,12 @@ class TensorFlowSCollectionFunctions[T: ClassTag](@transient val self: SCollecti
    *                 [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
    *                 ownership of the [[org.tensorflow.Tensor Tensor]]s.
    */
+  @deprecated("TensorFlow Graph model support will be removed. Use Saved Model predict.",
+              "scio-tensorflow 0.5.4")
   def predict[V: ClassTag, W](graphUri: String, fetchOps: Seq[String], config: Array[Byte] = null)(
-    inFn: T => Map[String, Tensor[_]])(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] = {
-    val graphBytes = self.context.distCache(graphUri)(f => Files.readAllBytes(f.toPath))
-    self.parDo(new PredictDoFn[T, V](graphBytes, fetchOps, config, inFn, outFn))
-  }
+    inFn: T => Map[String, Tensor[_]])(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
+    self.parDo(new GraphPredictDoFn[T, V](graphUri, fetchOps, config, inFn, outFn))
+
 }
 
 class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
@@ -150,11 +198,12 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
                           numShards: Int = 0,
                           tfRecordSpecPath: String = null)(
     implicit ev: T <:< Example): (Future[Tap[Example]], Future[Tap[String]]) = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
     require(tFRecordSpec != null, "TFRecord spec can't be null")
     require(path != null, "Path can't be null")
     val _tfRecordSpecPath =
       Option(tfRecordSpecPath).getOrElse(path.replaceAll("\\/+$", "") + "/_tf_record_spec.json")
-    import scala.concurrent.ExecutionContext.Implicits.global
 
     val fi: SCollectionSeqFeatureInfo = tFRecordSpec match {
       case SeqFeatureInfo(x) =>
@@ -162,6 +211,8 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
       case SCollectionSeqFeatureInfo(x) =>
         SCollectionSeqFeatureInfo(x)
     }
+
+    import CustomCirceEncoders._
     val tfrs: SCollection[String] =
       fi.x.map(TFRecordSpecConfig(fi.LATEST_VERSION, _, compression).asJson.noSpaces)
 
