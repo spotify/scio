@@ -65,6 +65,7 @@ val shapelessDatatypeVersion = "0.1.9"
 val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.3.0"
 val tensorFlowVersion = "1.8.0"
+val zoltarVersion = "0.3.1-SNAPSHOT"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
@@ -543,7 +544,9 @@ lazy val scioTensorFlow: Project = Project(
     "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
     "com.spotify" %% "featran-core" % featranVersion,
     "com.spotify" %% "featran-scio" % featranVersion,
-    "com.spotify" %% "featran-tensorflow" % featranVersion
+    "com.spotify" %% "featran-tensorflow" % featranVersion,
+    "com.spotify" % "zoltar-api" % zoltarVersion,
+    "com.spotify" % "zoltar-tensorflow" % zoltarVersion
   ),
   libraryDependencies ++= Seq(
     "io.circe" %% "circe-core",
