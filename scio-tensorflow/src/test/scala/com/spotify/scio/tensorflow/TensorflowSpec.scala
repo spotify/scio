@@ -79,7 +79,7 @@ class TensorflowSpec extends PipelineSpec {
     val r = session.runner().fetch(const).run().get(0)
     val newGraph = new Graph()
     try {
-      val graphFile = Files.createTempFile("tf-grap", ".bin")
+      val graphFile = Files.createTempFile("tf-graph", ".bin")
       Files.write(graphFile, graph.toGraphDef)
       newGraph.importGraphDef(Files.readAllBytes(graphFile))
       new String(r.bytesValue()) should be(helloworld)
@@ -94,15 +94,18 @@ class TensorflowSpec extends PipelineSpec {
   it should "allow to predict" in {
     val g = new Graph()
     val t3 = Tensors.create(3L)
+    val graphFile = Files.createTempFile("tf-graph", ".bin")
     try {
       val input = g.opBuilder("Placeholder", "input").setAttr("dtype", t3.dataType).build.output(0)
       val c3 = g.opBuilder("Const", "c3")
         .setAttr("dtype", t3.dataType)
         .setAttr("value", t3).build.output(0)
       g.opBuilder("Mul", "multiply").addInput(c3).addInput(input).build()
+
+      Files.write(graphFile, g.toGraphDef)
+
       JobTest[TFJob.type]
-        .distCache(DistCacheIO[Array[Byte]]("tf-graph.bin"), g.toGraphDef)
-        .args("--graphURI=tf-graph.bin", "--output=output")
+        .args(s"--graphURI=${graphFile.toUri}", "--output=output")
         .output(TextIO("output")) {
           _ should containInAnyOrder((1L to 10).map(x => (x, x * 3)).map(_.toString))
         }
@@ -110,26 +113,31 @@ class TensorflowSpec extends PipelineSpec {
     } finally {
       g.close()
       t3.close()
+      graphFile.toFile.deleteOnExit()
     }
   }
 
   it should "allow to predict with 2 inputs" in {
     val g = new Graph()
+    val graphFile = Files.createTempFile("tf-graph", ".bin")
     try {
       val input = g.opBuilder("Placeholder", "input")
         .setAttr("dtype", DataType.INT64).build.output(0)
       val input2 = g.opBuilder("Placeholder", "input2")
         .setAttr("dtype", DataType.INT64).build.output(0)
       g.opBuilder("Mul", "multiply").addInput(input2).addInput(input).build()
+
+      Files.write(graphFile, g.toGraphDef)
+
       JobTest[TFJob2Inputs.type]
-        .distCache(DistCacheIO[Array[Byte]]("tf-graph.bin"), g.toGraphDef)
-        .args("--graphURI=tf-graph.bin", "--output=output")
+        .args(s"--graphURI=${graphFile.toUri}", "--output=output")
         .output(TextIO("output")) {
           _ should containInAnyOrder((1L to 10).map(x => (x, x * 3)).map(_.toString))
         }
         .run()
     } finally {
       g.close()
+      graphFile.toFile.deleteOnExit()
     }
   }
 
