@@ -70,7 +70,7 @@ private object TFSavedJob {
                   petalWidth: Option[Double],
                   className: Option[String])
 
-  val irisFeaturesSpec: FeatureSpec[Iris] = FeatureSpec
+  val Spec: FeatureSpec[Iris] = FeatureSpec
     .of[Iris]
     .optional(_.petalLength)(StandardScaler("petal_length", withMean = true))
     .optional(_.petalWidth)(StandardScaler("petal_width", withMean = true))
@@ -82,18 +82,10 @@ private object TFSavedJob {
     val options = TensorFlowModel.Options.builder.tags(Collections.singletonList("serve")).build
     val settings = sc.parallelize(List(Source.fromURL(args("settings")).getLines.mkString))
 
-    val collection = sc
-      .parallelize(List("5.1,3.5,1.4,0.2,Iris-setosa"))
-      .map(_.split(","))
-      .map { props =>
-        Iris(props.lift(0).map(_.toDouble),
-             props.lift(1).map(_.toDouble),
-             props.lift(2).map(_.toDouble),
-             props.lift(3).map(_.toDouble),
-             props.lift(4))
-      }
+    val collection =
+      sc.parallelize(List(Iris(Some(5.1), Some(3.5), Some(1.4), Some(0.2), Some("Iris-setosa"))))
 
-    irisFeaturesSpec
+    Spec
       .extractWithSettings(collection, settings)
       .featureValues[Example]
       .predict(args("savedModelUri"), Seq("linear/head/predictions/class_ids"), options) { e =>
