@@ -21,6 +21,9 @@ import com.google.api.services.bigquery.model.TableRow
 import org.joda.time.Instant
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.annotation.StaticAnnotation
+import scala.reflect.runtime.universe._
+
 // TODO: mock BigQueryClient for fromTable and fromQuery
 class TypeProviderTest extends FlatSpec with Matchers {
 
@@ -450,4 +453,17 @@ class TypeProviderTest extends FlatSpec with Matchers {
     Artisanal1ToTableWithBody.foo(Artisanal1ToTableWithBody(3)) shouldBe 3
   }
 
+
+  class UserDefinedAnnotation1 extends StaticAnnotation
+  class UserDefinedAnnotation2 extends StaticAnnotation
+
+  @UserDefinedAnnotation1
+  @BigQueryType.toTable
+  @UserDefinedAnnotation2
+  case class RecordWithCustomAnnotations(a1: Int)
+
+  it should "support user defined annotations" in {
+    val annotations = typeOf[RecordWithCustomAnnotations].typeSymbol.annotations.map(_.tree.tpe)
+    annotations should contain allOf (typeOf[UserDefinedAnnotation1], typeOf[UserDefinedAnnotation2])
+  }
 }
