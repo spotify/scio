@@ -18,48 +18,12 @@
 package com.spotify.scio
 
 import com.spotify.scio.testing.TestIO
-import com.spotify.scio.values._
 import org.tensorflow.example.Example
 
-import scala.reflect.ClassTag
-
-package object tensorflow {
-
-  import scala.language.implicitConversions
+package object tensorflow extends TensorFlowImplicits {
 
   case class TFRecordIO(path: String) extends TestIO[Array[Byte]](path)
 
   case class TFExampleIO(path: String) extends TestIO[Example](path)
 
-  /**
-   * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
-   * [[TensorFlowSCollectionFunctions]].
-   */
-  implicit def makeTensorFlowSCollectionFunctions[T: ClassTag](s: SCollection[T])
-  : TensorFlowSCollectionFunctions[T] = new TensorFlowSCollectionFunctions(s)
-
-  /**
-   * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
-   * [[TFRecordSCollectionFunctions]].
-   */
-  implicit def makeTFRecordSCollectionFunctions[T <: Array[Byte]](s: SCollection[T])
-  : TFRecordSCollectionFunctions[T] = new TFRecordSCollectionFunctions(s)
-
-  /** Implicit conversion from [[ScioContext]] to [[TFScioContextFunctions]]. */
-  implicit def makeTFScioContextFunctions(s: ScioContext): TFScioContextFunctions =
-    new TFScioContextFunctions(s)
-
-  /**
-   * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
-   * [[TFExampleSCollectionFunctions]].
-   */
-  implicit def makeTFExampleSCollectionFunctions[T <: Example](s: SCollection[T])
-  : TFExampleSCollectionFunctions[T] = new TFExampleSCollectionFunctions(s)
-
-  /**
-   * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
-   * [[TFExampleSCollectionFunctions]].
-   */
-  implicit def makeSeqTFExampleSCollectionFunctions[T <: Example](s: SCollection[Seq[T]])
-  : SeqTFExampleSCollectionFunctions[T] = new SeqTFExampleSCollectionFunctions(s)
 }

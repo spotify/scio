@@ -20,10 +20,11 @@ package com.spotify.scio.tensorflow
 import java.nio.file.Files
 
 import com.spotify.scio.ContextAndArgs
-import com.spotify.scio.testing.{DistCacheIO, PipelineSpec, TextIO}
+import com.spotify.scio.testing.{PipelineSpec, TextIO}
 import org.tensorflow._
 
 private object TFJob {
+
   def main(argv: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(argv)
     sc.parallelize(1L to 10)
@@ -36,6 +37,7 @@ private object TFJob {
 }
 
 private object TFJob2Inputs {
+
   def main(argv: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(argv)
     sc.parallelize(1L to 10)
