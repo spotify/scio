@@ -18,35 +18,98 @@
 package com.spotify.scio.tensorflow
 
 import java.nio.file.Files
+import java.util.Collections
 
+import com.spotify.featran.scio._
+import com.spotify.featran.tensorflow._
+import com.spotify.featran.FeatureSpec
+import com.spotify.featran.transformers.StandardScaler
 import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.testing.{PipelineSpec, TextIO}
+import com.spotify.zoltar.tf.TensorFlowModel
 import org.tensorflow._
+import org.tensorflow.example.Example
 
-private object TFJob {
+import scala.io.Source
+
+private object TFGraphJob {
 
   def main(argv: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(argv)
     sc.parallelize(1L to 10)
-      .predict(args("graphURI"), Seq("multiply"))
-      {e => Map("input" -> Tensors.create(e))}
-      {(r, o) => (r, o.map{case (_, t) => t.longValue()}.head)}
+      .predict(args("graphURI"), Seq("multiply")) { e =>
+        Map("input" -> Tensors.create(e))
+      } { (r, o) =>
+        (r, o.map { case (_, t) => t.longValue() }.head)
+      }
       .saveAsTextFile(args("output"))
-    sc.close()
+    sc.close().waitUntilDone()
   }
 }
 
-private object TFJob2Inputs {
+private object TFGraphJob2Inputs {
 
   def main(argv: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(argv)
     sc.parallelize(1L to 10)
-      .predict(args("graphURI"), Seq("multiply"))
-      {e => Map("input" -> Tensors.create(e),
-                "input2" -> Tensors.create(3L))}
-      {(r, o) => (r, o.map{case (_, t) => t.longValue()}.head)}
+      .predict(args("graphURI"), Seq("multiply")) { e =>
+        Map("input" -> Tensors.create(e), "input2" -> Tensors.create(3L))
+      } { (r, o) =>
+        (r, o.map { case (_, t) => t.longValue() }.head)
+      }
       .saveAsTextFile(args("output"))
-    sc.close()
+    sc.close().waitUntilDone()
+  }
+}
+
+private object TFSavedJob {
+
+  case class Iris(sepalLength: Option[Double],
+                  sepalWidth: Option[Double],
+                  petalLength: Option[Double],
+                  petalWidth: Option[Double],
+                  className: Option[String])
+
+  val irisFeaturesSpec: FeatureSpec[Iris] = FeatureSpec
+    .of[Iris]
+    .optional(_.petalLength)(StandardScaler("petal_length", withMean = true))
+    .optional(_.petalWidth)(StandardScaler("petal_width", withMean = true))
+    .optional(_.sepalLength)(StandardScaler("sepal_length", withMean = true))
+    .optional(_.sepalWidth)(StandardScaler("sepal_width", withMean = true))
+
+  def main(argv: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(argv)
+    val options = TensorFlowModel.Options.builder.tags(Collections.singletonList("serve")).build
+    val settings = sc.parallelize(List(Source.fromURL(args("settings")).getLines.mkString))
+
+    val collection = sc
+      .parallelize(List("5.1,3.5,1.4,0.2,Iris-setosa"))
+      .map(_.split(","))
+      .map { props =>
+        Iris(props.lift(0).map(_.toDouble),
+             props.lift(1).map(_.toDouble),
+             props.lift(2).map(_.toDouble),
+             props.lift(3).map(_.toDouble),
+             props.lift(4))
+      }
+
+    irisFeaturesSpec
+      .extractWithSettings(collection, settings)
+      .featureValues[Example]
+      .predict(args("savedModelUri"), Seq("linear/head/predictions/class_ids"), options) { e =>
+        Map("input_example_tensor" -> Tensors.create(Array(e.toByteArray)))
+      } { (r, o) =>
+        (r, o.map {
+          case (a, outTensor) =>
+            val output = Array.ofDim[Long](1)
+            outTensor.copyTo(output)
+            output(0)
+        }.head)
+      }
+      .map(_._2)
+      .saveAsTextFile(args("output"))
+
+    sc.close().waitUntilDone()
   }
 }
 
@@ -99,14 +162,17 @@ class TensorflowSpec extends PipelineSpec {
     val graphFile = Files.createTempFile("tf-graph", ".bin")
     try {
       val input = g.opBuilder("Placeholder", "input").setAttr("dtype", t3.dataType).build.output(0)
-      val c3 = g.opBuilder("Const", "c3")
+      val c3 = g
+        .opBuilder("Const", "c3")
         .setAttr("dtype", t3.dataType)
-        .setAttr("value", t3).build.output(0)
+        .setAttr("value", t3)
+        .build
+        .output(0)
       g.opBuilder("Mul", "multiply").addInput(c3).addInput(input).build()
 
       Files.write(graphFile, g.toGraphDef)
 
-      JobTest[TFJob.type]
+      JobTest[TFGraphJob.type]
         .args(s"--graphURI=${graphFile.toUri}", "--output=output")
         .output(TextIO("output")) {
           _ should containInAnyOrder((1L to 10).map(x => (x, x * 3)).map(_.toString))
@@ -123,15 +189,21 @@ class TensorflowSpec extends PipelineSpec {
     val g = new Graph()
     val graphFile = Files.createTempFile("tf-graph", ".bin")
     try {
-      val input = g.opBuilder("Placeholder", "input")
-        .setAttr("dtype", DataType.INT64).build.output(0)
-      val input2 = g.opBuilder("Placeholder", "input2")
-        .setAttr("dtype", DataType.INT64).build.output(0)
+      val input = g
+        .opBuilder("Placeholder", "input")
+        .setAttr("dtype", DataType.INT64)
+        .build
+        .output(0)
+      val input2 = g
+        .opBuilder("Placeholder", "input2")
+        .setAttr("dtype", DataType.INT64)
+        .build
+        .output(0)
       g.opBuilder("Mul", "multiply").addInput(input2).addInput(input).build()
 
       Files.write(graphFile, g.toGraphDef)
 
-      JobTest[TFJob2Inputs.type]
+      JobTest[TFGraphJob2Inputs.type]
         .args(s"--graphURI=${graphFile.toUri}", "--output=output")
         .output(TextIO("output")) {
           _ should containInAnyOrder((1L to 10).map(x => (x, x * 3)).map(_.toString))
@@ -141,6 +213,18 @@ class TensorflowSpec extends PipelineSpec {
       g.close()
       graphFile.toFile.deleteOnExit()
     }
+  }
+
+  it should "allow saved model prediction" in {
+    val resource = getClass.getResource("/trained_model")
+    val settings = getClass.getResource("/settings.json")
+
+    JobTest[TFSavedJob.type]
+      .args(s"--savedModelUri=$resource", s"--settings=$settings", "--output=output")
+      .output(TextIO("output")) {
+        _ should containInAnyOrder(List("0"))
+      }
+      .run()
   }
 
 }
