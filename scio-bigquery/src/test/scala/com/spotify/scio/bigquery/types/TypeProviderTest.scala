@@ -464,6 +464,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   it should "support user defined annotations" in {
     val annotations = typeOf[RecordWithCustomAnnotations].typeSymbol.annotations.map(_.tree.tpe)
-    annotations should contain allOf (typeOf[UserDefinedAnnotation1], typeOf[UserDefinedAnnotation2])
+    annotations should contain allOf(
+      typeOf[UserDefinedAnnotation1], typeOf[UserDefinedAnnotation2])
   }
 }
