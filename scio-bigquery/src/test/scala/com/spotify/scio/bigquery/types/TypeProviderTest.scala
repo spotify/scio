@@ -467,4 +467,16 @@ class TypeProviderTest extends FlatSpec with Matchers {
     annotations should contain allOf(
       typeOf[UserDefinedAnnotation1], typeOf[UserDefinedAnnotation2])
   }
+
+  @UserDefinedAnnotation1
+  @BigQueryType.fromSchema(
+    """{"fields": [ {"mode": "REQUIRED", "name": "f1", "type": "INTEGER"} ]}""")
+  @UserDefinedAnnotation2
+  class ClassWithCustomAnnotations
+
+  "BigQueryType.fromSchema" should "support user defined annotations" in {
+    val annotations = typeOf[ClassWithCustomAnnotations].typeSymbol.annotations.map(_.tree.tpe)
+    annotations should contain allOf(
+      typeOf[UserDefinedAnnotation1], typeOf[UserDefinedAnnotation2])
+  }
 }
