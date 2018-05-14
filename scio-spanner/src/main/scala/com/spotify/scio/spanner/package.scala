@@ -1,6 +1,6 @@
 package com.spotify.scio
 
-import com.google.cloud.spanner.{KeySet, Mutation, Struct}
+import com.google.cloud.spanner._
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.spanner.{SpannerConfig, SpannerIO}
@@ -26,27 +26,34 @@ package object spanner {
                          databaseId: String,
                          table: String,
                          columns: Iterable[String],
-                         keySet: KeySet = null): SCollection[Struct] = {
+                         keySet: KeySet = null,
+                         partitionOptions: PartitionOptions = null,
+                         timestampBound: TimestampBound = null): SCollection[Struct] = {
 
       val spannerConfig = SpannerConfig.create
         .withProjectId(projectId)
         .withInstanceId(instanceId)
         .withDatabaseId(databaseId)
 
-      spannerFromTableWithConfig(spannerConfig, table, columns, keySet)
+      spannerFromTableWithConfig(
+        spannerConfig, table, columns, keySet, partitionOptions, timestampBound)
     }
 
     /** Read from Spanner table. Return [[SCollection]] of [[Struct]]s. */
     def spannerFromTableWithConfig(spannerConfig: SpannerConfig,
                                    table: String,
                                    columns: Iterable[String],
-                                   keySet: KeySet = null): SCollection[Struct] = {
+                                   keySet: KeySet = null,
+                                   partitionOptions: PartitionOptions = null,
+                                   timestampBound: TimestampBound = null): SCollection[Struct] = {
 
       var read = SpannerIO.read.withSpannerConfig(spannerConfig)
         .withTable(table)
         .withColumns(columns.toSeq.asJava)
 
       if (keySet != null) { read = read.withKeySet(keySet) }
+      if (partitionOptions != null) { read = read.withPartitionOptions(partitionOptions) }
+      if (timestampBound != null) { read = read.withTimestampBound(timestampBound) }
 
       self.wrap(self.applyInternal(read))
     }
@@ -56,23 +63,30 @@ package object spanner {
                          instanceId: String,
                          databaseId: String,
                          query: String,
-                         index: String = null): SCollection[Struct] = {
+                         index: String = null,
+                         partitionOptions: PartitionOptions = null,
+                         timestampBound: TimestampBound = null): SCollection[Struct] = {
 
       val spannerConfig = SpannerConfig.create
         .withProjectId(projectId)
         .withInstanceId(instanceId)
         .withDatabaseId(databaseId)
 
-      spannerFromQueryWithConfig(spannerConfig, query)
+      spannerFromQueryWithConfig(spannerConfig, query, index, partitionOptions, timestampBound)
     }
 
     /** Read from Spanner with query. Return [[SCollection]] of [[Struct]]s. */
     def spannerFromQueryWithConfig(spannerConfig: SpannerConfig,
                                    query: String,
-                                   index: String = null): SCollection[Struct] = {
+                                   index: String = null,
+                                   partitionOptions: PartitionOptions = null,
+                                   timestampBound: TimestampBound = null): SCollection[Struct] = {
 
       var read = SpannerIO.read.withSpannerConfig(spannerConfig).withQuery(query)
+
       if (index != null) { read = read.withIndex(index) }
+      if (partitionOptions != null) { read = read.withPartitionOptions(partitionOptions) }
+      if (timestampBound != null) { read = read.withTimestampBound(timestampBound) }
 
       self.wrap(self.applyInternal(read))
     }
