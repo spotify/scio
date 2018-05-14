@@ -110,7 +110,7 @@ private[tensorflow] class SavedBundlePredictDoFn[T, V](uri: String,
 
   override def createResource(): ModelLoader[TensorFlowModel] = {
     log.info("Loading TensorFlow graph")
-    Models.tensorFlow(uri)
+    Models.tensorFlow(uri, options)
   }
 }
 
