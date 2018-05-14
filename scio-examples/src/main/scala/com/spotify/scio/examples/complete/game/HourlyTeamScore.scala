@@ -17,7 +17,6 @@
 
 // Example: Calculate the score for a team over a time window
 
-
 // Usage:
 
 // `sbt runMain "com.spotify.scio.examples.complete.game.HourlyTeamScore

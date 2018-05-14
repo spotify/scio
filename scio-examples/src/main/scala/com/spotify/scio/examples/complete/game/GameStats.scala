@@ -15,7 +15,6 @@
  * under the License.
  */
 
-
 // Example: Calculate game statistics: sum of team's scores, average user session length
 
 // Usage:
