@@ -15,6 +15,19 @@
  * under the License.
  */
 
+
+// Example: Calculate game statistics: sum of team's scores, average user session length
+
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.complete.game.GameStats
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --fixedWindowDuration=60
+// --sessionGap=5
+// --userActivityWindowDuration=30
+// --topic=[PUBSUB_TOPIC_NAME]
+// --output=bq://[PROJECT]/[DATASET]/mobile_game`
+
 package com.spotify.scio.examples.complete.game
 
 import java.util.TimeZone
@@ -27,7 +40,6 @@ import org.apache.beam.sdk.options.StreamingOptions
 import org.apache.beam.sdk.transforms.windowing.{IntervalWindow, TimestampCombiner}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTimeZone, Duration, Instant}
-// Example: Calculate game statistics: sum of team's scores, average user session length
 
 object GameStats {
 
@@ -71,7 +83,7 @@ object GameStats {
     rawEvents
       // Window over a fixed length of time
       .withFixedWindows(Duration.standardMinutes(fixedWindowDuration))
-      // Convert to `SCollectionWithSideInput` to use side input at same time as `SCollection` elt
+      // Convert to `SCollectionWithSideInput` to use side input at same time as `SCollection` entry
       .withSideInputs(spammyUsers)
       // Filter out spammy users from this list -- `s(spammyUsers)` accesses the side input
       .filter { case (i, s) => !s(spammyUsers).contains(i.user) }
@@ -118,9 +130,9 @@ object GameStats {
       // Save to the BigQuery table defined by "output" + "_sessions" suffix
       .saveAsTypedBigQuery(args("output") + "_sessions")
 
-    // Close context and run the job
+    // Close context and execute the pipeline
     val result = sc.close()
-    // Wait to finish processing before exiting when streaming pipeline is halted
+    // Wait to finish processing before exiting when streaming pipeline is canceled during shutdown
     exampleUtils.waitToFinish(result.internal)
   }
   // scalastyle:on method.length
@@ -131,7 +143,8 @@ object GameStats {
     // Average of all user scores
     val globalMeanScore = sumScores.values.mean
     sumScores
-      // Replicates global mean score to all workers - "cross product"
+      // Cross product of global mean and user scores,
+      // effectively appending global mean to each (user, score) tuple.
       .cross(globalMeanScore)
       .filter { case ((_, score), gmc) =>
         // Filter keeps users who have a score higher than 2.5x the average score

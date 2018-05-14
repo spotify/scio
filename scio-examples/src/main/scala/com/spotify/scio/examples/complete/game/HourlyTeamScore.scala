@@ -15,6 +15,18 @@
  * under the License.
  */
 
+// Example: Calculate the score for a team over a time window
+
+
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.complete.game.HourlyTeamScore
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --windowDuration=60
+// --startMin=2018-05-13-00-00
+// --stopMin=2018-05-14-00-00
+// --output=bq://[PROJECT]/[DATASET]/mobile_game_hourly_team_score`
+
 package com.spotify.scio.examples.complete.game
 
 import java.util.TimeZone
@@ -25,8 +37,6 @@ import com.spotify.scio.examples.common.ExampleData
 import org.apache.beam.sdk.transforms.windowing.IntervalWindow
 import org.joda.time.{DateTimeZone, Duration, Instant}
 import org.joda.time.format.DateTimeFormat
-
-// Example: Calculate the score for a team over a time window
 
 object HourlyTeamScore {
 
@@ -80,7 +90,7 @@ object HourlyTeamScore {
       // Save to the BigQuery table defined by "output" in the arguments passed in
       .saveAsTypedBigQuery(args("output"))
 
-    // Close context and run the job
+    // Close context and execute the pipeline
     sc.close()
   }
 

@@ -15,6 +15,14 @@
  * under the License.
  */
 
+// Example: Calculate the score for a user
+
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.complete.game.UserScore
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --output=bq://[PROJECT]/[DATASET]/mobile_game_user_score`
+
 package com.spotify.scio.examples.complete.game
 
 import com.spotify.scio._
@@ -22,8 +30,6 @@ import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.common.ExampleData
 
 import scala.util.Try
-
-// Example: Calculate the score for a user
 
 object UserScore {
 
@@ -51,14 +57,14 @@ object UserScore {
       .flatMap(parseEvent)
       // Change each event into a tuple of: user, and that user's score
       .map(i => (i.user, i.score))
-      // Sum the scores for a user
+      // Sum the scores by user
       .sumByKey
       // Map summed results from tuples into `UserScoreSums` case class, so we can save to BQ
       .map(UserScoreSums.tupled)
       // Save to the BigQuery table defined by "output" in the arguments passed in
       .saveAsTypedBigQuery(args("output"))
 
-    // Close context and run the job
+    // Close context and execute the pipeline
     sc.close()
   }
 

@@ -15,6 +15,17 @@
  * under the License.
  */
 
+// Example: Calculate leaderboard for game (highest team scores, highest user scores)
+
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.complete.game.LeaderBoard
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --teamWindowDuration=60
+// --allowedLateness=120
+// --topic=[PUBSUB_TOPIC_NAME]
+// --output=bq://[PROJECT]/[DATASET]/mobile_game`
+
 package com.spotify.scio.examples.complete.game
 
 import java.util.TimeZone
@@ -29,8 +40,6 @@ import org.apache.beam.sdk.options.StreamingOptions
 import org.apache.beam.sdk.transforms.windowing._
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTimeZone, Duration, Instant}
-
-// Example: Calculate leaderboard for game (highest team scores, highest user scores)
 
 object LeaderBoard {
 
@@ -79,7 +88,9 @@ object LeaderBoard {
       .saveAsTypedBigQuery(args("output") + "_team")
 
     gameEvents
-      // Recalculate using global window, 10 minutes after every first processing in the window
+      // Recalculate using global window, 10 minutes after every first processing of an entry
+      // occurring within the window. Accumulates fired panes (rather than discarding). Accepts
+      // late entries if they arrive within the allowedLateness duration
       .withGlobalWindow(WindowOptions(
         trigger = Repeatedly.forever(AfterProcessingTime.pastFirstElementInPane()
           .plusDelayOf(Duration.standardMinutes(10))),
@@ -88,16 +99,16 @@ object LeaderBoard {
       )
       // Change each event into a tuple of: user, and that user's score
       .map(i => (i.user, i.score))
-      // Sum the scores for a user
+      // Sum the scores by user
       .sumByKey
       // Map summed results from tuples into `UserScoreSums` case class, so we can save to BQ
       .map(kv => UserScoreSums(kv._1, kv._2, fmt.print(Instant.now())))
       // Save to the BigQuery table defined by "output" in the arguments passed in + "_user" suffix
       .saveAsTypedBigQuery(args("output") + "_user")
 
-    // Close context and run the job
+    // Close context and execute the pipeline
     val result = sc.close()
-    // Wait to finish processing before exiting when streaming pipeline is halted
+    // Wait to finish processing before exiting when streaming pipeline is canceled during shutdown
     exampleUtils.waitToFinish(result.internal)
   }
   // scalastyle:on method.length
@@ -107,8 +118,10 @@ object LeaderBoard {
                           allowedLateness: Duration): SCollection[(String, Int)] =
     infos.withFixedWindows(
       // Using a fixed window, calculate every time the window ends, allowing recalculations
-      // anytime after: 5 minutes after first element was processed, and
-      // anytime until: 10 minutes after first element was processed.
+      // anytime after: 5 minutes after the first element in the window that we processed was
+      // processed, and anytime until: 10 minutes after the first element in the window that we
+      // processed was processed. Accumulates fired panes for recalculation rather than
+      // discarding, as long as they arrive before allowedLateness duration ends.
       teamWindowDuration,
       options = WindowOptions(
         trigger = AfterWatermark.pastEndOfWindow()
