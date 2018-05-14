@@ -59,7 +59,7 @@ object HourlyTeamScore {
 
 
     sc.textFile(input)
-      // Parse each line as UserScore events, keep the ones that successfully parsed
+      // Parse each line as `GameActionInfo` events, keep the ones that successfully parsed
       .flatMap(UserScore.parseEvent)
       // Filter out events before start time and after end time
       .filter(i => i.timestamp > startMin && i.timestamp < stopMin)
@@ -72,7 +72,7 @@ object HourlyTeamScore {
       // Sum the scores across the defined window, using "team" as the key to sum by
       .sumByKey
       .withWindow[IntervalWindow]
-      // Map summed results from tuples into a TeamScoreSums case class, so we can save to BQ
+      // Map summed results from tuples into `TeamScoreSums` case class, so we can save to BQ
       .map { case ((team, score), window) =>
         val start = fmt.print(window.start())
         TeamScoreSums(team, score, start)

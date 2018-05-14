@@ -23,27 +23,42 @@ import com.spotify.scio.examples.common.ExampleData
 
 import scala.util.Try
 
+// Example: Calculate the score for a user
+
 object UserScore {
 
+  // Case class containing all the fields within an event, for internal model
   case class GameActionInfo(user: String, team: String, score: Int, timestamp: Long)
 
+  // The schema for the BigQuery table to write output to is defined as an annotated case class
   @BigQueryType.toTable
   case class UserScoreSums(user: String, total_score: Int)
 
+  // Helper function for parsing data. Reads in a CSV line and converts to `GameActionInfo` instance
   def parseEvent(line: String): Option[GameActionInfo] = Try {
     val t = line.split(",")
     GameActionInfo(t(0).trim, t(1).trim, t(2).toInt, t(3).toLong)
   }.toOption
 
   def main(cmdlineArgs: Array[String]): Unit = {
+    // Create `ScioContext` and `Args`
     val (sc, args) = ContextAndArgs(cmdlineArgs)
+    // A text file containing data on events
     val input = args.getOrElse("input", ExampleData.GAMING)
+
     sc.textFile(input)
+      // Parse each line as `GameActionInfo` events, keep the ones that successfully parsed
       .flatMap(parseEvent)
+      // Change each event into a tuple of: user, and that user's score
       .map(i => (i.user, i.score))
+      // Sum the scores for a user
       .sumByKey
+      // Map summed results from tuples into `UserScoreSums` case class, so we can save to BQ
       .map(UserScoreSums.tupled)
+      // Save to the BigQuery table defined by "output" in the arguments passed in
       .saveAsTypedBigQuery(args("output"))
+
+    // Close context and run the job
     sc.close()
   }
 
