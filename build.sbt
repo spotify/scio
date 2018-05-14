@@ -391,6 +391,19 @@ lazy val scioBigtable: Project = Project(
   scioTest % "it"
 ).configs(IntegrationTest)
 
+lazy val scioSpanner: Project = Project(
+  "scio-spanner",
+  file("scio-spanner")
+).settings(
+  commonSettings,
+  description := "Scio add-on for Google Cloud Spanner",
+  libraryDependencies ++= Seq(
+    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion
+  )
+).dependsOn(
+  scioCore
+)
+
 lazy val scioCassandra2: Project = Project(
   "scio-cassandra2",
   file("scio-cassandra2")
