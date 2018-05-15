@@ -88,9 +88,15 @@ object LeaderBoard {
       .saveAsTypedBigQuery(args("output") + "_team")
 
     gameEvents
-      // Recalculate using global window, 10 minutes after every first processing of an entry
-      // occurring within the window. Accumulates fired panes (rather than discarding). Accepts
-      // late entries if they arrive within the allowedLateness duration
+      // Use a global window for unbounded data, which updates calculation every 10 minutes,
+      // starting 10 minutes after the first event arrives.
+      // Recalculates immediately when late data arrives, according to these rules:
+      // - Accumulates fired panes (rather than discarding), which means subsequent calculations
+      // use all data, not just data collected after the last calculation was done.
+      // - Accepts late entries (and recalculates based on them) only if they arrive within the
+      // allowedLateness duration.
+      // For more information on these options, see the Beam docs:
+      // https://beam.apache.org/documentation/programming-guide/#triggers
       .withGlobalWindow(WindowOptions(
         trigger = Repeatedly.forever(AfterProcessingTime.pastFirstElementInPane()
           .plusDelayOf(Duration.standardMinutes(10))),
@@ -117,11 +123,17 @@ object LeaderBoard {
                           teamWindowDuration: Duration,
                           allowedLateness: Duration): SCollection[(String, Int)] =
     infos.withFixedWindows(
-      // Using a fixed window, calculate every time the window ends, allowing recalculations
-      // anytime after: 5 minutes after the first element in the window that we processed was
-      // processed, and anytime until: 10 minutes after the first element in the window that we
-      // processed was processed. Accumulates fired panes for recalculation rather than
-      // discarding, as long as they arrive before allowedLateness duration ends.
+      // Using a fixed window, calculate every time the window ends.
+      // Also calculate an early/"speculative" result from partial data, 5 minutes after the first
+      // element in our window is processed (withEarlyFirings).
+      // If late data arrives, 10 minutes after the late data arrives, recalculate according to:
+      // - Accumulates fired panes (rather than discarding), which means subsequent calculations
+      // use all data, not just data collected after the last calculation was done.
+      // - Accepts late entries (and recalculates based on them) only if they arrive within the
+      // allowedLateness duration.
+      // For more information on these options, see the Beam docs:
+      // https://beam.apache.org/documentation/programming-guide/#composite-triggers
+      // (subsection 8.5.2, "Composition with AfterWatermark", is especially relevant)
       teamWindowDuration,
       options = WindowOptions(
         trigger = AfterWatermark.pastEndOfWindow()
