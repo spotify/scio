@@ -19,6 +19,7 @@ package com.spotify.scio.tensorflow
 
 import java.nio.ByteBuffer
 import java.util.concurrent.{CompletableFuture, CompletionStage}
+import java.util.function.{Consumer, Function}
 
 import com.google.common.base.Charsets
 import com.spotify.featran.{FeatureExtractor, MultiFeatureExtractor}
@@ -90,7 +91,11 @@ private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
   @Teardown
   def teardown(): Unit = {
     log.info(s"Closing down predict DoFn $this")
-    getResource.get().thenAccept(_.close())
+    getResource
+      .get()
+      .thenAccept(new Consumer[M] {
+        override def accept(model: M): Unit = model.close()
+      })
   }
 }
 
@@ -100,12 +105,13 @@ private[tensorflow] class SavedBundlePredictDoFn[T, V](uri: String,
                                                        inFn: T => Map[String, Tensor[_]],
                                                        outFn: (T, Map[String, Tensor[_]]) => V)
     extends PredictDoFn[T, V, TensorFlowModel](fetchOp, inFn, outFn) {
-  @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
 
   override def withResourceRunner(f: Session#Runner => V): CompletableFuture[V] =
     getResource
       .get()
-      .thenApply[V](model => f(model.instance().session().runner()))
+      .thenApply[V](new Function[TensorFlowModel, V] {
+        override def apply(model: TensorFlowModel): V = f(model.instance().session().runner())
+      })
       .toCompletableFuture
 
   override def createResource(): ModelLoader[TensorFlowModel] = Models.tensorFlow(uri, options)
@@ -117,7 +123,6 @@ private[tensorflow] class GraphPredictDoFn[T, V](uri: String,
                                                  inFn: T => Map[String, Tensor[_]],
                                                  outFn: (T, Map[String, Tensor[_]]) => V)
     extends PredictDoFn[T, V, TensorFlowGraphModel](fetchOp, inFn, outFn) {
-  @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
 
   override def createResource(): ModelLoader[TensorFlowGraphModel] = {
     val configOpt = Option(config).map(ConfigProto.parseFrom)
@@ -127,7 +132,9 @@ private[tensorflow] class GraphPredictDoFn[T, V](uri: String,
   override def withResourceRunner(f: Session#Runner => V): CompletableFuture[V] =
     getResource
       .get()
-      .thenApply[V](model => f(model.instance().runner()))
+      .thenApply[V](new Function[TensorFlowGraphModel, V] {
+        override def apply(model: TensorFlowGraphModel): V = f(model.instance().runner())
+      })
       .toCompletableFuture
 }
 
