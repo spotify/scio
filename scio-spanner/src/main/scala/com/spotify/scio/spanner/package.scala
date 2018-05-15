@@ -51,7 +51,10 @@ package object spanner {
   /** Enhanced version of [[ScioContext]] with Spanner methods. */
   implicit class SpannerScioContext(val self: ScioContext) extends AnyVal {
 
-    /** Read from Spanner table. Return [[SCollection]] of [[Struct]]s. */
+    /**
+     * Read from Spanner table. Return [[com.spotify.scio.values.SCollection SCollection]]
+     * of `Struct`s.
+     */
     def spannerFromTable(projectId: String,
                          instanceId: String,
                          databaseId: String,
@@ -65,7 +68,10 @@ package object spanner {
       spannerFromTableWithConfig(config, table, columns, keySet, partitionOptions, timestampBound)
     }
 
-    /** Read from Spanner table. Return [[SCollection]] of [[Struct]]s. */
+    /**
+     * Read from Spanner table. Return [[com.spotify.scio.values.SCollection SCollection]]
+     * of `Struct`s.
+     */
     def spannerFromTableWithConfig(spannerConfig: SpannerConfig,
                                    table: String,
                                    columns: Iterable[String],
@@ -84,7 +90,10 @@ package object spanner {
       self.wrap(self.applyInternal(read))
     }
 
-    /** Read from Spanner with query. Return [[SCollection]] of [[Struct]]s. */
+    /**
+     * Read from Spanner with query. Return [[com.spotify.scio.values.SCollection SCollection]]
+     * of `Struct`s.
+     */
     def spannerFromQuery(projectId: String,
                          instanceId: String,
                          databaseId: String,
@@ -97,7 +106,10 @@ package object spanner {
       spannerFromQueryWithConfig(config, query, index, partitionOptions, timestampBound)
     }
 
-    /** Read from Spanner with query. Return [[SCollection]] of [[Struct]]s. */
+    /**
+     * Read from Spanner with query. Return [[com.spotify.scio.values.SCollection SCollection]]
+     * of `Struct`s.
+     */
     def spannerFromQueryWithConfig(spannerConfig: SpannerConfig,
                                    query: String,
                                    index: String = null,
@@ -114,10 +126,13 @@ package object spanner {
     }
   }
 
-  /** Enhanced version of [[SCollection]] with Spanner methods. */
+  /**
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with
+   * Spanner methods.
+   */
   implicit class SpannerSCollection(val self: SCollection[Mutation]) extends AnyVal {
 
-    /** Commit [[Mutation]]s to Spanner. */
+    /** Commit `Mutation`s to Spanner. */
     def saveAsSpanner(projectId: String,
                       instanceId: String,
                       databaseId: String,
@@ -127,7 +142,7 @@ package object spanner {
       saveAsSpannerWithConfig(config, batchSizeBytes)
     }
 
-    /** Commit [[Mutation]]s to Spanner. */
+    /** Commit `Mutation`s to Spanner. */
     def saveAsSpannerWithConfig(spannerConfig: SpannerConfig,
                                 batchSizeBytes: Long = 0): Future[Tap[Mutation]] = {
 
@@ -140,13 +155,14 @@ package object spanner {
   }
 
   /**
-   * Enhanced version of [[SCollection]] with Spanner methods for committing groups
-   * of [[Mutation]] atomically ([[MutationGroup]]).
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with
+   * Spanner methods for committing groups of `Mutation`s atomically
+   * ([[org.apache.beam.sdk.io.gcp.spanner.MutationGroup MutationGroup]]).
    */
   implicit class SpannerMutationGroupSCollection(val self: SCollection[MutationGroup])
     extends AnyVal {
 
-    /** Commit [[MutationGroup]]s to Spanner. */
+    /** Commit [[org.apache.beam.sdk.io.gcp.spanner.MutationGroup MutationGroup]]s to Spanner. */
     def saveAsSpanner(projectId: String,
                       instanceId: String,
                       databaseId: String,
@@ -156,7 +172,7 @@ package object spanner {
       saveAsSpannerWithConfig(config, batchSizeBytes)
     }
 
-    /** Commit [[MutationGroup]]s to Spanner. */
+    /** Commit [[org.apache.beam.sdk.io.gcp.spanner.MutationGroup MutationGroup]]s to Spanner. */
     def saveAsSpannerWithConfig(spannerConfig: SpannerConfig,
                                 batchSizeBytes: Long = 0): Future[Tap[MutationGroup]] = {
 
