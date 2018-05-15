@@ -61,7 +61,8 @@ trait TensorFlowImplicits {
 
 }
 
-/** This allows to not only use [[TensorFlowImplicits]] as:
+/**
+ * This allows to not only use [[TensorFlowImplicits]] as:
  * <code>
  *  import TensorFlowImplicits._
  * </code>
