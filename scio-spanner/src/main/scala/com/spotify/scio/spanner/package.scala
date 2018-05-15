@@ -3,18 +3,18 @@ package com.spotify.scio
 import com.google.cloud.spanner._
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.gcp.spanner.{SpannerConfig, SpannerIO}
+import org.apache.beam.sdk.io.gcp.spanner.{MutationGroup, SpannerConfig, SpannerIO}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 /**
-  * Main package for Spanner APIs. Import all.
-  *
-  * {{{
-  * import com.spotify.scio.spanner._
-  * }}}
-  */
+ * Main package for Spanner APIs. Import all.
+ *
+ * {{{
+ * import com.spotify.scio.spanner._
+ * }}}
+ */
 package object spanner {
 
   /** Enhanced version of [[ScioContext]] with Spanner methods. */
@@ -117,6 +117,39 @@ package object spanner {
       if (batchSizeBytes > 0) { write = write.withBatchSizeBytes(batchSizeBytes) }
 
       self.applyInternal(write)
+      Future.failed(new NotImplementedError("Spanner future not implemented."))
+    }
+  }
+
+  /**
+   * Enhanced version of [[SCollection]] with Spanner methods for committing groups
+   * of [[Mutation]] atomically ([[MutationGroup]]).
+   */
+  implicit class SpannerMutationGroupSCollection(val self: SCollection[MutationGroup])
+    extends AnyVal {
+
+    /** Commit [[MutationGroup]]s to Spanner. */
+    def saveAsSpanner(projectId: String,
+                      instanceId: String,
+                      databaseId: String,
+                      batchSizeBytes: Long = 0): Future[Tap[MutationGroup]] = {
+
+      val spannerConfig = SpannerConfig.create
+        .withProjectId(projectId)
+        .withInstanceId(instanceId)
+        .withDatabaseId(databaseId)
+
+      saveAsSpannerWithConfig(spannerConfig, batchSizeBytes)
+    }
+
+    /** Commit [[MutationGroup]]s to Spanner. */
+    def saveAsSpannerWithConfig(spannerConfig: SpannerConfig,
+                                batchSizeBytes: Long = 0): Future[Tap[MutationGroup]] = {
+
+      var write = SpannerIO.write.withSpannerConfig(spannerConfig)
+      if (batchSizeBytes > 0) { write = write.withBatchSizeBytes(batchSizeBytes) }
+
+      self.applyInternal(write.grouped)
       Future.failed(new NotImplementedError("Spanner future not implemented."))
     }
   }
