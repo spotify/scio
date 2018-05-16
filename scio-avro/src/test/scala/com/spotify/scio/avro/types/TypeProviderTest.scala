@@ -21,7 +21,10 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.avro.types.AvroType.HasAvroDoc
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{Assertion, FlatSpec, Matchers}
+
+import scala.annotation.StaticAnnotation
+import scala.reflect.runtime.universe._
 
 class TypeProviderTest extends FlatSpec with Matchers {
   @AvroType.fromSchema(
@@ -772,4 +775,42 @@ class TypeProviderTest extends FlatSpec with Matchers {
     r.test shouldBe 2
   }
 
+
+  class UserAnnot1 extends StaticAnnotation
+  class UserAnnot2 extends StaticAnnotation
+
+  def containsAllUserAnnotTypes[T: TypeTag]: Assertion =
+    typeOf[T]
+      .typeSymbol
+      .annotations
+      .map(_.tree.tpe)
+      .containsSlice(Seq(typeOf[UserAnnot1], typeOf[UserAnnot2])) shouldBe true
+
+  @UserAnnot1
+  @AvroType.fromSchemaFile("scio-avro/src/test/avro/scio-avro-test.avsc")
+  @UserAnnot2
+  class FromResourceWithUserAnnotations
+
+  it should "preserve user defined annotations" in {
+    containsAllUserAnnotTypes[FromResourceWithUserAnnotations]
+  }
+
+  @UserAnnot1
+  @AvroType.fromSchema(
+    """{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}""")
+  @UserAnnot2
+  class SchemaWithUserAnnotations
+
+  "AvroType.fromSchema" should "preserve user defined annotations" in {
+    containsAllUserAnnotTypes[SchemaWithUserAnnotations]
+  }
+
+  @UserAnnot1
+  @AvroType.toSchema
+  @UserAnnot2
+  case class RecordWithUserAnnotations(a1: Int)
+
+  "AvroType.toSchema" should "preserve user defined annotations" in {
+    containsAllUserAnnotTypes[RecordWithUserAnnotations]
+  }
 }

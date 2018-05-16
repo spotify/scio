@@ -144,7 +144,7 @@ private[types] object TypeProvider {
           q"""override def schema: ${p(c, ApacheAvro)}.Schema =
                  ${p(c, ScioAvroType)}.schemaOf[$name]""")
 
-        val caseClassTree = q"""${caseClass(c)(name, fields, body)}"""
+        val caseClassTree = q"""${caseClass(c)(mods, name, fields, body)}"""
 
         if (shouldDumpClassesForPlugin) {
           dumpCodeForScalaPlugin(c)(Seq.empty, caseClassTree, name.toString)
@@ -258,7 +258,7 @@ private[types] object TypeProvider {
           q"""override def schema: ${p(c, ApacheAvro)}.Schema =
                  new ${p(c, ApacheAvro)}.Schema.Parser().parse(${schema.toString})""")
 
-        val caseClassTree = q"${caseClass(c)(name, fields, Nil)}"
+        val caseClassTree = q"${caseClass(c)(mods, name, fields, Nil)}"
 
         if (shouldDumpClassesForPlugin) {
           dumpCodeForScalaPlugin(c)(recordClasses, caseClassTree, name.toString())
@@ -276,9 +276,10 @@ private[types] object TypeProvider {
 
   /** Generate a case class. */
   private def caseClass(c: blackbox.Context)
-                       (name: c.TypeName, fields: Seq[c.Tree], body: Seq[c.Tree]): c.Tree = {
+                       (mods: c.Modifiers, name: c.TypeName, fields: Seq[c.Tree], body: Seq[c.Tree]): c.Tree = {
     import c.universe._
-    q"case class $name(..$fields) extends ${p(c, ScioAvroType)}.HasAvroAnnotation { ..$body }"
+    val caseMods = Modifiers(Flag.CASE, typeNames.EMPTY, mods.annotations)
+    q"$caseMods class $name(..$fields) extends ${p(c, ScioAvroType)}.HasAvroAnnotation { ..$body }"
   }
 
   /** Generate a companion object. */

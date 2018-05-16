@@ -86,7 +86,6 @@ private[types] object TypeProvider {
         if (parents.map(_.toString()).toSet != Set("scala.Product", "scala.Serializable")) {
           c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the case class $clazzDef")
         }
-
         val desc = getTableDescription(c)(clazzDef.asInstanceOf[ClassDef])
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SType)}.schemaOf[$cName]"
         val defTblDesc = desc.headOption.map(d => q"override def tableDescription: _root_.java.lang.String = $d")

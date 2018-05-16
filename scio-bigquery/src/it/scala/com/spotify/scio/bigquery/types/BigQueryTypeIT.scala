@@ -18,10 +18,11 @@
 package com.spotify.scio.bigquery.types
 
 import com.spotify.scio.bigquery.BigQueryClient
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.annotation.StaticAnnotation
 import scala.collection.JavaConverters._
+import scala.reflect.runtime.universe._
 
 object BigQueryTypeIT {
   @BigQueryType.fromQuery(
@@ -48,6 +49,14 @@ object BigQueryTypeIT {
 
   @BigQueryType.toTable
   case class ToTableT(word: String, word_count: Int)
+
+  class UserAnnot1 extends StaticAnnotation
+  class UserAnnot2 extends StaticAnnotation
+
+  @UserAnnot1
+  @BigQueryType.fromTable("bigquery-public-data:samples.shakespeare")
+  @UserAnnot2
+  class ShakespeareWithUserAnnotations
 }
 
 class BigQueryTypeIT extends FlatSpec with Matchers {
@@ -130,6 +139,14 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
 
   it should "work with $LATEST" in {
     BigQueryType[FromTableLatestT].table shouldBe Some("data-integration-test:partition_a.table_%s")
+  }
+
+  it should "preserve user defined annotations" in {
+    typeOf[ShakespeareWithUserAnnotations]
+      .typeSymbol
+      .annotations
+      .map(_.tree.tpe)
+      .containsSlice(Seq(typeOf[UserAnnot1], typeOf[UserAnnot2])) shouldBe true
   }
 
   "toTable" should "work" in {

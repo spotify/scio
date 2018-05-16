@@ -19,7 +19,7 @@ package com.spotify.scio.bigquery.types
 
 import com.google.api.services.bigquery.model.TableRow
 import org.joda.time.Instant
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{Assertion, FlatSpec, Matchers}
 
 import scala.annotation.StaticAnnotation
 import scala.reflect.runtime.universe._
@@ -453,30 +453,31 @@ class TypeProviderTest extends FlatSpec with Matchers {
     Artisanal1ToTableWithBody.foo(Artisanal1ToTableWithBody(3)) shouldBe 3
   }
 
+  class UserAnnot1 extends StaticAnnotation
+  class UserAnnot2 extends StaticAnnotation
 
-  class UserDefinedAnnotation1 extends StaticAnnotation
-  class UserDefinedAnnotation2 extends StaticAnnotation
+  def containsAllUserAnnotTypes[T: TypeTag]: Assertion =
+    typeOf[T]
+      .typeSymbol
+      .annotations
+      .map(_.tree.tpe)
+      .containsSlice(Seq(typeOf[UserAnnot1], typeOf[UserAnnot2])) shouldBe true
 
-  @UserDefinedAnnotation1
+  @UserAnnot1
   @BigQueryType.toTable
-  @UserDefinedAnnotation2
-  case class RecordWithCustomAnnotations(a1: Int)
+  @UserAnnot2
+  case class RecordWithUserAnnotations(a1: Int)
 
-  it should "support user defined annotations" in {
-    val annotations = typeOf[RecordWithCustomAnnotations].typeSymbol.annotations.map(_.tree.tpe)
-    annotations should contain allOf(
-      typeOf[UserDefinedAnnotation1], typeOf[UserDefinedAnnotation2])
+  it should "preserve user defined annotations" in {
+    containsAllUserAnnotTypes[RecordWithUserAnnotations]
   }
 
-  @UserDefinedAnnotation1
-  @BigQueryType.fromSchema(
-    """{"fields": [ {"mode": "REQUIRED", "name": "f1", "type": "INTEGER"} ]}""")
-  @UserDefinedAnnotation2
-  class ClassWithCustomAnnotations
+  @UserAnnot1
+  @BigQueryType.fromSchema("""{"fields": [ {"mode": "REQUIRED", "name": "f1", "type": "DATE"} ]}""")
+  @UserAnnot2
+  class SchemaWithUserAnnotations
 
-  "BigQueryType.fromSchema" should "support user defined annotations" in {
-    val annotations = typeOf[ClassWithCustomAnnotations].typeSymbol.annotations.map(_.tree.tpe)
-    annotations should contain allOf(
-      typeOf[UserDefinedAnnotation1], typeOf[UserDefinedAnnotation2])
+  "BigQueryType.fromSchema" should "preserve user defined annotations" in {
+    containsAllUserAnnotTypes[SchemaWithUserAnnotations]
   }
 }

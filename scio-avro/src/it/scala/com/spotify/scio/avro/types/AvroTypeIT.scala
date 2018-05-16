@@ -20,6 +20,9 @@ package com.spotify.scio.avro.types
 import org.apache.avro.Schema.Parser
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.annotation.StaticAnnotation
+import scala.reflect.runtime.universe._
+
 object AvroTypeIT {
   @AvroType.fromPath(
     "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro")
@@ -59,6 +62,15 @@ object AvroTypeIT {
       |shakespeare-schema.avsc
     """.stripMargin)
   class FromFile
+
+  class UserAnnot1 extends StaticAnnotation
+  class UserAnnot2 extends StaticAnnotation
+
+  @UserAnnot1
+  @AvroType.fromPath(
+    "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro")
+  @UserAnnot2
+  class FromPathWithUserAnnotations
 }
 
 class AvroTypeIT extends FlatSpec with Matchers  {
@@ -121,5 +133,13 @@ class AvroTypeIT extends FlatSpec with Matchers  {
     val r1 = FromPathMultiLine(corpus=Some("corpus"), corpus_date=Some(123L))
     val r2 = FromPathMultiLine.fromGenericRecord(FromPathMultiLine.toGenericRecord(r1))
     r1 shouldBe r2
+  }
+
+  it should "preserve user defined annotations" in {
+    typeOf[FromPathWithUserAnnotations]
+      .typeSymbol
+      .annotations
+      .map(_.tree.tpe)
+      .containsSlice(Seq(typeOf[UserAnnot1], typeOf[UserAnnot2])) shouldBe true
   }
 }
