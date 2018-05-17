@@ -453,31 +453,49 @@ class TypeProviderTest extends FlatSpec with Matchers {
     Artisanal1ToTableWithBody.foo(Artisanal1ToTableWithBody(3)) shouldBe 3
   }
 
-  class UserAnnot1 extends StaticAnnotation
-  class UserAnnot2 extends StaticAnnotation
+  class Annotation1 extends StaticAnnotation
+  class Annotation2 extends StaticAnnotation
 
-  def containsAllUserAnnotTypes[T: TypeTag]: Assertion =
+  def containsAllAnnotTypes[T: TypeTag]: Assertion =
     typeOf[T]
       .typeSymbol
       .annotations
       .map(_.tree.tpe)
-      .containsSlice(Seq(typeOf[UserAnnot1], typeOf[UserAnnot2])) shouldBe true
+      .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true
 
-  @UserAnnot1
+  @Annotation1
   @BigQueryType.toTable
-  @UserAnnot2
-  case class RecordWithUserAnnotations(a1: Int)
+  @Annotation2
+  case class RecordWithSurroundingAnnotations(a1: Int)
 
-  it should "preserve user defined annotations" in {
-    containsAllUserAnnotTypes[RecordWithUserAnnotations]
+  it should "preserve surrounding user defined annotations" in {
+    containsAllAnnotTypes[RecordWithSurroundingAnnotations]
   }
 
-  @UserAnnot1
-  @BigQueryType.fromSchema("""{"fields": [ {"mode": "REQUIRED", "name": "f1", "type": "DATE"} ]}""")
-  @UserAnnot2
-  class SchemaWithUserAnnotations
+  @BigQueryType.toTable
+  @Annotation1
+  @Annotation2
+  case class RecordWithSequentialAnnotations(a1: Int)
 
-  "BigQueryType.fromSchema" should "preserve user defined annotations" in {
-    containsAllUserAnnotTypes[SchemaWithUserAnnotations]
+  it should "preserve sequential user defined annotations" in {
+    containsAllAnnotTypes[RecordWithSequentialAnnotations]
+  }
+
+  @Annotation1
+  @BigQueryType.fromSchema("""{"fields": [ {"mode": "REQUIRED", "name": "f1", "type": "DATE"} ]}""")
+  @Annotation2
+  class SchemaWithSurroundingAnnotations
+
+  "BigQueryType.fromSchema" should "preserve surrounding user defined annotations" in {
+    containsAllAnnotTypes[SchemaWithSurroundingAnnotations]
+  }
+
+  @BigQueryType.fromSchema("""{"fields": [ {"mode": "REQUIRED", "name": "f1", "type": "DATE"} ]}""")
+  @Annotation1
+  @Annotation2
+  class SchemaWithSequentialAnnotations
+
+  it should "preserve sequential user defined annotations" in {
+    containsAllAnnotTypes[SchemaWithSequentialAnnotations]
   }
 }

@@ -18,7 +18,7 @@
 package com.spotify.scio.bigquery.types
 
 import com.spotify.scio.bigquery.BigQueryClient
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{Assertion, FlatSpec, Matchers}
 
 import scala.annotation.StaticAnnotation
 import scala.collection.JavaConverters._
@@ -50,13 +50,18 @@ object BigQueryTypeIT {
   @BigQueryType.toTable
   case class ToTableT(word: String, word_count: Int)
 
-  class UserAnnot1 extends StaticAnnotation
-  class UserAnnot2 extends StaticAnnotation
+  class Annotation1 extends StaticAnnotation
+  class Annotation2 extends StaticAnnotation
 
-  @UserAnnot1
+  @Annotation1
   @BigQueryType.fromTable("bigquery-public-data:samples.shakespeare")
-  @UserAnnot2
-  class ShakespeareWithUserAnnotations
+  @Annotation2
+  class ShakespeareWithSurroundingAnnotations
+
+  @BigQueryType.fromTable("bigquery-public-data:samples.shakespeare")
+  @Annotation1
+  @Annotation2
+  class ShakespeareWithSequentialAnnotations
 }
 
 class BigQueryTypeIT extends FlatSpec with Matchers {
@@ -141,12 +146,19 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
     BigQueryType[FromTableLatestT].table shouldBe Some("data-integration-test:partition_a.table_%s")
   }
 
-  it should "preserve user defined annotations" in {
-    typeOf[ShakespeareWithUserAnnotations]
+  def containsAllAnnotTypes[T: TypeTag]: Assertion =
+    typeOf[T]
       .typeSymbol
       .annotations
       .map(_.tree.tpe)
-      .containsSlice(Seq(typeOf[UserAnnot1], typeOf[UserAnnot2])) shouldBe true
+      .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true
+
+  it should "preserve surrounding user defined annotations" in {
+    containsAllAnnotTypes[ShakespeareWithSurroundingAnnotations]
+  }
+
+  it should "preserve sequential user defined annotations" in {
+    containsAllAnnotTypes[ShakespeareWithSequentialAnnotations]
   }
 
   "toTable" should "work" in {

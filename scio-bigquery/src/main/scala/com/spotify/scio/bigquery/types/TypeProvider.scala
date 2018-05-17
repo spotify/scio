@@ -76,6 +76,7 @@ private[types] object TypeProvider {
       .map(_.children.tail.head)
   }
 
+
   def toTableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
     checkMacroEnclosed(c)
@@ -98,7 +99,6 @@ private[types] object TypeProvider {
             c.universe.ValDef(c.universe.Modifiers(m.flags, m.privateWithin, m.annotations), n, tq"$tpt @${typeOf[BigQueryTag]}", rhs)
           }
         }
-
         val caseClassTree = q"""${caseClass(c)(mods, cName, taggedFields, body)}"""
         val maybeCompanion = tail.headOption
         (q"""$caseClassTree

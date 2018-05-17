@@ -15,6 +15,10 @@
  * under the License.
  */
 
+// scalastyle:off file.size.limit
+// scalastyle:off number.of.methods
+// scalastyle:off number.of.types
+
 package com.spotify.scio.avro.types
 
 import com.google.protobuf.ByteString
@@ -775,42 +779,73 @@ class TypeProviderTest extends FlatSpec with Matchers {
     r.test shouldBe 2
   }
 
+  class Annotation1 extends StaticAnnotation
+  class Annotation2 extends StaticAnnotation
 
-  class UserAnnot1 extends StaticAnnotation
-  class UserAnnot2 extends StaticAnnotation
-
-  def containsAllUserAnnotTypes[T: TypeTag]: Assertion =
+  def containsAllAnnotTypes[T: TypeTag]: Assertion =
     typeOf[T]
       .typeSymbol
       .annotations
       .map(_.tree.tpe)
-      .containsSlice(Seq(typeOf[UserAnnot1], typeOf[UserAnnot2])) shouldBe true
+      .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true
 
-  @UserAnnot1
+  @Annotation1
   @AvroType.fromSchemaFile("scio-avro/src/test/avro/scio-avro-test.avsc")
-  @UserAnnot2
-  class FromResourceWithUserAnnotations
+  @Annotation2
+  class FromResourceWithSurroundingAnnotations
 
-  it should "preserve user defined annotations" in {
-    containsAllUserAnnotTypes[FromResourceWithUserAnnotations]
+  it should "preserve surrounding user defined annotations" in {
+    containsAllAnnotTypes[FromResourceWithSurroundingAnnotations]
   }
 
-  @UserAnnot1
+  @AvroType.fromSchemaFile("scio-avro/src/test/avro/scio-avro-test.avsc")
+  @Annotation1
+  @Annotation2
+  class FromResourceWithSequentialAnnotations
+
+  it should "preserve sequential user defined annotations" in {
+    containsAllAnnotTypes[FromResourceWithSequentialAnnotations]
+  }
+
+  @Annotation1
   @AvroType.fromSchema(
     """{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}""")
-  @UserAnnot2
-  class SchemaWithUserAnnotations
+  @Annotation2
+  class SchemaWithSurroundingAnnotations
 
-  "AvroType.fromSchema" should "preserve user defined annotations" in {
-    containsAllUserAnnotTypes[SchemaWithUserAnnotations]
+  "AvroType.fromSchema" should "preserve surrounding user defined annotations" in {
+    containsAllAnnotTypes[SchemaWithSurroundingAnnotations]
   }
 
-  @UserAnnot1
-  @AvroType.toSchema
-  @UserAnnot2
-  case class RecordWithUserAnnotations(a1: Int)
+  @AvroType.fromSchema(
+    """{"type":"record","name": "Record","fields":[{"name":"f1","type":"int"}]}""")
+  @Annotation1
+  @Annotation2
+  class SchemaWithSequentialAnnotations
 
-  "AvroType.toSchema" should "preserve user defined annotations" in {
-    containsAllUserAnnotTypes[RecordWithUserAnnotations]
+  it should "preserve sequential user defined annotations" in {
+    containsAllAnnotTypes[SchemaWithSequentialAnnotations]
+  }
+
+  @Annotation1
+  @AvroType.toSchema
+  @Annotation2
+  case class RecordWithSurroundingAnnotations(a1: Int)
+
+  "AvroType.toSchema" should "preserve surrounding user defined annotations" in {
+    containsAllAnnotTypes[RecordWithSurroundingAnnotations]
+  }
+
+  @AvroType.toSchema
+  @Annotation1
+  @Annotation2
+  case class RecordWithSequentialAnnotations(a1: Int)
+
+  it should "preserve sequential user defined annotations" in {
+    containsAllAnnotTypes[RecordWithSequentialAnnotations]
   }
 }
+
+// scalastyle:on file.size.limit
+// scalastyle:on number.of.methods
+// scalastyle:on number.of.types
