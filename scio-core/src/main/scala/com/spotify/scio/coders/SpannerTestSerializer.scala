@@ -19,7 +19,7 @@ package com.spotify.scio.coders
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
-import com.google.cloud.spanner.{Mutation, Struct}
+import com.google.cloud.spanner.{Mutation, Struct, Value}
 import com.google.common.collect.Iterators
 import com.twitter.chill.KSerializer
 import org.apache.beam.sdk.io.gcp.spanner.MutationGroup
@@ -101,9 +101,9 @@ private class SpannerTestMutationGroupSerializer extends KSerializer[MutationGro
 
     output.writeInt(Iterators.size(mutationGroup.iterator))
 
-    mutationGroup.iterator.forEachRemaining{mutation =>
+    mutationGroup.iterator.forEachRemaining{(mutation: Mutation) =>
       output.writeString(mutation.getTable)
-      mutation.getValues.forEach(value => output.writeString(value.toString))
+      mutation.getValues.forEach((value: Value) => output.writeString(value.toString))
     }
   }
 

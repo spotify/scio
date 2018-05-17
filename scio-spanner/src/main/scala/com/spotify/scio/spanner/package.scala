@@ -35,20 +35,6 @@ import scala.concurrent.Future
  */
 package object spanner {
 
-  /** Create SpannerConfig object. Only projectId, instanceId, and databaseId are set. */
-  object SpannerConfigBasic {
-
-    def apply(projectId: String,
-              instanceId: String,
-              databaseId: String): SpannerConfig = {
-
-      SpannerConfig.create
-        .withProjectId(projectId)
-        .withInstanceId(instanceId)
-        .withDatabaseId(databaseId)
-    }
-  }
-
   /** Enhanced version of [[ScioContext]] with Spanner methods. */
   implicit class SpannerScioContext(val self: ScioContext) extends AnyVal {
 
@@ -65,7 +51,11 @@ package object spanner {
                          partitionOptions: PartitionOptions = null,
                          timestampBound: TimestampBound = null): SCollection[Struct] = {
 
-      val config = SpannerConfigBasic(projectId, instanceId, databaseId)
+      val config = SpannerConfig.create
+        .withProjectId(projectId)
+        .withInstanceId(instanceId)
+        .withDatabaseId(databaseId)
+
       spannerFromTableWithConfig(config, table, columns, keySet, partitionOptions, timestampBound)
     }
 
@@ -109,7 +99,11 @@ package object spanner {
                          partitionOptions: PartitionOptions = null,
                          timestampBound: TimestampBound = null): SCollection[Struct] = {
 
-      val config = SpannerConfigBasic(projectId, instanceId, databaseId)
+      val config = SpannerConfig.create
+        .withProjectId(projectId)
+        .withInstanceId(instanceId)
+        .withDatabaseId(databaseId)
+
       spannerFromQueryWithConfig(config, query, index, partitionOptions, timestampBound)
     }
 
@@ -151,7 +145,11 @@ package object spanner {
                       databaseId: String,
                       batchSizeBytes: Long = 0): Future[Tap[Mutation]] = {
 
-      val config = SpannerConfigBasic(projectId, instanceId, databaseId)
+      val config = SpannerConfig.create
+        .withProjectId(projectId)
+        .withInstanceId(instanceId)
+        .withDatabaseId(databaseId)
+
       saveAsSpannerWithConfig(config, batchSizeBytes)
     }
 
@@ -187,7 +185,11 @@ package object spanner {
                       databaseId: String,
                       batchSizeBytes: Long = 0): Future[Tap[MutationGroup]] = {
 
-      val config = SpannerConfigBasic(projectId, instanceId, databaseId)
+      val config = SpannerConfig.create
+        .withProjectId(projectId)
+        .withInstanceId(instanceId)
+        .withDatabaseId(databaseId)
+
       saveAsSpannerWithConfig(config, batchSizeBytes)
     }
 
