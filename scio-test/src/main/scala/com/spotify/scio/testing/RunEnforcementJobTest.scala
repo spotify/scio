@@ -26,7 +26,7 @@ import scala.reflect.ClassTag
 /**
  * Trait that enforces [[JobTest.Builder.run]] is called.
  */
-trait RunEnforcementJobTest extends FlatSpec { this: Suite =>
+trait RunEnforcementJobTest extends FlatSpec { this: PipelineSpec =>
 
   private val tests = ArrayBuffer.empty[InnerJobTest.Builder]
 

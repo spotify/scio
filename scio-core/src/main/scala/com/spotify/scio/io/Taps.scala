@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.util.Try
 
 /** Exception for when a tap is not available. */
 class TapNotAvailableException(msg: String) extends Exception(msg)

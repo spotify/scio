@@ -31,8 +31,6 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.transforms.windowing.IntervalWindow
 import org.joda.time.{Duration, Instant}
 
-import scala.util.Try
-
 object TopWikipediaSessions {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)

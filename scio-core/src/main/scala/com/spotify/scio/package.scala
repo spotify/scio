@@ -22,7 +22,6 @@ import com.twitter.algebird.Monoid
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 /**

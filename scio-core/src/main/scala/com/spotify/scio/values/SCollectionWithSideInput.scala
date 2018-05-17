@@ -40,7 +40,7 @@ class SCollectionWithSideInput[T: ClassTag] private[values] (val internal: PColl
 
   val ct: ClassTag[T] = implicitly[ClassTag[T]]
 
-  private def parDo[T, U](fn: DoFn[T, U]) = ParDo.of(fn).withSideInputs(sides.map(_.view).asJava)
+  private def parDo[T0, U](fn: DoFn[T0, U]) = ParDo.of(fn).withSideInputs(sides.map(_.view).asJava)
 
   /** [[SCollection.filter]] with an additional [[SideInputContext]] argument. */
   def filter(f: (T, SideInputContext[T]) => Boolean): SCollectionWithSideInput[T] = {

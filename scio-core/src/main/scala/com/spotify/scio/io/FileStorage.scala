@@ -96,7 +96,7 @@ private[scio] class FileStorage(protected[scio] val path: String) {
     val nums = metadata.flatMap { meta =>
       val m = partPattern.findAllIn(meta.resourceId().toString)
       if (m.hasNext) {
-        Some(m.group(1).toInt, m.group(2).toInt)
+        Some((m.group(1).toInt, m.group(2).toInt))
       } else {
         None
       }

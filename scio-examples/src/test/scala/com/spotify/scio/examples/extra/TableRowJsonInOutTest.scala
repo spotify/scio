@@ -18,7 +18,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.bigquery.TableRow
-import com.spotify.scio.testing.{JobTest, PipelineSpec, TableRowJsonIO}
+import com.spotify.scio.testing.{PipelineSpec, TableRowJsonIO}
 
 class TableRowJsonInOutTest extends PipelineSpec {
 

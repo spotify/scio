@@ -21,7 +21,6 @@ import com.spotify.scio._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.common.ExampleData
 import org.apache.beam.examples.common.{ExampleOptions, ExampleUtils}
-import org.apache.beam.sdk.options.StreamingOptions
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{Duration, Instant}
 

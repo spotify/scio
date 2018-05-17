@@ -83,20 +83,20 @@ class JoinBenchmark {
 
   def artisan(as: JIterable[Int], bs: JIterable[Int], c: Context[(Int, Int)]): Unit = {
     (peak(as), peak(bs)) match {
-      case ((1, a), (1, b)) => c.output(a, b)
+      case ((1, a), (1, b)) => c.output((a, b))
       case ((1, a), (2, _)) =>
         val i = bs.iterator()
-        while (i.hasNext) c.output(a, i.next())
+        while (i.hasNext) c.output((a, i.next()))
       case ((2, _), (1, b)) =>
         val i = as.iterator()
-        while (i.hasNext) c.output(i.next(), b)
+        while (i.hasNext) c.output((i.next(), b))
       case ((2, _), (2, _)) =>
         val i = as.iterator()
         while (i.hasNext) {
           val a = i.next()
           val j = bs.iterator()
           while (j.hasNext) {
-            c.output(a, j.next())
+            c.output((a, j.next()))
           }
         }
       case _ => ()
@@ -116,18 +116,18 @@ class JoinBenchmark {
       val a1 = !ai.hasNext
       val b1 = !bi.hasNext
       if (a1 && b1) {
-        c.output(a, b)
+        c.output((a, b))
       } else if (a1 && !b1) {
-        c.output(a, b)
-        c.output(a, bi.next())
+        c.output((a, b))
+        c.output((a, bi.next()))
         while (bi.hasNext) {
-          c.output(a, bi.next())
+          c.output((a, bi.next()))
         }
       } else if (!a1 && b1) {
-        c.output(a, b)
-        c.output(ai.next(), b)
+        c.output((a, b))
+        c.output((ai.next(), b))
         while (ai.hasNext) {
-          c.output((ai.next(), b))
+          c.output(((ai.next(), b)))
         }
       } else {
         ai = as.iterator()
@@ -135,7 +135,7 @@ class JoinBenchmark {
           a = ai.next()
           bi = bs.iterator()
           while (bi.hasNext) {
-            c.output(a, bi.next())
+            c.output((a, bi.next()))
           }
         }
       }
@@ -152,7 +152,7 @@ class JoinBenchmark {
       val a = ai.next()
       val bi = bs.iterator()
       while (bi.hasNext) {
-        c.output(a, bi.next())
+        c.output((a, bi.next()))
       }
     }
   }

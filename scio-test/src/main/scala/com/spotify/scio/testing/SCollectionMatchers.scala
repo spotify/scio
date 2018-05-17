@@ -95,6 +95,14 @@ trait SCollectionMatchers {
       }
     }
 
+  private def makeFnSingle[T](f: T => Unit): SerializableFunction[T, Void] =
+    new SerializableFunction[T, Void] {
+      override def apply(input: T) = {
+        f(input)
+        null
+      }
+    }
+
   // Due to  https://github.com/GoogleCloudPlatform/DataflowJavaSDK/issues/434
   // SerDe cycle on each element to keep consistent with values on the expected side
   private def serDeCycle[T: ClassTag](scollection: SCollection[T]): SCollection[T] = {
@@ -310,6 +318,30 @@ trait SCollectionMatchers {
               builder(PAssert.that(serDeCycle(left).internal)).satisfies(f),
               () =>
                 builder(PAssert.that(serDeCycle(left).internal)).satisfies(g))
+          }
+        }
+    }
+
+  /**
+   * Assert that the SCollection in question contains a single element which satisfies the
+   * provided function.
+   */
+  def satisfySingleValue[T: ClassTag](predicate: T => Boolean): SingleMatcher[SCollection[T], T] =
+    new SingleMatcher[SCollection[T], T] {
+      override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
+        new Matcher[SCollection[T]] {
+          override def apply(left: SCollection[T]): MatchResult = {
+            val p = ClosureCleaner(predicate)
+            val f = makeFnSingle[T](in => assert(p(in)))
+            val g = makeFnSingle[T](in => assert(!p(in)))
+            m(
+              () =>
+                builder(PAssert.thatSingleton(serDeCycle(left).internal))
+                  .satisfies(f),
+              () =>
+                builder(PAssert.thatSingleton(serDeCycle(left).internal))
+                  .satisfies(g)
+            )
           }
         }
     }

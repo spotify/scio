@@ -34,6 +34,7 @@ val chillVersion = "0.9.2"
 val circeVersion = "0.9.1"
 val commonsIoVersion = "2.6"
 val commonsMath3Version = "3.6.1"
+val commonsPoolVersion = "2.5.0"
 val elasticsearch2Version = "2.1.0"
 val elasticsearch5Version = "5.5.0"
 val featranVersion = "0.1.25"
@@ -64,6 +65,7 @@ val shapelessDatatypeVersion = "0.1.9"
 val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.3.0"
 val tensorFlowVersion = "1.8.0"
+val zoltarVersion = "0.3.1"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
@@ -87,14 +89,8 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
 
   scalaVersion       := "2.12.6",
   crossScalaVersions := Seq("2.11.12", "2.12.6"),
-  scalacOptions                   ++= {
-    Seq("-Xmax-classfile-name", "100", "-target:jvm-1.8", "-deprecation", "-feature", "-unchecked") ++
-      (if (scalaBinaryVersion.value == "2.12") Seq("-Ydelambdafy:inline") else Nil)
-    },
-  scalacOptions in (Compile, doc) ++= {
-    Seq("-skip-packages", "org.apache") ++
-      (if (scalaBinaryVersion.value == "2.12") Seq("-no-java-comments") else Nil)
-    },
+  scalacOptions                   ++= Scalac.commonsOptions.value,
+  scalacOptions in (Compile, doc) ++= Scalac.compileDocOptions.value,
   javacOptions                    ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
   javacOptions in (Compile, doc)  := Seq("-source", "1.8"),
 
@@ -296,7 +292,8 @@ lazy val scioCore: Project = Project(
     "com.google.guava" % "guava" % guavaVersion,
     "com.google.protobuf" % "protobuf-java" % protobufVersion,
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
-    "org.apache.xbean" % "xbean-asm5-shaded" % asmVersion
+    "org.apache.xbean" % "xbean-asm5-shaded" % asmVersion,
+    "org.apache.commons" % "commons-pool2" %  commonsPoolVersion
   )
 ).dependsOn(
   scioAvro,
@@ -554,7 +551,9 @@ lazy val scioTensorFlow: Project = Project(
     "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
     "com.spotify" %% "featran-core" % featranVersion,
     "com.spotify" %% "featran-scio" % featranVersion,
-    "com.spotify" %% "featran-tensorflow" % featranVersion
+    "com.spotify" %% "featran-tensorflow" % featranVersion,
+    "com.spotify" % "zoltar-api" % zoltarVersion,
+    "com.spotify" % "zoltar-tensorflow" % zoltarVersion
   ),
   libraryDependencies ++= Seq(
     "io.circe" %% "circe-core",

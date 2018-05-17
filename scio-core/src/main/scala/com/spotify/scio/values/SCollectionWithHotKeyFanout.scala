@@ -34,11 +34,11 @@ class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag] private[values]
  private val hotKeyFanout: Either[K => Int, Int])
   extends TransformNameable {
 
-  private def withFanout[K, I, O](combine: Combine.PerKey[K, I, O])
-  : PerKeyWithHotKeyFanout[K, I, O] = this.hotKeyFanout match {
+  private def withFanout[K0, I, O](combine: Combine.PerKey[K0, I, O])
+  : PerKeyWithHotKeyFanout[K0, I, O] = this.hotKeyFanout match {
     case Left(f) =>
       combine.withHotKeyFanout(
-        Functions.serializableFn(f).asInstanceOf[SerializableFunction[K, java.lang.Integer]])
+        Functions.serializableFn(f).asInstanceOf[SerializableFunction[K0, java.lang.Integer]])
     case Right(f) =>
       combine.withHotKeyFanout(f)
   }

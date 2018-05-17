@@ -19,7 +19,7 @@ package com.spotify.scio.examples.extra
 
 import com.spotify.scio.proto.SimpleV2.SimplePB
 import com.spotify.scio.proto.Track.TrackPB
-import com.spotify.scio.testing.{JobTest, PipelineSpec, ProtobufIO}
+import com.spotify.scio.testing.{PipelineSpec, ProtobufIO}
 
 class ProtobufExampleTest extends PipelineSpec {
 
