@@ -89,7 +89,7 @@ private object KryoRegistrarLoader {
 }
 
 private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends AtomicCoder[T] {
-  
+
   import KryoAtomicCoder._
 
   private val header = -1
