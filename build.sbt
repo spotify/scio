@@ -610,6 +610,7 @@ lazy val scioExamples: Project = Project(
   scioJdbc,
   scioExtra,
   scioTensorFlow,
+  scioSpanner,
   scioTest % "test"
 )
 

@@ -19,6 +19,7 @@ package com.spotify.scio
 
 import com.google.cloud.spanner._
 import com.spotify.scio.io.Tap
+import com.spotify.scio.testing.{CustomIO, TestIO}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.spanner.{MutationGroup, SpannerConfig, SpannerIO}
 
@@ -77,17 +78,23 @@ package object spanner {
                                    columns: Iterable[String],
                                    keySet: KeySet = null,
                                    partitionOptions: PartitionOptions = null,
-                                   timestampBound: TimestampBound = null): SCollection[Struct] = {
+                                   timestampBound: TimestampBound = null): SCollection[Struct] =
+      self.requireNotClosed {
+        if (self.isTest) {
+          val input = CustomIO[Struct](spannerConfig.toString)
+          self.getTestInput[Struct](input)
 
-      var read = SpannerIO.read.withSpannerConfig(spannerConfig)
-        .withTable(table)
-        .withColumns(columns.toSeq.asJava)
+        } else {
+          var read = SpannerIO.read.withSpannerConfig(spannerConfig)
+            .withTable(table)
+            .withColumns(columns.toSeq.asJava)
 
-      if (keySet != null) { read = read.withKeySet(keySet) }
-      if (partitionOptions != null) { read = read.withPartitionOptions(partitionOptions) }
-      if (timestampBound != null) { read = read.withTimestampBound(timestampBound) }
+          if (keySet != null) { read = read.withKeySet(keySet) }
+          if (partitionOptions != null) { read = read.withPartitionOptions(partitionOptions) }
+          if (timestampBound != null) { read = read.withTimestampBound(timestampBound) }
 
-      self.wrap(self.applyInternal(read))
+          self.wrap(self.applyInternal(read))
+        }
     }
 
     /**
@@ -114,15 +121,21 @@ package object spanner {
                                    query: String,
                                    index: String = null,
                                    partitionOptions: PartitionOptions = null,
-                                   timestampBound: TimestampBound = null): SCollection[Struct] = {
+                                   timestampBound: TimestampBound = null): SCollection[Struct] =
+      self.requireNotClosed {
+        if (self.isTest) {
+          val input = CustomIO[Struct](spannerConfig.toString)
+          self.getTestInput[Struct](input)
 
-      var read = SpannerIO.read.withSpannerConfig(spannerConfig).withQuery(query)
+        } else {
+          var read = SpannerIO.read.withSpannerConfig(spannerConfig).withQuery(query)
 
-      if (index != null) { read = read.withIndex(index) }
-      if (partitionOptions != null) { read = read.withPartitionOptions(partitionOptions) }
-      if (timestampBound != null) { read = read.withTimestampBound(timestampBound) }
+          if (index != null) { read = read.withIndex(index) }
+          if (partitionOptions != null) { read = read.withPartitionOptions(partitionOptions) }
+          if (timestampBound != null) { read = read.withTimestampBound(timestampBound) }
 
-      self.wrap(self.applyInternal(read))
+          self.wrap(self.applyInternal(read))
+        }
     }
   }
 
@@ -146,10 +159,16 @@ package object spanner {
     def saveAsSpannerWithConfig(spannerConfig: SpannerConfig,
                                 batchSizeBytes: Long = 0): Future[Tap[Mutation]] = {
 
-      var write = SpannerIO.write.withSpannerConfig(spannerConfig)
-      if (batchSizeBytes > 0) { write = write.withBatchSizeBytes(batchSizeBytes) }
+      if (self.context.isTest) {
+        val output = CustomIO[Mutation](spannerConfig.toString)
+        self.context.testOut(output.asInstanceOf[TestIO[Mutation]])(self)
 
-      self.applyInternal(write)
+      } else {
+        var write = SpannerIO.write.withSpannerConfig(spannerConfig)
+        if (batchSizeBytes > 0) { write = write.withBatchSizeBytes(batchSizeBytes) }
+
+        self.applyInternal(write)
+      }
       Future.failed(new NotImplementedError("Spanner future not implemented."))
     }
   }
@@ -176,10 +195,16 @@ package object spanner {
     def saveAsSpannerWithConfig(spannerConfig: SpannerConfig,
                                 batchSizeBytes: Long = 0): Future[Tap[MutationGroup]] = {
 
-      var write = SpannerIO.write.withSpannerConfig(spannerConfig)
-      if (batchSizeBytes > 0) { write = write.withBatchSizeBytes(batchSizeBytes) }
+      if (self.context.isTest) {
+        val output = CustomIO[MutationGroup](spannerConfig.toString)
+        self.context.testOut(output.asInstanceOf[TestIO[MutationGroup]])(self)
 
-      self.applyInternal(write.grouped)
+      } else {
+        var write = SpannerIO.write.withSpannerConfig(spannerConfig)
+        if (batchSizeBytes > 0) { write = write.withBatchSizeBytes(batchSizeBytes) }
+
+        self.applyInternal(write.grouped)
+      }
       Future.failed(new NotImplementedError("Spanner future not implemented."))
     }
   }

@@ -17,12 +17,12 @@
 
 package com.spotify.scio.coders
 
-import java.io.{InputStream, OutputStream, EOFException}
-import java.io.{InputStream, OutputStream}
+import java.io.{EOFException, InputStream, OutputStream}
 import java.nio.file.Path
 
 import com.esotericsoftware.kryo.KryoException
 import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
+import com.google.cloud.spanner.{Mutation, Struct}
 import com.google.common.io.{ByteStreams, CountingOutputStream}
 import com.google.common.reflect.ClassPath
 import com.google.protobuf.{ByteString, Message}
@@ -34,6 +34,7 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.coders._
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
+import org.apache.beam.sdk.io.gcp.spanner.MutationGroup
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.util.{EmptyOnDeserializationThreadLocal, VarInt}
@@ -114,6 +115,11 @@ private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends
 
         k.forSubclass[Path](new JPathSerializer)
         k.forSubclass[ByteString](new ByteStringSerializer)
+
+        // specifically needed for Spanner testing
+        k.forSubclass[Struct](new SpannerTestStructSerializer)
+        k.forSubclass[Mutation](new SpannerTestMutationSerializer)
+        k.forSubclass[MutationGroup](new SpannerTestMutationGroupSerializer)
 
         k.forClass(new KVSerializer)
         // TODO:
