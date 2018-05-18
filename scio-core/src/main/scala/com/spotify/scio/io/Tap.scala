@@ -87,7 +87,7 @@ case class TableRowJsonTap(path: String) extends Tap[TableRow] {
 
 /** Tap for BigQuery tables. */
 case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
-  override def value: Iterator[TableRow] = BigQueryClient.defaultInstance().getTableRows(table)
+  override def value: Iterator[TableRow] = BigQueryClient.defaultInstance().tables.getRows(table)
   override def open(sc: ScioContext): SCollection[TableRow] = sc.bigQueryTable(table)
 }
 

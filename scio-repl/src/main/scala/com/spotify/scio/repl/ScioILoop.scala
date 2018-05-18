@@ -20,7 +20,7 @@ package com.spotify.scio.repl
 import java.io.BufferedReader
 
 import org.apache.beam.sdk.options.PipelineOptionsFactory
-import com.spotify.scio.bigquery.BigQueryClient
+import com.spotify.scio.bigquery.BigQueryConfig
 import com.spotify.scio.{scalaVersion, scioVersion}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.commons.lang.StringEscapeUtils
@@ -212,7 +212,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
       r
     }
 
-    val key = BigQueryClient.PROJECT_KEY
+    val key = BigQueryConfig.PROJECT_KEY
 
     if (sys.props(key) != null) {
       create(sys.props(key))

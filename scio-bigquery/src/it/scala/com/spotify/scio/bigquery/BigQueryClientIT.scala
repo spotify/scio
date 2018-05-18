@@ -27,6 +27,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.JavaConverters._
+import scala.util.Success
 
 class BigQueryClientIT extends FlatSpec with Matchers {
 
@@ -37,38 +38,38 @@ class BigQueryClientIT extends FlatSpec with Matchers {
   val sqlQuery =
     "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` LIMIT 10"
 
-  "extractLocation" should "work with legacy syntax" in {
+  "QueryService.extractLocation" should "work with legacy syntax" in {
     val query = "SELECT word FROM [data-integration-test:samples_%s.shakespeare]"
-    bq.extractLocation(query.format("us")) shouldBe Some("US")
-    bq.extractLocation(query.format("eu")) shouldBe Some("EU")
+    bq.query.extractLocation(query.format("us")) shouldBe Some("US")
+    bq.query.extractLocation(query.format("eu")) shouldBe Some("EU")
   }
 
   it should "work with SQL syntax" in {
     val query = "SELECT word FROM `data-integration-test.samples_%s.shakespeare`"
-    bq.extractLocation(query.format("us")) shouldBe Some("US")
-    bq.extractLocation(query.format("eu")) shouldBe Some("EU")
+    bq.query.extractLocation(query.format("us")) shouldBe Some("US")
+    bq.query.extractLocation(query.format("eu")) shouldBe Some("EU")
   }
 
   it should "support missing source tables" in {
-    bq.extractLocation("SELECT 6") shouldBe None
+    bq.query.extractLocation("SELECT 6") shouldBe None
   }
 
-  "extractTables" should "work with legacy syntax" in {
+  "QueryService.extractTables" should "work with legacy syntax" in {
     val tableSpec = BigQueryHelpers.parseTableSpec("bigquery-public-data:samples.shakespeare")
-    bq.extractTables(legacyQuery) shouldBe Set(tableSpec)
+    bq.query.extractTables(legacyQuery) shouldBe Set(tableSpec)
   }
 
   it should "work with SQL syntax" in {
     val tableSpec = BigQueryHelpers.parseTableSpec("bigquery-public-data:samples.shakespeare")
-    bq.extractTables(sqlQuery) shouldBe Set(tableSpec)
+    bq.query.extractTables(sqlQuery) shouldBe Set(tableSpec)
   }
 
-  "getQuerySchema" should "work with legacy syntax" in {
+  "QueryService.getSchema" should "work with legacy syntax" in {
     val expected = new TableSchema().setFields(List(
       new TableFieldSchema().setName("word").setType("STRING").setMode("REQUIRED"),
       new TableFieldSchema().setName("word_count").setType("INTEGER").setMode("REQUIRED")
     ).asJava)
-    bq.getQuerySchema(legacyQuery) shouldBe expected
+    bq.query.getSchema(legacyQuery) shouldBe expected
   }
 
   it should "work with SQL syntax" in {
@@ -76,37 +77,37 @@ class BigQueryClientIT extends FlatSpec with Matchers {
       new TableFieldSchema().setName("word").setType("STRING").setMode("NULLABLE"),
       new TableFieldSchema().setName("word_count").setType("INTEGER").setMode("NULLABLE")
     ).asJava)
-    bq.getQuerySchema(sqlQuery) shouldBe expected
+    bq.query.getSchema(sqlQuery) shouldBe expected
   }
 
   // scalastyle:off no.whitespace.before.left.bracket
   it should "fail invalid legacy syntax" in {
     (the [GoogleJsonResponseException] thrownBy {
-      bq.getQuerySchema("SELECT word, count FROM [bigquery-public-data:samples.shakespeare]")
+      bq.query.getSchema("SELECT word, count FROM [bigquery-public-data:samples.shakespeare]")
     }).getDetails.getCode shouldBe 400
   }
 
   it should "fail invalid SQL syntax" in {
     (the [GoogleJsonResponseException] thrownBy {
-      bq.getQuerySchema("SELECT word, count FROM `bigquery-public-data.samples.shakespeare`")
+      bq.query.getSchema("SELECT word, count FROM `bigquery-public-data.samples.shakespeare`")
     }).getDetails.getCode shouldBe 400
   }
   // scalastyle:on no.whitespace.before.left.bracket
 
-  "getQueryRows" should "work with legacy syntax" in {
-    val rows = bq.getQueryRows(legacyQuery).toList
+  "QueryService.getRows" should "work with legacy syntax" in {
+    val rows = bq.query.getRows(legacyQuery).toList
     rows.size shouldBe 10
     all(rows.map(_.keySet().asScala)) shouldBe Set("word", "word_count")
   }
 
   it should "work with SQL syntax" in {
-    val rows = bq.getQueryRows(sqlQuery).toList
+    val rows = bq.query.getRows(sqlQuery).toList
     rows.size shouldBe 10
     all(rows.map(_.keySet().asScala)) shouldBe Set("word", "word_count")
   }
 
-  "getTableSchema" should "work" in {
-    val schema = bq.getTableSchema("bigquery-public-data:samples.shakespeare")
+  "TableService.getTableSchema" should "work" in {
+    val schema = bq.tables.getSchema("bigquery-public-data:samples.shakespeare")
     val fields = schema.getFields.asScala
     fields.size shouldBe 4
     fields.map(_.getName) shouldBe Seq("word", "word_count", "corpus", "corpus_date")
@@ -114,13 +115,13 @@ class BigQueryClientIT extends FlatSpec with Matchers {
     fields.map(_.getMode) shouldBe Seq("REQUIRED", "REQUIRED", "REQUIRED", "REQUIRED")
   }
 
-  "getTableRows" should "work" in {
-    val rows = bq.getTableRows("bigquery-public-data:samples.shakespeare").take(10).toList
+  "TableService.getRows" should "work" in {
+    val rows = bq.tables.getRows("bigquery-public-data:samples.shakespeare").take(10).toList
     val columns = Set("word", "word_count", "corpus", "corpus_date")
     all(rows.map(_.keySet().asScala)) shouldBe columns
   }
 
-  "loadTableFromCsv" should "work" in {
+  "Load.csv" should "work" in {
     val schema = BigQueryUtil.parseSchema(
       """
         |{
@@ -133,15 +134,15 @@ class BigQueryClientIT extends FlatSpec with Matchers {
         |}
       """.stripMargin)
     val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.csv")
-    val table = bq.temporaryTable(location = "US")
-    val tableRef = bq.loadTableFromCsv(sources, table.asTableSpec, skipLeadingRows = 1,
+    val table = bq.tables.createTemporary(location = "US")
+    val tableRef = bq.load.csv(sources, table.asTableSpec, skipLeadingRows = 1,
       schema = Some(schema))
-    val createdTable = bq.getTable(tableRef)
-    createdTable.getNumRows.intValue() shouldBe 10
-    bq.deleteTable(tableRef)
+    val createdTable = tableRef.map(bq.tables.get)
+    createdTable.map(_.getNumRows.intValue()) shouldBe Success(10)
+    tableRef.map(bq.tables.delete)
   }
 
-  "loadTableFromJson" should "work" in {
+  "Load.json" should "work" in {
     val schema = BigQueryUtil.parseSchema(
       """
         |{
@@ -154,54 +155,54 @@ class BigQueryClientIT extends FlatSpec with Matchers {
         |}
       """.stripMargin)
     val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.json")
-    val table = bq.temporaryTable(location = "US")
-    val tableRef = bq.loadTableFromJson(sources, table.asTableSpec, schema = Some(schema))
-    val createdTable = bq.getTable(tableRef)
-    createdTable.getNumRows.intValue() shouldBe 10
-    bq.deleteTable(tableRef)
+    val table = bq.tables.createTemporary(location = "US")
+    val tableRef = bq.load.json(sources, table.asTableSpec, schema = Some(schema))
+    val createdTable = tableRef.map(bq.tables.get)
+    createdTable.map(_.getNumRows.intValue()) shouldBe Success(10)
+    tableRef.map(bq.tables.delete)
   }
 
-  "loadTableFromAvro" should "work" in {
+  "Load.avro" should "work" in {
     val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.avro")
-    val table = bq.temporaryTable(location = "US")
-    val tableRef = bq.loadTableFromAvro(sources, table.asTableSpec)
-    val createdTable = bq.getTable(tableRef)
-    createdTable.getNumRows.intValue() shouldBe 10
-    bq.deleteTable(tableRef)
+    val table = bq.tables.createTemporary(location = "US")
+    val tableRef = bq.load.avro(sources, table.asTableSpec)
+    val createdTable = tableRef.map(bq.tables.get)
+    createdTable.map(_.getNumRows.intValue()) shouldBe Success(10)
+    tableRef.map(bq.tables.delete)
   }
 
-  "exportTableAsCsv" should "work" in {
+  "extract.asCsv" should "work" in {
     val sourceTable = "bigquery-public-data:samples.shakespeare"
     val (bucket, prefix) = ("data-integration-test-eu", s"extract/csv/${UUID.randomUUID}")
     GcsUtils.exists(bucket, prefix) shouldBe false
     val destination = List(
       s"gs://$bucket/$prefix"
     )
-    bq.exportTableAsCsv(sourceTable, destination)
+    bq.extract.asCsv(sourceTable, destination)
     GcsUtils.exists(bucket, prefix) shouldBe true
     GcsUtils.remove(bucket, prefix)
   }
 
-  "exportTableAsJson" should "work" in {
+  "extract.asJson" should "work" in {
     val sourceTable = "bigquery-public-data:samples.shakespeare"
     val (bucket, prefix) = ("data-integration-test-eu", s"extract/json/${UUID.randomUUID}")
     GcsUtils.exists(bucket, prefix) shouldBe false
     val destination = List(
       s"gs://$bucket/$prefix"
     )
-    bq.exportTableAsJson(sourceTable, destination)
+    bq.extract.asJson(sourceTable, destination)
     GcsUtils.exists(bucket, prefix) shouldBe true
     GcsUtils.remove(bucket, prefix)
   }
 
-  "exportTableAsAvro" should "work" in {
+  "extract.asAvro" should "work" in {
     val sourceTable = "bigquery-public-data:samples.shakespeare"
     val (bucket, prefix) = ("data-integration-test-eu", s"extract/avro/${UUID.randomUUID}")
     GcsUtils.exists(bucket, prefix) shouldBe false
     val destination = List(
       s"gs://$bucket/$prefix"
     )
-    bq.exportTableAsAvro(sourceTable, destination)
+    bq.extract.asAvro(sourceTable, destination)
     GcsUtils.exists(bucket, prefix) shouldBe true
     GcsUtils.remove(bucket, prefix)
   }
