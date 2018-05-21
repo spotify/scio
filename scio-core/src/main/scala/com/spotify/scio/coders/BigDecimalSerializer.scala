@@ -23,7 +23,7 @@ import com.twitter.chill.KSerializer
 
 import java.math.{BigDecimal => JBigDecimal}
 
-class BigDecimalSerializer extends KSerializer[BigDecimal] {
+private class BigDecimalSerializer extends KSerializer[BigDecimal] {
   override def read(kryo: Kryo, input: Input, cls: Class[BigDecimal]): BigDecimal = {
     val jBigDec = kryo.readClassAndObject(input).asInstanceOf[JBigDecimal]
     BigDecimal(jBigDec)
