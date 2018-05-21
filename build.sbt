@@ -546,7 +546,11 @@ lazy val scioTensorFlow: Project = Project(
     "io.circe" %% "circe-core",
     "io.circe" %% "circe-generic",
     "io.circe" %% "circe-parser"
-  ).map(_ % circeVersion)
+  ).map(_ % circeVersion),
+  (testLoader in Test) :=
+    TensorflowTestClasspath.create(
+      (testLoader in Test).value,
+       (dependencyClasspath in Test).value)
 ).dependsOn(
   scioCore,
   scioTest % "test->test"
