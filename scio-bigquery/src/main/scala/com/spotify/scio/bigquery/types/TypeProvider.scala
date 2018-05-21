@@ -99,7 +99,7 @@ private[types] object TypeProvider {
             c.universe.ValDef(c.universe.Modifiers(m.flags, m.privateWithin, m.annotations), n, tq"$tpt @${typeOf[BigQueryTag]}", rhs)
           }
         }
-        val caseClassTree = q"""${caseClass(c)(cName, taggedFields, body)}"""
+        val caseClassTree = q"""${caseClass(c)(mods, cName, taggedFields, body)}"""
         val maybeCompanion = tail.headOption
         (q"""$caseClassTree
             ${companion(c)(cName, traits, Seq(defSchema, defToPrettyString) ++ defTblDesc, taggedFields.asInstanceOf[Seq[Tree]].size, maybeCompanion)}
@@ -184,7 +184,7 @@ private[types] object TypeProvider {
         val defSchema = q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SUtil)}.parseSchema(${schema.toString})"
         val defToPrettyString = q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${cName.toString}, indent)"
 
-        val caseClassTree = q"""${caseClass(c)(cName, fields, body)}"""
+        val caseClassTree = q"""${caseClass(c)(mods, cName, fields, body)}"""
         val maybeCompanion = tail.headOption
         (q"""$caseClassTree
             ${companion(c)(cName, traits ++ defTblTrait, Seq(defSchema, defToPrettyString) ++ overrides ++ defTblDesc, fields.size, maybeCompanion)}
@@ -229,9 +229,11 @@ private[types] object TypeProvider {
 
   /** Generate a case class. */
   private def caseClass(c: blackbox.Context)
-                       (name: c.TypeName, fields: Seq[c.Tree], body: Seq[c.Tree]): c.Tree = {
+                       (mods: c.Modifiers, name: c.TypeName, fields: Seq[c.Tree], body: Seq[c.Tree]): c.Tree = {
     import c.universe._
-    q"@_root_.com.spotify.scio.bigquery.types.BigQueryTag case class $name(..$fields) extends ${p(c, SType)}.HasAnnotation { ..$body }"
+    val tagAnnot = q"new _root_.com.spotify.scio.bigquery.types.BigQueryTag"
+    val taggedMods = Modifiers(Flag.CASE, typeNames.EMPTY, tagAnnot :: mods.annotations)
+    q"$taggedMods class $name(..$fields) extends ${p(c, SType)}.HasAnnotation { ..$body }"
   }
   /** Generate a companion object. */
   private def companion(c: blackbox.Context)

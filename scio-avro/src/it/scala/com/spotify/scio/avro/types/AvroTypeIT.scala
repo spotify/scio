@@ -18,7 +18,10 @@
 package com.spotify.scio.avro.types
 
 import org.apache.avro.Schema.Parser
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{Assertion, FlatSpec, Matchers}
+
+import scala.annotation.StaticAnnotation
+import scala.reflect.runtime.universe._
 
 object AvroTypeIT {
   @AvroType.fromPath(
@@ -59,6 +62,21 @@ object AvroTypeIT {
       |shakespeare-schema.avsc
     """.stripMargin)
   class FromFile
+
+  class Annotation1 extends StaticAnnotation
+  class Annotation2 extends StaticAnnotation
+
+  @Annotation1
+  @AvroType.fromPath(
+    "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro")
+  @Annotation2
+  class FromPathWithSurroundingAnnotations
+
+  @AvroType.fromPath(
+    "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro")
+  @Annotation1
+  @Annotation2
+  class FromPathWithSequentialAnnotations
 }
 
 class AvroTypeIT extends FlatSpec with Matchers  {
@@ -121,5 +139,20 @@ class AvroTypeIT extends FlatSpec with Matchers  {
     val r1 = FromPathMultiLine(corpus=Some("corpus"), corpus_date=Some(123L))
     val r2 = FromPathMultiLine.fromGenericRecord(FromPathMultiLine.toGenericRecord(r1))
     r1 shouldBe r2
+  }
+
+  def containsAllAnnotTypes[T: TypeTag]: Assertion =
+    typeOf[T]
+      .typeSymbol
+      .annotations
+      .map(_.tree.tpe)
+      .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true
+
+  it should "preserve surrounding user defined annotations" in {
+    containsAllAnnotTypes[FromPathWithSurroundingAnnotations]
+  }
+
+  it should "preserve sequential user defined annotations" in {
+    containsAllAnnotTypes[FromPathWithSequentialAnnotations]
   }
 }
