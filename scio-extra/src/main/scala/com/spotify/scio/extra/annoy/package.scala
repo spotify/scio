@@ -211,7 +211,9 @@ package object annoy {
      */
     def asAnnoy(metric: AnnoyMetric, dim: Int, nTrees: Int): SCollection[AnnoyUri] = {
       val uuid = UUID.randomUUID()
-      val path = s"${self.context.options.getTempLocation}/annoy-build-$uuid"
+      val tempLocation = self.context.options.getTempLocation
+      require(tempLocation != null, s"--tempLocation arg is required")
+      val path = s"$tempLocation/annoy-build-$uuid"
       this.asAnnoy(path, metric, dim, nTrees)
     }
 
