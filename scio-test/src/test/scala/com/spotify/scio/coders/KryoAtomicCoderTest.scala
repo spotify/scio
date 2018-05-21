@@ -116,6 +116,11 @@ class KryoAtomicCoderTest extends PipelineSpec {
     cf should roundTrip (kv)
   }
 
+  it should "support BigDecimal" in {
+    val bigDecimal = BigDecimal(1000.42)
+    cf should roundTrip (bigDecimal)
+  }
+
   it should "support custom KryoRegistrar" in {
     val c = cf()
 
