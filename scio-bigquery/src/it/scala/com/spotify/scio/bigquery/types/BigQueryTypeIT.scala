@@ -146,12 +146,14 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
     BigQueryType[FromTableLatestT].table shouldBe Some("data-integration-test:partition_a.table_%s")
   }
 
-  def containsAllAnnotTypes[T: TypeTag]: Assertion =
-    typeOf[T]
+  def containsAllAnnotTypes[T: TypeTag]: Assertion = {
+    val types = typeOf[T]
       .typeSymbol
       .annotations
       .map(_.tree.tpe)
-      .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true
+    Seq(typeOf[Annotation1], typeOf[Annotation2])
+      .forall(lt => types.exists(rt => lt =:= rt)) shouldBe true
+  }
 
   it should "preserve surrounding user defined annotations" in {
     containsAllAnnotTypes[ShakespeareWithSurroundingAnnotations]
