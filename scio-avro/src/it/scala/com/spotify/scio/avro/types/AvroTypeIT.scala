@@ -141,12 +141,14 @@ class AvroTypeIT extends FlatSpec with Matchers  {
     r1 shouldBe r2
   }
 
-  def containsAllAnnotTypes[T: TypeTag]: Assertion =
-    typeOf[T]
+  def containsAllAnnotTypes[T: TypeTag]: Assertion = {
+    val types = typeOf[T]
       .typeSymbol
       .annotations
       .map(_.tree.tpe)
-      .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true
+    Seq(typeOf[Annotation1], typeOf[Annotation2])
+      .forall(lt => types.exists(rt => lt =:= rt)) shouldBe true
+  }
 
   it should "preserve surrounding user defined annotations" in {
     containsAllAnnotTypes[FromPathWithSurroundingAnnotations]
