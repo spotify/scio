@@ -109,6 +109,9 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
     }
   },
 
+  evictionWarningOptions in update := EvictionWarningOptions.default
+    .withWarnTransitiveEvictions(false),
+
   coverageExcludedPackages := Seq(
     "com\\.spotify\\.scio\\.examples\\..*",
     "com\\.spotify\\.scio\\.repl\\..*",
