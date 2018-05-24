@@ -535,6 +535,9 @@ lazy val scioTensorFlow: Project = Project(
 ).settings(
   commonSettings,
   description := "Scio add-on for TensorFlow",
+  dependencyOverrides ++= Seq(
+    "com.google.api-client" % "google-api-client" % "1.23.0"
+  ),
   libraryDependencies ++= Seq(
     "org.tensorflow" % "tensorflow" % tensorFlowVersion,
     "org.tensorflow" % "proto" % tensorFlowVersion,
