@@ -20,11 +20,16 @@ package com.spotify.scio.bigquery.validation
 
 import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.{TableRow, description}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
 // This test shows how you can utilize the `SampleOverrideTypeProvider` to override types using
 // properties on the individual field level processing data
-class BigQueryValidationTest extends FlatSpec with Matchers  {
+class BigQueryValidationTest extends FlatSpec with Matchers with BeforeAndAfterAll  {
+
+  override def beforeAll(): Unit = {
+    System.setProperty("override.type.provider",
+      "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
+  }
 
   @SampleOverrideTypeProvider.setProperty
   @BigQueryType.fromSchema(
@@ -53,8 +58,6 @@ class BigQueryValidationTest extends FlatSpec with Matchers  {
   }
 
   "ValidationProvider" should "override types using SampleValidationProvider for toTable" in {
-    System.setProperty("override.type.provider",
-      "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
     CountryOutput.schema.getFields.get(0).getType shouldBe "STRING"
     CountryOutput.schema.getFields.get(1).getType shouldBe "STRING"
     CountryOutput.schema.getFields.get(2).getType shouldBe "STRING"

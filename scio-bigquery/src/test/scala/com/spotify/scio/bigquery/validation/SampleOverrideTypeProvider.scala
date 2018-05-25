@@ -103,6 +103,11 @@ class SampleOverrideTypeProvider extends OverrideTypeProvider {
 
 }
 
+/** This shouldn't be necessary in most production use cases
+  * however passing System properties from Intellij can cause issues
+  *
+  * The ideal place to set this System property is in your build.sbt file
+  */
 object SampleOverrideTypeProvider {
 
   class setProperty extends StaticAnnotation {
