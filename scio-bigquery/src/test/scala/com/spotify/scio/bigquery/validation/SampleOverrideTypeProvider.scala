@@ -110,7 +110,7 @@ object SampleOverrideTypeProvider {
   }
 
   def setPropertyImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    System.setProperty(OverrideTypeProviderFinder.flag,
+    System.setProperty("override.type.provider",
       "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
     annottees.head
   }

@@ -53,7 +53,7 @@ class BigQueryValidationTest extends FlatSpec with Matchers  {
   }
 
   "ValidationProvider" should "override types using SampleValidationProvider for toTable" in {
-    System.setProperty(OverrideTypeProviderFinder.flag,
+    System.setProperty("override.type.provider",
       "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
     CountryOutput.schema.getFields.get(0).getType shouldBe "STRING"
     CountryOutput.schema.getFields.get(1).getType shouldBe "STRING"
