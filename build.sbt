@@ -309,10 +309,6 @@ lazy val scioTest: Project = Project(
 ).settings(
   commonSettings ++ itSettings,
   description := "Scio helpers for ScalaTest",
-  // necessary to properly test since we need this value at compile time
-  initialize in Test ~= { _ =>
-    System.setProperty( "OVERRIDE_TYPE_PROVIDER", "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider" )
-  },
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "it",

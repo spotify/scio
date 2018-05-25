@@ -20,8 +20,10 @@ package com.spotify.scio.bigquery.validation
 
 import com.google.api.services.bigquery.model.TableFieldSchema
 
+import scala.annotation.StaticAnnotation
 import scala.reflect.macros.blackbox
 import scala.reflect.runtime.universe._
+import scala.language.experimental.macros
 
 // A sample implementation to override types under certain conditions
 class SampleOverrideTypeProvider extends OverrideTypeProvider {
@@ -97,4 +99,19 @@ class SampleOverrideTypeProvider extends OverrideTypeProvider {
   def initializeToTable(c: blackbox.Context)(modifiers: c.universe.Modifiers,
                                              variableName: c.universe.TermName,
                                              tpe: c.universe.Tree): Unit = Unit
+
+
+}
+
+object SampleOverrideTypeProvider {
+
+  class setProperty extends StaticAnnotation {
+    def macroTransform(annottees: Any*): Any = macro setPropertyImpl
+  }
+
+  def setPropertyImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+    System.setProperty(OverrideTypeProviderFinder.flag,
+      "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
+    annottees.head
+  }
 }

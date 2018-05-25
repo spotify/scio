@@ -25,7 +25,7 @@ object OverrideTypeProviderFinder {
 
   private val instance = {
     // Load the class dynamically at compile time and runtime
-    val classInstance = Try(Class.forName(System.getProperty("OVERRIDE_TYPE_PROVIDER", ""))
+    val classInstance = Try(Class.forName(System.getProperty(flag, ""))
       .newInstance()
       .asInstanceOf[OverrideTypeProvider])
     classInstance match {
@@ -35,4 +35,6 @@ object OverrideTypeProviderFinder {
   }
 
   def getProvider: OverrideTypeProvider = instance
+
+  val flag = "override.type.provider"
 }
