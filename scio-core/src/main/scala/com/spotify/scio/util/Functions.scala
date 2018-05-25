@@ -168,7 +168,9 @@ private[scio] object Functions {
 
     override def mergeAccumulators(accumulators: JIterable[JList[T]]): JList[T] = {
       val partial: Iterable[T] = accumulators.asScala.flatMap(a => reduceOption(a.asScala))
-      reduceOption(partial).toList.asJava
+      val r = Lists.newArrayList[T]()
+      reduceOption(partial).foreach(r.add)
+      r
     }
 
     def reduceOption(accumulator: Iterable[T]): Option[T]
