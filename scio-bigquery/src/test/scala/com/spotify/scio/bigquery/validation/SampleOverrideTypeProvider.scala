@@ -20,8 +20,10 @@ package com.spotify.scio.bigquery.validation
 
 import com.google.api.services.bigquery.model.TableFieldSchema
 
+import scala.annotation.StaticAnnotation
 import scala.reflect.macros.blackbox
 import scala.reflect.runtime.universe._
+import scala.language.experimental.macros
 
 // A sample implementation to override types under certain conditions
 class SampleOverrideTypeProvider extends OverrideTypeProvider {
@@ -97,4 +99,26 @@ class SampleOverrideTypeProvider extends OverrideTypeProvider {
   def initializeToTable(c: blackbox.Context)(modifiers: c.universe.Modifiers,
                                              variableName: c.universe.TermName,
                                              tpe: c.universe.Tree): Unit = Unit
+
+
+}
+
+/**
+ * This shouldn't be necessary in most production use cases. However passing System properties from
+ * Intellij can cause issues. The ideal place to set this System property is in your build.sbt
+ * file.
+  */
+object SampleOverrideTypeProvider {
+
+  class setProperty extends StaticAnnotation {
+    def macroTransform(annottees: Any*): Any = macro setPropertyImpl
+  }
+
+  def setSystemProperty(): Unit = System.setProperty("override.type.provider",
+    "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
+
+  def setPropertyImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+    setSystemProperty()
+    annottees.head
+  }
 }
