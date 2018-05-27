@@ -19,7 +19,7 @@ package com.spotify.scio.coders
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
-import com.google.cloud.spanner.{Mutation, Struct, Value}
+import com.google.cloud.spanner.{Key, Mutation, Struct, Value}
 import com.google.common.collect.Iterators
 import com.twitter.chill.KSerializer
 import org.apache.beam.sdk.io.gcp.spanner.MutationGroup
@@ -66,25 +66,48 @@ private class SpannerTestMutationSerializer extends KSerializer[Mutation] {
   def write(kryo: Kryo, output: Output, mutation: Mutation): Unit = {
 
     output.writeString(mutation.getTable)
-    mutation.getValues.forEach(value => output.writeString(value.toString))
+
+    if (mutation.getOperation == Mutation.Op.INSERT) {
+      output.writeInt(0)
+      mutation.getValues.forEach(value => output.writeString(value.toString))
+
+    } else if (mutation.getOperation == Mutation.Op.DELETE) {
+      output.writeInt(1)
+      mutation.getKeySet.getKeys.forEach(key => output.writeString(key.toString))
+    }
   }
 
   def read(kryo: Kryo, input: Input, tpe: Class[Mutation]): Mutation = {
 
     val table = input.readString
-    var mutationBuilder = Mutation.newInsertBuilder(table)
+    val mutationType = input.readInt
 
-    if (table == "usersBackup") {
-      mutationBuilder
-        .set("id").to(input.readString)
-        .set("firstName").to(input.readString)
-        .set("lastName").to(input.readString)
+    if (mutationType == 0) {
+      var mutationBuilder = Mutation.newInsertBuilder(table)
 
-    } else if (table == "usersActive") {
-      mutationBuilder.set("id").to(input.readString)
+      if (table == "users") {
+        mutationBuilder
+          .set("id").to(input.readString)
+          .set("firstName").to(input.readString)
+          .set("lastName").to(input.readString)
+          .set("status").to(input.readString)
+
+      } else if (table == "usersBackup") {
+        mutationBuilder
+          .set("id").to(input.readString)
+          .set("firstName").to(input.readString)
+          .set("lastName").to(input.readString)
+
+      } else if (table == "usersActive") {
+        mutationBuilder.set("id").to(input.readString)
+      }
+
+      mutationBuilder.build
+
+    } else {
+      val id = input.readString.stripPrefix("[").stripSuffix("]")
+      Mutation.delete(table, Key.newBuilder.append(id).build)
     }
-
-    mutationBuilder.build
   }
 }
 

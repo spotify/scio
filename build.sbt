@@ -392,14 +392,16 @@ lazy val scioSpanner: Project = Project(
   "scio-spanner",
   file("scio-spanner")
 ).settings(
-  commonSettings,
+  commonSettings ++ itSettings,
   description := "Scio add-on for Google Cloud Spanner",
   libraryDependencies ++= Seq(
-    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion
+    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+    "org.scalatest" %% "scalatest" % scalatestVersion % "test,it"
   )
 ).dependsOn(
-  scioCore
-)
+  scioCore,
+  scioTest % "it"
+).configs(IntegrationTest)
 
 lazy val scioCassandra2: Project = Project(
   "scio-cassandra2",
