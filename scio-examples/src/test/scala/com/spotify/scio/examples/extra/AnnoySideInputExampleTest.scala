@@ -21,9 +21,15 @@ import com.spotify.scio.testing._
 
 class AnnoySideInputExampleTest extends PipelineSpec {
   "AnnoySideInputExample" should "work" in {
+    val temp = java.nio.file.Files.createTempDirectory("annoy-side-input-example-")
+    temp.toFile.deleteOnExit
+
     val expected = Seq.fill(100)("1.0")
     JobTest[com.spotify.scio.examples.extra.AnnoySideInputExample.type]
-      .args("--output=out.txt")
+      .args(
+        "--output=out.txt",
+        s"--tempLocation=$temp"
+      )
       .output(TextIO("out.txt"))(_ should containInAnyOrder(expected))
       .run()
   }

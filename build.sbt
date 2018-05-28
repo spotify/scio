@@ -109,6 +109,9 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
     }
   },
 
+  evictionWarningOptions in update := EvictionWarningOptions.default
+    .withWarnTransitiveEvictions(false),
+
   coverageExcludedPackages := Seq(
     "com\\.spotify\\.scio\\.examples\\..*",
     "com\\.spotify\\.scio\\.repl\\..*",
@@ -561,7 +564,11 @@ lazy val scioTensorFlow: Project = Project(
     "io.circe" %% "circe-core",
     "io.circe" %% "circe-generic",
     "io.circe" %% "circe-parser"
-  ).map(_ % circeVersion)
+  ).map(_ % circeVersion),
+  (testLoader in Test) :=
+    TensorflowTestClasspath.create(
+      (testLoader in Test).value,
+       (dependencyClasspath in Test).value)
 ).dependsOn(
   scioCore,
   scioTest % "test->test"

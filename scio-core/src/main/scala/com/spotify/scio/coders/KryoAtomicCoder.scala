@@ -261,6 +261,7 @@ private[scio] object KryoAtomicCoder {
       k.forSubclass[Struct](new SpannerTestStructSerializer)
       k.forSubclass[Mutation](new SpannerTestMutationSerializer)
       k.forSubclass[MutationGroup](new SpannerTestMutationGroupSerializer)
+      k.forClass(new BigDecimalSerializer)
       k.forClass(new KVSerializer)
       // TODO:
       // TimestampedValueCoder
