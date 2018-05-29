@@ -17,7 +17,8 @@
 
 package com.spotify.scio.examples.extra
 
-import com.spotify.scio.testing.{PipelineSpec, TextIO}
+import com.spotify.scio.nio.TextIO
+import com.spotify.scio.testing.PipelineSpec
 
 class DoFnExampleTest extends PipelineSpec {
 
@@ -27,8 +28,8 @@ class DoFnExampleTest extends PipelineSpec {
   "DoFnExample" should "work" in {
     JobTest[DoFnExample.type]
       .args("--input=in.txt", "--output=out.txt")
-      .input(TextIO("in.txt"), inData)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (outData))
+      .inputNio(TextIO("in.txt"), inData)
+      .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (outData))
       .run()
   }
 

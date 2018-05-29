@@ -17,6 +17,7 @@
 
 package com.spotify.scio.examples.extra
 
+import com.spotify.scio.nio.TextIO
 import com.spotify.scio.testing._
 
 class AnnoySideInputExampleTest extends PipelineSpec {
@@ -30,7 +31,7 @@ class AnnoySideInputExampleTest extends PipelineSpec {
         "--output=out.txt",
         s"--tempLocation=$temp"
       )
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(expected))
+      .outputNio(TextIO("out.txt"))(_ should containInAnyOrder(expected))
       .run()
   }
 }

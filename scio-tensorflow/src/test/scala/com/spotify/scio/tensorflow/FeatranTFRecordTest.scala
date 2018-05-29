@@ -22,7 +22,8 @@ import com.spotify.featran.tensorflow._
 import com.spotify.featran.transformers.Identity
 import com.spotify.featran.{FeatureSpec, MultiFeatureSpec}
 import com.spotify.scio._
-import com.spotify.scio.testing.{PipelineSpec, TextIO}
+import com.spotify.scio.nio.TextIO
+import com.spotify.scio.testing.PipelineSpec
 import org.tensorflow.example.Example
 import org.tensorflow.{example => tf}
 
@@ -97,9 +98,10 @@ class FeatranTFRecordTest extends PipelineSpec {
   "FeatureSpecJob" should "work" in {
     JobTest[FeatureSpecJob.type]
       .args("--input=in.txt", "--output=out")
-      .input(TextIO("in.txt"), in)
-      .output(TextIO("out/train/_tf_record_spec.json"))(_ should containSingleValue(tfRecordSpec))
-      .output(TextIO("out/test/_tf_record_spec.json"))(_ should containSingleValue(tfRecordSpec))
+      .inputNio(TextIO("in.txt"), in)
+      .outputNio(TextIO("out/train/_tf_record_spec.json"))(_ should containSingleValue
+      (tfRecordSpec))
+      .outputNio(TextIO("out/test/_tf_record_spec.json"))(_ should containSingleValue(tfRecordSpec))
       .output(TFExampleIO("out/train"))(_ should satisfy[Example](_.size === 9000+-500))
       .output(TFExampleIO("out/test"))(_ should satisfy[Example](_.size === 1000+-500))
       .run()
@@ -114,9 +116,11 @@ class FeatranTFRecordTest extends PipelineSpec {
   "MultiSpecJob" should "work" in {
     JobTest[MultiSpecJob.type]
       .args("--input=in.txt", "--output=out")
-      .input(TextIO("in.txt"), in)
-      .output(TextIO("out/train/_tf_record_spec.json"))(_ should containSingleValue(tfRecordMSpec))
-      .output(TextIO("out/test/_tf_record_spec.json"))(_ should containSingleValue(tfRecordMSpec))
+      .inputNio(TextIO("in.txt"), in)
+      .outputNio(TextIO("out/train/_tf_record_spec.json"))(_ should containSingleValue
+      (tfRecordMSpec))
+      .outputNio(TextIO("out/test/_tf_record_spec.json"))(_ should containSingleValue
+      (tfRecordMSpec))
       .output(TFExampleIO("out/train"))(_ should satisfy[Example](_.size === 9000+-500))
       .output(TFExampleIO("out/test"))(_ should satisfy[Example](_.size === 1000+-500))
       .run()

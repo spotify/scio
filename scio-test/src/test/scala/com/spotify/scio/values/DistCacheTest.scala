@@ -21,6 +21,7 @@ import com.spotify.annoy.{ANNIndex, AnnoyIndex}
 import com.spotify.scio._
 import com.spotify.scio.testing._
 import com.spotify.scio.avro._
+import com.spotify.scio.nio.TextIO
 import com.spotify.sparkey.SparkeyReader.Entry
 import com.spotify.sparkey.{IndexHeader, LogHeader, Sparkey, SparkeyReader}
 
@@ -121,9 +122,9 @@ class DistCacheTest extends PipelineSpec {
   "DistCache" should "work with JobTest" in {
     JobTest[SimpleDistCacheJob.type]
       .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
-      .input(TextIO("in.txt"), Seq("a", "b"))
+      .inputNio(TextIO("in.txt"), Seq("a", "b"))
       .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+      .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
       .run()
   }
 
@@ -152,9 +153,9 @@ class DistCacheTest extends PipelineSpec {
   it should "work for non-serializable dist cache" in {
     JobTest[NonSerializableDistCacheJob.type]
       .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
-      .input(TextIO("in.txt"), Seq("a", "b"))
+      .inputNio(TextIO("in.txt"), Seq("a", "b"))
       .distCacheFunc(DistCacheIO("dc.txt"), () => new NonSerializable("foobar"))
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("foobar", "foobar")))
+      .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (Seq("foobar", "foobar")))
       .run()
   }
 
@@ -174,7 +175,7 @@ class DistCacheTest extends PipelineSpec {
     val expected = Seq(Seq(10, 20), Seq(15, 25))
     JobTest[AnnoyDistCacheJob.type]
       .args("--input=in.txt", "--output=out.avro", "--annoy=data.ann")
-      .input(TextIO("in.txt"), Seq("0", "1"))
+      .inputNio(TextIO("in.txt"), Seq("0", "1"))
       .distCache(DistCacheIO("data.ann"), annoy)
       .output(ObjectFileIO[Seq[Int]]("out.avro"))(_ should containInAnyOrder (expected))
       .run()
@@ -211,9 +212,9 @@ class DistCacheTest extends PipelineSpec {
   "Sparkey" should "work with JobTest" in {
     JobTest[SparkeyDistCacheJob.type]
       .args("--input=in.txt", "--output=out.txt", "--sparkey=data.sparkey")
-      .input(TextIO("in.txt"), Seq("a", "b"))
+      .inputNio(TextIO("in.txt"), Seq("a", "b"))
       .distCache(DistCacheIO(Seq("data.sparkey.spi", "data.sparkey.spl")), sparkey)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("alpha", "bravo")))
+      .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (Seq("alpha", "bravo")))
       .run()
   }
 

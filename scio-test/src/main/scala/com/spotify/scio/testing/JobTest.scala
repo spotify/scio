@@ -20,6 +20,7 @@ package com.spotify.scio.testing
 import java.lang.reflect.InvocationTargetException
 
 import com.spotify.scio.ScioResult
+import com.spotify.scio.nio.ScioIO
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.{metrics => bm}
@@ -94,6 +95,7 @@ object JobTest {
       this
     }
 
+    // TODO: Delete these two methods
     /**
      * Feed an input to the pipeline being tested. Note that `TestIO[T]` must match the one used
      * inside the pipeline, e.g. `AvroIO[MyRecord]("in.avro")` with
@@ -125,11 +127,12 @@ object JobTest {
      * Feed an input to the pipeline being tested, Note that `ScioIO[T]` must match the one used
      * inside the pipeline. e.g.
      * TODO: add an example once we have complete nio integration with ScioContext
-     * @param id input identifier.
+     * @param sio input ScioIO[T].
      * @param value iterable to return when this input nio is called
      * @return
      */
-    def inputNio[T](id: String, value: Iterable[T]): Builder = {
+    def inputNio[T](sio: ScioIO[T], value: Iterable[T]): Builder = {
+      val id = sio.id
       require(!state.inputNio.contains(id), s"Duplicate nio test input: $id")
       state = state.copy(inputNio = state.inputNio + (id -> value))
       this
@@ -139,14 +142,15 @@ object JobTest {
      * Evaluate and outptu of the pipeline being tested. Note that `ScioIO[T]` must match the one
      * used inside the pipeline, e.g
      * TODO: add and example once we have complete nio integration with SCollection
-     * @param id output identifier.
+     * @param sio output ScioIO[T].
      * @param assertion assertion for output data. See [[SCollectionMatchers]] for available
      *                  matchers on an [[com.spotify.scio.values.SCollection SCollection]].
      * @tparam T
      * @return
      */
-    def outputNio[T](id: String)(assertion: SCollection[T] => Unit): Builder = {
-      require(!state.outputNio.contains(id), s"Duplicate nio test output $id")
+    def outputNio[T](sio: ScioIO[T])(assertion: SCollection[T] => Unit): Builder = {
+      val id = sio.id
+      require(!state.outputNio.contains(id), s"Duplicate nio test output: $id")
       state = state
         .copy(outputNio = state.outputNio + (id -> assertion.asInstanceOf[SCollection[_] => Unit]))
       this

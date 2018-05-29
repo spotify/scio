@@ -17,15 +17,16 @@
 
 package com.spotify.scio.examples.extra
 
-import com.spotify.scio.testing.{PipelineSpec, TextIO}
+import com.spotify.scio.nio.TextIO
+import com.spotify.scio.testing.PipelineSpec
 
 class SafeFlatMapExampleTest extends PipelineSpec {
 
   "SafeFlatMapExample" should "work" in {
     JobTest[SafeFlatMapExample.type]
       .args("--input=in", "--num-sum=num-sum")
-      .input(TextIO("in"), Seq("1 foo 3 bar bar"))
-      .output(TextIO("num-sum"))(_ should containSingleValue("13"))
+      .inputNio(TextIO("in"), Seq("1 foo 3 bar bar"))
+      .outputNio(TextIO("num-sum"))(_ should containSingleValue("13"))
       .run()
   }
 }

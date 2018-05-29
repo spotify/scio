@@ -20,7 +20,8 @@ package com.spotify.scio.examples.extra
 import java.io.FileOutputStream
 import java.nio.file.Files
 
-import com.spotify.scio.testing.{PipelineSpec, TextIO}
+import com.spotify.scio.nio.TextIO
+import com.spotify.scio.testing.PipelineSpec
 
 class SingleGZipFileExampleTest extends PipelineSpec {
 
@@ -30,8 +31,8 @@ class SingleGZipFileExampleTest extends PipelineSpec {
   "SingleGZipFileExample" should "work" in {
     JobTest[SingleGZipFileExample.type]
       .args("--input=in.txt", "--output=out.txt")
-      .input(TextIO("in.txt"), inData)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
+      .inputNio(TextIO("in.txt"), inData)
+      .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
 

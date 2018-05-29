@@ -158,7 +158,7 @@ case class PubsubIO[T](topic: String) extends TestIO[T](topic)
 
 case class TableRowJsonIO(path: String) extends TestIO[TableRow](path)
 
-case class TextIO(path: String) extends TestIO[String](path)
+case class CustomIO[T](name: String) extends TestIO[T](name)
 
 case class DistCacheIO[T](uri: String)
 
@@ -166,4 +166,3 @@ object DistCacheIO {
   def apply[T](uris: Seq[String]): DistCacheIO[T] = DistCacheIO(uris.mkString("\t"))
 }
 
-case class CustomIO[T](name: String) extends TestIO[T](name)

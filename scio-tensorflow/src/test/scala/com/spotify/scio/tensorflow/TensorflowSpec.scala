@@ -25,7 +25,8 @@ import com.spotify.featran.tensorflow._
 import com.spotify.featran.FeatureSpec
 import com.spotify.featran.transformers.StandardScaler
 import com.spotify.scio.ContextAndArgs
-import com.spotify.scio.testing.{PipelineSpec, TextIO}
+import com.spotify.scio.nio.TextIO
+import com.spotify.scio.testing.PipelineSpec
 import com.spotify.zoltar.tf.TensorFlowModel
 import org.tensorflow._
 import org.tensorflow.example.Example
@@ -166,7 +167,7 @@ class TensorflowSpec extends PipelineSpec {
 
       JobTest[TFGraphJob.type]
         .args(s"--graphURI=${graphFile.toUri}", "--output=output")
-        .output(TextIO("output")) {
+        .outputNio(TextIO("output")) {
           _ should containInAnyOrder((1L to 10).map(x => (x, x * 3)).map(_.toString))
         }
         .run()
@@ -197,7 +198,7 @@ class TensorflowSpec extends PipelineSpec {
 
       JobTest[TFGraphJob2Inputs.type]
         .args(s"--graphURI=${graphFile.toUri}", "--output=output")
-        .output(TextIO("output")) {
+        .outputNio(TextIO("output")) {
           _ should containInAnyOrder((1L to 10).map(x => (x, x * 3)).map(_.toString))
         }
         .run()
@@ -213,7 +214,7 @@ class TensorflowSpec extends PipelineSpec {
 
     JobTest[TFSavedJob.type]
       .args(s"--savedModelUri=$resource", s"--settings=$settings", "--output=output")
-      .output(TextIO("output")) {
+      .outputNio(TextIO("output")) {
         _ should containInAnyOrder(List("0"))
       }
       .run()

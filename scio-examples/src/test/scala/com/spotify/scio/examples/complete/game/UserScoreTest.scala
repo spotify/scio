@@ -18,6 +18,7 @@
 package com.spotify.scio.examples.complete.game
 
 import com.spotify.scio.examples.complete.game.UserScore.UserScoreSums
+import com.spotify.scio.nio.TextIO
 import com.spotify.scio.testing._
 
 class UserScoreTest extends PipelineSpec {
@@ -50,7 +51,7 @@ class UserScoreTest extends PipelineSpec {
   "UserScore" should "work" in {
     JobTest[com.spotify.scio.examples.complete.game.UserScore.type]
       .args("--input=in.txt", "--output=dataset.table")
-      .input(TextIO("in.txt"), inData1)
+      .inputNio(TextIO("in.txt"), inData1)
       .output(BigQueryIO[UserScoreSums]("dataset.table"))(_ should containInAnyOrder (expected))
       .run()
   }
@@ -58,7 +59,7 @@ class UserScoreTest extends PipelineSpec {
   it should "drop bad input" in {
     JobTest[com.spotify.scio.examples.complete.game.UserScore.type]
       .args("--input=in.txt", "--output=dataset.table")
-      .input(TextIO("in.txt"), inData2)
+      .inputNio(TextIO("in.txt"), inData2)
       .output(BigQueryIO[UserScoreSums]("dataset.table"))(_ should beEmpty)
       .run()
   }

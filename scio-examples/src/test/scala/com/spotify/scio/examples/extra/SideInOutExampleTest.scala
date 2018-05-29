@@ -17,6 +17,7 @@
 
 package com.spotify.scio.examples.extra
 
+import com.spotify.scio.nio.TextIO
 import com.spotify.scio.testing._
 
 class SideInOutExampleTest extends PipelineSpec {
@@ -28,12 +29,12 @@ class SideInOutExampleTest extends PipelineSpec {
       .args(
         "--input=in.txt", "--stopWords=stop.txt",
         "--output1=out1.txt", "--output2=out2.txt", "--output3=out3.txt", "--output4=out4.txt")
-      .input(TextIO("in.txt"), inData)
-      .input(TextIO("stop.txt"), Seq("the"))
-      .output(TextIO("out1.txt"))(_ should containInAnyOrder (Seq.empty[String]))
-      .output(TextIO("out2.txt"))(_ should containInAnyOrder (Seq.empty[String]))
-      .output(TextIO("out3.txt"))(_ should containInAnyOrder (Seq("dog: 1", "fox: 1")))
-      .output(TextIO("out4.txt")) {
+      .inputNio(TextIO("in.txt"), inData)
+      .inputNio(TextIO("stop.txt"), Seq("the"))
+      .outputNio(TextIO("out1.txt"))(_ should containInAnyOrder (Seq.empty[String]))
+      .outputNio(TextIO("out2.txt"))(_ should containInAnyOrder (Seq.empty[String]))
+      .outputNio(TextIO("out3.txt"))(_ should containInAnyOrder (Seq("dog: 1", "fox: 1")))
+      .outputNio(TextIO("out4.txt")) {
         _ should containInAnyOrder (Seq("brown: 1", "jumps: 1", "lazy: 1", "over: 1", "quick: 1"))
       }
       .run()

@@ -19,6 +19,7 @@ package com.spotify.scio.examples.extra
 
 import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.common.ExampleData
+import com.spotify.scio.nio.TextIO
 import com.spotify.scio.testing._
 import org.joda.time.format.DateTimeFormat
 
@@ -44,7 +45,7 @@ class DistCacheExampleTest extends PipelineSpec {
       .args("--output=out.txt")
       .input(TableRowJsonIO(ExampleData.EXPORTED_WIKI_TABLE), in)
       .distCache(DistCacheIO("gs://dataflow-samples/samples/misc/months.txt"), distCache)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
+      .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
 
