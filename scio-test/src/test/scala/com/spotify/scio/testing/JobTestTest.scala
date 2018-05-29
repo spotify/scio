@@ -23,6 +23,7 @@ import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro._
+import com.spotify.scio.nio.{ScioIO, TextIO}
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.{io => gio}
@@ -308,8 +309,8 @@ class JobTestTest extends PipelineSpec {
   def testTextFileJob(xs: String*): Unit = {
     JobTest[TextFileJob.type]
       .args("--input=in.txt", "--output=out.txt")
-      .input(TextIO("in.txt"), Seq("a", "b", "c"))
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (xs))
+      .inputNio(TextIO("in.txt"), Seq("a", "b", "c"))
+      .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (xs))
       .run()
   }
 
@@ -325,9 +326,9 @@ class JobTestTest extends PipelineSpec {
   def testDistCacheJob(xs: String*): Unit = {
     JobTest[DistCacheJob.type]
       .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
-      .input(TextIO("in.txt"), Seq("a", "b"))
+      .inputNio(TextIO("in.txt"), Seq("a", "b"))
       .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (xs))
+      .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (xs))
       .run()
   }
 
@@ -366,7 +367,7 @@ class JobTestTest extends PipelineSpec {
       JobTest[DistCacheJob.type]
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
     } should have message "requirement failed: Missing test input: in.txt, available: []"
   }
@@ -375,9 +376,9 @@ class JobTestTest extends PipelineSpec {
     the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type]
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
-        .input(TextIO("bad-in.txt"), Seq("a", "b"))
+        .inputNio(TextIO("bad-in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
     } should have message
       "requirement failed: Missing test input: in.txt, available: [bad-in.txt]"
@@ -387,10 +388,10 @@ class JobTestTest extends PipelineSpec {
     the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type]
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
-        .input(TextIO("in.txt"), Seq("a", "b"))
-        .input(TextIO("unmatched.txt"), Seq("X", "Y"))
+        .inputNio(TextIO("in.txt"), Seq("a", "b"))
+        .inputNio(TextIO("unmatched.txt"), Seq("X", "Y"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
     } should have message "requirement failed: Unmatched test input: unmatched.txt"
   }
@@ -399,19 +400,19 @@ class JobTestTest extends PipelineSpec {
     the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type](enforceRun = false)
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
-        .input(TextIO("in.txt"), Seq("a", "b"))
-        .input(TextIO("in.txt"), Seq("X", "Y"))
+        .inputNio(TextIO("in.txt"), Seq("a", "b"))
+        .inputNio(TextIO("in.txt"), Seq("X", "Y"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
-    } should have message "requirement failed: Duplicate test input: in.txt"
+    } should have message "requirement failed: Duplicate nio test input: in.txt"
   }
 
   it should "fail missing test output" in {
     the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type]
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
-        .input(TextIO("in.txt"), Seq("a", "b"))
+        .inputNio(TextIO("in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .run()
     } should have message "requirement failed: Missing test output: out.txt, available: []"
@@ -421,8 +422,8 @@ class JobTestTest extends PipelineSpec {
     the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type]
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
-        .input(TextIO("in.txt"), Seq("a", "b"))
-        .output(TextIO("bad-out.txt"))(
+        .inputNio(TextIO("in.txt"), Seq("a", "b"))
+        .outputNio(TextIO("bad-out.txt"))(
           _ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .run()
@@ -434,10 +435,10 @@ class JobTestTest extends PipelineSpec {
     the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type]
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
-        .input(TextIO("in.txt"), Seq("a", "b"))
+        .inputNio(TextIO("in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
-        .output(TextIO("unmatched.txt"))(_ should containInAnyOrder (Seq("X", "Y")))
+        .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .outputNio(TextIO("unmatched.txt"))(_ should containInAnyOrder (Seq("X", "Y")))
         .run()
     } should have message "requirement failed: Unmatched test output: unmatched.txt"
   }
@@ -446,20 +447,20 @@ class JobTestTest extends PipelineSpec {
     the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type](enforceRun = false)
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
-        .input(TextIO("in.txt"), Seq("a", "b"))
+        .inputNio(TextIO("in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("X", "Y")))
+        .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (Seq("X", "Y")))
         .run()
-    } should have message "requirement failed: Duplicate test output: out.txt"
+    } should have message "requirement failed: Duplicate nio test output: out.txt"
   }
 
   it should "fail missing test dist cache" in {
     the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type]
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
-        .input(TextIO("in.txt"), Seq("a", "b"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .inputNio(TextIO("in.txt"), Seq("a", "b"))
+        .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
     } should have message
       "requirement failed: Missing test dist cache: DistCacheIO(dc.txt), available: []"
@@ -469,9 +470,9 @@ class JobTestTest extends PipelineSpec {
     the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type]
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
-        .input(TextIO("in.txt"), Seq("a", "b"))
+        .inputNio(TextIO("in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("bad-dc.txt"), Seq("1", "2"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
     } should have message
       "requirement failed: Missing test dist cache: DistCacheIO(dc.txt), available: " +
@@ -482,10 +483,10 @@ class JobTestTest extends PipelineSpec {
     the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type]
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
-        .input(TextIO("in.txt"), Seq("a", "b"))
+        .inputNio(TextIO("in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .distCache(DistCacheIO("unmatched.txt"), Seq("X", "Y"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
     } should have message
       "requirement failed: Unmatched test dist cache: DistCacheIO(unmatched.txt)"
@@ -495,10 +496,10 @@ class JobTestTest extends PipelineSpec {
     the [IllegalArgumentException] thrownBy {
       JobTest[DistCacheJob.type](enforceRun = false)
         .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
-        .input(TextIO("in.txt"), Seq("a", "b"))
+        .inputNio(TextIO("in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .distCache(DistCacheIO("dc.txt"), Seq("X", "Y"))
-        .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+        .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
     } should have message
       "requirement failed: Duplicate test dist cache: DistCacheIO(dc.txt)"
@@ -507,8 +508,8 @@ class JobTestTest extends PipelineSpec {
   it should "ignore materialize" in {
     JobTest[MaterializeJob.type]
       .args("--input=in.txt", "--output=out.txt")
-      .input(TextIO("in.txt"), Seq("a", "b"))
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a", "b")))
+      .inputNio(TextIO("in.txt"), Seq("a", "b"))
+      .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a", "b")))
       .run()
   }
 
@@ -644,7 +645,14 @@ class JobTestTest extends PipelineSpec {
     test(ProtobufIO(null), "ProtobufIO(null)")
     test(PubsubIO(null), "PubsubIO(null)")
     test(TableRowJsonIO(null), "TableRowJsonIO(null)")
-    test(TextIO(null), "TextIO(null)")
+
+    def testIO[T](testIO: => ScioIO[T]): Unit = {
+      the [IllegalArgumentException] thrownBy {
+        testIO
+      } should have message "requirement failed"
+    }
+
+    testIO(TextIO(null))
   }
 
   it should "not allow empty keys" in {
@@ -660,7 +668,13 @@ class JobTestTest extends PipelineSpec {
     test(ProtobufIO(""), "ProtobufIO()")
     test(PubsubIO(""), "PubsubIO()")
     test(TableRowJsonIO(""), "TableRowJsonIO()")
-    test(TextIO(""), "TextIO()")
+
+    def testIO[T](testIO: => ScioIO[T]): Unit = {
+       the [IllegalArgumentException] thrownBy {
+         testIO
+       } should have message "requirement failed"
+    }
+    testIO(TextIO(""))
   }
 
   "runWithContext" should "fail input with message" in {
@@ -690,7 +704,7 @@ class JobTestTest extends PipelineSpec {
     the [IllegalArgumentException] thrownBy {
       JobTest[JobWitDuplicateInput.type]
         .args("--input=input")
-        .input(TextIO("input"), Seq("does", "not", "matter"))
+        .inputNio(TextIO("input"), Seq("does", "not", "matter"))
         .run()
     } should have message msg
   }
@@ -701,7 +715,7 @@ class JobTestTest extends PipelineSpec {
     the [IllegalArgumentException] thrownBy {
       JobTest[JobWitDuplicateOutput.type]
         .args("--output=output")
-        .output(TextIO("output"))(_ should containSingleValue ("does not matter"))
+        .outputNio(TextIO("output"))(_ should containSingleValue ("does not matter"))
         .run()
     } should have message msg
   }

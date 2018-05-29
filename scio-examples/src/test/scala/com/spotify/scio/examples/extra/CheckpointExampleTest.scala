@@ -18,7 +18,8 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.extra.checkpoint._
-import com.spotify.scio.testing.{PipelineSpec, TextIO}
+import com.spotify.scio.nio.TextIO
+import com.spotify.scio.testing.PipelineSpec
 
 class CheckpointExampleTest extends PipelineSpec {
 
@@ -31,10 +32,10 @@ class CheckpointExampleTest extends PipelineSpec {
   "CheckpointJobTest" should "work" in {
     JobTest[CheckpointExample.type]
       .args("--output=output", "--input=input", "--checkpoint=checkpoint")
-      .input(TextIO("input"), input)
-      .output(TextIO("output-max"))(_ should containSingleValue (max))
-      .output(TextIO("output-words"))(_ should containInAnyOrder (words))
-      .output(TextIO("output"))(_ should containInAnyOrder (prettyCount))
+      .inputNio(TextIO("input"), input)
+      .outputNio(TextIO("output-max"))(_ should containSingleValue (max))
+      .outputNio(TextIO("output-words"))(_ should containInAnyOrder (words))
+      .outputNio(TextIO("output"))(_ should containInAnyOrder (prettyCount))
       .run()
   }
 
@@ -42,9 +43,9 @@ class CheckpointExampleTest extends PipelineSpec {
     JobTest[CheckpointExample.type]
       .args("--output=output", "--input=input", "--checkpoint=checkpoint")
       .input(CheckpointIO("checkpoint-src"), words)
-      .output(TextIO("output-max"))(_ should containSingleValue (max))
-      .output(TextIO("output-words"))(_ should containInAnyOrder (words))
-      .output(TextIO("output"))(_ should containInAnyOrder (prettyCount))
+      .outputNio(TextIO("output-max"))(_ should containSingleValue (max))
+      .outputNio(TextIO("output-words"))(_ should containInAnyOrder (words))
+      .outputNio(TextIO("output"))(_ should containInAnyOrder (prettyCount))
       .run()
   }
 
@@ -53,9 +54,9 @@ class CheckpointExampleTest extends PipelineSpec {
       .args("--output=output", "--input=input", "--checkpoint=checkpoint")
       .input(CheckpointIO("checkpoint-src"), words)
       .input(CheckpointIO("checkpoint-count"), count)
-      .output(TextIO("output-max"))(_ should containSingleValue (max))
-      .output(TextIO("output-words"))(_ should containInAnyOrder (words))
-      .output(TextIO("output"))(_ should containInAnyOrder (prettyCount))
+      .outputNio(TextIO("output-max"))(_ should containSingleValue (max))
+      .outputNio(TextIO("output-words"))(_ should containInAnyOrder (words))
+      .outputNio(TextIO("output"))(_ should containInAnyOrder (prettyCount))
       .run()
   }
 

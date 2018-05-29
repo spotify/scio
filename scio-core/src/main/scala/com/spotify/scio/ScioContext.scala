@@ -29,7 +29,7 @@ import com.google.datastore.v1.{Entity, Query}
 import com.google.protobuf.Message
 import com.spotify.scio.io.Tap
 import com.spotify.scio.metrics.Metrics
-import com.spotify.scio.nio.ScioIO
+import com.spotify.scio.nio.{ScioIO, TextIO}
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
@@ -453,11 +453,18 @@ class ScioContext private[scio] (val options: PipelineOptions,
   private[scio] def testOutNio: TestOutputNio = TestDataManager.getOutputNio(testId.get)
   private[scio] def testDistCache: TestDistCache = TestDataManager.getDistCache(testId.get)
 
+  // TODO: Delete these two methods after complete migrate to the nio
   private[scio] def testOut[T](key: TestIO[T]): SCollection[T] => Unit =
     testOutNio(key.key)
 
   private[scio] def getTestInput[T: ClassTag](key: TestIO[T]): SCollection[T] =
     getTestInputNio(key.key)
+
+  private[scio] def testOut[T](key: ScioIO[T]): SCollection[T] => Unit =
+    testOutNio(key.id)
+
+  private[scio] def getTestInput[T: ClassTag](key: ScioIO[T]): SCollection[T] =
+    getTestInputNio(key.id)
 
   private[scio] def getTestInputNio[T: ClassTag](key: String): SCollection[T] =
     this.parallelize(testInNio(key).asInstanceOf[Seq[T]])
@@ -597,12 +604,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
   def textFile(path: String,
                compression: gio.Compression = gio.Compression.AUTO)
   : SCollection[String] = requireNotClosed {
-    if (this.isTest) {
-      this.getTestInput(TextIO(path))
-    } else {
-      wrap(this.applyInternal(gio.TextIO.read().from(path)
-        .withCompression(compression))).setName(path)
-    }
+    val textIO = TextIO(path)
+    val readP = textIO.ReadParams(compression)
+    read(textIO)(readP)
   }
 
   /**

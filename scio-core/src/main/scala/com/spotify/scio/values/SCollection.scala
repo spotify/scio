@@ -27,7 +27,7 @@ import com.google.datastore.v1.Entity
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io._
-import com.spotify.scio.nio.ScioIO
+import com.spotify.scio.nio.{ScioIO, TextIO}
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
@@ -975,17 +975,20 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                      numShards: Int = 0,
                      compression: Compression = Compression.UNCOMPRESSED)
   : Future[Tap[String]] = {
+    val textIO = TextIO(path)
+    val writeP = textIO.WriteParams(suffix, numShards, compression)
+//    write(textIO)(writeP)
     val s = if (classOf[String] isAssignableFrom this.ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
     } else {
       this.map(_.toString)
     }
+
     if (context.isTest) {
-      context.testOut(TextIO(path))(s)
+      context.testOutNio(textIO.id)(s)
       s.saveAsInMemoryTap
     } else {
-      s.applyInternal(textOut(path, suffix, numShards, compression))
-      context.makeFuture(TextTap(ScioUtil.addPartSuffix(path)))
+      textIO.write(s, writeP)
     }
   }
 

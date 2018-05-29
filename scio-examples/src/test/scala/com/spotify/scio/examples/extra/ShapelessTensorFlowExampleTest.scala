@@ -18,6 +18,7 @@
 package com.spotify.scio.examples.extra
 
 import com.google.protobuf.ByteString
+import com.spotify.scio.nio.TextIO
 import com.spotify.scio.tensorflow.TFRecordIO
 import com.spotify.scio.testing._
 import org.tensorflow.example._
@@ -39,7 +40,7 @@ class ShapelessTensorFlowExampleTest extends PipelineSpec {
   "ShapelessTensorFlowWriteExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.ShapelessTensorFlowWriteExample.type]
       .args("--input=in.txt", "--output=wc.tfrecords")
-      .input(TextIO("in.txt"), textIn)
+      .inputNio(TextIO("in.txt"), textIn)
       .output(TFRecordIO("wc.tfrecords")) {
         _.map(Example.parseFrom) should containInAnyOrder (examples)
       }
@@ -50,7 +51,7 @@ class ShapelessTensorFlowExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.ShapelessTensorFlowReadExample.type]
       .args("--input=wc.tfrecords", "--output=out.txt")
       .input(TFRecordIO("wc.tfrecords"), examples.map(_.toByteArray))
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (textOut))
+      .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (textOut))
       .run()
   }
 

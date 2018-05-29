@@ -24,7 +24,7 @@ import java.util.function.{Consumer, Function}
 import com.google.common.base.Charsets
 import com.spotify.featran.{FeatureExtractor, MultiFeatureExtractor}
 import com.spotify.scio.io.{Tap, TextTap}
-import com.spotify.scio.testing.TextIO
+import com.spotify.scio.nio.TextIO
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.transforms.{DoFnWithResource, JavaAsyncDoFn}
 import com.spotify.scio.util.ScioUtil

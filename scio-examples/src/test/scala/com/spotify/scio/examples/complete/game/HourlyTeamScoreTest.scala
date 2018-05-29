@@ -18,6 +18,7 @@
 package com.spotify.scio.examples.complete.game
 
 import com.spotify.scio.examples.complete.game.HourlyTeamScore.TeamScoreSums
+import com.spotify.scio.nio.TextIO
 import com.spotify.scio.testing._
 
 class HourlyTeamScoreTest extends PipelineSpec {
@@ -56,7 +57,7 @@ class HourlyTeamScoreTest extends PipelineSpec {
   "HourlyTeamScore" should "work" in {
     JobTest[com.spotify.scio.examples.complete.game.HourlyTeamScore.type]
       .args("--input=in.txt", "--output=dataset.table")
-      .input(TextIO("in.txt"), inData)
+      .inputNio(TextIO("in.txt"), inData)
       .output(BigQueryIO[TeamScoreSums]("dataset.table"))(_ should containInAnyOrder (expected))
       .run()
   }

@@ -37,6 +37,9 @@ import scala.util.Try
 
 case class TextIO(path: String) extends ScioIO[String] {
 
+  require(path != null)
+  require(!path.isEmpty)
+
   case class ReadParams(compression: Compression = Compression.AUTO)
 
   case class WriteParams(suffix: String = ".txt",
@@ -47,28 +50,18 @@ case class TextIO(path: String) extends ScioIO[String] {
   type WriteP = WriteParams
 
   def read(sc: ScioContext, params: ReadParams): SCollection[String] = sc.requireNotClosed {
-    if (sc.isTest) {
-      sc.getTestInputNio(this.id)
-    } else {
-      sc.wrap(sc.applyInternal(BTextIO.read().from(path)
-        .withCompression(params.compression))).setName(path)
-    }
+    sc.wrap(sc.applyInternal(BTextIO.read().from(path)
+      .withCompression(params.compression))).setName(path)
   }
 
   def write(pipeline: SCollection[String], params: WriteParams): Future[Tap[String]] = {
-    if (pipeline.context.isTest) {
-      pipeline.context.testOutNio(this.id)(pipeline)
-      // TODO: replace this with ScioIO[T] subclass when we have nio InMemoryIO[T]
-      pipeline.saveAsInMemoryTap
-    } else {
-      pipeline.applyInternal(textOut(path, params))
-      pipeline.context.makeFuture(tap(ReadParams()))
-    }
+    pipeline.applyInternal(textOut(path, params))
+    pipeline.context.makeFuture(tap(ReadParams()))
   }
 
   def tap(params: ReadParams): Tap[String] = new Tap[String] {
     /** Read data set into memory. */
-    override def value: Iterator[String] = TextIO.textFile(path)
+    override def value: Iterator[String] = TextIO.textFile(ScioUtil.addPartSuffix(path))
 
     /** Open data set as an [[com.spotify.scio.values.SCollection SCollection]]. */
     override def open(sc: ScioContext): SCollection[String] = {

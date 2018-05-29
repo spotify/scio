@@ -216,8 +216,6 @@ class TapTest extends TapSpec {
     }.map(_.toInt)
     verifyTap(t, Set(1, 2, 3))
     t.isInstanceOf[Tap[Int]] shouldBe true
-    t.parent.get.isInstanceOf[TextTap] shouldBe true
-    t.parent.get.asInstanceOf[TextTap].path shouldBe ScioUtil.addPartSuffix(dir.getPath)
     FileUtils.deleteDirectory(dir)
   }
 

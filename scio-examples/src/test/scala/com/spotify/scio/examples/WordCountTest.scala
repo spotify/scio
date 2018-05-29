@@ -17,6 +17,7 @@
 
 package com.spotify.scio.examples
 
+import com.spotify.scio.nio.TextIO
 import com.spotify.scio.testing._
 
 class WordCountTest extends PipelineSpec {
@@ -27,16 +28,16 @@ class WordCountTest extends PipelineSpec {
   "WordCount" should "work" in {
     JobTest[com.spotify.scio.examples.WordCount.type]
       .args("--input=in.txt", "--output=out.txt")
-      .input(TextIO("in.txt"), inData)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
+      .inputNio(TextIO("in.txt"), inData)
+      .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
 
   "MinimalWordCount" should "work" in {
     JobTest[com.spotify.scio.examples.MinimalWordCount.type]
       .args("--input=in.txt", "--output=out.txt")
-      .input(TextIO("in.txt"), inData)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
+      .inputNio(TextIO("in.txt"), inData)
+      .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
 
@@ -48,7 +49,7 @@ class WordCountTest extends PipelineSpec {
       "stomach a") ++ (1 to 100).map("x" * _)
     JobTest[com.spotify.scio.examples.DebuggingWordCount.type]
       .args("--input=in.txt", "--output=out.txt")
-      .input(TextIO("in.txt"), in)
+      .inputNio(TextIO("in.txt"), in)
       .run()
   }
 

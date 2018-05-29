@@ -19,6 +19,7 @@ package com.spotify.scio.examples.cookbook
 
 import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.common.ExampleData
+import com.spotify.scio.nio.TextIO
 import com.spotify.scio.testing._
 
 class JoinExamplesTest extends PipelineSpec {
@@ -61,7 +62,7 @@ class JoinExamplesTest extends PipelineSpec {
       .args("--output=out.txt")
       .input(BigQueryIO(ExampleData.EVENT_TABLE), eventData)
       .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
+      .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
 
@@ -70,7 +71,7 @@ class JoinExamplesTest extends PipelineSpec {
       .args("--output=out.txt")
       .input(BigQueryIO(ExampleData.EVENT_TABLE), eventData)
       .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
+      .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
 
@@ -79,7 +80,7 @@ class JoinExamplesTest extends PipelineSpec {
       .args("--output=out.txt")
       .input(BigQueryIO(ExampleData.EVENT_TABLE), eventData)
       .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
+      .outputNio(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
 
