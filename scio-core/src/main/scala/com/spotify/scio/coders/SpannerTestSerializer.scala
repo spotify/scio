@@ -19,7 +19,7 @@ package com.spotify.scio.coders
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
-import com.google.cloud.spanner.{Key, Mutation, Struct, Value}
+import com.google.cloud.spanner.{Key, Mutation, Struct}
 import com.google.common.collect.Iterators
 import com.twitter.chill.KSerializer
 import org.apache.beam.sdk.io.gcp.spanner.MutationGroup
@@ -69,11 +69,11 @@ private class SpannerTestMutationSerializer extends KSerializer[Mutation] {
 
     if (mutation.getOperation == Mutation.Op.INSERT) {
       output.writeInt(0)
-      mutation.getValues.forEach(value => output.writeString(value.toString))
+      mutation.getValues.asScala.map(_.toString).foreach(output.writeString)
 
     } else if (mutation.getOperation == Mutation.Op.DELETE) {
       output.writeInt(1)
-      mutation.getKeySet.getKeys.forEach(key => output.writeString(key.toString))
+      mutation.getKeySet.getKeys.asScala.map(_.toString).foreach(output.writeString)
     }
   }
 
@@ -123,10 +123,9 @@ private class SpannerTestMutationGroupSerializer extends KSerializer[MutationGro
   def write(kryo: Kryo, output: Output, mutationGroup: MutationGroup): Unit = {
 
     output.writeInt(Iterators.size(mutationGroup.iterator))
-
-    mutationGroup.iterator.forEachRemaining{(mutation: Mutation) =>
+    mutationGroup.iterator.asScala.foreach{ mutation =>
       output.writeString(mutation.getTable)
-      mutation.getValues.forEach((value: Value) => output.writeString(value.toString))
+      mutation.getValues.asScala.map(_.toString).foreach(output.writeString)
     }
   }
 
