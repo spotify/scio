@@ -114,9 +114,11 @@ object SampleOverrideTypeProvider {
     def macroTransform(annottees: Any*): Any = macro setPropertyImpl
   }
 
+  def setSystemProperty(): Unit = System.setProperty("override.type.provider",
+    "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
+
   def setPropertyImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    System.setProperty("override.type.provider",
-      "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
+    setSystemProperty()
     annottees.head
   }
 }

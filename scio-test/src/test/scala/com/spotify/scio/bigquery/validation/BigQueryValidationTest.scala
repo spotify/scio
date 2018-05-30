@@ -27,9 +27,8 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 class BigQueryValidationTest extends FlatSpec with Matchers with BeforeAndAfterAll  {
 
   override def beforeAll(): Unit = {
-    // We need this at runtime as well and tests are run in a for
-    System.setProperty("override.type.provider",
-      "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
+    // We need this at runtime as well and tests are run in a fork
+    SampleOverrideTypeProvider.setSystemProperty()
   }
 
   @SampleOverrideTypeProvider.setProperty
