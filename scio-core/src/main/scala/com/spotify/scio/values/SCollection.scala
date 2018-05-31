@@ -92,6 +92,14 @@ object SCollection {
   : PairSCollectionFunctions[K, V] =
     new PairSCollectionFunctions(s)
 
+  implicit def makePairHashSCollectionFunctions[K: ClassTag, V: ClassTag](s: SCollection[(K, V)])
+  : PairHashSCollectionFunctions[K, V] =
+    new PairHashSCollectionFunctions(s)
+
+  implicit def makePairSkewedSCollectionFunctions[K: ClassTag, V: ClassTag](s: SCollection[(K, V)])
+  : PairSkewedSCollectionFunctions[K, V] =
+    new PairSkewedSCollectionFunctions(s)
+
 }
 
 // scalastyle:off number.of.methods
