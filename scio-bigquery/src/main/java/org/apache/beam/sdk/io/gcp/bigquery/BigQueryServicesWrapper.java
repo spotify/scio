@@ -43,11 +43,7 @@ public class BigQueryServicesWrapper {
     this.bqOptions = bqOptions;
   }
 
-  public void createTable(TableReference ref, TableSchema schema)
-      throws IOException, InterruptedException {
-    Table table = new Table()
-        .setTableReference(ref)
-        .setSchema(schema);
+  public void createTable(Table table) throws IOException, InterruptedException {
     bqServices.getDatasetService(bqOptions).createTable(table);
   }
 
