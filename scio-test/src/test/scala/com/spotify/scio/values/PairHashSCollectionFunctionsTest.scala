@@ -153,4 +153,21 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       p should beEmpty
     }
   }
+
+  it should "support hashFullOuterJoin() with cached side-input" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
+      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13), ("d", 14)))
+      val side = p2.asArrayBufferMapSideInput
+      val p = p1.hashFullOuterJoin(side)
+      p should containInAnyOrder (Seq(
+        ("a", (Some(1), Some(11))),
+        ("a", (Some(2), Some(11))),
+        ("b", (Some(3), Some(12))),
+        ("b", (Some(3), Some(13))),
+        ("c", (Some(4), None)),
+        ("d", (None, Some(14)))))
+    }
+  }
+
 }

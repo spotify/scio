@@ -45,6 +45,8 @@ import org.joda.time.{Duration, Instant}
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent._
 import scala.reflect.ClassTag
 
@@ -479,6 +481,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   def min(ord: Ordering[T])(implicit coder: Coder[T]): SCollection[T] =
     this.reduce(ord.min)
+
+  def toSideSet: SideSet[T] = {
+    map(v => v -> None).toSideMap.toSideKeySet
+  }
+
+  def filter(side: SideSet[T]): SCollection[T] = {
+    map(v => v -> None).hashJoin(side.toSideMap).keys
+  }
 
   /**
    * Compute the SCollection's data distribution using approximate `N`-tiles.
