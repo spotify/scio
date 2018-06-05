@@ -93,7 +93,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     leftHashed.map(x => (x._1, x._2)) ++ rightHashed
   }
 
-   private def combineAsMapSideInput: SideInput[MMap[K, ArrayBuffer[V]]] = {
+   private lazy val combineAsMapSideInput: SideInput[MMap[K, ArrayBuffer[V]]] = {
     self.combine { case (k, v) =>
       MMap(k -> ArrayBuffer(v))
     } { case (combiner, (k, v)) =>
