@@ -131,6 +131,14 @@ class BigQueryClient private (private val projectId: String,
       .build()
   }
 
+  private lazy val bqService = {
+    val options = PipelineOptionsFactory.create().as(classOf[bq.BigQueryOptions])
+    options.setProject(projectId)
+    options.setGcpCredential(credentials)
+
+    new bq.BigQueryServicesWrapper(options)
+  }
+
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   private val TABLE_PREFIX = "scio_query"
@@ -317,28 +325,33 @@ class BigQueryClient private (private val projectId: String,
   def writeTableRows(table: TableReference, rows: List[TableRow], schema: TableSchema,
                      writeDisposition: WriteDisposition,
                      createDisposition: CreateDisposition): Unit = {
-    val options = PipelineOptionsFactory.create().as(classOf[bq.BigQueryOptions])
-    options.setProject(projectId)
-    options.setGcpCredential(credentials)
     try {
-      val service = new bq.BigQueryServicesWrapper(options)
       if (createDisposition == CREATE_IF_NEEDED) {
-        service.createTable(table, schema)
+        createTable(table, schema)
       }
-      service.insertAll(table, rows.asJava)
+      bqService.insertAll(table, rows.asJava)
     } finally {
-      Option(options.as(classOf[GcsOptions]).getExecutorService)
-        .foreach(_.shutdown())
+      val options = PipelineOptionsFactory.create().as(classOf[GcsOptions])
+      Option(options.getExecutorService).foreach(_.shutdown())
     }
   }
 
   /** Write rows to a table. */
-  def writeTableRows(tableSpec: String, rows: List[TableRow], schema: TableSchema = null,
+  def writeTableRows(tableSpec: String, rows: List[TableRow], schema: TableSchema,
                      writeDisposition: WriteDisposition = WRITE_EMPTY,
                      createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =
     writeTableRows(
       bq.BigQueryHelpers.parseTableSpec(tableSpec),
       rows, schema, writeDisposition, createDisposition)
+
+  def createTable(table: Table): Unit =
+    bqService.createTable(table)
+
+  def createTable(table: TableReference, schema: TableSchema): Unit =
+    createTable(new Table().setTableReference(table).setSchema(schema))
+
+  def createTable(tableSpec: String, schema: TableSchema): Unit =
+    createTable(bq.BigQueryHelpers.parseTableSpec(tableSpec), schema)
 
   // =======================================================================
   // Type safe API
@@ -416,6 +429,15 @@ class BigQueryClient private (private val projectId: String,
     writeTypedRows(
       bq.BigQueryHelpers.parseTableSpec(tableSpec), rows,
       writeDisposition, createDisposition)
+
+  def createTypedTable[T <: HasAnnotation: TypeTag](table: Table): Unit =
+    createTable(table.setSchema(BigQueryType[T].schema))
+
+  def createTypedTable[T <: HasAnnotation: TypeTag](table: TableReference): Unit =
+    createTable(table, BigQueryType[T].schema)
+
+  def createTypedTable[T <: HasAnnotation: TypeTag](tableSpec: String): Unit =
+    createTypedTable(bq.BigQueryHelpers.parseTableSpec(tableSpec))
 
   // =======================================================================
   // Job execution
