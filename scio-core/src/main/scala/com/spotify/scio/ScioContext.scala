@@ -24,6 +24,7 @@ import java.io.File
 import java.net.URI
 import java.nio.file.Files
 
+import _root_.io.grpc.{Context => GrpcContext}
 import com.google.api.services.bigquery.model.TableReference
 import com.google.datastore.v1.{Entity, Query}
 import com.google.protobuf.Message
@@ -383,7 +384,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
                                   val context: ScioContext) extends ScioResult(internal) {
     override val finalState: Future[State] = {
       import scala.concurrent.ExecutionContext.Implicits.global
-      val r = _root_.io.grpc.Context.current().wrap(() => {
+      val r = GrpcContext.current().wrap(() => {
         val state = internal.waitUntilFinish()
         context.updateFutures(state)
         val metricsLocation = context.optionsAs[ScioOptions].getMetricsLocation
