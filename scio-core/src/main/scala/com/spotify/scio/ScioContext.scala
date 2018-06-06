@@ -383,7 +383,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
                                   val context: ScioContext) extends ScioResult(internal) {
     override val finalState: Future[State] = {
       import scala.concurrent.ExecutionContext.Implicits.global
-      val r = __root__.io.grpc.Context.current().wrap(() => {
+      val r = _root_.io.grpc.Context.current().wrap(() => {
         val state = internal.waitUntilFinish()
         context.updateFutures(state)
         val metricsLocation = context.optionsAs[ScioOptions].getMetricsLocation
