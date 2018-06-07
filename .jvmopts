@@ -1,11 +1,5 @@
 # Same JVM opts as https://github.com/typelevel/cats/blob/master/.jvmopts
 -Dfile.encoding=UTF8
--Xms1G
--Xmx6G
--XX:ReservedCodeCacheSize=1G
--XX:+TieredCompilation
--XX:-UseGCOverheadLimit
--XX:+CMSClassUnloadingEnabled
--XX:+UseConcMarkSweepGC
-# Additional flag that might help in case of serialization failures
--Dsun.io.serialization.extendedDebugInfo=true
+-Xms2G
+-Xmx8G
+-XX:ReservedCodeCacheSize=512m
