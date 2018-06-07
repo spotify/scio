@@ -396,7 +396,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
       val f = Future(r.call())
       f.onComplete {
         case Success(_) => Unit
-        case Failure(NonFatal(_)) => context.updateFutures(r)
+        case Failure(NonFatal(_)) => context.updateFutures(state)
       }
       f
     }
