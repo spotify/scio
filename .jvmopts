@@ -1,4 +1,3 @@
-# Same JVM opts as https://github.com/typelevel/cats/blob/master/.jvmopts
 -Dfile.encoding=UTF8
 -Xms2G
 -Xmx8G
