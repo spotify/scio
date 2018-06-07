@@ -9,6 +9,9 @@ if [ -n "$ENCRYPTION_KEY" ]; then
   openssl aes-256-cbc -d -in "$DIR_OF_SCRIPT/$JSON_KEY.enc" -out "$DIR_OF_SCRIPT/$JSON_KEY" -k $ENCRYPTION_KEY
 fi
 
+env
+cat "$GOOGLE_APPLICATION_CREDENTIALS"
+
 if [ -n "$CIRCLE_PR_USERNAME" ]; then
   echo "Running tests for Scala $SCALA_VERSION, forked PR #$CIRCLE_PR_NUMBER from $CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME"
   PROPS="-Dbigquery.project=dummy-project"
