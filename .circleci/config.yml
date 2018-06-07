@@ -5,13 +5,13 @@
 scala_211_version: &scala_211_version 2.11.12
 scala_212_version: &scala_212_version 2.12.6
 
-docker_settings: &docker_settings
+common_settings: &common_settings
   docker:
     - image: circleci/openjdk:8-jdk
       environment:
-        SBT_OPTS: "-Xms2g -Xmx2g -XX:ReservedCodeCacheSize=250M"
         GOOGLE_APPLICATION_CREDENTIALS: scripts/data-integration-test.json
   working_directory: ~/scio
+  resource_class: xlarge
 
 restore_cache_settings: &restore_cache_settings
   keys:
@@ -27,7 +27,7 @@ save_cache_settings: &save_cache_settings
     - ~/stream.tar.gz
 
 build_settings: &build_settings
-  <<: *docker_settings
+  <<: *common_settings
   steps:
     - checkout
     - restore_cache: *restore_cache_settings
@@ -52,7 +52,7 @@ build_settings: &build_settings
     - save_cache: *save_cache_settings
 
 publish_settings: &publish_settings
-  <<: *docker_settings
+  <<: *common_settings
   steps:
     - checkout
     - restore_cache: *restore_cache_settings
