@@ -100,8 +100,9 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   resolvers += Resolver.sonatypeRepo("public"),
 
   scalastyleSources in Compile ++= (unmanagedSourceDirectories in Test).value,
-  testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
-  testOptions ++= {
+  testOptions in Test += Tests.Argument("-oD"),
+  testOptions in Test += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
+  testOptions in Test ++= {
     if (sys.env.contains("SLOW")) {
       Nil
     } else {
