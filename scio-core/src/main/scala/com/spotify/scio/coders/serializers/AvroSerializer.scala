@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.coders
+package com.spotify.scio.coders.serializers
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
@@ -28,7 +28,7 @@ import org.apache.beam.sdk.coders.AvroCoder
 import scala.collection.mutable.{Map => MMap}
 import scala.util.Try
 
-private class GenericAvroSerializer extends KSerializer[GenericRecord] {
+private[coders] class GenericAvroSerializer extends KSerializer[GenericRecord] {
 
   private lazy val cache: MMap[String, AvroCoder[GenericRecord]] = MMap()
 
@@ -52,7 +52,7 @@ private class GenericAvroSerializer extends KSerializer[GenericRecord] {
 
 }
 
-private class SpecificAvroSerializer[T <: SpecificRecordBase] extends KSerializer[T] {
+private[coders] class SpecificAvroSerializer[T <: SpecificRecordBase] extends KSerializer[T] {
 
   private lazy val cache: MMap[Class[T], AvroCoder[T]] = MMap()
 

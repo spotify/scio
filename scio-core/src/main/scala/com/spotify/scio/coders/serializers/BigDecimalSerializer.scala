@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2018 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,21 @@
  * under the License.
  */
 
-package com.spotify.scio.coders
+package com.spotify.scio.coders.serializers
 
-import com.twitter.chill.KSerializer
-import java.nio.file.{Path, Paths}
+import java.math.{BigDecimal => JBigDecimal}
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
+import com.twitter.chill.KSerializer
 
-private class JPathSerializer extends KSerializer[Path] {
-  override def read(kryo: Kryo, input: Input, tpe: Class[Path]): Path =
-    Paths.get(input.readString())
+private[coders] class BigDecimalSerializer extends KSerializer[BigDecimal] {
+  override def read(kryo: Kryo, input: Input, cls: Class[BigDecimal]): BigDecimal = {
+    val jBigDec = kryo.readClassAndObject(input).asInstanceOf[JBigDecimal]
+    BigDecimal(jBigDec)
+  }
 
-  override def write(kryo: Kryo, output: Output, path: Path): Unit =
-    output.writeString(path.toString)
+  override def write(kryo: Kryo, output: Output, obj: BigDecimal): Unit = {
+    kryo.writeClassAndObject(output, obj.bigDecimal)
+  }
 }
