@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.coders
+package com.spotify.scio.coders.serializers
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}

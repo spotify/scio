@@ -15,24 +15,23 @@
  * under the License.
  */
 
-package com.spotify.scio.coders
+package com.spotify.scio.coders.serializers
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.twitter.chill.KSerializer
-import org.apache.beam.sdk.values.KV
+import org.apache.beam.sdk.coders.Coder
+import org.apache.beam.sdk.util.CoderUtils
 
-private class KVSerializer[K, V] extends KSerializer[KV[K, V]] {
+class CoderSerializer[T](private val coder: Coder[T]) extends KSerializer[T] {
 
-  override def write(kser: Kryo, out: Output, obj: KV[K, V]): Unit = {
-    kser.writeClassAndObject(out, obj.getKey)
-    kser.writeClassAndObject(out, obj.getValue)
+  override def write(kser: Kryo, out: Output, obj: T): Unit = {
+    val bytes = CoderUtils.encodeToByteArray(coder, obj)
+    out.writeInt(bytes.length)
+    out.write(bytes)
   }
 
-  override def read(kser: Kryo, in: Input, cls: Class[KV[K, V]]): KV[K, V] = {
-    val k = kser.readClassAndObject(in).asInstanceOf[K]
-    val v = kser.readClassAndObject(in).asInstanceOf[V]
-    KV.of(k, v)
-  }
+  override def read(kser: Kryo, in: Input, cls: Class[T]): T =
+    CoderUtils.decodeFromByteArray(coder, in.readBytes(in.readInt()))
 
 }

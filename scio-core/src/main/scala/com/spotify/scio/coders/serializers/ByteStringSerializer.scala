@@ -14,25 +14,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.spotify.scio.coders
 
+package com.spotify.scio.coders.serializers
+
+import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.google.protobuf.ByteString
-import com.twitter.chill.{Kryo, KryoSerializer}
-import org.scalatest.{FlatSpec, Matchers}
+import com.twitter.chill.KSerializer
 
-class ByteStringSerializerTest extends FlatSpec with Matchers {
-
-  private def testRoundTrip(ser: ByteStringSerializer, bs: ByteString): Unit = {
-    val k: Kryo = KryoSerializer.registered.newKryo()
-    val o = new Array[Byte](bs.size() * 2)
-    ser.write(k, new Output(o), bs)
-    val back = ser.read(k, new Input(o), null)
-    bs shouldEqual back
+private class ByteStringSerializer extends KSerializer[ByteString] {
+  override def read(kryo: Kryo, input: Input, tpe: Class[ByteString]): ByteString = {
+    val n = input.readInt()
+    ByteString.copyFrom(input.readBytes(n))
   }
 
-  "ByteStringSerializer" should "roundtrip large ByteString" in {
-    val ser = new ByteStringSerializer
-    testRoundTrip(ser, ByteString.copyFrom(Array.fill(1056)(7.toByte)))
+
+  override def write(kryo: Kryo, output: Output, byteStr: ByteString): Unit = {
+    val len = byteStr.size
+    output.writeInt(len)
+    val bytes = byteStr.iterator
+    while (bytes.hasNext) {
+      output.write(bytes.nextByte())
+    }
   }
 }

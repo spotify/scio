@@ -15,26 +15,21 @@
  * under the License.
  */
 
-package com.spotify.scio.coders
+package com.spotify.scio.coders.serializers
+
+import java.math.{BigDecimal => JBigDecimal}
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
-import com.google.protobuf.ByteString
 import com.twitter.chill.KSerializer
 
-private class ByteStringSerializer extends KSerializer[ByteString] {
-  override def read(kryo: Kryo, input: Input, tpe: Class[ByteString]): ByteString = {
-    val n = input.readInt()
-    ByteString.copyFrom(input.readBytes(n))
+private class BigDecimalSerializer extends KSerializer[BigDecimal] {
+  override def read(kryo: Kryo, input: Input, cls: Class[BigDecimal]): BigDecimal = {
+    val jBigDec = kryo.readClassAndObject(input).asInstanceOf[JBigDecimal]
+    BigDecimal(jBigDec)
   }
 
-
-  override def write(kryo: Kryo, output: Output, byteStr: ByteString): Unit = {
-    val len = byteStr.size
-    output.writeInt(len)
-    val bytes = byteStr.iterator
-    while (bytes.hasNext) {
-      output.write(bytes.nextByte())
-    }
+  override def write(kryo: Kryo, output: Output, obj: BigDecimal): Unit = {
+    kryo.writeClassAndObject(output, obj.bigDecimal)
   }
 }
