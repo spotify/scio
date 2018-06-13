@@ -168,7 +168,15 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
 ) ++ mimaSettings
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
-  scalastyleSources in Compile ++= (unmanagedSourceDirectories in IntegrationTest).value
+  scalastyleSources in Compile ++= (unmanagedSourceDirectories in IntegrationTest).value,
+  // exclude all sources if we don't have GCP credentials
+  (excludeFilter in unmanagedSources) in IntegrationTest := {
+    if (BuildCredentials.exists) {
+      HiddenFileFilter
+    } else {
+      HiddenFileFilter || "*.scala"
+    }
+  }
 )
 
 lazy val noPublishSettings = Seq(
@@ -595,6 +603,14 @@ lazy val scioExamples: Project = Project(
     "org.mockito" % "mockito-all" % mockitoVersion % "test"
   ),
   addCompilerPlugin(paradiseDependency),
+  // exclude problematic sources if we don't have GCP credentials
+  excludeFilter in unmanagedSources := {
+    if (BuildCredentials.exists) {
+      HiddenFileFilter
+    } else {
+      HiddenFileFilter || "TypedBigQueryTornadoes*.scala"
+    }
+  },
   sources in doc in Compile := List()
 ).dependsOn(
   scioCore,
