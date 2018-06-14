@@ -96,6 +96,8 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
 
   // protobuf-lite is an older subset of protobuf-java and causes issues
   excludeDependencies += "com.google.protobuf" % "protobuf-lite",
+  // hamcrest-core overlaps with hamcrest-all and causes issues in IntelliJ
+  excludeDependencies += "org.hamcrest" % "hamcrest-core",
 
   resolvers += Resolver.sonatypeRepo("public"),
 
