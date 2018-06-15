@@ -514,11 +514,20 @@ lazy val scioJdbc: Project = Project(
   scioTest % "test"
 )
 
+val ensureSourceManaged = taskKey[Unit]("ensureSourceManaged")
+
 lazy val scioParquet: Project = Project(
   "scio-parquet",
   file("scio-parquet")
 ).settings(
   commonSettings,
+  // change annotation processor output directory so IntelliJ can pick them up
+  ensureSourceManaged := IO.createDirectory(sourceManaged.value / "main"),
+  (compile in Compile) := Def.task {
+    ensureSourceManaged.value
+    (compile in Compile).value
+  }.value,
+  javacOptions ++= Seq("-s", (sourceManaged.value / "main").toString),
   description := "Scio add-on for Parquet",
   libraryDependencies ++= Seq(
     "me.lyh" %% "parquet-avro-extra" % parquetAvroExtraVersion,
