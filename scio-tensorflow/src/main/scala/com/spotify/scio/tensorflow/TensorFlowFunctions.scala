@@ -18,6 +18,7 @@
 package com.spotify.scio.tensorflow
 
 import java.nio.ByteBuffer
+import java.nio.channels.Channels
 import java.util.concurrent.{CompletableFuture, CompletionStage}
 import java.util.function.{Consumer, Function}
 
@@ -41,7 +42,9 @@ import org.apache.beam.sdk.{io => gio}
 import org.slf4j.LoggerFactory
 import org.tensorflow._
 import org.tensorflow.example.Example
+import org.tensorflow.example.Feature.KindCase
 import org.tensorflow.framework.ConfigProto
+import org.tensorflow.metadata.v0._
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -198,6 +201,8 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
    *                         `<PATH>/_tf_record_spec.json`
    * @group output
    */
+  @deprecated("TFRecordSpec will be removed in favor of tf.metadata Schema. Use " +
+    "'saveAsTfExampleFileWithMetadata'", "scio-tensorflow 0.5.6")
   def saveAsTfExampleFile(path: String,
                           tFRecordSpec: TFRecordSpec,
                           suffix: String = ".tfrecords",
@@ -251,6 +256,8 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
    *           [[com.spotify.featran.FeatureSpec]]
    * @group output
    */
+  @deprecated("TFRecordSpec will be removed in favor of tf.metadata Schema. Use " +
+    "'saveAsTfExampleFileWithMetadata'", "scio-tensorflow 0.5.6")
   def saveAsTfExampleFile(
     path: String,
     fe: FeatureExtractor[SCollection, _]): (Future[Tap[Example]], Future[Tap[String]]) =
@@ -263,12 +270,98 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
    *           [[com.spotify.featran.FeatureSpec]]
    * @group output
    */
+  @deprecated("TFRecordSpec will be removed in favor of tf.metadata Schema. Use " +
+    "'saveAsTfExampleFileWithMetadata'", "scio-tensorflow 0.5.6")
   def saveAsTfExampleFile(path: String,
                           fe: FeatureExtractor[SCollection, _],
                           compression: Compression): (Future[Tap[Example]], Future[Tap[String]]) =
     self.saveAsTfExampleFile(path,
                              FeatranTFRecordSpec.fromFeatureSpec(fe.featureNames),
                              compression = compression)
+
+
+  /**
+   * Save this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file,
+   * along with a protobuf file representing the inferred `org.tensorflow.metadata.v0.Schema`.
+   * @group output
+   */
+  def saveAsTfExampleFileWithMetadata(path: String,
+                                      schemaSuffix: String = "schema.pb",
+                                      suffix: String = ".tfrecords",
+                                      compression: Compression = Compression.UNCOMPRESSED,
+                                      numShards: Int = 0)
+                                     (implicit ev: T <:< Example): Future[Tap[Example]] = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    val schemaPath = path.replaceAll("\\/+$", "") + schemaSuffix
+    buildAndSaveExampleMetadata(schemaPath)(ev)
+    val r = self.map(_.toByteArray).saveAsTfRecordFile(path, suffix, compression, numShards)
+    r.map(_.map(Example.parseFrom))
+  }
+
+  /**
+   * Infer a `org.tensorflow.metadata.v0.Schema` from this SCollection of
+   * `org.tensorflow.example.Example`.
+   * @return A singleton `SCollection` containing the schema.
+   */
+  def buildExampleMetadata(implicit ev: T <:< Example): SCollection[Schema] = {
+    val features = examplesToFeatures(self.asInstanceOf[SCollection[Example]])
+    features
+      .groupBy(_ => ())
+      .values.map(features => Schema.newBuilder().addAllFeature(features.asJava).build())
+  }
+
+  /**
+   * Infer a `org.tensorflow.metadata.v0.Schema` from this SCollection of
+   * `org.tensorflow.example.Example` and output the resulting protobuf object.
+   * @return A singleton `SCollection` containing the schema.
+   * @group output
+   */
+  def buildAndSaveExampleMetadata(schemaPath: String)(implicit ev: T <:< Example)
+  : SCollection[Schema] = {
+    val schema = self.buildExampleMetadata(ev)
+    schema.map { s =>
+      val d = FileSystems.matchNewResource(schemaPath, false)
+      val chnnl = Channels.newOutputStream(FileSystems.create(d, MimeTypes.BINARY))
+      try {
+        s.writeTo(chnnl)
+      } finally {
+        chnnl.close()
+      }
+    }
+    schema
+  }
+
+  private def examplesToFeatures(examples: SCollection[Example]): SCollection[Feature] =
+    examples
+      .flatMap(_.getFeatures.getFeatureMap.asScala)
+      .map { case (name, f) =>
+        f.getKindCase match {
+          case KindCase.BYTES_LIST =>
+            ((name, FeatureType.BYTES), Set(f.getBytesList.getValueCount))
+          case KindCase.FLOAT_LIST =>
+            ((name, FeatureType.FLOAT), Set(f.getFloatList.getValueCount))
+          case KindCase.INT64_LIST =>
+            ((name, FeatureType.INT), Set(f.getInt64List.getValueCount))
+          case KindCase.KIND_NOT_SET => sys.error("kind must be set!")
+        }
+      }
+      .sumByKey
+      .map { case ((name, f), shapes) =>
+        val builder = Feature.newBuilder()
+          .setName(name)
+          .setType(f)
+        if (shapes.size == 1) {
+          // This is a fixed length feature
+          builder.setShape(FixedShape.newBuilder()
+            .addDim(FixedShape.Dim.newBuilder().setSize(shapes.head)))
+        }
+        else {
+          // Var length
+          builder.setValueCount(ValueCount.newBuilder().setMin(shapes.min).setMax(shapes.max))
+        }
+        builder.build()
+      }
 }
 
 class SeqTFExampleSCollectionFunctions[T <: Example](@transient val self: SCollection[Seq[T]])
@@ -286,6 +379,8 @@ class SeqTFExampleSCollectionFunctions[T <: Example](@transient val self: SColle
    *           [[com.spotify.featran.MultiFeatureSpec]]
    * @group output
    */
+  @deprecated("TFRecordSpec will be removed in favor of tf.metadata Schema. Use " +
+    "'saveAsTfExampleFileWithMetadata'", "scio-tensorflow 0.5.6")
   def saveAsTfExampleFile(
     path: String,
     fe: MultiFeatureExtractor[SCollection, _]): (Future[Tap[Example]], Future[Tap[String]]) =
@@ -299,6 +394,8 @@ class SeqTFExampleSCollectionFunctions[T <: Example](@transient val self: SColle
    *           [[com.spotify.featran.MultiFeatureSpec]]
    * @group output
    */
+  @deprecated("TFRecordSpec will be removed in favor of tf.metadata Schema. Use " +
+    "'saveAsTfExampleFileWithMetadata'", "scio-tensorflow 0.5.6")
   def saveAsTfExampleFile(path: String,
                           fe: MultiFeatureExtractor[SCollection, _],
                           compression: Compression): (Future[Tap[Example]], Future[Tap[String]]) = {
