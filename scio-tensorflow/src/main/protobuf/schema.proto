@@ -1,0 +1,335 @@
+// Copyright 2017 The TensorFlow Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// =============================================================================
+
+
+syntax = "proto2";
+option cc_enable_arenas = true;
+
+package tensorflow.metadata.v0;
+
+option java_package = "org.tensorflow.metadata.v0";
+option java_multiple_files = true;
+
+enum LifecycleStage {
+  UNKNOWN_STAGE = 0;  // Unknown stage.
+  PLANNED = 1;        // Planned feature, may not be created yet.
+  ALPHA = 2;          // Prototype feature, not used in experiments yet.
+  BETA = 3;           // Used in user-facing experiments.
+  PRODUCTION = 4;     // Used in a significant fraction of user traffic.
+  DEPRECATED = 5;     // No longer supported: do not use in new models.
+  DEBUG_ONLY = 6;     // Only exists for debugging purposes.
+};
+
+//
+// Message to represent schema information.
+message Schema {
+  // Features described in this schema.
+  repeated Feature feature = 1;
+
+  // Sparse features described in this schema.
+  repeated SparseFeature sparse_feature = 6;
+
+
+  // declared as top-level features in <feature>.
+  // String domains referenced in the features.
+  repeated StringDomain string_domain = 4;
+
+  // Default environments for each feature.
+  // An environment represents both a type of location (e.g. a server or phone)
+  // and a time (e.g. right before model X is run). In the standard scenario,
+  // 99% of the features should be in the default environments TRAINING,
+  // SERVING, and the LABEL (or labels) AND WEIGHT is only available at TRAINING
+  // (not at serving).
+  // Other possible variations:
+  // 1. There may be TRAINING_MOBILE, SERVING_MOBILE, TRAINING_SERVICE,
+  //    and SERVING_SERVICE.
+  // 2. If one is ensembling three models, where the predictions of the first
+  //    three models are available for the ensemble model, there may be
+  //    TRAINING, SERVING_INITIAL, SERVING_ENSEMBLE.
+  // See FeatureProto::not_in_environment and FeatureProto::in_environment.
+  repeated string default_environment = 5;
+
+}
+
+// Describes schema-level information about a specific feature.
+message Feature {
+
+  // The name of the feature.
+  optional string name = 1;  // required
+
+
+
+
+  // Constraints on the presence of this feature in the examples.
+  optional FeaturePresence presence = 14;
+
+  // The shape of the feature which governs the number of values that appear in
+  // each example.
+  oneof shape_type {
+    // The feature has a fixed shape corresponding to a multi-dimensional
+    // tensor.
+    FixedShape shape = 23;
+    // The feature doesn't have a well defined shape. All we know are limits on
+    // the minimum and maximum number of values.
+    ValueCount value_count = 5;
+  }
+
+  // Type of the feature's values
+  optional FeatureType type = 6;
+
+  // Domain for the values of the feature.
+  oneof domain_info {
+    // Reference to a domain defined at the schema level.
+    string domain = 7;
+    // Inline definitions of domains.
+    IntDomain int_domain = 9;
+    FloatDomain float_domain = 10;
+    StringDomain string_domain = 11;
+    BoolDomain bool_domain = 13;
+  }
+
+  // Constraints on the distribution of the feature values.
+  // Currently only supported for StringDomains.
+  optional DistributionConstraints distribution_constraints = 15;
+
+  // Additional information about the feature for documentation purpose.
+  optional Annotation annotation = 16;
+
+  // Tests comparing the distribution to the associated serving data.
+  optional FeatureComparator skew_comparator = 18;
+
+  // Tests comparing the distribution between two consecutive spans (e.g. days).
+  optional FeatureComparator drift_comparator = 21;
+
+  // List of environments this feature is present in.
+  // Should be disjoint from not_in_environment.
+  // This feature is in environment "foo" if:
+  // ("foo" is in in_environment or default_environments) AND
+  // "foo" is not in not_in_environment.
+  // See Schema::default_environments.
+  repeated string in_environment = 20;
+
+  // List of environments this feature is not present in.
+  // Should be disjoint from of in_environment.
+  // See Schema::default_environments and in_environment.
+  repeated string not_in_environment = 19;
+
+  optional LifecycleStage lifecycle_stage = 22;
+}
+
+// Additional information about the feature for documentation purposes.
+message Annotation {
+  // Tags can be used to mark features. For example, tag on user_age feature can
+  // be `user_feature`, tag on user_country feature can be `location_feature`,
+  // `user_feature`.
+  repeated string tag = 1;
+  // Free-text comments. This can be used as a description of the feature,
+  // developer notes etc.
+  repeated string comment = 2;
+}
+
+// Specifies a fixed shape for the feature's values. The immediate implication
+// is that each feature has a fixed number of values. Moreover, these values
+// can be parsed in a multi-dimensional tensor using the specified axis sizes.
+// The FixedShape defines a lexicographical ordering of the data. For instance,
+// if there is a FixedShape {
+//   axis {size:3} axis {size:2}
+// }
+// then tensor[0][0]=field[0]
+// then tensor[0][1]=field[1]
+// then tensor[1][0]=field[2]
+// then tensor[1][1]=field[3]
+// then tensor[2][0]=field[4]
+// then tensor[2][1]=field[5]
+//
+// The FixedShape message is identical with the TensorFlow TensorShape proto
+// message.
+message FixedShape {
+  // The dimensions that define the shape. The total number of values in each
+  // example is the product of sizes of each dimension.
+  repeated Dim dim = 2;
+
+  // An axis in a multi-dimensional feature representation.
+  message Dim {
+    optional int64 size = 1;
+
+    // Optional name of the tensor dimension.
+    optional string name = 2;
+  }
+}
+
+// Limits on maximum and minimum number of values in a
+// single example (when the feature is present). Use this when the minimum
+// value count can be different than the maximum value count. Otherwise prefer
+// FixedShape.
+message ValueCount {
+  optional int64 min = 1;
+  optional int64 max = 2;
+}
+
+
+// A sparse feature represents a sparse tensor that is encoded with a
+// combination of raw features, namely index features and a value feature.  Each
+// index feature defines a list of indices in a different dimension.
+message SparseFeature {
+  // Name for the sparse feature. This should not clash with other features in
+  // the same schema.
+  optional string name = 1;  // required
+
+
+  // The lifecycle_stage determines where a feature is expected to be used,
+  // and therefore how important issues with it are.
+  optional LifecycleStage lifecycle_stage = 7;
+
+
+  // Constraints on the presence of this feature in examples.
+  optional FeaturePresence presence = 4;
+
+  // Shape of the sparse tensor that this SparseFeature represents.
+  optional FixedShape dense_shape = 5;
+
+  // Features that represent indexes.
+  repeated IndexFeature index_feature = 6;  // at least one
+  message IndexFeature {
+    // Name of the index-feature. This should be unique in the schema.
+    optional string name = 1;
+  }
+
+  // If true then the index values are already sorted lexicographically.
+  optional bool is_sorted = 8;
+
+  optional ValueFeature value_feature = 9;  // required
+  message ValueFeature {
+    // Name of the value-feature. This should be unique in the schema.
+    optional string name = 1;
+  }
+
+  // Type of value feature.
+  optional FeatureType type = 10;
+
+  // Domain information
+  optional Domain domain = 11;
+}
+
+// Models constraints on the distribution of a feature's values.
+message DistributionConstraints {
+  // The minimum fraction (in [0,1]) of values across all examples that
+  // should come from the feature's domain, e.g.:
+  //   1.0  => All values must come from the domain.
+  //    .9  => At least 90% of the values must come from the domain.
+  optional double min_domain_mass = 1 [default = 1.0];
+}
+
+// Encodes information for domains of integer values.
+// Note that FeatureType could be either INT or BYTES.
+message IntDomain {
+  // Id of the domain. Required if the domain is defined at the schema level. If
+  // so, then the name must be unique within the schema.
+  optional string name = 1;
+
+  // Min and max values for the domain.
+  optional int64 min = 3;
+  optional int64 max = 4;
+
+  // If true then the domain encodes categorical values (i.e., ids) rather than
+  // ordinal values.
+  optional bool is_categorical = 5;
+}
+
+// Encodes information for domains of float values.
+// Note that FeatureType could be either INT or BYTES.
+message FloatDomain {
+  // Id of the domain. Required if the domain is defined at the schema level. If
+  // so, then the name must be unique within the schema.
+  optional string name = 1;
+
+  // Min and max values of the domain.
+  optional float min = 3;
+  optional float max = 4;
+}
+
+// Encodes information for domains of string values.
+message StringDomain {
+
+  // Id of the domain. Required if the domain is defined at the schema level. If
+  // so, then the name must be unique within the schema.
+  optional string name = 1;
+
+  // The values appearing in the domain.
+  repeated string value = 2;
+}
+
+// Encodes information about the domain of a boolean attribute that encodes its
+// TRUE/FALSE values as strings, or 0=false, 1=true.
+// Note that FeatureType could be either INT or BYTES.
+message BoolDomain {
+  // Id of the domain. Required if the domain is defined at the schema level. If
+  // so, then the name must be unique within the schema.
+  optional string name = 1;
+
+  // Strings values for TRUE/FALSE.
+  optional string true_value = 2;
+  optional string false_value = 3;
+}
+
+// Describes the physical representation of a feature.
+// It may be different than the logical representation, which
+// is represented as a Domain.
+enum FeatureType {
+  TYPE_UNKNOWN = 0;
+  BYTES = 1;
+  INT = 2;
+  FLOAT = 3;
+}
+
+// Describes constraints on the presence of the feature in the data.
+message FeaturePresence {
+  // Minimum fraction of examples that have this feature.
+  optional double min_fraction = 1;
+  // Minimum number of examples that have this feature.
+  optional int64 min_count = 2;
+}
+
+
+message Domain {
+  oneof domain_info {
+    // Reference to a domain defined at the schema level.
+    string name = 1;
+
+    // Inline definitions of domains.
+    IntDomain ints = 2;
+    FloatDomain floats = 3;
+    StringDomain strings = 4;
+    BoolDomain bools = 5;
+  }
+
+  // Constraints on the distribution of the feature values.
+  // Currently only supported for StringDomains.
+  optional DistributionConstraints distribution_constraints = 6;
+}
+
+// Checks that the L-infinity norm is below a certain threshold between the
+// two discrete distributions. Since this is applied to a FeatureNameStatistics,
+// it only considers the top k.
+// L_infty(p,q) = max_i |p_i-q_i|
+message InfinityNorm {
+  // The InfinityNorm is in the interval [0.0, 1.0] so sensible bounds should
+  // be in the interval [0.0, 1.0).
+  optional double threshold = 1;
+}
+
+message FeatureComparator {
+  optional InfinityNorm infinity_norm = 1;
+}

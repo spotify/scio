@@ -545,9 +545,16 @@ lazy val scioParquet: Project = Project(
 lazy val scioTensorFlow: Project = Project(
   "scio-tensorflow",
   file("scio-tensorflow")
-).settings(
+).enablePlugins(ProtobufPlugin).settings(
   commonSettings,
   description := "Scio add-on for TensorFlow",
+  version in ProtobufConfig := protobufVersion,
+  protobufRunProtoc in ProtobufConfig := (args =>
+    // protoc-jar does not include 3.3.1 binary
+    com.github.os72.protocjar.Protoc.runProtoc("-v3.3.0" +: args.toArray)
+  ),
+  sourceDirectories in Compile := (sourceDirectories in Compile).value.filterNot(_.getPath.endsWith("/src_managed/main")),
+  managedSourceDirectories in Compile := (managedSourceDirectories in Compile).value.filterNot(_.getPath.endsWith("/src_managed/main")),
   libraryDependencies ++= Seq(
     "org.tensorflow" % "tensorflow" % tensorFlowVersion,
     "org.tensorflow" % "proto" % tensorFlowVersion,
