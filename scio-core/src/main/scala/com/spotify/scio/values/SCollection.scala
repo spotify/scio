@@ -576,7 +576,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group hash
    */
   def cross[U: ClassTag](that: SCollection[U]): SCollection[(T, U)] = this.transform { in =>
-    val side = that.asListSideInput
+    // TODO: switch to ListSideInput when https://github.com/spotify/scio/issues/1152 is resolved
+    val side = that.aggregate(Aggregator.toList[U]).asSingletonSideInput
     in
       .withSideInputs(side)
       .flatMap((t, s) => s(side).map((t, _)))
