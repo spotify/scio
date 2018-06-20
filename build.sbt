@@ -37,7 +37,7 @@ val commonsMath3Version = "3.6.1"
 val commonsPoolVersion = "2.5.0"
 val elasticsearch2Version = "2.1.0"
 val elasticsearch5Version = "5.5.0"
-val featranVersion = "0.1.26"
+val featranVersion = "0.1.27"
 val gcsConnectorVersion = "1.6.3-hadoop2"
 val gcsVersion = "1.8.0"
 val guavaVersion = "20.0"
@@ -65,7 +65,7 @@ val shapelessDatatypeVersion = "0.1.9"
 val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.3.0"
 val tensorFlowVersion = "1.8.0"
-val zoltarVersion = "0.3.1"
+val zoltarVersion = "0.4.0"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
