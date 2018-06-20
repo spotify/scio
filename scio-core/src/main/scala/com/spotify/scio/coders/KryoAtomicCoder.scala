@@ -19,8 +19,6 @@ package com.spotify.scio.coders
 
 import java.io.{EOFException, InputStream, OutputStream}
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Function
 
 import com.esotericsoftware.kryo.KryoException
 import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
@@ -28,6 +26,7 @@ import com.google.common.io.{ByteStreams, CountingOutputStream}
 import com.google.common.reflect.ClassPath
 import com.google.protobuf.{ByteString, Message}
 import com.spotify.scio.options.ScioOptions
+import com.spotify.scio.util.Functions
 import com.twitter.chill._
 import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
@@ -194,21 +193,14 @@ private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends
 /** Used for sharing Kryo instance and buffers. */
 private[scio] final case class KryoState(kryo: Kryo) {
 
-  val inputChunked: KryoOptions => InputChunked = memoize { options =>
+  val inputChunked: KryoOptions => InputChunked = Functions.memoize { options =>
     new InputChunked(options.bufferSize)
   }
 
-  val outputChunked: KryoOptions => OutputChunked = memoize { options =>
+  val outputChunked: KryoOptions => OutputChunked = Functions.memoize { options =>
     new OutputChunked(options.bufferSize)
   }
 
-  private[this] def memoize[T, U](f: T => U): T => U = {
-    lazy val cache = new ConcurrentHashMap[T, U]()
-    t =>
-      cache.computeIfAbsent(t, new Function[T, U] {
-        override def apply(tt: T): U = f(tt)
-      })
-  }
 }
 
 private[scio] object KryoAtomicCoder {
@@ -231,9 +223,12 @@ private[scio] object KryoAtomicCoder {
       new DefaultPooledObject[KryoState](obj)
   }
 
-  private[this] val kryoPool: ObjectPool[KryoState] = {
+  private[this] val kryoPool: KryoOptions => ObjectPool[KryoState] = Functions.memoize { options =>
     val factory = KryStatePoolFactory(() => {
       val k = KryoSerializer.registered.newKryo()
+      k.setReferences(options.referenceTracking)
+      k.setRegistrationRequired(options.registrationRequired)
+
       k.forClass(new CoderSerializer(InstantCoder.of()))
       k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
       // Java Iterable/Collection are missing proper equality check, use custom CBF as a
@@ -269,14 +264,11 @@ private[scio] object KryoAtomicCoder {
   }
 
   def withKryoState[R](options: KryoOptions)(f: KryoState => R): R = {
-    val kryoState = kryoPool.borrowObject()
-    kryoState.kryo.setReferences(options.referenceTracking)
-    kryoState.kryo.setRegistrationRequired(options.registrationRequired)
-
+    val kryoState = kryoPool(options).borrowObject()
     try {
       f(kryoState)
     } finally {
-      kryoPool.returnObject(kryoState)
+      kryoPool(options).returnObject(kryoState)
     }
   }
 }

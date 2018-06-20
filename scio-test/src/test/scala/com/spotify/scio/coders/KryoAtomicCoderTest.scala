@@ -143,16 +143,34 @@ class KryoAtomicCoderTest extends PipelineSpec {
   }
 
   it should "support kryo registration required option" in {
-    val options = PipelineOptionsFactory.fromArgs("--kryoRegistrationRequired=true").create()
+    val options = PipelineOptionsFactory
+      .fromArgs("--kryoRegistrationRequired=true")
+      .create()
     val sc = ScioContext(options)
     sc.parallelize(1 to 10).map(x => RecordB(x.toString, x))
 
     // scalastyle:off no.whitespace.before.left.bracket
-    val e = the [PipelineExecutionException] thrownBy { sc.close() }
+    val e = the[PipelineExecutionException] thrownBy { sc.close() }
     // scalastyle:on no.whitespace.before.left.bracket
 
     val msg = "Class is not registered: com.spotify.scio.coders.RecordB"
-    e.getCause.getMessage should startWith (msg)
+    e.getCause.getMessage should startWith(msg)
+  }
+
+  it should "support kryo registrar with custom options" in {
+    // ensure we get a different kryo instance from object pool.
+    val options = PipelineOptionsFactory
+      .fromArgs("--kryoReferenceTracking=false", "--kryoRegistrationRequired=false")
+      .create()
+    val sc = ScioContext(options)
+    sc.parallelize(1 to 10).map(x => RecordB(x.toString, x))
+
+    // scalastyle:off no.whitespace.before.left.bracket
+    val e = the[PipelineExecutionException] thrownBy { sc.close() }
+    // scalastyle:on no.whitespace.before.left.bracket
+
+    val msg = "Class is not registered: com.spotify.scio.coders.RecordB"
+    e.getCause.getMessage should startWith(msg)
   }
 
 }
@@ -168,6 +186,7 @@ class RecordAKryoRegistrar extends IKryoRegistrar {
         output.writeString(obj.name)
         output.writeInt(obj.value)
       }
+
       override def read(kryo: Kryo, input: Input, tpe: Class[RecordA]): RecordA =
         RecordA(input.readString(), input.readInt() + 10)
     })
@@ -180,7 +199,18 @@ class RecordBKryoRegistrar extends IKryoRegistrar {
         output.writeString(obj.name)
         output.writeInt(obj.value)
       }
+
       override def read(kryo: Kryo, input: Input, tpe: Class[RecordB]): RecordB =
         RecordB(input.readString(), input.readInt() + 10)
     })
+}
+
+// Dummy registrar that when reference tracing disabled requires registration
+@KryoRegistrar
+class TestOverridableKryoRegistrar extends IKryoRegistrar {
+  override def apply(k: Kryo): Unit =
+    if (!k.getReferences && !k.isRegistrationRequired) {
+      // Overrides the value set from KryoOptions
+      k.setRegistrationRequired(true)
+    }
 }
