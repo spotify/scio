@@ -20,10 +20,12 @@
 package com.spotify.scio
 
 import java.beans.Introspector
+import java.util.concurrent.Callable
 import java.io.File
 import java.net.URI
 import java.nio.file.Files
 
+import _root_.io.grpc.{Context => GrpcContext}
 import com.google.api.services.bigquery.model.TableReference
 import com.google.datastore.v1.{Entity, Query}
 import com.google.protobuf.Message
@@ -383,15 +385,18 @@ class ScioContext private[scio] (val options: PipelineOptions,
                                   val context: ScioContext) extends ScioResult(internal) {
     override val finalState: Future[State] = {
       import scala.concurrent.ExecutionContext.Implicits.global
-      val f = Future {
-        val state = internal.waitUntilFinish()
-        context.updateFutures(state)
-        val metricsLocation = context.optionsAs[ScioOptions].getMetricsLocation
-        if (metricsLocation != null) {
-          saveMetrics(metricsLocation)
+      val r = GrpcContext.current().wrap(new Callable[State]() {
+        override def call(): State = {
+          val state = internal.waitUntilFinish()
+          context.updateFutures(state)
+          val metricsLocation = context.optionsAs[ScioOptions].getMetricsLocation
+          if (metricsLocation != null) {
+            saveMetrics(metricsLocation)
+          }
+          ContextScioResult.this.state
         }
-        this.state
-      }
+      })
+      val f = Future(r.call())
       f.onComplete {
         case Success(_) => Unit
         case Failure(NonFatal(_)) => context.updateFutures(state)

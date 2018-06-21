@@ -40,6 +40,7 @@ val elasticsearch5Version = "5.5.0"
 val featranVersion = "0.1.27"
 val gcsConnectorVersion = "1.6.3-hadoop2"
 val gcsVersion = "1.8.0"
+val grpcContextVersion = "1.2.0"
 val guavaVersion = "20.0"
 val hadoopVersion = "2.7.3"
 val hamcrestVersion = "1.3"
@@ -307,7 +308,8 @@ lazy val scioCore: Project = Project(
     "com.google.protobuf" % "protobuf-java" % protobufVersion,
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
     "org.apache.xbean" % "xbean-asm5-shaded" % asmVersion,
-    "org.apache.commons" % "commons-pool2" %  commonsPoolVersion
+    "org.apache.commons" % "commons-pool2" %  commonsPoolVersion,
+    "io.grpc" % "grpc-context" % grpcContextVersion
   )
 ).dependsOn(
   scioAvro,
