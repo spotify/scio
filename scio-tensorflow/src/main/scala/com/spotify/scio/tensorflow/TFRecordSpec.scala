@@ -58,15 +58,18 @@ object TFRecordSpec {
 }
 
 private object FeatranTFRecordSpec {
+
+  def normalizeName(name: String): String = name.replaceAll("[^A-Za-z0-9_]", "_")
+
   def fromFeatureSpec(featureNames: SCollection[Seq[String]]): TFRecordSpec = {
     TFRecordSpec.fromSColSeqFeatureInfo(
-      featureNames.map(_.map(n => FeatureInfo(n, FeatureKind.FloatList, Map()))))
+      featureNames.map(_.map(n => FeatureInfo(normalizeName(n), FeatureKind.FloatList, Map()))))
   }
 
   def fromMultiSpec(featureNames: SCollection[Seq[Seq[String]]]): TFRecordSpec = {
     val featureInfos = featureNames.map(_.zipWithIndex.flatMap {
       case (sss, i) => sss.map(n =>
-        FeatureInfo(n, FeatureKind.FloatList, Map("multispec-id" -> i.toString)))
+        FeatureInfo(normalizeName(n), FeatureKind.FloatList, Map("multispec-id" -> i.toString)))
     })
     TFRecordSpec.fromSColSeqFeatureInfo(featureInfos)
   }
