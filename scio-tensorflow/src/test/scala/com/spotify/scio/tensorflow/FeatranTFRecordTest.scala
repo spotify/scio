@@ -34,7 +34,7 @@ object FeatureSpecJob {
     val (sc, args) = ContextAndArgs(argv)
 
     val featureSpec = FeatureSpec.of[TrainingPoint]
-      .required(_.x1)(Identity("x1"))
+      .required(_.x1)(Identity("x.1"))
       .required(_.label)(Identity("label"))
 
     val collection = sc.textFile(args("input"))
@@ -90,7 +90,7 @@ class FeatranTFRecordTest extends PipelineSpec {
 
   val tfRecordSpec =
     """{"version":1,""" +
-      """"features":[{"name":"x1","kind":"FloatList","tags":{}},""" +
+      """"features":[{"name":"x_1","kind":"FloatList","tags":{}},""" +
       """{"name":"label","kind":"FloatList","tags":{}}],""" +
       """"compression":"UNCOMPRESSED"}"""
 
@@ -120,6 +120,15 @@ class FeatranTFRecordTest extends PipelineSpec {
       .output(TFExampleIO("out/train"))(_ should satisfy[Example](_.size === 9000+-500))
       .output(TFExampleIO("out/test"))(_ should satisfy[Example](_.size === 1000+-500))
       .run()
+  }
+
+  "FeatranTFRecordSpec.normalizeName" should "work" in {
+    FeatranTFRecordSpec.normalizeName("foo") shouldBe "foo"
+    FeatranTFRecordSpec.normalizeName("Foo") shouldBe "Foo"
+    FeatranTFRecordSpec.normalizeName("foo bar") shouldBe "foo_bar"
+    FeatranTFRecordSpec.normalizeName("foo-bar") shouldBe "foo_bar"
+    FeatranTFRecordSpec.normalizeName("Foo-Bar") shouldBe "Foo_Bar"
+    FeatranTFRecordSpec.normalizeName("foo.bar-baz ala &33*(") shouldBe "foo_bar_baz_ala__33__"
   }
 
 }
