@@ -74,7 +74,7 @@ object PubSubAdmin {
     }
 
   /**
-   * Check PubSub topic exists.
+   * Gets the configuration of a topic.
    *
    * @param name Topic path. Needs to follow `projects/projectId/topics/topicName`
    * @return
