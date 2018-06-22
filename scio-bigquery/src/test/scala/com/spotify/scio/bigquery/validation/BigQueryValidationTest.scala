@@ -19,6 +19,7 @@
 package com.spotify.scio.bigquery.validation
 
 import com.spotify.scio.bigquery.types.BigQueryType
+import com.spotify.scio.bigquery.validation.{SampleOverrideTypeProvider, Country}
 import com.spotify.scio.bigquery.{TableRow, description}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
