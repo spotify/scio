@@ -19,7 +19,6 @@
 package com.spotify.scio.bigquery.validation
 
 import com.spotify.scio.bigquery.types.BigQueryType
-import com.spotify.scio.bigquery.validation.{SampleOverrideTypeProvider, Country}
 import com.spotify.scio.bigquery.{TableRow, description}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
@@ -27,12 +26,6 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 // properties on the individual field level processing data
 class BigQueryValidationTest extends FlatSpec with Matchers with BeforeAndAfterAll  {
 
-  override def beforeAll(): Unit = {
-    // We need this at runtime as well and tests are run in a fork
-    SampleOverrideTypeProvider.setSystemProperty()
-  }
-
-  @SampleOverrideTypeProvider.setProperty
   @BigQueryType.fromSchema(
     """
       |{
@@ -45,7 +38,6 @@ class BigQueryValidationTest extends FlatSpec with Matchers with BeforeAndAfterA
     """.stripMargin)
   class CountryInput
 
-  @SampleOverrideTypeProvider.setProperty
   @BigQueryType.toTable
   case class CountryOutput(@description("COUNTRY") country: Country,
                            countryString: String,
