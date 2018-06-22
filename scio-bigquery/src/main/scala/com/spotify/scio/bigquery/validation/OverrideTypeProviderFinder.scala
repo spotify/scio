@@ -19,12 +19,9 @@ package com.spotify.scio.bigquery.validation
 
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
-import org.slf4j.LoggerFactory
 
 /** Common finder for the proper [[OverrideTypeProvider]]. */
 object OverrideTypeProviderFinder {
-  private val logger = LoggerFactory.getLogger(this.getClass)
-
   private val instance = {
     // Load the class dynamically at compile time and runtime
     val classInstance = Try(Class.forName(System.getProperty("override.type.provider", ""))
