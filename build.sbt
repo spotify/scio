@@ -384,28 +384,13 @@ lazy val scioAvro: Project = Project(
   scioCore % "compile,it->it"
 ).configs(IntegrationTest)
 
-lazy val PreTest =
-  config("pre-test")
-    .describedAs("Create a new compilation unit so that SampleOverrideTypeProvider is compiled before OverrideTypeProviderFinder's lookup.")
-
 lazy val scioBigQuery: Project = Project(
   "scio-bigquery",
   file("scio-bigquery")
 ).settings(
-  inConfig(PreTest)(Defaults.configSettings),
   commonSettings ++ macroSettings ++ itSettings ++ beamRunnerSettings,
   description := "Scio add-on for Google BigQuery",
-  // necessary to properly test since we need this value at compile time
-  (initialize in Test) ~= { _ =>
-    System.setProperty("OVERRIDE_TYPE_PROVIDER", "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
-  },
   addCompilerPlugin(paradiseDependency),
-  (compile in PreTest) := (compile in PreTest).dependsOn(compile in Compile).value,
-  (unmanagedClasspath in PreTest) += (classDirectory in Compile).value,
-  (compile in Test) := (compile in Test).dependsOn(compile in PreTest).value,
-  (unmanagedClasspath in Test) += (classDirectory in PreTest).value,
-  (compile in IntegrationTest) := (compile in IntegrationTest).dependsOn(compile in PreTest).value,
-  (unmanagedClasspath in IntegrationTest) += (classDirectory in PreTest).value,
   libraryDependencies ++= Seq(
     "commons-io" % "commons-io" % commonsIoVersion,
     "joda-time" % "joda-time" % jodaTimeVersion,
@@ -419,7 +404,10 @@ lazy val scioBigQuery: Project = Project(
     "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test,it",
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test,it",
     "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
-  )
+  ),
+  (initialize in Test) ~= { _ =>
+    System.setProperty("override.type.provider", "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
+  }
 ).dependsOn(
   scioCore % "compile,it->it",
   scioTest % "compile,test->test,it->test"
