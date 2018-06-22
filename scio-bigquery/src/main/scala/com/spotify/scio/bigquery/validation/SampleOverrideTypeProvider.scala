@@ -20,10 +20,10 @@ package com.spotify.scio.bigquery.validation
 
 import com.google.api.services.bigquery.model.TableFieldSchema
 
-import scala.annotation.StaticAnnotation
+import scala.collection.mutable
+import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 import scala.reflect.runtime.universe._
-import scala.language.experimental.macros
 
 // A sample implementation to override types under certain conditions
 class SampleOverrideTypeProvider extends OverrideTypeProvider {
@@ -103,22 +103,41 @@ class SampleOverrideTypeProvider extends OverrideTypeProvider {
 
 }
 
-/**
- * This shouldn't be necessary in most production use cases. However passing System properties from
- * Intellij can cause issues. The ideal place to set this System property is in your build.sbt
- * file.
-  */
-object SampleOverrideTypeProvider {
 
-  class setProperty extends StaticAnnotation {
-    def macroTransform(annottees: Any*): Any = macro setPropertyImpl
+class Country(val data: String) extends AnyVal
+
+object Country {
+
+  def apply(data: String): Country = {
+    if (!isValid(data)) {
+      throw new IllegalArgumentException("Not valid")
+    }
+    new Country(data)
   }
 
-  def setSystemProperty(): Unit = System.setProperty("override.type.provider",
-    "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
+  def isValid(data: String): Boolean = data.length == 2
 
-  def setPropertyImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    setSystemProperty()
-    annottees.head
+  def parse(data: String): Country = Country(data)
+
+  def stringType: String = "COUNTRY"
+
+  def bigQueryType: String = "STRING"
+
+}
+
+// Internal index to keep track of class mappings this can be done in a number of ways
+object Index {
+  def getIndexCompileTimeTypes(c: blackbox.Context): mutable.Map[c.Type, Class[_]] = {
+    import c.universe._
+    mutable.Map[Type, Class[_]](typeOf[Country] -> classOf[Country])
   }
+
+  def getIndexClass: mutable.Map[String, Class[_]] = {
+    mutable.Map[String, Class[_]](Country.stringType -> classOf[Country])
+  }
+
+  def getIndexRuntimeTypes: mutable.Map[Type, Class[_]] = {
+    mutable.Map[Type, Class[_]](typeOf[Country] -> classOf[Country])
+  }
+
 }
