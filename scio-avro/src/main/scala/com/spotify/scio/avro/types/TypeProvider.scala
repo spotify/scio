@@ -17,6 +17,8 @@
 
 package com.spotify.scio.avro.types
 
+import java.io.InputStream
+import java.net.URL
 import java.nio.channels.Channels
 import java.nio.file.{Path, Paths}
 
@@ -36,6 +38,7 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.reflect.macros._
+import scala.util.Try
 
 // scalastyle:off line.size.limit
 private[types] object TypeProvider {
@@ -53,17 +56,25 @@ private[types] object TypeProvider {
 
   def schemaFileImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     val file = extractStrings(c, "Missing file").head.trim.replaceAll("\n", "")
+    val fileInputStream = Try(readFromFileSystem(file))
+      .recover { case _: Throwable => readFromUrl(file) }
+    if (fileInputStream.isFailure) {
+      throw new RuntimeException(s"Error reading schema file $file")
+    }
+    val schema = new Schema.Parser().parse(fileInputStream.get)
+    schemaToType(c)(schema, annottees)
+  }
 
+  private def readFromFileSystem(file: String): InputStream = {
     val files = FileSystems.`match`(file)
     assume(files.metadata().size() == 1,
       s"File argument '$file' must match exactly one file. " +
         s"We've matched ${files.metadata().size()} files.")
-    val fileInputStream =
-      Channels.newInputStream(FileSystems.open(files.metadata().get(0).resourceId()))
-
-    val schema = new Schema.Parser().parse(fileInputStream)
-    schemaToType(c)(schema, annottees)
+    Channels.newInputStream(FileSystems.open(files.metadata().get(0).resourceId()))
   }
+
+  private def readFromUrl(file: String): InputStream =
+    new URL(file).openStream()
 
   def pathImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     val path = extractStrings(c, "Missing path").head

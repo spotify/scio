@@ -19,7 +19,7 @@ package com.spotify.scio.pubsub
 
 import com.google.pubsub.v1.PublisherGrpc.PublisherBlockingStub
 import com.google.pubsub.v1.SubscriberGrpc.SubscriberBlockingStub
-import com.google.pubsub.v1.{PublisherGrpc, SubscriberGrpc, Subscription, Topic}
+import com.google.pubsub.v1.{GetTopicRequest, PublisherGrpc, SubscriberGrpc, Subscription, Topic}
 import io.grpc.ManagedChannel
 import io.grpc.auth.MoreCallCredentials
 import io.grpc.netty.{GrpcSslContexts, NegotiationType, NettyChannelBuilder}
@@ -71,6 +71,18 @@ object PubSubAdmin {
     GrpcClient.publisher(pubsubOptions) { client =>
       val topic = Topic.newBuilder().setName(name).build()
       client.createTopic(topic)
+    }
+
+  /**
+   * Get the configuration of a topic.
+   *
+   * @param name Topic path. Needs to follow `projects/projectId/topics/topicName`
+   * @return
+   */
+  def topic(pubsubOptions: PubsubOptions, name: String): Try[Topic] =
+    GrpcClient.publisher(pubsubOptions) { client =>
+      val topicRequest = GetTopicRequest.newBuilder().setTopic(name).build()
+      client.getTopic(topicRequest)
     }
 
   /**

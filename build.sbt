@@ -37,7 +37,7 @@ val commonsMath3Version = "3.6.1"
 val commonsPoolVersion = "2.5.0"
 val elasticsearch2Version = "2.1.0"
 val elasticsearch5Version = "5.5.0"
-val featranVersion = "0.1.26"
+val featranVersion = "0.1.27"
 val gcsConnectorVersion = "1.6.3-hadoop2"
 val gcsVersion = "1.8.0"
 val guavaVersion = "20.0"
@@ -65,7 +65,7 @@ val shapelessDatatypeVersion = "0.1.9"
 val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.3.0"
 val tensorFlowVersion = "1.8.0"
-val zoltarVersion = "0.3.1"
+val zoltarVersion = "0.4.0"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
@@ -96,6 +96,8 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
 
   // protobuf-lite is an older subset of protobuf-java and causes issues
   excludeDependencies += "com.google.protobuf" % "protobuf-lite",
+  // hamcrest-core overlaps with hamcrest-all and causes issues in IntelliJ
+  excludeDependencies += "org.hamcrest" % "hamcrest-core",
 
   resolvers += Resolver.sonatypeRepo("public"),
 
@@ -168,7 +170,15 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
 ) ++ mimaSettings
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
-  scalastyleSources in Compile ++= (unmanagedSourceDirectories in IntegrationTest).value
+  scalastyleSources in Compile ++= (unmanagedSourceDirectories in IntegrationTest).value,
+  // exclude all sources if we don't have GCP credentials
+  (excludeFilter in unmanagedSources) in IntegrationTest := {
+    if (BuildCredentials.exists) {
+      HiddenFileFilter
+    } else {
+      HiddenFileFilter || "*.scala"
+    }
+  }
 )
 
 lazy val noPublishSettings = Seq(
@@ -394,7 +404,7 @@ lazy val scioCassandra2: Project = Project(
 ).settings(
   commonSettings ++ itSettings,
   description := "Scio add-on for Apache Cassandra 2.x",
-  scalaSource in Compile := (baseDirectory in ThisBuild).value / "scio-cassandra3/src/main/scala",
+  scalaSource in Compile := ((scalaSource in Compile) in scioCassandra3).value,
   libraryDependencies ++= Seq(
     "com.datastax.cassandra" % "cassandra-driver-core" % "2.1.10.3",
     "org.apache.cassandra" % "cassandra-all" % "2.0.17",
@@ -506,11 +516,20 @@ lazy val scioJdbc: Project = Project(
   scioTest % "test"
 )
 
+val ensureSourceManaged = taskKey[Unit]("ensureSourceManaged")
+
 lazy val scioParquet: Project = Project(
   "scio-parquet",
   file("scio-parquet")
 ).settings(
   commonSettings,
+  // change annotation processor output directory so IntelliJ can pick them up
+  ensureSourceManaged := IO.createDirectory(sourceManaged.value / "main"),
+  (compile in Compile) := Def.task {
+    ensureSourceManaged.value
+    (compile in Compile).value
+  }.value,
+  javacOptions ++= Seq("-s", (sourceManaged.value / "main").toString),
   description := "Scio add-on for Parquet",
   libraryDependencies ++= Seq(
     "me.lyh" %% "parquet-avro-extra" % parquetAvroExtraVersion,
@@ -532,9 +551,6 @@ lazy val scioTensorFlow: Project = Project(
 ).settings(
   commonSettings,
   description := "Scio add-on for TensorFlow",
-  dependencyOverrides ++= Seq(
-    "com.google.apis" % "google-api-services-storage" % "v1-rev131-1.22.0"
-  ),
   libraryDependencies ++= Seq(
     "org.tensorflow" % "tensorflow" % tensorFlowVersion,
     "org.tensorflow" % "proto" % tensorFlowVersion,
@@ -542,8 +558,11 @@ lazy val scioTensorFlow: Project = Project(
     "com.spotify" %% "featran-core" % featranVersion,
     "com.spotify" %% "featran-scio" % featranVersion,
     "com.spotify" %% "featran-tensorflow" % featranVersion,
-    "com.spotify" % "zoltar-api" % zoltarVersion,
-    "com.spotify" % "zoltar-tensorflow" % zoltarVersion
+    // exclude and explicitly include 'google-api-services-storage' to make sure the right dep is
+    // considered when including 'scio-tensorflow'
+    "com.spotify" % "zoltar-api" % zoltarVersion exclude("com.google.apis", "google-api-services-storage"),
+    "com.spotify" % "zoltar-tensorflow" % zoltarVersion,
+    "com.google.apis" % "google-api-services-storage" % "v1-rev131-1.22.0"
   ),
   libraryDependencies ++= Seq(
     "io.circe" %% "circe-core",
@@ -595,6 +614,14 @@ lazy val scioExamples: Project = Project(
     "org.mockito" % "mockito-all" % mockitoVersion % "test"
   ),
   addCompilerPlugin(paradiseDependency),
+  // exclude problematic sources if we don't have GCP credentials
+  excludeFilter in unmanagedSources := {
+    if (BuildCredentials.exists) {
+      HiddenFileFilter
+    } else {
+      HiddenFileFilter || "TypedBigQueryTornadoes*.scala"
+    }
+  },
   sources in doc in Compile := List()
 ).dependsOn(
   scioCore,
