@@ -37,8 +37,6 @@ import org.scalatest.matchers.{MatchResult, Matcher}
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
-import com.spotify.scio.coders.serializers._
-
 class KryoAtomicCoderTest extends PipelineSpec {
 
   import com.spotify.scio.testing.TestingUtils._
