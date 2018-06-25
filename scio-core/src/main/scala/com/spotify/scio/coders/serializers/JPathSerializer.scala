@@ -23,7 +23,7 @@ import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.twitter.chill.KSerializer
 
-private class JPathSerializer extends KSerializer[Path] {
+private[coders] class JPathSerializer extends KSerializer[Path] {
   override def read(kryo: Kryo, input: Input, tpe: Class[Path]): Path =
     Paths.get(input.readString())
 

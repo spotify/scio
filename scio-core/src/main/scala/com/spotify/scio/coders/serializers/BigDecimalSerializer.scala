@@ -23,7 +23,7 @@ import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.twitter.chill.KSerializer
 
-private class BigDecimalSerializer extends KSerializer[BigDecimal] {
+private[coders] class BigDecimalSerializer extends KSerializer[BigDecimal] {
   override def read(kryo: Kryo, input: Input, cls: Class[BigDecimal]): BigDecimal = {
     val jBigDec = kryo.readClassAndObject(input).asInstanceOf[JBigDecimal]
     BigDecimal(jBigDec)

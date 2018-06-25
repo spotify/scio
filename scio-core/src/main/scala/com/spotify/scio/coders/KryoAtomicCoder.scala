@@ -88,15 +88,18 @@ private object KryoRegistrarLoader {
 }
 
 
-private object KryoSerializerLoader {
+/** serializers we've written in Scio and want to add to Kryo serialization
+  * @see com.spotify.scio.coders.serializers */
+private object ScioKryoRegistrar extends IKryoRegistrar {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  def load(k: Kryo): Unit = {
-    logger.debug("Loading KryoSerializers: " + serializers.mkString(", "))
-    serializers.foreach(k.forClass(_))
-    // some custom ones unfortunately
-
+  def apply(k: Kryo): Unit = {
+    logger.debug("Loading common Kryo serializers...")
+    k.forClass(new CoderSerializer(InstantCoder.of()))
+    k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
+    // Java Iterable/Collection are missing proper equality check, use custom CBF as a
+    // workaround
     k.register(classOf[Wrappers.JIterableWrapper[_]],
                new JTraversableSerializer[Any, Iterable[Any]]()(new JIterableWrapperCBF[Any]))
     k.register(classOf[Wrappers.JCollectionWrapper[_]],
@@ -105,36 +108,20 @@ private object KryoSerializerLoader {
     // as regular Scala collections as a workaround
     k.register(classOf[Wrappers.JListWrapper[_]],
                new JTraversableSerializer[Any, mutable.Buffer[Any]])
-
-
-    k.forClass(new CoderSerializer(InstantCoder.of()))
-    k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
+    k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
+    k.forSubclass[GenericRecord](new GenericAvroSerializer)
+    k.forSubclass[Message](new ProtobufSerializer)
+    k.forSubclass[LocalDate](new JodaLocalDateSerializer)
+    k.forSubclass[LocalTime](new JodaLocalTimeSerializer)
+    k.forSubclass[LocalDateTime](new JodaLocalDateTimeSerializer)
+    k.forSubclass[DateTime](new JodaDateTimeSerializer)
+    k.forSubclass[Path](new JPathSerializer)
+    k.forSubclass[ByteString](new ByteStringSerializer)
+    k.forClass(new BigDecimalSerializer)
+    k.forClass(new KVSerializer)
+    // TODO:
+    // TimestampedValueCoder
   }
-
-  private val serializers: Seq[KSerializer[_]] = {
-    logger.debug("Initializing KryoSerializers")
-    val classLoader = Thread.currentThread().getContextClassLoader
-    ClassPath
-      .from(classLoader)
-      .getAllClasses
-      .asScala
-      .toSeq
-      .filter(_.getName.endsWith("Serializer"))
-      .flatMap { clsInfo =>
-        val optCls: Option[KSerializer[_]] = try {
-          val cls = clsInfo.load()
-          if (classOf[KSerializer[_]] isAssignableFrom cls) {
-            Some(cls.newInstance().asInstanceOf[KSerializer[_]])
-          } else {
-            None
-          }
-        } catch {
-          case _: Throwable => None
-        }
-        optCls
-      }
-  }
-
 }
 
 private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends AtomicCoder[T] {
@@ -286,36 +273,7 @@ private[scio] object KryoAtomicCoder {
     val factory = KryStatePoolFactory(() => {
       val k = KryoSerializer.registered.newKryo()
 
-      // register all the serializers to the new kryo instance
-      KryoSerializerLoader.load(k)
-//
-//      k.forClass(new CoderSerializer(InstantCoder.of()))
-//      k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
-//      // Java Iterable/Collection are missing proper equality check, use custom CBF as a
-//      // workaround
-//      k.register(classOf[Wrappers.JIterableWrapper[_]],
-//                 new JTraversableSerializer[Any, Iterable[Any]]()(new JIterableWrapperCBF[Any]))
-//      k.register(classOf[Wrappers.JCollectionWrapper[_]],
-//                 new JTraversableSerializer[Any, Iterable[Any]]()(new JCollectionWrapperCBF[Any]))
-//      // Wrapped Java collections may have immutable implementations, i.e. Guava, treat them
-//      // as regular Scala collections as a workaround
-//      k.register(classOf[Wrappers.JListWrapper[_]],
-//                 new JTraversableSerializer[Any, mutable.Buffer[Any]])
-//      k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
-//      k.forSubclass[GenericRecord](new GenericAvroSerializer)
-//      k.forSubclass[Message](new ProtobufSerializer)
-//      k.forSubclass[LocalDate](new JodaLocalDateSerializer)
-//      k.forSubclass[LocalTime](new JodaLocalTimeSerializer)
-//      k.forSubclass[LocalDateTime](new JodaLocalDateTimeSerializer)
-//      k.forSubclass[DateTime](new JodaDateTimeSerializer)
-//      k.forSubclass[Path](new JPathSerializer)
-//      k.forSubclass[ByteString](new ByteStringSerializer)
-//      k.forClass(new BigDecimalSerializer)
-//      k.forClass(new KVSerializer)
-
-      // TODO:
-      // TimestampedValueCoder
-
+      ScioKryoRegistrar(k)
       new AlgebirdRegistrar()(k)
       KryoRegistrarLoader.load(k)
 

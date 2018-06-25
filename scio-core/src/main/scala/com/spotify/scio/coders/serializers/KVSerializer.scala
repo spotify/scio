@@ -22,7 +22,7 @@ import com.esotericsoftware.kryo.io.{Input, Output}
 import com.twitter.chill.KSerializer
 import org.apache.beam.sdk.values.KV
 
-private class KVSerializer[K, V] extends KSerializer[KV[K, V]] {
+private[coders] class KVSerializer[K, V] extends KSerializer[KV[K, V]] {
 
   override def write(kser: Kryo, out: Output, obj: KV[K, V]): Unit = {
     kser.writeClassAndObject(out, obj.getKey)

@@ -22,7 +22,7 @@ import com.esotericsoftware.kryo.io.{Input, Output}
 import com.google.protobuf.ByteString
 import com.twitter.chill.KSerializer
 
-private class ByteStringSerializer extends KSerializer[ByteString] {
+private[coders] class ByteStringSerializer extends KSerializer[ByteString] {
   override def read(kryo: Kryo, input: Input, tpe: Class[ByteString]): ByteString = {
     val n = input.readInt()
     ByteString.copyFrom(input.readBytes(n))
