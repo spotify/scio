@@ -19,7 +19,7 @@ package com.spotify.scio.coders.serializers
 
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
-import org.joda.time._
+import org.joda.time.{LocalDate, LocalDateTime, LocalTime, DateTime, DateTimeZone}
 import org.joda.time.chrono.ISOChronology
 
 private class JodaLocalDateTimeSerializer extends Serializer[LocalDateTime] {

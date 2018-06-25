@@ -18,7 +18,7 @@
 package com.spotify.scio.coders.serializers
 
 import com.spotify.scio.coders.{CoderTestUtils, KryoAtomicCoder, KryoOptions}
-import org.joda.time._
+import org.joda.time.{LocalDate, LocalDateTime, LocalTime, DateTime, DateTimeZone}
 import org.scalacheck._
 import org.scalatest._
 import org.scalatest.prop.Checkers
