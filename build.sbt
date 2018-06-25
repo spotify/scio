@@ -166,7 +166,8 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
     val bootClasspath = System.getProperty("sun.boot.class.path").split(sys.props("path.separator")).map(file(_))
     val jdkMapping = Map(bootClasspath.find(_.getPath.endsWith("rt.jar")).get -> url("http://docs.oracle.com/javase/8/docs/api/"))
     docMappings.flatMap((mappingFn _).tupled).toMap ++ jdkMapping
-  }
+  },
+  conflictManager := ConflictManager.latestTime,
 ) ++ mimaSettings
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
