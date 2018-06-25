@@ -29,7 +29,8 @@ import scala.collection.mutable
  * Based on [[org.apache.beam.sdk.coders.IterableLikeCoder]] and
  * [[org.apache.beam.sdk.util.BufferedElementCountingOutputStream]].
  */
-class JTraversableSerializer[T, C <: Traversable[T]](val bufferSize: Int = 64 * 1024)
+private[coders] class JTraversableSerializer[T, C <: Traversable[T]]
+(val bufferSize: Int = 64 * 1024)
 (implicit cbf: CanBuildFrom[C, T, C])
   extends KSerializer[C] {
 
@@ -57,7 +58,7 @@ class JTraversableSerializer[T, C <: Traversable[T]](val bufferSize: Int = 64 * 
 }
 
 // workaround for Java Iterable/Collection missing proper equality check
-abstract class JWrapperCBF[T] extends CanBuildFrom[Iterable[T], T, Iterable[T]] {
+private[coders] abstract class JWrapperCBF[T] extends CanBuildFrom[Iterable[T], T, Iterable[T]] {
   override def apply(from: Iterable[T]): mutable.Builder[T, Iterable[T]] = {
     val b = new JIterableWrapperBuilder
     from.foreach(b += _)
@@ -79,12 +80,12 @@ abstract class JWrapperCBF[T] extends CanBuildFrom[Iterable[T], T, Iterable[T]] 
   }
 }
 
-class JIterableWrapperCBF[T] extends JWrapperCBF[T] {
+private[coders] class JIterableWrapperCBF[T] extends JWrapperCBF[T] {
   override def asScala(xs: java.util.List[T]): Iterable[T] =
     xs.asInstanceOf[java.lang.Iterable[T]].asScala
 }
 
-class JCollectionWrapperCBF[T] extends JWrapperCBF[T] {
+private[coders] class JCollectionWrapperCBF[T] extends JWrapperCBF[T] {
   override def asScala(xs: java.util.List[T]): Iterable[T] =
     xs.asInstanceOf[java.util.Collection[T]].asScala
 }

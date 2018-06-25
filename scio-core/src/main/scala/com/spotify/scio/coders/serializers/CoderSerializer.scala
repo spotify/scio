@@ -23,7 +23,7 @@ import com.twitter.chill.KSerializer
 import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.util.CoderUtils
 
-class CoderSerializer[T](private val coder: Coder[T]) extends KSerializer[T] {
+private[coders] class CoderSerializer[T](private val coder: Coder[T]) extends KSerializer[T] {
 
   override def write(kser: Kryo, out: Output, obj: T): Unit = {
     val bytes = CoderUtils.encodeToByteArray(coder, obj)
