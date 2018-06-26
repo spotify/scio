@@ -404,7 +404,6 @@ lazy val scioCassandra2: Project = Project(
 ).settings(
   commonSettings ++ itSettings,
   description := "Scio add-on for Apache Cassandra 2.x",
-  scalaSource in Compile := ((scalaSource in Compile) in scioCassandra3).value,
   libraryDependencies ++= Seq(
     "com.datastax.cassandra" % "cassandra-driver-core" % "2.1.10.3",
     "org.apache.cassandra" % "cassandra-all" % "2.0.17",
