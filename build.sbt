@@ -323,6 +323,7 @@ lazy val scioTest: Project = Project(
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "it",
+    "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test",
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
     "org.scalatest" %% "scalatest" % scalatestVersion,
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
