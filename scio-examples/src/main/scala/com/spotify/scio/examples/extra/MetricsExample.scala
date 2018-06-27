@@ -95,19 +95,19 @@ object MetricsExample {
     require(c == 100)
 
     val g = result.gauge(gauge).committed.get
-    println("gauge timestamp: " + g.timestamp())
-    println("gauge value: " + g.value())
+    println("gauge timestamp: " + g.getTimestamp)
+    println("gauge value: " + g.getValue)
 
     val d = result.distribution(dist).committed.get
-    println("dist min: " + d.min())
-    println("dist max: " + d.max())
-    println("dist count: " + d.count())
-    println("dist sum: " + d.sum())
-    println("dist mean: " + d.mean())
-    require(d.min() == 1 && d.max() == 100)
-    require(d.count() == 100)
-    require(d.sum() == (1 to 100).sum)
-    require(d.mean() == (1 to 100).sum / 100.0)
+    println("dist min: " + d.getMin)
+    println("dist max: " + d.getMax)
+    println("dist count: " + d.getCount)
+    println("dist sum: " + d.getSum)
+    println("dist mean: " + d.getMean)
+    require(d.getMin == 1 && d.getMax == 100)
+    require(d.getCount == 100)
+    require(d.getSum == (1 to 100).sum)
+    require(d.getMean == (1 to 100).sum / 100.0)
 
     // Dynamic metrics
     result.allCounters
