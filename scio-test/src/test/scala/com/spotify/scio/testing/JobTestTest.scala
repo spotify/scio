@@ -769,15 +769,15 @@ class JobTestTest extends PipelineSpec {
     JobTest[MetricsJob.type]
       .counter(MetricsJob.counter)(_ shouldBe 10)
       .distribution(MetricsJob.distribution) { d =>
-        d.count() shouldBe 10
-        d.min() shouldBe 1
-        d.max() shouldBe 10
-        d.sum() shouldBe 55
-        d.mean() shouldBe 5.5
+        d.getCount shouldBe 10
+        d.getMin shouldBe 1
+        d.getMax shouldBe 10
+        d.getSum shouldBe 55
+        d.getMean shouldBe 5.5
       }
       .gauge(MetricsJob.gauge) { g =>
-        g.value() should be >= 1L
-        g.value() should be <= 10L
+        g.getValue should be >= 1L
+        g.getValue should be <= 10L
       }
       .run()
   }
@@ -793,7 +793,7 @@ class JobTestTest extends PipelineSpec {
   it should "fail incorrect distribution test" in {
     the [TestFailedException] thrownBy {
       JobTest[MetricsJob.type]
-        .distribution(MetricsJob.distribution)(_.max() shouldBe 100)
+        .distribution(MetricsJob.distribution)(_.getMax shouldBe 100)
         .run()
     } should have message "10 was not equal to 100"
   }
@@ -801,7 +801,7 @@ class JobTestTest extends PipelineSpec {
   it should "fail incorrect gauge test" in {
     val e = the [TestFailedException] thrownBy {
       JobTest[MetricsJob.type]
-        .gauge(MetricsJob.gauge)(_.value() should be >= 100L)
+        .gauge(MetricsJob.gauge)(_.getValue should be >= 100L)
         .run()
     }
     e.getMessage should endWith (" was not greater than or equal to 100")
