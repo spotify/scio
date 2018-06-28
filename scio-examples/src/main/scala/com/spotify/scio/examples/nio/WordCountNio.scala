@@ -80,8 +80,8 @@ object WordCountNio {
     val result = sc.close().waitUntilFinish()
 
     // Retrieve metric values
-    logger.info("Max: " + result.distribution(lineDist).committed.map(_.max()))
-    logger.info("Min: " + result.distribution(lineDist).committed.map(_.min()))
+    logger.info("Max: " + result.distribution(lineDist).committed.map(_.getMax))
+    logger.info("Min: " + result.distribution(lineDist).committed.map(_.getMin))
     logger.info("Sum non-empty: " + result.counter(sumNonEmpty).committed)
     logger.info("Sum empty: " + result.counter(sumEmpty).committed)
   }
