@@ -23,6 +23,8 @@ import org.apache.beam.sdk.transforms.DoFn;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link DoFn} that handles asynchronous requests to an external service that returns Java 8
@@ -30,10 +32,13 @@ import java.util.function.Function;
  */
 public abstract class JavaAsyncDoFn<InputT, OutputT, ResourceT>
     extends BaseAsyncDoFn<InputT, OutputT, ResourceT, CompletableFuture<OutputT>> {
+  private Logger logger = LoggerFactory.getLogger(this.getClass());
+
   @SuppressWarnings("unchecked")
   @Override
   protected void waitForFutures(Iterable<CompletableFuture<OutputT>> futures)
       throws InterruptedException, ExecutionException {
+    logger.info(String.format("Futures size: %d", Iterables.size(futures)));
     CompletableFuture.allOf(Iterables.toArray(futures, CompletableFuture.class)).get();
   }
 
