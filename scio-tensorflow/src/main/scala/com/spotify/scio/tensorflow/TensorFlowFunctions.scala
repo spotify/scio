@@ -111,7 +111,7 @@ private[tensorflow] class SavedBundlePredictDoFn[T, V](uri: String,
     getResource
       .computeIfAbsent(uri, _ => Models.tensorFlow(uri, options))
       .get()
-      .thenApply[V](new Function[TensorFlowModel, V] {
+      .thenApplyAsync[V](new Function[TensorFlowModel, V] {
         override def apply(model: TensorFlowModel): V = f(model.instance().session().runner())
       })
       .toCompletableFuture
@@ -144,7 +144,7 @@ private[tensorflow] class GraphPredictDoFn[T, V](uri: String,
         Models.tensorFlowGraph(uri, configOpt.orNull, null)
       })
       .get()
-      .thenApply[V](new Function[TensorFlowGraphModel, V] {
+      .thenApplyAsync[V](new Function[TensorFlowGraphModel, V] {
         override def apply(model: TensorFlowGraphModel): V = f(model.instance().runner())
       })
       .toCompletableFuture
