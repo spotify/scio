@@ -86,7 +86,7 @@ class Args private (private val m: Map[String, List[String]]) extends Serializab
   def apply(key: String): String = required(key)
 
   /** Shortcut for `optional(key).getOrElse(default)`. */
-  def getOrElse(key: String, default: String): String = optional(key).getOrElse(default)
+  def getOrElse(key: String, default: => String): String = optional(key).getOrElse(default)
 
   /** Get the list of values for a given key. */
   def list(key: String): List[String] = m.getOrElse(key, Nil)
