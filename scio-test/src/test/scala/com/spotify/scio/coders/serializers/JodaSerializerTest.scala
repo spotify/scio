@@ -15,14 +15,15 @@
  * under the License.
  */
 
-package com.spotify.scio.coders
+package com.spotify.scio.coders.serializers
 
+import com.spotify.scio.coders.{CoderTestUtils, KryoAtomicCoder, KryoOptions}
 import org.joda.time.{LocalDate, LocalDateTime, LocalTime, DateTime, DateTimeZone}
 import org.scalacheck._
 import org.scalatest._
 import org.scalatest.prop.Checkers
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
 import scala.util.Try
 
 class JodaSerializerTest extends FlatSpec with Checkers {

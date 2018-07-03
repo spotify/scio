@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.coders
+package com.spotify.scio.coders.serializers
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, InputChunked, Output, OutputChunked}
@@ -29,7 +29,8 @@ import scala.collection.mutable
  * Based on [[org.apache.beam.sdk.coders.IterableLikeCoder]] and
  * [[org.apache.beam.sdk.util.BufferedElementCountingOutputStream]].
  */
-private class JTraversableSerializer[T, C <: Traversable[T]](val bufferSize: Int = 64 * 1024)
+private[coders] class JTraversableSerializer[T, C <: Traversable[T]]
+(val bufferSize: Int = 64 * 1024)
 (implicit cbf: CanBuildFrom[C, T, C])
   extends KSerializer[C] {
 
@@ -57,7 +58,7 @@ private class JTraversableSerializer[T, C <: Traversable[T]](val bufferSize: Int
 }
 
 // workaround for Java Iterable/Collection missing proper equality check
-private abstract class JWrapperCBF[T] extends CanBuildFrom[Iterable[T], T, Iterable[T]] {
+private[coders] abstract class JWrapperCBF[T] extends CanBuildFrom[Iterable[T], T, Iterable[T]] {
   override def apply(from: Iterable[T]): mutable.Builder[T, Iterable[T]] = {
     val b = new JIterableWrapperBuilder
     from.foreach(b += _)
@@ -79,12 +80,12 @@ private abstract class JWrapperCBF[T] extends CanBuildFrom[Iterable[T], T, Itera
   }
 }
 
-private class JIterableWrapperCBF[T] extends JWrapperCBF[T] {
+private[coders] class JIterableWrapperCBF[T] extends JWrapperCBF[T] {
   override def asScala(xs: java.util.List[T]): Iterable[T] =
     xs.asInstanceOf[java.lang.Iterable[T]].asScala
 }
 
-private class JCollectionWrapperCBF[T] extends JWrapperCBF[T] {
+private[coders] class JCollectionWrapperCBF[T] extends JWrapperCBF[T] {
   override def asScala(xs: java.util.List[T]): Iterable[T] =
     xs.asInstanceOf[java.util.Collection[T]].asScala
 }

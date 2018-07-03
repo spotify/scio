@@ -15,14 +15,14 @@
  * under the License.
  */
 
-package com.spotify.scio.coders
+package com.spotify.scio.coders.serializers
 
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
 import org.joda.time.{LocalDate, LocalDateTime, LocalTime, DateTime, DateTimeZone}
 import org.joda.time.chrono.ISOChronology
 
-private class JodaLocalDateTimeSerializer extends Serializer[LocalDateTime] {
+private[coders] class JodaLocalDateTimeSerializer extends Serializer[LocalDateTime] {
   setImmutable(true)
 
   def write(kryo: Kryo, output: Output, ldt: LocalDateTime): Unit = {
@@ -52,7 +52,7 @@ private class JodaLocalDateTimeSerializer extends Serializer[LocalDateTime] {
   }
 }
 
-private class JodaLocalTimeSerializer extends Serializer[LocalTime] {
+private[coders] class JodaLocalTimeSerializer extends Serializer[LocalTime] {
   setImmutable(true)
 
   def write(kryo: Kryo, output: Output, lt: LocalTime): Unit = {
@@ -70,7 +70,7 @@ private class JodaLocalTimeSerializer extends Serializer[LocalTime] {
 }
 
 
-private class JodaLocalDateSerializer extends Serializer[LocalDate] {
+private[coders] class JodaLocalDateSerializer extends Serializer[LocalDate] {
   setImmutable(true)
 
   def write(kryo: Kryo, output: Output, ld: LocalDate): Unit = {
@@ -93,7 +93,7 @@ private class JodaLocalDateSerializer extends Serializer[LocalDate] {
   }
 }
 
-private class JodaDateTimeSerializer extends Serializer[DateTime] {
+private[coders] class JodaDateTimeSerializer extends Serializer[DateTime] {
   setImmutable(true)
 
   def write(kryo: Kryo, output: Output, dt: DateTime): Unit = {

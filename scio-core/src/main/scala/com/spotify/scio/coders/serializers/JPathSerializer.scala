@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2017 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,18 @@
  * under the License.
  */
 
-package com.spotify.scio.coders
+package com.spotify.scio.coders.serializers
+
+import java.nio.file.{Path, Paths}
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
-import com.google.protobuf.ByteString
 import com.twitter.chill.KSerializer
 
-private class ByteStringSerializer extends KSerializer[ByteString] {
-  override def read(kryo: Kryo, input: Input, tpe: Class[ByteString]): ByteString = {
-    val n = input.readInt()
-    ByteString.copyFrom(input.readBytes(n))
-  }
+private[coders] class JPathSerializer extends KSerializer[Path] {
+  override def read(kryo: Kryo, input: Input, tpe: Class[Path]): Path =
+    Paths.get(input.readString())
 
-
-  override def write(kryo: Kryo, output: Output, byteStr: ByteString): Unit = {
-    val len = byteStr.size
-    output.writeInt(len)
-    val bytes = byteStr.iterator
-    while (bytes.hasNext) {
-      output.write(bytes.nextByte())
-    }
-  }
+  override def write(kryo: Kryo, output: Output, path: Path): Unit =
+    output.writeString(path.toString)
 }
