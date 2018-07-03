@@ -101,7 +101,7 @@ public class UserScore {
       return this.score;
     }
     public String getKey(String keyname) {
-      if (keyname.equals("team")) {
+      if ("team".equals(keyname)) {
         return this.team;
       } else {  // return username as default
         return this.user;
@@ -128,7 +128,8 @@ public class UserScore {
 
     @ProcessElement
     public void processElement(ProcessContext c) {
-      String[] components = c.element().split(",");
+      System.out.println("GOT " + c.element());
+      String[] components = c.element().split(",", -1);
       try {
         String user = components[0].trim();
         String team = components[1].trim();
