@@ -52,7 +52,6 @@ val junitInterfaceVersion = "0.11"
 val junitVersion = "4.12"
 val kantanCsvVersion = "0.4.0"
 val kryoVersion = "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
-val mockitoVersion = "1.10.19"
 val parquetAvroExtraVersion = "0.2.2"
 val parquetVersion = "1.9.0"
 val protobufGenericVersion = "0.2.4"
@@ -96,8 +95,6 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
 
   // protobuf-lite is an older subset of protobuf-java and causes issues
   excludeDependencies += "com.google.protobuf" % "protobuf-lite",
-  // hamcrest-core overlaps with hamcrest-all and causes issues in IntelliJ
-  excludeDependencies += "org.hamcrest" % "hamcrest-core",
 
   resolvers += Resolver.sonatypeRepo("public"),
 
@@ -610,8 +607,7 @@ lazy val scioExamples: Project = Project(
     "mysql" % "mysql-connector-java" % "5.1.+",
     "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.2",
     "org.slf4j" % "slf4j-simple" % slf4jVersion,
-    "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
-    "org.mockito" % "mockito-all" % mockitoVersion % "test"
+    "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
   ),
   addCompilerPlugin(paradiseDependency),
   // exclude problematic sources if we don't have GCP credentials
