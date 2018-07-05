@@ -30,12 +30,18 @@ object MetadataSchemaTest {
   val e1Features = Map[String, Feature](
     "long" -> longFeature(Seq(1, 2, 3)),
     "bytes" -> byteStrFeature(Seq("a", "b", "c").map(ByteString.copyFromUtf8)),
-    "floats" -> floatFeature(Seq(1.0f, 2.0f, 3.0f))
+    "floats" -> floatFeature(Seq(1.0f, 2.0f, 3.0f)),
+    "indices" -> longFeature(Seq(1, 9)),
+    "values" -> byteStrFeature(Seq("one", "nine").map(ByteString.copyFromUtf8)),
+    "dense_shape" -> longFeature(Seq(100))
   )
   val e2Features = Map[String, Feature](
     "long" -> longFeature(Seq(6)),
     "bytes" -> byteStrFeature(Seq("d", "e", "f").map(ByteString.copyFromUtf8)),
-    "floats" -> floatFeature(Seq(4.0f, 5.0f))
+    "floats" -> floatFeature(Seq(4.0f, 5.0f)),
+    "indices" -> longFeature(Seq(1, 2, 80)),
+    "values" -> byteStrFeature(Seq("one", "two", "eighty").map(ByteString.copyFromUtf8)),
+    "dense_shape" -> longFeature(Seq(100))
   )
 
   val examples = Seq(e1Features, e2Features).map(mkExample)
@@ -53,6 +59,18 @@ object MetadataSchemaTest {
       .setName("floats")
       .setType(FeatureType.FLOAT)
       .setValueCount(ValueCount.newBuilder().setMin(2).setMax(3)))
+    .addFeature(MFeature.newBuilder()
+      .setName("indices")
+      .setType(FeatureType.INT)
+      .setValueCount(ValueCount.newBuilder().setMin(2).setMax(3)))
+    .addFeature(MFeature.newBuilder()
+      .setName("values")
+      .setType(FeatureType.BYTES)
+      .setValueCount(ValueCount.newBuilder().setMin(2).setMax(3)))
+    .addFeature(MFeature.newBuilder()
+      .setName("dense_shape")
+      .setType(FeatureType.INT)
+      .setShape(FixedShape.newBuilder().addDim(FixedShape.Dim.newBuilder().setSize(1))))
     .build()
 
   private def longFeature(raw: Seq[Long]): Feature = {
@@ -90,8 +108,7 @@ class MetadataSchemaTest extends PipelineSpec {
 
   "Saving example schema" should "work" in {
     runWithContext { sc =>
-      val schema = sc.parallelize(examples)
-        .buildExampleMetadata
+      val schema = sc.parallelize(examples).inferExampleMetadata
       schema should satisfy[Schema] { schema =>
         val actualFeatures = schema.head.getFeatureList.asScala.toSet
         val expectedFeatures = expectedSchema.getFeatureList.asScala.toSet
