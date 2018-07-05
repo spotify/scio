@@ -22,7 +22,12 @@ import scala.util.control.NonFatal
 
 /** Common finder for the proper [[OverrideTypeProvider]]. */
 object OverrideTypeProviderFinder {
-  private val instance = {
+
+  var typeProvider: String = System.getProperty("override.type.provider", "")
+
+  var provider: OverrideTypeProvider = instance()
+
+  def instance(): OverrideTypeProvider = {
     // Load the class dynamically at compile time and runtime
     val classInstance = Try(Class.forName(System.getProperty("override.type.provider", ""))
       .newInstance()
@@ -33,5 +38,12 @@ object OverrideTypeProviderFinder {
     }
   }
 
-  def getProvider: OverrideTypeProvider = instance
+  def getProvider: OverrideTypeProvider = {
+    val thisInstance = System.getProperty("override.type.provider", "")
+    if (typeProvider != thisInstance) {
+      typeProvider = thisInstance
+      provider = instance()
+    }
+    provider
+  }
 }
