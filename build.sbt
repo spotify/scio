@@ -404,10 +404,7 @@ lazy val scioBigQuery: Project = Project(
     "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test,it",
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test,it",
     "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
-  ),
-  (initialize in Test) ~= { _ =>
-    System.setProperty("override.type.provider", "com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider")
-  }
+  )
 ).dependsOn(
   scioCore % "compile,it->it",
   scioTest % "compile,test->test,it->test"
