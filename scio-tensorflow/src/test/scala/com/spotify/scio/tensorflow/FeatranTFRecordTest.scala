@@ -22,8 +22,10 @@ import com.spotify.featran.tensorflow._
 import com.spotify.featran.transformers.Identity
 import com.spotify.featran.{FeatureSpec, MultiFeatureSpec}
 import com.spotify.scio._
-import com.spotify.scio.testing.{PipelineSpec, TextIO}
+import com.spotify.scio.testing.{PipelineSpec, ProtobufIO, TextIO}
+import org.apache.beam.sdk.io.Compression
 import org.tensorflow.example.Example
+import org.tensorflow.metadata.v0.{FixedShape, Schema, SparseFeature}
 import org.tensorflow.{example => tf}
 
 case class TrainingPoint(x1: Double, label: Double)
@@ -55,10 +57,8 @@ object FeatureSpecJob {
 }
 
 object MultiSpecJob {
-
   def main(argv: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(argv)
-
     val features = FeatureSpec.of[TrainingPoint]
       .required(_.x1)(Identity("x1"))
 
@@ -78,7 +78,40 @@ object MultiSpecJob {
 
     train.saveAsTfExampleFile(args("output") + "/train", dataset)
     test.saveAsTfExampleFile(args("output") + "/test", dataset)
+    sc.close()
+  }
+}
 
+object ExamplesJobV2 {
+  def main(argv: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(argv)
+    sc.parallelize(MetadataSchemaTest.examples)
+      .saveAsTfExampleFile(args("output"))
+    sc.close()
+  }
+}
+
+object ExamplesJobV2WithCustomSchema {
+  def addSparseInfo(schema: Schema): Schema =
+    schema.toBuilder.addSparseFeature(
+      SparseFeature.newBuilder
+        .setName("sparseFeature")
+        .setDenseShape(FixedShape.newBuilder.addDim(FixedShape.Dim.newBuilder().setSize(1)))
+        .setValueFeature(SparseFeature.ValueFeature.newBuilder.setName("values"))
+        .addIndexFeature(SparseFeature.IndexFeature.newBuilder.setName("indices")
+        )).build()
+
+  def main(argv: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(argv)
+    val examples = sc.parallelize(MetadataSchemaTest.examples)
+    val schema = examples.inferExampleMetadata
+    examples.saveAsTfExampleFile(
+      args("output"),
+      schema=schema.map(addSparseInfo),
+      schemaFilename = "_schema.pb",
+      suffix = ".tfrecords",
+      compression = Compression.UNCOMPRESSED,
+      numShards = 0)
     sc.close()
   }
 }
@@ -129,6 +162,28 @@ class FeatranTFRecordTest extends PipelineSpec {
     FeatranTFRecordSpec.normalizeName("foo-bar") shouldBe "foo_bar"
     FeatranTFRecordSpec.normalizeName("Foo-Bar") shouldBe "Foo_Bar"
     FeatranTFRecordSpec.normalizeName("foo.bar-baz ala &33*(") shouldBe "foo_bar_baz_ala__33__"
+  }
+
+  "ExamplesJobV2" should "work" in {
+    import scala.collection.JavaConverters._
+    JobTest[ExamplesJobV2.type]
+      .args("--output=out")
+      .output(TFExampleIO("out"))(_ should satisfy[Example](_.size == 2))
+      .output(ProtobufIO[Schema]("out/_schema.pb"))(_.flatMap(_.getFeatureList.asScala)
+        should containInAnyOrder(MetadataSchemaTest.expectedSchema.getFeatureList.asScala))
+      .run()
+  }
+
+  "ExamplesJobV2WithCustomSchema" should "work" in {
+    import scala.collection.JavaConverters._
+    val expectedSchama = ExamplesJobV2WithCustomSchema
+      .addSparseInfo(MetadataSchemaTest.expectedSchema)
+    JobTest[ExamplesJobV2WithCustomSchema.type]
+      .args("--output=out")
+      .output(TFExampleIO("out"))(_ should satisfy[Example](_.size == 2))
+      .output(ProtobufIO[Schema]("out/_schema.pb"))(_.flatMap(_.getFeatureList.asScala)
+        should containInAnyOrder(expectedSchama.getFeatureList.asScala))
+      .run()
   }
 
 }

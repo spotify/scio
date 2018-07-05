@@ -24,8 +24,8 @@ import java.util.function.{Consumer, Function}
 
 import com.google.common.base.Charsets
 import com.spotify.featran.{FeatureExtractor, MultiFeatureExtractor}
-import com.spotify.scio.io.{Tap, TextTap}
-import com.spotify.scio.testing.TextIO
+import com.spotify.scio.io.{Tap, Taps, TextTap}
+import com.spotify.scio.testing.{ProtobufIO, TextIO}
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.transforms.{DoFnWithResource, JavaAsyncDoFn}
 import com.spotify.scio.util.ScioUtil
@@ -35,6 +35,8 @@ import com.spotify.zoltar.{Model, ModelLoader, Models}
 import io.circe.generic.auto._
 import io.circe.syntax._
 import javax.annotation.Nullable
+
+import com.twitter.algebird.{Aggregator, MultiAggregator}
 import org.apache.beam.sdk.io.{Compression, FileSystems}
 import org.apache.beam.sdk.transforms.DoFn.Teardown
 import org.apache.beam.sdk.util.MimeTypes
@@ -283,20 +285,42 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
   /**
    * Save this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file,
    * along with a protobuf file representing the inferred `org.tensorflow.metadata.v0.Schema`.
+   * If you need to alter the schema, use [[inferExampleMetadata]] and pass altered schema to
+   * [[saveAsTfExampleFile()]].
    * @group output
    */
-  def saveAsTfExampleFileWithMetadata(path: String,
-                                      schemaSuffix: String = "schema.pb",
-                                      suffix: String = ".tfrecords",
-                                      compression: Compression = Compression.UNCOMPRESSED,
-                                      numShards: Int = 0)
-                                     (implicit ev: T <:< Example): Future[Tap[Example]] = {
-    import scala.concurrent.ExecutionContext.Implicits.global
+  def saveAsTfExampleFile(path: String)(implicit ev: T <:< Example)
+  : (Future[Tap[Example]], Future[Tap[Schema]]) = {
+    this.saveAsTfExampleFile(
+      path,
+      schema = null,
+      schemaFilename = "_schema.pb",
+      suffix = ".tfrecords",
+      compression = Compression.UNCOMPRESSED,
+      numShards = 0
+    )(ev)
+  }
 
-    val schemaPath = path.replaceAll("\\/+$", "") + schemaSuffix
-    buildAndSaveExampleMetadata(schemaPath)(ev)
-    val r = self.map(_.toByteArray).saveAsTfRecordFile(path, suffix, compression, numShards)
-    r.map(_.map(Example.parseFrom))
+  def saveAsTfExampleFile(path: String,
+                          schema: SCollection[Schema],
+                          schemaFilename: String,
+                          suffix: String,
+                          compression: Compression,
+                          numShards: Int)
+                          (implicit ev: T <:< Example)
+  : (Future[Tap[Example]], Future[Tap[Schema]]) = {
+    val inferedSchema = Option(schema).getOrElse(self.inferExampleMetadata(ev))
+    val schemaPath = path.replaceAll("\\/+$", "") + "/" + schemaFilename
+    if (self.context.isTest) {
+      self.context.testOut(TFExampleIO(path))(self.asInstanceOf[SCollection[Example]])
+      self.context.testOut(ProtobufIO(schemaPath))(inferedSchema)
+      (self.saveAsInMemoryTap.asInstanceOf[Future[Tap[Example]]], inferedSchema.saveAsInMemoryTap)
+    } else {
+      import scala.concurrent.ExecutionContext.Implicits.global
+      saveExampleMetadata(inferedSchema, schemaPath)
+      val r = self.map(_.toByteArray).saveAsTfRecordFile(path, suffix, compression, numShards)
+      (r.map(_.map(Example.parseFrom)), Taps().protobufFile[Schema](schemaPath))
+    }
   }
 
   /**
@@ -304,22 +328,13 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
    * `org.tensorflow.example.Example`.
    * @return A singleton `SCollection` containing the schema.
    */
-  def buildExampleMetadata(implicit ev: T <:< Example): SCollection[Schema] = {
-    val features = examplesToFeatures(self.asInstanceOf[SCollection[Example]])
-    features
+  def inferExampleMetadata(implicit ev: T <:< Example): SCollection[Schema] =
+    examplesToFeatures(self.asInstanceOf[SCollection[Example]])
       .groupBy(_ => ())
       .values.map(features => Schema.newBuilder().addAllFeature(features.asJava).build())
-  }
 
-  /**
-   * Infer a `org.tensorflow.metadata.v0.Schema` from this SCollection of
-   * `org.tensorflow.example.Example` and output the resulting protobuf object.
-   * @return A singleton `SCollection` containing the schema.
-   * @group output
-   */
-  def buildAndSaveExampleMetadata(schemaPath: String)(implicit ev: T <:< Example)
+  private def saveExampleMetadata(schema: SCollection[Schema], schemaPath: String)
   : SCollection[Schema] = {
-    val schema = self.buildExampleMetadata(ev)
     schema.map { s =>
       val d = FileSystems.matchNewResource(schemaPath, false)
       val chnnl = Channels.newOutputStream(FileSystems.create(d, MimeTypes.BINARY))
@@ -335,30 +350,31 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
   private def examplesToFeatures(examples: SCollection[Example]): SCollection[Feature] =
     examples
       .flatMap(_.getFeatures.getFeatureMap.asScala)
-      .map { case (name, f) =>
-        f.getKindCase match {
+      .map { case (name, feature) =>
+        feature.getKindCase match {
           case KindCase.BYTES_LIST =>
-            ((name, FeatureType.BYTES), Set(f.getBytesList.getValueCount))
+            ((name, FeatureType.BYTES), feature.getBytesList.getValueCount)
           case KindCase.FLOAT_LIST =>
-            ((name, FeatureType.FLOAT), Set(f.getFloatList.getValueCount))
+            ((name, FeatureType.FLOAT), feature.getFloatList.getValueCount)
           case KindCase.INT64_LIST =>
-            ((name, FeatureType.INT), Set(f.getInt64List.getValueCount))
-          case KindCase.KIND_NOT_SET => sys.error("kind must be set!")
+            ((name, FeatureType.INT), feature.getInt64List.getValueCount)
+          case KindCase.KIND_NOT_SET =>
+            sys.error(s"kind must be set - feature is ${feature.toString}")
         }
       }
-      .sumByKey
-      .map { case ((name, f), shapes) =>
+      .aggregateByKey(MultiAggregator((Aggregator.max[Int], Aggregator.min[Int])))
+      .map { case ((featureName, featureType), (max, min)) =>
         val builder = Feature.newBuilder()
-          .setName(name)
-          .setType(f)
-        if (shapes.size == 1) {
+          .setName(featureName)
+          .setType(featureType)
+        if (max == min) {
           // This is a fixed length feature
           builder.setShape(FixedShape.newBuilder()
-            .addDim(FixedShape.Dim.newBuilder().setSize(shapes.head)))
+            .addDim(FixedShape.Dim.newBuilder().setSize(max)))
         }
         else {
           // Var length
-          builder.setValueCount(ValueCount.newBuilder().setMin(shapes.min).setMax(shapes.max))
+          builder.setValueCount(ValueCount.newBuilder().setMin(min).setMax(max))
         }
         builder.build()
       }
