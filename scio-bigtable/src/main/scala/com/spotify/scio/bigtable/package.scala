@@ -21,7 +21,6 @@ import com.google.bigtable.v2._
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
 import com.spotify.scio.io.Tap
-import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.joda.time.Duration
@@ -37,6 +36,11 @@ import scala.concurrent.Future
  * }}}
  */
 package object bigtable {
+
+  import bigtable.{nio => btnio}
+
+  type BigtableIO[T] = btnio.BigtableIO[T]
+  val BigtableIO = btnio.BigtableIO
 
   /** Enhanced version of `Row` with convenience methods. */
   implicit class RichRow(val self: Row) extends AnyVal {
@@ -103,8 +107,8 @@ package object bigtable {
                  tableId: String,
                  keyRange: ByteKeyRange = null,
                  rowFilter: RowFilter = null): SCollection[Row] = {
-      val parameters = nio.Row.Parameters(keyRange, rowFilter)
-      self.read(nio.Row(projectId, instanceId, tableId))(parameters)
+      val parameters = btnio.Row.Parameters(keyRange, rowFilter)
+      self.read(btnio.Row(projectId, instanceId, tableId))(parameters)
     }
 
     /** Get an SCollection for a Bigtable table. */
@@ -112,8 +116,8 @@ package object bigtable {
                  tableId: String,
                  keyRange: ByteKeyRange,
                  rowFilter: RowFilter): SCollection[Row] = {
-      val parameters = nio.Row.Parameters(keyRange, rowFilter)
-      self.read(nio.Row(bigtableOptions, tableId))(parameters)
+      val parameters = btnio.Row.Parameters(keyRange, rowFilter)
+      self.read(btnio.Row(bigtableOptions, tableId))(parameters)
     }
 
     /**
@@ -217,8 +221,8 @@ package object bigtable {
                        tableId: String)
                       (implicit ev: T <:< Mutation)
     : Future[Tap[(ByteString, Iterable[Mutation])]] = {
-      val params = nio.Mutate.Default
-      self.write(nio.Mutate[T](projectId, instanceId, tableId))(params)
+      val params = btnio.Mutate.Default
+      self.write(btnio.Mutate[T](projectId, instanceId, tableId))(params)
         .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
     }
 
@@ -229,8 +233,8 @@ package object bigtable {
                        tableId: String)
                       (implicit ev: T <:< Mutation)
     : Future[Tap[(ByteString, Iterable[Mutation])]] = {
-      val params = nio.Mutate.Default
-      self.write(nio.Mutate[T](bigtableOptions, tableId))(params)
+      val params = btnio.Mutate.Default
+      self.write(btnio.Mutate[T](bigtableOptions, tableId))(params)
         .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
     }
 
@@ -244,16 +248,10 @@ package object bigtable {
                        flushInterval: Duration = Duration.standardSeconds(1))
                       (implicit ev: T <:< Mutation)
     : Future[Tap[(ByteString, Iterable[Mutation])]] = {
-      val params = nio.Mutate.Bulk(numOfShards, flushInterval)
-      self.write(nio.Mutate[T](bigtableOptions, tableId))(params)
+      val params = btnio.Mutate.Bulk(numOfShards, flushInterval)
+      self.write(btnio.Mutate[T](bigtableOptions, tableId))(params)
         .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
     }
   }
-
-  case class BigtableInput(projectId: String, instanceId: String, tableId: String)
-    extends TestIO[Row](s"$projectId\t$instanceId\t$tableId")
-
-  case class BigtableOutput[T <: Mutation](projectId: String, instanceId: String, tableId: String)
-    extends TestIO[(ByteString, Iterable[T])](s"$projectId\t$instanceId\t$tableId")
 
 }
