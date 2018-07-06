@@ -53,7 +53,7 @@ import scala.collection.mutable
 
 private object KryoRegistrarLoader {
 
-  private val logger = LoggerFactory.getLogger(this.getClass)
+  private[this] val logger = LoggerFactory.getLogger(this.getClass)
 
   def load(k: Kryo): Unit = {
     logger.debug("Loading KryoRegistrars: " + registrars.mkString(", "))
@@ -83,17 +83,15 @@ private object KryoRegistrarLoader {
         optCls
       }
   }
-
 }
-
 
 /** serializers we've written in Scio and want to add to Kryo serialization
   * @see com.spotify.scio.coders.serializers */
-private object ScioKryoRegistrar extends IKryoRegistrar {
+private class ScioKryoRegistrar extends IKryoRegistrar {
 
-  private val logger = LoggerFactory.getLogger(this.getClass)
+  private[this] val logger = LoggerFactory.getLogger(this.getClass)
 
-  def apply(k: Kryo): Unit = {
+  override def apply(k: Kryo): Unit = {
     logger.debug("Loading common Kryo serializers...")
     k.forClass(new CoderSerializer(InstantCoder.of()))
     k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
@@ -124,10 +122,9 @@ private object ScioKryoRegistrar extends IKryoRegistrar {
 }
 
 private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends AtomicCoder[T] {
-
   import KryoAtomicCoder._
 
-  private val header = -1
+  private[this] val header = -1
 
   override def encode(value: T, os: OutputStream): Unit = withKryoState(options) { kryoState =>
     if (value == null) {
@@ -267,9 +264,9 @@ private[scio] object KryoAtomicCoder {
       k.setReferences(options.referenceTracking)
       k.setRegistrationRequired(options.registrationRequired)
 
-      ScioKryoRegistrar(k)
-
+      new ScioKryoRegistrar()(k)
       new AlgebirdRegistrar()(k)
+
       KryoRegistrarLoader.load(k)
 
       KryoState(k)
