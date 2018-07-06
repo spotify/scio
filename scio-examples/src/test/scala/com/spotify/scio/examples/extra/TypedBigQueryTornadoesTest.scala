@@ -17,6 +17,7 @@
 
 package com.spotify.scio.examples.extra
 
+import com.spotify.scio.bigquery._
 import com.spotify.scio.testing._
 
 class TypedBigQueryTornadoesTest extends PipelineSpec {
@@ -36,7 +37,7 @@ class TypedBigQueryTornadoesTest extends PipelineSpec {
   "TypedBigQueryTornadoes" should "work" in {
     JobTest[com.spotify.scio.examples.extra.TypedBigQueryTornadoes.type]
       .args("--output=dataset.table")
-      .input(BigQueryIO(TypedBigQueryTornadoes.Row.query), inData)
+      .input(BigQueryIO[Row](TypedBigQueryTornadoes.Row.query), inData)
       .output(BigQueryIO[Result]("dataset.table"))(_ should containInAnyOrder (expected))
       .run()
   }

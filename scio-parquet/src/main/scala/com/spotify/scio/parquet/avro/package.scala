@@ -21,13 +21,12 @@ import java.lang.{Boolean => JBoolean}
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.Tap
-import com.spotify.scio.testing.AvroIO
+import com.spotify.scio.avro._
 import com.spotify.scio.util.{ClosureCleaner, ScioUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.io.hadoop.inputformat.HadoopInputFormatIO
-import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.mapreduce.Job
@@ -50,6 +49,9 @@ import scala.reflect.ClassTag
  */
 package object avro {
 
+  type ParquetAvroIO[T] = avro.nio.ParquetAvroIO[T]
+  val ParquetAvroIO = avro.nio.ParquetAvroIO
+
   /** Alias for `me.lyh.parquet.avro.Projection`. */
   val Projection = me.lyh.parquet.avro.Projection
 
@@ -68,8 +70,6 @@ package object avro {
      * Avro [[org.apache.avro.generic.GenericRecord GenericRecord]] and dynamic work rebalancing
      * are not supported. Without the latter, pipelines may not autoscale up or down during the
      * initial read and subsequent fused transforms.
-     *
-     * @group input
      */
     def parquetAvroFile[T <: SpecificRecordBase : ClassTag](path: String,
                                                             projection: Schema = null,
@@ -187,8 +187,8 @@ package object avro {
                               numShards: Int = 0,
                               schema: Schema = null,
                               suffix: String = ""): Future[Tap[T]] = {
-      val params = nio.ParquetAvroFile.Parameters(numShards, schema, suffix)
-      self.write(nio.ParquetAvroFile[T](path))(params)
+      val params = ParquetAvroIO.Parameters(numShards, schema, suffix)
+      self.write(ParquetAvroIO[T](path))(params)
     }
   }
 

@@ -27,7 +27,7 @@ import com.google.datastore.v1.Entity
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io._
-import com.spotify.scio.nio.ScioIO
+import com.spotify.scio.nio
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
@@ -35,7 +35,7 @@ import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage
-import org.apache.beam.sdk.io.gcp.{datastore => dsio, pubsub => psio}
+import org.apache.beam.sdk.io.gcp.{pubsub => psio}
 import org.apache.beam.sdk.io.{Compression, FileBasedSink}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
@@ -905,15 +905,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as a Datastore dataset. Note that elements must be of type `Entity`.
    * @group output
    */
-  def saveAsDatastore(projectId: String)(implicit ev: T <:< Entity): Future[Tap[Entity]] = {
-    if (context.isTest) {
-      context.testOut(DatastoreIO(projectId))(this.asInstanceOf[SCollection[Entity]])
-    } else {
-      this.asInstanceOf[SCollection[Entity]].applyInternal(
-        dsio.DatastoreIO.v1.write.withProjectId(projectId))
-    }
-    Future.failed(new NotImplementedError("Datastore future not implemented"))
-  }
+  def saveAsDatastore(projectId: String)(implicit ev: T <:< Entity): Future[Tap[Entity]] =
+    this.asInstanceOf[SCollection[Entity]].write(nio.DatastoreIO(projectId))
 
   /**
    * Save this SCollection as a Pub/Sub topic.
@@ -997,18 +990,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                      numShards: Int = 0,
                      compression: Compression = Compression.UNCOMPRESSED)
   : Future[Tap[String]] = {
+    val io = nio.TextIO(path)
     val s = if (classOf[String] isAssignableFrom this.ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
     } else {
       this.map(_.toString)
     }
-    if (context.isTest) {
-      context.testOut(TextIO(path))(s)
-      s.saveAsInMemoryTap
-    } else {
-      s.applyInternal(textOut(path, suffix, numShards, compression))
-      context.makeFuture(TextTap(ScioUtil.addPartSuffix(path)))
-    }
+    s.write(io)(io.WriteParams(suffix, numShards, compression))
   }
 
   /**
@@ -1040,12 +1028,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @param io     an implementation of `ScioIO[T]` trait
    * @param params configurations need to pass to perform underline write implementation
    */
-  def write(io: ScioIO[T])(params: io.WriteP): Future[Tap[T]] =
+  def write(io: nio.ScioIO[T])(params: io.WriteP): Future[Tap[T]] =
     writeImpl(io)(params)
 
-  private def writeImpl(io: ScioIO[T])(params: io.WriteP): Future[Tap[T]] = {
+  private def writeImpl(io: nio.ScioIO[T])(params: io.WriteP): Future[Tap[T]] = {
     if (context.isTest) {
-      context.testOutNio(io.id)(this)
+      context.testOut(io.id)(this)
       this.saveAsInMemoryTap
     } else {
       io.write(this, params)
@@ -1053,7 +1041,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   // scalastyle:off structural.type
-  def write(io: ScioIO[T]{ type WriteP = Unit }): Future[Tap[T]] =
+  def write(io: nio.ScioIO[T]{ type WriteP = Unit }): Future[Tap[T]] =
     writeImpl(io)(())
   // scalastyle:on structural.type
 
