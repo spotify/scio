@@ -29,15 +29,30 @@ import scala.concurrent.Future
 import scala.reflect.ClassTag
 import java.sql.{PreparedStatement, ResultSet}
 
+trait JdbcIO[T] extends ScioIO[T] {
+  override def toString: String = s"JdbcIO($id)"
+}
+
+object JdbcIO {
+  def apply[T](opts: JdbcIoOptions): JdbcIO[T] = new JdbcIO[T] {
+    override type ReadP = Nothing
+    override type WriteP = Nothing
+    override def read(sc: ScioContext, params: ReadP): SCollection[T] = ???
+    override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = ???
+    override def tap(read: Nothing): Tap[T] = ???
+    override def id: String = jdbcIoId(opts)
+  }
+}
+
 final case class Select[T: ClassTag](readOptions: JdbcReadOptions[T])
-  extends ScioIO[T] {
+  extends JdbcIO[T] {
 
   type ReadP = Unit
   type WriteP = Nothing
 
   private[jdbc] def jdbcIoId(opts: JdbcConnectionOptions, query: String): String = {
     val user = opts.password
-      .fold(s"${opts.username}")(password => s"${opts.username}:${password}")
+      .fold(s"${opts.username}")(password => s"${opts.username}:$password")
     s"$user@${opts.connectionUrl}:$query"
   }
 
@@ -77,7 +92,7 @@ final case class Select[T: ClassTag](readOptions: JdbcReadOptions[T])
 }
 
 final case class Write[T](writeOptions: JdbcWriteOptions[T])
-  extends ScioIO[T] {
+  extends JdbcIO[T] {
     type ReadP = Nothing
     type WriteP = Unit
 

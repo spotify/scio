@@ -94,20 +94,51 @@ private object Reads {
   }
 }
 
- /**
-  * Get an SCollection for a BigQuery SELECT query.
-  * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
-  * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
-  * supported. By default the query dialect will be automatically detected. To override this
-  * behavior, start the query string with `#legacysql` or `#standardsql`.
-  * @group input
-  */
-final case class Select(sqlQuery: String) extends ScioIO[TableRow] {
+trait BigQueryIO[T] extends ScioIO[T] {
+  override def toString: String = s"BigQueryIO($id)"
+}
+
+object BigQueryIO {
+  def apply[T](_id: String): BigQueryIO[T] = new BigQueryIO[T] {
+    override type ReadP = Nothing
+    override type WriteP = Nothing
+    override def read(sc: ScioContext, params: ReadP): SCollection[T] = ???
+    override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = ???
+    override def tap(read: Nothing): Tap[T] = ???
+    override def id: String = _id
+  }
+}
+
+trait TableRowJsonIO extends ScioIO[TableRow] {
+  override def toString: String = s"TableRowJsonIO($id)"
+}
+
+object TableRowJsonIO {
+  def apply(_id: String): TableRowJsonIO = new TableRowJsonIO {
+    override type ReadP = Nothing
+    override type WriteP = Nothing
+    override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] = ???
+    override def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] = ???
+    override def tap(read: Nothing): Tap[TableRow] = ???
+    override def id: String = _id
+  }
+}
+
+/**
+ * Get an SCollection for a BigQuery SELECT query.
+ * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
+ * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
+ * supported. By default the query dialect will be automatically detected. To override this
+ * behavior, start the query string with `#legacysql` or `#standardsql`.
+ */
+final case class Select(sqlQuery: String) extends BigQueryIO[TableRow] {
   import Select._
   type ReadP = ReadParam
   type WriteP = Nothing // ReadOnly
 
   def id: String = sqlQuery
+
+  private lazy val bqc = BigQueryClient.defaultInstance()
 
   def read(sc: ScioContext, params: ReadParam): SCollection[TableRow] =
     params match {
@@ -115,17 +146,15 @@ final case class Select(sqlQuery: String) extends ScioIO[TableRow] {
         Reads.bqReadQuery(sc)(bqio.BigQueryIO.readTableRows(), sqlQuery, flattenResults)
     }
 
-  private lazy val bqc = BigQueryClient.defaultInstance()
+  def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
+    throw new IllegalStateException("Select queries are read-only")
 
   def tap(params: ReadParam): Tap[TableRow] =
     params match {
-        case FlattenResults(f) =>
-          val table = bqc.query(sqlQuery, flattenResults = f)
-          BigQueryTap(table)
+      case FlattenResults(f) =>
+        val table = bqc.query(sqlQuery, flattenResults = f)
+        BigQueryTap(table)
     }
-
-  def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
-    throw new IllegalStateException("Select queries are read-only")
 }
 
 object Select {
@@ -135,9 +164,8 @@ object Select {
 
 /**
  * Get an IO for a BigQuery table.
- * @group input
  */
-final case class TableRef(table: TableReference) extends ScioIO[TableRow] {
+final case class TableRef(table: TableReference) extends BigQueryIO[TableRow] {
   type ReadP = Unit
   type WriteP = TableRef.WriteParam
 
@@ -145,9 +173,6 @@ final case class TableRef(table: TableReference) extends ScioIO[TableRow] {
 
   def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     Reads.bqReadTable(sc)(bqio.BigQueryIO.readTableRows(), table)
-
-  def tap(read: ReadP): Tap[TableRow] =
-    BigQueryTap(table)
 
   def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
     params match {
@@ -167,6 +192,8 @@ final case class TableRef(table: TableReference) extends ScioIO[TableRow] {
           data.context.makeFuture(BigQueryTap(table))
         }
     }
+
+  def tap(read: ReadP): Tap[TableRow] = BigQueryTap(table)
 }
 
 object TableRef {
@@ -182,7 +209,7 @@ object TableRef {
  * Get an SCollection for a BigQuery table.
  * @group input
  */
-final case class TableSpec(tableSpec: String) extends ScioIO[TableRow] {
+final case class TableSpec(tableSpec: String) extends BigQueryIO[TableRow] {
   type ReadP = Unit
   type WriteP = TableSpec.WriteParam
 
@@ -192,9 +219,6 @@ final case class TableSpec(tableSpec: String) extends ScioIO[TableRow] {
   def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     TableRef(ref).read(sc, params)
 
-  def tap(read: ReadP): Tap[TableRow] =
-    TableRef(ref).tap(read)
-
   def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
     params match {
       case TableSpec.Parameters(schema, writeDisposition, createDisposition, tableDescription) =>
@@ -202,6 +226,7 @@ final case class TableSpec(tableSpec: String) extends ScioIO[TableRow] {
         TableRef(ref).write(data, p)
     }
 
+  def tap(read: ReadP): Tap[TableRow] = TableRef(ref).tap(read)
 }
 
 object TableSpec {
@@ -215,9 +240,8 @@ object TableSpec {
 
 /**
  * Get an IO for a BigQuery TableRow JSON file.
- * @group input
  */
-final case class TableRowJsonFile(path: String) extends ScioIO[TableRow] {
+final case class TableRowJsonFile(path: String) extends BigQueryIO[TableRow] {
   type ReadP = Unit
   type WriteP = TableRowJsonFile.Parameters
 
@@ -229,9 +253,6 @@ final case class TableRowJsonFile(path: String) extends ScioIO[TableRow] {
         .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
     }
 
-  def tap(read: ReadP): Tap[TableRow] =
-    TableRowJsonTap(path)
-
   def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
     params match {
       case TableRowJsonFile.Parameters(numShards, compression) =>
@@ -240,6 +261,8 @@ final case class TableRowJsonFile(path: String) extends ScioIO[TableRow] {
           .applyInternal(data.textOut(path, ".json", numShards, compression))
         data.context.makeFuture(TableRowJsonTap(ScioUtil.addPartSuffix(path)))
     }
+
+  def tap(read: ReadP): Tap[TableRow] = TableRowJsonTap(path)
 }
 
 object TableRowJsonFile {
@@ -304,7 +327,7 @@ object Typed {
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
-  case class Query[T <: HasAnnotation : ClassTag : TypeTag](query: String) extends ScioIO[T] {
+  case class Query[T <: HasAnnotation : ClassTag : TypeTag](query: String) extends BigQueryIO[T] {
     type ReadP = Unit
     type WriteP = Nothing // ReadOnly
 
@@ -319,18 +342,17 @@ object Typed {
     def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
       throw new IllegalStateException("Select queries are read-only")
 
-    def tap(params: ReadP): Tap[T] = {
+    def tap(params: ReadP): Tap[T] =
       Select(query)
         .tap(Select.FlattenResults())
         .map(bqt.fromTableRow)
-    }
   }
 
   /**
    * Get a typed SCollection for a BigQuery table.
    */
   case class Table[T <: HasAnnotation : ClassTag : TypeTag](table: TableReference)
-    extends ScioIO[T] {
+    extends BigQueryIO[T] {
     type ReadP = Unit
     type WriteP = Table.WriteParam
 

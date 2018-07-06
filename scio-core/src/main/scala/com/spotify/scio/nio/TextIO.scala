@@ -48,29 +48,27 @@ case class TextIO(path: String) extends ScioIO[String] {
 
   def read(sc: ScioContext, params: ReadParams): SCollection[String] = sc.requireNotClosed {
     if (sc.isTest) {
-      sc.getTestInputNio(this.id)
+      sc.getTestInput(this)
     } else {
       sc.wrap(sc.applyInternal(BTextIO.read().from(path)
         .withCompression(params.compression))).setName(path)
     }
   }
 
-  def write(pipeline: SCollection[String], params: WriteParams): Future[Tap[String]] = {
-    if (pipeline.context.isTest) {
-      pipeline.context.testOutNio(this.id)(pipeline)
+  def write(data: SCollection[String], params: WriteParams): Future[Tap[String]] = {
+    if (data.context.isTest) {
+      data.context.testOut(this.id)(data)
       // TODO: replace this with ScioIO[T] subclass when we have nio InMemoryIO[T]
-      pipeline.saveAsInMemoryTap
+      data.saveAsInMemoryTap
     } else {
-      pipeline.applyInternal(textOut(path, params))
-      pipeline.context.makeFuture(tap(ReadParams()))
+      data.applyInternal(textOut(path, params))
+      data.context.makeFuture(tap(ReadParams()))
     }
   }
 
   def tap(params: ReadParams): Tap[String] = new Tap[String] {
-    /** Read data set into memory. */
-    override def value: Iterator[String] = TextIO.textFile(path)
+    override def value: Iterator[String] = TextIO.textFile(ScioUtil.addPartSuffix(path))
 
-    /** Open data set as an [[com.spotify.scio.values.SCollection SCollection]]. */
     override def open(sc: ScioContext): SCollection[String] = {
       val textIO = TextIO(ScioUtil.addPartSuffix(path))
       val readParams = textIO.ReadParams(compression = params.compression)
@@ -78,8 +76,7 @@ case class TextIO(path: String) extends ScioIO[String] {
     }
   }
 
-  private[scio] def textOut(path: String,
-                            params: WriteParams) = {
+  private def textOut(path: String, params: WriteParams) = {
     BTextIO.write()
       .to(pathWithShards(path))
       .withSuffix(params.suffix)
@@ -95,8 +92,7 @@ case class TextIO(path: String) extends ScioIO[String] {
 
 object TextIO {
 
-  /** Read all files in the path line by line and return it as `Iterator[String]` */
-  def textFile(path: String): Iterator[String] = {
+  private def textFile(path: String): Iterator[String] = {
     val factory = new CompressorStreamFactory()
 
     def wrapInputStream(in: InputStream) = {
@@ -108,8 +104,8 @@ object TextIO {
     IOUtils.lineIterator(input, Charsets.UTF_8).asScala
   }
 
-  private[scio] def getDirectoryInputStream(path: String,
-                                            wrapperFn: InputStream => InputStream = identity)
+  private def getDirectoryInputStream(path: String,
+                                      wrapperFn: InputStream => InputStream = identity)
   : InputStream = {
     val inputs = listFiles(path).map(getObjectInputStream).map(wrapperFn).asJava
     new SequenceInputStream(Collections.enumeration(inputs))
@@ -120,4 +116,3 @@ object TextIO {
   private def getObjectInputStream(meta: Metadata): InputStream =
     Channels.newInputStream(FileSystems.open(meta.resourceId()))
 }
-
