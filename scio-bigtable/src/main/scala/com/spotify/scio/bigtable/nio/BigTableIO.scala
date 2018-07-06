@@ -25,14 +25,31 @@ import com.spotify.scio.bigtable._
 import com.google.bigtable.v2.{Row => BTRow, _}
 import com.google.protobuf.ByteString
 import com.google.cloud.bigtable.config.BigtableOptions
-import org.apache.beam.sdk.io.gcp.bigtable.BigtableIO
+import org.apache.beam.sdk.io.gcp.bigtable.{BigtableIO => BBigtableIO}
 import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.apache.beam.sdk.values.KV
 import scala.concurrent.Future
 import scala.collection.JavaConverters._
 import org.joda.time.Duration
 
-final case class Row(bigtableOptions: BigtableOptions, tableId: String) extends ScioIO[BTRow] {
+trait BigtableIO[T] extends ScioIO[T] {
+  override def toString: String = s"BigtableIO($id)"
+}
+
+object BigtableIO {
+  def apply[T](projectId: String,
+               instanceId: String,
+               tableId: String): BigtableIO[T] = new BigtableIO[T] {
+    override type ReadP = Nothing
+    override type WriteP = Nothing
+    override def read(sc: ScioContext, params: ReadP): SCollection[T] = ???
+    override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = ???
+    override def tap(read: Nothing): Tap[T] = ???
+    override def id: String = s"$projectId\t$instanceId\t$tableId"
+  }
+}
+
+final case class Row(bigtableOptions: BigtableOptions, tableId: String) extends BigtableIO[BTRow] {
 
   type ReadP = Row.ReadParam
   type WriteP = Nothing
@@ -44,7 +61,7 @@ final case class Row(bigtableOptions: BigtableOptions, tableId: String) extends 
     sc.requireNotClosed {
       params match {
         case Row.Parameters(keyRange, rowFilter) =>
-          var read = BigtableIO.read().withBigtableOptions(bigtableOptions).withTableId(tableId)
+          var read = BBigtableIO.read().withBigtableOptions(bigtableOptions).withTableId(tableId)
             if (keyRange != null) {
               read = read.withKeyRange(keyRange)
             }
@@ -82,7 +99,7 @@ object Row {
 
 final case class Mutate[T](
   bigtableOptions: BigtableOptions,
-  tableId: String)(implicit ev: T <:< Mutation) extends ScioIO[(ByteString, Iterable[T])] {
+  tableId: String)(implicit ev: T <:< Mutation) extends BigtableIO[(ByteString, Iterable[T])] {
 
   type ReadP = Nothing
   type WriteP = Mutate.WriteParam
@@ -100,7 +117,7 @@ final case class Mutate[T](
     val sink =
       params match {
         case Mutate.Default =>
-          BigtableIO.write().withBigtableOptions(bigtableOptions).withTableId(tableId)
+          BBigtableIO.write().withBigtableOptions(bigtableOptions).withTableId(tableId)
         case Mutate.Bulk(numOfShards, flushInterval) =>
           new BigtableBulkWriter(tableId, bigtableOptions, numOfShards, flushInterval)
       }
