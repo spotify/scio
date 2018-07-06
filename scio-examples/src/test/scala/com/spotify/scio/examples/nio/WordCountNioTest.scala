@@ -17,8 +17,8 @@
 
 package com.spotify.scio.examples.nio
 
-import com.spotify.scio.nio.{TextIO => NTextIO}
-import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.nio
+import com.spotify.scio.testing._
 
 class WordCountNioTest extends PipelineSpec {
 
@@ -28,8 +28,8 @@ class WordCountNioTest extends PipelineSpec {
   "WordCount" should "works with nio JobTest inputs" in {
     JobTest[com.spotify.scio.examples.nio.WordCountNio.type]
       .args("--input=in.txt", "--output=out.txt")
-      .inputNio(NTextIO("in.txt").id, inData)
-      .outputNio[String](NTextIO("out.txt").id)(_ should containInAnyOrder (expected))
+      .input(nio.TextIO("in.txt"), inData)
+      .output[String](nio.TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
 }

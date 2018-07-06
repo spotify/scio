@@ -18,7 +18,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.extra.checkpoint._
-import com.spotify.scio.testing.{PipelineSpec, TextIO}
+import com.spotify.scio.testing._
 
 class CheckpointExampleTest extends PipelineSpec {
 
@@ -41,7 +41,7 @@ class CheckpointExampleTest extends PipelineSpec {
   it should "work with src checkpoint provided" in {
     JobTest[CheckpointExample.type]
       .args("--output=output", "--input=input", "--checkpoint=checkpoint")
-      .input(CheckpointIO("checkpoint-src"), words)
+      .input(CheckpointIO[String]("checkpoint-src"), words)
       .output(TextIO("output-max"))(_ should containSingleValue (max))
       .output(TextIO("output-words"))(_ should containInAnyOrder (words))
       .output(TextIO("output"))(_ should containInAnyOrder (prettyCount))
@@ -51,8 +51,8 @@ class CheckpointExampleTest extends PipelineSpec {
   it should "work with src and count checkpoints provided" in {
     JobTest[CheckpointExample.type]
       .args("--output=output", "--input=input", "--checkpoint=checkpoint")
-      .input(CheckpointIO("checkpoint-src"), words)
-      .input(CheckpointIO("checkpoint-count"), count)
+      .input(CheckpointIO[String]("checkpoint-src"), words)
+      .input(CheckpointIO[(String, Long)]("checkpoint-count"), count)
       .output(TextIO("output-max"))(_ should containSingleValue (max))
       .output(TextIO("output-words"))(_ should containInAnyOrder (words))
       .output(TextIO("output"))(_ should containInAnyOrder (prettyCount))

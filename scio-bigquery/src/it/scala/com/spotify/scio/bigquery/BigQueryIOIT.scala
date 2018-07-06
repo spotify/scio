@@ -17,11 +17,9 @@
 
 package com.spotify.scio.bigquery
 
-import java.util.UUID
-
 import org.apache.beam.sdk.options._
 import com.spotify.scio.testing._
-import com.spotify.scio.bigquery.nio._
+import com.spotify.scio.bigquery.nio.Typed
 import com.spotify.scio.testing.util.ItUtils
 
 object BigQueryIOIT {
@@ -48,7 +46,7 @@ class BigQueryIOIT extends PipelineSpec {
       .create()
 
 
-  "Select" should "read typed values from a sql query" in
+  "Select" should "read typed values from a SQL query" in
     runWithRealContext(options) { sc =>
       val scoll = Typed[ShakespeareFromQuery].read(sc, ())
       scoll should haveSize (10)

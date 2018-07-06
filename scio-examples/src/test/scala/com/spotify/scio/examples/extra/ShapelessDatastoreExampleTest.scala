@@ -45,7 +45,7 @@ class ShapelessDatastoreExampleTest extends PipelineSpec {
   "ShapelessDatastoreReadExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.ShapelessDatastoreReadExample.type]
       .args("--input=project", "--output=out.txt")
-      .input(DatastoreIO("project", Query.getDefaultInstance), entities)
+      .input(DatastoreIO("project"), entities)
       .output(TextIO("out.txt"))(_ should containInAnyOrder (textOut))
       .run()
   }

@@ -29,7 +29,6 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.language.implicitConversions
 
-
 /** Tap for BigQuery TableRow JSON files on local file system or GCS. */
 final case class TableRowJsonTap(path: String) extends Tap[TableRow] {
   override def value: Iterator[TableRow] = FileStorage(path).tableRowJsonFile

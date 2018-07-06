@@ -20,9 +20,11 @@ package com.spotify.scio.testing
 import com.google.common.collect.ImmutableMap
 import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
+import com.google.protobuf.Message
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro._
+import com.spotify.scio.nio.ScioIO
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.{io => gio}
@@ -191,7 +193,7 @@ class JobTestTest extends PipelineSpec {
   def testObjectFileJob(xs: Int*): Unit = {
     JobTest[ObjectFileJob.type]
       .args("--input=in.avro", "--output=out.avro")
-      .input(ObjectFileIO("in.avro"), Seq(1, 2, 3))
+      .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
       .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder (xs))
       .run()
   }
@@ -208,7 +210,7 @@ class JobTestTest extends PipelineSpec {
   def testSpecificAvroFileJob(xs: Seq[TestRecord]): Unit = {
     JobTest[SpecificAvroFileJob.type]
       .args("--input=in.avro", "--output=out.avro")
-      .input(AvroIO("in.avro"), (1 to 3).map(newSpecificRecord))
+      .input(AvroIO[TestRecord]("in.avro"), (1 to 3).map(newSpecificRecord))
       .output(AvroIO[TestRecord]("out.avro"))(_ should containInAnyOrder (xs))
       .run()
   }
@@ -229,7 +231,7 @@ class JobTestTest extends PipelineSpec {
   def testGenericAvroFileJob(xs: Seq[GenericRecord]): Unit = {
     JobTest[GenericAvroFileJob.type]
       .args("--input=in.avro", "--output=out.avro")
-      .input(AvroIO("in.avro"), (1 to 3).map(newGenericRecord))
+      .input(AvroIO[GenericRecord]("in.avro"), (1 to 3).map(newGenericRecord))
       .output(AvroIO[GenericRecord]("out.avro"))(_ should containInAnyOrder (xs))
       .run()
   }
@@ -530,7 +532,7 @@ class JobTestTest extends PipelineSpec {
     "JobTestFromType" should "work" in {
       JobTest[ObjectFileJob.type]
         .args("--input=in.avro", "--output=out.avro")
-        .input(ObjectFileIO("in.avro"), Seq(1, 2, 3))
+        .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
         .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder(Seq(1, 2, 3)))
     }
   }
@@ -539,7 +541,7 @@ class JobTestTest extends PipelineSpec {
     "JobTestFromString" should "work" in {
       JobTest("com.spotify.scio.testing.ObjectFileJob")
         .args("--input=in.avro", "--output=out.avro")
-        .input(ObjectFileIO("in.avro"), Seq(1, 2, 3))
+        .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
         .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder (Seq(1, 2, 3)))
     }
   }
@@ -548,14 +550,12 @@ class JobTestTest extends PipelineSpec {
     "MultiJobTest" should "work" in {
       JobTest[ObjectFileJob.type]
         .args("--input=in.avro", "--output=out.avro")
-        .input(ObjectFileIO("in.avro"), Seq(1, 2, 3))
+        .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
         .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder (Seq(1, 2, 3)))
-
-      // testBigQuery((1 to 3).map(newTableRow))
 
       JobTest[ObjectFileJob.type]
         .args("--input=in2.avro", "--output=out2.avro")
-        .input(ObjectFileIO("in2.avro"), Seq(1, 2, 3))
+        .input(ObjectFileIO[Int]("in2.avro"), Seq(1, 2, 3))
         .output(ObjectFileIO[Int]("out2.avro"))(_ should containInAnyOrder (Seq(1, 2, 3)))
     }
   }
@@ -565,7 +565,7 @@ class JobTestTest extends PipelineSpec {
     "OriginalJobTest" should "work" in {
       InternalJobTest[ObjectFileJob.type]
         .args("--input=in.avro", "--output=out.avro")
-        .input(ObjectFileIO("in.avro"), Seq(1, 2, 3))
+        .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
         .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder (Seq(1, 2, 3)))
     }
   }
@@ -632,35 +632,44 @@ class JobTestTest extends PipelineSpec {
   // =======================================================================
 
   "TestIO" should "not allow null keys" in {
+    // FIXME: NIO remove
     def test[T](testIO: => TestIO[T], repr: String): Unit = {
       the [IllegalArgumentException] thrownBy {
         testIO
       } should have message s"requirement failed: $repr has null key"
     }
-    test(ObjectFileIO(null), "ObjectFileIO(null)")
-    test(AvroIO(null), "AvroIO(null)")
-    test(BigQueryIO(null), "BigQueryIO(null)")
-    test(DatastoreIO(null), "DatastoreIO(null,null,null)")
-    test(ProtobufIO(null), "ProtobufIO(null)")
+
+    def test1[T](testIO: => ScioIO[T], repr: String): Unit = {
+      the [IllegalArgumentException] thrownBy {
+        testIO
+      } should have message s"requirement failed: $repr has null id"
+    }
+    test1(ObjectFileIO(null), "ObjectFileIO(null)")
+    test1(AvroIO(null), "AvroIO(null,null)")
+    test1(DatastoreIO(null), "DatastoreIO(null)")
+    test1(ProtobufIO[Message](null), "ProtobufIO(null)")
     test(PubsubIO(null), "PubsubIO(null)")
-    test(TableRowJsonIO(null), "TableRowJsonIO(null)")
-    test(TextIO(null), "TextIO(null)")
+    test1(TextIO(null), "TextIO(null)")
   }
 
   it should "not allow empty keys" in {
+    // FIXME: NIO remove
     def test[T](testIO: => TestIO[T], repr: String): Unit = {
       the [IllegalArgumentException] thrownBy {
         testIO
       } should have message s"requirement failed: $repr has empty string key"
     }
-    test(ObjectFileIO(""), "ObjectFileIO()")
-    test(AvroIO(""), "AvroIO()")
-    test(BigQueryIO(""), "BigQueryIO()")
-    test(DatastoreIO(""), "DatastoreIO(,null,null)")
-    test(ProtobufIO(""), "ProtobufIO()")
+    def test1[T](testIO: => ScioIO[T], repr: String): Unit = {
+      the [IllegalArgumentException] thrownBy {
+        testIO
+      } should have message s"requirement failed: $repr has empty string id"
+    }
+    test1(ObjectFileIO(""), "ObjectFileIO()")
+    test1(AvroIO(""), "AvroIO(,null)")
+    test1(DatastoreIO(""), "DatastoreIO()")
+    test1(ProtobufIO[Message](""), "ProtobufIO()")
     test(PubsubIO(""), "PubsubIO()")
-    test(TableRowJsonIO(""), "TableRowJsonIO()")
-    test(TextIO(""), "TextIO()")
+    test1(TextIO(""), "TextIO()")
   }
 
   "runWithContext" should "fail input with message" in {

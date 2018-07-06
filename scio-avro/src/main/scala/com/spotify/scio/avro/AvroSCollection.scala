@@ -49,7 +49,7 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
     } else if(context.isTest) {
       // Do not run assertions on materilized value but still access test context to trigger
       // the test checking if we're running inside a JobTest
-      context.testOutNio
+      context.testOut
       saveAsInMemoryTap
     } else {
       saveAsObjectFile(path)
@@ -68,8 +68,8 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
                      codec: CodecFactory = CodecFactory.deflateCodec(6),
                      metadata: Map[String, AnyRef] = Map.empty)
   : Future[Tap[T]] = {
-    val paramters = nio.AvroFile.Parameters(numShards, suffix, codec, metadata)
-    self.write(nio.AvroFile[T](path, schema))(paramters)
+    val paramters = nio.AvroIO.Parameters(numShards, suffix, codec, metadata)
+    self.write(nio.AvroIO[T](path, schema))(paramters)
   }
 
   /**
@@ -97,7 +97,7 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
    */
   def saveAsObjectFile(path: String, numShards: Int = 0, suffix: String = ".obj",
                        metadata: Map[String, AnyRef] = Map.empty): Future[Tap[T]] =
-    self.write(nio.ObjectFile[T](path))(nio.ObjectFile.Parameters(numShards, suffix, metadata))
+    self.write(nio.ObjectFileIO[T](path))(nio.ObjectFileIO.Parameters(numShards, suffix, metadata))
 
   /**
    * Save this SCollection as a Protobuf file.
@@ -108,5 +108,5 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
    */
   def saveAsProtobufFile(path: String, numShards: Int = 0)
                         (implicit ev: T <:< Message): Future[Tap[T]] =
-    self.write(nio.ProtobufFile[T](path))(nio.ProtobufFile.Parameters(numShards))
+    self.write(nio.ProtobufIO[T](path))(nio.ProtobufIO.Parameters(numShards))
 }
