@@ -38,7 +38,7 @@ class CloudSqlExampleTest extends PipelineSpec {
 
     JobTest[com.spotify.scio.examples.extra.CloudSqlExample.type]
       .args(args: _*)
-      .input(JdbcIO(readOpts), input)
+      .input(JdbcIO[(String, Long)](readOpts), input)
       .output(JdbcIO[(String, Long)](writeOpts))(_ should containInAnyOrder (expected))
       .run()
   }

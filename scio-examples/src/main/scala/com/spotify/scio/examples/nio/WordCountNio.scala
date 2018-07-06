@@ -26,7 +26,7 @@ package com.spotify.scio.examples.nio
 
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
-import com.spotify.scio.nio.TextIO
+import com.spotify.scio.nio
 import org.slf4j.LoggerFactory
 
 object WordCountNio {
@@ -50,8 +50,8 @@ object WordCountNio {
     val sumEmpty = ScioMetrics.counter("emptyLines")
 
     // Create IO classes to read and write
-    val inputTextIO = TextIO(input)
-    val outputTextIO = TextIO(output)
+    val inputTextIO = nio.TextIO(input)
+    val outputTextIO = nio.TextIO(output)
 
     // Open text files as an `SCollection[String]` passing io read params
     sc.read(inputTextIO)(inputTextIO.ReadParams())

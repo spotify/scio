@@ -20,7 +20,6 @@ package com.spotify.scio.extra
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro._
 import com.spotify.scio.io.FileStorage
-import com.spotify.scio.testing.ObjectFileIO
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.FileSystems
@@ -41,7 +40,7 @@ package object checkpoint {
   /**
    * For use in testing, see [[https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/CheckpointExampleTest.scala CheckpointExampleTest]].
    */
-  def CheckpointIO[T](fileOrPath: String): ObjectFileIO[T] = ObjectFileIO[T](fileOrPath)
+  def CheckpointIO[T: ClassTag](fileOrPath: String): ObjectFileIO[T] = ObjectFileIO[T](fileOrPath)
   // scalastyle:on line.size.limit
   // scalastyle:on method.name
 
@@ -75,7 +74,7 @@ package object checkpoint {
     }
 
     private def isCheckpointAvailable(path: String): Boolean = {
-      if (self.isTest && self.testInNio.m.contains(path)) {
+      if (self.isTest && self.testIn.m.contains(path)) {
         // if it's test and checkpoint was registered in test
         true
       } else {

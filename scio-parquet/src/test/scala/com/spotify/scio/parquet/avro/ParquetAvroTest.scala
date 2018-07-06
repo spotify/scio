@@ -18,7 +18,7 @@
 package com.spotify.scio.parquet.avro
 
 import com.spotify.scio._
-import com.spotify.scio.avro.{Account, AvroUtils, TestRecord}
+import com.spotify.scio.avro._
 import com.spotify.scio.io.TapSpec
 import com.spotify.scio.testing._
 import org.apache.avro.generic.GenericRecord
@@ -146,7 +146,7 @@ class ParquetAvroTest extends TapSpec with BeforeAndAfterAll {
   it should "work with JobTest" in {
     JobTest[ParquetAvroJob.type]
       .args("--input=in.parquet", "--output=out.parquet")
-      .input(AvroIO("in.parquet"), specificRecords)
+      .input(AvroIO[TestRecord]("in.parquet"), specificRecords)
       .output(AvroIO[TestRecord]("out.parquet"))(_ should containInAnyOrder (specificRecords))
       .run()
   }
