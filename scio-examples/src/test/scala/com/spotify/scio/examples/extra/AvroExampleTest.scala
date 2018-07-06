@@ -19,7 +19,8 @@ package com.spotify.scio.examples.extra
 
 import com.spotify.scio.avro.Account
 import com.spotify.scio.examples.extra.AvroExample.{AccountFromSchema, AccountToSchema}
-import com.spotify.scio.testing.{AvroIO, PipelineSpec, TextIO}
+import com.spotify.scio.avro._
+import com.spotify.scio.testing._
 
 class AvroExampleTest extends PipelineSpec {
 
@@ -32,7 +33,7 @@ class AvroExampleTest extends PipelineSpec {
 
     JobTest[com.spotify.scio.examples.extra.AvroExample.type]
       .args("--input=in.avro", "--output=out.txt", "--method=specificIn")
-      .input(AvroIO("in.avro"), input)
+      .input(AvroIO[Account]("in.avro"), input)
       .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
@@ -63,7 +64,7 @@ class AvroExampleTest extends PipelineSpec {
 
     JobTest[com.spotify.scio.examples.extra.AvroExample.type]
       .args("--input=in.avro", "--output=out.txt", "--method=typedIn")
-      .input(AvroIO("in.avro"), input)
+      .input(AvroIO[AccountFromSchema]("in.avro"), input)
       .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }

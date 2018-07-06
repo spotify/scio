@@ -20,6 +20,7 @@ package com.spotify.scio.testing
 import java.lang.reflect.InvocationTargetException
 
 import com.spotify.scio.ScioResult
+import com.spotify.scio.nio.ScioIO
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.{metrics => bm}
@@ -71,8 +72,8 @@ object JobTest {
 
   private case class BuilderState(className: String,
                                   cmdlineArgs: Array[String] = Array(),
-                                  inputNio: Map[String, Iterable[_]] = Map.empty,
-                                  outputNio: Map[String, SCollection[_] => Unit] = Map.empty,
+                                  input: Map[String, Iterable[_]] = Map.empty,
+                                  output: Map[String, SCollection[_] => Unit] = Map.empty,
                                   distCaches: Map[DistCacheIO[_], _] = Map.empty,
                                   counters: Map[bm.Counter, Long => Unit] = Map.empty,
                                   // scalastyle:off line.size.limit
@@ -100,8 +101,14 @@ object JobTest {
      * `sc.avroFile[MyRecord]("in.avro")`.
      */
     def input[T](key: TestIO[T], value: Iterable[T]): Builder = {
-      require(!state.inputNio.contains(key.key), "Duplicate test input: " + key.key)
-      state = state.copy(inputNio = state.inputNio + (key.key -> value))
+      require(!state.input.contains(key.key), "Duplicate test input: " + key.key)
+      state = state.copy(input = state.input + (key.key -> value))
+      this
+    }
+    // FIXME: NIO promote
+    def input[T](key: ScioIO[T], value: Iterable[T]): Builder = {
+      require(!state.input.contains(key.id), "Duplicate test input: " + key.id)
+      state = state.copy(input = state.input + (key.id -> value))
       this
     }
 
@@ -114,41 +121,29 @@ object JobTest {
      *                  matchers on an [[com.spotify.scio.values.SCollection SCollection]].
      */
     def output[T](key: TestIO[T])(assertion: SCollection[T] => Unit): Builder = {
-      require(!state.outputNio.contains(key.key), "Duplicate test output: " + key.key)
+      require(!state.output.contains(key.key), "Duplicate test output: " + key.key)
       state = state
-        .copy(outputNio =
-          state.outputNio + (key.key -> assertion.asInstanceOf[SCollection[_] => Unit]))
+        .copy(output =
+          state.output + (key.key -> assertion.asInstanceOf[SCollection[_] => Unit]))
+      this
+    }
+    // FIXME: NIO promote
+    def output[T](key: ScioIO[T])(assertion: SCollection[T] => Unit): Builder = {
+      require(!state.output.contains(key.id), "Duplicate test output: " + key.id)
+      state = state
+        .copy(output = state.output + (key.id -> assertion.asInstanceOf[SCollection[_] => Unit]))
       this
     }
 
-    /**
-     * Feed an input to the pipeline being tested, Note that `ScioIO[T]` must match the one used
-     * inside the pipeline. e.g.
-     * TODO: add an example once we have complete nio integration with ScioContext
-     * @param id input identifier.
-     * @param value iterable to return when this input nio is called
-     * @return
-     */
     def inputNio[T](id: String, value: Iterable[T]): Builder = {
-      require(!state.inputNio.contains(id), s"Duplicate nio test input: $id")
-      state = state.copy(inputNio = state.inputNio + (id -> value))
+      require(!state.input.contains(id), s"Duplicate test input: $id")
+      state = state.copy(input = state.input + (id -> value))
       this
     }
-
-    /**
-     * Evaluate and outptu of the pipeline being tested. Note that `ScioIO[T]` must match the one
-     * used inside the pipeline, e.g
-     * TODO: add and example once we have complete nio integration with SCollection
-     * @param id output identifier.
-     * @param assertion assertion for output data. See [[SCollectionMatchers]] for available
-     *                  matchers on an [[com.spotify.scio.values.SCollection SCollection]].
-     * @tparam T
-     * @return
-     */
     def outputNio[T](id: String)(assertion: SCollection[T] => Unit): Builder = {
-      require(!state.outputNio.contains(id), s"Duplicate nio test output $id")
+      require(!state.output.contains(id), s"Duplicate test output $id")
       state = state
-        .copy(outputNio = state.outputNio + (id -> assertion.asInstanceOf[SCollection[_] => Unit]))
+        .copy(output = state.output + (id -> assertion.asInstanceOf[SCollection[_] => Unit]))
       this
     }
 
@@ -222,8 +217,8 @@ object JobTest {
     def setUp(): Unit =
       TestDataManager.setup(
         testId,
-        state.inputNio,
-        state.outputNio,
+        state.input,
+        state.output,
         state.distCaches
       )
 
@@ -264,7 +259,7 @@ object JobTest {
       s"""|JobTest[${state.className}](
           |\targs: ${state.cmdlineArgs.mkString(" ")}
           |\tdistCache: ${state.distCaches}
-          |\tinputs: ${state.inputNio.mkString(", ")}""".stripMargin
+          |\tinputs: ${state.input.mkString(", ")}""".stripMargin
 
   }
 

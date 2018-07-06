@@ -17,15 +17,14 @@
 
 package com.spotify.scio
 
-
 import java.net.InetSocketAddress
 
 import com.spotify.scio.io.Tap
-import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException
 import org.elasticsearch.action.ActionRequest
 import org.joda.time.Duration
+
 import scala.concurrent.Future
 
 /**
@@ -37,8 +36,8 @@ import scala.concurrent.Future
  */
 package object elasticsearch {
 
-  case class ElasticsearchIO[T](options: ElasticsearchOptions)
-    extends TestIO[T](options.toString)
+  type ElasticsearchIO[T] = elasticsearch.nio.ElasticsearchIO[T]
+  val ElasticsearchIO = elasticsearch.nio.ElasticsearchIO
 
   case class ElasticsearchOptions(clusterName: String, servers: Seq[InetSocketAddress])
 
@@ -60,13 +59,8 @@ package object elasticsearch {
                             maxBulkRequestSize: Int = 3000,
                             errorFn: BulkExecutionException => Unit = m => throw m)
                            (f: T => Iterable[ActionRequest[_]]): Future[Tap[T]] = {
-      val io = nio.ElacticsearchIO[T](
-        esOptions,
-        flushInterval,
-        numOfShards,
-        maxBulkRequestSize,
-        errorFn)(f)
-      self.write(io)
+      val io = ElasticsearchIO[T](esOptions)
+      self.write(io)(io.WriteParams(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize))
     }
   }
 

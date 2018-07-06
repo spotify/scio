@@ -41,11 +41,11 @@ import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
-case class ObjectFile[T: ClassTag](path: String)
+case class ObjectFileIO[T: ClassTag](path: String)
   extends ScioIO[T] {
 
   type ReadP = Unit
-  type WriteP = ObjectFile.WriteParam
+  type WriteP = ObjectFileIO.WriteParam
 
   def id: String = path
 
@@ -54,12 +54,11 @@ case class ObjectFile[T: ClassTag](path: String)
    *
    * Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
    * serialization is not guaranteed to be compatible across Scio releases.
-   * @group input
    */
   def read(sc: ScioContext, params: ReadP): SCollection[T] =
     sc.requireNotClosed {
       val coder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
-      sc.read(AvroFile[GenericRecord](path, AvroBytesUtil.schema))
+      sc.read(AvroIO[GenericRecord](path, AvroBytesUtil.schema))
         .parDo(new DoFn[GenericRecord, T] {
           @ProcessElement
           private[scio] def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit = {
@@ -68,9 +67,6 @@ case class ObjectFile[T: ClassTag](path: String)
         })
         .setName(path)
     }
-
-  def tap(read: ReadP): Tap[T] =
-    ObjectFileTap[T](ScioUtil.addPartSuffix(path))
 
   /**
    * Save this SCollection as an object file using default serialization.
@@ -81,21 +77,23 @@ case class ObjectFile[T: ClassTag](path: String)
    */
   def write(sc: SCollection[T], params: WriteP): Future[Tap[T]] =
     params match {
-      case ObjectFile.Parameters(numShards, suffix, metadata) =>
+      case ObjectFileIO.Parameters(numShards, suffix, metadata) =>
         val elemCoder = sc.getCoder[T]
-        val parameters = AvroFile.Parameters(numShards, suffix, metadata = metadata)
+        val parameters = AvroIO.Parameters(numShards, suffix, metadata = metadata)
         sc
           .parDo(new DoFn[T, GenericRecord] {
             @ProcessElement
             private[scio] def processElement(c: DoFn[T, GenericRecord]#ProcessContext): Unit =
               c.output(AvroBytesUtil.encode(elemCoder, c.element()))
           })
-          .write(AvroFile[GenericRecord](path, AvroBytesUtil.schema))(parameters)
+          .write(AvroIO[GenericRecord](path, AvroBytesUtil.schema))(parameters)
         sc.context.makeFuture(ObjectFileTap[T](ScioUtil.addPartSuffix(path)))
     }
+
+  def tap(read: ReadP): Tap[T] = ObjectFileTap[T](ScioUtil.addPartSuffix(path))
 }
 
-object ObjectFile {
+object ObjectFileIO {
   sealed trait WriteParam
   final case class Parameters(
     numShards: Int = 0,
@@ -103,9 +101,10 @@ object ObjectFile {
     metadata: Map[String, AnyRef] = Map.empty) extends WriteParam
 }
 
-case class ProtobufFile[T : ClassTag](path: String)(implicit ev: T <:< Message) extends ScioIO[T] {
+case class ProtobufIO[T : ClassTag](path: String)
+                                   (implicit ev: T <:< Message) extends ScioIO[T] {
   type ReadP = Unit
-  type WriteP = ProtobufFile.WriteParam
+  type WriteP = ProtobufIO.WriteParam
 
   def id: String = path
 
@@ -114,41 +113,38 @@ case class ProtobufFile[T : ClassTag](path: String)(implicit ev: T <:< Message) 
    *
    * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage
    * Avro's block file format.
-   * @group input
    */
   def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    sc.read(ObjectFile(path))
-
-  def tap(read: ReadP): Tap[T] =
-    ObjectFileTap[T](path)
+    sc.read(ObjectFileIO(path))
 
   /**
    * Save this SCollection as a Protobuf file.
    *
    * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage
    * Avro's block file format.
-   * @group output
    */
   def write(sc: SCollection[T], params: WriteP): Future[Tap[T]] =
     params match {
-      case ProtobufFile.Parameters(numShards) =>
+      case ProtobufIO.Parameters(numShards) =>
         import me.lyh.protobuf.generic
         val schema = generic.Schema.of[Message](sc.ct.asInstanceOf[ClassTag[Message]]).toJson
         val metadata = Map("protobuf.generic.schema" -> schema)
-        sc.write(ObjectFile[T](path))(ObjectFile.Parameters(numShards))
+        sc.write(ObjectFileIO[T](path))(ObjectFileIO.Parameters(numShards, metadata = metadata))
     }
+
+  def tap(read: ReadP): Tap[T] = ObjectFileTap[T](path)
 }
 
-object ProtobufFile {
+object ProtobufIO {
   sealed trait WriteParam
   final case class Parameters(numShards: Int = 0) extends WriteParam
 }
 
-case class AvroFile[T: ClassTag](path: String, schema: Schema = null)
+case class AvroIO[T: ClassTag](path: String, schema: Schema = null)
   extends ScioIO[T] {
 
   type ReadP = Unit
-  type WriteP = AvroFile.WriteParam
+  type WriteP = AvroIO.WriteParam
 
   private def avroOut[U](sc: SCollection[T],
                          write: gio.AvroIO.Write[U],
@@ -165,10 +161,8 @@ case class AvroFile[T: ClassTag](path: String, schema: Schema = null)
   def id: String = path
 
   /**
-   * Get an SCollection for an Avro file.
-   * @param schema must be not null if `T` is of type
-   *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
-   * @group input
+   * Get an SCollection for an Avro file. `schema` must be not null if `T` is of type
+   * [[org.apache.avro.generic.GenericRecord GenericRecord]].
    */
   def read(sc: ScioContext, params: ReadP): SCollection[T] =
     sc.requireNotClosed {
@@ -181,18 +175,13 @@ case class AvroFile[T: ClassTag](path: String, schema: Schema = null)
       sc.wrap(sc.applyInternal(t)).setName(path)
     }
 
-  def tap(read: ReadP): Tap[T] =
-    AvroTap[T](path, schema)
-
   /**
-   * Save this SCollection as an Avro file.
-   * @param schema must be not null if `T` is of type
-   *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
-   * @group output
+   * Save this SCollection as an Avro file. `schema` must be not null if `T` is of type
+   * [[org.apache.avro.generic.GenericRecord GenericRecord]].
    */
   def write(sc: SCollection[T], params: WriteP): Future[Tap[T]] =
     params match {
-      case AvroFile.Parameters(numShards, suffix, codec, metadata) =>
+      case AvroIO.Parameters(numShards, suffix, codec, metadata) =>
         val cls = ScioUtil.classOf[T]
         val t = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
           gio.AvroIO.write(cls)
@@ -202,9 +191,11 @@ case class AvroFile[T: ClassTag](path: String, schema: Schema = null)
         sc.applyInternal(avroOut(sc, t, path, numShards, suffix, codec, metadata))
         sc.context.makeFuture(AvroTap(ScioUtil.addPartSuffix(path), schema))
     }
+
+  def tap(read: ReadP): Tap[T] = AvroTap[T](path, schema)
 }
 
-object AvroFile {
+object AvroIO {
   sealed trait WriteParam
   final case class Parameters(
     numShards: Int = 0,
@@ -243,8 +234,6 @@ object Typed {
    * [[com.spotify.scio.avro.types.AvroType AvroType.fromSchema]],
    * [[com.spotify.scio.avro.types.AvroType AvroType.fromPath]], or
    * [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
-   *
-   * @group input
    */
     def read(sc: ScioContext, params: ReadP): SCollection[T] =
       sc.requireNotClosed {
@@ -253,17 +242,9 @@ object Typed {
         sc.wrap(sc.applyInternal(t)).setName(path).map(avroT.fromGenericRecord)
       }
 
-
-    def tap(read: ReadP): Tap[T] = {
-      val avroT = AvroType[T]
-      AvroTap[GenericRecord](path, avroT.schema)
-        .map(avroT.fromGenericRecord)
-    }
-
   /**
    * Save this SCollection as an Avro file. Note that element type `T` must be a case class
    * annotated with [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
-   * @group output
    */
     def write(sc: SCollection[T], params: WriteP): Future[Tap[T]] =
       params match {
@@ -277,6 +258,12 @@ object Typed {
           sc.applyInternal(typedAvroOut(sc, t, path, numShards, suffix, codec, metadata))
           sc.context.makeFuture(AvroTap(ScioUtil.addPartSuffix(path), avroT.schema))
       }
+
+    def tap(read: ReadP): Tap[T] = {
+      val avroT = AvroType[T]
+      AvroTap[GenericRecord](path, avroT.schema)
+        .map(avroT.fromGenericRecord)
+    }
   }
 
   object AvroFile {
