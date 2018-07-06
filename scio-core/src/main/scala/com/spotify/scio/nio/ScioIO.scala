@@ -24,12 +24,15 @@ import com.spotify.scio.values.SCollection
 import scala.concurrent.Future
 
 /**
- * Base trait for all Read Write IO classes, every IO connector must implement this.
- * This trait has two abstract implicit methods #read, #write that need be implemented
- * in every subtype. Look at the [[com.spotify.scio.nio.TextIO]] subclass as reference
+ * Base trait for all Read/Write IO classes. Every IO connector must implement this.
+ * This trait has two abstract implicit methods #read, #write that need to be implemented
+ * in every subtype. Look at the [[com.spotify.scio.nio.TextIO]] subclass for a reference
  * implementation.
  */
 trait ScioIO[T] {
+
+  require(id != null, s"$this has null id")
+  require(!id.isEmpty, s"$this has empty string id")
 
   // abstract types for read/write params.
   type ReadP

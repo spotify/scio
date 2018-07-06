@@ -18,8 +18,9 @@
 package com.spotify.scio.bigquery.testing
 
 import com.spotify.scio._
-import com.spotify.scio.testing._
 import com.spotify.scio.bigquery._
+import com.spotify.scio.nio.ScioIO
+import com.spotify.scio.testing._
 
 // scalastyle:off file.size.limit
 
@@ -49,7 +50,7 @@ class JobTestTest extends PipelineSpec {
   def testBigQuery(xs: Seq[TableRow]): Unit = {
     JobTest[BigQueryJob.type]
       .args("--input=table.in", "--output=table.out")
-      .input(BigQueryIO("table.in"), (1 to 3).map(newTableRow))
+      .input(BigQueryIO[TableRow]("table.in"), (1 to 3).map(newTableRow))
       .output(BigQueryIO[TableRow]("table.out"))(_ should containInAnyOrder (xs))
       .run()
   }
@@ -78,6 +79,26 @@ class JobTestTest extends PipelineSpec {
   it should "fail incorrect TableRowJsonIO" in {
     an [AssertionError] should be thrownBy { testTableRowJson((1 to 2).map(newTableRow)) }
     an [AssertionError] should be thrownBy { testTableRowJson((1 to 4).map(newTableRow)) }
+  }
+
+  "BigQueryIO" should "not allow null keys" in {
+    def test[T](testIO: => ScioIO[T], repr: String): Unit = {
+      the [IllegalArgumentException] thrownBy {
+        testIO
+      } should have message s"requirement failed: $repr has null id"
+    }
+    test(BigQueryIO(null), "BigQueryIO(null)")
+    test(TableRowJsonIO(null), "TableRowJsonIO(null)")
+  }
+
+  it should "not allow empty keys" in {
+    def test[T](testIO: => ScioIO[T], repr: String): Unit = {
+      the [IllegalArgumentException] thrownBy {
+        testIO
+      } should have message s"requirement failed: $repr has empty string id"
+    }
+    test(BigQueryIO(""), "BigQueryIO()")
+    test(TableRowJsonIO(""), "TableRowJsonIO()")
   }
 
 }

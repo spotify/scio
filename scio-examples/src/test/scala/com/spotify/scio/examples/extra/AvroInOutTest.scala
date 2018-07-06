@@ -17,7 +17,7 @@
 
 package com.spotify.scio.examples.extra
 
-import com.spotify.scio.avro.{Account, TestRecord}
+import com.spotify.scio.avro._
 import com.spotify.scio.testing._
 
 import scala.collection.JavaConverters._
@@ -35,7 +35,7 @@ class AvroInOutTest extends PipelineSpec {
   "AvroInOut" should "work" in {
     JobTest[com.spotify.scio.examples.extra.AvroInOut.type]
       .args("--input=in.avro", "--output=out.avro")
-      .input(AvroIO("in.avro"), input)
+      .input(AvroIO[TestRecord]("in.avro"), input)
       .output(AvroIO[Account]("out.avro"))(_ should containInAnyOrder (expected))
       .run()
   }

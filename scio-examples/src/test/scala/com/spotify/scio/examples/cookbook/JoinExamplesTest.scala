@@ -59,8 +59,8 @@ class JoinExamplesTest extends PipelineSpec {
   "JoinExamples" should "work" in {
     JobTest[com.spotify.scio.examples.cookbook.JoinExamples.type]
       .args("--output=out.txt")
-      .input(BigQueryIO(ExampleData.EVENT_TABLE), eventData)
-      .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)
+      .input(BigQueryIO[TableRow](ExampleData.EVENT_TABLE), eventData)
+      .input(BigQueryIO[TableRow](ExampleData.COUNTRY_TABLE), countryData)
       .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
@@ -68,8 +68,8 @@ class JoinExamplesTest extends PipelineSpec {
   "SideInputJoinExamples" should "work" in {
     JobTest[com.spotify.scio.examples.cookbook.SideInputJoinExamples.type]
       .args("--output=out.txt")
-      .input(BigQueryIO(ExampleData.EVENT_TABLE), eventData)
-      .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)
+      .input(BigQueryIO[TableRow](ExampleData.EVENT_TABLE), eventData)
+      .input(BigQueryIO[TableRow](ExampleData.COUNTRY_TABLE), countryData)
       .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
@@ -77,8 +77,8 @@ class JoinExamplesTest extends PipelineSpec {
   "HashJoinExamples" should "work" in {
     JobTest[com.spotify.scio.examples.cookbook.HashJoinExamples.type]
       .args("--output=out.txt")
-      .input(BigQueryIO(ExampleData.EVENT_TABLE), eventData)
-      .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)
+      .input(BigQueryIO[TableRow](ExampleData.EVENT_TABLE), eventData)
+      .input(BigQueryIO[TableRow](ExampleData.COUNTRY_TABLE), countryData)
       .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }

@@ -35,11 +35,11 @@ import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 
 import scala.concurrent.Future
 
-final case class ParquetAvroFile[T](path: String)
+final case class ParquetAvroIO[T](path: String)
     extends ScioIO[T] {
 
   type ReadP = Nothing
-  type WriteP = ParquetAvroFile.WriteParam
+  type WriteP = ParquetAvroIO.WriteParam
 
   def id: String = path
 
@@ -50,7 +50,7 @@ final case class ParquetAvroFile[T](path: String)
     throw new IllegalStateException("Can't create a Tap for parquet avro file")
 
   def write(sc: SCollection[T], params: WriteP): Future[Tap[T]] = params match {
-    case ParquetAvroFile.Parameters(numShards, schema, suffix) =>
+    case ParquetAvroIO.Parameters(numShards, schema, suffix) =>
       val job = Job.getInstance()
       if (ScioUtil.isLocalRunner(sc.context.options.getRunner)) {
         GcsConnectorUtil.setCredentials(job)
@@ -74,7 +74,7 @@ final case class ParquetAvroFile[T](path: String)
   }
 }
 
-object ParquetAvroFile {
+object ParquetAvroIO {
   sealed trait WriteParam
   final case class Parameters(numShards: Int = 0,
                               schema: Schema = null,

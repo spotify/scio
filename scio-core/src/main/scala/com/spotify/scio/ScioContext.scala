@@ -36,7 +36,7 @@ import com.spotify.scio.util._
 import com.spotify.scio.values._
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
-import org.apache.beam.sdk.io.gcp.{datastore => dsio, pubsub => psio}
+import org.apache.beam.sdk.io.gcp.{pubsub => psio}
 import org.apache.beam.sdk.metrics.Counter
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms._
@@ -360,25 +360,23 @@ class ScioContext private[scio] (val options: PipelineOptions,
     new SCollectionImpl[T](p, this)
 
   /**
-  * Add callbacks calls when the context is closed.
-  */
+   * Add callbacks calls when the context is closed.
+   */
   private[scio] def onClose(f: Unit => Unit): Unit =
     _onClose = _onClose compose f
 
-  /**
-  * Get from or put in an object in this context local cache
-  * This method is used un scio-bigquery to only instanciate the bigquery client once
-  * even if there's multiple implicit conversions from [[ScioContext]] to [[BigQueryScioContext]]
-  */
+  /*
+   * Get from or put in an object in this context local cache
+   * This method is used in `scio-bigquery` to only instantiate the BigQuery client once
+   * even if there's multiple implicit conversions from [[ScioContext]] to `BigQueryScioContext`
+   */
   private[scio] def cached[T: ClassTag](t: => T): T = {
     val key = implicitly[ClassTag[T]]
-    _localInstancesCache.get(key).getOrElse {
+    _localInstancesCache.getOrElse(key, {
       _localInstancesCache += key -> t
       t
-    }.asInstanceOf[T]
+    }).asInstanceOf[T]
   }
-
-
 
   // =======================================================================
   // States
@@ -496,18 +494,22 @@ class ScioContext private[scio] (val options: PipelineOptions,
   /**  Whether this is a test context. */
   def isTest: Boolean = testId.isDefined
 
-  private[scio] def testInNio: TestInputNio = TestDataManager.getInputNio(testId.get)
-  private[scio] def testOutNio: TestOutputNio = TestDataManager.getOutputNio(testId.get)
+  private[scio] def testIn: TestInput = TestDataManager.getInput(testId.get)
+  private[scio] def testOut: TestOutput = TestDataManager.getOutput(testId.get)
   private[scio] def testDistCache: TestDistCache = TestDataManager.getDistCache(testId.get)
 
+  private[scio] def testOut[T](key: ScioIO[T]): SCollection[T] => Unit =
+    testOut(key.id)
+
+  private[scio] def getTestInput[T: ClassTag](key: ScioIO[T]): SCollection[T] =
+    this.parallelize(testIn(key.id).asInstanceOf[Seq[T]])
+
+  // FIXME: NIO remove
   private[scio] def testOut[T](key: TestIO[T]): SCollection[T] => Unit =
-    testOutNio(key.key)
+    testOut(key.key)
 
   private[scio] def getTestInput[T: ClassTag](key: TestIO[T]): SCollection[T] =
-    getTestInputNio(key.key)
-
-  private[scio] def getTestInputNio[T: ClassTag](key: String): SCollection[T] =
-    this.parallelize(testInNio(key).asInstanceOf[Seq[T]])
+    this.parallelize(testIn(key.key).asInstanceOf[Seq[T]])
 
   // =======================================================================
   // Read operations
@@ -521,18 +523,10 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection for a Datastore query.
    * @group input
    */
-  def datastore(projectId: String, query: Query, namespace: String = null): SCollection[Entity] =
-    requireNotClosed {
-      if (this.isTest) {
-        this.getTestInput(DatastoreIO(projectId, query, namespace))
-      } else {
-        wrap(this.applyInternal(
-          dsio.DatastoreIO.v1().read()
-            .withProjectId(projectId)
-            .withNamespace(namespace)
-            .withQuery(query)))
-      }
-    }
+  def datastore(projectId: String, query: Query, namespace: String = null): SCollection[Entity] = {
+    val io = nio.DatastoreIO(projectId)
+    this.read(io)(io.ReadParams(query, namespace))
+  }
 
   private def pubsubIn[T: ClassTag](isSubscription: Boolean,
                                     name: String,
@@ -642,14 +636,10 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group input
    */
   def textFile(path: String,
-               compression: gio.Compression = gio.Compression.AUTO)
-  : SCollection[String] = requireNotClosed {
-    if (this.isTest) {
-      this.getTestInput(TextIO(path))
-    } else {
-      wrap(this.applyInternal(gio.TextIO.read().from(path)
-        .withCompression(compression))).setName(path)
-    }
+                compression: gio.Compression = gio.Compression.AUTO)
+  : SCollection[String] = {
+    val io = nio.TextIO(path)
+    this.read(io)(io.ReadParams(compression))
   }
 
   /**
@@ -680,7 +670,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   private def readImpl[T: ClassTag](io: ScioIO[T])(params: io.ReadP): SCollection[T] =
     requireNotClosed {
       if (this.isTest) {
-        this.getTestInputNio(io.id)
+        this.getTestInput(io)
       } else {
         io.read(this, params)
       }
