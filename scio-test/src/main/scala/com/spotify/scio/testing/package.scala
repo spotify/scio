@@ -36,4 +36,10 @@ package object testing {
       self.wrap(self.pipeline.apply(ts.toString, ts))
   }
 
+  type TextIO = nio.TextIO
+  val TextIO = nio.TextIO
+
+  type DatastoreIO = nio.DatastoreIO
+  val DatastoreIO = nio.DatastoreIO
+
 }

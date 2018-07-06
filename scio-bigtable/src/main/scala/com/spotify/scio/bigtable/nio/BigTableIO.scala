@@ -56,11 +56,11 @@ final case class Row(bigtableOptions: BigtableOptions, tableId: String) extends 
       }
     }
 
-  def tap(read: ReadP): Tap[BTRow] =
-    throw new NotImplementedError("Bigtable tap not implemented")
-
   def write(sc: SCollection[BTRow], params: WriteP): Future[Tap[BTRow]] =
     throw new IllegalStateException("Row are read-only, Use Mutation to write to BigTable")
+
+  def tap(read: ReadP): Tap[BTRow] =
+    throw new NotImplementedError("Bigtable tap not implemented")
 }
 
 object Row {
@@ -93,9 +93,6 @@ final case class Mutate[T](
   def read(sc: ScioContext, params: ReadP): SCollection[(ByteString, Iterable[T])] =
     throw new IllegalStateException("Can't read mutations from BigTable")
 
-  def tap(read: ReadP): Tap[(ByteString, Iterable[T])] =
-    throw new IllegalStateException("Can't read mutations from BigTable")
-
   def write(
     sc: SCollection[(ByteString, Iterable[T])],
     params: WriteP
@@ -111,6 +108,9 @@ final case class Mutate[T](
       .applyInternal(sink)
     Future.failed(new NotImplementedError("Bigtable future not implemented"))
   }
+
+  def tap(read: ReadP): Tap[(ByteString, Iterable[T])] =
+    throw new IllegalStateException("Can't read mutations from BigTable")
 }
 
 object Mutate {

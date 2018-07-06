@@ -15,9 +15,8 @@
  * under the License.
  */
 
-package com.spotify.scio.examples
+package com.spotify.scio.examples.extra
 
-import com.spotify.scio.examples.extra.{TsvExampleRead, TsvExampleWrite}
 import com.spotify.scio.testing._
 
 class TsvExampleTest extends PipelineSpec {

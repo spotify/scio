@@ -36,7 +36,7 @@ final class AvroScioContext(@transient val self: ScioContext) extends Serializab
    * @group input
    */
   def objectFile[T: ClassTag](path: String): SCollection[T] =
-    self.read(nio.ObjectFile[T](path))
+    self.read(nio.ObjectFileIO[T](path))
 
   /**
    * Get an SCollection for an Avro file.
@@ -45,7 +45,7 @@ final class AvroScioContext(@transient val self: ScioContext) extends Serializab
    * @group input
    */
   def avroFile[T: ClassTag](path: String, schema: Schema = null): SCollection[T] =
-    self.read(nio.AvroFile[T](path, schema))
+    self.read(nio.AvroIO[T](path, schema))
 
   /**
    * Get a typed SCollection from an Avro schema.
@@ -69,6 +69,6 @@ final class AvroScioContext(@transient val self: ScioContext) extends Serializab
    * @group input
    */
   def protobufFile[T: ClassTag](path: String)(implicit ev: T <:< Message): SCollection[T] =
-    self.read(nio.ProtobufFile[T](path))
+    self.read(nio.ProtobufIO[T](path))
 
 }
