@@ -56,7 +56,7 @@ class JsonTest extends TapSpec {
       _
         .parallelize(data)
         .saveAsJsonFile(dir.getPath)
-    }
+    }.map(_.right.get)
     verifyTap(t, data.toSet)
     FileUtils.deleteDirectory(dir)
   }
@@ -67,7 +67,7 @@ class JsonTest extends TapSpec {
       _
         .parallelize(data)
         .saveAsJsonFile(dir.getPath, printer = Printer.noSpaces.copy(dropNullValues = true))
-    }
+    }.map(_.right.get)
     verifyTap(t, data.toSet)
     val result = Files.list(dir.toPath).iterator().asScala
       .flatMap(p => Source.fromFile(p.toFile).getLines())
@@ -84,8 +84,8 @@ class JsonTest extends TapSpec {
   "JobTest" should "pass correct JsonIO" in {
     JobTest[JsonJob.type]
       .args("--input=in.json", "--output=out.json")
-      .input(JsonIO("in.json"), data)
-      .output(JsonIO[Record]("out.json"))(_ should containInAnyOrder (data))
+      .input(JsonIO[Record]("in.json"), data.mapToEither)
+      .output(JsonIO[Record]("out.json"))(_ should containInAnyOrder (data.mapToEither))
       .run()
   }
 
