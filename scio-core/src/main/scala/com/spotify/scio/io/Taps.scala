@@ -111,7 +111,7 @@ trait Taps {
 
   /** Get a `Future[Tap[T]]` of an object file. */
   def objectFile[T: ClassTag](path: String): Future[Tap[T]] =
-    mkTap(s"Protobuf: $path", () => isPathDone(path), () => ObjectFileTap[T](path))
+    mkTap(s"Object file: $path", () => isPathDone(path), () => ObjectFileTap[T](path))
 
   private def isPathDone(path: String): Boolean = FileStorage(path).isDone
 
