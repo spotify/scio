@@ -70,7 +70,7 @@ final case class AvroTaps[T <: Taps](self: T) {
 
   /** Get a `Future[Tap[T]]` of an object file. */
   def objectFile[T: ClassTag](path: String): Future[Tap[T]] =
-    mkTap(s"Protobuf: $path", () => isPathDone(path), () => ObjectFileTap[T](path))
+    mkTap(s"Object file: $path", () => isPathDone(path), () => ObjectFileTap[T](path))
 
   /** Get a `Future[Tap[T]]` for an Avro file. */
   def avroFile[T: ClassTag](path: String, schema: Schema = null): Future[Tap[T]] =
