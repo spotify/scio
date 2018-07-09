@@ -22,7 +22,7 @@ import java.util.{List => JList, Map => JMap}
 
 import com.spotify.scio.util.JMapWrapper
 import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.transforms.windowing.BoundedWindow
+import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, GlobalWindow}
 import org.apache.beam.sdk.values.PCollectionView
 
 import scala.collection.JavaConverters._
@@ -35,7 +35,7 @@ trait SideInput[T] extends Serializable {
   private[values] def get[I, O](context: DoFn[I, O]#ProcessContext): T
 
   def getCache[I, O](context: DoFn[I, O]#ProcessContext, window: BoundedWindow): T = {
-    if (cache == null || window == org.apache.beam.sdk.transforms.windowing.GlobalWindow.INSTANCE || this.window != window) {
+    if (cache == null || window == GlobalWindow.INSTANCE || this.window != window) {
       this.window = window
       cache = get(context)
     }
