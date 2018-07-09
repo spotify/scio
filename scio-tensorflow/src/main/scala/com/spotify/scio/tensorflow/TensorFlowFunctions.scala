@@ -24,6 +24,7 @@ import java.util.function.{Consumer, Function}
 
 import com.google.common.base.Charsets
 import com.spotify.featran.{FeatureExtractor, MultiFeatureExtractor}
+import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{Tap, Taps, TextTap}
 import com.spotify.scio.testing.{ProtobufIO, TextIO}
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
@@ -35,7 +36,6 @@ import com.spotify.zoltar.{Model, ModelLoader, Models}
 import io.circe.generic.auto._
 import io.circe.syntax._
 import javax.annotation.Nullable
-
 import com.twitter.algebird.{Aggregator, MultiAggregator}
 import org.apache.beam.sdk.io.{Compression, FileSystems}
 import org.apache.beam.sdk.transforms.DoFn.Teardown
@@ -319,7 +319,16 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
       import scala.concurrent.ExecutionContext.Implicits.global
       saveExampleMetadata(inferedSchema, schemaPath)
       val r = self.map(_.toByteArray).saveAsTfRecordFile(path, suffix, compression, numShards)
-      (r.map(_.map(Example.parseFrom)), Taps().protobufFile[Schema](schemaPath))
+      val fExample = r.map(_.map(Example.parseFrom))
+      val fSchema = fExample.map { _ =>
+        val id = FileSystems.matchSingleFileSpec(schemaPath).resourceId()
+        val schema = Schema.parseFrom(Channels.newInputStream(FileSystems.open(id)))
+        new Tap[Schema] {
+          override def value: Iterator[Schema] = Iterator(schema)
+          override def open(sc: ScioContext): SCollection[Schema] = sc.parallelize(Seq(schema))
+        }
+      }
+      (fExample, fSchema)
     }
   }
 
