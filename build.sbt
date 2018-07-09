@@ -562,11 +562,8 @@ lazy val scioTensorFlow: Project = Project(
     "com.spotify" %% "featran-core" % featranVersion,
     "com.spotify" %% "featran-scio" % featranVersion,
     "com.spotify" %% "featran-tensorflow" % featranVersion,
-    // exclude and explicitly include 'google-api-services-storage' to make sure the right dep is
-    // considered when including 'scio-tensorflow'
-    "com.spotify" % "zoltar-api" % zoltarVersion exclude("com.google.apis", "google-api-services-storage"),
-    "com.spotify" % "zoltar-tensorflow" % zoltarVersion,
-    "com.google.apis" % "google-api-services-storage" % "v1-rev131-1.22.0"
+    "com.spotify" % "zoltar-api" % zoltarVersion,
+    "com.spotify" % "zoltar-tensorflow" % zoltarVersion
   ),
   libraryDependencies ++= Seq(
     "io.circe" %% "circe-core",
