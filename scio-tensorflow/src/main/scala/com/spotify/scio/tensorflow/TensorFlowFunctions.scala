@@ -19,10 +19,11 @@ package com.spotify.scio.tensorflow
 
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
-import java.util.concurrent.{CompletableFuture, CompletionStage}
+import java.util.concurrent.{CompletableFuture, CompletionStage, ConcurrentMap}
 import java.util.function.{Consumer, Function}
 
 import com.google.common.base.Charsets
+import com.google.common.collect.Maps
 import com.spotify.featran.{FeatureExtractor, MultiFeatureExtractor}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{Tap, Taps, TextTap}
@@ -56,12 +57,12 @@ private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
   fetchOp: Seq[String],
   inFn: T => Map[String, Tensor[_]],
   outFn: (T, Map[String, Tensor[_]]) => V)
-    extends JavaAsyncDoFn[T, V, ModelLoader[M]] {
+    extends JavaAsyncDoFn[T, V, ConcurrentMap[String, ModelLoader[M]]] {
   @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
 
   def withResourceRunner(f: Session#Runner => V): CompletableFuture[V]
 
-  override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_INSTANCE
+  override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_CLASS
 
   /**
    * Process an element asynchronously.
@@ -93,15 +94,9 @@ private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
     result.toCompletableFuture
   }
 
-  @Teardown
-  def teardown(): Unit = {
-    log.info(s"Closing down predict DoFn $this")
-    getResource
-      .get()
-      .thenAccept(new Consumer[M] {
-        override def accept(model: M): Unit = model.close()
-      })
-  }
+  override def createResource(): ConcurrentMap[String, ModelLoader[M]] =
+    Maps.newConcurrentMap[String, ModelLoader[M]]()
+
 }
 
 private[tensorflow] class SavedBundlePredictDoFn[T, V](uri: String,
@@ -110,16 +105,28 @@ private[tensorflow] class SavedBundlePredictDoFn[T, V](uri: String,
                                                        inFn: T => Map[String, Tensor[_]],
                                                        outFn: (T, Map[String, Tensor[_]]) => V)
     extends PredictDoFn[T, V, TensorFlowModel](fetchOp, inFn, outFn) {
+  @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
 
   override def withResourceRunner(f: Session#Runner => V): CompletableFuture[V] =
     getResource
+      .computeIfAbsent(uri, _ => Models.tensorFlow(uri, options))
       .get()
-      .thenApply[V](new Function[TensorFlowModel, V] {
+      .thenApplyAsync[V](new Function[TensorFlowModel, V] {
         override def apply(model: TensorFlowModel): V = f(model.instance().session().runner())
       })
       .toCompletableFuture
 
-  override def createResource(): ModelLoader[TensorFlowModel] = Models.tensorFlow(uri, options)
+  @Teardown
+  def teardown(): Unit = {
+    log.info(s"Closing down predict DoFn $this")
+    getResource
+      .get(uri)
+      .get()
+      .thenAccept(new Consumer[TensorFlowModel] {
+        override def accept(model: TensorFlowModel): Unit = model.close()
+      })
+  }
+
 }
 
 private[tensorflow] class GraphPredictDoFn[T, V](uri: String,
@@ -128,19 +135,30 @@ private[tensorflow] class GraphPredictDoFn[T, V](uri: String,
                                                  inFn: T => Map[String, Tensor[_]],
                                                  outFn: (T, Map[String, Tensor[_]]) => V)
     extends PredictDoFn[T, V, TensorFlowGraphModel](fetchOp, inFn, outFn) {
-
-  override def createResource(): ModelLoader[TensorFlowGraphModel] = {
-    val configOpt = Option(config).map(ConfigProto.parseFrom)
-    Models.tensorFlowGraph(uri, configOpt.orNull, null)
-  }
+  @transient private lazy val log = LoggerFactory.getLogger(this.getClass)
 
   override def withResourceRunner(f: Session#Runner => V): CompletableFuture[V] =
     getResource
+      .computeIfAbsent(uri, _ => {
+        val configOpt = Option(config).map(ConfigProto.parseFrom)
+        Models.tensorFlowGraph(uri, configOpt.orNull, null)
+      })
       .get()
-      .thenApply[V](new Function[TensorFlowGraphModel, V] {
+      .thenApplyAsync[V](new Function[TensorFlowGraphModel, V] {
         override def apply(model: TensorFlowGraphModel): V = f(model.instance().runner())
       })
       .toCompletableFuture
+
+  @Teardown
+  def teardown(): Unit = {
+    log.info(s"Closing down predict DoFn $this")
+    getResource
+      .get(uri)
+      .get()
+      .thenAccept(new Consumer[TensorFlowGraphModel] {
+        override def accept(model: TensorFlowGraphModel): Unit = model.close()
+      })
+  }
 }
 
 /**
