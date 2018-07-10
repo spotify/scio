@@ -51,7 +51,7 @@ private object TFGraphJob2Inputs {
 
   def main(argv: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(argv)
-    sc.parallelize(1L to 1000000)
+    sc.parallelize(1L to 10)
       .predict(args("graphURI"), Seq("multiply")) { e =>
         Map("input" -> Tensors.create(e), "input2" -> Tensors.create(3L))
       } { (r, o) =>
@@ -198,8 +198,7 @@ class TensorflowSpec extends PipelineSpec {
       JobTest[TFGraphJob2Inputs.type]
         .args(s"--graphURI=${graphFile.toUri}", "--output=output")
         .output(TextIO("output")) {
-//          _ should containInAnyOrder((1L to 1000000).map(x => (x, x * 3)).map(_.toString))
-          _ shouldNot beEmpty
+          _ should containInAnyOrder((1L to 10).map(x => (x, x * 3)).map(_.toString))
         }
         .run()
     } finally {
