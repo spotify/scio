@@ -565,6 +565,10 @@ lazy val scioTensorFlow: Project = Project(
     "com.spotify" % "zoltar-api" % zoltarVersion,
     "com.spotify" % "zoltar-tensorflow" % zoltarVersion
   ),
+  dependencyOverrides ++= Seq(
+    "com.google.protobuf" % "protobuf-java" % protobufVersion,
+    "com.google.protobuf" % "protobuf-java-util" % protobufVersion
+  ),
   libraryDependencies ++= Seq(
     "io.circe" %% "circe-core",
     "io.circe" %% "circe-generic",
