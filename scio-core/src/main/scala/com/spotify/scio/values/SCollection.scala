@@ -340,6 +340,22 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def distinct: SCollection[T] = this.pApply(Distinct.create[T]())
 
   /**
+   * Returns a new SCollection with distinct elements using given function to obtain a
+   * representative value for each input element.
+   *
+   * @param f The funciton to use to get representative values.
+   * @tparam U The type of representative values used to dedup.
+   * @group transform
+   */
+  def distinctWithRepresentativeValueFn[U](f: T => U)(implicit ctu: ClassTag[U])
+  : SCollection[T] = {
+    this.pApply(Distinct
+      .withRepresentativeValueFn(Functions.serializableFn(f.asInstanceOf[T => U]))
+      .withRepresentativeType(TypeDescriptor.of(ctu.runtimeClass).asInstanceOf[TypeDescriptor[U]])
+    )
+  }
+
+  /**
    * Return a new SCollection containing only the elements that satisfy a predicate.
    * @group transform
    */
