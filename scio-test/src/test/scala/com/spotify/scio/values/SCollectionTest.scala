@@ -354,6 +354,16 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support seeded randomSplit()" in {
+    runWithContext { sc =>
+      def round(c: Long): Long = math.round(c / 10.0) * 10
+      val p1 = sc.parallelize(0 to 100).randomSplit(Array(0.3, 0.7), seed = 42)
+      p1.length shouldBe 2
+      p1(0).count.map(round) should containSingleValue (20L)
+      p1(1).count.map(round) should containSingleValue (80L)
+    }
+  }
+
   it should "support reduce()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).reduce(_ + _)
