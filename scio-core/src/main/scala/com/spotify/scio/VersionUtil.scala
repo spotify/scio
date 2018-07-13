@@ -63,7 +63,7 @@ private[scio] object VersionUtil {
   private val pattern = """v?(\d+)\.(\d+).(\d+)(-\w+)?""".r
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  private def getLatest: Option[String] = Try {
+  private lazy val latest: Option[String] = Try {
     val transport = new NetHttpTransport()
     val response = transport
       .createRequestFactory(new HttpRequestInitializer {
@@ -103,7 +103,7 @@ private[scio] object VersionUtil {
   }
 
   def checkVersion(): Unit =
-    checkVersion(scioVersion, getLatest).foreach(logger.warn)
+    checkVersion(scioVersion, latest).foreach(logger.warn)
 
   private def getRunnerVersion(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]])
   : Try[String] = Try {
