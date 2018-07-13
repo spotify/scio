@@ -33,7 +33,7 @@ import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
-import org.apache.beam.sdk.coders._
+import org.apache.beam.sdk.coders.{AtomicCoder, CoderException, InstantCoder}
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.VarInt
@@ -86,7 +86,7 @@ private object KryoRegistrarLoader {
 }
 
 /** serializers we've written in Scio and want to add to Kryo serialization
-  * @see com.spotify.scio.coders.serializers */
+ * @see com.spotify.scio.coders.serializers */
 private class ScioKryoRegistrar extends IKryoRegistrar {
 
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
@@ -132,7 +132,7 @@ private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends
     }
 
     VarInt.encode(header, os)
-    val chunked = kryoState.outputChunked(options)
+    val chunked = kryoState.outputChunked
     chunked.setOutputStream(os)
 
     try {
@@ -152,7 +152,7 @@ private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends
   }
 
   override def decode(is: InputStream): T = withKryoState(options) { kryoState =>
-    val chunked = kryoState.inputChunked(options)
+    val chunked = kryoState.inputChunked
     val o = if (VarInt.decodeInt(is) == header) {
       chunked.setInputStream(is)
 
@@ -226,17 +226,9 @@ private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends
 }
 
 /** Used for sharing Kryo instance and buffers. */
-private[scio] final case class KryoState(kryo: Kryo) {
-
-  val inputChunked: KryoOptions => InputChunked = Functions.memoize { options =>
-    new InputChunked(options.bufferSize)
-  }
-
-  val outputChunked: KryoOptions => OutputChunked = Functions.memoize { options =>
-    new OutputChunked(options.bufferSize)
-  }
-
-}
+private[scio] final case class KryoState(kryo: Kryo,
+                                         inputChunked: InputChunked,
+                                         outputChunked: OutputChunked)
 
 private[scio] object KryoAtomicCoder {
   private val logger = LoggerFactory.getLogger(this.getClass)
@@ -269,7 +261,10 @@ private[scio] object KryoAtomicCoder {
 
       KryoRegistrarLoader.load(k)
 
-      KryoState(k)
+      val input = new InputChunked(options.bufferSize)
+      val output = new OutputChunked(options.bufferSize)
+
+      KryoState(k, input, output)
     })
 
     new GenericObjectPool[KryoState](factory, defaultPoolConfig)
