@@ -21,7 +21,7 @@ import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.testing._
 
-class DistinctWithRepresentativeValueFnExampleTest extends PipelineSpec {
+class DistinctByKeyExampleTest extends PipelineSpec {
 
   val input = Seq(
     ("c1", "verylongword1"),
@@ -40,8 +40,8 @@ class DistinctWithRepresentativeValueFnExampleTest extends PipelineSpec {
     ("verylongword3", "c2")
   ).map(kv => TableRow("word" -> kv._1, "reference_play" -> kv._2))
 
-  "DistinctWithRepresentativeValueFnExample" should "work" in {
-    JobTest[com.spotify.scio.examples.cookbook.DistinctWithRepresentativeValueFnExample.type]
+  "DistinctByKeyExample" should "work" in {
+    JobTest[com.spotify.scio.examples.cookbook.DistinctByKeyExample.type]
       .args("--output=dataset.table")
       .input(BigQueryIO(ExampleData.SHAKESPEARE_TABLE), input)
       .output(BigQueryIO[TableRow]("dataset.table"))(_ should containInAnyOrder (expected))

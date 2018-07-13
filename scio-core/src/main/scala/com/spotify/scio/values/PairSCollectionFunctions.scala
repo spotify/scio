@@ -372,6 +372,15 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   def countByKey: SCollection[(K, Long)] = self.transform(_.keys.countByValue)
 
   /**
+   * Return a new SCollection of (key, value) pairs without duplicates based on the keys.
+   * The value is taken randomly for each key.
+   *
+   * @return a new SCollection of (key, value) pairs
+   * @group per_key
+   */
+  def distinctByKey: SCollection[(K, V)] = self.distinctBy(_._1)
+
+  /**
    * Pass each value in the key-value pair SCollection through a `flatMap` function without
    * changing the keys.
    * @group transform

@@ -229,6 +229,14 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  it should "support distinctByKey()" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq(("a", 11), ("a", 11), ("b", 22), ("b", 22), ("b", 22)))
+        .distinctByKey
+      p should containInAnyOrder(Seq(("a", 11), ("b", 22)))
+    }
+  }
+
   it should "support flatMapValues()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("b", 2))).flatMapValues(v => Seq(v + 10.0, v + 20.0))

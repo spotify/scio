@@ -239,10 +239,10 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support distinctWithRepresentativeValueFn" in {
+  it should "support distinctBy()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq("kA" -> "vA1", "kB" -> "vB", "kA" -> "vA2"))
-        .distinctWithRepresentativeValueFn(_._1)
+        .distinctBy(_._1)
       p.keys should containInAnyOrder(Seq("kA", "kB"))
     }
   }
