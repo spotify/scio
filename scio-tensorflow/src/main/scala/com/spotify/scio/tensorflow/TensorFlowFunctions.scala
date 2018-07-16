@@ -306,17 +306,30 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
                              compression = compression)
 
   /**
-   * Save this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file,
-   * along with a protobuf file representing the inferred `org.tensorflow.metadata.v0.Schema`.
-   * If you need to alter the schema, use [[inferExampleMetadata]] and pass altered schema to
-   * [[saveAsTfExampleFile()]].
+   * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
    * @group output
    */
-  def saveAsTfExampleFile(path: String)(implicit ev: T <:< Example)
-  : (Future[Tap[Example]], Future[Tap[Schema]]) = {
+  def saveAsTfExampleFile(path: String)(implicit ev: T <:< Example): Future[Tap[Example]] = {
     this.saveAsTfExampleFile(
       path,
       schema = null,
+      schemaFilename = "_inferred_schema.pb",
+      suffix = ".tfrecords",
+      compression = Compression.UNCOMPRESSED,
+      numShards = 0
+    )(ev)
+  }
+
+  /**
+   * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file,
+   * along with  `org.tensorflow.metadata.v0.Schema`.
+   * @group output
+   */
+  def saveAsTfExampleFile(path: String, schema: Schema)(implicit ev: T <:< Example)
+  : Future[Tap[Example]] = {
+    this.saveAsTfExampleFile(
+      path,
+      schema,
       schemaFilename = "_schema.pb",
       suffix = ".tfrecords",
       compression = Compression.UNCOMPRESSED,
@@ -324,59 +337,53 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
     )(ev)
   }
 
+  /**
+   * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file,
+   * along with  `org.tensorflow.metadata.v0.Schema`.
+   * @return
+   */
   def saveAsTfExampleFile(path: String,
-                          schema: SCollection[Schema],
+                          schema: Schema,
                           schemaFilename: String,
                           suffix: String,
                           compression: Compression,
                           numShards: Int)
-                          (implicit ev: T <:< Example)
-  : (Future[Tap[Example]], Future[Tap[Schema]]) = {
-    val inferedSchema = Option(schema).getOrElse(self.inferExampleMetadata(ev))
+                          (implicit ev: T <:< Example): Future[Tap[Example]] = {
+    require(schemaFilename != null && schemaFilename != "", "schema filename has to be set!")
     val schemaPath = path.replaceAll("\\/+$", "") + "/" + schemaFilename
+    if (schema == null) {
+      // by default if there is no schema provided infer and save schema
+      self.inferExampleMetadata(schemaPath)(ev)
+    } else {
+      // TODO (#1252): maybe enforce some schema checks, but at least save the schema along the data
+      TFExampleSCollectionFunctions
+        .saveExampleMetadata(self.context.parallelize(Some(schema)), schemaPath)
+    }
     if (self.context.isTest) {
       self.context.testOut(TFExampleIO(path))(self.asInstanceOf[SCollection[Example]])
-      self.context.testOut(ProtobufIO(schemaPath))(inferedSchema)
-      (self.saveAsInMemoryTap.asInstanceOf[Future[Tap[Example]]], inferedSchema.saveAsInMemoryTap)
+      self.saveAsInMemoryTap.asInstanceOf[Future[Tap[Example]]]
     } else {
-      import scala.concurrent.ExecutionContext.Implicits.global
-      saveExampleMetadata(inferedSchema, schemaPath)
       val r = self.map(_.toByteArray).saveAsTfRecordFile(path, suffix, compression, numShards)
-      val fExample = r.map(_.map(Example.parseFrom))
-      val fSchema = fExample.map { _ =>
-        val id = FileSystems.matchSingleFileSpec(schemaPath).resourceId()
-        val schema = Schema.parseFrom(Channels.newInputStream(FileSystems.open(id)))
-        new Tap[Schema] {
-          override def value: Iterator[Schema] = Iterator(schema)
-          override def open(sc: ScioContext): SCollection[Schema] = sc.parallelize(Seq(schema))
-        }
-      }
-      (fExample, fSchema)
+      import scala.concurrent.ExecutionContext.Implicits.global
+      r.map(_.map(Example.parseFrom))
     }
   }
 
   /**
    * Infer a `org.tensorflow.metadata.v0.Schema` from this SCollection of
    * `org.tensorflow.example.Example`.
-   * @return A singleton `SCollection` containing the schema.
+   * @param schemaPath optional path to save infered schema
+   * @return A singleton `SCollection` containing the schema
    */
-  def inferExampleMetadata(implicit ev: T <:< Example): SCollection[Schema] =
-    examplesToFeatures(self.asInstanceOf[SCollection[Example]])
+  def inferExampleMetadata(schemaPath: String = null)(implicit ev: T <:< Example)
+  : SCollection[Schema] = {
+    val result = examplesToFeatures(self.asInstanceOf[SCollection[Example]])
       .groupBy(_ => ())
       .values.map(features => Schema.newBuilder().addAllFeature(features.asJava).build())
-
-  private def saveExampleMetadata(schema: SCollection[Schema], schemaPath: String)
-  : SCollection[Schema] = {
-    schema.map { s =>
-      val d = FileSystems.matchNewResource(schemaPath, false)
-      val chnnl = Channels.newOutputStream(FileSystems.create(d, MimeTypes.BINARY))
-      try {
-        s.writeTo(chnnl)
-      } finally {
-        chnnl.close()
-      }
+    if (schemaPath != null) {
+      TFExampleSCollectionFunctions.saveExampleMetadata(result, schemaPath)
     }
-    schema
+    result
   }
 
   private def examplesToFeatures(examples: SCollection[Example]): SCollection[Feature] =
@@ -410,6 +417,21 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
         }
         builder.build()
       }
+}
+
+private object TFExampleSCollectionFunctions {
+  def saveExampleMetadata(schema: SCollection[Schema], schemaPath: String): Unit =
+    if (!schema.context.isTest) {
+      schema.map { s =>
+        val d = FileSystems.matchNewResource(schemaPath, false)
+        val chnnl = Channels.newOutputStream(FileSystems.create(d, MimeTypes.BINARY))
+        try {
+          s.writeTo(chnnl)
+        } finally {
+          chnnl.close()
+        }
+      }
+    }
 }
 
 class SeqTFExampleSCollectionFunctions[T <: Example](@transient val self: SCollection[Seq[T]])

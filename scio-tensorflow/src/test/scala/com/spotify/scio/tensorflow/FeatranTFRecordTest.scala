@@ -17,13 +17,15 @@
 
 package com.spotify.scio.tensorflow
 
+import java.nio.file.Files
+
 import com.spotify.featran.scio._
 import com.spotify.featran.tensorflow._
 import com.spotify.featran.transformers.Identity
 import com.spotify.featran.{FeatureSpec, MultiFeatureSpec}
 import com.spotify.scio._
 import com.spotify.scio.testing.{PipelineSpec, ProtobufIO, TextIO}
-import org.apache.beam.sdk.io.Compression
+import org.scalatest.Matchers
 import org.tensorflow.example.Example
 import org.tensorflow.metadata.v0.{FixedShape, Schema, SparseFeature}
 import org.tensorflow.{example => tf}
@@ -91,27 +93,23 @@ object ExamplesJobV2 {
   }
 }
 
-object ExamplesJobV2WithCustomSchema {
-  def addSparseInfo(schema: Schema): Schema =
-    schema.toBuilder.addSparseFeature(
+object ExamplesJobV2WithSchema {
+  def dummySchema(): Schema = {
+    val schema = Schema.newBuilder()
+    schema.addSparseFeature(
       SparseFeature.newBuilder
         .setName("sparseFeature")
         .setDenseShape(FixedShape.newBuilder.addDim(FixedShape.Dim.newBuilder().setSize(1)))
         .setValueFeature(SparseFeature.ValueFeature.newBuilder.setName("values"))
         .addIndexFeature(SparseFeature.IndexFeature.newBuilder.setName("indices")
         )).build()
+    schema.build()
+  }
 
   def main(argv: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(argv)
     val examples = sc.parallelize(MetadataSchemaTest.examples)
-    val schema = examples.inferExampleMetadata
-    examples.saveAsTfExampleFile(
-      args("output"),
-      schema=schema.map(addSparseInfo),
-      schemaFilename = "_schema.pb",
-      suffix = ".tfrecords",
-      compression = Compression.UNCOMPRESSED,
-      numShards = 0)
+    examples.saveAsTfExampleFile(args("output"), dummySchema())
     sc.close()
   }
 }
@@ -165,25 +163,28 @@ class FeatranTFRecordTest extends PipelineSpec {
   }
 
   "ExamplesJobV2" should "work" in {
-    import scala.collection.JavaConverters._
     JobTest[ExamplesJobV2.type]
       .args("--output=out")
       .output(TFExampleIO("out"))(_ should satisfy[Example](_.size == 2))
-      .output(ProtobufIO[Schema]("out/_schema.pb"))(_.flatMap(_.getFeatureList.asScala)
-        should containInAnyOrder(MetadataSchemaTest.expectedSchema.getFeatureList.asScala))
       .run()
   }
 
   "ExamplesJobV2WithCustomSchema" should "work" in {
-    import scala.collection.JavaConverters._
-    val expectedSchama = ExamplesJobV2WithCustomSchema
-      .addSparseInfo(MetadataSchemaTest.expectedSchema)
-    JobTest[ExamplesJobV2WithCustomSchema.type]
+    JobTest[ExamplesJobV2WithSchema.type]
       .args("--output=out")
       .output(TFExampleIO("out"))(_ should satisfy[Example](_.size == 2))
-      .output(ProtobufIO[Schema]("out/_schema.pb"))(_.flatMap(_.getFeatureList.asScala)
-        should containInAnyOrder(expectedSchama.getFeatureList.asScala))
       .run()
+  }
+
+  "saveExampleMetadata" should "work" in {
+    val f = Files.createTempDirectory("saveExampleMetadataTest").resolve("schema.pb")
+    f.toFile.deleteOnExit()
+    val sc = ScioContext()
+    val schema = ExamplesJobV2WithSchema.dummySchema()
+    TFExampleSCollectionFunctions.saveExampleMetadata(sc.parallelize(Some(schema)),
+      f.toFile.getAbsolutePath)
+    sc.close()
+    Files.readAllBytes(f) shouldBe schema.toByteArray
   }
 
 }
