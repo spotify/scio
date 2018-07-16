@@ -36,7 +36,7 @@ import org.apache.beam.sdk.coders.{AtomicCoder, CoderException, InstantCoder}
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
-import org.apache.beam.sdk.util.{EmptyOnDeserializationThreadLocal, VarInt}
+import org.apache.beam.sdk.util.VarInt
 import org.joda.time.{DateTime, LocalDate, LocalDateTime, LocalTime}
 import org.slf4j.LoggerFactory
 
@@ -45,15 +45,15 @@ import scala.collection.convert.Wrappers
 import scala.collection.mutable
 
 private object KryoRegistrarLoader {
-  private[this] val Log = LoggerFactory.getLogger(this.getClass)
+  private[this] val logger = LoggerFactory.getLogger(this.getClass)
 
   def load(k: Kryo): Unit = {
-    Log.debug("Loading KryoRegistrars: " + registrars.mkString(", "))
+    logger.debug("Loading KryoRegistrars: " + registrars.mkString(", "))
     registrars.foreach(_(k))
   }
 
   private val registrars: Seq[IKryoRegistrar] = {
-    Log.debug("Initializing KryoRegistrars")
+    logger.debug("Initializing KryoRegistrars")
     val classLoader = Thread.currentThread().getContextClassLoader
     ClassPath
       .from(classLoader)
@@ -78,16 +78,16 @@ private object KryoRegistrarLoader {
 }
 
 object ScioKryoRegistrar {
-  private val Log = LoggerFactory.getLogger(this.getClass)
+  private val logger = LoggerFactory.getLogger(this.getClass)
 }
 
 /** serializers we've written in Scio and want to add to Kryo serialization
  * @see com.spotify.scio.coders.serializers */
 private final class ScioKryoRegistrar extends IKryoRegistrar {
-  import ScioKryoRegistrar.Log
+  import ScioKryoRegistrar.logger
 
   override def apply(k: Kryo): Unit = {
-    Log.debug("Loading common Kryo serializers...")
+    logger.debug("Loading common Kryo serializers...")
     k.forClass(new CoderSerializer(InstantCoder.of()))
     k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
     // Java Iterable/Collection are missing proper equality check, use custom CBF as a
@@ -182,7 +182,7 @@ private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
           val elapsed = System.currentTimeMillis() - start
           if (elapsed > abortThreshold) {
             aborted = true
-            Log.warn(
+            logger.warn(
               s"Aborting size estimation for ${wrapper.underlying.getClass}, " +
                 s"elapsed: $elapsed ms, count: $count, bytes: $bytes")
             wrapper.underlying match {
@@ -190,15 +190,15 @@ private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
                 // extrapolate remaining bytes in the collection
                 val remaining = (bytes.toDouble / count * (c.size - count)).toLong
                 observer.update(remaining)
-                Log.warn(
+                logger.warn(
                   s"Extrapolated size estimation for ${wrapper.underlying.getClass} " +
                     s"count: ${c.size}, bytes: ${bytes + remaining}")
               case _ =>
-                Log.warn("Can't get size of internal collection, thus can't extrapolate size")
+                logger.warn("Can't get size of internal collection, thus can't extrapolate size")
             }
           } else if (elapsed > warningThreshold && !warned) {
             warned = true
-            Log.warn(
+            logger.warn(
               s"Slow size estimation for ${wrapper.underlying.getClass}, " +
                 s"elapsed: $elapsed ms, count: $count, bytes: $bytes")
           }
@@ -225,11 +225,13 @@ private[scio] final case class KryoState(kryo: Kryo,
                                          outputChunked: OutputChunked)
 
 private[scio] object KryoAtomicCoder {
-  private val Log = LoggerFactory.getLogger(this.getClass)
+  private val logger = LoggerFactory.getLogger(this.getClass)
   private val Header = -1
 
-  private[this] val kryoState: ThreadLocal[KryoState] =
-    new EmptyOnDeserializationThreadLocal[KryoState]
+  // resort to ThreadLocal to make sure we have one kryo instance per thread and that KryoState
+  // instances are GC'ed once the thread dies; there's no need for other concurrency primitives
+  // which most likely will introduce more overhead.
+  private[this] val kryoState: ThreadLocal[KryoState] = new ThreadLocal[KryoState]
 
   def withKryoState[R](options: KryoOptions)(f: KryoState => R): R = {
     val ks = Option(kryoState.get()).getOrElse {
