@@ -108,7 +108,7 @@ class MetadataSchemaTest extends PipelineSpec {
 
   "Saving example schema" should "work" in {
     runWithContext { sc =>
-      val schema = sc.parallelize(examples).inferExampleMetadata
+      val schema = sc.parallelize(examples).inferExampleMetadata()
       schema should satisfy[Schema] { schema =>
         val actualFeatures = schema.head.getFeatureList.asScala.toSet
         val expectedFeatures = expectedSchema.getFeatureList.asScala.toSet
