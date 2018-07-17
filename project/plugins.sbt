@@ -12,5 +12,5 @@ addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.3")
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.2.0")
 
 libraryDependencies ++= Seq(
-  "com.github.os72" % "protoc-jar" % "3.3.0.1"
+  "com.github.os72" % "protoc-jar" % "3.5.1.1"
 )

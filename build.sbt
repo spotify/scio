@@ -55,7 +55,7 @@ val kryoVersion = "4.0.2" // explicitly depend on 4.0.1+ due to https://github.c
 val parquetAvroExtraVersion = "0.2.2"
 val parquetVersion = "1.9.0"
 val protobufGenericVersion = "0.2.4"
-val protobufVersion = "3.3.1"
+val protobufVersion = "3.5.1"
 val scalacheckShapelessVersion = "1.1.8"
 val scalacheckVersion = "1.13.5"
 val scalaMacrosVersion = "2.1.1"
@@ -551,7 +551,7 @@ lazy val scioTensorFlow: Project = Project(
   version in ProtobufConfig := protobufVersion,
   protobufRunProtoc in ProtobufConfig := (args =>
     // protoc-jar does not include 3.3.1 binary
-    com.github.os72.protocjar.Protoc.runProtoc("-v3.3.0" +: args.toArray)
+    com.github.os72.protocjar.Protoc.runProtoc("-v3.5.1" +: args.toArray)
   ),
   sourceDirectories in Compile := (sourceDirectories in Compile).value.filterNot(_.getPath.endsWith("/src_managed/main")),
   managedSourceDirectories in Compile := (managedSourceDirectories in Compile).value.filterNot(_.getPath.endsWith("/src_managed/main")),
@@ -564,10 +564,6 @@ lazy val scioTensorFlow: Project = Project(
     "com.spotify" %% "featran-tensorflow" % featranVersion,
     "com.spotify" % "zoltar-api" % zoltarVersion,
     "com.spotify" % "zoltar-tensorflow" % zoltarVersion
-  ),
-  dependencyOverrides ++= Seq(
-    "com.google.protobuf" % "protobuf-java" % protobufVersion,
-    "com.google.protobuf" % "protobuf-java-util" % protobufVersion
   ),
   libraryDependencies ++= Seq(
     "io.circe" %% "circe-core",
