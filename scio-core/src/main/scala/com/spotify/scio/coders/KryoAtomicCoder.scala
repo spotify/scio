@@ -27,7 +27,6 @@ import com.google.common.reflect.ClassPath
 import com.google.protobuf.{ByteString, Message}
 import com.spotify.scio.coders.serializers._
 import com.spotify.scio.options.ScioOptions
-import com.spotify.scio.util.Functions
 import com.twitter.chill._
 import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
@@ -36,14 +35,8 @@ import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.coders.{AtomicCoder, CoderException, InstantCoder}
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
-import org.apache.beam.sdk.util.VarInt
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
-import org.apache.commons.pool2.impl.{
-  DefaultPooledObject,
-  GenericObjectPool,
-  GenericObjectPoolConfig
-}
-import org.apache.commons.pool2.{BasePooledObjectFactory, ObjectPool, PooledObject}
+import org.apache.beam.sdk.util.VarInt
 import org.joda.time.{DateTime, LocalDate, LocalDateTime, LocalTime}
 import org.slf4j.LoggerFactory
 
@@ -52,7 +45,6 @@ import scala.collection.convert.Wrappers
 import scala.collection.mutable
 
 private object KryoRegistrarLoader {
-
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
 
   def load(k: Kryo): Unit = {
@@ -85,11 +77,14 @@ private object KryoRegistrarLoader {
   }
 }
 
+object ScioKryoRegistrar {
+  private val logger = LoggerFactory.getLogger(this.getClass)
+}
+
 /** serializers we've written in Scio and want to add to Kryo serialization
  * @see com.spotify.scio.coders.serializers */
-private class ScioKryoRegistrar extends IKryoRegistrar {
-
-  private[this] val logger = LoggerFactory.getLogger(this.getClass)
+private final class ScioKryoRegistrar extends IKryoRegistrar {
+  import ScioKryoRegistrar.logger
 
   override def apply(k: Kryo): Unit = {
     logger.debug("Loading common Kryo serializers...")
@@ -121,17 +116,16 @@ private class ScioKryoRegistrar extends IKryoRegistrar {
   }
 }
 
-private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends AtomicCoder[T] {
+private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
+    extends AtomicCoder[T] {
   import KryoAtomicCoder._
-
-  private[this] val header = -1
 
   override def encode(value: T, os: OutputStream): Unit = withKryoState(options) { kryoState =>
     if (value == null) {
       throw new CoderException("cannot encode a null value")
     }
 
-    VarInt.encode(header, os)
+    VarInt.encode(Header, os)
     val chunked = kryoState.outputChunked
     chunked.setOutputStream(os)
 
@@ -153,7 +147,7 @@ private[scio] class KryoAtomicCoder[T](private val options: KryoOptions) extends
 
   override def decode(is: InputStream): T = withKryoState(options) { kryoState =>
     val chunked = kryoState.inputChunked
-    val o = if (VarInt.decodeInt(is) == header) {
+    val o = if (VarInt.decodeInt(is) == Header) {
       chunked.setInputStream(is)
 
       kryoState.kryo.readClassAndObject(chunked)
@@ -232,26 +226,15 @@ private[scio] final case class KryoState(kryo: Kryo,
 
 private[scio] object KryoAtomicCoder {
   private val logger = LoggerFactory.getLogger(this.getClass)
+  private val Header = -1
 
-  private[this] val defaultPoolConfig = {
-    val config = new GenericObjectPoolConfig()
-    config.setMaxTotal(Integer.MAX_VALUE)
-    config.setJmxEnabled(false)
-    config.setMaxIdle(Integer.MAX_VALUE)
-    config.setMinIdle(Integer.MAX_VALUE)
-    config
-  }
+  // resort to ThreadLocal to make sure we have one kryo instance per thread and that KryoState
+  // instances are GC'ed once the thread dies; there's no need for other concurrency primitives
+  // which most likely will introduce more overhead.
+  private[this] val kryoState: ThreadLocal[KryoState] = new ThreadLocal[KryoState]
 
-  final case class KryStatePoolFactory(f: () => KryoState)
-      extends BasePooledObjectFactory[KryoState] {
-    override def create(): KryoState = f()
-
-    override def wrap(obj: KryoState): PooledObject[KryoState] =
-      new DefaultPooledObject[KryoState](obj)
-  }
-
-  private[this] val kryoPool: KryoOptions => ObjectPool[KryoState] = Functions.memoize { options =>
-    val factory = KryStatePoolFactory(() => {
+  def withKryoState[R](options: KryoOptions)(f: KryoState => R): R = {
+    val ks = Option(kryoState.get()).getOrElse {
       val k = KryoSerializer.registered.newKryo()
       k.setReferences(options.referenceTracking)
       k.setRegistrationRequired(options.registrationRequired)
@@ -264,29 +247,22 @@ private[scio] object KryoAtomicCoder {
       val input = new InputChunked(options.bufferSize)
       val output = new OutputChunked(options.bufferSize)
 
-      KryoState(k, input, output)
-    })
-
-    new GenericObjectPool[KryoState](factory, defaultPoolConfig)
-  }
-
-  def withKryoState[R](options: KryoOptions)(f: KryoState => R): R = {
-    val kryoState = kryoPool(options).borrowObject()
-    try {
-      f(kryoState)
-    } finally {
-      kryoPool(options).returnObject(kryoState)
+      val state = KryoState(k, input, output)
+      kryoState.set(state)
+      state
     }
+
+    f(ks)
   }
 }
 
-private[scio] case class KryoOptions(bufferSize: Int,
-                                     maxBufferSize: Int,
-                                     referenceTracking: Boolean,
-                                     registrationRequired: Boolean)
+private[scio] final case class KryoOptions(bufferSize: Int,
+                                           maxBufferSize: Int,
+                                           referenceTracking: Boolean,
+                                           registrationRequired: Boolean)
 
 private[scio] object KryoOptions {
-  def apply(): KryoOptions = KryoOptions(PipelineOptionsFactory.create())
+  @inline def apply(): KryoOptions = KryoOptions(PipelineOptionsFactory.create())
 
   def apply(options: PipelineOptions): KryoOptions = {
     val o = options.as(classOf[ScioOptions])

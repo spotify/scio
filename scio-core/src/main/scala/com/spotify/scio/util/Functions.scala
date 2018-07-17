@@ -18,8 +18,6 @@
 package com.spotify.scio.util
 
 import java.lang.{Iterable => JIterable}
-import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Function
 import java.util.{List => JList}
 
 import com.google.common.collect.Lists
@@ -200,11 +198,4 @@ private[scio] object Functions {
       _mon.sumOption(accumulator).orElse(Some(_mon.zero))
   }
 
-  def memoize[T, U](f: T => U): T => U = {
-    lazy val cache = new ConcurrentHashMap[T, U]()
-    t =>
-      cache.computeIfAbsent(t, new Function[T, U] {
-        override def apply(tt: T): U = f(tt)
-      })
-  }
 }
