@@ -65,7 +65,7 @@ trait Taps {
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
   def bigQueryTable(table: TableReference): Future[Tap[TableRow]] =
-    mkTap(s"BigQuery Table: $table", () => bqc.tableExists(table), () => BigQueryTap(table))
+    mkTap(s"BigQuery Table: $table", () => bqc.tables.exists(table), () => BigQueryTap(table))
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
   def bigQueryTable(tableSpec: String): Future[Tap[TableRow]] =
@@ -116,10 +116,10 @@ trait Taps {
   private def isPathDone(path: String): Boolean = FileStorage(path).isDone
 
   private def isQueryDone(sqlQuery: String): Boolean =
-    bqc.extractTables(sqlQuery).forall(bqc.tableExists)
+    bqc.query.extractTables(sqlQuery).forall(bqc.tables.exists)
 
   private def bigQueryTap(sqlQuery: String, flattenResults: Boolean): BigQueryTap = {
-    val table = bqc.query(sqlQuery, flattenResults = flattenResults)
+    val table = bqc.query.run(sqlQuery, flattenResults = flattenResults)
     BigQueryTap(table)
   }
 

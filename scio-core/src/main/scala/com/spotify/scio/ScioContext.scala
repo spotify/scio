@@ -558,7 +558,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (this.isTest) {
       this.getTestInput(BigQueryIO[T](sqlQuery))
     } else if (this.bigQueryClient.isCacheEnabled) {
-      val queryJob = this.bigQueryClient.newQueryJob(sqlQuery, flattenResults)
+      val queryJob = this.bigQueryClient.query.newQueryJob(sqlQuery, flattenResults)
       _queryJobs.append(queryJob)
       val read = typedRead.from(queryJob.table).withoutValidation()
       wrap(this.applyInternal(read)).setName(sqlQuery)
@@ -568,7 +568,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
       } else {
         typedRead.fromQuery(sqlQuery)
       }
-      val query = if (this.bigQueryClient.isLegacySql(sqlQuery, flattenResults)) {
+      val query = if (this.bigQueryClient.query.isLegacySql(sqlQuery, flattenResults)) {
         baseQuery
       } else {
         baseQuery.usingStandardSql()
