@@ -21,6 +21,8 @@ import scala.reflect.ClassTag
 
 import com.twitter.algebird.{CMS, CMSHasher}
 
+private final case class Partitions[K, V](hot: SCollection[(K, V)], chill: SCollection[(K, V)])
+
  /**
   * Extra functions available on SCollections of (key, value) pairs for skwed joins
   * through an implicit conversion.
@@ -32,8 +34,6 @@ import com.twitter.algebird.{CMS, CMSHasher}
   */
 class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)])
   (implicit ctKey: ClassTag[K], ctValue: ClassTag[V]) {
-
-  private final case class Partitions[A](hot: SCollection[(K, A)], chill: SCollection[(K, A)])
 
   // scalastyle:off parameter.number
    /**
@@ -364,7 +364,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)])
 
   private def partitionInputs[W: ClassTag](that: SCollection[(K, W)],
     hotKeyThreshold: Long,
-    cms: SCollection[CMS[K]]): (Partitions[V], Partitions[W]) = {
+    cms: SCollection[CMS[K]]): (Partitions[K, V], Partitions[K, W]) = {
     val (hotSelf, chillSelf) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
     // scalastyle:off line.size.limit
     // Use asIterableSideInput as workaround for:

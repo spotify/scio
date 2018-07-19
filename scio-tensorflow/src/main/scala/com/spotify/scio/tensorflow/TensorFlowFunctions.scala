@@ -26,9 +26,8 @@ import java.util.function.Function
 import com.google.common.base.Charsets
 import com.google.common.collect.Maps
 import com.spotify.featran.{FeatureExtractor, MultiFeatureExtractor}
-import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{Tap, TextTap}
-import com.spotify.scio.testing.{ProtobufIO, TextIO}
+import com.spotify.scio.testing.TextIO
 import com.spotify.scio.transforms.DoFnWithResource
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.util.ScioUtil
