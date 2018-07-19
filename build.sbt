@@ -62,7 +62,7 @@ val scalatestVersion = "3.0.5"
 val shapelessDatatypeVersion = "0.1.9"
 val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.3.0"
-val tensorFlowVersion = "1.9.0"
+val tensorFlowVersion = "1.8.0"
 val zoltarVersion = "0.4.0"
 
 lazy val mimaSettings = Seq(
