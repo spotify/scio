@@ -109,11 +109,11 @@ object MetricsExample {
     require(d.getSum == (1 to 100).sum)
     require(d.getMean == (1 to 100).sum / 100.0)
 
-    // Dynamic metrics
+    // Dynamic metricsk
     result.allCounters
-      .filterKeys(_.name().startsWith("even_"))
+      .filterKeys(_.getName.startsWith("even_"))
       .foreach { case (name, value) =>
-        println(name.name() + ": " + value.committed.get)
+        println(name.getName + ": " + value.committed.get)
       }
   }
 

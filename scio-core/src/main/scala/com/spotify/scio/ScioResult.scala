@@ -132,13 +132,14 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
       BeamGauge(gauge.getValue, gauge.getTimestamp)
     }
     val beamCounters = allCounters.map { case (k, v) =>
-      BeamMetric(k.namespace(), k.name(), v)
+      BeamMetric(k.getNamespace, k.getName, v)
     }
     val beamDistributions = allDistributions.map { case (k, v) =>
-      BeamMetric(k.namespace(), k.name(), MetricValue(mkDist(v.attempted), v.committed.map(mkDist)))
+      BeamMetric(k.getNamespace, k.getName,
+        MetricValue(mkDist(v.attempted), v.committed.map(mkDist)))
     }
     val beamGauges = allGauges.map { case (k, v) =>
-      BeamMetric(k.namespace(), k.name(),
+      BeamMetric(k.getNamespace, k.getName,
         MetricValue(mkGauge(v.attempted), v.committed.map(mkGauge)))
     }
     BeamMetrics(beamCounters, beamDistributions, beamGauges)

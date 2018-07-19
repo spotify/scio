@@ -873,7 +873,7 @@ class BigQueryClient private (private val projectId: String,
   // =======================================================================
 
   /** Wait for all jobs to finish. */
-  def waitForJobs(jobs: BigQueryJob*): Unit = {
+  private[scio] def waitForJobs(jobs: BigQueryJob*): Unit = {
     val numTotal = jobs.size
     var pendingJobs = jobs.flatMap {
       job =>
