@@ -376,7 +376,9 @@ private[types] object TypeProvider {
     if (sys.props("bigquery.class.cache.directory") != null) {
       Paths.get(sys.props("bigquery.class.cache.directory"))
     } else {
-      Paths.get(sys.props("java.io.tmpdir")).resolve("bigquery-classes")
+      Paths.get(sys.props("java.io.tmpdir"))
+        .resolve(sys.props("user.name"))
+        .resolve("bigquery-classes")
     }
   }
 
