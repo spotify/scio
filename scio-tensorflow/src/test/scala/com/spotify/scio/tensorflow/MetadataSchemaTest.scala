@@ -70,7 +70,7 @@ object MetadataSchemaTest {
     .addFeature(MFeature.newBuilder()
       .setName("dense_shape")
       .setType(FeatureType.INT)
-      .setShape(FixedShape.newBuilder().addDim(FixedShape.Dim.newBuilder().setSize(1))))
+      .setShape(FixedShape.newBuilder()))
     .build()
 
   private def longFeature(raw: Seq[Long]): Feature = {

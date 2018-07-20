@@ -407,8 +407,11 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
           .setType(featureType)
         if (max == min) {
           // This is a fixed length feature
-          builder.setShape(FixedShape.newBuilder()
-            .addDim(FixedShape.Dim.newBuilder().setSize(max)))
+          val shapeBuilder = FixedShape.newBuilder()
+          if (max > 1) {
+            shapeBuilder.addDim(FixedShape.Dim.newBuilder().setSize(max))
+          }
+          builder.setShape(shapeBuilder)
         }
         else {
           // Var length
