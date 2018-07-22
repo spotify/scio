@@ -37,7 +37,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     */
   def hashJoin[W: ClassTag](that: SCollection[(K, W)])
   : SCollection[(K, (V, W))] = self.transform { in =>
-    val side = combineAsMapSideInput(that)
+    val side = that.combineAsMapSideInput
 
     in.withSideInputs(side).flatMap[(K, (V, W))] { (kv, s) =>
       s(side).getOrElse(kv._1, ArrayBuffer.empty[W]).iterator.map(w => (kv._1, (kv._2, w)))
@@ -52,7 +52,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     */
   def hashLeftJoin[W: ClassTag](that: SCollection[(K, W)])
   : SCollection[(K, (V, Option[W]))] = self.transform { in =>
-    val side = combineAsMapSideInput(that)
+    val side = that.combineAsMapSideInput
 
     in.withSideInputs(side).flatMap[(K, (V, Option[W]))] { (kv, s) =>
       val (k, v) = kv
@@ -69,7 +69,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     */
   def hashFullOuterJoin[W: ClassTag](that: SCollection[(K, W)])
   : SCollection[(K, (Option[V], Option[W]))] = self.transform { in =>
-    val side = combineAsMapSideInput(that)
+    val side = that.combineAsMapSideInput
 
     val leftHashed = in.withSideInputs(side).flatMap { (kv, s) =>
       val (k, v) = kv
@@ -93,16 +93,15 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     leftHashed.map(x => (x._1, x._2)) ++ rightHashed
   }
 
-  private def combineAsMapSideInput[W: ClassTag](that: SCollection[(K, W)])
-  : SideInput[MMap[K, ArrayBuffer[W]]] = {
-    that.combine { case (k, v) =>
+   private lazy val combineAsMapSideInput: SideInput[MMap[K, ArrayBuffer[V]]] = {
+    self.combine { case (k, v) =>
       MMap(k -> ArrayBuffer(v))
     } { case (combiner, (k, v)) =>
-      combiner.getOrElseUpdate(k, ArrayBuffer.empty[W]) += v
+      combiner.getOrElseUpdate(k, ArrayBuffer.empty[V]) += v
       combiner
     } { case (left, right) =>
-      right.foreach { case (k, vs) => left.getOrElseUpdate(k, ArrayBuffer.empty[W]) ++= vs }
+      right.foreach { case (k, vs) => left.getOrElseUpdate(k, ArrayBuffer.empty[V]) ++= vs }
       left
-    }.asSingletonSideInput(MMap.empty[K, ArrayBuffer[W]])
+    }.asSingletonSideInput(MMap.empty[K, ArrayBuffer[V]])
   }
 }
