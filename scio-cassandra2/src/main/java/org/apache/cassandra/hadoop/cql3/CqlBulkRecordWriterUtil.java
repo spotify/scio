@@ -17,7 +17,7 @@
 
 package org.apache.cassandra.hadoop.cql3;
 
-import org.apache.cassandra.hadoop.AbstractBulkRecordWriter;
+import org.apache.cassandra.config.Config;
 import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.hadoop.conf.Configuration;
 
@@ -37,6 +37,7 @@ public class CqlBulkRecordWriterUtil {
                                               String tableSchema,
                                               String insertStatement)
       throws IOException {
+    Config.setClientMode(true);
     ConfigHelper.setOutputInitialAddress(conf, host);
     if (port >= 0) {
       ConfigHelper.setOutputRpcPort(conf, String.valueOf(port));
@@ -47,9 +48,9 @@ public class CqlBulkRecordWriterUtil {
     ConfigHelper.setOutputKeyspace(conf, keyspace);
     ConfigHelper.setOutputColumnFamily(conf, table);
     ConfigHelper.setOutputPartitioner(conf, partitioner);
-    CqlBulkOutputFormat.setColumnFamilySchema(conf, table, tableSchema);
-    CqlBulkOutputFormat.setColumnFamilyInsertStatement(conf, table, insertStatement);
-    conf.set(AbstractBulkRecordWriter.OUTPUT_LOCATION, Files.createTempDirectory("scio-cassandra-").toString());
+    CqlBulkOutputFormat.setTableSchema(conf, table, tableSchema);
+    CqlBulkOutputFormat.setTableInsertStatement(conf, table, insertStatement);
+    conf.set(CqlBulkRecordWriter.OUTPUT_LOCATION, Files.createTempDirectory("scio-cassandra-").toString());
 
     // workaround for Hadoop static initialization
     if (!System.getProperties().containsKey("hadoop.home.dir") &&

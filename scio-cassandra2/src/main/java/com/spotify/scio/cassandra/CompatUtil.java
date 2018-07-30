@@ -18,6 +18,7 @@
 package com.spotify.scio.cassandra;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ProtocolVersion;
 import org.apache.cassandra.dht.Murmur3Partitioner;
@@ -35,12 +36,14 @@ class CompatUtil {
   private static Murmur3Partitioner murmur3Partitioner = new Murmur3Partitioner();
 
   public static ProtocolVersion getProtocolVersion(Cluster cluster) {
-    return cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+    return cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
   }
 
   public static <T> ByteBuffer serialize(DataType dataType, T value,
                                          ProtocolVersion protocolVersion) {
-    return dataType.serialize(value, protocolVersion);
+    return CodecRegistry.DEFAULT_INSTANCE
+        .codecFor(dataType, value)
+        .serialize(value, protocolVersion);
   }
 
   public static BigInteger maxToken(String partitioner) {
@@ -59,7 +62,7 @@ class CompatUtil {
       case "org.apache.cassandra.dht.RandomPartitioner":
         return RandomPartitioner.ZERO;
       case "org.apache.cassandra.dht.Murmur3Partitioner":
-        return BigInteger.valueOf(Murmur3Partitioner.MINIMUM.token);
+        return BigInteger.valueOf((long) Murmur3Partitioner.MINIMUM.getTokenValue());
       default:
         throw new IllegalArgumentException("Unsupported partitioner " + partitioner);
     }
@@ -68,10 +71,10 @@ class CompatUtil {
   public static BigInteger getToken(String partitioner, ByteBuffer key) {
     switch (partitioner) {
       case "org.apache.cassandra.dht.RandomPartitioner":
-        return randomPartitioner.getToken(key).getToken().token;
+        return randomPartitioner.getToken(key).getTokenValue();
       case "org.apache.cassandra.dht.Murmur3Partitioner":
-        return BigInteger.valueOf(murmur3Partitioner.getToken(key).token)
-            .add(BigInteger.valueOf(Murmur3Partitioner.MINIMUM.token));
+        return BigInteger.valueOf((long) murmur3Partitioner.getToken(key).getTokenValue())
+            .add(BigInteger.valueOf((long) Murmur3Partitioner.MINIMUM.getTokenValue()));
       default:
         throw new IllegalArgumentException("Unsupported partitioner " + partitioner);
     }
