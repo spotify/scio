@@ -52,6 +52,7 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
 
   @StartBundle
   public void startBundle() {
+    waitForFutures();
     futures.clear();
     results.clear();
     errors.clear();
@@ -59,6 +60,11 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
 
   @FinishBundle
   public void finishBundle(FinishBundleContext c) {
+    waitForFutures();
+    flush(c);
+  }
+
+  private void waitForFutures() {
     if (!futures.isEmpty()) {
       try {
         waitForFutures(futures.values());
@@ -69,7 +75,6 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
         throw new RuntimeException("Failed to process futures", e);
       }
     }
-    flush(c);
   }
 
   @ProcessElement
