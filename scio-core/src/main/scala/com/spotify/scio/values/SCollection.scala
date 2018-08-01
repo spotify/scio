@@ -469,16 +469,18 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @return split SCollections in an array
    * @group transform
    */
-  def randomSplit(weights: Array[Double]): Array[SCollection[T]] = {
+  def randomSplit(weights: Array[Double], seed: Long = 0): Array[SCollection[T]] = {
     val sum = weights.sum
     val normalizedCumWeights = weights.map(_ / sum).scanLeft(0.0d)(_ + _)
     val m = TreeMap(normalizedCumWeights.zipWithIndex: _*)  // Map[lower bound, split]
 
+    val rnd = if(seed != 0) Some(new java.util.Random(seed)) else None
     val sides = (1 until weights.length).map(_ => SideOutput[T]())
     val (head, tail) = this
       .withSideOutputs(sides: _*)
       .flatMap { (x, c) =>
-        val i = m.to(ThreadLocalRandom.current().nextDouble()).last._2
+        val r = rnd.map(_.nextDouble()).getOrElse(ThreadLocalRandom.current().nextDouble())
+        val i = m.to(r).last._2
         if (i == 0) {
           Seq(x)  // Main output
         } else {
