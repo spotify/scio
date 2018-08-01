@@ -81,7 +81,6 @@ val beamSDKIO =
       ExclusionRule("com.google.cloud", "google-cloud-core"),
       ExclusionRule("com.google.api.grpc", "proto-google-cloud-spanner-admin-database-v1"),
       ExclusionRule("com.google.api.grpc", "proto-google-common-protos"),
-      ExclusionRule("com.google.oauth-client", "google-oauth-client"),
       ExclusionRule("io.netty", "netty-tcnative-boringssl-static"),
       ExclusionRule("io.netty", "netty-handler"),
       ExclusionRule("io.grpc", "grpc-auth"),
