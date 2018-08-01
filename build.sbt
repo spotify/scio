@@ -75,6 +75,21 @@ lazy val mimaSettings = Seq(
   mimaBinaryIssueFilters ++= Seq()
 )
 
+val beamSDKIO =
+  "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll(
+      ExclusionRule("com.google.cloud", "google-cloud-spanner"),
+      ExclusionRule("com.google.cloud", "google-cloud-core"),
+      ExclusionRule("com.google.api.grpc", "proto-google-cloud-spanner-admin-database-v1"),
+      ExclusionRule("com.google.api.grpc", "proto-google-common-protos"),
+      ExclusionRule("com.google.oauth-client", "google-oauth-client"),
+      ExclusionRule("io.netty", "netty-tcnative-boringssl-static"),
+      ExclusionRule("io.netty", "netty-handler"),
+      ExclusionRule("io.grpc", "grpc-auth"),
+      ExclusionRule("io.grpc", "grpc-netty"),
+      ExclusionRule("io.grpc", "grpc-stub"),
+      ExclusionRule("io.grpc", "grpc-core")
+    )
+
 def previousVersion(currentVersion: String): Option[String] = {
   val Version = """(\d+)\.(\d+)\.(\d+).*""".r
   val Version(x, y, z) = currentVersion
@@ -302,7 +317,8 @@ lazy val scioCore: Project = Project(
     "com.google.guava" % "guava" % guavaVersion,
     "com.google.protobuf" % "protobuf-java" % protobufVersion,
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
-    "org.apache.xbean" % "xbean-asm5-shaded" % asmVersion
+    "org.apache.xbean" % "xbean-asm5-shaded" % asmVersion,
+    "io.grpc" % "grpc-all" % "1.7.0" exclude("io.opencensus", "opencensus-api")
   )
 ).dependsOn(
   scioAvro,
@@ -345,8 +361,8 @@ lazy val scioAvro: Project = Project(
   commonSettings ++ macroSettings ++ itSettings,
   description := "Scio add-on for working with Avro",
   libraryDependencies ++= Seq(
-    "org.apache.avro" % "avro" % avroVersion,
-    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+    "org.apache.avro" % "avro" % avroVersion exclude("com.thoughtworks.paranamer", "paranamer"),
+    beamSDKIO,
     "org.slf4j" % "slf4j-api" % slf4jVersion,
     "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
     "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
@@ -363,7 +379,7 @@ lazy val scioBigQuery: Project = Project(
   description := "Scio add-on for Google BigQuery",
   libraryDependencies ++= Seq(
     "commons-io" % "commons-io" % commonsIoVersion,
-    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+    beamSDKIO,
     "joda-time" % "joda-time" % jodaTimeVersion,
     "org.joda" % "joda-convert" % jodaConvertVersion,
     "org.slf4j" % "slf4j-api" % slf4jVersion,
@@ -382,7 +398,7 @@ lazy val scioBigtable: Project = Project(
   commonSettings ++ itSettings,
   description := "Scio add-on for Google Cloud Bigtable",
   libraryDependencies ++= Seq(
-    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+    beamSDKIO,
     "org.scalatest" %% "scalatest" % scalatestVersion % "test",
     "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test",
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion % "test",
