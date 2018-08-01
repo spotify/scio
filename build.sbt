@@ -80,13 +80,7 @@ val beamSDKIO =
       ExclusionRule("com.google.cloud", "google-cloud-spanner"),
       ExclusionRule("com.google.cloud", "google-cloud-core"),
       ExclusionRule("com.google.api.grpc", "proto-google-cloud-spanner-admin-database-v1"),
-      ExclusionRule("com.google.api.grpc", "proto-google-common-protos"),
-      ExclusionRule("io.netty", "netty-tcnative-boringssl-static"),
-      ExclusionRule("io.netty", "netty-handler"),
-      ExclusionRule("io.grpc", "grpc-auth"),
-      ExclusionRule("io.grpc", "grpc-netty"),
-      ExclusionRule("io.grpc", "grpc-stub"),
-      ExclusionRule("io.grpc", "grpc-core")
+      ExclusionRule("com.google.api.grpc", "proto-google-common-protos")
     )
 
 def previousVersion(currentVersion: String): Option[String] = {
