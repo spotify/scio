@@ -76,12 +76,20 @@ lazy val mimaSettings = Seq(
 )
 
 val beamSDKIO =
-  "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll(
-      ExclusionRule("com.google.cloud", "google-cloud-spanner"),
-      ExclusionRule("com.google.cloud", "google-cloud-core"),
-      ExclusionRule("com.google.api.grpc", "proto-google-cloud-spanner-admin-database-v1"),
-      ExclusionRule("com.google.api.grpc", "proto-google-common-protos")
-    )
+  Seq(
+    "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll(
+        ExclusionRule("com.google.cloud", "google-cloud-spanner"),
+        ExclusionRule("com.google.cloud", "google-cloud-core"),
+        ExclusionRule("com.google.api.grpc", "proto-google-cloud-spanner-admin-database-v1"),
+        ExclusionRule("com.google.api.grpc", "proto-google-common-protos")
+      ),
+    "io.grpc"  % "grpc-core" % "1.7.0",
+    "io.grpc"  % "grpc-context" % "1.7.0",
+    "io.grpc"  % "grpc-auth" % "1.7.0",
+    "io.grpc"  % "grpc-netty" % "1.7.0",
+    "io.grpc"  % "grpc-stub" % "1.7.0",
+    "com.google.cloud.bigtable" % "bigtable-protos" % "1.0.0"
+  )
 
 def previousVersion(currentVersion: String): Option[String] = {
   val Version = """(\d+)\.(\d+)\.(\d+).*""".r
@@ -355,13 +363,12 @@ lazy val scioAvro: Project = Project(
   description := "Scio add-on for working with Avro",
   libraryDependencies ++= Seq(
     "org.apache.avro" % "avro" % avroVersion exclude("com.thoughtworks.paranamer", "paranamer"),
-    beamSDKIO,
     "org.slf4j" % "slf4j-api" % slf4jVersion,
     "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
     "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test",
     "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
-  )
+  ) ++ beamSDKIO
 ).configs(IntegrationTest)
 
 lazy val scioBigQuery: Project = Project(
@@ -372,7 +379,6 @@ lazy val scioBigQuery: Project = Project(
   description := "Scio add-on for Google BigQuery",
   libraryDependencies ++= Seq(
     "commons-io" % "commons-io" % commonsIoVersion,
-    beamSDKIO,
     "joda-time" % "joda-time" % jodaTimeVersion,
     "org.joda" % "joda-convert" % jodaConvertVersion,
     "org.slf4j" % "slf4j-api" % slf4jVersion,
@@ -381,7 +387,7 @@ lazy val scioBigQuery: Project = Project(
     "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test",
     "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
-  )
+  ) ++ beamSDKIO
 ).configs(IntegrationTest)
 
 lazy val scioBigtable: Project = Project(
@@ -391,13 +397,12 @@ lazy val scioBigtable: Project = Project(
   commonSettings ++ itSettings,
   description := "Scio add-on for Google Cloud Bigtable",
   libraryDependencies ++= Seq(
-    beamSDKIO,
     "org.scalatest" %% "scalatest" % scalatestVersion % "test",
     "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test",
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion % "test",
     "com.novocode" % "junit-interface" % junitInterfaceVersion,
     "junit" % "junit" % junitVersion % "test"
-  )
+  ) ++ beamSDKIO
 ).dependsOn(
   scioCore,
   scioTest % "it"
