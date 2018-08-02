@@ -74,7 +74,7 @@ private[scio] object Functions {
       accumulator._2.asScala.foldLeft(accumulator._1)(s)
 
     override def mergeAccumulators(accumulators: JIterable[(U, JList[T])]): (U, JList[T]) = {
-      val combined = accumulators.asScala.map(fold).reduce(c)
+      val combined = accumulators.asScala.iterator.map(fold).reduce(c)
       (combined, Lists.newArrayList())
     }
 
@@ -119,7 +119,7 @@ private[scio] object Functions {
 
     override def mergeAccumulators(accumulators: JIterable[(Option[C], JList[T])])
     : (Option[C], JList[T]) = {
-      val combined = accumulators.asScala.flatMap(foldOption).reduce(mc)
+      val combined = accumulators.asScala.iterator.flatMap(foldOption).reduce(mc)
       (Some(combined), Lists.newArrayList())
     }
 
