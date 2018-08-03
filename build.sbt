@@ -335,7 +335,7 @@ lazy val scioTest: Project = Project(
   description := "Scio helpers for ScalaTest",
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
-    "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "it",
+    "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "test,it",
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test",
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
     "org.scalatest" %% "scalatest" % scalatestVersion,
@@ -406,7 +406,7 @@ lazy val scioBigtable: Project = Project(
   ) ++ beamSDKIO
 ).dependsOn(
   scioCore,
-  scioTest % "it"
+  scioTest % "test,it"
 ).configs(IntegrationTest)
 
 lazy val scioCassandra2: Project = Project(
@@ -422,7 +422,7 @@ lazy val scioCassandra2: Project = Project(
   )
 ).dependsOn(
   scioCore,
-  scioTest % "it"
+  scioTest % "test,it"
 ).configs(IntegrationTest)
 
 lazy val scioCassandra3: Project = Project(
@@ -441,7 +441,7 @@ lazy val scioCassandra3: Project = Project(
   )
 ).dependsOn(
   scioCore,
-  scioTest % "it"
+  scioTest % "test,it"
 ).configs(IntegrationTest)
 
 lazy val scioElasticsearch2: Project = Project(
