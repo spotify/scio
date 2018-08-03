@@ -21,7 +21,7 @@ import java.io.BufferedReader
 
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import com.spotify.scio.bigquery.BigQueryClient
-import com.spotify.scio.{scalaVersion, scioVersion}
+import com.spotify.scio.BuildInfo
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.commons.lang.StringEscapeUtils
 
@@ -177,16 +177,18 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
   }
 
   private def welcome(): Unit = {
-    val ascii = """Welcome to
-                  |                 _____
-                  |    ________________(_)_____
-                  |    __  ___/  ___/_  /_  __ \
-                  |    _(__  )/ /__ _  / / /_/ /
-                  |    /____/ \___/ /_/  \____/""".stripMargin + "   version " + scioVersion + "\n"
+    val ascii =
+      """Welcome to
+        |                 _____
+        |    ________________(_)_____
+        |    __  ___/  ___/_  /_  __ \
+        |    _(__  )/ /__ _  / / /_/ /
+        |    /____/ \___/ /_/  \____/""".stripMargin + "   version " + BuildInfo.version + "\n"
     echo(ascii)
 
     val p = scala.util.Properties
-    echo("Using Scala version %s (%s, Java %s)".format(scalaVersion, p.javaVmName, p.javaVersion))
+    echo("Using Scala version %s (%s, Java %s)"
+      .format(BuildInfo.scalaVersion, p.javaVmName, p.javaVersion))
 
     echo(
       """

@@ -164,7 +164,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
     docMappings.flatMap((mappingFn _).tupled).toMap ++ jdkMapping
   },
 
-  buildInfoKeys := Seq[BuildInfoKey](version, "beamVersion" -> beamVersion),
+  buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
   buildInfoPackage := "com.spotify.scio"
 ) ++ mimaSettings
 

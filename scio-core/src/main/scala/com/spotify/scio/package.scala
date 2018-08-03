@@ -50,15 +50,6 @@ package object scio {
       Await.result(self.flatMap(identity), atMost)
   }
 
-  /** Scala version. */
-  val scalaVersion: String = scala.util.Properties.versionNumberString
-
-  /** Scio version. */
-  val scioVersion: String = VersionUtil.scioVersion
-
-  /** Beam version. */
-  val beamVersion: String = VersionUtil.beamVersion
-
   /** [[com.twitter.algebird.Monoid Monoid]] for `Array[Int]`. */
   implicit val intArrayMon: Monoid[Array[Int]] = new ArrayMonoid[Int]
 

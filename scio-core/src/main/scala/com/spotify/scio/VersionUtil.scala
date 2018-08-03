@@ -31,10 +31,6 @@ import scala.util.{Failure, Success, Try}
 
 private[scio] object VersionUtil {
 
-  val scioVersion: String = BuildInfo.version
-
-  val beamVersion: String = BuildInfo.beamVersion
-
   case class SemVer(major: Int, minor: Int, rev: Int, suffix: String) extends Ordered[SemVer] {
     def compare(that: SemVer): Int = {
       implicit val revStringOrder = Ordering[String]
@@ -88,7 +84,7 @@ private[scio] object VersionUtil {
   }
 
   def checkVersion(): Unit =
-    checkVersion(scioVersion, latest).foreach(logger.warn)
+    checkVersion(BuildInfo.version, latest).foreach(logger.warn)
 
   private def getRunnerVersion(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]])
   : Try[String] = Try {
@@ -121,8 +117,8 @@ private[scio] object VersionUtil {
     getRunnerVersion(runner) match {
       case Success(version) =>
         require(
-          version == beamVersion,
-          s"Mismatched version for $name, expected: $beamVersion, actual: $version")
+          version == BuildInfo.beamVersion,
+          s"Mismatched version for $name, expected: ${BuildInfo.beamVersion}, actual: $version")
       case Failure(e) =>
         logger.warn(s"Failed to get version for $name", e)
     }
