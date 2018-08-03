@@ -111,7 +111,7 @@ class ScioContextTest extends PipelineSpec {
     val mapper = ScioUtil.getScalaJsonMapper
 
     val metrics = mapper.readValue(metricsFile, classOf[Metrics])
-    metrics.version shouldBe scioVersion
+    metrics.version shouldBe BuildInfo.version
   }
 
   // scalastyle:off no.whitespace.before.left.bracket
