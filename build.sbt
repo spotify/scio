@@ -64,6 +64,7 @@ val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.3.0"
 val tensorFlowVersion = "1.8.0"
 val zoltarVersion = "0.4.0"
+val grpcVersion = "1.7.0"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
@@ -83,11 +84,11 @@ val beamSDKIO =
         ExclusionRule("com.google.api.grpc", "proto-google-cloud-spanner-admin-database-v1"),
         ExclusionRule("com.google.api.grpc", "proto-google-common-protos")
       ),
-    "io.grpc"  % "grpc-core" % "1.7.0",
-    "io.grpc"  % "grpc-context" % "1.7.0",
-    "io.grpc"  % "grpc-auth" % "1.7.0",
-    "io.grpc"  % "grpc-netty" % "1.7.0",
-    "io.grpc"  % "grpc-stub" % "1.7.0",
+    "io.grpc"  % "grpc-core" % grpcVersion,
+    "io.grpc"  % "grpc-context" % grpcVersion,
+    "io.grpc"  % "grpc-auth" % grpcVersion,
+    "io.grpc"  % "grpc-netty" % grpcVersion,
+    "io.grpc"  % "grpc-stub" % grpcVersion,
     "com.google.cloud.bigtable" % "bigtable-protos" % "1.0.0"
   )
 
