@@ -10,6 +10,7 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.1")
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.0")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.3")
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.2.0")
+addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.9.0")
 
 libraryDependencies ++= Seq(
   "com.github.os72" % "protoc-jar" % "3.5.1.1"

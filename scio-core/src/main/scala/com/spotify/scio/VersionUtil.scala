@@ -31,24 +31,9 @@ import scala.util.{Failure, Success, Try}
 
 private[scio] object VersionUtil {
 
-  val scioVersion: String = {
-    val stream = this.getClass.getResourceAsStream("/version.sbt")
-    val line = scala.io.Source.fromInputStream(stream).getLines().next()
-    """version in .+"([^"]+)"""".r.findFirstMatchIn(line) match {
-      case Some(m) => m.group(1)
-      case None => throw new IllegalStateException("Cannot find Scio version")
-    }
-  }
+  val scioVersion: String = BuildInfo.version
 
-  val beamVersion: String = {
-    val stream = this.getClass.getResourceAsStream("/build.sbt")
-    val line = scala.io.Source.fromInputStream(stream).getLines()
-      .filter(_.startsWith("val beamVersion = ")).next()
-    """val beamVersion = "([^"]+)"""".r.findFirstMatchIn(line) match {
-      case Some(m) => m.group(1)
-      case None => throw new IllegalStateException("Cannot find Beam version")
-    }
-  }
+  val beamVersion: String = BuildInfo.beamVersion
 
   case class SemVer(major: Int, minor: Int, rev: Int, suffix: String) extends Ordered[SemVer] {
     def compare(that: SemVer): Int = {
