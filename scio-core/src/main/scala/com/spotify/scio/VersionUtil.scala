@@ -17,17 +17,16 @@
 
 package com.spotify.scio
 
-import java.util.Properties
-
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.http.{GenericUrl, HttpRequest, HttpRequestInitializer}
 import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.jackson2.JacksonFactory
+import org.apache.beam.sdk.util.ReleaseInfo
 import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 private[scio] object VersionUtil {
 
@@ -86,42 +85,12 @@ private[scio] object VersionUtil {
   def checkVersion(): Unit =
     checkVersion(BuildInfo.version, latest).foreach(logger.warn)
 
-  private def getRunnerVersion(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]])
-  : Try[String] = Try {
-    val clsName = "/" + runner.getName.replace(".", "/") + ".class"
-    val path = runner.getResource(clsName).getPath
-    val file = path.substring(0, path.lastIndexOf('!'))
-    val jar = file.substring(file.lastIndexOf('/') + 1)
-    val regex = """(beam-runners-.*-java).*\.jar""".r
-    val matches = regex.findAllIn(jar).matchData
-    val artifactId = if (matches.hasNext) {
-      matches.next().group(1)
-    } else {
-      // jar name does not match `beam-runners-.*-java.*.jar`, probably in a REPL or assembly jar
-      runner.getSimpleName match {
-        case "DirectRunner" => "beam-runners-direct-java"
-        case "DataflowRunner" => "beam-runners-google-cloud-dataflow-java"
-        case r => new IllegalStateException(s"Unknown runner $r")
-      }
-    }
-
-    val props = new Properties()
-    props.load(runner.getResourceAsStream(
-      s"/META-INF/maven/org.apache.beam/$artifactId/pom.properties"))
-    props.getProperty("version")
-  }
-
-  def checkRunnerVersion(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]])
-  : Unit = {
+  def checkRunnerVersion(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Unit = {
     val name = runner.getSimpleName
-    getRunnerVersion(runner) match {
-      case Success(version) =>
-        require(
-          version == BuildInfo.beamVersion,
-          s"Mismatched version for $name, expected: ${BuildInfo.beamVersion}, actual: $version")
-      case Failure(e) =>
-        logger.warn(s"Failed to get version for $name", e)
-    }
+    val version = ReleaseInfo.getReleaseInfo.getVersion
+    require(
+      version == BuildInfo.beamVersion,
+      s"Mismatched version for $name, expected: ${BuildInfo.beamVersion}, actual: $version")
   }
 
 }
