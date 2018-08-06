@@ -80,6 +80,9 @@ trait BaseScioShell extends MainGenericRunner {
     // Force the repl to be synchronous, so all cmds are executed in the same thread
     command.settings.Yreplsync.value = true
 
+    // Workaround for https://github.com/spotify/scio/issues/867
+    command.settings.Yreplclassbased.value = true
+
     val scioClassLoader = new ScioReplClassLoader(
       command.settings.classpathURLs.toArray ++
         classLoaderURLs(Thread.currentThread().getContextClassLoader),
