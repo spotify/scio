@@ -37,9 +37,9 @@ object WriteDynamicExample {
     // All characters starting with letter A will share an output path, etc
     val dynamicOutput: FileIO.Write[String, LinesPerCharacter] = FileIO
       .writeDynamic[String, LinesPerCharacter]()
-      .by((linesPerCharacter: LinesPerCharacter) =>
-        linesPerCharacter.name.charAt(0).toString
-      )
+      .by(Contextful.fn[LinesPerCharacter, String]((linesPerCharacter: LinesPerCharacter) =>
+        linesPerCharacter.name.charAt(0).toString.toUpperCase
+      ))
       .withNaming((characterFirstLetter: String) =>
         FileIO.Write.defaultNaming(s"characters-starting-with-$characterFirstLetter", ".txt")
       )
