@@ -21,9 +21,18 @@ import org.apache.beam.sdk.io.{DefaultFilenamePolicy, FileBasedSink}
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 
+/**
+ * Converters for Beam Java SDK APIs. Import all.
+ *
+ * {{{
+ * import com.spotify.scio.JavaConverters._
+ * }}}
+ */
 object JavaConverters {
 
+  /** Enhanced version of [[String]] with Beam Java SDK converter methods. */
   implicit class RichString(val s: String) extends AnyVal {
+    /** Convert the string to a [[ResourceId]]. */
     def toResourceId: ResourceId =
       FileBasedSink.convertToFileResourceIfPossible(s)
 
@@ -35,10 +44,15 @@ object JavaConverters {
         false)
   }
 
+  /** Scio version of [[DefaultFilenamePolicy]]. */
   final case class FilenamePolicy(baseFilename: String,
                                   shardTemplate: String = null,
                                   templateSuffix: String = null,
                                   windowedWrites: Boolean = false) {
+    /**
+     * Convert the filename policy to a
+     * [[org.apache.beam.sdk.io.DefaultFilenamePolicy DefaultFilenamePolicy]].
+     */
     def asJava: DefaultFilenamePolicy =
       DefaultFilenamePolicy.fromStandardParameters(
         StaticValueProvider.of(baseFilename.toResourceId),
@@ -47,7 +61,12 @@ object JavaConverters {
         windowedWrites)
   }
 
+  /** Enhanced version of [[Any]] with Beam Java SDK converter methods. */
   implicit class RichAny[T](val value: T) extends AnyVal {
+    /**
+     * Convert the value to a
+     * [[org.apache.beam.sdk.options.ValueProvider.StaticValueProvider StaticValueProvider]].
+     */
     def toStaticValueProvider: StaticValueProvider[T] =
       StaticValueProvider.of(value)
   }
