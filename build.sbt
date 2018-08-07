@@ -423,8 +423,10 @@ lazy val scioCassandra2: Project = Project(
   commonSettings ++ itSettings,
   description := "Scio add-on for Apache Cassandra 2.x",
   libraryDependencies ++= Seq(
-    "com.datastax.cassandra" % "cassandra-driver-core" % "2.1.10.3",
-    "org.apache.cassandra" % "cassandra-all" % "2.0.17",
+    "com.datastax.cassandra" % "cassandra-driver-core" % "3.5.1",
+    ("org.apache.cassandra" % "cassandra-all" % "2.2.12")
+      .exclude("ch.qos.logback", "logback-classic")
+      .exclude("org.slf4j", "log4j-over-slf4j"),
     "org.apache.hadoop" % "hadoop-client" % hadoopVersion
   )
 ).dependsOn(
@@ -439,8 +441,8 @@ lazy val scioCassandra3: Project = Project(
   commonSettings ++ itSettings,
   description := "Scio add-on for Apache Cassandra 3.x",
   libraryDependencies ++= Seq(
-    "com.datastax.cassandra" % "cassandra-driver-core" % "3.2.0",
-    ("org.apache.cassandra" % "cassandra-all" % "3.11.0")
+    "com.datastax.cassandra" % "cassandra-driver-core" % "3.5.1",
+    ("org.apache.cassandra" % "cassandra-all" % "3.11.2")
       .exclude("ch.qos.logback", "logback-classic")
       .exclude("org.slf4j", "log4j-over-slf4j"),
     "org.apache.hadoop" % "hadoop-client" % hadoopVersion,

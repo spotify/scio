@@ -19,11 +19,11 @@ package com.spotify.scio.cassandra
 
 import java.math.{BigInteger, BigDecimal => JBigDecimal}
 import java.nio.ByteBuffer
-import java.time.Instant
+import java.time.{Instant, LocalTime}
 import java.util.{Date, UUID}
 
 import com.datastax.driver.core.utils.UUIDs
-import com.datastax.driver.core.{Cluster, Row}
+import com.datastax.driver.core.{Cluster, LocalDate, Row}
 import com.spotify.scio._
 import org.scalatest._
 
@@ -41,14 +41,18 @@ class CassandraIT extends FlatSpec with Matchers with BeforeAndAfterAll {
     """
       |CREATE TABLE scio.table1 (
       |  key text,          // String
-      |  i1 int,            // Int
-      |  i2 bigint,         // Long
+      |  i1 tinyint,        // Byte
+      |  i2 smallint,       // Short
+      |  i3 int,            // Int
+      |  i4 bigint,         // Long
       |  d decimal,         // java.math.BigDecimal
       |  f1 float,          // Float
       |  f2 double,         // Double
       |  b1 boolean,        // Boolean
       |  b2 blob,           // java.nio.ByteBuffer
-      |  dt timestamp,      // java.util.Date
+      |  dt1 date,          // com.datastax.driver.core.LocalDate
+      |  dt2 time,          // Long, the number of nanoseconds since midnight
+      |  dt3 timestamp,     // java.util.Date
       |  u1 uuid,           // java.util.UUID
       |  u2 timeuuid,       // java.util.UUID, Version 1
       |  v1 varchar,        // String
@@ -100,8 +104,8 @@ class CassandraIT extends FlatSpec with Matchers with BeforeAndAfterAll {
     val cql =
       """
         |INSERT INTO scio.table1
-        |(key, i1, i2, d, f1, f2, b1, b2, dt, u1, u2, v1, v2, c1, c2, c3)
-        |VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        |(key, i1, i2, i3, i4, d, f1, f2, b1, b2, dt1, dt2, dt3, u1, u2, v1, v2, c1, c2, c3)
+        |VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       """.stripMargin
     val opts = CassandraOptions("scio", "table1", cql, host)
 
@@ -151,18 +155,21 @@ object CassandraIT {
 
   private val u1: UUID = UUID.randomUUID()
   private val u2: UUID = UUIDs.timeBased()
+  private val date = LocalDate.fromMillisSinceEpoch(System.currentTimeMillis())
+  private val time = LocalTime.now().toNanoOfDay
   private val timestamp = Date.from(Instant.now())
 
   def toValues1(i: Int): Seq[Any] = Seq(
-    s"key$i", i, i.toLong, JBigDecimal.valueOf(i), i.toFloat, i.toDouble,
-    i % 2 == 0, ByteBuffer.wrap(s"blob$i".getBytes), timestamp,
+    s"key$i", i.toByte, i.toShort, i, i.toLong, JBigDecimal.valueOf(i), i.toFloat, i.toDouble,
+    i % 2 == 0, ByteBuffer.wrap(s"blob$i".getBytes), date, time, timestamp,
     u1, u2, s"varchar$i", BigInteger.valueOf(i),
     List(s"list$i").asJava, Set(s"set$i").asJava, Map(s"key$i" -> i).asJava)
 
   def fromRow1(r: Row): Seq[Any] = Seq(
-    r.getString("key"), r.getInt("i1"), r.getLong("i2"),
+    r.getString("key"), r.getByte("i1"), r.getShort("i2"), r.getInt("i3"), r.getLong("i4"),
     r.getDecimal("d"), r.getFloat("f1"), r.getDouble("f2"), r.getBool("b1"), r.getBytes("b2"),
-    r.getDate("dt"), r.getUUID("u1"), r.getUUID("u2"), r.getString("v1"), r.getVarint("v2"),
+    r.getDate("dt1"), r.getTime("dt2"), r.getTimestamp("dt3"),
+    r.getUUID("u1"), r.getUUID("u2"), r.getString("v1"), r.getVarint("v2"),
     r.getList("c1", classOf[String]), r.getSet("c2", classOf[String]),
     r.getMap("c3", classOf[String], classOf[java.lang.Integer]))
 
