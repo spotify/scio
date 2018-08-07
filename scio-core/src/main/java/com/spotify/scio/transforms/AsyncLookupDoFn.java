@@ -220,13 +220,13 @@ public abstract class AsyncLookupDoFn<A, B, C> extends DoFn<A, KV<A, AsyncLookup
     private final A value;
     private final Throwable exception;
 
-    private Try(A value) {
+    public Try(A value) {
       isSuccess = true;
       this.value = value;
       this.exception = null;
     }
 
-    private Try(Throwable exception) {
+    public Try(Throwable exception) {
       isSuccess = false;
       this.value = null;
       this.exception = exception;
