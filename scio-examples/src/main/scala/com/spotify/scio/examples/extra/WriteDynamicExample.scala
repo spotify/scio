@@ -15,49 +15,62 @@
  * under the License.
  */
 
+// Example: Demonstrates FileIO's writeDynamic method
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.extra.WriteDynamicExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --input=gs://apache-beam-samples/shakespeare/kinglear.txt
+// --output=[OUTPUT]"`
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.examples.common.ExampleData
 import org.apache.beam.sdk.coders.StringUtf8Coder
 import org.apache.beam.sdk.io.{FileIO, TextIO}
-import org.apache.beam.sdk.transforms.Contextful
+import org.apache.beam.sdk.transforms.{Contextful, SerializableFunction}
 
-// `sbt runMain "com.spotify.scio.examples.extra.WriteDynamicExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-// --input=gs://apache-beam-samples/shakespeare/kinglear.txt
-// --output=[OUTPUT]"
+
 object WriteDynamicExample {
   case class LinesPerCharacter(name: String, lines: Long)
+
+  // The King Lear text is formatted as "CHARACTER_NAME  dialogue"
+  lazy val kingLearTextSplitter = "\t"
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    // Group records according to first letter of the character's name
-    // All characters starting with letter A will share an output path, etc
+    // Group records according to first letter of the character's name so
+    // all characters starting with letter A will share an output path, etc
     val dynamicOutput: FileIO.Write[String, LinesPerCharacter] = FileIO
       .writeDynamic[String, LinesPerCharacter]()
-      .by(Contextful.fn[LinesPerCharacter, String]((linesPerCharacter: LinesPerCharacter) =>
-        linesPerCharacter.name.charAt(0).toString.toUpperCase
-      ))
+      .by(new SerializableFunction[LinesPerCharacter, String] {
+        override def apply(input: LinesPerCharacter): String = {
+          input.name.charAt(0).toString.toUpperCase
+        }
+      })
       .withNaming((characterFirstLetter: String) =>
         FileIO.Write.defaultNaming(s"characters-starting-with-$characterFirstLetter", ".txt")
       )
       .withDestinationCoder(StringUtf8Coder.of())
       .withNumShards(1) // Since input is small, restrict to one file per bucket
       .via(
-        Contextful.fn[LinesPerCharacter, String]((lines: LinesPerCharacter) => lines.toString),
-        TextIO.sink() // Serialize LinesPerCharacter records as Strings
+        Contextful.fn[LinesPerCharacter, String]( // Output LinesPerCharacter records as Strings
+          new SerializableFunction[LinesPerCharacter, String] {
+            override def apply(input: LinesPerCharacter): String = input.toString
+          }),
+        TextIO.sink()
       )
       .to(args("output"))
 
-    // Compute # of times each character speaks in the King Lear text
+    // Compute number of times each character speaks in the King Lear text
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
-      .flatMap(line => {
-        val characterAndFirstLine = line.split("\t").filter(_.nonEmpty)
-        if (characterAndFirstLine.size != 2) { None }
-        else { Some(characterAndFirstLine(0)) }
-      })
+      .flatMap { line =>
+        line.split(kingLearTextSplitter).filter(_.nonEmpty).toList match {
+          case name::dialogue::restOfList => Some(name)
+          case _ => None
+        }
+      }
       .countByValue
       .map { case (character, count) => LinesPerCharacter(character, count) }
       .saveAsCustomOutput("dynamicWriteExample", dynamicOutput)
