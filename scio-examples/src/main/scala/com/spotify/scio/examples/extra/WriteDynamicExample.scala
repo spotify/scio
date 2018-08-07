@@ -27,6 +27,7 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.examples.common.ExampleData
 import org.apache.beam.sdk.coders.StringUtf8Coder
+import org.apache.beam.sdk.io.FileIO.Write.FileNaming
 import org.apache.beam.sdk.io.{FileIO, TextIO}
 import org.apache.beam.sdk.transforms.{Contextful, SerializableFunction}
 
@@ -49,8 +50,12 @@ object WriteDynamicExample {
           input.name.charAt(0).toString.toUpperCase
         }
       })
-      .withNaming((characterFirstLetter: String) =>
-        FileIO.Write.defaultNaming(s"characters-starting-with-$characterFirstLetter", ".txt")
+      .withNaming(
+        new SerializableFunction[String, FileNaming] {
+          override def apply(firstLetter: String): FileNaming = {
+            FileIO.Write.defaultNaming(s"characters-starting-with-$firstLetter", ".txt")
+          }
+        }
       )
       .withDestinationCoder(StringUtf8Coder.of())
       .withNumShards(1) // Since input is small, restrict to one file per bucket
