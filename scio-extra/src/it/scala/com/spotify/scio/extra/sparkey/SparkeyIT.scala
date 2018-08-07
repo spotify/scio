@@ -50,6 +50,32 @@ class SparkeyIT extends PipelineSpec {
     }
   }
 
+  ignore should "support repeatedly opening sparkey SideInput (#1269)" in {
+    runWithContext { sc =>
+
+      FileSystems.setDefaultPipelineOptions(sc.options)
+      val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
+      val basePath = tempLocation + "/sparkey"
+      val resourceId = FileSystems.matchNewResource(basePath + ".spl", false)
+      // Create a sparkey KV file
+      val uri = SparkeyUri(basePath, sc.options)
+      val writer =  new SparkeyWriter(uri, -1)
+      (1 to 100000000).foreach { x => writer.put(x.toString, x.toString) }
+      writer.close()
+
+      try {
+        val p1 = sc.parallelize(1 to 10)
+        val p2 = new SparkeyScioContext(sc).sparkeySideInput(basePath)
+        p1.withSideInputs(p2)
+          .map{ (x, si) =>
+            si(p2).get(x.toString)
+          }.toSCollection
+      } finally {
+        FileSystems.delete(Seq(resourceId).asJava)
+      }
+    }
+  }
+
   it should "throw exception when Sparkey file exists" in {
     runWithContext { sc =>
       FileSystems.setDefaultPipelineOptions(sc.options)
