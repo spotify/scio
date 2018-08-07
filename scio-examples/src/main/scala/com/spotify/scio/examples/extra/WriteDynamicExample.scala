@@ -72,7 +72,7 @@ object WriteDynamicExample {
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap { line =>
         line.split(kingLearTextSplitter).filter(_.nonEmpty).toList match {
-          case name::dialogue::restOfList => Some(name)
+          case name::dialogue::Nil => Some(name)
           case _ => None
         }
       }
