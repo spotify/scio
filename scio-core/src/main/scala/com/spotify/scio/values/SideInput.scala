@@ -32,10 +32,17 @@ trait SideInput[T] extends Serializable {
   private var cache: T = _
   @transient private var window: BoundedWindow = _
 
+  // Use this attribute in implementations of SideInput to force caching
+  // even on GlobalWindows. (Used to fix #1269)
+  protected def updateCacheOnGlobalWindow = true
+
   private[values] def get[I, O](context: DoFn[I, O]#ProcessContext): T
 
   def getCache[I, O](context: DoFn[I, O]#ProcessContext, window: BoundedWindow): T = {
-    if (cache == null || window == GlobalWindow.INSTANCE || this.window != window) {
+    if (
+        cache == null || this.window != window ||
+        (updateCacheOnGlobalWindow && window == GlobalWindow.INSTANCE)
+      ) {
       this.window = window
       cache = get(context)
     }

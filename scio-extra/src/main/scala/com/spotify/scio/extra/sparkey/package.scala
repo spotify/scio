@@ -181,6 +181,7 @@ package object sparkey {
 
   private class SparkeySideInput(val view: PCollectionView[SparkeyUri])
     extends SideInput[SparkeyReader] {
+    override def updateCacheOnGlobalWindow: Boolean = false
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
       context.sideInput(view).getReader
   }
