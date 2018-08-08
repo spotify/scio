@@ -182,7 +182,42 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   },
 
   buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
-  buildInfoPackage := "com.spotify.scio"
+  buildInfoPackage := "com.spotify.scio",
+
+  // Add a test equivalent to RequireUpperBoundDeps add issue a warning if the more recent
+  // version of a module is evicted
+  update := {
+    val log = streams.value.log
+    val up: UpdateReport = update.value
+
+    implicit def versionOrdering = new Ordering[VersionNumber] {
+      def compare(v1: VersionNumber, v2: VersionNumber) = {
+        val dv = v1.numbers.zip(v2.numbers).find(v => v._1 != v._2)
+        dv.map {
+          case v if v._1 < v._2 => -1
+          case _ => 1
+        }.getOrElse(0)
+      }
+    }
+
+    up.configurations.collect { case c if c.configuration.name == "runtime" =>
+      c.details
+      .flatMap(_.modules)
+      .groupBy{ m => (m.module.organization, m.module.name) }
+      .toList
+      .sortBy { case (n, ms) => n }
+      .map { case ((org, name), ms) =>
+        val selected = ms.find(_.evicted == false).get
+        val selectedVersion = VersionNumber(selected.module.revision)
+        val maxVersion = ms.toList.map(x => VersionNumber(x.module.revision)).sorted.last
+        if(versionOrdering.compare(selectedVersion, maxVersion) < 0) {
+          log.warn(s"+- ${org}:${name}:${selectedVersion} was selected but" +
+            s" ${maxVersion} should be used instead")
+        }
+      }
+    }
+    up
+  }
 ) ++ mimaSettings
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
