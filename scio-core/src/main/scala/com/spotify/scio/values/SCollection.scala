@@ -43,7 +43,7 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage
+import org.apache.beam.sdk.io.gcp.pubsub.{PubsubMessage, ScioPubsubIO}
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio, datastore => dsio, pubsub => psio}
 import org.apache.beam.sdk.io.{Compression, FileBasedSink}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
@@ -1210,17 +1210,17 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         w.to(topic)
       }
       if (classOf[String] isAssignableFrom cls) {
-        val t = setup(psio.PubsubIO.writeStrings())
+        val t = setup(ScioPubsubIO.writeStrings())
         this.asInstanceOf[SCollection[String]].applyInternal(t)
       } else if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-        val t = setup(psio.PubsubIO.writeAvros(cls))
+        val t = setup(ScioPubsubIO.writeAvros(cls))
         this.applyInternal(t)
       } else if (classOf[Message] isAssignableFrom cls) {
-        val t = setup(psio.PubsubIO.writeProtos(cls.asInstanceOf[Class[Message]]))
+        val t = setup(ScioPubsubIO.writeProtos(cls.asInstanceOf[Class[Message]]))
         this.asInstanceOf[SCollection[Message]].applyInternal(t)
       } else {
         val coder = internal.getPipeline.getCoderRegistry.getScalaCoder[T](context.options)
-        val t = setup(psio.PubsubIO.writeMessages())
+        val t = setup(ScioPubsubIO.writeMessages())
         this.map { t =>
           val payload = CoderUtils.encodeToByteArray(coder, t)
           new PubsubMessage(payload, Map.empty[String, String].asJava)
@@ -1242,7 +1242,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (context.isTest) {
       context.testOut(PubsubIO(topic))(this)
     } else {
-      var transform = psio.PubsubIO.writeMessages().to(topic)
+      var transform = ScioPubsubIO.writeMessages().to(topic)
       if (idAttribute != null) {
         transform = transform.withIdAttribute(idAttribute)
       }
