@@ -104,6 +104,17 @@ jobs:
     environment:
       - SCALA_VERSION: *scala_212_version
 
+  bench:
+    <<: *common_settings
+    steps:
+      - checkout
+      - restore_cache: *restore_cache_settings
+      - run:
+          command: ./scripts/circleci_bench.sh
+          no_output_timeout: 30m
+    environment:
+      - SCALA_VERSION: *scala_212_version
+
 ####################
 # Workflows
 ####################
@@ -158,3 +169,15 @@ workflows:
     jobs:
       - build_211
       - build_212
+
+  # Nightly benchmarks
+  bench:
+    triggers:
+      - schedule:
+          cron: "0 18 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - bench

@@ -21,7 +21,7 @@ import java.util.UUID
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
-import com.google.api.services.dataflow.Dataflow
+import com.google.api.services.dataflow.{Dataflow, DataflowScopes}
 import com.spotify.scio._
 import com.spotify.scio.runners.dataflow.DataflowResult
 import com.spotify.scio.values.SCollection
@@ -40,10 +40,9 @@ import scala.util.Random
 // run on HEAD. Keep all changes contained in the same file.
 
 object ScioBenchmarkSettings {
-  val projectId: String = "scio-playground"
+  val defaultProjectId: String = "scio-playground"
 
   val commonArgs = Array(
-    s"--project=$projectId",
     "--runner=DataflowRunner",
     "--numWorkers=4",
     "--workerMachineType=n1-standard-4",
@@ -59,7 +58,8 @@ object ScioBenchmark {
   private val dataflow = {
     val transport = GoogleNetHttpTransport.newTrustedTransport()
     val jackson = JacksonFactory.getDefaultInstance
-    val credential = GoogleCredential.getApplicationDefault
+    val credential = GoogleCredential
+      .getApplicationDefault.createScoped(Seq(DataflowScopes.CLOUD_PLATFORM).asJava)
     new Dataflow.Builder(transport, jackson, credential).build()
   }
 
@@ -67,14 +67,15 @@ object ScioBenchmark {
     val argz = Args(args)
     val name = argz("name")
     val regex = argz.getOrElse("regex", ".*")
+    val projectId = argz.getOrElse("project", ScioBenchmarkSettings.defaultProjectId)
 
-    val timestamp = DateTimeFormat.forPattern("MMddHHmmss")
+    val timestamp = DateTimeFormat.forPattern("yyyyMMddHHmmss")
       .withZone(DateTimeZone.UTC)
       .print(System.currentTimeMillis())
     val prefix = s"ScioBenchmark-$name-$timestamp"
     val results = benchmarks
       .filter(_.name.matches(regex))
-      .flatMap(_.run(prefix))
+      .flatMap(_.run(projectId, prefix))
 
     import scala.concurrent.ExecutionContext.Implicits.global
     val future = Future.sequence(results.map(_.result.finalState))
@@ -146,11 +147,11 @@ object ScioBenchmark {
       base ++ extra
     }
 
-    def run(prefix: String): Iterable[BenchmarkResult] = {
+    def run(projectId: String, prefix: String): Iterable[BenchmarkResult] = {
       val username = sys.props("user.name")
       configurations
         .map { case (confName, extraArgs) =>
-          val (sc, _) = ContextAndArgs(commonArgs ++ extraArgs)
+          val (sc, _) = ContextAndArgs(Array(s"--project=$projectId") ++ commonArgs ++ extraArgs)
           sc.setAppName(confName)
           sc.setJobName(s"$prefix-$confName-$username".toLowerCase())
           run(sc)
