@@ -123,7 +123,7 @@ private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
     extends AtomicCoder[T] {
   import KryoAtomicCoder._
 
-  private[this] lazy val instanceId = UUID.randomUUID.toString
+  private[this] val instanceId = UUID.randomUUID.toString
 
   override def encode(value: T, os: OutputStream): Unit =
     withKryoState(instanceId, options) { kryoState =>
