@@ -20,7 +20,7 @@ import Keys._
 import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 
-val beamVersion = "2.5.0"
+val beamVersion = "2.6.0"
 
 val algebirdVersion = "0.13.4"
 val annoy4sVersion = "0.6.0"
