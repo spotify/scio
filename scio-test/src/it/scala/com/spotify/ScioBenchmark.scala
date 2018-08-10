@@ -258,13 +258,13 @@ object ScioBenchmark {
   // 100M items, 10K keys, average 10K values per key
   object GroupByKey extends Benchmark(shuffleConf) {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).groupBy(_ => Random.nextInt(10 * K)).mapValues(_.size)
+      randomUUIDs(sc, 100 * M).map(Elem(_)).groupBy(_ => Random.nextInt(10 * K)).values.map(_.size)
   }
 
   // 10M items, 1 key
   object GroupAll extends Benchmark(shuffleConf) {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 10 * M).groupBy(_ => 0).mapValues(_.size)
+      randomUUIDs(sc, 10 * M).map(Elem(_)).groupBy(_ => 0).values.map(_.size)
   }
 
   // ===== Join =====
@@ -351,16 +351,22 @@ object ScioBenchmark {
   private val K = 1000
   private val numPartitions = 100
 
-  private def randomUUIDs(sc: ScioContext, n: Long): SCollection[String] =
-    sc.parallelize(Seq.fill(numPartitions)(n / numPartitions))
+  final case class Elem[T](elem: T)
+
+  private def randomUUIDs(sc: ScioContext, n: Long): SCollection[Elem[String]] =
+    sc.parallelize((1 to numPartitions / 10).map(_ => Seq.fill(numPartitions)(n / numPartitions)))
+      .flatten
       .applyTransform(ParDo.of(new FillDoFn(() => UUID.randomUUID().toString)))
+      .map(Elem(_))
 
   private def randomKVs(sc: ScioContext,
-                        n: Long, numUniqueKeys: Int): SCollection[(String, String)] =
-    sc.parallelize(Seq.fill(numPartitions)(n / numPartitions))
+                        n: Long, numUniqueKeys: Int): SCollection[(String, Elem[String])] =
+    sc.parallelize((1 to numPartitions / 10).map(_ => Seq.fill(numPartitions)(n / numPartitions)))
+      .flatten
       .applyTransform(ParDo.of(new FillDoFn(() =>
         ("key" + Random.nextInt(numUniqueKeys), UUID.randomUUID().toString)
       )))
+      .mapValues(Elem(_))
 
   private class FillDoFn[T](val f: () => T) extends DoFn[Long, T] {
     @ProcessElement
