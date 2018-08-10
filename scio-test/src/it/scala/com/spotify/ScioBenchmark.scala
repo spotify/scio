@@ -167,83 +167,87 @@ object ScioBenchmark {
 
   // ===== Combine =====
 
+  // 100M items, into a set of 1000 unique items
+
   object Reduce extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).map(_.hashCode % 100).map(Set(_)).reduce(_ ++ _)
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).map(Set(_)).reduce(_ ++ _)
   }
 
   object Sum extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).map(_.hashCode % 100).map(Set(_)).sum
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).map(Set(_)).sum
   }
 
   object Fold extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).map(_.hashCode % 100).map(Set(_)).fold(Set.empty[Int])(_ ++ _)
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).map(Set(_)).fold(Set.empty[Int])(_ ++ _)
   }
 
   object FoldMonoid extends Benchmark {
     override def run(sc: ScioContext): Unit =
-    randomUUIDs(sc, 100 * M).map(_.hashCode % 100).map(Set(_)).fold
+    randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).map(Set(_)).fold
   }
 
   object Aggregate extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).map(_.hashCode % 100).aggregate(Set.empty[Int])(_ + _, _ ++ _)
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).aggregate(Set.empty[Int])(_ + _, _ ++ _)
   }
 
   object AggregateAggregator extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).map(_.hashCode % 100)
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 1000)
         .aggregate(Aggregator.fromMonoid[Set[Int]].composePrepare[Int](Set(_)))
   }
 
   object Combine extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).map(_.hashCode % 100).combine(Set(_))(_ + _)(_ ++ _)
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).combine(Set(_))(_ + _)(_ ++ _)
   }
 
   // ===== CombineByKey =====
 
+  // 100M items, 10K keys, into a set of 1000 unique items per key
+
   object ReduceByKey extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 100)
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
         .mapValues(Set(_)).reduceByKey(_ ++ _)
   }
 
   object SumByKey extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 100)
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
         .mapValues(Set(_)).sumByKey
   }
 
   object FoldByKey extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 100)
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
         .mapValues(Set(_)).foldByKey(Set.empty[Int])(_ ++ _)
   }
 
   object FoldByKeyMonoid extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 100)
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
         .mapValues(Set(_)).foldByKey
   }
 
   object AggregateByKey extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 100)
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
         .aggregateByKey(Set.empty[Int])(_ + _, _ ++ _)
   }
 
   object AggregateByKeyAggregator extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 100)
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
         .aggregateByKey(Aggregator.fromMonoid[Set[Int]].composePrepare[Int](Set(_)))
   }
 
   object CombineByKey extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 100)
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
         .combineByKey(Set(_))(_ + _)(_ ++ _)
   }
 
