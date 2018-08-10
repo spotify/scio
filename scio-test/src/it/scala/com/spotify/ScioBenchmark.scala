@@ -14,6 +14,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.spotify
 
 import java.util.UUID
@@ -25,6 +26,7 @@ import com.google.api.services.dataflow.{Dataflow, DataflowScopes}
 import com.spotify.scio._
 import com.spotify.scio.runners.dataflow.DataflowResult
 import com.spotify.scio.values.SCollection
+import com.twitter.algebird.Aggregator
 import org.apache.beam.runners.dataflow.DataflowPipelineJob
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
@@ -51,6 +53,7 @@ object ScioBenchmarkSettings {
   val shuffleConf = Map("ShuffleService" -> Array("--experiments=shuffle_mode=service"))
 }
 
+// scalastyle:off number.of.methods
 object ScioBenchmark {
 
   import ScioBenchmarkSettings._
@@ -160,6 +163,88 @@ object ScioBenchmark {
     }
 
     def run(sc: ScioContext): Unit
+  }
+
+  // ===== Combine =====
+
+  object Reduce extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 100).map(Set(_)).reduce(_ ++ _)
+  }
+
+  object Sum extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 100).map(Set(_)).sum
+  }
+
+  object Fold extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 100).map(Set(_)).fold(Set.empty[Int])(_ ++ _)
+  }
+
+  object FoldMonoid extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+    randomUUIDs(sc, 100 * M).map(_.hashCode % 100).map(Set(_)).fold
+  }
+
+  object Aggregate extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 100).aggregate(Set.empty[Int])(_ + _, _ ++ _)
+  }
+
+  object AggregateAggregator extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 100)
+        .aggregate(Aggregator.fromMonoid[Set[Int]].composePrepare[Int](Set(_)))
+  }
+
+  object Combine extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 100).combine(Set(_))(_ + _)(_ ++ _)
+  }
+
+  // ===== CombineByKey =====
+
+  object ReduceByKey extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 100)
+        .mapValues(Set(_)).reduceByKey(_ ++ _)
+  }
+
+  object SumByKey extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 100)
+        .mapValues(Set(_)).sumByKey
+  }
+
+  object FoldByKey extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 100)
+        .mapValues(Set(_)).foldByKey(Set.empty[Int])(_ ++ _)
+  }
+
+  object FoldByKeyMonoid extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 100)
+        .mapValues(Set(_)).foldByKey
+  }
+
+  object AggregateByKey extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 100)
+        .aggregateByKey(Set.empty[Int])(_ + _, _ ++ _)
+  }
+
+  object AggregateByKeyAggregator extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 100)
+        .aggregateByKey(Aggregator.fromMonoid[Set[Int]].composePrepare[Int](Set(_)))
+  }
+
+  object CombineByKey extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 100)
+        .combineByKey(Set(_))(_ + _)(_ ++ _)
   }
 
   // ===== GroupByKey =====
@@ -284,3 +369,4 @@ object ScioBenchmark {
   }
 
 }
+// scalastyle:on number.of.methods
