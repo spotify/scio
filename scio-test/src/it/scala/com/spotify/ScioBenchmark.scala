@@ -44,10 +44,10 @@ import scala.util.Random
 
 object ScioBenchmarkSettings {
   val defaultProjectId: String = "scio-playground"
-
+  val numOfWorkers = 4
   val commonArgs = Array(
     "--runner=DataflowRunner",
-    "--numWorkers=4",
+    s"--numWorkers=$numOfWorkers",
     "--workerMachineType=n1-standard-4",
     "--autoscalingAlgorithm=NONE")
 
@@ -354,14 +354,14 @@ object ScioBenchmark {
   final case class Elem[T](elem: T)
 
   private def randomUUIDs(sc: ScioContext, n: Long): SCollection[Elem[String]] =
-    sc.parallelize((1 to numPartitions / 10).map(_ => Seq.fill(numPartitions)(n / numPartitions)))
+    sc.parallelize((1 to numOfWorkers).map(_ => Seq.fill(numPartitions)(n / numPartitions)))
       .flatten
       .applyTransform(ParDo.of(new FillDoFn(() => UUID.randomUUID().toString)))
       .map(Elem(_))
 
   private def randomKVs(sc: ScioContext,
                         n: Long, numUniqueKeys: Int): SCollection[(String, Elem[String])] =
-    sc.parallelize((1 to numPartitions / 10).map(_ => Seq.fill(numPartitions)(n / numPartitions)))
+    sc.parallelize((1 to numOfWorkers).map(_ => Seq.fill(numPartitions)(n / numPartitions)))
       .flatten
       .applyTransform(ParDo.of(new FillDoFn(() =>
         ("key" + Random.nextInt(numUniqueKeys), UUID.randomUUID().toString)
