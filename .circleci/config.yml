@@ -10,6 +10,7 @@ common_settings: &common_settings
     - image: circleci/openjdk:8-jdk
       environment:
         GOOGLE_APPLICATION_CREDENTIALS: scripts/data-integration-test.json
+        DATASTORE_PROJECT_ID: data-integration-test
   working_directory: ~/scio
   resource_class: xlarge
 
