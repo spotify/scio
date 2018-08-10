@@ -23,6 +23,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.dataflow.{Dataflow, DataflowScopes}
+import com.google.common.reflect.ClassPath
 import com.spotify.scio._
 import com.spotify.scio.runners.dataflow.DataflowResult
 import com.spotify.scio.values.SCollection
@@ -122,17 +123,18 @@ object ScioBenchmark {
   // Benchmarks
   // =======================================================================
 
-  private val benchmarks = Seq(
-    GroupByKey,
-    GroupAll,
-    Join,
-    JoinOne,
-    HashJoin,
-    SingletonSideInput,
-    IterableSideInput,
-    ListSideInput,
-    MapSideInput,
-    MultiMapSideInput)
+  private val benchmarks = ClassPath.from(Thread.currentThread().getContextClassLoader)
+    .getAllClasses
+    .asScala
+    .filter(_.getName.matches("com\\.spotify\\.ScioBenchmark\\$[\\w]+\\$"))
+    .flatMap { ci =>
+      val cls = ci.load()
+      if (classOf[Benchmark] isAssignableFrom cls) {
+        Some(cls.newInstance().asInstanceOf[Benchmark])
+      } else {
+        None
+      }
+    }
 
   case class BenchmarkResult(name: String, extraArgs: Array[String], result: ScioResult)
 
