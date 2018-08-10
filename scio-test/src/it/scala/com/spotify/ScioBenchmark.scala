@@ -258,13 +258,13 @@ object ScioBenchmark {
   // 100M items, 10K keys, average 10K values per key
   object GroupByKey extends Benchmark(shuffleConf) {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).map(Elem(_)).groupBy(_ => Random.nextInt(10 * K)).values.map(_.size)
+      randomUUIDs(sc, 100 * M).groupBy(_ => Random.nextInt(10 * K)).values.map(_.size)
   }
 
   // 10M items, 1 key
   object GroupAll extends Benchmark(shuffleConf) {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 10 * M).map(Elem(_)).groupBy(_ => 0).values.map(_.size)
+      randomUUIDs(sc, 10 * M).groupBy(_ => 0).values.map(_.size)
   }
 
   // ===== Join =====
