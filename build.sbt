@@ -153,7 +153,8 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
     Developer(id="ravwojdyla", name="Rafal Wojdyla", email="ravwojdyla@gmail.com", url=url("https://twitter.com/ravwojdyla")),
     Developer(id="andrewsmartin", name="Andrew Martin", email="andrewsmartin.mg@gmail.com", url=url("https://twitter.com/andrew_martin92")),
     Developer(id="fallonfofallon", name="Fallon Chen", email="fallon@spotify.com", url=url("https://twitter.com/fallonfofallon")),
-    Developer(id="regadas", name="Filipe Regadas", email="filiperegadas@gmail.com", url=url("https://twitter.com/regadas"))
+    Developer(id="regadas", name="Filipe Regadas", email="filiperegadas@gmail.com", url=url("https://twitter.com/regadas")),
+    Developer(id="jto", name="Julien Tournay", email="julient@spotify.com", url=url("https://twitter.com/skaalf"))
   ),
 
   credentials ++= (for {
