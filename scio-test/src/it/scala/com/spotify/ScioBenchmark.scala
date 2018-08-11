@@ -14,6 +14,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.spotify
 
 import java.util.UUID
@@ -22,9 +23,11 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.dataflow.{Dataflow, DataflowScopes}
+import com.google.common.reflect.ClassPath
 import com.spotify.scio._
 import com.spotify.scio.runners.dataflow.DataflowResult
 import com.spotify.scio.values.SCollection
+import com.twitter.algebird.Aggregator
 import org.apache.beam.runners.dataflow.DataflowPipelineJob
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
@@ -51,6 +54,7 @@ object ScioBenchmarkSettings {
   val shuffleConf = Map("ShuffleService" -> Array("--experiments=shuffle_mode=service"))
 }
 
+// scalastyle:off number.of.methods
 object ScioBenchmark {
 
   import ScioBenchmarkSettings._
@@ -119,17 +123,18 @@ object ScioBenchmark {
   // Benchmarks
   // =======================================================================
 
-  private val benchmarks = Seq(
-    GroupByKey,
-    GroupAll,
-    Join,
-    JoinOne,
-    HashJoin,
-    SingletonSideInput,
-    IterableSideInput,
-    ListSideInput,
-    MapSideInput,
-    MultiMapSideInput)
+  private val benchmarks = ClassPath.from(Thread.currentThread().getContextClassLoader)
+    .getAllClasses
+    .asScala
+    .filter(_.getName.matches("com\\.spotify\\.ScioBenchmark\\$[\\w]+\\$"))
+    .flatMap { ci =>
+      val cls = ci.load()
+      if (classOf[Benchmark] isAssignableFrom cls) {
+        Some(cls.newInstance().asInstanceOf[Benchmark])
+      } else {
+        None
+      }
+    }
 
   case class BenchmarkResult(name: String, extraArgs: Array[String], result: ScioResult)
 
@@ -160,6 +165,92 @@ object ScioBenchmark {
     }
 
     def run(sc: ScioContext): Unit
+  }
+
+  // ===== Combine =====
+
+  // 100M items, into a set of 1000 unique items
+
+  object Reduce extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).map(Set(_)).reduce(_ ++ _)
+  }
+
+  object Sum extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).map(Set(_)).sum
+  }
+
+  object Fold extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).map(Set(_)).fold(Set.empty[Int])(_ ++ _)
+  }
+
+  object FoldMonoid extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+    randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).map(Set(_)).fold
+  }
+
+  object Aggregate extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).aggregate(Set.empty[Int])(_ + _, _ ++ _)
+  }
+
+  object AggregateAggregator extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 1000)
+        .aggregate(Aggregator.fromMonoid[Set[Int]].composePrepare[Int](Set(_)))
+  }
+
+  object Combine extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).map(_.hashCode % 1000).combine(Set(_))(_ + _)(_ ++ _)
+  }
+
+  // ===== CombineByKey =====
+
+  // 100M items, 10K keys, into a set of 1000 unique items per key
+
+  object ReduceByKey extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
+        .mapValues(Set(_)).reduceByKey(_ ++ _)
+  }
+
+  object SumByKey extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
+        .mapValues(Set(_)).sumByKey
+  }
+
+  object FoldByKey extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
+        .mapValues(Set(_)).foldByKey(Set.empty[Int])(_ ++ _)
+  }
+
+  object FoldByKeyMonoid extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
+        .mapValues(Set(_)).foldByKey
+  }
+
+  object AggregateByKey extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
+        .aggregateByKey(Set.empty[Int])(_ + _, _ ++ _)
+  }
+
+  object AggregateByKeyAggregator extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
+        .aggregateByKey(Aggregator.fromMonoid[Set[Int]].composePrepare[Int](Set(_)))
+  }
+
+  object CombineByKey extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
+        .combineByKey(Set(_))(_ + _)(_ ++ _)
   }
 
   // ===== GroupByKey =====
@@ -284,3 +375,4 @@ object ScioBenchmark {
   }
 
 }
+// scalastyle:on number.of.methods
