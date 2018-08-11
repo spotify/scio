@@ -349,19 +349,37 @@ object ScioBenchmark {
 
   private val M = 1000000
   private val K = 1000
-  private val numPartitions = 100
 
   final case class Elem[T](elem: T)
 
+  def partitions(n: Long,
+                 numPartitions: Int = 100,
+                 numOfWorkers: Int = numOfWorkers): Iterable[Iterable[Long]] = {
+    val chunks = numPartitions * numOfWorkers
+
+    def loop(n: Long): Seq[Long] = {
+      n match {
+        case 0                    => Nil
+        case x if x < chunks      => Seq(x)
+        case x if x % chunks == 0 => Seq.fill(chunks)(x / chunks)
+        case x =>
+          val r = x % chunks
+          loop(r) ++ loop(x - r)
+      }
+    }
+
+    loop(n).grouped(numOfWorkers).toIterable
+  }
+
   private def randomUUIDs(sc: ScioContext, n: Long): SCollection[Elem[String]] =
-    sc.parallelize((1 to numOfWorkers).map(_ => Seq.fill(numPartitions)(n / numPartitions)))
+    sc.parallelize(partitions(n))
       .flatten
       .applyTransform(ParDo.of(new FillDoFn(() => UUID.randomUUID().toString)))
       .map(Elem(_))
 
   private def randomKVs(sc: ScioContext,
                         n: Long, numUniqueKeys: Int): SCollection[(String, Elem[String])] =
-    sc.parallelize((1 to numOfWorkers).map(_ => Seq.fill(numPartitions)(n / numPartitions)))
+    sc.parallelize(partitions(n))
       .flatten
       .applyTransform(ParDo.of(new FillDoFn(() =>
         ("key" + Random.nextInt(numUniqueKeys), UUID.randomUUID().toString)
