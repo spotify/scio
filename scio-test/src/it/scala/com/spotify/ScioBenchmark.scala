@@ -44,10 +44,10 @@ import scala.util.Random
 
 object ScioBenchmarkSettings {
   val defaultProjectId: String = "scio-playground"
-
+  val numOfWorkers = 4
   val commonArgs = Array(
     "--runner=DataflowRunner",
-    "--numWorkers=4",
+    s"--numWorkers=$numOfWorkers",
     "--workerMachineType=n1-standard-4",
     "--autoscalingAlgorithm=NONE")
 
@@ -258,13 +258,13 @@ object ScioBenchmark {
   // 100M items, 10K keys, average 10K values per key
   object GroupByKey extends Benchmark(shuffleConf) {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).groupBy(_ => Random.nextInt(10 * K)).mapValues(_.size)
+      randomUUIDs(sc, 100 * M).groupBy(_ => Random.nextInt(10 * K)).values.map(_.size)
   }
 
   // 10M items, 1 key
   object GroupAll extends Benchmark(shuffleConf) {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 10 * M).groupBy(_ => 0).mapValues(_.size)
+      randomUUIDs(sc, 10 * M).groupBy(_ => 0).values.map(_.size)
   }
 
   // ===== Join =====
@@ -349,18 +349,42 @@ object ScioBenchmark {
 
   private val M = 1000000
   private val K = 1000
-  private val numPartitions = 100
 
-  private def randomUUIDs(sc: ScioContext, n: Long): SCollection[String] =
-    sc.parallelize(Seq.fill(numPartitions)(n / numPartitions))
+  final case class Elem[T](elem: T)
+
+  def partitions(n: Long,
+                 numPartitions: Int = 100,
+                 numOfWorkers: Int = numOfWorkers): Iterable[Iterable[Long]] = {
+    val chunks = numPartitions * numOfWorkers
+
+    def loop(n: Long): Seq[Long] = {
+      n match {
+        case 0                    => Nil
+        case x if x < chunks      => Seq(x)
+        case x if x % chunks == 0 => Seq.fill(chunks)(x / chunks)
+        case x =>
+          val r = x % chunks
+          loop(r) ++ loop(x - r)
+      }
+    }
+
+    loop(n).grouped(numOfWorkers).toIterable
+  }
+
+  private def randomUUIDs(sc: ScioContext, n: Long): SCollection[Elem[String]] =
+    sc.parallelize(partitions(n))
+      .flatten
       .applyTransform(ParDo.of(new FillDoFn(() => UUID.randomUUID().toString)))
+      .map(Elem(_))
 
   private def randomKVs(sc: ScioContext,
-                        n: Long, numUniqueKeys: Int): SCollection[(String, String)] =
-    sc.parallelize(Seq.fill(numPartitions)(n / numPartitions))
+                        n: Long, numUniqueKeys: Int): SCollection[(String, Elem[String])] =
+    sc.parallelize(partitions(n))
+      .flatten
       .applyTransform(ParDo.of(new FillDoFn(() =>
         ("key" + Random.nextInt(numUniqueKeys), UUID.randomUUID().toString)
       )))
+      .mapValues(Elem(_))
 
   private class FillDoFn[T](val f: () => T) extends DoFn[Long, T] {
     @ProcessElement
