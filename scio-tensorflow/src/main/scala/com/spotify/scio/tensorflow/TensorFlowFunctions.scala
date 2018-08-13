@@ -218,93 +218,6 @@ private[tensorflow] class PredictSCollectionFunctions[T: ClassTag](
 class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
 
   /**
-   * Save this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
-   *
-   * @param tFRecordSpec     TF Record description for the Examples, use the
-   *                         [[com.spotify.scio.tensorflow.TFRecordSpec]] to define a description.
-   * @param tfRecordSpecPath path to save the TF Record description to, by default it will be
-   *                         `<PATH>/_tf_record_spec.json`
-   * @group output
-   */
-  @deprecated("TFRecordSpec will be removed in favor of tf.metadata Schema. Use " +
-    "'saveAsTfExampleFileWithMetadata'", "scio-tensorflow 0.5.6")
-  def saveAsTfExampleFile(path: String,
-                          tFRecordSpec: TFRecordSpec,
-                          suffix: String = ".tfrecords",
-                          compression: Compression = Compression.UNCOMPRESSED,
-                          numShards: Int = 0,
-                          tfRecordSpecPath: String = null)(
-    implicit ev: T <:< Example): (Future[Tap[Example]], Future[Tap[String]]) = {
-    import scala.concurrent.ExecutionContext.Implicits.global
-
-    require(tFRecordSpec != null, "TFRecord spec can't be null")
-    require(path != null, "Path can't be null")
-    val _tfRecordSpecPath =
-      Option(tfRecordSpecPath).getOrElse(path.replaceAll("\\/+$", "") + "/_tf_record_spec.json")
-
-    val fi: SCollectionSeqFeatureInfo = tFRecordSpec match {
-      case SeqFeatureInfo(x) =>
-        SCollectionSeqFeatureInfo(self.context.parallelize(Seq(x)))
-      case SCollectionSeqFeatureInfo(x) =>
-        SCollectionSeqFeatureInfo(x)
-    }
-
-    import CustomCirceEncoders._
-    val tfrs: SCollection[String] =
-      fi.x.map(TFRecordSpecConfig(fi.LATEST_VERSION, _, compression).asJson.noSpaces)
-
-    if (self.context.isTest) {
-      self.context.testOut(TextIO(_tfRecordSpecPath))(tfrs)
-      self.context.testOut(TFExampleIO(path))(self.asInstanceOf[SCollection[Example]])
-      (self.saveAsInMemoryTap.asInstanceOf[Future[Tap[Example]]],
-       tfrs.saveAsInMemoryTap.asInstanceOf[Future[Tap[String]]])
-    } else {
-      tfrs.map { e =>
-        val featureSpecResource = FileSystems.matchNewResource(_tfRecordSpecPath, false)
-        val writer = FileSystems.create(featureSpecResource, MimeTypes.TEXT)
-        try {
-          writer.write(ByteBuffer.wrap(s"$e\n".getBytes(Charsets.UTF_8)))
-        } finally {
-          writer.close()
-        }
-      }
-      val featureSpecFuture = Future(TextTap(_tfRecordSpecPath))
-      val r = self.map(_.toByteArray).saveAsTfRecordFile(path, suffix, compression, numShards)
-      (r.map(_.map(Example.parseFrom)), featureSpecFuture)
-    }
-  }
-
-  /**
-   * Save this SCollection of [[Example]] as TensorFlow TFRecord files.
-   *
-   * @param fe FeatureExtractor, obtained from Featran after calling extract on a
-   *           [[com.spotify.featran.FeatureSpec]]
-   * @group output
-   */
-  @deprecated("TFRecordSpec will be removed in favor of tf.metadata Schema. Use " +
-    "'saveAsTfExampleFileWithMetadata'", "scio-tensorflow 0.5.6")
-  def saveAsTfExampleFile(
-    path: String,
-    fe: FeatureExtractor[SCollection, _]): (Future[Tap[Example]], Future[Tap[String]]) =
-    saveAsTfExampleFile(path, fe, Compression.UNCOMPRESSED)
-
-  /**
-   * Save this SCollection of [[Example]] as TensorFlow TFRecord files.
-   *
-   * @param fe FeatureExtractor, obtained from Featran after calling extract on a
-   *           [[com.spotify.featran.FeatureSpec]]
-   * @group output
-   */
-  @deprecated("TFRecordSpec will be removed in favor of tf.metadata Schema. Use " +
-    "'saveAsTfExampleFileWithMetadata'", "scio-tensorflow 0.5.6")
-  def saveAsTfExampleFile(path: String,
-                          fe: FeatureExtractor[SCollection, _],
-                          compression: Compression): (Future[Tap[Example]], Future[Tap[String]]) =
-    self.saveAsTfExampleFile(path,
-                             FeatranTFRecordSpec.fromFeatureSpec(fe.featureNames),
-                             compression = compression)
-
-  /**
    * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
    * @group output
    */
@@ -338,7 +251,7 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
 
   /**
    * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file,
-   * along with  `org.tensorflow.metadata.v0.Schema`.
+   * along with `org.tensorflow.metadata.v0.Schema`.
    * @return
    */
   def saveAsTfExampleFile(path: String,
@@ -442,41 +355,6 @@ class SeqTFExampleSCollectionFunctions[T <: Example](@transient val self: SColle
   def mergeExamples(e: Seq[Example]): Example =
     e.foldLeft(Example.newBuilder)((b, i) => b.mergeFrom(i))
       .build()
-
-  /**
-   * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
-   * Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
-   *
-   * @param fe FeatureExtractor, obtained from Featran after calling extract on a
-   *           [[com.spotify.featran.MultiFeatureSpec]]
-   * @group output
-   */
-  @deprecated("TFRecordSpec will be removed in favor of tf.metadata Schema. Use " +
-    "'saveAsTfExampleFileWithMetadata'", "scio-tensorflow 0.5.6")
-  def saveAsTfExampleFile(
-    path: String,
-    fe: MultiFeatureExtractor[SCollection, _]): (Future[Tap[Example]], Future[Tap[String]]) =
-    saveAsTfExampleFile(path, fe, Compression.UNCOMPRESSED)
-
-  /**
-   * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
-   * Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
-   *
-   * @param fe FeatureExtractor, obtained from Featran after calling extract on a
-   *           [[com.spotify.featran.MultiFeatureSpec]]
-   * @group output
-   */
-  @deprecated("TFRecordSpec will be removed in favor of tf.metadata Schema. Use " +
-    "'saveAsTfExampleFileWithMetadata'", "scio-tensorflow 0.5.6")
-  def saveAsTfExampleFile(path: String,
-                          fe: MultiFeatureExtractor[SCollection, _],
-                          compression: Compression): (Future[Tap[Example]], Future[Tap[String]]) = {
-    self
-      .map(mergeExamples)
-      .saveAsTfExampleFile(path,
-                           FeatranTFRecordSpec.fromMultiSpec(fe.featureNames),
-                           compression = compression)
-  }
 
 }
 

@@ -71,7 +71,6 @@ message Feature {
 
 
 
-
   // Constraints on the presence of this feature in the examples.
   optional FeaturePresence presence = 14;
 
@@ -98,6 +97,7 @@ message Feature {
     FloatDomain float_domain = 10;
     StringDomain string_domain = 11;
     BoolDomain bool_domain = 13;
+    StructDomain struct_domain = 29;
   }
 
   // Constraints on the distribution of the feature values.
@@ -195,7 +195,8 @@ message SparseFeature {
 
 
   // Constraints on the presence of this feature in examples.
-  optional FeaturePresence presence = 4;
+  // Deprecated, this is inferred by the referred features.
+  optional FeaturePresence presence = 4 [deprecated = true];
 
   // Shape of the sparse tensor that this SparseFeature represents.
   optional FixedShape dense_shape = 5;
@@ -203,7 +204,8 @@ message SparseFeature {
   // Features that represent indexes.
   repeated IndexFeature index_feature = 6;  // at least one
   message IndexFeature {
-    // Name of the index-feature. This should be unique in the schema.
+    // Name of the index-feature. This should be a reference to an existing
+    // feature in the schema.
     optional string name = 1;
   }
 
@@ -212,15 +214,18 @@ message SparseFeature {
 
   optional ValueFeature value_feature = 9;  // required
   message ValueFeature {
-    // Name of the value-feature. This should be unique in the schema.
+    // Name of the value-feature. This should be a reference to an existing
+    // feature in the schema.
     optional string name = 1;
   }
 
   // Type of value feature.
-  optional FeatureType type = 10;
+  // Deprecated, this is inferred by the referred features.
+  optional FeatureType type = 10 [deprecated = true];
 
   // Domain information
-  optional Domain domain = 11;
+  // Deprecated, this is inferred by the referred features.
+  optional Domain domain = 11 [deprecated = true];
 }
 
 // Models constraints on the distribution of a feature's values.
@@ -260,6 +265,13 @@ message FloatDomain {
   optional float max = 4;
 }
 
+// Domain for a recursive struct.
+message StructDomain {
+  repeated Feature feature = 1;
+
+  repeated SparseFeature sparse_feature = 2;
+}
+
 // Encodes information for domains of string values.
 message StringDomain {
 
@@ -284,6 +296,7 @@ message BoolDomain {
   optional string false_value = 3;
 }
 
+
 // Describes the physical representation of a feature.
 // It may be different than the logical representation, which
 // is represented as a Domain.
@@ -292,6 +305,7 @@ enum FeatureType {
   BYTES = 1;
   INT = 2;
   FLOAT = 3;
+  STRUCT = 4;
 }
 
 // Describes constraints on the presence of the feature in the data.
@@ -313,6 +327,7 @@ message Domain {
     FloatDomain floats = 3;
     StringDomain strings = 4;
     BoolDomain bools = 5;
+    StructDomain features = 12;
   }
 
   // Constraints on the distribution of the feature values.

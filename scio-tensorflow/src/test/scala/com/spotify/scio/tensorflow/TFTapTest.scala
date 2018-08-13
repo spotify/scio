@@ -55,26 +55,4 @@ class TFTapTest extends TapSpec {
     }
   }
 
-  it should "support saveAsTfExampleFile with case class" in {
-    val examples = getDummyExample
-    import org.apache.beam.sdk.io.{Compression => CType}
-    for (compressionType <- Seq(CType.UNCOMPRESSED, CType.DEFLATE, CType.GZIP)) {
-      val dir = tmpDir
-      val sc = ScioContext()
-      val (out, spec) = sc.parallelize(examples)
-        .saveAsTfExampleFile(
-          dir.getPath,
-          TFRecordSpec.fromCaseClass[TestFeatureSpec.TestFeatures],
-          compression = compressionType)
-      sc.close().waitUntilDone()
-      verifyTap(out.waitForResult(), examples.toSet)
-      verifyTap(spec.waitForResult(), Set(
-        s"""{"version":1,""" +
-          """"features":[{"name":"f2","kind":"FloatList","tags":{}},""" +
-          """{"name":"f1","kind":"FloatList","tags":{}}],""" +
-          s""""compression":"$compressionType"}"""
-      ))
-      FileUtils.deleteDirectory(dir)
-    }
-  }
 }
