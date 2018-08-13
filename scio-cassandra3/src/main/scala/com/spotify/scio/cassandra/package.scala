@@ -68,6 +68,9 @@ package object cassandra {
      * occur at the end of each window in streaming mode. The bulk writer writes to all nodes in a
      * cluster so remote nodes in a multi-datacenter cluster may become a bottleneck.
      *
+     * '''NOTE: this module is optimized for throughput in batch mode and not recommended for
+     * * streaming mode.'''
+     *
      * @param opts Cassandra options
      * @param parallelism number of concurrent bulk writers, default to number of Cassandra nodes
      * @param f function to convert input data to values for the CQL statement
