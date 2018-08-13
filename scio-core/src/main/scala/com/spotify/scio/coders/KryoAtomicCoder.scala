@@ -19,6 +19,9 @@ package com.spotify.scio.coders
 
 import java.io.{EOFException, InputStream, OutputStream}
 import java.nio.file.Path
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Function
 
 import com.esotericsoftware.kryo.KryoException
 import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
@@ -35,8 +38,8 @@ import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.coders.{AtomicCoder, CoderException, InstantCoder}
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
-import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.util.VarInt
+import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.joda.time.{DateTime, LocalDate, LocalDateTime, LocalTime}
 import org.slf4j.LoggerFactory
 
@@ -120,32 +123,35 @@ private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
     extends AtomicCoder[T] {
   import KryoAtomicCoder._
 
-  override def encode(value: T, os: OutputStream): Unit = withKryoState(options) { kryoState =>
-    if (value == null) {
-      throw new CoderException("cannot encode a null value")
+  private[this] val instanceId = UUID.randomUUID.toString
+
+  override def encode(value: T, os: OutputStream): Unit =
+    withKryoState(instanceId, options) { kryoState =>
+      if (value == null) {
+        throw new CoderException("cannot encode a null value")
+      }
+
+      VarInt.encode(Header, os)
+      val chunked = kryoState.outputChunked
+      chunked.setOutputStream(os)
+
+      try {
+        kryoState.kryo.writeClassAndObject(chunked, value)
+        chunked.endChunks()
+        chunked.flush()
+      } catch {
+        case ke: KryoException =>
+          // make sure that the Kryo output buffer is cleared in case that we can recover from
+          // the exception (e.g. EOFException which denotes buffer full)
+          chunked.clear()
+          ke.getCause match {
+            case ex: EOFException => throw ex
+            case _                => throw ke
+          }
+      }
     }
 
-    VarInt.encode(Header, os)
-    val chunked = kryoState.outputChunked
-    chunked.setOutputStream(os)
-
-    try {
-      kryoState.kryo.writeClassAndObject(chunked, value)
-      chunked.endChunks()
-      chunked.flush()
-    } catch {
-      case ke: KryoException =>
-        // make sure that the Kryo output buffer is cleared in case that we can recover from
-        // the exception (e.g. EOFException which denotes buffer full)
-        chunked.clear()
-        ke.getCause match {
-          case ex: EOFException => throw ex
-          case _                => throw ke
-        }
-    }
-  }
-
-  override def decode(is: InputStream): T = withKryoState(options) { kryoState =>
+  override def decode(is: InputStream): T = withKryoState(instanceId, options) { kryoState =>
     val chunked = kryoState.inputChunked
     val o = if (VarInt.decodeInt(is) == Header) {
       chunked.setInputStream(is)
@@ -207,7 +213,7 @@ private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
         observer.update(kryoEncodedElementByteSize(value))
     }
 
-  private def kryoEncodedElementByteSize(obj: Any): Long = withKryoState(options) {
+  private def kryoEncodedElementByteSize(obj: Any): Long = withKryoState(instanceId, options) {
     kryoState: KryoState =>
       val s = new CountingOutputStream(ByteStreams.nullOutputStream())
       val output = new Output(options.bufferSize, options.maxBufferSize)
@@ -228,29 +234,28 @@ private[scio] object KryoAtomicCoder {
   private val logger = LoggerFactory.getLogger(this.getClass)
   private val Header = -1
 
-  // resort to ThreadLocal to make sure we have one kryo instance per thread and that KryoState
-  // instances are GC'ed once the thread dies; there's no need for other concurrency primitives
-  // which most likely will introduce more overhead.
-  private[this] val kryoState: ThreadLocal[KryoState] = new ThreadLocal[KryoState]
+  // make sure we have one kryo instance per thread per instance
+  private[this] val KryoStateMap = new ConcurrentHashMap[String, KryoState]()
 
-  def withKryoState[R](options: KryoOptions)(f: KryoState => R): R = {
-    val ks = Option(kryoState.get()).getOrElse {
-      val k = KryoSerializer.registered.newKryo()
-      k.setReferences(options.referenceTracking)
-      k.setRegistrationRequired(options.registrationRequired)
+  final def withKryoState[R](instanceId: String, options: KryoOptions)(f: KryoState => R): R = {
+    val id = Thread.currentThread().getId + "-" + instanceId
+    val ks = KryoStateMap.computeIfAbsent(id, new Function[String, KryoState] {
+      override def apply(v1: String): KryoState = {
+        val k = KryoSerializer.registered.newKryo()
+        k.setReferences(options.referenceTracking)
+        k.setRegistrationRequired(options.registrationRequired)
 
-      new ScioKryoRegistrar()(k)
-      new AlgebirdRegistrar()(k)
+        new ScioKryoRegistrar()(k)
+        new AlgebirdRegistrar()(k)
 
-      KryoRegistrarLoader.load(k)
+        KryoRegistrarLoader.load(k)
 
-      val input = new InputChunked(options.bufferSize)
-      val output = new OutputChunked(options.bufferSize)
+        val input = new InputChunked(options.bufferSize)
+        val output = new OutputChunked(options.bufferSize)
 
-      val state = KryoState(k, input, output)
-      kryoState.set(state)
-      state
-    }
+        KryoState(k, input, output)
+      }
+    })
 
     f(ks)
   }
