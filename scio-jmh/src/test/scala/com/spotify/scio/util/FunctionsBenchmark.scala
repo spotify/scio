@@ -17,9 +17,9 @@
 
 package com.spotify.scio.util
 
+import java.util
 import java.util.concurrent.TimeUnit
 
-import com.google.common.collect.Lists
 import com.twitter.algebird.{Monoid, Semigroup}
 import org.apache.beam.sdk.testing.CombineFnTester
 import org.apache.beam.sdk.transforms.Combine.CombineFn
@@ -34,7 +34,7 @@ class FunctionsBenchmark {
 
   type T = Set[Int]
 
-  val input = Lists.newArrayList((1 to 100).map(Set(_)).asJava)
+  val input = new util.ArrayList((1 to 100).map(Set(_)).asJava)
   val output = (1 to 100).toSet
 
   val aggregateFn = Functions.aggregateFn[T, T](Set.empty[Int])(_ ++ _, _ ++ _)
