@@ -106,11 +106,58 @@ private object RunnerContext {
 
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
 object ContextAndArgs {
+  // scalastyle:off regex
+  // scalastyle:off cyclomatic.complexity
   /** Create [[ScioContext]] and [[Args]] for command line arguments. */
   def apply(args: Array[String]): (ScioContext, Args) = {
     val (_opts, _args) = ScioContext.parseArguments[PipelineOptions](args)
     (new ScioContext(_opts, Nil), _args)
   }
+
+  import caseapp._
+  import caseapp.core.help._
+  def typed[T: Parser : Help](args: Array[String]): (ScioContext, T) = {
+    // limit the options passed to case-app
+    // to options supported in T
+    val supportedCustomArgs =
+      Parser[T].args.flatMap { a =>
+        a.name  +: a.extraNames
+      }.map(_.name) ++ List("help", "usage")
+
+    val Reg = "^-{1,2}(.+)$".r
+    val (customArgs, remainingArgs) =
+      args.partition { s =>
+        s match {
+          case Reg(a) =>
+            val name = a.takeWhile(_ != '=')
+            supportedCustomArgs.contains(name)
+          case x => true
+        }
+      }
+
+    CaseApp.detailedParseWithHelp[T](customArgs) match {
+      case Left(message) =>
+        Console.err.println(message.message)
+        sys.exit(1)
+      case Right((_, usage, help, _)) if help =>
+        Console.out.println(Help[T].help)
+        sys.exit(0)
+      case Right((_, usage, help, _)) if usage =>
+        Console.out.println(Help[T].help)
+        for {
+          i <- PipelineOptionsFactory.getRegisteredOptions.asScala
+        } PipelineOptionsFactory.printHelp(Console.out, i)
+        sys.exit(0)
+      case Right((Right(t), usage, help, _)) =>
+        val (ctx, _) = ContextAndArgs(remainingArgs)
+        (ctx, t)
+      case Right((Left(message), usage, help, _)) =>
+        Console.err.println(message.message)
+        sys.exit(1)
+    }
+  }
+  // scalastyle:on regex
+  // scalastyle:on cyclomatic.complexity
 }
 
 /** Companion object for [[ScioContext]]. */
