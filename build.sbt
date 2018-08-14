@@ -65,6 +65,7 @@ val sparkeyVersion = "2.3.0"
 val tensorFlowVersion = "1.8.0"
 val zoltarVersion = "0.4.0"
 val grpcVersion = "1.7.0"
+val caseappVersion = "2.0.0-M3"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
@@ -324,7 +325,8 @@ lazy val scioCore: Project = Project(
     "com.google.protobuf" % "protobuf-java" % protobufVersion,
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
     "org.apache.xbean" % "xbean-asm5-shaded" % asmVersion,
-    "io.grpc" % "grpc-all" % grpcVersion exclude("io.opencensus", "opencensus-api")
+    "io.grpc" % "grpc-all" % grpcVersion exclude("io.opencensus", "opencensus-api"),
+    "com.github.alexarchambault" %% "case-app" % caseappVersion
   )
 ).dependsOn(
   scioAvro,
