@@ -43,7 +43,7 @@ import scala.util.Random
 // run on HEAD. Keep all changes contained in the same file.
 
 object ScioBenchmarkSettings {
-  val defaultProjectId: String = "scio-playground"
+  val defaultProjectId: String = "data-integration-test"
   val numOfWorkers = 4
   val commonArgs = Array(
     "--runner=DataflowRunner",

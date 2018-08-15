@@ -34,7 +34,7 @@ import org.apache.beam.sdk.values.KV
 import scala.util.{Failure, Success}
 
 object BigtableBenchmark {
-  val projectId: String = "scio-playground"
+  val projectId: String = "data-integration-test"
   val instanceId: String = "side-input-test"
   val tableId: String = "side-input-test"
 
