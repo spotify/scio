@@ -18,8 +18,8 @@
 package com.spotify.scio.avro
 
 import com.google.common.io.Files
-import com.spotify.scio.{ContextAndArgs, ScioResult}
-import org.scalatest.{FlatSpec, Matchers}
+import com.spotify.scio._
+import org.scalatest._
 
 class TypedAvroIT extends FlatSpec with Matchers {
   "Typed Avro IO" should "not throw exception" in {
