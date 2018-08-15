@@ -24,7 +24,6 @@ fi
 
 URL="https://oss.sonatype.org/content/repositories/releases/com/spotify/scio-core_2.11/maven-metadata.xml"
 VERSION=$(curl -s $URL | grep -o '<latest>[^<>]\+</latest>' | sed -E 's/<\/?latest>//g')
-VERSION=1.0.0
 echo "Latest Scio release: $VERSION"
 
 git_clone() {
@@ -44,8 +43,9 @@ make_pr() {
   if [ $STATUS -ne 0 ]; then
     echo "Submitting PR to $REPO"
     git commit -a -m "Bump Scio to $VERSION"
-    git push -u origin "HEAD:$(whoami)/scio-$VERSION"
-    hub pull-request -f -m "Bump Scio to $VERSION"
+    BRANCH="$(whoami)/scio-$VERSION"
+    git push -u origin "HEAD:$BRANCH"
+    hub pull-request -f -m "Bump Scio to $VERSION" -h $BRANCH
   else
     echo "Failed to update $REPO"
   fi
@@ -66,8 +66,8 @@ git_clone $REPO
 cd homebrew-public
 # sed -i behaves differently on Mac and Linux
 cat scio.rb | \
-  sed "s/\<url \"[^\"]\+\"/url \"${URL//\//\\/}\"/g" | \
-  sed "s/\<sha256 \"[^\"]\+\"/sha256 \"$SHASUM\"/g" > scio.rb.tmp
+  sed "s/url \"[^\"]*\"/url \"${URL//\//\\/}\"/g" | \
+  sed "s/sha256 \"[^\"]*\"/sha256 \"$SHASUM\"/g" > scio.rb.tmp
 mv scio.rb.tmp scio.rb
 make_pr $REPO
 cd ..
@@ -85,7 +85,7 @@ update_downstream() {
   for FILE in $(git grep -l 'val scioVersion = "'); do
     echo "Updating $FILE"
     # sed -i behaves differently on Mac and Linux
-    cat $FILE | sed "s/\<val scioVersion = \"[^\"]\+\"/val scioVersion = \"$VERSION\"/g" > $FILE.tmp
+    cat $FILE | sed "s/val scioVersion = \"[^\"]*\"/val scioVersion = \"$VERSION\"/g" > $FILE.tmp
     mv $FILE.tmp $FILE
   done
   make_pr $REPO
