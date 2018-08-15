@@ -112,6 +112,7 @@ jobs:
       - run:
           command: ./scripts/circleci_bench.sh
           no_output_timeout: 30m
+      - save_cache: *save_cache_settings
     environment:
       - SCALA_VERSION: *scala_212_version
 
