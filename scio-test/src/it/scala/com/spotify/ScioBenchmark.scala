@@ -131,8 +131,8 @@ object ScioBenchmark {
       prettyPrint("Finish time", job.getCurrentStateTime)
       val start = parser.parseLocalDateTime(job.getCreateTime)
       val finish = parser.parseLocalDateTime(job.getCurrentStateTime)
-      val elapsed = PeriodFormat.getDefault.print(Seconds.secondsBetween(start, finish))
-      prettyPrint("Elapsed", elapsed)
+      val elapsed = Seconds.secondsBetween(start, finish)
+      prettyPrint("Elapsed", PeriodFormat.getDefault.print(elapsed))
 
       val jobMetrics = r.result.as[DataflowResult].getJobMetrics.getMetrics.asScala
         .filter { m =>
@@ -143,7 +143,8 @@ object ScioBenchmark {
 
       jobMetrics.foreach(kv => prettyPrint(kv._1, kv._2))
       OperationBenchmark(r.name,
-        jobMetrics.filter(metric => datastoreMetricKeys.contains(metric._1)).toMap)
+        jobMetrics.filter(metric => datastoreMetricKeys.contains(metric._1)).toMap +
+          ("Elapsed" -> elapsed.getSeconds.toString))
     }
     if (circleCIEnv.isDefined) {
       saveMetricsToDatastore(circleCIEnv.get, metrics)
@@ -190,7 +191,8 @@ object ScioBenchmark {
     printMetricsComparison(benchmarks.map(_.opName))
   }
 
-  private val getBenchmarkQuery = "SELECT * from Benchmarks_%s ORDER BY buildNum DESC LIMIT 2"
+  private val getBenchmarkQuery =
+    s"SELECT * from ${datastoreKind}_%s ORDER BY buildNum DESC LIMIT 2"
 
   // TODO: move this to email generator
   private def printMetricsComparison(benchmarkNames: Iterable[String]): Unit = {
@@ -202,16 +204,28 @@ object ScioBenchmark {
               .setAllowLiterals(true)
               .setQueryString(getBenchmarkQuery.format(benchmarkName))
               .build()
-          ).build()
-        )
+          ).build())
 
-        comparisonMetrics.getBatch.getEntityResultsList.asScala.foreach { entityResult =>
-          val path = entityResult.getEntity.getKey.getPath(0)
-          entityResult.getEntity.getPropertiesMap.asScala
-            .filter { case (k, _) => datastoreMetricKeys.contains(k) }
-            .foreach { case (k, v) =>
-              prettyPrint(s"${path.getKind}[build=${path.getName}]", s"$k=$v")
+        val metrics = comparisonMetrics.getBatch.getEntityResultsList.asScala
+          .sortBy(_.getEntity.getKey.getPath(0).getName.toInt)
+          .map(_.getEntity)
+        if (metrics.size == 2) {
+          val opName = metrics.head.getKey.getPath(0).getKind.substring(datastoreKind.length + 1)
+          val props = metrics.map(_.getPropertiesMap.asScala)
+          println("=" * 80)
+          prettyPrint("Benchmark", opName)
+          val List(b1, b2) = props.map(_("buildNum").getIntegerValue).toList
+          prettyPrint("BuildNum", "%15d%15d%15s".format(b1, b2, "Delta"))
+          datastoreMetricKeys.foreach { k =>
+            val List(prev, curr) = props.map(_(k).getStringValue.toLong).toList
+            val delta = (curr - prev).toDouble / curr * 100.0
+            val signed = if (delta.isNaN) {
+              "0.00%"
+            } else {
+              (if (delta > 0) "+" else "") + "%.2f%%".format(delta)
             }
+            prettyPrint(k, "%15d%15d%15s".format(prev, curr, signed))
+          }
         }
       } catch {
         case e: Exception => println(s"Caught error fetching benchmark metrics from Datastore: $e")
@@ -222,7 +236,7 @@ object ScioBenchmark {
 
   private def prettyPrint(k: String, v: String): Unit = {
     // scalastyle:off regex
-    println("%-20s: %s".format(k, v))
+    println("%-30s: %s".format(k, v))
     // scalastyle:on regex
   }
 
