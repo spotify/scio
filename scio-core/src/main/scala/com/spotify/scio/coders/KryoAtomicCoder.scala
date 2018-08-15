@@ -244,7 +244,6 @@ private[scio] object KryoAtomicCoder {
         k.setReferences(options.referenceTracking)
         k.setRegistrationRequired(options.registrationRequired)
 
-        new AllScalaRegistrar()(k)
         new ScioKryoRegistrar()(k)
         new AlgebirdRegistrar()(k)
 
