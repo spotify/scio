@@ -385,7 +385,10 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
     result
   }
 
-  private def examplesToFeatures(examples: SCollection[Example]): SCollection[Feature] =
+  // scalastyle:off method.length
+  private def examplesToFeatures(examples: SCollection[Example]): SCollection[Feature] = {
+    // count allows us to check presence of features, could also be used for statistics
+    val countSI = examples.count.asSingletonSideInput
     examples
       .flatMap(_.getFeatures.getFeatureMap.asScala)
       .map { case (name, feature) =>
@@ -400,25 +403,36 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
             sys.error(s"kind must be set - feature is ${feature.toString}")
         }
       }
-      .aggregateByKey(MultiAggregator((Aggregator.max[Int], Aggregator.min[Int])))
-      .map { case ((featureName, featureType), (max, min)) =>
+      .aggregateByKey(MultiAggregator((Aggregator.max[Int], Aggregator.min[Int], Aggregator.size)))
+      .withSideInputs(countSI)
+      .map { case (((featureName, featureType), (max, min, size)), ctx) =>
+        val count = ctx(countSI)
         val builder = Feature.newBuilder()
           .setName(featureName)
           .setType(featureType)
-        if (max == min) {
-          // This is a fixed length feature
+        if (max == min && size == count) {
+          // This is a fixed length feature, if:
+          // * length of the feature list is constant
+          // * feature list was present in all features
+
+          // Presence in all the features is required for Example parsing logic in TensorFlow
           val shapeBuilder = FixedShape.newBuilder()
           if (max > 1) {
+            // No need to set dim for scalars
             shapeBuilder.addDim(FixedShape.Dim.newBuilder().setSize(max))
           }
           builder.setShape(shapeBuilder)
-        }
-        else {
-          // Var length
+        } else {
+          // Var length feature
           builder.setValueCount(ValueCount.newBuilder().setMin(min).setMax(max))
         }
+        builder.setPresence(FeaturePresence.newBuilder()
+          .setMinCount(size)
+          .setMinFraction(size.toFloat/count))
         builder.build()
-      }
+      }.toSCollection
+  }
+  // scalastyle:on method.length
 }
 
 private object TFExampleSCollectionFunctions {
