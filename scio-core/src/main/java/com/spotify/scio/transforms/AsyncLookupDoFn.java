@@ -98,6 +98,7 @@ public abstract class AsyncLookupDoFn<A, B, C> extends DoFn<A, KV<A, AsyncLookup
     resultCount = 0;
   }
 
+  @SuppressWarnings("unchecked")
   @ProcessElement
   public void processElement(ProcessContext c, BoundedWindow window) {
     flush(r -> c.output(KV.of(r.input, r.output)));
