@@ -217,14 +217,14 @@ object ScioBenchmark {
           val List(b1, b2) = props.map(_("buildNum").getIntegerValue).toList
           prettyPrint("BuildNum", "%15d%15d%15s".format(b1, b2, "Delta"))
           datastoreMetricKeys.foreach { k =>
-            val List(prev, curr) = props.map(_(k).getStringValue.toLong).toList
+            val List(prev, curr) = props.map(_(k).getStringValue.toDouble).toList
             val delta = (curr - prev).toDouble / curr * 100.0
             val signed = if (delta.isNaN) {
               "0.00%"
             } else {
               (if (delta > 0) "+" else "") + "%.2f%%".format(delta)
             }
-            prettyPrint(k, "%15d%15d%15s".format(prev, curr, signed))
+            prettyPrint(k, "%15.2f%15.2f%15s".format(prev, curr, signed))
           }
         }
       } catch {
