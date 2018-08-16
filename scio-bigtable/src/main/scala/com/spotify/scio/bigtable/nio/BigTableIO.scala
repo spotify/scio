@@ -17,20 +17,22 @@
 
 package com.spotify.scio.bigtable.nio
 
-import com.spotify.scio.ScioContext
-import com.spotify.scio.values.SCollection
-import com.spotify.scio.nio.ScioIO
-import com.spotify.scio.io.Tap
-import com.spotify.scio.bigtable._
 import com.google.bigtable.v2.{Row => BTRow, _}
-import com.google.protobuf.ByteString
 import com.google.cloud.bigtable.config.BigtableOptions
+import com.google.protobuf.ByteString
+import com.spotify.scio.ScioContext
+import com.spotify.scio.bigtable._
+import com.spotify.scio.io.Tap
+import com.spotify.scio.nio.ScioIO
+import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.bigtable.{BigtableIO => BBigtableIO}
 import org.apache.beam.sdk.io.range.ByteKeyRange
+import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.KV
-import scala.concurrent.Future
-import scala.collection.JavaConverters._
 import org.joda.time.Duration
+
+import scala.collection.JavaConverters._
+import scala.concurrent.Future
 
 trait BigtableIO[T] extends ScioIO[T] {
   override def toString: String = s"BigtableIO($id)"
@@ -61,15 +63,24 @@ final case class Row(bigtableOptions: BigtableOptions, tableId: String) extends 
     sc.requireNotClosed {
       params match {
         case Row.Parameters(keyRange, rowFilter) =>
-          var read = BBigtableIO.read().withBigtableOptions(bigtableOptions).withTableId(tableId)
-            if (keyRange != null) {
-              read = read.withKeyRange(keyRange)
-            }
-            if (rowFilter != null) {
-              read = read.withRowFilter(rowFilter)
-            }
-            sc.wrap(sc.applyInternal(read))
-              .setName(s"${bigtableOptions.getProjectId} ${bigtableOptions.getInstanceId} $tableId")
+          val opts = bigtableOptions // defeat closure
+          var read = BBigtableIO.read()
+            .withProjectId(bigtableOptions.getProjectId)
+            .withInstanceId(bigtableOptions.getInstanceId)
+            .withTableId(tableId)
+            .withBigtableOptionsConfigurator(
+              new SerializableFunction[BigtableOptions.Builder, BigtableOptions.Builder] {
+                override def apply(input: BigtableOptions.Builder): BigtableOptions.Builder =
+                  opts.toBuilder
+              })
+          if (keyRange != null) {
+            read = read.withKeyRange(keyRange)
+          }
+          if (rowFilter != null) {
+            read = read.withRowFilter(rowFilter)
+          }
+          sc.wrap(sc.applyInternal(read))
+            .setName(s"${bigtableOptions.getProjectId} ${bigtableOptions.getInstanceId} $tableId")
       }
     }
 
@@ -117,7 +128,16 @@ final case class Mutate[T](
     val sink =
       params match {
         case Mutate.Default =>
-          BBigtableIO.write().withBigtableOptions(bigtableOptions).withTableId(tableId)
+          val opts = bigtableOptions // defeat closure
+          BBigtableIO.write()
+            .withProjectId(bigtableOptions.getProjectId)
+            .withInstanceId(bigtableOptions.getInstanceId)
+            .withTableId(tableId)
+            .withBigtableOptionsConfigurator(
+              new SerializableFunction[BigtableOptions.Builder, BigtableOptions.Builder] {
+                override def apply(input: BigtableOptions.Builder): BigtableOptions.Builder =
+                  opts.toBuilder
+              })
         case Mutate.Bulk(numOfShards, flushInterval) =>
           new BigtableBulkWriter(tableId, bigtableOptions, numOfShards, flushInterval)
       }
