@@ -87,7 +87,7 @@ case class ObjectFileIO[T: ClassTag](path: String)
               c.output(AvroBytesUtil.encode(elemCoder, c.element()))
           })
           .write(AvroIO[GenericRecord](path, AvroBytesUtil.schema))(parameters)
-        sc.context.makeFuture(ObjectFileTap[T](ScioUtil.addPartSuffix(path)))
+        sc.context.makeFuture(tap(Unit))
     }
 
   def tap(read: ReadP): Tap[T] = ObjectFileTap[T](ScioUtil.addPartSuffix(path))
@@ -132,7 +132,7 @@ case class ProtobufIO[T : ClassTag](path: String)
         sc.write(ObjectFileIO[T](path))(ObjectFileIO.Parameters(numShards, metadata = metadata))
     }
 
-  def tap(read: ReadP): Tap[T] = ObjectFileTap[T](path)
+  def tap(read: ReadP): Tap[T] = ObjectFileTap[T](ScioUtil.addPartSuffix(path))
 }
 
 object ProtobufIO {
@@ -189,10 +189,10 @@ case class AvroIO[T: ClassTag](path: String, schema: Schema = null)
           gio.AvroIO.writeGenericRecords(schema).asInstanceOf[gio.AvroIO.Write[T]]
         }
         sc.applyInternal(avroOut(sc, t, path, numShards, suffix, codec, metadata))
-        sc.context.makeFuture(AvroTap(ScioUtil.addPartSuffix(path), schema))
+        sc.context.makeFuture(tap(Unit))
     }
 
-  def tap(read: ReadP): Tap[T] = AvroTap[T](path, schema)
+  def tap(read: ReadP): Tap[T] = AvroTap[T](ScioUtil.addPartSuffix(path), schema)
 }
 
 object AvroIO {
@@ -256,12 +256,12 @@ object Typed {
             })
             .withSchema(avroT.schema)
           sc.applyInternal(typedAvroOut(sc, t, path, numShards, suffix, codec, metadata))
-          sc.context.makeFuture(AvroTap(ScioUtil.addPartSuffix(path), avroT.schema))
+          sc.context.makeFuture(tap(Unit))
       }
 
     def tap(read: ReadP): Tap[T] = {
       val avroT = AvroType[T]
-      AvroTap[GenericRecord](path, avroT.schema)
+      AvroTap[GenericRecord](ScioUtil.addPartSuffix(path), avroT.schema)
         .map(avroT.fromGenericRecord)
     }
   }
