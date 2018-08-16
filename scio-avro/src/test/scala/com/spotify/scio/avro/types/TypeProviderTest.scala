@@ -279,7 +279,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
       |    { "name" : "array",
       |      "type" : {
       |        "type": "record",
-      |        "name": "Array",
+      |        "name": "ArrayF",
       |        "fields": [
       |          { "name": "intF", "type": { "type" : "array", "items" : "int"}}
       |        ]}
@@ -287,7 +287,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
       |    { "name" : "map",
       |      "type" : {
       |        "type": "record",
-      |        "name": "Map",
+      |        "name": "MapF",
       |        "fields": [
       |          { "name": "intF", "type": { "type" : "map", "values" : "int"}}
       |        ]}
@@ -299,7 +299,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   it should "support nested records" in {
     val r = RecordWithRecords(RecordWithRecords$Basic(1), RecordWithRecords$Optional(Some(1)),
-      RecordWithRecords$Array(List(1)), RecordWithRecords$Map(Map("int" -> 1)))
+      RecordWithRecords$ArrayF(List(1)), RecordWithRecords$MapF(Map("int" -> 1)))
     r.basic.intF shouldBe 1
     r.optional.intF shouldBe Some(1)
     r.array.intF shouldBe List(1)
@@ -334,7 +334,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
                                   |    { "name" : "array",
                                   |      "type" : {
                                   |        "type": "record",
-                                  |        "name": "Array",
+                                  |        "name": "ArrayF",
                                   |        "fields": [
                                   |          { "name": "intF",
                                   |            "type": { "type" : "array", "items" : "int"}}
@@ -343,7 +343,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
                                   |    { "name" : "map",
                                   |      "type" : {
                                   |        "type": "record",
-                                  |        "name": "Map",
+                                  |        "name": "MapF",
                                   |        "fields": [
                                   |          { "name": "intF",
                                   |            "type": { "type" : "map", "values" : "int"}}
@@ -379,7 +379,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
       |    { "name" : "array",
       |      "type" : ["null", {
       |        "type": "record",
-      |        "name": "Array",
+      |        "name": "ArrayF",
       |        "fields": [
       |          { "name": "intF", "type": { "type" : "array", "items" : "int"}}
       |        ]}]
@@ -387,7 +387,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
       |    { "name" : "map",
       |      "type" : ["null", {
       |        "type": "record",
-      |        "name": "Map",
+      |        "name": "MapF",
       |        "fields": [
       |          { "name": "intF", "type": { "type" : "map", "values" : "int"}}
       |        ]}]
@@ -401,12 +401,12 @@ class TypeProviderTest extends FlatSpec with Matchers {
     val r = RecordWithOptionalRecords(
       Some(RecordWithOptionalRecords$Basic(1)),
       Some(RecordWithOptionalRecords$Optional(Some(1))),
-      Some(RecordWithOptionalRecords$Array(List(1))),
-      Some(RecordWithOptionalRecords$Map(Map("int" -> 1))))
+      Some(RecordWithOptionalRecords$ArrayF(List(1))),
+      Some(RecordWithOptionalRecords$MapF(Map("int" -> 1))))
     r.basic shouldBe Some(RecordWithOptionalRecords$Basic(1))
     r.optional shouldBe Some(RecordWithOptionalRecords$Optional(Some(1)))
-    r.array shouldBe Some(RecordWithOptionalRecords$Array(List(1)))
-    r.map shouldBe Some(RecordWithOptionalRecords$Map(Map("int" -> 1)))
+    r.array shouldBe Some(RecordWithOptionalRecords$ArrayF(List(1)))
+    r.map shouldBe Some(RecordWithOptionalRecords$MapF(Map("int" -> 1)))
   }
 
   @AvroType.fromSchema(
@@ -434,7 +434,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
       |    { "name" : "array",
       |      "type" : { "type" : "array", "items" : {
       |        "type": "record",
-      |        "name": "Array",
+      |        "name": "ArrayF",
       |        "fields": [
       |          { "name": "intF", "type": { "type" : "array", "items" : "int"}}
       |        ]}}
@@ -442,7 +442,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
       |    { "name" : "map",
       |      "type" : { "type" : "array", "items" : {
       |        "type": "record",
-      |        "name": "Map",
+      |        "name": "MapF",
       |        "fields": [
       |          { "name": "intF", "type": { "type" : "map", "values" : "int"}}
       |        ]}}
@@ -456,12 +456,12 @@ class TypeProviderTest extends FlatSpec with Matchers {
     val r = RecordWithRecordArrays(
       List(RecordWithRecordArrays$Basic(1)),
       List(RecordWithRecordArrays$Optional(Some(1))),
-      List(RecordWithRecordArrays$Array(List(1))),
-      List(RecordWithRecordArrays$Map(Map("int" -> 1))))
+      List(RecordWithRecordArrays$ArrayF(List(1))),
+      List(RecordWithRecordArrays$MapF(Map("int" -> 1))))
     r.basic shouldBe List(RecordWithRecordArrays$Basic(1))
     r.optional shouldBe List(RecordWithRecordArrays$Optional(Some(1)))
-    r.array shouldBe List(RecordWithRecordArrays$Array(List(1)))
-    r.map shouldBe List(RecordWithRecordArrays$Map(Map("int" -> 1)))
+    r.array shouldBe List(RecordWithRecordArrays$ArrayF(List(1)))
+    r.map shouldBe List(RecordWithRecordArrays$MapF(Map("int" -> 1)))
   }
 
   @AvroType.fromSchema(
@@ -489,7 +489,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
       |    { "name" : "array",
       |      "type" : { "type" : "map", "values" : {
       |        "type": "record",
-      |        "name": "Array",
+      |        "name": "ArrayF",
       |        "fields": [
       |          { "name": "intF", "type": { "type" : "array", "items" : "int"}}
       |        ]}}
@@ -497,7 +497,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
       |    { "name" : "map",
       |      "type" : { "type" : "map", "values" : {
       |        "type": "record",
-      |        "name": "Map",
+      |        "name": "MapF",
       |        "fields": [
       |          { "name": "intF", "type": { "type" : "map", "values" : "int"}}
       |        ]}}
@@ -511,12 +511,12 @@ class TypeProviderTest extends FlatSpec with Matchers {
     val r = RecordWithRecordMaps(
       Map("basic" -> RecordWithRecordMaps$Basic(1)),
       Map("optional" -> RecordWithRecordMaps$Optional(Some(1))),
-      Map("array" -> RecordWithRecordMaps$Array(List(1))),
-      Map("map" -> RecordWithRecordMaps$Map(Map("int" -> 1))))
+      Map("array" -> RecordWithRecordMaps$ArrayF(List(1))),
+      Map("map" -> RecordWithRecordMaps$MapF(Map("int" -> 1))))
     r.basic shouldBe Map("basic" -> RecordWithRecordMaps$Basic(1))
     r.optional shouldBe Map("optional" -> RecordWithRecordMaps$Optional(Some(1)))
-    r.array shouldBe  Map("array" -> RecordWithRecordMaps$Array(List(1)))
-    r.map shouldBe Map("map" -> RecordWithRecordMaps$Map(Map("int" -> 1)))
+    r.array shouldBe  Map("array" -> RecordWithRecordMaps$ArrayF(List(1)))
+    r.map shouldBe Map("map" -> RecordWithRecordMaps$MapF(Map("int" -> 1)))
   }
 
   @AvroType.fromSchema(
