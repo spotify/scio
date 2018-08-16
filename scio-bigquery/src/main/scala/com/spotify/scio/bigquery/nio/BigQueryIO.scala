@@ -259,10 +259,10 @@ final case class TableRowJsonFile(path: String) extends BigQueryIO[TableRow] {
         data
           .map(e => ScioUtil.jsonFactory.toString(e))
           .applyInternal(data.textOut(path, ".json", numShards, compression))
-        data.context.makeFuture(TableRowJsonTap(ScioUtil.addPartSuffix(path)))
+        data.context.makeFuture(tap(Unit))
     }
 
-  def tap(read: ReadP): Tap[TableRow] = TableRowJsonTap(path)
+  def tap(read: ReadP): Tap[TableRow] = TableRowJsonTap(ScioUtil.addPartSuffix(path))
 }
 
 object TableRowJsonFile {
