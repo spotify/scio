@@ -56,10 +56,7 @@ object TFExampleExample {
       .countByValue
       .map { case (s, c) => WordCountFeatures(s.length.toFloat, c.toFloat) }
       .map(featuresType.toExample(_))
-      .saveAsTfExampleFile(
-        args("output"),
-        TFRecordSpec.fromCaseClass[WordCountFeatures],
-        tfRecordSpecPath = args.optional("feature-desc-path").orNull)
+      .saveAsTfExampleFile(args("output"))
     sc.close()
   }
 }
