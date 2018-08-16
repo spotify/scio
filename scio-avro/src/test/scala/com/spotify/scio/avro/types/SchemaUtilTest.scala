@@ -49,46 +49,46 @@ class SchemaUtilTest extends FlatSpec with Matchers {
 
   it should "support nested records" in {
     SchemaUtil.toPrettyString1(parseSchema(recordFields())) shouldBe
-      """
-        |case class NestedFields(basic: NestedFields$BasicFields, optional: NestedFields$OptionalFields, array: NestedFields$ArrayFields, map: NestedFields$MapFields)
-        |case class NestedFields$BasicFields(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
-        |case class NestedFields$OptionalFields(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
-        |case class NestedFields$ArrayFields(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
-        |case class NestedFields$MapFields(boolF: Map[String,Boolean], intF: Map[String,Int], longF: Map[String,Long], floatF: Map[String,Float], doubleF: Map[String,Double], stringF: Map[String,String], byteStringF: Map[String,ByteString])
-      """.stripMargin.trim
+      f"""
+         |case class NestedFields(basic: NestedFields$$BasicFields, optional: NestedFields$$OptionalFields, array: NestedFields$$ArrayFields, map: NestedFields$$MapFields)
+         |case class NestedFields$$BasicFields(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
+         |case class NestedFields$$OptionalFields(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
+         |case class NestedFields$$ArrayFields(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
+         |case class NestedFields$$MapFields(boolF: Map[String,Boolean], intF: Map[String,Int], longF: Map[String,Long], floatF: Map[String,Float], doubleF: Map[String,Double], stringF: Map[String,String], byteStringF: Map[String,ByteString])
+       """.stripMargin.trim
   }
 
   it should "support nested optional records" in {
     SchemaUtil.toPrettyString1(parseSchema(recordFields(OPTIONAL))) shouldBe
-      """
-        |case class OptionalNestedFields(basic: Option[OptionalNestedFields$BasicFields] = None, optional: Option[OptionalNestedFields$OptionalFields] = None, array: Option[OptionalNestedFields$ArrayFields] = None, map: Option[OptionalNestedFields$MapFields] = None)
-        |case class OptionalNestedFields$BasicFields(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
-        |case class OptionalNestedFields$OptionalFields(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
-        |case class OptionalNestedFields$ArrayFields(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
-        |case class OptionalNestedFields$MapFields(boolF: Map[String,Boolean], intF: Map[String,Int], longF: Map[String,Long], floatF: Map[String,Float], doubleF: Map[String,Double], stringF: Map[String,String], byteStringF: Map[String,ByteString])
-      """.stripMargin.trim
+      f"""
+         |case class OptionalNestedFields(basic: Option[OptionalNestedFields$$BasicFields] = None, optional: Option[OptionalNestedFields$$OptionalFields] = None, array: Option[OptionalNestedFields$$ArrayFields] = None, map: Option[OptionalNestedFields$$MapFields] = None)
+         |case class OptionalNestedFields$$BasicFields(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
+         |case class OptionalNestedFields$$OptionalFields(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
+         |case class OptionalNestedFields$$ArrayFields(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
+         |case class OptionalNestedFields$$MapFields(boolF: Map[String,Boolean], intF: Map[String,Int], longF: Map[String,Long], floatF: Map[String,Float], doubleF: Map[String,Double], stringF: Map[String,String], byteStringF: Map[String,ByteString])
+       """.stripMargin.trim
   }
 
   it should "support nested record arrays" in {
     SchemaUtil.toPrettyString1(parseSchema(recordFields(ARRAY))) shouldBe
-      """
-        |case class ArrayNestedFields(basic: List[ArrayNestedFields$BasicFields], optional: List[ArrayNestedFields$OptionalFields], array: List[ArrayNestedFields$ArrayFields], map: List[ArrayNestedFields$MapFields])
-        |case class ArrayNestedFields$BasicFields(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
-        |case class ArrayNestedFields$OptionalFields(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
-        |case class ArrayNestedFields$ArrayFields(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
-        |case class ArrayNestedFields$MapFields(boolF: Map[String,Boolean], intF: Map[String,Int], longF: Map[String,Long], floatF: Map[String,Float], doubleF: Map[String,Double], stringF: Map[String,String], byteStringF: Map[String,ByteString])
-      """.stripMargin.trim
+      f"""
+         |case class ArrayNestedFields(basic: List[ArrayNestedFields$$BasicFields], optional: List[ArrayNestedFields$$OptionalFields], array: List[ArrayNestedFields$$ArrayFields], map: List[ArrayNestedFields$$MapFields])
+         |case class ArrayNestedFields$$BasicFields(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
+         |case class ArrayNestedFields$$OptionalFields(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
+         |case class ArrayNestedFields$$ArrayFields(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
+         |case class ArrayNestedFields$$MapFields(boolF: Map[String,Boolean], intF: Map[String,Int], longF: Map[String,Long], floatF: Map[String,Float], doubleF: Map[String,Double], stringF: Map[String,String], byteStringF: Map[String,ByteString])
+       """.stripMargin.trim
   }
 
   it should "support nested record maps" in {
     SchemaUtil.toPrettyString1(parseSchema(recordFields(MAP))) shouldBe
-      """
-        |case class MapNestedFields(basic: Map[String,MapNestedFields$BasicFields], optional: Map[String,MapNestedFields$OptionalFields], array: Map[String,MapNestedFields$ArrayFields], map: Map[String,MapNestedFields$MapFields])
-        |case class MapNestedFields$BasicFields(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
-        |case class MapNestedFields$OptionalFields(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
-        |case class MapNestedFields$ArrayFields(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
-        |case class MapNestedFields$MapFields(boolF: Map[String,Boolean], intF: Map[String,Int], longF: Map[String,Long], floatF: Map[String,Float], doubleF: Map[String,Double], stringF: Map[String,String], byteStringF: Map[String,ByteString])
-      """.stripMargin.trim
+      f"""
+         |case class MapNestedFields(basic: Map[String,MapNestedFields$$BasicFields], optional: Map[String,MapNestedFields$$OptionalFields], array: Map[String,MapNestedFields$$ArrayFields], map: Map[String,MapNestedFields$$MapFields])
+         |case class MapNestedFields$$BasicFields(boolF: Boolean, intF: Int, longF: Long, floatF: Float, doubleF: Double, stringF: String, byteStringF: ByteString)
+         |case class MapNestedFields$$OptionalFields(boolF: Option[Boolean] = None, intF: Option[Int] = None, longF: Option[Long] = None, floatF: Option[Float] = None, doubleF: Option[Double] = None, stringF: Option[String] = None, byteStringF: Option[ByteString] = None)
+         |case class MapNestedFields$$ArrayFields(boolF: List[Boolean], intF: List[Int], longF: List[Long], floatF: List[Float], doubleF: List[Double], stringF: List[String], byteStringF: List[ByteString])
+         |case class MapNestedFields$$MapFields(boolF: Map[String,Boolean], intF: Map[String,Int], longF: Map[String,Long], floatF: Map[String,Float], doubleF: Map[String,Double], stringF: Map[String,String], byteStringF: Map[String,ByteString])
+       """.stripMargin.trim
   }
 
   it should "support multiple levels of nested records" in {
@@ -123,12 +123,12 @@ class SchemaUtilTest extends FlatSpec with Matchers {
                                |}
                                |""".stripMargin)
     SchemaUtil.toPrettyString1(schema) shouldBe
-      """
-        |case class Record(level1: Record$Level1)
-        |case class Record$Level1(level2: Record$Level1$Level2)
-        |case class Record$Level1$Level2(level3: Record$Level1$Level2$Level3)
-        |case class Record$Level1$Level2$Level3(intF: Int)
-      """.stripMargin.trim
+      f"""
+         |case class Record(level1: Record$$Level1)
+         |case class Record$$Level1(level2: Record$$Level1$$Level2)
+         |case class Record$$Level1$$Level2(level3: Record$$Level1$$Level2$$Level3)
+         |case class Record$$Level1$$Level2$$Level3(intF: Int)
+       """.stripMargin.trim
   }
 
   it should "support indent" in {
