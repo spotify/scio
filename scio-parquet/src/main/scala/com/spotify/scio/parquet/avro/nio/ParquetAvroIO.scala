@@ -38,11 +38,12 @@ import scala.concurrent.Future
 final case class ParquetAvroIO[T](path: String)
     extends ScioIO[T] {
 
-  type ReadP = Nothing
+  type ReadP = Unit
   type WriteP = ParquetAvroIO.WriteParam
 
   def id: String = path
 
+  // FIXME: implement this
   def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new IllegalStateException("Can't read directly from parquet avro file")
 
