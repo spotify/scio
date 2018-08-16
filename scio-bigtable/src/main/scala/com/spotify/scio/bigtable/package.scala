@@ -25,6 +25,7 @@ import com.spotify.scio.testing.TestIO
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.bigtable.BigtableIO
 import org.apache.beam.sdk.io.range.ByteKeyRange
+import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.KV
 import org.joda.time.Duration
 
@@ -125,7 +126,16 @@ package object bigtable {
           tableId)
         self.getTestInput[Row](input)
       } else {
-        var read = BigtableIO.read().withBigtableOptions(bigtableOptions).withTableId(tableId)
+        val opts = bigtableOptions  // defeat closure
+        var read = BigtableIO.read()
+          .withProjectId(bigtableOptions.getProjectId)
+          .withInstanceId(bigtableOptions.getInstanceId)
+          .withTableId(tableId)
+          .withBigtableOptionsConfigurator(
+            new SerializableFunction[BigtableOptions.Builder, BigtableOptions.Builder] {
+              override def apply(input: BigtableOptions.Builder): BigtableOptions.Builder =
+                opts.toBuilder
+            })
         if (keyRange != null) {
           read = read.withKeyRange(keyRange)
         }
@@ -257,7 +267,16 @@ package object bigtable {
           bigtableOptions.getProjectId, bigtableOptions.getInstanceId, tableId)
         self.context.testOut(output.asInstanceOf[TestIO[(ByteString, Iterable[T])]])(self)
       } else {
-        val sink = BigtableIO.write().withBigtableOptions(bigtableOptions).withTableId(tableId)
+        val opts = bigtableOptions  // defeat closure
+        val sink = BigtableIO.write()
+          .withProjectId(bigtableOptions.getProjectId)
+          .withInstanceId(bigtableOptions.getInstanceId)
+          .withTableId(tableId)
+          .withBigtableOptionsConfigurator(
+            new SerializableFunction[BigtableOptions.Builder, BigtableOptions.Builder] {
+              override def apply(input: BigtableOptions.Builder): BigtableOptions.Builder =
+                opts.toBuilder
+            })
         self
           .map(kv => KV.of(kv._1, kv._2.asJava.asInstanceOf[java.lang.Iterable[Mutation]]))
           .applyInternal(sink)

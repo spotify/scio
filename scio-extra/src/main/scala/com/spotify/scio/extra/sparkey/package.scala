@@ -187,7 +187,7 @@ package object sparkey {
   }
 
   sealed trait SparkeyWritable[K, V] extends Serializable {
-    def put(w: SparkeyWriter, key: K, value: V)
+    private[sparkey] def put(w: SparkeyWriter, key: K, value: V)
   }
 
   implicit val stringSparkeyWritable = new SparkeyWritable[String, String] {
