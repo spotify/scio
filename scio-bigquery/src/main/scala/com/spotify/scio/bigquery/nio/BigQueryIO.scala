@@ -414,7 +414,7 @@ object Typed {
       // BigQueryScioContext.typedBigQuery is removed
       case null if bqt.isTable =>
         val table = bqt.table.get
-        ScioIO.ro(Table(table))
+        ScioIO.ro[T](Table(table))
       case null if bqt.isQuery =>
         val _query = bqt.query.get
         Query[T](_query)
