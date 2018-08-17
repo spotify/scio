@@ -17,17 +17,13 @@
 
 package com.spotify.scio.tensorflow
 
-import java.nio.ByteBuffer
 import java.nio.channels.Channels
 import java.time.Duration
 import java.util.concurrent.ConcurrentMap
 import java.util.function.Function
 
-import com.google.common.base.Charsets
 import com.google.common.collect.Maps
-import com.spotify.featran.{FeatureExtractor, MultiFeatureExtractor}
-import com.spotify.scio.io.{Tap, TextTap}
-import com.spotify.scio.testing.TextIO
+import com.spotify.scio.io.Tap
 import com.spotify.scio.transforms.DoFnWithResource
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.util.ScioUtil
@@ -35,8 +31,6 @@ import com.spotify.scio.values.SCollection
 import com.spotify.zoltar.tf.{TensorFlowGraphModel, TensorFlowModel}
 import com.spotify.zoltar.{Model, Models}
 import com.twitter.algebird.{Aggregator, MultiAggregator}
-import io.circe.generic.auto._
-import io.circe.syntax._
 import javax.annotation.Nullable
 import org.apache.beam.sdk.io.{Compression, FileSystems}
 import org.apache.beam.sdk.transforms.DoFn
