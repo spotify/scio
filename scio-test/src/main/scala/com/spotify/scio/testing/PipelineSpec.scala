@@ -52,12 +52,7 @@ trait PipelineSpec
 
   private def getBeamOptions(m: ConfigMap): List[String] =
     m.collect { case (Beam(k), v) => k -> v }
-      .flatMap {
-        case (k, v) =>
-          aliases
-            .get(k)
-            .getOrElse(List(k -> v))
-      }
+      .flatMap { case (k, v) => aliases.getOrElse(k, List(k -> v)) }
       .map { case (k, v) => s"--$k=$v" }
       .toList
 
