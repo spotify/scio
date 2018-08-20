@@ -64,10 +64,10 @@ class SCollectionMatchersTest extends PipelineSpec {
     an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(Seq(1)) should containSingleValue (10) }
     }
-    an [PipelineExecutionException] should be thrownBy {
+    a [PipelineExecutionException] should be thrownBy {
       runWithContext { _.parallelize(1 to 10) should containSingleValue (1) }
     }
-    an [PipelineExecutionException] should be thrownBy {
+    a [PipelineExecutionException] should be thrownBy {
       runWithContext { _.parallelize(Seq.empty[Int]) should containSingleValue (1) }
     }
 
@@ -77,10 +77,10 @@ class SCollectionMatchersTest extends PipelineSpec {
     an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(Seq(1)) shouldNot containSingleValue (1) }
     }
-    an [PipelineExecutionException] should be thrownBy {
+    a [PipelineExecutionException] should be thrownBy {
       runWithContext { _.parallelize(1 to 10) shouldNot containSingleValue (1) }
     }
-    an [PipelineExecutionException] should be thrownBy {
+    a [PipelineExecutionException] should be thrownBy {
       runWithContext { _.parallelize(Seq.empty[Int]) shouldNot containSingleValue (1) }
     }
   }
@@ -224,10 +224,10 @@ class SCollectionMatchersTest extends PipelineSpec {
     an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(Seq(1)) should satisfySingleValue[Int] (_ == 10) }
     }
-    an [PipelineExecutionException] should be thrownBy {
+    a [PipelineExecutionException] should be thrownBy {
       runWithContext { _.parallelize(1 to 10) should satisfySingleValue[Int] (_ == 1) }
     }
-    an [PipelineExecutionException] should be thrownBy {
+    a [PipelineExecutionException] should be thrownBy {
       runWithContext { _.parallelize(Seq.empty[Int]) should satisfySingleValue[Int] (_ == 1) }
     }
 
@@ -237,10 +237,10 @@ class SCollectionMatchersTest extends PipelineSpec {
     an [AssertionError] should be thrownBy {
       runWithContext { _.parallelize(Seq(1)) shouldNot satisfySingleValue[Int] (_ == 1) }
     }
-    an [PipelineExecutionException] should be thrownBy {
+    a [PipelineExecutionException] should be thrownBy {
       runWithContext { _.parallelize(1 to 10) shouldNot satisfySingleValue[Int] (_ == 1) }
     }
-    an [PipelineExecutionException] should be thrownBy {
+    a [PipelineExecutionException] should be thrownBy {
       runWithContext { _.parallelize(Seq.empty[Int]) shouldNot satisfySingleValue[Int] (_ == 1) }
     }
   }
@@ -364,7 +364,7 @@ class SCollectionMatchersTest extends PipelineSpec {
         containSingleValue(13)
       }
 
-      an [ClassCastException] should be thrownBy {
+      a [ClassCastException] should be thrownBy {
         windowedStream.groupByKey should inEarlyGlobalWindowPanes {
           haveSize(4)
         }
