@@ -61,11 +61,8 @@ package object json extends AutoDerivation {
 
   /** Enhanced version of [[ScioContext]] with JSON methods. */
   implicit class JsonScioContext(@transient val self: ScioContext) extends Serializable {
-    def jsonFile[T: ClassTag : Encoder : Decoder](path: String)
-    : SCollection[Either[DecodeError, T]] = {
-      val io = JsonIO[T](path)
-      io.read(self, Unit)
-    }
+    def jsonFile[T: ClassTag : Encoder : Decoder](path: String): SCollection[T] =
+      self.read(JsonIO[T](path))
   }
 
   /**
@@ -77,22 +74,10 @@ package object json extends AutoDerivation {
                        suffix: String = ".json",
                        numShards: Int = 0,
                        compression: Compression = Compression.UNCOMPRESSED,
-                       printer: Printer = Printer.noSpaces)
-    : Future[Tap[Either[DecodeError, T]]] = {
+                       printer: Printer = Printer.noSpaces): Future[Tap[T]] = {
       val io = JsonIO[T](path)
       self
-        .map(Right[DecodeError, T](_).asInstanceOf[Either[DecodeError, T]])
         .write(io)(io.WriteParams(suffix, numShards, compression, printer))
-    }
-  }
-
-  implicit class JsonIterable[T, M[_]]
-  (xs: M[T])(implicit ev: M[T] <:< Iterable[T],
-             cbf: CanBuildFrom[M[T], Either[DecodeError, T], M[Either[DecodeError, T]]]) {
-    def mapToEither: M[Either[DecodeError, T]] = {
-      val b = cbf()
-      xs.foreach(x => b += Right(x))
-      b.result()
     }
   }
 

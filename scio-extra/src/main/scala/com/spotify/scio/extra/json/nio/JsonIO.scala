@@ -18,7 +18,6 @@
 package com.spotify.scio.extra.json.nio
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.extra.json.DecodeError
 import com.spotify.scio.io.Tap
 import com.spotify.scio.nio.{ScioIO, TextIO}
 import com.spotify.scio.util.ScioUtil
@@ -33,7 +32,7 @@ import scala.reflect.ClassTag
 import scala.util.{Left, Right}
 
 case class JsonIO[T: ClassTag : Encoder : Decoder](path: String)
-  extends ScioIO[Either[DecodeError, T]] {
+  extends ScioIO[T] {
 
   case class WriteParams(suffix: String = ".json",
                          numShards: Int = 0,
@@ -43,41 +42,26 @@ case class JsonIO[T: ClassTag : Encoder : Decoder](path: String)
   override type ReadP = Unit
   override type WriteP = WriteParams
 
-  override def read(sc: ScioContext, params: ReadP)
-  : SCollection[Either[DecodeError, T]] = sc.requireNotClosed {
-    if (sc.isTest) {
-      sc.getTestInput[Either[DecodeError, T]](this)
-    } else {
-      sc.wrap(sc.applyInternal(BTextIO.read().from(path))).setName(path)
-        .map(decodeJson)
-    }
+  override def read(sc: ScioContext, params: ReadP): SCollection[T] =
+    sc.wrap(sc.applyInternal(BTextIO.read().from(path))).setName(path).map(decodeJson)
+
+  override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
+    data.map(x => params.printer.pretty(x.asJson)).applyInternal(jsonOut(path, params))
+    data.context.makeFuture(tap(Unit))
   }
 
-  override def write(data: SCollection[Either[DecodeError, T]], params: WriteP)
-  : Future[Tap[Either[DecodeError, T]]] =
-    if (data.context.isTest) {
-      data.context.testOut(this.id)(data)
-      data.saveAsInMemoryTap
-    } else {
-      data.flatMap(_.right.toOption.map(x => params.printer.pretty(x.asJson)))
-        .applyInternal(jsonOut(path, params))
-      data.context.makeFuture(tap(Unit))
-    }
-
-  override def tap(read: ReadP): Tap[Either[DecodeError, T]] = new Tap[Either[DecodeError, T]] {
-    override def value: Iterator[Either[DecodeError, T]] =
+  override def tap(read: ReadP): Tap[T] = new Tap[T] {
+    override def value: Iterator[T] =
       TextIO.textFile(ScioUtil.addPartSuffix(path)).map(decodeJson)
-    override def open(sc: ScioContext): SCollection[Either[DecodeError, T]] = {
-      val jsonIO = JsonIO(ScioUtil.addPartSuffix(path))
-      jsonIO.read(sc, Unit)
-    }
+    override def open(sc: ScioContext): SCollection[T] =
+      JsonIO(ScioUtil.addPartSuffix(path)).read(sc, Unit)
   }
 
   override def id: String = path
 
-  private def decodeJson(json: String): Either[DecodeError, T] = decode[T](json) match {
-    case Left(e) => Left(DecodeError(e, json))
-    case Right(t) => Right(t)
+  private def decodeJson(json: String): T = decode[T](json) match {
+    case Left(e) => throw e
+    case Right(t) => t
   }
 
   private def jsonOut(path: String, params: WriteParams) =

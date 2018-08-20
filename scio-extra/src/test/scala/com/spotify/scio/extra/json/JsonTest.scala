@@ -21,9 +21,9 @@ import java.nio.file.Files
 
 import io.circe.Printer
 import com.spotify.scio._
-import com.spotify.scio.avro._
 import com.spotify.scio.io.TapSpec
 import com.spotify.scio.util.ScioUtil
+import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.commons.io.FileUtils
 
 import scala.collection.JavaConverters._
@@ -34,7 +34,6 @@ object JsonJob {
     import JsonTest._
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.jsonFile[Record](args("input"))
-      .flatMap(_.right.toOption)
       .saveAsJsonFile(args("output"))
     sc.close()
   }
@@ -56,7 +55,7 @@ class JsonTest extends TapSpec {
       _
         .parallelize(data)
         .saveAsJsonFile(dir.getPath)
-    }.map(_.right.get)
+    }
     verifyTap(t, data.toSet)
     FileUtils.deleteDirectory(dir)
   }
@@ -67,7 +66,7 @@ class JsonTest extends TapSpec {
       _
         .parallelize(data)
         .saveAsJsonFile(dir.getPath, printer = Printer.noSpaces.copy(dropNullValues = true))
-    }.map(_.right.get)
+    }
     verifyTap(t, data.toSet)
     val result = Files.list(dir.toPath).iterator().asScala
       .flatMap(p => Source.fromFile(p.toFile).getLines())
@@ -84,8 +83,8 @@ class JsonTest extends TapSpec {
   "JobTest" should "pass correct JsonIO" in {
     JobTest[JsonJob.type]
       .args("--input=in.json", "--output=out.json")
-      .input(JsonIO[Record]("in.json"), data.mapToEither)
-      .output(JsonIO[Record]("out.json"))(_ should containInAnyOrder (data.mapToEither))
+      .input(JsonIO[Record]("in.json"), data)
+      .output(JsonIO[Record]("out.json"))(_ should containInAnyOrder (data))
       .run()
   }
 
@@ -100,13 +99,12 @@ class JsonTest extends TapSpec {
     runWithFileFuture {
       _.parallelize(badData).saveAsTextFile(dir.getPath)
     }
-    val t = runWithFileFuture {
-      _
-        .jsonFile[Record](ScioUtil.addPartSuffix(dir.getPath))
-        .flatMap(_.left.toOption.map(_.input))
-        .materialize
-    }
-    verifyTap(t, badData.toSet)
+
+    val sc = ScioContext()
+    sc.jsonFile[Record](ScioUtil.addPartSuffix(dir.getPath))
+    // scalastyle:off no.whitespace.before.left.bracket
+    a [PipelineExecutionException] should be thrownBy { sc.close() }
+    // scalastyle:on no.whitespace.before.left.bracket
     FileUtils.deleteDirectory(dir)
   }
 
