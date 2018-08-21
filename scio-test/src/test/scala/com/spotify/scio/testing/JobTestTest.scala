@@ -24,7 +24,7 @@ import com.google.protobuf.Message
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro._
-import com.spotify.scio.nio.ScioIO
+import com.spotify.scio.nio.{CustomIO, ScioIO}
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.{io => gio}
@@ -345,7 +345,7 @@ class JobTestTest extends PipelineSpec {
   def testCustomIOJob(xs: String*): Unit = {
     JobTest[CustomIOJob.type]
       .args("--input=in.txt", "--output=out.txt")
-      .input(CustomIO("TextIn"), Seq(1, 2, 3).map(_.toString))
+      .input(CustomIO[String]("TextIn"), Seq(1, 2, 3).map(_.toString))
       .output(CustomIO[String]("TextOut"))(_ should containInAnyOrder (xs))
       .run()
   }

@@ -649,7 +649,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   def customInput[T : ClassTag, I >: PBegin <: PInput]
   (name: String, transform: PTransform[I, PCollection[T]]): SCollection[T] = requireNotClosed {
     if (this.isTest) {
-      this.getTestInput(CustomIO[T](name))
+      this.getTestInput(nio.CustomIO[T](name))
     } else {
       wrap(this.pipeline.apply(name, transform))
     }
