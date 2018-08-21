@@ -1038,7 +1038,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def saveAsCustomOutput[O <: POutput](name: String, transform: PTransform[PCollection[T], O])
   : Future[Tap[T]] = {
     if (context.isTest) {
-      context.testOut(CustomIO[T](name))(this)
+      context.testOut(nio.CustomIO[T](name))(this)
     } else {
       this.internal.apply(name, transform)
     }
