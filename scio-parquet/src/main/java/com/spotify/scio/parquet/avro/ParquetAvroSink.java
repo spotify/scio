@@ -28,6 +28,7 @@ import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.hadoop.ParquetWriter;
+import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
 import javax.annotation.Nullable;
 
@@ -35,19 +36,22 @@ public class ParquetAvroSink<T> extends HadoopFileBasedSink<T, Void, T> {
 
   private final String schemaString;
   private final SerializableConfiguration conf;
+  private final CompressionCodecName compression;
 
   public ParquetAvroSink(ValueProvider<ResourceId> baseOutputFileName,
                          DynamicDestinations<T, Void, T> dynamicDestinations,
                          Schema schema,
-                         Configuration conf) {
+                         Configuration conf,
+                         CompressionCodecName compression) {
     super(baseOutputFileName, dynamicDestinations);
-    schemaString = schema.toString();
+    this.schemaString = schema.toString();
     this.conf = new SerializableConfiguration(conf);
+    this.compression = compression;
   }
 
   @Override
   public HadoopFileBasedSink.WriteOperation<Void, T> createWriteOperation() {
-    return new ParquetAvroWriteOperation<T>(this, schemaString, conf);
+    return new ParquetAvroWriteOperation<T>(this, schemaString, conf, compression);
   }
 
   @Override
@@ -75,18 +79,21 @@ public class ParquetAvroSink<T> extends HadoopFileBasedSink<T, Void, T> {
 
     private final String schemaString;
     private final SerializableConfiguration conf;
+    private final CompressionCodecName compression;
 
     public ParquetAvroWriteOperation(HadoopFileBasedSink<T, Void, T> sink,
                                      String schemaString,
-                                     SerializableConfiguration conf) {
+                                     SerializableConfiguration conf,
+                                     CompressionCodecName compression) {
       super(sink);
       this.schemaString = schemaString;
       this.conf = conf;
+      this.compression = compression;
     }
 
     @Override
     public Writer<Void, T> createWriter() throws Exception {
-      return new ParquetAvroWriter<>(this, new Schema.Parser().parse(schemaString), conf);
+      return new ParquetAvroWriter<>(this, new Schema.Parser().parse(schemaString), conf, compression);
     }
   }
 
@@ -98,14 +105,17 @@ public class ParquetAvroSink<T> extends HadoopFileBasedSink<T, Void, T> {
 
     private final Schema schema;
     private final SerializableConfiguration conf;
+    private final CompressionCodecName compression;
     private ParquetWriter<T> writer;
 
     public ParquetAvroWriter(WriteOperation<Void, T> writeOperation,
                              Schema schema,
-                             SerializableConfiguration conf) {
+                             SerializableConfiguration conf,
+                             CompressionCodecName compression) {
       super(writeOperation);
       this.schema = schema;
       this.conf = conf;
+      this.compression = compression;
     }
 
     @Override
@@ -113,6 +123,7 @@ public class ParquetAvroSink<T> extends HadoopFileBasedSink<T, Void, T> {
       writer = org.apache.parquet.avro.AvroParquetWriter.<T>builder(path)
           .withSchema(schema)
           .withConf(conf.get())
+          .withCompressionCodec(compression)
           .build();
     }
 
