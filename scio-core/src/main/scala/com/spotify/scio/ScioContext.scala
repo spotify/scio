@@ -126,13 +126,11 @@ object ContextAndArgs {
 
     val Reg = "^-{1,2}(.+)$".r
     val (customArgs, remainingArgs) =
-      args.partition { s =>
-        s match {
-          case Reg(a) =>
-            val name = a.takeWhile(_ != '=')
-            supportedCustomArgs.contains(name)
-          case x => true
-        }
+      args.partition {
+        case Reg(a) =>
+          val name = a.takeWhile(_ != '=')
+          supportedCustomArgs.contains(name)
+        case _ => true
       }
 
     CaseApp.detailedParseWithHelp[T](customArgs) match {
