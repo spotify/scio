@@ -65,7 +65,8 @@ package object jdbc {
   case class JdbcReadOptions[T](connectionOptions: JdbcConnectionOptions,
                                 query: String,
                                 statementPreparator: PreparedStatement => Unit = null,
-                                rowMapper: ResultSet => T) extends JdbcIoOptions
+                                rowMapper: ResultSet => T,
+                                fetchSize: Option[Int] = None) extends JdbcIoOptions
 
   /**
    * Options for writing to a JDBC source.
@@ -76,7 +77,8 @@ package object jdbc {
    */
   case class JdbcWriteOptions[T](connectionOptions: JdbcConnectionOptions,
                                  statement: String,
-                                 preparedStatementSetter: (T, PreparedStatement) => Unit = null)
+                                 preparedStatementSetter: (T, PreparedStatement) => Unit = null,
+                                 batchSize: Option[Long] = None)
     extends JdbcIoOptions
 
   private[jdbc] def jdbcIoId(opts: JdbcConnectionOptions, query: String): String = {
@@ -86,8 +88,8 @@ package object jdbc {
   }
 
   private[jdbc] def jdbcIoId(opts: JdbcIoOptions): String = opts match {
-    case JdbcReadOptions(connOpts, query, _, _) => jdbcIoId(connOpts, query)
-    case JdbcWriteOptions(connOpts, statement, _) => jdbcIoId(connOpts, statement)
+    case JdbcReadOptions(connOpts, query, _, _, _) => jdbcIoId(connOpts, query)
+    case JdbcWriteOptions(connOpts, statement, _, _) => jdbcIoId(connOpts, statement)
   }
 
   private[jdbc] def getDataSourceConfig(opts: jdbc.JdbcConnectionOptions)
