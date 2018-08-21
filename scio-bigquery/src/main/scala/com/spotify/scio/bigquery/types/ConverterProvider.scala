@@ -209,7 +209,6 @@ private[types] object ConverterProvider {
     def field(symbol: Symbol, fn: TermName): Tree = {
       val name = symbol.name.toString
       val tpe = symbol.asMethod.returnType
-
       
       val tree = q"""{
             val v = $fn.get($name)
