@@ -79,3 +79,11 @@ object ScioIO {
     }
   // scalastyle:on structural.type
 }
+
+case class CustomIO[T](id: String) extends ScioIO[T] {
+  override type ReadP = Nothing
+  override type WriteP = Nothing
+  override def read(sc: ScioContext, params: ReadP): SCollection[T] = ???
+  override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = ???
+  override def tap(read: ReadP): Tap[T] = ???
+}
