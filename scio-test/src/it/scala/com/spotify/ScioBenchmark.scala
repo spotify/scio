@@ -76,11 +76,11 @@ object ScioBenchmark {
     new Dataflow.Builder(transport, jackson, credential).build()
   }
 
-  private val datastore = DatastoreHelper.getDatastoreFromEnv
+  private lazy val datastore = DatastoreHelper.getDatastoreFromEnv
 
   private val datastoreKind = "Benchmarks"
 
-  private lazy val datastoreMetricKeys = Set("Elapsed", "TotalMemoryUsage", "TotalPdUsage",
+  private val datastoreMetricKeys = Set("Elapsed", "TotalMemoryUsage", "TotalPdUsage",
     "TotalShuffleDataProcessed", "TotalSsdUsage", "TotalStreamingDataProcessed", "TotalVcpuTime")
 
   private val circleCIEnv: Option[CircleCIEnv] = {
