@@ -80,8 +80,10 @@ final case class Select[T: ClassTag](readOptions: JdbcReadOptions[T])
           }
         })
     }
-    // override default fetch size.
-    transform = readOptions.fetchSize.map(transform.withFetchSize(_)).getOrElse(transform)
+    if (readOptions.fetchSize != USE_BEAM_DEFAULT_FETCH_SIZE) {
+      // override default fetch size.
+      transform = transform.withFetchSize(readOptions.fetchSize)
+    }
     sc.wrap(sc.applyInternal(transform)).setName(sc.tfName)
   }
 
@@ -127,8 +129,10 @@ final case class Write[T](writeOptions: JdbcWriteOptions[T])
             }
           })
       }
-      // override default batch size.
-      transform = writeOptions.batchSize.map(transform.withBatchSize(_)).getOrElse(transform)
+      if(writeOptions.batchSize != USE_BEAM_DEFAULT_BATCH_SIZE) {
+        // override default batch size.
+        transform = transform.withBatchSize(writeOptions.batchSize)
+      }
       sc.applyInternal(transform)
       Future.failed(new NotImplementedError("JDBC future is not implemented"))
     }
