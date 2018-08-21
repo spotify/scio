@@ -26,12 +26,15 @@ import java.util.concurrent.ThreadLocalRandom
 import com.google.datastore.v1.Entity
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io._
 import com.spotify.scio.nio
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
+import org.apache.avro.file.CodecFactory
+import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage
@@ -887,6 +890,35 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // =======================================================================
   // Write operations
   // =======================================================================
+
+  /**
+   * Extract data from this SCollection as a `Future`. The `Future` will be completed once the
+   * pipeline completes successfully.
+   * @group output
+   */
+  def materialize: Future[Tap[T]] = materialize(ScioUtil.getTempFile(context), isCheckpoint = false)
+  private[scio] def materialize(path: String, isCheckpoint: Boolean): Future[Tap[T]] =
+    if (context.isTest) {
+      // Do not run assertions on materialized value but still access test context to trigger
+      // the test checking if we're running inside a JobTest
+      if (!isCheckpoint) context.testOut
+      saveAsInMemoryTap
+    } else {
+      val elemCoder = this.getCoder[T]
+      val write = gio.AvroIO.writeGenericRecords(AvroBytesUtil.schema)
+        .to(this.pathWithShards(path))
+        .withSuffix(".obj.avro")
+        .withCodec(CodecFactory.deflateCodec(6))
+        .withMetadata(Map.empty[String, AnyRef].asJava)
+      this
+        .parDo(new DoFn[T, GenericRecord] {
+          @ProcessElement
+          private[scio] def processElement(c: DoFn[T, GenericRecord]#ProcessContext): Unit =
+            c.output(AvroBytesUtil.encode(elemCoder, c.element()))
+        })
+        .applyInternal(write)
+      context.makeFuture(new MaterializeTap[T](path))
+    }
 
   private[scio] def pathWithShards(path: String) = path.replaceAll("\\/+$", "") + "/part"
 

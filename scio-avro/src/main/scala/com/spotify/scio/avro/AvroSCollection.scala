@@ -36,26 +36,6 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
   import self.{context, saveAsInMemoryTap, ct}
 
   /**
-   * Extract data from this SCollection as a `Future`. The `Future` will be completed once the
-   * pipeline completes successfully.
-   * @group output
-   */
-  def materialize: Future[Tap[T]] = materialize(ScioUtil.getTempFile(context), isCheckpoint = false)
-  private[scio] def materialize(path: String, isCheckpoint: Boolean): Future[Tap[T]] =
-    if(context.isTest && isCheckpoint) {
-      // if it's a test and checkpoint - no need to test checkpoint data
-      ()
-      saveAsInMemoryTap
-    } else if(context.isTest) {
-      // Do not run assertions on materilized value but still access test context to trigger
-      // the test checking if we're running inside a JobTest
-      context.testOut
-      saveAsInMemoryTap
-    } else {
-      saveAsObjectFile(path)
-    }
-
-  /**
    * Save this SCollection as an Avro file.
    * @param schema must be not null if `T` is of type
    *               [[org.apache.avro.generic.GenericRecord GenericRecord]].

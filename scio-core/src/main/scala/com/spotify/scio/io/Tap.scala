@@ -20,7 +20,13 @@ package com.spotify.scio.io
 import java.util.UUID
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.AvroBytesUtil
+import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
+import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.io.AvroIO
+import org.apache.beam.sdk.transforms.DoFn
+import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 
 import scala.reflect.ClassTag
 
@@ -65,4 +71,30 @@ private[scio] class InMemoryTap[T: ClassTag] extends Tap[T] {
   override def value: Iterator[T] = InMemorySink.get(id).iterator
   override def open(sc: ScioContext): SCollection[T] =
     sc.parallelize[T](InMemorySink.get(id))
+}
+
+private[scio] class MaterializeTap[T: ClassTag](val path: String) extends Tap[T] {
+  val _path = ScioUtil.addPartSuffix(path)
+
+  override def value: Iterator[T] = {
+  val coder = ScioUtil.getScalaCoder[T]
+  FileStorage(_path)
+  .avroFile[GenericRecord](AvroBytesUtil.schema)
+    .map(AvroBytesUtil.decode(coder, _))
+  }
+  override def open(sc: ScioContext): SCollection[T] = sc.requireNotClosed {
+    import com.spotify.scio.Implicits._
+
+    val coder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
+    val read = AvroIO.readGenericRecords(AvroBytesUtil.schema).from(_path)
+    sc.wrap(sc.applyInternal(read))
+      .setName(_path)
+      .parDo(new DoFn[GenericRecord, T] {
+        @ProcessElement
+        private[scio] def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit = {
+          c.output(AvroBytesUtil.decode(coder, c.element()))
+        }
+      })
+      .setName(_path)
+  }
 }
