@@ -20,7 +20,6 @@ package com.spotify.scio.parquet.avro
 import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.io.TapSpec
-import com.spotify.scio.testing._
 import org.apache.avro.generic.GenericRecord
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.fs.Path
@@ -120,14 +119,15 @@ class ParquetAvroTest extends TapSpec with BeforeAndAfterAll {
   }
 
   it should "write generic records" in {
+    val dir = tmpDir
+
     val genericRecords = (1 to 100).map(AvroUtils.newGenericRecord)
     val sc = ScioContext()
-    val tmp = tmpDir
     sc.parallelize(genericRecords)
-      .saveAsParquetAvroFile(tmp.toString, numShards = 1, schema = AvroUtils.schema)
+      .saveAsParquetAvroFile(dir.toString, numShards = 1, schema = AvroUtils.schema)
     sc.close()
 
-    val files = tmp.listFiles()
+    val files = dir.listFiles()
     files.length shouldBe 1
 
     val reader = AvroParquetReader.builder[GenericRecord](new Path(files(0).toString)).build()
@@ -137,10 +137,10 @@ class ParquetAvroTest extends TapSpec with BeforeAndAfterAll {
       b += r
       r = reader.read()
     }
+    reader.close()
     b.result() should contain theSameElementsAs genericRecords
 
-    reader.close()
-    FileUtils.deleteDirectory(tmp)
+    FileUtils.deleteDirectory(dir)
   }
 
   it should "work with JobTest" in {

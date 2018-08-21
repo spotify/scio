@@ -18,20 +18,18 @@
 package com.spotify.scio.parquet.avro.nio
 
 import com.spotify.scio.parquet.avro._
-
 import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.io.Tap
 import com.spotify.scio.nio.ScioIO
 import com.spotify.scio.util.ScioUtil
-
 import org.apache.hadoop.mapreduce.Job
 import org.apache.avro.Schema
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.avro.reflect.ReflectData
-
 import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
 import scala.concurrent.Future
 
@@ -51,7 +49,7 @@ final case class ParquetAvroIO[T](path: String)
     throw new IllegalStateException("Can't create a Tap for parquet avro file")
 
   def write(sc: SCollection[T], params: WriteP): Future[Tap[T]] = params match {
-    case ParquetAvroIO.Parameters(numShards, schema, suffix) =>
+    case ParquetAvroIO.Parameters(numShards, schema, suffix, compression) =>
       val job = Job.getInstance()
       if (ScioUtil.isLocalRunner(sc.context.options.getRunner)) {
         GcsConnectorUtil.setCredentials(job)
@@ -66,9 +64,10 @@ final case class ParquetAvroIO[T](path: String)
       val resource = FileBasedSink.convertToFileResourceIfPossible(sc.pathWithShards(path))
       val prefix = StaticValueProvider.of(resource)
       val usedFilenamePolicy = DefaultFilenamePolicy.fromStandardParameters(
-        prefix, null, ".parquet", false)
+        prefix, null, "", false)
       val destinations = DynamicFileDestinations.constant[T](usedFilenamePolicy)
-      val sink = new ParquetAvroSink[T](prefix, destinations, writerSchema, job.getConfiguration)
+      val sink = new ParquetAvroSink[T](
+        prefix, destinations, writerSchema, job.getConfiguration, compression)
       val t = HadoopWriteFiles.to(sink).withNumShards(numShards)
       sc.applyInternal(t)
       Future.failed(new NotImplementedError("Parquet Avro future not implemented"))
@@ -79,6 +78,7 @@ object ParquetAvroIO {
   sealed trait WriteParam
   final case class Parameters(numShards: Int = 0,
                               schema: Schema = null,
-                              suffix: String = "")
+                              suffix: String = "",
+                              compression: CompressionCodecName = CompressionCodecName.SNAPPY)
       extends WriteParam
 }
