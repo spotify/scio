@@ -210,7 +210,14 @@ private[types] object ConverterProvider {
       val name = symbol.name.toString
       val tpe = symbol.asMethod.returnType
 
-      val tree = q"$fn.get($name)"
+      
+      val tree = q"""{
+            val v = $fn.get($name)
+            if(v == null) {
+                throw new NullPointerException("null field in non-option field " + $name)
+            }
+            v
+        }"""
       if (tpe.erasure =:= typeOf[Option[_]].erasure) {
         option(tree, tpe.typeArgs.head)
       } else if (tpe.erasure =:= typeOf[List[_]].erasure) {
