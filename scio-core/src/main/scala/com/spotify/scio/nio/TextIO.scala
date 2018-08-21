@@ -76,14 +76,13 @@ case class TextIO(path: String) extends ScioIO[String] {
     }
   }
 
-  private def textOut(path: String, params: WriteParams) = {
+  private def textOut(path: String, params: WriteParams) =
     BTextIO.write()
       .to(pathWithShards(path))
       .withSuffix(params.suffix)
       .withNumShards(params.numShards)
       .withWritableByteChannelFactory(
         FileBasedSink.CompressionType.fromCanonical(params.compression))
-  }
 
   private[scio] def pathWithShards(path: String) = path.replaceAll("\\/+$", "") + "/part"
 
@@ -92,7 +91,7 @@ case class TextIO(path: String) extends ScioIO[String] {
 
 object TextIO {
 
-  private def textFile(path: String): Iterator[String] = {
+  private[scio] def textFile(path: String): Iterator[String] = {
     val factory = new CompressorStreamFactory()
 
     def wrapInputStream(in: InputStream) = {
