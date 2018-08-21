@@ -28,25 +28,28 @@ import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 /**
- * Main package for JDBC APIs. Import all.
- *
- * {{{
- * import com.spotify.scio.jdbc._
- * }}}
- */
+  * Main package for JDBC APIs. Import all.
+  *
+  * {{{
+  * import com.spotify.scio.jdbc._
+  * }}}
+  */
 package object jdbc {
 
   type JdbcIO[T] = jdbc.nio.JdbcIO[T]
   val JdbcIO = jdbc.nio.JdbcIO
 
+  private[jdbc] val USE_BEAM_DEFAULT_BATCH_SIZE = -1L
+  private[jdbc] val USE_BEAM_DEFAULT_FETCH_SIZE = -1
+
   /**
-   * Options for a JDBC connection.
-   *
-   * @param username database login username
-   * @param password database login password if exists
-   * @param connectionUrl connection url, i.e "jdbc:mysql://[host]:[port]/db?"
-   * @param driverClass subclass of [[java.sql.Driver]]
-   */
+    * Options for a JDBC connection.
+    *
+    * @param username      database login username
+    * @param password      database login password if exists
+    * @param connectionUrl connection url, i.e "jdbc:mysql://[host]:[port]/db?"
+    * @param driverClass   subclass of [[java.sql.Driver]]
+    */
   case class JdbcConnectionOptions(username: String,
                                    password: Option[String],
                                    connectionUrl: String,
@@ -55,28 +58,32 @@ package object jdbc {
   sealed trait JdbcIoOptions
 
   /**
-   * Options for reading from a JDBC source.
-   *
-   * @param connectionOptions connection options
-   * @param query query string
-   * @param statementPreparator function to prepare a [[java.sql.PreparedStatement]]
-   * @param rowMapper function to map from a SQL [[java.sql.ResultSet]] to `T`
-   */
+    * Options for reading from a JDBC source.
+    *
+    * @param connectionOptions   connection options
+    * @param query               query string
+    * @param statementPreparator function to prepare a [[java.sql.PreparedStatement]]
+    * @param rowMapper           function to map from a SQL [[java.sql.ResultSet]] to `T`
+    * @param fetchSize           use apache beam default fetch size if the value is -1
+    */
   case class JdbcReadOptions[T](connectionOptions: JdbcConnectionOptions,
                                 query: String,
                                 statementPreparator: PreparedStatement => Unit = null,
-                                rowMapper: ResultSet => T) extends JdbcIoOptions
+                                rowMapper: ResultSet => T,
+                                fetchSize: Int = USE_BEAM_DEFAULT_FETCH_SIZE) extends JdbcIoOptions
 
   /**
-   * Options for writing to a JDBC source.
-   *
-   * @param connectionOptions connection options
-   * @param statement query statement
-   * @param preparedStatementSetter function to set values in a [[java.sql.PreparedStatement]]
-   */
+    * Options for writing to a JDBC source.
+    *
+    * @param connectionOptions       connection options
+    * @param statement               query statement
+    * @param preparedStatementSetter function to set values in a [[java.sql.PreparedStatement]]
+    * @param batchSize               use apache beam default batch size if the value is -1
+    */
   case class JdbcWriteOptions[T](connectionOptions: JdbcConnectionOptions,
                                  statement: String,
-                                 preparedStatementSetter: (T, PreparedStatement) => Unit = null)
+                                 preparedStatementSetter: (T, PreparedStatement) => Unit = null,
+                                 batchSize: Long = USE_BEAM_DEFAULT_BATCH_SIZE)
     extends JdbcIoOptions
 
   private[jdbc] def jdbcIoId(opts: JdbcConnectionOptions, query: String): String = {
@@ -86,8 +93,8 @@ package object jdbc {
   }
 
   private[jdbc] def jdbcIoId(opts: JdbcIoOptions): String = opts match {
-    case JdbcReadOptions(connOpts, query, _, _) => jdbcIoId(connOpts, query)
-    case JdbcWriteOptions(connOpts, statement, _) => jdbcIoId(connOpts, statement)
+    case JdbcReadOptions(connOpts, query, _, _, _) => jdbcIoId(connOpts, query)
+    case JdbcWriteOptions(connOpts, statement, _, _) => jdbcIoId(connOpts, statement)
   }
 
   private[jdbc] def getDataSourceConfig(opts: jdbc.JdbcConnectionOptions)
