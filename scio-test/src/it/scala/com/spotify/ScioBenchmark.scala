@@ -43,6 +43,12 @@ import scala.util.{Failure, Random, Success, Try}
 // can run with past Scio releases.
 
 private[this] object PrettyPrint {
+  @inline def printSeparator(numChars: Int = 80): Unit = {
+    // scalastyle:off regex
+    println("=" * numChars)
+    // scalastyle:on regex
+  }
+
   @inline def print(k: String, v: String): Unit = {
     // scalastyle:off regex
     println("%-30s: %s".format(k, v))
@@ -231,7 +237,7 @@ final case class DatastoreLogger(circleCIEnv: Option[CircleCIEnv]) extends Bench
         if (metrics.size == 2) {
           val opName = metrics.head.getKey.getPath(0).getKind.substring(Kind.length + 1)
           val props = metrics.map(_.getPropertiesMap.asScala)
-          println("=" * 80)
+          PrettyPrint.printSeparator()
           PrettyPrint.print("Benchmark", opName)
 
           val List(b1, b2) = props.map(_("buildNum").getIntegerValue).toList
@@ -250,7 +256,8 @@ final case class DatastoreLogger(circleCIEnv: Option[CircleCIEnv]) extends Bench
         }
       } catch {
         case e: Exception =>
-          println(s"Caught error fetching benchmark metrics from Datastore: $e")
+          PrettyPrint
+            .print(benchmarkName, s"Caught error fetching benchmark metrics from Datastore: $e")
       }
     }
   }
@@ -259,9 +266,7 @@ final case class DatastoreLogger(circleCIEnv: Option[CircleCIEnv]) extends Bench
 final case class ConsoleLogger() extends BenchmarkLogger[Try] {
   override def log(benchmarks: Iterable[BenchmarkResult]): Try[Unit] = Try {
     benchmarks.foreach { benchmark =>
-      // scalastyle:off regex
-      println("=" * 80)
-      // scalastyle:on regex
+      PrettyPrint.printSeparator()
       PrettyPrint.print("Benchmark", benchmark.name)
       PrettyPrint.print("Extra arguments", benchmark.extraArgs.mkString(" "))
       PrettyPrint.print("State", benchmark.scioResult.state.toString)
