@@ -17,6 +17,7 @@
 
 package com.spotify.scio.examples.extra
 
+import com.spotify.scio.nio.CustomIO
 import com.spotify.scio.testing._
 
 class TsvExampleTest extends PipelineSpec {
