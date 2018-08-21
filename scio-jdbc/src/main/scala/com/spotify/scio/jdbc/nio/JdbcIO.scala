@@ -57,7 +57,7 @@ final case class Select[T: ClassTag](readOptions: JdbcReadOptions[T])
   }
 
   def id: String = readOptions match {
-    case JdbcReadOptions(connOpts, query, _, _) => jdbcIoId(connOpts, query)
+    case JdbcReadOptions(connOpts, query, _, _, _) => jdbcIoId(connOpts, query)
   }
 
   def read(sc: ScioContext, params: ReadP): SCollection[T] = sc.requireNotClosed {
@@ -79,6 +79,10 @@ final case class Select[T: ClassTag](readOptions: JdbcReadOptions[T])
             readOptions.statementPreparator(preparedStatement)
           }
         })
+    }
+    if (readOptions.fetchSize != USE_BEAM_DEFAULT_FETCH_SIZE) {
+      // override default fetch size.
+      transform = transform.withFetchSize(readOptions.fetchSize)
     }
     sc.wrap(sc.applyInternal(transform)).setName(sc.tfName)
   }
@@ -103,7 +107,7 @@ final case class Write[T](writeOptions: JdbcWriteOptions[T])
     }
 
     def id: String = writeOptions match {
-      case JdbcWriteOptions(connOpts, statement, _) => jdbcIoId(connOpts, statement)
+      case JdbcWriteOptions(connOpts, statement, _, _) => jdbcIoId(connOpts, statement)
     }
 
     def read(sc: ScioContext, params: ReadP): SCollection[T] =
@@ -124,6 +128,10 @@ final case class Write[T](writeOptions: JdbcWriteOptions[T])
               writeOptions.preparedStatementSetter(element, preparedStatement)
             }
           })
+      }
+      if(writeOptions.batchSize != USE_BEAM_DEFAULT_BATCH_SIZE) {
+        // override default batch size.
+        transform = transform.withBatchSize(writeOptions.batchSize)
       }
       sc.applyInternal(transform)
       Future.failed(new NotImplementedError("JDBC future is not implemented"))
