@@ -35,14 +35,11 @@ import com.spotify.scio.bigquery.types._
 @State(Scope.Thread)
 class BigQueryBenchmark {
   import BigQueryBenchmark.Simple
-  
   val s = Simple.toTableRow(Simple("test"))
-  
   @Benchmark def bq(): Simple = Simple.fromTableRow(s)
-
 }
 // scalastyle:on number.of.methods
 object BigQueryBenchmark {
-  @BigQueryType.toTable 
+  @BigQueryType.toTable
   case class Simple(a: String)
 }
