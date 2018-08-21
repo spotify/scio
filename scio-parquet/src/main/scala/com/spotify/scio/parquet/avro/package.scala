@@ -34,6 +34,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.parquet.avro.AvroParquetInputFormat
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
+import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -186,8 +187,10 @@ package object avro {
     def saveAsParquetAvroFile(path: String,
                               numShards: Int = 0,
                               schema: Schema = null,
-                              suffix: String = ""): Future[Tap[T]] = {
-      val params = ParquetAvroIO.Parameters(numShards, schema, suffix)
+                              suffix: String = "",
+                              compression: CompressionCodecName = CompressionCodecName.SNAPPY)
+    : Future[Tap[T]] = {
+      val params = ParquetAvroIO.Parameters(numShards, schema, suffix, compression)
       self.write(ParquetAvroIO[T](path))(params)
     }
   }
