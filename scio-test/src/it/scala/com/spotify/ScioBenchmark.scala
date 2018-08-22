@@ -34,6 +34,7 @@ import org.joda.time.{DateTimeZone, Instant, LocalDateTime, Seconds}
 import shapeless.datatype.datastore._
 
 import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.language.higherKinds
@@ -100,16 +101,20 @@ abstract class Benchmark(val extraConfs: Map[String, Array[String]] = null) {
     base ++ extra
   }
 
-  def run(projectId: String, prefix: String, args: Array[String]): Iterable[BenchmarkResult] = {
+  def run(projectId: String,
+          prefix: String,
+          args: Array[String]): Iterable[Future[BenchmarkResult]] = {
     val username = sys.props("user.name")
     configurations
-      .map { case (confName, extraArgs) =>
-        val (sc, _) = ContextAndArgs(Array(s"--project=$projectId") ++ args ++ extraArgs)
-        sc.setAppName(confName)
-        sc.setJobName(s"$prefix-$confName-$username".toLowerCase())
-        run(sc)
-        val result = sc.close()
-        BenchmarkResult(confName, extraArgs, result)
+      .map {
+        case (confName, extraArgs) =>
+          val (sc, _) =
+            ContextAndArgs(Array(s"--project=$projectId") ++ args ++ extraArgs)
+          sc.setAppName(confName)
+          sc.setJobName(s"$prefix-$confName-$username".toLowerCase())
+          run(sc)
+          val result = sc.close()
+          result.finalState.map(_ => BenchmarkResult(confName, extraArgs, result))
       }
   }
 
@@ -124,13 +129,14 @@ case class BenchmarkResult(name: String,
                            extraArgs: Array[String],
                            scioResult: ScioResult) {
   import BenchmarkResult._
+  require(scioResult.isCompleted)
 
-  lazy val job: Job = scioResult.as[DataflowResult].getJob
-  lazy val startTime: LocalDateTime = dateTimeParser.parseLocalDateTime(job.getCreateTime)
-  lazy val finishTime: LocalDateTime = dateTimeParser.parseLocalDateTime(job.getCurrentStateTime)
-  lazy val elapsedTime: Seconds = Seconds.secondsBetween(startTime, finishTime)
+  val job: Job = scioResult.as[DataflowResult].getJob
+  val startTime: LocalDateTime = dateTimeParser.parseLocalDateTime(job.getCreateTime)
+  val finishTime: LocalDateTime = dateTimeParser.parseLocalDateTime(job.getCurrentStateTime)
+  val elapsedTime: Seconds = Seconds.secondsBetween(startTime, finishTime)
 
-  lazy val metrics: Map[String, String] = scioResult.as[DataflowResult]
+  val metrics: Map[String, String] = scioResult.as[DataflowResult]
     .getJobMetrics
     .getMetrics
     .asScala
@@ -147,7 +153,7 @@ trait BenchmarkLogger[F[_]] {
 }
 
 final case class ScioBenchmarkLogger[F[_]](loggers: BenchmarkLogger[F]*) {
-  def log(benchmarks: Iterable[BenchmarkResult]): Seq[F[Unit]] =
+  def log(benchmarks: BenchmarkResult*): Seq[F[Unit]] =
     loggers.map(_.log(benchmarks))
 }
 
@@ -298,11 +304,10 @@ object ScioBenchmark {
       .filter(_.name.matches(regex))
       .flatMap(_.run(projectId, prefix, commonArgs))
 
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val future = Future.sequence(results.map(_.scioResult.finalState))
-    Await.result(future, Duration.Inf)
+    val logger = ScioBenchmarkLogger[Try](ConsoleLogger(), DatastoreLogger(circleCIEnv))
 
-    ScioBenchmarkLogger[Try](ConsoleLogger(), DatastoreLogger(circleCIEnv)).log(results)
+    val future = Future.sequence(results.map(_.map(logger.log(_))))
+    Await.result(future, Duration.Inf)
   }
 
   // =======================================================================
