@@ -944,15 +944,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                    idAttribute: String = null,
                    timestampAttribute: String = null)
   : Future[Tap[T]] = {
-    val psio: nio.PubSubIO[T] = nio.PubSubIO[T](topic)
-
-    if (context.isTest) {
-      context.testOut(psio)(this)
-    } else {
-      this.write(psio)(psio.WriteParams())
-    }
-
-    Future.failed(new NotImplementedError("Pubsub future not implemented"))
+    val io = nio.PubSubIO[T](topic)
+    this.write(io)
   }
 
   /**
@@ -963,16 +956,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                                               idAttribute: String = null,
                                               timestampAttribute: String = null)
                                              (implicit ev: T <:< (V, Map[String, String]))
-  : Future[Tap[V]] = {
-    val psio = nio.PubSubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
-
-    if (context.isTest) {
-      context.testOut(psio)(this.asInstanceOf[SCollection[(V, Map[String, String])]])
-    } else {
-      this.asInstanceOf[SCollection[(V, Map[String, String])]].write(psio)(psio.WriteParams())
-    }
-
-    Future.failed(new NotImplementedError("Pubsub future not implemented"))
+  : Future[Tap[(V, Map[String, String])]] = {
+    val io = nio.PubSubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
+    this.asInstanceOf[SCollection[(V, Map[String, String])]].write(io)
   }
 
   /**

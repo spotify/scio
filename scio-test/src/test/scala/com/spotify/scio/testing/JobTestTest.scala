@@ -648,7 +648,7 @@ class JobTestTest extends PipelineSpec {
     test1(AvroIO(null), "AvroIO(null,null)")
     test1(DatastoreIO(null), "DatastoreIO(null)")
     test1(ProtobufIO[Message](null), "ProtobufIO(null)")
-    test1(PubSubIO[Message](null), "PubSubIOWithoutAttributes(null)")
+    test1(PubSubIO[Message](null), "PubSubIOWithoutAttributes(null,null,null)")
     test1(TextIO(null), "TextIO(null)")
   }
 
@@ -668,7 +668,7 @@ class JobTestTest extends PipelineSpec {
     test1(AvroIO(""), "AvroIO(,null)")
     test1(DatastoreIO(""), "DatastoreIO()")
     test1(ProtobufIO[Message](""), "ProtobufIO()")
-    test1(PubSubIO[Message](""), "PubSubIOWithoutAttributes()")
+    test1(PubSubIO[Message](""), "PubSubIOWithoutAttributes(,null,null)")
     test1(TextIO(""), "TextIO()")
   }
 

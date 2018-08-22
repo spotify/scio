@@ -524,10 +524,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
   private def pubsubIn[T: ClassTag](isSubscription: Boolean,
                                     name: String,
                                     idAttribute: String,
-                                    timestampAttribute: String)
-  : SCollection[T] = requireNotClosed {
-    val io = nio.PubSubIO[T](name)
-    io.read(this, io.ReadParams(isSubscription))
+                                    timestampAttribute: String): SCollection[T] = {
+    val io = nio.PubSubIO[T](name, idAttribute, timestampAttribute)
+    this.read(io)(io.ReadParams(isSubscription))
   }
 
   /**
@@ -552,9 +551,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
                                                   name: String,
                                                   idAttribute: String,
                                                   timestampAttribute: String)
-  : SCollection[(T, Map[String, String])] = requireNotClosed {
+  : SCollection[(T, Map[String, String])] = {
     val io = nio.PubSubIO.withAttributes[T](name, idAttribute, timestampAttribute)
-    io.read(this, io.ReadParams(isSubscription))
+    this.read(io)(io.ReadParams(isSubscription))
   }
 
   /**
