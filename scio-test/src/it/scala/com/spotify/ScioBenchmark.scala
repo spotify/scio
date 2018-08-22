@@ -43,249 +43,6 @@ import scala.util.{Failure, Random, Success, Try}
 // This file is symlinked to scio-bench/src/main/scala/com/spotify/ScioBenchmark.scala so that it
 // can run with past Scio releases.
 
-private[this] object PrettyPrint {
-  @inline def printSeparator(numChars: Int = 80): Unit = {
-    // scalastyle:off regex
-    println("=" * numChars)
-    // scalastyle:on regex
-  }
-
-  @inline def print(k: String, v: String): Unit = {
-    // scalastyle:off regex
-    println("%-30s: %s".format(k, v))
-    // scalastyle:on regex
-  }
-}
-
-final case class CircleCIEnv(buildNum: Long, gitHash: String)
-
-object ScioBenchmarkSettings {
-  val defaultProjectId: String = "data-integration-test"
-  val numOfWorkers = 4
-  val commonArgs = Array(
-    "--runner=DataflowRunner",
-    s"--numWorkers=$numOfWorkers",
-    "--workerMachineType=n1-standard-4",
-    "--autoscalingAlgorithm=NONE")
-
-  val shuffleConf = Map("ShuffleService" -> Array("--experiments=shuffle_mode=service"))
-
-  val circleCIEnv: Option[CircleCIEnv] = {
-    val isCircleCIRun = sys.env.get("CIRCLECI").contains("true")
-
-    if (isCircleCIRun) {
-      (sys.env.get("CIRCLE_BUILD_NUM"), sys.env.get("CIRCLE_SHA1")) match {
-        case (Some(buildNumber), Some(gitHash)) =>
-          Some(CircleCIEnv(buildNumber.toLong, gitHash))
-        case _ => throw new IllegalStateException("CIRCLECI env variable is set but not " +
-          "CIRCLE_BUILD_NUM and CIRCLE_SHA1")
-      }
-    } else {
-      PrettyPrint.print("CircleCI", "CIRCLECI env variable not found. Will not publish " +
-        "benchmark results to Datastore.")
-      None
-    }
-  }
-}
-
-abstract class Benchmark(val extraConfs: Map[String, Array[String]] = null) {
-  val name: String = this.getClass.getSimpleName.replaceAll("\\$$", "")
-
-  private val configurations: Map[String, Array[String]] = {
-    val base = Map(name -> Array.empty[String])
-    val extra = if (extraConfs == null) {
-      Map.empty
-    } else {
-      extraConfs.map(kv => (s"$name${kv._1}", kv._2))
-    }
-    base ++ extra
-  }
-
-  def run(projectId: String,
-          prefix: String,
-          args: Array[String]): Iterable[Future[BenchmarkResult]] = {
-    val username = sys.props("user.name")
-    configurations
-      .map {
-        case (confName, extraArgs) =>
-          val (sc, _) =
-            ContextAndArgs(Array(s"--project=$projectId") ++ args ++ extraArgs)
-          sc.setAppName(confName)
-          sc.setJobName(s"$prefix-$confName-$username".toLowerCase())
-          run(sc)
-          val result = sc.close()
-          result.finalState.map(_ => BenchmarkResult(confName, extraArgs, result))
-      }
-  }
-
-  def run(sc: ScioContext): Unit
-}
-
-object BenchmarkResult {
-  private val dateTimeParser = ISODateTimeFormat.dateTimeParser()
-}
-
-case class BenchmarkResult(name: String,
-                           extraArgs: Array[String],
-                           scioResult: ScioResult) {
-  import BenchmarkResult._
-  require(scioResult.isCompleted)
-
-  val job: Job = scioResult.as[DataflowResult].getJob
-  val startTime: LocalDateTime = dateTimeParser.parseLocalDateTime(job.getCreateTime)
-  val finishTime: LocalDateTime = dateTimeParser.parseLocalDateTime(job.getCurrentStateTime)
-  val elapsedTime: Seconds = Seconds.secondsBetween(startTime, finishTime)
-
-  val metrics: Map[String, String] = scioResult.as[DataflowResult]
-    .getJobMetrics
-    .getMetrics
-    .asScala
-    .filter { m =>
-      m.getName.getName.startsWith("Total") && !m.getName.getContext.containsKey("tentative")
-    }
-    .map(m => (m.getName.getName, m.getScalar.toString))
-    .sortBy(_._1)
-    .toMap
-}
-
-trait BenchmarkLogger[F[_]] {
-  def log(benchmarks: Iterable[BenchmarkResult]): F[Unit]
-}
-
-final case class ScioBenchmarkLogger[F[_]](loggers: BenchmarkLogger[F]*) {
-  def log(benchmarks: BenchmarkResult*): Seq[F[Unit]] =
-    loggers.map(_.log(benchmarks))
-}
-
-object DatastoreLogger {
-  final case class ScioBenchmarkRun(timestamp: Instant,
-                                    gitHash: String,
-                                    buildNum: Long,
-                                    operation: String)
-
-  private lazy val Storage: Datastore = DatastoreHelper.getDatastoreFromEnv
-
-  private val Kind = "Benchmarks"
-
-  private val OrderByBuildNumQuery =
-    s"SELECT * from ${Kind}_%s ORDER BY buildNum DESC LIMIT 2"
-
-  private val Metrics = Set("Elapsed", "TotalMemoryUsage", "TotalPdUsage",
-    "TotalShuffleDataProcessed", "TotalSsdUsage", "TotalStreamingDataProcessed", "TotalVcpuTime")
-}
-
-final case class DatastoreLogger(circleCIEnv: Option[CircleCIEnv]) extends BenchmarkLogger[Try] {
-  import DatastoreLogger._
-
-  // Save metrics to integration testing Datastore instance. Can't make this into a
-  // transaction because DS limit is 25 entities per transaction.
-  override def log(benchmarks: Iterable[BenchmarkResult]): Try[Unit] = {
-    circleCIEnv.map { env =>
-      val now = new Instant()
-      val dt = DatastoreType[ScioBenchmarkRun]
-
-      val commits = benchmarks.map { benchmark =>
-        val entity = dt
-          .toEntityBuilder(
-            ScioBenchmarkRun(now, env.gitHash, env.buildNum, benchmark.name))
-          .setKey(DatastoreHelper.makeKey(
-            s"${Kind}_${benchmark.name}", env.buildNum.toString))
-
-        val metrics = ("Elapsed", benchmark.elapsedTime.getSeconds.toString) :: benchmark.metrics
-          .filter(metric => Metrics.contains(metric._1)).toList
-
-        metrics.foreach {
-          case (key, value) =>
-            val entityValue = DatastoreHelper.makeValue(value).build()
-            entity.putProperties(key, entityValue)
-        }
-
-        Try {
-          val commit = Storage.commit(CommitRequest.newBuilder()
-            .setMode(CommitRequest.Mode.NON_TRANSACTIONAL)
-            // Upsert means we can re-run a job for same build if necessary; insert would trigger
-            // a Datastore exception
-            .addMutations(Mutation.newBuilder().setUpsert(entity.build()).build())
-            .build())
-
-          (benchmark, commit)
-        }
-      }
-
-      commits
-        .foldLeft(Try(List[(BenchmarkResult, CommitResponse)]())) {
-          case (Success(list), Success(value)) => Success(value :: list)
-          case (Success(_), Failure(ex)) => Failure(ex)
-          case (f @ Failure(_), _) => f
-        }
-        .map(_.map(_._1.name))
-        .map(printMetricsComparison)
-    }.getOrElse {
-      Success(Unit)
-    }
-  }
-
-  // TODO: move this to email generator
-  private[this] def printMetricsComparison(benchmarkNames: Iterable[String]): Unit = {
-    benchmarkNames.foreach { benchmarkName =>
-      try {
-        val comparisonMetrics = Storage.runQuery(
-          RunQueryRequest.newBuilder().setGqlQuery(
-            GqlQuery.newBuilder()
-              .setAllowLiterals(true)
-              .setQueryString(OrderByBuildNumQuery.format(benchmarkName))
-              .build()
-          ).build())
-
-        val metrics = comparisonMetrics.getBatch.getEntityResultsList.asScala
-          .sortBy(_.getEntity.getKey.getPath(0).getName.toInt)
-          .map(_.getEntity)
-        if (metrics.size == 2) {
-          val opName = metrics.head.getKey.getPath(0).getKind.substring(Kind.length + 1)
-          val props = metrics.map(_.getPropertiesMap.asScala)
-          PrettyPrint.printSeparator()
-          PrettyPrint.print("Benchmark", opName)
-
-          val List(b1, b2) = props.map(_("buildNum").getIntegerValue).toList
-          PrettyPrint.print("BuildNum", "%15d%15d%15s".format(b1, b2, "Delta"))
-
-          Metrics.foreach { k =>
-            val List(prev, curr) = props.map(_(k).getStringValue.toDouble).toList
-            val delta = (curr - prev) / curr * 100.0
-            val signed = if (delta.isNaN) {
-              "0.00%"
-            } else {
-              (if (delta > 0) "+" else "") + "%.2f%%".format(delta)
-            }
-            PrettyPrint.print(k, "%15.2f%15.2f%15s".format(prev, curr, signed))
-          }
-        }
-      } catch {
-        case e: Exception =>
-          PrettyPrint
-            .print(benchmarkName, s"Caught error fetching benchmark metrics from Datastore: $e")
-      }
-    }
-  }
-}
-
-final case class ConsoleLogger() extends BenchmarkLogger[Try] {
-  override def log(benchmarks: Iterable[BenchmarkResult]): Try[Unit] = Try {
-    benchmarks.foreach { benchmark =>
-      PrettyPrint.printSeparator()
-      PrettyPrint.print("Benchmark", benchmark.name)
-      PrettyPrint.print("Extra arguments", benchmark.extraArgs.mkString(" "))
-      PrettyPrint.print("State", benchmark.scioResult.state.toString)
-      PrettyPrint.print("Create time", benchmark.startTime.toString())
-      PrettyPrint.print("Finish time", benchmark.finishTime.toString())
-      PrettyPrint.print("Elapsed", PeriodFormat.getDefault.print(benchmark.elapsedTime))
-      benchmark.metrics.foreach { kv =>
-        PrettyPrint.print(kv._1, kv._2)
-      }
-    }
-  }
-}
-
 // scalastyle:off number.of.types
 // scalastyle:off number.of.methods
 object ScioBenchmark {
@@ -561,3 +318,246 @@ object ScioBenchmark {
 }
 // scalastyle:on number.of.methods
 // scalastyle:on number.of.types
+
+private[this] object PrettyPrint {
+  @inline def printSeparator(numChars: Int = 80): Unit = {
+    // scalastyle:off regex
+    println("=" * numChars)
+    // scalastyle:on regex
+  }
+
+  @inline def print(k: String, v: String): Unit = {
+    // scalastyle:off regex
+    println("%-30s: %s".format(k, v))
+    // scalastyle:on regex
+  }
+}
+
+final case class CircleCIEnv(buildNum: Long, gitHash: String)
+
+object ScioBenchmarkSettings {
+  val defaultProjectId: String = "data-integration-test"
+  val numOfWorkers = 4
+  val commonArgs = Array(
+    "--runner=DataflowRunner",
+    s"--numWorkers=$numOfWorkers",
+    "--workerMachineType=n1-standard-4",
+    "--autoscalingAlgorithm=NONE")
+
+  val shuffleConf = Map("ShuffleService" -> Array("--experiments=shuffle_mode=service"))
+
+  val circleCIEnv: Option[CircleCIEnv] = {
+    val isCircleCIRun = sys.env.get("CIRCLECI").contains("true")
+
+    if (isCircleCIRun) {
+      (sys.env.get("CIRCLE_BUILD_NUM"), sys.env.get("CIRCLE_SHA1")) match {
+        case (Some(buildNumber), Some(gitHash)) =>
+          Some(CircleCIEnv(buildNumber.toLong, gitHash))
+        case _ => throw new IllegalStateException("CIRCLECI env variable is set but not " +
+          "CIRCLE_BUILD_NUM and CIRCLE_SHA1")
+      }
+    } else {
+      PrettyPrint.print("CircleCI", "CIRCLECI env variable not found. Will not publish " +
+        "benchmark results to Datastore.")
+      None
+    }
+  }
+}
+
+abstract class Benchmark(val extraConfs: Map[String, Array[String]] = null) {
+  val name: String = this.getClass.getSimpleName.replaceAll("\\$$", "")
+
+  private val configurations: Map[String, Array[String]] = {
+    val base = Map(name -> Array.empty[String])
+    val extra = if (extraConfs == null) {
+      Map.empty
+    } else {
+      extraConfs.map(kv => (s"$name${kv._1}", kv._2))
+    }
+    base ++ extra
+  }
+
+  def run(projectId: String,
+          prefix: String,
+          args: Array[String]): Iterable[Future[BenchmarkResult]] = {
+    val username = sys.props("user.name")
+    configurations
+      .map {
+        case (confName, extraArgs) =>
+          val (sc, _) =
+            ContextAndArgs(Array(s"--project=$projectId") ++ args ++ extraArgs)
+          sc.setAppName(confName)
+          sc.setJobName(s"$prefix-$confName-$username".toLowerCase())
+          run(sc)
+          val result = sc.close()
+          result.finalState.map(_ => BenchmarkResult(confName, extraArgs, result))
+      }
+  }
+
+  def run(sc: ScioContext): Unit
+}
+
+object BenchmarkResult {
+  private val dateTimeParser = ISODateTimeFormat.dateTimeParser()
+}
+
+case class BenchmarkResult(name: String,
+                           extraArgs: Array[String],
+                           scioResult: ScioResult) {
+  import BenchmarkResult._
+  require(scioResult.isCompleted)
+
+  val job: Job = scioResult.as[DataflowResult].getJob
+  val startTime: LocalDateTime = dateTimeParser.parseLocalDateTime(job.getCreateTime)
+  val finishTime: LocalDateTime = dateTimeParser.parseLocalDateTime(job.getCurrentStateTime)
+  val elapsedTime: Seconds = Seconds.secondsBetween(startTime, finishTime)
+
+  val metrics: Map[String, String] = scioResult.as[DataflowResult]
+    .getJobMetrics
+    .getMetrics
+    .asScala
+    .filter { m =>
+      m.getName.getName.startsWith("Total") && !m.getName.getContext.containsKey("tentative")
+    }
+    .map(m => (m.getName.getName, m.getScalar.toString))
+    .sortBy(_._1)
+    .toMap
+}
+
+trait BenchmarkLogger[F[_]] {
+  def log(benchmarks: Iterable[BenchmarkResult]): F[Unit]
+}
+
+final case class ScioBenchmarkLogger[F[_]](loggers: BenchmarkLogger[F]*) {
+  def log(benchmarks: BenchmarkResult*): Seq[F[Unit]] =
+    loggers.map(_.log(benchmarks))
+}
+
+object DatastoreLogger {
+  final case class ScioBenchmarkRun(timestamp: Instant,
+                                    gitHash: String,
+                                    buildNum: Long,
+                                    operation: String)
+
+  private lazy val Storage: Datastore = DatastoreHelper.getDatastoreFromEnv
+
+  private val Kind = "Benchmarks"
+
+  private val OrderByBuildNumQuery =
+    s"SELECT * from ${Kind}_%s ORDER BY buildNum DESC LIMIT 2"
+
+  private val Metrics = Set("Elapsed", "TotalMemoryUsage", "TotalPdUsage",
+    "TotalShuffleDataProcessed", "TotalSsdUsage", "TotalStreamingDataProcessed", "TotalVcpuTime")
+}
+
+final case class DatastoreLogger(circleCIEnv: Option[CircleCIEnv]) extends BenchmarkLogger[Try] {
+  import DatastoreLogger._
+
+  // Save metrics to integration testing Datastore instance. Can't make this into a
+  // transaction because DS limit is 25 entities per transaction.
+  override def log(benchmarks: Iterable[BenchmarkResult]): Try[Unit] = {
+    circleCIEnv.map { env =>
+      val now = new Instant()
+      val dt = DatastoreType[ScioBenchmarkRun]
+
+      val commits = benchmarks.map { benchmark =>
+        val entity = dt
+          .toEntityBuilder(
+            ScioBenchmarkRun(now, env.gitHash, env.buildNum, benchmark.name))
+          .setKey(DatastoreHelper.makeKey(
+            s"${Kind}_${benchmark.name}", env.buildNum.toString))
+
+        val metrics = ("Elapsed", benchmark.elapsedTime.getSeconds.toString) :: benchmark.metrics
+          .filter(metric => Metrics.contains(metric._1)).toList
+
+        metrics.foreach {
+          case (key, value) =>
+            val entityValue = DatastoreHelper.makeValue(value).build()
+            entity.putProperties(key, entityValue)
+        }
+
+        Try {
+          val commit = Storage.commit(CommitRequest.newBuilder()
+            .setMode(CommitRequest.Mode.NON_TRANSACTIONAL)
+            // Upsert means we can re-run a job for same build if necessary; insert would trigger
+            // a Datastore exception
+            .addMutations(Mutation.newBuilder().setUpsert(entity.build()).build())
+            .build())
+
+          (benchmark, commit)
+        }
+      }
+
+      commits
+        .foldLeft(Try(List[(BenchmarkResult, CommitResponse)]())) {
+          case (Success(list), Success(value)) => Success(value :: list)
+          case (Success(_), Failure(ex)) => Failure(ex)
+          case (f @ Failure(_), _) => f
+        }
+        .map(_.map(_._1.name))
+        .map(printMetricsComparison)
+    }.getOrElse {
+      Success(Unit)
+    }
+  }
+
+  // TODO: move this to email generator
+  private[this] def printMetricsComparison(benchmarkNames: Iterable[String]): Unit = {
+    benchmarkNames.foreach { benchmarkName =>
+      try {
+        val comparisonMetrics = Storage.runQuery(
+          RunQueryRequest.newBuilder().setGqlQuery(
+            GqlQuery.newBuilder()
+              .setAllowLiterals(true)
+              .setQueryString(OrderByBuildNumQuery.format(benchmarkName))
+              .build()
+          ).build())
+
+        val metrics = comparisonMetrics.getBatch.getEntityResultsList.asScala
+          .sortBy(_.getEntity.getKey.getPath(0).getName.toInt)
+          .map(_.getEntity)
+        if (metrics.size == 2) {
+          val opName = metrics.head.getKey.getPath(0).getKind.substring(Kind.length + 1)
+          val props = metrics.map(_.getPropertiesMap.asScala)
+          PrettyPrint.printSeparator()
+          PrettyPrint.print("Benchmark", opName)
+
+          val List(b1, b2) = props.map(_("buildNum").getIntegerValue).toList
+          PrettyPrint.print("BuildNum", "%15d%15d%15s".format(b1, b2, "Delta"))
+
+          Metrics.foreach { k =>
+            val List(prev, curr) = props.map(_(k).getStringValue.toDouble).toList
+            val delta = (curr - prev) / curr * 100.0
+            val signed = if (delta.isNaN) {
+              "0.00%"
+            } else {
+              (if (delta > 0) "+" else "") + "%.2f%%".format(delta)
+            }
+            PrettyPrint.print(k, "%15.2f%15.2f%15s".format(prev, curr, signed))
+          }
+        }
+      } catch {
+        case e: Exception =>
+          PrettyPrint
+            .print(benchmarkName, s"Caught error fetching benchmark metrics from Datastore: $e")
+      }
+    }
+  }
+}
+
+final case class ConsoleLogger() extends BenchmarkLogger[Try] {
+  override def log(benchmarks: Iterable[BenchmarkResult]): Try[Unit] = Try {
+    benchmarks.foreach { benchmark =>
+      PrettyPrint.printSeparator()
+      PrettyPrint.print("Benchmark", benchmark.name)
+      PrettyPrint.print("Extra arguments", benchmark.extraArgs.mkString(" "))
+      PrettyPrint.print("State", benchmark.scioResult.state.toString)
+      PrettyPrint.print("Create time", benchmark.startTime.toString())
+      PrettyPrint.print("Finish time", benchmark.finishTime.toString())
+      PrettyPrint.print("Elapsed", PeriodFormat.getDefault.print(benchmark.elapsedTime))
+      benchmark.metrics.foreach { kv =>
+        PrettyPrint.print(kv._1, kv._2)
+      }
+    }
+  }
+}
