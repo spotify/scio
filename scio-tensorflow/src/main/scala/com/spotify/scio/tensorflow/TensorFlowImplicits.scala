@@ -63,10 +63,11 @@ trait TensorFlowImplicits {
 
 /**
  * This allows to not only use [[TensorFlowImplicits]] as:
- * <code>
- *  import TensorFlowImplicits._
- * </code>
+ * {{{
+ * import TensorFlowImplicits._
+ * }}}
  *
- * But also make them available from other places through inheritance @see [[tensorflow]].
+ * But also make them available from other places through inheritance, see
+ * [[com.spotify.scio.tensorflow tensorflow]].
  */
 object TensorFlowImplicits extends TensorFlowImplicits

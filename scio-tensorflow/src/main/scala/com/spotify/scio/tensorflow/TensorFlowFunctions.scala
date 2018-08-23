@@ -264,14 +264,9 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
       TFExampleSCollectionFunctions
         .saveExampleMetadata(self.context.parallelize(Some(schema)), schemaPath)
     }
-    if (self.context.isTest) {
-      self.context.testOut(TFExampleIO(path))(self.asInstanceOf[SCollection[Example]])
-      self.saveAsInMemoryTap.asInstanceOf[Future[Tap[Example]]]
-    } else {
-      val r = self.map(_.toByteArray).saveAsTfRecordFile(path, suffix, compression, numShards)
-      import scala.concurrent.ExecutionContext.Implicits.global
-      r.map(_.map(Example.parseFrom))
-    }
+    val io = TFExampleIO(path)
+    val params = TFExampleIO.WriteParam(suffix,compression, numShards)
+    self.asInstanceOf[SCollection[Example]].write(io)(params)
   }
 
   /**
@@ -430,21 +425,9 @@ class TFRecordSCollectionFunctions[T <: Array[Byte]](val self: SCollection[T]) {
     suffix: String = ".tfrecords",
     compression: Compression = Compression.UNCOMPRESSED,
     numShards: Int = 0)(implicit ev: T <:< Array[Byte]): Future[Tap[Array[Byte]]] = {
-    if (self.context.isTest) {
-      self.context.testOut(TFRecordIO(path))(self.asInstanceOf[SCollection[Array[Byte]]])
-      self.saveAsInMemoryTap.asInstanceOf[Future[Tap[Array[Byte]]]]
-    } else {
-      self
-        .asInstanceOf[SCollection[Array[Byte]]]
-        .applyInternal(
-          gio.TFRecordIO
-            .write()
-            .to(self.pathWithShards(path))
-            .withSuffix(suffix)
-            .withNumShards(numShards)
-            .withCompression(compression))
-      self.context.makeFuture(TFRecordFileTap(ScioUtil.addPartSuffix(path)))
-    }
+    val io = TFRecordIO(path)
+    val params = TFRecordIO.WriteParam(suffix, compression, numShards)
+    self.asInstanceOf[SCollection[Array[Byte]]].write(io)(params)
   }
 
 }

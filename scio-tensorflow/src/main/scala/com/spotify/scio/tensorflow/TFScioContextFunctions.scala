@@ -20,7 +20,6 @@ package com.spotify.scio.tensorflow
 import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.Compression
-import org.apache.beam.sdk.{io => gio}
 import org.tensorflow.example.Example
 
 class TFScioContextFunctions(val self: ScioContext) extends AnyVal {
@@ -32,14 +31,8 @@ class TFScioContextFunctions(val self: ScioContext) extends AnyVal {
    * @group input
    */
   def tfRecordFile(path: String, compression: Compression = Compression.AUTO)
-  : SCollection[Array[Byte]] = self.requireNotClosed {
-    if (self.isTest) {
-      self.getTestInput(TFRecordIO(path))
-    } else {
-      self.wrap(self.applyInternal(gio.TFRecordIO.read().from(path)
-          .withCompression(compression)))
-    }
-  }
+  : SCollection[Array[Byte]] =
+    self.read(TFRecordIO(path))(TFRecordIO.ReadParam(compression))
 
   /**
    * Get an SCollection of `org.tensorflow.example.Example` from a TensorFlow TFRecord file
