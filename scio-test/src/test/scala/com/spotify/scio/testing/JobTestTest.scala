@@ -628,48 +628,35 @@ class JobTestTest extends PipelineSpec {
   }
 
   // =======================================================================
-  // Test invalid TestIO
+  // Test invalid ScioIO
   // =======================================================================
 
-  "TestIO" should "not allow null keys" in {
-    // FIXME: NIO remove
-    def test[T](testIO: => TestIO[T], repr: String): Unit = {
+  "ScioIO" should "not allow null keys" in {
+    def test[T](io: => ScioIO[T], repr: String): Unit = {
       the [IllegalArgumentException] thrownBy {
-        testIO
-      } should have message s"requirement failed: $repr has null key"
-    }
-
-    def test1[T](testIO: => ScioIO[T], repr: String): Unit = {
-      the [IllegalArgumentException] thrownBy {
-        testIO
+        io
       } should have message s"requirement failed: $repr has null id"
     }
-    test1(ObjectFileIO(null), "ObjectFileIO(null)")
-    test1(AvroIO(null), "AvroIO(null,null)")
-    test1(DatastoreIO(null), "DatastoreIO(null)")
-    test1(ProtobufIO[Message](null), "ProtobufIO(null)")
-    test1(PubSubIO[Message](null), "PubSubIOWithoutAttributes(null,null,null)")
-    test1(TextIO(null), "TextIO(null)")
+    test(ObjectFileIO(null), "ObjectFileIO(null)")
+    test(AvroIO(null), "AvroIO(null,null)")
+    test(DatastoreIO(null), "DatastoreIO(null)")
+    test(ProtobufIO[Message](null), "ProtobufIO(null)")
+    test(PubSubIO[Message](null), "PubSubIOWithoutAttributes(null,null,null)")
+    test(TextIO(null), "TextIO(null)")
   }
 
   it should "not allow empty keys" in {
-    // FIXME: NIO remove
-    def test[T](testIO: => TestIO[T], repr: String): Unit = {
+    def test[T](io: => ScioIO[T], repr: String): Unit = {
       the [IllegalArgumentException] thrownBy {
-        testIO
-      } should have message s"requirement failed: $repr has empty string key"
-    }
-    def test1[T](testIO: => ScioIO[T], repr: String): Unit = {
-      the [IllegalArgumentException] thrownBy {
-        testIO
+        io
       } should have message s"requirement failed: $repr has empty string id"
     }
-    test1(ObjectFileIO(""), "ObjectFileIO()")
-    test1(AvroIO(""), "AvroIO(,null)")
-    test1(DatastoreIO(""), "DatastoreIO()")
-    test1(ProtobufIO[Message](""), "ProtobufIO()")
-    test1(PubSubIO[Message](""), "PubSubIOWithoutAttributes(,null,null)")
-    test1(TextIO(""), "TextIO()")
+    test(ObjectFileIO(""), "ObjectFileIO()")
+    test(AvroIO(""), "AvroIO(,null)")
+    test(DatastoreIO(""), "DatastoreIO()")
+    test(ProtobufIO[Message](""), "ProtobufIO()")
+    test(PubSubIO[Message](""), "PubSubIOWithoutAttributes(,null,null)")
+    test(TextIO(""), "TextIO()")
   }
 
   "runWithContext" should "fail input with message" in {

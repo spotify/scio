@@ -55,18 +55,17 @@ case class ObjectFileIO[T: ClassTag](path: String)
    * Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
    * serialization is not guaranteed to be compatible across Scio releases.
    */
-  def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    sc.requireNotClosed {
-      val coder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
-      sc.read(AvroIO[GenericRecord](path, AvroBytesUtil.schema))
-        .parDo(new DoFn[GenericRecord, T] {
-          @ProcessElement
-          private[scio] def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit = {
-            c.output(AvroBytesUtil.decode(coder, c.element()))
-          }
-        })
-        .setName(path)
-    }
+  def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val coder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
+    sc.read(AvroIO[GenericRecord](path, AvroBytesUtil.schema))
+      .parDo(new DoFn[GenericRecord, T] {
+        @ProcessElement
+        private[scio] def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit = {
+          c.output(AvroBytesUtil.decode(coder, c.element()))
+        }
+      })
+      .setName(path)
+  }
 
   /**
    * Save this SCollection as an object file using default serialization.
@@ -164,16 +163,15 @@ case class AvroIO[T: ClassTag](path: String, schema: Schema = null)
    * Get an SCollection for an Avro file. `schema` must be not null if `T` is of type
    * [[org.apache.avro.generic.GenericRecord GenericRecord]].
    */
-  def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    sc.requireNotClosed {
-      val cls = ScioUtil.classOf[T]
-      val t = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-        gio.AvroIO.read(cls).from(path)
-      } else {
-        gio.AvroIO.readGenericRecords(schema).from(path).asInstanceOf[gio.AvroIO.Read[T]]
-      }
-      sc.wrap(sc.applyInternal(t)).setName(path)
+  def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val cls = ScioUtil.classOf[T]
+    val t = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+      gio.AvroIO.read(cls).from(path)
+    } else {
+      gio.AvroIO.readGenericRecords(schema).from(path).asInstanceOf[gio.AvroIO.Read[T]]
     }
+    sc.wrap(sc.applyInternal(t)).setName(path)
+  }
 
   /**
    * Save this SCollection as an Avro file. `schema` must be not null if `T` is of type
@@ -212,18 +210,17 @@ object Typed {
     type ReadP = Unit
     type WriteP = AvroFile.WriteParam
 
-    private def typedAvroOut[U](
-                              sc: SCollection[T],
-                              write: gio.AvroIO.TypedWrite[U, Void, GenericRecord],
-                              path: String, numShards: Int, suffix: String,
-                              codec: CodecFactory,
-                              metadata: Map[String, AnyRef]) =
-    write
-      .to(sc.pathWithShards(path))
-      .withNumShards(numShards)
-      .withSuffix(suffix + ".avro")
-      .withCodec(codec)
-      .withMetadata(metadata.asJava)
+    private def typedAvroOut[U](sc: SCollection[T],
+                                write: gio.AvroIO.TypedWrite[U, Void, GenericRecord],
+                                path: String, numShards: Int, suffix: String,
+                                codec: CodecFactory,
+                                metadata: Map[String, AnyRef]) =
+      write
+        .to(sc.pathWithShards(path))
+        .withNumShards(numShards)
+        .withSuffix(suffix + ".avro")
+        .withCodec(codec)
+        .withMetadata(metadata.asJava)
 
     def id: String = path
 
@@ -235,12 +232,11 @@ object Typed {
    * [[com.spotify.scio.avro.types.AvroType AvroType.fromPath]], or
    * [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
    */
-    def read(sc: ScioContext, params: ReadP): SCollection[T] =
-      sc.requireNotClosed {
-        val avroT = AvroType[T]
-        val t = gio.AvroIO.readGenericRecords(avroT.schema).from(path)
-        sc.wrap(sc.applyInternal(t)).setName(path).map(avroT.fromGenericRecord)
-      }
+    def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+      val avroT = AvroType[T]
+      val t = gio.AvroIO.readGenericRecords(avroT.schema).from(path)
+      sc.wrap(sc.applyInternal(t)).setName(path).map(avroT.fromGenericRecord)
+    }
 
   /**
    * Save this SCollection as an Avro file. Note that element type `T` must be a case class

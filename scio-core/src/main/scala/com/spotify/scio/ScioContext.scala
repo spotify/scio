@@ -499,13 +499,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
   private[scio] def getTestInput[T: ClassTag](key: ScioIO[T]): SCollection[T] =
     this.parallelize(testIn(key.id).asInstanceOf[Seq[T]])
 
-  // FIXME: NIO remove
-  private[scio] def testOut[T](key: TestIO[T]): SCollection[T] => Unit =
-    testOut(key.key)
-
-  private[scio] def getTestInput[T: ClassTag](key: TestIO[T]): SCollection[T] =
-    this.parallelize(testIn(key.key).asInstanceOf[Seq[T]])
-
   // =======================================================================
   // Read operations
   // =======================================================================

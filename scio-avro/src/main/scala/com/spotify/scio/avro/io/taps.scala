@@ -35,7 +35,7 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 /**
- * Tap for Avro files on local file system or GCS.
+ * Tap for Avro files.
  * @param schema must be not null if `T` is of type
  *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
  */
@@ -47,8 +47,8 @@ case class AvroTap[T: ClassTag](path: String,
 }
 
 /**
- * Tap for object files on local file system or GCS. Note that serialization is not guaranteed to
- * be compatible across Scio releases.
+ * Tap for object files. Note that serialization is not guaranteed to be compatible across Scio
+ * releases.
  */
 case class ObjectFileTap[T: ClassTag](path: String) extends Tap[T] {
   override def value: Iterator[T] = {
@@ -60,7 +60,7 @@ case class ObjectFileTap[T: ClassTag](path: String) extends Tap[T] {
   override def open(sc: ScioContext): SCollection[T] = sc.objectFile(path)
 }
 
-final case class AvroTaps[T <: Taps](self: T) {
+final case class AvroTaps(self: Taps) {
 
   import self.{mkTap, isPathDone}
 
