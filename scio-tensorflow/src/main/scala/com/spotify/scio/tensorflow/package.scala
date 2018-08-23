@@ -17,13 +17,4 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.testing.TestIO
-import org.tensorflow.example.Example
-
-package object tensorflow extends TensorFlowImplicits {
-
-  case class TFRecordIO(path: String) extends TestIO[Array[Byte]](path)
-
-  case class TFExampleIO(path: String) extends TestIO[Example](path)
-
-}
+package object tensorflow extends TensorFlowImplicits
