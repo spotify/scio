@@ -143,8 +143,6 @@ class TestIO[+T] private[scio] (val key: String) {
   require(!key.isEmpty, s"$this has empty string key")
 }
 
-case class PubsubIO[T](topic: String) extends TestIO[T](topic)
-
 case class DistCacheIO[T](uri: String)
 
 object DistCacheIO {
