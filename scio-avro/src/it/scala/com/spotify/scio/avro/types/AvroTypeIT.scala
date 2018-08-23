@@ -18,7 +18,7 @@
 package com.spotify.scio.avro.types
 
 import org.apache.avro.Schema.Parser
-import org.scalatest.{Assertion, FlatSpec, Matchers}
+import org.scalatest._
 
 import scala.annotation.StaticAnnotation
 import scala.reflect.runtime.universe._

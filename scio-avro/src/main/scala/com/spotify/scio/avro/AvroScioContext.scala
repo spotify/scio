@@ -26,6 +26,7 @@ import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
+/** Enhanced version of [[ScioContext]] with Avro methods. */
 final class AvroScioContext(@transient val self: ScioContext) extends Serializable {
 
   /**

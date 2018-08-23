@@ -74,7 +74,7 @@ private[scio] class InMemoryTap[T: ClassTag] extends Tap[T] {
 }
 
 private[scio] class MaterializeTap[T: ClassTag](val path: String) extends Tap[T] {
-  val _path = ScioUtil.addPartSuffix(path)
+  private val _path = ScioUtil.addPartSuffix(path)
 
   override def value: Iterator[T] = {
   val coder = ScioUtil.getScalaCoder[T]

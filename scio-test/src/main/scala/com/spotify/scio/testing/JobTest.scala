@@ -100,12 +100,6 @@ object JobTest {
      * inside the pipeline, e.g. `AvroIO[MyRecord]("in.avro")` with
      * `sc.avroFile[MyRecord]("in.avro")`.
      */
-    def input[T](key: TestIO[T], value: Iterable[T]): Builder = {
-      require(!state.input.contains(key.key), "Duplicate test input: " + key.key)
-      state = state.copy(input = state.input + (key.key -> value))
-      this
-    }
-    // FIXME: NIO promote
     def input[T](key: ScioIO[T], value: Iterable[T]): Builder = {
       require(!state.input.contains(key.id), "Duplicate test input: " + key.id)
       state = state.copy(input = state.input + (key.id -> value))
@@ -120,30 +114,10 @@ object JobTest {
      * @param assertion assertion for output data. See [[SCollectionMatchers]] for available
      *                  matchers on an [[com.spotify.scio.values.SCollection SCollection]].
      */
-    def output[T](key: TestIO[T])(assertion: SCollection[T] => Unit): Builder = {
-      require(!state.output.contains(key.key), "Duplicate test output: " + key.key)
-      state = state
-        .copy(output =
-          state.output + (key.key -> assertion.asInstanceOf[SCollection[_] => Unit]))
-      this
-    }
-    // FIXME: NIO promote
     def output[T](key: ScioIO[T])(assertion: SCollection[T] => Unit): Builder = {
       require(!state.output.contains(key.id), "Duplicate test output: " + key.id)
       state = state
         .copy(output = state.output + (key.id -> assertion.asInstanceOf[SCollection[_] => Unit]))
-      this
-    }
-
-    def inputNio[T](id: String, value: Iterable[T]): Builder = {
-      require(!state.input.contains(id), s"Duplicate test input: $id")
-      state = state.copy(input = state.input + (id -> value))
-      this
-    }
-    def outputNio[T](id: String)(assertion: SCollection[T] => Unit): Builder = {
-      require(!state.output.contains(id), s"Duplicate test output $id")
-      state = state
-        .copy(output = state.output + (id -> assertion.asInstanceOf[SCollection[_] => Unit]))
       this
     }
 

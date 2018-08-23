@@ -59,33 +59,32 @@ final case class Row(bigtableOptions: BigtableOptions, tableId: String) extends 
   import bigtableOptions._
   def id: String = s"$getProjectId\t$getInstanceId\t$tableId"
 
-  def read(sc: ScioContext, params: ReadP): SCollection[BTRow] =
-    sc.requireNotClosed {
-      params match {
-        case Row.Parameters(keyRange, rowFilter) =>
-          val opts = bigtableOptions // defeat closure
-          var read = BBigtableIO.read()
-            .withProjectId(bigtableOptions.getProjectId)
-            .withInstanceId(bigtableOptions.getInstanceId)
-            .withTableId(tableId)
-            .withBigtableOptionsConfigurator(
-              new SerializableFunction[BigtableOptions.Builder, BigtableOptions.Builder] {
-                override def apply(input: BigtableOptions.Builder): BigtableOptions.Builder =
-                  opts.toBuilder
-              })
-          if (keyRange != null) {
-            read = read.withKeyRange(keyRange)
-          }
-          if (rowFilter != null) {
-            read = read.withRowFilter(rowFilter)
-          }
-          sc.wrap(sc.applyInternal(read))
-            .setName(s"${bigtableOptions.getProjectId} ${bigtableOptions.getInstanceId} $tableId")
-      }
+  def read(sc: ScioContext, params: ReadP): SCollection[BTRow] = {
+    params match {
+      case Row.Parameters(keyRange, rowFilter) =>
+        val opts = bigtableOptions // defeat closure
+      var read = BBigtableIO.read()
+        .withProjectId(bigtableOptions.getProjectId)
+        .withInstanceId(bigtableOptions.getInstanceId)
+        .withTableId(tableId)
+        .withBigtableOptionsConfigurator(
+          new SerializableFunction[BigtableOptions.Builder, BigtableOptions.Builder] {
+            override def apply(input: BigtableOptions.Builder): BigtableOptions.Builder =
+              opts.toBuilder
+          })
+        if (keyRange != null) {
+          read = read.withKeyRange(keyRange)
+        }
+        if (rowFilter != null) {
+          read = read.withRowFilter(rowFilter)
+        }
+        sc.wrap(sc.applyInternal(read))
+          .setName(s"${bigtableOptions.getProjectId} ${bigtableOptions.getInstanceId} $tableId")
     }
+  }
 
   def write(sc: SCollection[BTRow], params: WriteP): Future[Tap[BTRow]] =
-    throw new IllegalStateException("Row are read-only, Use Mutation to write to BigTable")
+    throw new IllegalStateException("Row is read-only, use Mutation to write to Bigtable")
 
   def tap(read: ReadP): Tap[BTRow] =
     throw new NotImplementedError("Bigtable tap not implemented")
@@ -100,17 +99,18 @@ object Row {
   def apply(projectId: String,
             instanceId: String,
             tableId: String): Row = {
-      val bigtableOptions = new BigtableOptions.Builder()
-        .setProjectId(projectId)
-        .setInstanceId(instanceId)
-        .build
-      Row(bigtableOptions, tableId)
-    }
+    val bigtableOptions = new BigtableOptions.Builder()
+      .setProjectId(projectId)
+      .setInstanceId(instanceId)
+      .build
+    Row(bigtableOptions, tableId)
+  }
 }
 
-final case class Mutate[T](
-  bigtableOptions: BigtableOptions,
-  tableId: String)(implicit ev: T <:< Mutation) extends BigtableIO[(ByteString, Iterable[T])] {
+final case class Mutate[T](bigtableOptions: BigtableOptions,
+                           tableId: String)
+                          (implicit ev: T <:< Mutation)
+  extends BigtableIO[(ByteString, Iterable[T])] {
 
   type ReadP = Nothing
   type WriteP = Mutate.WriteParam
@@ -119,7 +119,7 @@ final case class Mutate[T](
   def id: String = s"$getProjectId\t$getInstanceId\t$tableId"
 
   def read(sc: ScioContext, params: ReadP): SCollection[(ByteString, Iterable[T])] =
-    throw new IllegalStateException("Can't read mutations from BigTable")
+    throw new IllegalStateException("Mutate is write-only, use Row to read from Bigtable")
 
   def write(
     sc: SCollection[(ByteString, Iterable[T])],
@@ -147,7 +147,7 @@ final case class Mutate[T](
   }
 
   def tap(read: ReadP): Tap[(ByteString, Iterable[T])] =
-    throw new IllegalStateException("Can't read mutations from BigTable")
+    throw new NotImplementedError("Bigtable tap not implemented")
 }
 
 object Mutate {
