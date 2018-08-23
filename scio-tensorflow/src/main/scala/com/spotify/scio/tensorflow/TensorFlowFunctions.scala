@@ -380,21 +380,9 @@ class TFRecordSCollectionFunctions[T <: Array[Byte]](val self: SCollection[T]) {
     suffix: String = ".tfrecords",
     compression: Compression = Compression.UNCOMPRESSED,
     numShards: Int = 0)(implicit ev: T <:< Array[Byte]): Future[Tap[Array[Byte]]] = {
-    if (self.context.isTest) {
-      self.context.testOut(TFRecordIO(path))(self.asInstanceOf[SCollection[Array[Byte]]])
-      self.saveAsInMemoryTap.asInstanceOf[Future[Tap[Array[Byte]]]]
-    } else {
-      self
-        .asInstanceOf[SCollection[Array[Byte]]]
-        .applyInternal(
-          gio.TFRecordIO
-            .write()
-            .to(self.pathWithShards(path))
-            .withSuffix(suffix)
-            .withNumShards(numShards)
-            .withCompression(compression))
-      self.context.makeFuture(TFRecordFileTap(ScioUtil.addPartSuffix(path)))
-    }
+    val io = TFRecordIO(path)
+    val params = TFRecordIO.WriteParam(suffix, compression, numShards)
+    self.asInstanceOf[SCollection[Array[Byte]]].write(io)(params)
   }
 
 }
