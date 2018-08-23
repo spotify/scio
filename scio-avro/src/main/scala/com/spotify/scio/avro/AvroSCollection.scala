@@ -17,23 +17,21 @@
 
 package com.spotify.scio.avro
 
-import scala.concurrent.Future
+import com.google.protobuf.Message
+import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
+import com.spotify.scio.io.Tap
+import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
-import com.google.protobuf.Message
-import com.spotify.scio.io.Tap
-import com.spotify.scio.util._
-import com.spotify.scio.values._
-import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 
-import scala.concurrent._
+import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 /** Enhanced version of [[SCollection]] with Avro methods. */
 final class AvroSCollection[T](@transient val self: SCollection[T]) extends Serializable {
 
-  import self.{context, saveAsInMemoryTap, ct}
+  import self.ct
 
   /**
    * Save this SCollection as an Avro file.

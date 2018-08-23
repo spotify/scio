@@ -38,13 +38,13 @@ trait ScioIO[T] {
   type ReadP
   type WriteP
 
+  def id: String
+
   def read(sc: ScioContext, params: ReadP): SCollection[T]
 
   def write(data: SCollection[T], params: WriteP): Future[Tap[T]]
 
-  def tap(read: ReadP): Tap[T]
-
-  def id: String
+  def tap(params: ReadP): Tap[T]
 }
 
 object ScioIO {
@@ -66,16 +66,16 @@ object ScioIO {
       type ReadP = io.ReadP
       type WriteP = Nothing
 
+      def id: String = io.id
+
       def read(sc: ScioContext, params: ReadP): SCollection[T] =
         io.read(sc, params)
 
       def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
         throw new IllegalStateException("read-only IO. This code should be unreachable")
 
-      def tap(read: ReadP): Tap[T] =
-        io.tap(read)
-
-      def id: String = io.id
+      def tap(params: ReadP): Tap[T] =
+        io.tap(params)
     }
   // scalastyle:on structural.type
 }
@@ -85,5 +85,5 @@ case class CustomIO[T](id: String) extends ScioIO[T] {
   override type WriteP = Nothing
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = ???
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = ???
-  override def tap(read: ReadP): Tap[T] = ???
+  override def tap(params: ReadP): Tap[T] = ???
 }

@@ -49,7 +49,7 @@ private object Reads {
                                        typedRead: bqio.BigQueryIO.TypedRead[T],
                                        sqlQuery: String,
                                        flattenResults: Boolean  = false)
-  : SCollection[T] = sc.requireNotClosed {
+  : SCollection[T] = {
     val bigQueryClient = Reads.client(sc)
     import sc.wrap
     if (bigQueryClient.isCacheEnabled) {
@@ -88,7 +88,7 @@ private object Reads {
   private[scio] def bqReadTable[T: ClassTag](sc: ScioContext)(
     typedRead: bqio.BigQueryIO.TypedRead[T],
     table: TableReference)
-  : SCollection[T] = sc.requireNotClosed {
+  : SCollection[T] = {
     val tableSpec: String = bqio.BigQueryHelpers.toTableSpec(table)
     sc.wrap(sc.applyInternal(typedRead.from(table))).setName(tableSpec)
   }
@@ -247,11 +247,10 @@ final case class TableRowJsonFile(path: String) extends BigQueryIO[TableRow] {
 
   def id: String = path
 
-  def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
-    sc.requireNotClosed {
-      sc.wrap(sc.applyInternal(gio.TextIO.read().from(path))).setName(path)
-        .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
-    }
+  def read(sc: ScioContext, params: ReadP): SCollection[TableRow] = {
+    sc.wrap(sc.applyInternal(gio.TextIO.read().from(path))).setName(path)
+      .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
+  }
 
   def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
     params match {
