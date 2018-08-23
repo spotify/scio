@@ -24,9 +24,7 @@ import java.io.File
 import java.net.URI
 import java.nio.file.Files
 
-import org.apache.avro.specific.SpecificRecordBase
 import com.google.datastore.v1.{Entity, Query}
-import com.google.protobuf.Message
 import com.spotify.scio.io.Tap
 import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.nio.ScioIO
@@ -36,11 +34,9 @@ import com.spotify.scio.util._
 import com.spotify.scio.values._
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
-import org.apache.beam.sdk.io.gcp.{pubsub => psio}
 import org.apache.beam.sdk.metrics.Counter
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms._
-import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{Pipeline, PipelineResult, io => gio}
 import org.joda.time.Instant
@@ -53,7 +49,6 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Future, Promise}
 import scala.io.Source
 import scala.reflect.ClassTag
-import scala.reflect.runtime.universe._
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
@@ -531,39 +526,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
   private def pubsubIn[T: ClassTag](isSubscription: Boolean,
                                     name: String,
                                     idAttribute: String,
-                                    timestampAttribute: String)
-  : SCollection[T] = requireNotClosed {
-    if (this.isTest) {
-      this.getTestInput(PubsubIO(name))
-    } else {
-      val cls = ScioUtil.classOf[T]
-      def setup[U](read: psio.PubsubIO.Read[U]) = {
-        var r = read
-        r = if (isSubscription) r.fromSubscription(name) else r.fromTopic(name)
-        if (idAttribute != null) {
-          r = r.withIdAttribute(idAttribute)
-        }
-        if (timestampAttribute != null) {
-          r = r.withTimestampAttribute(timestampAttribute)
-        }
-        r
-      }
-      if (classOf[String] isAssignableFrom cls) {
-        val t = setup(psio.PubsubIO.readStrings())
-        wrap(this.applyInternal(t)).setName(name).asInstanceOf[SCollection[T]]
-      } else if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-        val t = setup(psio.PubsubIO.readAvros(cls))
-        wrap(this.applyInternal(t)).setName(name)
-      } else if (classOf[Message] isAssignableFrom cls) {
-        val t = setup(psio.PubsubIO.readProtos(cls.asSubclass(classOf[Message])))
-        wrap(this.applyInternal(t)).setName(name).asInstanceOf[SCollection[T]]
-      } else {
-        val coder = pipeline.getCoderRegistry.getScalaCoder[T](options)
-        val t = setup(psio.PubsubIO.readMessages())
-        wrap(this.applyInternal(t)).setName(name)
-          .map(m => CoderUtils.decodeFromByteArray(coder, m.getPayload))
-      }
-    }
+                                    timestampAttribute: String): SCollection[T] = {
+    val io = nio.PubSubIO[T](name, idAttribute, timestampAttribute)
+    this.read(io)(io.ReadParams(isSubscription))
   }
 
   /**
@@ -588,26 +553,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
                                                   name: String,
                                                   idAttribute: String,
                                                   timestampAttribute: String)
-  : SCollection[(T, Map[String, String])] = requireNotClosed {
-    if (this.isTest) {
-      this.getTestInput(PubsubIO(name))
-    } else {
-      var t = psio.PubsubIO.readMessagesWithAttributes()
-      t = if (isSubscription) t.fromSubscription(name) else t.fromTopic(name)
-      if (idAttribute != null) {
-        t = t.withIdAttribute(idAttribute)
-      }
-      if (timestampAttribute != null) {
-        t = t.withTimestampAttribute(timestampAttribute)
-      }
-      val elementCoder = pipeline.getCoderRegistry.getScalaCoder[T](options)
-      wrap(this.applyInternal(t)).setName(name)
-        .map { m =>
-          val payload = CoderUtils.decodeFromByteArray(elementCoder, m.getPayload)
-          val attributes = JMapWrapper.of(m.getAttributeMap)
-          (payload, attributes)
-        }
-    }
+  : SCollection[(T, Map[String, String])] = {
+    val io = nio.PubSubIO.withAttributes[T](name, idAttribute, timestampAttribute)
+    this.read(io)(io.ReadParams(isSubscription))
   }
 
   /**

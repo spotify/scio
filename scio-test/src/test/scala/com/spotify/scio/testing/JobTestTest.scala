@@ -24,7 +24,7 @@ import com.google.protobuf.Message
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro._
-import com.spotify.scio.nio.{CustomIO, ScioIO}
+import com.spotify.scio.nio.{CustomIO, PubSubIO, ScioIO}
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.{io => gio}
@@ -274,8 +274,8 @@ class JobTestTest extends PipelineSpec {
   def testPubsubJob(xs: String*): Unit = {
     JobTest[PubsubJob.type]
       .args("--input=in", "--output=out")
-      .input(PubsubIO("in"), Seq("a", "b", "c"))
-      .output(PubsubIO[String]("out"))(_ should containInAnyOrder (xs))
+      .input(PubSubIO[String]("in"), Seq("a", "b", "c"))
+      .output(PubSubIO[String]("out"))(_ should containInAnyOrder (xs))
       .run()
   }
 
@@ -293,8 +293,8 @@ class JobTestTest extends PipelineSpec {
     val m = Map("a" -> "1", "b" -> "2", "c" -> "3")
     JobTest[PubsubWithAttributesJob.type]
       .args("--input=in", "--output=out")
-      .input(PubsubIO("in"), Seq("a", "b", "c").map((_, m)))
-      .output(PubsubIO[(String, M)]("out"))(_ should containInAnyOrder (xs.map((_, m))))
+      .input(PubSubIO[(String, M)]("in"), Seq("a", "b", "c").map((_, m)))
+      .output(PubSubIO[(String, M)]("out"))(_ should containInAnyOrder (xs.map((_, m))))
       .run()
   }
 
@@ -648,7 +648,7 @@ class JobTestTest extends PipelineSpec {
     test1(AvroIO(null), "AvroIO(null,null)")
     test1(DatastoreIO(null), "DatastoreIO(null)")
     test1(ProtobufIO[Message](null), "ProtobufIO(null)")
-    test(PubsubIO(null), "PubsubIO(null)")
+    test1(PubSubIO[Message](null), "PubSubIOWithoutAttributes(null,null,null)")
     test1(TextIO(null), "TextIO(null)")
   }
 
@@ -668,7 +668,7 @@ class JobTestTest extends PipelineSpec {
     test1(AvroIO(""), "AvroIO(,null)")
     test1(DatastoreIO(""), "DatastoreIO()")
     test1(ProtobufIO[Message](""), "ProtobufIO()")
-    test(PubsubIO(""), "PubsubIO()")
+    test1(PubSubIO[Message](""), "PubSubIOWithoutAttributes(,null,null)")
     test1(TextIO(""), "TextIO()")
   }
 

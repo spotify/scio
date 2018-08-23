@@ -24,7 +24,6 @@ import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.concurrent.ThreadLocalRandom
 
 import com.google.datastore.v1.Entity
-import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io._
@@ -37,13 +36,10 @@ import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.coders.Coder
-import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage
-import org.apache.beam.sdk.io.gcp.{pubsub => psio}
 import org.apache.beam.sdk.io.{Compression, FileBasedSink}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
-import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{io => gio}
@@ -948,39 +944,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                    idAttribute: String = null,
                    timestampAttribute: String = null)
   : Future[Tap[T]] = {
-    if (context.isTest) {
-      context.testOut(PubsubIO(topic))(this)
-    } else {
-      val cls = ScioUtil.classOf[T]
-      def setup[U](write: psio.PubsubIO.Write[U]): psio.PubsubIO.Write[U] = {
-        var w = write
-        if (idAttribute != null) {
-          w = w.withIdAttribute(idAttribute)
-        }
-        if (timestampAttribute != null) {
-          w = w.withTimestampAttribute(timestampAttribute)
-        }
-        w.to(topic)
-      }
-      if (classOf[String] isAssignableFrom cls) {
-        val t = setup(psio.PubsubIO.writeStrings())
-        this.asInstanceOf[SCollection[String]].applyInternal(t)
-      } else if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-        val t = setup(psio.PubsubIO.writeAvros(cls))
-        this.applyInternal(t)
-      } else if (classOf[Message] isAssignableFrom cls) {
-        val t = setup(psio.PubsubIO.writeProtos(cls.asInstanceOf[Class[Message]]))
-        this.asInstanceOf[SCollection[Message]].applyInternal(t)
-      } else {
-        val coder = internal.getPipeline.getCoderRegistry.getScalaCoder[T](context.options)
-        val t = setup(psio.PubsubIO.writeMessages())
-        this.map { t =>
-          val payload = CoderUtils.encodeToByteArray(coder, t)
-          new PubsubMessage(payload, Map.empty[String, String].asJava)
-        }.applyInternal(t)
-      }
-    }
-    Future.failed(new NotImplementedError("Pubsub future not implemented"))
+    val io = nio.PubSubIO[T](topic)
+    this.write(io)
   }
 
   /**
@@ -991,26 +956,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                                               idAttribute: String = null,
                                               timestampAttribute: String = null)
                                              (implicit ev: T <:< (V, Map[String, String]))
-  : Future[Tap[V]] = {
-    if (context.isTest) {
-      context.testOut(PubsubIO(topic))(this)
-    } else {
-      var transform = psio.PubsubIO.writeMessages().to(topic)
-      if (idAttribute != null) {
-        transform = transform.withIdAttribute(idAttribute)
-      }
-      if (timestampAttribute != null) {
-        transform = transform.withTimestampAttribute(timestampAttribute)
-      }
-      val coder = internal.getPipeline.getCoderRegistry.getScalaCoder[V](context.options)
-      this.map { t =>
-        val kv = t.asInstanceOf[(V, Map[String, String])]
-        val payload = CoderUtils.encodeToByteArray(coder, kv._1)
-        val attributes = kv._2.asJava
-        new PubsubMessage(payload, attributes)
-      }.applyInternal(transform)
-    }
-    Future.failed(new NotImplementedError("Pubsub future not implemented"))
+  : Future[Tap[(V, Map[String, String])]] = {
+    val io = nio.PubSubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
+    this.asInstanceOf[SCollection[(V, Map[String, String])]].write(io)
   }
 
   /**
