@@ -104,11 +104,11 @@ private[scio] object TestDataManager {
     getValue(testId, distCaches, "using dist cache")
 
   def setup(testId: String,
-            inNios: Map[String, Iterable[_]],
-            outNios: Map[String, SCollection[_] => Unit],
+            ins: Map[String, Iterable[_]],
+            outs: Map[String, SCollection[_] => Unit],
             dcs: Map[DistCacheIO[_], _]): Unit = {
-    inputs += (testId -> new TestInput(inNios))
-    outputs += (testId -> new TestOutput(outNios))
+    inputs += (testId -> new TestInput(ins))
+    outputs += (testId -> new TestOutput(outs))
     distCaches += (testId -> new TestDistCache(dcs))
   }
 
@@ -132,15 +132,6 @@ private[scio] object TestDataManager {
     closed -= testId
   }
 
-}
-
-/* For matching IO types */
-
-// FIXME: NIO remote all
-
-class TestIO[+T] private[scio] (val key: String) {
-  require(key != null, s"$this has null key")
-  require(!key.isEmpty, s"$this has empty string key")
 }
 
 case class DistCacheIO[T](uri: String)
