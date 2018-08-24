@@ -209,20 +209,21 @@ private[types] object ConverterProvider {
     def field(symbol: Symbol, fn: TermName): Tree = {
       val name = symbol.name.toString
       val tpe = symbol.asMethod.returnType
-      
-      val tree = q"""{
+
+      val tree = q"$fn.get($name)"
+      val nonNullTree = q"""{
             val v = $fn.get($name)
             if(v == null) {
-                throw new NullPointerException("null field in non-option field " + $name)
+                throw new NullPointerException("null field in REQUIRED field " + $name)
             }
             v
         }"""
       if (tpe.erasure =:= typeOf[Option[_]].erasure) {
         option(tree, tpe.typeArgs.head)
       } else if (tpe.erasure =:= typeOf[List[_]].erasure) {
-        list(tree, tpe.typeArgs.head)
+        list(nonNullTree, tpe.typeArgs.head)
       } else {
-        cast(tree, tpe)
+        cast(nonNullTree, tpe)
       }
     }
 
