@@ -62,7 +62,7 @@ private object TFGraphJob2Inputs {
   }
 }
 
-private object TFSavedJob {
+private[tensorflow] object TFSavedJob {
 
   case class Iris(sepalLength: Option[Double],
                   sepalWidth: Option[Double],
