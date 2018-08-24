@@ -21,12 +21,9 @@ import scala.annotation.StaticAnnotation
 import scala.reflect.macros.blackbox
 import scala.language.experimental.macros
 
-/**
-  * This shouldn't be necessary in most production use cases. However passing System properties from
-  * Intellij can cause issues. The ideal place to set this System property is in your build.sbt
-  * file.
-  */
-object SetProperty {
+// This shouldn't be necessary in most production use cases. However passing System properties from
+// Intellij can cause issues. The ideal place to set this system property is in your build.sbt file.
+private[validation] object SetProperty {
 
   class setProperty extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro setPropertyImpl

@@ -24,6 +24,7 @@ import com.google.protobuf.Message
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro._
+import com.spotify.scio.bigquery._
 import com.spotify.scio.nio.{CustomIO, PubSubIO, ScioIO}
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
@@ -58,6 +59,24 @@ object GenericAvroFileJob {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.avroFile[GenericRecord](args("input"), AvroUtils.schema)
       .saveAsAvroFile(args("output"))
+    sc.close()
+  }
+}
+
+object BigQueryJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.bigQueryTable(args("input"))
+      .saveAsBigQuery(args("output"))
+    sc.close()
+  }
+}
+
+object TableRowJsonJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.tableRowJsonFile(args("input"))
+      .saveAsTableRowJsonFile(args("output"))
     sc.close()
   }
 }
@@ -247,6 +266,42 @@ class JobTestTest extends PipelineSpec {
     an [AssertionError] should be thrownBy {
       testGenericAvroFileJob((1 to 4).map(newGenericRecord))
     }
+  }
+
+  def newTableRow(i: Int): TableRow = TableRow("int_field" -> i)
+
+  def testBigQuery(xs: Seq[TableRow]): Unit = {
+    JobTest[BigQueryJob.type]
+      .args("--input=table.in", "--output=table.out")
+      .input(BigQueryIO[TableRow]("table.in"), (1 to 3).map(newTableRow))
+      .output(BigQueryIO[TableRow]("table.out"))(_ should containInAnyOrder (xs))
+      .run()
+  }
+
+  it should "pass correct BigQueryJob" in {
+    testBigQuery((1 to 3).map(newTableRow))
+  }
+
+  it should "fail incorrect BigQueryJob" in {
+    an [AssertionError] should be thrownBy { testBigQuery((1 to 2).map(newTableRow)) }
+    an [AssertionError] should be thrownBy { testBigQuery((1 to 4).map(newTableRow)) }
+  }
+
+  def testTableRowJson(xs: Seq[TableRow]): Unit = {
+    JobTest[TableRowJsonJob.type]
+      .args("--input=in.json", "--output=out.json")
+      .input(TableRowJsonIO("in.json"), (1 to 3).map(newTableRow))
+      .output(TableRowJsonIO("out.json"))(_ should containInAnyOrder (xs))
+      .run()
+  }
+
+  it should "pass correct TableRowJsonIO" in {
+    testTableRowJson((1 to 3).map(newTableRow))
+  }
+
+  it should "fail incorrect TableRowJsonIO" in {
+    an [AssertionError] should be thrownBy { testTableRowJson((1 to 2).map(newTableRow)) }
+    an [AssertionError] should be thrownBy { testTableRowJson((1 to 4).map(newTableRow)) }
   }
 
   def newEntity(i: Int): Entity = Entity.newBuilder()
@@ -639,6 +694,8 @@ class JobTestTest extends PipelineSpec {
     }
     test(ObjectFileIO(null), "ObjectFileIO(null)")
     test(AvroIO(null), "AvroIO(null,null)")
+    test(BigQueryIO(null), "BigQueryIO(null)")
+    test(TableRowJsonIO(null), "TableRowJsonIO(null)")
     test(DatastoreIO(null), "DatastoreIO(null)")
     test(ProtobufIO[Message](null), "ProtobufIO(null)")
     test(PubSubIO[Message](null), "PubSubIOWithoutAttributes(null,null,null)")
@@ -653,6 +710,8 @@ class JobTestTest extends PipelineSpec {
     }
     test(ObjectFileIO(""), "ObjectFileIO()")
     test(AvroIO(""), "AvroIO(,null)")
+    test(BigQueryIO(""), "BigQueryIO()")
+    test(TableRowJsonIO(""), "TableRowJsonIO()")
     test(DatastoreIO(""), "DatastoreIO()")
     test(ProtobufIO[Message](""), "ProtobufIO()")
     test(PubSubIO[Message](""), "PubSubIOWithoutAttributes(,null,null)")
