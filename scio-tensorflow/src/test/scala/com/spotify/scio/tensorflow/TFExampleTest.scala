@@ -19,12 +19,13 @@ package com.spotify.scio.tensorflow
 
 import java.nio.file.Files
 
+import com.spotify.featran.{FeatureSpec, MultiFeatureSpec}
+import com.spotify.featran.transformers.{OneHotEncoder, StandardScaler}
 import com.spotify.scio._
+import com.spotify.scio.tensorflow.TFSavedJob.Iris
 import com.spotify.scio.testing.PipelineSpec
 import org.tensorflow.example.Example
 import org.tensorflow.metadata.v0.{FixedShape, Schema, SparseFeature}
-
-case class TrainingPoint(x1: Double, label: Double)
 
 object ExamplesJobV2 {
   def main(argv: Array[String]): Unit = {
@@ -56,28 +57,52 @@ object ExamplesJobV2WithSchema {
   }
 }
 
-class FeatranTFRecordTest extends PipelineSpec {
+object MultiSpecFeatranJob {
+  import com.spotify.featran.scio._
+  import com.spotify.featran.tensorflow._
 
-  "FeatranTFRecordSpec.normalizeName" should "work" in {
-    FeatranTFRecordSpec.normalizeName("foo") shouldBe "foo"
-    FeatranTFRecordSpec.normalizeName("Foo") shouldBe "Foo"
-    FeatranTFRecordSpec.normalizeName("foo bar") shouldBe "foo_bar"
-    FeatranTFRecordSpec.normalizeName("foo-bar") shouldBe "foo_bar"
-    FeatranTFRecordSpec.normalizeName("Foo-Bar") shouldBe "Foo_Bar"
-    FeatranTFRecordSpec.normalizeName("foo.bar-baz ala &33*(") shouldBe "foo_bar_baz_ala__33__"
+  val fSpec: FeatureSpec[Iris] = FeatureSpec
+    .of[Iris]
+    .optional(_.petalLength)(StandardScaler("petal_length", withMean = true))
+    .optional(_.petalWidth)(StandardScaler("petal_width", withMean = true))
+    .optional(_.sepalLength)(StandardScaler("sepal_length", withMean = true))
+    .optional(_.sepalWidth)(StandardScaler("sepal_width", withMean = true))
+
+  val lSpec: FeatureSpec[Iris] = FeatureSpec
+    .of[Iris]
+    .optional(_.className)(OneHotEncoder("class_name"))
+
+  val spec = MultiFeatureSpec(fSpec, lSpec)
+
+  def main(argv: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(argv)
+
+    val collection =
+      sc.parallelize(List(Iris(Some(5.1), Some(3.5), Some(1.4), Some(0.2), Some("Iris-setosa"))))
+
+    spec
+      .extract(collection)
+      .featureValues[Example]
+      .saveAsTfExampleFile(args("output"))
+
+    sc.close()
   }
+
+}
+
+class TFExampleTest extends PipelineSpec {
 
   "ExamplesJobV2" should "work" in {
     JobTest[ExamplesJobV2.type]
       .args("--output=out")
-      .output(TFExampleIO("out"))(_ should satisfy[Example](_.size == 2))
+      .output(TFExampleIO("out"))(_ should haveSize(2))
       .run()
   }
 
   "ExamplesJobV2WithCustomSchema" should "work" in {
     JobTest[ExamplesJobV2WithSchema.type]
       .args("--output=out")
-      .output(TFExampleIO("out"))(_ should satisfy[Example](_.size == 2))
+      .output(TFExampleIO("out"))(_ should haveSize(2))
       .run()
   }
 
@@ -91,5 +116,21 @@ class FeatranTFRecordTest extends PipelineSpec {
     sc.close()
     Files.readAllBytes(f) shouldBe schema.toByteArray
   }
+
+  "MultiSpecFeatranJob" should "work" in {
+    import scala.collection.JavaConverters._
+    JobTest[MultiSpecFeatranJob.type]
+      .args("--output=out")
+      .output(TFExampleIO("out"))(_ should satisfy[Example]{i =>
+        val features = i.head.getFeatures.getFeatureMap.asScala
+        // check that there are features from both sides of the multispec, also that there is the
+        // right number of features overall
+        features.contains("petal_width") &&
+          features.contains("class_name_Iris_setosa") &&
+          features.size == 5
+      })
+      .run()
+  }
+
 
 }

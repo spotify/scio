@@ -215,7 +215,7 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
    * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
    * @group output
    */
-  def saveAsTfExampleFile(path: String)(implicit ev: T <:< Example): Future[Tap[Example]] = {
+  def saveAsTfExampleFile(path: String): Future[Tap[Example]] = {
     this.saveAsTfExampleFile(
       path,
       schema = null,
@@ -223,7 +223,7 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
       suffix = ".tfrecords",
       compression = Compression.UNCOMPRESSED,
       numShards = 0
-    )(ev)
+    )
   }
 
   /**
@@ -231,7 +231,7 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
    * along with  `org.tensorflow.metadata.v0.Schema`.
    * @group output
    */
-  def saveAsTfExampleFile(path: String, schema: Schema)(implicit ev: T <:< Example)
+  def saveAsTfExampleFile(path: String, schema: Schema)
   : Future[Tap[Example]] = {
     this.saveAsTfExampleFile(
       path,
@@ -240,7 +240,7 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
       suffix = ".tfrecords",
       compression = Compression.UNCOMPRESSED,
       numShards = 0
-    )(ev)
+    )
   }
 
   /**
@@ -253,13 +253,12 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
                           schemaFilename: String,
                           suffix: String,
                           compression: Compression,
-                          numShards: Int)
-                          (implicit ev: T <:< Example): Future[Tap[Example]] = {
+                          numShards: Int): Future[Tap[Example]] = {
     require(schemaFilename != null && schemaFilename != "", "schema filename has to be set!")
     val schemaPath = path.replaceAll("\\/+$", "") + "/" + schemaFilename
     if (schema == null) {
       // by default if there is no schema provided infer and save schema
-      self.inferExampleMetadata(schemaPath)(ev)
+      self.inferExampleMetadata(schemaPath)
     } else {
       // TODO (#1252): maybe enforce some schema checks, but at least save the schema along the data
       TFExampleSCollectionFunctions
@@ -281,7 +280,7 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
    * @param schemaPath optional path to save infered schema
    * @return A singleton `SCollection` containing the schema
    */
-  def inferExampleMetadata(schemaPath: String = null)(implicit ev: T <:< Example)
+  def inferExampleMetadata(schemaPath: String = null)
   : SCollection[Schema] = {
     val result = examplesToFeatures(self.asInstanceOf[SCollection[Example]])
       .groupBy(_ => ())
@@ -363,6 +362,57 @@ class SeqTFExampleSCollectionFunctions[T <: Example](@transient val self: SColle
   def mergeExamples(e: Seq[Example]): Example =
     e.foldLeft(Example.newBuilder)((b, i) => b.mergeFrom(i))
       .build()
+
+  /**
+   * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
+   * Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
+   *
+   * @group output
+   */
+  def saveAsTfExampleFile(path: String): Future[Tap[Example]] = {
+    this.saveAsTfExampleFile(
+      path,
+      schema = null,
+      schemaFilename = "_inferred_schema.pb",
+      suffix = ".tfrecords",
+      compression = Compression.UNCOMPRESSED,
+      numShards = 0
+    )
+  }
+
+  /**
+   * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
+   * Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
+   *
+   * @group output
+   */
+  def saveAsTfExampleFile(path: String, schema: Schema)
+  : Future[Tap[Example]] = {
+    this.saveAsTfExampleFile(
+      path,
+      schema,
+      schemaFilename = "_schema.pb",
+      suffix = ".tfrecords",
+      compression = Compression.UNCOMPRESSED,
+      numShards = 0
+    )
+  }
+
+  /**
+   * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
+   * Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
+   *
+   * @group output
+   */
+  def saveAsTfExampleFile(path: String,
+                          schema: Schema,
+                          schemaFilename: String,
+                          suffix: String,
+                          compression: Compression,
+                          numShards: Int): Future[Tap[Example]] =
+    self
+      .map(this.mergeExamples)
+      .saveAsTfExampleFile(path, schema, schemaFilename, suffix, compression, numShards)
 
 }
 
