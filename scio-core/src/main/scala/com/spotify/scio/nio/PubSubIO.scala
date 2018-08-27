@@ -32,25 +32,26 @@ import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 sealed trait PubSubIO[T] extends ScioIO[T] {
-  case class ReadParams(isSubscription: Boolean)
+  override type ReadP = PubSubIO.ReadParam
+  override type WriteP = Unit
 
-  type ReadP = ReadParams
-  type WriteP = Unit
-
-  def tap(params: ReadParams): Tap[T] = throw new NotImplementedError("Pubsub tap not implemented")
+  override def tap(params: ReadP): Tap[T] =
+    throw new NotImplementedError("Pubsub tap not implemented")
 }
 
 object PubSubIO {
+  final case class ReadParam(isSubscription: Boolean)
+
   def apply[T: ClassTag](name: String,
                          idAttribute: String = null,
                          timestampAttribute: String = null): PubSubIO[T] =
-    new PubSubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
+    PubSubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
   def withAttributes[T: ClassTag](name: String,
                                   idAttribute: String = null,
                                   timestampAttribute: String = null)
   : PubSubIO[(T, Map[String, String])] =
-    new PubSubIOWithAttributes[T](name, idAttribute, timestampAttribute)
+    PubSubIOWithAttributes[T](name, idAttribute, timestampAttribute)
 }
 
 private case class PubSubIOWithoutAttributes[T: ClassTag](name: String,
@@ -59,9 +60,11 @@ private case class PubSubIOWithoutAttributes[T: ClassTag](name: String,
   extends PubSubIO[T] {
   private val cls = ScioUtil.classOf[T]
 
-  def id: String = name
+  override def toString: String = s"${classOf[PubSubIO[_]].getCanonicalName}($id)"
 
-  def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+  override def id: String = name
+
+  override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     def setup[U](read: BeamPubSubIO.Read[U]) = {
       var r = read
       r = if (params.isSubscription) r.fromSubscription(name) else r.fromTopic(name)
@@ -91,7 +94,7 @@ private case class PubSubIOWithoutAttributes[T: ClassTag](name: String,
     }
   }
 
-  def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
+  override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
     def setup[U](write: BeamPubSubIO.Write[U]) = {
       var w = write.to(name)
       if (idAttribute != null) {
@@ -132,9 +135,11 @@ private case class PubSubIOWithAttributes[T: ClassTag](name: String,
   extends PubSubIO[(T, Map[String, String])] {
   type WithAttributeMap = (T, Map[String, String])
 
-  def id: String = name
+  override def toString: String = s"${classOf[PubSubIO[_]].getCanonicalName}($id)"
 
-  def read(sc: ScioContext, params: ReadP): SCollection[WithAttributeMap] = {
+  override def id: String = name
+
+  override def read(sc: ScioContext, params: ReadP): SCollection[WithAttributeMap] = {
       var r = BeamPubSubIO.readMessagesWithAttributes()
       r = if (params.isSubscription) r.fromSubscription(name) else r.fromTopic(name)
       if (idAttribute != null) {
@@ -153,7 +158,8 @@ private case class PubSubIOWithAttributes[T: ClassTag](name: String,
         }
     }
 
-  def write(data: SCollection[WithAttributeMap], params: WriteP): Future[Tap[WithAttributeMap]] = {
+  override def write(data: SCollection[WithAttributeMap], params: WriteP)
+  : Future[Tap[WithAttributeMap]] = {
     var w = BeamPubSubIO.writeMessages().to(name)
     if (idAttribute != null) {
       w = w.withIdAttribute(idAttribute)

@@ -27,6 +27,7 @@ package com.spotify.scio.examples.nio
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.nio
+import com.spotify.scio.nio.TextIO
 import org.slf4j.LoggerFactory
 
 object WordCountNio {
@@ -54,7 +55,7 @@ object WordCountNio {
     val outputTextIO = nio.TextIO(output)
 
     // Open text files as an `SCollection[String]` passing io read params
-    sc.read(inputTextIO)(inputTextIO.ReadParams())
+    sc.read(inputTextIO)(TextIO.ReadParam())
       .map { w =>
         // Trim input lines, update distribution metric
         val trimmed = w.trim
@@ -74,7 +75,7 @@ object WordCountNio {
       // Map `(String, Long)` tuples into final "word: count" strings
       .map { case (word, count) => word + ": " + count }
       // Save result as text files under the output path by passing write params
-      .write(outputTextIO)(outputTextIO.WriteParams())
+      .write(outputTextIO)(TextIO.WriteParam())
 
     // Close the context, execute the pipeline and block until it finishes
     val result = sc.close().waitUntilFinish()

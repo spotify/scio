@@ -35,39 +35,33 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.util.Try
 
-case class TextIO(path: String) extends ScioIO[String] {
+final case class TextIO(path: String) extends ScioIO[String] {
 
-  case class ReadParams(compression: Compression = Compression.AUTO)
+  override type ReadP = TextIO.ReadParam
+  override type WriteP = TextIO.WriteParam
 
-  case class WriteParams(suffix: String = ".txt",
-                         numShards: Int = 0,
-                         compression: Compression = Compression.UNCOMPRESSED)
+  override def id: String = path
 
-  type ReadP = ReadParams
-  type WriteP = WriteParams
-
-  def id: String = path
-
-  def read(sc: ScioContext, params: ReadParams): SCollection[String] =
+  override def read(sc: ScioContext, params: ReadP): SCollection[String] =
     sc.wrap(sc.applyInternal(BTextIO.read().from(path)
       .withCompression(params.compression))).setName(path)
 
-  def write(data: SCollection[String], params: WriteParams): Future[Tap[String]] = {
+  override def write(data: SCollection[String], params: WriteP): Future[Tap[String]] = {
     data.applyInternal(textOut(path, params))
-    data.context.makeFuture(tap(ReadParams()))
+    data.context.makeFuture(tap(TextIO.ReadParam()))
   }
 
-  def tap(params: ReadParams): Tap[String] = new Tap[String] {
+  override def tap(params: ReadP): Tap[String] = new Tap[String] {
     override def value: Iterator[String] = TextIO.textFile(ScioUtil.addPartSuffix(path))
 
     override def open(sc: ScioContext): SCollection[String] = {
       val textIO = TextIO(ScioUtil.addPartSuffix(path))
-      val readParams = textIO.ReadParams(compression = params.compression)
+      val readParams = TextIO.ReadParam(compression = params.compression)
       textIO.read(sc, readParams)
     }
   }
 
-  private def textOut(path: String, params: WriteParams) =
+  private def textOut(path: String, params: WriteP) =
     BTextIO.write()
       .to(pathWithShards(path))
       .withSuffix(params.suffix)
@@ -79,6 +73,12 @@ case class TextIO(path: String) extends ScioIO[String] {
 }
 
 object TextIO {
+
+  final case class ReadParam(compression: Compression = Compression.AUTO)
+
+  final case class WriteParam(suffix: String = ".txt",
+                              numShards: Int = 0,
+                              compression: Compression = Compression.UNCOMPRESSED)
 
   private[scio] def textFile(path: String): Iterator[String] = {
     val factory = new CompressorStreamFactory()
