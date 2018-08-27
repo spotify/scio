@@ -46,24 +46,15 @@ case class TextIO(path: String) extends ScioIO[String] {
   type ReadP = ReadParams
   type WriteP = WriteParams
 
-  def read(sc: ScioContext, params: ReadParams): SCollection[String] = sc.requireNotClosed {
-    if (sc.isTest) {
-      sc.getTestInput(this)
-    } else {
-      sc.wrap(sc.applyInternal(BTextIO.read().from(path)
-        .withCompression(params.compression))).setName(path)
-    }
-  }
+  def id: String = path
+
+  def read(sc: ScioContext, params: ReadParams): SCollection[String] =
+    sc.wrap(sc.applyInternal(BTextIO.read().from(path)
+      .withCompression(params.compression))).setName(path)
 
   def write(data: SCollection[String], params: WriteParams): Future[Tap[String]] = {
-    if (data.context.isTest) {
-      data.context.testOut(this.id)(data)
-      // TODO: replace this with ScioIO[T] subclass when we have nio InMemoryIO[T]
-      data.saveAsInMemoryTap
-    } else {
-      data.applyInternal(textOut(path, params))
-      data.context.makeFuture(tap(ReadParams()))
-    }
+    data.applyInternal(textOut(path, params))
+    data.context.makeFuture(tap(ReadParams()))
   }
 
   def tap(params: ReadParams): Tap[String] = new Tap[String] {
@@ -85,8 +76,6 @@ case class TextIO(path: String) extends ScioIO[String] {
         FileBasedSink.CompressionType.fromCanonical(params.compression))
 
   private[scio] def pathWithShards(path: String) = path.replaceAll("\\/+$", "") + "/part"
-
-  def id: String = path
 }
 
 object TextIO {
