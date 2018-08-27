@@ -190,8 +190,8 @@ package object avro {
                               suffix: String = "",
                               compression: CompressionCodecName = CompressionCodecName.SNAPPY)
     : Future[Tap[T]] = {
-      val params = ParquetAvroIO.Parameters(numShards, schema, suffix, compression)
-      self.write(ParquetAvroIO[T](path))(params)
+      val param = ParquetAvroIO.WriteParam(numShards, schema, suffix, compression)
+      self.write(ParquetAvroIO[T](path))(param)
     }
   }
 
