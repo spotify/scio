@@ -27,10 +27,10 @@ import scala.concurrent.Future
 final case class CassandraIO[T](opts: CassandraOptions, parallelism: Int = 0)(f: T => Seq[Any])
   extends ScioIO[T] {
 
-  type ReadP = Nothing
-  type WriteP = Unit
+  override type ReadP = Nothing
+  override type WriteP = Unit
 
-  def id: String = {
+  override def id: String = {
     val sb = new StringBuilder
     if (opts.username != null && opts.password != null) {
       sb.append(s"${opts.username}:${opts.password}@")
@@ -43,8 +43,8 @@ final case class CassandraIO[T](opts: CassandraOptions, parallelism: Int = 0)(f:
     sb.toString()
   }
 
-  def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    throw new NotImplementedError("Can't read from Cassandra")
+  override def read(sc: ScioContext, params: ReadP): SCollection[T] =
+    throw new IllegalStateException("Can't read from Cassandra")
 
   /**
    * Save this SCollection as a Cassandra table.
@@ -55,15 +55,15 @@ final case class CassandraIO[T](opts: CassandraOptions, parallelism: Int = 0)(f:
    * occur at the end of each window in streaming mode. The bulk writer writes to all nodes in a
    * cluster so remote nodes in a multi-datacenter cluster may become a bottleneck.
    */
-  def write(sc: SCollection[T], params: WriteP): Future[Tap[T]] = {
+  override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
     val bulkOps = new BulkOperations(opts, parallelism)
-    sc
+    data
       .map(f.andThen(bulkOps.serializeFn))
       .groupBy(bulkOps.partitionFn)
       .map(bulkOps.writeFn)
     Future.failed(new NotImplementedError("Cassandra future is not implemented"))
   }
 
-  def tap(read: ReadP): Tap[T] =
+  override def tap(params: ReadP): Tap[T] =
     throw new NotImplementedError("Can't read from Cassandra")
 }
