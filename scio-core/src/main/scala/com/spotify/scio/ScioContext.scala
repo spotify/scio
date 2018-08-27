@@ -493,11 +493,11 @@ class ScioContext private[scio] (val options: PipelineOptions,
   private[scio] def testOut: TestOutput = TestDataManager.getOutput(testId.get)
   private[scio] def testDistCache: TestDistCache = TestDataManager.getDistCache(testId.get)
 
-  private[scio] def testOut[T](key: ScioIO[T]): SCollection[T] => Unit =
-    testOut(key.id)
+  private[scio] def testOut[T](io: ScioIO[T]): SCollection[T] => Unit =
+    testOut(io.toString)
 
-  private[scio] def getTestInput[T: ClassTag](key: ScioIO[T]): SCollection[T] =
-    this.parallelize(testIn(key.id).asInstanceOf[Seq[T]])
+  private[scio] def getTestInput[T: ClassTag](io: ScioIO[T]): SCollection[T] =
+    this.parallelize(testIn(io.toString).asInstanceOf[Seq[T]])
 
   // =======================================================================
   // Read operations
