@@ -100,9 +100,9 @@ object JobTest {
      * inside the pipeline, e.g. `AvroIO[MyRecord]("in.avro")` with
      * `sc.avroFile[MyRecord]("in.avro")`.
      */
-    def input[T](key: ScioIO[T], value: Iterable[T]): Builder = {
-      require(!state.input.contains(key.id), "Duplicate test input: " + key.id)
-      state = state.copy(input = state.input + (key.id -> value))
+    def input[T](io: ScioIO[T], value: Iterable[T]): Builder = {
+      require(!state.input.contains(io.toString), "Duplicate test input: " + io.toString)
+      state = state.copy(input = state.input + (io.toString -> value))
       this
     }
 
@@ -114,10 +114,10 @@ object JobTest {
      * @param assertion assertion for output data. See [[SCollectionMatchers]] for available
      *                  matchers on an [[com.spotify.scio.values.SCollection SCollection]].
      */
-    def output[T](key: ScioIO[T])(assertion: SCollection[T] => Unit): Builder = {
-      require(!state.output.contains(key.id), "Duplicate test output: " + key.id)
-      state = state
-        .copy(output = state.output + (key.id -> assertion.asInstanceOf[SCollection[_] => Unit]))
+    def output[T](io: ScioIO[T])(assertion: SCollection[T] => Unit): Builder = {
+      require(!state.output.contains(io.toString), "Duplicate test output: " + io.toString)
+      state = state.copy(
+        output = state.output + (io.toString -> assertion.asInstanceOf[SCollection[_] => Unit]))
       this
     }
 
