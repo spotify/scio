@@ -117,8 +117,7 @@ package object jdbc {
   /** Enhanced version of [[ScioContext]] with JDBC methods. */
   implicit class JdbcScioContext(@transient val self: ScioContext) extends Serializable {
     /** Get an SCollection for a JDBC query. */
-    def jdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T])
-    : SCollection[T] =
+    def jdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T]): SCollection[T] =
       self.read(jdbc.nio.Select(readOptions))
   }
 
