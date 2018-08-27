@@ -32,33 +32,22 @@ case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
   type ReadP = ReadParams
   type WriteP = Unit
 
-  override def read(sc: ScioContext, params: ReadP)
-  : SCollection[Entity] = sc.requireNotClosed {
-    if (sc.isTest) {
-      sc.getTestInput(this)
-    } else {
-      sc.wrap(sc.applyInternal(
-        BDatastoreIO.v1().read()
-          .withProjectId(projectId)
-          .withNamespace(params.namespace)
-          .withQuery(params.query)))
-    }
-  }
+  override def id: String = projectId
+
+  override def read(sc: ScioContext, params: ReadP): SCollection[Entity] =
+    sc.wrap(sc.applyInternal(
+      BDatastoreIO.v1().read()
+        .withProjectId(projectId)
+        .withNamespace(params.namespace)
+        .withQuery(params.query)))
 
   override def write(data: SCollection[Entity], params: WriteP): Future[Tap[Entity]] = {
-    if (data.context.isTest) {
-      data.context.testOut(this)(data)
-      // TODO: replace this with ScioIO[T] subclass when we have nio InMemoryIO[T]
-      data.saveAsInMemoryTap
-    } else {
-      data.asInstanceOf[SCollection[Entity]].applyInternal(
-        BDatastoreIO.v1.write.withProjectId(projectId))
-    }
+    data.asInstanceOf[SCollection[Entity]].applyInternal(
+      BDatastoreIO.v1.write.withProjectId(projectId))
     Future.failed(new NotImplementedError("Datastore future not implemented"))
   }
 
-  override def tap(read: ReadParams): Tap[Entity] =
+  override def tap(params: ReadParams): Tap[Entity] =
     throw new NotImplementedError("Datastore tap not implemented")
 
-  override def id: String = projectId
 }
