@@ -34,22 +34,19 @@ final class BigQueryScioContext(@transient val self: ScioContext) extends Serial
    * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
-   * @group input
    */
   def bigQuerySelect(sqlQuery: String,
                      flattenResults: Boolean = false): SCollection[TableRow] =
-    self.read(nio.Select(sqlQuery))(nio.Select.FlattenResults(flattenResults))
+    self.read(nio.Select(sqlQuery))(nio.Select.ReadParam(flattenResults))
 
   /**
    * Get an SCollection for a BigQuery table.
-   * @group input
    */
   def bigQueryTable(table: TableReference): SCollection[TableRow] =
     self.read(nio.TableRef(table))
 
   /**
    * Get an SCollection for a BigQuery table.
-   * @group input
    */
   def bigQueryTable(tableSpec: String): SCollection[TableRow] =
     self.read(nio.TableSpec(tableSpec))
@@ -90,9 +87,8 @@ final class BigQueryScioContext(@transient val self: ScioContext) extends Serial
 
   /**
    * Get an SCollection for a BigQuery TableRow JSON file.
-   * @group input
    */
   def tableRowJsonFile(path: String): SCollection[TableRow] =
-    self.read(nio.TableRowJsonFile(path))
+    self.read(nio.TableRowJsonIO(path))
 
 }
