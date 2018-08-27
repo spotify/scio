@@ -38,6 +38,8 @@ trait ScioIO[T] {
   type ReadP
   type WriteP
 
+  override def toString: String = s"${getClass.getSimpleName}($id)"
+
   def id: String
 
   def read(sc: ScioContext, params: ReadP): SCollection[T]
