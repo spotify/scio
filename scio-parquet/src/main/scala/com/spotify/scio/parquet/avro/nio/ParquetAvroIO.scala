@@ -33,52 +33,48 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
 import scala.concurrent.Future
 
-final case class ParquetAvroIO[T](path: String)
-    extends ScioIO[T] {
+final case class ParquetAvroIO[T](path: String) extends ScioIO[T] {
 
   type ReadP = Nothing
   type WriteP = ParquetAvroIO.WriteParam
 
-  def id: String = path
+  override def id: String = path
 
   // FIXME: implement this
-  def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    throw new IllegalStateException("Can't read directly from parquet avro file")
+  override def read(sc: ScioContext, params: ReadP): SCollection[T] =
+    throw new IllegalStateException("ParquetAvroIO is read-only")
 
-  def tap(params: ReadP): Tap[T] =
-    throw new IllegalStateException("Can't create a Tap for parquet avro file")
-
-  def write(sc: SCollection[T], params: WriteP): Future[Tap[T]] = params match {
-    case ParquetAvroIO.Parameters(numShards, schema, suffix, compression) =>
+  override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
       val job = Job.getInstance()
-      if (ScioUtil.isLocalRunner(sc.context.options.getRunner)) {
+      if (ScioUtil.isLocalRunner(data.context.options.getRunner)) {
         GcsConnectorUtil.setCredentials(job)
       }
 
-      val cls = sc.ct.runtimeClass
+      val cls = data.ct.runtimeClass
       val writerSchema = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
         ReflectData.get().getSchema(cls)
       } else {
-        schema
+        params.schema
       }
-      val resource = FileBasedSink.convertToFileResourceIfPossible(sc.pathWithShards(path))
+      val resource = FileBasedSink.convertToFileResourceIfPossible(data.pathWithShards(path))
       val prefix = StaticValueProvider.of(resource)
       val usedFilenamePolicy = DefaultFilenamePolicy.fromStandardParameters(
         prefix, null, "", false)
       val destinations = DynamicFileDestinations.constant[T](usedFilenamePolicy)
       val sink = new ParquetAvroSink[T](
-        prefix, destinations, writerSchema, job.getConfiguration, compression)
-      val t = HadoopWriteFiles.to(sink).withNumShards(numShards)
-      sc.applyInternal(t)
+        prefix, destinations, writerSchema, job.getConfiguration, params.compression)
+      val t = HadoopWriteFiles.to(sink).withNumShards(params.numShards)
+      data.applyInternal(t)
       Future.failed(new NotImplementedError("Parquet Avro future not implemented"))
   }
+
+  override def tap(params: ReadP): Tap[T] =
+    throw new NotImplementedError("Parquet Avro tap not implemented")
 }
 
 object ParquetAvroIO {
-  sealed trait WriteParam
-  final case class Parameters(numShards: Int = 0,
+  final case class WriteParam(numShards: Int = 0,
                               schema: Schema = null,
                               suffix: String = "",
                               compression: CompressionCodecName = CompressionCodecName.SNAPPY)
-      extends WriteParam
 }
