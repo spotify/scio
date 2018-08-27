@@ -943,10 +943,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def saveAsPubsub(topic: String,
                    idAttribute: String = null,
                    timestampAttribute: String = null)
-  : Future[Tap[T]] = {
-    val io = nio.PubSubIO[T](topic)
-    this.write(io)
-  }
+  : Future[Tap[T]] =
+    this.write(nio.PubSubIO[T](topic))
 
   /**
     * Save this SCollection as a Pub/Sub topic using the given map as message attributes.
@@ -970,13 +968,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                      numShards: Int = 0,
                      compression: Compression = Compression.UNCOMPRESSED)
   : Future[Tap[String]] = {
-    val io = nio.TextIO(path)
     val s = if (classOf[String] isAssignableFrom this.ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
     } else {
       this.map(_.toString)
     }
-    s.write(io)(io.WriteParams(suffix, numShards, compression))
+    s.write(nio.TextIO(path))(nio.TextIO.WriteParam(suffix, numShards, compression))
   }
 
   /**

@@ -38,7 +38,7 @@ trait ScioIO[T] {
   type ReadP
   type WriteP
 
-  override def toString: String = s"${getClass.getSimpleName}($id)"
+  override def toString: String = s"${getClass.getCanonicalName}($id)"
 
   def id: String
 
@@ -53,30 +53,30 @@ object ScioIO {
   // scalastyle:off structural.type
   type ReadOnly[T, R] =
     ScioIO[T] {
-      type ReadP = R
-      type WriteP = Nothing
+      override type ReadP = R
+      override type WriteP = Nothing
     }
 
   type Aux[T, R, W] =
     ScioIO[T] {
-      type ReadP = R
-      type WriteP = W
+      override type ReadP = R
+      override type WriteP = W
     }
 
   def ro[T](io: ScioIO[T]): ScioIO.ReadOnly[T, io.ReadP] =
     new ScioIO[T] {
-      type ReadP = io.ReadP
-      type WriteP = Nothing
+      override type ReadP = io.ReadP
+      override type WriteP = Nothing
 
-      def id: String = io.id
+      override def id: String = io.id
 
-      def read(sc: ScioContext, params: ReadP): SCollection[T] =
+      override def read(sc: ScioContext, params: ReadP): SCollection[T] =
         io.read(sc, params)
 
-      def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
+      override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
         throw new IllegalStateException("read-only IO. This code should be unreachable")
 
-      def tap(params: ReadP): Tap[T] =
+      override def tap(params: ReadP): Tap[T] =
         io.tap(params)
     }
   // scalastyle:on structural.type

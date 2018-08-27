@@ -107,7 +107,7 @@ class ScioContextTest extends PipelineSpec {
 
     val sc = ScioContext()
     val textIO = TextIO(output.getAbsolutePath)
-    sc.parallelize(Seq("a", "b", "c")).write(textIO)(textIO.WriteParams())
+    sc.parallelize(Seq("a", "b", "c")).write(textIO)(TextIO.WriteParam())
     output.exists() shouldBe false
 
     sc.close()

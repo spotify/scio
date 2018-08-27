@@ -27,7 +27,7 @@ import java.nio.file.Files
 import com.google.datastore.v1.{Entity, Query}
 import com.spotify.scio.io.Tap
 import com.spotify.scio.metrics.Metrics
-import com.spotify.scio.nio.ScioIO
+import com.spotify.scio.nio.{DatastoreIO, ScioIO}
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
@@ -511,17 +511,15 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection for a Datastore query.
    * @group input
    */
-  def datastore(projectId: String, query: Query, namespace: String = null): SCollection[Entity] = {
-    val io = nio.DatastoreIO(projectId)
-    this.read(io)(io.ReadParams(query, namespace))
-  }
+  def datastore(projectId: String, query: Query, namespace: String = null): SCollection[Entity] =
+    this.read(nio.DatastoreIO(projectId))(DatastoreIO.ReadParam(query, namespace))
 
   private def pubsubIn[T: ClassTag](isSubscription: Boolean,
                                     name: String,
                                     idAttribute: String,
                                     timestampAttribute: String): SCollection[T] = {
     val io = nio.PubSubIO[T](name, idAttribute, timestampAttribute)
-    this.read(io)(io.ReadParams(isSubscription))
+    this.read(io)(nio.PubSubIO.ReadParam(isSubscription))
   }
 
   /**
@@ -548,7 +546,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
                                                   timestampAttribute: String)
   : SCollection[(T, Map[String, String])] = {
     val io = nio.PubSubIO.withAttributes[T](name, idAttribute, timestampAttribute)
-    this.read(io)(io.ReadParams(isSubscription))
+    this.read(io)(nio.PubSubIO.ReadParam(isSubscription))
   }
 
   /**
@@ -576,12 +574,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection for a text file.
    * @group input
    */
-  def textFile(path: String,
-                compression: gio.Compression = gio.Compression.AUTO)
-  : SCollection[String] = {
-    val io = nio.TextIO(path)
-    this.read(io)(io.ReadParams(compression))
-  }
+  def textFile(path: String, compression: gio.Compression = gio.Compression.AUTO)
+  : SCollection[String] =
+    this.read(nio.TextIO(path))(nio.TextIO.ReadParam(compression))
 
   /**
    * Get an SCollection with a custom input transform. The transform should have a unique name.
