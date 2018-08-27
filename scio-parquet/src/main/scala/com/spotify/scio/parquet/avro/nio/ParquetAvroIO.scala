@@ -36,7 +36,7 @@ import scala.concurrent.Future
 final case class ParquetAvroIO[T](path: String)
     extends ScioIO[T] {
 
-  type ReadP = Unit
+  type ReadP = Nothing
   type WriteP = ParquetAvroIO.WriteParam
 
   def id: String = path

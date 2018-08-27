@@ -60,7 +60,7 @@ final case class Select[T: ClassTag](readOptions: JdbcReadOptions[T])
     case JdbcReadOptions(connOpts, query, _, _, _) => jdbcIoId(connOpts, query)
   }
 
-  def read(sc: ScioContext, params: ReadP): SCollection[T] = sc.requireNotClosed {
+  def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
     val connOpts = readOptions.connectionOptions
     var transform = jio.JdbcIO.read[T]()
@@ -87,12 +87,11 @@ final case class Select[T: ClassTag](readOptions: JdbcReadOptions[T])
     sc.wrap(sc.applyInternal(transform)).setName(sc.tfName)
   }
 
-  def tap(read: ReadP): Tap[T] =
-    throw new NotImplementedError("JDBC Tap is not implemented")
+  def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
+    throw new IllegalStateException("Can't write to a SQL Select")
 
-  def write(sc: SCollection[T], params: WriteP): Future[Tap[T]] = {
-    throw new NotImplementedError("Can't write to a SQL Select")
-  }
+  def tap(params: ReadP): Tap[T] =
+    throw new NotImplementedError("JDBC Tap is not implemented")
 }
 
 final case class Write[T](writeOptions: JdbcWriteOptions[T])
@@ -111,12 +110,9 @@ final case class Write[T](writeOptions: JdbcWriteOptions[T])
     }
 
     def read(sc: ScioContext, params: ReadP): SCollection[T] =
-      throw new NotImplementedError("Can't read from a JDBC Write")
+      throw new IllegalStateException("Can't read from a JDBC Write")
 
-    def tap(read: ReadP): Tap[T] =
-      throw new NotImplementedError("JDBC Tap is not implemented")
-
-    def write(sc: SCollection[T], params: WriteP): Future[Tap[T]] = {
+    def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
       val connOpts = writeOptions.connectionOptions
       var transform = jio.JdbcIO.write[T]()
         .withDataSourceConfiguration(getDataSourceConfig(writeOptions.connectionOptions))
@@ -133,7 +129,10 @@ final case class Write[T](writeOptions: JdbcWriteOptions[T])
         // override default batch size.
         transform = transform.withBatchSize(writeOptions.batchSize)
       }
-      sc.applyInternal(transform)
+      data.applyInternal(transform)
       Future.failed(new NotImplementedError("JDBC future is not implemented"))
     }
+
+  def tap(params: ReadP): Tap[T] =
+    throw new NotImplementedError("JDBC Tap is not implemented")
 }
