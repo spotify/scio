@@ -19,14 +19,14 @@ package com.spotify.scio.bigquery.nio
 
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.ScioContext
-import com.spotify.scio.bigquery.{BigQueryType, BigQueryClient}
+import com.spotify.scio.bigquery.{BigQueryClient, BigQueryType}
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.io.{BigQueryTap, TableRowJsonTap}
-import com.spotify.scio.nio.ScioIO
+import com.spotify.scio.nio.{ScioIO, TestIO}
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.{KryoAtomicCoder, KryoOptions}
-import com.google.api.services.bigquery.model.{TableRow, TableReference, TableSchema}
+import com.google.api.services.bigquery.model.{TableReference, TableRow, TableSchema}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.{bigquery => bqio}
 import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
@@ -34,6 +34,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, 
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.{io => gio}
+
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
@@ -45,11 +46,10 @@ private object Reads {
       BigQueryClient(o.getProject, o.getGcpCredential)
     }
 
-  private[scio] def bqReadQuery[T: ClassTag](sc: ScioContext)(
-                                       typedRead: bqio.BigQueryIO.TypedRead[T],
-                                       sqlQuery: String,
-                                       flattenResults: Boolean  = false)
-  : SCollection[T] = {
+  private[scio] def bqReadQuery[T: ClassTag](sc: ScioContext)
+                                            (typedRead: bqio.BigQueryIO.TypedRead[T],
+                                             sqlQuery: String,
+                                             flattenResults: Boolean  = false): SCollection[T] = {
     val bigQueryClient = Reads.client(sc)
     import sc.wrap
     if (bigQueryClient.isCacheEnabled) {
@@ -94,32 +94,12 @@ private object Reads {
   }
 }
 
-trait BigQueryIO[T] extends ScioIO[T] {
-  override def toString: String = s"BigQueryIO($id)"
+sealed trait BigQueryIO[T] extends TestIO[T] {
+  override def toString: String = s"${classOf[BigQueryIO[_]].getCanonicalName}($id)"
 }
 
 object BigQueryIO {
   def apply[T](_id: String): BigQueryIO[T] = new BigQueryIO[T] {
-    override type ReadP = Nothing
-    override type WriteP = Nothing
-    override def read(sc: ScioContext, params: ReadP): SCollection[T] = ???
-    override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = ???
-    override def tap(read: Nothing): Tap[T] = ???
-    override def id: String = _id
-  }
-}
-
-trait TableRowJsonIO extends ScioIO[TableRow] {
-  override def toString: String = s"TableRowJsonIO($id)"
-}
-
-object TableRowJsonIO {
-  def apply(_id: String): TableRowJsonIO = new TableRowJsonIO {
-    override type ReadP = Nothing
-    override type WriteP = Nothing
-    override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] = ???
-    override def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] = ???
-    override def tap(read: Nothing): Tap[TableRow] = ???
     override def id: String = _id
   }
 }
@@ -131,144 +111,131 @@ object TableRowJsonIO {
  * supported. By default the query dialect will be automatically detected. To override this
  * behavior, start the query string with `#legacysql` or `#standardsql`.
  */
-final case class Select(sqlQuery: String) extends BigQueryIO[TableRow] {
-  import Select._
-  type ReadP = ReadParam
-  type WriteP = Nothing // ReadOnly
+final case class Select(sqlQuery: String) extends ScioIO[TableRow] {
+  override type ReadP = Select.ReadParam
+  override type WriteP = Nothing // ReadOnly
 
-  def id: String = sqlQuery
+  override def toString: String = s"${classOf[BigQueryIO[_]].getCanonicalName}($id)"
 
   private lazy val bqc = BigQueryClient.defaultInstance()
 
-  def read(sc: ScioContext, params: ReadParam): SCollection[TableRow] =
-    params match {
-      case FlattenResults(flattenResults) =>
-        Reads.bqReadQuery(sc)(bqio.BigQueryIO.readTableRows(), sqlQuery, flattenResults)
-    }
+  override def id: String = sqlQuery
 
-  def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
+  override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
+    Reads.bqReadQuery(sc)(bqio.BigQueryIO.readTableRows(), sqlQuery, params.flattenResults)
+
+  override def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
     throw new IllegalStateException("Select queries are read-only")
 
-  def tap(params: ReadParam): Tap[TableRow] =
-    params match {
-      case FlattenResults(f) =>
-        val table = bqc.query(sqlQuery, flattenResults = f)
-        BigQueryTap(table)
-    }
+  override def tap(params: ReadP): Tap[TableRow] =
+    BigQueryTap(bqc.query(sqlQuery, flattenResults = params.flattenResults))
 }
 
 object Select {
-  sealed trait ReadParam
-  final case class FlattenResults(value: Boolean = false) extends ReadParam
+  final case class ReadParam(flattenResults: Boolean = false)
 }
 
 /**
  * Get an IO for a BigQuery table.
  */
-final case class TableRef(table: TableReference) extends BigQueryIO[TableRow] {
-  type ReadP = Unit
-  type WriteP = TableRef.WriteParam
+final case class TableRef(table: TableReference) extends ScioIO[TableRow] {
+  override type ReadP = Unit
+  override type WriteP = TableRef.WriteParam
 
-  def id: String = bqio.BigQueryHelpers.toTableSpec(table)
+  override def toString: String = s"${classOf[BigQueryIO[_]].getCanonicalName}($id)"
 
-  def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
+  override def id: String = bqio.BigQueryHelpers.toTableSpec(table)
+
+  override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     Reads.bqReadTable(sc)(bqio.BigQueryIO.readTableRows(), table)
 
-  def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
-    params match {
-      case TableRef.Parameters(schema, writeDisposition, createDisposition, tableDescription) =>
-        var transform = bqio.BigQueryIO.writeTableRows().to(table)
-        if (schema != null) transform = transform.withSchema(schema)
-        if (createDisposition != null) {
-          transform = transform.withCreateDisposition(createDisposition)
-        }
-        if (writeDisposition != null) transform = transform.withWriteDisposition(writeDisposition)
-        if (tableDescription != null) transform = transform.withTableDescription(tableDescription)
-        data.applyInternal(transform)
-
-        if (writeDisposition == WriteDisposition.WRITE_APPEND) {
-          Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
-        } else {
-          data.context.makeFuture(BigQueryTap(table))
-        }
+  override def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] = {
+    var transform = bqio.BigQueryIO.writeTableRows().to(table)
+    if (params.schema != null) transform = transform.withSchema(params.schema)
+    if (params.createDisposition != null) {
+      transform = transform.withCreateDisposition(params.createDisposition)
     }
+    if (params.writeDisposition != null) transform = {
+      transform.withWriteDisposition(params.writeDisposition)
+    }
+    if (params.tableDescription != null) transform = {
+      transform.withTableDescription(params.tableDescription)
+    }
+    data.applyInternal(transform)
 
-  def tap(read: ReadP): Tap[TableRow] = BigQueryTap(table)
+    if (params.writeDisposition == WriteDisposition.WRITE_APPEND) {
+      Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
+    } else {
+      data.context.makeFuture(BigQueryTap(table))
+    }
+  }
+
+  override def tap(read: ReadP): Tap[TableRow] = BigQueryTap(table)
 }
 
 object TableRef {
-  sealed trait WriteParam
-  final case class Parameters(
+  final case class WriteParam(
     schema: TableSchema,
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition,
-    tableDescription: String) extends WriteParam
+    tableDescription: String)
 }
 
 /**
  * Get an SCollection for a BigQuery table.
- * @group input
  */
-final case class TableSpec(tableSpec: String) extends BigQueryIO[TableRow] {
-  type ReadP = Unit
-  type WriteP = TableSpec.WriteParam
+final case class TableSpec(tableSpec: String) extends ScioIO[TableRow] {
+  override type ReadP = Unit
+  override type WriteP = TableSpec.WriteParam
 
-  def id: String = tableSpec
+  override def toString: String = s"${classOf[BigQueryIO[_]].getCanonicalName}($id)"
+
   private lazy val ref = bqio.BigQueryHelpers.parseTableSpec(tableSpec)
 
-  def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
+  override def id: String = tableSpec
+
+  override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     TableRef(ref).read(sc, params)
 
-  def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
-    params match {
-      case TableSpec.Parameters(schema, writeDisposition, createDisposition, tableDescription) =>
-        val p = TableRef.Parameters(schema, writeDisposition, createDisposition, tableDescription)
-        TableRef(ref).write(data, p)
-    }
+  override def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
+    TableRef(ref).write(data, params)
 
-  def tap(read: ReadP): Tap[TableRow] = TableRef(ref).tap(read)
+  override def tap(read: ReadP): Tap[TableRow] = TableRef(ref).tap(read)
 }
 
 object TableSpec {
-  sealed trait WriteParam
-  final case class Parameters(
-    schema: TableSchema,
-    writeDisposition: WriteDisposition,
-    createDisposition: CreateDisposition,
-    tableDescription: String) extends WriteParam
+  type WriteParam = TableRef.WriteParam
+  val WriteParam = TableRef.WriteParam
 }
 
 /**
  * Get an IO for a BigQuery TableRow JSON file.
  */
-final case class TableRowJsonFile(path: String) extends BigQueryIO[TableRow] {
-  type ReadP = Unit
-  type WriteP = TableRowJsonFile.Parameters
+final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
+  override type ReadP = Unit
+  override type WriteP = TableRowJsonIO.WriteParam
 
-  def id: String = path
+  override def id: String = path
 
-  def read(sc: ScioContext, params: ReadP): SCollection[TableRow] = {
+  override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] = {
     sc.wrap(sc.applyInternal(gio.TextIO.read().from(path))).setName(path)
       .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
   }
 
-  def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
-    params match {
-      case TableRowJsonFile.Parameters(numShards, compression) =>
-        data
-          .map(e => ScioUtil.jsonFactory.toString(e))
-          .applyInternal(data.textOut(path, ".json", numShards, compression))
-        data.context.makeFuture(tap(Unit))
-    }
+  override def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] = {
+    data
+      .map(e => ScioUtil.jsonFactory.toString(e))
+      .applyInternal(data.textOut(path, ".json", params.numShards, params.compression))
+    data.context.makeFuture(tap(Unit))
+  }
 
-  def tap(read: ReadP): Tap[TableRow] = TableRowJsonTap(ScioUtil.addPartSuffix(path))
+  override def tap(read: ReadP): Tap[TableRow] = TableRowJsonTap(ScioUtil.addPartSuffix(path))
 }
 
-object TableRowJsonFile {
-  sealed trait WriteParam
-  final case class Parameters(
+object TableRowJsonIO {
+  final case class WriteParam(
     numShards: Int = 0,
-    compression: Compression = Compression.UNCOMPRESSED) extends WriteParam
+    compression: Compression = Compression.UNCOMPRESSED)
 }
 
 object Typed {
@@ -298,10 +265,10 @@ object Typed {
         }
 
     implicit def queryIO[T <: HasAnnotation : ClassTag : TypeTag](
-      implicit t: BigQueryType.Query[T]): Aux[T, Query] =
+      implicit t: BigQueryType.Query[T]): Aux[T, Select] =
         new IO[T] {
-          type F[A <: HasAnnotation] = Query[A]
-          def impl: Query[T] = Query(t.query)
+          type F[A <: HasAnnotation] = Select[A]
+          def impl: Select[T] = Select(t.query)
         }
   }
   // scalastyle:on structural.type
@@ -326,76 +293,80 @@ object Typed {
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
-  case class Query[T <: HasAnnotation : ClassTag : TypeTag](query: String) extends BigQueryIO[T] {
-    type ReadP = Unit
-    type WriteP = Nothing // ReadOnly
+  final case class Select[T <: HasAnnotation : ClassTag : TypeTag](query: String)
+    extends ScioIO[T] {
+    override type ReadP = Unit
+    override type WriteP = Nothing // ReadOnly
 
-    def id: String = query
     private lazy val bqt = BigQueryType[T]
 
-    def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    override def toString: String = s"${classOf[BigQueryIO[_]].getCanonicalName}($id)"
+
+    override def id: String = query
+
+    override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
       Reads.bqReadQuery(sc)(typedRead(sc), query)
     }
 
-    def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
+    override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
       throw new IllegalStateException("Select queries are read-only")
 
-    def tap(params: ReadP): Tap[T] =
-      Select(query)
-        .tap(Select.FlattenResults())
+    override def tap(params: ReadP): Tap[T] =
+      com.spotify.scio.bigquery.nio.Select(query)
+        .tap(com.spotify.scio.bigquery.nio.Select.ReadParam(flattenResults = false))
         .map(bqt.fromTableRow)
   }
 
   /**
    * Get a typed SCollection for a BigQuery table.
    */
-  case class Table[T <: HasAnnotation : ClassTag : TypeTag](table: TableReference)
-    extends BigQueryIO[T] {
-    type ReadP = Unit
-    type WriteP = Table.WriteParam
+  final case class Table[T <: HasAnnotation : ClassTag : TypeTag](table: TableReference)
+    extends ScioIO[T] {
+    override type ReadP = Unit
+    override type WriteP = Table.WriteParam
 
-    def id: String = bqio.BigQueryHelpers.toTableSpec(table)
     private lazy val bqt = BigQueryType[T]
 
-    def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    override def toString: String = s"${classOf[BigQueryIO[_]].getCanonicalName}($id)"
+
+    override def id: String = bqio.BigQueryHelpers.toTableSpec(table)
+
+    override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
       Reads.bqReadTable(sc)(typedRead(sc), table)
     }
 
-    def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
-      params match {
-        case Table.Parameters(writeDisposition, createDisposition) =>
-          val initialTfName = data.tfName
-          import scala.concurrent.ExecutionContext.Implicits.global
-          val scoll =
-            data
-              .map(bqt.toTableRow)
-              .withName(s"$initialTfName$$Write")
+    override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
+      val initialTfName = data.tfName
+      import scala.concurrent.ExecutionContext.Implicits.global
+      val rows =
+        data
+          .map(bqt.toTableRow)
+          .withName(s"$initialTfName$$Write")
 
-          val ps =
-            TableRef.Parameters(
-              bqt.schema,
-              writeDisposition,
-              createDisposition,
-              bqt.tableDescription.orNull)
+      val ps =
+        TableRef.WriteParam(
+          bqt.schema,
+          params.writeDisposition,
+          params.createDisposition,
+          bqt.tableDescription.orNull)
 
-          TableRef(table)
-            .write(scoll, ps)
-            .map(_.map(bqt.fromTableRow))
-      }
+      TableRef(table)
+        .write(rows, ps)
+        .map(_.map(bqt.fromTableRow))
+    }
 
-    def tap(read: ReadP): Tap[T] =
+    override def tap(read: ReadP): Tap[T] =
       TableRef(table)
         .tap(read)
         .map(bqt.fromTableRow)
   }
 
   object Table {
-    sealed trait WriteParam
-    final case class Parameters(
+    final case class WriteParam(
       writeDisposition: WriteDisposition,
-      createDisposition: CreateDisposition) extends WriteParam
+      createDisposition: CreateDisposition)
 
     def apply[T <: HasAnnotation : ClassTag : TypeTag](tableSpec: String): Table[T] =
       Table[T](bqio.BigQueryHelpers.parseTableSpec(tableSpec))
@@ -416,13 +387,13 @@ object Typed {
         ScioIO.ro[T](Table(table))
       case null if bqt.isQuery =>
         val _query = bqt.query.get
-        Query[T](_query)
+        Select[T](_query)
       case null =>
         throw new IllegalArgumentException(s"Missing table or query field in companion object")
       case _ if table.isDefined =>
         ScioIO.ro(Table[T](newSource))
       case _ =>
-        Query[T](newSource)
+        Select[T](newSource)
     }
   }
 }

@@ -34,31 +34,29 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
   /**
    * Save this SCollection as a BigQuery table. Note that elements must be of type
    * [[com.google.api.services.bigquery.model.TableRow TableRow]].
-   * @group output
    */
   def saveAsBigQuery(table: TableReference, schema: TableSchema,
                      writeDisposition: WriteDisposition,
                      createDisposition: CreateDisposition,
                      tableDescription: String)
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
-    val params =
-      nio.TableRef.Parameters(schema, writeDisposition, createDisposition, tableDescription)
-    self.asInstanceOf[SCollection[TableRow]].write(nio.TableRef(table))(params)
+    val param =
+      nio.TableRef.WriteParam(schema, writeDisposition, createDisposition, tableDescription)
+    self.asInstanceOf[SCollection[TableRow]].write(nio.TableRef(table))(param)
   }
 
   /**
    * Save this SCollection as a BigQuery table. Note that elements must be of type
    * [[com.google.api.services.bigquery.model.TableRow TableRow]].
-   * @group output
    */
   def saveAsBigQuery(tableSpec: String, schema: TableSchema = null,
                      writeDisposition: WriteDisposition = null,
                      createDisposition: CreateDisposition = null,
                      tableDescription: String = null)
                     (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
-    val params =
-      nio.TableSpec.Parameters(schema, writeDisposition, createDisposition, tableDescription)
-    self.asInstanceOf[SCollection[TableRow]].write(nio.TableSpec(tableSpec))(params)
+    val param =
+      nio.TableSpec.WriteParam(schema, writeDisposition, createDisposition, tableDescription)
+    self.asInstanceOf[SCollection[TableRow]].write(nio.TableSpec(tableSpec))(param)
   }
 
   /**
@@ -70,9 +68,9 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
                           createDisposition: CreateDisposition)
                          (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
   : Future[Tap[T]] = {
-    val params = nio.Typed.Table.Parameters(writeDisposition, createDisposition)
+    val param = nio.Typed.Table.WriteParam(writeDisposition, createDisposition)
     self.asInstanceOf[SCollection[T with HasAnnotation]]
-      .write(nio.Typed.Table[T with HasAnnotation](table))(params)
+      .write(nio.Typed.Table[T with HasAnnotation](table))(param)
       .asInstanceOf[Future[Tap[T]]]
   }
 
@@ -111,9 +109,9 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
                           createDisposition: CreateDisposition = null)
                          (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
   : Future[Tap[T]] = {
-    val params = nio.Typed.Table.Parameters(writeDisposition, createDisposition)
+    val param = nio.Typed.Table.WriteParam(writeDisposition, createDisposition)
     self.asInstanceOf[SCollection[T with HasAnnotation]]
-      .write(nio.Typed.Table[T with HasAnnotation](tableSpec))(params)
+      .write(nio.Typed.Table[T with HasAnnotation](tableSpec))(param)
       .asInstanceOf[Future[Tap[T]]]
   }
 
@@ -121,13 +119,12 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
   /**
    * Save this SCollection as a BigQuery TableRow JSON text file. Note that elements must be of
    * type [[com.google.api.services.bigquery.model.TableRow TableRow]].
-   * @group output
    */
   def saveAsTableRowJsonFile(path: String,
                              numShards: Int = 0,
                              compression: Compression = Compression.UNCOMPRESSED)
                             (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
-    val params = nio.TableRowJsonFile.Parameters(numShards, compression)
-    self.asInstanceOf[SCollection[TableRow]].write(nio.TableRowJsonFile(path))(params)
+    val param = nio.TableRowJsonIO.WriteParam(numShards, compression)
+    self.asInstanceOf[SCollection[TableRow]].write(nio.TableRowJsonIO(path))(param)
   }
 }
