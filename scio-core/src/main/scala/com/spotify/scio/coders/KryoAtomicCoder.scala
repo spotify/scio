@@ -20,8 +20,6 @@ package com.spotify.scio.coders
 import java.io.{EOFException, InputStream, OutputStream}
 import java.nio.file.Path
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Function
 
 import com.esotericsoftware.kryo.KryoException
 import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
@@ -233,27 +231,29 @@ private[scio] object KryoAtomicCoder {
   private val logger = LoggerFactory.getLogger(this.getClass)
   private val Header = -1
 
-  // make sure we have one kryo instance per thread per instance
-  private[this] val KryoStateMap = new ConcurrentHashMap[String, KryoState]()
+  // We want to have one Kryo instance per thread per instance.
+  // Also the instances should be garbage collected when the thread dies.
+  private[this] val KryoStateMap: ThreadLocal[mutable.HashMap[String, KryoState]] =
+    new ThreadLocal[mutable.HashMap[String, KryoState]] {
+      override def initialValue(): mutable.HashMap[String, KryoState] =
+        mutable.HashMap[String, KryoState]()
+    }
 
   final def withKryoState[R](instanceId: String, options: KryoOptions)(f: KryoState => R): R = {
-    val id = Thread.currentThread().getId + "-" + instanceId
-    val ks = KryoStateMap.computeIfAbsent(id, new Function[String, KryoState] {
-      override def apply(v1: String): KryoState = {
-        val k = KryoSerializer.registered.newKryo()
-        k.setReferences(options.referenceTracking)
-        k.setRegistrationRequired(options.registrationRequired)
+    val ks = KryoStateMap.get().getOrElseUpdate(instanceId, {
+      val k = KryoSerializer.registered.newKryo()
+      k.setReferences(options.referenceTracking)
+      k.setRegistrationRequired(options.registrationRequired)
 
-        new ScioKryoRegistrar()(k)
-        new AlgebirdRegistrar()(k)
+      new ScioKryoRegistrar()(k)
+      new AlgebirdRegistrar()(k)
 
-        KryoRegistrarLoader.load(k)
+      KryoRegistrarLoader.load(k)
 
-        val input = new InputChunked(options.bufferSize)
-        val output = new OutputChunked(options.bufferSize)
+      val input = new InputChunked(options.bufferSize)
+      val output = new OutputChunked(options.bufferSize)
 
-        KryoState(k, input, output)
-      }
+      KryoState(k, input, output)
     })
 
     f(ks)
