@@ -107,7 +107,7 @@ package object bigtable {
                  tableId: String,
                  keyRange: ByteKeyRange = null,
                  rowFilter: RowFilter = null): SCollection[Row] = {
-      val parameters = btnio.Row.Parameters(keyRange, rowFilter)
+      val parameters = btnio.Row.ReadParam(keyRange, rowFilter)
       self.read(btnio.Row(projectId, instanceId, tableId))(parameters)
     }
 
@@ -116,7 +116,7 @@ package object bigtable {
                  tableId: String,
                  keyRange: ByteKeyRange,
                  rowFilter: RowFilter): SCollection[Row] = {
-      val parameters = btnio.Row.Parameters(keyRange, rowFilter)
+      val parameters = btnio.Row.ReadParam(keyRange, rowFilter)
       self.read(btnio.Row(bigtableOptions, tableId))(parameters)
     }
 
@@ -221,8 +221,8 @@ package object bigtable {
                        tableId: String)
                       (implicit ev: T <:< Mutation)
     : Future[Tap[(ByteString, Iterable[Mutation])]] = {
-      val params = btnio.Mutate.Default
-      self.write(btnio.Mutate[T](projectId, instanceId, tableId))(params)
+      val param = btnio.Mutate.Default
+      self.write(btnio.Mutate[T](projectId, instanceId, tableId))(param)
         .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
     }
 
@@ -233,8 +233,8 @@ package object bigtable {
                        tableId: String)
                       (implicit ev: T <:< Mutation)
     : Future[Tap[(ByteString, Iterable[Mutation])]] = {
-      val params = btnio.Mutate.Default
-      self.write(btnio.Mutate[T](bigtableOptions, tableId))(params)
+      val param = btnio.Mutate.Default
+      self.write(btnio.Mutate[T](bigtableOptions, tableId))(param)
         .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
     }
 
@@ -248,8 +248,8 @@ package object bigtable {
                        flushInterval: Duration = Duration.standardSeconds(1))
                       (implicit ev: T <:< Mutation)
     : Future[Tap[(ByteString, Iterable[Mutation])]] = {
-      val params = btnio.Mutate.Bulk(numOfShards, flushInterval)
-      self.write(btnio.Mutate[T](bigtableOptions, tableId))(params)
+      val param = btnio.Mutate.Bulk(numOfShards, flushInterval)
+      self.write(btnio.Mutate[T](bigtableOptions, tableId))(param)
         .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
     }
   }
