@@ -34,26 +34,20 @@ import scala.collection.JavaConverters._
 final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions)
   extends ScioIO[T] {
 
-  case class WriteParams(f: T => Iterable[DocWriteRequest[_]],
-                         errorFn: BulkExecutionException => Unit = m => throw m,
-                         flushInterval: Duration = Duration.standardSeconds(1),
-                         numOfShards: Long = 0,
-                         maxBulkRequestSize: Int = 3000)
+  override type ReadP = Nothing
+  override type WriteP = ElasticsearchIO.WriteParam[T]
 
-  type ReadP = Nothing
-  type WriteP = WriteParams
+  override def id: String = esOptions.toString
 
-  def id: String = esOptions.toString
-
-  def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    throw new NotImplementedError("Can't read from Elacticsearch")
+  override def read(sc: ScioContext, params: ReadP): SCollection[T] =
+    throw new IllegalStateException("Can't read from Elacticsearch")
 
   /**
    * Save this SCollection into Elasticsearch.
    */
-  def write(sc: SCollection[T], params: WriteP): Future[Tap[T]] = {
+  override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
     val shards = if (params.numOfShards > 0) params.numOfShards else esOptions.servers.size
-    sc.applyInternal(
+    data.applyInternal(
       esio.ElasticsearchIO.Write
         .withClusterName(esOptions.clusterName)
         .withServers(esOptions.servers.toArray)
@@ -69,6 +63,14 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions)
     Future.failed(new NotImplementedError("Custom future not implemented"))
   }
 
-  def tap(read: ReadP): Tap[T] =
+  override def tap(params: ReadP): Tap[T] =
     throw new NotImplementedError("Can't read from Elacticsearch")
+}
+
+object ElasticsearchIO {
+  final case class WriteParam[T](f: T => Iterable[DocWriteRequest[_]],
+                                 errorFn: BulkExecutionException => Unit = m => throw m,
+                                 flushInterval: Duration = Duration.standardSeconds(1),
+                                 numOfShards: Long = 0,
+                                 maxBulkRequestSize: Int = 3000)
 }
