@@ -37,7 +37,6 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
    * Save this SCollection as an Avro file.
    * @param schema must be not null if `T` is of type
    *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
-   * @group output
    */
   def saveAsAvroFile(path: String,
                      numShards: Int = 0,
@@ -46,14 +45,13 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
                      codec: CodecFactory = CodecFactory.deflateCodec(6),
                      metadata: Map[String, AnyRef] = Map.empty)
   : Future[Tap[T]] = {
-    val paramters = nio.AvroIO.Parameters(numShards, suffix, codec, metadata)
-    self.write(nio.AvroIO[T](path, schema))(paramters)
+    val param = nio.AvroIO.WriteParam(numShards, suffix, codec, metadata)
+    self.write(nio.AvroIO[T](path, schema))(param)
   }
 
   /**
    * Save this SCollection as an Avro file. Note that element type `T` must be a case class
    * annotated with [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
-   * @group output
    */
   def saveAsTypedAvroFile(path: String,
                           numShards: Int = 0,
@@ -62,8 +60,8 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
                           metadata: Map[String, AnyRef] = Map.empty)
                          (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAvroAnnotation)
   : Future[Tap[T]] = {
-    val parameters = nio.Typed.AvroFile.Parameters(numShards, suffix, codec, metadata)
-    self.write(nio.Typed.AvroFile[T](path))(parameters)
+    val param = nio.AvroIO.WriteParam(numShards, suffix, codec, metadata)
+    self.write(nio.Typed.AvroIO[T](path))(param)
   }
 
   /**
@@ -71,20 +69,25 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
    *
    * Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
    * serialization is not guaranteed to be compatible across Scio releases.
-   * @group output
    */
   def saveAsObjectFile(path: String, numShards: Int = 0, suffix: String = ".obj",
-                       metadata: Map[String, AnyRef] = Map.empty): Future[Tap[T]] =
-    self.write(nio.ObjectFileIO[T](path))(nio.ObjectFileIO.Parameters(numShards, suffix, metadata))
+                       codec: CodecFactory = CodecFactory.deflateCodec(6),
+                       metadata: Map[String, AnyRef] = Map.empty): Future[Tap[T]] = {
+    val param = nio.ObjectFileIO.WriteParam(numShards, suffix, codec, metadata)
+    self.write(nio.ObjectFileIO[T](path))(param)
+  }
 
   /**
    * Save this SCollection as a Protobuf file.
    *
    * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage
    * Avro's block file format.
-   * @group output
    */
-  def saveAsProtobufFile(path: String, numShards: Int = 0)
-                        (implicit ev: T <:< Message): Future[Tap[T]] =
-    self.write(nio.ProtobufIO[T](path))(nio.ProtobufIO.Parameters(numShards))
+  def saveAsProtobufFile(path: String, numShards: Int = 0, suffix: String = ".protobuf",
+                         codec: CodecFactory = CodecFactory.deflateCodec(6),
+                         metadata: Map[String, AnyRef] = Map.empty)
+                        (implicit ev: T <:< Message): Future[Tap[T]] = {
+    val param = nio.ProtobufIO.WriteParam(numShards, suffix, codec, metadata)
+    self.write(nio.ProtobufIO[T](path))(param)
+  }
 }
