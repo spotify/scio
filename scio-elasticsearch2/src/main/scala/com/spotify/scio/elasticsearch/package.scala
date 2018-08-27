@@ -60,7 +60,9 @@ package object elasticsearch {
                             errorFn: BulkExecutionException => Unit = m => throw m)
                            (f: T => Iterable[ActionRequest[_]]): Future[Tap[T]] = {
       val io = ElasticsearchIO[T](esOptions)
-      self.write(io)(io.WriteParams(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize))
+      val param = ElasticsearchIO.WriteParam(
+        f, errorFn, flushInterval, numOfShards, maxBulkRequestSize)
+      self.write(io)(param)
     }
   }
 
