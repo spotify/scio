@@ -687,7 +687,8 @@ lazy val scioJmh: Project = Project(
   classDirectory in Jmh := (classDirectory in Test).value,
   dependencyClasspath in Jmh := (dependencyClasspath in Test).value,
   libraryDependencies ++= Seq(
-    "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
+    "junit" % "junit" % junitVersion % "test",
+    "org.hamcrest" % "hamcrest-all" % hamcrestVersion % "test",
     "org.slf4j" % "slf4j-nop" % slf4jVersion
   )
 ).dependsOn(
