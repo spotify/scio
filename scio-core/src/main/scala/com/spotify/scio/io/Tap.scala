@@ -87,14 +87,12 @@ private[scio] class MaterializeTap[T: ClassTag](val path: String) extends Tap[T]
 
     val coder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
     val read = AvroIO.readGenericRecords(AvroBytesUtil.schema).from(_path)
-    sc.wrap(sc.applyInternal(read))
-      .setName(_path)
+    sc.wrap(sc.applyInternal(read)).setName(_path)
       .parDo(new DoFn[GenericRecord, T] {
         @ProcessElement
         private[scio] def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit = {
           c.output(AvroBytesUtil.decode(coder, c.element()))
         }
       })
-      .setName(_path)
   }
 }
