@@ -75,9 +75,7 @@ package object json extends AutoDerivation {
                        numShards: Int = 0,
                        compression: Compression = Compression.UNCOMPRESSED,
                        printer: Printer = Printer.noSpaces): Future[Tap[T]] = {
-      val io = JsonIO[T](path)
-      self
-        .write(io)(io.WriteParams(suffix, numShards, compression, printer))
+      self.write(JsonIO[T](path))(JsonIO.WriteParam(suffix, numShards, compression, printer))
     }
   }
 
