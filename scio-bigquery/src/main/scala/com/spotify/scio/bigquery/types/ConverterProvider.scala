@@ -211,19 +211,20 @@ private[types] object ConverterProvider {
       val tpe = symbol.asMethod.returnType
 
       val tree = q"$fn.get($name)"
-      val nonNullTree = q"""{
-            val v = $fn.get($name)
-            if(v == null) {
-                throw new NullPointerException("null field in REQUIRED field " + $name)
-            }
-            v
+      def nonNullTree(fType: String) =
+        q"""{
+          val v = $fn.get($name)
+          if (v == null) {
+            throw new NullPointerException($fType + " field \"" + $name + "\" is null")
+          }
+          v
         }"""
       if (tpe.erasure =:= typeOf[Option[_]].erasure) {
         option(tree, tpe.typeArgs.head)
       } else if (tpe.erasure =:= typeOf[List[_]].erasure) {
-        list(nonNullTree, tpe.typeArgs.head)
+        list(nonNullTree("REPEATED"), tpe.typeArgs.head)
       } else {
-        cast(nonNullTree, tpe)
+        cast(nonNullTree("REQUIRED"), tpe)
       }
     }
 
