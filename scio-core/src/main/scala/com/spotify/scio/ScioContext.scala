@@ -180,8 +180,11 @@ object ScioContext {
 
   /** Create a new [[ScioContext]] instance for testing. */
   def forTest(): ScioContext = {
+    // when running unit tests force 1 thread per job,
+    // otherwise each JobTest spawns as many threads as CPU cores available
+    // this is intended to make tests faster
     val opts = PipelineOptionsFactory
-      .fromArgs("--appName=" + TestUtil.newTestId())
+      .fromArgs("--targetParallelism=1", "--appName=" + TestUtil.newTestId())
       .as(classOf[PipelineOptions])
     new ScioContext(opts, List[String]())
   }

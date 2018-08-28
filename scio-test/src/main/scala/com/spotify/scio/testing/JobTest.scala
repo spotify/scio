@@ -209,10 +209,14 @@ object JobTest {
       setUp()
 
       try {
+        // when running unit tests force 1 thread per job,
+        // otherwise each JobTest spawns as many threads as CPU cores available
+        // this is intended to make tests faster
+        val args = state.cmdlineArgs ++ Array(s"--appName=$testId", "--targetParallelism=1")
         Class
           .forName(state.className)
           .getMethod("main", classOf[Array[String]])
-          .invoke(null, state.cmdlineArgs :+ s"--appName=$testId")
+          .invoke(null, args)
       } catch {
         // InvocationTargetException stacktrace is noisy and useless
         case e: InvocationTargetException => throw e.getCause
