@@ -63,7 +63,6 @@ final case class ObjectFileIO[T: ClassTag](path: String) extends ScioIO[T] {
           c.output(AvroBytesUtil.decode(coder, c.element()))
         }
       })
-      .setName(path)
   }
 
   /**
