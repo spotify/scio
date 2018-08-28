@@ -525,7 +525,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
             c.output(AvroBytesUtil.decode(coder, c.element()))
           }
         })
-        .setName(path)
     }
   }
 
