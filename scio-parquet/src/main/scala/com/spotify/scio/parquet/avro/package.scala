@@ -92,44 +92,9 @@ package object avro {
      * Return a new SCollection by applying a function to all Parquet Avro records of this Parquet
      * file.
      */
-    def map[U: ClassTag](f: T => U): SCollection[U] = if (context.isTest) {
-      context.getTestInput(AvroIO[U](path))
-    } else {
-      val cls = ScioUtil.classOf[T]
-      val readSchema = cls.getMethod("getClassSchema").invoke(null).asInstanceOf[Schema]
-
-      val job = Job.getInstance()
-      setInputPaths(job, path)
-      job.setInputFormatClass(classOf[AvroParquetInputFormat[T]])
-      job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
-      job.getConfiguration.setClass("value.class", cls, cls)
-
-      AvroParquetInputFormat.setAvroReadSchema(job, readSchema)
-      if (projection != null) {
-        AvroParquetInputFormat.setRequestedProjection(job, projection)
-      }
-      if (predicate != null) {
-        ParquetInputFormat.setFilterPredicate(job.getConfiguration, predicate)
-      }
-
-      val uCls = ScioUtil.classOf[U]
-      val source = HadoopInputFormatIO.read[JBoolean, U]()
-        .withConfiguration(job.getConfiguration)
-        .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
-          override def apply(input: Void): JBoolean = true // workaround for NPE
-        })
-        .withValueTranslation(new SimpleFunction[T, U]() {
-          // Workaround for incomplete Avro objects
-          // `SCollection#map` might throw NPE on incomplete Avro objects when the runner tries
-          // to serialized them. Lifting the mapping function here fixes the problem.
-          val g = ClosureCleaner(f)  // defeat closure
-          override def apply(input: T): U = g(input)
-          override def getInputTypeDescriptor = TypeDescriptor.of(cls)
-          override def getOutputTypeDescriptor = TypeDescriptor.of(uCls)
-        })
-      context
-        .wrap(context.applyInternal(source))
-        .map(_.getValue)
+    def map[U: ClassTag](f: T => U): SCollection[U] = {
+      val param = ParquetAvroIO.ReadParam[T, U](projection, predicate, f)
+      context.read(ParquetAvroIO[U](path))(param)
     }
 
     /**
@@ -190,6 +155,7 @@ package object avro {
                               suffix: String = "",
                               compression: CompressionCodecName = CompressionCodecName.SNAPPY)
     : Future[Tap[T]] = {
+      import self.ct
       val param = ParquetAvroIO.WriteParam(numShards, schema, suffix, compression)
       self.write(ParquetAvroIO[T](path))(param)
     }

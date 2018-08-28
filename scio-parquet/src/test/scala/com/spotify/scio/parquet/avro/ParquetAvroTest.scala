@@ -146,8 +146,10 @@ class ParquetAvroTest extends TapSpec with BeforeAndAfterAll {
   it should "work with JobTest" in {
     JobTest[ParquetAvroJob.type]
       .args("--input=in.parquet", "--output=out.parquet")
-      .input(AvroIO[TestRecord]("in.parquet"), specificRecords)
-      .output(AvroIO[TestRecord]("out.parquet"))(_ should containInAnyOrder (specificRecords))
+      .input(ParquetAvroIO[TestRecord]("in.parquet"), specificRecords)
+      .output(ParquetAvroIO[TestRecord]("out.parquet")) {
+        _ should containInAnyOrder (specificRecords)
+      }
       .run()
   }
 
