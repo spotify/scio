@@ -264,9 +264,8 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
       TFExampleSCollectionFunctions
         .saveExampleMetadata(self.context.parallelize(Some(schema)), schemaPath)
     }
-    val io = TFExampleIO(path)
-    val params = TFExampleIO.WriteParam(suffix,compression, numShards)
-    self.asInstanceOf[SCollection[Example]].write(io)(params)
+    val param = TFExampleIO.WriteParam(suffix,compression, numShards)
+    self.asInstanceOf[SCollection[Example]].write(TFExampleIO(path))(param)
   }
 
   /**
@@ -425,9 +424,8 @@ class TFRecordSCollectionFunctions[T <: Array[Byte]](val self: SCollection[T]) {
     suffix: String = ".tfrecords",
     compression: Compression = Compression.UNCOMPRESSED,
     numShards: Int = 0)(implicit ev: T <:< Array[Byte]): Future[Tap[Array[Byte]]] = {
-    val io = TFRecordIO(path)
-    val params = TFRecordIO.WriteParam(suffix, compression, numShards)
-    self.asInstanceOf[SCollection[Array[Byte]]].write(io)(params)
+    val param = TFRecordIO.WriteParam(suffix, compression, numShards)
+    self.asInstanceOf[SCollection[Array[Byte]]].write(TFRecordIO(path))(param)
   }
 
 }
