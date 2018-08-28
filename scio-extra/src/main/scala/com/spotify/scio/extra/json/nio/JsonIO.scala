@@ -31,16 +31,10 @@ import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.util.{Left, Right}
 
-case class JsonIO[T: ClassTag : Encoder : Decoder](path: String)
-  extends ScioIO[T] {
-
-  case class WriteParams(suffix: String = ".json",
-                         numShards: Int = 0,
-                         compression: Compression = Compression.UNCOMPRESSED,
-                         printer: Printer = Printer.noSpaces)
+final case class JsonIO[T: ClassTag : Encoder : Decoder](path: String) extends ScioIO[T] {
 
   override type ReadP = Unit
-  override type WriteP = WriteParams
+  override type WriteP = JsonIO.WriteParam
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
     sc.wrap(sc.applyInternal(BTextIO.read().from(path))).setName(path).map(decodeJson)
@@ -50,7 +44,7 @@ case class JsonIO[T: ClassTag : Encoder : Decoder](path: String)
     data.context.makeFuture(tap(Unit))
   }
 
-  override def tap(read: ReadP): Tap[T] = new Tap[T] {
+  override def tap(params: ReadP): Tap[T] = new Tap[T] {
     override def value: Iterator[T] =
       TextIO.textFile(ScioUtil.addPartSuffix(path)).map(decodeJson)
     override def open(sc: ScioContext): SCollection[T] =
@@ -64,7 +58,7 @@ case class JsonIO[T: ClassTag : Encoder : Decoder](path: String)
     case Right(t) => t
   }
 
-  private def jsonOut(path: String, params: WriteParams) =
+  private def jsonOut(path: String, params: WriteP) =
     BTextIO.write()
       .to(pathWithShards(path))
       .withSuffix(params.suffix)
@@ -74,4 +68,11 @@ case class JsonIO[T: ClassTag : Encoder : Decoder](path: String)
 
   private[scio] def pathWithShards(path: String) = path.replaceAll("\\/+$", "") + "/part"
 
+}
+
+object JsonIO {
+  final case class WriteParam(suffix: String = ".json",
+                              numShards: Int = 0,
+                              compression: Compression = Compression.UNCOMPRESSED,
+                              printer: Printer = Printer.noSpaces)
 }
