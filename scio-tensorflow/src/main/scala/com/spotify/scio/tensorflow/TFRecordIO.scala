@@ -32,8 +32,6 @@ final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {
   override type ReadP = TFRecordIO.ReadParam
   override type WriteP = TFRecordIO.WriteParam
 
-  override def id: String = path
-
   override def read(sc: ScioContext, params: ReadP): SCollection[Array[Byte]] =
     TFRecordMethods.read(sc, path, params)
 
@@ -55,8 +53,6 @@ object TFRecordIO {
 final case class TFExampleIO(path: String) extends ScioIO[Example] {
   override type ReadP = TFExampleIO.ReadParam
   override type WriteP = TFExampleIO.WriteParam
-
-  override def id: String = path
 
   override def read(sc: ScioContext, params: ReadP): SCollection[Example] =
     TFRecordMethods.read(sc, path, params).map(Example.parseFrom)

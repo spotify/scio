@@ -18,6 +18,7 @@
 package com.spotify.scio.testing
 
 import com.spotify.scio.ScioResult
+import com.spotify.scio.nio.ScioIO
 import com.spotify.scio.values.SCollection
 
 import scala.collection.concurrent.TrieMap
@@ -27,7 +28,8 @@ import scala.collection.mutable.{Set => MSet}
 private[scio] class TestInput(val m: Map[String, Iterable[_]]) {
   val s: MSet[String] = MSet.empty
 
-  def apply[T](key: String): Iterable[T] = {
+  def apply[T](io: ScioIO[T]): Iterable[T] = {
+    val key = io.testId
     require(
       m.contains(key),
       s"Missing test input: $key, available: ${m.keys.mkString("[", ", ", "]")}")
@@ -48,8 +50,9 @@ private[scio] class TestInput(val m: Map[String, Iterable[_]]) {
 private[scio] class TestOutput(val m: Map[String, SCollection[_] => Unit]) {
   val s: MSet[String] = MSet.empty
 
-  def apply[T](key: String): SCollection[T] => Unit = {
+  def apply[T](io: ScioIO[T]): SCollection[T] => Unit = {
     // TODO: support Materialize outputs, maybe Materialized[T]?
+    val key = io.testId
     require(
       m.contains(key),
       s"Missing test output: $key, available: ${m.keys.mkString("[", ", ", "]")}")

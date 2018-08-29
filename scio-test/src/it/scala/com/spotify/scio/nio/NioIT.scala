@@ -92,8 +92,8 @@ class NioIT extends PipelineSpec {
       builder.setUp()
       runMain(Array(s"--input=$in", s"--output=$out") :+ s"--appName=${builder.testId}")
       builder.tearDown()
-    } should have message s"requirement failed: Missing test input: ${ioFn(in)}, " +
-      s"available: [com.spotify.scio.nio.CustomIO($in)]"
+    } should have message s"requirement failed: Missing test input: ${ioFn(in).testId}, " +
+      s"available: [CustomIO($in)]"
 
     the [IllegalArgumentException] thrownBy {
       val builder = com.spotify.scio.testing.JobTest("null")
@@ -102,8 +102,8 @@ class NioIT extends PipelineSpec {
       builder.setUp()
       runMain(Array(s"--input=$in", s"--output=$out") :+ s"--appName=${builder.testId}")
       builder.tearDown()
-    } should have message s"requirement failed: Missing test output: ${ioFn(out)}, " +
-      s"available: [com.spotify.scio.nio.CustomIO($out)]"
+    } should have message s"requirement failed: Missing test output: ${ioFn(out).testId}, " +
+      s"available: [CustomIO($out)]"
     // scalastyle:on no.whitespace.before.left.bracket
   }
 

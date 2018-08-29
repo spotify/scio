@@ -50,8 +50,6 @@ final case class ParquetAvroIO[T: ClassTag](path: String) extends ScioIO[T] {
 
   private val cls = ScioUtil.classOf[T]
 
-  override def id: String = path
-
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val job = Job.getInstance()
     setInputPaths(sc, job, path)

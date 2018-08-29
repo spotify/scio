@@ -102,7 +102,7 @@ object JobTest {
      */
     def input[T](io: ScioIO[T], value: Iterable[T]): Builder = {
       require(!state.input.contains(io.toString), "Duplicate test input: " + io.toString)
-      state = state.copy(input = state.input + (io.toString -> value))
+      state = state.copy(input = state.input + (io.testId -> value))
       this
     }
 
@@ -117,7 +117,7 @@ object JobTest {
     def output[T](io: ScioIO[T])(assertion: SCollection[T] => Unit): Builder = {
       require(!state.output.contains(io.toString), "Duplicate test output: " + io.toString)
       state = state.copy(
-        output = state.output + (io.toString -> assertion.asInstanceOf[SCollection[_] => Unit]))
+        output = state.output + (io.testId -> assertion.asInstanceOf[SCollection[_] => Unit]))
       this
     }
 

@@ -40,8 +40,6 @@ final case class TextIO(path: String) extends ScioIO[String] {
   override type ReadP = TextIO.ReadParam
   override type WriteP = TextIO.WriteParam
 
-  override def id: String = path
-
   override def read(sc: ScioContext, params: ReadP): SCollection[String] =
     sc.wrap(sc.applyInternal(BTextIO.read().from(path)
       .withCompression(params.compression))).setName(path)
