@@ -35,14 +35,13 @@ import scala.reflect.ClassTag
  */
 package object checkpoint {
 
-  // scalastyle:off method.name
   // scalastyle:off line.size.limit
   /**
    * For use in testing, see [[https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/CheckpointExampleTest.scala CheckpointExampleTest]].
    */
-  def CheckpointIO[T: ClassTag](fileOrPath: String): ObjectFileIO[T] = ObjectFileIO[T](fileOrPath)
   // scalastyle:on line.size.limit
-  // scalastyle:on method.name
+  type CheckpointIO[T] = ObjectFileIO[T]
+  val CheckpointIO = ObjectFileIO
 
   implicit class CheckpointScioContext(val self: ScioContext) extends AnyVal {
 
@@ -74,7 +73,7 @@ package object checkpoint {
     }
 
     private def isCheckpointAvailable(path: String): Boolean = {
-      if (self.isTest && self.testIn.m.contains(path)) {
+      if (self.isTest && self.testInput.m.contains(CheckpointIO(path).testId)) {
         // if it's test and checkpoint was registered in test
         true
       } else {

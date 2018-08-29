@@ -30,19 +30,6 @@ final case class CassandraIO[T](opts: CassandraOptions, parallelism: Int = 0)(f:
   override type ReadP = Nothing
   override type WriteP = Unit
 
-  override def id: String = {
-    val sb = new StringBuilder
-    if (opts.username != null && opts.password != null) {
-      sb.append(s"${opts.username}:${opts.password}@")
-    }
-    sb.append(opts.seedNodeHost)
-    if (opts.seedNodePort >= 0) {
-      sb.append(opts.seedNodePort)
-    }
-    sb.append(s"/${opts.keyspace}/${opts.table}/${opts.cql}")
-    sb.toString()
-  }
-
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new IllegalStateException("Can't read from Cassandra")
 

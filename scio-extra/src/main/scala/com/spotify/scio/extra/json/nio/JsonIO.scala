@@ -51,8 +51,6 @@ final case class JsonIO[T: ClassTag : Encoder : Decoder](path: String) extends S
       JsonIO(ScioUtil.addPartSuffix(path)).read(sc, Unit)
   }
 
-  override def id: String = path
-
   private def decodeJson(json: String): T = decode[T](json) match {
     case Left(e) => throw e
     case Right(t) => t

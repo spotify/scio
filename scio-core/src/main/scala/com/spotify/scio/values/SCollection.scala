@@ -897,7 +897,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (context.isTest) {
       // Do not run assertions on materialized value but still access test context to trigger
       // the test checking if we're running inside a JobTest
-      if (!isCheckpoint) context.testOut
+      if (!isCheckpoint) context.testOutput
       saveAsInMemoryTap
     } else {
       val elemCoder = this.getCoder[T]
@@ -1010,7 +1010,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   private def writeImpl(io: nio.ScioIO[T])(params: io.WriteP): Future[Tap[T]] = {
     if (context.isTest) {
-      context.testOut(io.toString)(this)
+      context.testOut(io)(this)
       this.saveAsInMemoryTap
     } else {
       io.write(this, params)
