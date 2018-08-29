@@ -17,7 +17,7 @@
 
 package com.spotify.scio.jdbc.nio
 
-import com.spotify.scio.jdbc._
+import com.spotify.scio.jdbc.{jdbcIoId, _}
 import com.spotify.scio.Implicits._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.ScioContext
@@ -29,13 +29,11 @@ import scala.concurrent.Future
 import scala.reflect.ClassTag
 import java.sql.{PreparedStatement, ResultSet}
 
-sealed trait JdbcIO[T] extends TestIO[T] {
-  override def toString: String = s"JdbcIO($id)"
-}
+sealed trait JdbcIO[T] extends TestIO[T]
 
 object JdbcIO {
   def apply[T](opts: JdbcIoOptions): JdbcIO[T] = new JdbcIO[T] {
-    override def id: String = jdbcIoId(opts)
+    override def testId: String = s"JdbcIO(${jdbcIoId(opts)})"
   }
 }
 
@@ -44,14 +42,14 @@ final case class Select[T: ClassTag](readOptions: JdbcReadOptions[T]) extends Sc
   override type ReadP = Unit
   override type WriteP = Nothing
 
+  override def testId: String = readOptions match {
+    case JdbcReadOptions(connOpts, query, _, _, _) => s"JdbcIO(${jdbcIoId(connOpts, query)})"
+  }
+
   private[jdbc] def jdbcIoId(opts: JdbcConnectionOptions, query: String): String = {
     val user = opts.password
       .fold(s"${opts.username}")(password => s"${opts.username}:$password")
     s"$user@${opts.connectionUrl}:$query"
-  }
-
-  override def id: String = readOptions match {
-    case JdbcReadOptions(connOpts, query, _, _, _) => jdbcIoId(connOpts, query)
   }
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
@@ -91,14 +89,14 @@ final case class Write[T](writeOptions: JdbcWriteOptions[T]) extends ScioIO[T] {
   override type ReadP = Nothing
   override type WriteP = Unit
 
+  override def testId: String = writeOptions match {
+    case JdbcWriteOptions(connOpts, statement, _, _) => s"JdbcIO(${jdbcIoId(connOpts, statement)})"
+  }
+
   private[jdbc] def jdbcIoId(opts: JdbcConnectionOptions, query: String): String = {
     val user = opts.password
       .fold(s"${opts.username}")(password => s"${opts.username}:${password}")
     s"$user@${opts.connectionUrl}:$query"
-  }
-
-  override def id: String = writeOptions match {
-    case JdbcWriteOptions(connOpts, statement, _, _) => jdbcIoId(connOpts, statement)
   }
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =

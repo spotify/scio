@@ -37,8 +37,6 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions)
   override type ReadP = Nothing
   override type WriteP = ElasticsearchIO.WriteParam[T]
 
-  override def id: String = esOptions.toString
-
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new IllegalStateException("Can't read from ElasticSearch")
 

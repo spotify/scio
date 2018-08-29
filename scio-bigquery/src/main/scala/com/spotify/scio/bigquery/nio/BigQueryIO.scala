@@ -94,13 +94,11 @@ private object Reads {
   }
 }
 
-sealed trait BigQueryIO[T] extends TestIO[T] {
-  override def toString: String = s"${classOf[BigQueryIO[_]].getCanonicalName}($id)"
-}
+sealed trait BigQueryIO[T] extends ScioIO[T]
 
 object BigQueryIO {
-  def apply[T](_id: String): BigQueryIO[T] = new BigQueryIO[T] {
-    override def id: String = _id
+  def apply[T](id: String): BigQueryIO[T] = new BigQueryIO[T] with TestIO[T] {
+    override def testId: String = s"BigQueryIO($id)"
   }
 }
 
@@ -111,15 +109,13 @@ object BigQueryIO {
  * supported. By default the query dialect will be automatically detected. To override this
  * behavior, start the query string with `#legacysql` or `#standardsql`.
  */
-final case class Select(sqlQuery: String) extends ScioIO[TableRow] {
+final case class Select(sqlQuery: String) extends BigQueryIO[TableRow] {
   override type ReadP = Select.ReadParam
   override type WriteP = Nothing // ReadOnly
 
-  override def toString: String = s"${classOf[BigQueryIO[_]].getCanonicalName}($id)"
-
   private lazy val bqc = BigQueryClient.defaultInstance()
 
-  override def id: String = sqlQuery
+  override def testId: String = s"BigQueryIO($sqlQuery)"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     Reads.bqReadQuery(sc)(bqio.BigQueryIO.readTableRows(), sqlQuery, params.flattenResults)
@@ -138,13 +134,11 @@ object Select {
 /**
  * Get an IO for a BigQuery table.
  */
-final case class TableRef(table: TableReference) extends ScioIO[TableRow] {
+final case class TableRef(table: TableReference) extends BigQueryIO[TableRow] {
   override type ReadP = Unit
   override type WriteP = TableRef.WriteParam
 
-  override def toString: String = s"${classOf[BigQueryIO[_]].getCanonicalName}($id)"
-
-  override def id: String = bqio.BigQueryHelpers.toTableSpec(table)
+  override def testId: String = s"BigQueryIO(${bqio.BigQueryHelpers.toTableSpec(table)})"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     Reads.bqReadTable(sc)(bqio.BigQueryIO.readTableRows(), table)
@@ -184,15 +178,12 @@ object TableRef {
 /**
  * Get an SCollection for a BigQuery table.
  */
-final case class TableSpec(tableSpec: String) extends ScioIO[TableRow] {
+final case class TableSpec(tableSpec: String) extends BigQueryIO[TableRow] {
   override type ReadP = Unit
   override type WriteP = TableSpec.WriteParam
 
-  override def toString: String = s"${classOf[BigQueryIO[_]].getCanonicalName}($id)"
-
   private lazy val ref = bqio.BigQueryHelpers.parseTableSpec(tableSpec)
-
-  override def id: String = tableSpec
+  override def testId: String = s"BigQueryIO($tableSpec)"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     TableRef(ref).read(sc, params)
@@ -214,8 +205,6 @@ object TableSpec {
 final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
   override type ReadP = Unit
   override type WriteP = TableRowJsonIO.WriteParam
-
-  override def id: String = path
 
   override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] = {
     sc.wrap(sc.applyInternal(gio.TextIO.read().from(path))).setName(path)
@@ -294,15 +283,13 @@ object Typed {
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
   final case class Select[T <: HasAnnotation : ClassTag : TypeTag](query: String)
-    extends ScioIO[T] {
+    extends BigQueryIO[T] {
     override type ReadP = Unit
     override type WriteP = Nothing // ReadOnly
 
     private lazy val bqt = BigQueryType[T]
 
-    override def toString: String = s"${classOf[BigQueryIO[_]].getCanonicalName}($id)"
-
-    override def id: String = query
+    override def testId: String = s"BigQueryIO($query)"
 
     override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)
@@ -322,15 +309,13 @@ object Typed {
    * Get a typed SCollection for a BigQuery table.
    */
   final case class Table[T <: HasAnnotation : ClassTag : TypeTag](table: TableReference)
-    extends ScioIO[T] {
+    extends BigQueryIO[T] {
     override type ReadP = Unit
     override type WriteP = Table.WriteParam
 
     private lazy val bqt = BigQueryType[T]
 
-    override def toString: String = s"${classOf[BigQueryIO[_]].getCanonicalName}($id)"
-
-    override def id: String = bqio.BigQueryHelpers.toTableSpec(table)
+    override def testId: String = s"BigQueryIO(${bqio.BigQueryHelpers.toTableSpec(table)})"
 
     override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       @inline def typedRead(sc: ScioContext) = Reads.avroBigQueryRead[T](sc)

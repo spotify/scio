@@ -30,17 +30,12 @@ import scala.concurrent.Future
  * implementation.
  */
 trait ScioIO[T] {
-
-  require(id != null, s"$this has null id")
-  require(!id.isEmpty, s"$this has empty string id")
-
   // abstract types for read/write params.
   type ReadP
   type WriteP
 
-  override def toString: String = s"${getClass.getCanonicalName}($id)"
-
-  def id: String
+  // identifier for JobTest IO matching
+  def testId: String = this.toString
 
   def read(sc: ScioContext, params: ReadP): SCollection[T]
 
@@ -53,14 +48,14 @@ object ScioIO {
   // scalastyle:off structural.type
   type ReadOnly[T, R] =
     ScioIO[T] {
-      override type ReadP = R
-      override type WriteP = Nothing
+      type ReadP = R
+      type WriteP = Nothing
     }
 
   type Aux[T, R, W] =
     ScioIO[T] {
-      override type ReadP = R
-      override type WriteP = W
+      type ReadP = R
+      type WriteP = W
     }
 
   def ro[T](io: ScioIO[T]): ScioIO.ReadOnly[T, io.ReadP] =
@@ -68,9 +63,7 @@ object ScioIO {
       override type ReadP = io.ReadP
       override type WriteP = Nothing
 
-      override def toString: String = io.toString
-
-      override def id: String = io.id
+      override def testId: String = io.testId
 
       override def read(sc: ScioContext, params: ReadP): SCollection[T] =
         io.read(sc, params)

@@ -34,26 +34,23 @@ import org.joda.time.Duration
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
-sealed trait BigtableIO[T] extends TestIO[T] {
-  override def toString: String = s"BigtableIO($id)"
-}
+sealed trait BigtableIO[T] extends ScioIO[T]
 
 object BigtableIO {
   def apply[T](projectId: String,
                instanceId: String,
-               tableId: String): BigtableIO[T] = new BigtableIO[T] {
-    override def id: String = s"$projectId\t$instanceId\t$tableId"
+               tableId: String): BigtableIO[T] = new BigtableIO[T] with TestIO[T] {
+    override def testId: String = s"BigtableIO($projectId\t$instanceId\t$tableId)"
   }
 }
 
-final case class Row(bigtableOptions: BigtableOptions, tableId: String) extends ScioIO[BTRow] {
+final case class Row(bigtableOptions: BigtableOptions, tableId: String) extends BigtableIO[BTRow] {
 
   override type ReadP = Row.ReadParam
   override type WriteP = Nothing
 
-  import bigtableOptions._
-
-  override def id: String = s"$getProjectId\t$getInstanceId\t$tableId"
+  override def testId: String =
+    s"BigtableIO(${bigtableOptions.getProjectId}\t${bigtableOptions.getInstanceId}\t$tableId)"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[BTRow] = {
     val opts = bigtableOptions // defeat closure
@@ -102,14 +99,13 @@ object Row {
 final case class Mutate[T](bigtableOptions: BigtableOptions,
                            tableId: String)
                           (implicit ev: T <:< Mutation)
-  extends ScioIO[(ByteString, Iterable[T])] {
+  extends BigtableIO[(ByteString, Iterable[T])] {
 
   override type ReadP = Nothing
   override type WriteP = Mutate.WriteParam
 
-  import bigtableOptions._
-
-  override def id: String = s"$getProjectId\t$getInstanceId\t$tableId"
+  override def testId: String =
+    s"BigtableIO(${bigtableOptions.getProjectId}\t${bigtableOptions.getInstanceId}\t$tableId)"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[(ByteString, Iterable[T])] =
     throw new IllegalStateException("Mutate is write-only, use Row to read from Bigtable")

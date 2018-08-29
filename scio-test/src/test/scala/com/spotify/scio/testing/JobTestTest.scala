@@ -686,38 +686,6 @@ class JobTestTest extends PipelineSpec {
   // Test invalid ScioIO
   // =======================================================================
 
-  "ScioIO" should "not allow null keys" in {
-    def test[T](io: => ScioIO[T], repr: String): Unit = {
-      the [IllegalArgumentException] thrownBy {
-        io
-      } should have message s"requirement failed: $repr has null id"
-    }
-    test(ObjectFileIO(null), "ObjectFileIO(null)")
-    test(AvroIO(null), "AvroIO(null,null)")
-    test(BigQueryIO(null), "BigQueryIO(null)")
-    test(TableRowJsonIO(null), "TableRowJsonIO(null)")
-    test(DatastoreIO(null), "DatastoreIO(null)")
-    test(ProtobufIO[Message](null), "ProtobufIO(null)")
-    test(PubSubIO[Message](null), "PubSubIOWithoutAttributes(null,null,null)")
-    test(TextIO(null), "TextIO(null)")
-  }
-
-  it should "not allow empty keys" in {
-    def test[T](io: => ScioIO[T], repr: String): Unit = {
-      the [IllegalArgumentException] thrownBy {
-        io
-      } should have message s"requirement failed: $repr has empty string id"
-    }
-    test(ObjectFileIO(""), "ObjectFileIO()")
-    test(AvroIO(""), "AvroIO(,null)")
-    test(BigQueryIO(""), "BigQueryIO()")
-    test(TableRowJsonIO(""), "TableRowJsonIO()")
-    test(DatastoreIO(""), "DatastoreIO()")
-    test(ProtobufIO[Message](""), "ProtobufIO()")
-    test(PubSubIO[Message](""), "PubSubIOWithoutAttributes(,null,null)")
-    test(TextIO(""), "TextIO()")
-  }
-
   "runWithContext" should "fail input with message" in {
     val msg = "requirement failed: Missing test data. Are you reading input outside of JobTest?"
     the [IllegalArgumentException] thrownBy {

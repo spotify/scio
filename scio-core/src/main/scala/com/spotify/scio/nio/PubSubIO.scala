@@ -60,9 +60,7 @@ private case class PubSubIOWithoutAttributes[T: ClassTag](name: String,
   extends PubSubIO[T] {
   private val cls = ScioUtil.classOf[T]
 
-  override def toString: String = s"${classOf[PubSubIO[_]].getCanonicalName}($id)"
-
-  override def id: String = name
+  override def testId: String = s"PubSubIO($name, $idAttribute, $timestampAttribute)"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     def setup[U](read: BeamPubSubIO.Read[U]) = {
@@ -135,9 +133,7 @@ private case class PubSubIOWithAttributes[T: ClassTag](name: String,
   extends PubSubIO[(T, Map[String, String])] {
   type WithAttributeMap = (T, Map[String, String])
 
-  override def toString: String = s"${classOf[PubSubIO[_]].getCanonicalName}($id)"
-
-  override def id: String = name
+  override def testId: String = s"PubSubIO($name, $idAttribute, $timestampAttribute)"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[WithAttributeMap] = {
       var r = BeamPubSubIO.readMessagesWithAttributes()

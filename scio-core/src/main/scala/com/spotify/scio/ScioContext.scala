@@ -489,15 +489,15 @@ class ScioContext private[scio] (val options: PipelineOptions,
   /**  Whether this is a test context. */
   def isTest: Boolean = testId.isDefined
 
-  private[scio] def testIn: TestInput = TestDataManager.getInput(testId.get)
-  private[scio] def testOut: TestOutput = TestDataManager.getOutput(testId.get)
+  private[scio] def testInput: TestInput = TestDataManager.getInput(testId.get)
+  private[scio] def testOutput: TestOutput = TestDataManager.getOutput(testId.get)
   private[scio] def testDistCache: TestDistCache = TestDataManager.getDistCache(testId.get)
 
   private[scio] def testOut[T](io: ScioIO[T]): SCollection[T] => Unit =
-    testOut(io.toString)
+    testOutput(io)
 
   private[scio] def getTestInput[T: ClassTag](io: ScioIO[T]): SCollection[T] =
-    this.parallelize(testIn(io.toString).asInstanceOf[Seq[T]])
+    this.parallelize(testInput(io).asInstanceOf[Seq[T]])
 
   // =======================================================================
   // Read operations
