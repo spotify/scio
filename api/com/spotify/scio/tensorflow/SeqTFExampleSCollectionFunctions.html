@@ -162,10 +162,6 @@
                         <a class="class" href="TFRecordSCollectionFunctions.html" title=""></a>
                         <a href="TFRecordSCollectionFunctions.html" title="">TFRecordSCollectionFunctions</a>
                       </li><li class="current-entities indented4">
-                        <a class="object" href="TFRecordSpec$.html" title=""></a>
-                        <a class="trait" href="TFRecordSpec.html" title="Contains metadata about TFRecords."></a>
-                        <a href="TFRecordSpec.html" title="Contains metadata about TFRecords.">TFRecordSpec</a>
-                      </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="TFScioContextFunctions.html" title=""></a>
                         <a href="TFScioContextFunctions.html" title="">TFScioContextFunctions</a>
@@ -543,6 +539,60 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
+    </li><li name="com.spotify.scio.tensorflow.SeqTFExampleSCollectionFunctions#saveAsTfExampleFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="output">
+      <a id="saveAsTfExampleFile(path:String,schema:org.tensorflow.metadata.v0.Schema,schemaFilename:String,suffix:String,compression:org.apache.beam.sdk.io.Compression,numShards:Int):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]"></a><a id="saveAsTfExampleFile(String,Schema,String,String,Compression,Int):Future[Tap[Example]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/SeqTFExampleSCollectionFunctions.html#saveAsTfExampleFile(path:String,schema:org.tensorflow.metadata.v0.Schema,schemaFilename:String,suffix:String,compression:org.apache.beam.sdk.io.Compression,numShards:Int):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">saveAsTfExampleFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <a href="../../../../org/tensorflow/metadata/v0/Schema.html" class="extype" name="org.tensorflow.metadata.v0.Schema">Schema</a></span>, <span name="schemaFilename">schemaFilename: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="compression">compression: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/io/Compression.html#org.apache.beam.sdk.io.Compression" class="extype" name="org.apache.beam.sdk.io.Compression">Compression</a></span>, <span name="numShards">numShards: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="org.tensorflow.example.Example">Example</span>]]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Merge each <span class="extype" name="Seq">Seq</span> of <span class="extype" name="Example">Example</span> and save them as TensorFlow TFRecord files.</p><div class="fullcomment"><div class="comment cmt"><p>Merge each <span class="extype" name="Seq">Seq</span> of <span class="extype" name="Example">Example</span> and save them as TensorFlow TFRecord files.
+Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
+</p></div></div>
+    </li><li name="com.spotify.scio.tensorflow.SeqTFExampleSCollectionFunctions#saveAsTfExampleFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="output">
+      <a id="saveAsTfExampleFile(path:String,schema:org.tensorflow.metadata.v0.Schema):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]"></a><a id="saveAsTfExampleFile(String,Schema):Future[Tap[Example]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/SeqTFExampleSCollectionFunctions.html#saveAsTfExampleFile(path:String,schema:org.tensorflow.metadata.v0.Schema):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">saveAsTfExampleFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <a href="../../../../org/tensorflow/metadata/v0/Schema.html" class="extype" name="org.tensorflow.metadata.v0.Schema">Schema</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="org.tensorflow.example.Example">Example</span>]]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Merge each <span class="extype" name="Seq">Seq</span> of <span class="extype" name="Example">Example</span> and save them as TensorFlow TFRecord files.</p><div class="fullcomment"><div class="comment cmt"><p>Merge each <span class="extype" name="Seq">Seq</span> of <span class="extype" name="Example">Example</span> and save them as TensorFlow TFRecord files.
+Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
+</p></div></div>
+    </li><li name="com.spotify.scio.tensorflow.SeqTFExampleSCollectionFunctions#saveAsTfExampleFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="output">
+      <a id="saveAsTfExampleFile(path:String):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]"></a><a id="saveAsTfExampleFile(String):Future[Tap[Example]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/SeqTFExampleSCollectionFunctions.html#saveAsTfExampleFile(path:String):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">saveAsTfExampleFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="org.tensorflow.example.Example">Example</span>]]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Merge each <span class="extype" name="Seq">Seq</span> of <span class="extype" name="Example">Example</span> and save them as TensorFlow TFRecord files.</p><div class="fullcomment"><div class="comment cmt"><p>Merge each <span class="extype" name="Seq">Seq</span> of <span class="extype" name="Example">Example</span> and save them as TensorFlow TFRecord files.
+Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
+</p></div></div>
     </li><li name="com.spotify.scio.tensorflow.SeqTFExampleSCollectionFunctions#self" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="self:com.spotify.scio.values.SCollection[Seq[T]]"></a><a id="self:SCollection[Seq[T]]"></a>
       <span class="permalink">
@@ -665,54 +715,7 @@
 
         
 
-        <div class="values members">
-              <h3>Deprecated Value Members</h3>
-              <ol><li name="com.spotify.scio.tensorflow.SeqTFExampleSCollectionFunctions#saveAsTfExampleFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="output">
-      <a id="saveAsTfExampleFile(path:String,fe:com.spotify.featran.MultiFeatureExtractor[com.spotify.scio.values.SCollection,_],compression:org.apache.beam.sdk.io.Compression):(scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]],scala.concurrent.Future[com.spotify.scio.io.Tap[String]])"></a><a id="saveAsTfExampleFile(String,MultiFeatureExtractor[SCollection,_],Compression):(Future[Tap[Example]],Future[Tap[String]])"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/tensorflow/SeqTFExampleSCollectionFunctions.html#saveAsTfExampleFile(path:String,fe:com.spotify.featran.MultiFeatureExtractor[com.spotify.scio.values.SCollection,_],compression:org.apache.beam.sdk.io.Compression):(scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]],scala.concurrent.Future[com.spotify.scio.io.Tap[String]])" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version scio-tensorflow 0.5.6)">saveAsTfExampleFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="fe">fe: <span class="extype" name="com.spotify.featran.MultiFeatureExtractor">MultiFeatureExtractor</span>[<a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>, _]</span>, <span name="compression">compression: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/io/Compression.html#org.apache.beam.sdk.io.Compression" class="extype" name="org.apache.beam.sdk.io.Compression">Compression</a></span>)</span><span class="result">: (<a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="org.tensorflow.example.Example">Example</span>]], <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="scala.Predef.String">String</span>]])</span>
-      </span>
-      
-      <p class="shortcomment cmt">Merge each <span class="extype" name="Seq">Seq</span> of <span class="extype" name="Example">Example</span> and save them as TensorFlow TFRecord files.</p><div class="fullcomment"><div class="comment cmt"><p>Merge each <span class="extype" name="Seq">Seq</span> of <span class="extype" name="Example">Example</span> and save them as TensorFlow TFRecord files.
-Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
-</p></div><dl class="paramcmts block"><dt class="param">fe</dt><dd class="cmt"><p>FeatureExtractor, obtained from Featran after calling extract on a
-          <span class="extype" name="com.spotify.featran.MultiFeatureSpec">com.spotify.featran.MultiFeatureSpec</span></p></dd></dl><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version scio-tensorflow 0.5.6)</i></p></dd></dl></div>
-    </li><li name="com.spotify.scio.tensorflow.SeqTFExampleSCollectionFunctions#saveAsTfExampleFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="output">
-      <a id="saveAsTfExampleFile(path:String,fe:com.spotify.featran.MultiFeatureExtractor[com.spotify.scio.values.SCollection,_]):(scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]],scala.concurrent.Future[com.spotify.scio.io.Tap[String]])"></a><a id="saveAsTfExampleFile(String,MultiFeatureExtractor[SCollection,_]):(Future[Tap[Example]],Future[Tap[String]])"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/tensorflow/SeqTFExampleSCollectionFunctions.html#saveAsTfExampleFile(path:String,fe:com.spotify.featran.MultiFeatureExtractor[com.spotify.scio.values.SCollection,_]):(scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]],scala.concurrent.Future[com.spotify.scio.io.Tap[String]])" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version scio-tensorflow 0.5.6)">saveAsTfExampleFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="fe">fe: <span class="extype" name="com.spotify.featran.MultiFeatureExtractor">MultiFeatureExtractor</span>[<a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>, _]</span>)</span><span class="result">: (<a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="org.tensorflow.example.Example">Example</span>]], <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="scala.Predef.String">String</span>]])</span>
-      </span>
-      
-      <p class="shortcomment cmt">Merge each <span class="extype" name="Seq">Seq</span> of <span class="extype" name="Example">Example</span> and save them as TensorFlow TFRecord files.</p><div class="fullcomment"><div class="comment cmt"><p>Merge each <span class="extype" name="Seq">Seq</span> of <span class="extype" name="Example">Example</span> and save them as TensorFlow TFRecord files.
-Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
-</p></div><dl class="paramcmts block"><dt class="param">fe</dt><dd class="cmt"><p>FeatureExtractor, obtained from Featran after calling extract on a
-          <span class="extype" name="com.spotify.featran.MultiFeatureSpec">com.spotify.featran.MultiFeatureSpec</span></p></dd></dl><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version scio-tensorflow 0.5.6)</i></p></dd></dl></div>
-    </li></ol>
-            </div>
+        
         </div>
 
         <div id="inheritedMembers">
