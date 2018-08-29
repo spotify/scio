@@ -46,8 +46,6 @@ final case class ObjectFileIO[T: ClassTag](path: String) extends ScioIO[T] {
   override type ReadP = Unit
   override type WriteP = ObjectFileIO.WriteParam
 
-  override def id: String = path
-
   /**
    * Get an SCollection for an object file using default serialization.
    *
@@ -96,8 +94,6 @@ final case class ProtobufIO[T : ClassTag](path: String)
   override type ReadP = Unit
   override type WriteP = ProtobufIO.WriteParam
 
-  override def id: String = path
-
   /**
    * Get an SCollection for a Protobuf file.
    *
@@ -145,7 +141,7 @@ final case class AvroIO[T: ClassTag](path: String, schema: Schema = null) extend
       .withCodec(codec)
       .withMetadata(metadata.asJava)
 
-  override def id: String = path
+  override def testId: String = s"AvroIO($path)"
 
   /**
    * Get an SCollection for an Avro file. `schema` must be not null if `T` is of type
@@ -208,8 +204,6 @@ object Typed {
         .withSuffix(suffix + ".avro")
         .withCodec(codec)
         .withMetadata(metadata.asJava)
-
-    override def id: String = path
 
     /**
      * Get a typed SCollection from an Avro schema.

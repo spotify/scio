@@ -30,8 +30,6 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
   override type ReadP = DatastoreIO.ReadParam
   override type WriteP = Unit
 
-  override def id: String = projectId
-
   override def read(sc: ScioContext, params: ReadP): SCollection[Entity] =
     sc.wrap(sc.applyInternal(
       BDatastoreIO.v1().read()
