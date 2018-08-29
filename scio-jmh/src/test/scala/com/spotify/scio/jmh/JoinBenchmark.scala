@@ -127,7 +127,7 @@ class JoinBenchmark {
         c.output((a, b))
         c.output((ai.next(), b))
         while (ai.hasNext) {
-          c.output(((ai.next(), b)))
+          c.output((ai.next(), b))
         }
       } else {
         ai = as.iterator()

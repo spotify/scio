@@ -15,11 +15,12 @@
  * under the License.
  */
 
-package com.spotify.scio.util
+package com.spotify.scio.jmh
 
 import java.util
 import java.util.concurrent.TimeUnit
 
+import com.spotify.scio.util.Functions
 import com.twitter.algebird.{Monoid, Semigroup}
 import org.apache.beam.sdk.testing.CombineFnTester
 import org.apache.beam.sdk.transforms.Combine.CombineFn
