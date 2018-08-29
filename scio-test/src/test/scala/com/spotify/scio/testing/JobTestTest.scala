@@ -370,11 +370,11 @@ class JobTestTest extends PipelineSpec {
       .run()
   }
 
-  it should "pass correct TextFileIO" in {
+  it should "pass correct TextIO" in {
     testTextFileJob("aX", "bX", "cX")
   }
 
-  it should "fail incorrect TextFileIO" in {
+  it should "fail incorrect TextIO" in {
     an [AssertionError] should be thrownBy { testTextFileJob("aX", "bX") }
     an [AssertionError] should be thrownBy { testTextFileJob("aX", "bX", "cX", "dX") }
   }
@@ -425,7 +425,7 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
-    } should have message "requirement failed: Missing test input: in.txt, available: []"
+    } should have message "requirement failed: Missing test input: TextIO(in.txt), available: []"
   }
 
   it should "fail misspelled test input" in {
@@ -437,7 +437,7 @@ class JobTestTest extends PipelineSpec {
         .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
     } should have message
-      "requirement failed: Missing test input: in.txt, available: [bad-in.txt]"
+      "requirement failed: Missing test input: TextIO(in.txt), available: [TextIO(bad-in.txt)]"
   }
 
   it should "fail unmatched test input" in {
@@ -449,7 +449,7 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
-    } should have message "requirement failed: Unmatched test input: unmatched.txt"
+    } should have message "requirement failed: Unmatched test input: TextIO(unmatched.txt)"
   }
 
   it should "fail duplicate test input" in {
@@ -461,7 +461,7 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .run()
-    } should have message "requirement failed: Duplicate test input: in.txt"
+    } should have message "requirement failed: Duplicate test input: TextIO(in.txt)"
   }
 
   it should "fail missing test output" in {
@@ -471,7 +471,7 @@ class JobTestTest extends PipelineSpec {
         .input(TextIO("in.txt"), Seq("a", "b"))
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .run()
-    } should have message "requirement failed: Missing test output: out.txt, available: []"
+    } should have message "requirement failed: Missing test output: TextIO(out.txt), available: []"
   }
 
   it should "fail misspelled test output" in {
@@ -484,7 +484,7 @@ class JobTestTest extends PipelineSpec {
         .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
         .run()
     } should have message
-      "requirement failed: Missing test output: out.txt, available: [bad-out.txt]"
+      "requirement failed: Missing test output: TextIO(out.txt), available: [TextIO(bad-out.txt)]"
   }
 
   it should "fail unmatched test output" in {
@@ -496,7 +496,7 @@ class JobTestTest extends PipelineSpec {
         .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .output(TextIO("unmatched.txt"))(_ should containInAnyOrder (Seq("X", "Y")))
         .run()
-    } should have message "requirement failed: Unmatched test output: unmatched.txt"
+    } should have message "requirement failed: Unmatched test output: TextIO(unmatched.txt)"
   }
 
   it should "fail duplicate test output" in {
@@ -508,7 +508,7 @@ class JobTestTest extends PipelineSpec {
         .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
         .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("X", "Y")))
         .run()
-    } should have message "requirement failed: Duplicate test output: out.txt"
+    } should have message "requirement failed: Duplicate test output: TextIO(out.txt)"
   }
 
   it should "fail missing test dist cache" in {
@@ -632,7 +632,7 @@ class JobTestTest extends PipelineSpec {
                                     |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
                                     |  	args: --input=in.avro --output=out.avro
                                     |  	distCache: Map\(\)
-                                    |  	inputs: in.avro -> List\(1, 2, 3\) \(JobTestTest.scala:.*\)""".stripMargin
+                                    |  	inputs: ObjectFileIO\(in.avro\) -> List\(1, 2, 3\) \(JobTestTest.scala:.*\)""".stripMargin
   // scalastyle:on line.size.limit
   // scalastyle:on line.contains.tab
 
@@ -656,11 +656,11 @@ class JobTestTest extends PipelineSpec {
                  |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
                  |  	args: --input=in.avro --output=out.avro
                  |  	distCache: Map\(\)
-                 |  	inputs: in.avro -> List\(1, 2, 3\)
+                 |  	inputs: ObjectFileIO\(in.avro\) -> List\(1, 2, 3\)
                  |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
                  |  	args: --input=in2.avro --output=out2.avro
                  |  	distCache: Map\(\)
-                 |  	inputs: in2.avro -> List\(1, 2, 3\) \(JobTestTest.scala:.*\)""".stripMargin
+                 |  	inputs: ObjectFileIO\(in2.avro\) -> List\(1, 2, 3\) \(JobTestTest.scala:.*\)""".stripMargin
     // scalastyle:on line.size.limit
     // scalastyle:on line.contains.tab
     stdOutMock.message.mkString("") should include regex msg
@@ -708,8 +708,8 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail on duplicate inputs in the job itself" in {
-    val msg = "requirement failed: There already exists test input for input, " +
-      "currently registered inputs: [input]"
+    val msg = "requirement failed: There already exists test input for TextIO(input), " +
+      "currently registered inputs: [TextIO(input)]"
     the [IllegalArgumentException] thrownBy {
       JobTest[JobWitDuplicateInput.type]
         .args("--input=input")
@@ -719,8 +719,8 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail on duplicate outputs in the job itself" in {
-    val msg = "requirement failed: There already exists test output for output, " +
-      "currently registered outputs: [output]"
+    val msg = "requirement failed: There already exists test output for TextIO(output), " +
+      "currently registered outputs: [TextIO(output)]"
     the [IllegalArgumentException] thrownBy {
       JobTest[JobWitDuplicateOutput.type]
         .args("--output=output")
