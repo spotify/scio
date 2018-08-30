@@ -18,10 +18,9 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
-import com.spotify.scio.avro.{AvroType => _, _}
+import com.spotify.scio.avro._
 import com.spotify.scio.examples.common.ExampleData
 import org.apache.avro.generic.GenericRecord
-import shapeless.datatype.avro._
 
 /*
  * Avro examples using shapeless-datatype to seamlessly convert between case classes and Avro
@@ -30,6 +29,9 @@ import shapeless.datatype.avro._
  * https://github.com/nevillelyh/shapeless-datatype
  */
 object ShapelessAvroExample {
+  // limit import scope to avoid polluting namespace
+  import shapeless.datatype.avro._
+
   val wordCountType = AvroType[WordCount]
   val wordCountSchema = AvroSchema[WordCount]
   case class WordCount(word: String, count: Long)

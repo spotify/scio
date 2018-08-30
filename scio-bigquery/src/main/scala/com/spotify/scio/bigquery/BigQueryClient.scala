@@ -38,7 +38,7 @@ import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import org.apache.beam.sdk.io.gcp.{bigquery => bq}
+import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.commons.io.FileUtils
 import org.joda.time.format.{DateTimeFormat, PeriodFormatterBuilder}
@@ -132,11 +132,11 @@ class BigQueryClient private (private val projectId: String,
   }
 
   private lazy val bqService = {
-    val options = PipelineOptionsFactory.create().as(classOf[bq.BigQueryOptions])
+    val options = PipelineOptionsFactory.create().as(classOf[beam.BigQueryOptions])
     options.setProject(projectId)
     options.setGcpCredential(credentials)
 
-    new bq.BigQueryServicesWrapper(options)
+    new beam.BigQueryServicesWrapper(options)
   }
 
   private val logger = LoggerFactory.getLogger(this.getClass)
@@ -182,7 +182,7 @@ class BigQueryClient private (private val projectId: String,
       val temp = temporaryTable(location)
 
       // Create temporary table view and get schema
-      logger.info(s"Creating temporary view ${bq.BigQueryHelpers.toTableSpec(temp)}")
+      logger.info(s"Creating temporary view ${beam.BigQueryHelpers.toTableSpec(temp)}")
       val view = new ViewDefinition().setQuery(sqlQuery)
       val viewTable = new Table().setView(view).setTableReference(temp)
       val schema = bigquery
@@ -190,7 +190,7 @@ class BigQueryClient private (private val projectId: String,
         .execute().getSchema
 
       // Delete temporary table
-      logger.info(s"Deleting temporary view ${bq.BigQueryHelpers.toTableSpec(temp)}")
+      logger.info(s"Deleting temporary view ${beam.BigQueryHelpers.toTableSpec(temp)}")
       bigquery.tables().delete(temp.getProjectId, temp.getDatasetId, temp.getTableId).execute()
 
       schema
@@ -213,11 +213,11 @@ class BigQueryClient private (private val projectId: String,
 
   /** Get rows from a table. */
   def getTableRows(tableSpec: String): Iterator[TableRow] =
-    getTableRows(bq.BigQueryHelpers.parseTableSpec(tableSpec))
+    getTableRows(beam.BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Get rows from a table. */
   def getTableRows(table: TableReference): Iterator[TableRow] = new Iterator[TableRow] {
-    private val iterator = bq.PatchedBigQueryTableRowIterator.fromTable(table, bigquery)
+    private val iterator = beam.PatchedBigQueryTableRowIterator.fromTable(table, bigquery)
     private var _isOpen = false
     private var _hasNext = false
     private def init(): Unit = if (!_isOpen) {
@@ -243,17 +243,17 @@ class BigQueryClient private (private val projectId: String,
 
   /** Get schema from a table. */
   def getTableSchema(tableSpec: String): TableSchema =
-    getTableSchema(bq.BigQueryHelpers.parseTableSpec(tableSpec))
+    getTableSchema(beam.BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Get schema from a table. */
   def getTableSchema(table: TableReference): TableSchema =
-    withCacheKey(bq.BigQueryHelpers.toTableSpec(table)) {
+    withCacheKey(beam.BigQueryHelpers.toTableSpec(table)) {
       getTable(table).getSchema
     }
 
   /** Get table metadata. */
   def getTable(tableSpec: String): Table =
-    getTable(bq.BigQueryHelpers.parseTableSpec(tableSpec))
+    getTable(beam.BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Get table metadata. */
   def getTable(table: TableReference): Table = {
@@ -293,7 +293,7 @@ class BigQueryClient private (private val projectId: String,
    * exist, throws in other cases (BigQuery exception, network issue etc.).
    */
   def tableExists(tableSpec: String): Boolean =
-    tableExists(bq.BigQueryHelpers.parseTableSpec(tableSpec))
+    tableExists(beam.BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Deletes a table */
   private[bigquery] def deleteTable(table: TableReference): Unit = {
@@ -311,7 +311,7 @@ class BigQueryClient private (private val projectId: String,
             destinationTable: String = null,
             flattenResults: Boolean = false): TableReference =
     if (destinationTable != null) {
-      val tableRef = bq.BigQueryHelpers.parseTableSpec(destinationTable)
+      val tableRef = beam.BigQueryHelpers.parseTableSpec(destinationTable)
       val queryJob = delayedQueryJob(sqlQuery, tableRef, flattenResults)
       queryJob.waitForResult()
       tableRef
@@ -341,7 +341,7 @@ class BigQueryClient private (private val projectId: String,
                      writeDisposition: WriteDisposition = WRITE_EMPTY,
                      createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =
     writeTableRows(
-      bq.BigQueryHelpers.parseTableSpec(tableSpec),
+      beam.BigQueryHelpers.parseTableSpec(tableSpec),
       rows, schema, writeDisposition, createDisposition)
 
   def createTable(table: Table): Unit =
@@ -351,7 +351,7 @@ class BigQueryClient private (private val projectId: String,
     createTable(new Table().setTableReference(table).setSchema(schema))
 
   def createTable(tableSpec: String, schema: TableSchema): Unit =
-    createTable(bq.BigQueryHelpers.parseTableSpec(tableSpec), schema)
+    createTable(beam.BigQueryHelpers.parseTableSpec(tableSpec), schema)
 
   // =======================================================================
   // Type safe API
@@ -394,7 +394,7 @@ class BigQueryClient private (private val projectId: String,
       }
     } else {
       // newSource can be either table or query
-      val table = scala.util.Try(bq.BigQueryHelpers.parseTableSpec(newSource)).toOption
+      val table = scala.util.Try(beam.BigQueryHelpers.parseTableSpec(newSource)).toOption
       if (table.isDefined) {
         self.getTableRows(table.get)
       } else {
@@ -427,7 +427,7 @@ class BigQueryClient private (private val projectId: String,
    writeDisposition: WriteDisposition = WRITE_EMPTY,
    createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =
     writeTypedRows(
-      bq.BigQueryHelpers.parseTableSpec(tableSpec), rows,
+      beam.BigQueryHelpers.parseTableSpec(tableSpec), rows,
       writeDisposition, createDisposition)
 
   def createTypedTable[T <: HasAnnotation: TypeTag](table: Table): Unit =
@@ -437,7 +437,7 @@ class BigQueryClient private (private val projectId: String,
     createTable(table, BigQueryType[T].schema)
 
   def createTypedTable[T <: HasAnnotation: TypeTag](tableSpec: String): Unit =
-    createTypedTable(bq.BigQueryHelpers.parseTableSpec(tableSpec))
+    createTypedTable(beam.BigQueryHelpers.parseTableSpec(tableSpec))
 
   // =======================================================================
   // Job execution
@@ -461,7 +461,7 @@ class BigQueryClient private (private val projectId: String,
       val time = BigInt(getTable(temp).getLastModifiedTime)
       if (sourceTimes.forall(_ < time)) {
         logger.info(s"Cache hit for query: `$sqlQuery`")
-        logger.info(s"Existing destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
+        logger.info(s"Existing destination table: ${beam.BigQueryHelpers.toTableSpec(temp)}")
         new QueryJob {
           override def waitForResult(): Unit = {}
           override val jobReference: Option[JobReference] = None
@@ -471,7 +471,7 @@ class BigQueryClient private (private val projectId: String,
       } else {
         logger.info(s"Cache invalid for query: `$sqlQuery`")
         val newTemp = temporaryTable(extractLocation(sqlQuery).getOrElse(DEFAULT_LOCATION))
-        logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(newTemp)}")
+        logger.info(s"New destination table: ${beam.BigQueryHelpers.toTableSpec(newTemp)}")
         setCacheDestinationTable(sqlQuery, newTemp)
         delayedQueryJob(sqlQuery, newTemp, flattenResults)
       }
@@ -480,7 +480,7 @@ class BigQueryClient private (private val projectId: String,
       case NonFatal(_) =>
         val temp = temporaryTable(extractLocation(sqlQuery).getOrElse(DEFAULT_LOCATION))
         logger.info(s"Cache miss for query: `$sqlQuery`")
-        logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
+        logger.info(s"New destination table: ${beam.BigQueryHelpers.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
         delayedQueryJob(sqlQuery, temp, flattenResults)
     }
@@ -656,10 +656,10 @@ class BigQueryClient private (private val projectId: String,
   }.toOption
 
   private def setCacheDestinationTable(key: String, table: TableReference): Unit =
-    Files.write(bq.BigQueryHelpers.toTableSpec(table), tableCacheFile(key), Charsets.UTF_8)
+    Files.write(beam.BigQueryHelpers.toTableSpec(table), tableCacheFile(key), Charsets.UTF_8)
 
   private def getCacheDestinationTable(key: String): Option[TableReference] = Try {
-    bq.BigQueryHelpers.parseTableSpec(scala.io.Source.fromFile(tableCacheFile(key)).mkString)
+    beam.BigQueryHelpers.parseTableSpec(scala.io.Source.fromFile(tableCacheFile(key)).mkString)
   }.toOption
 
   private def cacheFile(key: String, suffix: String): File = {
@@ -722,7 +722,7 @@ class BigQueryClient private (private val projectId: String,
                           fieldDelimiter: Option[String] = None,
                           printHeader: Option[Boolean] = None): Unit = {
 
-    val tableRef = bq.BigQueryHelpers.parseTableSpec(sourceTable)
+    val tableRef = beam.BigQueryHelpers.parseTableSpec(sourceTable)
 
     val jobConfigExtract = new JobConfigurationExtract()
       .setSourceTable(tableRef)
@@ -827,7 +827,7 @@ class BigQueryClient private (private val projectId: String,
                         ignoreUnknownValues: Option[Boolean] = None,
                         encoding: Option[String] = None): TableReference = {
 
-    val tableRef = bq.BigQueryHelpers.parseTableSpec(destinationTable)
+    val tableRef = beam.BigQueryHelpers.parseTableSpec(destinationTable)
 
     val jobConfigLoad = new JobConfigurationLoad()
       .setSourceUris(sources.asJava)

@@ -19,7 +19,6 @@ package com.spotify.scio.testing
 
 import org.apache.beam.sdk.options._
 import com.spotify.scio._
-import com.spotify.scio.avro._
 import com.spotify.scio.values.SCollection
 
 import scala.reflect.ClassTag

@@ -19,7 +19,7 @@ package com.spotify.scio.avro
 
 import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.io.Tap
+import com.spotify.scio.io._
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
@@ -45,8 +45,8 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
                      codec: CodecFactory = CodecFactory.deflateCodec(6),
                      metadata: Map[String, AnyRef] = Map.empty)
   : Future[Tap[T]] = {
-    val param = nio.AvroIO.WriteParam(numShards, suffix, codec, metadata)
-    self.write(nio.AvroIO[T](path, schema))(param)
+    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
+    self.write(AvroIO[T](path, schema))(param)
   }
 
   /**
@@ -60,8 +60,8 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
                           metadata: Map[String, AnyRef] = Map.empty)
                          (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAvroAnnotation)
   : Future[Tap[T]] = {
-    val param = nio.AvroIO.WriteParam(numShards, suffix, codec, metadata)
-    self.write(nio.Typed.AvroIO[T](path))(param)
+    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
+    self.write(com.spotify.scio.io.AvroTyped.AvroIO[T](path))(param)
   }
 
   /**
@@ -73,8 +73,8 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
   def saveAsObjectFile(path: String, numShards: Int = 0, suffix: String = ".obj",
                        codec: CodecFactory = CodecFactory.deflateCodec(6),
                        metadata: Map[String, AnyRef] = Map.empty): Future[Tap[T]] = {
-    val param = nio.ObjectFileIO.WriteParam(numShards, suffix, codec, metadata)
-    self.write(nio.ObjectFileIO[T](path))(param)
+    val param = ObjectFileIO.WriteParam(numShards, suffix, codec, metadata)
+    self.write(ObjectFileIO[T](path))(param)
   }
 
   /**
@@ -87,7 +87,7 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
                          codec: CodecFactory = CodecFactory.deflateCodec(6),
                          metadata: Map[String, AnyRef] = Map.empty)
                         (implicit ev: T <:< Message): Future[Tap[T]] = {
-    val param = nio.ProtobufIO.WriteParam(numShards, suffix, codec, metadata)
-    self.write(nio.ProtobufIO[T](path))(param)
+    val param = ProtobufIO.WriteParam(numShards, suffix, codec, metadata)
+    self.write(ProtobufIO[T](path))(param)
   }
 }

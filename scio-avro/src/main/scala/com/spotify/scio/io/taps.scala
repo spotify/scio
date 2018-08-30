@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.avro.io
+package com.spotify.scio.io
 
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
@@ -23,7 +23,6 @@ import com.google.protobuf.Message
 import com.twitter.chill.Externalizer
 import com.spotify.scio._
 import com.spotify.scio.avro._
-import com.spotify.scio.io._
 import com.spotify.scio.util._
 import com.spotify.scio.values._
 import com.spotify.scio.avro.types.AvroType

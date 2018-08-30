@@ -37,11 +37,6 @@ import scala.concurrent.Future
  */
 package object bigtable {
 
-  import bigtable.{nio => btnio}
-
-  type BigtableIO[T] = btnio.BigtableIO[T]
-  val BigtableIO = btnio.BigtableIO
-
   /** Enhanced version of `Row` with convenience methods. */
   implicit class RichRow(val self: Row) extends AnyVal {
 
@@ -107,8 +102,8 @@ package object bigtable {
                  tableId: String,
                  keyRange: ByteKeyRange = null,
                  rowFilter: RowFilter = null): SCollection[Row] = {
-      val parameters = btnio.Row.ReadParam(keyRange, rowFilter)
-      self.read(btnio.Row(projectId, instanceId, tableId))(parameters)
+      val parameters = BigtableRead.ReadParam(keyRange, rowFilter)
+      self.read(BigtableRead(projectId, instanceId, tableId))(parameters)
     }
 
     /** Get an SCollection for a Bigtable table. */
@@ -116,8 +111,8 @@ package object bigtable {
                  tableId: String,
                  keyRange: ByteKeyRange,
                  rowFilter: RowFilter): SCollection[Row] = {
-      val parameters = btnio.Row.ReadParam(keyRange, rowFilter)
-      self.read(btnio.Row(bigtableOptions, tableId))(parameters)
+      val parameters = BigtableRead.ReadParam(keyRange, rowFilter)
+      self.read(BigtableRead(bigtableOptions, tableId))(parameters)
     }
 
     /**
@@ -221,8 +216,8 @@ package object bigtable {
                        tableId: String)
                       (implicit ev: T <:< Mutation)
     : Future[Tap[(ByteString, Iterable[Mutation])]] = {
-      val param = btnio.Mutate.Default
-      self.write(btnio.Mutate[T](projectId, instanceId, tableId))(param)
+      val param = BigtableWrite.Default
+      self.write(BigtableWrite[T](projectId, instanceId, tableId))(param)
         .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
     }
 
@@ -233,8 +228,8 @@ package object bigtable {
                        tableId: String)
                       (implicit ev: T <:< Mutation)
     : Future[Tap[(ByteString, Iterable[Mutation])]] = {
-      val param = btnio.Mutate.Default
-      self.write(btnio.Mutate[T](bigtableOptions, tableId))(param)
+      val param = BigtableWrite.Default
+      self.write(BigtableWrite[T](bigtableOptions, tableId))(param)
         .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
     }
 
@@ -248,8 +243,8 @@ package object bigtable {
                        flushInterval: Duration = Duration.standardSeconds(1))
                       (implicit ev: T <:< Mutation)
     : Future[Tap[(ByteString, Iterable[Mutation])]] = {
-      val param = btnio.Mutate.Bulk(numOfShards, flushInterval)
-      self.write(btnio.Mutate[T](bigtableOptions, tableId))(param)
+      val param = BigtableWrite.Bulk(numOfShards, flushInterval)
+      self.write(BigtableWrite[T](bigtableOptions, tableId))(param)
         .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
     }
   }

@@ -17,7 +17,8 @@
 
 package com.spotify.scio.examples.cookbook
 
-import com.spotify.scio.testing.{PipelineSpec, TextIO}
+import com.spotify.scio.io._
+import com.spotify.scio.testing._
 
 class DistinctExampleTest extends PipelineSpec {
 

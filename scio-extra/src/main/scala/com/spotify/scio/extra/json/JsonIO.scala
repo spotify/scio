@@ -15,17 +15,16 @@
  * under the License.
  */
 
-package com.spotify.scio.extra.json.nio
+package com.spotify.scio.extra.json
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.Tap
-import com.spotify.scio.nio.{ScioIO, TextIO}
+import com.spotify.scio.io.{ScioIO, Tap, TextIO}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import io.circe.{Decoder, Encoder, Printer}
+import io.circe.{Printer}
 import io.circe.parser._
 import io.circe.syntax._
-import org.apache.beam.sdk.io.{Compression, FileBasedSink, TextIO => BTextIO}
+import org.apache.beam.sdk.{io => beam}
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -37,7 +36,7 @@ final case class JsonIO[T: ClassTag : Encoder : Decoder](path: String) extends S
   override type WriteP = JsonIO.WriteParam
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    sc.wrap(sc.applyInternal(BTextIO.read().from(path))).setName(path).map(decodeJson)
+    sc.wrap(sc.applyInternal(beam.TextIO.read().from(path))).setName(path).map(decodeJson)
 
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
     data.map(x => params.printer.pretty(x.asJson)).applyInternal(jsonOut(path, params))
@@ -57,12 +56,12 @@ final case class JsonIO[T: ClassTag : Encoder : Decoder](path: String) extends S
   }
 
   private def jsonOut(path: String, params: WriteP) =
-    BTextIO.write()
+    beam.TextIO.write()
       .to(pathWithShards(path))
       .withSuffix(params.suffix)
       .withNumShards(params.numShards)
       .withWritableByteChannelFactory(
-        FileBasedSink.CompressionType.fromCanonical(params.compression))
+        beam.FileBasedSink.CompressionType.fromCanonical(params.compression))
 
   private[scio] def pathWithShards(path: String) = path.replaceAll("\\/+$", "") + "/part"
 
@@ -71,6 +70,6 @@ final case class JsonIO[T: ClassTag : Encoder : Decoder](path: String) extends S
 object JsonIO {
   final case class WriteParam(suffix: String = ".json",
                               numShards: Int = 0,
-                              compression: Compression = Compression.UNCOMPRESSED,
+                              compression: beam.Compression = beam.Compression.UNCOMPRESSED,
                               printer: Printer = Printer.noSpaces)
 }

@@ -15,20 +15,18 @@
  * under the License.
  */
 
-package com.spotify.scio.cassandra.nio
+package com.spotify.scio.cassandra
 
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.ScioContext
-import com.spotify.scio.cassandra.{CassandraOptions, BulkOperations}
-import com.spotify.scio.nio.ScioIO
-import com.spotify.scio.io.Tap
+import com.spotify.scio.io.{ScioIO, Tap}
+
 import scala.concurrent.Future
 
-final case class CassandraIO[T](opts: CassandraOptions, parallelism: Int = 0)(f: T => Seq[Any])
-  extends ScioIO[T] {
+final case class CassandraIO[T](opts: CassandraOptions, parallelism: Int = 0) extends ScioIO[T] {
 
   override type ReadP = Nothing
-  override type WriteP = Unit
+  override type WriteP = CassandraIO.WriteParam[T]
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new IllegalStateException("Can't read from Cassandra")
@@ -45,7 +43,7 @@ final case class CassandraIO[T](opts: CassandraOptions, parallelism: Int = 0)(f:
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
     val bulkOps = new BulkOperations(opts, parallelism)
     data
-      .map(f.andThen(bulkOps.serializeFn))
+      .map(params.outputFn.andThen(bulkOps.serializeFn))
       .groupBy(bulkOps.partitionFn)
       .map(bulkOps.writeFn)
     Future.failed(new NotImplementedError("Cassandra future is not implemented"))
@@ -53,4 +51,8 @@ final case class CassandraIO[T](opts: CassandraOptions, parallelism: Int = 0)(f:
 
   override def tap(params: ReadP): Tap[T] =
     throw new NotImplementedError("Can't read from Cassandra")
+}
+
+object CassandraIO {
+  final case class WriteParam[T](outputFn: T => Seq[Any])
 }

@@ -15,21 +15,21 @@
  * under the License.
  */
 
-package com.spotify.scio.examples.nio
+package com.spotify.scio.examples.extra
 
-import com.spotify.scio.nio
+import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
-class WordCountNioTest extends PipelineSpec {
+class WordCountScioIOTest extends PipelineSpec {
 
   val inData = Seq("a b c d e", "a b a b", "")
   val expected = Seq("a: 3", "b: 3", "c: 1", "d: 1", "e: 1")
 
-  "WordCount" should "works with nio JobTest inputs" in {
-    JobTest[com.spotify.scio.examples.nio.WordCountNio.type]
+  "WordCountScioIO" should "works with io JobTest inputs" in {
+    JobTest[com.spotify.scio.examples.extra.WordCountScioIO.type]
       .args("--input=in.txt", "--output=out.txt")
-      .input(nio.TextIO("in.txt"), inData)
-      .output[String](nio.TextIO("out.txt"))(_ should containInAnyOrder (expected))
+      .input(TextIO("in.txt"), inData)
+      .output[String](TextIO("out.txt"))(_ should containInAnyOrder (expected))
       .run()
   }
 }

@@ -19,7 +19,6 @@ package com.spotify.scio.tensorflow
 
 import java.util.UUID
 
-import com.spotify.scio.ScioContext
 import com.spotify.scio.io.TapSpec
 import org.apache.commons.io.FileUtils
 import shapeless.datatype.tensorflow._

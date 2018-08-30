@@ -15,13 +15,12 @@
  * under the License.
  */
 
-package com.spotify.scio.nio
+package com.spotify.scio.io
 
 import com.google.datastore.v1.{Entity, Query}
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.gcp.datastore.{DatastoreIO => BDatastoreIO}
+import org.apache.beam.sdk.io.gcp.{datastore => beam}
 
 import scala.concurrent.Future
 
@@ -32,14 +31,14 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
 
   override def read(sc: ScioContext, params: ReadP): SCollection[Entity] =
     sc.wrap(sc.applyInternal(
-      BDatastoreIO.v1().read()
+      beam.DatastoreIO.v1().read()
         .withProjectId(projectId)
         .withNamespace(params.namespace)
         .withQuery(params.query)))
 
   override def write(data: SCollection[Entity], params: WriteP): Future[Tap[Entity]] = {
     data.asInstanceOf[SCollection[Entity]].applyInternal(
-      BDatastoreIO.v1.write.withProjectId(projectId))
+      beam.DatastoreIO.v1.write.withProjectId(projectId))
     Future.failed(new NotImplementedError("Datastore future not implemented"))
   }
 

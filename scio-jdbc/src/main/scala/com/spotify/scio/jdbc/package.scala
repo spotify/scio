@@ -21,23 +21,19 @@ import java.sql.{Driver, PreparedStatement, ResultSet}
 
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.jdbc.JdbcIO.DataSourceConfiguration
-import org.apache.beam.sdk.io.{jdbc => jio}
+import org.apache.beam.sdk.io.{jdbc => beam}
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 /**
-  * Main package for JDBC APIs. Import all.
-  *
-  * {{{
-  * import com.spotify.scio.jdbc._
-  * }}}
-  */
+ * Main package for JDBC APIs. Import all.
+ *
+ * {{{
+ * import com.spotify.scio.jdbc._
+ * }}}
+ */
 package object jdbc {
-
-  type JdbcIO[T] = jdbc.nio.JdbcIO[T]
-  val JdbcIO = jdbc.nio.JdbcIO
 
   private[jdbc] val USE_BEAM_DEFAULT_BATCH_SIZE = -1L
   private[jdbc] val USE_BEAM_DEFAULT_FETCH_SIZE = -1
@@ -86,28 +82,17 @@ package object jdbc {
                                  batchSize: Long = USE_BEAM_DEFAULT_BATCH_SIZE)
     extends JdbcIoOptions
 
-  private[jdbc] def jdbcIoId(opts: JdbcConnectionOptions, query: String): String = {
-    val user = opts.password
-      .fold(s"${opts.username}")(password => s"${opts.username}:$password")
-    s"$user@${opts.connectionUrl}:$query"
-  }
-
-  private[jdbc] def jdbcIoId(opts: JdbcIoOptions): String = opts match {
-    case JdbcReadOptions(connOpts, query, _, _, _) => jdbcIoId(connOpts, query)
-    case JdbcWriteOptions(connOpts, statement, _, _) => jdbcIoId(connOpts, statement)
-  }
-
   private[jdbc] def getDataSourceConfig(opts: jdbc.JdbcConnectionOptions)
-  : DataSourceConfiguration = {
+  : beam.JdbcIO.DataSourceConfiguration = {
     opts.password match {
       case Some(pass) => {
-        jio.JdbcIO.DataSourceConfiguration
+        beam.JdbcIO.DataSourceConfiguration
           .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
           .withUsername(opts.username)
           .withPassword(pass)
       }
       case None => {
-        jio.JdbcIO.DataSourceConfiguration
+        beam.JdbcIO.DataSourceConfiguration
           .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
           .withUsername(opts.username)
       }
@@ -118,14 +103,14 @@ package object jdbc {
   implicit class JdbcScioContext(@transient val self: ScioContext) extends Serializable {
     /** Get an SCollection for a JDBC query. */
     def jdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T]): SCollection[T] =
-      self.read(jdbc.nio.Select(readOptions))
+      self.read(JdbcSelect(readOptions))
   }
 
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JDBC methods. */
   implicit class JdbcSCollection[T](val self: SCollection[T]) {
     /** Save this SCollection as a JDBC database. */
     def saveAsJdbc(writeOptions: JdbcWriteOptions[T]): Future[Tap[T]] =
-      self.write(jdbc.nio.Write(writeOptions))
+      self.write(JdbcWrite(writeOptions))
   }
 
 }

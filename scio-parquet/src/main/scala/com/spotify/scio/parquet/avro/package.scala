@@ -17,23 +17,15 @@
 
 package com.spotify.scio.parquet
 
-import java.lang.{Boolean => JBoolean}
-
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.Tap
-import com.spotify.scio.avro._
-import com.spotify.scio.util.{ClosureCleaner, ScioUtil}
+import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.specific.SpecificRecordBase
-import org.apache.beam.sdk.io.hadoop.inputformat.HadoopInputFormatIO
-import org.apache.beam.sdk.transforms.SimpleFunction
-import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
-import org.apache.parquet.avro.AvroParquetInputFormat
 import org.apache.parquet.filter2.predicate.FilterPredicate
-import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.slf4j.LoggerFactory
 
@@ -49,9 +41,6 @@ import scala.reflect.ClassTag
  * }}}
  */
 package object avro {
-
-  type ParquetAvroIO[T] = avro.nio.ParquetAvroIO[T]
-  val ParquetAvroIO = avro.nio.ParquetAvroIO
 
   /** Alias for `me.lyh.parquet.avro.Projection`. */
   val Projection = me.lyh.parquet.avro.Projection

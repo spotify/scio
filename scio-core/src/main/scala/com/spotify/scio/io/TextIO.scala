@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.nio
+package com.spotify.scio.io
 
 import java.io.{BufferedInputStream, InputStream, SequenceInputStream}
 import java.nio.channels.Channels
@@ -23,7 +23,6 @@ import java.util.Collections
 
 import com.google.api.client.util.Charsets
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.Tap
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata

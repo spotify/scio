@@ -27,7 +27,7 @@ import java.nio.file.Files
 import com.google.datastore.v1.{Entity, Query}
 import com.spotify.scio.io.Tap
 import com.spotify.scio.metrics.Metrics
-import com.spotify.scio.nio.{DatastoreIO, ScioIO}
+import com.spotify.scio.io._
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
@@ -38,7 +38,7 @@ import org.apache.beam.sdk.metrics.Counter
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values._
-import org.apache.beam.sdk.{Pipeline, PipelineResult, io => gio}
+import org.apache.beam.sdk.{Pipeline, PipelineResult, io => beam}
 import org.joda.time.Instant
 import org.slf4j.LoggerFactory
 
@@ -512,14 +512,14 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @group input
    */
   def datastore(projectId: String, query: Query, namespace: String = null): SCollection[Entity] =
-    this.read(nio.DatastoreIO(projectId))(DatastoreIO.ReadParam(query, namespace))
+    this.read(DatastoreIO(projectId))(DatastoreIO.ReadParam(query, namespace))
 
   private def pubsubIn[T: ClassTag](isSubscription: Boolean,
                                     name: String,
                                     idAttribute: String,
                                     timestampAttribute: String): SCollection[T] = {
-    val io = nio.PubSubIO[T](name, idAttribute, timestampAttribute)
-    this.read(io)(nio.PubSubIO.ReadParam(isSubscription))
+    val io = PubsubIO[T](name, idAttribute, timestampAttribute)
+    this.read(io)(PubsubIO.ReadParam(isSubscription))
   }
 
   /**
@@ -545,8 +545,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
                                                   idAttribute: String,
                                                   timestampAttribute: String)
   : SCollection[(T, Map[String, String])] = {
-    val io = nio.PubSubIO.withAttributes[T](name, idAttribute, timestampAttribute)
-    this.read(io)(nio.PubSubIO.ReadParam(isSubscription))
+    val io = PubsubIO.withAttributes[T](name, idAttribute, timestampAttribute)
+    this.read(io)(PubsubIO.ReadParam(isSubscription))
   }
 
   /**
@@ -574,9 +574,9 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection for a text file.
    * @group input
    */
-  def textFile(path: String, compression: gio.Compression = gio.Compression.AUTO)
+  def textFile(path: String, compression: beam.Compression = beam.Compression.AUTO)
   : SCollection[String] =
-    this.read(nio.TextIO(path))(nio.TextIO.ReadParam(compression))
+    this.read(TextIO(path))(TextIO.ReadParam(compression))
 
   /**
    * Get an SCollection with a custom input transform. The transform should have a unique name.
@@ -585,7 +585,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   def customInput[T : ClassTag, I >: PBegin <: PInput]
   (name: String, transform: PTransform[I, PCollection[T]]): SCollection[T] = requireNotClosed {
     if (this.isTest) {
-      this.getTestInput(nio.CustomIO[T](name))
+      this.getTestInput(CustomIO[T](name))
     } else {
       wrap(this.pipeline.apply(name, transform))
     }
@@ -593,8 +593,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
 
   /**
    * Generic read method for all `ScioIO[T]` implementations, if it is test pipeline this will
-   * feed value of pre-registered input Nio implementation which match for the passing `ScioIO[T]`
-   * implementation. if not this will invoke [[com.spotify.scio.nio.ScioIO[T]#read]] method along
+   * feed value of pre-registered input IO implementation which match for the passing `ScioIO[T]`
+   * implementation. if not this will invoke [[com.spotify.scio.io.ScioIO[T]#read]] method along
    * with read configurations passed by.
    *
    * @param io     an implementation of `ScioIO[T]` trait

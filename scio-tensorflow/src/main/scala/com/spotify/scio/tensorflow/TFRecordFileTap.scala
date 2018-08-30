@@ -22,7 +22,7 @@ import com.spotify.scio.io.{FileStorage, Tap}
 import com.spotify.scio.values.SCollection
 
 /** Tap for Tensorflow TFRecord files. */
-case class TFRecordFileTap(path: String) extends Tap[Array[Byte]] {
+final case class TFRecordFileTap(path: String) extends Tap[Array[Byte]] {
 
   import scala.language.implicitConversions
 

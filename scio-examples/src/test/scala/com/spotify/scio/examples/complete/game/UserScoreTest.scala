@@ -19,6 +19,7 @@ package com.spotify.scio.examples.complete.game
 
 import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.complete.game.UserScore.UserScoreSums
+import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class UserScoreTest extends PipelineSpec {

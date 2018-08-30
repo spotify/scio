@@ -22,7 +22,6 @@ import java.nio.file.Files
 import com.spotify.featran.{FeatureSpec, MultiFeatureSpec}
 import com.spotify.featran.transformers.{OneHotEncoder, StandardScaler}
 import com.spotify.scio._
-import com.spotify.scio.avro._
 import com.spotify.scio.tensorflow.TFSavedJob.Iris
 import com.spotify.scio.testing._
 import org.tensorflow.example.Example

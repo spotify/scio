@@ -37,19 +37,19 @@ final class BigQueryScioContext(@transient val self: ScioContext) extends Serial
    */
   def bigQuerySelect(sqlQuery: String,
                      flattenResults: Boolean = false): SCollection[TableRow] =
-    self.read(nio.Select(sqlQuery))(nio.Select.ReadParam(flattenResults))
+    self.read(BigQuerySelect(sqlQuery))(BigQuerySelect.ReadParam(flattenResults))
 
   /**
    * Get an SCollection for a BigQuery table.
    */
   def bigQueryTable(table: TableReference): SCollection[TableRow] =
-    self.read(nio.TableRef(table))
+    self.read(BigQueryTable(table))
 
   /**
    * Get an SCollection for a BigQuery table.
    */
   def bigQueryTable(tableSpec: String): SCollection[TableRow] =
-    self.read(nio.TableSpec(tableSpec))
+    self.read(BigQueryTable(tableSpec))
 
   /**
    * Get a typed SCollection for a BigQuery SELECT query or table.
@@ -83,12 +83,12 @@ final class BigQueryScioContext(@transient val self: ScioContext) extends Serial
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
   def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null)
-    : SCollection[T] = self.read(nio.Typed.dynamic[T](newSource))
+    : SCollection[T] = self.read(BigQueryTyped.dynamic[T](newSource))
 
   /**
    * Get an SCollection for a BigQuery TableRow JSON file.
    */
   def tableRowJsonFile(path: String): SCollection[TableRow] =
-    self.read(nio.TableRowJsonIO(path))
+    self.read(TableRowJsonIO(path))
 
 }

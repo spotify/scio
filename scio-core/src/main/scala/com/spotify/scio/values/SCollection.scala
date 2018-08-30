@@ -27,14 +27,11 @@ import com.google.datastore.v1.Entity
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io._
-import com.spotify.scio.nio
-import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.io.{Compression, FileBasedSink}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
@@ -42,7 +39,7 @@ import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
-import org.apache.beam.sdk.{io => gio}
+import org.apache.beam.sdk.{io => beam}
 import org.joda.time.{Duration, Instant}
 
 import scala.collection.JavaConverters._
@@ -110,7 +107,6 @@ object SCollection {
 sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   import TupleFunctions._
-  import com.spotify.scio.Implicits._
 
   // =======================================================================
   // Delegations for internal PCollection
@@ -901,7 +897,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       saveAsInMemoryTap
     } else {
       val elemCoder = this.getCoder[T]
-      val write = gio.AvroIO.writeGenericRecords(AvroBytesUtil.schema)
+      val write = beam.AvroIO.writeGenericRecords(AvroBytesUtil.schema)
         .to(this.pathWithShards(path))
         .withSuffix(".obj.avro")
         .withCodec(CodecFactory.deflateCodec(6))
@@ -922,7 +918,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                             suffix: String,
                             numShards: Int,
                             compression: Compression) = {
-    gio.TextIO.write()
+    beam.TextIO.write()
       .to(pathWithShards(path))
       .withSuffix(suffix)
       .withNumShards(numShards)
@@ -934,7 +930,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group output
    */
   def saveAsDatastore(projectId: String)(implicit ev: T <:< Entity): Future[Tap[Entity]] =
-    this.asInstanceOf[SCollection[Entity]].write(nio.DatastoreIO(projectId))
+    this.asInstanceOf[SCollection[Entity]].write(DatastoreIO(projectId))
 
   /**
    * Save this SCollection as a Pub/Sub topic.
@@ -944,7 +940,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                    idAttribute: String = null,
                    timestampAttribute: String = null)
   : Future[Tap[T]] =
-    this.write(nio.PubSubIO[T](topic))
+    this.write(PubsubIO[T](topic))
 
   /**
     * Save this SCollection as a Pub/Sub topic using the given map as message attributes.
@@ -955,7 +951,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                                               timestampAttribute: String = null)
                                              (implicit ev: T <:< (V, Map[String, String]))
   : Future[Tap[(V, Map[String, String])]] = {
-    val io = nio.PubSubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
+    val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
     this.asInstanceOf[SCollection[(V, Map[String, String])]].write(io)
   }
 
@@ -973,7 +969,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     } else {
       this.map(_.toString)
     }
-    s.write(nio.TextIO(path))(nio.TextIO.WriteParam(suffix, numShards, compression))
+    s.write(TextIO(path))(TextIO.WriteParam(suffix, numShards, compression))
   }
 
   /**
@@ -983,7 +979,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def saveAsCustomOutput[O <: POutput](name: String, transform: PTransform[PCollection[T], O])
   : Future[Tap[T]] = {
     if (context.isTest) {
-      context.testOut(nio.CustomIO[T](name))(this)
+      context.testOut(CustomIO[T](name))(this)
     } else {
       this.internal.apply(name, transform)
     }
@@ -998,17 +994,17 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   /**
    * Generic write method for all `ScioIO[T]` implementations, if it is test pipeline this will
-   * evaluate pre-registered output Nio implementation which match for the passing `ScioIO[T]`
-   * implementation. if not this will invoke [[com.spotify.scio.nio.ScioIO[T]#write]] method along
+   * evaluate pre-registered output IO implementation which match for the passing `ScioIO[T]`
+   * implementation. if not this will invoke [[com.spotify.scio.io.ScioIO[T]#write]] method along
    * with write configurations passed by.
    *
    * @param io     an implementation of `ScioIO[T]` trait
    * @param params configurations need to pass to perform underline write implementation
    */
-  def write(io: nio.ScioIO[T])(params: io.WriteP): Future[Tap[T]] =
+  def write(io: ScioIO[T])(params: io.WriteP): Future[Tap[T]] =
     writeImpl(io)(params)
 
-  private def writeImpl(io: nio.ScioIO[T])(params: io.WriteP): Future[Tap[T]] = {
+  private def writeImpl(io: ScioIO[T])(params: io.WriteP): Future[Tap[T]] = {
     if (context.isTest) {
       context.testOut(io)(this)
       this.saveAsInMemoryTap
@@ -1018,7 +1014,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   // scalastyle:off structural.type
-  def write(io: nio.ScioIO[T]{ type WriteP = Unit }): Future[Tap[T]] =
+  def write(io: ScioIO[T]{ type WriteP = Unit }): Future[Tap[T]] =
     writeImpl(io)(())
   // scalastyle:on structural.type
 
