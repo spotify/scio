@@ -15,21 +15,18 @@
  * under the License.
  */
 
-package com.spotify.scio.avro.nio
+package com.spotify.scio.io
 
 import com.google.protobuf.Message
 import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.{io => gio}
+import org.apache.beam.sdk.{io => beam}
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.specific.SpecificRecordBase
 import com.spotify.scio.ScioContext
 import com.spotify.scio.values._
-import com.spotify.scio.io.Tap
-import com.spotify.scio.avro.io._
-import com.spotify.scio.nio.ScioIO
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.Implicits._
 import com.spotify.scio.util.ScioUtil
@@ -130,7 +127,7 @@ final case class AvroIO[T: ClassTag](path: String, schema: Schema = null) extend
   override type WriteP = AvroIO.WriteParam
 
   private def avroOut[U](sc: SCollection[T],
-                         write: gio.AvroIO.Write[U],
+                         write: beam.AvroIO.Write[U],
                          path: String, numShards: Int, suffix: String,
                          codec: CodecFactory,
                          metadata: Map[String, AnyRef]) =
@@ -150,9 +147,9 @@ final case class AvroIO[T: ClassTag](path: String, schema: Schema = null) extend
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val cls = ScioUtil.classOf[T]
     val t = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-      gio.AvroIO.read(cls).from(path)
+      beam.AvroIO.read(cls).from(path)
     } else {
-      gio.AvroIO.readGenericRecords(schema).from(path).asInstanceOf[gio.AvroIO.Read[T]]
+      beam.AvroIO.readGenericRecords(schema).from(path).asInstanceOf[beam.AvroIO.Read[T]]
     }
     sc.wrap(sc.applyInternal(t)).setName(path)
   }
@@ -164,9 +161,9 @@ final case class AvroIO[T: ClassTag](path: String, schema: Schema = null) extend
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
     val cls = ScioUtil.classOf[T]
     val t = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-      gio.AvroIO.write(cls)
+      beam.AvroIO.write(cls)
     } else {
-      gio.AvroIO.writeGenericRecords(schema).asInstanceOf[gio.AvroIO.Write[T]]
+      beam.AvroIO.writeGenericRecords(schema).asInstanceOf[beam.AvroIO.Write[T]]
     }
     data.applyInternal(
       avroOut(data, t, path, params.numShards, params.suffix, params.codec, params.metadata))
@@ -184,17 +181,17 @@ object AvroIO {
     metadata: Map[String, AnyRef] = Map.empty)
 }
 
-object Typed {
+object AvroTyped {
 
   final case class AvroIO[T : ClassTag : TypeTag](path: String)
                                                  (implicit ev: T <:< HasAvroAnnotation)
     extends ScioIO[T] {
 
     override type ReadP = Unit
-    override type WriteP = com.spotify.scio.avro.nio.AvroIO.WriteParam
+    override type WriteP = com.spotify.scio.io.AvroIO.WriteParam
 
     private def typedAvroOut[U](sc: SCollection[T],
-                                write: gio.AvroIO.TypedWrite[U, Void, GenericRecord],
+                                write: beam.AvroIO.TypedWrite[U, Void, GenericRecord],
                                 path: String, numShards: Int, suffix: String,
                                 codec: CodecFactory,
                                 metadata: Map[String, AnyRef]) =
@@ -215,7 +212,7 @@ object Typed {
      */
     override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       val avroT = AvroType[T]
-      val t = gio.AvroIO.readGenericRecords(avroT.schema).from(path)
+      val t = beam.AvroIO.readGenericRecords(avroT.schema).from(path)
       sc.wrap(sc.applyInternal(t)).setName(path).map(avroT.fromGenericRecord)
     }
 
@@ -225,7 +222,7 @@ object Typed {
      */
     override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
       val avroT = AvroType[T]
-      val t = gio.AvroIO.writeCustomTypeToGenericRecords()
+      val t = beam.AvroIO.writeCustomTypeToGenericRecords()
         .withFormatFunction(new SerializableFunction[T, GenericRecord] {
           override def apply(input: T): GenericRecord = avroT.toGenericRecord(input)
         })

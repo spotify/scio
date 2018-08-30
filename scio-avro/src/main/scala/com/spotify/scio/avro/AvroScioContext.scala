@@ -20,8 +20,9 @@ package com.spotify.scio.avro
 import com.google.protobuf.Message
 import org.apache.avro.Schema
 import com.spotify.scio.ScioContext
-import com.spotify.scio.values._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
+import com.spotify.scio.io._
+import com.spotify.scio.values._
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
@@ -36,7 +37,7 @@ final class AvroScioContext(@transient val self: ScioContext) extends Serializab
    * serialization is not guaranteed to be compatible across Scio releases.
    */
   def objectFile[T: ClassTag](path: String): SCollection[T] =
-    self.read(nio.ObjectFileIO[T](path))
+    self.read(ObjectFileIO[T](path))
 
   /**
    * Get an SCollection for an Avro file.
@@ -44,7 +45,7 @@ final class AvroScioContext(@transient val self: ScioContext) extends Serializab
    *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
    */
   def avroFile[T: ClassTag](path: String, schema: Schema = null): SCollection[T] =
-    self.read(nio.AvroIO[T](path, schema))
+    self.read(AvroIO[T](path, schema))
 
   /**
    * Get a typed SCollection from an Avro schema.
@@ -56,7 +57,7 @@ final class AvroScioContext(@transient val self: ScioContext) extends Serializab
    */
   def typedAvroFile[T <: HasAvroAnnotation : ClassTag : TypeTag](path: String)
   : SCollection[T] =
-    self.read(nio.Typed.AvroIO[T](path))
+    self.read(com.spotify.scio.io.AvroTyped.AvroIO[T](path))
 
   /**
    * Get an SCollection for a Protobuf file.
@@ -65,6 +66,6 @@ final class AvroScioContext(@transient val self: ScioContext) extends Serializab
    * Avro's block file format.
    */
   def protobufFile[T: ClassTag](path: String)(implicit ev: T <:< Message): SCollection[T] =
-    self.read(nio.ProtobufIO[T](path))
+    self.read(ProtobufIO[T](path))
 
 }

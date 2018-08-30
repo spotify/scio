@@ -24,7 +24,7 @@ import com.spotify.scio.util.Functions
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.{DynamicDestinations, TableDestination}
-import org.apache.beam.sdk.io.gcp.{bigquery => bqio}
+import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.values.ValueInSingleWindow
 
 import scala.concurrent.Future
@@ -58,7 +58,7 @@ package object dynamic {
           throw new NotImplementedError(
             "BigQuery with dynamic destinations cannot be used in a test context")
       } else {
-        var transform = bqio.BigQueryIO.write()
+        var transform = beam.BigQueryIO.write()
           .to(destinations)
           .withFormatFunction(Functions.serializableFn(formatFn))
         if (createDisposition != null) {

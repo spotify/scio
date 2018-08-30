@@ -31,9 +31,6 @@ import scala.concurrent.Future
  */
 package object cassandra {
 
-  type CassandraIO[T] = cassandra.nio.CassandraIO[T]
-  val CassandraIO = cassandra.nio.CassandraIO
-
   case class CassandraOptions(keyspace: String, table: String, cql: String,
                               seedNodeHost: String, seedNodePort: Int = -1,
                               username: String = null, password: String = null)
@@ -62,6 +59,6 @@ package object cassandra {
      */
     def saveAsCassandra(opts: CassandraOptions, parallelism: Int = 0)
                        (f: T => Seq[Any]): Future[Tap[T]] =
-      self.write(CassandraIO[T](opts, parallelism)(f))
+      self.write(CassandraIO[T](opts, parallelism))(CassandraIO.WriteParam(f))
     }
 }

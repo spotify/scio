@@ -20,15 +20,14 @@ package com.spotify.scio.testing
 import com.google.common.collect.ImmutableMap
 import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
-import com.google.protobuf.Message
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro._
 import com.spotify.scio.bigquery._
-import com.spotify.scio.nio.{CustomIO, PubSubIO, ScioIO}
+import com.spotify.scio.io._
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.{io => gio}
+import org.apache.beam.sdk.{io => beam}
 import org.scalatest.exceptions.TestFailedException
 
 import scala.io.Source
@@ -144,9 +143,9 @@ object MaterializeJob {
 object CustomIOJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val inputTransform = gio.TextIO.read()
+    val inputTransform = beam.TextIO.read()
       .from(args("input"))
-    val outputTransform = gio.TextIO.write()
+    val outputTransform = beam.TextIO.write()
       .to(args("output"))
     sc.customInput("TextIn", inputTransform)
       .map(_.toInt)
@@ -329,8 +328,8 @@ class JobTestTest extends PipelineSpec {
   def testPubsubJob(xs: String*): Unit = {
     JobTest[PubsubJob.type]
       .args("--input=in", "--output=out")
-      .input(PubSubIO[String]("in"), Seq("a", "b", "c"))
-      .output(PubSubIO[String]("out"))(_ should containInAnyOrder (xs))
+      .input(PubsubIO[String]("in"), Seq("a", "b", "c"))
+      .output(PubsubIO[String]("out"))(_ should containInAnyOrder (xs))
       .run()
   }
 
@@ -348,8 +347,8 @@ class JobTestTest extends PipelineSpec {
     val m = Map("a" -> "1", "b" -> "2", "c" -> "3")
     JobTest[PubsubWithAttributesJob.type]
       .args("--input=in", "--output=out")
-      .input(PubSubIO[(String, M)]("in"), Seq("a", "b", "c").map((_, m)))
-      .output(PubSubIO[(String, M)]("out"))(_ should containInAnyOrder (xs.map((_, m))))
+      .input(PubsubIO[(String, M)]("in"), Seq("a", "b", "c").map((_, m)))
+      .output(PubsubIO[(String, M)]("out"))(_ should containInAnyOrder (xs.map((_, m))))
       .run()
   }
 

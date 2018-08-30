@@ -15,13 +15,12 @@
  * under the License.
  */
 
-package com.spotify.scio.bigquery.io
+package com.spotify.scio.bigquery
 
 import scala.concurrent.Future
 
 import com.spotify.scio.io.{Tap, Taps, FileStorage}
 import com.google.api.services.bigquery.model.TableReference
-import com.spotify.scio.bigquery._
 import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 
@@ -55,13 +54,13 @@ final case class BigQueryTaps(self: Taps) {
     mkTap(
       s"BigQuery SELECT: $sqlQuery",
       () => isQueryDone(sqlQuery),
-      () => nio.Select(sqlQuery).tap(nio.Select.ReadParam(flattenResults)))
+      () => BigQuerySelect(sqlQuery).tap(BigQuerySelect.ReadParam(flattenResults)))
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
   def bigQueryTable(table: TableReference): Future[Tap[TableRow]] =
     mkTap(s"BigQuery Table: $table",
       () => bqc.tableExists(table),
-      () => nio.TableRef(table).tap(()))
+      () => BigQueryTable(table).tap(()))
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
   def bigQueryTable(tableSpec: String): Future[Tap[TableRow]] =
@@ -94,7 +93,7 @@ final case class BigQueryTaps(self: Taps) {
   def tableRowJsonFile(path: String): Future[Tap[TableRow]] =
     mkTap(s"TableRowJson: $path",
       () => self.isPathDone(path),
-      () => nio.TableRowJsonIO(path).tap(()))
+      () => TableRowJsonIO(path).tap(()))
 
   private def isQueryDone(sqlQuery: String): Boolean =
     bqc.extractTables(sqlQuery).forall(bqc.tableExists)

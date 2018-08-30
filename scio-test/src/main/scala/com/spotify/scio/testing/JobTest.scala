@@ -20,10 +20,10 @@ package com.spotify.scio.testing
 import java.lang.reflect.InvocationTargetException
 
 import com.spotify.scio.ScioResult
-import com.spotify.scio.nio.ScioIO
+import com.spotify.scio.io.ScioIO
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.{metrics => bm}
+import org.apache.beam.sdk.{metrics => beam}
 
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
@@ -75,11 +75,11 @@ object JobTest {
                                   input: Map[String, Iterable[_]] = Map.empty,
                                   output: Map[String, SCollection[_] => Unit] = Map.empty,
                                   distCaches: Map[DistCacheIO[_], _] = Map.empty,
-                                  counters: Map[bm.Counter, Long => Unit] = Map.empty,
+                                  counters: Map[beam.Counter, Long => Unit] = Map.empty,
                                   // scalastyle:off line.size.limit
-                                  distributions: Map[bm.Distribution, bm.DistributionResult => Unit] = Map.empty,
+                                  distributions: Map[beam.Distribution, beam.DistributionResult => Unit] = Map.empty,
                                   // scalastyle:on line.size.limit
-                                  gauges: Map[bm.Gauge, bm.GaugeResult => Unit] = Map.empty,
+                                  gauges: Map[beam.Gauge, beam.GaugeResult => Unit] = Map.empty,
                                   wasRunInvoked: Boolean = false)
 
   class Builder(private var state: BuilderState) {
@@ -152,7 +152,7 @@ object JobTest {
      * @param counter counter to be evaluated
      * @param assertion assertion for the counter result's committed value
      */
-    def counter(counter: bm.Counter)(assertion: Long => Unit): Builder = {
+    def counter(counter: beam.Counter)(assertion: Long => Unit): Builder = {
       require(!state.counters.contains(counter), "Duplicate test counter: " + counter.getName)
       state = state.copy(counters = state.counters + (counter -> assertion))
       this
@@ -164,8 +164,8 @@ object JobTest {
      * @param distribution distribution to be evaluated
      * @param assertion assertion for the distribution result's committed value
      */
-    def distribution(distribution: bm.Distribution)
-                    (assertion: bm.DistributionResult => Unit): Builder = {
+    def distribution(distribution: beam.Distribution)
+                    (assertion: beam.DistributionResult => Unit): Builder = {
       require(
         !state.distributions.contains(distribution),
         "Duplicate test distribution: " + distribution.getName)
@@ -178,7 +178,7 @@ object JobTest {
      * @param gauge gauge to be evaluated
      * @param assertion assertion for the gauge result's committed value
      */
-    def gauge(gauge: bm.Gauge)(assertion: bm.GaugeResult => Unit): Builder = {
+    def gauge(gauge: beam.Gauge)(assertion: beam.GaugeResult => Unit): Builder = {
       require(!state.gauges.contains(gauge), "Duplicate test gauge: " + gauge.getName)
       state = state.copy(gauges = state.gauges + (gauge -> assertion))
       this
@@ -238,14 +238,14 @@ object JobTest {
   }
 
   /** Create a new JobTest.Builder instance. */
-  def apply(className: String)(implicit bm: BeamOptions): Builder =
+  def apply(className: String)(implicit bo: BeamOptions): Builder =
     new Builder(BuilderState(className))
-      .args(bm.opts:_*)
+      .args(bo.opts:_*)
 
   /** Create a new JobTest.Builder instance. */
-  def apply[T: ClassTag](implicit bm: BeamOptions): Builder = {
+  def apply[T: ClassTag](implicit bo: BeamOptions): Builder = {
     val className=  ScioUtil.classOf[T].getName.replaceAll("\\$$", "")
-    apply(className).args(bm.opts:_*)
+    apply(className).args(bo.opts:_*)
   }
 
 }

@@ -19,7 +19,6 @@ package com.spotify.scio.bigquery
 
 import org.apache.beam.sdk.options._
 import com.spotify.scio.testing._
-import com.spotify.scio.bigquery.nio.Typed
 import com.spotify.scio.testing.util.ItUtils
 
 object BigQueryIOIT {
@@ -48,7 +47,7 @@ class BigQueryIOIT extends PipelineSpec {
 
   "Select" should "read typed values from a SQL query" in
     runWithRealContext(options) { sc =>
-      val scoll = Typed[ShakespeareFromQuery].read(sc, ())
+      val scoll = BigQueryTyped[ShakespeareFromQuery].read(sc, Unit)
       scoll should haveSize (10)
       scoll should satisfy[ShakespeareFromQuery] {
         _.forall(_.getClass == classOf[ShakespeareFromQuery])
@@ -57,7 +56,7 @@ class BigQueryIOIT extends PipelineSpec {
 
   "TableRef" should "read typed values from table" in
     runWithRealContext(options) { sc =>
-      val scoll = Typed[ShakespeareFromTable].read(sc, ())
+      val scoll = BigQueryTyped[ShakespeareFromTable].read(sc, Unit)
       scoll.take(10) should haveSize (10)
       scoll should satisfy[ShakespeareFromTable] {
         _.forall(_.getClass == classOf[ShakespeareFromTable])

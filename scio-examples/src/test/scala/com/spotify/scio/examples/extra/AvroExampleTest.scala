@@ -17,9 +17,9 @@
 
 package com.spotify.scio.examples.extra
 
-import com.spotify.scio.avro.Account
-import com.spotify.scio.examples.extra.AvroExample.{AccountFromSchema, AccountToSchema}
 import com.spotify.scio.avro._
+import com.spotify.scio.examples.extra.AvroExample.{AccountFromSchema, AccountToSchema}
+import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class AvroExampleTest extends PipelineSpec {

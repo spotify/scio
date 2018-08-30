@@ -17,6 +17,7 @@
 
 package com.spotify.scio.examples.extra
 
+import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class AnnoySideInputExampleTest extends PipelineSpec {

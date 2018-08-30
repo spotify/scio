@@ -36,9 +36,6 @@ import scala.concurrent.Future
  */
 package object elasticsearch {
 
-  type ElasticsearchIO[T] = elasticsearch.nio.ElasticsearchIO[T]
-  val ElasticsearchIO = elasticsearch.nio.ElasticsearchIO
-
   case class ElasticsearchOptions(clusterName: String, servers: Seq[InetSocketAddress])
 
   implicit class ElasticsearchSCollection[T](val self: SCollection[T]) extends AnyVal {
