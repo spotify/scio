@@ -17,24 +17,15 @@
 
 package com.spotify.scio.nio
 
-import java.io.File
-import java.util.UUID
-
 import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper
 import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.bigquery._
-import com.spotify.scio.io.Tap
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
-import com.spotify.scio.values.SCollection
-import org.apache.commons.io.FileUtils
 
-import scala.concurrent.Future
-import scala.reflect.ClassTag
-
-object NioIT {
+object ScioIOTest {
   @AvroType.toSchema
   case class AvroRecord(i: Int, s: String, r: List[String])
 
@@ -42,72 +33,9 @@ object NioIT {
   case class BQRecord(i: Int, s: String, r: List[String])
 }
 
-class NioIT extends PipelineSpec {
+class ScioIOTest extends ScioIOSpec {
 
-  private def testTap[T: ClassTag](xs: Seq[T])
-                                  (ioFn: String => ScioIO[T])
-                                  (readFn: (ScioContext, String) => SCollection[T])
-                                  (writeFn: (SCollection[T], String) => Future[Tap[T]])
-                                  (suffix: String): Unit = {
-    val tmpDir = new File(
-      new File(sys.props("java.io.tmpdir")),
-      "scio-test-" + UUID.randomUUID())
-
-    val sc = ScioContext()
-    val data = sc.parallelize(xs)
-    val future = writeFn(data, tmpDir.getAbsolutePath)
-    sc.close().waitUntilDone()
-    val tap = future.waitForResult()
-
-    tap.value.toSeq should contain theSameElementsAs xs
-    tap.open(ScioContext()) should containInAnyOrder(xs)
-    all(tmpDir.listFiles().map(_.toString)) should endWith (suffix)
-    FileUtils.deleteDirectory(tmpDir)
-  }
-
-  private def testJobTest[T: ClassTag](xs: Seq[T], in: String = "in", out: String = "out")
-                                      (ioFn: String => ScioIO[T])
-                                      (readFn: (ScioContext, String) => SCollection[T])
-                                      (writeFn: (SCollection[T], String) => Future[Tap[T]])
-  : Unit = {
-    def runMain(args: Array[String]): Unit = {
-      val (sc, argz) = ContextAndArgs(args)
-      val data = readFn(sc, argz("input"))
-      writeFn(data, argz("output"))
-      sc.close()
-    }
-
-    val builder = com.spotify.scio.testing.JobTest("null")
-      .input(ioFn(in), xs)
-      .output(ioFn(out))(_ should containInAnyOrder (xs))
-    builder.setUp()
-    runMain(Array(s"--input=$in", s"--output=$out") :+ s"--appName=${builder.testId}")
-    builder.tearDown()
-
-    // scalastyle:off no.whitespace.before.left.bracket
-    the [IllegalArgumentException] thrownBy {
-      val builder = com.spotify.scio.testing.JobTest("null")
-        .input(CustomIO[T](in), xs)
-        .output(ioFn(out))(_ should containInAnyOrder (xs))
-      builder.setUp()
-      runMain(Array(s"--input=$in", s"--output=$out") :+ s"--appName=${builder.testId}")
-      builder.tearDown()
-    } should have message s"requirement failed: Missing test input: ${ioFn(in).testId}, " +
-      s"available: [CustomIO($in)]"
-
-    the [IllegalArgumentException] thrownBy {
-      val builder = com.spotify.scio.testing.JobTest("null")
-        .input(ioFn(in), xs)
-        .output(CustomIO[T](out))(_ should containInAnyOrder (xs))
-      builder.setUp()
-      runMain(Array(s"--input=$in", s"--output=$out") :+ s"--appName=${builder.testId}")
-      builder.tearDown()
-    } should have message s"requirement failed: Missing test output: ${ioFn(out).testId}, " +
-      s"available: [CustomIO($out)]"
-    // scalastyle:on no.whitespace.before.left.bracket
-  }
-
-  import NioIT._
+  import ScioIOTest._
 
   "AvroIO" should "work with SpecificRecord" in {
     val xs = (1 to 100).map(AvroUtils.newSpecificRecord)
@@ -130,7 +58,7 @@ class NioIT extends PipelineSpec {
   }
 
   "ObjectFileIO" should "work" in {
-    import NioIT._
+    import ScioIOTest._
     val xs = (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
     testTap(xs)(ObjectFileIO(_))(_.objectFile(_))(_.saveAsObjectFile(_))(".obj.avro")
     testJobTest(xs)(ObjectFileIO(_))(_.objectFile(_))(_.saveAsObjectFile(_))
