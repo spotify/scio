@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2018 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,13 +35,12 @@ import scala.concurrent.{Await, Future}
 import scala.language.higherKinds
 import scala.util.{Random, Try}
 
-// @Todo fix symlink
-
-/** Batch benchmark jobs, run once daily and logged to DataStore.
+/**
+ * Batch benchmark jobs, run once daily and logged to DataStore.
  *
- * This file is symlinked to scio-bench/src/main/scala/com/spotify/ScioBenchmark.scala so that it
- * can run with past Scio releases.
- * */
+ * This file is symlinked to scio-bench/src/main/scala/com/spotify/ScioBatchBenchmark.scala so
+ * that it can run with past Scio releases.
+ */
 object ScioBatchBenchmark {
   import ScioBenchmarkSettings._
 

@@ -27,24 +27,17 @@ import org.joda.time.format.DateTimeFormat
 
 import scala.collection.JavaConverters._
 
-/** Streaming benchmark jobs, restarted daily and polled for metrics every hour. */
+/**
+ * Streaming benchmark jobs, restarted daily and polled for metrics every hour.
+ *
+ * This file is symlinked to scio-bench/src/main/scala/com/spotify/ScioStreamingBenchmark.scala so
+ * that it can run with past Scio releases.
+ */
 object ScioStreamingBenchmark {
   import DataflowProvider._
   import ScioBenchmarkSettings._
 
-  private val benchmarks = ClassPath.from(Thread.currentThread().getContextClassLoader)
-    .getAllClasses
-    .asScala
-    .filter(_.getName.matches("com\\.spotify\\.ScioStreamingBenchmark\\$[\\w]+\\$"))
-    .flatMap { ci =>
-      val cls = ci.load()
-      if (classOf[StreamingBenchmark] isAssignableFrom cls) {
-        Some(cls.newInstance().asInstanceOf[StreamingBenchmark])
-      } else {
-        None
-      }
-    }
-
+  // Launch the streaming benchmark jobs and cancel old jobs
   def main(args: Array[String]): Unit = {
     val argz = Args(args)
     val name = argz("name")
@@ -61,6 +54,19 @@ object ScioStreamingBenchmark {
       .filter(_.name.matches(regex))
       .map(_.run(projectId, prefix, commonArgs("n1-highmem-8")))
   }
+
+  private val benchmarks = ClassPath.from(Thread.currentThread().getContextClassLoader)
+    .getAllClasses
+    .asScala
+    .filter(_.getName.matches("com\\.spotify\\.ScioStreamingBenchmark\\$[\\w]+\\$"))
+    .flatMap { ci =>
+      val cls = ci.load()
+      if (classOf[StreamingBenchmark] isAssignableFrom cls) {
+        Some(cls.newInstance().asInstanceOf[StreamingBenchmark])
+      } else {
+        None
+      }
+    }
 
   private val cancelledState = "JOB_STATE_CANCELLED"
 
@@ -107,12 +113,11 @@ object ScioStreamingBenchmark {
   }
 }
 
-/** Triggered once an hour to read job metrics from currently running streaming benchmarks
- * and write to DataStore. */
 object ScioStreamingBenchmarkMetrics {
   import DataflowProvider._
   import ScioBenchmarkSettings._
 
+  // Triggered once an hour to poll job metrics from currently running streaming benchmarks
   def main(args: Array[String]): Unit = {
     val argz = Args(args)
     val name = argz("name")
@@ -134,7 +139,7 @@ object ScioStreamingBenchmarkMetrics {
               }.orElse {
               PrettyPrint.print(
                 "Active jobs fetcher",
-                s"Could not parse validbenchmark name from job ${job.getName}")
+                s"Could not parse valid benchmark name from job ${job.getName}")
               None
             }
           } else {
@@ -169,10 +174,11 @@ abstract class StreamingBenchmark {
 
 class DatastoreStreamingLogger extends DatastoreLogger(ScioBenchmarkSettings.StreamingMetrics) {
   override def dsKeyId(benchmark: BenchmarkResult, env: CircleCIEnv): String = {
-    s"${env.buildNum.toString}[${timeOffset(benchmark.startTime)}]"
+    val hoursSinceJobLaunch = hourOffset(benchmark.startTime)
+    s"${env.buildNum}[$hoursSinceJobLaunch]"
   }
 
-  private def timeOffset(startTime: LocalDateTime): String = {
+  private def hourOffset(startTime: LocalDateTime): String = {
     val hourOffset = Hours.hoursBetween(startTime, new LocalDateTime(DateTimeZone.UTC)).getHours
     s"+${"%02d".format(hourOffset)}h"
   }

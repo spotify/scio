@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Spotify AB.
+ * Copyright 2018 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,12 @@ import scala.collection.JavaConverters._
 import scala.language.higherKinds
 import scala.util.{Failure, Success, Try}
 
-
-/** Shared functions to manage benchmark jobs and write metrics to DataStore. */
-
-final case class CircleCIEnv(buildNum: Long, gitHash: String)
-
+/**
+ * Shared functions to manage benchmark jobs and write metrics to DataStore
+ *
+ * This file is symlinked to scio-bench/src/main/scala/com/spotify/ScioBenchmark.scala so
+ * that it can run with past Scio releases.
+ */
 object ScioBenchmarkSettings {
   val defaultProjectId: String = "data-integration-test"
   val numOfWorkers = 4
@@ -76,6 +77,8 @@ object ScioBenchmarkSettings {
     "TotalMemoryUsage", "TotalPdUsage", "TotalShuffleDataProcessed", "TotalSsdUsage",
     "TotalStreamingDataProcessed", "TotalVcpuTime")
 }
+
+final case class CircleCIEnv(buildNum: Long, gitHash: String)
 
 object DataflowProvider {
   val dataflow: Dataflow = {
