@@ -36,15 +36,6 @@ package object avro {
   /** Annotation for Avro field and record documentation. */
   type doc = com.spotify.scio.avro.types.doc
 
-  type AvroIO[T] = avro.nio.AvroIO[T]
-  val AvroIO = avro.nio.AvroIO
-
-  type ObjectFileIO[T] = avro.nio.ObjectFileIO[T]
-  val ObjectFileIO = avro.nio.ObjectFileIO
-
-  type ProtobufIO[T] = avro.nio.ProtobufIO[T]
-  val ProtobufIO = avro.nio.ProtobufIO
-
   implicit def toAvroScioContext(c: ScioContext): AvroScioContext =
     new AvroScioContext(c)
   implicit def toAvroSCollection[T](c: SCollection[T]): AvroSCollection[T] =

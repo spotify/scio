@@ -18,7 +18,7 @@
 package com.spotify.scio.testing
 
 import com.spotify.scio.ScioResult
-import com.spotify.scio.nio.ScioIO
+import com.spotify.scio.io.ScioIO
 import com.spotify.scio.values.SCollection
 
 import scala.collection.concurrent.TrieMap

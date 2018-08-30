@@ -78,12 +78,6 @@ package object bigquery {
   implicit def toBigQuerySCollection[T](c: SCollection[T]): BigQuerySCollection[T] =
     new BigQuerySCollection[T](c)
 
-  type BigQueryIO[T] = bigquery.nio.BigQueryIO[T]
-  val BigQueryIO = bigquery.nio.BigQueryIO
-
-  type TableRowJsonIO = bigquery.nio.TableRowJsonIO
-  val TableRowJsonIO = bigquery.nio.TableRowJsonIO
-
   /**
    * Enhanced version of [[com.google.api.services.bigquery.model.TableReference TableReference]].
    */

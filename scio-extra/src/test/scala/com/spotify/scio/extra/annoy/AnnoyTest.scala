@@ -22,7 +22,6 @@ import java.nio.file.Files
 
 import com.spotify.annoy.{ANNIndex, IndexType}
 import com.spotify.scio.ScioContext
-import com.spotify.scio.avro._
 import com.spotify.scio.testing.PipelineSpec
 
 class AnnoyTest extends PipelineSpec {

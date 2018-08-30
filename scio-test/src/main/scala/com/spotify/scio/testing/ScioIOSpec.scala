@@ -21,8 +21,7 @@ import java.io.File
 import java.util.UUID
 
 import com.spotify.scio._
-import com.spotify.scio.io.Tap
-import com.spotify.scio.nio._
+import com.spotify.scio.io._
 import com.spotify.scio.values.SCollection
 import org.apache.commons.io.FileUtils
 

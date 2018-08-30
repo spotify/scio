@@ -15,14 +15,12 @@
  * under the License.
  */
 
-package com.spotify.scio.parquet.avro.nio
+package com.spotify.scio.parquet.avro
 
 import java.lang.{Boolean => JBoolean}
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.Tap
-import com.spotify.scio.nio.ScioIO
-import com.spotify.scio.parquet.avro._
+import com.spotify.scio.io.{ScioIO, Tap}
 import com.spotify.scio.util.{ClosureCleaner, ScioUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema

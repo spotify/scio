@@ -18,6 +18,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.extra.checkpoint._
+import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class CheckpointExampleTest extends PipelineSpec {

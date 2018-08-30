@@ -24,9 +24,7 @@ import io.circe.Printer
 import io.circe.generic.AutoDerivation
 import org.apache.beam.sdk.io.Compression
 
-import scala.collection.generic.CanBuildFrom
 import scala.concurrent.Future
-import scala.language.higherKinds
 import scala.reflect.ClassTag
 
 /**
@@ -49,9 +47,6 @@ import scala.reflect.ClassTag
  * }}}
  */
 package object json extends AutoDerivation {
-
-  type JsonIO[T] = nio.JsonIO[T]
-  val JsonIO = nio.JsonIO
 
   type Encoder[T] = io.circe.Encoder[T]
   type Decoder[T] = io.circe.Decoder[T]

@@ -20,8 +20,9 @@ package com.spotify.scio.io
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.specific.SpecificRecordBase
+import org.apache.beam.sdk.{io => beam}
 import org.apache.beam.sdk.io.FileBasedSink.DynamicDestinations
-import org.apache.beam.sdk.io.{AvroIO, DynamicAvroDestinations, FileSystems, TextIO}
+import org.apache.beam.sdk.io.{AvroIO, DynamicAvroDestinations, FileSystems}
 
 import scala.concurrent.Future
 
@@ -123,7 +124,7 @@ package object dynamic {
           "Text file with dynamic destinations cannot be used in a test context")
       } else {
         val tempDir = FileSystems.matchNewResource(self.context.options.getTempLocation, true)
-        var transform = TextIO.write().to(destinations).withTempDirectory(tempDir)
+        var transform = beam.TextIO.write().to(destinations).withTempDirectory(tempDir)
         if (windowedWrites) {
           transform = transform.withWindowedWrites().withNumShards(numShards)
         }

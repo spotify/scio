@@ -15,22 +15,21 @@
  * under the License.
  */
 
-// Example: Word Count Example with Metrics and nio read/write
+// Example: Word Count Example with Metrics and ScioIO read/write
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.nio.WordCountNio
+// `sbt runMain "com.spotify.scio.examples.extra.WordCountScioIO
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
-package com.spotify.scio.examples.nio
+package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
-import com.spotify.scio.nio
-import com.spotify.scio.nio.TextIO
+import com.spotify.scio.io.TextIO
 import org.slf4j.LoggerFactory
 
-object WordCountNio {
+object WordCountScioIO {
 
   // Logger is an object instance, i.e. statically initialized and thus can be used safely in an
   // anonymous function without serialization issue
@@ -51,8 +50,8 @@ object WordCountNio {
     val sumEmpty = ScioMetrics.counter("emptyLines")
 
     // Create IO classes to read and write
-    val inputTextIO = nio.TextIO(input)
-    val outputTextIO = nio.TextIO(output)
+    val inputTextIO = TextIO(input)
+    val outputTextIO = TextIO(output)
 
     // Open text files as an `SCollection[String]` passing io read params
     sc.read(inputTextIO)(TextIO.ReadParam())

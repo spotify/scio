@@ -26,7 +26,6 @@ import com.google.common.collect.Maps
 import com.spotify.scio.io.Tap
 import com.spotify.scio.transforms.DoFnWithResource
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
-import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.spotify.zoltar.tf.{TensorFlowGraphModel, TensorFlowModel}
 import com.spotify.zoltar.{Model, Models}
@@ -36,7 +35,6 @@ import org.apache.beam.sdk.io.{Compression, FileSystems}
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Teardown}
 import org.apache.beam.sdk.util.MimeTypes
-import org.apache.beam.sdk.{io => gio}
 import org.slf4j.LoggerFactory
 import org.tensorflow._
 import org.tensorflow.example.Example

@@ -15,10 +15,9 @@
  * under the License.
  */
 
-package com.spotify.scio.nio
+package com.spotify.scio.io
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
 
 import scala.concurrent.Future
@@ -26,7 +25,7 @@ import scala.concurrent.Future
 /**
  * Base trait for all Read/Write IO classes. Every IO connector must implement this.
  * This trait has two abstract implicit methods #read, #write that need to be implemented
- * in every subtype. Look at the [[com.spotify.scio.nio.TextIO]] subclass for a reference
+ * in every subtype. Look at the [[com.spotify.scio.io.TextIO]] subclass for a reference
  * implementation.
  */
 trait ScioIO[T] {
