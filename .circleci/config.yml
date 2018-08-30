@@ -117,6 +117,18 @@ jobs:
     environment:
       - SCALA_VERSION: *scala_212_version
 
+  bench_streaming_metrics:
+    <<: *common_settings
+    steps:
+      - checkout
+      - restore_cache: *restore_cache_settings
+      - run:
+          command: ./scripts/circleci_streaming_bench_metrics.sh
+          no_output_timeout: 30m
+      - save_cache: *save_cache_settings
+    environment:
+      - SCALA_VERSION: *scala_212_version
+
 ####################
 # Workflows
 ####################
@@ -183,3 +195,13 @@ workflows:
                 - master
     jobs:
       - bench
+  bench_streaming_metrics:
+    triggers:
+      - schedule:
+          cron: "0 * * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - bench_streaming_metrics

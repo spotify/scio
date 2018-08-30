@@ -11,5 +11,4 @@ fi
 
 PROPS="-Dbigquery.project=data-integration-test -Dbigquery.secret=$DIR_OF_SCRIPT/$JSON_KEY"
 
-sbt -v $PROPS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.ScioBatchBenchmark --name=ci"
-sbt -v $PROPS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.ScioStreamingBenchmark --name=ci"
+sbt -v $PROPS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.ScioStreamingBenchmarkMetrics --name=ci"
