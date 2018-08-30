@@ -15,15 +15,13 @@
  * under the License.
  */
 
-package com.spotify.scio.jdbc.nio
+package com.spotify.scio.jdbc
 
-import com.spotify.scio.jdbc.{jdbcIoId, _}
 import com.spotify.scio.Implicits._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.ScioContext
-import com.spotify.scio.nio.{ScioIO, TestIO}
-import com.spotify.scio.io.Tap
-import org.apache.beam.sdk.io.{jdbc => jio}
+import com.spotify.scio.io.{ScioIO, Tap, TestIO}
+import org.apache.beam.sdk.io.{jdbc => beam}
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -32,18 +30,13 @@ import java.sql.{PreparedStatement, ResultSet}
 sealed trait JdbcIO[T] extends TestIO[T]
 
 object JdbcIO {
-  def apply[T](opts: JdbcIoOptions): JdbcIO[T] = new JdbcIO[T] {
+  def apply[T](opts: JdbcIoOptions): JdbcIO[T] = new JdbcIO[T] with TestIO[T] {
     override def testId: String = s"JdbcIO(${jdbcIoId(opts)})"
   }
-}
 
-final case class Select[T: ClassTag](readOptions: JdbcReadOptions[T]) extends ScioIO[T] {
-
-  override type ReadP = Unit
-  override type WriteP = Nothing
-
-  override def testId: String = readOptions match {
-    case JdbcReadOptions(connOpts, query, _, _, _) => s"JdbcIO(${jdbcIoId(connOpts, query)})"
+  private[jdbc] def jdbcIoId(opts: JdbcIoOptions): String = opts match {
+    case JdbcReadOptions(connOpts, query, _, _, _) => jdbcIoId(connOpts, query)
+    case JdbcWriteOptions(connOpts, statement, _, _) => jdbcIoId(connOpts, statement)
   }
 
   private[jdbc] def jdbcIoId(opts: JdbcConnectionOptions, query: String): String = {
@@ -51,21 +44,29 @@ final case class Select[T: ClassTag](readOptions: JdbcReadOptions[T]) extends Sc
       .fold(s"${opts.username}")(password => s"${opts.username}:$password")
     s"$user@${opts.connectionUrl}:$query"
   }
+}
+
+final case class JdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T]) extends ScioIO[T] {
+
+  override type ReadP = Unit
+  override type WriteP = Nothing
+
+  override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(readOptions)})"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
-    var transform = jio.JdbcIO.read[T]()
+    var transform = beam.JdbcIO.read[T]()
       .withCoder(coder)
       .withDataSourceConfiguration(getDataSourceConfig(readOptions.connectionOptions))
       .withQuery(readOptions.query)
-      .withRowMapper(new jio.JdbcIO.RowMapper[T] {
+      .withRowMapper(new beam.JdbcIO.RowMapper[T] {
         override def mapRow(resultSet: ResultSet): T = {
           readOptions.rowMapper(resultSet)
         }
       })
     if (readOptions.statementPreparator != null) {
       transform = transform
-        .withStatementPreparator(new jio.JdbcIO.StatementPreparator {
+        .withStatementPreparator(new beam.JdbcIO.StatementPreparator {
           override def setParameters(preparedStatement: PreparedStatement): Unit = {
             readOptions.statementPreparator(preparedStatement)
           }
@@ -85,31 +86,24 @@ final case class Select[T: ClassTag](readOptions: JdbcReadOptions[T]) extends Sc
     throw new NotImplementedError("JDBC tap is not implemented")
 }
 
-final case class Write[T](writeOptions: JdbcWriteOptions[T]) extends ScioIO[T] {
+final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends ScioIO[T] {
+
   override type ReadP = Nothing
   override type WriteP = Unit
 
-  override def testId: String = writeOptions match {
-    case JdbcWriteOptions(connOpts, statement, _, _) => s"JdbcIO(${jdbcIoId(connOpts, statement)})"
-  }
-
-  private[jdbc] def jdbcIoId(opts: JdbcConnectionOptions, query: String): String = {
-    val user = opts.password
-      .fold(s"${opts.username}")(password => s"${opts.username}:${password}")
-    s"$user@${opts.connectionUrl}:$query"
-  }
+  override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(writeOptions)})"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new IllegalStateException("jdbc.Write is write-only")
 
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
     val connOpts = writeOptions.connectionOptions
-    var transform = jio.JdbcIO.write[T]()
+    var transform = beam.JdbcIO.write[T]()
       .withDataSourceConfiguration(getDataSourceConfig(writeOptions.connectionOptions))
       .withStatement(writeOptions.statement)
     if (writeOptions.preparedStatementSetter != null) {
       transform = transform
-        .withPreparedStatementSetter(new jio.JdbcIO.PreparedStatementSetter[T] {
+        .withPreparedStatementSetter(new beam.JdbcIO.PreparedStatementSetter[T] {
           override def setParameters(element: T, preparedStatement: PreparedStatement): Unit = {
             writeOptions.preparedStatementSetter(element, preparedStatement)
           }

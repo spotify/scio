@@ -18,7 +18,6 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
-import com.spotify.scio.avro._
 import com.spotify.scio.io.Taps
 
 // Use Futures and Taps to wait for resources

@@ -21,7 +21,6 @@ package com.spotify.scio.bigquery.validation
 import com.google.api.services.bigquery.model.TableFieldSchema
 
 import scala.collection.mutable
-import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 import scala.reflect.runtime.universe._
 

@@ -19,8 +19,9 @@ package com.spotify.scio.values
 
 import com.spotify.annoy.{ANNIndex, AnnoyIndex}
 import com.spotify.scio._
-import com.spotify.scio.testing._
 import com.spotify.scio.avro._
+import com.spotify.scio.io._
+import com.spotify.scio.testing._
 import com.spotify.sparkey.SparkeyReader.Entry
 import com.spotify.sparkey.{IndexHeader, LogHeader, Sparkey, SparkeyReader}
 

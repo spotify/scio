@@ -15,11 +15,10 @@
  * under the License.
  */
 
-package com.spotify.scio.nio
+package com.spotify.scio.io
 
 import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper
-import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.proto.Track.TrackPB
@@ -52,7 +51,7 @@ class ScioIOTest extends ScioIOSpec {
 
   it should "work with typed Avro" in {
     val xs = (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
-    val io = avro.nio.Typed.AvroIO[AvroRecord] _
+    val io = (s: String) => AvroIO[AvroRecord](s)
     testTap(xs)(io)(_.typedAvroFile[AvroRecord](_))(_.saveAsTypedAvroFile(_))(".avro")
     testJobTest(xs)(io)(_.typedAvroFile[AvroRecord](_))(_.saveAsTypedAvroFile(_))
   }
@@ -78,9 +77,7 @@ class ScioIOTest extends ScioIOSpec {
 
   it should "work with typed BigQuery" in {
     val xs = (1 to 100).map(x => BQRecord(x, x.toString, (1 to x).map(_.toString).toList))
-    val in = "project:dataset.input"
-    val out = "project:dataset.output"
-    testJobTest(xs, in, out)(BigQueryIO(_))(_.typedBigQuery(_))(_.saveAsTypedBigQuery(_))
+    testJobTest(xs)(BigQueryIO(_))(_.typedBigQuery(_))(_.saveAsTypedBigQuery(_))
   }
 
   "TableRowJsonIO" should "work" in {
@@ -104,25 +101,25 @@ class ScioIOTest extends ScioIOSpec {
       testJobTest(xs)(DatastoreIO(_))(_.datastore(_, null))(_.saveAsDatastore(_))
     }
 
-  "PubSubIO" should "work with subscription" in {
+  "PubsubIO" should "work with subscription" in {
     val xs = (1 to 100).map(_.toString)
-    testJobTest(xs)(PubSubIO(_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
+    testJobTest(xs)(PubsubIO(_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
   }
 
   it should "work with topic" in {
     val xs = (1 to 100).map(_.toString)
-    testJobTest(xs)(PubSubIO(_))(_.pubsubTopic(_))(_.saveAsPubsub(_))
+    testJobTest(xs)(PubsubIO(_))(_.pubsubTopic(_))(_.saveAsPubsub(_))
   }
 
   it should "work with subscription and attributes" in {
     val xs = (1 to 100).map(x => (x.toString, Map.empty[String, String]))
-    val io = (s: String) => PubSubIO[(String, Map[String, String])](s)
+    val io = (s: String) => PubsubIO[(String, Map[String, String])](s)
     testJobTest(xs)(io)(_.pubsubSubscriptionWithAttributes(_))(_.saveAsPubsubWithAttributes(_))
   }
 
   it should "work with topic and attributes" in {
     val xs = (1 to 100).map(x => (x.toString, Map.empty[String, String]))
-    val io = (s: String) => PubSubIO[(String, Map[String, String])](s)
+    val io = (s: String) => PubsubIO[(String, Map[String, String])](s)
     testJobTest(xs)(io)(_.pubsubTopicWithAttributes(_))(_.saveAsPubsubWithAttributes(_))
   }
 

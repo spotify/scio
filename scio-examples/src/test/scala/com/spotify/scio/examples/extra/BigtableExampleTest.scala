@@ -20,6 +20,7 @@ package com.spotify.scio.examples.extra
 import com.google.bigtable.v2.{Mutation, Row}
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigtable._
+import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class BigtableExampleTest extends PipelineSpec {

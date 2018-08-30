@@ -18,6 +18,7 @@
 package com.spotify.scio.examples.extra
 
 import com.google.protobuf.ByteString
+import com.spotify.scio.io._
 import com.spotify.scio.tensorflow.TFRecordIO
 import com.spotify.scio.testing._
 import org.tensorflow.example._

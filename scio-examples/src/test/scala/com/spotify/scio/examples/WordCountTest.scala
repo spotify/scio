@@ -17,6 +17,7 @@
 
 package com.spotify.scio.examples
 
+import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
 class WordCountTest extends PipelineSpec {

@@ -20,7 +20,8 @@ package com.spotify.scio.examples.extra
 import java.io.FileOutputStream
 import java.nio.file.Files
 
-import com.spotify.scio.testing.{PipelineSpec, TextIO}
+import com.spotify.scio.io._
+import com.spotify.scio.testing._
 
 class SingleGZipFileExampleTest extends PipelineSpec {
 

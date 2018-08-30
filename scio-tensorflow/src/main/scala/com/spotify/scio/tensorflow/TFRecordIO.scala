@@ -18,12 +18,11 @@
 package com.spotify.scio.tensorflow
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.Tap
-import com.spotify.scio.nio.ScioIO
+import com.spotify.scio.io.{ScioIO, Tap}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.Compression
-import org.apache.beam.sdk.{io => bio}
+import org.apache.beam.sdk.{io => beam}
 import org.tensorflow.example.Example
 
 import scala.concurrent.Future
@@ -78,7 +77,7 @@ private object TFRecordMethods {
   def read(sc: ScioContext,
            path: String,
            params: TFRecordIO.ReadParam): SCollection[Array[Byte]] =
-    sc.wrap(sc.applyInternal(bio.TFRecordIO
+    sc.wrap(sc.applyInternal(beam.TFRecordIO
       .read()
       .from(path)
       .withCompression(params.compression)))
@@ -86,7 +85,7 @@ private object TFRecordMethods {
   def write(data: SCollection[Array[Byte]],
             path: String,
             params: TFRecordIO.WriteParam): Unit =
-    data.applyInternal(bio.TFRecordIO
+    data.applyInternal(beam.TFRecordIO
       .write()
       .to(data.pathWithShards(path))
       .withSuffix(params.suffix)

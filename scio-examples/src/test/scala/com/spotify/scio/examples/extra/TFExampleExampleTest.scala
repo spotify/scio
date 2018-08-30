@@ -17,8 +17,9 @@
 
 package com.spotify.scio.examples.extra
 
+import com.spotify.scio.io._
 import com.spotify.scio.tensorflow.TFExampleIO
-import com.spotify.scio.testing.{PipelineSpec, TextIO}
+import com.spotify.scio.testing._
 
 class TFExampleExampleTest extends PipelineSpec {
   import WordCountFeatureSpec._

@@ -21,7 +21,6 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
-import com.spotify.scio.avro._
 
 object TapExample {
   def main(cmdlineArgs: Array[String]): Unit = {
