@@ -62,6 +62,18 @@ object BigQueryTypeIT {
   @Annotation1
   @Annotation2
   class ShakespeareWithSequentialAnnotations
+
+  // run this to re-populate tables used for this test and BigQueryPartitionUtilIT
+  def main(args: Array[String]): Unit = {
+    val bq = BigQueryClient.defaultInstance()
+    val data = List(ToTableT("a", 1), ToTableT("b", 2))
+    bq.writeTypedRows("data-integration-test:partition_a.table_20170101", data)
+    bq.writeTypedRows("data-integration-test:partition_a.table_20170102", data)
+    bq.writeTypedRows("data-integration-test:partition_a.table_20170103", data)
+    bq.writeTypedRows("data-integration-test:partition_b.table_20170101", data)
+    bq.writeTypedRows("data-integration-test:partition_b.table_20170102", data)
+    bq.writeTypedRows("data-integration-test:partition_c.table_20170104", data)
+  }
 }
 
 class BigQueryTypeIT extends FlatSpec with Matchers {
