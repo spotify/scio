@@ -453,6 +453,8 @@ class ScioContext private[scio] (val options: PipelineOptions,
         getBeamMetrics)
 
     override def getAwaitDuration: Duration = awaitDuration
+
+    override def isTest: Boolean = context.isTest
   }
 
   /** Whether the context is closed. */
