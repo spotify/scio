@@ -19,6 +19,7 @@ package com.spotify.scio
 
 import java.util.concurrent.TimeUnit
 
+import com.spotify.scio.ScioResultTest._
 import com.spotify.scio.metrics.{BeamDistribution, MetricValue}
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
@@ -40,32 +41,6 @@ class ScioResultTest extends PipelineSpec {
   }
 
   it should "respect waitUntilDone() with cancelJob passed in" in {
-    val mockPipeline = new PipelineResult {
-      private var state = State.RUNNING
-      override def cancel(): State = {
-        state = State.CANCELLED
-        state
-      }
-      override def waitUntilFinish(duration: time.Duration): State = null
-      override def waitUntilFinish(): State = null
-      override def getState: State = state
-      override def metrics(): MetricResults = null
-    }
-
-    // Give the ScioResult a 10 nanosecond timeout and verify job is cancelled after timeout
-    val nanos = Duration.create(10L, TimeUnit.NANOSECONDS)
-
-    // Mock Scio result takes 100 milliseconds to complete
-    val mockScioResult = new ScioResult(mockPipeline) {
-      override def getMetrics: metrics.Metrics = null
-      override val finalState: Future[State] = Future {
-        Thread.sleep(10.seconds.toMillis)
-        State.DONE
-      }
-
-      override def getAwaitDuration: Duration = nanos
-    }
-
     the[PipelineExecutionException] thrownBy {
       mockScioResult.waitUntilDone(cancelJob = true)
     } should have message s"java.lang.Exception: Job cancelled after exceeding timeout value $nanos"
@@ -101,4 +76,41 @@ class ScioResultTest extends PipelineSpec {
     gauge.forall(g => g.committed.get.value >= 1 && g.committed.get.value <= 3) shouldBe true
   }
 
+  "isTest" should "return true when testing" in {
+    val r = runWithContext(_.parallelize(Seq(1, 2, 3)))
+    r.isTest shouldBe true
+  }
+
+  "isTest" should "return false when not testing" in {
+    mockScioResult.isTest shouldBe false
+  }
+}
+
+object ScioResultTest {
+
+  private val mockPipeline: PipelineResult = new PipelineResult {
+    private var state = State.RUNNING
+    override def cancel(): State = {
+      state = State.CANCELLED
+      state
+    }
+    override def waitUntilFinish(duration: time.Duration): State = null
+    override def waitUntilFinish(): State = null
+    override def getState: State = state
+    override def metrics(): MetricResults = null
+  }
+
+  // Give the ScioResult a 10 nanosecond timeout and verify job is cancelled after timeout
+  private val nanos = Duration.create(10L, TimeUnit.NANOSECONDS)
+
+  // Mock Scio result takes 100 milliseconds to complete
+  private val mockScioResult = new ScioResult(mockPipeline) {
+    override def getMetrics: metrics.Metrics = null
+    override val finalState: Future[State] = Future {
+      Thread.sleep(10.seconds.toMillis)
+      State.DONE
+    }
+
+    override def getAwaitDuration: Duration = nanos
+  }
 }

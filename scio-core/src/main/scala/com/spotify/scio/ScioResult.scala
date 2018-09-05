@@ -102,6 +102,9 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
   /** Whether the pipeline is completed. */
   def isCompleted: Boolean = internal.getState.isTerminal
 
+  /** Whether this is the result of a test. */
+  def isTest: Boolean = false
+
   /** Pipeline's current state. */
   def state: State = Try(internal.getState).getOrElse(State.UNKNOWN)
 
