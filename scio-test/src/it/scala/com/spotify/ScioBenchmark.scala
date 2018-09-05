@@ -20,7 +20,7 @@ package com.spotify
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
-import com.google.api.services.dataflow.Dataflow
+import com.google.api.services.dataflow.{Dataflow, DataflowScopes}
 import com.google.api.services.dataflow.model.{Job, JobMetrics}
 import com.google.datastore.v1._
 import com.google.datastore.v1.client.{Datastore, DatastoreHelper}
@@ -85,6 +85,7 @@ object DataflowProvider {
     val transport = GoogleNetHttpTransport.newTrustedTransport()
     val jackson = JacksonFactory.getDefaultInstance
     val credential = GoogleCredential.getApplicationDefault
+      .createScoped(DataflowScopes.all())
     new Dataflow.Builder(transport, jackson, credential).build()
   }
 }
