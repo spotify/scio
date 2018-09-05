@@ -54,7 +54,7 @@ object ScioBatchBenchmark {
       .print(System.currentTimeMillis())
     val prefix = s"ScioBenchmark-$name-$timestamp"
     val results = benchmarks
-      .filter(_.name.matches(regex)).take(1)
+      .filter(_.name.matches(regex))
       .flatMap(_.run(projectId, prefix, commonArgs()))
 
     val logger = ScioBenchmarkLogger[Try](
