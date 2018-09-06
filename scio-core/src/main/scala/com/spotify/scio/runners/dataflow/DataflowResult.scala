@@ -42,11 +42,12 @@ class DataflowResult(val internal: DataflowPipelineJob) extends RunnerResult {
   private val client = DataflowResult.getOptions(internal.getProjectId).getDataflowClient
 
   /** Get Dataflow [[com.google.api.services.dataflow.model.Job Job]]. */
-  def getJob: Job = DataflowResult.getJob(client, internal.getProjectId, internal.getJobId)
+  def getJob: Job = DataflowResult.getJob(
+    client, internal.getProjectId, internal.getRegion, internal.getJobId)
 
   /** Get Dataflow [[com.google.api.services.dataflow.model.JobMetrics JobMetrics]]. */
-  def getJobMetrics: JobMetrics =
-    DataflowResult.getJobMetrics(client, internal.getProjectId, internal.getJobId)
+  def getJobMetrics: JobMetrics = DataflowResult.getJobMetrics(
+    client, internal.getProjectId, internal.getRegion, internal.getJobId)
 
   /** Get a generic [[ScioResult]]. */
   override def asScioResult: ScioResult = new DataflowScioResult(internal)
@@ -80,7 +81,7 @@ object DataflowResult {
   def apply(projectId: String, jobId: String): DataflowResult = {
     val options = getOptions(projectId)
 
-    val job = DataflowResult.getJob(options.getDataflowClient, options.getProject, jobId)
+    val job = getJob(options.getDataflowClient, options.getProject, options.getRegion, jobId)
     // DataflowPipelineJob require a mapping of human-readable transform names via
     // AppliedPTransform#getUserName, e.g. flatMap@MyJob.scala:12, to Dataflow service generated
     // transform names, e.g. s12
@@ -107,11 +108,13 @@ object DataflowResult {
     options
   }
 
-  private def getJob(dataflow: Dataflow, projectId: String, jobId: String): Job =
-    dataflow.projects().jobs().get(projectId, jobId).setView("JOB_VIEW_ALL").execute()
+  private def getJob(dataflow: Dataflow, projectId: String, location: String, jobId: String): Job =
+    dataflow.projects().locations().jobs().get(projectId, location, jobId).setView("JOB_VIEW_ALL")
+      .execute()
 
-  private def getJobMetrics(dataflow: Dataflow, projectId: String, jobId: String): JobMetrics =
-    dataflow.projects().jobs().getMetrics(projectId, jobId).execute()
+  private def getJobMetrics(dataflow: Dataflow, projectId: String, location: String,
+                            jobId: String): JobMetrics =
+    dataflow.projects().locations().jobs().getMetrics(projectId, location, jobId).execute()
 
   // wiring to reconstruct AppliedPTransform for name mapping
 
