@@ -81,11 +81,11 @@ final case class ParquetAvroIO[T: ClassTag](path: String) extends ScioIO[T] {
       val resource = FileBasedSink.convertToFileResourceIfPossible(data.pathWithShards(path))
       val prefix = StaticValueProvider.of(resource)
       val usedFilenamePolicy = DefaultFilenamePolicy.fromStandardParameters(
-        prefix, null, "", false)
+        prefix, null, ".parquet", false)
       val destinations = DynamicFileDestinations.constant[T](usedFilenamePolicy)
       val sink = new ParquetAvroSink[T](
         prefix, destinations, writerSchema, job.getConfiguration, params.compression)
-      val t = HadoopWriteFiles.to(sink).withNumShards(params.numShards)
+      val t = WriteFiles.to(sink).withNumShards(params.numShards)
       data.applyInternal(t)
       Future.failed(new NotImplementedError("Parquet Avro future not implemented"))
   }
