@@ -17,13 +17,16 @@
 
 package com.spotify.scio.parquet.avro
 
+import java.nio.channels.{Channels, SeekableByteChannel}
+import java.nio.file.Files
+
 import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.io.TapSpec
 import org.apache.avro.generic.GenericRecord
 import org.apache.commons.io.FileUtils
-import org.apache.hadoop.fs.Path
 import org.apache.parquet.avro.AvroParquetReader
+import org.apache.parquet.io.{DelegatingSeekableInputStream, InputFile, SeekableInputStream}
 import org.scalatest._
 
 object ParquetAvroJob {
@@ -130,7 +133,8 @@ class ParquetAvroTest extends TapSpec with BeforeAndAfterAll {
     val files = dir.listFiles()
     files.length shouldBe 1
 
-    val reader = AvroParquetReader.builder[GenericRecord](new Path(files(0).toString)).build()
+    val inputFile = new BeamParquetInputFile(Files.newByteChannel(files.head.toPath))
+    val reader = AvroParquetReader.builder[GenericRecord](inputFile).build()
     var r: GenericRecord = reader.read()
     val b = Seq.newBuilder[GenericRecord]
     while (r != null) {
@@ -153,4 +157,13 @@ class ParquetAvroTest extends TapSpec with BeforeAndAfterAll {
       .run()
   }
 
+}
+
+private class BeamParquetInputFile(var channel: SeekableByteChannel) extends InputFile {
+  override def getLength: Long = channel.size
+  override def newStream: SeekableInputStream =
+    new DelegatingSeekableInputStream(Channels.newInputStream(channel)) {
+      override def getPos: Long = channel.position
+      override def seek(newPos: Long): Unit = channel.position(newPos)
+    }
 }
