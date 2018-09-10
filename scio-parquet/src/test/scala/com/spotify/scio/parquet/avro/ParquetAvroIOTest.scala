@@ -17,37 +17,15 @@
 
 package com.spotify.scio.parquet.avro
 
-import java.nio.channels.{Channels, SeekableByteChannel}
-import java.nio.file.Files
-
 import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.io.TapSpec
+import com.spotify.scio.testing._
 import org.apache.avro.generic.GenericRecord
 import org.apache.commons.io.FileUtils
-import org.apache.parquet.avro.AvroParquetReader
-import org.apache.parquet.io.{DelegatingSeekableInputStream, InputFile, SeekableInputStream}
 import org.scalatest._
 
-object ParquetAvroJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.parquetAvroFile[TestRecord](args("input"))
-      .saveAsParquetAvroFile(args("output"))
-    sc.close()
-  }
-}
-
-object Test {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.parallelize((1 to 100).map(AvroUtils.newSpecificRecord))
-      .saveAsParquetAvroFile(args("output"), numShards = 1)
-    sc.close()
-  }
-}
-
-class ParquetAvroTest extends TapSpec with BeforeAndAfterAll {
+class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
 
   private val dir = tmpDir
   private val specificRecords = (1 to 10).map(AvroUtils.newSpecificRecord)
@@ -61,11 +39,12 @@ class ParquetAvroTest extends TapSpec with BeforeAndAfterAll {
 
   override protected def afterAll(): Unit = FileUtils.deleteDirectory(dir)
 
-  "ParquetAvro" should "read specific records" in {
-    val sc = ScioContext()
-    val data = sc.parquetAvroFile[TestRecord](dir + "/*.parquet")
-    data.map(identity) should containInAnyOrder (specificRecords)
-    sc.close()
+  "ParquetAvroIO" should "work with specific records" in {
+    val xs = (1 to 100).map(AvroUtils.newSpecificRecord)
+    testTap(xs)(ParquetAvroIO(_))(
+      _.parquetAvroFile(_).map(identity))(_.saveAsParquetAvroFile(_))(".parquet")
+    testJobTest(xs)(
+      ParquetAvroIO(_))(_.parquetAvroFile[TestRecord](_).map(identity))(_.saveAsParquetAvroFile(_))
   }
 
   it should "read specific records with projection" in {
@@ -133,37 +112,12 @@ class ParquetAvroTest extends TapSpec with BeforeAndAfterAll {
     val files = dir.listFiles()
     files.length shouldBe 1
 
-    val inputFile = new BeamParquetInputFile(Files.newByteChannel(files.head.toPath))
-    val reader = AvroParquetReader.builder[GenericRecord](inputFile).build()
-    var r: GenericRecord = reader.read()
-    val b = Seq.newBuilder[GenericRecord]
-    while (r != null) {
-      b += r
-      r = reader.read()
-    }
-    reader.close()
-    b.result() should contain theSameElementsAs genericRecords
+    val params =
+      ParquetAvroIO.ReadParam[GenericRecord, GenericRecord](AvroUtils.schema, null, identity)
+    val tap = ParquetAvroTap(files.head.getAbsolutePath, params)
+    tap.value.toList should contain theSameElementsAs genericRecords
 
     FileUtils.deleteDirectory(dir)
   }
 
-  it should "work with JobTest" in {
-    JobTest[ParquetAvroJob.type]
-      .args("--input=in.parquet", "--output=out.parquet")
-      .input(ParquetAvroIO[TestRecord]("in.parquet"), specificRecords)
-      .output(ParquetAvroIO[TestRecord]("out.parquet")) {
-        _ should containInAnyOrder (specificRecords)
-      }
-      .run()
-  }
-
-}
-
-private class BeamParquetInputFile(var channel: SeekableByteChannel) extends InputFile {
-  override def getLength: Long = channel.size
-  override def newStream: SeekableInputStream =
-    new DelegatingSeekableInputStream(Channels.newInputStream(channel)) {
-      override def getPos: Long = channel.position
-      override def seek(newPos: Long): Unit = channel.position(newPos)
-    }
 }
