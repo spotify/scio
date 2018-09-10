@@ -139,13 +139,13 @@ package object avro {
      *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
      */
     def saveAsParquetAvroFile(path: String,
-                              numShards: Int = 0,
                               schema: Schema = null,
+                              numShards: Int = 0,
                               suffix: String = "",
                               compression: CompressionCodecName = CompressionCodecName.SNAPPY)
     : Future[Tap[T]] = {
       import self.ct
-      val param = ParquetAvroIO.WriteParam(numShards, schema, suffix, compression)
+      val param = ParquetAvroIO.WriteParam(schema, numShards, suffix, compression)
       self.write(ParquetAvroIO[T](path))(param)
     }
   }
