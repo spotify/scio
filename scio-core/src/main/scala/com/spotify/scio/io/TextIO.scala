@@ -48,15 +48,7 @@ final case class TextIO(path: String) extends ScioIO[String] {
     data.context.makeFuture(tap(TextIO.ReadParam()))
   }
 
-  override def tap(params: ReadP): Tap[String] = new Tap[String] {
-    override def value: Iterator[String] = TextIO.textFile(ScioUtil.addPartSuffix(path))
-
-    override def open(sc: ScioContext): SCollection[String] = {
-      val textIO = TextIO(ScioUtil.addPartSuffix(path))
-      val readParams = TextIO.ReadParam(compression = params.compression)
-      textIO.read(sc, readParams)
-    }
-  }
+  override def tap(params: ReadP): Tap[String] = TextTap(ScioUtil.addPartSuffix(path))
 
   private def textOut(path: String, params: WriteP) =
     BTextIO.write()
