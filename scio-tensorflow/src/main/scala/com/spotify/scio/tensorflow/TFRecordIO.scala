@@ -53,6 +53,8 @@ final case class TFExampleIO(path: String) extends ScioIO[Example] {
   override type ReadP = TFExampleIO.ReadParam
   override type WriteP = TFExampleIO.WriteParam
 
+  override def testId: String = s"TFRecordIO($path)"
+
   override def read(sc: ScioContext, params: ReadP): SCollection[Example] =
     TFRecordMethods.read(sc, path, params).map(Example.parseFrom)
 
@@ -94,4 +96,5 @@ private object TFRecordMethods {
 
   def tap(read: TFRecordIO.ReadParam, path: String): Tap[Array[Byte]] =
     TFRecordFileTap(ScioUtil.addPartSuffix(path))
+
 }

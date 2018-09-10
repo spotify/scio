@@ -40,6 +40,6 @@ class TFScioContextFunctions(val self: ScioContext) extends AnyVal {
    * @group input
    */
   def tfRecordExampleFile(path: String, compression: Compression = Compression.AUTO)
-  : SCollection[Example] = self.tfRecordFile(path, compression).map(Example.parseFrom)
+  : SCollection[Example] = self.read(TFExampleIO(path))(TFExampleIO.ReadParam(compression))
 
 }
