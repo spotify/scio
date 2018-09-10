@@ -48,15 +48,71 @@ trait ScioIOSpec extends PipelineSpec {
 
     tap.value.toSeq should contain theSameElementsAs xs
     tap.open(ScioContext()) should containInAnyOrder(xs)
-    all(tmpDir.listFiles().map(_.toString)) should endWith (suffix)
+    val files = tmpDir.listFiles().filterNot(_.getName.startsWith("_")).map(_.toString)
+    all(files) should endWith (suffix)
     FileUtils.deleteDirectory(tmpDir)
+  }
+
+  def testJobTestInput[T: ClassTag](xs: Seq[T], in: String = "in")
+                                   (ioFn: String => ScioIO[T])
+                                   (readFn: (ScioContext, String) => SCollection[T]): Unit = {
+    def runMain(args: Array[String]): Unit = {
+      val (sc, argz) = ContextAndArgs(args)
+      readFn(sc, argz("input")).saveAsTextFile("out")
+      sc.close()
+    }
+
+    val builder = com.spotify.scio.testing.JobTest("null")
+      .input(ioFn(in), xs)
+      .output(TextIO("out"))(_ should containInAnyOrder (xs.map(_.toString)))
+    builder.setUp()
+    runMain(Array(s"--input=$in") :+ s"--appName=${builder.testId}")
+    builder.tearDown()
+
+    // scalastyle:off no.whitespace.before.left.bracket
+    the [IllegalArgumentException] thrownBy {
+      val builder = com.spotify.scio.testing.JobTest("null")
+        .input(CustomIO[T](in), xs)
+        .output(TextIO("out"))(_ should containInAnyOrder (xs.map(_.toString)))
+      builder.setUp()
+      runMain(Array(s"--input=$in") :+ s"--appName=${builder.testId}")
+      builder.tearDown()
+    } should have message s"requirement failed: Missing test input: ${ioFn(in).testId}, " +
+      s"available: [CustomIO($in)]"
+    // scalastyle:on no.whitespace.before.left.bracket
+  }
+
+  def testJobTestOutput[T: ClassTag](xs: Seq[T], out: String = "out")
+                                    (ioFn: String => ScioIO[T])
+                                    (writeFn: (SCollection[T], String) => Future[Tap[T]]): Unit = {
+    def runMain(args: Array[String]): Unit = {
+      val (sc, argz) = ContextAndArgs(args)
+      writeFn(sc.parallelize(xs), argz("output"))
+      sc.close()
+    }
+
+    val builder = com.spotify.scio.testing.JobTest("null")
+      .output(ioFn(out))(_ should containInAnyOrder (xs))
+    builder.setUp()
+    runMain(Array(s"--output=$out") :+ s"--appName=${builder.testId}")
+    builder.tearDown()
+
+    // scalastyle:off no.whitespace.before.left.bracket
+    the [IllegalArgumentException] thrownBy {
+      val builder = com.spotify.scio.testing.JobTest("null")
+        .output(CustomIO[T](out))(_ should containInAnyOrder (xs))
+      builder.setUp()
+      runMain(Array(s"--output=$out") :+ s"--appName=${builder.testId}")
+      builder.tearDown()
+    } should have message s"requirement failed: Missing test output: ${ioFn(out).testId}, " +
+      s"available: [CustomIO($out)]"
+    // scalastyle:on no.whitespace.before.left.bracket
   }
 
   def testJobTest[T: ClassTag](xs: Seq[T], in: String = "in", out: String = "out")
                               (ioFn: String => ScioIO[T])
                               (readFn: (ScioContext, String) => SCollection[T])
-                              (writeFn: (SCollection[T], String) => Future[Tap[T]])
-  : Unit = {
+                              (writeFn: (SCollection[T], String) => Future[Tap[T]]): Unit = {
     def runMain(args: Array[String]): Unit = {
       val (sc, argz) = ContextAndArgs(args)
       val data = readFn(sc, argz("input"))

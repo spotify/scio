@@ -22,6 +22,7 @@ import java.nio.file.Files
 import io.circe.Printer
 import com.spotify.scio._
 import com.spotify.scio.io.TapSpec
+import com.spotify.scio.testing._
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.commons.io.FileUtils
@@ -29,63 +30,38 @@ import org.apache.commons.io.FileUtils
 import scala.collection.JavaConverters._
 import scala.io.Source
 
-object JsonJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    import JsonTest._
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.jsonFile[Record](args("input"))
-      .saveAsJsonFile(args("output"))
-    sc.close()
-  }
-}
 
-object JsonTest {
+object JsonIOTest {
   case class Record(i: Int, s: String, o: Option[Int])
 }
 
-class JsonTest extends TapSpec {
+class JsonIOTest extends ScioIOSpec with TapSpec {
 
-  import JsonTest._
+  import JsonIOTest._
 
-  private val data = Seq(1, 2, 3).map(x => Record(x, x.toString, if (x % 2 == 0) Some(x) else None))
+  private val xs = (1 to 100).map(x => Record(x, x.toString, if (x % 2 == 0) Some(x) else None))
 
-  "Future" should "support saveAsJsonFile" in {
-    val dir = tmpDir
-    val t = runWithFileFuture {
-      _
-        .parallelize(data)
-        .saveAsJsonFile(dir.getPath)
-    }
-    verifyTap(t, data.toSet)
-    FileUtils.deleteDirectory(dir)
+  "JsonIO" should "work" in {
+    testTap(xs)(JsonIO(_))(_.jsonFile(_))(_.saveAsJsonFile(_))(".json")
+    testJobTest(xs)(JsonIO(_))(_.jsonFile(_))(_.saveAsJsonFile(_))
   }
 
   it should "support custom printer" in {
     val dir = tmpDir
     val t = runWithFileFuture {
       _
-        .parallelize(data)
+        .parallelize(xs)
         .saveAsJsonFile(dir.getPath, printer = Printer.noSpaces.copy(dropNullValues = true))
     }
-    verifyTap(t, data.toSet)
+    verifyTap(t, xs.toSet)
     val result = Files.list(dir.toPath).iterator().asScala
       .flatMap(p => Source.fromFile(p.toFile).getLines())
       .toSeq
-    val expected = Seq(
-      """{"i":1,"s":"1"}""",
-      """{"i":2,"s":"2","o":2}""",
-      """{"i":3,"s":"3"}"""
-    )
+    val expected = (1 to 100).map { x =>
+      s"""{"i":$x,"s":"$x"${if (x % 2 == 0) s""","o":$x""" else ""}}"""
+    }
     result should contain theSameElementsAs expected
     FileUtils.deleteDirectory(dir)
-  }
-
-  "JobTest" should "pass correct JsonIO" in {
-    JobTest[JsonJob.type]
-      .args("--input=in.json", "--output=out.json")
-      .input(JsonIO[Record]("in.json"), data)
-      .output(JsonIO[Record]("out.json"))(_ should containInAnyOrder (data))
-      .run()
   }
 
   it should "handle invalid JSON" in {
