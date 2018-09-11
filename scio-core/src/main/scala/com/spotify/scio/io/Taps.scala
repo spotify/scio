@@ -49,23 +49,27 @@ trait Taps {
 }
 
 /** Taps implementation that fails immediately if tap not available. */
-private class ImmediateTaps extends Taps {
+private final class ImmediateTaps extends Taps {
   override private[scio] def mkTap[T](name: String,
                                       readyFn: () => Boolean,
                                       tapFn: () => Tap[T]): Future[Tap[T]] =
     if (readyFn()) Future.successful(tapFn()) else Future.failed(new TapNotAvailableException(name))
 }
 
-/** Taps implementation that polls for tap availability in the background. */
-private class PollingTaps(private val backOff: BackOff) extends Taps {
-
-  case class Poll(name: String,
-                  readyFn: () => Boolean,
-                  tapFn: () => Tap[Any],
-                  promise: Promise[AnyRef])
-
-  private var polls: List[Poll] = _
+private object PollingTaps {
   private val logger = LoggerFactory.getLogger(this.getClass)
+
+  final case class Poll(name: String,
+                        readyFn: () => Boolean,
+                        tapFn: () => Tap[Any],
+                        promise: Promise[AnyRef])
+}
+
+/** Taps implementation that polls for tap availability in the background. */
+private final class PollingTaps(private[this] val backOff: BackOff) extends Taps {
+  import PollingTaps._
+
+  private[this] var polls: List[Poll] = _
 
   override private[scio] def mkTap[T](name: String,
                                       readyFn: () => Boolean,
@@ -178,9 +182,7 @@ object Taps extends {
     }
   }
 
-  private def getPropOrElse(key: String, default: String): String = {
-    val value = sys.props(key)
-    if (value == null) default else value
-  }
+  @inline private def getPropOrElse(key: String, default: String): String =
+    sys.props.getOrElse(key, default)
 
 }
