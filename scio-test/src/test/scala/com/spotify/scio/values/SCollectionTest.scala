@@ -44,7 +44,7 @@ class SCollectionTest extends PipelineSpec {
   "SCollection" should "support setName()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).setName("MySCollection")
-      p.name shouldBe "MySCollection"
+      p.name shouldBe "MySCollection#1"
     }
   }
 

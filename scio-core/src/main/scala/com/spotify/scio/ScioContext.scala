@@ -895,6 +895,11 @@ class ScioContext private[scio] (val options: PipelineOptions,
   /** Form an empty SCollection. */
   def empty[T: ClassTag](): SCollection[T] = parallelize(Seq())
 
+  import java.util.concurrent.atomic.AtomicInteger
+  private val uniqueIdx = new AtomicInteger
+  private[scio] def mkUnique(name: String): String =
+    s"$name#${uniqueIdx.getAndIncrement()}"
+
   /**
    * Distribute a local Scala `Iterable` to form an SCollection.
    * @group in_memory

@@ -134,7 +134,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def setCoder(coder: Coder[T]): SCollection[T] = context.wrap(internal.setCoder(coder))
 
   /** Assign a name to this SCollection. */
-  def setName(name: String): SCollection[T] = context.wrap(internal.setName(name))
+  def setName(name: String): SCollection[T] = context.wrap(internal.setName(context.mkUnique(name)))
 
   /**
    * Apply a [[org.apache.beam.sdk.transforms.PTransform PTransform]] and wrap the output in an
