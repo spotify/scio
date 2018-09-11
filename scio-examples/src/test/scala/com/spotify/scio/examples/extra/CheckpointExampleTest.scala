@@ -42,7 +42,7 @@ class CheckpointExampleTest extends PipelineSpec {
   it should "work with src checkpoint provided" in {
     JobTest[CheckpointExample.type]
       .args("--output=output", "--input=input", "--checkpoint=checkpoint")
-      .input(CheckpointIO[String]("checkpoint-src"), words)
+      .input(CheckpointIO("checkpoint-src"), words)
       .output(TextIO("output-max"))(_ should containSingleValue (max))
       .output(TextIO("output-words"))(_ should containInAnyOrder (words))
       .output(TextIO("output"))(_ should containInAnyOrder (prettyCount))
@@ -52,8 +52,8 @@ class CheckpointExampleTest extends PipelineSpec {
   it should "work with src and count checkpoints provided" in {
     JobTest[CheckpointExample.type]
       .args("--output=output", "--input=input", "--checkpoint=checkpoint")
-      .input(CheckpointIO[String]("checkpoint-src"), words)
-      .input(CheckpointIO[(String, Long)]("checkpoint-count"), count)
+      .input(CheckpointIO("checkpoint-src"), words)
+      .input(CheckpointIO("checkpoint-count"), count)
       .output(TextIO("output-max"))(_ should containSingleValue (max))
       .output(TextIO("output-words"))(_ should containInAnyOrder (words))
       .output(TextIO("output"))(_ should containInAnyOrder (prettyCount))
