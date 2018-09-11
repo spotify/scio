@@ -46,7 +46,7 @@ class ShapelessAvroExampleTest extends PipelineSpec {
   "ShapelessAvroReadExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.ShapelessAvroReadExample.type]
       .args("--input=wc.avro", "--output=out.txt")
-      .input(AvroIO[GenericRecord]("wc.avro"), records)
+      .input(AvroIO("wc.avro"), records)
       .output(TextIO("out.txt"))(_ should containInAnyOrder (textOut))
       .run()
   }
