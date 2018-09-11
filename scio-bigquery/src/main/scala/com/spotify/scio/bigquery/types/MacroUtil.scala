@@ -24,7 +24,7 @@ import scala.reflect.runtime.universe._
 
 private[types] object MacroUtil {
 
-  private val logger = LoggerFactory.getLogger(this.getClass)
+  private[this] val logger = LoggerFactory.getLogger(this.getClass)
 
   // Case class helpers for runtime reflection
 
@@ -67,7 +67,7 @@ private[types] object MacroUtil {
 
   // Debugging
 
-  def debug(msg: Any): Unit = {
+  @inline def debug(msg: Any): Unit = {
     if (sys.props("bigquery.types.debug") != null && sys.props("bigquery.types.debug").toBoolean) {
       logger.info(msg.toString)
     }
