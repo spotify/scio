@@ -53,24 +53,30 @@ object PubsubIO {
     PubsubIOWithAttributes[T](name, idAttribute, timestampAttribute)
 }
 
-private case class PubsubIOWithoutAttributes[T: ClassTag](name: String,
-                                                          idAttribute: String,
-                                                          timestampAttribute: String)
+private final case class PubsubIOWithoutAttributes[T: ClassTag](name: String,
+                                                                idAttribute: String,
+                                                                timestampAttribute: String)
   extends PubsubIO[T] {
-  private val cls = ScioUtil.classOf[T]
+  private[this] val cls = ScioUtil.classOf[T]
 
   override def testId: String = s"PubsubIO($name, $idAttribute, $timestampAttribute)"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     def setup[U](read: beam.PubsubIO.Read[U]) = {
       var r = read
-      r = if (params.isSubscription) r.fromSubscription(name) else r.fromTopic(name)
+      r = if (params.isSubscription) {
+        r.fromSubscription(name)
+      } else {
+        r.fromTopic(name)
+      }
+
       if (idAttribute != null) {
         r = r.withIdAttribute(idAttribute)
       }
       if (timestampAttribute != null) {
         r = r.withTimestampAttribute(timestampAttribute)
       }
+
       r
     }
 
@@ -126,9 +132,9 @@ private case class PubsubIOWithoutAttributes[T: ClassTag](name: String,
   }
 }
 
-private case class PubsubIOWithAttributes[T: ClassTag](name: String,
-                                                       idAttribute: String,
-                                                       timestampAttribute: String)
+private final case class PubsubIOWithAttributes[T: ClassTag](name: String,
+                                                             idAttribute: String,
+                                                             timestampAttribute: String)
   extends PubsubIO[(T, Map[String, String])] {
   type WithAttributeMap = (T, Map[String, String])
 

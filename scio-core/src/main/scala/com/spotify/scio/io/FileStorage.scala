@@ -36,13 +36,12 @@ import org.apache.commons.io.IOUtils
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
-import scala.util.Try
 
 private[scio] object FileStorage {
-  def apply(path: String): FileStorage = new FileStorage(path)
+  @inline final def apply(path: String): FileStorage = new FileStorage(path)
 }
 
-private[scio] class FileStorage(protected[scio] val path: String) {
+private[scio] final class FileStorage(protected[scio] val path: String) {
 
   private def listFiles: Seq[Metadata] = FileSystems.`match`(path).metadata().asScala
 
@@ -77,7 +76,11 @@ private[scio] class FileStorage(protected[scio] val path: String) {
     val factory = new CompressorStreamFactory()
     def wrapInputStream(in: InputStream) = {
       val buffered = new BufferedInputStream(in)
-      Try(factory.createCompressorInputStream(buffered)).getOrElse(buffered)
+      try {
+        factory.createCompressorInputStream(buffered)
+      } catch {
+        case _: Throwable => buffered
+      }
     }
     val input = getDirectoryInputStream(path, wrapInputStream)
     IOUtils.lineIterator(input, Charsets.UTF_8).asScala
@@ -91,7 +94,7 @@ private[scio] class FileStorage(protected[scio] val path: String) {
     val metadata = try {
       listFiles
     } catch {
-      case e: FileNotFoundException => Seq.empty
+      case _: FileNotFoundException => Seq.empty
     }
     val nums = metadata.flatMap { meta =>
       val m = partPattern.findAllIn(meta.resourceId().toString)
