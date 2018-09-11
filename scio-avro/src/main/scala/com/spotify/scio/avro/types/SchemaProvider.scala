@@ -18,6 +18,8 @@
 package com.spotify.scio.avro.types
 
 import java.util.Collections.{emptyList, emptyMap}
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function
 
 import com.google.protobuf.ByteString
 import com.spotify.scio.avro.types.MacroUtil._
@@ -25,9 +27,12 @@ import org.apache.avro.{JsonProperties, Schema}
 import org.apache.avro.Schema.Field
 
 import scala.collection.JavaConverters._
+import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 
 private[types] object SchemaProvider {
+
+  private[this] val m: ConcurrentHashMap[Type, Schema] = new ConcurrentHashMap[Type, Schema]()
 
   def schemaOf[T: TypeTag]: Schema = {
     val tpe = typeOf[T]
@@ -36,7 +41,9 @@ private[types] object SchemaProvider {
       throw new RuntimeException(s"Unsupported type $tpe.erasure")
     }
 
-    toSchema(tpe)._1
+    m.computeIfAbsent(tpe, new function.Function[Type, Schema] {
+      override def apply(t: universe.Type): Schema = toSchema(tpe)._1
+    })
   }
 
   // scalastyle:off cyclomatic.complexity
