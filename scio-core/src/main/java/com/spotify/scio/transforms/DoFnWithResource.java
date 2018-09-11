@@ -122,7 +122,7 @@ public abstract class DoFnWithResource<InputT, OutputT, ResourceT> extends DoFn<
         break;
     }
     resources.computeIfAbsent(resourceId, key -> {
-      LOG.info("Creating resource {}", resourceId);
+      LOG.debug("Creating resource {}", resourceId);
       return createResource();
     });
   }
