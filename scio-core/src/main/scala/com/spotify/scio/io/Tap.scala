@@ -61,32 +61,37 @@ trait Tap[T] extends Serializable { self =>
 }
 
 /** Tap for text files on local file system or GCS. */
-case class TextTap(path: String) extends Tap[String] {
+final case class TextTap(path: String) extends Tap[String] {
   override def value: Iterator[String] = FileStorage(path).textFile
+
   override def open(sc: ScioContext): SCollection[String] = sc.textFile(path)
 }
 
-private[scio] class InMemoryTap[T: ClassTag] extends Tap[T] {
+private[scio] final case class InMemoryTap[T: ClassTag]() extends Tap[T] {
   private[scio] val id: String = UUID.randomUUID().toString
+
   override def value: Iterator[T] = InMemorySink.get(id).iterator
+
   override def open(sc: ScioContext): SCollection[T] =
     sc.parallelize[T](InMemorySink.get(id))
 }
 
-private[scio] class MaterializeTap[T: ClassTag](val path: String) extends Tap[T] {
-  private val _path = ScioUtil.addPartSuffix(path)
+private[scio] final case class MaterializeTap[T: ClassTag](path: String) extends Tap[T] {
+  private[this] val _path = ScioUtil.addPartSuffix(path)
 
   override def value: Iterator[T] = {
-  val coder = ScioUtil.getScalaCoder[T]
-  FileStorage(_path)
-  .avroFile[GenericRecord](AvroBytesUtil.schema)
-    .map(AvroBytesUtil.decode(coder, _))
+    val coder = ScioUtil.getScalaCoder[T]
+    FileStorage(_path)
+      .avroFile[GenericRecord](AvroBytesUtil.schema)
+      .map(AvroBytesUtil.decode(coder, _))
   }
+
   override def open(sc: ScioContext): SCollection[T] = sc.requireNotClosed {
     import com.spotify.scio.Implicits._
 
     val coder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
     val read = AvroIO.readGenericRecords(AvroBytesUtil.schema).from(_path)
+
     sc.wrap(sc.applyInternal(read)).setName(_path)
       .parDo(new DoFn[GenericRecord, T] {
         @ProcessElement

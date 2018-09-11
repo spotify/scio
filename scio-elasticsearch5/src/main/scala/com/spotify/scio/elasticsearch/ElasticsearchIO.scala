@@ -44,7 +44,12 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions)
    * Save this SCollection into Elasticsearch.
    */
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
-    val shards = if (params.numOfShards > 0) params.numOfShards else esOptions.servers.size
+    val shards = if (params.numOfShards > 0) {
+      params.numOfShards
+    } else {
+      esOptions.servers.size
+    }
+
     data.applyInternal(
       beam.ElasticsearchIO.Write
         .withClusterName(esOptions.clusterName)

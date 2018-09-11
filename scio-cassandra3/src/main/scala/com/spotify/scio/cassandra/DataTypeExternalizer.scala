@@ -27,19 +27,19 @@ import com.twitter.chill._
 import scala.collection.JavaConverters._
 
 private[cassandra] object DataTypeExternalizer {
-  def apply(dt: DataType): DataTypeExternalizer = {
+  final def apply(dt: DataType): DataTypeExternalizer = {
     val x = new DataTypeExternalizer
     x.set(dt)
     x
   }
 }
 
-private[cassandra] class DataTypeExternalizer extends Externalizer[DataType] {
+private[cassandra] final class DataTypeExternalizer extends Externalizer[DataType] {
   override protected def kryo: KryoInstantiator =
     new (DataTypeKryoInstantiator).setReferences(true)
 }
 
-private class DataTypeKryoInstantiator extends EmptyScalaKryoInstantiator {
+private final class DataTypeKryoInstantiator extends EmptyScalaKryoInstantiator {
   override def newKryo: KryoBase = {
     val k = super.newKryo
     k.forSubclass[ImmutableList[Any]](new ImmutableListSerializer[Any])
@@ -61,14 +61,16 @@ private trait ImmutableCollectionSerializer[M] extends KSerializer[M] {
   }
 }
 
-private class ImmutableListSerializer[T] extends ImmutableCollectionSerializer[ImmutableList[T]] {
+private final class ImmutableListSerializer[T]
+  extends ImmutableCollectionSerializer[ImmutableList[T]] {
   override def read(kser: Kryo, in: Input, cls: Class[ImmutableList[T]]): ImmutableList[T] =
     ImmutableList.copyOf(readList(kser, in): JIterable[T])
   override def write(kser: Kryo, out: Output, obj: ImmutableList[T]): Unit =
     writeList(kser, out, obj)
 }
 
-private class ImmutableSetSerializer[T] extends ImmutableCollectionSerializer[ImmutableSet[T]] {
+private final class ImmutableSetSerializer[T]
+  extends ImmutableCollectionSerializer[ImmutableSet[T]] {
   override def read(kser: Kryo, in: Input, cls: Class[ImmutableSet[T]]): ImmutableSet[T] =
     ImmutableSet.copyOf(readList(kser, in): JIterable[T])
   override def write(kser: Kryo, out: Output, obj: ImmutableSet[T]): Unit =
