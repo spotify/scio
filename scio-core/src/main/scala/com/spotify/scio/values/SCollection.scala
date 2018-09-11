@@ -957,8 +957,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group output
    */
   def saveAsTextFile(path: String,
-                     suffix: String = ".txt",
                      numShards: Int = 0,
+                     suffix: String = ".txt",
                      compression: Compression = Compression.UNCOMPRESSED)
   : Future[Tap[String]] = {
     val s = if (classOf[String] isAssignableFrom this.ct.runtimeClass) {
