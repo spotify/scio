@@ -91,7 +91,7 @@ package object bigtable {
 
   }
 
-  private val DEFAULT_SLEEP_DURATION = Duration.standardMinutes(20)
+  private[this] val DEFAULT_SLEEP_DURATION = Duration.standardMinutes(20)
 
   /** Enhanced version of [[ScioContext]] with Bigtable methods. */
   implicit class BigtableScioContext(val self: ScioContext) extends AnyVal {

@@ -77,13 +77,13 @@ object BigQueryType {
     def schema: TableSchema
 
     /** Avro [[GenericRecord]] to `T` converter. */
-    def fromAvro: (GenericRecord => T)
+    def fromAvro: GenericRecord => T
 
     /** TableRow to `T` converter. */
-    def fromTableRow: (TableRow => T)
+    def fromTableRow: TableRow => T
 
     /** `T` to TableRow converter. */
-    def toTableRow: (T => TableRow)
+    def toTableRow: T => TableRow
 
     /** Get a pretty string representation of the schema. */
     def toPrettyString(indent: Int = 0): String
@@ -243,22 +243,22 @@ object BigQueryType {
     * Generate a converter function from Avro [[GenericRecord]] to the given case class `T`.
     * @group converters
     */
-  def fromAvro[T]: (GenericRecord => T) = macro ConverterProvider.fromAvroImpl[T]
+  def fromAvro[T]: GenericRecord => T = macro ConverterProvider.fromAvroImpl[T]
 
   /**
    * Generate a converter function from [[TableRow]] to the given case class `T`.
    * @group converters
    */
-  def fromTableRow[T]: (TableRow => T) = macro ConverterProvider.fromTableRowImpl[T]
+  def fromTableRow[T]: TableRow => T = macro ConverterProvider.fromTableRowImpl[T]
 
   /**
    * Generate a converter function from the given case class `T` to [[TableRow]].
    * @group converters
    */
-  def toTableRow[T]: (T => TableRow) = macro ConverterProvider.toTableRowImpl[T]
+  def toTableRow[T]: T => TableRow = macro ConverterProvider.toTableRowImpl[T]
 
   /** Create a new BigQueryType instance. */
-  def apply[T: TypeTag]: BigQueryType[T] = new BigQueryType[T]
+  @inline final def apply[T: TypeTag]: BigQueryType[T] = new BigQueryType[T]
 
 }
 
@@ -269,9 +269,9 @@ object BigQueryType {
  */
 class BigQueryType[T: TypeTag] {
 
-  private val bases = typeOf[T].companion.baseClasses
+  private[this] val bases = typeOf[T].companion.baseClasses
 
-  private val instance = runtimeMirror(getClass.getClassLoader)
+  private[this] val instance = runtimeMirror(getClass.getClassLoader)
     .reflectModule(typeOf[T].typeSymbol.companion.asModule)
     .instance
 
@@ -294,13 +294,13 @@ class BigQueryType[T: TypeTag] {
     Try(getField("tableDescription").asInstanceOf[String]).toOption
 
   /** Avro [[GenericRecord]] to `T` converter. */
-  def fromAvro: (GenericRecord => T) = getField("fromAvro").asInstanceOf[(GenericRecord => T)]
+  def fromAvro: GenericRecord => T = getField("fromAvro").asInstanceOf[GenericRecord => T]
 
   /** TableRow to `T` converter. */
-  def fromTableRow: (TableRow => T) = getField("fromTableRow").asInstanceOf[(TableRow => T)]
+  def fromTableRow: TableRow => T = getField("fromTableRow").asInstanceOf[TableRow => T]
 
   /** `T` to TableRow converter. */
-  def toTableRow: (T => TableRow) = getField("toTableRow").asInstanceOf[(T => TableRow)]
+  def toTableRow: T => TableRow = getField("toTableRow").asInstanceOf[T => TableRow]
 
   /** TableSchema of `T`. */
   def schema: TableSchema = BigQueryType.schemaOf[T]

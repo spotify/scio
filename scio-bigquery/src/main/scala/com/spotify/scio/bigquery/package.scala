@@ -107,7 +107,7 @@ package object bigquery {
    * }}}
    */
   object TableRow {
-    def apply(fields: (String, _)*): TableRow =
+    @inline def apply(fields: (String, _)*): TableRow =
       fields.foldLeft(new GTableRow())((r, kv) => r.set(kv._1, kv._2))
   }
 
@@ -184,9 +184,9 @@ package object bigquery {
   /** Utility for BigQuery `TIMESTAMP` type. */
   object Timestamp {
     // YYYY-[M]M-[D]D[( |T)[H]H:[M]M:[S]S[.DDDDDD]][time zone]
-    private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS ZZZ")
+    private[this] val formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS ZZZ")
 
-    private val parser = new DateTimeFormatterBuilder()
+    private[this] val parser = new DateTimeFormatterBuilder()
       .append(DateTimeFormat.forPattern("yyyy-MM-dd"))
       .appendOptional(new DateTimeFormatterBuilder()
         .append(DateTimeFormat.forPattern(" HH:mm:ss").getParser)
@@ -216,7 +216,7 @@ package object bigquery {
   /** Utility for BigQuery `DATE` type. */
   object Date {
     // YYYY-[M]M-[D]D
-    private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd").withZoneUTC()
+    private[this] val formatter = DateTimeFormat.forPattern("yyyy-MM-dd").withZoneUTC()
 
     /** Convert `LocalDate` to BigQuery `DATE` string. */
     def apply(date: LocalDate): String = formatter.print(date)
@@ -228,8 +228,8 @@ package object bigquery {
   /** Utility for BigQuery `TIME` type. */
   object Time {
     // [H]H:[M]M:[S]S[.DDDDDD]
-    private val formatter = DateTimeFormat.forPattern("HH:mm:ss.SSSSSS").withZoneUTC()
-    private val parser = new DateTimeFormatterBuilder()
+    private[this] val formatter = DateTimeFormat.forPattern("HH:mm:ss.SSSSSS").withZoneUTC()
+    private[this] val parser = new DateTimeFormatterBuilder()
       .append(DateTimeFormat.forPattern("HH:mm:ss").getParser)
       .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
       .toFormatter
@@ -245,9 +245,9 @@ package object bigquery {
   /** Utility for BigQuery `DATETIME` type. */
   object DateTime {
     // YYYY-[M]M-[D]D[( |T)[H]H:[M]M:[S]S[.DDDDDD]]
-    private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
+    private[this] val formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
 
-    private val parser = new DateTimeFormatterBuilder()
+    private[this] val parser = new DateTimeFormatterBuilder()
       .append(DateTimeFormat.forPattern("yyyy-MM-dd"))
       .appendOptional(new DateTimeFormatterBuilder()
         .append(DateTimeFormat.forPattern(" HH:mm:ss").getParser)

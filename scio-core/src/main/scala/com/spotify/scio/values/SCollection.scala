@@ -921,7 +921,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
             c.output(AvroBytesUtil.encode(elemCoder, c.element()))
         })
         .applyInternal(write)
-      context.makeFuture(new MaterializeTap[T](path))
+      context.makeFuture(MaterializeTap[T](path))
     }
 
   private[scio] def pathWithShards(path: String) = path.replaceAll("\\/+$", "") + "/part"
@@ -999,7 +999,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   private[scio] def saveAsInMemoryTap: Future[Tap[T]] = {
-    val tap = new InMemoryTap[T]
+    val tap = InMemoryTap[T]()
     InMemorySink.save(tap.id, this)
     context.makeFuture(tap)
   }

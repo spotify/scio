@@ -25,7 +25,7 @@ import scala.reflect.macros.blackbox
 import scala.reflect.runtime.universe._
 
 // A sample implementation to override types under certain conditions
-class SampleOverrideTypeProvider extends OverrideTypeProvider {
+final class SampleOverrideTypeProvider extends OverrideTypeProvider {
 
   private def getByTypeString(tfs: TableFieldSchema): Option[Class[_]] = {
     Option(tfs.getDescription)

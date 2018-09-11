@@ -35,9 +35,9 @@ import scala.concurrent.Future
 sealed trait BigtableIO[T] extends ScioIO[T]
 
 object BigtableIO {
-  def apply[T](projectId: String,
-               instanceId: String,
-               tableId: String): BigtableIO[T] = new BigtableIO[T] with TestIO[T] {
+  final def apply[T](projectId: String,
+                     instanceId: String,
+                     tableId: String): BigtableIO[T] = new BigtableIO[T] with TestIO[T] {
     override def testId: String = s"BigtableIO($projectId\t$instanceId\t$tableId)"
   }
 }
@@ -84,9 +84,9 @@ object BigtableRead {
     keyRange: ByteKeyRange = null,
     rowFilter: RowFilter = null)
 
-  def apply(projectId: String,
-            instanceId: String,
-            tableId: String): BigtableRead = {
+  final def apply(projectId: String,
+                  instanceId: String,
+                  tableId: String): BigtableRead = {
     val bigtableOptions = new BigtableOptions.Builder()
       .setProjectId(projectId)
       .setInstanceId(instanceId)
@@ -127,7 +127,9 @@ final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: Str
           new BigtableBulkWriter(tableId, bigtableOptions, numOfShards, flushInterval)
       }
     data
-      .map(kv => KV.of(kv._1, kv._2.asJava.asInstanceOf[java.lang.Iterable[Mutation]]))
+      .map {
+        case (key, value) => KV.of(key, value.asJava.asInstanceOf[java.lang.Iterable[Mutation]])
+      }
       .applyInternal(sink)
     Future.failed(new NotImplementedError("Bigtable future not implemented"))
   }
@@ -143,7 +145,7 @@ object BigtableWrite {
     numOfShards: Int,
     flushInterval: Duration = Duration.standardSeconds(1)) extends WriteParam
 
-  def apply[T](projectId: String,
+  final def apply[T](projectId: String,
                instanceId: String,
                tableId: String)(implicit ev: T <:< Mutation): BigtableWrite[T] = {
       val bigtableOptions = new BigtableOptions.Builder()

@@ -36,7 +36,7 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 private object Reads {
-  private def client(sc: ScioContext) =
+  @inline private def client(sc: ScioContext) =
     sc.cached[BigQueryClient] {
       val o = sc.optionsAs[GcpOptions]
       BigQueryClient(o.getProject, o.getGcpCredential)
@@ -46,12 +46,12 @@ private object Reads {
                                             (typedRead: beam.BigQueryIO.TypedRead[T],
                                              sqlQuery: String,
                                              flattenResults: Boolean  = false): SCollection[T] = {
-    val bigQueryClient = Reads.client(sc)
+    val bigQueryClient = client(sc)
     import sc.wrap
     if (bigQueryClient.isCacheEnabled) {
       val queryJob = bigQueryClient.newQueryJob(sqlQuery, flattenResults)
 
-      sc.onClose{ _ =>
+      sc.onClose { _ =>
         bigQueryClient.waitForJobs(queryJob)
       }
 
@@ -93,7 +93,7 @@ private object Reads {
 sealed trait BigQueryIO[T] extends ScioIO[T]
 
 object BigQueryIO {
-  def apply[T](id: String): BigQueryIO[T] = new BigQueryIO[T] with TestIO[T] {
+  @inline final def apply[T](id: String): BigQueryIO[T] = new BigQueryIO[T] with TestIO[T] {
     override def testId: String = s"BigQueryIO($id)"
   }
 }
@@ -143,7 +143,9 @@ final case class BigQueryTable(tableSpec: String) extends BigQueryIO[TableRow] {
 
   override def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] = {
     var transform = beam.BigQueryIO.writeTableRows().to(table)
-    if (params.schema != null) transform = transform.withSchema(params.schema)
+    if (params.schema != null) {
+      transform = transform.withSchema(params.schema)
+    }
     if (params.createDisposition != null) {
       transform = transform.withCreateDisposition(params.createDisposition)
     }
@@ -172,9 +174,8 @@ object BigQueryTable {
     createDisposition: CreateDisposition,
     tableDescription: String)
 
-  def apply(table: TableReference): BigQueryTable = {
+  @inline final def apply(table: TableReference): BigQueryTable =
     BigQueryTable(beam.BigQueryHelpers.toTableSpec(table))
-  }
 }
 
 /**
@@ -214,7 +215,7 @@ object BigQueryTyped {
     Alternatively, use Typed.Query("<sqlQuery>") or Typed.Table("<bigquery table>")
     to get a ScioIO instance.
   """)
-  trait IO[T <: HasAnnotation] {
+  sealed trait IO[T <: HasAnnotation] {
     type F[_ <: HasAnnotation] <: ScioIO[_]
     def impl: F[T]
   }
@@ -249,7 +250,7 @@ object BigQueryTyped {
    *
    * The source (table) specified in the annotation will be used
    */
-  def apply[T <: HasAnnotation : ClassTag : TypeTag](implicit t: IO[T]): t.F[T] =
+  @inline final def apply[T <: HasAnnotation : ClassTag : TypeTag](implicit t: IO[T]): t.F[T] =
     t.impl
 
   /**
@@ -279,7 +280,7 @@ object BigQueryTyped {
 
     override def tap(params: ReadP): Tap[T] =
       com.spotify.scio.bigquery.BigQuerySelect(query)
-        .tap(com.spotify.scio.bigquery.BigQuerySelect.ReadParam(flattenResults = false))
+        .tap(com.spotify.scio.bigquery.BigQuerySelect.ReadParam())
         .map(bqt.fromTableRow)
   }
 
@@ -302,8 +303,9 @@ object BigQueryTyped {
     }
 
     override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
-      val initialTfName = data.tfName
       import scala.concurrent.ExecutionContext.Implicits.global
+
+      val initialTfName = data.tfName
       val rows =
         data
           .map(bqt.toTableRow)
@@ -332,7 +334,8 @@ object BigQueryTyped {
       writeDisposition: WriteDisposition,
       createDisposition: CreateDisposition)
 
-    def apply[T <: HasAnnotation : ClassTag : TypeTag](table: TableReference): Table[T] =
+    @inline
+    final def apply[T <: HasAnnotation : ClassTag : TypeTag](table: TableReference): Table[T] =
       Table[T](beam.BigQueryHelpers.toTableSpec(table))
   }
 
