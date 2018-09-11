@@ -38,7 +38,7 @@ class ProtobufExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.ProtobufExample.type]
       .args("--input=in.proto", "--output=out.proto")
       .input(ProtobufIO[SimplePB]("in.proto"), input)
-      .output(ProtobufIO[TrackPB]("out.proto"))(_ should containInAnyOrder[TrackPB](expected))
+      .output(ProtobufIO[TrackPB]("out.proto"))(_ should containInAnyOrder (expected))
       .run()
   }
 
