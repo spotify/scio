@@ -17,15 +17,21 @@
 
 package com.spotify
 
+import java.util.UUID
+
 import com.google.api.services.dataflow.model.Job
 import com.google.common.reflect.ClassPath
 import com.spotify.scio._
+import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.GenerateSequence
 import org.apache.beam.sdk.options.StreamingOptions
 import org.joda.time._
 import org.joda.time.format.DateTimeFormat
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
+import scala.util.Random
 
 /**
  * Streaming benchmark jobs, restarted daily and polled for metrics every hour.
@@ -92,28 +98,89 @@ object ScioStreamingBenchmark {
   // =======================================================================
   // Benchmarks
   // =======================================================================
+  private val M = 10000
+  private val K = 1000
 
-  // @Todo write actual benchmark job
-  object StreamingBenchmarkExample extends StreamingBenchmark {
+  case class Nested(value: Array[String])
+  case class SomeObject(key: String, value: Float, list: List[Long], nested: Map[String, Nested])
+  case class CompoundKey(k1: String, k2: Long)
+
+  object StreamingExample extends StreamingBenchmark {
     override def run(sc: ScioContext): Unit = {
-      sc.optionsAs[StreamingOptions].setStreaming(true)
+      val pubsubOut = outputTopic(sc)
 
-      sc
-        .customInput(
-          "testJob",
-          GenerateSequence
-            .from(0)
-            .withRate(1, org.joda.time.Duration.standardSeconds(10))
-        )
-        .withFixedWindows(
-          duration = org.joda.time.Duration.standardSeconds(10),
-          offset = org.joda.time.Duration.ZERO)
-        .map(_ * 10)
+      val sideInput = randomUUIDs(sc, perMinute = K).asListSideInput
+
+      randomUUIDs(sc, perMinute = M)
+        .map { uuid =>
+          val nested = Nested(uuid.split(""))
+          (
+            CompoundKey(uuid.charAt(0).toString, Random.nextInt(50000)),
+            SomeObject(uuid, Random.nextFloat(), (1L to 10000L).toList,
+              uuid.split("").map((_, nested)).toMap)
+          )
+        }
+        .groupByKey
+        .withSideInputs(sideInput)
+        .flatMap { case ((key, grp), ctx) =>
+          Some((
+            key.copy(k2 = key.k2 + Random.nextInt(50000)),
+            (
+              key.k1,
+              ctx(sideInput).take(50),
+              grp.map(obj => obj.copy(key = s"${obj.key}2", list = obj.list.reverse))
+            )))
+        }
+        .toSCollection
+        .minByKey(Ordering.by(_._2.size))
+        .map(_ => 1) // keep message size small to minimize pub/sub cost
+        .saveAsPubsub(pubsubOut)
     }
   }
+
+  private def randomUUIDs(sc: ScioContext, perMinute: Int): SCollection[String] =
+    sc
+      .customInput(
+        "createRandomUUIDs",
+        GenerateSequence
+          .from(0)
+          .withRate(perMinute, org.joda.time.Duration.standardSeconds(60))
+      )
+      .withFixedWindows(Duration.standardSeconds(60), Duration.ZERO)
+      .map(_ => UUID.randomUUID().toString)
+}
+
+abstract class StreamingBenchmark {
+  import ScioBenchmarkSettings.circleCIEnv
+
+  val name: String = this.getClass.getSimpleName.replaceAll("\\$$", "")
+  val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  def run(projectId: String,
+          prefix: String,
+          args: Array[String]): (String, ScioResult) = {
+    val username = sys.props("user.name")
+    val buildNum = circleCIEnv.map(_.buildNum).getOrElse(-1)
+
+    val (sc, _) = ContextAndArgs(args)
+    sc.setAppName(name)
+    sc.setJobName(s"$prefix-$name-$buildNum-$username".toLowerCase())
+    sc.optionsAs[GcpOptions].setProject(projectId)
+    sc.optionsAs[StreamingOptions].setStreaming(true)
+
+    run(sc)
+
+    (name, sc.close())
+  }
+
+  def run(sc: ScioContext): Unit
+
+  def outputTopic(sc: ScioContext): String =
+    s"projects/${sc.optionsAs[GcpOptions].getProject}/topics/StreamingBenchmark-$name"
 }
 
 object ScioStreamingBenchmarkMetrics {
+
   import DataflowProvider._
   import ScioBenchmarkSettings._
 
@@ -122,64 +189,33 @@ object ScioStreamingBenchmarkMetrics {
     val argz = Args(args)
     val name = argz("name")
     val projectId = argz.getOrElse("project", defaultProjectId)
-    val jobNamePattern = s"sciostreamingbenchmark-$name-\\d+-([a-zA-Z0-9]+)-\\w+".r
+    val jobNamePattern = s"sciostreamingbenchmark-$name-\\d+-([a-zA-Z0-9]+)-(-?\\d+)-\\w+".r
 
     val jobs = dataflow.projects().jobs().list(projectId)
 
-    val hourlyMetrics = Option(jobs.setFilter("ACTIVE").execute().getJobs)
-      .map { activeJobs =>
+    val hourlyMetrics =
+      Option(jobs.setFilter("ACTIVE").execute().getJobs).map { activeJobs =>
         activeJobs.asScala.flatMap { job =>
-          if (job.getName.toLowerCase.startsWith("sciostreamingbenchmark")) {
-            jobNamePattern.findFirstMatchIn(job.getName).map(_.group(1))
-              .map { benchmarkName =>
-                BenchmarkResult.streaming(
-                  benchmarkName,
-                  job.getCreateTime,
-                  dataflow.projects().jobs().getMetrics(projectId, job.getId).execute())
-              }.orElse {
-              PrettyPrint.print(
-                "Active jobs fetcher",
-                s"Could not parse valid benchmark name from job ${job.getName}")
-              None
-            }
-          } else {
-            None
+          for (benchmarkNameAndBuildNum <- jobNamePattern.findFirstMatchIn(job.getName)) yield {
+            BenchmarkResult.streaming(
+              benchmarkNameAndBuildNum.group(1),
+              benchmarkNameAndBuildNum.group(2).toLong,
+              job.getCreateTime,
+              dataflow.projects().jobs().getMetrics(projectId, job.getId).execute()
+            )
           }
-        }.toList
+        }
       }.getOrElse(List())
 
-    new DatastoreStreamingLogger().log(hourlyMetrics)
-  }
-}
+    new DatastoreLogger(StreamingMetrics) {
+      override def dsKeyId(benchmark: BenchmarkResult): String = {
+        val hourOffset = Hours.hoursBetween(
+          benchmark.startTime,
+          new LocalDateTime(DateTimeZone.UTC)
+        ).getHours
 
-abstract class StreamingBenchmark {
-  val name: String = this.getClass.getSimpleName.replaceAll("\\$$", "")
-
-  def run(projectId: String,
-          prefix: String,
-          args: Array[String]): (String, ScioResult) = {
-    val username = sys.props("user.name")
-
-    val (sc, _) = ContextAndArgs(Array(s"--project=$projectId") ++ args)
-    sc.setAppName(name)
-    sc.setJobName(s"$prefix-$name-$username".toLowerCase())
-
-    run(sc)
-
-    (name, sc.close())
-  }
-
-  def run(sc: ScioContext): Unit
-}
-
-class DatastoreStreamingLogger extends DatastoreLogger(ScioBenchmarkSettings.StreamingMetrics) {
-  override def dsKeyId(benchmark: BenchmarkResult, env: CircleCIEnv): String = {
-    val hoursSinceJobLaunch = hourOffset(benchmark.startTime)
-    s"${env.buildNum}[$hoursSinceJobLaunch]"
-  }
-
-  private def hourOffset(startTime: LocalDateTime): String = {
-    val hourOffset = Hours.hoursBetween(startTime, new LocalDateTime(DateTimeZone.UTC)).getHours
-    s"+${"%02d".format(hourOffset)}h"
+        s"${benchmark.buildNum}[+${"%02d".format(hourOffset)}h]"
+      }
+    }.log(hourlyMetrics)
   }
 }

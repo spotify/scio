@@ -75,7 +75,7 @@ object ScioBenchmarkSettings {
 
   val StreamingMetrics = Set("CurrentMemoryUsage", "CurrentPdUsage", "CurrentVcpuCount",
     "TotalMemoryUsage", "TotalPdUsage", "TotalShuffleDataProcessed", "TotalSsdUsage",
-    "TotalStreamingDataProcessed", "TotalVcpuTime")
+    "TotalStreamingDataProcessed", "TotalVcpuTime", "SystemLag")
 }
 
 final case class CircleCIEnv(buildNum: Long, gitHash: String)
@@ -102,6 +102,7 @@ final case class ScioBenchmarkLogger[F[_]](loggers: BenchmarkLogger[F]*) {
 case class BenchmarkResult(
                             name: String,
                             elapsed: Option[Seconds],
+                            buildNum: Long,
                             startTime: LocalDateTime,
                             finishTime: Option[LocalDateTime],
                             state: State,
@@ -133,11 +134,12 @@ object BenchmarkResult {
       .toMap
 
     BenchmarkResult(
-      name, Some(elapsedTime), startTime, Some(finishTime),
-      scioResult.state, extraArgs, metrics)
+      name, Some(elapsedTime), circleCIEnv.map(_.buildNum).getOrElse(-1L),
+      startTime, Some(finishTime), scioResult.state, extraArgs, metrics)
   }
 
   def streaming(name: String,
+                buildNum: Long,
                 createTime: String,
                 jobMetrics: JobMetrics): BenchmarkResult = {
     val startTime: LocalDateTime = dateTimeParser.parseLocalDateTime(createTime)
@@ -148,7 +150,7 @@ object BenchmarkResult {
       .sortBy(_._1)
       .toMap
 
-    BenchmarkResult(name, None, startTime, None, State.RUNNING, Array(), metrics)
+    BenchmarkResult(name, None, buildNum, startTime, None, State.RUNNING, Array(), metrics)
   }
 }
 
@@ -161,7 +163,9 @@ class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try
                                     operation: String)
   val Storage: Datastore = DatastoreHelper.getDatastoreFromEnv
   val Kind = "Benchmarks"
-  val OrderByBuildNumQuery = s"SELECT * from ${Kind}_%s ORDER BY timestamp DESC LIMIT 2"
+  val OrderByBuildNumQuery = s"SELECT * from ${Kind}_%s ORDER BY buildNum DESC LIMIT 2"
+
+  def dsKeyId(benchmark: BenchmarkResult): String = benchmark.buildNum.toString
 
   // Save metrics to integration testing Datastore instance. Can't make this into a
   // transaction because DS limit is 25 entities per transaction.
@@ -173,9 +177,9 @@ class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try
       val commits = benchmarks.map { benchmark =>
         val entity = dt
           .toEntityBuilder(
-            ScioBenchmarkRun(now, env.gitHash, env.buildNum, benchmark.name))
+            ScioBenchmarkRun(now, env.gitHash, benchmark.buildNum, benchmark.name))
           .setKey(DatastoreHelper
-            .makeKey(s"${Kind}_${benchmark.name}", dsKeyId(benchmark, env)).build())
+            .makeKey(s"${Kind}_${benchmark.name}", dsKeyId(benchmark)).build())
 
         val metrics = benchmark.elapsed match {
           case Some(period) => Map("Elapsed" -> period.getSeconds.toString) ++ benchmark.metrics
@@ -207,16 +211,15 @@ class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try
           case (f @ Failure(_), _) => f
         }
         .map(_.map(_._1.name))
-        .map(metrics => printMetricsComparison(metrics))
+        .map(metrics => printMetricsComparison(benchmarks))
     }.getOrElse {
       Success(Unit)
     }
   }
 
   // TODO: move this to email generator
-  def printMetricsComparison(benchmarkNames: Iterable[String]):
-  Unit = {
-    benchmarkNames.foreach { benchmarkName =>
+  def printMetricsComparison(benchmarks: Iterable[BenchmarkResult]): Unit = {
+    benchmarks.map(_.name).foreach { benchmarkName =>
       try {
         val comparisonMetrics = Storage.runQuery(
           RunQueryRequest.newBuilder().setGqlQuery(
@@ -256,8 +259,6 @@ class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try
       }
     }
   }
-
-  def dsKeyId(benchmark: BenchmarkResult, env: CircleCIEnv): String = env.buildNum.toString
 }
 
 final case class ConsoleLogger() extends BenchmarkLogger[Try] {
