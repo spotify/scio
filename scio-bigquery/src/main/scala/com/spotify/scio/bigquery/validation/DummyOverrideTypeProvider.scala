@@ -23,7 +23,7 @@ import scala.reflect.macros.blackbox
 import scala.reflect.runtime.universe
 
 /** An [[OverrideTypeProvider]] implementation with the default behavior. */
-class DummyOverrideTypeProvider extends OverrideTypeProvider {
+final class DummyOverrideTypeProvider extends OverrideTypeProvider {
   override def shouldOverrideType(tfs: TableFieldSchema): Boolean = false
 
   override def shouldOverrideType(c: blackbox.Context)(tpe: c.Type): Boolean = false

@@ -27,16 +27,16 @@ private[bigquery] object BigQueryPartitionUtil {
 
   // Ported from com.google.cloud.dataflow.sdk.io.BigQueryHelpers
 
-  private val PROJECT_ID_REGEXP = "[a-z][-a-z0-9:.]{4,61}[a-z0-9]"
-  private val DATASET_REGEXP = "[-\\w.]{1,1024}"
-  private val TABLE_REGEXP = "[-\\w$@]{1,1024}($LATEST)?"
-  private val DATASET_TABLE_REGEXP_LEGACY =
+  private[this] val PROJECT_ID_REGEXP = "[a-z][-a-z0-9:.]{4,61}[a-z0-9]"
+  private[this] val DATASET_REGEXP = "[-\\w.]{1,1024}"
+  private[this] val TABLE_REGEXP = "[-\\w$@]{1,1024}($LATEST)?"
+  private[this] val DATASET_TABLE_REGEXP_LEGACY =
     s"((?<PROJECT>$PROJECT_ID_REGEXP):)?(?<DATASET>$DATASET_REGEXP)\\.(?<TABLE>$TABLE_REGEXP)"
-  private val DATASET_TABLE_REGEXP_STANDARD =
+  private[this] val DATASET_TABLE_REGEXP_STANDARD =
     s"((?<PROJECT>$PROJECT_ID_REGEXP).)?(?<DATASET>$DATASET_REGEXP)\\.(?<TABLE>$TABLE_REGEXP)"
-  private val QUERY_TABLE_SPEC_LEGACY =
+  private[this] val QUERY_TABLE_SPEC_LEGACY =
     Pattern.compile(s"(?<=\\[)$DATASET_TABLE_REGEXP_LEGACY(?=\\])")
-  private val QUERY_TABLE_SPEC_STANDARD =
+  private[this] val QUERY_TABLE_SPEC_STANDARD =
     Pattern.compile(s"(?<=\\`)$DATASET_TABLE_REGEXP_STANDARD(?=\\`)")
 
   private def extractTables(sqlQuery: String): Map[String, TableReference] = {

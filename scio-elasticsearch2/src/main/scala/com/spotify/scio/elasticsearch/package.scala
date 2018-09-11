@@ -36,7 +36,7 @@ import scala.concurrent.Future
  */
 package object elasticsearch {
 
-  case class ElasticsearchOptions(clusterName: String, servers: Seq[InetSocketAddress])
+  final case class ElasticsearchOptions(clusterName: String, servers: Seq[InetSocketAddress])
 
   implicit class ElasticsearchSCollection[T](val self: SCollection[T]) extends AnyVal {
 

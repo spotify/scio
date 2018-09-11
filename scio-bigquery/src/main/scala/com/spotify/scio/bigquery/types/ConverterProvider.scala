@@ -28,31 +28,31 @@ import scala.reflect.macros._
 
 private[types] object ConverterProvider {
 
-  def fromAvroImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(GenericRecord => T)] = {
+  def fromAvroImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[GenericRecord => T] = {
     import c.universe._
     val tpe = implicitly[c.WeakTypeTag[T]].tpe
     val r = fromAvroInternal(c)(tpe)
     debug(s"ConverterProvider.fromAvroImpl[${weakTypeOf[T]}]:")
     debug(r)
-    c.Expr[(GenericRecord => T)](r)
+    c.Expr[GenericRecord => T](r)
   }
 
-  def fromTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(TableRow => T)] = {
+  def fromTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[TableRow => T] = {
     import c.universe._
     val tpe = implicitly[c.WeakTypeTag[T]].tpe
     val r = fromTableRowInternal(c)(tpe)
     debug(s"ConverterProvider.fromTableRowImpl[${weakTypeOf[T]}]:")
     debug(r)
-    c.Expr[(TableRow => T)](r)
+    c.Expr[TableRow => T](r)
   }
 
-  def toTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(T => TableRow)] = {
+  def toTableRowImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[T => TableRow] = {
     import c.universe._
     val tpe = implicitly[c.WeakTypeTag[T]].tpe
     val r = toTableRowInternal(c)(tpe)
     debug(s"ConverterProvider.toTableRowImpl[${weakTypeOf[T]}]:")
     debug(r)
-    c.Expr[(T => TableRow)](r)
+    c.Expr[T => TableRow](r)
   }
 
   // =======================================================================
@@ -343,5 +343,6 @@ private[types] object ConverterProvider {
 }
 
 object ConverterUtil {
-  @inline def notNull[@specialized(Boolean, Int, Long, Float, Double) T](x: T): Boolean = x != null
+  @inline final def notNull[@specialized(Boolean, Int, Long, Float, Double) T](x: T): Boolean =
+    x != null
 }
