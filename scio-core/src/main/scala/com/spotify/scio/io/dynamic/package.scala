@@ -17,13 +17,18 @@
 
 package com.spotify.scio.io
 
+import com.spotify.scio.util.Functions
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
+import org.apache.avro.file.CodecFactory
+import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
+import org.apache.beam.sdk.coders.StringUtf8Coder
+import org.apache.beam.sdk.io.AvroIO.RecordFormatter
+import org.apache.beam.sdk.io.{Compression, FileIO}
 import org.apache.beam.sdk.{io => beam}
-import org.apache.beam.sdk.io.FileBasedSink.DynamicDestinations
-import org.apache.beam.sdk.io.{AvroIO, DynamicAvroDestinations, FileSystems}
 
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 /**
@@ -36,58 +41,38 @@ import scala.concurrent.Future
 package object dynamic {
 
   /**
-   * Dynamic file destinations settings. Output path is `<path>/<destination>/part-<shard><suffix>`
-   * for regular writes and `<path>/<destination>/part-<window>-<shard><suffix>` for windowed
-   * writes, where `<destination>` is computed with `destinationFn`.
-   * @param path path
-   * @param default default `<destination>` for empty collections
-   * @param windowedWrites preserves windowing of input elements and writes them to files based on
-   *                       the element's window
-   * @param numShards the number of shards to use, or 0 to let the system decide, must be > 0 when
-   *                  `windowedWrites` is true
-   */
-  case class FileDestinations(path: String,
-                              default: String = "default",
-                              windowedWrites: Boolean = false,
-                              numShards: Int = 0)
-
-  /** Companion object for [[FileDestinations]]. */
-  object FileDestinations {
-    /** Create a windowed [[FileDestinations]]. */
-    def windowed(path: String, numShards: Int, default: String = "default"): FileDestinations = {
-      require(numShards > 0, "numShards must be > 0")
-      FileDestinations(path, default, true, numShards)
-    }
-  }
-
-  /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
    * destinations methods.
    */
   implicit class DynamicIoSCollection[T](val self: SCollection[T]) extends AnyVal {
+
     /**
-     * Save this SCollection as Avro files specified by the
-     * [[org.apache.beam.sdk.io.DynamicAvroDestinations DynamicAvroDestinations]].
+     * Save this SCollection as Avro files specified by the destination function.
      */
-    def saveAsAvroFile(destinations: DynamicAvroDestinations[T, _, T], schema: Schema,
-                       windowedWrites: Boolean, numShards: Int)
-    : Future[Tap[T]] = {
+    def saveAsDynamicAvroFile(path: String,
+                              numShards: Int = 0,
+                              schema: Schema = null,
+                              suffix: String = ".avro",
+                              codec: CodecFactory = CodecFactory.deflateCodec(6),
+                              metadata: Map[String, AnyRef] = Map.empty)
+                             (destinationFn: T => String): Future[Tap[T]] = {
       if (self.context.isTest) {
         throw new NotImplementedError(
           "Avro file with dynamic destinations cannot be used in a test context")
       } else {
-        val tempDir = FileSystems.matchNewResource(self.context.options.getTempLocation, true)
         val cls = self.ct.runtimeClass.asInstanceOf[Class[T]]
-        val t = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-          AvroIO.write(cls)
-        } else {
-          AvroIO.writeGenericRecords(schema).asInstanceOf[AvroIO.Write[T]]
-        }
-        var transform = t.to(destinations).withTempDirectory(tempDir)
-        if (windowedWrites) {
-          transform = transform.withWindowedWrites().withNumShards(numShards)
-        }
-        self.applyInternal(transform)
+        val sink = {
+          if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+            beam.AvroIO.sink(cls)
+          } else {
+            beam.AvroIO.sinkViaGenericRecords(schema, new RecordFormatter[GenericRecord] {
+              override def formatRecord(element: GenericRecord, schema: Schema): GenericRecord =
+                element
+            }).asInstanceOf[beam.AvroIO.Sink[T]]
+          }
+        }.withCodec(codec).withMetadata(com.google.common.collect.Maps.newHashMap(metadata.asJava))
+        val write = writeDynamic(path, numShards, suffix, destinationFn).via(sink)
+        self.applyInternal(write)
       }
 
       Future.failed(
@@ -95,25 +80,13 @@ package object dynamic {
     }
 
     /**
-     * Save this SCollection as Avro files specified by the destination function.
+     * Save this SCollection as text files specified by the destination function.
      */
-    def saveAsAvroFile(fileDestination: FileDestinations,
-                       schema: Schema = null,
-                       suffix: String = ".avro")
-                      (destinationFn: T => String): Future[Tap[T]] = {
-      val destinations = DynamicDestinationsUtil.avroFn(
-        fileDestination, suffix, destinationFn, schema)
-      saveAsAvroFile(
-        destinations, schema, fileDestination.windowedWrites, fileDestination.numShards)
-    }
-
-    /**
-     * Save this SCollection as text files specified by the
-     * [[org.apache.beam.sdk.io.FileBasedSink.DynamicDestinations DynamicDestinations]].
-     */
-    def saveAsTextFile(destinations: DynamicDestinations[String, _, String],
-                       windowedWrites: Boolean, numShards: Int)
-    : Future[Tap[String]] = {
+    def saveAsDynamicTextFile(path: String,
+                              numShards: Int = 0,
+                              suffix: String = ".txt",
+                              compression: Compression = Compression.UNCOMPRESSED)
+                             (destinationFn: String => String): Future[Tap[String]] = {
       val s = if (classOf[String] isAssignableFrom self.ct.runtimeClass) {
         self.asInstanceOf[SCollection[String]]
       } else {
@@ -123,27 +96,29 @@ package object dynamic {
         throw new NotImplementedError(
           "Text file with dynamic destinations cannot be used in a test context")
       } else {
-        val tempDir = FileSystems.matchNewResource(self.context.options.getTempLocation, true)
-        var transform = beam.TextIO.write().to(destinations).withTempDirectory(tempDir)
-        if (windowedWrites) {
-          transform = transform.withWindowedWrites().withNumShards(numShards)
-        }
-        s.applyInternal(transform)
+        val write = writeDynamic(path, numShards, suffix, destinationFn).via(beam.TextIO.sink())
+            .withCompression(compression)
+        s.applyInternal(write)
       }
 
       Future.failed(
         new NotImplementedError("Text file future with dynamic destinations not implemented"))
     }
 
-    /**
-     * Save this SCollection as text files specified by the destination function.
-     */
-    def saveAsTextFile(fileDestination: FileDestinations, suffix: String = ".txt")
-                      (destinationFn: String => String): Future[Tap[String]] = {
-      val destinations = DynamicDestinationsUtil.fileFn(fileDestination, suffix, destinationFn)
-      saveAsTextFile(destinations, fileDestination.windowedWrites, fileDestination.numShards)
-    }
-
   }
 
+
+  private def writeDynamic[A](path: String,
+                              numShards: Int,
+                              suffix: String,
+                              destinationFn: A => String): FileIO.Write[String, A] = {
+    FileIO.writeDynamic[String, A]()
+      .to(path)
+      .withNumShards(numShards)
+      .by(Functions.serializableFn(destinationFn))
+      .withDestinationCoder(StringUtf8Coder.of())
+      .withNaming(Functions.serializableFn { destination: String =>
+        FileIO.Write.defaultNaming(s"$destination/part" , suffix)
+      })
+  }
 }
