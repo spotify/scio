@@ -272,7 +272,7 @@ class JobTestTest extends PipelineSpec {
   def testBigQuery(xs: Seq[TableRow]): Unit = {
     JobTest[BigQueryJob.type]
       .args("--input=table.in", "--output=table.out")
-      .input(BigQueryIO[TableRow]("table.in"), (1 to 3).map(newTableRow))
+      .input(BigQueryIO("table.in"), (1 to 3).map(newTableRow))
       .output(BigQueryIO[TableRow]("table.out"))(_ should containInAnyOrder (xs))
       .run()
   }
