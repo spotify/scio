@@ -18,6 +18,7 @@
 package com.spotify.scio.options;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 
@@ -51,4 +52,16 @@ public interface ScioOptions extends PipelineOptions, KryoOptions {
   @Description("Path to newline separated file with command line options")
   String getOptionsFile();
   void setOptionsFile(String optionsFile);
+
+  @Description("Whether to check for chained cogroups")
+  @Default.Enum("WARNING")
+  CheckEnabled getChainedCogroups();
+
+  void setChainedCogroups(CheckEnabled enabled);
+
+  enum CheckEnabled {
+    OFF,
+    WARNING,
+    ERROR
+  }
 }
