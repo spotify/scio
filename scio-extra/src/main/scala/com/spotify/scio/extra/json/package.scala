@@ -68,7 +68,7 @@ package object json extends AutoDerivation {
         self.getTestInput[T](JsonIO[T](path)).map(Right(_))
       } else {
         self
-          .wrap(self.applyInternal(gio.TextIO.read().from(path))).setName(path)
+          .wrap(self.applyInternal(gio.TextIO.read().from(path)))
           .map { json =>
             decode[T](json) match {
               case Left(e) => Left(DecodeError(e, json))

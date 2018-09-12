@@ -54,4 +54,17 @@ class ScioContextIT extends FlatSpec with Matchers {
     ScioUtil.isRemoteUri(new URI(gcpTempLocation)) shouldBe true
   }
 
+  it should "#1323: generate unique SCollection names" in {
+    val options = PipelineOptionsFactory.create()
+    options.setRunner(classOf[DataflowRunner])
+    options.as(classOf[GcpOptions]).setProject(ItUtils.project)
+    val sc = ScioContext(options)
+
+    val s1 = sc.empty[(String, Int)]()
+    val s2 = sc.empty[(String, Double)]()
+    s1.join(s2)
+
+    noException shouldBe thrownBy { sc.close() }
+  }
+
 }

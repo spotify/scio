@@ -140,7 +140,7 @@ package object jdbc {
               }
             })
         }
-        self.wrap(self.applyInternal(transform)).setName(self.tfName)
+        self.wrap(self.applyInternal(transform))
       }
     }
   }

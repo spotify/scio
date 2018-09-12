@@ -41,14 +41,7 @@ class SCollectionTest extends PipelineSpec {
 
   import com.spotify.scio.testing.TestingUtils._
 
-  "SCollection" should "support setName()" in {
-    runWithContext { sc =>
-      val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).setName("MySCollection")
-      p.name shouldBe "MySCollection"
-    }
-  }
-
-  it should "support applyTransform()" in {
+  "SCollection" should "support applyTransform()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).applyTransform(Count.globally())
       p should containSingleValue (5L.asInstanceOf[java.lang.Long])
