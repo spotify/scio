@@ -27,6 +27,7 @@ import com.google.datastore.v1.Entity
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.AvroBytesUtil
 import com.spotify.scio.io._
+import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
@@ -890,6 +891,48 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def timestampBy(f: T => Instant, allowedTimestampSkew: Duration = Duration.ZERO): SCollection[T] =
     this.applyTransform(WithTimestamps.of(Functions.serializableFn(f))
       .withAllowedTimestampSkew(allowedTimestampSkew))
+
+  // =======================================================================
+  // Read operations
+  // =======================================================================
+
+  /**
+   * Read files represented by elements of this [[SCollection]] as file patterns.
+   *
+   * {{{
+   * sc.parallelize("a.txt").readAll(TextIO.readAll())
+   * }}}
+   */
+  def readAll[U: ClassTag](read: PTransform[PCollection[String], PCollection[U]])
+                          (implicit ev: T <:< String)
+  : SCollection[U] = if (context.isTest) {
+    val id = context.testId.get
+    this
+      .asInstanceOf[SCollection[String]]
+      .flatMap(s => TestDataManager.getInput(id)(ReadIO(s)))
+  } else {
+    this.asInstanceOf[SCollection[String]].applyTransform(read)
+  }
+
+  /**
+   * Read files as byte arrays represented by elements of this [[SCollection]] as file patterns.
+   */
+  def readAllBytes(implicit ev: T <:< String)
+  : SCollection[Array[Byte]] = if (context.isTest) {
+    val id = context.testId.get
+    this
+      .asInstanceOf[SCollection[String]]
+      .flatMap(s => TestDataManager.getInput(id)(ReadIO(s)))
+  } else {
+    this.asInstanceOf[SCollection[String]]
+      .applyTransform(new PTransform[PCollection[String], PCollection[Array[Byte]]]() {
+        override def expand(input: PCollection[String]): PCollection[Array[Byte]] =
+          input
+            .apply(beam.FileIO.matchAll())
+            .apply(beam.FileIO.readMatches())
+            .apply(ParDo.of(Functions.mapFn((f: beam.FileIO.ReadableFile) => f.readFullyAsBytes())))
+      })
+  }
 
   // =======================================================================
   // Write operations

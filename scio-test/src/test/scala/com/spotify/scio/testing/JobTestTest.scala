@@ -156,6 +156,27 @@ object CustomIOJob {
   }
 }
 
+object ReadAllJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.textFile(args("input"))
+      .readAll(beam.TextIO.readAll())
+      .saveAsTextFile(args("output"))
+    sc.close()
+  }
+}
+
+object ReadAllBytesJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.textFile(args("input"))
+      .readAllBytes
+      .map(new String(_))
+      .saveAsTextFile(args("output"))
+    sc.close()
+  }
+}
+
 object JobWithoutClose {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -411,6 +432,44 @@ class JobTestTest extends PipelineSpec {
   it should "fail incorrect CustomIO" in {
     an [AssertionError] should be thrownBy { testCustomIOJob("10", "20") }
     an [AssertionError] should be thrownBy { testCustomIOJob("10", "20", "30", "40") }
+  }
+
+  def testReadAllJob(xs: String*): Unit = {
+    JobTest[ReadAllJob.type]
+      .args("--input=in.txt", "--output=out.txt")
+      .input(TextIO("in.txt"), Seq("a", "b"))
+      .input(ReadIO("a"), Seq("a1", "a2"))
+      .input(ReadIO("b"), Seq("b1", "b2"))
+      .output(TextIO("out.txt"))(_ should containInAnyOrder (xs))
+      .run()
+  }
+
+  it should "pass correct string ReadIO" in {
+    testReadAllJob("a1", "a2", "b1", "b2")
+  }
+
+  it should "fail correct string ReadIO" in {
+    an [AssertionError] should be thrownBy { testReadAllJob("a1", "a2") }
+    an [AssertionError] should be thrownBy { testReadAllJob("a1", "a2", "b1", "b2", "c1") }
+  }
+
+  def testReadAllBytesJob(xs: String*): Unit = {
+    JobTest[ReadAllBytesJob.type]
+      .args("--input=in.txt", "--output=out.txt")
+      .input(TextIO("in.txt"), Seq("a", "b"))
+      .input(ReadIO("a"), Seq("a1", "a2").map(_.getBytes))
+      .input(ReadIO("b"), Seq("b1", "b2").map(_.getBytes))
+      .output(TextIO("out.txt"))(_ should containInAnyOrder (xs))
+      .run()
+  }
+
+  it should "pass correct bytes ReadIO" in {
+    testReadAllBytesJob("a1", "a2", "b1", "b2")
+  }
+
+  it should "fail correct bytes ReadIO" in {
+    an [AssertionError] should be thrownBy { testReadAllBytesJob("a1", "a2") }
+    an [AssertionError] should be thrownBy { testReadAllBytesJob("a1", "a2", "b1", "b2", "c1") }
   }
 
   // =======================================================================

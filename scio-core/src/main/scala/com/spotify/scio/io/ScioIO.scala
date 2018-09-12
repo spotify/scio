@@ -89,4 +89,14 @@ trait TestIO[T] extends ScioIO[T] {
     throw new IllegalStateException(s"$this is for testing purpose only")
 }
 
+/**
+ * Special version of [[ScioIO]] for use with [[ScioContext.customInput]] and
+ * [[SCollection.saveAsCustomOutput]].
+ */
 final case class CustomIO[T](id: String) extends TestIO[T]
+
+/**
+ * Special version of [[ScioIO]] for use with [[SCollection.readAll]] and
+ * [[SCollection.readAllBytes]].
+ */
+final case class ReadIO[T](id: String) extends TestIO[T]
