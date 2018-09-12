@@ -6,11 +6,6 @@ scala_211_version: &scala_211_version 2.11.12
 scala_212_version: &scala_212_version 2.12.6
 
 common_settings: &common_settings
-  docker:
-    - image: circleci/openjdk:8-jdk
-      environment:
-        GOOGLE_APPLICATION_CREDENTIALS: scripts/data-integration-test.json
-        DATASTORE_PROJECT_ID: data-integration-test
   working_directory: ~/scio
   resource_class: xlarge
 
@@ -26,6 +21,21 @@ save_cache_settings: &save_cache_settings
     - ~/.sbt
     - ~/resolution-cache.tar.gz
     - ~/stream.tar.gz
+
+docker_settings: &docker_settings
+  environment:
+    GOOGLE_APPLICATION_CREDENTIALS: scripts/data-integration-test.json
+    DATASTORE_PROJECT_ID: data-integration-test
+
+jdk8: &jdk8
+  docker:
+    - image: circleci/openjdk:8-jdk
+      <<: *docker_settings
+
+jdk11: &jdk11
+  docker:
+    - image: circleci/openjdk:11-jdk
+      <<: *docker_settings
 
 build_settings: &build_settings
   <<: *common_settings
@@ -59,6 +69,7 @@ publish_settings: &publish_settings
     - restore_cache: *restore_cache_settings
     - run: sbt ++$SCALA_VERSION publish
 
+
 ####################
 # Jobs
 ####################
@@ -66,16 +77,28 @@ publish_settings: &publish_settings
 version: 2
 jobs:
   build_211:
-    <<: *build_settings
+    <<: [*build_settings, *jdk8]
     environment:
       - SCALA_VERSION: *scala_211_version
       - SCOVERAGE: 0
 
   build_212:
-    <<: *build_settings
+    <<: [*build_settings, *jdk8]
     environment:
       - SCALA_VERSION: *scala_212_version
       - SCOVERAGE: 1
+
+  build_211-jdk11:
+    <<: [*build_settings, *jdk11]
+    environment:
+    - SCALA_VERSION: *scala_211_version
+    - SCOVERAGE: 0
+
+  build_212-jdk11:
+    <<: [*build_settings, *jdk11]
+    environment:
+    - SCALA_VERSION: *scala_212_version
+    - SCOVERAGE: 0
 
   deploy:
     # Workaround for sbt-assembly hitting Docker aufs file name length limit
@@ -95,17 +118,17 @@ jobs:
       - run: ghr -u spotify -draft $CIRCLE_TAG scio-repl/target/scala-*/scio-repl-*.jar
 
   publish_211:
-    <<: *publish_settings
+    <<: [*publish_settings, *jdk8]
     environment:
       - SCALA_VERSION: *scala_211_version
 
   publish_212:
-    <<: *publish_settings
+    <<: [*publish_settings, *jdk8]
     environment:
       - SCALA_VERSION: *scala_212_version
 
   bench:
-    <<: *common_settings
+    <<: [*common_settings, *jdk8]
     steps:
       - checkout
       - restore_cache: *restore_cache_settings
@@ -117,7 +140,7 @@ jobs:
       - SCALA_VERSION: *scala_212_version
 
   bench_streaming_metrics:
-    <<: *common_settings
+    <<: [*common_settings, *jdk8]
     steps:
       - checkout
       - restore_cache: *restore_cache_settings
@@ -138,14 +161,8 @@ workflows:
   # Per commit build
   build:
     jobs:
-      - build_211:
-          filters:
-            tags:
-              only: /.*/
-      - build_212:
-          filters:
-            tags:
-              only: /.*/
+      - build_211
+      - build_212
       - deploy:
           requires:
             - build_211
@@ -168,6 +185,18 @@ workflows:
     jobs:
       - publish_211
       - publish_212
+
+  build-jdk11:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - build_211-jdk11
+      - build_212-jdk11
 
   # Nightly build with latest Beam SNAPSHOTs
   snapshot:
