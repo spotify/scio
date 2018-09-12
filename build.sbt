@@ -25,7 +25,7 @@ val beamVersion = "2.6.0"
 val algebirdVersion = "0.13.4"
 val annoy4sVersion = "0.6.0"
 val annoyVersion = "0.2.5"
-val asmVersion = "4.5"
+val asmVersion = "4.9"
 val autoServiceVersion = "1.0-rc3"
 val autoValueVersion = "1.4.1"
 val avroVersion = "1.8.2"
@@ -324,7 +324,7 @@ lazy val scioCore: Project = Project(
     "com.google.guava" % "guava" % guavaVersion,
     "com.google.protobuf" % "protobuf-java" % protobufVersion,
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
-    "org.apache.xbean" % "xbean-asm5-shaded" % asmVersion,
+    "org.apache.xbean" % "xbean-asm6-shaded" % asmVersion,
     "io.grpc" % "grpc-all" % grpcVersion exclude("io.opencensus", "opencensus-api"),
     "com.github.alexarchambault" %% "case-app" % caseappVersion
   )
