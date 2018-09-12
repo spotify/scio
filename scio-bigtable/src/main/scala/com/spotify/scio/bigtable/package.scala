@@ -133,7 +133,6 @@ package object bigtable {
           read = read.withRowFilter(rowFilter)
         }
         self.wrap(self.applyInternal(read))
-          .setName(s"${bigtableOptions.getProjectId} ${bigtableOptions.getInstanceId} $tableId")
       }
     }
 

@@ -547,7 +547,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
       } else {
         gio.AvroIO.readGenericRecords(schema).from(path).asInstanceOf[gio.AvroIO.Read[T]]
       }
-      wrap(this.applyInternal(t)).setName(path)
+      wrap(this.applyInternal(t))
     }
   }
 
@@ -568,7 +568,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     } else {
       val avroT = AvroType[T]
       val t = gio.AvroIO.readGenericRecords(avroT.schema).from(path)
-      wrap(this.applyInternal(t)).setName(path).map(avroT.fromGenericRecord)
+      wrap(this.applyInternal(t)).map(avroT.fromGenericRecord)
     }
   }
 
@@ -607,7 +607,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
       val queryJob = this.bigQueryClient.newQueryJob(sqlQuery, flattenResults)
       _queryJobs.append(queryJob)
       val read = typedRead.from(queryJob.table).withoutValidation()
-      wrap(this.applyInternal(read)).setName(sqlQuery)
+      wrap(this.applyInternal(read))
     } else {
       val baseQuery = if (!flattenResults) {
         typedRead.fromQuery(sqlQuery).withoutResultFlattening()
@@ -619,7 +619,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
       } else {
         baseQuery.usingStandardSql()
       }
-      wrap(this.applyInternal(query)).setName(sqlQuery)
+      wrap(this.applyInternal(query))
     }
   }
 
@@ -630,7 +630,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (this.isTest) {
       this.getTestInput(BigQueryIO[T](tableSpec))
     } else {
-      wrap(this.applyInternal(typedRead.from(table))).setName(tableSpec)
+      wrap(this.applyInternal(typedRead.from(table)))
     }
   }
 
@@ -754,17 +754,17 @@ class ScioContext private[scio] (val options: PipelineOptions,
       }
       if (classOf[String] isAssignableFrom cls) {
         val t = setup(psio.PubsubIO.readStrings())
-        wrap(this.applyInternal(t)).setName(name).asInstanceOf[SCollection[T]]
+        wrap(this.applyInternal(t)).asInstanceOf[SCollection[T]]
       } else if (classOf[SpecificRecordBase] isAssignableFrom cls) {
         val t = setup(psio.PubsubIO.readAvros(cls))
-        wrap(this.applyInternal(t)).setName(name)
+        wrap(this.applyInternal(t))
       } else if (classOf[Message] isAssignableFrom cls) {
         val t = setup(psio.PubsubIO.readProtos(cls.asSubclass(classOf[Message])))
-        wrap(this.applyInternal(t)).setName(name).asInstanceOf[SCollection[T]]
+        wrap(this.applyInternal(t)).asInstanceOf[SCollection[T]]
       } else {
         val coder = pipeline.getCoderRegistry.getScalaCoder[T](options)
         val t = setup(psio.PubsubIO.readMessages())
-        wrap(this.applyInternal(t)).setName(name)
+        wrap(this.applyInternal(t))
           .map(m => CoderUtils.decodeFromByteArray(coder, m.getPayload))
       }
     }
@@ -805,7 +805,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
         t = t.withTimestampAttribute(timestampAttribute)
       }
       val elementCoder = pipeline.getCoderRegistry.getScalaCoder[T](options)
-      wrap(this.applyInternal(t)).setName(name)
+      wrap(this.applyInternal(t))
         .map { m =>
           val payload = CoderUtils.decodeFromByteArray(elementCoder, m.getPayload)
           val attributes = JMapWrapper.of(m.getAttributeMap)
@@ -842,7 +842,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     if (this.isTest) {
       this.getTestInput[TableRow](TableRowJsonIO(path))
     } else {
-      wrap(this.applyInternal(gio.TextIO.read().from(path))).setName(path)
+      wrap(this.applyInternal(gio.TextIO.read().from(path)))
         .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
     }
   }
@@ -858,7 +858,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
       this.getTestInput(TextIO(path))
     } else {
       wrap(this.applyInternal(gio.TextIO.read().from(path)
-        .withCompression(compression))).setName(path)
+        .withCompression(compression)))
     }
   }
 
@@ -907,7 +907,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
   def parallelize[T: ClassTag](elems: Iterable[T]): SCollection[T] = requireNotClosed {
     val coder = pipeline.getCoderRegistry.getScalaCoder[T](options)
     wrap(this.applyInternal(Create.of(elems.asJava).withCoder(coder)))
-      .setName(truncate(elems.toString()))
   }
 
   /**
@@ -919,7 +918,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
     val coder = pipeline.getCoderRegistry.getScalaKvCoder[K, V](options)
     wrap(this.applyInternal(Create.of(elems.asJava).withCoder(coder)))
       .map(kv => (kv.getKey, kv.getValue))
-      .setName(truncate(elems.toString()))
   }
 
   /**
@@ -931,7 +929,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
     val coder = pipeline.getCoderRegistry.getScalaCoder[T](options)
     val v = elems.map(t => TimestampedValue.of(t._1, t._2))
     wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder)))
-      .setName(truncate(elems.toString()))
   }
 
   /**
@@ -943,7 +940,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
     val coder = pipeline.getCoderRegistry.getScalaCoder[T](options)
     val v = elems.zip(timestamps).map(t => TimestampedValue.of(t._1, t._2))
     wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder)))
-      .setName(truncate(elems.toString()))
   }
 
   // =======================================================================
