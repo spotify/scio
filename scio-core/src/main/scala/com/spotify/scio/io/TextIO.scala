@@ -41,7 +41,7 @@ final case class TextIO(path: String) extends ScioIO[String] {
 
   override def read(sc: ScioContext, params: ReadP): SCollection[String] =
     sc.wrap(sc.applyInternal(BTextIO.read().from(path)
-      .withCompression(params.compression))).setName(path)
+      .withCompression(params.compression)))
 
   override def write(data: SCollection[String], params: WriteP): Future[Tap[String]] = {
     data.applyInternal(textOut(path, params))

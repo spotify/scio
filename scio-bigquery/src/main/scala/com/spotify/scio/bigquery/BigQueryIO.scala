@@ -56,7 +56,7 @@ private object Reads {
       }
 
       val read = typedRead.from(queryJob.table).withoutValidation()
-      wrap(sc.applyInternal(read)).setName(sqlQuery)
+      wrap(sc.applyInternal(read))
     } else {
       val baseQuery = if (!flattenResults) {
         typedRead.fromQuery(sqlQuery).withoutResultFlattening()
@@ -68,7 +68,7 @@ private object Reads {
       } else {
         baseQuery.usingStandardSql()
       }
-      wrap(sc.applyInternal(query)).setName(sqlQuery)
+      wrap(sc.applyInternal(query))
     }
   }
 
@@ -86,7 +86,7 @@ private object Reads {
     table: TableReference)
   : SCollection[T] = {
     val tableSpec: String = beam.BigQueryHelpers.toTableSpec(table)
-    sc.wrap(sc.applyInternal(typedRead.from(table))).setName(tableSpec)
+    sc.wrap(sc.applyInternal(typedRead.from(table)))
   }
 }
 
@@ -186,7 +186,7 @@ final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
   override type WriteP = TableRowJsonIO.WriteParam
 
   override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] = {
-    sc.wrap(sc.applyInternal(TextIO.read().from(path))).setName(path)
+    sc.wrap(sc.applyInternal(TextIO.read().from(path)))
       .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
   }
 
