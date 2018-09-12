@@ -69,7 +69,6 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
       read = read.withRowFilter(params.rowFilter)
     }
     sc.wrap(sc.applyInternal(read))
-      .setName(s"${bigtableOptions.getProjectId} ${bigtableOptions.getInstanceId} $tableId")
   }
 
   override def write(data: SCollection[Row], params: WriteP): Future[Tap[Row]] =

@@ -82,17 +82,17 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag](name: String,
 
     if (classOf[String] isAssignableFrom cls) {
       val t = setup(beam.PubsubIO.readStrings())
-      sc.wrap(sc.applyInternal(t)).setName(name).asInstanceOf[SCollection[T]]
+      sc.wrap(sc.applyInternal(t)).asInstanceOf[SCollection[T]]
     } else if (classOf[SpecificRecordBase] isAssignableFrom cls) {
       val t = setup(beam.PubsubIO.readAvros(cls))
-      sc.wrap(sc.applyInternal(t)).setName(name)
+      sc.wrap(sc.applyInternal(t))
     } else if (classOf[Message] isAssignableFrom cls) {
       val t = setup(beam.PubsubIO.readProtos(cls.asSubclass(classOf[Message])))
-      sc.wrap(sc.applyInternal(t)).setName(name).asInstanceOf[SCollection[T]]
+      sc.wrap(sc.applyInternal(t)).asInstanceOf[SCollection[T]]
     } else {
       val coder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
       val t = setup(beam.PubsubIO.readMessages())
-      sc.wrap(sc.applyInternal(t)).setName(name)
+      sc.wrap(sc.applyInternal(t))
         .map(m => CoderUtils.decodeFromByteArray(coder, m.getPayload))
     }
   }
@@ -151,7 +151,7 @@ private final case class PubsubIOWithAttributes[T: ClassTag](name: String,
       }
 
       val elementCoder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
-      sc.wrap(sc.applyInternal(r)).setName(name)
+      sc.wrap(sc.applyInternal(r))
         .map { m =>
           val payload = CoderUtils.decodeFromByteArray(elementCoder, m.getPayload)
           val attributes = JMapWrapper.of(m.getAttributeMap)

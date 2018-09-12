@@ -36,7 +36,7 @@ final case class JsonIO[T: ClassTag : Encoder : Decoder](path: String) extends S
   override type WriteP = JsonIO.WriteParam
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    sc.wrap(sc.applyInternal(beam.TextIO.read().from(path))).setName(path).map(decodeJson)
+    sc.wrap(sc.applyInternal(beam.TextIO.read().from(path))).map(decodeJson)
 
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
     data.map(x => params.printer.pretty(x.asJson)).applyInternal(jsonOut(path, params))

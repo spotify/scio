@@ -151,7 +151,7 @@ final case class AvroIO[T: ClassTag](path: String, schema: Schema = null) extend
     } else {
       beam.AvroIO.readGenericRecords(schema).from(path).asInstanceOf[beam.AvroIO.Read[T]]
     }
-    sc.wrap(sc.applyInternal(t)).setName(path)
+    sc.wrap(sc.applyInternal(t))
   }
 
   /**
@@ -213,7 +213,7 @@ object AvroTyped {
     override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       val avroT = AvroType[T]
       val t = beam.AvroIO.readGenericRecords(avroT.schema).from(path)
-      sc.wrap(sc.applyInternal(t)).setName(path).map(avroT.fromGenericRecord)
+      sc.wrap(sc.applyInternal(t)).map(avroT.fromGenericRecord)
     }
 
     /**

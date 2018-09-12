@@ -76,7 +76,7 @@ final case class JdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T]) extend
       // override default fetch size.
       transform = transform.withFetchSize(readOptions.fetchSize)
     }
-    sc.wrap(sc.applyInternal(transform)).setName(sc.tfName)
+    sc.wrap(sc.applyInternal(transform))
   }
 
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
