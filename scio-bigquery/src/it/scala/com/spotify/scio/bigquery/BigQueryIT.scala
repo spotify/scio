@@ -17,7 +17,6 @@
 
 package com.spotify.scio.bigquery
 
-import com.spotify.scio.bigquery.types._
 import org.scalatest.Inspectors.forAll
 import org.scalatest._
 

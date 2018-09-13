@@ -21,6 +21,7 @@ import java.net.InetSocketAddress
 
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException
 import org.elasticsearch.action.ActionRequest
 import org.joda.time.Duration
@@ -55,7 +56,8 @@ package object elasticsearch {
                             numOfShards: Long = 0,
                             maxBulkRequestSize: Int = 3000,
                             errorFn: BulkExecutionException => Unit = m => throw m)
-                           (f: T => Iterable[ActionRequest[_]]): Future[Tap[T]] = {
+                           (f: T => Iterable[ActionRequest[_]])
+                           (implicit coder: Coder[T]): Future[Tap[T]] = {
       val io = ElasticsearchIO[T](esOptions)
       val param = ElasticsearchIO.WriteParam(
         f, errorFn, flushInterval, numOfShards, maxBulkRequestSize)

@@ -30,6 +30,7 @@ import org.apache.beam.sdk.{io => beam}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
+import scala.reflect.ClassTag
 
 /**
  * IO package for dynamic destinations. Import All.
@@ -55,12 +56,13 @@ package object dynamic {
                               suffix: String = ".avro",
                               codec: CodecFactory = CodecFactory.deflateCodec(6),
                               metadata: Map[String, AnyRef] = Map.empty)
-                             (destinationFn: T => String): Future[Tap[T]] = {
+                             (destinationFn: T => String)
+                             (implicit ct: ClassTag[T]): Future[Tap[T]] = {
       if (self.context.isTest) {
         throw new NotImplementedError(
           "Avro file with dynamic destinations cannot be used in a test context")
       } else {
-        val cls = self.ct.runtimeClass.asInstanceOf[Class[T]]
+        val cls = ct.runtimeClass.asInstanceOf[Class[T]]
         val sink = {
           if (classOf[SpecificRecordBase] isAssignableFrom cls) {
             beam.AvroIO.sink(cls)
@@ -86,8 +88,9 @@ package object dynamic {
                               numShards: Int = 0,
                               suffix: String = ".txt",
                               compression: Compression = Compression.UNCOMPRESSED)
-                             (destinationFn: String => String): Future[Tap[String]] = {
-      val s = if (classOf[String] isAssignableFrom self.ct.runtimeClass) {
+                             (destinationFn: String => String)
+                             (implicit ct: ClassTag[T]): Future[Tap[String]] = {
+      val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
         self.asInstanceOf[SCollection[String]]
       } else {
         self.map(_.toString)
@@ -106,7 +109,6 @@ package object dynamic {
     }
 
   }
-
 
   private def writeDynamic[A](path: String,
                               numShards: Int,

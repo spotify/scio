@@ -20,6 +20,7 @@ package com.spotify.scio.io
 import com.google.protobuf.Message
 import com.spotify.scio.Implicits._
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.{JMapWrapper, ScioUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.avro.specific.SpecificRecordBase
@@ -41,19 +42,19 @@ sealed trait PubsubIO[T] extends ScioIO[T] {
 object PubsubIO {
   final case class ReadParam(isSubscription: Boolean)
 
-  def apply[T: ClassTag](name: String,
+  def apply[T: ClassTag : Coder](name: String,
                          idAttribute: String = null,
                          timestampAttribute: String = null): PubsubIO[T] =
     PubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
-  def withAttributes[T: ClassTag](name: String,
+  def withAttributes[T: ClassTag : Coder](name: String,
                                   idAttribute: String = null,
                                   timestampAttribute: String = null)
   : PubsubIO[(T, Map[String, String])] =
     PubsubIOWithAttributes[T](name, idAttribute, timestampAttribute)
 }
 
-private final case class PubsubIOWithoutAttributes[T: ClassTag](name: String,
+private final case class PubsubIOWithoutAttributes[T: ClassTag : Coder](name: String,
                                                                 idAttribute: String,
                                                                 timestampAttribute: String)
   extends PubsubIO[T] {
@@ -132,7 +133,7 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag](name: String,
   }
 }
 
-private final case class PubsubIOWithAttributes[T: ClassTag](name: String,
+private final case class PubsubIOWithAttributes[T: ClassTag : Coder](name: String,
                                                              idAttribute: String,
                                                              timestampAttribute: String)
   extends PubsubIO[(T, Map[String, String])] {

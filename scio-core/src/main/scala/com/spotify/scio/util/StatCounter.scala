@@ -21,6 +21,9 @@
 
 package com.spotify.scio.util
 
+import com.spotify.scio.coders.Coder
+
+
 /**
  * A class for tracking the statistics of a set of numbers (count, mean and variance) in a
  * numerically robust way. Includes support for merging two StatCounters. Based on Welford
@@ -149,4 +152,8 @@ object StatCounter {
 
   /** Build a StatCounter from a list of values passed as variable-length arguments. */
   def apply(values: Double*): StatCounter = new StatCounter(values)
+
+  // StatCounter is mutable -> use a kryocoder
+  implicit def statcounterCoder: Coder[com.spotify.scio.util.StatCounter] =
+    Coder.kryo
 }

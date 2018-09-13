@@ -24,6 +24,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{ScioIO, Tap}
 import com.spotify.scio.util.{ClosureCleaner, ScioUtil}
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.coders.Coder
 import org.apache.avro.Schema
 import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecordBase
@@ -44,7 +45,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 
-final case class ParquetAvroIO[T: ClassTag](path: String) extends ScioIO[T] {
+final case class ParquetAvroIO[T: ClassTag : Coder](path: String) extends ScioIO[T] {
 
   override type ReadP = ParquetAvroIO.ReadParam[_, T]
   override type WriteP = ParquetAvroIO.WriteParam
@@ -146,7 +147,8 @@ object ParquetAvroIO {
                               compression: CompressionCodecName = CompressionCodecName.SNAPPY)
 }
 
-case class ParquetAvroTap[A, T: ClassTag](path: String, params: ParquetAvroIO.ReadParam[A, T])
+case class ParquetAvroTap[A, T: ClassTag : Coder](
+  path: String, params: ParquetAvroIO.ReadParam[A, T])
   extends Tap[T] {
   override def value: Iterator[T] = {
     val xs = FileSystems.`match`(path).metadata().asScala.toList

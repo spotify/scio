@@ -24,10 +24,11 @@ import com.google.common.collect.ImmutableList
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.coders.CoderTestUtils._
+
 import com.spotify.scio.testing.PipelineSpec
-import com.twitter.chill._
+import com.twitter.chill.{java => _, _}
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
-import org.apache.beam.sdk.coders.Coder
+import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values.KV
@@ -37,11 +38,14 @@ import org.scalatest.matchers.{MatchResult, Matcher}
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
+case class RecordA(name: String, value: Int)
+case class RecordB(name: String, value: Int)
+
 class KryoAtomicCoderTest extends PipelineSpec {
 
   import com.spotify.scio.testing.TestingUtils._
 
-  type CoderFactory = () => Coder[Any]
+  type CoderFactory = () => BCoder[Any]
   val cf = () => new KryoAtomicCoder[Any](KryoOptions())
 
   private def roundTrip[T: ClassTag](value: T) = new Matcher[CoderFactory] {
@@ -147,6 +151,9 @@ class KryoAtomicCoderTest extends PipelineSpec {
       .fromArgs("--kryoRegistrationRequired=true")
       .create()
     val sc = ScioContext(options)
+
+    implicit def alwaysUseKryo[A: ClassTag]: Coder[A] = Coder.kryo[A]
+
     sc.parallelize(1 to 10).map(x => RecordB(x.toString, x))
 
     // scalastyle:off no.whitespace.before.left.bracket
@@ -158,6 +165,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
   }
 
   it should "support kryo registrar with custom options" in {
+    implicit val recordBfallbackCoder = Coder.kryo[RecordB]
     // ensure we get a different kryo instance from object pool.
     val options = PipelineOptionsFactory
       .fromArgs("--kryoReferenceTracking=false", "--kryoRegistrationRequired=false")
@@ -174,9 +182,6 @@ class KryoAtomicCoderTest extends PipelineSpec {
   }
 
 }
-
-case class RecordA(name: String, value: Int)
-case class RecordB(name: String, value: Int)
 
 @KryoRegistrar
 class RecordAKryoRegistrar extends IKryoRegistrar {

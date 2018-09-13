@@ -20,6 +20,8 @@ package com.spotify.scio.extra
 import java.util.UUID
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.Coder
+
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.SparkeyReader
 import org.apache.beam.sdk.transforms.{DoFn, View}
@@ -108,7 +110,9 @@ package object sparkey {
      * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
     def asSparkey(path: String = null, maxMemoryUsage: Long = -1)
-                 (implicit w: SparkeyWritable[K, V]): SCollection[SparkeyUri] = {
+                 (implicit w: SparkeyWritable[K, V],
+                  koder: Coder[K],
+                  voder: Coder[V]): SCollection[SparkeyUri] = {
       val basePath = if (path == null) {
         val uuid = UUID.randomUUID()
         self.context.options.getTempLocation + s"/sparkey-$uuid"
@@ -139,7 +143,10 @@ package object sparkey {
      *
      * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
-    def asSparkey(implicit w: SparkeyWritable[K, V]): SCollection[SparkeyUri] = this.asSparkey()
+    def asSparkey(
+      implicit w: SparkeyWritable[K, V],
+      koder: Coder[K],
+      voder: Coder[V]): SCollection[SparkeyUri] = this.asSparkey()
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
@@ -147,7 +154,10 @@ package object sparkey {
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
      * required that each key of the input be associated with a single value.
      */
-    def asSparkeySideInput(implicit w: SparkeyWritable[K, V]): SideInput[SparkeyReader] =
+    def asSparkeySideInput(
+      implicit w: SparkeyWritable[K, V],
+      koder: Coder[K],
+      voder: Coder[V]): SideInput[SparkeyReader] =
       self.asSparkey.asSparkeySideInput
   }
 

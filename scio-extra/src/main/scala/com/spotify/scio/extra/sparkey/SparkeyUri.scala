@@ -22,6 +22,7 @@ import java.net.URI
 import java.nio.file.{Files, Paths}
 
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
+import com.spotify.scio.coders.Coder
 import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
 import com.spotify.sparkey.{Sparkey, SparkeyReader}
 import org.apache.beam.sdk.options.PipelineOptions
@@ -50,6 +51,8 @@ private[sparkey] object SparkeyUri {
       new RemoteSparkeyUri(basePath, opts)
     }
   def extensions: Seq[String] = Seq(".spi", ".spl")
+
+  implicit def coderSparkeyURI: Coder[SparkeyUri] = Coder.kryo[SparkeyUri]
 }
 
 private class LocalSparkeyUri(val basePath: String) extends SparkeyUri {

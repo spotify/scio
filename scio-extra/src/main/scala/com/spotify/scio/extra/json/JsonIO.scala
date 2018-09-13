@@ -21,7 +21,8 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{ScioIO, Tap, TextIO}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import io.circe.{Printer}
+import com.spotify.scio.coders.Coder
+import io.circe.Printer
 import io.circe.parser._
 import io.circe.syntax._
 import org.apache.beam.sdk.{io => beam}
@@ -30,7 +31,7 @@ import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.util.{Left, Right}
 
-final case class JsonIO[T: ClassTag : Encoder : Decoder](path: String) extends ScioIO[T] {
+final case class JsonIO[T: ClassTag : Encoder : Decoder : Coder](path: String) extends ScioIO[T] {
 
   override type ReadP = Unit
   override type WriteP = JsonIO.WriteParam

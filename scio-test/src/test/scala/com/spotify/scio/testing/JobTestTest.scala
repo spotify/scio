@@ -21,10 +21,12 @@ import com.google.common.collect.ImmutableMap
 import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.spotify.scio._
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.io._
+import com.spotify.scio.avro.{AvroUtils, TestRecord}
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.{io => beam}
@@ -56,6 +58,7 @@ object SpecificAvroFileJob {
 object GenericAvroFileJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
+    implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
     sc.avroFile[GenericRecord](args("input"), AvroUtils.schema)
       .saveAsAvroFile(args("output"))
     sc.close()
@@ -104,7 +107,7 @@ object PubsubWithAttributesJob {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.pubsubTopicWithAttributes[String](args("input"))
       .map(kv => (kv._1 + "X", kv._2))
-      .saveAsPubsubWithAttributes(args("output"))
+      .saveAsPubsubWithAttributes[String](args("output"))
     sc.close()
   }
 }
@@ -268,6 +271,7 @@ class JobTestTest extends PipelineSpec {
   }
 
   def testGenericAvroFileJob(xs: Seq[GenericRecord]): Unit = {
+    implicit val coder = Coder.avroGenericRecordCoder
     JobTest[GenericAvroFileJob.type]
       .args("--input=in.avro", "--output=out.avro")
       .input(AvroIO[GenericRecord]("in.avro"), (1 to 3).map(newGenericRecord))
@@ -293,7 +297,7 @@ class JobTestTest extends PipelineSpec {
   def testBigQuery(xs: Seq[TableRow]): Unit = {
     JobTest[BigQueryJob.type]
       .args("--input=table.in", "--output=table.out")
-      .input(BigQueryIO("table.in"), (1 to 3).map(newTableRow))
+      .input(BigQueryIO[TableRow]("table.in"), (1 to 3).map(newTableRow))
       .output(BigQueryIO[TableRow]("table.out"))(_ should containInAnyOrder (xs))
       .run()
   }

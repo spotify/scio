@@ -36,10 +36,11 @@ import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.{FileUtils, IOUtils}
 
 import scala.concurrent.Future
-import scala.reflect.ClassTag
+import com.spotify.scio.coders.Coder
+
 
 trait TapSpec extends PipelineSpec {
-  def verifyTap[T: ClassTag](tap: Tap[T], expected: Set[T]): Unit = {
+  def verifyTap[T: Coder](tap: Tap[T], expected: Set[T]): Unit = {
     SerializableUtils.ensureSerializable(tap)
     tap.value.toSet shouldBe expected
     val sc = ScioContext()
@@ -65,6 +66,9 @@ trait TapSpec extends PipelineSpec {
 }
 
 class TapTest extends TapSpec {
+
+  val schema = newGenericRecord(1).getSchema
+  implicit val coder = Coder.avroGenericRecordCoder(schema)
 
   private def makeRecords(sc: ScioContext) =
     sc.parallelize(Seq(1, 2, 3))
@@ -122,7 +126,7 @@ class TapTest extends TapSpec {
       _
         .parallelize(Seq(1, 2, 3))
         .map(newGenericRecord)
-        .saveAsAvroFile(dir.getPath, schema = newGenericRecord(1).getSchema)
+        .saveAsAvroFile(dir.getPath, schema = schema)
     }
     verifyTap(t, Set(1, 2, 3).map(newGenericRecord))
     FileUtils.deleteDirectory(dir)

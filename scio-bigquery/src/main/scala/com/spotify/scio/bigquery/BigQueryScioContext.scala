@@ -19,6 +19,7 @@ package com.spotify.scio.bigquery
 
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 
@@ -82,7 +83,7 @@ final class BigQueryScioContext(@transient val self: ScioContext) extends Serial
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
-  def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag](newSource: String = null)
+  def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag : Coder](newSource: String = null)
     : SCollection[T] = self.read(BigQueryTyped.dynamic[T](newSource))
 
   /**

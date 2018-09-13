@@ -20,11 +20,14 @@ package com.spotify.scio.extra
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.coders.Coder
 import io.circe.Printer
 import io.circe.generic.AutoDerivation
 import org.apache.beam.sdk.io.Compression
 
+import scala.collection.generic.CanBuildFrom
 import scala.concurrent.Future
+import scala.language.higherKinds
 import scala.reflect.ClassTag
 
 /**
@@ -56,7 +59,7 @@ package object json extends AutoDerivation {
 
   /** Enhanced version of [[ScioContext]] with JSON methods. */
   implicit class JsonScioContext(@transient val self: ScioContext) extends Serializable {
-    def jsonFile[T: ClassTag : Encoder : Decoder](path: String): SCollection[T] =
+    def jsonFile[T: ClassTag : Encoder : Decoder : Coder](path: String): SCollection[T] =
       self.read(JsonIO[T](path))
   }
 
@@ -69,7 +72,8 @@ package object json extends AutoDerivation {
                        suffix: String = ".json",
                        numShards: Int = 0,
                        compression: Compression = Compression.UNCOMPRESSED,
-                       printer: Printer = Printer.noSpaces): Future[Tap[T]] = {
+                       printer: Printer = Printer.noSpaces)
+                       (implicit coder: Coder[T]): Future[Tap[T]] = {
       self.write(JsonIO[T](path))(JsonIO.WriteParam(suffix, numShards, compression, printer))
     }
   }

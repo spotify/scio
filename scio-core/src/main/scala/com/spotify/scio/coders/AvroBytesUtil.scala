@@ -21,7 +21,7 @@ import java.nio.ByteBuffer
 
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
-import org.apache.beam.sdk.coders.Coder
+import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.util.CoderUtils
 
 import scala.collection.JavaConverters._
@@ -36,14 +36,14 @@ private[scio] object AvroBytesUtil {
     s
   }
 
-  def encode[T](coder: Coder[T], obj: T): GenericRecord = {
+  def encode[T](coder: BCoder[T], obj: T): GenericRecord = {
     val bytes = CoderUtils.encodeToByteArray(coder, obj)
     val record = new GenericData.Record(schema)
     record.put("bytes", ByteBuffer.wrap(bytes))
     record
   }
 
-  def decode[T](coder: Coder[T], record: GenericRecord): T = {
+  def decode[T](coder: BCoder[T], record: GenericRecord): T = {
     val bb = record.get("bytes").asInstanceOf[ByteBuffer]
     val bytes = java.util.Arrays.copyOfRange(bb.array(), bb.position(), bb.limit())
     CoderUtils.decodeFromByteArray(coder, bytes)

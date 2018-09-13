@@ -18,13 +18,14 @@
 package com.spotify.scio
 
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.coders.Coder
 
 package object repl {
 
   implicit class ReplSCollection[T](val self: SCollection[T]) extends AnyVal {
 
     /** Convenience method to close the current [[ScioContext]] and collect elements. */
-    def closeAndCollect(): Iterator[T] = {
+    def closeAndCollect()(implicit c: Coder[T]): Iterator[T] = {
       val f = self.materialize
       self.context.close()
       f.waitForResult().value

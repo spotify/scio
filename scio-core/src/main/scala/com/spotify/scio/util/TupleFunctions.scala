@@ -28,6 +28,10 @@ private[scio] object TupleFunctions {
 
   def kvToTuple[K, V](kv: KV[K, V]): (K, V) = (kv.getKey, kv.getValue)
 
+  // specialized version of a common version of kvToTuple
+  def klToTuple[K](kv: KV[K, java.lang.Long]): (K, Long) =
+    (kv.getKey, kv.getValue)
+
   def kvIterableToTuple[K, V](kv: KV[K, JIterable[V]]): (K, Iterable[V]) =
     (kv.getKey, kv.getValue.asScala)
 

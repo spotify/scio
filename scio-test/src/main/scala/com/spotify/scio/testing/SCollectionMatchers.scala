@@ -21,6 +21,8 @@ import java.lang.{Iterable => JIterable}
 import java.util.{Map => JMap}
 
 import com.spotify.scio.util.ClosureCleaner
+import com.spotify.scio.coders.Coder
+
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.testing.PAssert.{IterableAssert, SingletonAssert}
@@ -105,7 +107,7 @@ trait SCollectionMatchers {
 
   // Due to  https://github.com/GoogleCloudPlatform/DataflowJavaSDK/issues/434
   // SerDe cycle on each element to keep consistent with values on the expected side
-  private def serDeCycle[T: ClassTag](scollection: SCollection[T]): SCollection[T] = {
+  private def serDeCycle[T: Coder](scollection: SCollection[T]): SCollection[T] = {
     val coder = scollection.internal.getCoder
     scollection
       .map(
@@ -168,7 +170,7 @@ trait SCollectionMatchers {
     matcher.matcher(_.inEarlyGlobalWindowPanes)
 
   /** Assert that the SCollection in question contains the provided elements. */
-  def containInAnyOrder[T: ClassTag](value: Iterable[T]): IterableMatcher[SCollection[T], T] =
+  def containInAnyOrder[T: Coder](value: Iterable[T]): IterableMatcher[SCollection[T], T] =
     new IterableMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
@@ -194,7 +196,7 @@ trait SCollectionMatchers {
     }
 
   /** Assert that the SCollection in question contains a single provided element. */
-  def containSingleValue[T: ClassTag](value: T): SingleMatcher[SCollection[T], T] =
+  def containSingleValue[T: Coder](value: T): SingleMatcher[SCollection[T], T] =
     new SingleMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
@@ -212,7 +214,7 @@ trait SCollectionMatchers {
 
   /** Assert that the SCollection in question contains the provided element without making
    *  assumptions about other elements in the collection. */
-  def containValue[T: ClassTag](value: T): IterableMatcher[SCollection[T], T] =
+  def containValue[T: Coder](value: T): IterableMatcher[SCollection[T], T] =
     new IterableMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
@@ -285,7 +287,7 @@ trait SCollectionMatchers {
     }
 
   /** Assert that the SCollection in question is equivalent to the provided map. */
-  def equalMapOf[K: ClassTag, V: ClassTag](value: Map[K, V])
+  def equalMapOf[K: Coder, V: Coder](value: Map[K, V])
   : SingleMatcher[SCollection[(K, V)], JMap[K, V]] =
     new SingleMatcher[SCollection[(K, V)], JMap[K, V]] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[(K, V)]] =
@@ -305,7 +307,7 @@ trait SCollectionMatchers {
   // TODO: investigate why multi-map doesn't work
 
   /** Assert that the SCollection in question satisfies the provided function. */
-  def satisfy[T: ClassTag](predicate: Iterable[T] => Boolean)
+  def satisfy[T: Coder](predicate: Iterable[T] => Boolean)
   : IterableMatcher[SCollection[T], T] =
     new IterableMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
@@ -326,7 +328,7 @@ trait SCollectionMatchers {
    * Assert that the SCollection in question contains a single element which satisfies the
    * provided function.
    */
-  def satisfySingleValue[T: ClassTag](predicate: T => Boolean): SingleMatcher[SCollection[T], T] =
+  def satisfySingleValue[T: Coder](predicate: T => Boolean): SingleMatcher[SCollection[T], T] =
     new SingleMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
@@ -347,13 +349,13 @@ trait SCollectionMatchers {
     }
 
   /** Assert that all elements of the SCollection in question satisfy the provided function. */
-  def forAll[T: ClassTag](predicate: T => Boolean): IterableMatcher[SCollection[T], T] = {
+  def forAll[T: Coder](predicate: T => Boolean): IterableMatcher[SCollection[T], T] = {
     val f = ClosureCleaner(predicate)
     satisfy(_.forall(f))
   }
 
   /** Assert that some elements of the SCollection in question satisfy the provided function. */
-  def exist[T: ClassTag](predicate: T => Boolean): IterableMatcher[SCollection[T], T] = {
+  def exist[T: Coder](predicate: T => Boolean): IterableMatcher[SCollection[T], T] = {
     val f = ClosureCleaner(predicate)
     satisfy(_.exists(f))
   }

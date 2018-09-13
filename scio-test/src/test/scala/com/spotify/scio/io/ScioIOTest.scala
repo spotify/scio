@@ -20,6 +20,7 @@ package com.spotify.scio.io
 import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper
 import com.spotify.scio.avro._
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.bigquery._
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
@@ -44,6 +45,7 @@ class ScioIOTest extends ScioIOSpec {
 
   it should "work with GenericRecord" in {
     import AvroUtils.schema
+    implicit val coder = Coder.avroGenericRecordCoder(schema)
     val xs = (1 to 100).map(AvroUtils.newGenericRecord)
     testTap(xs)(AvroIO(_))(_.avroFile(_, schema))(_.saveAsAvroFile(_, schema = schema))(".avro")
     testJobTest(xs)(AvroIO(_))(_.avroFile(_, schema))(_.saveAsAvroFile(_, schema = schema))

@@ -31,7 +31,7 @@ def mkArgs(n):
 
 
 def mkClassTags(n):
-    return ', '.join(x + ': ClassTag' for x in ['KEY'] + mkVals(n))
+    return ', '.join(x + ': Coder' for x in ['KEY'] + mkVals(n))
 
 
 def mkFnArgs(n):
@@ -182,6 +182,9 @@ def main(out):
         // scalastyle:off parameter.number
 
         package com.spotify.scio.util
+
+        import com.spotify.scio.coders.Coder
+        import com.spotify.scio.coders.Implicits._
 
         import com.google.common.collect.Lists
         import com.spotify.scio.values.SCollection

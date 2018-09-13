@@ -31,7 +31,7 @@ val autoValueVersion = "1.4.1"
 val avroVersion = "1.8.2"
 val breezeVersion ="1.0-RC2"
 val chillVersion = "0.9.3"
-val circeVersion = "0.9.1"
+val circeVersion = "0.9.3"
 val commonsIoVersion = "2.6"
 val commonsMath3Version = "3.6.1"
 val elasticsearch2Version = "2.1.0"
@@ -59,11 +59,13 @@ val scalacheckShapelessVersion = "1.1.8"
 val scalacheckVersion = "1.13.5"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.0.5"
+val shapelessVersion = "2.3.3"
 val shapelessDatatypeVersion = "0.1.9"
 val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.3.0"
 val tensorFlowVersion = "1.8.0"
 val zoltarVersion = "0.4.0"
+val magnoliaVersion = "0.10.1-SNAPSHOT"
 val grpcVersion = "1.7.0"
 val caseappVersion = "2.0.0-M3"
 
@@ -297,7 +299,9 @@ lazy val root: Project = Project(
   scioSchemas,
   scioExamples,
   scioRepl,
-  scioJmh
+  scioJmh,
+  scioCoders,
+  scioCodersMacros
 )
 
 lazy val scioCore: Project = Project(
@@ -327,8 +331,12 @@ lazy val scioCore: Project = Project(
     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
     "org.apache.xbean" % "xbean-asm6-shaded" % asmVersion,
     "io.grpc" % "grpc-all" % grpcVersion exclude("io.opencensus", "opencensus-api"),
-    "com.github.alexarchambault" %% "case-app" % caseappVersion
+    "com.github.alexarchambault" %% "case-app" % caseappVersion,
+    "org.scalatest" %% "scalatest" % scalatestVersion % "test"
   )
+).dependsOn(
+  scioSchemas % "test->test",
+  scioCoders
 ).configs(
   IntegrationTest
 ).enablePlugins(BuildInfoPlugin)
@@ -337,7 +345,7 @@ lazy val scioTest: Project = Project(
   "scio-test",
   file("scio-test")
 ).settings(
-  commonSettings ++ itSettings,
+  commonSettings ++ itSettings ++ macroSettings,
   description := "Scio helpers for ScalaTest",
   libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
@@ -355,16 +363,47 @@ lazy val scioTest: Project = Project(
     "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
     "com.novocode" % "junit-interface" % junitInterfaceVersion,
     "junit" % "junit" % junitVersion % "test"
-  ),
-  addCompilerPlugin(paradiseDependency)
+  )
 ).configs(
   IntegrationTest
 ).dependsOn(
-  scioCore % "compile->compile;test->test;it->it",
+  scioCore % "test->test;compile->compile;it->it",
   scioSchemas % "test,it",
   scioAvro % "compile->test",
   scioBigQuery % "compile->test"
 )
+
+lazy val scioCodersMacros: Project = Project(
+  "scio-coders-macros",
+  file("scio-coders-macros")
+).settings(
+  commonSettings ++ macroSettings,
+  description := "Scio add-on for static Coder derivation (macros)",
+  libraryDependencies ++= Seq(
+    "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+    "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "provided",
+    "org.scalatest" %% "scalatest" % scalatestVersion % "test",
+    "com.propensive" %% "magnolia" % magnoliaVersion,
+    "com.chuusai" %% "shapeless" % shapelessVersion,
+    "com.twitter" %% "algebird-core" % algebirdVersion
+  )
+)
+
+lazy val scioCoders: Project = Project(
+  "scio-coders",
+  file("scio-coders")
+).settings(
+  commonSettings,
+  description := "Scio add-on for static Coder derivation",
+  libraryDependencies ++= Seq(
+    "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+    "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "provided",
+    "org.scalatest" %% "scalatest" % scalatestVersion % "test",
+    "com.propensive" %% "magnolia" % magnoliaVersion,
+    "com.chuusai" %% "shapeless" % shapelessVersion,
+    "com.twitter" %% "algebird-core" % algebirdVersion
+  )
+).dependsOn(scioCodersMacros)
 
 lazy val scioAvro: Project = Project(
   "scio-avro",

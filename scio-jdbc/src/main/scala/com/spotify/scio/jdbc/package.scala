@@ -21,6 +21,7 @@ import java.sql.{Driver, PreparedStatement, ResultSet}
 
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.io.{jdbc => beam}
 
 import scala.concurrent.Future
@@ -102,14 +103,14 @@ package object jdbc {
   /** Enhanced version of [[ScioContext]] with JDBC methods. */
   implicit class JdbcScioContext(@transient val self: ScioContext) extends Serializable {
     /** Get an SCollection for a JDBC query. */
-    def jdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T]): SCollection[T] =
+    def jdbcSelect[T: ClassTag : Coder](readOptions: JdbcReadOptions[T]): SCollection[T] =
       self.read(JdbcSelect(readOptions))
   }
 
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JDBC methods. */
   implicit class JdbcSCollection[T](val self: SCollection[T]) {
     /** Save this SCollection as a JDBC database. */
-    def saveAsJdbc(writeOptions: JdbcWriteOptions[T]): Future[Tap[T]] =
+    def saveAsJdbc(writeOptions: JdbcWriteOptions[T])(implicit coder: Coder[T]): Future[Tap[T]] =
       self.write(JdbcWrite(writeOptions))
   }
 
