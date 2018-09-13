@@ -100,6 +100,8 @@ object SCollection {
   : PairSkewedSCollectionFunctions[K, V] =
     new PairSkewedSCollectionFunctions(s)
 
+  private[scio] final case class State(postCoGroup: Boolean = false)
+
 }
 
 // scalastyle:off number.of.methods
@@ -122,6 +124,19 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   import TupleFunctions._
   import com.spotify.scio.Implicits._
+
+  // =======================================================================
+  // States
+  // =======================================================================
+
+  private var _state: SCollection.State = SCollection.State()
+
+  private[scio] def withState(f: SCollection.State => SCollection.State): SCollection[T] = {
+    _state = f(_state)
+    this
+  }
+
+  private[scio] def state: SCollection.State = _state
 
   // =======================================================================
   // Delegations for internal PCollection

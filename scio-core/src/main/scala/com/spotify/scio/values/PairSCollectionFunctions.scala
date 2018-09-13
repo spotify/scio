@@ -149,7 +149,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)])
    */
   def cogroup[W: ClassTag](that: SCollection[(K, W)])
   : SCollection[(K, (Iterable[V], Iterable[W]))] =
-    MultiJoin.withName(self.tfName).cogroup(self, that)
+    ArtisanJoin.cogroup(self.tfName, self, that)
 
   /**
    * For each key k in `this` or `that1` or `that2`, return a resulting SCollection that contains
