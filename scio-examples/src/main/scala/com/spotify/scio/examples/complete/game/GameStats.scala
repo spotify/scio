@@ -68,9 +68,9 @@ object GameStats {
     val userActivityWindowDuration = args.int("userActivityWindowDuration", 30)
 
     // Read streaming events from PubSub topic, using ms of events as their ID
-    val rawEvents = sc.pubsubTopic(args("topic"), idAttribute = "timestamp_ms")
+    val rawEvents = sc.pubsubTopic[String](args("topic"), idAttribute = "timestamp_ms")
       // Parse input as a `GameActionInfo` event
-      .flatMap(UserScore.parseEvent)
+      .flatMap(UserScore.parseEvent _)
 
     // Change each event into a tuple of: user, and that user's score
     val userEvents = rawEvents.map(i => (i.user, i.score))

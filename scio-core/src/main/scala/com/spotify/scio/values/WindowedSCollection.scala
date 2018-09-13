@@ -18,14 +18,14 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.Coder
+
 import com.spotify.scio.util.FunctionsWithWindowedValue
 import org.apache.beam.sdk.transforms.windowing.Window.ClosingBehavior
 import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.values.PCollection
 import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
 import org.joda.time.{Duration, Instant}
-
-import scala.reflect.ClassTag
 
 /** Window options for an [[SCollection]]. */
 case class WindowOptions(trigger: Trigger = null,
@@ -52,27 +52,25 @@ case class WindowedValue[T](value: T, timestamp: Instant, window: BoundedWindow,
 }
 
 /** An enhanced SCollection that provides access to window information via [[WindowedValue]]. */
-class WindowedSCollection[T: ClassTag] private[values] (val internal: PCollection[T],
+class WindowedSCollection[T: Coder] private[values] (val internal: PCollection[T],
                                                         val context: ScioContext)
   extends PCollectionWrapper[T] {
-
-  val ct: ClassTag[T] = implicitly[ClassTag[T]]
 
   /** [[SCollection.filter]] with access to window information via [[WindowedValue]]. */
   def filter(f: WindowedValue[T] => Boolean): WindowedSCollection[T] =
     new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.filterFn(f)).internal, context)
 
   /** [[SCollection.flatMap]] with access to window information via [[WindowedValue]]. */
-  def flatMap[U: ClassTag](f: WindowedValue[T] => TraversableOnce[WindowedValue[U]])
+  def flatMap[U: Coder](f: WindowedValue[T] => TraversableOnce[WindowedValue[U]])
   : WindowedSCollection[U] =
     new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.flatMapFn(f)).internal, context)
 
   /** [[SCollection.keyBy]] with access to window information via [[WindowedValue]]. */
-  def keyBy[K: ClassTag](f: WindowedValue[T] => K): WindowedSCollection[(K, T)] =
+  def keyBy[K: Coder](f: WindowedValue[T] => K): WindowedSCollection[(K, T)] =
     this.map(wv => wv.copy(value = (f(wv), wv.value)))
 
   /** [[SCollection.map]] with access to window information via [[WindowedValue]]. */
-  def map[U: ClassTag](f: WindowedValue[T] => WindowedValue[U]): WindowedSCollection[U] =
+  def map[U: Coder](f: WindowedValue[T] => WindowedValue[U]): WindowedSCollection[U] =
     new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.mapFn(f)).internal, context)
 
   /** Convert back to a basic SCollection. */

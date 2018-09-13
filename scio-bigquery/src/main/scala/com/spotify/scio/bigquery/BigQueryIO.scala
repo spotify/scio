@@ -22,7 +22,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.io.{ScioIO, Tap, TestIO}
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.coders.{KryoAtomicCoder, KryoOptions}
+import com.spotify.scio.coders.{Coder, KryoAtomicCoder, KryoOptions}
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
@@ -225,14 +225,14 @@ object BigQueryTyped {
     type Aux[T <: HasAnnotation, F0[_ <: HasAnnotation] <: ScioIO[_]] =
       IO[T]{ type F[A <: HasAnnotation] = F0[A] }
 
-    implicit def tableIO[T <: HasAnnotation : ClassTag : TypeTag](
+    implicit def tableIO[T <: HasAnnotation : ClassTag : TypeTag : Coder](
       implicit t: BigQueryType.Table[T]): Aux[T, Table] =
         new IO[T] {
           type F[A <: HasAnnotation] = Table[A]
           def impl: Table[T] = Table(t.table)
         }
 
-    implicit def queryIO[T <: HasAnnotation : ClassTag : TypeTag](
+    implicit def queryIO[T <: HasAnnotation : ClassTag : TypeTag : Coder](
       implicit t: BigQueryType.Query[T]): Aux[T, Select] =
         new IO[T] {
           type F[A <: HasAnnotation] = Select[A]
@@ -261,7 +261,7 @@ object BigQueryTyped {
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
-  final case class Select[T <: HasAnnotation : ClassTag : TypeTag](query: String)
+  final case class Select[T <: HasAnnotation : ClassTag : TypeTag : Coder](query: String)
     extends BigQueryIO[T] {
     override type ReadP = Unit
     override type WriteP = Nothing // ReadOnly
@@ -287,7 +287,7 @@ object BigQueryTyped {
   /**
    * Get a typed SCollection for a BigQuery table.
    */
-  final case class Table[T <: HasAnnotation : ClassTag : TypeTag](tableSpec: String)
+  final case class Table[T <: HasAnnotation : ClassTag : TypeTag : Coder](tableSpec: String)
     extends BigQueryIO[T] {
     override type ReadP = Unit
     override type WriteP = Table.WriteParam
@@ -303,9 +303,8 @@ object BigQueryTyped {
     }
 
     override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
-      import scala.concurrent.ExecutionContext.Implicits.global
-
       val initialTfName = data.tfName
+      import scala.concurrent.ExecutionContext.Implicits.global
       val rows =
         data
           .map(bqt.toTableRow)
@@ -335,11 +334,12 @@ object BigQueryTyped {
       createDisposition: CreateDisposition)
 
     @inline
-    final def apply[T <: HasAnnotation : ClassTag : TypeTag](table: TableReference): Table[T] =
+    final def apply[T <: HasAnnotation : ClassTag : TypeTag : Coder](
+      table: TableReference): Table[T] =
       Table[T](beam.BigQueryHelpers.toTableSpec(table))
   }
 
-  private[scio] def dynamic[T <: HasAnnotation : ClassTag : TypeTag](
+  private[scio] def dynamic[T <: HasAnnotation : ClassTag : TypeTag : Coder](
     newSource: String
   ): ScioIO.ReadOnly[T, Unit] = {
     val bqt = BigQueryType[T]

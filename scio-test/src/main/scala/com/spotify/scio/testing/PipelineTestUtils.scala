@@ -19,9 +19,8 @@ package com.spotify.scio.testing
 
 import org.apache.beam.sdk.options._
 import com.spotify.scio._
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
-
-import scala.reflect.ClassTag
 
 /** Trait with utility methods for unit testing pipelines. */
 trait PipelineTestUtils {
@@ -65,7 +64,7 @@ trait PipelineTestUtils {
    * } shouldBe Seq(6)
    * }}}
    */
-  def runWithData[T: ClassTag, U: ClassTag](data: Iterable[T])
+  def runWithData[T: Coder, U: Coder](data: Iterable[T])
                                            (fn: SCollection[T] => SCollection[U]): Seq[U] = {
     runWithLocalOutput { sc => fn(sc.parallelize(data)) }._2
   }
@@ -82,7 +81,7 @@ trait PipelineTestUtils {
    * @param fn transform to be tested
    * @return output data
    */
-  def runWithData[T1: ClassTag, T2: ClassTag, U: ClassTag]
+  def runWithData[T1: Coder, T2: Coder, U: Coder]
   (data1: Iterable[T1], data2: Iterable[T2])
   (fn: (SCollection[T1], SCollection[T2]) => SCollection[U]): Seq[U] = {
     runWithLocalOutput { sc =>
@@ -103,7 +102,7 @@ trait PipelineTestUtils {
    * @param fn transform to be tested
    * @return output data
    */
-  def runWithData[T1: ClassTag, T2: ClassTag, T3: ClassTag, U: ClassTag]
+  def runWithData[T1: Coder, T2: Coder, T3: Coder, U: Coder]
   (data1: Iterable[T1], data2: Iterable[T2], data3: Iterable[T3])
   (fn: (SCollection[T1], SCollection[T2], SCollection[T3]) => SCollection[U]): Seq[U] = {
     runWithLocalOutput { sc =>
@@ -125,7 +124,7 @@ trait PipelineTestUtils {
    * @param fn transform to be tested
    * @return output data
    */
-  def runWithData[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, U: ClassTag]
+  def runWithData[T1: Coder, T2: Coder, T3: Coder, T4: Coder, U: Coder]
   (data1: Iterable[T1], data2: Iterable[T2], data3: Iterable[T3], data4: Iterable[T4])
   (fn: (SCollection[T1], SCollection[T2], SCollection[T3], SCollection[T4]) => SCollection[U])
   : Seq[U] = {
@@ -144,7 +143,7 @@ trait PipelineTestUtils {
    * @return a tuple containing the [[ScioResult]] and the materialized result of fn as a
    *         [[scala.collection.Seq Seq]]
    */
-  def runWithLocalOutput[U](fn: ScioContext => SCollection[U]): (ScioResult, Seq[U]) = {
+  def runWithLocalOutput[U: Coder](fn: ScioContext => SCollection[U]): (ScioResult, Seq[U]) = {
     val sc = ScioContext()
     val f = fn(sc).materialize
     val result = sc.close().waitUntilFinish()  // block non-test runner

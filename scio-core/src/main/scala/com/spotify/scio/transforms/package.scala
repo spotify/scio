@@ -22,13 +22,14 @@ import java.net.URI
 import java.nio.file.Path
 
 import com.spotify.scio.util._
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
+
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
 
 import scala.collection.JavaConverters._
-import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -46,7 +47,7 @@ package object transforms {
      * @param batchSize batch size when downloading files
      * @param keep keep downloaded files after processing
      */
-    def mapFile[T: ClassTag](f: Path => T,
+    def mapFile[T: Coder](f: Path => T,
                              batchSize: Int = 10,
                              keep: Boolean = false): SCollection[T] =
       self.applyTransform(ParDo.of(new FileDownloadDoFn[T](
@@ -59,7 +60,7 @@ package object transforms {
      * @param batchSize batch size when downloading files
      * @param keep keep downloaded files after processing
      */
-    def flatMapFile[T: ClassTag](f: Path => TraversableOnce[T],
+    def flatMapFile[T: Coder](f: Path => TraversableOnce[T],
                                  batchSize: Int = 10,
                                  keep: Boolean = false): SCollection[T] =
       self
@@ -120,7 +121,7 @@ package object transforms {
      * `parallelism` is the number of concurrent `DoFn`s per worker.
      * @group transform
      */
-    def flatMapWithParallelism[U: ClassTag](parallelism: Int)(fn: T => TraversableOnce[U])
+    def flatMapWithParallelism[U: Coder](parallelism: Int)(fn: T => TraversableOnce[U])
     :SCollection[U] = self.parDo(parallelFlatMapFn(parallelism)(fn))
 
     /**
@@ -128,8 +129,8 @@ package object transforms {
      * `parallelism` is the number of concurrent `DoFn`s per worker.
      * @group transform
      */
-    def filterWithParallelism(parallelism: Int)(fn: T => Boolean): SCollection[T] = {
-      implicit val ct = self.ct
+    def filterWithParallelism(parallelism: Int)(fn: T => Boolean)(
+      implicit coder: Coder[T]): SCollection[T] = {
       self.parDo(parallelFilterFn(parallelism)(fn))
     }
 
@@ -138,7 +139,7 @@ package object transforms {
      * `parallelism` is the number of concurrent `DoFn`s per worker.
      * @group transform
      */
-    def mapWithParallelism[U: ClassTag](parallelism: Int)(fn: T => U): SCollection[U] =
+    def mapWithParallelism[U: Coder](parallelism: Int)(fn: T => U): SCollection[U] =
       self.parDo(parallelMapFn(parallelism)(fn))
 
     /**
@@ -146,7 +147,7 @@ package object transforms {
      * `parallelism` is the number of concurrent `DoFn`s per worker.
      * @group transform
      */
-    def collectWithParallelism[U: ClassTag](parallelism: Int)(pfn: PartialFunction[T, U])
+    def collectWithParallelism[U: Coder](parallelism: Int)(pfn: PartialFunction[T, U])
     :SCollection[U] = self.parDo(parallelCollectFn(parallelism)(pfn))
   }
 
@@ -199,7 +200,7 @@ package object transforms {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with specialized
    * versions of flatMap.
    */
-  implicit class SpecializedFlatMapSCollection[T](val self: SCollection[T]) extends AnyVal {
+  implicit class SpecializedFlatMapSCollection[T](val self: SCollection[T]) {
 
     /**
      * Latency optimized flavor of
@@ -210,7 +211,7 @@ package object transforms {
      *
      * @group transform
      */
-    def safeFlatMap[U: ClassTag](f: T => TraversableOnce[U])
+    def safeFlatMap[U: Coder](f: T => TraversableOnce[U])(implicit coder: Coder[T])
     : (SCollection[U], SCollection[(T, Throwable)]) = {
       val (mainTag, errorTag) = (new TupleTag[U], new TupleTag[(T, Throwable)])
       val doFn = new NamedDoFn[T, U] {
@@ -229,8 +230,10 @@ package object transforms {
       }
       val tuple = self.applyInternal(
         ParDo.of(doFn).withOutputTags(mainTag, TupleTagList.of(errorTag)))
-      val main = tuple.get(mainTag).setCoder(self.getCoder[U])
-      val errorPipe = tuple.get(errorTag).setCoder(self.getCoder[(T, Throwable)])
+      val main = tuple.get(mainTag).setCoder(CoderMaterializer.beam(self.context, Coder[U]))
+      val errorPipe =
+        tuple.get(errorTag)
+          .setCoder(CoderMaterializer.beam(self.context, Coder[(T, Throwable)]))
       (self.context.wrap(main), self.context.wrap(errorPipe))
     }
 

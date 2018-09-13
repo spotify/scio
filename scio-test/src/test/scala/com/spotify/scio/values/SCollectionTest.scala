@@ -35,7 +35,8 @@ import org.apache.beam.sdk.values.KV
 import org.joda.time.{DateTimeConstants, Duration, Instant}
 
 import scala.collection.JavaConverters._
-import scala.reflect.ClassTag
+import com.spotify.scio.coders.Coder
+
 
 class SCollectionTest extends PipelineSpec {
 
@@ -54,19 +55,6 @@ class SCollectionTest extends PipelineSpec {
       val x = c.element()
       c.output(KV.of(x, x.toString))
     }
-  }
-
-  it should "fail applyTransform() with KV output" in {
-    // scalastyle:off no.whitespace.before.left.bracket
-    val e = the [IllegalArgumentException] thrownBy {
-      runWithContext { sc =>
-        val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).applyTransform(ParDo.of(newKvDoFn))
-      }
-    }
-    val msg = "requirement failed: Applying a transform with KV[K, V] output, " +
-      "use applyKvTransform instead"
-    e.getMessage shouldBe msg
-    // scalastyle:on no.whitespace.before.left.bracket
   }
 
   it should "support applyKvTransform()" in {
@@ -109,7 +97,7 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support unionAll() with an empty list" in {
     runWithContext { sc =>
-      sc.unionAll(Seq()) should beEmpty
+      sc.unionAll(List[SCollection[Unit]]().toIterable) should beEmpty
     }
   }
 
@@ -256,10 +244,10 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support flatten()" in {
     runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(Seq("a b", "c d"), Seq("e f", "g h"))).flatten
+      val p1 = sc.parallelize(Seq(Seq("a b", "c d"), Seq("e f", "g h"))).flatten[String]
       p1 should containInAnyOrder(Seq("a b", "c d", "e f", "g h"))
 
-      val p2 = sc.parallelize(Seq(Some(1), None)).flatten
+      val p2 = sc.parallelize(Seq(Some(1), None)).flatten[Int]
       p2 should containInAnyOrder(Seq(1))
     }
   }
@@ -297,7 +285,7 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support max" in {
     runWithContext { sc =>
-      def max[T: ClassTag : Numeric](elems: T*): SCollection[T] = sc.parallelize(elems).max
+      def max[T: Coder : Numeric](elems: T*): SCollection[T] = sc.parallelize(elems).max
       max(1, 2, 3) should containSingleValue (3)
       max(1L, 2L, 3L) should containSingleValue (3L)
       max(1F, 2F, 3F) should containSingleValue (3F)
@@ -307,7 +295,7 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support mean" in {
     runWithContext { sc =>
-      def mean[T: ClassTag : Numeric](elems: T*): SCollection[Double] = sc.parallelize(elems).mean
+      def mean[T: Coder : Numeric](elems: T*): SCollection[Double] = sc.parallelize(elems).mean
       mean(1, 2, 3) should containSingleValue (2.0)
       mean(1L, 2L, 3L) should containSingleValue (2.0)
       mean(1F, 2F, 3F) should containSingleValue (2.0)
@@ -317,7 +305,7 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support min" in {
     runWithContext { sc =>
-      def min[T: ClassTag : Numeric](elems: T*): SCollection[T] = sc.parallelize(elems).min
+      def min[T: Coder : Numeric](elems: T*): SCollection[T] = sc.parallelize(elems).min
       min(1, 2, 3) should containSingleValue (1)
       min(1L, 2L, 3L) should containSingleValue (1L)
       min(1F, 2F, 3F) should containSingleValue (1F)
@@ -410,7 +398,7 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support sum" in {
     runWithContext { sc =>
-      def sum[T: ClassTag : Semigroup](elems: T*): SCollection[T] = sc.parallelize(elems).sum
+      def sum[T: Coder : Semigroup](elems: T*): SCollection[T] = sc.parallelize(elems).sum
       sum(1, 2, 3) should containSingleValue (6)
       sum(1L, 2L, 3L) should containSingleValue (6L)
       sum(1F, 2F, 3F) should containSingleValue (6F)
@@ -431,7 +419,7 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5))
       val r1 = p.top(3)
-      val r2 = p.top(3)(Ordering.by(-_))
+      val r2 = p.top(3, Ordering.by(-_))
       r1 should containSingleValue (iterable(5, 4, 3))
       r2 should containSingleValue (iterable(1, 2, 3))
     }

@@ -285,7 +285,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
 
   it should "support intersectByKey() with empty LHS" in {
     runWithContext { sc =>
-      val p1 = sc.parallelize(Seq[(String, Any)]())
+      val p1 = sc.parallelize(Seq[(String, Unit)]())
       val p2 = sc.parallelize(Seq("a", "b", "d"))
       val p = p1.intersectByKey(p2)
       p should beEmpty
@@ -393,7 +393,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
 
   it should "support subtractByKey() with empty LHS" in {
     runWithContext { sc =>
-      val p1 = sc.parallelize(Seq[(String, Any)]())
+      val p1 = sc.parallelize(Seq[(String, Unit)]())
       val p2 = sc.parallelize(Seq("a", "b", "d"))
       val p = p1.subtractByKey(p2)
       p should beEmpty
@@ -429,7 +429,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("b", 11), ("b", 12), ("c", 21), ("c", 22), ("c", 23)))
       val r1 = p.topByKey(1)
-      val r2 = p.topByKey(1)(Ordering.by(-_))
+      val r2 = p.topByKey(1, Ordering.by(-_))
       r1 should
         containInAnyOrder (Seq(("a", iterable(1)), ("b", iterable(12)), ("c", iterable(23))))
       r2 should
@@ -446,7 +446,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
 
   it should "support flattenValues()" in {
     runWithContext { sc =>
-      val p = sc.parallelize(Seq(("a", Seq(1, 2, 3)), ("b", Seq(4, 5, 6)))).flattenValues
+      val p = sc.parallelize(Seq(("a", Seq(1, 2, 3)), ("b", Seq(4, 5, 6)))).flattenValues[Int]
       p should containInAnyOrder (Seq(("a", 1), ("a", 2), ("a", 3), ("b", 4), ("b", 5), ("b", 6)))
     }
   }

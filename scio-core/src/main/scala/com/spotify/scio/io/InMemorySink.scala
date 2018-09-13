@@ -18,6 +18,7 @@
 package com.spotify.scio.io
 
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.coders.Coder
 
 import scala.collection.concurrent.TrieMap
 
@@ -25,7 +26,7 @@ private[scio] object InMemorySink {
 
   private val cache: TrieMap[String, Iterable[Any]] = TrieMap.empty
 
-  def save[T](id: String, data: SCollection[T]): Unit = {
+  def save[T: Coder](id: String, data: SCollection[T]): Unit = {
     require(data.context.isTest, "In memory sink can only be used in tests")
     data
       .groupBy(_ => ())

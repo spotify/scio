@@ -32,7 +32,6 @@ import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import scala.language.higherKinds
 import scala.util.{Random, Try}
 
 /**
@@ -289,14 +288,14 @@ object ScioBatchBenchmark {
 
   private def randomUUIDs(sc: ScioContext, n: Long): SCollection[Elem[String]] =
     sc.parallelize(partitions(n))
-      .flatten
+      .flatten[Long]
       .applyTransform(ParDo.of(new FillDoFn(() => UUID.randomUUID().toString)))
       .map(Elem(_))
 
   private def randomKVs(sc: ScioContext,
                         n: Long, numUniqueKeys: Int): SCollection[(String, Elem[String])] =
     sc.parallelize(partitions(n))
-      .flatten
+      .flatten[Long]
       .applyTransform(ParDo.of(new FillDoFn(() =>
         ("key" + Random.nextInt(numUniqueKeys), UUID.randomUUID().toString)
       )))

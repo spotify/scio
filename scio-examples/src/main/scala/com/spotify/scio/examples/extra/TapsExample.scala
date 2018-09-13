@@ -20,6 +20,7 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio._
 import com.spotify.scio.io.Taps
 
+
 // Use Futures and Taps to wait for resources
 // Set -Dtaps.algorithm=polling to wait for the resources to become available
 // Set -Dtaps.algorithm=immediate to fail immediately if a resource is not available

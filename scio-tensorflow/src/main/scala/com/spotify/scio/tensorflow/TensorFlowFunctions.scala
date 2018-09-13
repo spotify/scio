@@ -46,6 +46,9 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 
+import com.spotify.scio.coders.Coder
+
+
 private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
   fetchOp: Seq[String],
   inFn: T => Map[String, Tensor[_]],
@@ -179,7 +182,7 @@ private[tensorflow] class PredictSCollectionFunctions[T: ClassTag](
    *                 [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
    *                 ownership of the [[org.tensorflow.Tensor Tensor]]s.
    */
-  def predict[V: ClassTag, W](savedModelUri: String,
+  def predict[V: Coder, W](savedModelUri: String,
                               fetchOps: Seq[String],
                               options: TensorFlowModel.Options)(inFn: T => Map[String, Tensor[_]])(
     outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
@@ -201,7 +204,7 @@ private[tensorflow] class PredictSCollectionFunctions[T: ClassTag](
    */
   @deprecated("TensorFlow Graph model support will be removed. Use Saved Model predict.",
               "scio-tensorflow 0.5.4")
-  def predict[V: ClassTag, W](graphUri: String, fetchOps: Seq[String], config: Array[Byte] = null)(
+  def predict[V: Coder, W](graphUri: String, fetchOps: Seq[String], config: Array[Byte] = null)(
     inFn: T => Map[String, Tensor[_]])(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
     self.parDo(new GraphPredictDoFn[T, V](graphUri, fetchOps, config, inFn, outFn))
 

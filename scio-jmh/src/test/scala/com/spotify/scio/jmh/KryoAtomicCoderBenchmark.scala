@@ -29,8 +29,14 @@ import org.apache.beam.sdk.util.CoderUtils
 import org.openjdk.jmh.annotations._
 
 final case class UserId(bytes: Array[Byte])
+object UserId {
+  implicit def coderUserId: Coder[UserId] = Coder.gen[UserId]
+}
 final case class User(id: UserId, username: String, email: String)
 final case class SpecializedUser(id: UserId, username: String, email: String)
+final case class SpecializedUserForDerived(id: UserId, username: String, email: String)
+
+
 
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -45,11 +51,17 @@ class KryoAtomicCoderBenchmark {
 
   // use hand-optimized coders
   val specializedUser = SpecializedUser(userId, "johndoe", "johndoe@spotify.com")
+  val specializedUserForDerived =
+    SpecializedUserForDerived(userId, "johndoe", "johndoe@spotify.com")
+  val tenTimes = List.fill(10)(specializedUserForDerived)
+
 
   val kryoCoder = new KryoAtomicCoder[User](KryoOptions())
   val javaCoder = SerializableCoder.of(classOf[User])
   val specializedCoder = new SpecializedCoder
   val specializedKryoCoder = new KryoAtomicCoder[SpecializedUser](KryoOptions())
+  val derivedCoder = CoderMaterializer.beamWithDefault(Coder[SpecializedUserForDerived])
+  val derivedListCoder = CoderMaterializer.beamWithDefault(Coder[List[SpecializedUserForDerived]])
 
   @Benchmark
   def kryoEncode: Array[Byte] = {
@@ -71,10 +83,23 @@ class KryoAtomicCoderBenchmark {
     CoderUtils.encodeToByteArray(specializedKryoCoder, specializedUser)
   }
 
+  @Benchmark
+  def derivedEncode: Array[Byte] = {
+    CoderUtils.encodeToByteArray(derivedCoder, specializedUserForDerived)
+  }
+
+  @Benchmark
+  def derivedListEncode: Array[Byte] = {
+    CoderUtils.encodeToByteArray(derivedListCoder, tenTimes)
+  }
+
+
   val kryoEncoded = kryoEncode
   val javaEncoded = javaEncode
   val customEncoded = customEncode
   val customKryoEncoded = customKryoEncode
+  val derivedEncoded = derivedEncode
+  val derivedListEncoded = derivedListEncode
 
   @Benchmark
   def kryoDecode: User = {
@@ -94,6 +119,16 @@ class KryoAtomicCoderBenchmark {
   @Benchmark
   def customKryoDecode: SpecializedUser = {
     CoderUtils.decodeFromByteArray(specializedKryoCoder, customKryoEncoded)
+  }
+
+  @Benchmark
+  def derivedDecode: SpecializedUserForDerived = {
+    CoderUtils.decodeFromByteArray(derivedCoder, derivedEncoded)
+  }
+
+  @Benchmark
+  def derivedListDecode: List[SpecializedUserForDerived] = {
+    CoderUtils.decodeFromByteArray(derivedListCoder, derivedListEncoded)
   }
 }
 

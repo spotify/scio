@@ -30,6 +30,8 @@ import org.apache.beam.sdk.transforms.windowing.{GlobalWindows, SlidingWindows}
 import org.joda.time.Duration
 
 import scala.collection.JavaConverters._
+import com.spotify.scio.coders.Coder
+
 
 /*
 SBT
@@ -49,6 +51,8 @@ object AutoComplete {
   @BigQueryType.toTable
   case class Record(pre: String, tags: List[Tag])
 
+  implicit def recordCoder: Coder[Record] = ???
+
   def computeTopCompletions(input: SCollection[String],
                             candidatesPerPrefix: Int,
                             recursive: Boolean): SCollection[(String, Iterable[(String, Long)])] = {
@@ -64,7 +68,7 @@ object AutoComplete {
   : SCollection[(String, Iterable[(String, Long)])] =
     input
       .flatMap(allPrefixes(minPrefix))
-      .topByKey(candidatesPerPrefix)(Ordering.by(_._2))
+      .topByKey(candidatesPerPrefix, Ordering.by(_._2))
 
   def computeTopRecursive(input: SCollection[(String, Long)],
                            candidatesPerPrefix: Int, minPrefix: Int)
@@ -76,7 +80,7 @@ object AutoComplete {
       val larger = computeTopRecursive(input, candidatesPerPrefix, minPrefix + 1)
       val small = (larger(1).flatMap(_._2) ++ input.filter(_._1.length == minPrefix))
         .flatMap(allPrefixes(minPrefix, minPrefix))
-        .topByKey(candidatesPerPrefix)(Ordering.by(_._2))
+        .topByKey(candidatesPerPrefix, Ordering.by(_._2))
       Seq(larger.head ++ larger(1), small)
     }
 

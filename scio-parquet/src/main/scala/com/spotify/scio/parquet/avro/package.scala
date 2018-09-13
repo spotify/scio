@@ -21,6 +21,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.io.Tap
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.coders.Coder
 import org.apache.avro.Schema
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.hadoop.mapreduce.Job
@@ -81,7 +82,7 @@ package object avro {
      * Return a new SCollection by applying a function to all Parquet Avro records of this Parquet
      * file.
      */
-    def map[U: ClassTag](f: T => U): SCollection[U] = {
+    def map[U: ClassTag : Coder](f: T => U): SCollection[U] = {
       val param = ParquetAvroIO.ReadParam[T, U](projection, predicate, f)
       context.read(ParquetAvroIO[U](path))(param)
     }
@@ -90,14 +91,14 @@ package object avro {
      * Return a new SCollection by first applying a function to all Parquet Avro records of
      * this Parquet file, and then flattening the results.
      */
-    def flatMap[U: ClassTag](f: T => TraversableOnce[U]): SCollection[U] =
+    def flatMap[U: ClassTag : Coder](f: T => TraversableOnce[U]): SCollection[U] =
       this
         // HadoopInputFormatIO does not support custom coder, force SerializableCoder
         .map(x => f(x).asInstanceOf[Serializable])
         .asInstanceOf[SCollection[TraversableOnce[U]]]
         .flatten
 
-    private def toSCollection: SCollection[T] = {
+    private def toSCollection(implicit c: Coder[T]): SCollection[T] = {
       if (projection != null) {
         logger.warn("Materializing Parquet Avro records with projection may cause " +
           "NullPointerException. Perform a `map` or `flatMap` immediately after " +
@@ -122,17 +123,18 @@ package object avro {
   }
 
   object ParquetAvroFile {
-    implicit def parquetAvroFileToSCollection[T: ClassTag](self: ParquetAvroFile[T])
+    implicit def parquetAvroFileToSCollection[T: Coder](self: ParquetAvroFile[T])
     : SCollection[T] = self.toSCollection
-    implicit def parquetAvroFileToParquetAvroSCollection[T: ClassTag](self: ParquetAvroFile[T])
-    : ParquetAvroSCollection[T] = new ParquetAvroSCollection(self.toSCollection)
+    implicit def parquetAvroFileToParquetAvroSCollection[T: ClassTag : Coder](
+      self: ParquetAvroFile[T]): ParquetAvroSCollection[T] =
+        new ParquetAvroSCollection(self.toSCollection)
   }
 
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Parquet Avro
    * methods.
    */
-  implicit class ParquetAvroSCollection[T](val self: SCollection[T]) extends AnyVal {
+  implicit class ParquetAvroSCollection[T: ClassTag : Coder](val self: SCollection[T]) {
     /**
      * Save this SCollection of Avro records as a Parquet file.
      * @param schema must be not null if `T` is of type
@@ -144,7 +146,6 @@ package object avro {
                               suffix: String = "",
                               compression: CompressionCodecName = CompressionCodecName.SNAPPY)
     : Future[Tap[T]] = {
-      import self.ct
       val param = ParquetAvroIO.WriteParam(schema, numShards, suffix, compression)
       self.write(ParquetAvroIO[T](path))(param)
     }

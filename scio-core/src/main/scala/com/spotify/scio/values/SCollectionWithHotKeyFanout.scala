@@ -17,19 +17,18 @@
 
 package com.spotify.scio.values
 
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.Functions
 import com.spotify.scio.util.TupleFunctions._
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.beam.sdk.transforms.Combine.PerKeyWithHotKeyFanout
 import org.apache.beam.sdk.transforms.{Combine, SerializableFunction}
 
-import scala.reflect.ClassTag
-
 /**
  * An enhanced SCollection that uses an intermediate node to combine "hot" keys partially before
  * performing the full combine.
  */
-class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag] private[values]
+class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values]
 (private val self: PairSCollectionFunctions[K, V],
  private val hotKeyFanout: Either[K => Int, Int])
   extends TransformNameable {
@@ -52,7 +51,7 @@ class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag] private[values]
    * [[PairSCollectionFunctions.aggregateByKey[U]* PairSCollectionFunctions.aggregateByKey]] with
    * hot key fanout.
    */
-  def aggregateByKey[U: ClassTag](zeroValue: U)(seqOp: (U, V) => U,
+  def aggregateByKey[U: Coder](zeroValue: U)(seqOp: (U, V) => U,
                                                 combOp: (U, U) => U): SCollection[(K, U)] =
     self.applyPerKey(
       withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp))),
@@ -62,15 +61,15 @@ class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag] private[values]
    * [[PairSCollectionFunctions.aggregateByKey[A,U]* PairSCollectionFunctions.aggregateByKey]]
    * with hot key fanout.
    */
-  def aggregateByKey[A: ClassTag, U: ClassTag](aggregator: Aggregator[V, A, U])
+  def aggregateByKey[A: Coder, U: Coder](aggregator: Aggregator[V, A, U])
   : SCollection[(K, U)] =
     self.self.context.wrap(self.self.internal).transform { in =>
       val a = aggregator  // defeat closure
-      in.mapValues(a.prepare).sumByKey(a.semigroup).mapValues(a.present)
+      in.mapValues(a.prepare).sumByKey(a.semigroup, Coder[K], Coder[A]).mapValues(a.present)
     }
 
   /** [[PairSCollectionFunctions.combineByKey]] with hot key fanout. */
-  def combineByKey[C: ClassTag](createCombiner: V => C)
+  def combineByKey[C: Coder](createCombiner: V => C)
                                (mergeValue: (C, V) => C)
                                (mergeCombiners: (C, C) => C): SCollection[(K, C)] =
     self.applyPerKey(

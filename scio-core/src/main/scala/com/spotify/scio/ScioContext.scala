@@ -32,6 +32,7 @@ import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.values._
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 import org.apache.beam.sdk.metrics.Counter
@@ -351,7 +352,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     scala.collection.mutable.Map.empty
 
   /** Wrap a [[org.apache.beam.sdk.values.PCollection PCollection]]. */
-  def wrap[T: ClassTag](p: PCollection[T]): SCollection[T] =
+  def wrap[T](p: PCollection[T]): SCollection[T] =
     new SCollectionImpl[T](p, this)
 
   /**
@@ -496,7 +497,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   private[scio] def testOut[T](io: ScioIO[T]): SCollection[T] => Unit =
     testOutput(io)
 
-  private[scio] def getTestInput[T: ClassTag](io: ScioIO[T]): SCollection[T] =
+  private[scio] def getTestInput[T: Coder](io: ScioIO[T]): SCollection[T] =
     this.parallelize(testInput(io).asInstanceOf[Seq[T]])
 
   // =======================================================================
@@ -514,7 +515,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
   def datastore(projectId: String, query: Query, namespace: String = null): SCollection[Entity] =
     this.read(DatastoreIO(projectId))(DatastoreIO.ReadParam(query, namespace))
 
-  private def pubsubIn[T: ClassTag](isSubscription: Boolean,
+  private def pubsubIn[T: ClassTag : Coder](isSubscription: Boolean,
                                     name: String,
                                     idAttribute: String,
                                     timestampAttribute: String): SCollection[T] = {
@@ -526,7 +527,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection for a Pub/Sub subscription.
    * @group input
    */
-  def pubsubSubscription[T: ClassTag](sub: String,
+  def pubsubSubscription[T: ClassTag : Coder](sub: String,
                                       idAttribute: String = null,
                                       timestampAttribute: String = null)
   : SCollection[T] = pubsubIn(isSubscription = true, sub, idAttribute, timestampAttribute)
@@ -535,12 +536,12 @@ class ScioContext private[scio] (val options: PipelineOptions,
     * Get an SCollection for a Pub/Sub topic.
     * @group input
     */
-  def pubsubTopic[T: ClassTag](topic: String,
+  def pubsubTopic[T: ClassTag : Coder](topic: String,
                                idAttribute: String = null,
                                timestampAttribute: String = null)
   : SCollection[T] = pubsubIn(isSubscription = false, topic, idAttribute, timestampAttribute)
 
-  private def pubsubInWithAttributes[T: ClassTag](isSubscription: Boolean,
+  private def pubsubInWithAttributes[T: ClassTag : Coder](isSubscription: Boolean,
                                                   name: String,
                                                   idAttribute: String,
                                                   timestampAttribute: String)
@@ -553,21 +554,21 @@ class ScioContext private[scio] (val options: PipelineOptions,
     * Get an SCollection for a Pub/Sub subscription that includes message attributes.
     * @group input
     */
-  def pubsubSubscriptionWithAttributes[T: ClassTag](sub: String,
+  def pubsubSubscriptionWithAttributes[T: ClassTag : Coder](sub: String,
                                                     idAttribute: String = null,
                                                     timestampAttribute: String = null)
   : SCollection[(T, Map[String, String])] =
-    pubsubInWithAttributes(isSubscription = true, sub, idAttribute, timestampAttribute)
+    pubsubInWithAttributes[T](isSubscription = true, sub, idAttribute, timestampAttribute)
 
   /**
     * Get an SCollection for a Pub/Sub topic that includes message attributes.
     * @group input
     */
-  def pubsubTopicWithAttributes[T: ClassTag](topic: String,
+  def pubsubTopicWithAttributes[T: ClassTag : Coder](topic: String,
                                              idAttribute: String = null,
                                              timestampAttribute: String = null)
   : SCollection[(T, Map[String, String])] =
-    pubsubInWithAttributes(isSubscription = false, topic, idAttribute, timestampAttribute)
+    pubsubInWithAttributes[T](isSubscription = false, topic, idAttribute, timestampAttribute)
 
   /**
    * Get an SCollection for a text file.
@@ -581,7 +582,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * Get an SCollection with a custom input transform. The transform should have a unique name.
    * @group input
    */
-  def customInput[T : ClassTag, I >: PBegin <: PInput]
+  def customInput[T : Coder, I >: PBegin <: PInput]
   (name: String, transform: PTransform[I, PCollection[T]]): SCollection[T] = requireNotClosed {
     if (this.isTest) {
       this.getTestInput(CustomIO[T](name))
@@ -599,10 +600,10 @@ class ScioContext private[scio] (val options: PipelineOptions,
    * @param io     an implementation of `ScioIO[T]` trait
    * @param params configurations need to pass to perform underline read implementation
    */
-  def read[T: ClassTag](io: ScioIO[T])(params: io.ReadP): SCollection[T] =
+  def read[T: Coder](io: ScioIO[T])(params: io.ReadP): SCollection[T] =
     readImpl[T](io)(params)
 
-  private def readImpl[T: ClassTag](io: ScioIO[T])(params: io.ReadP): SCollection[T] =
+  private def readImpl[T: Coder](io: ScioIO[T])(params: io.ReadP): SCollection[T] =
     requireNotClosed {
       if (this.isTest) {
         this.getTestInput(io)
@@ -612,7 +613,7 @@ class ScioContext private[scio] (val options: PipelineOptions,
     }
 
   // scalastyle:off structural.type
-  def read[T: ClassTag](io: ScioIO[T]{ type ReadP = Unit }): SCollection[T] =
+  def read[T: Coder](io: ScioIO[T]{ type ReadP = Unit }): SCollection[T] =
     readImpl[T](io)(())
   // scalastyle:on structural.type
 
@@ -628,38 +629,34 @@ class ScioContext private[scio] (val options: PipelineOptions,
   }
 
   /** Create a union of multiple SCollections. Supports empty lists. */
-  def unionAll[T: ClassTag](scs: Iterable[SCollection[T]]): SCollection[T] = scs match {
+  def unionAll[T: Coder](scs: Iterable[SCollection[T]]): SCollection[T] = scs match {
     case Nil => empty()
     case contents => SCollection.unionAll(contents)
   }
 
   /** Form an empty SCollection. */
-  def empty[T: ClassTag](): SCollection[T] = parallelize(Seq())
-
-  import java.util.concurrent.atomic.AtomicInteger
-  private val uniqueIdx = new AtomicInteger
-  private[scio] def mkUnique(name: String): String =
-    s"$name#${uniqueIdx.getAndIncrement()}"
+  def empty[T: Coder](): SCollection[T] = parallelize(Seq())
 
   /**
    * Distribute a local Scala `Iterable` to form an SCollection.
    * @group in_memory
    */
-  def parallelize[T: ClassTag](elems: Iterable[T]): SCollection[T] = requireNotClosed {
-    val coder = pipeline.getCoderRegistry.getScalaCoder[T](options)
-    wrap(this.applyInternal(Create.of(elems.asJava).withCoder(coder)))
+  def parallelize[T: Coder](elems: Iterable[T]): SCollection[T] = requireNotClosed {
+    wrap(this.applyInternal(Create.of(elems.asJava)
+      .withCoder(CoderMaterializer.beam(context, Coder[T]))))
   }
 
   /**
    * Distribute a local Scala `Map` to form an SCollection.
    * @group in_memory
    */
-  def parallelize[K: ClassTag, V: ClassTag](elems: Map[K, V]): SCollection[(K, V)] =
-  requireNotClosed {
-    val coder = pipeline.getCoderRegistry.getScalaKvCoder[K, V](options)
-    wrap(this.applyInternal(Create.of(elems.asJava).withCoder(coder)))
-      .map(kv => (kv.getKey, kv.getValue))
-  }
+  def parallelize[K, V](
+    elems: Map[K, V])(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
+    requireNotClosed {
+      val kvc = CoderMaterializer.kvCoder[K, V](context)
+      wrap(this.applyInternal(Create.of(elems.asJava).withCoder(kvc)))
+        .map(kv => (kv.getKey, kv.getValue))
+    }
 
   /**
    * Distribute a local Scala `Iterable` with timestamps to form an SCollection.

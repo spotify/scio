@@ -69,8 +69,8 @@ object LeaderBoard {
     val allowedLateness = Duration.standardMinutes(args.int("allowedLateness", 120))
 
     // Read in streaming data from PubSub and parse each row as `GameActionInfo` events
-    val gameEvents = sc.pubsubTopic(args("topic"), timestampAttribute = "timestamp_ms")
-      .flatMap(UserScore.parseEvent)
+    val gameEvents = sc.pubsubTopic[String](args("topic"), timestampAttribute = "timestamp_ms")
+      .flatMap(UserScore.parseEvent _)
 
     calculateTeamScores(gameEvents, teamWindowDuration, allowedLateness)
       // Add windowing information to team score results by converting to `WindowedSCollection`

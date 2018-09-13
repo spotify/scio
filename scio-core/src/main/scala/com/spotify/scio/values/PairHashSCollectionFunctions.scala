@@ -17,8 +17,8 @@
 
 package com.spotify.scio.values
 
+import com.spotify.scio.coders.Coder
 import scala.collection.mutable.{ArrayBuffer, Map => MMap}
-import scala.reflect.ClassTag
 
  /**
   * Extra functions available on SCollections of (key, value) pairs for hash based joins
@@ -26,8 +26,7 @@ import scala.reflect.ClassTag
   *
   * @groupname join Join Operations
   */
-class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)])
-  (implicit ctKey: ClassTag[K], ctValue: ClassTag[V]) {
+class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
    /**
     * Perform an inner join by replicating `that` to all workers. The right side should be tiny and
@@ -35,10 +34,10 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     *
     * @group join
     */
-  def hashJoin[W: ClassTag](that: SCollection[(K, W)])
+  def hashJoin[W: Coder](that: SCollection[(K, W)])(implicit koder: Coder[K], voder: Coder[V])
   : SCollection[(K, (V, W))] = self.transform { in =>
     val side = combineAsMapSideInput(that)
-
+    implicit val vwCoder = Coder[(V, W)]
     in.withSideInputs(side).flatMap[(K, (V, W))] { (kv, s) =>
       s(side).getOrElse(kv._1, ArrayBuffer.empty[W]).iterator.map(w => (kv._1, (kv._2, w)))
     }.toSCollection
@@ -50,10 +49,10 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     *
     * @group join
     */
-  def hashLeftJoin[W: ClassTag](that: SCollection[(K, W)])
+  def hashLeftJoin[W: Coder](that: SCollection[(K, W)])(implicit koder: Coder[K], voder: Coder[V])
   : SCollection[(K, (V, Option[W]))] = self.transform { in =>
     val side = combineAsMapSideInput(that)
-
+    implicit val vwCoder = Coder[(V, Option[W])]
     in.withSideInputs(side).flatMap[(K, (V, Option[W]))] { (kv, s) =>
       val (k, v) = kv
       val m = s(side)
@@ -67,7 +66,8 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     *
     * @group join
     */
-  def hashFullOuterJoin[W: ClassTag](that: SCollection[(K, W)])
+  def hashFullOuterJoin[W: Coder](
+    that: SCollection[(K, W)])(implicit koder: Coder[K], voder: Coder[V])
   : SCollection[(K, (Option[V], Option[W]))] = self.transform { in =>
     val side = combineAsMapSideInput(that)
 
@@ -93,7 +93,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)])
     leftHashed.map(x => (x._1, x._2)) ++ rightHashed
   }
 
-  private def combineAsMapSideInput[W: ClassTag](that: SCollection[(K, W)])
+  private def combineAsMapSideInput[W: Coder](that: SCollection[(K, W)])(implicit koder: Coder[K])
   : SideInput[MMap[K, ArrayBuffer[W]]] = {
     that.combine { case (k, v) =>
       MMap(k -> ArrayBuffer(v))
