@@ -17,44 +17,45 @@
 
 package com.spotify.scio.bigtable
 
+import java.util.concurrent.ConcurrentLinkedQueue
+
 import com.google.cloud.bigtable.grpc.BigtableSession
 import com.google.common.cache.{Cache, CacheBuilder}
 import com.google.common.util.concurrent.{Futures, ListenableFuture}
+import com.spotify.scio.testing._
 import com.spotify.scio.transforms.AsyncLookupDoFn.CacheSupplier
-import org.apache.beam.sdk.transforms.DoFnTester
-import org.scalatest._
 
-import scala.collection.mutable
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success}
 
-class BigtableDoFnTest extends FlatSpec with Matchers {
+class BigtableDoFnTest extends PipelineSpec {
 
   "BigtableDoFn" should "work" in {
     val fn = new TestBigtableDoFn
-    val output = DoFnTester.of(fn).processBundle((1 to 10).asJava)
-      .asScala.map(kv => (kv.getKey, kv.getValue.get()))
-    output shouldBe (1 to 10).map(x => (x, x.toString))
+    val output = runWithData(1 to 10)(_.parDo(fn))
+      .map(kv => (kv.getKey, kv.getValue.get()))
+    output should contain theSameElementsAs (1 to 10).map(x => (x, x.toString))
   }
 
   it should "work with cache" in {
     val fn = new TestCachingBigtableDoFn
-    val output = DoFnTester.of(fn).processBundle(((1 to 10) ++ (5 to 15)).asJava)
-      .asScala.map(kv => (kv.getKey, kv.getValue.asScala.get))
-    output shouldBe ((1 to 10) ++ (5 to 15)).map(x => (x, x.toString))
-    BigtableDoFnTest.queue shouldBe (1 to 15)
+    val output = runWithData((1 to 10) ++ (5 to 15))(_.parDo(fn))
+      .map(kv => (kv.getKey, kv.getValue.get()))
+    output should contain theSameElementsAs ((1 to 10) ++ (5 to 15)).map(x => (x, x.toString))
+    BigtableDoFnTest.queue.asScala.toSet should contain theSameElementsAs (1 to 15)
+    BigtableDoFnTest.queue.size() should be <= 20
   }
 
   it should "work with failures" in {
     val fn = new TestFailingBigtableDoFn
-    val output = DoFnTester.of(fn).processBundle((1 to 10).asJava).asScala.map { kv =>
+    val output = runWithData(1 to 10)(_.parDo(fn)).map { kv =>
       val r = kv.getValue.asScala match {
         case Success(v) => v
         case Failure(e) => e.getMessage
       }
       (kv.getKey, r)
     }
-    output shouldBe (1 to 10).map { x =>
+    output should contain theSameElementsAs (1 to 10).map { x =>
       val prefix = if (x % 2 == 0) "success" else "failure"
       (x, prefix + x.toString)
     }
@@ -62,7 +63,7 @@ class BigtableDoFnTest extends FlatSpec with Matchers {
 }
 
 object BigtableDoFnTest {
-  val queue: mutable.Queue[Int] = mutable.Queue.empty
+  val queue: ConcurrentLinkedQueue[Int] = new ConcurrentLinkedQueue[Int]()
 }
 
 class TestBigtableDoFn extends BigtableDoFn[Int, String](null) {
@@ -74,7 +75,7 @@ class TestBigtableDoFn extends BigtableDoFn[Int, String](null) {
 class TestCachingBigtableDoFn extends BigtableDoFn[Int, String](null, 100, new TestCacheSupplier) {
   override def newClient(): BigtableSession = null
   override def asyncLookup(session: BigtableSession, input: Int): ListenableFuture[String] = {
-    BigtableDoFnTest.queue.enqueue(input)
+    BigtableDoFnTest.queue.add(input)
     Futures.immediateFuture(input.toString)
   }
 }

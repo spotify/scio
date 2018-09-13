@@ -17,43 +17,44 @@
 
 package com.spotify.scio.transforms
 
+import java.util.concurrent.ConcurrentLinkedQueue
+
 import com.google.common.cache.{Cache, CacheBuilder}
 import com.google.common.util.concurrent.{Futures, ListenableFuture}
+import com.spotify.scio.testing._
 import com.spotify.scio.transforms.AsyncLookupDoFn.CacheSupplier
-import org.apache.beam.sdk.transforms.DoFnTester
-import org.scalatest._
 
-import scala.collection.mutable
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success}
 
-class AsyncLookupDoFnTest extends FlatSpec with Matchers {
+class AsyncLookupDoFnTest extends PipelineSpec {
 
   "AsyncLookupDoFn" should "work" in {
     val fn = new TestAsyncLookupDoFn
-    val output = DoFnTester.of(fn).processBundle((1 to 10).asJava)
-      .asScala.map(kv => (kv.getKey, kv.getValue.get()))
-    output shouldBe (1 to 10).map(x => (x, x.toString))
+    val output = runWithData(1 to 10)(_.parDo(fn))
+      .map(kv => (kv.getKey, kv.getValue.get()))
+    output should contain theSameElementsAs (1 to 10).map(x => (x, x.toString))
   }
 
   it should "work with cache" in {
     val fn = new TestCachingAsyncLookupDoFn
-    val output = DoFnTester.of(fn).processBundle(((1 to 10) ++ (5 to 15)).asJava)
-      .asScala.map(kv => (kv.getKey, kv.getValue.asScala.get))
-    output shouldBe ((1 to 10) ++ (5 to 15)).map(x => (x, x.toString))
-    AsyncLookupDoFnTest.queue shouldBe (1 to 15)
+    val output = runWithData((1 to 10) ++ (5 to 15))(_.parDo(fn))
+      .map(kv => (kv.getKey, kv.getValue.asScala.get))
+    output should contain theSameElementsAs ((1 to 10) ++ (5 to 15)).map(x => (x, x.toString))
+    AsyncLookupDoFnTest.queue.asScala.toSet should contain theSameElementsAs (1 to 15)
+    AsyncLookupDoFnTest.queue.size() should be <= 20
   }
 
   it should "work with failures" in {
     val fn = new TestFailingAsyncLookupDoFn
-    val output = DoFnTester.of(fn).processBundle((1 to 10).asJava).asScala.map { kv =>
+    val output = runWithData(1 to 10)(_.parDo(fn)).map { kv =>
       val r = kv.getValue.asScala match {
         case Success(v) => v
         case Failure(e) => e.getMessage
       }
       (kv.getKey, r)
     }
-    output shouldBe (1 to 10).map { x =>
+    output should contain theSameElementsAs (1 to 10).map { x =>
       val prefix = if (x % 2 == 0) "success" else "failure"
       (x, prefix + x.toString)
     }
@@ -61,7 +62,7 @@ class AsyncLookupDoFnTest extends FlatSpec with Matchers {
 }
 
 object AsyncLookupDoFnTest {
-  val queue: mutable.Queue[Int] = mutable.Queue.empty
+  val queue: ConcurrentLinkedQueue[Int] = new ConcurrentLinkedQueue[Int]()
 }
 
 class AsyncClient {
@@ -77,7 +78,7 @@ class TestCachingAsyncLookupDoFn extends
   AsyncLookupDoFn[Int, String, AsyncClient](100, new TestCacheSupplier) {
   override protected def newClient(): AsyncClient = null
   override def asyncLookup(session: AsyncClient, input: Int): ListenableFuture[String] = {
-    AsyncLookupDoFnTest.queue.enqueue(input)
+    AsyncLookupDoFnTest.queue.add(input)
     Futures.immediateFuture(input.toString)
   }
 }

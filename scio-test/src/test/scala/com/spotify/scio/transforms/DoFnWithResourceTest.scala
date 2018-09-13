@@ -19,15 +19,12 @@ package com.spotify.scio.transforms
 
 import java.util.UUID
 
+import com.spotify.scio.testing._
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.DoFnTester
 import org.apache.beam.sdk.util.SerializableUtils
-import org.scalatest._
 
-import scala.collection.JavaConverters._
-
-class DoFnWithResourceTest extends FlatSpec with Matchers {
+class DoFnWithResourceTest extends PipelineSpec {
 
   private def cloneAndProcess(doFn: DoFnWithResource[String, String, TestResource]) = {
     val clone = SerializableUtils.ensureSerializable(doFn)
@@ -50,7 +47,7 @@ class DoFnWithResourceTest extends FlatSpec with Matchers {
     c1.getResource shouldBe c3.getResource
     c1.getResource shouldBe c4.getResource
 
-    DoFnTester.of(c1).processBundle("a", "b", "c").asScala shouldBe Seq("A", "B", "C")
+    runWithData(Seq("a", "b", "c"))(_.parDo(c1)) should contain theSameElementsAs Seq("A", "B", "C")
   }
 
   it should "support per instance resources" in {
@@ -72,7 +69,7 @@ class DoFnWithResourceTest extends FlatSpec with Matchers {
     c3.getResource should not be c1.getResource
     c3.getResource should not be c2.getResource
 
-    DoFnTester.of(c1).processBundle("a", "b", "c").asScala shouldBe Seq("A", "B", "C")
+    runWithData(Seq("a", "b", "c"))(_.parDo(c1)) should contain theSameElementsAs Seq("A", "B", "C")
   }
 
   it should "support per core resources" in {
@@ -98,7 +95,7 @@ class DoFnWithResourceTest extends FlatSpec with Matchers {
     c3.getResource should not be c2.getResource
     c3.getResource should not be c4.getResource
 
-    DoFnTester.of(c1).processBundle("a", "b", "c").asScala shouldBe Seq("A", "B", "C")
+    runWithData(Seq("a", "b", "c"))(_.parDo(c1)) should contain theSameElementsAs Seq("A", "B", "C")
   }
 
 }
