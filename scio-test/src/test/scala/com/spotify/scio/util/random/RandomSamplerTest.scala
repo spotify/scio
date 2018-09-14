@@ -18,13 +18,44 @@
 package com.spotify.scio.util.random
 
 import com.spotify.scio.testing.PipelineSpec
-import org.apache.beam.sdk.transforms.DoFnTester
+import org.apache.beam.sdk.options.PipelineOptions
+import org.apache.beam.sdk.transforms.DoFn
+import org.apache.beam.sdk.transforms.windowing.PaneInfo
+import org.apache.beam.sdk.values.{PCollectionView, TupleTag}
+import org.joda.time.Instant
 
-import scala.collection.JavaConverters._
+import scala.collection.mutable.{Buffer => MBuffer}
 
 class RandomSamplerTest extends PipelineSpec {
 
   import RandomSamplerUtils._
+
+  def test[T](sampler: RandomSampler[T, _], xs: Seq[T]): Seq[T] = {
+    sampler.startBundle(null)
+    val buffer = MBuffer.empty[T]
+    xs.foreach(x => sampler.processElement(newContext[T](sampler, x, buffer)))
+    buffer
+  }
+
+  def test[K, V](sampler: RandomValueSampler[K, V, _], xs: Seq[(K, V)]): Seq[(K, V)] = {
+    sampler.startBundle(null)
+    val buffer = MBuffer.empty[(K, V)]
+    xs.foreach(x => sampler.processElement(newContext[(K, V)](sampler, x, buffer)))
+    buffer
+  }
+
+  private def newContext[T](f: DoFn[T, T], e: T, buffer: MBuffer[T]) = new f.ProcessContext {
+    override def element(): T = e
+    override def sideInput[U](view: PCollectionView[U]): U = ???
+    override def timestamp(): Instant = ???
+    override def pane(): PaneInfo = ???
+    override def updateWatermark(watermark: Instant): Unit = ???
+    override def getPipelineOptions: PipelineOptions = ???
+    override def output(output: T): Unit = buffer.append(output)
+    override def output[U](tag: TupleTag[U], output: U): Unit = ???
+    override def outputWithTimestamp(output: T, timestamp: Instant): Unit = ???
+    override def outputWithTimestamp[U](tag: TupleTag[U], output: U, timestamp: Instant): Unit = ???
+  }
 
   def testSampler(withReplacement: Boolean,
                   expectedFraction: Double, actualFraction: Double): Double = {
@@ -38,7 +69,7 @@ class RandomSamplerTest extends PipelineSpec {
     }
     sampler.setSeed(fixedSeed)
 
-    val actual = DoFnTester.of(sampler).processBundle(population.asJava).asScala.toArray
+    val actual = test(sampler, population).toArray
     scala.util.Sorting.quickSort(actual)
     medianKSD(gaps(expected), gaps(actual))
   }
@@ -73,7 +104,7 @@ class RandomSamplerTest extends PipelineSpec {
     }
     sampler.setSeed(fixedSeed)
 
-    val actual = DoFnTester.of(sampler).processBundle(keyedPopulation.asJava).asScala
+    val actual = test(sampler, keyedPopulation)
       .groupBy(_._1)
       .mapValues { vs =>
         val a = vs.map(_._2).toArray
