@@ -65,7 +65,7 @@ val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.3.0"
 val tensorFlowVersion = "1.8.0"
 val zoltarVersion = "0.4.0"
-val magnoliaVersion = "0.10.1-SNAPSHOT"
+val magnoliaVersion = "0.10.1-jto-SNAPSHOT"
 val grpcVersion = "1.7.0"
 val caseappVersion = "2.0.0-M3"
 
@@ -383,7 +383,7 @@ lazy val scioCodersMacros: Project = Project(
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "provided",
     "org.scalatest" %% "scalatest" % scalatestVersion % "test",
-    "com.propensive" %% "magnolia" % magnoliaVersion,
+    "me.lyh" %% "magnolia" % magnoliaVersion,
     "com.chuusai" %% "shapeless" % shapelessVersion,
     "com.twitter" %% "algebird-core" % algebirdVersion
   )
@@ -399,7 +399,7 @@ lazy val scioCoders: Project = Project(
     "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "provided",
     "org.scalatest" %% "scalatest" % scalatestVersion % "test",
-    "com.propensive" %% "magnolia" % magnoliaVersion,
+    "me.lyh" %% "magnolia" % magnoliaVersion,
     "com.chuusai" %% "shapeless" % shapelessVersion,
     "com.twitter" %% "algebird-core" % algebirdVersion
   )
