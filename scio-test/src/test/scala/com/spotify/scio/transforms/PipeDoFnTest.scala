@@ -122,7 +122,7 @@ class PipeDoFnTest extends PipelineSpec {
           .pipe(Array("cat"), null, null, Seq(Array("rm", "/non-exist-path")), null)
       }
     }
-    errorMessages(e1) should contain ("Non-zero exit code: 1")
+    errorMessages(e2) should contain ("Non-zero exit code: 1")
   }
 
   // FIXME: this test is flaky because teardown is called asynchronously

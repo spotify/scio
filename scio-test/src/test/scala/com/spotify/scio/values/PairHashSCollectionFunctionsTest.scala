@@ -87,11 +87,10 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2)))
       val p2 = sc.parallelize(Seq(("a", 11), ("c", 13)))
       val p = p1.hashFullOuterJoin(p2)
-      val e =
-        p should containInAnyOrder (Seq(
-          ("a", (Some(1), Some(11))),
-          ("b", (Some(2), None)),
-          ("c", (None, Some(13)))))
+      p should containInAnyOrder (Seq(
+        ("a", (Some(1), Some(11))),
+        ("b", (Some(2), None)),
+        ("c", (None, Some(13)))))
     }
   }
 

@@ -33,10 +33,8 @@ import scala.reflect.ClassTag
 trait ScioIOSpec extends PipelineSpec {
 
   def testTap[T: Coder](xs: Seq[T])
-                          (ioFn: String => ScioIO[T])
-                          (readFn: (ScioContext, String) => SCollection[T])
-                          (writeFn: (SCollection[T], String) => Future[Tap[T]])
-                          (suffix: String): Unit = {
+                       (writeFn: (SCollection[T], String) => Future[Tap[T]])
+                       (suffix: String): Unit = {
     val tmpDir = new File(
       new File(sys.props("java.io.tmpdir")),
       "scio-test-" + UUID.randomUUID())
@@ -55,8 +53,9 @@ trait ScioIOSpec extends PipelineSpec {
   }
 
   def testJobTestInput[T: ClassTag : Coder](xs: Seq[T], in: String = "in")
-                                   (ioFn: String => ScioIO[T])
-                                   (readFn: (ScioContext, String) => SCollection[T]): Unit = {
+                                           (ioFn: String => ScioIO[T])
+                                           (readFn: (ScioContext, String) => SCollection[T])
+  : Unit = {
     def runMain(args: Array[String]): Unit = {
       val (sc, argz) = ContextAndArgs(args)
       readFn(sc, argz("input")).saveAsTextFile("out")
@@ -84,8 +83,8 @@ trait ScioIOSpec extends PipelineSpec {
   }
 
   def testJobTestOutput[T: Coder](xs: Seq[T], out: String = "out")
-                                    (ioFn: String => ScioIO[T])
-                                    (writeFn: (SCollection[T], String) => Future[Tap[T]]): Unit = {
+                                 (ioFn: String => ScioIO[T])
+                                 (writeFn: (SCollection[T], String) => Future[Tap[T]]): Unit = {
     def runMain(args: Array[String]): Unit = {
       val (sc, argz) = ContextAndArgs(args)
       writeFn(sc.parallelize(xs), argz("output"))
@@ -111,9 +110,9 @@ trait ScioIOSpec extends PipelineSpec {
   }
 
   def testJobTest[T: Coder](xs: Seq[T], in: String = "in", out: String = "out")
-                              (ioFn: String => ScioIO[T])
-                              (readFn: (ScioContext, String) => SCollection[T])
-                              (writeFn: (SCollection[T], String) => Future[Tap[T]]): Unit = {
+                           (ioFn: String => ScioIO[T])
+                           (readFn: (ScioContext, String) => SCollection[T])
+                           (writeFn: (SCollection[T], String) => Future[Tap[T]]): Unit = {
     def runMain(args: Array[String]): Unit = {
       val (sc, argz) = ContextAndArgs(args)
       val data = readFn(sc, argz("input"))

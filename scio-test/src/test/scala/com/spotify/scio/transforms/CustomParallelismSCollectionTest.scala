@@ -17,8 +17,6 @@
 
 package com.spotify.scio.transforms
 
-import java.util.concurrent.atomic.AtomicInteger
-
 import com.spotify.scio.testing.PipelineSpec
 
 class CustomParallelismSCollectionTest extends PipelineSpec {
@@ -37,7 +35,6 @@ class CustomParallelismSCollectionTest extends PipelineSpec {
   }
 
   it should "support mapWithParallelism()" in {
-    @transient lazy val processing = new AtomicInteger()
     runWithContext { sc =>
       val p = sc
         .parallelize(Seq("1", "2", "3"))

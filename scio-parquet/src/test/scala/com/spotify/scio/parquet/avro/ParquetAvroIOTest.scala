@@ -42,8 +42,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
 
   "ParquetAvroIO" should "work with specific records" in {
     val xs = (1 to 100).map(AvroUtils.newSpecificRecord)
-    testTap(xs)(ParquetAvroIO(_))(
-      _.parquetAvroFile(_).map(identity))(_.saveAsParquetAvroFile(_))(".parquet")
+    testTap(xs)(_.saveAsParquetAvroFile(_))(".parquet")
     testJobTest(xs)(
       ParquetAvroIO(_))(_.parquetAvroFile[TestRecord](_).map(identity))(_.saveAsParquetAvroFile(_))
   }

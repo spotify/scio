@@ -42,7 +42,7 @@ class JsonIOTest extends ScioIOSpec with TapSpec {
   private val xs = (1 to 100).map(x => Record(x, x.toString, if (x % 2 == 0) Some(x) else None))
 
   "JsonIO" should "work" in {
-    testTap(xs)(JsonIO(_))(_.jsonFile(_))(_.saveAsJsonFile(_))(".json")
+    testTap(xs)(_.saveAsJsonFile(_))(".json")
     testJobTest(xs)(JsonIO(_))(_.jsonFile(_))(_.saveAsJsonFile(_))
   }
 

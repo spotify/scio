@@ -146,7 +146,7 @@ class NamedTransformTest extends PipelineSpec {
     // scalastyle:off no.whitespace.before.left.bracket
     val e = the [IllegalArgumentException] thrownBy {
       runWithContext { sc =>
-        val p1 = sc.parallelize(1 to 5).withName("Double").withName("DoubleMap").map(_ * 2)
+        sc.parallelize(1 to 5).withName("Double").withName("DoubleMap").map(_ * 2)
       }
     }
     // scalastyle:on no.whitespace.before.left.bracket
@@ -156,7 +156,6 @@ class NamedTransformTest extends PipelineSpec {
   }
 
   private def assertTransformNameStartsWith(p: PCollectionWrapper[_], tfName: String) = {
-    val prefix = tfName.split("[\\(/]").toList
     val visitor = new AssertTransformNameVisitor(p.internal, tfName)
     p.context.pipeline.traverseTopologically(visitor)
     visitor.success shouldBe true

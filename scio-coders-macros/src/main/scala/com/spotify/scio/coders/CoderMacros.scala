@@ -52,7 +52,6 @@ private[coders] object CoderMacros {
     import c.universe._
     val wtt = weakTypeOf[T]
     val TypeRef(pre, sym, args) = wtt
-    val companioned = wtt.typeSymbol
 
     val typeName = sym.name
     val params = args.headOption.map { _ => args.mkString("[", ",", "]") }.getOrElse("")
@@ -115,7 +114,6 @@ private[coders] object CoderMacros {
   def wrappedCoder[T: c.WeakTypeTag](c: whitebox.Context): c.Tree = {
     import c.universe._
     val wtt = weakTypeOf[T]
-    val companioned = wtt.typeSymbol
 
     if(wtt <:< typeOf[Iterable[_]]) {
       c.abort(c.enclosingPosition,
@@ -129,10 +127,6 @@ private[coders] object CoderMacros {
         case q"val $name = $body; $rest" =>
           body
       }
-
-    val name = c.freshName(s"$$ShimDerivedCoder")
-    val className = TypeName(name)
-    val termName = TermName(name)
 
     // Remove annotations from magnolia since they are
     // not serialiazable and we don't use them anyway

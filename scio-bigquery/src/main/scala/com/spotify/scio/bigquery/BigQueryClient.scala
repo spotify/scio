@@ -718,7 +718,7 @@ class BigQueryClient private (private val projectId: String,
   private def exportTable(sourceTable: String,
                           destinationUris: List[String],
                           format: String,
-                          gzipCompression: Boolean = false,
+                          gzipCompression: Boolean,
                           fieldDelimiter: Option[String] = None,
                           printHeader: Option[Boolean] = None): Unit = {
 
@@ -814,18 +814,18 @@ class BigQueryClient private (private val projectId: String,
   private def loadTable(sources: List[String],
                         sourceFormat: String,
                         destinationTable: String,
-                        createDisposition: CreateDisposition = CREATE_IF_NEEDED,
-                        writeDisposition: WriteDisposition = WRITE_APPEND,
-                        schema: Option[TableSchema] = None,
+                        createDisposition: CreateDisposition,
+                        writeDisposition: WriteDisposition,
+                        schema: Option[TableSchema],
                         autodetect: Option[Boolean] = None,
+                        maxBadRecords: Int,
+                        encoding: Option[String],
                         allowJaggedRows: Option[Boolean] = None,
                         allowQuotedNewLines: Option[Boolean] = None,
                         quote: Option[String] = None,
-                        maxBadRecords: Int = 0,
                         skipLeadingRows: Option[Int] = None,
                         fieldDelimiter: Option[String] = None,
-                        ignoreUnknownValues: Option[Boolean] = None,
-                        encoding: Option[String] = None): TableReference = {
+                        ignoreUnknownValues: Option[Boolean] = None): TableReference = {
 
     val tableRef = beam.BigQueryHelpers.parseTableSpec(destinationTable)
 

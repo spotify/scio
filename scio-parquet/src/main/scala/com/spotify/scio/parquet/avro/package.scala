@@ -19,13 +19,11 @@ package com.spotify.scio.parquet
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.Tap
-import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
 import org.apache.avro.Schema
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.hadoop.mapreduce.Job
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.slf4j.LoggerFactory
@@ -105,19 +103,6 @@ package object avro {
           "`parquetAvroFile` to map out projected fields.")
       }
       this.map(identity)
-    }
-
-    private def setInputPaths(job: Job, path: String): Unit = {
-      // This is needed since `FileInputFormat.setInputPaths` validates paths locally and requires
-      // the user's GCP credentials.
-      GcsConnectorUtil.setCredentials(job)
-
-      FileInputFormat.setInputPaths(job, path)
-
-      // It will interfere with credentials in Dataflow workers
-      if (!ScioUtil.isLocalRunner(context.options.getRunner)) {
-        GcsConnectorUtil.unsetCredentials(job)
-      }
     }
 
   }
