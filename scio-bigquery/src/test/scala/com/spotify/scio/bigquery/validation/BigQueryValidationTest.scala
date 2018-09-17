@@ -72,7 +72,7 @@ class BigQueryValidationTest extends FlatSpec with Matchers with BeforeAndAfterA
   "ValidationProvider" should "throw an error when converting invalid data" in {
     assertThrows[IllegalArgumentException] {
       val tableRow = TableRow("country" -> "USA", "countryString" -> "USA", "noCountry" -> "USA")
-      val input = CountryInput.fromTableRow(tableRow)
+      CountryInput.fromTableRow(tableRow)
     }
   }
 

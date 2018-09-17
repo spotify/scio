@@ -25,9 +25,7 @@ import io.circe.Printer
 import io.circe.generic.AutoDerivation
 import org.apache.beam.sdk.io.Compression
 
-import scala.collection.generic.CanBuildFrom
 import scala.concurrent.Future
-import scala.language.higherKinds
 import scala.reflect.ClassTag
 
 /**

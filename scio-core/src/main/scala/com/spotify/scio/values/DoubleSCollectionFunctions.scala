@@ -111,7 +111,7 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
   // scalastyle:off cyclomatic.complexity
   // scalastyle:off method.length
   private def histogramImpl(buckets: SCollection[Array[Double]],
-                            evenBuckets: Boolean = false): SCollection[Array[Long]] = {
+                            evenBuckets: Boolean): SCollection[Array[Long]] = {
     // Map buckets into a side input of bucket function
     val side = buckets.map { b =>
       require(b.length >= 2, "buckets array must have at least two elements")

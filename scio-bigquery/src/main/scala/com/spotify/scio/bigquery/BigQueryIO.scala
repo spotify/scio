@@ -84,10 +84,8 @@ private object Reads {
   private[scio] def bqReadTable[T: ClassTag](sc: ScioContext)(
     typedRead: beam.BigQueryIO.TypedRead[T],
     table: TableReference)
-  : SCollection[T] = {
-    val tableSpec: String = beam.BigQueryHelpers.toTableSpec(table)
+  : SCollection[T] =
     sc.wrap(sc.applyInternal(typedRead.from(table)))
-  }
 }
 
 sealed trait BigQueryIO[T] extends ScioIO[T]

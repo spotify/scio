@@ -17,17 +17,17 @@
 
 package com.spotify.scio.bigquery
 
-import com.spotify.scio.io._
-import com.spotify.scio.coders.Coder
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.io._
+import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.Compression
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+
 import scala.concurrent._
-import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
-import com.spotify.scio.values.SCollection
-import types.BigQueryType.HasAnnotation
 
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
 final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends Serializable {
@@ -67,8 +67,7 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
   def saveAsTypedBigQuery(table: TableReference,
                           writeDisposition: WriteDisposition,
                           createDisposition: CreateDisposition)
-                         (implicit ct: ClassTag[T],
-                         tt: TypeTag[T],
+                         (implicit tt: TypeTag[T],
                          ev: T <:< HasAnnotation,
                          coder: Coder[T])
   : Future[Tap[T]] = {
@@ -112,8 +111,7 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
   def saveAsTypedBigQuery(tableSpec: String,
                           writeDisposition: WriteDisposition = null,
                           createDisposition: CreateDisposition = null)
-                         (implicit ct: ClassTag[T],
-                         tt: TypeTag[T],
+                         (implicit tt: TypeTag[T],
                          ev: T <:< HasAnnotation,
                          coder: Coder[T])
   : Future[Tap[T]] = {

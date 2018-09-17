@@ -39,7 +39,7 @@ class ScioIOTest extends ScioIOSpec {
 
   "AvroIO" should "work with SpecificRecord" in {
     val xs = (1 to 100).map(AvroUtils.newSpecificRecord)
-    testTap(xs)(AvroIO(_))(_.avroFile(_))(_.saveAsAvroFile(_))(".avro")
+    testTap(xs)(_.saveAsAvroFile(_))(".avro")
     testJobTest(xs)(AvroIO(_))(_.avroFile(_))(_.saveAsAvroFile(_))
   }
 
@@ -47,28 +47,28 @@ class ScioIOTest extends ScioIOSpec {
     import AvroUtils.schema
     implicit val coder = Coder.avroGenericRecordCoder(schema)
     val xs = (1 to 100).map(AvroUtils.newGenericRecord)
-    testTap(xs)(AvroIO(_))(_.avroFile(_, schema))(_.saveAsAvroFile(_, schema = schema))(".avro")
+    testTap(xs)(_.saveAsAvroFile(_, schema = schema))(".avro")
     testJobTest(xs)(AvroIO(_))(_.avroFile(_, schema))(_.saveAsAvroFile(_, schema = schema))
   }
 
   it should "work with typed Avro" in {
     val xs = (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
     val io = (s: String) => AvroIO[AvroRecord](s)
-    testTap(xs)(io)(_.typedAvroFile[AvroRecord](_))(_.saveAsTypedAvroFile(_))(".avro")
+    testTap(xs)(_.saveAsTypedAvroFile(_))(".avro")
     testJobTest(xs)(io)(_.typedAvroFile[AvroRecord](_))(_.saveAsTypedAvroFile(_))
   }
 
   "ObjectFileIO" should "work" in {
     import ScioIOTest._
     val xs = (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
-    testTap(xs)(ObjectFileIO(_))(_.objectFile(_))(_.saveAsObjectFile(_))(".obj.avro")
+    testTap(xs)(_.saveAsObjectFile(_))(".obj.avro")
     testJobTest(xs)(ObjectFileIO(_))(_.objectFile(_))(_.saveAsObjectFile(_))
   }
 
   "ProtobufIO" should "work" in {
     val xs = (1 to 100).map(x => TrackPB.newBuilder().setTrackId(x.toString).build())
     val suffix = ".protobuf.avro"
-    testTap(xs)(ProtobufIO(_))(_.protobufFile[TrackPB](_))(_.saveAsProtobufFile(_))(suffix)
+    testTap(xs)(_.saveAsProtobufFile(_))(suffix)
     testJobTest(xs)(ProtobufIO(_))(_.protobufFile[TrackPB](_))(_.saveAsProtobufFile(_))
   }
 
@@ -84,13 +84,13 @@ class ScioIOTest extends ScioIOSpec {
 
   "TableRowJsonIO" should "work" in {
     val xs = (1 to 100).map(x => TableRow("x" -> x.toString))
-    testTap(xs)(TableRowJsonIO(_))(_.tableRowJsonFile(_))(_.saveAsTableRowJsonFile(_))(".json")
+    testTap(xs)(_.saveAsTableRowJsonFile(_))(".json")
     testJobTest(xs)(TableRowJsonIO(_))(_.tableRowJsonFile(_))(_.saveAsTableRowJsonFile(_))
   }
 
   "TextIO" should "work" in {
     val xs = (1 to 100).map(_.toString)
-    testTap(xs)(TextIO(_))(_.textFile(_))(_.saveAsTextFile(_))(".txt")
+    testTap(xs)(_.saveAsTextFile(_))(".txt")
     testJobTest(xs)(TextIO(_))(_.textFile(_))(_.saveAsTextFile(_))
   }
 

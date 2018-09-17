@@ -32,12 +32,6 @@ class TFTapTest extends TapSpec {
 
   }
 
-  private def getDummyExample = {
-    import TestFeatureSpec._
-    val features = Seq(TestFeatures(1.0F, 2.0F), TestFeatures(5.0F, 3.0F))
-    features.map(featuresType.toExample(_))
-  }
-
   "SCollection" should "support saveAsTFRecordFile" in {
     val data = Seq.fill(100)(UUID.randomUUID().toString)
     import org.apache.beam.sdk.io.{Compression => CType}

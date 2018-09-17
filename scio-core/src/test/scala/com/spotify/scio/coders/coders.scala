@@ -21,8 +21,6 @@ import scala.collection.JavaConverters._
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.avro.generic.GenericRecord
 import org.scalatest.{FlatSpec, Matchers, Assertion}
-import com.spotify.scio.values.SCollection
-import com.spotify.scio.ScioContext
 
 import scala.reflect.{ClassTag, classTag}
 
@@ -210,14 +208,6 @@ class CodersTest extends FlatSpec with Matchers {
     checkNotFallback(CaseClassWithExplicitCoder(1, "hello"))
     Coder[CaseClassWithExplicitCoder] should
       === (CaseClassWithExplicitCoder.caseClassWithExplicitCoderCoder)
-  }
-
-  private def withSCollection[T: Coder](fn: SCollection[T] => Assertion): Assertion = {
-    val sc = ScioContext.forTest()
-    val coll = sc.parallelize(Nil: List[T])
-    val res = fn(coll)
-    sc.close().waitUntilFinish()
-    res
   }
 
   it should "provide a fallback if no safe coder is available" in {

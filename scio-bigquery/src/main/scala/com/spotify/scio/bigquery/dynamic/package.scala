@@ -28,7 +28,6 @@ import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.values.ValueInSingleWindow
 
 import scala.concurrent.Future
-import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 /**
@@ -100,7 +99,7 @@ package object dynamic {
     def saveAsTypedBigQuery(writeDisposition: WriteDisposition = null,
                             createDisposition: CreateDisposition = null)
                            (tableFn: ValueInSingleWindow[T] => TableDestination)
-                           (implicit ct: ClassTag[T], tt: TypeTag[T], ev: T <:< HasAnnotation)
+                           (implicit tt: TypeTag[T], ev: T <:< HasAnnotation)
     : Future[Tap[T]] = {
       val bqt = BigQueryType[T]
       val destinations = DynamicDestinationsUtil.tableFn(tableFn, bqt.schema)

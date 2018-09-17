@@ -78,7 +78,7 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
   def saveAsObjectFile(path: String, numShards: Int = 0, suffix: String = ".obj",
                        codec: CodecFactory = CodecFactory.deflateCodec(6),
                        metadata: Map[String, AnyRef] = Map.empty)
-                       (implicit ct: ClassTag[T], coder: Coder[T]): Future[Tap[T]] = {
+                       (implicit coder: Coder[T]): Future[Tap[T]] = {
     val param = ObjectFileIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(ObjectFileIO[T](path))(param)
   }

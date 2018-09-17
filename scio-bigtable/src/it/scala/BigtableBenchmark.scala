@@ -226,7 +226,7 @@ object BlockingCachingBigtableRead {
     sc.parallelize(letters)
       .applyTransform(ParDo.of(new FillDoFn(1)))
       .flatMap(s => Seq.fill(1000000)(s))
-      .applyTransform(ParDo.of(new BigtableDoFn[String, String](bigtableOptions) {
+      .applyTransform(ParDo.of(new BigtableDoFn[String, String](bigtableOptions, 10000, cache) {
         override def asyncLookup(session: BigtableSession, input: String) = {
           val output = bigtableLookup(session, input).get()
           Futures.immediateFuture(output)

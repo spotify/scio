@@ -81,8 +81,7 @@ object TextIO {
     IOUtils.lineIterator(input, Charsets.UTF_8).asScala
   }
 
-  private def getDirectoryInputStream(path: String,
-                                      wrapperFn: InputStream => InputStream = identity)
+  private def getDirectoryInputStream(path: String, wrapperFn: InputStream => InputStream)
   : InputStream = {
     val inputs = listFiles(path).map(getObjectInputStream).map(wrapperFn).asJava
     new SequenceInputStream(Collections.enumeration(inputs))

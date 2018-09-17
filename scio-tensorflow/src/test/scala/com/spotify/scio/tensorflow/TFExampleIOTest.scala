@@ -32,7 +32,7 @@ class TFExampleIOTest extends ScioIOSpec {
 
   "TFEXampleIO" should "work" in {
     val xs = (1 to 100).map(x => recordT.toExample(Record(x, x.toString)))
-    testTap(xs)(TFExampleIO(_))(_.tfRecordExampleFile(_))(_.saveAsTfExampleFile(_))(".tfrecords")
+    testTap(xs)(_.saveAsTfExampleFile(_))(".tfrecords")
     testJobTest(xs)(TFExampleIO(_))(_.tfRecordExampleFile(_))(_.saveAsTfExampleFile(_))
   }
 

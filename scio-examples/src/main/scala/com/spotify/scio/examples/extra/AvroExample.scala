@@ -95,8 +95,6 @@ object AvroExample {
   }
 
   private def genericOut(sc: ScioContext, args: Args): Unit = {
-    // Schema is not serializable and breaks lambda when pulled in from closure
-    val schemaString = schema.toString
     // Avro generic record encoding is more efficient with an explicit schema
     implicit def genericCoder = Coder.avroGenericRecordCoder(schema)
     sc.parallelize(1 to 100)

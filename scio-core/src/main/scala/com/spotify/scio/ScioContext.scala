@@ -623,11 +623,6 @@ class ScioContext private[scio] (val options: PipelineOptions,
   // In-memory collections
   // =======================================================================
 
-  private def truncate(name: String): String = {
-    val maxLength = 256
-    if (name.length <= maxLength) name else name.substring(0, maxLength - 3) + "..."
-  }
-
   /** Create a union of multiple SCollections. Supports empty lists. */
   def unionAll[T: Coder](scs: Iterable[SCollection[T]]): SCollection[T] = scs match {
     case Nil => empty()
