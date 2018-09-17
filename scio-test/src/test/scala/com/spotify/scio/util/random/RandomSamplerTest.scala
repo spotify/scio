@@ -30,14 +30,14 @@ class RandomSamplerTest extends PipelineSpec {
 
   import RandomSamplerUtils._
 
-  def test[T](sampler: RandomSampler[T, _], xs: Seq[T]): Seq[T] = {
+  private def test[T](sampler: RandomSampler[T, _], xs: Seq[T]): Seq[T] = {
     sampler.startBundle(null)
     val buffer = MBuffer.empty[T]
     xs.foreach(x => sampler.processElement(newContext[T](sampler, x, buffer)))
     buffer
   }
 
-  def test[K, V](sampler: RandomValueSampler[K, V, _], xs: Seq[(K, V)]): Seq[(K, V)] = {
+  private def test[K, V](sampler: RandomValueSampler[K, V, _], xs: Seq[(K, V)]): Seq[(K, V)] = {
     sampler.startBundle(null)
     val buffer = MBuffer.empty[(K, V)]
     xs.foreach(x => sampler.processElement(newContext[(K, V)](sampler, x, buffer)))
