@@ -11,6 +11,7 @@ addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.3")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.4")
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.2.0")
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.9.0")
+addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.5.1")
 
 libraryDependencies ++= Seq(
   "com.github.os72" % "protoc-jar" % "3.5.1.1"
