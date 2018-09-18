@@ -95,7 +95,10 @@ trait JavaCoders {
 
   implicit def serializableCoder: Coder[Serializable] = Coder.kryo[Serializable]
 
-  // implicit def paneinfoCoder: Coder[PaneInfo] = ???
+  import org.apache.beam.sdk.transforms.windowing.PaneInfo
+  implicit def paneInfoCoder: Coder[PaneInfo] =
+    Coder.beam(PaneInfo.PaneInfoCoder.of())
+
   implicit def instantCoder: Coder[org.joda.time.Instant] =
     Coder.beam(InstantCoder.of())
   implicit def tablerowCoder: Coder[com.google.api.services.bigquery.model.TableRow] =
