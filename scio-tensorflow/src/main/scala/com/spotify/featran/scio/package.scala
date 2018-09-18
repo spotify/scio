@@ -21,7 +21,7 @@ package com.spotify.featran
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
 
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.{classTag, ClassTag}
 
 package object scio {
 
@@ -42,11 +42,11 @@ package object scio {
 
     override def cross[A, B: ClassTag](ma: SCollection[A])(
       mb: SCollection[B]): SCollection[(A, B)] = {
-        implicit val ct: ClassTag[A] = classTag[Any].asInstanceOf[ClassTag[A]]
-        implicit val coderA: Coder[A] = Coder.kryo[A]
-        implicit val coderB: Coder[B] = Coder.kryo[B]
-        ma.cross(mb)
-      }
+      implicit val ct: ClassTag[A] = classTag[Any].asInstanceOf[ClassTag[A]]
+      implicit val coderA: Coder[A] = Coder.kryo[A]
+      implicit val coderB: Coder[B] = Coder.kryo[B]
+      ma.cross(mb)
+    }
 
     override def pure[A, B: ClassTag](ma: SCollection[A])(b: B): SCollection[B] = {
       implicit val coder: Coder[B] = Coder.kryo

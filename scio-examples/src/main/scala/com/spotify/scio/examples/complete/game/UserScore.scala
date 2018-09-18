@@ -41,10 +41,11 @@ object UserScore {
   case class UserScoreSums(user: String, total_score: Int)
 
   // Helper function for parsing data. Reads in a CSV line and converts to `GameActionInfo` instance
-  def parseEvent(line: String): Option[GameActionInfo] = Try {
-    val t = line.split(",")
-    GameActionInfo(t(0).trim, t(1).trim, t(2).toInt, t(3).toLong)
-  }.toOption
+  def parseEvent(line: String): Option[GameActionInfo] =
+    Try {
+      val t = line.split(",")
+      GameActionInfo(t(0).trim, t(1).trim, t(2).toInt, t(3).toLong)
+    }.toOption
 
   def main(cmdlineArgs: Array[String]): Unit = {
     // Create `ScioContext` and `Args`

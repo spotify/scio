@@ -51,7 +51,8 @@ trait BaseScioShell extends MainGenericRunner {
 
     def classLoaderURLs(cl: ClassLoader): Array[java.net.URL] = cl match {
       case null => Array()
-      case u: java.net.URLClassLoader => u.getURLs ++ classLoaderURLs(cl.getParent)
+      case u: java.net.URLClassLoader =>
+        u.getURLs ++ classLoaderURLs(cl.getParent)
       case _ => classLoaderURLs(cl.getParent)
     }
 
@@ -65,10 +66,12 @@ trait BaseScioShell extends MainGenericRunner {
 
     // Repl assembly includes paradise's scalac-plugin.xml - required for BigQuery macro
     // There should be no harm if we keep this for sbt launch.
-    val thisJar = this.getClass.getProtectionDomain.getCodeSource.getLocation.getPath
+    val thisJar =
+      this.getClass.getProtectionDomain.getCodeSource.getLocation.getPath
     command.settings.plugin.tryToSet(List(thisJar))
 
-    ClassPath.split(command.settings.classpath.value)
+    ClassPath
+      .split(command.settings.classpath.value)
       .find(File(_).name.startsWith("paradise_"))
       .foreach(s => command.settings.plugin.tryToSet(List(s)))
 

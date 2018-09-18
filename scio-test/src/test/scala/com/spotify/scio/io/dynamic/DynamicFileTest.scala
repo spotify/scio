@@ -35,7 +35,10 @@ import scala.collection.JavaConverters._
 class DynamicFileTest extends PipelineSpec {
 
   private def verifyOutput(path: Path, expected: String*): Unit = {
-    val actual = Files.list(path).iterator().asScala
+    val actual = Files
+      .list(path)
+      .iterator()
+      .asScala
       .filterNot(_.toFile.getName.startsWith("."))
       .toSet
     actual shouldBe expected.map(path.resolve).toSet
@@ -44,7 +47,8 @@ class DynamicFileTest extends PipelineSpec {
   "Dynamic File" should "support text files" in {
     val tmpDir = Files.createTempDirectory("dynamic-io-")
     val sc1 = ScioContext()
-    sc1.parallelize(1 to 10)
+    sc1
+      .parallelize(1 to 10)
       .saveAsDynamicTextFile(tmpDir.toString)(s => (s.toInt % 2).toString)
     sc1.close()
     verifyOutput(tmpDir, "0", "1")
@@ -52,8 +56,8 @@ class DynamicFileTest extends PipelineSpec {
     val sc2 = ScioContext()
     val lines0 = sc2.textFile(s"$tmpDir/0/*.txt")
     val lines1 = sc2.textFile(s"$tmpDir/1/*.txt")
-    lines0 should containInAnyOrder ((1 to 10).filter(_ % 2 == 0).map(_.toString))
-    lines1 should containInAnyOrder ((1 to 10).filter(_ % 2 == 1).map(_.toString))
+    lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(_.toString))
+    lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(_.toString))
     sc2.close()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
@@ -62,7 +66,8 @@ class DynamicFileTest extends PipelineSpec {
     val tmpDir = Files.createTempDirectory("dynamic-io-")
     val options = PipelineOptionsFactory.fromArgs("--streaming=true").create()
     val sc1 = ScioContext(options)
-    sc1.parallelize(1 to 10)
+    sc1
+      .parallelize(1 to 10)
       // Explicit optional arguments `Duration.Zero` and `WindowOptions()` as a workaround for the
       // mysterious "Could not find proxy for val sc1" compiler error
       .timestampBy(x => new Instant(x * 60000), Duration.ZERO)
@@ -76,14 +81,14 @@ class DynamicFileTest extends PipelineSpec {
     val sc2 = ScioContext()
     val lines0 = sc2.textFile(s"$tmpDir/0/*.txt")
     val lines1 = sc2.textFile(s"$tmpDir/1/*.txt")
-    lines0 should containInAnyOrder ((1 to 10).filter(_ % 2 == 0).map(_.toString))
-    lines1 should containInAnyOrder ((1 to 10).filter(_ % 2 == 1).map(_.toString))
+    lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(_.toString))
+    lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(_.toString))
     (1 to 10).foreach { x =>
       val p = x % 2
       val t1 = new Instant(x * 60000)
       val t2 = t1.plus(60000)
       val lines = sc2.textFile(s"$tmpDir/$p/part-$t1-$t2-*.txt")
-      lines should containSingleValue (x.toString)
+      lines should containSingleValue(x.toString)
     }
     sc2.close()
     FileUtils.deleteDirectory(tmpDir.toFile)
@@ -93,7 +98,9 @@ class DynamicFileTest extends PipelineSpec {
     val tmpDir = Files.createTempDirectory("dynamic-io-")
     val sc1 = ScioContext()
     implicit val coder = Coder.avroGenericRecordCoder(schema)
-    sc1.parallelize(1 to 10).map(newGenericRecord)
+    sc1
+      .parallelize(1 to 10)
+      .map(newGenericRecord)
       .saveAsDynamicAvroFile(tmpDir.toString, schema = schema) { r =>
         (r.get("int_field").toString.toInt % 2).toString
       }
@@ -103,8 +110,8 @@ class DynamicFileTest extends PipelineSpec {
     val sc2 = ScioContext()
     val lines0 = sc2.avroFile[GenericRecord](s"$tmpDir/0/*.avro", schema)
     val lines1 = sc2.avroFile[GenericRecord](s"$tmpDir/1/*.avro", schema)
-    lines0 should containInAnyOrder ((1 to 10).filter(_ % 2 == 0).map(newGenericRecord))
-    lines1 should containInAnyOrder ((1 to 10).filter(_ % 2 == 1).map(newGenericRecord))
+    lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(newGenericRecord))
+    lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(newGenericRecord))
     sc2.close()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
@@ -112,7 +119,9 @@ class DynamicFileTest extends PipelineSpec {
   it should "support specific Avro files" in {
     val tmpDir = Files.createTempDirectory("dynamic-io-")
     val sc1 = ScioContext()
-    sc1.parallelize(1 to 10).map(newSpecificRecord)
+    sc1
+      .parallelize(1 to 10)
+      .map(newSpecificRecord)
       .saveAsDynamicAvroFile(tmpDir.toString, schema = schema) { r =>
         (r.getIntField % 2).toString
       }
@@ -122,8 +131,8 @@ class DynamicFileTest extends PipelineSpec {
     val sc2 = ScioContext()
     val lines0 = sc2.avroFile[TestRecord](s"$tmpDir/0/*.avro")
     val lines1 = sc2.avroFile[TestRecord](s"$tmpDir/1/*.avro")
-    lines0 should containInAnyOrder ((1 to 10).filter(_ % 2 == 0).map(newSpecificRecord))
-    lines1 should containInAnyOrder ((1 to 10).filter(_ % 2 == 1).map(newSpecificRecord))
+    lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(newSpecificRecord))
+    lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(newSpecificRecord))
     sc2.close()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
@@ -132,7 +141,9 @@ class DynamicFileTest extends PipelineSpec {
     val tmpDir = Files.createTempDirectory("dynamic-io-")
     val options = PipelineOptionsFactory.fromArgs("--streaming=true").create()
     val sc1 = ScioContext(options)
-    sc1.parallelize(1 to 10).map(newSpecificRecord)
+    sc1
+      .parallelize(1 to 10)
+      .map(newSpecificRecord)
       // Explicit optional arguments `Duration.Zero` and `WindowOptions()` as a workaround for the
       // mysterious "Could not find proxy for val sc1" compiler error
       .timestampBy(x => new Instant(x.getIntField * 60000), Duration.ZERO)
@@ -146,14 +157,14 @@ class DynamicFileTest extends PipelineSpec {
     val sc2 = ScioContext()
     val records0 = sc2.avroFile[TestRecord](s"$tmpDir/0/*.avro")
     val records1 = sc2.avroFile[TestRecord](s"$tmpDir/1/*.avro")
-    records0 should containInAnyOrder ((1 to 10).filter(_ % 2 == 0).map(newSpecificRecord))
-    records1 should containInAnyOrder ((1 to 10).filter(_ % 2 == 1).map(newSpecificRecord))
+    records0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(newSpecificRecord))
+    records1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(newSpecificRecord))
     (1 to 10).foreach { x =>
       val p = x % 2
       val t1 = new Instant(x * 60000)
       val t2 = t1.plus(60000)
       val records = sc2.avroFile[TestRecord](s"$tmpDir/$p/part-$t1-$t2-*.avro")
-      records should containSingleValue (newSpecificRecord(x))
+      records should containSingleValue(newSpecificRecord(x))
     }
     sc2.close()
     FileUtils.deleteDirectory(tmpDir.toFile)

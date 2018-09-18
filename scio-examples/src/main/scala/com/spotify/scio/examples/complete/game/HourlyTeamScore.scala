@@ -48,9 +48,12 @@ object HourlyTeamScore {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     // Date formatters for full timestamp and short timestamp
-    def fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
-      .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
-    val minFmt = DateTimeFormat.forPattern("yyyy-MM-dd-HH-mm")
+    def fmt =
+      DateTimeFormat
+        .forPattern("yyyy-MM-dd HH:mm:ss.SSS")
+        .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
+    val minFmt = DateTimeFormat
+      .forPattern("yyyy-MM-dd-HH-mm")
       .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
 
     // The earliest time a scoring event can be.
@@ -60,12 +63,13 @@ object HourlyTeamScore {
     // The latest time a scoring event can be.
     // If not passed in it defaults to midnight on Jan 1 2100 (in PST)
     val stopMin =
-      new Instant(minFmt.parseMillis(args.getOrElse("stopMin", "2100-01-01-00-00"))).getMillis
+      new Instant(
+        minFmt
+          .parseMillis(args.getOrElse("stopMin", "2100-01-01-00-00"))).getMillis
     // Minutes to group events by - defaults to 60 minutes if not passed in
     val windowDuration = args.long("windowDuration", 60L)
     // A text file containing data on events
     val input = args.getOrElse("input", ExampleData.GAMING)
-
 
     sc.textFile(input)
       // Parse each line as `GameActionInfo` events, keep the ones that successfully parsed
@@ -82,9 +86,10 @@ object HourlyTeamScore {
       .sumByKey
       .withWindow[IntervalWindow]
       // Map summed results from tuples into `TeamScoreSums` case class, so we can save to BQ
-      .map { case ((team, score), window) =>
-        val start = fmt.print(window.start())
-        TeamScoreSums(team, score, start)
+      .map {
+        case ((team, score), window) =>
+          val start = fmt.print(window.start())
+          TeamScoreSums(team, score, start)
       }
       // Save to the BigQuery table defined by "output" in the arguments passed in
       .saveAsTypedBigQuery(args("output"))

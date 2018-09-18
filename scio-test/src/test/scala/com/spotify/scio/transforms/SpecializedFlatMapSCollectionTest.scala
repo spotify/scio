@@ -24,17 +24,18 @@ class SpecializedFlatMapSCollectionTest extends PipelineSpec {
   "SpecializedFlatMapSCollectionTest" should "support safeFlatMap()" in {
     val errorMsg = "String contains 'a'"
     runWithContext { sc =>
-      val (p, errors) = sc.parallelize(Seq("a b c", "d e", "f", "a z y"))
-        .safeFlatMap{ e =>
+      val (p, errors) = sc
+        .parallelize(Seq("a b c", "d e", "f", "a z y"))
+        .safeFlatMap { e =>
           if (e.contains("a")) {
             throw new Exception(errorMsg)
           } else {
             e.split(" ")
           }
         }
-      p should containInAnyOrder (Seq("d", "e", "f"))
-      val errorsCleaned = errors.map { case (i, e) => (i, e.getMessage)}
-      errorsCleaned should containInAnyOrder (Seq(("a b c", errorMsg), ("a z y", errorMsg)))
+      p should containInAnyOrder(Seq("d", "e", "f"))
+      val errorsCleaned = errors.map { case (i, e) => (i, e.getMessage) }
+      errorsCleaned should containInAnyOrder(Seq(("a b c", errorMsg), ("a z y", errorMsg)))
     }
   }
 }

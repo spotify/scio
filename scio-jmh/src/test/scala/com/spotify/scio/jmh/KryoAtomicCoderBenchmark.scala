@@ -35,9 +35,6 @@ object UserId {
 final case class User(id: UserId, username: String, email: String)
 final case class SpecializedUser(id: UserId, username: String, email: String)
 final case class SpecializedUserForDerived(id: UserId, username: String, email: String)
-
-
-
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Thread)
@@ -50,49 +47,44 @@ class KryoAtomicCoderBenchmark {
   val user = User(userId, "johndoe", "johndoe@spotify.com")
 
   // use hand-optimized coders
-  val specializedUser = SpecializedUser(userId, "johndoe", "johndoe@spotify.com")
+  val specializedUser =
+    SpecializedUser(userId, "johndoe", "johndoe@spotify.com")
   val specializedUserForDerived =
     SpecializedUserForDerived(userId, "johndoe", "johndoe@spotify.com")
   val tenTimes = List.fill(10)(specializedUserForDerived)
-
 
   val kryoCoder = new KryoAtomicCoder[User](KryoOptions())
   val javaCoder = SerializableCoder.of(classOf[User])
   val specializedCoder = new SpecializedCoder
   val specializedKryoCoder = new KryoAtomicCoder[SpecializedUser](KryoOptions())
-  val derivedCoder = CoderMaterializer.beamWithDefault(Coder[SpecializedUserForDerived])
-  val derivedListCoder = CoderMaterializer.beamWithDefault(Coder[List[SpecializedUserForDerived]])
+  val derivedCoder =
+    CoderMaterializer.beamWithDefault(Coder[SpecializedUserForDerived])
+  val derivedListCoder =
+    CoderMaterializer.beamWithDefault(Coder[List[SpecializedUserForDerived]])
 
   @Benchmark
-  def kryoEncode: Array[Byte] = {
+  def kryoEncode: Array[Byte] =
     CoderUtils.encodeToByteArray(kryoCoder, user)
-  }
 
   @Benchmark
-  def javaEncode: Array[Byte] = {
+  def javaEncode: Array[Byte] =
     CoderUtils.encodeToByteArray(javaCoder, user)
-  }
 
   @Benchmark
-  def customEncode: Array[Byte] = {
+  def customEncode: Array[Byte] =
     CoderUtils.encodeToByteArray(specializedCoder, specializedUser)
-  }
 
   @Benchmark
-  def customKryoEncode: Array[Byte] = {
+  def customKryoEncode: Array[Byte] =
     CoderUtils.encodeToByteArray(specializedKryoCoder, specializedUser)
-  }
 
   @Benchmark
-  def derivedEncode: Array[Byte] = {
+  def derivedEncode: Array[Byte] =
     CoderUtils.encodeToByteArray(derivedCoder, specializedUserForDerived)
-  }
 
   @Benchmark
-  def derivedListEncode: Array[Byte] = {
+  def derivedListEncode: Array[Byte] =
     CoderUtils.encodeToByteArray(derivedListCoder, tenTimes)
-  }
-
 
   val kryoEncoded = kryoEncode
   val javaEncoded = javaEncode
@@ -102,34 +94,28 @@ class KryoAtomicCoderBenchmark {
   val derivedListEncoded = derivedListEncode
 
   @Benchmark
-  def kryoDecode: User = {
+  def kryoDecode: User =
     CoderUtils.decodeFromByteArray(kryoCoder, kryoEncoded)
-  }
 
   @Benchmark
-  def javaDecode: User = {
+  def javaDecode: User =
     CoderUtils.decodeFromByteArray(javaCoder, javaEncoded)
-  }
 
   @Benchmark
-  def customDecode: SpecializedUser = {
+  def customDecode: SpecializedUser =
     CoderUtils.decodeFromByteArray(specializedCoder, customEncoded)
-  }
 
   @Benchmark
-  def customKryoDecode: SpecializedUser = {
+  def customKryoDecode: SpecializedUser =
     CoderUtils.decodeFromByteArray(specializedKryoCoder, customKryoEncoded)
-  }
 
   @Benchmark
-  def derivedDecode: SpecializedUserForDerived = {
+  def derivedDecode: SpecializedUserForDerived =
     CoderUtils.decodeFromByteArray(derivedCoder, derivedEncoded)
-  }
 
   @Benchmark
-  def derivedListDecode: List[SpecializedUserForDerived] = {
+  def derivedListDecode: List[SpecializedUserForDerived] =
     CoderUtils.decodeFromByteArray(derivedListCoder, derivedListEncoded)
-  }
 }
 
 final class SpecializedCoder extends AtomicCoder[SpecializedUser] {

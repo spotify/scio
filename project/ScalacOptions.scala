@@ -21,12 +21,14 @@ object Scalac {
 
   // see: https://tpolecat.github.io/2017/04/25/scalac-flags.html
   val baseOptions = List(
-    "-Xmax-classfile-name", "100",
+    "-Xmax-classfile-name",
+    "100",
     "-target:jvm-1.8",
     "-deprecation", // Emit warning and location for usages of deprecated APIs.
     "-feature", // Emit warning and location for usages of features that should be imported explicitly.
     "-unchecked", // Enable additional warnings where generated code depends on assumptions.
-    "-encoding", "utf-8", // Specify character encoding used by source files.
+    "-encoding",
+    "utf-8", // Specify character encoding used by source files.
     "-explaintypes", // Explain type errors in more detail.
     // "-language:existentials", // Existential types (besides wildcard types) can be written and inferred
     // "-language:experimental.macros", // Allow macro definition (besides implementation and application)
@@ -74,12 +76,15 @@ object Scalac {
   }
 
   def commonsOptions = Def.setting {
-    baseOptions ++ (if (scalaBinaryVersion.value == "2.12") scala212settings.value else Nil)
+    baseOptions ++ (if (scalaBinaryVersion.value == "2.12")
+                      scala212settings.value
+                    else Nil)
   }
 
   def compileDocOptions = Def.setting {
     List("-skip-packages", "org.apache") ++
-      (if (scalaBinaryVersion.value == "2.12") List("-no-java-comments") else Nil)
+      (if (scalaBinaryVersion.value == "2.12") List("-no-java-comments")
+       else Nil)
   }
 
 }

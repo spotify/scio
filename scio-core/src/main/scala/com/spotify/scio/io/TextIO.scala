@@ -40,25 +40,32 @@ final case class TextIO(path: String) extends ScioIO[String] {
   override type WriteP = TextIO.WriteParam
 
   override def read(sc: ScioContext, params: ReadP): SCollection[String] =
-    sc.wrap(sc.applyInternal(BTextIO.read().from(path)
-      .withCompression(params.compression)))
+    sc.wrap(
+      sc.applyInternal(
+        BTextIO
+          .read()
+          .from(path)
+          .withCompression(params.compression)))
 
   override def write(data: SCollection[String], params: WriteP): Future[Tap[String]] = {
     data.applyInternal(textOut(path, params))
     data.context.makeFuture(tap(TextIO.ReadParam()))
   }
 
-  override def tap(params: ReadP): Tap[String] = TextTap(ScioUtil.addPartSuffix(path))
+  override def tap(params: ReadP): Tap[String] =
+    TextTap(ScioUtil.addPartSuffix(path))
 
   private def textOut(path: String, params: WriteP) =
-    BTextIO.write()
+    BTextIO
+      .write()
       .to(pathWithShards(path))
       .withSuffix(params.suffix)
       .withNumShards(params.numShards)
       .withWritableByteChannelFactory(
         FileBasedSink.CompressionType.fromCanonical(params.compression))
 
-  private[scio] def pathWithShards(path: String) = path.replaceAll("\\/+$", "") + "/part"
+  private[scio] def pathWithShards(path: String) =
+    path.replaceAll("\\/+$", "") + "/part"
 }
 
 object TextIO {
@@ -81,13 +88,14 @@ object TextIO {
     IOUtils.lineIterator(input, Charsets.UTF_8).asScala
   }
 
-  private def getDirectoryInputStream(path: String, wrapperFn: InputStream => InputStream)
-  : InputStream = {
+  private def getDirectoryInputStream(path: String,
+                                      wrapperFn: InputStream => InputStream): InputStream = {
     val inputs = listFiles(path).map(getObjectInputStream).map(wrapperFn).asJava
     new SequenceInputStream(Collections.enumeration(inputs))
   }
 
-  private def listFiles(path: String): Seq[Metadata] = FileSystems.`match`(path).metadata().asScala
+  private def listFiles(path: String): Seq[Metadata] =
+    FileSystems.`match`(path).metadata().asScala
 
   private def getObjectInputStream(meta: Metadata): InputStream =
     Channels.newInputStream(FileSystems.open(meta.resourceId()))

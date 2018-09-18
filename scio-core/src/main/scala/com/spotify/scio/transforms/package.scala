@@ -42,18 +42,21 @@ package object transforms {
    * [[java.net.URI URI]] methods.
    */
   implicit class URISCollection(val self: SCollection[URI]) extends AnyVal {
+
     /**
      * Download [[java.net.URI URI]] elements and process as local [[java.nio.file.Path Path]]s.
      * @param batchSize batch size when downloading files
      * @param keep keep downloaded files after processing
      */
     def mapFile[T: Coder](f: Path => T,
-                             batchSize: Int = 10,
-                             keep: Boolean = false): SCollection[T] =
-      self.applyTransform(ParDo.of(new FileDownloadDoFn[T](
-        RemoteFileUtil.create(self.context.options),
-        Functions.serializableFn(f),
-        batchSize, keep)))
+                          batchSize: Int = 10,
+                          keep: Boolean = false): SCollection[T] =
+      self.applyTransform(
+        ParDo.of(
+          new FileDownloadDoFn[T](RemoteFileUtil.create(self.context.options),
+                                  Functions.serializableFn(f),
+                                  batchSize,
+                                  keep)))
 
     /**
      * Download [[java.net.URI URI]] elements and process as local [[java.nio.file.Path Path]]s.
@@ -61,21 +64,23 @@ package object transforms {
      * @param keep keep downloaded files after processing
      */
     def flatMapFile[T: Coder](f: Path => TraversableOnce[T],
-                                 batchSize: Int = 10,
-                                 keep: Boolean = false): SCollection[T] =
+                              batchSize: Int = 10,
+                              keep: Boolean = false): SCollection[T] =
       self
-        .applyTransform(ParDo.of(new FileDownloadDoFn[TraversableOnce[T]](
-          RemoteFileUtil.create(self.context.options),
-          Functions.serializableFn(f),
-          batchSize, keep)))
+        .applyTransform(
+          ParDo.of(
+            new FileDownloadDoFn[TraversableOnce[T]](RemoteFileUtil.create(self.context.options),
+                                                     Functions.serializableFn(f),
+                                                     batchSize,
+                                                     keep)))
         .flatMap(identity)
 
   }
 
   /**
-    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with custom
-    * parallelism, where `parallelism` is the number of concurrent `DoFn` threads per worker
-    * (default to number of CPU cores).
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with custom
+   * parallelism, where `parallelism` is the number of concurrent `DoFn` threads per worker
+   * (default to number of CPU cores).
    */
   implicit class CustomParallelismSCollection[T](val self: SCollection[T]) {
     private def parallelCollectFn[U](parallelism: Int)(pfn: PartialFunction[T, U]): DoFn[T, U] =
@@ -83,7 +88,7 @@ package object transforms {
         val isDefined = ClosureCleaner(pfn.isDefinedAt(_)) // defeat closure
         val g = ClosureCleaner(pfn) // defeat closure
         def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
-          if(isDefined(c.element())){
+          if (isDefined(c.element())) {
             c.output(g(c.element()))
           }
         }
@@ -93,7 +98,7 @@ package object transforms {
       new ParallelLimitedFn[T, T](parallelism) {
         val g = ClosureCleaner(f) // defeat closure
         def parallelProcessElement(c: DoFn[T, T]#ProcessContext): Unit = {
-          if(g(c.element())){
+          if (g(c.element())) {
             c.output(c.element())
           }
         }
@@ -121,8 +126,9 @@ package object transforms {
      * `parallelism` is the number of concurrent `DoFn`s per worker.
      * @group transform
      */
-    def flatMapWithParallelism[U: Coder](parallelism: Int)(fn: T => TraversableOnce[U])
-    :SCollection[U] = self.parDo(parallelFlatMapFn(parallelism)(fn))
+    def flatMapWithParallelism[U: Coder](parallelism: Int)(
+      fn: T => TraversableOnce[U]): SCollection[U] =
+      self.parDo(parallelFlatMapFn(parallelism)(fn))
 
     /**
      * Return a new SCollection containing only the elements that satisfy a predicate.
@@ -130,9 +136,8 @@ package object transforms {
      * @group transform
      */
     def filterWithParallelism(parallelism: Int)(fn: T => Boolean)(
-      implicit coder: Coder[T]): SCollection[T] = {
+      implicit coder: Coder[T]): SCollection[T] =
       self.parDo(parallelFilterFn(parallelism)(fn))
-    }
 
     /**
      * Return a new SCollection by applying a function to all elements of this SCollection.
@@ -147,8 +152,9 @@ package object transforms {
      * `parallelism` is the number of concurrent `DoFn`s per worker.
      * @group transform
      */
-    def collectWithParallelism[U: Coder](parallelism: Int)(pfn: PartialFunction[T, U])
-    :SCollection[U] = self.parDo(parallelCollectFn(parallelism)(pfn))
+    def collectWithParallelism[U: Coder](parallelism: Int)(
+      pfn: PartialFunction[T, U]): SCollection[U] =
+      self.parDo(parallelCollectFn(parallelism)(pfn))
   }
 
   /**
@@ -211,8 +217,8 @@ package object transforms {
      *
      * @group transform
      */
-    def safeFlatMap[U: Coder](f: T => TraversableOnce[U])(implicit coder: Coder[T])
-    : (SCollection[U], SCollection[(T, Throwable)]) = {
+    def safeFlatMap[U: Coder](f: T => TraversableOnce[U])(
+      implicit coder: Coder[T]): (SCollection[U], SCollection[(T, Throwable)]) = {
       val (mainTag, errorTag) = (new TupleTag[U], new TupleTag[(T, Throwable)])
       val doFn = new NamedDoFn[T, U] {
         val g = ClosureCleaner(f) // defeat closure
@@ -228,11 +234,14 @@ package object transforms {
           while (i.hasNext) c.output(i.next())
         }
       }
-      val tuple = self.applyInternal(
-        ParDo.of(doFn).withOutputTags(mainTag, TupleTagList.of(errorTag)))
-      val main = tuple.get(mainTag).setCoder(CoderMaterializer.beam(self.context, Coder[U]))
+      val tuple =
+        self.applyInternal(ParDo.of(doFn).withOutputTags(mainTag, TupleTagList.of(errorTag)))
+      val main = tuple
+        .get(mainTag)
+        .setCoder(CoderMaterializer.beam(self.context, Coder[U]))
       val errorPipe =
-        tuple.get(errorTag)
+        tuple
+          .get(errorTag)
           .setCoder(CoderMaterializer.beam(self.context, Coder[(T, Throwable)]))
       (self.context.wrap(main), self.context.wrap(errorPipe))
     }
@@ -242,8 +251,10 @@ package object transforms {
 
   /** Enhanced version of `AsyncLookupDoFn.Try` with convenience methods. */
   implicit class RichAsyncLookupDoFnTry[A](val self: AsyncLookupDoFn.Try[A]) extends AnyVal {
+
     /** Convert this `AsyncLookupDoFn.Try` to a Scala `Try`. */
-    def asScala: Try[A] = if (self.isSuccess) Success(self.get()) else Failure(self.getException)
+    def asScala: Try[A] =
+      if (self.isSuccess) Success(self.get()) else Failure(self.getException)
   }
 
 }

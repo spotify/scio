@@ -28,11 +28,13 @@ object TapExample {
 
     // First job and its associated `ScioContext`
     val (sc1, args) = ContextAndArgs(cmdlineArgs)
-    val f1 = sc1.parallelize(1 to 10)
+    val f1 = sc1
+      .parallelize(1 to 10)
       .sum
       // Save data to a temporary location for use later as a `Future[Tap[T]]`
       .materialize
-    val f2 = sc1.parallelize(1 to 100)
+    val f2 = sc1
+      .parallelize(1 to 100)
       .sum
       .map(_.toString)
       // Save data for use later as a `Future[Tap[T]]`

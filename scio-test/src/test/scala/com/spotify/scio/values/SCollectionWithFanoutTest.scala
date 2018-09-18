@@ -22,7 +22,6 @@ import com.twitter.algebird.{Aggregator, Semigroup}
 
 import com.spotify.scio.coders.Coder
 
-
 class SCollectionWithFanoutTest extends PipelineSpec {
 
   "SCollectionWithFanout" should "support aggregate()" in {
@@ -31,16 +30,19 @@ class SCollectionWithFanoutTest extends PipelineSpec {
       val p1 = p.aggregate(0.0)(_ + _, _ + _)
       val p2 = p.aggregate(Aggregator.max[Int])
       val p3 = p.aggregate(Aggregator.immutableSortedReverseTake[Int](5))
-      p1 should containSingleValue (5050.0)
-      p2 should containSingleValue (100)
-      p3 should containSingleValue (Seq(100, 99, 98, 97, 96))
+      p1 should containSingleValue(5050.0)
+      p2 should containSingleValue(100)
+      p3 should containSingleValue(Seq(100, 99, 98, 97, 96))
     }
   }
 
   it should "support combine()" in {
     runWithContext { sc =>
-      val p = sc.parallelize(1 to 100).withFanout(10).combine(_.toDouble)(_ + _)(_ + _)
-      p should containSingleValue (5050.0)
+      val p = sc
+        .parallelize(1 to 100)
+        .withFanout(10)
+        .combine(_.toDouble)(_ + _)(_ + _)
+      p should containSingleValue(5050.0)
     }
   }
 
@@ -49,27 +51,27 @@ class SCollectionWithFanoutTest extends PipelineSpec {
       val p = sc.parallelize(1 to 100).withFanout(10)
       val r1 = p.fold(0)(_ + _)
       val r2 = p.fold
-      r1 should containSingleValue (5050)
-      r2 should containSingleValue (5050)
+      r1 should containSingleValue(5050)
+      r2 should containSingleValue(5050)
     }
   }
 
   it should "support reduce()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).withFanout(10).reduce(_ + _)
-      p should containSingleValue (15)
+      p should containSingleValue(15)
     }
   }
 
   it should "support sum()" in {
     runWithContext { sc =>
-      def sum[T: Coder : Semigroup](elems: T*): SCollection[T] =
+      def sum[T: Coder: Semigroup](elems: T*): SCollection[T] =
         sc.parallelize(elems).withFanout(10).sum
-      sum(1, 2, 3) should containSingleValue (6)
-      sum(1L, 2L, 3L) should containSingleValue (6L)
-      sum(1F, 2F, 3F) should containSingleValue (6F)
-      sum(1.0, 2.0, 3.0) should containSingleValue (6.0)
-      sum(1 to 100: _*) should containSingleValue (5050)
+      sum(1, 2, 3) should containSingleValue(6)
+      sum(1L, 2L, 3L) should containSingleValue(6L)
+      sum(1F, 2F, 3F) should containSingleValue(6F)
+      sum(1.0, 2.0, 3.0) should containSingleValue(6.0)
+      sum(1 to 100: _*) should containSingleValue(5050)
     }
   }
 

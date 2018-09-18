@@ -38,7 +38,8 @@ object TsvExampleWrite {
     val output = args("output")
 
     // Create a Write Transformation with tsv suffix, single file and specific header.
-    val transform = beam.TextIO.write()
+    val transform = beam.TextIO
+      .write()
       .to(pathWithShards(output))
       .withSuffix(".tsv")
       .withNumShards(1)

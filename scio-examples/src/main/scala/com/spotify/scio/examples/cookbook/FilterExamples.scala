@@ -39,17 +39,19 @@ object FilterExamples {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     // Schema for result BigQuery table
-    val schema = new TableSchema().setFields(List(
-      new TableFieldSchema().setName("year").setType("INTEGER"),
-      new TableFieldSchema().setName("month").setType("INTEGER"),
-      new TableFieldSchema().setName("day").setType("INTEGER"),
-      new TableFieldSchema().setName("mean_temp").setType("FLOAT")
-    ).asJava)
+    val schema = new TableSchema().setFields(
+      List(
+        new TableFieldSchema().setName("year").setType("INTEGER"),
+        new TableFieldSchema().setName("month").setType("INTEGER"),
+        new TableFieldSchema().setName("day").setType("INTEGER"),
+        new TableFieldSchema().setName("mean_temp").setType("FLOAT")
+      ).asJava)
 
     val monthFilter = args.int("monthFilter", 7)
 
     // Open BigQuery table as a `SCollection[TableRow]`
-    val pipe = sc.bigQueryTable(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
+    val pipe = sc
+      .bigQueryTable(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
       // Map `TableRow`s into `Record`s
       .map { row =>
         val year = row.getLong("year")
@@ -63,7 +65,7 @@ object FilterExamples {
     val globalMeanTemp = pipe.map(_.meanTemp).mean
 
     pipe
-      // Filter by month
+    // Filter by month
       .filter(_.month == monthFilter)
       // Cross product of elements in the two `SCollection`s, and since the right hand side is a
       // singleton, effectively decorate each `Record` as `(Record, Double)`

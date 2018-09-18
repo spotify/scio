@@ -35,15 +35,15 @@ import scala.concurrent.Future
 sealed trait BigtableIO[T] extends ScioIO[T]
 
 object BigtableIO {
-  final def apply[T](projectId: String,
-                     instanceId: String,
-                     tableId: String): BigtableIO[T] = new BigtableIO[T] with TestIO[T] {
-    override def testId: String = s"BigtableIO($projectId\t$instanceId\t$tableId)"
-  }
+  final def apply[T](projectId: String, instanceId: String, tableId: String): BigtableIO[T] =
+    new BigtableIO[T] with TestIO[T] {
+      override def testId: String =
+        s"BigtableIO($projectId\t$instanceId\t$tableId)"
+    }
 }
 
 final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
-  extends BigtableIO[Row] {
+    extends BigtableIO[Row] {
 
   override type ReadP = BigtableRead.ReadParam
   override type WriteP = Nothing
@@ -53,7 +53,8 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
 
   override def read(sc: ScioContext, params: ReadP): SCollection[Row] = {
     val opts = bigtableOptions // defeat closure
-    var read = beam.BigtableIO.read()
+    var read = beam.BigtableIO
+      .read()
       .withProjectId(bigtableOptions.getProjectId)
       .withInstanceId(bigtableOptions.getInstanceId)
       .withTableId(tableId)
@@ -79,13 +80,9 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
 }
 
 object BigtableRead {
-  final case class ReadParam(
-    keyRange: ByteKeyRange = null,
-    rowFilter: RowFilter = null)
+  final case class ReadParam(keyRange: ByteKeyRange = null, rowFilter: RowFilter = null)
 
-  final def apply(projectId: String,
-                  instanceId: String,
-                  tableId: String): BigtableRead = {
+  final def apply(projectId: String, instanceId: String, tableId: String): BigtableRead = {
     val bigtableOptions = new BigtableOptions.Builder()
       .setProjectId(projectId)
       .setInstanceId(instanceId)
@@ -94,9 +91,9 @@ object BigtableRead {
   }
 }
 
-final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: String)
-                                 (implicit ev: T <:< Mutation)
-  extends BigtableIO[(ByteString, Iterable[T])] {
+final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: String)(
+  implicit ev: T <:< Mutation)
+    extends BigtableIO[(ByteString, Iterable[T])] {
 
   override type ReadP = Nothing
   override type WriteP = BigtableWrite.WriteParam
@@ -107,13 +104,14 @@ final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: Str
   override def read(sc: ScioContext, params: ReadP): SCollection[(ByteString, Iterable[T])] =
     throw new IllegalStateException("BigtableWrite is write-only, use Row to read from Bigtable")
 
-  override def write(data: SCollection[(ByteString, Iterable[T])], params: WriteP)
-  : Future[Tap[(ByteString, Iterable[T])]] = {
+  override def write(data: SCollection[(ByteString, Iterable[T])],
+                     params: WriteP): Future[Tap[(ByteString, Iterable[T])]] = {
     val sink =
       params match {
         case BigtableWrite.Default =>
           val opts = bigtableOptions // defeat closure
-          beam.BigtableIO.write()
+          beam.BigtableIO
+            .write()
             .withProjectId(bigtableOptions.getProjectId)
             .withInstanceId(bigtableOptions.getInstanceId)
             .withTableId(tableId)
@@ -127,7 +125,8 @@ final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: Str
       }
     data
       .map {
-        case (key, value) => KV.of(key, value.asJava.asInstanceOf[java.lang.Iterable[Mutation]])
+        case (key, value) =>
+          KV.of(key, value.asJava.asInstanceOf[java.lang.Iterable[Mutation]])
       }
       .applyInternal(sink)
     Future.failed(new NotImplementedError("Bigtable future not implemented"))
@@ -140,17 +139,15 @@ final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: Str
 object BigtableWrite {
   sealed trait WriteParam
   object Default extends WriteParam
-  final case class Bulk(
-    numOfShards: Int,
-    flushInterval: Duration = Duration.standardSeconds(1)) extends WriteParam
+  final case class Bulk(numOfShards: Int, flushInterval: Duration = Duration.standardSeconds(1))
+      extends WriteParam
 
-  final def apply[T](projectId: String,
-               instanceId: String,
-               tableId: String)(implicit ev: T <:< Mutation): BigtableWrite[T] = {
-      val bigtableOptions = new BigtableOptions.Builder()
-        .setProjectId(projectId)
-        .setInstanceId(instanceId)
-        .build
-      BigtableWrite[T](bigtableOptions, tableId)
-    }
+  final def apply[T](projectId: String, instanceId: String, tableId: String)(
+    implicit ev: T <:< Mutation): BigtableWrite[T] = {
+    val bigtableOptions = new BigtableOptions.Builder()
+      .setProjectId(projectId)
+      .setInstanceId(instanceId)
+      .build
+    BigtableWrite[T](bigtableOptions, tableId)
+  }
 }

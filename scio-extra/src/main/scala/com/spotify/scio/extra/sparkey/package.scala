@@ -83,6 +83,7 @@ package object sparkey {
 
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
   implicit class SparkeyScioContext(val self: ScioContext) extends AnyVal {
+
     /**
      * Create a SideInput of `SparkeyReader` from a [[SparkeyUri]] base path, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
@@ -109,10 +110,10 @@ package object sparkey {
      *                       the index file
      * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
-    def asSparkey(path: String = null, maxMemoryUsage: Long = -1)
-                 (implicit w: SparkeyWritable[K, V],
-                  koder: Coder[K],
-                  voder: Coder[V]): SCollection[SparkeyUri] = {
+    def asSparkey(path: String = null, maxMemoryUsage: Long = -1)(
+      implicit w: SparkeyWritable[K, V],
+      koder: Coder[K],
+      voder: Coder[V]): SCollection[SparkeyUri] = {
       val basePath = if (path == null) {
         val uuid = UUID.randomUUID()
         self.context.options.getTempLocation + s"/sparkey-$uuid"
@@ -125,15 +126,16 @@ package object sparkey {
       logger.info(s"Saving as Sparkey: $uri")
       self.transform { in =>
         in.groupBy(_ => ())
-          .map { case (_, xs) =>
-            val writer = new SparkeyWriter(uri, maxMemoryUsage)
-            val it = xs.iterator
-            while (it.hasNext) {
-              val kv = it.next()
-              w.put(writer, kv._1, kv._2)
-            }
-            writer.close()
-            uri
+          .map {
+            case (_, xs) =>
+              val writer = new SparkeyWriter(uri, maxMemoryUsage)
+              val it = xs.iterator
+              while (it.hasNext) {
+                val kv = it.next()
+                w.put(writer, kv._1, kv._2)
+              }
+              writer.close()
+              uri
           }
       }
     }
@@ -143,10 +145,9 @@ package object sparkey {
      *
      * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
-    def asSparkey(
-      implicit w: SparkeyWritable[K, V],
-      koder: Coder[K],
-      voder: Coder[V]): SCollection[SparkeyUri] = this.asSparkey()
+    def asSparkey(implicit w: SparkeyWritable[K, V],
+                  koder: Coder[K],
+                  voder: Coder[V]): SCollection[SparkeyUri] = this.asSparkey()
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
@@ -154,10 +155,9 @@ package object sparkey {
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
      * required that each key of the input be associated with a single value.
      */
-    def asSparkeySideInput(
-      implicit w: SparkeyWritable[K, V],
-      koder: Coder[K],
-      voder: Coder[V]): SideInput[SparkeyReader] =
+    def asSparkeySideInput(implicit w: SparkeyWritable[K, V],
+                           koder: Coder[K],
+                           voder: Coder[V]): SideInput[SparkeyReader] =
       self.asSparkey.asSparkeySideInput
   }
 
@@ -165,6 +165,7 @@ package object sparkey {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
    */
   implicit class SparkeySCollection(val self: SCollection[SparkeyUri]) extends AnyVal {
+
     /**
      * Convert this SCollection to a SideInput of `SparkeyReader`, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
@@ -177,7 +178,8 @@ package object sparkey {
 
   /** Enhanced version of `SparkeyReader` that mimics a `Map`. */
   implicit class RichStringSparkeyReader(val self: SparkeyReader) extends Map[String, String] {
-    override def get(key: String): Option[String] = Option(self.getAsString(key))
+    override def get(key: String): Option[String] =
+      Option(self.getAsString(key))
     override def iterator: Iterator[(String, String)] =
       self.iterator.asScala.map(e => (e.getKeyAsString, e.getValueAsString))
 
@@ -190,7 +192,7 @@ package object sparkey {
   }
 
   private class SparkeySideInput(val view: PCollectionView[SparkeyUri])
-    extends SideInput[SparkeyReader] {
+      extends SideInput[SparkeyReader] {
     override def updateCacheOnGlobalWindow: Boolean = false
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
       context.sideInput(view).getReader
@@ -205,9 +207,10 @@ package object sparkey {
       w.put(key, value)
   }
 
-  implicit val ByteArraySparkeyWritable = new SparkeyWritable[Array[Byte], Array[Byte]] {
-    def put(w: SparkeyWriter, key: Array[Byte], value: Array[Byte]): Unit =
-      w.put(key, value)
-  }
+  implicit val ByteArraySparkeyWritable =
+    new SparkeyWritable[Array[Byte], Array[Byte]] {
+      def put(w: SparkeyWriter, key: Array[Byte], value: Array[Byte]): Unit =
+        w.put(key, value)
+    }
 
 }

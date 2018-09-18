@@ -26,7 +26,7 @@ class ConverterProviderTest extends FlatSpec with Matchers {
 
   // scalastyle:off no.whitespace.before.left.bracket
   "ConverterProvider" should "throw NPE with meaningful message for null in REQUIRED field" in {
-    the [NullPointerException] thrownBy {
+    the[NullPointerException] thrownBy {
       Required.fromTableRow(TableRow())
     } should have message """REQUIRED field "a" is null"""
   }
@@ -36,7 +36,7 @@ class ConverterProviderTest extends FlatSpec with Matchers {
   }
 
   it should "throw NPE with meaningful message for null in REPEATED field" in {
-    the [NullPointerException] thrownBy {
+    the[NullPointerException] thrownBy {
       Repeated.fromTableRow(TableRow())
     } should have message """REPEATED field "a" is null"""
   }

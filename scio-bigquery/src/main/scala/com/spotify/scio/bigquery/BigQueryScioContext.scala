@@ -36,8 +36,7 @@ final class BigQueryScioContext(@transient val self: ScioContext) extends Serial
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
-  def bigQuerySelect(sqlQuery: String,
-                     flattenResults: Boolean = false): SCollection[TableRow] =
+  def bigQuerySelect(sqlQuery: String, flattenResults: Boolean = false): SCollection[TableRow] =
     self.read(BigQuerySelect(sqlQuery))(BigQuerySelect.ReadParam(flattenResults))
 
   /**
@@ -83,8 +82,9 @@ final class BigQueryScioContext(@transient val self: ScioContext) extends Serial
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
-  def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag : Coder](newSource: String = null)
-    : SCollection[T] = self.read(BigQueryTyped.dynamic[T](newSource))
+  def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+    newSource: String = null): SCollection[T] =
+    self.read(BigQueryTyped.dynamic[T](newSource))
 
   /**
    * Get an SCollection for a BigQuery TableRow JSON file.

@@ -33,10 +33,10 @@ case object DataflowContext extends RunnerContext {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit = {
-    options.as(classOf[DataflowPipelineWorkerPoolOptions])
+  override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit =
+    options
+      .as(classOf[DataflowPipelineWorkerPoolOptions])
       .setFilesToStage(getFilesToStage(artifacts).toList.asJava)
-  }
 
   // =======================================================================
   // Extra artifacts - jars/files etc
@@ -54,13 +54,14 @@ case object DataflowContext extends RunnerContext {
   /** Borrowed from DataflowRunner. */
   private def detectClassPathResourcesToStage(classLoader: ClassLoader): Iterable[String] = {
     require(classLoader.isInstanceOf[URLClassLoader],
-      "Current ClassLoader is '" + classLoader + "' only URLClassLoaders are supported")
+            "Current ClassLoader is '" + classLoader + "' only URLClassLoaders are supported")
 
     // exclude jars from JAVA_HOME and files from current directory
     val javaHome = new File(sys.props("java.home")).getCanonicalPath
     val userDir = new File(sys.props("user.dir")).getCanonicalPath
 
-    val classPathJars = classLoader.asInstanceOf[URLClassLoader]
+    val classPathJars = classLoader
+      .asInstanceOf[URLClassLoader]
       .getURLs
       .map(url => new File(url.toURI).getCanonicalPath)
       .filter(path => !path.startsWith(javaHome) && path != userDir)

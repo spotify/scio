@@ -29,10 +29,10 @@ import org.joda.time.{Duration, Instant}
 
 /** Window options for an [[SCollection]]. */
 case class WindowOptions(trigger: Trigger = null,
-                                             accumulationMode: AccumulationMode = null,
-                                             allowedLateness: Duration = null,
-                                             closingBehavior: ClosingBehavior = null,
-                                             timestampCombiner: TimestampCombiner = null)
+                         accumulationMode: AccumulationMode = null,
+                         allowedLateness: Duration = null,
+                         closingBehavior: ClosingBehavior = null,
+                         timestampCombiner: TimestampCombiner = null)
 
 /** Value with window information to be used inside a [[WindowedSCollection]]. */
 case class WindowedValue[T](value: T, timestamp: Instant, window: BoundedWindow, pane: PaneInfo) {
@@ -53,16 +53,16 @@ case class WindowedValue[T](value: T, timestamp: Instant, window: BoundedWindow,
 
 /** An enhanced SCollection that provides access to window information via [[WindowedValue]]. */
 class WindowedSCollection[T: Coder] private[values] (val internal: PCollection[T],
-                                                        val context: ScioContext)
-  extends PCollectionWrapper[T] {
+                                                     val context: ScioContext)
+    extends PCollectionWrapper[T] {
 
   /** [[SCollection.filter]] with access to window information via [[WindowedValue]]. */
   def filter(f: WindowedValue[T] => Boolean): WindowedSCollection[T] =
     new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.filterFn(f)).internal, context)
 
   /** [[SCollection.flatMap]] with access to window information via [[WindowedValue]]. */
-  def flatMap[U: Coder](f: WindowedValue[T] => TraversableOnce[WindowedValue[U]])
-  : WindowedSCollection[U] =
+  def flatMap[U: Coder](
+    f: WindowedValue[T] => TraversableOnce[WindowedValue[U]]): WindowedSCollection[U] =
     new WindowedSCollection(this.parDo(FunctionsWithWindowedValue.flatMapFn(f)).internal, context)
 
   /** [[SCollection.keyBy]] with access to window information via [[WindowedValue]]. */

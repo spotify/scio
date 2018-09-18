@@ -39,35 +39,34 @@ class LeaderBoardTest extends PipelineSpec {
                     score: Int,
                     baseTimeOffset: Duration): TimestampedValue[GameActionInfo] = {
     val t = baseTime.plus(baseTimeOffset)
-    TimestampedValue.of(GameActionInfo(
-      user.user, user.team, score, t.getMillis), t)
+    TimestampedValue.of(GameActionInfo(user.user, user.team, score, t.getMillis), t)
   }
 
   "LeaderBoard.calculateTeamScores" should "work with on time elements" in {
     val stream = testStreamOf[GameActionInfo]
-      // Start at the epoch
+    // Start at the epoch
       .advanceWatermarkTo(baseTime)
       // add some elements ahead of the watermark
       .addElements(
         event(blueOne, 3, Duration.standardSeconds(3)),
         event(blueOne, 2, Duration.standardMinutes(1)),
         event(redTwo, 3, Duration.standardSeconds(22)),
-        event(blueTwo, 5, Duration.standardSeconds(3)))
+        event(blueTwo, 5, Duration.standardSeconds(3))
+      )
       // The watermark advances slightly, but not past the end of the window
       .advanceWatermarkTo(baseTime.plus(Duration.standardMinutes(3)))
-      .addElements(
-        event(redOne, 1, Duration.standardMinutes(4)),
-        event(blueOne, 2, Duration.standardSeconds(270)))
+      .addElements(event(redOne, 1, Duration.standardMinutes(4)),
+                   event(blueOne, 2, Duration.standardSeconds(270)))
       // The window should close and emit an ON_TIME pane
       .advanceWatermarkToInfinity
 
     runWithContext { sc =>
-      val teamScores = LeaderBoard.calculateTeamScores(
-        sc.testStream(stream), teamWindowDuration, allowedLateness)
+      val teamScores =
+        LeaderBoard.calculateTeamScores(sc.testStream(stream), teamWindowDuration, allowedLateness)
 
       val window = new IntervalWindow(baseTime, teamWindowDuration)
       teamScores should inOnTimePane(window) {
-        containInAnyOrder (Seq((blueOne.team, 12), (redOne.team, 4)))
+        containInAnyOrder(Seq((blueOne.team, 12), (redOne.team, 4)))
       }
     }
   }

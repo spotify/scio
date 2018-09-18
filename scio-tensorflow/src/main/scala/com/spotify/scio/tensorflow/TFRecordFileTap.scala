@@ -30,5 +30,6 @@ final case class TFRecordFileTap(path: String) extends Tap[Array[Byte]] {
     new TFFileStorageFunctions(s)
 
   override def value: Iterator[Array[Byte]] = FileStorage(path).tfRecordFile
-  override def open(sc: ScioContext): SCollection[Array[Byte]] = sc.tfRecordFile(path)
+  override def open(sc: ScioContext): SCollection[Array[Byte]] =
+    sc.tfRecordFile(path)
 }

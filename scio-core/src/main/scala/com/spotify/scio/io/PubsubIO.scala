@@ -42,25 +42,26 @@ sealed trait PubsubIO[T] extends ScioIO[T] {
 object PubsubIO {
   final case class ReadParam(isSubscription: Boolean)
 
-  def apply[T: ClassTag : Coder](name: String,
-                         idAttribute: String = null,
-                         timestampAttribute: String = null): PubsubIO[T] =
+  def apply[T: ClassTag: Coder](name: String,
+                                idAttribute: String = null,
+                                timestampAttribute: String = null): PubsubIO[T] =
     PubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
-  def withAttributes[T: ClassTag : Coder](name: String,
-                                  idAttribute: String = null,
-                                  timestampAttribute: String = null)
-  : PubsubIO[(T, Map[String, String])] =
+  def withAttributes[T: ClassTag: Coder](
+    name: String,
+    idAttribute: String = null,
+    timestampAttribute: String = null): PubsubIO[(T, Map[String, String])] =
     PubsubIOWithAttributes[T](name, idAttribute, timestampAttribute)
 }
 
-private final case class PubsubIOWithoutAttributes[T: ClassTag : Coder](name: String,
-                                                                idAttribute: String,
-                                                                timestampAttribute: String)
-  extends PubsubIO[T] {
+private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](name: String,
+                                                                       idAttribute: String,
+                                                                       timestampAttribute: String)
+    extends PubsubIO[T] {
   private[this] val cls = ScioUtil.classOf[T]
 
-  override def testId: String = s"PubsubIO($name, $idAttribute, $timestampAttribute)"
+  override def testId: String =
+    s"PubsubIO($name, $idAttribute, $timestampAttribute)"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     def setup[U](read: beam.PubsubIO.Read[U]) = {
@@ -124,44 +125,47 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag : Coder](name: St
       val coder = data.internal.getPipeline.getCoderRegistry
         .getScalaCoder[T](data.context.options)
       val t = setup(beam.PubsubIO.writeMessages())
-      data.map { record =>
-        val payload = CoderUtils.encodeToByteArray(coder, record)
-        new beam.PubsubMessage(payload, Map.empty[String, String].asJava)
-      }.applyInternal(t)
+      data
+        .map { record =>
+          val payload = CoderUtils.encodeToByteArray(coder, record)
+          new beam.PubsubMessage(payload, Map.empty[String, String].asJava)
+        }
+        .applyInternal(t)
     }
     Future.failed(new NotImplementedError("Pubsub future not implemented"))
   }
 }
 
-private final case class PubsubIOWithAttributes[T: ClassTag : Coder](name: String,
-                                                             idAttribute: String,
-                                                             timestampAttribute: String)
-  extends PubsubIO[(T, Map[String, String])] {
+private final case class PubsubIOWithAttributes[T: ClassTag: Coder](name: String,
+                                                                    idAttribute: String,
+                                                                    timestampAttribute: String)
+    extends PubsubIO[(T, Map[String, String])] {
   type WithAttributeMap = (T, Map[String, String])
 
-  override def testId: String = s"PubsubIO($name, $idAttribute, $timestampAttribute)"
+  override def testId: String =
+    s"PubsubIO($name, $idAttribute, $timestampAttribute)"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[WithAttributeMap] = {
-      var r = beam.PubsubIO.readMessagesWithAttributes()
-      r = if (params.isSubscription) r.fromSubscription(name) else r.fromTopic(name)
-      if (idAttribute != null) {
-        r = r.withIdAttribute(idAttribute)
-      }
-      if (timestampAttribute != null) {
-        r = r.withTimestampAttribute(timestampAttribute)
-      }
-
-      val elementCoder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
-      sc.wrap(sc.applyInternal(r))
-        .map { m =>
-          val payload = CoderUtils.decodeFromByteArray(elementCoder, m.getPayload)
-          val attributes = JMapWrapper.of(m.getAttributeMap)
-          (payload, attributes)
-        }
+    var r = beam.PubsubIO.readMessagesWithAttributes()
+    r = if (params.isSubscription) r.fromSubscription(name) else r.fromTopic(name)
+    if (idAttribute != null) {
+      r = r.withIdAttribute(idAttribute)
+    }
+    if (timestampAttribute != null) {
+      r = r.withTimestampAttribute(timestampAttribute)
     }
 
-  override def write(data: SCollection[WithAttributeMap], params: WriteP)
-  : Future[Tap[WithAttributeMap]] = {
+    val elementCoder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
+    sc.wrap(sc.applyInternal(r))
+      .map { m =>
+        val payload = CoderUtils.decodeFromByteArray(elementCoder, m.getPayload)
+        val attributes = JMapWrapper.of(m.getAttributeMap)
+        (payload, attributes)
+      }
+  }
+
+  override def write(data: SCollection[WithAttributeMap],
+                     params: WriteP): Future[Tap[WithAttributeMap]] = {
     var w = beam.PubsubIO.writeMessages().to(name)
     if (idAttribute != null) {
       w = w.withIdAttribute(idAttribute)
@@ -169,12 +173,15 @@ private final case class PubsubIOWithAttributes[T: ClassTag : Coder](name: Strin
     if (timestampAttribute != null) {
       w = w.withTimestampAttribute(timestampAttribute)
     }
-    val coder = data.internal.getPipeline.getCoderRegistry.getScalaCoder[T](data.context.options)
-    data.map { kv =>
-      val payload = CoderUtils.encodeToByteArray(coder, kv._1)
-      val attributes = kv._2.asJava
-      new beam.PubsubMessage(payload, attributes)
-    }.applyInternal(w)
+    val coder = data.internal.getPipeline.getCoderRegistry
+      .getScalaCoder[T](data.context.options)
+    data
+      .map { kv =>
+        val payload = CoderUtils.encodeToByteArray(coder, kv._1)
+        val attributes = kv._2.asJava
+        new beam.PubsubMessage(payload, attributes)
+      }
+      .applyInternal(w)
     Future.failed(new NotImplementedError("Pubsub future not implemented"))
   }
 }

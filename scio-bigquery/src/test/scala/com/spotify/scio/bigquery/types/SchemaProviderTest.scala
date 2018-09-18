@@ -18,7 +18,7 @@
 package com.spotify.scio.bigquery.types
 
 import com.spotify.scio.bigquery.BigQueryUtil.parseSchema
-import org.scalatest.{Matchers, FlatSpec}
+import org.scalatest.{FlatSpec, Matchers}
 
 class SchemaProviderTest extends FlatSpec with Matchers {
 

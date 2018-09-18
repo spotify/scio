@@ -37,7 +37,7 @@ final class AvroScioContext(@transient val self: ScioContext) extends Serializab
    * Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
    * serialization is not guaranteed to be compatible across Scio releases.
    */
-  def objectFile[T : Coder](path: String): SCollection[T] =
+  def objectFile[T: Coder](path: String): SCollection[T] =
     self.read(ObjectFileIO[T](path))
 
   /**
@@ -45,7 +45,7 @@ final class AvroScioContext(@transient val self: ScioContext) extends Serializab
    * @param schema must be not null if `T` is of type
    *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
    */
-  def avroFile[T: ClassTag : Coder](path: String, schema: Schema = null): SCollection[T] =
+  def avroFile[T: ClassTag: Coder](path: String, schema: Schema = null): SCollection[T] =
     self.read(AvroIO[T](path, schema))
 
   /**
@@ -56,8 +56,8 @@ final class AvroScioContext(@transient val self: ScioContext) extends Serializab
    * [[com.spotify.scio.avro.types.AvroType AvroType.fromPath]], or
    * [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
    */
-  def typedAvroFile[T <: HasAvroAnnotation : ClassTag : TypeTag : Coder](path: String)
-  : SCollection[T] =
+  def typedAvroFile[T <: HasAvroAnnotation: ClassTag: TypeTag: Coder](
+    path: String): SCollection[T] =
     self.read(com.spotify.scio.io.AvroTyped.AvroIO[T](path))
 
   /**
@@ -66,7 +66,7 @@ final class AvroScioContext(@transient val self: ScioContext) extends Serializab
    * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage
    * Avro's block file format.
    */
-  def protobufFile[T: ClassTag : Coder](path: String)(implicit ev: T <:< Message): SCollection[T] =
+  def protobufFile[T: ClassTag: Coder](path: String)(implicit ev: T <:< Message): SCollection[T] =
     self.read(ProtobufIO[T](path))
 
 }

@@ -212,14 +212,16 @@ object AvroType {
    * to the given case class `T`.
    * @group converters
    */
-  def fromGenericRecord[T]: (GenericRecord => T) = macro ConverterProvider.fromGenericRecordImpl[T]
+  def fromGenericRecord[T]: (GenericRecord => T) =
+    macro ConverterProvider.fromGenericRecordImpl[T]
 
   /**
    * Generate a converter function from the given case class `T` to
    * [[org.apache.avro.generic.GenericRecord GenericRecord]].
    * @group converters
    */
-  def toGenericRecord[T]: (T => GenericRecord) = macro ConverterProvider.toGenericRecordImpl[T]
+  def toGenericRecord[T]: (T => GenericRecord) =
+    macro ConverterProvider.toGenericRecordImpl[T]
 
   /** Create a new AvroType instance. */
   def apply[T: TypeTag]: AvroType[T] = new AvroType[T]
@@ -237,7 +239,8 @@ class AvroType[T: TypeTag] extends Serializable {
     .reflectModule(typeOf[T].typeSymbol.companion.asModule)
     .instance
 
-  private def getField(key: String) = instance.getClass.getMethod(key).invoke(instance)
+  private def getField(key: String) =
+    instance.getClass.getMethod(key).invoke(instance)
 
   /** GenericRecord to `T` converter. */
   def fromGenericRecord: (GenericRecord => T) =

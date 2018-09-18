@@ -38,14 +38,13 @@ import org.apache.commons.io.{FileUtils, IOUtils}
 import scala.concurrent.Future
 import com.spotify.scio.coders.Coder
 
-
 trait TapSpec extends PipelineSpec {
   def verifyTap[T: Coder](tap: Tap[T], expected: Set[T]): Unit = {
     SerializableUtils.ensureSerializable(tap)
     tap.value.toSet shouldBe expected
     val sc = ScioContext()
-    tap.open(sc) should containInAnyOrder (expected)
-    sc.close().waitUntilFinish()  // block non-test runner
+    tap.open(sc) should containInAnyOrder(expected)
+    sc.close().waitUntilFinish() // block non-test runner
   }
 
   def runWithInMemoryFuture[T](fn: ScioContext => Future[Tap[T]]): Tap[T] =
@@ -56,13 +55,12 @@ trait TapSpec extends PipelineSpec {
 
   def runWithFuture[T](sc: ScioContext)(fn: ScioContext => Future[Tap[T]]): Tap[T] = {
     val f = fn(sc)
-    sc.close().waitUntilFinish()  // block non-test runner
+    sc.close().waitUntilFinish() // block non-test runner
     f.waitForResult()
   }
 
-  def tmpDir: File = new File(
-    new File(sys.props("java.io.tmpdir")),
-    "scio-test-" + UUID.randomUUID())
+  def tmpDir: File =
+    new File(new File(sys.props("java.io.tmpdir")), "scio-test-" + UUID.randomUUID())
 }
 
 class TapTest extends TapSpec {
@@ -74,7 +72,8 @@ class TapTest extends TapSpec {
     sc.parallelize(Seq(1, 2, 3))
       .map(i => (newSpecificRecord(i), newGenericRecord(i)))
 
-  val expectedRecords = Set(1, 2, 3).map(i => (newSpecificRecord(i), newGenericRecord(i)))
+  val expectedRecords =
+    Set(1, 2, 3).map(i => (newSpecificRecord(i), newGenericRecord(i)))
 
   "Future" should "support saveAsInMemoryTap" in {
     val t = runWithInMemoryFuture { makeRecords(_).saveAsInMemoryTap }
@@ -83,22 +82,24 @@ class TapTest extends TapSpec {
 
   it should "update isCompleted with testId" in {
     val sc = ScioContext.forTest()
-    val f = sc.parallelize(Seq(1, 2, 3))
+    val f = sc
+      .parallelize(Seq(1, 2, 3))
       .map(newSpecificRecord)
       .saveAsInMemoryTap
     f.isCompleted shouldBe false
-    sc.close().waitUntilFinish()  // block non-test runner
+    sc.close().waitUntilFinish() // block non-test runner
     f.isCompleted shouldBe true
   }
 
   it should "update isCompleted without testId" in {
     val dir = tmpDir
     val sc = ScioContext()
-    val f = sc.parallelize(Seq(1, 2, 3))
+    val f = sc
+      .parallelize(Seq(1, 2, 3))
       .map(newSpecificRecord)
       .saveAsAvroFile(dir.getPath)
     f.isCompleted shouldBe false
-    sc.close().waitUntilFinish()  // block non-test runner
+    sc.close().waitUntilFinish() // block non-test runner
     f.isCompleted shouldBe true
     FileUtils.deleteDirectory(dir)
   }
@@ -111,8 +112,7 @@ class TapTest extends TapSpec {
   it should "support saveAsAvroFile with SpecificRecord" in {
     val dir = tmpDir
     val t = runWithFileFuture {
-      _
-        .parallelize(Seq(1, 2, 3))
+      _.parallelize(Seq(1, 2, 3))
         .map(newSpecificRecord)
         .saveAsAvroFile(dir.getPath)
     }
@@ -123,8 +123,7 @@ class TapTest extends TapSpec {
   it should "support saveAsAvroFile with GenericRecord" in {
     val dir = tmpDir
     val t = runWithFileFuture {
-      _
-        .parallelize(Seq(1, 2, 3))
+      _.parallelize(Seq(1, 2, 3))
         .map(newGenericRecord)
         .saveAsAvroFile(dir.getPath, schema = schema)
     }
@@ -135,8 +134,7 @@ class TapTest extends TapSpec {
   it should "support saveAsAvroFile with reflect record" in {
     val dir = tmpDir
     val t = runWithFileFuture {
-      _
-        .parallelize(Seq("a", "b", "c"))
+      _.parallelize(Seq("a", "b", "c"))
         .map(s => ByteBuffer.wrap(s.getBytes))
         .saveAsAvroFile(dir.getPath, schema = new Schema.Parser().parse("\"bytes\""))
     }.map(bb => new String(bb.array(), bb.position(), bb.limit()))
@@ -147,8 +145,7 @@ class TapTest extends TapSpec {
   it should "support saveAsTextFile" in {
     val dir = tmpDir
     val t = runWithFileFuture {
-      _
-        .parallelize(Seq("a", "b", "c"))
+      _.parallelize(Seq("a", "b", "c"))
         .saveAsTextFile(dir.getPath)
     }
     verifyTap(t, Set("a", "b", "c"))
@@ -158,7 +155,8 @@ class TapTest extends TapSpec {
   it should "support reading compressed text files" in {
     val nFiles = 10
     val nLines = 100
-    val data = Array.fill(nFiles)(Array.fill(nLines)(UUID.randomUUID().toString))
+    val data =
+      Array.fill(nFiles)(Array.fill(nLines)(UUID.randomUUID().toString))
     for ((cType, ext) <- Seq(("gz", "gz"), ("bzip2", "bz2"))) {
       val dir = tmpDir
       dir.mkdir()
@@ -178,13 +176,14 @@ class TapTest extends TapSpec {
     val dir = tmpDir
     val data = Seq(("a", 1), ("b", 2), ("c", 3))
     // use java protos otherwise we would have to pull in pb-scala
-    def mkProto(t: (String, Int)): SimplePBV2 = SimplePBV2.newBuilder()
-                                                          .setPlays(t._2)
-                                                          .setTrackId(t._1)
-                                                          .build()
+    def mkProto(t: (String, Int)): SimplePBV2 =
+      SimplePBV2
+        .newBuilder()
+        .setPlays(t._2)
+        .setTrackId(t._1)
+        .build()
     val t = runWithFileFuture {
-      _
-        .parallelize(data)
+      _.parallelize(data)
         .map(mkProto)
         .saveAsProtobufFile(dir.getPath)
     }
@@ -197,13 +196,14 @@ class TapTest extends TapSpec {
     val dir = tmpDir
     val data = Seq(("a", 1), ("b", 2), ("c", 3))
     // use java protos otherwise we would have to pull in pb-scala
-    def mkProto(t: (String, Int)): SimplePBV3 = SimplePBV3.newBuilder()
-                                                          .setPlays(t._2)
-                                                          .setTrackId(t._1)
-                                                          .build()
+    def mkProto(t: (String, Int)): SimplePBV3 =
+      SimplePBV3
+        .newBuilder()
+        .setPlays(t._2)
+        .setTrackId(t._1)
+        .build()
     val t = runWithFileFuture {
-      _
-        .parallelize(data)
+      _.parallelize(data)
         .map(mkProto)
         .saveAsProtobufFile(dir.getPath)
     }
@@ -213,19 +213,18 @@ class TapTest extends TapSpec {
   }
 
   it should "support saveAsTableRowJsonFile" in {
-    def newTableRow(i: Int): TableRow = TableRow(
-      "int_field" -> 1 * i,
-      "long_field" -> 1L * i,
-      "float_field" -> 1F * i,
-      "double_field" -> 1.0 * i,
-      "boolean_field" -> "true",
-      "string_field" -> "hello")
+    def newTableRow(i: Int): TableRow =
+      TableRow("int_field" -> 1 * i,
+               "long_field" -> 1L * i,
+               "float_field" -> 1F * i,
+               "double_field" -> 1.0 * i,
+               "boolean_field" -> "true",
+               "string_field" -> "hello")
 
     val dir = tmpDir
     // Compare .toString versions since TableRow may not round trip
     val t = runWithFileFuture {
-      _
-        .parallelize(Seq(1, 2, 3))
+      _.parallelize(Seq(1, 2, 3))
         .map(newTableRow)
         .saveAsTableRowJsonFile(dir.getPath)
     }.map(ScioUtil.jsonFactory.toString)
@@ -236,8 +235,7 @@ class TapTest extends TapSpec {
   it should "keep parent after Tap.map" in {
     val dir = tmpDir
     val t = runWithFileFuture {
-      _
-        .parallelize(Seq(1, 2, 3))
+      _.parallelize(Seq(1, 2, 3))
         .saveAsTextFile(dir.getPath)
     }.map(_.toInt)
     verifyTap(t, Set(1, 2, 3))

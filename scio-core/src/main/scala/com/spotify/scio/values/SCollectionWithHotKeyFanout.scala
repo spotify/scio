@@ -28,19 +28,22 @@ import org.apache.beam.sdk.transforms.{Combine, SerializableFunction}
  * An enhanced SCollection that uses an intermediate node to combine "hot" keys partially before
  * performing the full combine.
  */
-class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values]
-(private val self: PairSCollectionFunctions[K, V],
- private val hotKeyFanout: Either[K => Int, Int])
-  extends TransformNameable {
+class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
+  private val self: PairSCollectionFunctions[K, V],
+  private val hotKeyFanout: Either[K => Int, Int])
+    extends TransformNameable {
 
-  private def withFanout[K0, I, O](combine: Combine.PerKey[K0, I, O])
-  : PerKeyWithHotKeyFanout[K0, I, O] = this.hotKeyFanout match {
-    case Left(f) =>
-      combine.withHotKeyFanout(
-        Functions.serializableFn(f).asInstanceOf[SerializableFunction[K0, java.lang.Integer]])
-    case Right(f) =>
-      combine.withHotKeyFanout(f)
-  }
+  private def withFanout[K0, I, O](
+    combine: Combine.PerKey[K0, I, O]): PerKeyWithHotKeyFanout[K0, I, O] =
+    this.hotKeyFanout match {
+      case Left(f) =>
+        combine.withHotKeyFanout(
+          Functions
+            .serializableFn(f)
+            .asInstanceOf[SerializableFunction[K0, java.lang.Integer]])
+      case Right(f) =>
+        combine.withHotKeyFanout(f)
+    }
 
   override def withName(name: String): this.type = {
     self.self.withName(name)
@@ -52,26 +55,25 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values]
    * hot key fanout.
    */
   def aggregateByKey[U: Coder](zeroValue: U)(seqOp: (U, V) => U,
-                                                combOp: (U, U) => U): SCollection[(K, U)] =
-    self.applyPerKey(
-      withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp))),
-      kvToTuple[K, U])
+                                             combOp: (U, U) => U): SCollection[(K, U)] =
+    self.applyPerKey(withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(seqOp, combOp))),
+                     kvToTuple[K, U])
 
   /**
    * [[PairSCollectionFunctions.aggregateByKey[A,U]* PairSCollectionFunctions.aggregateByKey]]
    * with hot key fanout.
    */
-  def aggregateByKey[A: Coder, U: Coder](aggregator: Aggregator[V, A, U])
-  : SCollection[(K, U)] =
+  def aggregateByKey[A: Coder, U: Coder](aggregator: Aggregator[V, A, U]): SCollection[(K, U)] =
     self.self.context.wrap(self.self.internal).transform { in =>
-      val a = aggregator  // defeat closure
-      in.mapValues(a.prepare).sumByKey(a.semigroup, Coder[K], Coder[A]).mapValues(a.present)
+      val a = aggregator // defeat closure
+      in.mapValues(a.prepare)
+        .sumByKey(a.semigroup, Coder[K], Coder[A])
+        .mapValues(a.present)
     }
 
   /** [[PairSCollectionFunctions.combineByKey]] with hot key fanout. */
-  def combineByKey[C: Coder](createCombiner: V => C)
-                               (mergeValue: (C, V) => C)
-                               (mergeCombiners: (C, C) => C): SCollection[(K, C)] =
+  def combineByKey[C: Coder](createCombiner: V => C)(mergeValue: (C, V) => C)(
+    mergeCombiners: (C, C) => C): SCollection[(K, C)] =
     self.applyPerKey(
       withFanout(Combine.perKey(Functions.combineFn(createCombiner, mergeValue, mergeCombiners))),
       kvToTuple[K, C])
@@ -81,9 +83,8 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values]
    * hot key fanout.
    */
   def foldByKey(zeroValue: V)(op: (V, V) => V): SCollection[(K, V)] =
-    self.applyPerKey(
-      withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op))),
-      kvToTuple[K, V])
+    self.applyPerKey(withFanout(Combine.perKey(Functions.aggregateFn(zeroValue)(op, op))),
+                     kvToTuple[K, V])
 
   /**
    * [[PairSCollectionFunctions.foldByKey(implicit* PairSCollectionFunctions.foldByKey]] with

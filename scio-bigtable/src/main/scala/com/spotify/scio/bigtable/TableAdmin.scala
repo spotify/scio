@@ -36,7 +36,7 @@ object TableAdmin {
   private val log: Logger = LoggerFactory.getLogger(TableAdmin.getClass)
 
   private def adminClient[A](bigtableOptions: BigtableOptions)(
-      f: BigtableTableAdminClient => A): Try[A] = {
+    f: BigtableTableAdminClient => A): Try[A] = {
     val channel =
       ChannelPoolCreator.createPool(bigtableOptions.getTableAdminHost)
     val executorService =
@@ -108,7 +108,8 @@ object TableAdmin {
                                    tablePath: String,
                                    columnFamilies: List[String]): Unit = {
 
-    val tableInfo = client.getTable(GetTableRequest.newBuilder().setName(tablePath).build)
+    val tableInfo =
+      client.getTable(GetTableRequest.newBuilder().setName(tablePath).build)
 
     val modifications: List[Modification] = columnFamilies.collect {
       case (cf) if !tableInfo.containsColumnFamilies(cf) =>

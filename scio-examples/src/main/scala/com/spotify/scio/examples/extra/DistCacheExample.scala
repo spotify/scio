@@ -39,14 +39,17 @@ object DistCacheExample {
     // - Function to load the local file on workers
     val dc = sc.distCache(args.getOrElse("months", ExampleData.MONTHS)) { f =>
       // Load the file into memory as a `Map[Int, String]`
-      scala.io.Source.fromFile(f).getLines().map { s =>
-        val t = s.split(" ")
-        (t(0).toInt, t(1))
-      }.toMap
+      scala.io.Source
+        .fromFile(f)
+        .getLines()
+        .map { s =>
+          val t = s.split(" ")
+          (t(0).toInt, t(1))
+        }
+        .toMap
     }
 
-    sc
-      .tableRowJsonFile(args.getOrElse("input", ExampleData.EXPORTED_WIKI_TABLE))
+    sc.tableRowJsonFile(args.getOrElse("input", ExampleData.EXPORTED_WIKI_TABLE))
       .map(row => new Instant(row.getLong("timestamp") * 1000L).toDateTime.getMonthOfYear)
       .countByValue
       // Access distributed cache inside a lambda function

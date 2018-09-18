@@ -22,7 +22,8 @@ import org.scalacheck._
 
 object IteratorsSpec {
   implicit class PairsIterable[T](val self: Iterable[T]) extends AnyVal {
-    def pairs: Iterator[(T, T)] = self.sliding(2).filter(_.size == 2).map(s => (s.head, s.last))
+    def pairs: Iterator[(T, T)] =
+      self.sliding(2).filter(_.size == 2).map(s => (s.head, s.last))
   }
 }
 
@@ -34,12 +35,11 @@ class IteratorsSpec extends PropertySpec {
 
   val timeSeries = Gen.listOf[Long](Gen.choose(0L, maxInterval)).map {
     case head :: tail => tail.scanLeft(head)(_ + _)
-    case Nil => Nil
+    case Nil          => Nil
   }
 
-  def isWithinBounds(xs: Seq[Long], size: Long, offset: Long): Boolean = {
+  def isWithinBounds(xs: Seq[Long], size: Long, offset: Long): Boolean =
     xs.forall(x => x >= lowerBound(x, size, offset) && x < upperBound(x, size, offset))
-  }
 
   def windowSize(xs: Seq[Long]): Long = xs.last - xs.head
 
@@ -49,12 +49,13 @@ class IteratorsSpec extends PropertySpec {
   } yield (size, offset)
 
   property("fixed") {
-    forAll(timeSeries, fixedParams) { case (ts, (size, offset)) =>
-      val r = ts.iterator.timeSeries(identity).fixed(size, offset).toList
-      r.flatten shouldBe ts
-      r.forall(_.nonEmpty)
-      r.forall(windowSize(_) < size)
-      r.forall(isWithinBounds(_, size, offset))
+    forAll(timeSeries, fixedParams) {
+      case (ts, (size, offset)) =>
+        val r = ts.iterator.timeSeries(identity).fixed(size, offset).toList
+        r.flatten shouldBe ts
+        r.forall(_.nonEmpty)
+        r.forall(windowSize(_) < size)
+        r.forall(isWithinBounds(_, size, offset))
     }
   }
 
@@ -75,16 +76,18 @@ class IteratorsSpec extends PropertySpec {
   } yield (size, period, offset)
 
   property("sliding") {
-    forAll(timeSeries, slidingParams) { case (ts, params) =>
-      val (size, period, offset) = params
-      val r = ts.iterator.timeSeries(identity).sliding(size, period, offset).toList
-      val lowers = r.map(w => lowerBound(w.head, period, offset)).pairs
-      val uppers = r.map(w => upperBound(w.head, period, offset)).pairs
-      r.forall(_.nonEmpty)
-      r.forall(windowSize(_)< size)
-      r.forall(isWithinBounds(_, size, offset))
-      lowers.forall(p => p._2 - p._1 >= period)
-      uppers.forall(p => p._2 - p._1 >= period)
+    forAll(timeSeries, slidingParams) {
+      case (ts, params) =>
+        val (size, period, offset) = params
+        val r =
+          ts.iterator.timeSeries(identity).sliding(size, period, offset).toList
+        val lowers = r.map(w => lowerBound(w.head, period, offset)).pairs
+        val uppers = r.map(w => upperBound(w.head, period, offset)).pairs
+        r.forall(_.nonEmpty)
+        r.forall(windowSize(_) < size)
+        r.forall(isWithinBounds(_, size, offset))
+        lowers.forall(p => p._2 - p._1 >= period)
+        uppers.forall(p => p._2 - p._1 >= period)
     }
   }
 

@@ -34,21 +34,22 @@ private[scio] object FunctionsWithSideOutput {
     }
   }
 
-  def mapFn[T, U](f: (T, SideOutputContext[T]) => U): DoFn[T, U] = new SideOutputFn[T, U] {
-    val g = ClosureCleaner(f)  // defeat closure
-    @ProcessElement
-    private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit =
-      c.output(g(c.element(), sideOutputContext(c)))
-  }
-
-  def flatMapFn[T, U](f: (T, SideOutputContext[T]) => TraversableOnce[U])
-  : DoFn[T, U] = new SideOutputFn[T, U] {
-    val g = ClosureCleaner(f)  // defeat closure
-    @ProcessElement
-    private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-      val i = g(c.element(), sideOutputContext(c)).toIterator
-      while (i.hasNext) c.output(i.next())
+  def mapFn[T, U](f: (T, SideOutputContext[T]) => U): DoFn[T, U] =
+    new SideOutputFn[T, U] {
+      val g = ClosureCleaner(f) // defeat closure
+      @ProcessElement
+      private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit =
+        c.output(g(c.element(), sideOutputContext(c)))
     }
-  }
+
+  def flatMapFn[T, U](f: (T, SideOutputContext[T]) => TraversableOnce[U]): DoFn[T, U] =
+    new SideOutputFn[T, U] {
+      val g = ClosureCleaner(f) // defeat closure
+      @ProcessElement
+      private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
+        val i = g(c.element(), sideOutputContext(c)).toIterator
+        while (i.hasNext) c.output(i.next())
+      }
+    }
 
 }

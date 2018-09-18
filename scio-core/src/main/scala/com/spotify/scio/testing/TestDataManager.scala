@@ -30,12 +30,11 @@ private[scio] class TestInput(val m: Map[String, Iterable[_]]) {
 
   def apply[T](io: ScioIO[T]): Iterable[T] = {
     val key = io.testId
-    require(
-      m.contains(key),
-      s"Missing test input: $key, available: ${m.keys.mkString("[", ", ", "]")}")
+    require(m.contains(key),
+            s"Missing test input: $key, available: ${m.keys.mkString("[", ", ", "]")}")
     require(!s.contains(key),
-      s"There already exists test input for $key, currently " +
-        s"registered inputs: ${s.mkString("[", ", ", "]")}")
+            s"There already exists test input for $key, currently " +
+              s"registered inputs: ${s.mkString("[", ", ", "]")}")
     s.add(key)
     m(key).asInstanceOf[Iterable[T]]
   }
@@ -53,12 +52,11 @@ private[scio] class TestOutput(val m: Map[String, SCollection[_] => Unit]) {
   def apply[T](io: ScioIO[T]): SCollection[T] => Unit = {
     // TODO: support Materialize outputs, maybe Materialized[T]?
     val key = io.testId
-    require(
-      m.contains(key),
-      s"Missing test output: $key, available: ${m.keys.mkString("[", ", ", "]")}")
+    require(m.contains(key),
+            s"Missing test output: $key, available: ${m.keys.mkString("[", ", ", "]")}")
     require(!s.contains(key),
-      s"There already exists test output for $key, currently " +
-        s"registered outputs: ${s.mkString("[", ", ", "]")}")
+            s"There already exists test output for $key, currently " +
+              s"registered outputs: ${s.mkString("[", ", ", "]")}")
     s.add(key)
     m(key)
   }
@@ -72,9 +70,8 @@ private[scio] class TestOutput(val m: Map[String, SCollection[_] => Unit]) {
 private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {
   val s: MSet[DistCacheIO[_]] = MSet.empty
   def apply[T](key: DistCacheIO[T]): () => T = {
-    require(
-      m.contains(key),
-      s"Missing test dist cache: $key, available: ${m.keys.mkString("[", ", ", "]")}")
+    require(m.contains(key),
+            s"Missing test dist cache: $key, available: ${m.keys.mkString("[", ", ", "]")}")
     s.add(key)
     m(key).asInstanceOf[() => T]
   }
@@ -97,11 +94,11 @@ private[scio] object TestDataManager {
     m(key)
   }
 
-  def getInput(testId: String)
-  : TestInput = getValue(testId, inputs, "reading input")
+  def getInput(testId: String): TestInput =
+    getValue(testId, inputs, "reading input")
 
-  def getOutput(testId: String)
-  : TestOutput = getValue(testId, outputs, "writing output")
+  def getOutput(testId: String): TestOutput =
+    getValue(testId, outputs, "writing output")
 
   def getDistCache(testId: String): TestDistCache =
     getValue(testId, distCaches, "using dist cache")
@@ -140,5 +137,6 @@ private[scio] object TestDataManager {
 case class DistCacheIO[T](uri: String)
 
 object DistCacheIO {
-  def apply[T](uris: Seq[String]): DistCacheIO[T] = DistCacheIO(uris.mkString("\t"))
+  def apply[T](uris: Seq[String]): DistCacheIO[T] =
+    DistCacheIO(uris.mkString("\t"))
 }

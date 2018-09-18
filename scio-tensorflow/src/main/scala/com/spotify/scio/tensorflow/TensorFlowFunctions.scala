@@ -48,7 +48,6 @@ import scala.reflect.ClassTag
 
 import com.spotify.scio.coders.Coder
 
-
 private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
   fetchOp: Seq[String],
   inFn: T => Map[String, Tensor[_]],
@@ -183,11 +182,10 @@ private[tensorflow] class PredictSCollectionFunctions[T: ClassTag](
    *                 ownership of the [[org.tensorflow.Tensor Tensor]]s.
    */
   def predict[V: Coder, W](savedModelUri: String,
-                              fetchOps: Seq[String],
-                              options: TensorFlowModel.Options)(inFn: T => Map[String, Tensor[_]])(
+                           fetchOps: Seq[String],
+                           options: TensorFlowModel.Options)(inFn: T => Map[String, Tensor[_]])(
     outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
     self.parDo(new SavedBundlePredictDoFn[T, V](savedModelUri, options, fetchOps, inFn, outFn))
-
 }
 
 class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
@@ -212,8 +210,7 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
    * along with  `org.tensorflow.metadata.v0.Schema`.
    * @group output
    */
-  def saveAsTfExampleFile(path: String, schema: Schema)
-  : Future[Tap[Example]] = {
+  def saveAsTfExampleFile(path: String, schema: Schema): Future[Tap[Example]] = {
     this.saveAsTfExampleFile(
       path,
       schema,
@@ -245,7 +242,7 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
       TFExampleSCollectionFunctions
         .saveExampleMetadata(self.context.parallelize(Some(schema)), schemaPath)
     }
-    val param = TFExampleIO.WriteParam(suffix,compression, numShards)
+    val param = TFExampleIO.WriteParam(suffix, compression, numShards)
     self.asInstanceOf[SCollection[Example]].write(TFExampleIO(path))(param)
   }
 
@@ -255,11 +252,11 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
    * @param schemaPath optional path to save infered schema
    * @return A singleton `SCollection` containing the schema
    */
-  def inferExampleMetadata(schemaPath: String = null)
-  : SCollection[Schema] = {
+  def inferExampleMetadata(schemaPath: String = null): SCollection[Schema] = {
     val result = examplesToFeatures(self.asInstanceOf[SCollection[Example]])
       .groupBy(_ => ())
-      .values.map(features => Schema.newBuilder().addAllFeature(features.asJava).build())
+      .values
+      .map(features => Schema.newBuilder().addAllFeature(features.asJava).build())
     if (schemaPath != null) {
       TFExampleSCollectionFunctions.saveExampleMetadata(result, schemaPath)
     }
@@ -272,46 +269,52 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
     val countSI = examples.count.asSingletonSideInput
     examples
       .flatMap(_.getFeatures.getFeatureMap.asScala)
-      .map { case (name, feature) =>
-        feature.getKindCase match {
-          case KindCase.BYTES_LIST =>
-            ((name, FeatureType.BYTES), feature.getBytesList.getValueCount)
-          case KindCase.FLOAT_LIST =>
-            ((name, FeatureType.FLOAT), feature.getFloatList.getValueCount)
-          case KindCase.INT64_LIST =>
-            ((name, FeatureType.INT), feature.getInt64List.getValueCount)
-          case KindCase.KIND_NOT_SET =>
-            sys.error(s"kind must be set - feature is ${feature.toString}")
-        }
+      .map {
+        case (name, feature) =>
+          feature.getKindCase match {
+            case KindCase.BYTES_LIST =>
+              ((name, FeatureType.BYTES), feature.getBytesList.getValueCount)
+            case KindCase.FLOAT_LIST =>
+              ((name, FeatureType.FLOAT), feature.getFloatList.getValueCount)
+            case KindCase.INT64_LIST =>
+              ((name, FeatureType.INT), feature.getInt64List.getValueCount)
+            case KindCase.KIND_NOT_SET =>
+              sys.error(s"kind must be set - feature is ${feature.toString}")
+          }
       }
       .aggregateByKey(MultiAggregator((Aggregator.max[Int], Aggregator.min[Int], Aggregator.size)))
       .withSideInputs(countSI)
-      .map { case (((featureName, featureType), (max, min, size)), ctx) =>
-        val count = ctx(countSI)
-        val builder = Feature.newBuilder()
-          .setName(featureName)
-          .setType(featureType)
-        if (max == min && size == count) {
-          // This is a fixed length feature, if:
-          // * length of the feature list is constant
-          // * feature list was present in all features
+      .map {
+        case (((featureName, featureType), (max, min, size)), ctx) =>
+          val count = ctx(countSI)
+          val builder = Feature
+            .newBuilder()
+            .setName(featureName)
+            .setType(featureType)
+          if (max == min && size == count) {
+            // This is a fixed length feature, if:
+            // * length of the feature list is constant
+            // * feature list was present in all features
 
-          // Presence in all the features is required for Example parsing logic in TensorFlow
-          val shapeBuilder = FixedShape.newBuilder()
-          if (max > 1) {
-            // No need to set dim for scalars
-            shapeBuilder.addDim(FixedShape.Dim.newBuilder().setSize(max))
+            // Presence in all the features is required for Example parsing logic in TensorFlow
+            val shapeBuilder = FixedShape.newBuilder()
+            if (max > 1) {
+              // No need to set dim for scalars
+              shapeBuilder.addDim(FixedShape.Dim.newBuilder().setSize(max))
+            }
+            builder.setShape(shapeBuilder)
+          } else {
+            // Var length feature
+            builder.setValueCount(ValueCount.newBuilder().setMin(min).setMax(max))
           }
-          builder.setShape(shapeBuilder)
-        } else {
-          // Var length feature
-          builder.setValueCount(ValueCount.newBuilder().setMin(min).setMax(max))
-        }
-        builder.setPresence(FeaturePresence.newBuilder()
-          .setMinCount(size)
-          .setMinFraction(size.toFloat/count))
-        builder.build()
-      }.toSCollection
+          builder.setPresence(
+            FeaturePresence
+              .newBuilder()
+              .setMinCount(size)
+              .setMinFraction(size.toFloat / count))
+          builder.build()
+      }
+      .toSCollection
   }
   // scalastyle:on method.length
 }
@@ -321,7 +324,8 @@ private object TFExampleSCollectionFunctions {
     if (!schema.context.isTest) {
       schema.map { s =>
         val d = FileSystems.matchNewResource(schemaPath, false)
-        val chnnl = Channels.newOutputStream(FileSystems.create(d, MimeTypes.BINARY))
+        val chnnl =
+          Channels.newOutputStream(FileSystems.create(d, MimeTypes.BINARY))
         try {
           s.writeTo(chnnl)
         } finally {
@@ -361,8 +365,7 @@ class SeqTFExampleSCollectionFunctions[T <: Example](@transient val self: SColle
    *
    * @group output
    */
-  def saveAsTfExampleFile(path: String, schema: Schema)
-  : Future[Tap[Example]] = {
+  def saveAsTfExampleFile(path: String, schema: Schema): Future[Tap[Example]] = {
     this.saveAsTfExampleFile(
       path,
       schema,

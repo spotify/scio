@@ -44,8 +44,10 @@ object GameStats {
 
   // The schemas for the BigQuery tables to write output to are defined as annotated case classes
   @BigQueryType.toTable
-  case class TeamScoreSums(team: String, total_score: Int,
-                           window_start: String, processing_time: String)
+  case class TeamScoreSums(team: String,
+                           total_score: Int,
+                           window_start: String,
+                           processing_time: String)
   @BigQueryType.toTable
   case class AvgSessionLength(mean_duration: Double, window_start: String)
 
@@ -58,8 +60,10 @@ object GameStats {
     val exampleUtils = new ExampleUtils(sc.options)
 
     // Date formatter for full timestamp
-    def fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
-      .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
+    def fmt =
+      DateTimeFormat
+        .forPattern("yyyy-MM-dd HH:mm:ss.SSS")
+        .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
     // Duration in minutes for windowing of user and team score sums, defaults to 1 hour
     val fixedWindowDuration = args.int("fixedWindowDuration", 60)
     // Duration in minutes for length of inactivity after which to start a session, defaults to 5m
@@ -68,19 +72,21 @@ object GameStats {
     val userActivityWindowDuration = args.int("userActivityWindowDuration", 30)
 
     // Read streaming events from PubSub topic, using ms of events as their ID
-    val rawEvents = sc.pubsubTopic[String](args("topic"), idAttribute = "timestamp_ms")
+    val rawEvents = sc
+      .pubsubTopic[String](args("topic"), idAttribute = "timestamp_ms")
       // Parse input as a `GameActionInfo` event
       .flatMap(UserScore.parseEvent)
 
     // Change each event into a tuple of: user, and that user's score
     val userEvents = rawEvents.map(i => (i.user, i.score))
     // Window user scores over a fixed length of time
-    val userScores = userEvents.withFixedWindows(Duration.standardMinutes(fixedWindowDuration))
+    val userScores =
+      userEvents.withFixedWindows(Duration.standardMinutes(fixedWindowDuration))
     // Calculate users with scores high enough to be anomalous, to remove from users later
     val spammyUsers = calculateSpammyUsers(userScores).asMapSideInput
 
     rawEvents
-      // Window over a fixed length of time
+    // Window over a fixed length of time
       .withFixedWindows(Duration.standardMinutes(fixedWindowDuration))
       // Convert to `SCollectionWithSideInput` to use side input at same time as `SCollection` entry
       .withSideInputs(spammyUsers)
@@ -107,24 +113,30 @@ object GameStats {
       .saveAsTypedBigQuery(args("output") + "_team")
 
     userEvents
-      // Window over a variable length of time - sessions end after sessionGap minutes no activity
-      .withSessionWindows(
-        Duration.standardMinutes(sessionGap),
-        options = WindowOptions(timestampCombiner = TimestampCombiner.END_OF_WINDOW))
+    // Window over a variable length of time - sessions end after sessionGap minutes no activity
+      .withSessionWindows(Duration.standardMinutes(sessionGap),
+                          options =
+                            WindowOptions(timestampCombiner = TimestampCombiner.END_OF_WINDOW))
       // Get all distinct users
-      .keys.distinct
+      .keys
+      .distinct
       .withWindow[IntervalWindow]
       // Get duration of all sessions in minutes, discard user info
-      .map { case (_, w) =>
-        new Duration(w.start(), w.end()).toPeriod().toStandardMinutes.getMinutes
+      .map {
+        case (_, w) =>
+          new Duration(w.start(), w.end())
+            .toPeriod()
+            .toStandardMinutes
+            .getMinutes
       }
       // Find the mean value for user session length durations in a fixed time window
       .withFixedWindows(Duration.standardMinutes(userActivityWindowDuration))
       .mean
       .withWindow[IntervalWindow]
-      .map { case (mean, w) =>
-        // Convert data on session length to `AvgSessionLength` case class, for BigQuery storage
-        AvgSessionLength(mean, fmt.print(w.start()))
+      .map {
+        case (mean, w) =>
+          // Convert data on session length to `AvgSessionLength` case class, for BigQuery storage
+          AvgSessionLength(mean, fmt.print(w.start()))
       }
       // Save to the BigQuery table defined by "output" + "_sessions" suffix
       .saveAsTypedBigQuery(args("output") + "_sessions")
@@ -142,12 +154,13 @@ object GameStats {
     // Average of all user scores
     val globalMeanScore = sumScores.values.mean
     sumScores
-      // Cross product of global mean and user scores,
-      // effectively appending global mean to each (user, score) tuple.
+    // Cross product of global mean and user scores,
+    // effectively appending global mean to each (user, score) tuple.
       .cross(globalMeanScore)
-      .filter { case ((_, score), gmc) =>
-        // Filter keeps users who have a score higher than 2.5x the average score
-        score > (gmc * 2.5)
+      .filter {
+        case ((_, score), gmc) =>
+          // Filter keeps users who have a score higher than 2.5x the average score
+          score > (gmc * 2.5)
       }
       // Keys are the (user, sumScore) tuples
       .keys

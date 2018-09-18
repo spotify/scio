@@ -20,7 +20,6 @@ package com.spotify.scio
 import scala.language.implicitConversions
 import com.spotify.scio.values._
 
-
 /**
  * Main package for Avro APIs. Import all.
  *

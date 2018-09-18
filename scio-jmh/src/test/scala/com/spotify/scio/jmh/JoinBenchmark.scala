@@ -73,7 +73,10 @@ class JoinBenchmark {
 
   def forYield(as: JIterable[Int], bs: JIterable[Int], c: Context[(Int, Int)]): Unit = {
     val xs: TraversableOnce[(Int, Int)] =
-      for (a <- as.asScala.iterator; b <- bs.asScala.iterator) yield (a, b)
+      for {
+        a <- as.asScala.iterator
+        b <- bs.asScala.iterator
+      } yield (a, b)
     val i = xs.toIterator
     while (i.hasNext) c.output(i.next())
   }
@@ -223,7 +226,7 @@ class JoinBenchmark {
 }
 
 private class CartesianIterator[A, B](as: JIterable[A], bs: JIterable[B])
-  extends AbstractIterator[(A, B)] {
+    extends AbstractIterator[(A, B)] {
   private val asi = as.iterator()
   private var bsi = bs.iterator()
   private var a: A = _
@@ -236,7 +239,7 @@ private class CartesianIterator[A, B](as: JIterable[A], bs: JIterable[B])
 
   override def computeNext(): (A, B) = {
     if (!bsi.hasNext) {
-      if (!asi.hasNext)  {
+      if (!asi.hasNext) {
         endOfData()
       } else {
         a = asi.next()

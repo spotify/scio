@@ -32,16 +32,20 @@ import scala.concurrent.Future
  */
 package object cassandra {
 
-  case class CassandraOptions(keyspace: String, table: String, cql: String,
-                              seedNodeHost: String, seedNodePort: Int = -1,
-                              username: String = null, password: String = null)
+  case class CassandraOptions(keyspace: String,
+                              table: String,
+                              cql: String,
+                              seedNodeHost: String,
+                              seedNodePort: Int = -1,
+                              username: String = null,
+                              password: String = null)
 
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Cassandra
    * methods.
    */
-  implicit class CassandraSCollection[T](@transient val self: SCollection[T])
-    extends Serializable {
+  implicit class CassandraSCollection[T](@transient val self: SCollection[T]) extends Serializable {
+
     /**
      * Save this SCollection as a Cassandra table.
      *
@@ -58,8 +62,8 @@ package object cassandra {
      * @param parallelism number of concurrent bulk writers, default to number of Cassandra nodes
      * @param f function to convert input data to values for the CQL statement
      */
-    def saveAsCassandra(opts: CassandraOptions, parallelism: Int = 0)
-                       (f: T => Seq[Any])(implicit coder: Coder[T]): Future[Tap[T]] =
+    def saveAsCassandra(opts: CassandraOptions, parallelism: Int = 0)(f: T => Seq[Any])(
+      implicit coder: Coder[T]): Future[Tap[T]] =
       self.write(CassandraIO[T](opts, parallelism))(CassandraIO.WriteParam(f))
-    }
+  }
 }

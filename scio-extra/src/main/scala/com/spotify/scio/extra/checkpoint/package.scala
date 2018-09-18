@@ -53,8 +53,7 @@ package object checkpoint {
      * @param fn result of this arbitrary => [[com.spotify.scio.values.SCollection SCollection]]
      *           flow is what is checkpointed
      */
-    def checkpoint[T: Coder](fileOrPath: String)
-                               (fn: => SCollection[T]): SCollection[T] = {
+    def checkpoint[T: Coder](fileOrPath: String)(fn: => SCollection[T]): SCollection[T] = {
       FileSystems.setDefaultPipelineOptions(self.options)
       val path = if (self.isTest) {
         fileOrPath

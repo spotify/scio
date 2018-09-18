@@ -85,16 +85,16 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
 
   property("round trip required nested types") {
     forAll { r1: RequiredNested =>
-      val r2 = BigQueryType.fromTableRow[RequiredNested](
-        BigQueryType.toTableRow[RequiredNested](r1))
+      val r2 =
+        BigQueryType.fromTableRow[RequiredNested](BigQueryType.toTableRow[RequiredNested](r1))
       RecordMatcher[RequiredNested](r1, r2) shouldBe true
     }
   }
 
   property("round trip optional nested types") {
     forAll { r1: OptionalNested =>
-      val r2 = BigQueryType.fromTableRow[OptionalNested](
-        BigQueryType.toTableRow[OptionalNested](r1))
+      val r2 =
+        BigQueryType.fromTableRow[OptionalNested](BigQueryType.toTableRow[OptionalNested](r1))
       RecordMatcher[OptionalNested](r1, r2) shouldBe true
     }
   }
@@ -111,8 +111,8 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
 
   property("round trip repeated nested types") {
     forAll { r1: RepeatedNested =>
-      val r2 = BigQueryType.fromTableRow[RepeatedNested](
-        BigQueryType.toTableRow[RepeatedNested](r1))
+      val r2 =
+        BigQueryType.fromTableRow[RepeatedNested](BigQueryType.toTableRow[RepeatedNested](r1))
       RecordMatcher[RepeatedNested](r1, r2) shouldBe true
     }
   }

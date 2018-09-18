@@ -24,7 +24,9 @@ class SCollectionWithHotKeyFanoutTest extends PipelineSpec {
 
   "SCollectionWithHotKeyFanout" should "support aggregateByKey()" in {
     runWithContext { sc =>
-      val p = sc.parallelize(1 to 100).map(("a", _)) ++ sc.parallelize(1 to 10).map(("b", _))
+      val p = sc.parallelize(1 to 100).map(("a", _)) ++ sc
+        .parallelize(1 to 10)
+        .map(("b", _))
       val pa = p.withHotKeyFanout(10)
       val pb = p.withHotKeyFanout(_.hashCode)
       val r1a = pa.aggregateByKey(0.0)(_ + _, _ + _)
@@ -33,13 +35,14 @@ class SCollectionWithHotKeyFanoutTest extends PipelineSpec {
       val r2b = pb.aggregateByKey(Aggregator.max[Int])
       val r3a = pa.aggregateByKey(Aggregator.immutableSortedReverseTake[Int](5))
       val r3b = pb.aggregateByKey(Aggregator.immutableSortedReverseTake[Int](5))
-      r1a should containInAnyOrder (Seq(("a", 5050.0), ("b", 55.0)))
-      r1b should containInAnyOrder (Seq(("a", 5050.0), ("b", 55.0)))
-      r2a should containInAnyOrder (Seq(("a", 100), ("b", 10)))
-      r2b should containInAnyOrder (Seq(("a", 100), ("b", 10)))
-      val r3expected = Seq(("a", Seq(100, 99, 98, 97, 96)), ("b", Seq(10, 9, 8, 7, 6)))
-      r3a should containInAnyOrder (r3expected)
-      r3b should containInAnyOrder (r3expected)
+      r1a should containInAnyOrder(Seq(("a", 5050.0), ("b", 55.0)))
+      r1b should containInAnyOrder(Seq(("a", 5050.0), ("b", 55.0)))
+      r2a should containInAnyOrder(Seq(("a", 100), ("b", 10)))
+      r2b should containInAnyOrder(Seq(("a", 100), ("b", 10)))
+      val r3expected =
+        Seq(("a", Seq(100, 99, 98, 97, 96)), ("b", Seq(10, 9, 8, 7, 6)))
+      r3a should containInAnyOrder(r3expected)
+      r3b should containInAnyOrder(r3expected)
     }
   }
 
@@ -47,10 +50,13 @@ class SCollectionWithHotKeyFanoutTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(1 to 100).map(("a", _))
       val p2 = sc.parallelize(1 to 10).map(("b", _))
-      val r1 = (p1 ++ p2).withHotKeyFanout(10).combineByKey(_.toDouble)(_ + _)(_ + _)
-      val r2 = (p1 ++ p2).withHotKeyFanout(_.hashCode).combineByKey(_.toDouble)(_ + _)(_ + _)
-      r1 should containInAnyOrder (Seq(("a", 5050.0), ("b", 55.0)))
-      r2 should containInAnyOrder (Seq(("a", 5050.0), ("b", 55.0)))
+      val r1 =
+        (p1 ++ p2).withHotKeyFanout(10).combineByKey(_.toDouble)(_ + _)(_ + _)
+      val r2 = (p1 ++ p2)
+        .withHotKeyFanout(_.hashCode)
+        .combineByKey(_.toDouble)(_ + _)(_ + _)
+      r1 should containInAnyOrder(Seq(("a", 5050.0), ("b", 55.0)))
+      r2 should containInAnyOrder(Seq(("a", 5050.0), ("b", 55.0)))
     }
   }
 
@@ -62,10 +68,10 @@ class SCollectionWithHotKeyFanoutTest extends PipelineSpec {
       val r2 = (p1 ++ p2).withHotKeyFanout(_.hashCode).foldByKey(0)(_ + _)
       val r3 = (p1 ++ p2).withHotKeyFanout(10).foldByKey
       val r4 = (p1 ++ p2).withHotKeyFanout(_.hashCode).foldByKey
-      r1 should containInAnyOrder (Seq(("a", 5050), ("b", 55)))
-      r2 should containInAnyOrder (Seq(("a", 5050), ("b", 55)))
-      r3 should containInAnyOrder (Seq(("a", 5050), ("b", 55)))
-      r4 should containInAnyOrder (Seq(("a", 5050), ("b", 55)))
+      r1 should containInAnyOrder(Seq(("a", 5050), ("b", 55)))
+      r2 should containInAnyOrder(Seq(("a", 5050), ("b", 55)))
+      r3 should containInAnyOrder(Seq(("a", 5050), ("b", 55)))
+      r4 should containInAnyOrder(Seq(("a", 5050), ("b", 55)))
     }
   }
 
@@ -74,8 +80,8 @@ class SCollectionWithHotKeyFanoutTest extends PipelineSpec {
       val p = sc.parallelize(Seq(("a", 1), ("b", 1), ("b", 2), ("c", 1), ("c", 2), ("c", 3)))
       val r1 = p.withHotKeyFanout(10).reduceByKey(_ + _)
       val r2 = p.withHotKeyFanout(_.hashCode).reduceByKey(_ + _)
-      r1 should containInAnyOrder (Seq(("a", 1), ("b", 3), ("c", 6)))
-      r2 should containInAnyOrder (Seq(("a", 1), ("b", 3), ("c", 6)))
+      r1 should containInAnyOrder(Seq(("a", 1), ("b", 3), ("c", 6)))
+      r2 should containInAnyOrder(Seq(("a", 1), ("b", 3), ("c", 6)))
     }
   }
 
@@ -84,10 +90,9 @@ class SCollectionWithHotKeyFanoutTest extends PipelineSpec {
       val p = sc.parallelize(List(("a", 1), ("b", 2), ("b", 2)) ++ (1 to 100).map(("c", _)))
       val r1 = p.withHotKeyFanout(10).sumByKey
       val r2 = p.withHotKeyFanout(_.hashCode).sumByKey
-      r1 should containInAnyOrder (Seq(("a", 1), ("b", 4), ("c", 5050)))
-      r2 should containInAnyOrder (Seq(("a", 1), ("b", 4), ("c", 5050)))
+      r1 should containInAnyOrder(Seq(("a", 1), ("b", 4), ("c", 5050)))
+      r2 should containInAnyOrder(Seq(("a", 1), ("b", 4), ("c", 5050)))
     }
   }
-
 
 }

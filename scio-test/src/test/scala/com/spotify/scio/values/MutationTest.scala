@@ -23,7 +23,9 @@ class MutationTest extends PipelineSpec {
   "BigDecimal serialization" should "not cause mutation exceptions" in {
     runWithContext { sc =>
       val expected = (1 to 10).map(_ * 2).toList
-      val result = sc.parallelize(1 to 10).map(BigDecimal(_))
+      val result = sc
+        .parallelize(1 to 10)
+        .map(BigDecimal(_))
         .map(_ * 2)
         .map(_.toInt)
       result should containInAnyOrder(expected)

@@ -32,7 +32,7 @@ class FileDownloadDoFnTest extends PipelineSpec {
     val files = createFiles(tmpDir, 100)
     runWithContext { sc =>
       val p = sc.parallelize(files.map(_.toUri)).flatMapFile(fn)
-      p.keys should containInAnyOrder ((1 to 100).map(_.toString))
+      p.keys should containInAnyOrder((1 to 100).map(_.toString))
       p.values.distinct should forAll { f: Path =>
         !Files.exists(f)
       }
@@ -46,7 +46,7 @@ class FileDownloadDoFnTest extends PipelineSpec {
     val files = createFiles(tmpDir, 100)
     runWithContext { sc =>
       val p = sc.parallelize(files.map(_.toUri)).flatMapFile(fn, 10, false)
-      p.keys should containInAnyOrder ((1 to 100).map(_.toString))
+      p.keys should containInAnyOrder((1 to 100).map(_.toString))
       p.values.distinct should forAll { f: Path =>
         !Files.exists(f)
       }
@@ -60,7 +60,7 @@ class FileDownloadDoFnTest extends PipelineSpec {
     val files = createFiles(tmpDir, 100)
     runWithContext { sc =>
       val p = sc.parallelize(files.map(_.toUri)).flatMapFile(fn, 10, true)
-      p.keys should containInAnyOrder ((1 to 100).map(_.toString))
+      p.keys should containInAnyOrder((1 to 100).map(_.toString))
       p.values.distinct should forAll { f: Path =>
         val r = Files.exists(f)
         if (r) {
@@ -80,6 +80,7 @@ class FileDownloadDoFnTest extends PipelineSpec {
       file
     }
 
-  private def fn(input: Path) = Files.readAllLines(input).asScala.map((_, input))
+  private def fn(input: Path) =
+    Files.readAllLines(input).asScala.map((_, input))
 
 }

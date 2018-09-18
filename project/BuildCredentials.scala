@@ -25,9 +25,11 @@ object BuildCredentials {
 
   private val CREDENTIAL_ENV_VAR = "GOOGLE_APPLICATION_CREDENTIALS"
   private val CLOUDSDK_CONFIG_DIRECTORY = "gcloud"
-  private val WELL_KNOWN_CREDENTIALS_FILE = "application_default_credentials.json"
+  private val WELL_KNOWN_CREDENTIALS_FILE =
+    "application_default_credentials.json"
 
-  def exists: Boolean = runningUsingEnvironmentVariable || runningUsingWellKnownFile
+  def exists: Boolean =
+    runningUsingEnvironmentVariable || runningUsingWellKnownFile
 
   private def runningUsingEnvironmentVariable: Boolean = {
     val credentialsPath = sys.env.getOrElse(CREDENTIAL_ENV_VAR, null)
@@ -48,10 +50,12 @@ object BuildCredentials {
       val configPath = new File(sys.props.getOrElse("user.home", ""), ".config")
       new File(configPath, CLOUDSDK_CONFIG_DIRECTORY)
     }
-    val credentialFilePath = new File(cloudConfigPath, WELL_KNOWN_CREDENTIALS_FILE)
+    val credentialFilePath =
+      new File(cloudConfigPath, WELL_KNOWN_CREDENTIALS_FILE)
     fileExists(credentialFilePath)
   }
 
-  private def fileExists(file: File): Boolean = file.exists() && !file.isDirectory
+  private def fileExists(file: File): Boolean =
+    file.exists() && !file.isDirectory
 
 }

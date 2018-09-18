@@ -22,11 +22,10 @@ import scala.reflect.macros._
 
 private[coders] object CoderMacros {
 
-
   /**
-  * Generate a coder which does not serialize the schema and relies exclusively on types.
-  */
-  def staticInvokeCoder[T <: SpecificRecordBase : c.WeakTypeTag](c: blackbox.Context): c.Tree = {
+   * Generate a coder which does not serialize the schema and relies exclusively on types.
+   */
+  def staticInvokeCoder[T <: SpecificRecordBase: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
     import c.universe._
     val wtt = weakTypeOf[T]
     val companioned = wtt.typeSymbol
@@ -47,19 +46,23 @@ private[coders] object CoderMacros {
     scala.collection.mutable.Set.empty
 
   // scalastyle:off method.length
-  def issueFallbackWarning[T: c.WeakTypeTag](
-    c: whitebox.Context)(lp: c.Expr[shapeless.LowPriority]): c.Tree = {
+  def issueFallbackWarning[T: c.WeakTypeTag](c: whitebox.Context)(
+    lp: c.Expr[shapeless.LowPriority]): c.Tree = {
     import c.universe._
     val wtt = weakTypeOf[T]
     val TypeRef(pre, sym, args) = wtt
 
     val typeName = sym.name
-    val params = args.headOption.map { _ => args.mkString("[", ",", "]") }.getOrElse("")
+    val params = args.headOption
+      .map { _ =>
+        args.mkString("[", ",", "]")
+      }
+      .getOrElse("")
     val fullType = typeName + params
 
     val toReport = (c.enclosingPosition.toString -> wtt.toString)
     val alreadyReported = reported.contains(toReport)
-    if(!alreadyReported) reported += toReport
+    if (!alreadyReported) reported += toReport
 
     def shortMessage =
       s"""
@@ -115,9 +118,9 @@ private[coders] object CoderMacros {
     import c.universe._
     val wtt = weakTypeOf[T]
 
-    if(wtt <:< typeOf[Iterable[_]]) {
+    if (wtt <:< typeOf[Iterable[_]]) {
       c.abort(c.enclosingPosition,
-        s"Automatic coder derivation can't derive a Coder for $wtt <: Seq")
+              s"Automatic coder derivation can't derive a Coder for $wtt <: Seq")
     }
 
     val magTree = magnolia.Magnolia.gen[T](c)
@@ -135,8 +138,10 @@ private[coders] object CoderMacros {
       new Transformer {
         override def transform(tree: Tree) = {
           tree match {
-            case Apply(AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps), List(typeName, isObject, isValueClass, params, annotations)) =>
-              Apply(AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps), List(typeName, isObject, isValueClass, params, q"""Array()"""))
+            case Apply(AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps),
+                       List(typeName, isObject, isValueClass, params, annotations)) =>
+              Apply(AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps),
+                    List(typeName, isObject, isValueClass, params, q"""Array()"""))
             case q"""new magnolia.CaseClass[$tc, $t]($typeName, $isObject, $isValueClass, $params, $annotations){ $body }""" =>
               q"""_root_.magnolia.CaseClass[$tc, $t]($typeName, $isObject, $isValueClass, $params, Array()){ $body }"""
             case q"com.spotify.scio.coders.Coder.dispatch(new magnolia.SealedTrait($name, $subtypes, $annotations))" =>
@@ -152,14 +157,16 @@ private[coders] object CoderMacros {
     val coder = removeAnnotations.transform(getLazyVal)
 
     val isPrivateContructor =
-      wtt.decls.collect {
-        case m: MethodSymbol if m.isConstructor =>
-          m.isPrivate
-      }.headOption.getOrElse(false)
-
+      wtt.decls
+        .collect {
+          case m: MethodSymbol if m.isConstructor =>
+            m.isPrivate
+        }
+        .headOption
+        .getOrElse(false)
 
     val tree: c.Tree =
-      if(isPrivateContructor) {
+      if (isPrivateContructor) {
         // Magnolia does not support classes with a private constructor.
         // Workaround the limitation by usong a fallback in that case
         q"""_root_.com.spotify.scio.coders.Coder.fallback[$wtt](null)"""

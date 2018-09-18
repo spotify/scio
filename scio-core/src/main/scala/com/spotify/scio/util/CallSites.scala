@@ -40,11 +40,16 @@ private[scio] object CallSites {
     e.getClassName == scioNs + "values.SCollectionImpl" && e.getMethodName == "transform"
 
   def getAppName: String = {
-    Thread.currentThread().getStackTrace
+    Thread
+      .currentThread()
+      .getStackTrace
       .drop(1)
       .find(e => isExternalClass(e.getClassName))
-      .map(_.getClassName).getOrElse("unknown")
-      .split("\\.").last.replaceAll("\\$$", "")
+      .map(_.getClassName)
+      .getOrElse("unknown")
+      .split("\\.")
+      .last
+      .replaceAll("\\$$", "")
   }
 
   /** Get a unique identifier for the current call site. */
@@ -66,8 +71,9 @@ private[scio] object CallSites {
 
     val pTransform = stack.indexWhere(isTransform)
     if (pTransform < pExt && pTransform > 0) {
-      val m = stack(pExt - 1).getMethodName  // method implemented with transform
-      val _p = stack.take(pTransform).indexWhere(e => e.getClassName.contains(m))
+      val m = stack(pExt - 1).getMethodName // method implemented with transform
+      val _p =
+        stack.take(pTransform).indexWhere(e => e.getClassName.contains(m))
       if (_p > 0) {
         pExt = _p
       }

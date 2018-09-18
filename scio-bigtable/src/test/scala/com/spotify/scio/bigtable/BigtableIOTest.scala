@@ -31,20 +31,20 @@ class BigtableIOTest extends ScioIOSpec {
     val xs = (1 to 100).map { x =>
       Row.newBuilder().setKey(ByteString.copyFromUtf8(x.toString)).build()
     }
-    testJobTestInput(xs)(
-      BigtableIO(projectId, instanceId, _))(_.bigtable(projectId, instanceId, _))
+    testJobTestInput(xs)(BigtableIO(projectId, instanceId, _))(_.bigtable(projectId, instanceId, _))
   }
 
   it should "work with output" in {
     val xs = (1 to 100).map { x =>
       val k = ByteString.copyFromUtf8(x.toString)
-      val m = Mutation.newBuilder().setSetCell(
-        SetCell.newBuilder().setValue(ByteString.copyFromUtf8(x.toString)))
+      val m = Mutation
+        .newBuilder()
+        .setSetCell(SetCell.newBuilder().setValue(ByteString.copyFromUtf8(x.toString)))
         .build()
       (k, Iterable(m))
     }
-    testJobTestOutput(xs)(
-      BigtableIO(projectId, instanceId, _))(_.saveAsBigtable(projectId, instanceId, _))
+    testJobTestOutput(xs)(BigtableIO(projectId, instanceId, _))(
+      _.saveAsBigtable(projectId, instanceId, _))
   }
 
 }

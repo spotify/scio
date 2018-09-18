@@ -26,7 +26,7 @@ import com.spotify.scio.io.Taps
 object TapsExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val taps = Taps()  // entry point to acquire taps
+    val taps = Taps() // entry point to acquire taps
 
     // extract Tap[T]s from two Future[Tap[T]]s
     val r = for {

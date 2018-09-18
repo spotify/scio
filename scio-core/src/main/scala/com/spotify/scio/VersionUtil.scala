@@ -56,7 +56,8 @@ private[scio] object VersionUtil {
       .buildGetRequest(new GenericUrl(url))
       .execute()
       .parseAs(classOf[java.util.List[Object]])
-    val latest = response.iterator().next().asInstanceOf[java.util.Map[String, AnyRef]]
+    val latest =
+      response.iterator().next().asInstanceOf[java.util.Map[String, AnyRef]]
     latest.get("tag_name").toString
   }.toOption
 
@@ -88,9 +89,8 @@ private[scio] object VersionUtil {
   def checkRunnerVersion(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Unit = {
     val name = runner.getSimpleName
     val version = ReleaseInfo.getReleaseInfo.getVersion
-    require(
-      version == BuildInfo.beamVersion,
-      s"Mismatched version for $name, expected: ${BuildInfo.beamVersion}, actual: $version")
+    require(version == BuildInfo.beamVersion,
+            s"Mismatched version for $name, expected: ${BuildInfo.beamVersion}, actual: $version")
   }
 
 }

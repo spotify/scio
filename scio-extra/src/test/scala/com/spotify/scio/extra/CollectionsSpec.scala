@@ -48,8 +48,10 @@ class CollectionsSpec extends PropertySpec {
 
   property("topByKey") {
     forAll(tupleLists, posInts) { (xs, num) =>
-      val maxExpected = xs.groupBy(_._1).mapValues(_.map(_._2).sorted.reverse.take(num).sorted)
-      val minExpected = xs.groupBy(_._1).mapValues(_.map(_._2).sorted.take(num).sorted)
+      val maxExpected =
+        xs.groupBy(_._1).mapValues(_.map(_._2).sorted.reverse.take(num).sorted)
+      val minExpected =
+        xs.groupBy(_._1).mapValues(_.map(_._2).sorted.take(num).sorted)
       def verify(actual: Map[String, Iterable[Int]], expected: Map[String, List[Int]]): Assertion =
         actual.mapValues(_.toList.sorted) shouldBe expected
       verify(xs.topByKey(num), maxExpected)

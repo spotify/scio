@@ -45,7 +45,9 @@ object TfIdf {
     // List files from the input path
     val uris = FileSystems
       .`match`(args.getOrElse("input", ExampleData.SHAKESPEARE_ALL))
-      .metadata().asScala.map(_.resourceId().toString)
+      .metadata()
+      .asScala
+      .map(_.resourceId().toString)
 
     // Read files as a collection of `(doc, line)` where doc is the URI of the file
     val uriToContent = args.getOrElse("mode", "union") match {
@@ -64,7 +66,8 @@ object TfIdf {
             // Read file with the `FileSystems` API inside a worker
             val rsrc = FileSystems.matchSingleFileSpec(uri).resourceId()
             val in = Channels.newInputStream(FileSystems.open(rsrc))
-            Source.fromInputStream(in)
+            Source
+              .fromInputStream(in)
               .getLines()
               .map((uri, _))
           }
@@ -73,8 +76,9 @@ object TfIdf {
     }
 
     computeTfIdf(uriToContent)
-      .map { case (t, (d, tfIdf)) =>
-        s"$t\t$d\t$tfIdf"
+      .map {
+        case (t, (d, tfIdf)) =>
+          s"$t\t$d\t$tfIdf"
       }
       .saveAsTextFile(args("output"))
 
@@ -82,37 +86,38 @@ object TfIdf {
   }
 
   // Compute TF-IDF from an input collection of `(doc, line)`
-  def computeTfIdf(uriToContent: SCollection[(String, String)])
-  : SCollection[(String, (String, Double))] = {
+  def computeTfIdf(
+    uriToContent: SCollection[(String, String)]): SCollection[(String, (String, Double))] = {
     // Split lines into terms as (doc, term)
-    val uriToWords = uriToContent.flatMap { case (uri, line) =>
-      line.split("\\W+").filter(_.nonEmpty).map(w => (uri, w.toLowerCase))
+    val uriToWords = uriToContent.flatMap {
+      case (uri, line) =>
+        line.split("\\W+").filter(_.nonEmpty).map(w => (uri, w.toLowerCase))
     }
 
     val uriToWordAndCount = uriToWords
-      // Count `(doc, terms)` occurrences to get `((doc, term), term-freq)`
-      .countByValue
-      // Remap tuple to key on doc, i.e. `(doc, (term, term-freq))`
+    // Count `(doc, terms)` occurrences to get `((doc, term), term-freq)`
+    .countByValue
+    // Remap tuple to key on doc, i.e. `(doc, (term, term-freq))`
       .map(t => (t._1._1, (t._1._2, t._2)))
 
     val wordToDf = uriToWords
-      // Compute unique `(doc, term)` pairs
-      .distinct
-      // Drop keys (`doc`) and keep values (`term`)
-      .values
-      // Count `term` occurrences to get `(term, doc-freq)`
-      .countByValue
-      // Cross product with unique number of `doc`s, or `N`
+    // Compute unique `(doc, term)` pairs
+    .distinct
+    // Drop keys (`doc`) and keep values (`term`)
+    .values
+    // Count `term` occurrences to get `(term, doc-freq)`
+    .countByValue
+    // Cross product with unique number of `doc`s, or `N`
       .cross(uriToContent.keys.distinct.count)
       // Compute `(term, DF)`
       .map { case ((t, df), numDocs) => (t, df.toDouble / numDocs) }
 
     uriToWords
-      // Drop values (`term`) and keep keys (`doc`)
-      .keys
-      // Count `doc` occurrences to get `(doc, doc-length)`
-      .countByValue
-      // Join with `(doc, (term, term-freq))` to get `(doc, (doc-length, (term, term-freq)))`
+    // Drop values (`term`) and keep keys (`doc`)
+    .keys
+    // Count `doc` occurrences to get `(doc, doc-length)`
+    .countByValue
+    // Join with `(doc, (term, term-freq))` to get `(doc, (doc-length, (term, term-freq)))`
       .join(uriToWordAndCount)
       // Compute `(term, (doc, TF))`
       .map { case (d, (dl, (t, tf))) => (t, (d, tf.toDouble / dl)) }

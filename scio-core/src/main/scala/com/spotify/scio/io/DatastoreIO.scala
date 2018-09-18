@@ -30,15 +30,19 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
   override type WriteP = Unit
 
   override def read(sc: ScioContext, params: ReadP): SCollection[Entity] =
-    sc.wrap(sc.applyInternal(
-      beam.DatastoreIO.v1().read()
-        .withProjectId(projectId)
-        .withNamespace(params.namespace)
-        .withQuery(params.query)))
+    sc.wrap(
+      sc.applyInternal(
+        beam.DatastoreIO
+          .v1()
+          .read()
+          .withProjectId(projectId)
+          .withNamespace(params.namespace)
+          .withQuery(params.query)))
 
   override def write(data: SCollection[Entity], params: WriteP): Future[Tap[Entity]] = {
-    data.asInstanceOf[SCollection[Entity]].applyInternal(
-      beam.DatastoreIO.v1.write.withProjectId(projectId))
+    data
+      .asInstanceOf[SCollection[Entity]]
+      .applyInternal(beam.DatastoreIO.v1.write.withProjectId(projectId))
     Future.failed(new NotImplementedError("Datastore future not implemented"))
   }
 

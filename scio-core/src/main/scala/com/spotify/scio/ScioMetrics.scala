@@ -29,12 +29,14 @@ object ScioMetrics {
 
   private def namespace[T: ClassTag]: String = {
     val cls = implicitly[ClassTag[T]].runtimeClass
-    val ns: Class[_] = if (classOf[Nothing] isAssignableFrom cls) this.getClass else cls
+    val ns: Class[_] =
+      if (classOf[Nothing] isAssignableFrom cls) this.getClass else cls
     ns.getCanonicalName.replaceAll("\\$$", "")
   }
 
   /** Create a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric. */
-  def counter(namespace: String, name: String): Counter = Metrics.counter(namespace, name)
+  def counter(namespace: String, name: String): Counter =
+    Metrics.counter(namespace, name)
 
   /**
    * Create a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric using `T` as namespace.
@@ -50,10 +52,12 @@ object ScioMetrics {
    * Create a new [[org.apache.beam.sdk.metrics.Distribution Distribution]] metric using `T` as
    * namespace. Default is "com.spotify.scio.ScioMetrics" if `T` is not specified.
    */
-  def distribution[T: ClassTag](name: String): Distribution = distribution(namespace[T], name)
+  def distribution[T: ClassTag](name: String): Distribution =
+    distribution(namespace[T], name)
 
   /** Create a new [[org.apache.beam.sdk.metrics.Gauge Gauge]] metric. */
-  def gauge(namespace: String, name: String): Gauge = Metrics.gauge(namespace, name)
+  def gauge(namespace: String, name: String): Gauge =
+    Metrics.gauge(namespace, name)
 
   /**
    * Create a new [[org.apache.beam.sdk.metrics.Gauge Gauge]] metric using `T` as namespace.

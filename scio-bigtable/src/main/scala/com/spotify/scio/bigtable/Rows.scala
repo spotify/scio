@@ -23,30 +23,47 @@ import com.google.protobuf.ByteString
 /** Helper methods for `Row`. */
 object Rows {
 
-  private def newCell(value: ByteString): Cell = Cell.newBuilder().setValue(value).build()
+  private def newCell(value: ByteString): Cell =
+    Cell.newBuilder().setValue(value).build()
 
   private def newCell(value: ByteString, timestampMicros: Long): Cell =
-    Cell.newBuilder().setValue(value).setTimestampMicros(timestampMicros).build()
+    Cell
+      .newBuilder()
+      .setValue(value)
+      .setTimestampMicros(timestampMicros)
+      .build()
 
-  private def newRow(key: ByteString, familyName: String, columnQualifier: ByteString,
+  private def newRow(key: ByteString,
+                     familyName: String,
+                     columnQualifier: ByteString,
                      cell: Cell): Row =
-    Row.newBuilder()
+    Row
+      .newBuilder()
       .setKey(key)
-      .addFamilies(Family.newBuilder()
-        .setName(familyName)
-        .addColumns(Column.newBuilder()
-          .setQualifier(columnQualifier)
-          .addCells(cell)))
+      .addFamilies(
+        Family
+          .newBuilder()
+          .setName(familyName)
+          .addColumns(
+            Column
+              .newBuilder()
+              .setQualifier(columnQualifier)
+              .addCells(cell)))
       .build()
 
   /** New `Row` with timestamp default to 0. */
-  def newRow(key: ByteString, familyName: String, columnQualifier: ByteString,
+  def newRow(key: ByteString,
+             familyName: String,
+             columnQualifier: ByteString,
              value: ByteString): Row =
     newRow(key, familyName, columnQualifier, newCell(value))
 
   /** New `Row`. */
-  def newRow(key: ByteString, familyName: String, columnQualifier: ByteString,
-             value: ByteString, timestampMicros: Long): Row =
+  def newRow(key: ByteString,
+             familyName: String,
+             columnQualifier: ByteString,
+             value: ByteString,
+             timestampMicros: Long): Row =
     newRow(key, familyName, columnQualifier, newCell(value, timestampMicros))
 
 }

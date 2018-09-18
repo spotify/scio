@@ -66,19 +66,20 @@ private[bigquery] object BigQueryPartitionUtil {
   }
 
   def latestQuery(bq: BigQueryClient, sqlQuery: String): String = {
-    val tables = extractTables(sqlQuery).filter(_._2.getTableId.endsWith("$LATEST"))
+    val tables =
+      extractTables(sqlQuery).filter(_._2.getTableId.endsWith("$LATEST"))
     if (tables.isEmpty) {
       sqlQuery
     } else {
       val overlaps = tables
         .map(t => getPartitions(bq, t._2))
         .reduce(_ intersect _)
-      require(
-        overlaps.nonEmpty,
-        "Cannot find latest common partition for " + tables.keys.mkString(", "))
+      require(overlaps.nonEmpty,
+              "Cannot find latest common partition for " + tables.keys.mkString(", "))
       val latest = overlaps.max
-      tables.foldLeft(sqlQuery) { case (q, (spec, _)) =>
-        q.replace(spec, spec.replace("$LATEST", latest))
+      tables.foldLeft(sqlQuery) {
+        case (q, (spec, _)) =>
+          q.replace(spec, spec.replace("$LATEST", latest))
       }
     }
   }

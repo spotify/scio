@@ -28,7 +28,8 @@ class ArrayMonoidTest extends FlatSpec with Matchers {
   val zero = mon.zero
   def nextArray: Array[Double] = Array.fill(dimension)(Random.nextDouble)
 
-  def plus(l: Array[Double], r: Array[Double]): Array[Double] = l.zip(r).map(p => p._1 + p._2)
+  def plus(l: Array[Double], r: Array[Double]): Array[Double] =
+    l.zip(r).map(p => p._1 + p._2)
 
   "ArrayMonoid" should "support plus" in {
     val l = nextArray
@@ -50,7 +51,8 @@ class ArrayMonoidTest extends FlatSpec with Matchers {
 
     mon.sumOption(zero +: xs).get shouldBe xs.reduce(plus)
     mon.sumOption(xs :+ zero).get shouldBe xs.reduce(plus)
-    mon.sumOption(xs.take(50) ++ Seq(zero) ++ xs.takeRight(50)).get shouldBe xs.reduce(plus)
+    mon.sumOption(xs.take(50) ++ Seq(zero) ++ xs.takeRight(50)).get shouldBe xs
+      .reduce(plus)
   }
 
 }

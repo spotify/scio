@@ -30,6 +30,7 @@ import scala.collection.JavaConverters._
  * distributed cache.
  */
 sealed trait DistCache[F] extends Serializable {
+
   /** Extract the underlying data. */
   def apply(): F
 }
@@ -83,7 +84,7 @@ object MockDistCache {
 private[scio] class DistCacheSingle[F](val uri: URI,
                                        val initFn: File => F,
                                        options: PipelineOptions)
-  extends FileDistCache[F](options) {
+    extends FileDistCache[F](options) {
   verifyUri(uri)
   override protected def init: F = initFn(prepareFiles(Seq(uri)).head)
 }
@@ -91,7 +92,7 @@ private[scio] class DistCacheSingle[F](val uri: URI,
 private[scio] class DistCacheMulti[F](val uris: Seq[URI],
                                       val initFn: Seq[File] => F,
                                       options: PipelineOptions)
-  extends FileDistCache[F](options) {
+    extends FileDistCache[F](options) {
   uris.foreach(verifyUri)
   override protected def init: F = initFn(prepareFiles(uris))
 }

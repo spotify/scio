@@ -29,10 +29,12 @@ object JavaConvertersExample {
     val output = args("output")
     val t: TextIO.TypedWrite[String, Void] = TextIO.writeCustomType()
     val transform = args("converter") match {
-      case "String#toResourceId" => t.toResource(StaticValueProvider.of(output.toResourceId))
-      case "String#toFilenamePolicy" => t.to(output.toFilenamePolicy)
+      case "String#toResourceId" =>
+        t.toResource(StaticValueProvider.of(output.toResourceId))
+      case "String#toFilenamePolicy"      => t.to(output.toFilenamePolicy)
       case "String#toStaticValueProvider" => t.to(output.toStaticValueProvider)
-      case "FilenamePolicy#toJava" => t.to(FilenamePolicy(output, "-SSSSS-of-NNNNN", ".csv").asJava)
+      case "FilenamePolicy#toJava" =>
+        t.to(FilenamePolicy(output, "-SSSSS-of-NNNNN", ".csv").asJava)
     }
 
     // In prod, TextIO transform converts Int -> String before write.

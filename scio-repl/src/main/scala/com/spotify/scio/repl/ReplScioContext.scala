@@ -20,9 +20,8 @@ package com.spotify.scio.repl
 import org.apache.beam.sdk.options.PipelineOptions
 import com.spotify.scio.{ScioContext, ScioResult}
 
-class ReplScioContext(options: PipelineOptions,
-                      artifacts: List[String])
-  extends ScioContext(options, artifacts) {
+class ReplScioContext(options: PipelineOptions, artifacts: List[String])
+    extends ScioContext(options, artifacts) {
 
   this.setAppName("sciorepl")
   this.setJobName(s"""sciorepl-${sys.props("user.name")}-${System.currentTimeMillis()}""")
@@ -36,14 +35,16 @@ class ReplScioContext(options: PipelineOptions,
   /** Ensure an operation is called before the pipeline is closed. */
   override private[scio] def requireNotClosed[T](body: => T): T = {
     require(!this.isClosed,
-      "ScioContext already closed, use :newScio <[context-name] | sc> to create new context")
+            "ScioContext already closed, use :newScio <[context-name] | sc> to create new context")
     super.requireNotClosed(body)
   }
 
   private def createJar(): Unit = {
     // scalastyle:off structural.type
     import scala.language.reflectiveCalls
-    this.getClass.getClassLoader.asInstanceOf[{def createReplCodeJar: String}].createReplCodeJar
+    this.getClass.getClassLoader
+      .asInstanceOf[{ def createReplCodeJar: String }]
+      .createReplCodeJar
     // scalastyle:on structural.type
   }
 

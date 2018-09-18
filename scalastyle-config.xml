@@ -67,8 +67,8 @@
    <parameter name="ignore"><![CDATA[-1,0,1,2,3]]></parameter>
   </parameters>
  </check>
- <check level="error" class="org.scalastyle.scalariform.NoWhitespaceBeforeLeftBracketChecker" enabled="true"></check>
- <check level="error" class="org.scalastyle.scalariform.NoWhitespaceAfterLeftBracketChecker" enabled="true"></check>
+ <check level="error" class="org.scalastyle.scalariform.NoWhitespaceBeforeLeftBracketChecker" enabled="false"></check>
+ <check level="error" class="org.scalastyle.scalariform.NoWhitespaceAfterLeftBracketChecker" enabled="false"></check>
  <check level="error" class="org.scalastyle.scalariform.ReturnChecker" enabled="true"></check>
  <check level="error" class="org.scalastyle.scalariform.NullChecker" enabled="false"></check>
  <check level="error" class="org.scalastyle.scalariform.NoCloneChecker" enabled="true"></check>
@@ -92,7 +92,7 @@
  </check>
  <check level="error" class="org.scalastyle.scalariform.UppercaseLChecker" enabled="true"></check>
  <check level="error" class="org.scalastyle.scalariform.SimplifyBooleanExpressionChecker" enabled="true"></check>
- <check level="error" class="org.scalastyle.scalariform.IfBraceChecker" enabled="true">
+ <check level="error" class="org.scalastyle.scalariform.IfBraceChecker" enabled="false">
   <parameters>
    <parameter name="singleLineAllowed"><![CDATA[true]]></parameter>
    <parameter name="doubleLineAllowed"><![CDATA[false]]></parameter>
@@ -100,7 +100,7 @@
  </check>
  <check level="error" class="org.scalastyle.scalariform.MethodLengthChecker" enabled="true">
   <parameters>
-   <parameter name="maxLength"><![CDATA[50]]></parameter>
+   <parameter name="maxLength"><![CDATA[100]]></parameter>
   </parameters>
  </check>
  <check level="error" class="org.scalastyle.scalariform.MethodNamesChecker" enabled="true">

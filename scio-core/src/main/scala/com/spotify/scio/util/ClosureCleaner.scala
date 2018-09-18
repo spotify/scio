@@ -45,7 +45,8 @@ private[scio] object ClosureCleaner {
     func
   }
 
-  private def clean(func: AnyRef): AnyRef = new TransitiveClosureCleaner(func).clean
+  private def clean(func: AnyRef): AnyRef =
+    new TransitiveClosureCleaner(func).clean
 
   def outerFieldOf(c: Class[_]): Option[Field] =
     Try(c.getDeclaredField(OUTER)).toOption
@@ -53,14 +54,14 @@ private[scio] object ClosureCleaner {
   def isOuterField(f: Field): Boolean = f.getName == OUTER
 
   /**
-    * Returns the (Class, AnyRef) pairs from highest level to lowest level. The last element is the
-    * outer of the closure.
-    */
+   * Returns the (Class, AnyRef) pairs from highest level to lowest level. The last element is the
+   * outer of the closure.
+   */
   def outerClassesOf(obj: AnyRef): List[(Class[_], AnyRef)] = {
     @tailrec
     def loop(obj: AnyRef, hierarchy: List[(Class[_], AnyRef)]): List[(Class[_], AnyRef)] = {
       outerFieldOf(obj.getClass) match {
-        case None => hierarchy // We have finished
+        case None    => hierarchy // We have finished
         case Some(f) =>
           // f is the $outer of obj
           f.setAccessible(true)
@@ -81,7 +82,8 @@ private[scio] object ClosureCleaner {
     while (stack.nonEmpty) {
       val cr = AsmUtil.classReader(stack.pop())
       val set = MSet[Class[_]]()
-      cr.foreach { reader => reader.accept(new InnerClosureFinder(set), 0)
+      cr.foreach { reader =>
+        reader.accept(new InnerClosureFinder(set), 0)
         (set -- seen).foreach { cls =>
           seen += cls
           stack.push(cls)
@@ -107,8 +109,7 @@ private[scio] object ClosureCleaner {
   def instantiateClass(cls: Class[_]): AnyRef = {
     val objectCtor = classOf[java.lang.Object].getDeclaredConstructor()
 
-    sun.reflect.ReflectionFactory
-      .getReflectionFactory
+    sun.reflect.ReflectionFactory.getReflectionFactory
       .newConstructorForSerialization(cls, objectCtor)
       .newInstance()
       .asInstanceOf[AnyRef]
@@ -163,14 +164,12 @@ private final class TransitiveClosureCleaner(val func: AnyRef) extends ClosureCl
         }
       }
 
-    accessedFields
-      .map {
-        case (cls, mset) =>
-          def toF(ss: Set[String]): Set[Field] = ss.map(cls.getDeclaredField)
-          val set = mset.toSet
-          (cls, toF(set))
-      }
-      .toMap
+    accessedFields.map {
+      case (cls, mset) =>
+        def toF(ss: Set[String]): Set[Field] = ss.map(cls.getDeclaredField)
+        val set = mset.toSet
+        (cls, toF(set))
+    }.toMap
   }
 
   override def cleanOuter(): AnyRef =
@@ -193,13 +192,16 @@ private final class TransitiveClosureCleaner(val func: AnyRef) extends ClosureCl
 private final case class MethodIdentifier[T](cls: Class[T], name: String, desc: String)
 
 private final class AccessedFieldsVisitor(output: MMap[Class[_], MSet[String]],
-                                    specificMethod: Option[MethodIdentifier[_]] = None,
-                                    visitedMethods: MSet[MethodIdentifier[_]] = MSet.empty)
-  extends ClassVisitor(ASM6) {
-  override def visitMethod(access: Int, name: String, desc: String,
-                           sig: String, exceptions: Array[String]): MethodVisitor = {
+                                          specificMethod: Option[MethodIdentifier[_]] = None,
+                                          visitedMethods: MSet[MethodIdentifier[_]] = MSet.empty)
+    extends ClassVisitor(ASM6) {
+  override def visitMethod(access: Int,
+                           name: String,
+                           desc: String,
+                           sig: String,
+                           exceptions: Array[String]): MethodVisitor = {
     if (specificMethod.isDefined &&
-      (specificMethod.get.name != name || specificMethod.get.desc != desc)) {
+        (specificMethod.get.name != name || specificMethod.get.desc != desc)) {
       null
     } else {
       new MethodVisitor(ASM6) {
@@ -211,8 +213,11 @@ private final class AccessedFieldsVisitor(output: MMap[Class[_], MSet[String]],
           }
         }
 
-        override def visitMethodInsn(op: Int, owner: String, name: String,
-                                     desc: String, itf: Boolean): Unit = {
+        override def visitMethodInsn(op: Int,
+                                     owner: String,
+                                     name: String,
+                                     desc: String,
+                                     itf: Boolean): Unit = {
           for (cl <- output.keys if cl.getName == owner.replace('/', '.')) {
             // Check for calls a getter method for a variable in an interpreter wrapper object.
             // This means that the corresponding field will be accessed, so we should save it.
@@ -237,22 +242,32 @@ private final class AccessedFieldsVisitor(output: MMap[Class[_], MSet[String]],
 private final class InnerClosureFinder(output: MSet[Class[_]]) extends ClassVisitor(ASM6) {
   private[this] var myName: String = _
 
-  override def visit(version: Int, access: Int, name: String, sig: String,
-                     superName: String, interfaces: Array[String]): Unit = {
+  override def visit(version: Int,
+                     access: Int,
+                     name: String,
+                     sig: String,
+                     superName: String,
+                     interfaces: Array[String]): Unit =
     myName = name
-  }
 
-  override def visitMethod(access: Int, name: String, desc: String,
-                           sig: String, exceptions: Array[String]): MethodVisitor =
+  override def visitMethod(access: Int,
+                           name: String,
+                           desc: String,
+                           sig: String,
+                           exceptions: Array[String]): MethodVisitor =
     new MethodVisitor(ASM6) {
-      override def visitMethodInsn(op: Int, owner: String, name: String,
-                                   desc: String, itf: Boolean) {
+      override def visitMethodInsn(op: Int,
+                                   owner: String,
+                                   name: String,
+                                   desc: String,
+                                   itf: Boolean) {
         val argTypes = Type.getArgumentTypes(desc)
         if (op == INVOKESPECIAL && name == "<init>" && argTypes.nonEmpty
-          && argTypes(0).toString.startsWith("L")
-          && argTypes(0).getInternalName == myName) {
-          output += Class.forName(owner.replace('/', '.'), false,
-            Thread.currentThread.getContextClassLoader)
+            && argTypes(0).toString.startsWith("L")
+            && argTypes(0).getInternalName == myName) {
+          output += Class.forName(owner.replace('/', '.'),
+                                  false,
+                                  Thread.currentThread.getContextClassLoader)
         }
       }
     }

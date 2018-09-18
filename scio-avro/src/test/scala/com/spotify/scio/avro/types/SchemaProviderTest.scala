@@ -65,8 +65,7 @@ class SchemaProviderTest extends FlatSpec with Matchers {
   @doc("User record schema")
   case class User(@doc("user name") name: String, @doc("user age") age: Int)
   @doc("Account record schema")
-  case class Account(@doc("account user") user: User,
-                     @doc("in USD") balance: Double)
+  case class Account(@doc("account user") user: User, @doc("in USD") balance: Double)
 
   val userSchema =
     s"""
@@ -99,7 +98,9 @@ class SchemaProviderTest extends FlatSpec with Matchers {
   it should "support doc annotation" in {
     // Schema.equals() ignores doc property.
     // Hence we need to turn Schemas to string in order to compare them.
-    SchemaProvider.schemaOf[User].toString shouldBe parseSchema(userSchema).toString
+    SchemaProvider
+      .schemaOf[User]
+      .toString shouldBe parseSchema(userSchema).toString
     SchemaProvider.schemaOf[Account].toString shouldBe parseSchema(accountSchema).toString
   }
 }

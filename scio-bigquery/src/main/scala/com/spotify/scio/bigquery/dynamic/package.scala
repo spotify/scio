@@ -54,10 +54,11 @@ package object dynamic {
                        writeDisposition: WriteDisposition,
                        createDisposition: CreateDisposition): Future[Tap[T]] = {
       if (self.context.isTest) {
-          throw new NotImplementedError(
-            "BigQuery with dynamic destinations cannot be used in a test context")
+        throw new NotImplementedError(
+          "BigQuery with dynamic destinations cannot be used in a test context")
       } else {
-        var transform = beam.BigQueryIO.write()
+        var transform = beam.BigQueryIO
+          .write()
           .to(destinations)
           .withFormatFunction(Functions.serializableFn(formatFn))
         if (createDisposition != null) {
@@ -80,16 +81,14 @@ package object dynamic {
      */
     def saveAsBigQuery(schema: TableSchema,
                        writeDisposition: WriteDisposition = null,
-                       createDisposition: CreateDisposition = null)
-                      (tableFn: ValueInSingleWindow[T] => TableDestination)
-                      (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
-      saveAsBigQuery(
-        DynamicDestinationsUtil.tableFn(tableFn, schema),
-        (t: T) => t.asInstanceOf[TableRow],
-        writeDisposition,
-        createDisposition)
+                       createDisposition: CreateDisposition = null)(
+      tableFn: ValueInSingleWindow[T] => TableDestination)(
+      implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
+      saveAsBigQuery(DynamicDestinationsUtil.tableFn(tableFn, schema),
+                     (t: T) => t.asInstanceOf[TableRow],
+                     writeDisposition,
+                     createDisposition)
         .asInstanceOf[Future[Tap[TableRow]]]
-
 
     /**
      * Save this SCollection to dynamic BigQuery tables using the specified table function.
@@ -97,18 +96,14 @@ package object dynamic {
      * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
      */
     def saveAsTypedBigQuery(writeDisposition: WriteDisposition = null,
-                            createDisposition: CreateDisposition = null)
-                           (tableFn: ValueInSingleWindow[T] => TableDestination)
-                           (implicit tt: TypeTag[T], ev: T <:< HasAnnotation)
-    : Future[Tap[T]] = {
+                            createDisposition: CreateDisposition = null)(
+      tableFn: ValueInSingleWindow[T] => TableDestination)(
+      implicit tt: TypeTag[T],
+      ev: T <:< HasAnnotation): Future[Tap[T]] = {
       val bqt = BigQueryType[T]
       val destinations = DynamicDestinationsUtil.tableFn(tableFn, bqt.schema)
 
-      saveAsBigQuery(
-        destinations,
-        bqt.toTableRow,
-        writeDisposition,
-        createDisposition)
+      saveAsBigQuery(destinations, bqt.toTableRow, writeDisposition, createDisposition)
     }
 
   }

@@ -33,21 +33,24 @@ private[values] trait PCollectionWrapper[T] extends TransformNameable {
    */
   val context: ScioContext
 
-  private[scio] def applyInternal[Output <: POutput]
-  (transform: PTransform[_ >: PCollection[T], Output]): Output =
+  private[scio] def applyInternal[Output <: POutput](
+    transform: PTransform[_ >: PCollection[T], Output]): Output =
     internal.apply(this.tfName, transform)
 
-  protected def pApply[U]
-  (transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {
-    val t = if (classOf[Combine.Globally[T, U]] isAssignableFrom transform.getClass) {
-      // In case PCollection is windowed
-      transform.asInstanceOf[Combine.Globally[T, U]].withoutDefaults()
-    } else {
-      transform
-    }
+  protected def pApply[U](
+    transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {
+    val t =
+      if (classOf[Combine.Globally[T, U]] isAssignableFrom transform.getClass) {
+        // In case PCollection is windowed
+        transform.asInstanceOf[Combine.Globally[T, U]].withoutDefaults()
+      } else {
+        transform
+      }
     context.wrap(this.applyInternal(t))
   }
 
   private[scio] def parDo[U: Coder](fn: DoFn[T, U]): SCollection[U] =
-    this.pApply(ParDo.of(fn)).setCoder(CoderMaterializer.beam(context, Coder[U]))
+    this
+      .pApply(ParDo.of(fn))
+      .setCoder(CoderMaterializer.beam(context, Coder[U]))
 }

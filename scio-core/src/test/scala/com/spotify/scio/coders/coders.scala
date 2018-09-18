@@ -20,9 +20,9 @@ package com.spotify.scio.coders
 import scala.collection.JavaConverters._
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.avro.generic.GenericRecord
-import org.scalatest.{FlatSpec, Matchers, Assertion}
+import org.scalatest.{Assertion, FlatSpec, Matchers}
 
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.{classTag, ClassTag}
 
 final case class UserId(bytes: Seq[Byte])
 
@@ -45,7 +45,7 @@ object CaseClassWithExplicitCoder {
   import org.apache.beam.sdk.coders.{AtomicCoder, StringUtf8Coder, VarIntCoder}
   import java.io.{InputStream, OutputStream}
   implicit val caseClassWithExplicitCoderCoder =
-    Coder.beam(new AtomicCoder[CaseClassWithExplicitCoder]{
+    Coder.beam(new AtomicCoder[CaseClassWithExplicitCoder] {
       val sc = StringUtf8Coder.of()
       val ic = VarIntCoder.of()
       def encode(value: CaseClassWithExplicitCoder, os: OutputStream): Unit = {
@@ -59,7 +59,6 @@ object CaseClassWithExplicitCoder {
       }
     })
 }
-
 
 case class NestedB(x: Int)
 case class NestedA(nb: NestedB)
@@ -85,16 +84,16 @@ class CodersTest extends FlatSpec with Matchers {
     org.apache.beam.sdk.util.SerializableUtils.ensureSerializable(beamCoder)
     val enc = CoderUtils.encodeToByteArray(beamCoder, t)
     val dec = CoderUtils.decodeFromByteArray(beamCoder, enc)
-    dec should === (t)
+    dec should ===(t)
   }
 
   def checkNotFallback[T: ClassTag](t: T)(implicit C: Coder[T], eq: Equality[T]): Assertion = {
-    C should !== (Coder.kryo[T])
+    C should !==(Coder.kryo[T])
     check[T](t)(C, eq)
   }
 
   def checkFallback[T: ClassTag](t: T)(implicit C: Coder[T], eq: Equality[T]): Assertion = {
-    C should === (Coder.kryo[T])
+    C should ===(Coder.kryo[T])
     check[T](t)(C, eq)
   }
 
@@ -107,7 +106,9 @@ class CodersTest extends FlatSpec with Matchers {
   it should "support Scala collections" in {
     val nil: Seq[String] = Nil
     val s: Seq[String] = (1 to 10).toSeq.map(_.toString)
-    val m = s.map{ v => v.toString -> v }.toMap
+    val m = s.map { v =>
+      v.toString -> v
+    }.toMap
 
     checkNotFallback(nil)
     checkNotFallback(s)
@@ -117,10 +118,15 @@ class CodersTest extends FlatSpec with Matchers {
   }
 
   it should "support Java collections" in {
-    import java.util.{ List => jList, Map => jMap }
+    import java.util.{List => jList, Map => jMap}
     val is = (1 to 10).toSeq
     val s: jList[String] = is.map(_.toString).asJava
-    val m: jMap[String, Int] = is.map{ v => v.toString -> v }.toMap.asJava
+    val m: jMap[String, Int] = is
+      .map { v =>
+        v.toString -> v
+      }
+      .toMap
+      .asJava
     checkNotFallback(s)
     checkNotFallback(m)
   }
@@ -130,12 +136,13 @@ class CodersTest extends FlatSpec with Matchers {
   }
 
   object Avro {
-    import com.spotify.scio.avro.{ User => AvUser, Account, Address }
+    import com.spotify.scio.avro.{User => AvUser, Account, Address}
     val accounts: List[Account] = List(new Account(1, "tyoe", "name", 12.5))
-    val address = new Address("street1", "street2", "city", "state", "01234", "Sweden")
+    val address =
+      new Address("street1", "street2", "city", "state", "01234", "Sweden")
     val user = new AvUser(1, "lastname", "firstname", "email@foobar.com", accounts.asJava, address)
 
-    val eq = new Equality[GenericRecord]{
+    val eq = new Equality[GenericRecord] {
       def areEqual(a: GenericRecord, b: Any): Boolean =
         a.toString === b.toString // YOLO
     }
@@ -159,8 +166,7 @@ class CodersTest extends FlatSpec with Matchers {
   it should "support Avro's GenericRecord" in {
     val schema = Avro.user.getSchema
     val record: GenericRecord = Avro.user
-    checkNotFallback(record)(
-      classTag[GenericRecord], Coder.avroGenericRecordCoder(schema), Avro.eq)
+    checkNotFallback(record)(classTag[GenericRecord], Coder.avroGenericRecordCoder(schema), Avro.eq)
   }
 
   it should "derive coders for product types" in {
@@ -170,7 +176,9 @@ class CodersTest extends FlatSpec with Matchers {
     checkNotFallback(MultiParameterizedDummy("dummy", 2))
     checkNotFallback(user)
     checkNotFallback((1, "String", List[Int]()))
-    val ds = (1 to 10).map{ _ => DummyCC("dummy") }.toList
+    val ds = (1 to 10).map { _ =>
+      DummyCC("dummy")
+    }.toList
     checkNotFallback(ds)
   }
 
@@ -181,7 +189,6 @@ class CodersTest extends FlatSpec with Matchers {
     checkNotFallback(tb)
     checkNotFallback((123, "hello", ta, tb, List(("bar", 1, "foo"))))
   }
-
 
   // FIXME: implement the missing coders
   ignore should "support all the already supported types" in {
@@ -208,7 +215,7 @@ class CodersTest extends FlatSpec with Matchers {
   it should "only derive Coder if no coder exists" in {
     checkNotFallback(CaseClassWithExplicitCoder(1, "hello"))
     Coder[CaseClassWithExplicitCoder] should
-      === (CaseClassWithExplicitCoder.caseClassWithExplicitCoderCoder)
+      ===(CaseClassWithExplicitCoder.caseClassWithExplicitCoderCoder)
   }
 
   it should "provide a fallback if no safe coder is available" in {

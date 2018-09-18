@@ -60,19 +60,20 @@ package object avro {
      * are not supported. Without the latter, pipelines may not autoscale up or down during the
      * initial read and subsequent fused transforms.
      */
-    def parquetAvroFile[T <: SpecificRecordBase : ClassTag](path: String,
-                                                            projection: Schema = null,
-                                                            predicate: FilterPredicate = null)
-    : ParquetAvroFile[T] = self.requireNotClosed {
-      new ParquetAvroFile[T](self, path, projection, predicate)
-    }
+    def parquetAvroFile[T <: SpecificRecordBase: ClassTag](
+      path: String,
+      projection: Schema = null,
+      predicate: FilterPredicate = null): ParquetAvroFile[T] =
+      self.requireNotClosed {
+        new ParquetAvroFile[T](self, path, projection, predicate)
+      }
 
   }
 
-  class ParquetAvroFile[T: ClassTag] private[avro](context: ScioContext,
-                                                   path: String,
-                                                   projection: Schema,
-                                                   predicate: FilterPredicate) {
+  class ParquetAvroFile[T: ClassTag] private[avro] (context: ScioContext,
+                                                    path: String,
+                                                    projection: Schema,
+                                                    predicate: FilterPredicate) {
 
     private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -80,7 +81,7 @@ package object avro {
      * Return a new SCollection by applying a function to all Parquet Avro records of this Parquet
      * file.
      */
-    def map[U: ClassTag : Coder](f: T => U): SCollection[U] = {
+    def map[U: ClassTag: Coder](f: T => U): SCollection[U] = {
       val param = ParquetAvroIO.ReadParam[T, U](projection, predicate, f)
       context.read(ParquetAvroIO[U](path))(param)
     }
@@ -89,18 +90,19 @@ package object avro {
      * Return a new SCollection by first applying a function to all Parquet Avro records of
      * this Parquet file, and then flattening the results.
      */
-    def flatMap[U: ClassTag : Coder](f: T => TraversableOnce[U]): SCollection[U] =
+    def flatMap[U: ClassTag: Coder](f: T => TraversableOnce[U]): SCollection[U] =
       this
-        // HadoopInputFormatIO does not support custom coder, force SerializableCoder
+      // HadoopInputFormatIO does not support custom coder, force SerializableCoder
         .map(x => f(x).asInstanceOf[Serializable])
         .asInstanceOf[SCollection[TraversableOnce[U]]]
         .flatten
 
     private def toSCollection(implicit c: Coder[T]): SCollection[T] = {
       if (projection != null) {
-        logger.warn("Materializing Parquet Avro records with projection may cause " +
-          "NullPointerException. Perform a `map` or `flatMap` immediately after " +
-          "`parquetAvroFile` to map out projected fields.")
+        logger.warn(
+          "Materializing Parquet Avro records with projection may cause " +
+            "NullPointerException. Perform a `map` or `flatMap` immediately after " +
+            "`parquetAvroFile` to map out projected fields.")
       }
       this.map(identity)
     }
@@ -108,30 +110,32 @@ package object avro {
   }
 
   object ParquetAvroFile {
-    implicit def parquetAvroFileToSCollection[T: Coder](self: ParquetAvroFile[T])
-    : SCollection[T] = self.toSCollection
-    implicit def parquetAvroFileToParquetAvroSCollection[T: ClassTag : Coder](
+    implicit def parquetAvroFileToSCollection[T: Coder](self: ParquetAvroFile[T]): SCollection[T] =
+      self.toSCollection
+    implicit def parquetAvroFileToParquetAvroSCollection[T: ClassTag: Coder](
       self: ParquetAvroFile[T]): ParquetAvroSCollection[T] =
-        new ParquetAvroSCollection(self.toSCollection)
+      new ParquetAvroSCollection(self.toSCollection)
   }
 
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Parquet Avro
    * methods.
    */
-  implicit class ParquetAvroSCollection[T: ClassTag : Coder](val self: SCollection[T]) {
+  implicit class ParquetAvroSCollection[T: ClassTag: Coder](val self: SCollection[T]) {
+
     /**
      * Save this SCollection of Avro records as a Parquet file.
      * @param schema must be not null if `T` is of type
      *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
      */
-    def saveAsParquetAvroFile(path: String,
-                              schema: Schema = null,
-                              numShards: Int = 0,
-                              suffix: String = "",
-                              compression: CompressionCodecName = CompressionCodecName.SNAPPY)
-    : Future[Tap[T]] = {
-      val param = ParquetAvroIO.WriteParam(schema, numShards, suffix, compression)
+    def saveAsParquetAvroFile(
+      path: String,
+      schema: Schema = null,
+      numShards: Int = 0,
+      suffix: String = "",
+      compression: CompressionCodecName = CompressionCodecName.SNAPPY): Future[Tap[T]] = {
+      val param =
+        ParquetAvroIO.WriteParam(schema, numShards, suffix, compression)
       self.write(ParquetAvroIO[T](path))(param)
     }
   }
@@ -142,12 +146,15 @@ package object avro {
       // requires the user's GCP credentials.
       sys.env.get("GOOGLE_APPLICATION_CREDENTIALS") match {
         case Some(json) =>
-          job.getConfiguration.set("fs.gs.auth.service.account.json.keyfile", json)
+          job.getConfiguration
+            .set("fs.gs.auth.service.account.json.keyfile", json)
         case None =>
           // Client id/secret of Google-managed project associated with the Cloud SDK
-          job.getConfiguration.setBoolean("fs.gs.auth.service.account.enable", false)
+          job.getConfiguration
+            .setBoolean("fs.gs.auth.service.account.enable", false)
           job.getConfiguration.set("fs.gs.auth.client.id", "32555940559.apps.googleusercontent.com")
-          job.getConfiguration.set("fs.gs.auth.client.secret", "ZmssLNjJy2998hD4CTg2ejr2")
+          job.getConfiguration
+            .set("fs.gs.auth.client.secret", "ZmssLNjJy2998hD4CTg2ejr2")
       }
     }
 

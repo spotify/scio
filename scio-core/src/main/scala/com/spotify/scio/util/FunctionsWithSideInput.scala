@@ -26,34 +26,36 @@ private[scio] object FunctionsWithSideInput {
 
   trait SideInputDoFn[T, U] extends NamedDoFn[T, U] {
     def sideInputContext(c: DoFn[T, U]#ProcessContext, w: BoundedWindow): SideInputContext[T] =
-        // Workaround for type inference limit
-        new SideInputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext], w)
+      // Workaround for type inference limit
+      new SideInputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext], w)
   }
 
-  def filterFn[T](f: (T, SideInputContext[T]) => Boolean): DoFn[T, T] = new SideInputDoFn[T, T] {
-    val g = ClosureCleaner(f)  // defeat closure
-    @ProcessElement
-    private[scio] def processElement(c: DoFn[T, T]#ProcessContext, w: BoundedWindow): Unit =
-      if (g(c.element(), sideInputContext(c, w))) {
-        c.output(c.element())
-      }
-  }
-
-  def flatMapFn[T, U](f: (T, SideInputContext[T]) => TraversableOnce[U])
-  : DoFn[T, U] = new SideInputDoFn[T, U] {
-    val g = ClosureCleaner(f)  // defeat closure
-    @ProcessElement
-    private[scio] def processElement(c: DoFn[T, U]#ProcessContext, w: BoundedWindow): Unit = {
-      val i = g(c.element(), sideInputContext(c, w)).toIterator
-      while (i.hasNext) c.output(i.next())
+  def filterFn[T](f: (T, SideInputContext[T]) => Boolean): DoFn[T, T] =
+    new SideInputDoFn[T, T] {
+      val g = ClosureCleaner(f) // defeat closure
+      @ProcessElement
+      private[scio] def processElement(c: DoFn[T, T]#ProcessContext, w: BoundedWindow): Unit =
+        if (g(c.element(), sideInputContext(c, w))) {
+          c.output(c.element())
+        }
     }
-  }
 
-  def mapFn[T, U](f: (T, SideInputContext[T]) => U): DoFn[T, U] = new SideInputDoFn[T, U] {
-    val g = ClosureCleaner(f)  // defeat closure
-    @ProcessElement
-    private[scio] def processElement(c: DoFn[T, U]#ProcessContext, w: BoundedWindow): Unit =
-      c.output(g(c.element(), sideInputContext(c, w)))
-  }
+  def flatMapFn[T, U](f: (T, SideInputContext[T]) => TraversableOnce[U]): DoFn[T, U] =
+    new SideInputDoFn[T, U] {
+      val g = ClosureCleaner(f) // defeat closure
+      @ProcessElement
+      private[scio] def processElement(c: DoFn[T, U]#ProcessContext, w: BoundedWindow): Unit = {
+        val i = g(c.element(), sideInputContext(c, w)).toIterator
+        while (i.hasNext) c.output(i.next())
+      }
+    }
+
+  def mapFn[T, U](f: (T, SideInputContext[T]) => U): DoFn[T, U] =
+    new SideInputDoFn[T, U] {
+      val g = ClosureCleaner(f) // defeat closure
+      @ProcessElement
+      private[scio] def processElement(c: DoFn[T, U]#ProcessContext, w: BoundedWindow): Unit =
+        c.output(g(c.element(), sideInputContext(c, w)))
+    }
 
 }

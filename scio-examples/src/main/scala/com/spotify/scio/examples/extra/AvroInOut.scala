@@ -32,7 +32,8 @@ object AvroInOut {
       .map { r =>
         // Create a new `Account` Avro specific record. It is recommended to use the builder over
         // constructor since it's more backwards compatible.
-        Account.newBuilder()
+        Account
+          .newBuilder()
           .setId(r.getIntField)
           .setType("checking")
           .setName(r.getStringField)
