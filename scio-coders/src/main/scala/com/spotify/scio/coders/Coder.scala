@@ -108,29 +108,67 @@ private class RecordCoder[T: ClassTag](cs: Array[(String, BCoder[T])])
         throw new RuntimeException(msg, e)
     }
 
-  def encode(value: Array[T], os: OutputStream): Unit = {
+  override def encode(value: Array[T], os: OutputStream): Unit = {
     var i = 0
     while (i < value.length) {
       val (label, c) = cs(i)
       val v = value(i)
-      onErrorMsg(s"Exception while trying to `encode` field ${label} with value ${v}") {
+      onErrorMsg(s"Exception while trying to `encode` field $label with value $v") {
         c.encode(v, os)
       }
-      i = i + 1
+      i += 1
     }
   }
 
-  def decode(is: InputStream): Array[T] = {
+  override def decode(is: InputStream): Array[T] = {
     val vs = new Array[T](cs.length)
     var i = 0
     while (i < cs.length) {
       val (label, c) = cs(i)
-      onErrorMsg(s"Exception while trying to `decode` field ${label}") {
+      onErrorMsg(s"Exception while trying to `decode` field $label") {
         vs.update(i, c.decode(is))
       }
-      i = i + 1
+      i += 1
     }
     vs
+  }
+
+  // delegate methods for determinism and equality checks
+  override def verifyDeterministic(): Unit = cs.foreach(_._2.verifyDeterministic())
+  override def consistentWithEquals(): Boolean = cs.forall(_._2.consistentWithEquals())
+  override def structuralValue(value: Array[T]): AnyRef = {
+    val b = Seq.newBuilder[AnyRef]
+    var i = 0
+    while (i < cs.length) {
+      val (label, c) = cs(i)
+      val v = value(i)
+      onErrorMsg(s"Exception while trying to `encode` field $label with value $v") {
+        b += c.structuralValue(v)
+      }
+      i += 1
+    }
+    b.result()
+  }
+
+  // delegate methods for byte size estimation
+  override def isRegisterByteSizeObserverCheap(value: Array[T]): Boolean = {
+    var res = true
+    var i = 0
+    while (res && i < cs.length) {
+      res = cs(i)._2.isRegisterByteSizeObserverCheap(value(i))
+      i += 1
+    }
+    res
+  }
+  override def registerByteSizeObserver(value: Array[T],
+                                        observer: ElementByteSizeObserver): Unit = {
+    var i = 0
+    while (i < cs.length) {
+      val (_, c) = cs(i)
+      val v = value(i)
+      c.registerByteSizeObserver(v, observer)
+      i += 1
+    }
   }
 }
 
