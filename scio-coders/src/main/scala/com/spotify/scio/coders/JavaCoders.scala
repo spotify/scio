@@ -24,7 +24,7 @@ import java.nio.ByteBuffer
 import java.io.{InputStream, OutputStream}
 
 final class ByteBufferCoder private[coders] () extends AtomicCoder[ByteBuffer] {
-  val bac = ByteArrayCoder.of()
+  private[this] val bac = ByteArrayCoder.of()
   def encode(value: ByteBuffer, os: OutputStream): Unit = {
     val array =
       if (value.hasArray) {
@@ -93,11 +93,16 @@ trait JavaCoders {
 
   implicit def serializableCoder: Coder[Serializable] = Coder.kryo[Serializable]
 
-  // implicit def paneinfoCoder: Coder[PaneInfo] = ???
+  import org.apache.beam.sdk.transforms.windowing.PaneInfo
+  implicit def paneInfoCoder: Coder[PaneInfo] =
+    Coder.beam(PaneInfo.PaneInfoCoder.of())
+
   implicit def instantCoder: Coder[org.joda.time.Instant] =
     Coder.beam(InstantCoder.of())
+
   implicit def tablerowCoder: Coder[com.google.api.services.bigquery.model.TableRow] =
     Coder.beam(org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder.of())
+
   implicit def messageCoder: Coder[org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage] =
     Coder.beam(org.apache.beam.sdk.io.gcp.pubsub.PubsubMessageWithAttributesCoder.of())
 
