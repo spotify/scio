@@ -36,7 +36,8 @@ import scala.io.Source
 object SimpleDistCacheJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val dc = sc.distCache(args("distCache"))(f => Source.fromFile(f).getLines().toSeq)
+    val dc =
+      sc.distCache(args("distCache"))(f => Source.fromFile(f).getLines().toSeq)
     sc.textFile(args("input"))
       .flatMap(x => dc().map(x + _))
       .saveAsTextFile(args("output"))
@@ -62,7 +63,8 @@ object NonSerializableDistCacheJob {
 object AnnoyDistCacheJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val dc = sc.distCache[AnnoyIndex](args("annoy"))(f => new ANNIndex(5, f.getAbsolutePath))
+    val dc = sc.distCache[AnnoyIndex](args("annoy"))(f =>
+      new ANNIndex(5, f.getAbsolutePath))
     sc.textFile(args("input"))
       .map { x =>
         val id = x.toInt
@@ -78,7 +80,8 @@ object SparkeyDistCacheJob {
   def main(cmdlineArgs: Array[String]): Unit = {
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val dc = sc.distCache(Seq(".spi", ".spl").map(args("sparkey") + _))(fs => Sparkey.open(fs.head))
+    val dc = sc.distCache(Seq(".spi", ".spl").map(args("sparkey") + _))(fs =>
+      Sparkey.open(fs.head))
     sc.textFile(args("input"))
       .map(dc().getAsString)
       .saveAsTextFile(args("output"))
@@ -92,10 +95,12 @@ object SparkeyDistCacheJob {
 
 object DistCacheTest {
 
-  def simpleTransform(in: SCollection[String], dc: DistCache[Seq[String]]): SCollection[String] =
+  def simpleTransform(in: SCollection[String],
+                      dc: DistCache[Seq[String]]): SCollection[String] =
     in.flatMap(x => dc().map(x + _))
 
-  def annoyTransform(in: SCollection[String], dc: DistCache[AnnoyIndex]): SCollection[Seq[Int]] =
+  def annoyTransform(in: SCollection[String],
+                     dc: DistCache[AnnoyIndex]): SCollection[Seq[Int]] =
     in.map { x =>
       val id = x.toInt
       val ann = dc()
@@ -125,7 +130,8 @@ class DistCacheTest extends PipelineSpec {
       .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
       .input(TextIO("in.txt"), Seq("a", "b"))
       .distCache(DistCacheIO("dc.txt"), Seq("1", "2"))
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("a1", "a2", "b1", "b2")))
+      .output(TextIO("out.txt"))(
+        _ should containInAnyOrder(Seq("a1", "a2", "b1", "b2")))
       .run()
   }
 
@@ -133,7 +139,8 @@ class DistCacheTest extends PipelineSpec {
     val dc = MockDistCache(Seq("1", "2"))
     runWithContext { sc =>
       val in = sc.parallelize(Seq("a", "b"))
-      simpleTransform(in, dc) should containInAnyOrder (Seq("a1", "a2", "b1", "b2"))
+      simpleTransform(in, dc) should containInAnyOrder(
+        Seq("a1", "a2", "b1", "b2"))
     }
   }
 
@@ -156,7 +163,8 @@ class DistCacheTest extends PipelineSpec {
       .args("--input=in.txt", "--output=out.txt", "--distCache=dc.txt")
       .input(TextIO("in.txt"), Seq("a", "b"))
       .distCacheFunc(DistCacheIO("dc.txt"), () => new NonSerializable("foobar"))
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("foobar", "foobar")))
+      .output(TextIO("out.txt"))(
+        _ should containInAnyOrder(Seq("foobar", "foobar")))
       .run()
   }
 
@@ -167,9 +175,8 @@ class DistCacheTest extends PipelineSpec {
   val annoy: AnnoyIndex = {
     val v1 = Array.fill(5)(0.5f)
     val v2 = Array.fill(5)(1.5f)
-    new MockAnnoy(
-      Map(0 -> v1, 1 -> v2, 2 -> v1, 3 -> v2),
-      Map(v1.toSeq -> List(10, 20), v2.toSeq -> List(15, 25)))
+    new MockAnnoy(Map(0 -> v1, 1 -> v2, 2 -> v1, 3 -> v2),
+                  Map(v1.toSeq -> List(10, 20), v2.toSeq -> List(15, 25)))
   }
 
   "AnnoyIndex" should "work with JobTest" in {
@@ -178,7 +185,8 @@ class DistCacheTest extends PipelineSpec {
       .args("--input=in.txt", "--output=out.avro", "--annoy=data.ann")
       .input(TextIO("in.txt"), Seq("0", "1"))
       .distCache(DistCacheIO("data.ann"), annoy)
-      .output(ObjectFileIO[Seq[Int]]("out.avro"))(_ should containInAnyOrder (expected))
+      .output(ObjectFileIO[Seq[Int]]("out.avro"))(
+        _ should containInAnyOrder(expected))
       .run()
   }
 
@@ -187,7 +195,7 @@ class DistCacheTest extends PipelineSpec {
     val expected = Seq(Seq(10, 20), Seq(15, 25))
     runWithContext { sc =>
       val in = sc.parallelize(Seq("0", "1"))
-      annoyTransform(in, dc) should containInAnyOrder (expected)
+      annoyTransform(in, dc) should containInAnyOrder(expected)
     }
   }
 
@@ -214,8 +222,10 @@ class DistCacheTest extends PipelineSpec {
     JobTest[SparkeyDistCacheJob.type]
       .args("--input=in.txt", "--output=out.txt", "--sparkey=data.sparkey")
       .input(TextIO("in.txt"), Seq("a", "b"))
-      .distCache(DistCacheIO(Seq("data.sparkey.spi", "data.sparkey.spl")), sparkey)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (Seq("alpha", "bravo")))
+      .distCache(DistCacheIO(Seq("data.sparkey.spi", "data.sparkey.spl")),
+                 sparkey)
+      .output(TextIO("out.txt"))(
+        _ should containInAnyOrder(Seq("alpha", "bravo")))
       .run()
   }
 
@@ -223,7 +233,7 @@ class DistCacheTest extends PipelineSpec {
     val dc = MockDistCache(sparkey)
     runWithContext { sc =>
       val in = sc.parallelize(Seq("a", "b"))
-      sparkeyTransform(in, dc) should containInAnyOrder (Seq("alpha", "bravo"))
+      sparkeyTransform(in, dc) should containInAnyOrder(Seq("alpha", "bravo"))
     }
   }
 
@@ -243,17 +253,21 @@ class DistCacheTest extends PipelineSpec {
 // Mock Annoy with fake data and serializable
 class MockAnnoy(private val itemVectors: Map[Int, Array[Float]],
                 private val nearest: Map[Seq[Float], List[Int]])
-  extends AnnoyIndex with Serializable {
+    extends AnnoyIndex
+    with Serializable {
   override def getNodeVector(nodeOffset: Int, v: Array[Float]): Unit = ???
   override def getItemVector(itemIndex: Int, v: Array[Float]): Unit = ???
-  override def getItemVector(itemIndex: Int): Array[Float] = itemVectors(itemIndex)
-  override def getNearest(queryVector: Array[Float], nResults: Int): java.util.List[Integer] =
+  override def getItemVector(itemIndex: Int): Array[Float] =
+    itemVectors(itemIndex)
+  override def getNearest(queryVector: Array[Float],
+                          nResults: Int): java.util.List[Integer] =
     nearest(queryVector.toSeq).asJava.asInstanceOf[java.util.List[Integer]]
 }
 
 // Mock SparkeyReader with fake data and serializable
 class MockSparkeyReader(private val data: Map[String, String])
-  extends SparkeyReader with Serializable {
+    extends SparkeyReader
+    with Serializable {
   override def getLogHeader: LogHeader = ???
   override def getAsString(key: String): String = data(key)
   override def getAsEntry(key: Array[Byte]): Entry = ???

@@ -26,11 +26,13 @@ class ArgsTest extends FlatSpec with Matchers {
   }
 
   it should "support getOrElse" in {
-    Args("--key1=value1".split(" ")).getOrElse("key2", "value2") shouldBe "value2"
+    Args("--key1=value1".split(" "))
+      .getOrElse("key2", "value2") shouldBe "value2"
   }
 
   it should "support list" in {
-    Args("--key=value1 --key=value2".split(" ")).list("key") shouldBe List("value1", "value2")
+    Args("--key=value1 --key=value2".split(" "))
+      .list("key") shouldBe List("value1", "value2")
   }
 
   it should "support optional" in {
@@ -45,13 +47,13 @@ class ArgsTest extends FlatSpec with Matchers {
 
   // scalastyle:off no.whitespace.before.left.bracket
   it should "fail required with missing value" in {
-    the [IllegalArgumentException] thrownBy {
+    the[IllegalArgumentException] thrownBy {
       Args(Array.empty).required("key")
     } should have message "Missing value for property 'key'"
   }
 
   it should "fail required with multiple values" in {
-    the [IllegalArgumentException] thrownBy {
+    the[IllegalArgumentException] thrownBy {
       Args("--key=value1 --key=value2".split(" ")).required("key")
     } should have message "Multiple values for property 'key'"
   }
@@ -104,7 +106,8 @@ class ArgsTest extends FlatSpec with Matchers {
   }
 
   it should "support toString" in {
-    val args = Args(Array("--key1=value1", "--key2=value2", "--key2=value3", "--key3"))
+    val args =
+      Args(Array("--key1=value1", "--key2=value2", "--key2=value3", "--key3"))
     args.toString shouldBe "Args(--key1=value1, --key2=[value2, value3], --key3=true)"
   }
 

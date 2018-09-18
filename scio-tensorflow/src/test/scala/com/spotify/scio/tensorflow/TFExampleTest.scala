@@ -39,13 +39,17 @@ object ExamplesJobV2 {
 object ExamplesJobV2WithSchema {
   def dummySchema(): Schema = {
     val schema = Schema.newBuilder()
-    schema.addSparseFeature(
-      SparseFeature.newBuilder
-        .setName("sparseFeature")
-        .setDenseShape(FixedShape.newBuilder.addDim(FixedShape.Dim.newBuilder().setSize(1)))
-        .setValueFeature(SparseFeature.ValueFeature.newBuilder.setName("values"))
-        .addIndexFeature(SparseFeature.IndexFeature.newBuilder.setName("indices")
-        )).build()
+    schema
+      .addSparseFeature(
+        SparseFeature.newBuilder
+          .setName("sparseFeature")
+          .setDenseShape(FixedShape.newBuilder.addDim(
+            FixedShape.Dim.newBuilder().setSize(1)))
+          .setValueFeature(
+            SparseFeature.ValueFeature.newBuilder.setName("values"))
+          .addIndexFeature(
+            SparseFeature.IndexFeature.newBuilder.setName("indices")))
+      .build()
     schema.build()
   }
 
@@ -78,7 +82,8 @@ object MultiSpecFeatranJob {
     val (sc, args) = ContextAndArgs(argv)
 
     val collection =
-      sc.parallelize(List(Iris(Some(5.1), Some(3.5), Some(1.4), Some(0.2), Some("Iris-setosa"))))
+      sc.parallelize(List(
+        Iris(Some(5.1), Some(3.5), Some(1.4), Some(0.2), Some("Iris-setosa"))))
 
     spec
       .extract(collection)
@@ -107,11 +112,13 @@ class TFExampleTest extends PipelineSpec {
   }
 
   "saveExampleMetadata" should "work" in {
-    val f = Files.createTempDirectory("saveExampleMetadataTest").resolve("schema.pb")
+    val f =
+      Files.createTempDirectory("saveExampleMetadataTest").resolve("schema.pb")
     f.toFile.deleteOnExit()
     val sc = ScioContext()
     val schema = ExamplesJobV2WithSchema.dummySchema()
-    TFExampleSCollectionFunctions.saveExampleMetadata(sc.parallelize(Some(schema)),
+    TFExampleSCollectionFunctions.saveExampleMetadata(
+      sc.parallelize(Some(schema)),
       f.toFile.getAbsolutePath)
     sc.close()
     Files.readAllBytes(f) shouldBe schema.toByteArray
@@ -121,16 +128,15 @@ class TFExampleTest extends PipelineSpec {
     import scala.collection.JavaConverters._
     JobTest[MultiSpecFeatranJob.type]
       .args("--output=out")
-      .output(TFExampleIO("out"))(_ should satisfy[Example]{i =>
+      .output(TFExampleIO("out"))(_ should satisfy[Example] { i =>
         val features = i.head.getFeatures.getFeatureMap.asScala
         // check that there are features from both sides of the multispec, also that there is the
         // right number of features overall
         features.contains("petal_width") &&
-          features.contains("class_name_Iris_setosa") &&
-          features.size == 5
+        features.contains("class_name_Iris_setosa") &&
+        features.size == 5
       })
       .run()
   }
-
 
 }

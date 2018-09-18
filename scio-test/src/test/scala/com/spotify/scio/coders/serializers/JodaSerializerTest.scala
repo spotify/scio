@@ -18,7 +18,13 @@
 package com.spotify.scio.coders.serializers
 
 import com.spotify.scio.coders.{CoderTestUtils, KryoAtomicCoder, KryoOptions}
-import org.joda.time.{LocalDate, LocalDateTime, LocalTime, DateTime, DateTimeZone}
+import org.joda.time.{
+  DateTime,
+  DateTimeZone,
+  LocalDate,
+  LocalDateTime,
+  LocalTime
+}
 import org.scalacheck._
 import org.scalatest._
 import org.scalatest.prop.Checkers
@@ -37,7 +43,8 @@ class JodaSerializerTest extends FlatSpec with Checkers {
       year <- Gen.choose(-292275054, 292278993)
       month <- Gen.choose(1, 12)
       maxDayOfMonth <- Try {
-        Gen.const(new LocalDateTime(year, month, 1, 0, 0).dayOfMonth().getMaximumValue)
+        Gen.const(
+          new LocalDateTime(year, month, 1, 0, 0).dayOfMonth().getMaximumValue)
       }.getOrElse(Gen.fail)
       day <- Gen.choose(1, maxDayOfMonth)
       hour <- Gen.choose(0, 23)
@@ -46,7 +53,14 @@ class JodaSerializerTest extends FlatSpec with Checkers {
       ms <- Gen.choose(0, 999)
       tz <- Gen.oneOf(DateTimeZone.getAvailableIDs.asScala.toSeq)
       attempt <- Try {
-        val ldt = new DateTime(year, month, day, hour, minute, second, ms,DateTimeZone.forID(tz))
+        val ldt = new DateTime(year,
+                               month,
+                               day,
+                               hour,
+                               minute,
+                               second,
+                               ms,
+                               DateTimeZone.forID(tz))
         Gen.const(ldt)
       }.getOrElse(Gen.fail)
     } yield attempt

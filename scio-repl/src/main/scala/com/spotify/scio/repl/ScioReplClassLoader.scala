@@ -33,8 +33,10 @@ import scala.tools.nsc.io._
  * @param urls classpath urls for URLClassLoader
  * @param parent parent for Scio CL - may be null to close the chain
  */
-class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent: ClassLoader)
-  extends URLClassLoader(urls, parent) {
+class ScioReplClassLoader(urls: Array[URL],
+                          parent: ClassLoader,
+                          detachedParent: ClassLoader)
+    extends URLClassLoader(urls, parent) {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -70,8 +72,10 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent:
     }
   }
 
-  def genNextReplCodeJarDir: File = Files.createTempDirectory("scio-repl-").toFile
-  def getNextReplCodeJarPath: String = new File(nextReplJarDir, replJarName).getAbsolutePath
+  def genNextReplCodeJarDir: File =
+    Files.createTempDirectory("scio-repl-").toFile
+  def getNextReplCodeJarPath: String =
+    new File(nextReplJarDir, replJarName).getAbsolutePath
 
   /**
    * Creates a jar file in a temporary directory containing the code thus far compiled by the REPL.
@@ -88,7 +92,8 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent:
     // Generate next repl jar dir
     nextReplJarDir = genNextReplCodeJarDir
 
-    val jarFile = createJar(virtualDirectory.asInstanceOf[VirtualDirectory], tempJar)
+    val jarFile =
+      createJar(virtualDirectory.asInstanceOf[VirtualDirectory], tempJar)
     jarFile.getPath
   }
 
@@ -97,7 +102,8 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent:
    *
    * @param virtualDirectory containing classes that should be added to the jar
    */
-  private def createJar(virtualDirectory: VirtualDirectory, jarFile: File): File = {
+  private def createJar(virtualDirectory: VirtualDirectory,
+                        jarFile: File): File = {
     val jarStream = new JarOutputStream(new FileOutputStream(jarFile))
     try {
       addVirtualDirectoryToJar(virtualDirectory, "", jarStream)
@@ -116,9 +122,9 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent:
    * @param entryPath for classes found in the virtual directory
    * @param jarStream for writing the jar file
    */
-  private def addVirtualDirectoryToJar( dir: VirtualDirectory,
-                                        entryPath: String,
-                                        jarStream: JarOutputStream) {
+  private def addVirtualDirectoryToJar(dir: VirtualDirectory,
+                                       entryPath: String,
+                                       jarStream: JarOutputStream) {
     dir.foreach { file =>
       if (file.isDirectory) {
         // Recursively descend into subdirectories, adjusting the package name as we do.
@@ -126,7 +132,9 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent:
         val entry: JarEntry = new JarEntry(dirPath)
         jarStream.putNextEntry(entry)
         jarStream.closeEntry()
-        addVirtualDirectoryToJar(file.asInstanceOf[VirtualDirectory], dirPath, jarStream)
+        addVirtualDirectoryToJar(file.asInstanceOf[VirtualDirectory],
+                                 dirPath,
+                                 jarStream)
       } else if (file.hasExtension("class")) {
         // Add class files as an entry in the jar file and write the class to the jar.
         val entry: JarEntry = new JarEntry(entryPath + file.name)

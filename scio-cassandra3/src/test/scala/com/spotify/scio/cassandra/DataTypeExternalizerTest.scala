@@ -25,12 +25,16 @@ class DataTypeExternalizerTest extends FlatSpec with Matchers {
 
   "DataTypeExternalizer" should "support ImmutableList" in {
     val dt = DataType.list(DataType.text())
-    SerializableUtils.ensureSerializable(DataTypeExternalizer(dt)).get shouldBe dt
+    SerializableUtils
+      .ensureSerializable(DataTypeExternalizer(dt))
+      .get shouldBe dt
   }
 
   it should "support ImmutableSet" in {
     val dt = DataType.set(DataType.text())
-    SerializableUtils.ensureSerializable(DataTypeExternalizer(dt)).get shouldBe dt
+    SerializableUtils
+      .ensureSerializable(DataTypeExternalizer(dt))
+      .get shouldBe dt
   }
 
 }

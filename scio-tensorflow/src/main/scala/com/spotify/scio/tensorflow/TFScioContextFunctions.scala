@@ -30,8 +30,9 @@ class TFScioContextFunctions(val self: ScioContext) extends AnyVal {
    * buffers (which contain `org.tensorflow.example.Features` as a field) serialized as bytes.
    * @group input
    */
-  def tfRecordFile(path: String, compression: Compression = Compression.AUTO)
-  : SCollection[Array[Byte]] =
+  def tfRecordFile(
+    path: String,
+    compression: Compression = Compression.AUTO): SCollection[Array[Byte]] =
     self.read(TFRecordIO(path))(TFRecordIO.ReadParam(compression))
 
   /**
@@ -39,7 +40,9 @@ class TFScioContextFunctions(val self: ScioContext) extends AnyVal {
    * encoded as serialized `org.tensorflow.example.Example` protocol buffers.
    * @group input
    */
-  def tfRecordExampleFile(path: String, compression: Compression = Compression.AUTO)
-  : SCollection[Example] = self.read(TFExampleIO(path))(TFExampleIO.ReadParam(compression))
+  def tfRecordExampleFile(
+    path: String,
+    compression: Compression = Compression.AUTO): SCollection[Example] =
+    self.read(TFExampleIO(path))(TFExampleIO.ReadParam(compression))
 
 }

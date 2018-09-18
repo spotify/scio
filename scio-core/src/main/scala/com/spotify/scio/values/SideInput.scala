@@ -38,11 +38,10 @@ trait SideInput[T] extends Serializable {
 
   private[values] def get[I, O](context: DoFn[I, O]#ProcessContext): T
 
-  def getCache[I, O](context: DoFn[I, O]#ProcessContext, window: BoundedWindow): T = {
-    if (
-        cache == null || this.window != window ||
-        (updateCacheOnGlobalWindow && window == GlobalWindow.INSTANCE)
-      ) {
+  def getCache[I, O](context: DoFn[I, O]#ProcessContext,
+                     window: BoundedWindow): T = {
+    if (cache == null || this.window != window ||
+        (updateCacheOnGlobalWindow && window == GlobalWindow.INSTANCE)) {
       this.window = window
       cache = get(context)
     }
@@ -59,19 +58,22 @@ object SideInput {
    * Wrap a view of a singleton as a [[SideInput]]. In most cases you want to use
    * [[SCollection.asSingletonSideInput(*]].
    */
-  def wrapSingleton[T](view: PCollectionView[T]): SideInput[T] = new SingletonSideInput[T](view)
+  def wrapSingleton[T](view: PCollectionView[T]): SideInput[T] =
+    new SingletonSideInput[T](view)
 
   /**
    * Wrap a view of a [[java.util.List]] as a [[SideInput]]. In most cases you want to use
    * [[SCollection.asListSideInput]].
    */
-  def wrapList[T](view: PCollectionView[JList[T]]): SideInput[Seq[T]] = new ListSideInput[T](view)
+  def wrapList[T](view: PCollectionView[JList[T]]): SideInput[Seq[T]] =
+    new ListSideInput[T](view)
 
   /**
    * Wrap a view of a [[java.lang.Iterable]] as a [[SideInput]]. In most cases you want to use
    * [[SCollection.asIterableSideInput]].
    */
-  def wrapIterable[T](view: PCollectionView[JIterable[T]]): SideInput[Iterable[T]] =
+  def wrapIterable[T](
+    view: PCollectionView[JIterable[T]]): SideInput[Iterable[T]] =
     new IterableSideInput[T](view)
 
   /**
@@ -86,41 +88,47 @@ object SideInput {
    * [[PairSCollectionFunctions.asMultiMapSideInput]].
    */
   def wrapMultiMap[K, V](view: PCollectionView[JMap[K, JIterable[V]]])
-  : SideInput[Map[K, Iterable[V]]] = new MultiMapSideInput[K, V](view)
+    : SideInput[Map[K, Iterable[V]]] = new MultiMapSideInput[K, V](view)
 }
 
 private[values] class SingletonSideInput[T](val view: PCollectionView[T])
-  extends SideInput[T] {
-  override def get[I, O](context: DoFn[I, O]#ProcessContext): T = context.sideInput(view)
+    extends SideInput[T] {
+  override def get[I, O](context: DoFn[I, O]#ProcessContext): T =
+    context.sideInput(view)
 }
 
 private[values] class ListSideInput[T](val view: PCollectionView[JList[T]])
-  extends SideInput[Seq[T]] {
+    extends SideInput[Seq[T]] {
   override def get[I, O](context: DoFn[I, O]#ProcessContext): Seq[T] =
     context.sideInput(view).asScala
 }
 
-private[values] class IterableSideInput[T](val view: PCollectionView[JIterable[T]])
-  extends SideInput[Iterable[T]] {
+private[values] class IterableSideInput[T](
+  val view: PCollectionView[JIterable[T]])
+    extends SideInput[Iterable[T]] {
   override def get[I, O](context: DoFn[I, O]#ProcessContext): Iterable[T] =
     context.sideInput(view).asScala
 }
 
 private[values] class MapSideInput[K, V](val view: PCollectionView[JMap[K, V]])
-  extends SideInput[Map[K, V]] {
+    extends SideInput[Map[K, V]] {
   override def get[I, O](context: DoFn[I, O]#ProcessContext): Map[K, V] =
     JMapWrapper.of(context.sideInput(view))
 }
 
-private[values] class MultiMapSideInput[K, V](val view: PCollectionView[JMap[K, JIterable[V]]])
-  extends SideInput[Map[K, Iterable[V]]] {
-  override def get[I, O](context: DoFn[I, O]#ProcessContext): Map[K, Iterable[V]] =
+private[values] class MultiMapSideInput[K, V](
+  val view: PCollectionView[JMap[K, JIterable[V]]])
+    extends SideInput[Map[K, Iterable[V]]] {
+  override def get[I, O](
+    context: DoFn[I, O]#ProcessContext): Map[K, Iterable[V]] =
     JMapWrapper.ofMultiMap(context.sideInput(view))
 }
 
 /** Encapsulate context of one or more [[SideInput]]s in an [[SCollectionWithSideInput]]. */
-class SideInputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessContext,
-                                         val window: BoundedWindow) {
+class SideInputContext[T] private[scio] (
+  val context: DoFn[T, AnyRef]#ProcessContext,
+  val window: BoundedWindow) {
+
   /** Extract the value of a given [[SideInput]]. */
   def apply[S](side: SideInput[S]): S = side.getCache(context, window)
 }

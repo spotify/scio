@@ -25,7 +25,10 @@ import org.scalatest._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import shapeless.datatype.record._
 
-class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matchers {
+class ConverterProviderSpec
+    extends PropSpec
+    with GeneratorDrivenPropertyChecks
+    with Matchers {
 
   // TODO: remove this once https://github.com/scalatest/scalatest/issues/1090 is addressed
   override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
@@ -34,7 +37,8 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
   import Schemas._
 
   implicit val arbByteArray = Arbitrary(Gen.alphaStr.map(_.getBytes))
-  implicit val arbByteString = Arbitrary(Gen.alphaStr.map(ByteString.copyFromUtf8))
+  implicit val arbByteString = Arbitrary(
+    Gen.alphaStr.map(ByteString.copyFromUtf8))
   implicit val arbInstant = Arbitrary(Gen.const(Instant.now()))
   implicit val arbDate = Arbitrary(Gen.const(LocalDate.now()))
   implicit val arbTime = Arbitrary(Gen.const(LocalTime.now()))
@@ -45,14 +49,16 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
 
   property("round trip required primitive types") {
     forAll { r1: Required =>
-      val r2 = BigQueryType.fromTableRow[Required](BigQueryType.toTableRow[Required](r1))
+      val r2 = BigQueryType.fromTableRow[Required](
+        BigQueryType.toTableRow[Required](r1))
       RecordMatcher[Required](r1, r2) shouldBe true
     }
   }
 
   property("round trip optional primitive types") {
     forAll { r1: Optional =>
-      val r2 = BigQueryType.fromTableRow[Optional](BigQueryType.toTableRow[Optional](r1))
+      val r2 = BigQueryType.fromTableRow[Optional](
+        BigQueryType.toTableRow[Optional](r1))
       RecordMatcher[Optional](r1, r2) shouldBe true
     }
   }
@@ -78,7 +84,8 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
 
   property("round trip repeated primitive types") {
     forAll { r1: Repeated =>
-      val r2 = BigQueryType.fromTableRow[Repeated](BigQueryType.toTableRow[Repeated](r1))
+      val r2 = BigQueryType.fromTableRow[Repeated](
+        BigQueryType.toTableRow[Repeated](r1))
       RecordMatcher[Repeated](r1, r2) shouldBe true
     }
   }

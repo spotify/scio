@@ -39,7 +39,8 @@ trait RunEnforcementJobTest extends FlatSpec { this: PipelineSpec =>
   // scalastyle:on method.name
 
   // scalastyle:off method.name
-  private[testing] def JobTest[T: ClassTag](enforceRun: Boolean = true): InnerJobTest.Builder = {
+  private[testing] def JobTest[T: ClassTag](
+    enforceRun: Boolean = true): InnerJobTest.Builder = {
     val jt = InnerJobTest[T]
     if (enforceRun) tests += jt
     jt
@@ -62,7 +63,9 @@ trait RunEnforcementJobTest extends FlatSpec { this: PipelineSpec =>
     if (outcome.isSucceeded) {
       val notRun = tests.filterNot(_.wasRunInvoked)
       if (notRun.nonEmpty) {
-        val m = notRun.mkString(start = "Missing run(): ", sep = "\nMissing run(): ", end = "")
+        val m = notRun.mkString(start = "Missing run(): ",
+                                sep = "\nMissing run(): ",
+                                end = "")
         Failed(s"Did you forget run()?\n$m")(test.pos.getOrElse(Position.here))
       } else {
         outcome

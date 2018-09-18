@@ -48,7 +48,8 @@ private[annoy] object AnnoyUri {
 
 private class LocalAnnoyUri(val path: String) extends AnnoyUri {
 
-  override private[annoy] def getReader(metric: AnnoyMetric, dim: Int): AnnoyReader =
+  override private[annoy] def getReader(metric: AnnoyMetric,
+                                        dim: Int): AnnoyReader =
     new AnnoyReader(path, metric, dim)
   override private[annoy] def saveAndClose(w: AnnoyWriter): Unit = {
     try {
@@ -62,11 +63,13 @@ private class LocalAnnoyUri(val path: String) extends AnnoyUri {
 
 }
 
-private class RemoteAnnoyUri(val path: String, options: PipelineOptions) extends AnnoyUri {
+private class RemoteAnnoyUri(val path: String, options: PipelineOptions)
+    extends AnnoyUri {
 
   val rfu: RemoteFileUtil = RemoteFileUtil.create(options)
 
-  override private[annoy] def getReader(metric: AnnoyMetric, dim: Int): AnnoyReader = {
+  override private[annoy] def getReader(metric: AnnoyMetric,
+                                        dim: Int): AnnoyReader = {
     val localPath = rfu.download(new URI(path))
     new AnnoyReader(localPath.toString, metric, dim)
   }
@@ -88,12 +91,14 @@ private class RemoteAnnoyUri(val path: String, options: PipelineOptions) extends
 private[annoy] class AnnoyWriter(metric: AnnoyMetric, dim: Int, nTrees: Int) {
 
   private val annoy4sIndex = metric match {
-    case Angular => AnnoyWriter.lib.createAngular(dim)
+    case Angular   => AnnoyWriter.lib.createAngular(dim)
     case Euclidean => AnnoyWriter.lib.createAngular(dim)
   }
 
-  def addItem(item: Int, w: Array[Float]): Unit = AnnoyWriter.lib.addItem(annoy4sIndex, item, w)
-  def save(filename: String): Unit = AnnoyWriter.lib.save(annoy4sIndex, filename)
+  def addItem(item: Int, w: Array[Float]): Unit =
+    AnnoyWriter.lib.addItem(annoy4sIndex, item, w)
+  def save(filename: String): Unit =
+    AnnoyWriter.lib.save(annoy4sIndex, filename)
   def build(): Unit = AnnoyWriter.lib.build(annoy4sIndex, nTrees)
   def free(): Unit = AnnoyWriter.lib.deleteIndex(annoy4sIndex)
   def size: Int = AnnoyWriter.lib.getNItems(annoy4sIndex)
@@ -102,5 +107,7 @@ private[annoy] class AnnoyWriter(metric: AnnoyMetric, dim: Int, nTrees: Int) {
 }
 
 private[annoy] object AnnoyWriter {
-  private val lib = Native.loadLibrary("annoy", classOf[AnnoyLibrary]).asInstanceOf[AnnoyLibrary]
+  private val lib = Native
+    .loadLibrary("annoy", classOf[AnnoyLibrary])
+    .asInstanceOf[AnnoyLibrary]
 }

@@ -24,7 +24,10 @@ import org.scalatest._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import shapeless.datatype.record._
 
-class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matchers {
+class ConverterProviderSpec
+    extends PropSpec
+    with GeneratorDrivenPropertyChecks
+    with Matchers {
 
   // TODO: remove this once https://github.com/scalatest/scalatest/issues/1090 is addressed
   override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
@@ -33,14 +36,16 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
   import Schemas._
 
   implicit val arbByteArray = Arbitrary(Gen.alphaStr.map(_.getBytes))
-  implicit val arbByteString = Arbitrary(Gen.alphaStr.map(ByteString.copyFromUtf8))
+  implicit val arbByteString = Arbitrary(
+    Gen.alphaStr.map(ByteString.copyFromUtf8))
 
   implicit def compareByteArrays(x: Array[Byte], y: Array[Byte]): Boolean =
     ByteString.copyFrom(x) == ByteString.copyFrom(y)
 
   property("round trip basic primitive types") {
     forAll { r1: BasicFields =>
-      val r2 = AvroType.fromGenericRecord[BasicFields](AvroType.toGenericRecord[BasicFields](r1))
+      val r2 = AvroType.fromGenericRecord[BasicFields](
+        AvroType.toGenericRecord[BasicFields](r1))
       RecordMatcher[BasicFields](r1, r2) shouldBe true
     }
   }
@@ -69,14 +74,16 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
 
   property("round trip primitive type arrays") {
     forAll { r1: ArrayFields =>
-      val r2 = AvroType.fromGenericRecord[ArrayFields](AvroType.toGenericRecord[ArrayFields](r1))
+      val r2 = AvroType.fromGenericRecord[ArrayFields](
+        AvroType.toGenericRecord[ArrayFields](r1))
       RecordMatcher[ArrayFields](r1, r2) shouldBe true
     }
   }
 
   property("round trip primitive type maps") {
     forAll { r1: MapFields =>
-      val r2 = AvroType.fromGenericRecord[MapFields](AvroType.toGenericRecord[MapFields](r1))
+      val r2 = AvroType.fromGenericRecord[MapFields](
+        AvroType.toGenericRecord[MapFields](r1))
 
       RecordMatcher[MapFields](r1, r2) shouldBe true
     }

@@ -49,7 +49,6 @@ object RandomSamplerUtils extends Serializable {
    * some probability.  Even when two distributions are the same, they will register as
    * different 10% of the time at a p-value of 0.1
    */
-
   // This D value is the precomputed KS statistic for p-value 0.1, sample size 1000:
   val sampleSize = 1000
   val D = 0.0544280747619
@@ -83,7 +82,8 @@ object RandomSamplerUtils extends Serializable {
   // This function assumes input data is integers sampled from the sequence of
   // increasing integers: {0, 1, 2, ...}.  This works because that is how I generate them,
   // and the samplers preserve their input order
-  def gaps(data: Array[Int]): Array[Int] = data.sliding(2).map(x => x(1) - x(0)).toArray
+  def gaps(data: Array[Int]): Array[Int] =
+    data.sliding(2).map(x => x(1) - x(0)).toArray
 
   // Returns the cumulative distribution from a histogram
   def cumulativeDist(hist: Array[Int]): Array[Double] = {
@@ -93,10 +93,11 @@ object RandomSamplerUtils extends Serializable {
   }
 
   // Returns aligned cumulative distributions from two arrays of data
-  def cumulants(d1: Array[Int], d2: Array[Int],
+  def cumulants(d1: Array[Int],
+                d2: Array[Int],
                 ss: Int = sampleSize): (Array[Double], Array[Double]) = {
     assert(math.min(d1.length, d2.length) > 0)
-    assert(math.min(d1.min, d2.min)  >=  0)
+    assert(math.min(d1.min, d2.min) >= 0)
     val m = 1 + math.max(d1.max, d2.max)
     val h1 = Array.fill[Int](m)(0)
     val h2 = Array.fill[Int](m)(0)
@@ -112,24 +113,34 @@ object RandomSamplerUtils extends Serializable {
     assert(cdf1.length == cdf2.length)
     val n = cdf1.length
     assert(n > 0)
-    assert(cdf1(n-1) == 1.0)
-    assert(cdf2(n-1) == 1.0)
-    cdf1.zip(cdf2).map { x => Math.abs(x._1 - x._2) }.max
+    assert(cdf1(n - 1) == 1.0)
+    assert(cdf2(n - 1) == 1.0)
+    cdf1
+      .zip(cdf2)
+      .map { x =>
+        Math.abs(x._1 - x._2)
+      }
+      .max
   }
 
   // Returns the median KS 'D' statistic between two samples, over (m) sampling trials
-  def medianKSD(data1: => Array[Int], data2: => Array[Int], m: Int = 5): Double = {
-    val t = Array.fill[Double](m) {
-      val (c1, c2) = cumulants(data1.take(sampleSize), data2.take(sampleSize))
-      ksd(c1, c2)
-    }.sorted
+  def medianKSD(data1: => Array[Int],
+                data2: => Array[Int],
+                m: Int = 5): Double = {
+    val t = Array
+      .fill[Double](m) {
+        val (c1, c2) = cumulants(data1.take(sampleSize), data2.take(sampleSize))
+        ksd(c1, c2)
+      }
+      .sorted
     // return the median KS statistic
     t(m / 2)
   }
 
   val population = 1 to populationSize
   val keyedPopulation = population.map(("a", _)) ++ population.map(("b", _))
-  def expectedSamples(withReplacement: Boolean, fraction: Double): Array[Int] = {
+  def expectedSamples(withReplacement: Boolean,
+                      fraction: Double): Array[Int] = {
     val i = population.iterator
     val s = if (withReplacement) sampleWR(i, fraction) else sample(i, fraction)
     s.toArray

@@ -34,18 +34,21 @@ final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {
   override def read(sc: ScioContext, params: ReadP): SCollection[Array[Byte]] =
     TFRecordMethods.read(sc, path, params)
 
-  override def write(data: SCollection[Array[Byte]], params: WriteP): Future[Tap[Array[Byte]]] = {
+  override def write(data: SCollection[Array[Byte]],
+                     params: WriteP): Future[Tap[Array[Byte]]] = {
     TFRecordMethods.write(data, path, params)
     data.context.makeFuture(tap(TFRecordIO.ReadParam(params.compression)))
   }
 
-  override def tap(params: ReadP): Tap[Array[Byte]] = TFRecordMethods.tap(params, path)
+  override def tap(params: ReadP): Tap[Array[Byte]] =
+    TFRecordMethods.tap(params, path)
 }
 
 object TFRecordIO {
   final case class ReadParam(compression: Compression = Compression.AUTO)
   final case class WriteParam(suffix: String = ".tfrecords",
-                              compression: Compression = Compression.UNCOMPRESSED,
+                              compression: Compression =
+                                Compression.UNCOMPRESSED,
                               numShards: Int = 0)
 }
 
@@ -58,7 +61,8 @@ final case class TFExampleIO(path: String) extends ScioIO[Example] {
   override def read(sc: ScioContext, params: ReadP): SCollection[Example] =
     TFRecordMethods.read(sc, path, params).map(Example.parseFrom)
 
-  override def write(data: SCollection[Example], params: WriteP): Future[Tap[Example]] = {
+  override def write(data: SCollection[Example],
+                     params: WriteP): Future[Tap[Example]] = {
     TFRecordMethods.write(data.map(_.toByteArray), path, params)
     data.context.makeFuture(tap(TFExampleIO.ReadParam(params.compression)))
   }
@@ -79,20 +83,23 @@ private object TFRecordMethods {
   def read(sc: ScioContext,
            path: String,
            params: TFRecordIO.ReadParam): SCollection[Array[Byte]] =
-    sc.wrap(sc.applyInternal(beam.TFRecordIO
-      .read()
-      .from(path)
-      .withCompression(params.compression)))
+    sc.wrap(
+      sc.applyInternal(
+        beam.TFRecordIO
+          .read()
+          .from(path)
+          .withCompression(params.compression)))
 
   def write(data: SCollection[Array[Byte]],
             path: String,
             params: TFRecordIO.WriteParam): Unit =
-    data.applyInternal(beam.TFRecordIO
-      .write()
-      .to(data.pathWithShards(path))
-      .withSuffix(params.suffix)
-      .withCompression(params.compression)
-      .withNumShards(params.numShards))
+    data.applyInternal(
+      beam.TFRecordIO
+        .write()
+        .to(data.pathWithShards(path))
+        .withSuffix(params.suffix)
+        .withCompression(params.compression)
+        .withNumShards(params.numShards))
 
   def tap(read: TFRecordIO.ReadParam, path: String): Tap[Array[Byte]] =
     TFRecordFileTap(ScioUtil.addPartSuffix(path))

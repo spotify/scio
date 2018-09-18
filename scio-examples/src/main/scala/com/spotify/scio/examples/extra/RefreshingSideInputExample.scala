@@ -43,12 +43,12 @@ import scala.util.{Random, Success, Try}
 object RefreshingSideInputExample {
   case class LotteryTicket(numbers: Seq[Int])
   case class LotteryResult(
-                            eventTime: Instant,
-                            processTime: Instant,
-                            isWinner: Boolean,
-                            ticket: Seq[Int],
-                            winningNumbers: Seq[Int]
-                          )
+    eventTime: Instant,
+    processTime: Instant,
+    isWinner: Boolean,
+    ticket: Seq[Int],
+    winningNumbers: Seq[Int]
+  )
 
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -57,7 +57,6 @@ object RefreshingSideInputExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.optionsAs[StreamingOptions].setStreaming(true)
-
 
     // An unbounded input that produces a sequence of 5 randomly generated winning lottery numbers,
     // refreshed every 10 seconds. Materialized as a singleton `SideInput`.
@@ -75,7 +74,8 @@ object RefreshingSideInputExample {
           trigger = Repeatedly.forever(AfterPane.elementCountAtLeast(1)),
           accumulationMode = AccumulationMode.DISCARDING_FIRED_PANES,
           closingBehavior = ClosingBehavior.FIRE_IF_NON_EMPTY,
-          allowedLateness = Duration.standardSeconds(0))
+          allowedLateness = Duration.standardSeconds(0)
+        )
       )
       .map(_ => Seq.fill(ticketSize)(Random.nextInt(100)))
       // A default is needed in case an empty pane is fired
@@ -88,14 +88,18 @@ object RefreshingSideInputExample {
       .withFixedWindows(Duration.standardSeconds(5))
       .withTimestamp
       .withSideInputs(winningLotteryNumbers)
-      .map { case ((lotteryTicket, eventTime), side) =>
-        val currentWinningNumbers = side(winningLotteryNumbers)
+      .map {
+        case ((lotteryTicket, eventTime), side) =>
+          val currentWinningNumbers = side(winningLotteryNumbers)
 
-        val isWinner = lotteryTicket.numbers == currentWinningNumbers
-        val result = LotteryResult(eventTime, Instant.now(), isWinner,
-          lotteryTicket.numbers, currentWinningNumbers)
+          val isWinner = lotteryTicket.numbers == currentWinningNumbers
+          val result = LotteryResult(eventTime,
+                                     Instant.now(),
+                                     isWinner,
+                                     lotteryTicket.numbers,
+                                     currentWinningNumbers)
 
-        logger.info(s"Lottery result: $result")
+          logger.info(s"Lottery result: $result")
       } // Can save output to PubSub, BigQuery, etc.
 
     sc.close()

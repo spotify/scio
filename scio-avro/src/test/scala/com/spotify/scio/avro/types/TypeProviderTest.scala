@@ -74,8 +74,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
     TableWithDescription.isInstanceOf[HasAvroDoc] shouldBe true
   }
 
-  @AvroType.fromSchema(
-    """
+  @AvroType.fromSchema("""
        |{
        |  "type": "record",
        |  "name": "Record",
@@ -93,8 +92,13 @@ class TypeProviderTest extends FlatSpec with Matchers {
   class RecordWithBasicTypes
 
   it should "support required primitive types" in {
-    val r = RecordWithBasicTypes(true, 1, 2L, 1.5f, 2.5, "string",
-      ByteString.copyFromUtf8("bytes"))
+    val r = RecordWithBasicTypes(true,
+                                 1,
+                                 2L,
+                                 1.5f,
+                                 2.5,
+                                 "string",
+                                 ByteString.copyFromUtf8("bytes"))
     r.boolF shouldBe true
     r.intF shouldBe 1
     r.longF shouldBe 2L
@@ -105,10 +109,15 @@ class TypeProviderTest extends FlatSpec with Matchers {
   }
 
   it should "support .tupled in companion object" in {
-    val r1 = RecordWithBasicTypes(true, 1, 2L, 1.5f, 2.5, "string",
-      ByteString.copyFromUtf8("bytes"))
-    val r2 = RecordWithBasicTypes.tupled((true, 1, 2L, 1.5f, 2.5, "string",
-      ByteString.copyFromUtf8("bytes")))
+    val r1 = RecordWithBasicTypes(true,
+                                  1,
+                                  2L,
+                                  1.5f,
+                                  2.5,
+                                  "string",
+                                  ByteString.copyFromUtf8("bytes"))
+    val r2 = RecordWithBasicTypes.tupled(
+      (true, 1, 2L, 1.5f, 2.5, "string", ByteString.copyFromUtf8("bytes")))
     r1 shouldBe r2
   }
 
@@ -142,9 +151,15 @@ class TypeProviderTest extends FlatSpec with Matchers {
   }
 
   it should "support round trip conversion from GenericRecord" in {
-    val r1 = RecordWithBasicTypes(true, 1, 2L, 1.5f, 2.5, "string",
-      ByteString.copyFromUtf8("bytes"))
-    val r2 = RecordWithBasicTypes.fromGenericRecord(RecordWithBasicTypes.toGenericRecord(r1))
+    val r1 = RecordWithBasicTypes(true,
+                                  1,
+                                  2L,
+                                  1.5f,
+                                  2.5,
+                                  "string",
+                                  ByteString.copyFromUtf8("bytes"))
+    val r2 = RecordWithBasicTypes.fromGenericRecord(
+      RecordWithBasicTypes.toGenericRecord(r1))
     r1 shouldBe r2
   }
 
@@ -167,9 +182,13 @@ class TypeProviderTest extends FlatSpec with Matchers {
   class RecordWithOptionalBasicTypes
 
   it should "support nullable primitive types" in {
-    val r = RecordWithOptionalBasicTypes(
-      Some(true), Some(1), Some(2L), Some(1.5f),
-      Some(2.5), Some("string"), Some(ByteString.copyFromUtf8("bytes")))
+    val r = RecordWithOptionalBasicTypes(Some(true),
+                                         Some(1),
+                                         Some(2L),
+                                         Some(1.5f),
+                                         Some(2.5),
+                                         Some("string"),
+                                         Some(ByteString.copyFromUtf8("bytes")))
     r.boolF shouldBe Some(true)
     r.intF shouldBe Some(1)
     r.longF shouldBe Some(2L)
@@ -209,9 +228,13 @@ class TypeProviderTest extends FlatSpec with Matchers {
   class RecordWithBasicTypeArrays
 
   it should "support primitive type arrays" in {
-    val r = RecordWithBasicTypeArrays(
-      List(true), List(1), List(2L), List(1.5f),
-      List(2.5), List("string"), List(ByteString.copyFromUtf8("bytes")))
+    val r = RecordWithBasicTypeArrays(List(true),
+                                      List(1),
+                                      List(2L),
+                                      List(1.5f),
+                                      List(2.5),
+                                      List("string"),
+                                      List(ByteString.copyFromUtf8("bytes")))
     r.boolF shouldBe List(true)
     r.intF shouldBe List(1)
     r.longF shouldBe List(2L)
@@ -241,10 +264,14 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   it should "support primitive type maps" in {
     val r = RecordWithBasicTypeMaps(
-      Map("bool" -> true), Map("int" -> 1),
-      Map("long" -> 2L), Map("float" -> 1.5f),
-      Map("double" -> 2.5), Map("string" -> "string"),
-      Map("bytes" -> ByteString.copyFromUtf8("bytes")))
+      Map("bool" -> true),
+      Map("int" -> 1),
+      Map("long" -> 2L),
+      Map("float" -> 1.5f),
+      Map("double" -> 2.5),
+      Map("string" -> "string"),
+      Map("bytes" -> ByteString.copyFromUtf8("bytes"))
+    )
     r.boolF shouldBe Map("bool" -> true)
     r.intF shouldBe Map("int" -> 1)
     r.longF shouldBe Map("long" -> 2L)
@@ -298,8 +325,10 @@ class TypeProviderTest extends FlatSpec with Matchers {
   class RecordWithRecords
 
   it should "support nested records" in {
-    val r = RecordWithRecords(RecordWithRecords$Basic(1), RecordWithRecords$Optional(Some(1)),
-      RecordWithRecords$ArrayF(List(1)), RecordWithRecords$MapF(Map("int" -> 1)))
+    val r = RecordWithRecords(RecordWithRecords$Basic(1),
+                              RecordWithRecords$Optional(Some(1)),
+                              RecordWithRecords$ArrayF(List(1)),
+                              RecordWithRecords$MapF(Map("int" -> 1)))
     r.basic.intF shouldBe 1
     r.optional.intF shouldBe Some(1)
     r.array.intF shouldBe List(1)
@@ -308,7 +337,8 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   it should "return correct schema for nested objects" in {
     RecordWithRecords.schema shouldBe
-      new Schema.Parser().parse("""
+      new Schema.Parser()
+        .parse("""
                                   |{
                                   |  "type" : "record",
                                   |  "name" : "Record",
@@ -402,7 +432,8 @@ class TypeProviderTest extends FlatSpec with Matchers {
       Some(RecordWithOptionalRecords$Basic(1)),
       Some(RecordWithOptionalRecords$Optional(Some(1))),
       Some(RecordWithOptionalRecords$ArrayF(List(1))),
-      Some(RecordWithOptionalRecords$MapF(Map("int" -> 1))))
+      Some(RecordWithOptionalRecords$MapF(Map("int" -> 1)))
+    )
     r.basic shouldBe Some(RecordWithOptionalRecords$Basic(1))
     r.optional shouldBe Some(RecordWithOptionalRecords$Optional(Some(1)))
     r.array shouldBe Some(RecordWithOptionalRecords$ArrayF(List(1)))
@@ -457,7 +488,8 @@ class TypeProviderTest extends FlatSpec with Matchers {
       List(RecordWithRecordArrays$Basic(1)),
       List(RecordWithRecordArrays$Optional(Some(1))),
       List(RecordWithRecordArrays$ArrayF(List(1))),
-      List(RecordWithRecordArrays$MapF(Map("int" -> 1))))
+      List(RecordWithRecordArrays$MapF(Map("int" -> 1)))
+    )
     r.basic shouldBe List(RecordWithRecordArrays$Basic(1))
     r.optional shouldBe List(RecordWithRecordArrays$Optional(Some(1)))
     r.array shouldBe List(RecordWithRecordArrays$ArrayF(List(1)))
@@ -512,15 +544,16 @@ class TypeProviderTest extends FlatSpec with Matchers {
       Map("basic" -> RecordWithRecordMaps$Basic(1)),
       Map("optional" -> RecordWithRecordMaps$Optional(Some(1))),
       Map("array" -> RecordWithRecordMaps$ArrayF(List(1))),
-      Map("map" -> RecordWithRecordMaps$MapF(Map("int" -> 1))))
+      Map("map" -> RecordWithRecordMaps$MapF(Map("int" -> 1)))
+    )
     r.basic shouldBe Map("basic" -> RecordWithRecordMaps$Basic(1))
-    r.optional shouldBe Map("optional" -> RecordWithRecordMaps$Optional(Some(1)))
-    r.array shouldBe  Map("array" -> RecordWithRecordMaps$ArrayF(List(1)))
+    r.optional shouldBe Map(
+      "optional" -> RecordWithRecordMaps$Optional(Some(1)))
+    r.array shouldBe Map("array" -> RecordWithRecordMaps$ArrayF(List(1)))
     r.map shouldBe Map("map" -> RecordWithRecordMaps$MapF(Map("int" -> 1)))
   }
 
-  @AvroType.fromSchema(
-    """
+  @AvroType.fromSchema("""
       |{
       |  "type" : "record",
       |  "name" : "Record",
@@ -555,9 +588,8 @@ class TypeProviderTest extends FlatSpec with Matchers {
   it should "support multiple levels of nesting records" in {
     val r =
       RecordWithNestedRecords(
-        RecordWithNestedRecords$Level1(
-          RecordWithNestedRecords$Level1$Level2(
-            RecordWithNestedRecords$Level1$Level2$Level3(1))))
+        RecordWithNestedRecords$Level1(RecordWithNestedRecords$Level1$Level2(
+          RecordWithNestedRecords$Level1$Level2$Level3(1))))
     r.level1.level2.level3.intF shouldBe 1
   }
 
@@ -568,28 +600,35 @@ class TypeProviderTest extends FlatSpec with Matchers {
   class Artisanal1Field
 
   it should "not provide .tupled in companion object with single field" in {
-    Artisanal1Field.getClass.getMethods.map(_.getName) should not contain "tupled"
+    Artisanal1Field.getClass.getMethods
+      .map(_.getName) should not contain "tupled"
   }
-
-
   @AvroType.toSchema
   case class ToSchema(boolF: Boolean,
-                     intF: Int,
-                     longF: Long,
-                     floatF: Float,
-                     doubleF: Double,
-                     stringF: String,
-                     bytesF: ByteString)
+                      intF: Int,
+                      longF: Long,
+                      floatF: Float,
+                      doubleF: Double,
+                      stringF: String,
+                      bytesF: ByteString)
 
   "AvroType.toSchema" should "support .tupled in companion object" in {
-    val r1 = ToSchema(true, 1, 2L, 1.5f, 2.5, "string", ByteString.copyFromUtf8("bytes"))
-    val r2 = ToSchema.tupled((true, 1, 2L, 1.5f, 2.5, "string", ByteString.copyFromUtf8("bytes")))
+    val r1 = ToSchema(true,
+                      1,
+                      2L,
+                      1.5f,
+                      2.5,
+                      "string",
+                      ByteString.copyFromUtf8("bytes"))
+    val r2 = ToSchema.tupled(
+      (true, 1, 2L, 1.5f, 2.5, "string", ByteString.copyFromUtf8("bytes")))
     r1 shouldBe r2
   }
 
   it should "returns correct schema for plain objects" in {
     ToSchema.schema should be
-      new Schema.Parser().parse("""
+    new Schema.Parser()
+      .parse("""
                                   |{
                                   |  "type": "record",
                                   |  "namespace": "com.spotify.scio.avro.types.TypeProviderTest",
@@ -618,37 +657,69 @@ class TypeProviderTest extends FlatSpec with Matchers {
   }
 
   it should "support round trip conversion from GenericRecord" in {
-    val r1 = ToSchema(true, 1, 2L, 1.5f, 2.5, "string", ByteString.copyFromUtf8("bytes"))
+    val r1 = ToSchema(true,
+                      1,
+                      2L,
+                      1.5f,
+                      2.5,
+                      "string",
+                      ByteString.copyFromUtf8("bytes"))
     val r2 = ToSchema.fromGenericRecord(ToSchema.toGenericRecord(r1))
     r1 shouldBe r2
   }
 
   it should "create companion object that is a Function subtype" in {
-    val cls = classOf[Function7[Boolean, Int, Long, Float, Double, String, ByteString, ToSchema]]
+    val cls = classOf[
+      Function7[Boolean,
+                Int,
+                Long,
+                Float,
+                Double,
+                String,
+                ByteString,
+                ToSchema]]
     (cls isAssignableFrom ToSchema.getClass) shouldBe true
   }
 
   it should "create companion object that is functionally equal to its apply method" in {
-    def doApply(f: (Boolean, Int, Long, Float, Double, String, ByteString) => ToSchema)
-               (x: (Boolean, Int, Long, Float, Double, String, ByteString)): ToSchema =
+    def doApply(
+      f: (Boolean, Int, Long, Float, Double, String, ByteString) => ToSchema)(
+      x: (Boolean, Int, Long, Float, Double, String, ByteString)): ToSchema =
       f(x._1, x._2, x._3, x._4, x._5, x._6, x._7)
 
-    doApply(ToSchema.apply _)(
-      (true, 1, 2L, 1.5f, 2.5, "string", ByteString.copyFromUtf8("bytes"))) shouldBe
-      doApply(ToSchema)((true, 1, 2L, 1.5f, 2.5, "string", ByteString.copyFromUtf8("bytes")))
+    doApply(ToSchema.apply _)((true,
+                               1,
+                               2L,
+                               1.5f,
+                               2.5,
+                               "string",
+                               ByteString.copyFromUtf8("bytes"))) shouldBe
+      doApply(ToSchema)(
+        (true, 1, 2L, 1.5f, 2.5, "string", ByteString.copyFromUtf8("bytes")))
 
-    doApply(ToSchema)(
-      (true, 1, 2L, 1.5f, 2.5, "string", ByteString.copyFromUtf8("bytes"))) shouldBe
-      ToSchema(true, 1, 2L, 1.5f, 2.5, "string", ByteString.copyFromUtf8("bytes"))
+    doApply(ToSchema)((true,
+                       1,
+                       2L,
+                       1.5f,
+                       2.5,
+                       "string",
+                       ByteString.copyFromUtf8("bytes"))) shouldBe
+      ToSchema(true,
+               1,
+               2L,
+               1.5f,
+               2.5,
+               "string",
+               ByteString.copyFromUtf8("bytes"))
   }
 
   @AvroType.toSchema
-  case class ReservedName(`type`: Boolean,
-                          `int`: Int)
+  case class ReservedName(`type`: Boolean, `int`: Int)
 
   it should "returns correct schema for objects containing fields named as scala reserved word" in {
     ReservedName.schema should be
-    new Schema.Parser().parse("""
+    new Schema.Parser()
+      .parse("""
                                 |{
                                 |  "type": "record",
                                 |  "namespace": "com.spotify.scio.avro.types.TypeProviderTest",
@@ -665,7 +736,8 @@ class TypeProviderTest extends FlatSpec with Matchers {
   case class Artisanal1FieldToSchema(f1: Long)
 
   it should "not provide .tupled in companion object with single field" in {
-    Artisanal1FieldToSchema.getClass.getMethods.map(_.getName) should not contain "tupled"
+    Artisanal1FieldToSchema.getClass.getMethods
+      .map(_.getName) should not contain "tupled"
   }
 
   it should "create companion object that is a Function subtype for single field record" in {
@@ -684,8 +756,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
     RecordWithDefault(10).y shouldBe 2
   }
 
-  @AvroType.fromSchema(
-    """
+  @AvroType.fromSchema("""
       |{
       |  "type": "record",
       |  "name": "Record",
@@ -719,18 +790,40 @@ class TypeProviderTest extends FlatSpec with Matchers {
   class ArtisanalMoreThan22Fields
 
   "AvroType.fromSchema" should "support .schema in companion object with >22 fields" in {
-    ArtisanalMoreThan22Fields(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23)
+    ArtisanalMoreThan22Fields(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+      16, 17, 18, 19, 20, 21, 22, 23)
     ArtisanalMoreThan22Fields.schema should not be null
   }
 
   it should "not provide .tupled in companion object with >22 fields" in {
-    ArtisanalMoreThan22Fields.getClass.getMethods.map(_.getName) should not contain "tupled"
+    ArtisanalMoreThan22Fields.getClass.getMethods
+      .map(_.getName) should not contain "tupled"
   }
 
   @AvroType.toSchema
-  case class TwentyThree(a1:Int,a2:Int,a3:Int,a4:Int,a5:Int,a6:Int,a7:Int,a8:Int,a9:Int,a10:Int,
-                         a11:Int,a12:Int,a13:Int,a14:Int,a15:Int,a16:Int,a17:Int,a18:Int,a19:Int,
-                         a20:Int,a21:Int,a22:Int,a23:Int)
+  case class TwentyThree(a1: Int,
+                         a2: Int,
+                         a3: Int,
+                         a4: Int,
+                         a5: Int,
+                         a6: Int,
+                         a7: Int,
+                         a8: Int,
+                         a9: Int,
+                         a10: Int,
+                         a11: Int,
+                         a12: Int,
+                         a13: Int,
+                         a14: Int,
+                         a15: Int,
+                         a16: Int,
+                         a17: Int,
+                         a18: Int,
+                         a19: Int,
+                         a20: Int,
+                         a21: Int,
+                         a22: Int,
+                         a23: Int)
 
   "AvroType.toSchema" should "not provide .tupled in companion object with >22 fields" in {
     TwentyThree.getClass.getMethods.map(_.getName) should not contain "tupled"
@@ -752,7 +845,7 @@ class TypeProviderTest extends FlatSpec with Matchers {
 
   @AvroType.toSchema
   @doc("Avro doc")
-  case class DocumentedRecord(a1:Int)
+  case class DocumentedRecord(a1: Int)
 
   it should "support table description" in {
     DocumentedRecord.doc shouldBe "Avro doc"
@@ -768,7 +861,8 @@ class TypeProviderTest extends FlatSpec with Matchers {
   class FromResourceMultiLine
 
   // scalastyle:off line.size.limit
-  @AvroType.fromSchemaFile("https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc")
+  @AvroType.fromSchemaFile(
+    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc")
   class FromResource
   // scalastyle:on line.size.limit
 
@@ -786,15 +880,14 @@ class TypeProviderTest extends FlatSpec with Matchers {
   class Annotation2 extends StaticAnnotation
 
   def containsAllAnnotTypes[T: TypeTag]: Assertion =
-    typeOf[T]
-      .typeSymbol
-      .annotations
+    typeOf[T].typeSymbol.annotations
       .map(_.tree.tpe)
       .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true
 
   // scalastyle:off line.size.limit
   @Annotation1
-  @AvroType.fromSchemaFile("https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc")
+  @AvroType.fromSchemaFile(
+    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc")
   @Annotation2
   class FromResourceWithSurroundingAnnotations
   // scalastyle:on line.size.limit
@@ -804,7 +897,8 @@ class TypeProviderTest extends FlatSpec with Matchers {
   }
 
   // scalastyle:off line.size.limit
-  @AvroType.fromSchemaFile("https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc")
+  @AvroType.fromSchemaFile(
+    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc")
   @Annotation1
   @Annotation2
   class FromResourceWithSequentialAnnotations

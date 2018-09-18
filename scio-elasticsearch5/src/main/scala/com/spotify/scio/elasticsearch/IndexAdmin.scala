@@ -30,7 +30,8 @@ import scala.util.Try
 
 object IndexAdmin {
 
-  private def adminClient[A](esOptions: ElasticsearchOptions)(f: AdminClient => A): Try[A] = {
+  private def adminClient[A](esOptions: ElasticsearchOptions)(
+    f: AdminClient => A): Try[A] = {
     val settings: Settings =
       Settings.builder.put("cluster.name", esOptions.clusterName).build
 

@@ -48,28 +48,34 @@ class ScioIOTest extends ScioIOSpec {
     implicit val coder = Coder.avroGenericRecordCoder(schema)
     val xs = (1 to 100).map(AvroUtils.newGenericRecord)
     testTap(xs)(_.saveAsAvroFile(_, schema = schema))(".avro")
-    testJobTest(xs)(AvroIO(_))(_.avroFile(_, schema))(_.saveAsAvroFile(_, schema = schema))
+    testJobTest(xs)(AvroIO(_))(_.avroFile(_, schema))(
+      _.saveAsAvroFile(_, schema = schema))
   }
 
   it should "work with typed Avro" in {
-    val xs = (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
+    val xs = (1 to 100).map(x =>
+      AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
     val io = (s: String) => AvroIO[AvroRecord](s)
     testTap(xs)(_.saveAsTypedAvroFile(_))(".avro")
-    testJobTest(xs)(io)(_.typedAvroFile[AvroRecord](_))(_.saveAsTypedAvroFile(_))
+    testJobTest(xs)(io)(_.typedAvroFile[AvroRecord](_))(
+      _.saveAsTypedAvroFile(_))
   }
 
   "ObjectFileIO" should "work" in {
     import ScioIOTest._
-    val xs = (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
+    val xs = (1 to 100).map(x =>
+      AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
     testTap(xs)(_.saveAsObjectFile(_))(".obj.avro")
     testJobTest(xs)(ObjectFileIO(_))(_.objectFile(_))(_.saveAsObjectFile(_))
   }
 
   "ProtobufIO" should "work" in {
-    val xs = (1 to 100).map(x => TrackPB.newBuilder().setTrackId(x.toString).build())
+    val xs =
+      (1 to 100).map(x => TrackPB.newBuilder().setTrackId(x.toString).build())
     val suffix = ".protobuf.avro"
     testTap(xs)(_.saveAsProtobufFile(_))(suffix)
-    testJobTest(xs)(ProtobufIO(_))(_.protobufFile[TrackPB](_))(_.saveAsProtobufFile(_))
+    testJobTest(xs)(ProtobufIO(_))(_.protobufFile[TrackPB](_))(
+      _.saveAsProtobufFile(_))
   }
 
   "BigQueryIO" should "work with TableRow" in {
@@ -78,14 +84,16 @@ class ScioIOTest extends ScioIOSpec {
   }
 
   it should "work with typed BigQuery" in {
-    val xs = (1 to 100).map(x => BQRecord(x, x.toString, (1 to x).map(_.toString).toList))
+    val xs = (1 to 100).map(x =>
+      BQRecord(x, x.toString, (1 to x).map(_.toString).toList))
     testJobTest(xs)(BigQueryIO(_))(_.typedBigQuery(_))(_.saveAsTypedBigQuery(_))
   }
 
   "TableRowJsonIO" should "work" in {
     val xs = (1 to 100).map(x => TableRow("x" -> x.toString))
     testTap(xs)(_.saveAsTableRowJsonFile(_))(".json")
-    testJobTest(xs)(TableRowJsonIO(_))(_.tableRowJsonFile(_))(_.saveAsTableRowJsonFile(_))
+    testJobTest(xs)(TableRowJsonIO(_))(_.tableRowJsonFile(_))(
+      _.saveAsTableRowJsonFile(_))
   }
 
   "TextIO" should "work" in {
@@ -96,12 +104,13 @@ class ScioIOTest extends ScioIOSpec {
 
   "DatastoreIO" should "work" in {
     val xs = (1 to 100).map { x =>
-      Entity.newBuilder()
+      Entity
+        .newBuilder()
         .putProperties("int", DatastoreHelper.makeValue(x).build())
         .build()
     }
-      testJobTest(xs)(DatastoreIO(_))(_.datastore(_, null))(_.saveAsDatastore(_))
-    }
+    testJobTest(xs)(DatastoreIO(_))(_.datastore(_, null))(_.saveAsDatastore(_))
+  }
 
   "PubsubIO" should "work with subscription" in {
     val xs = (1 to 100).map(_.toString)
@@ -116,13 +125,15 @@ class ScioIOTest extends ScioIOSpec {
   it should "work with subscription and attributes" in {
     val xs = (1 to 100).map(x => (x.toString, Map.empty[String, String]))
     val io = (s: String) => PubsubIO[(String, Map[String, String])](s)
-    testJobTest(xs)(io)(_.pubsubSubscriptionWithAttributes(_))(_.saveAsPubsubWithAttributes(_))
+    testJobTest(xs)(io)(_.pubsubSubscriptionWithAttributes(_))(
+      _.saveAsPubsubWithAttributes(_))
   }
 
   it should "work with topic and attributes" in {
     val xs = (1 to 100).map(x => (x.toString, Map.empty[String, String]))
     val io = (s: String) => PubsubIO[(String, Map[String, String])](s)
-    testJobTest(xs)(io)(_.pubsubTopicWithAttributes(_))(_.saveAsPubsubWithAttributes(_))
+    testJobTest(xs)(io)(_.pubsubTopicWithAttributes(_))(
+      _.saveAsPubsubWithAttributes(_))
   }
 
 }

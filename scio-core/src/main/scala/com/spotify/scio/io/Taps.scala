@@ -53,7 +53,8 @@ private final class ImmediateTaps extends Taps {
   override private[scio] def mkTap[T](name: String,
                                       readyFn: () => Boolean,
                                       tapFn: () => Tap[T]): Future[Tap[T]] =
-    if (readyFn()) Future.successful(tapFn()) else Future.failed(new TapNotAvailableException(name))
+    if (readyFn()) Future.successful(tapFn())
+    else Future.failed(new TapNotAvailableException(name))
 }
 
 private object PollingTaps {
@@ -66,49 +67,52 @@ private object PollingTaps {
 }
 
 /** Taps implementation that polls for tap availability in the background. */
-private final class PollingTaps(private[this] val backOff: BackOff) extends Taps {
+private final class PollingTaps(private[this] val backOff: BackOff)
+    extends Taps {
   import PollingTaps._
 
   private[this] var polls: List[Poll] = _
 
   override private[scio] def mkTap[T](name: String,
                                       readyFn: () => Boolean,
-                                      tapFn: () => Tap[T]): Future[Tap[T]] = this.synchronized {
-    val p = Promise[AnyRef]()
-    val init = if (polls == null) {
-      polls = Nil
-      true
-    } else {
-      false
-    }
-
-    logger.info(s"Polling for tap $name")
-    polls +:= Poll(name, readyFn, tapFn.asInstanceOf[() => Tap[Any]], p)
-
-    if (init) {
-      import scala.concurrent.ExecutionContext.Implicits.global
-      Future {
-        val sleeper = Sleeper.DEFAULT
-        do {
-          if (polls.nonEmpty) {
-            val tap = if (polls.size > 1) "taps" else "tap"
-            logger.info(s"Polling for ${polls.size} $tap")
-          }
-          this.synchronized {
-            val (ready, pending) = polls.partition(_.readyFn())
-            ready.foreach { p =>
-              logger.info(s"Tap available: ${p.name}")
-              p.promise.success(tapFn())
-            }
-            polls = pending
-          }
-        } while (BackOffUtils.next(sleeper, backOff))
-        polls.foreach(p => p.promise.failure(new TapNotAvailableException(p.name)))
+                                      tapFn: () => Tap[T]): Future[Tap[T]] =
+    this.synchronized {
+      val p = Promise[AnyRef]()
+      val init = if (polls == null) {
+        polls = Nil
+        true
+      } else {
+        false
       }
-    }
 
-    p.future.asInstanceOf[Future[Tap[T]]]
-  }
+      logger.info(s"Polling for tap $name")
+      polls +:= Poll(name, readyFn, tapFn.asInstanceOf[() => Tap[Any]], p)
+
+      if (init) {
+        import scala.concurrent.ExecutionContext.Implicits.global
+        Future {
+          val sleeper = Sleeper.DEFAULT
+          do {
+            if (polls.nonEmpty) {
+              val tap = if (polls.size > 1) "taps" else "tap"
+              logger.info(s"Polling for ${polls.size} $tap")
+            }
+            this.synchronized {
+              val (ready, pending) = polls.partition(_.readyFn())
+              ready.foreach { p =>
+                logger.info(s"Tap available: ${p.name}")
+                p.promise.success(tapFn())
+              }
+              polls = pending
+            }
+          } while (BackOffUtils.next(sleeper, backOff))
+          polls.foreach(p =>
+            p.promise.failure(new TapNotAvailableException(p.name)))
+        }
+      }
+
+      p.future.asInstanceOf[Future[Tap[T]]]
+    }
 
 }
 
@@ -161,12 +165,15 @@ object Taps extends {
       case "immediate" => new ImmediateTaps
       case "polling" =>
         val maxAttempts =
-          getPropOrElse(POLLING_MAXIMUM_ATTEMPTS_KEY, POLLING_MAXIMUM_ATTEMPTS_DEFAULT).toInt
+          getPropOrElse(POLLING_MAXIMUM_ATTEMPTS_KEY,
+                        POLLING_MAXIMUM_ATTEMPTS_DEFAULT).toInt
         val initInterval =
-          getPropOrElse(POLLING_INITIAL_INTERVAL_KEY, POLLING_INITIAL_INTERVAL_DEFAULT).toLong
+          getPropOrElse(POLLING_INITIAL_INTERVAL_KEY,
+                        POLLING_INITIAL_INTERVAL_DEFAULT).toLong
         val backOff = if (maxAttempts <= 0) {
           val maxInterval =
-            getPropOrElse(POLLING_MAXIMUM_INTERVAL_KEY, POLLING_MAXIMUM_INTERVAL_DEFAULT).toLong
+            getPropOrElse(POLLING_MAXIMUM_INTERVAL_KEY,
+                          POLLING_MAXIMUM_INTERVAL_DEFAULT).toLong
           FluentBackoff.DEFAULT
             .withInitialBackoff(Duration.millis(initInterval))
             .withMaxBackoff(Duration.millis(maxInterval))

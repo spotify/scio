@@ -33,14 +33,19 @@ object BigtableExample {
 
   // Convert a key-value pair to a Bigtable `Mutation` for writing
   def toMutation(key: String, value: Long): (ByteString, Iterable[Mutation]) = {
-    val m = Mutations.newSetCell(
-      FAMILY_NAME, COLUMN_QUALIFIER, ByteString.copyFromUtf8(value.toString), 0L)
+    val m = Mutations.newSetCell(FAMILY_NAME,
+                                 COLUMN_QUALIFIER,
+                                 ByteString.copyFromUtf8(value.toString),
+                                 0L)
     (ByteString.copyFromUtf8(key), Iterable(m))
   }
 
   // Convert a Bigtable `Row` from reading to a formatted key-value string
   def fromRow(r: Row): String =
-    r.getKey.toStringUtf8 + ": " + r.getValue(FAMILY_NAME, COLUMN_QUALIFIER).get.toStringUtf8
+    r.getKey.toStringUtf8 + ": " + r
+      .getValue(FAMILY_NAME, COLUMN_QUALIFIER)
+      .get
+      .toStringUtf8
 
 }
 
@@ -67,9 +72,11 @@ object BigtableWriteExample {
     sc.updateNumberOfBigtableNodes(btProjectId, btInstanceId, 15)
 
     // Ensure that destination tables and column families exist
-    sc.ensureTables(btProjectId, btInstanceId, Map(
-      btTableId -> List(BigtableExample.FAMILY_NAME)
-    ))
+    sc.ensureTables(btProjectId,
+                    btInstanceId,
+                    Map(
+                      btTableId -> List(BigtableExample.FAMILY_NAME)
+                    ))
 
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))

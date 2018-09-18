@@ -25,9 +25,13 @@ import java.util.{Random => JRandom}
 
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, StartBundle}
-import org.apache.commons.math3.distribution.{IntegerDistribution, PoissonDistribution}
+import org.apache.commons.math3.distribution.{
+  IntegerDistribution,
+  PoissonDistribution
+}
 
 private[scio] object RandomSampler {
+
   /** Default random number generator used by random samplers. */
   def newDefaultRNG: JRandom = new XORShiftRandom
 
@@ -71,13 +75,15 @@ private[scio] abstract class RandomSampler[T, R] extends DoFn[T, T] {
  * @param fraction the sampling fraction, aka Bernoulli sampling probability
  * @tparam T item type
  */
-private[scio] class BernoulliSampler[T](val fraction: Double) extends RandomSampler[T, JRandom] {
+private[scio] class BernoulliSampler[T](val fraction: Double)
+    extends RandomSampler[T, JRandom] {
 
   /** Epsilon slop to avoid failure from floating point jitter */
   require(
     fraction >= (0.0 - RandomSampler.roundingEpsilon)
       && fraction <= (1.0 + RandomSampler.roundingEpsilon),
-    s"Sampling fraction ($fraction) must be on interval [0, 1]")
+    s"Sampling fraction ($fraction) must be on interval [0, 1]"
+  )
 
   override def init: JRandom = {
     val r = RandomSampler.newDefaultRNG
@@ -105,12 +111,11 @@ private[scio] class BernoulliSampler[T](val fraction: Double) extends RandomSamp
  * @tparam T item type
  */
 private[scio] class PoissonSampler[T](val fraction: Double)
-  extends RandomSampler[T, IntegerDistribution] {
+    extends RandomSampler[T, IntegerDistribution] {
 
   /** Epsilon slop to avoid failure from floating point jitter. */
-  require(
-    fraction >= (0.0 - RandomSampler.roundingEpsilon),
-    s"Sampling fraction ($fraction) must be >= 0")
+  require(fraction >= (0.0 - RandomSampler.roundingEpsilon),
+          s"Sampling fraction ($fraction) must be >= 0")
 
   // PoissonDistribution throws an exception when fraction <= 0
   // If fraction is <= 0, 0 is used below, so we can use any placeholder value.
@@ -125,8 +130,9 @@ private[scio] class PoissonSampler[T](val fraction: Double)
   override def samples: Int = if (fraction <= 0.0) 0 else rng.sample()
 }
 
-private[scio] abstract class RandomValueSampler[K, V, R](val fractions: Map[K, Double])
-  extends DoFn[(K, V), (K, V)] {
+private[scio] abstract class RandomValueSampler[K, V, R](
+  val fractions: Map[K, Double])
+    extends DoFn[(K, V), (K, V)] {
 
   protected var rngs: Map[K, R] = null.asInstanceOf[Map[K, R]]
   protected var seed: Long = -1
@@ -134,7 +140,7 @@ private[scio] abstract class RandomValueSampler[K, V, R](val fractions: Map[K, D
   // TODO: is it necessary to setSeed for each instance like Spark does?
   @StartBundle
   def startBundle(c: DoFn[(K, V), (K, V)]#StartBundleContext): Unit =
-    rngs = fractions.mapValues(init).map(identity)  // workaround for serialization issue
+    rngs = fractions.mapValues(init).map(identity) // workaround for serialization issue
 
   @ProcessElement
   def processElement(c: DoFn[(K, V), (K, V)]#ProcessContext): Unit = {
@@ -154,14 +160,15 @@ private[scio] abstract class RandomValueSampler[K, V, R](val fractions: Map[K, D
 }
 
 private[scio] class BernoulliValueSampler[K, V](fractions: Map[K, Double])
-  extends RandomValueSampler[K, V, JRandom](fractions) {
+    extends RandomValueSampler[K, V, JRandom](fractions) {
 
   /** Epsilon slop to avoid failure from floating point jitter */
   require(
     fractions.values.forall { f =>
       f >= (0.0 - RandomSampler.roundingEpsilon) && f <= (1.0 + RandomSampler.roundingEpsilon)
     },
-    s"Sampling fractions must be on interval [0, 1]")
+    s"Sampling fractions must be on interval [0, 1]"
+  )
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
   override def init(fraction: Double): JRandom = {
@@ -184,7 +191,7 @@ private[scio] class BernoulliValueSampler[K, V](fractions: Map[K, Double])
 }
 
 private[scio] class PoissonValueSampler[K, V](fractions: Map[K, Double])
-  extends RandomValueSampler[K, V, IntegerDistribution](fractions) {
+    extends RandomValueSampler[K, V, IntegerDistribution](fractions) {
 
   /** Epsilon slop to avoid failure from floating point jitter. */
   require(

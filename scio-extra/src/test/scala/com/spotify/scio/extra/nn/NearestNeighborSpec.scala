@@ -26,8 +26,12 @@ class NearestNeighborSpec extends PropertySpec {
 
   val dimension = 40
   private def randVec = DenseVector.rand[Double](dimension)
-  val vector = Gen.resultOf { _: Int => randVec }
-  val vecs = Gen.nonEmptyListOf(vector).map(_.zipWithIndex.map(kv => ("key" + kv._2, kv._1)))
+  val vector = Gen.resultOf { _: Int =>
+    randVec
+  }
+  val vecs = Gen
+    .nonEmptyListOf(vector)
+    .map(_.zipWithIndex.map(kv => ("key" + kv._2, kv._1)))
   val maxResult = Gen.posNum[Int]
   val minSims = Gen.chooseNum[Double](-1.0, 1.0)
 
@@ -43,7 +47,9 @@ class NearestNeighborSpec extends PropertySpec {
       // TODO: figure out stage, bucket settings and coverage expectation
       val stages = 10
       val buckets = max(vectors.size / 100, 10)
-      val b = NearestNeighbor.newLSHBuilder[String, Double](dimension, stages, buckets)
+      val b = NearestNeighbor.newLSHBuilder[String, Double](dimension,
+                                                            stages,
+                                                            buckets)
       verify(b, vectors, maxResult, minSimilarity, 0.5, 0.5, 0.5)
     }
   }
@@ -52,17 +58,22 @@ class NearestNeighborSpec extends PropertySpec {
                      vectors: List[(String, DenseVector[Double])],
                      maxResult: Int,
                      minSimilarity: Double,
-                     minPrecision: Double, minRecall: Double, minF1: Double) = {
+                     minPrecision: Double,
+                     minRecall: Double,
+                     minF1: Double) = {
     vectors.foreach(kv => builder.add(kv._1, kv._2))
     val nn = builder.build
     nn.lookup(randVec, maxResult).size should be <= maxResult
-    nn.lookup(randVec, 100, minSimilarity).forall(_._2 >= minSimilarity) shouldBe true
+    nn.lookup(randVec, 100, minSimilarity)
+      .forall(_._2 >= minSimilarity) shouldBe true
     coverage(vectors, nn, minPrecision, minRecall, minF1)
   }
 
   private def coverage(vectors: List[(String, DenseVector[Double])],
                        nn: NearestNeighbor[String, Double],
-                       minPrecision: Double, minRecall: Double, minF1: Double) = {
+                       minPrecision: Double,
+                       minRecall: Double,
+                       minF1: Double) = {
     val v = randVec
     val expected = vectors
       .map(kv => (kv._1, kv._2 dot v))

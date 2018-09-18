@@ -34,12 +34,14 @@ private[cassandra] object DataTypeExternalizer {
   }
 }
 
-private[cassandra] final class DataTypeExternalizer extends Externalizer[DataType] {
+private[cassandra] final class DataTypeExternalizer
+    extends Externalizer[DataType] {
   override protected def kryo: KryoInstantiator =
     new (DataTypeKryoInstantiator).setReferences(true)
 }
 
-private final class DataTypeKryoInstantiator extends EmptyScalaKryoInstantiator {
+private final class DataTypeKryoInstantiator
+    extends EmptyScalaKryoInstantiator {
   override def newKryo: KryoBase = {
     val k = super.newKryo
     k.forSubclass[ImmutableList[Any]](new ImmutableListSerializer[Any])
@@ -52,7 +54,8 @@ private trait ImmutableCollectionSerializer[M] extends KSerializer[M] {
   def readList[T](kser: Kryo, in: Input): JCollection[T] = {
     val size = in.readInt(true)
     val list = Lists.newArrayList[T]()
-    (1 to size).foreach(_ => list.add(kser.readClassAndObject(in).asInstanceOf[T]))
+    (1 to size).foreach(_ =>
+      list.add(kser.readClassAndObject(in).asInstanceOf[T]))
     list
   }
   def writeList[T](kser: Kryo, out: Output, obj: JCollection[T]): Unit = {
@@ -62,16 +65,20 @@ private trait ImmutableCollectionSerializer[M] extends KSerializer[M] {
 }
 
 private final class ImmutableListSerializer[T]
-  extends ImmutableCollectionSerializer[ImmutableList[T]] {
-  override def read(kser: Kryo, in: Input, cls: Class[ImmutableList[T]]): ImmutableList[T] =
+    extends ImmutableCollectionSerializer[ImmutableList[T]] {
+  override def read(kser: Kryo,
+                    in: Input,
+                    cls: Class[ImmutableList[T]]): ImmutableList[T] =
     ImmutableList.copyOf(readList(kser, in): JIterable[T])
   override def write(kser: Kryo, out: Output, obj: ImmutableList[T]): Unit =
     writeList(kser, out, obj)
 }
 
 private final class ImmutableSetSerializer[T]
-  extends ImmutableCollectionSerializer[ImmutableSet[T]] {
-  override def read(kser: Kryo, in: Input, cls: Class[ImmutableSet[T]]): ImmutableSet[T] =
+    extends ImmutableCollectionSerializer[ImmutableSet[T]] {
+  override def read(kser: Kryo,
+                    in: Input,
+                    cls: Class[ImmutableSet[T]]): ImmutableSet[T] =
     ImmutableSet.copyOf(readList(kser, in): JIterable[T])
   override def write(kser: Kryo, out: Output, obj: ImmutableSet[T]): Unit =
     writeList(kser, out, obj)

@@ -33,7 +33,9 @@ object MetricsExample {
   val count = ScioMetrics.counter("count")
 
   // Distribution to track min, max, count, sum, mean, with optional namespace
-  val dist = ScioMetrics.distribution("com.spotify.scio.examples.extra.MetricsExample", "dist")
+  val dist = ScioMetrics.distribution(
+    "com.spotify.scio.examples.extra.MetricsExample",
+    "dist")
 
   // Gauge to track a changing value, with job class as namespace
   val gauge = ScioMetrics.gauge[MetricsExample.type]("gauge")
@@ -82,8 +84,9 @@ object MetricsExample {
 
     // Values at steps
     val s2steps = result.counterAtSteps(sum2).mapValues(_.committed.get)
-    s2steps.foreach { case (step, value) =>
-      println(s"sum2 at $step: " + value)
+    s2steps.foreach {
+      case (step, value) =>
+        println(s"sum2 at $step: " + value)
     }
 
     // `s2` should contain 2 steps
@@ -112,8 +115,9 @@ object MetricsExample {
     // Dynamic metricsk
     result.allCounters
       .filterKeys(_.getName.startsWith("even_"))
-      .foreach { case (name, value) =>
-        println(name.getName + ": " + value.committed.get)
+      .foreach {
+        case (name, value) =>
+          println(name.getName + ": " + value.committed.get)
       }
   }
 

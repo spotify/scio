@@ -15,7 +15,6 @@
  * under the License.
  */
 
-
 package com.spotify.scio.bigquery.validation
 
 import com.google.api.services.bigquery.model.TableFieldSchema
@@ -27,17 +26,18 @@ import scala.reflect.runtime.universe._
 // A sample implementation to override types under certain conditions
 final class SampleOverrideTypeProvider extends OverrideTypeProvider {
 
-  private def getByTypeString(tfs: TableFieldSchema): Option[Class[_]] = {
+  private def getByTypeString(tfs: TableFieldSchema): Option[Class[_]] =
     Option(tfs.getDescription)
       .flatMap(overrideType => Index.getIndexClass.get(overrideType))
-  }
 
-  private def getByTypeObject(c: blackbox.Context)
-                             (tpe: c.Type): Option[(c.Type, Class[_])] = {
-    Index.getIndexCompileTimeTypes(c).find(a => {
-      val (compileTimeType, _) = a
-      compileTimeType =:= tpe
-    })
+  private def getByTypeObject(c: blackbox.Context)(
+    tpe: c.Type): Option[(c.Type, Class[_])] = {
+    Index
+      .getIndexCompileTimeTypes(c)
+      .find(a => {
+        val (compileTimeType, _) = a
+        compileTimeType =:= tpe
+      })
   }
 
   private def getByTypeObject(tpe: Type): Option[(Type, Class[_])] = {
@@ -47,24 +47,24 @@ final class SampleOverrideTypeProvider extends OverrideTypeProvider {
     })
   }
 
-  def shouldOverrideType(tfs: TableFieldSchema): Boolean = {
+  def shouldOverrideType(tfs: TableFieldSchema): Boolean =
     getByTypeString(tfs).nonEmpty
-  }
 
-  def shouldOverrideType(c: blackbox.Context)(tpe: c.Type): Boolean = {
+  def shouldOverrideType(c: blackbox.Context)(tpe: c.Type): Boolean =
     getByTypeObject(c)(tpe).nonEmpty
-  }
 
-  def shouldOverrideType(tpe: Type): Boolean = {
+  def shouldOverrideType(tpe: Type): Boolean =
     getByTypeObject(tpe).nonEmpty
-  }
 
   def getBigQueryType(tpe: Type): String = {
     val optionalTuple = getByTypeObject(tpe)
     optionalTuple match {
       case Some(tuple) =>
         val (_, correspondingType) = tuple
-        correspondingType.getMethod("bigQueryType").invoke(null).asInstanceOf[String]
+        correspondingType
+          .getMethod("bigQueryType")
+          .invoke(null)
+          .asInstanceOf[String]
       case None => throw new IllegalArgumentException("Should never be here")
     }
   }
@@ -73,7 +73,8 @@ final class SampleOverrideTypeProvider extends OverrideTypeProvider {
     import c.universe._
     val typeClassOption: Option[Class[_]] = getByTypeString(tfs)
     typeClassOption match {
-      case Some(typeClass) => val packageName = typeClass.getPackage.getName
+      case Some(typeClass) =>
+        val packageName = typeClass.getPackage.getName
         val className = TypeName(typeClass.getSimpleName)
         tq"${c.parse("_root_." + packageName)}.$className"
       case None => throw new IllegalArgumentException("Should never be here")
@@ -86,10 +87,9 @@ final class SampleOverrideTypeProvider extends OverrideTypeProvider {
     optionalTuple match {
       case Some(tuple) =>
         val (_, correspondingType) = tuple
-        val instanceOfType = q"${
-          c.parse(correspondingType
-            .getPackage.getName + "." + correspondingType.getSimpleName)
-        }.parse(${c.parse(tree + ".asInstanceOf[String]")})"
+        val name = correspondingType.getPackage.getName + "." + correspondingType.getSimpleName
+        val instanceOfType =
+          q"${c.parse(name)}.parse(${c.parse(tree + ".asInstanceOf[String]")})"
         instanceOfType
       case None => throw new IllegalArgumentException("Should never be here")
     }
@@ -99,9 +99,7 @@ final class SampleOverrideTypeProvider extends OverrideTypeProvider {
                                              variableName: c.universe.TermName,
                                              tpe: c.universe.Tree): Unit = Unit
 
-
 }
-
 
 class Country(val data: String) extends AnyVal
 
@@ -126,17 +124,16 @@ object Country {
 
 // Internal index to keep track of class mappings this can be done in a number of ways
 object Index {
-  def getIndexCompileTimeTypes(c: blackbox.Context): mutable.Map[c.Type, Class[_]] = {
+  def getIndexCompileTimeTypes(
+    c: blackbox.Context): mutable.Map[c.Type, Class[_]] = {
     import c.universe._
     mutable.Map[Type, Class[_]](typeOf[Country] -> classOf[Country])
   }
 
-  def getIndexClass: mutable.Map[String, Class[_]] = {
+  def getIndexClass: mutable.Map[String, Class[_]] =
     mutable.Map[String, Class[_]](Country.stringType -> classOf[Country])
-  }
 
-  def getIndexRuntimeTypes: mutable.Map[Type, Class[_]] = {
+  def getIndexRuntimeTypes: mutable.Map[Type, Class[_]] =
     mutable.Map[Type, Class[_]](typeOf[Country] -> classOf[Country])
-  }
 
 }

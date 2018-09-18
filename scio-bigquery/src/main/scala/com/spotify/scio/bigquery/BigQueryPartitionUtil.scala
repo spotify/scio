@@ -49,12 +49,14 @@ private[bigquery] object BigQueryPartitionUtil {
     val m2 = QUERY_TABLE_SPEC_STANDARD.matcher(sqlQuery)
     while (m2.find()) {
       val t = m2.group(0)
-      b += (s"`$t`" -> BigQueryHelpers.parseTableSpec(t.replaceFirst("\\.", ":")))
+      b += (s"`$t`" -> BigQueryHelpers.parseTableSpec(
+        t.replaceFirst("\\.", ":")))
     }
     b.result()
   }
 
-  private def getPartitions(bq: BigQueryClient, tableRef: TableReference): Set[String] = {
+  private def getPartitions(bq: BigQueryClient,
+                            tableRef: TableReference): Set[String] = {
     val prefix = tableRef.getTableId.split('$')(0)
     bq.getTables(tableRef.getProjectId, tableRef.getDatasetId)
       .filter(_.getTableId.startsWith(prefix))
@@ -66,7 +68,8 @@ private[bigquery] object BigQueryPartitionUtil {
   }
 
   def latestQuery(bq: BigQueryClient, sqlQuery: String): String = {
-    val tables = extractTables(sqlQuery).filter(_._2.getTableId.endsWith("$LATEST"))
+    val tables =
+      extractTables(sqlQuery).filter(_._2.getTableId.endsWith("$LATEST"))
     if (tables.isEmpty) {
       sqlQuery
     } else {
@@ -77,8 +80,9 @@ private[bigquery] object BigQueryPartitionUtil {
         overlaps.nonEmpty,
         "Cannot find latest common partition for " + tables.keys.mkString(", "))
       val latest = overlaps.max
-      tables.foldLeft(sqlQuery) { case (q, (spec, _)) =>
-        q.replace(spec, spec.replace("$LATEST", latest))
+      tables.foldLeft(sqlQuery) {
+        case (q, (spec, _)) =>
+          q.replace(spec, spec.replace("$LATEST", latest))
       }
     }
   }
@@ -87,7 +91,8 @@ private[bigquery] object BigQueryPartitionUtil {
     val ref = BigQueryHelpers.parseTableSpec(tableSpec)
     if (ref.getTableId.endsWith("$LATEST")) {
       val partitions = getPartitions(bq, ref)
-      require(partitions.nonEmpty, s"Cannot find latest partition for $tableSpec")
+      require(partitions.nonEmpty,
+              s"Cannot find latest partition for $tableSpec")
       tableSpec.replace("$LATEST", partitions.max)
     } else {
       tableSpec

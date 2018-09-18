@@ -34,17 +34,21 @@ import scala.util.Try
 object UserScore {
 
   // Case class containing all the fields within an event, for internal model
-  case class GameActionInfo(user: String, team: String, score: Int, timestamp: Long)
+  case class GameActionInfo(user: String,
+                            team: String,
+                            score: Int,
+                            timestamp: Long)
 
   // The schema for the BigQuery table to write output to is defined as an annotated case class
   @BigQueryType.toTable
   case class UserScoreSums(user: String, total_score: Int)
 
   // Helper function for parsing data. Reads in a CSV line and converts to `GameActionInfo` instance
-  def parseEvent(line: String): Option[GameActionInfo] = Try {
-    val t = line.split(",")
-    GameActionInfo(t(0).trim, t(1).trim, t(2).toInt, t(3).toLong)
-  }.toOption
+  def parseEvent(line: String): Option[GameActionInfo] =
+    Try {
+      val t = line.split(",")
+      GameActionInfo(t(0).trim, t(1).trim, t(2).toInt, t(3).toLong)
+    }.toOption
 
   def main(cmdlineArgs: Array[String]): Unit = {
     // Create `ScioContext` and `Args`

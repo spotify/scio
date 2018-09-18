@@ -25,14 +25,16 @@ import scala.reflect.macros._
 
 private[types] object ConverterProvider {
 
-  def fromGenericRecordImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(GenericRecord => T)] = {
+  def fromGenericRecordImpl[T: c.WeakTypeTag](
+    c: blackbox.Context): c.Expr[(GenericRecord => T)] = {
     val tpe = implicitly[c.WeakTypeTag[T]].tpe
     val r = fromGenericRecordInternal(c)(tpe)
 
     c.Expr[(GenericRecord => T)](r)
   }
 
-  def toGenericRecordImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[(T => GenericRecord)] = {
+  def toGenericRecordImpl[T: c.WeakTypeTag](
+    c: blackbox.Context): c.Expr[(T => GenericRecord)] = {
     val tpe = implicitly[c.WeakTypeTag[T]].tpe
     val r = toGenericRecordInternal(c)(tpe)
 
@@ -41,7 +43,8 @@ private[types] object ConverterProvider {
 
   // scalastyle:off cyclomatic.complexity
   // scalastyle:off method.length
-  private def fromGenericRecordInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
+  private def fromGenericRecordInternal(c: blackbox.Context)(
+    tpe: c.Type): c.Tree = {
     import c.universe._
 
     // =======================================================================
@@ -51,11 +54,11 @@ private[types] object ConverterProvider {
     def cast(tree: Tree, tpe: Type): Tree = {
       tpe match {
         case t if t =:= typeOf[Boolean] => q"$tree.asInstanceOf[Boolean]"
-        case t if t =:= typeOf[Int] => q"$tree.asInstanceOf[Int]"
-        case t if t =:= typeOf[Long] => q"$tree.asInstanceOf[Long]"
-        case t if t =:= typeOf[Float] => q"$tree.asInstanceOf[Float]"
-        case t if t =:= typeOf[Double] => q"$tree.asInstanceOf[Double]"
-        case t if t =:= typeOf[String] => q"$tree.toString"
+        case t if t =:= typeOf[Int]     => q"$tree.asInstanceOf[Int]"
+        case t if t =:= typeOf[Long]    => q"$tree.asInstanceOf[Long]"
+        case t if t =:= typeOf[Float]   => q"$tree.asInstanceOf[Float]"
+        case t if t =:= typeOf[Double]  => q"$tree.asInstanceOf[Double]"
+        case t if t =:= typeOf[String]  => q"$tree.toString"
 
         case t if t =:= typeOf[ByteString] =>
           val bb = q"$tree.asInstanceOf[_root_.java.nio.ByteBuffer]"
@@ -65,7 +68,8 @@ private[types] object ConverterProvider {
           val bb = q"$tree.asInstanceOf[_root_.java.nio.ByteBuffer]"
           q"_root_.java.util.Arrays.copyOfRange($bb.array(), $bb.position(), $bb.limit())"
 
-        case t if t.erasure <:< typeOf[scala.collection.Map[String,_]].erasure =>
+        case t
+            if t.erasure <:< typeOf[scala.collection.Map[String, _]].erasure =>
           map(tree, tpe.typeArgs.tail.head)
 
         case t if t.erasure =:= typeOf[List[_]].erasure =>
@@ -112,7 +116,7 @@ private[types] object ConverterProvider {
       val companion = tpe.typeSymbol.companion
       val gets = tpe.erasure match {
         case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
-        case t => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
+        case t                      => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
       q"$companion(..$gets)"
     }
@@ -133,7 +137,8 @@ private[types] object ConverterProvider {
 
   // scalastyle:off cyclomatic.complexity
   // scalastyle:off method.length
-  private def toGenericRecordInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
+  private def toGenericRecordInternal(c: blackbox.Context)(
+    tpe: c.Type): c.Tree = {
     import c.universe._
 
     // =======================================================================
@@ -143,16 +148,18 @@ private[types] object ConverterProvider {
     def cast(tree: Tree, tpe: Type): Tree = {
       tpe match {
         case t if t =:= typeOf[Boolean] => tree
-        case t if t =:= typeOf[Int] => tree
-        case t if t =:= typeOf[Long] => tree
-        case t if t =:= typeOf[Float] => tree
-        case t if t =:= typeOf[Double] => tree
-        case t if t =:= typeOf[String] => tree
+        case t if t =:= typeOf[Int]     => tree
+        case t if t =:= typeOf[Long]    => tree
+        case t if t =:= typeOf[Float]   => tree
+        case t if t =:= typeOf[Double]  => tree
+        case t if t =:= typeOf[String]  => tree
 
         case t if t =:= typeOf[ByteString] => q"$tree.asReadOnlyByteBuffer"
-        case t if t =:= typeOf[Array[Byte]] => q"_root_.java.nio.ByteBuffer.wrap($tree)"
+        case t if t =:= typeOf[Array[Byte]] =>
+          q"_root_.java.nio.ByteBuffer.wrap($tree)"
 
-        case t if t.erasure <:< typeOf[scala.collection.Map[String,_]].erasure =>
+        case t
+            if t.erasure <:< typeOf[scala.collection.Map[String, _]].erasure =>
           map(tree, tpe.typeArgs.tail.head)
 
         case t if t.erasure <:< typeOf[List[_]].erasure =>
@@ -172,9 +179,11 @@ private[types] object ConverterProvider {
     def option(tree: Tree, tpe: Type): Tree =
       q"if ($tree.isDefined) ${cast(q"$tree.get", tpe)} else null"
 
-    def list(tree: Tree, tpe: Type): Tree = q"$tree.map(x => ${cast(q"x", tpe)}).asJava"
+    def list(tree: Tree, tpe: Type): Tree =
+      q"$tree.map(x => ${cast(q"x", tpe)}).asJava"
 
-    def map(tree: Tree, tpe: Type): Tree = q"$tree.mapValues(x => ${cast(q"x", tpe)}).asJava"
+    def map(tree: Tree, tpe: Type): Tree =
+      q"$tree.mapValues(x => ${cast(q"x", tpe)}).asJava"
 
     def field(symbol: Symbol, fn: TermName): (String, Tree) = {
       val name = symbol.name.toString
@@ -192,12 +201,16 @@ private[types] object ConverterProvider {
     def constructor(tpe: Type, fn: TermName): Tree = {
       val sets = tpe.erasure match {
         case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
-        case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
+        case _                      => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
       val schemaOf = q"${p(c, ScioAvroType)}.schemaOf[$tpe]"
-      val header = q"val result = new ${p(c, ApacheAvro)}.generic.GenericData.Record($schemaOf)"
-      val body = sets.map { case (fieldName, value) =>
-        q"if (${p(c, ScioAvro)}.types.ConverterUtil.notNull($value)) result.put($fieldName, $value)"
+      val header =
+        q"val result = new ${p(c, ApacheAvro)}.generic.GenericData.Record($schemaOf)"
+      val body = sets.map {
+        case (fieldName, value) =>
+          // scalastyle:off line.size.limit
+          q"if (${p(c, ScioAvro)}.types.ConverterUtil.notNull($value)) result.put($fieldName, $value)"
+          // scalastyle:on line.size.limit
       }
       val footer = q"result"
       q"{$header; ..$body; $footer}"
@@ -219,5 +232,6 @@ private[types] object ConverterProvider {
 }
 
 object ConverterUtil {
-  @inline def notNull[@specialized(Boolean, Int, Long, Float, Double) T](x: T): Boolean = x != null
+  @inline def notNull[@specialized(Boolean, Int, Long, Float, Double) T](
+    x: T): Boolean = x != null
 }

@@ -29,8 +29,7 @@ import scala.collection.JavaConverters._
 
 // Read and write specific and generic Avro records
 object AvroExample {
-  @AvroType.fromSchema(
-    """{
+  @AvroType.fromSchema("""{
       | "type":"record",
       | "name":"Account",
       | "namespace":"com.spotify.scio.avro",
@@ -44,7 +43,10 @@ object AvroExample {
   class AccountFromSchema
 
   @AvroType.toSchema
-  case class AccountToSchema(id: Int, `type`: String, name: String, amount: Double)
+  case class AccountToSchema(id: Int,
+                             `type`: String,
+                             name: String,
+                             amount: Double)
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -78,7 +80,8 @@ object AvroExample {
   private def specificOut(sc: ScioContext, args: Args): Unit = {
     sc.parallelize(1 to 100)
       .map { i =>
-        Account.newBuilder()
+        Account
+          .newBuilder()
           .setId(i)
           .setAmount(i.toDouble)
           .setName("account" + i)
@@ -109,18 +112,18 @@ object AvroExample {
       .saveAsAvroFile(args("output"), schema = schema)
   }
 
-  private def typedIn(sc: ScioContext, args: Args): Unit = {
+  private def typedIn(sc: ScioContext, args: Args): Unit =
     sc.typedAvroFile[AccountFromSchema](args("input"))
       .saveAsTextFile(args("output"))
-  }
 
   private def typedOut(sc: ScioContext, args: Args): Unit = {
     sc.parallelize(1 to 100)
       .map { i =>
         AccountToSchema(id = i,
-          amount = i.toDouble,
-          name = "account" + i,
-          `type` = "checking") }
+                        amount = i.toDouble,
+                        name = "account" + i,
+                        `type` = "checking")
+      }
       .saveAsTypedAvroFile(args("output"))
   }
 
@@ -135,16 +138,19 @@ object AvroExample {
     def f(name: String, tpe: Schema.Type) =
       new Schema.Field(
         name,
-        Schema.createUnion(List(Schema.create(Schema.Type.NULL), Schema.create(tpe)).asJava),
-        null: String, null: AnyRef)
+        Schema.createUnion(
+          List(Schema.create(Schema.Type.NULL), Schema.create(tpe)).asJava),
+        null: String,
+        null: AnyRef)
 
     val s = Schema.createRecord("GenericAccountRecord", null, null, false)
-    s.setFields(List(
-      f("id", Schema.Type.INT),
-      f("amount", Schema.Type.DOUBLE),
-      f("name", Schema.Type.STRING),
-      f("type", Schema.Type.STRING)
-    ).asJava)
+    s.setFields(
+      List(
+        f("id", Schema.Type.INT),
+        f("amount", Schema.Type.DOUBLE),
+        f("name", Schema.Type.STRING),
+        f("type", Schema.Type.STRING)
+      ).asJava)
     s
   }
 

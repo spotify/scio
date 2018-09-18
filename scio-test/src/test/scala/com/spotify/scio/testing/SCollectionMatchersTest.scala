@@ -34,69 +34,79 @@ class SCollectionMatchersTest extends PipelineSpec {
   "SCollectionMatchers" should "support containInAnyOrder" in {
     // should cases
     runWithContext {
-      _.parallelize(1 to 100) should containInAnyOrder (1 to 100)
+      _.parallelize(1 to 100) should containInAnyOrder(1 to 100)
     }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(1 to 200) should containInAnyOrder (1 to 100) }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(1 to 200) should containInAnyOrder(1 to 100)
+      }
     }
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(1 to 100) should containInAnyOrder (1 to 200) }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(1 to 100) should containInAnyOrder(1 to 200)
+      }
     }
 
     // shouldNot cases
     runWithContext {
-      _.parallelize(1 to 100) shouldNot containInAnyOrder (1 to 10)
+      _.parallelize(1 to 100) shouldNot containInAnyOrder(1 to 10)
     }
     runWithContext {
-      _.parallelize(1 to 10) shouldNot containInAnyOrder (1 to 100)
+      _.parallelize(1 to 10) shouldNot containInAnyOrder(1 to 100)
     }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(1 to 100) shouldNot containInAnyOrder (1 to 100) }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(1 to 100) shouldNot containInAnyOrder(1 to 100)
+      }
     }
   }
 
   it should "support containSingleValue" in {
     // should cases
-    runWithContext { _.parallelize(Seq(1)) should containSingleValue (1) }
+    runWithContext { _.parallelize(Seq(1)) should containSingleValue(1) }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(Seq(1)) should containSingleValue (10) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq(1)) should containSingleValue(10) }
     }
-    a [PipelineExecutionException] should be thrownBy {
-      runWithContext { _.parallelize(1 to 10) should containSingleValue (1) }
+    a[PipelineExecutionException] should be thrownBy {
+      runWithContext { _.parallelize(1 to 10) should containSingleValue(1) }
     }
-    a [PipelineExecutionException] should be thrownBy {
-      runWithContext { _.parallelize(Seq.empty[Int]) should containSingleValue (1) }
+    a[PipelineExecutionException] should be thrownBy {
+      runWithContext {
+        _.parallelize(Seq.empty[Int]) should containSingleValue(1)
+      }
     }
 
     // shouldNot cases
-    runWithContext { _.parallelize(Seq(10)) shouldNot containSingleValue (1) }
+    runWithContext { _.parallelize(Seq(10)) shouldNot containSingleValue(1) }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(Seq(1)) shouldNot containSingleValue (1) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq(1)) shouldNot containSingleValue(1) }
     }
-    a [PipelineExecutionException] should be thrownBy {
-      runWithContext { _.parallelize(1 to 10) shouldNot containSingleValue (1) }
+    a[PipelineExecutionException] should be thrownBy {
+      runWithContext { _.parallelize(1 to 10) shouldNot containSingleValue(1) }
     }
-    a [PipelineExecutionException] should be thrownBy {
-      runWithContext { _.parallelize(Seq.empty[Int]) shouldNot containSingleValue (1) }
+    a[PipelineExecutionException] should be thrownBy {
+      runWithContext {
+        _.parallelize(Seq.empty[Int]) shouldNot containSingleValue(1)
+      }
     }
   }
 
   it should "support containValue" in {
     // should cases
-    runWithContext { _.parallelize(Seq(1, 2, 3)) should containValue (1) }
+    runWithContext { _.parallelize(Seq(1, 2, 3)) should containValue(1) }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(Seq(1)) should containValue (10) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq(1)) should containValue(10) }
     }
     // shouldNot cases
-    runWithContext { _.parallelize(Seq(1, 2, 3)) shouldNot containValue (4) }
+    runWithContext { _.parallelize(Seq(1, 2, 3)) shouldNot containValue(4) }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(Seq(1, 2, 3)) shouldNot containValue (1) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq(1, 2, 3)) shouldNot containValue(1) }
     }
   }
 
@@ -104,47 +114,47 @@ class SCollectionMatchersTest extends PipelineSpec {
     // should cases
     runWithContext { _.parallelize(Seq.empty[Int]) should beEmpty }
 
-    an [AssertionError] should be thrownBy {
+    an[AssertionError] should be thrownBy {
       runWithContext { _.parallelize(1 to 10) should beEmpty }
     }
 
     // shouldNot cases
     runWithContext { _.parallelize(1 to 10) shouldNot beEmpty }
 
-    an [AssertionError] should be thrownBy {
+    an[AssertionError] should be thrownBy {
       runWithContext { _.parallelize(Seq.empty[Int]) shouldNot beEmpty }
     }
   }
 
   it should "support haveSize" in {
     // should cases
-    runWithContext { _.parallelize(Seq.empty[Int]) should haveSize (0) }
-    runWithContext { _.parallelize(Seq(1)) should haveSize (1) }
-    runWithContext { _.parallelize(1 to 10) should haveSize (10) }
+    runWithContext { _.parallelize(Seq.empty[Int]) should haveSize(0) }
+    runWithContext { _.parallelize(Seq(1)) should haveSize(1) }
+    runWithContext { _.parallelize(1 to 10) should haveSize(10) }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(Seq.empty[Int]) should haveSize (1) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq.empty[Int]) should haveSize(1) }
     }
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(Seq(1)) should haveSize (0) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq(1)) should haveSize(0) }
     }
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(1 to 10) should haveSize (20) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(1 to 10) should haveSize(20) }
     }
 
     // shouldNot cases
-    runWithContext { _.parallelize(Seq.empty[Int]) shouldNot haveSize (1) }
-    runWithContext { _.parallelize(Seq(1)) shouldNot haveSize (0) }
-    runWithContext { _.parallelize(1 to 10) shouldNot haveSize (100) }
+    runWithContext { _.parallelize(Seq.empty[Int]) shouldNot haveSize(1) }
+    runWithContext { _.parallelize(Seq(1)) shouldNot haveSize(0) }
+    runWithContext { _.parallelize(1 to 10) shouldNot haveSize(100) }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(Seq.empty[Int]) shouldNot haveSize (0) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq.empty[Int]) shouldNot haveSize(0) }
     }
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(Seq(1)) shouldNot haveSize (1) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq(1)) shouldNot haveSize(1) }
     }
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(1 to 10) shouldNot haveSize (10) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(1 to 10) shouldNot haveSize(10) }
     }
   }
 
@@ -152,112 +162,148 @@ class SCollectionMatchersTest extends PipelineSpec {
     // should cases
     val s = Seq("a" -> 1, "b" -> 2, "c" -> 3)
     runWithContext { sc =>
-      sc.parallelize(s) should equalMapOf (s.toMap)
-      sc.parallelize(Seq.empty[(String, Int)]) should equalMapOf (Map.empty[String, Int])
+      sc.parallelize(s) should equalMapOf(s.toMap)
+      sc.parallelize(Seq.empty[(String, Int)]) should equalMapOf(
+        Map.empty[String, Int])
     }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(s) should equalMapOf ((s :+ "d" -> 4).toMap) }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(s) should equalMapOf((s :+ "d" -> 4).toMap)
+      }
     }
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(s :+ "d" -> 4) should equalMapOf (s.toMap) }
-    }
-
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(s) should equalMapOf (s.tail.toMap) }
-    }
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(s.tail) should equalMapOf (s.toMap) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(s :+ "d" -> 4) should equalMapOf(s.toMap) }
     }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(s) should equalMapOf (s.toMap + ("a" -> 10)) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(s) should equalMapOf(s.tail.toMap) }
     }
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(s.tail :+ ("a" -> 10)) should equalMapOf (s.toMap) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(s.tail) should equalMapOf(s.toMap) }
     }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(s) should equalMapOf (Map.empty[String, Int]) }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(s) should equalMapOf(s.toMap + ("a" -> 10))
+      }
     }
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(Seq.empty[(String, Int)]) should equalMapOf (s.toMap) }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(s.tail :+ ("a" -> 10)) should equalMapOf(s.toMap)
+      }
+    }
+
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(s) should equalMapOf(Map.empty[String, Int])
+      }
+    }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(Seq.empty[(String, Int)]) should equalMapOf(s.toMap)
+      }
     }
 
     // shouldNot cases
     runWithContext { sc =>
-      sc.parallelize(s) shouldNot equalMapOf ((s :+ "d" -> 4).toMap)
-      sc.parallelize(s) shouldNot equalMapOf (Map.empty[String, Int])
-      sc.parallelize(Seq.empty[(String, Int)]) shouldNot equalMapOf (s.toMap)
+      sc.parallelize(s) shouldNot equalMapOf((s :+ "d" -> 4).toMap)
+      sc.parallelize(s) shouldNot equalMapOf(Map.empty[String, Int])
+      sc.parallelize(Seq.empty[(String, Int)]) shouldNot equalMapOf(s.toMap)
     }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(s) shouldNot equalMapOf (s.toMap) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(s) shouldNot equalMapOf(s.toMap) }
     }
-    an [AssertionError] should be thrownBy {
+    an[AssertionError] should be thrownBy {
       runWithContext {
-        _.parallelize(Seq.empty[(String, Int)]) shouldNot equalMapOf (Map.empty[String, Int])
+        _.parallelize(Seq.empty[(String, Int)]) shouldNot equalMapOf(
+          Map.empty[String, Int])
       }
     }
   }
 
   it should "support satisfy" in {
     // should cases
-    runWithContext { _.parallelize(1 to 100) should satisfy[Int] (_.sum == 5050) }
+    runWithContext {
+      _.parallelize(1 to 100) should satisfy[Int](_.sum == 5050)
+    }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(1 to 100) should satisfy[Int] (_.sum == 100) }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(1 to 100) should satisfy[Int](_.sum == 100)
+      }
     }
 
     // shouldNot cases
-    runWithContext { _.parallelize(1 to 100) shouldNot satisfy[Int] (_.sum == 100) }
+    runWithContext {
+      _.parallelize(1 to 100) shouldNot satisfy[Int](_.sum == 100)
+    }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(1 to 100) shouldNot satisfy[Int] (_.sum == 5050) }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(1 to 100) shouldNot satisfy[Int](_.sum == 5050)
+      }
     }
   }
 
   it should "support satisfySingleValue" in {
     // should cases
-    runWithContext { _.parallelize(Seq(1)) should satisfySingleValue[Int] (_ == 1) }
+    runWithContext {
+      _.parallelize(Seq(1)) should satisfySingleValue[Int](_ == 1)
+    }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(Seq(1)) should satisfySingleValue[Int] (_ == 10) }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(Seq(1)) should satisfySingleValue[Int](_ == 10)
+      }
     }
-    a [PipelineExecutionException] should be thrownBy {
-      runWithContext { _.parallelize(1 to 10) should satisfySingleValue[Int] (_ == 1) }
+    a[PipelineExecutionException] should be thrownBy {
+      runWithContext {
+        _.parallelize(1 to 10) should satisfySingleValue[Int](_ == 1)
+      }
     }
-    a [PipelineExecutionException] should be thrownBy {
-      runWithContext { _.parallelize(Seq.empty[Int]) should satisfySingleValue[Int] (_ == 1) }
+    a[PipelineExecutionException] should be thrownBy {
+      runWithContext {
+        _.parallelize(Seq.empty[Int]) should satisfySingleValue[Int](_ == 1)
+      }
     }
 
     // shouldNot cases
-    runWithContext { _.parallelize(Seq(10)) shouldNot satisfySingleValue[Int] (_ == 1) }
+    runWithContext {
+      _.parallelize(Seq(10)) shouldNot satisfySingleValue[Int](_ == 1)
+    }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(Seq(1)) shouldNot satisfySingleValue[Int] (_ == 1) }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(Seq(1)) shouldNot satisfySingleValue[Int](_ == 1)
+      }
     }
-    a [PipelineExecutionException] should be thrownBy {
-      runWithContext { _.parallelize(1 to 10) shouldNot satisfySingleValue[Int] (_ == 1) }
+    a[PipelineExecutionException] should be thrownBy {
+      runWithContext {
+        _.parallelize(1 to 10) shouldNot satisfySingleValue[Int](_ == 1)
+      }
     }
-    a [PipelineExecutionException] should be thrownBy {
-      runWithContext { _.parallelize(Seq.empty[Int]) shouldNot satisfySingleValue[Int] (_ == 1) }
+    a[PipelineExecutionException] should be thrownBy {
+      runWithContext {
+        _.parallelize(Seq.empty[Int]) shouldNot satisfySingleValue[Int](_ == 1)
+      }
     }
   }
 
   it should "support forAll" in {
     // should cases
-    runWithContext { _.parallelize(1 to 100) should forAll[Int] (_ > 0) }
+    runWithContext { _.parallelize(1 to 100) should forAll[Int](_ > 0) }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(1 to 100) should forAll[Int] (_ > 10) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(1 to 100) should forAll[Int](_ > 10) }
     }
 
     // shouldNot cases
-    runWithContext { _.parallelize(1 to 100) shouldNot forAll[Int] (_ > 10) }
+    runWithContext { _.parallelize(1 to 100) shouldNot forAll[Int](_ > 10) }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(1 to 100) shouldNot forAll[Int] (_ > 0) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(1 to 100) shouldNot forAll[Int](_ > 0) }
     }
   }
 
@@ -265,49 +311,69 @@ class SCollectionMatchersTest extends PipelineSpec {
     val xs = Seq(1.4, 1.5, 1.6)
 
     // should cases
-    runWithContext { _.parallelize(xs) should forAll[Double] (_ === 1.5+-0.1) }
-    runWithContext { _.parallelize(xs) should exist[Double] (_ === 1.5+-0.1) }
-    runWithContext { _.parallelize(xs) should satisfy[Double] (_.sum === 5.0+-0.5) }
+    runWithContext { _.parallelize(xs) should forAll[Double](_ === 1.5 +- 0.1) }
+    runWithContext { _.parallelize(xs) should exist[Double](_ === 1.5 +- 0.1) }
+    runWithContext {
+      _.parallelize(xs) should satisfy[Double](_.sum === 5.0 +- 0.5)
+    }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(xs) should forAll[Double] (_ === 1.4+-0.1) }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(xs) should forAll[Double](_ === 1.4 +- 0.1)
+      }
     }
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(xs) should exist[Double] (_ === 1.0+-0.1) }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(xs) should exist[Double](_ === 1.0 +- 0.1)
+      }
     }
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(xs) should satisfy[Double] (_.sum === 1.0+-0.5) }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(xs) should satisfy[Double](_.sum === 1.0 +- 0.5)
+      }
     }
 
     // shouldNot cases
-    runWithContext { _.parallelize(xs) shouldNot forAll[Double] (_ === 1.4+-0.1) }
-    runWithContext { _.parallelize(xs) shouldNot exist[Double] (_ === 1.0+-0.1) }
-    runWithContext { _.parallelize(xs) shouldNot satisfy[Double] (_.sum === 1.0+-0.5) }
+    runWithContext {
+      _.parallelize(xs) shouldNot forAll[Double](_ === 1.4 +- 0.1)
+    }
+    runWithContext {
+      _.parallelize(xs) shouldNot exist[Double](_ === 1.0 +- 0.1)
+    }
+    runWithContext {
+      _.parallelize(xs) shouldNot satisfy[Double](_.sum === 1.0 +- 0.5)
+    }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(xs) shouldNot forAll[Double] (_ === 1.5+-0.1) }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(xs) shouldNot forAll[Double](_ === 1.5 +- 0.1)
+      }
     }
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(xs) shouldNot exist[Double] (_ === 1.5+-0.1) }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(xs) shouldNot exist[Double](_ === 1.5 +- 0.1)
+      }
     }
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(xs) shouldNot satisfy[Double] (_.sum === 5.0+-0.5) }
+    an[AssertionError] should be thrownBy {
+      runWithContext {
+        _.parallelize(xs) shouldNot satisfy[Double](_.sum === 5.0 +- 0.5)
+      }
     }
   }
 
   it should "support exist" in {
     // should cases
-    runWithContext { _.parallelize(1 to 100) should exist[Int] (_ > 99) }
+    runWithContext { _.parallelize(1 to 100) should exist[Int](_ > 99) }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(1 to 100) should exist[Int] (_ > 100) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(1 to 100) should exist[Int](_ > 100) }
     }
 
     // shouldNot cases
-    runWithContext { _.parallelize(1 to 100) shouldNot exist[Int] (_ > 100) }
+    runWithContext { _.parallelize(1 to 100) shouldNot exist[Int](_ > 100) }
 
-    an [AssertionError] should be thrownBy {
-      runWithContext { _.parallelize(1 to 100) shouldNot exist[Int] (_ > 99) }
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(1 to 100) shouldNot exist[Int](_ > 99) }
     }
   }
 
@@ -319,17 +385,17 @@ class SCollectionMatchersTest extends PipelineSpec {
       TimestampedValue.of(elem, baseTime.plus(baseTimeOffset))
 
     val stream = testStreamOf[Int]
-      // Start at the epoch
+    // Start at the epoch
       .advanceWatermarkTo(baseTime)
       // add some elements ahead of the watermark
       .addElements(event(1, Duration.standardSeconds(3)),
-      event(2, Duration.standardMinutes(1)),
-      event(3, Duration.standardSeconds(22)),
-      event(4, Duration.standardSeconds(3)))
+                   event(2, Duration.standardMinutes(1)),
+                   event(3, Duration.standardSeconds(22)),
+                   event(4, Duration.standardSeconds(3)))
       // The watermark advances slightly, but not past the end of the window
       .advanceWatermarkTo(baseTime.plus(Duration.standardMinutes(3)))
       .addElements(event(1, Duration.standardMinutes(4)),
-        event(2, Duration.standardSeconds(270)))
+                   event(2, Duration.standardSeconds(270)))
 
     runWithContext { sc =>
       val windowedStream = sc
@@ -364,7 +430,7 @@ class SCollectionMatchersTest extends PipelineSpec {
         containSingleValue(13)
       }
 
-      a [ClassCastException] should be thrownBy {
+      a[ClassCastException] should be thrownBy {
         windowedStream.groupByKey should inEarlyGlobalWindowPanes {
           haveSize(4)
         }

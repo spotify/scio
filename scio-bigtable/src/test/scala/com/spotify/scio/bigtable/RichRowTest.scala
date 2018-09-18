@@ -30,36 +30,41 @@ class RichRowTest extends FlatSpec with Matchers {
 
   val FAMILY_NAME = "family"
 
-  val dataMap = Seq(
-    "a" -> Seq(10 -> "x", 9 -> "y", 8 -> "z"),
-    "b" -> Seq(7 -> "u", 6 -> "v", 5 -> "w"),
-    "c" -> Seq(4 -> "r", 3 -> "s", 2 -> "t"))
-    .map { case (q, cs) =>
+  val dataMap = Seq("a" -> Seq(10 -> "x", 9 -> "y", 8 -> "z"),
+                    "b" -> Seq(7 -> "u", 6 -> "v", 5 -> "w"),
+                    "c" -> Seq(4 -> "r", 3 -> "s", 2 -> "t")).map {
+    case (q, cs) =>
       val kvs = cs.map(kv => (kv._1.toLong, bs(kv._2)))
       (bs(q), ListMap(kvs: _*))
-    }
-    .toMap
+  }.toMap
 
-  val columns = dataMap.map { case (q, cs) =>
-    val cells = cs.map { case (t, v) =>
-      Cell.newBuilder().setTimestampMicros(t).setValue(v).build()
-    }
-    Column.newBuilder()
-      .setQualifier(q)
-      .addAllCells(cells.asJava)
-      .build()
+  val columns = dataMap.map {
+    case (q, cs) =>
+      val cells = cs.map {
+        case (t, v) =>
+          Cell.newBuilder().setTimestampMicros(t).setValue(v).build()
+      }
+      Column
+        .newBuilder()
+        .setQualifier(q)
+        .addAllCells(cells.asJava)
+        .build()
   }
 
-  val row = Row.newBuilder()
-    .addFamilies(Family.newBuilder()
-      .setName(FAMILY_NAME)
-      .addAllColumns(columns.asJava))
+  val row = Row
+    .newBuilder()
+    .addFamilies(
+      Family
+        .newBuilder()
+        .setName(FAMILY_NAME)
+        .addAllColumns(columns.asJava))
     .build()
 
   "RichRow" should "support getColumnCells" in {
     for ((q, cs) <- dataMap) {
-      val cells = cs.map { case (t, v) =>
-        Cell.newBuilder().setTimestampMicros(t).setValue(v).build()
+      val cells = cs.map {
+        case (t, v) =>
+          Cell.newBuilder().setTimestampMicros(t).setValue(v).build()
       }
       row.getColumnCells(FAMILY_NAME, q) shouldBe cells
     }
@@ -67,15 +72,16 @@ class RichRowTest extends FlatSpec with Matchers {
 
   it should "support getColumnLatestCell" in {
     for ((q, cs) <- dataMap) {
-      val cells = cs.map { case (t, v) =>
-        Cell.newBuilder().setTimestampMicros(t).setValue(v).build()
+      val cells = cs.map {
+        case (t, v) =>
+          Cell.newBuilder().setTimestampMicros(t).setValue(v).build()
       }
       row.getColumnLatestCell(FAMILY_NAME, q) shouldBe cells.headOption
     }
   }
 
   it should "support getFamilyMap" in {
-    val familyMap = dataMap.map { case (q, cs) => (q, cs.head._2)}
+    val familyMap = dataMap.map { case (q, cs) => (q, cs.head._2) }
     row.getFamilyMap(FAMILY_NAME) shouldBe familyMap
   }
 
@@ -84,7 +90,7 @@ class RichRowTest extends FlatSpec with Matchers {
   }
 
   it should "support getNoVersionMap" in {
-    val noVerMap = dataMap.map { case (q, cs) => (q, cs.head._2)}
+    val noVerMap = dataMap.map { case (q, cs) => (q, cs.head._2) }
     row.getNoVersionMap shouldBe Map(FAMILY_NAME -> noVerMap)
   }
 

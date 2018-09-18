@@ -29,15 +29,16 @@ private[types] object MacroUtil {
       List(typeOf[Product], typeOf[Serializable], typeOf[Equals])
         .forall(b => t.baseClasses.contains(b.typeSymbol))
 
-  def isField(s: Symbol): Boolean = s.isPublic && s.isMethod && !s.isSynthetic && !s.isConstructor
+  def isField(s: Symbol): Boolean =
+    s.isPublic && s.isMethod && !s.isSynthetic && !s.isConstructor
 
   // Case class helpers for macros
 
   def isCaseClass(c: blackbox.Context)(t: c.Type): Boolean = {
     import c.universe._
     !t.toString.startsWith("scala.") &&
-      List(typeOf[Product], typeOf[Serializable], typeOf[Equals])
-        .forall(b => t.baseClasses.contains(b.typeSymbol))
+    List(typeOf[Product], typeOf[Serializable], typeOf[Equals])
+      .forall(b => t.baseClasses.contains(b.typeSymbol))
   }
 
   def isField(c: blackbox.Context)(s: c.Symbol): Boolean =

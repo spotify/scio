@@ -53,8 +53,8 @@ package object checkpoint {
      * @param fn result of this arbitrary => [[com.spotify.scio.values.SCollection SCollection]]
      *           flow is what is checkpointed
      */
-    def checkpoint[T: Coder](fileOrPath: String)
-                               (fn: => SCollection[T]): SCollection[T] = {
+    def checkpoint[T: Coder](fileOrPath: String)(
+      fn: => SCollection[T]): SCollection[T] = {
       FileSystems.setDefaultPipelineOptions(self.options)
       val path = if (self.isTest) {
         fileOrPath
@@ -62,17 +62,20 @@ package object checkpoint {
         ScioUtil.getTempFile(self, fileOrPath)
       }
       if (isCheckpointAvailable(path)) {
-        self.objectFile[T](if (self.isTest) path else ScioUtil.addPartSuffix(path))
+        self.objectFile[T](
+          if (self.isTest) path else ScioUtil.addPartSuffix(path))
       } else {
         val r = fn
-        require(r.context == self, "Result SCollection has to share the same ScioContext")
+        require(r.context == self,
+                "Result SCollection has to share the same ScioContext")
         r.materialize(path, isCheckpoint = true)
         r
       }
     }
 
     private def isCheckpointAvailable(path: String): Boolean = {
-      if (self.isTest && self.testInput.m.contains(CheckpointIO[Unit](path).testId)) {
+      if (self.isTest && self.testInput.m.contains(
+            CheckpointIO[Unit](path).testId)) {
         // if it's test and checkpoint was registered in test
         true
       } else {

@@ -29,7 +29,8 @@ import scala.reflect.ClassTag
 
 private[scio] object Implicits {
 
-  private[scio] implicit class RichCoderRegistry(val r: CoderRegistry) extends AnyVal {
+  private[scio] implicit class RichCoderRegistry(val r: CoderRegistry)
+      extends AnyVal {
 
     def registerScalaCoders(): Unit = {
       // Missing Coders from DataFlowJavaSDK
@@ -58,7 +59,8 @@ private[scio] object Implicits {
       }
     }
 
-    def getScalaKvCoder[K: ClassTag, V: ClassTag](options: PipelineOptions): Coder[KV[K, V]] =
+    def getScalaKvCoder[K: ClassTag, V: ClassTag](
+      options: PipelineOptions): Coder[KV[K, V]] =
       KvCoder.of(getScalaCoder[K](options), getScalaCoder[V](options))
 
   }

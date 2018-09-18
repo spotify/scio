@@ -36,12 +36,14 @@ object TableAdmin {
   private val log: Logger = LoggerFactory.getLogger(TableAdmin.getClass)
 
   private def adminClient[A](bigtableOptions: BigtableOptions)(
-      f: BigtableTableAdminClient => A): Try[A] = {
+    f: BigtableTableAdminClient => A): Try[A] = {
     val channel =
       ChannelPoolCreator.createPool(bigtableOptions.getTableAdminHost)
     val executorService =
       BigtableSessionSharedThreadPools.getInstance().getRetryExecutor
-    val client = new BigtableTableAdminGrpcClient(channel, executorService, bigtableOptions)
+    val client = new BigtableTableAdminGrpcClient(channel,
+                                                  executorService,
+                                                  bigtableOptions)
 
     val result = Try(f(client))
     channel.shutdownNow()
@@ -62,7 +64,8 @@ object TableAdmin {
     val instance = bigtableOptions.getInstanceId
     val instancePath = s"projects/$project/instances/$instance"
 
-    log.info("Ensuring tables and column families exist in instance {}", instance)
+    log.info("Ensuring tables and column families exist in instance {}",
+             instance)
 
     adminClient(bigtableOptions) { client =>
       val existingTables = client
@@ -108,7 +111,8 @@ object TableAdmin {
                                    tablePath: String,
                                    columnFamilies: List[String]): Unit = {
 
-    val tableInfo = client.getTable(GetTableRequest.newBuilder().setName(tablePath).build)
+    val tableInfo =
+      client.getTable(GetTableRequest.newBuilder().setName(tablePath).build)
 
     val modifications: List[Modification] = columnFamilies.collect {
       case (cf) if !tableInfo.containsColumnFamilies(cf) =>
@@ -138,7 +142,9 @@ object TableAdmin {
    * @param table table name
    * @param rowPrefix row key prefix
    */
-  def dropRowRange(bigtableOptions: BigtableOptions, table: String, rowPrefix: String): Try[Unit] =
+  def dropRowRange(bigtableOptions: BigtableOptions,
+                   table: String,
+                   rowPrefix: String): Try[Unit] =
     adminClient(bigtableOptions) { client =>
       val project = bigtableOptions.getProjectId
       val instance = bigtableOptions.getInstanceId

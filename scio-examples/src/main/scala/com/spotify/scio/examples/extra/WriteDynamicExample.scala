@@ -31,7 +31,6 @@ import org.apache.beam.sdk.io.FileIO.Write.FileNaming
 import org.apache.beam.sdk.io.{FileIO, TextIO}
 import org.apache.beam.sdk.transforms.{Contextful, SerializableFunction}
 
-
 object WriteDynamicExample {
   case class LinesPerCharacter(name: String, lines: Long)
 
@@ -46,15 +45,14 @@ object WriteDynamicExample {
     val dynamicOutput: FileIO.Write[String, LinesPerCharacter] = FileIO
       .writeDynamic[String, LinesPerCharacter]()
       .by(new SerializableFunction[LinesPerCharacter, String] {
-        override def apply(input: LinesPerCharacter): String = {
+        override def apply(input: LinesPerCharacter): String =
           input.name.charAt(0).toString.toUpperCase
-        }
       })
       .withNaming(
         new SerializableFunction[String, FileNaming] {
-          override def apply(firstLetter: String): FileNaming = {
-            FileIO.Write.defaultNaming(s"characters-starting-with-$firstLetter", ".txt")
-          }
+          override def apply(firstLetter: String): FileNaming =
+            FileIO.Write.defaultNaming(s"characters-starting-with-$firstLetter",
+                                       ".txt")
         }
       )
       .withDestinationCoder(StringUtf8Coder.of())
@@ -62,7 +60,8 @@ object WriteDynamicExample {
       .via(
         Contextful.fn[LinesPerCharacter, String]( // Output LinesPerCharacter records as Strings
           new SerializableFunction[LinesPerCharacter, String] {
-            override def apply(input: LinesPerCharacter): String = input.toString
+            override def apply(input: LinesPerCharacter): String =
+              input.toString
           }),
         TextIO.sink()
       )
@@ -72,8 +71,8 @@ object WriteDynamicExample {
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap { line =>
         line.split(kingLearTextSplitter).filter(_.nonEmpty).toList match {
-          case name::dialogue::Nil => Some(name)
-          case _ => None
+          case name :: dialogue :: Nil => Some(name)
+          case _                       => None
         }
       }
       .countByValue

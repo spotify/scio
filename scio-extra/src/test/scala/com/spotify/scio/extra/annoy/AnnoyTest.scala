@@ -24,14 +24,14 @@ import com.spotify.annoy.{ANNIndex, IndexType}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.PipelineSpec
 
-
 class AnnoyTest extends PipelineSpec {
 
   val metric = Angular
   val dim = 2
   val nTrees = 10
 
-  val sideData = Seq((1, Array(2.5f,7.2f)), (2, Array(1.2f, 2.2f)), (3, Array(5.6f, 3.4f)))
+  val sideData =
+    Seq((1, Array(2.5f, 7.2f)), (2, Array(1.2f, 2.2f)), (3, Array(5.6f, 3.4f)))
 
   "SCollection" should "support .asAnnoy with temporary local file" in {
     val sc = ScioContext()
@@ -50,7 +50,10 @@ class AnnoyTest extends PipelineSpec {
 
   it should "support .asAnnoy with specified local file" in {
     val sc = ScioContext()
-    val p = sc.parallelize(sideData).asAnnoy("test.tree", metric, dim, nTrees).materialize
+    val p = sc
+      .parallelize(sideData)
+      .asAnnoy("test.tree", metric, dim, nTrees)
+      .materialize
     sc.close().waitUntilFinish()
 
     val path = p.waitForResult().value.next().path
@@ -68,7 +71,7 @@ class AnnoyTest extends PipelineSpec {
     val path = tmpDir.resolve("annoy.tree")
     Files.createFile(path)
     // scalastyle:off no.whitespace.before.left.bracket
-    the [IllegalArgumentException] thrownBy {
+    the[IllegalArgumentException] thrownBy {
       runWithContext {
         _.parallelize(sideData).asAnnoy(path.toString, Angular, 40, 10)
       }

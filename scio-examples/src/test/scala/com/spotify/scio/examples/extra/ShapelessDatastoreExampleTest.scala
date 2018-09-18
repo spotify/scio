@@ -27,7 +27,8 @@ class ShapelessDatastoreExampleTest extends PipelineSpec {
   val textIn = Seq("a b c d e", "a b a b")
   val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
   val entities = wordCount.map { kv =>
-    Entity.newBuilder()
+    Entity
+      .newBuilder()
       .setKey(makeKey(ShapelessDatastoreExample.kind, kv._1))
       .putProperties("word", makeValue(kv._1).build())
       .putProperties("count", makeValue(kv._2).build())
@@ -39,7 +40,7 @@ class ShapelessDatastoreExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.ShapelessDatastoreWriteExample.type]
       .args("--input=in.txt", "--output=project")
       .input(TextIO("in.txt"), textIn)
-      .output(DatastoreIO("project"))(_ should containInAnyOrder (entities))
+      .output(DatastoreIO("project"))(_ should containInAnyOrder(entities))
       .run()
   }
 
@@ -47,7 +48,7 @@ class ShapelessDatastoreExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.ShapelessDatastoreReadExample.type]
       .args("--input=project", "--output=out.txt")
       .input(DatastoreIO("project"), entities)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (textOut))
+      .output(TextIO("out.txt"))(_ should containInAnyOrder(textOut))
       .run()
   }
 

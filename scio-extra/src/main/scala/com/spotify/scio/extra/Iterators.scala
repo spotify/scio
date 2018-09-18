@@ -53,7 +53,8 @@ object Iterators {
   private class FixedIterator[T](self: Iterator[T],
                                  timestampFn: T => Long,
                                  size: Long,
-                                 offset: Long = 0L) extends Iterator[Seq[T]] {
+                                 offset: Long = 0L)
+      extends Iterator[Seq[T]] {
     private val bi = self.buffered
     override def hasNext: Boolean = bi.hasNext
     override def next(): Seq[T] = {
@@ -70,7 +71,8 @@ object Iterators {
 
   private class SessionIterator[T](self: Iterator[T],
                                    timestampFn: T => Long,
-                                   gapDuration: Long) extends Iterator[Seq[T]] {
+                                   gapDuration: Long)
+      extends Iterator[Seq[T]] {
     private val bi = self.buffered
     override def hasNext: Boolean = bi.hasNext
     override def next(): Seq[T] = {
@@ -90,7 +92,8 @@ object Iterators {
                                    timestampFn: T => Long,
                                    size: Long,
                                    period: Long = 1L,
-                                   offset: Long = 0L) extends Iterator[Seq[T]] {
+                                   offset: Long = 0L)
+      extends Iterator[Seq[T]] {
     private val bi = self.buffered
     private val queue = mutable.Queue[T]()
     fill()
@@ -129,14 +132,15 @@ object Iterators {
   }
 
   /** Iterator for time series data. */
-  class TimeSeriesIterator[T] private[extra] (private val self: Iterator[T],
-                                              private val timestampFn: T => Long) {
+  class TimeSeriesIterator[T] private[extra] (
+    private val self: Iterator[T],
+    private val timestampFn: T => Long) {
 
     /**
-      * Iterator of fixed-size timestamp-based windows.
-      * Partitions the timestamp space into half-open intervals of the form
-      * [N * size + offset, (N + 1) * size + offset).
-      */
+     * Iterator of fixed-size timestamp-based windows.
+     * Partitions the timestamp space into half-open intervals of the form
+     * [N * size + offset, (N + 1) * size + offset).
+     */
     def fixed(size: Long, offset: Long = 0L): Iterator[Seq[T]] = {
       require(size > 0, "size must be > 0")
       require(offset >= 0, "offset must be >= 0")
@@ -145,19 +149,21 @@ object Iterators {
     }
 
     /**
-      * Iterator of sessions separated by `gapDuration`-long periods with no elements.
-      */
+     * Iterator of sessions separated by `gapDuration`-long periods with no elements.
+     */
     def session(gapDuration: Long): Iterator[Seq[T]] = {
       require(gapDuration > 0, "size must be > 0")
       new SessionIterator(self, timestampFn, gapDuration)
     }
 
     /**
-      * Iterator of possibly overlapping fixed-size timestamp-based windows.
-      * Partitions the timestamp space into half-open intervals of the form
-      * [N * period + offset, N * period + offset + size).
-      */
-    def sliding(size: Long, period: Long = 1L, offset: Long = 0L): Iterator[Seq[T]] = {
+     * Iterator of possibly overlapping fixed-size timestamp-based windows.
+     * Partitions the timestamp space into half-open intervals of the form
+     * [N * period + offset, N * period + offset + size).
+     */
+    def sliding(size: Long,
+                period: Long = 1L,
+                offset: Long = 0L): Iterator[Seq[T]] = {
       require(size > 0, "size must be > 0")
       require(period > offset, "period must be > offset")
       require(offset >= 0, "offset must be >= 0")
@@ -169,10 +175,11 @@ object Iterators {
 
   /** Enhance Iterator by adding a `timeSeries` method. */
   implicit class RichIterator[T](val self: Iterator[T]) extends AnyVal {
+
     /**
-      * Convert this iterator to a [[TimeSeriesIterator]].
-      * @param timestampFn function to extract timestamp.
-      */
+     * Convert this iterator to a [[TimeSeriesIterator]].
+     * @param timestampFn function to extract timestamp.
+     */
     def timeSeries(timestampFn: T => Long): TimeSeriesIterator[T] =
       new TimeSeriesIterator(self, timestampFn)
   }

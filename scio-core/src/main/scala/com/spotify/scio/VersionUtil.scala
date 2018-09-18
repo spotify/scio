@@ -18,7 +18,11 @@
 package com.spotify.scio
 
 import com.google.api.client.http.javanet.NetHttpTransport
-import com.google.api.client.http.{GenericUrl, HttpRequest, HttpRequestInitializer}
+import com.google.api.client.http.{
+  GenericUrl,
+  HttpRequest,
+  HttpRequestInitializer
+}
 import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.jackson2.JacksonFactory
 import org.apache.beam.sdk.util.ReleaseInfo
@@ -30,7 +34,8 @@ import scala.util.Try
 
 private[scio] object VersionUtil {
 
-  case class SemVer(major: Int, minor: Int, rev: Int, suffix: String) extends Ordered[SemVer] {
+  case class SemVer(major: Int, minor: Int, rev: Int, suffix: String)
+      extends Ordered[SemVer] {
     def compare(that: SemVer): Int = {
       implicit val revStringOrder = Ordering[String]
       implicitly[Ordering[(Int, Int, Int, String)]]
@@ -56,7 +61,8 @@ private[scio] object VersionUtil {
       .buildGetRequest(new GenericUrl(url))
       .execute()
       .parseAs(classOf[java.util.List[Object]])
-    val latest = response.iterator().next().asInstanceOf[java.util.Map[String, AnyRef]]
+    val latest =
+      response.iterator().next().asInstanceOf[java.util.Map[String, AnyRef]]
     latest.get("tag_name").toString
   }.toOption
 
@@ -85,7 +91,8 @@ private[scio] object VersionUtil {
   def checkVersion(): Unit =
     checkVersion(BuildInfo.version, latest).foreach(logger.warn)
 
-  def checkRunnerVersion(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Unit = {
+  def checkRunnerVersion(
+    runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Unit = {
     val name = runner.getSimpleName
     val version = ReleaseInfo.getReleaseInfo.getVersion
     require(

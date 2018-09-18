@@ -36,14 +36,21 @@ runMain
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
   --input=gs://apache-beam-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv
   --output=[DATASET].trigger_example
-*/
+ */
 
 object TriggerExample {
 
   @BigQueryType.toTable
-  case class Record(trigger_type: String, freeway: String, total_flow: Long,
-                    number_of_records: Long, window: String, is_first: Boolean, is_last: Boolean,
-                    timing: String, event_time: Instant, processing_time: Instant)
+  case class Record(trigger_type: String,
+                    freeway: String,
+                    total_flow: Long,
+                    number_of_records: Long,
+                    window: String,
+                    is_first: Boolean,
+                    is_last: Boolean,
+                    timing: String,
+                    event_time: Instant,
+                    processing_time: Instant)
 
   // scalastyle:off method.length
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -54,7 +61,8 @@ object TriggerExample {
 
     // arguments
     val input = args.getOrElse("input", ExampleData.TRAFFIC)
-    val windowDuration = Duration.standardMinutes(args.int("windowDuration", 30))
+    val windowDuration =
+      Duration.standardMinutes(args.int("windowDuration", 30))
 
     val sc = ScioContext(opts)
 
@@ -70,48 +78,61 @@ object TriggerExample {
     val FIVE_MINUTES = Duration.standardMinutes(5)
     val ONE_DAY = Duration.standardDays(1)
 
-    val defaultTriggerResults = compute("default",
-      WindowOptions(
-        allowedLateness = Duration.ZERO,
-        trigger = Repeatedly.forever(AfterWatermark.pastEndOfWindow()),
-        accumulationMode = DISCARDING_FIRED_PANES))
+    val defaultTriggerResults = compute(
+      "default",
+      WindowOptions(allowedLateness = Duration.ZERO,
+                    trigger =
+                      Repeatedly.forever(AfterWatermark.pastEndOfWindow()),
+                    accumulationMode = DISCARDING_FIRED_PANES)
+    )
 
-    val withAllowedLatenessResults = compute("withAllowedLateness",
-      WindowOptions(
-        allowedLateness = ONE_DAY,
-        trigger = Repeatedly.forever(AfterWatermark.pastEndOfWindow()),
-        accumulationMode = DISCARDING_FIRED_PANES))
+    val withAllowedLatenessResults = compute(
+      "withAllowedLateness",
+      WindowOptions(allowedLateness = ONE_DAY,
+                    trigger =
+                      Repeatedly.forever(AfterWatermark.pastEndOfWindow()),
+                    accumulationMode = DISCARDING_FIRED_PANES)
+    )
 
-    val speculativeResults = compute("speculative",
+    val speculativeResults = compute(
+      "speculative",
       WindowOptions(
         allowedLateness = ONE_DAY,
         trigger = Repeatedly.forever(
           AfterProcessingTime
             .pastFirstElementInPane()
             .plusDelayOf(ONE_MINUTE)),
-        accumulationMode = ACCUMULATING_FIRED_PANES))
+        accumulationMode = ACCUMULATING_FIRED_PANES
+      )
+    )
 
-    val sequentialResults = compute("sequential",
+    val sequentialResults = compute(
+      "sequential",
       WindowOptions(
         allowedLateness = ONE_DAY,
         trigger = AfterEach.inOrder(
+          Repeatedly
+            .forever(
+              AfterProcessingTime
+                .pastFirstElementInPane()
+                .plusDelayOf(ONE_MINUTE))
+            .orFinally(AfterWatermark.pastEndOfWindow()),
           Repeatedly.forever(
             AfterProcessingTime
               .pastFirstElementInPane()
-              .plusDelayOf(ONE_MINUTE))
-            .orFinally(
-              AfterWatermark.pastEndOfWindow()),
-          Repeatedly.forever(
-            AfterProcessingTime
-              .pastFirstElementInPane()
-              .plusDelayOf(FIVE_MINUTES))),
-        accumulationMode = ACCUMULATING_FIRED_PANES))
+              .plusDelayOf(FIVE_MINUTES))
+        ),
+        accumulationMode = ACCUMULATING_FIRED_PANES
+      )
+    )
 
-    SCollection.unionAll(Seq(
-      defaultTriggerResults,
-      withAllowedLatenessResults,
-      speculativeResults,
-      sequentialResults)).saveAsTypedBigQuery(args("output"))
+    SCollection
+      .unionAll(
+        Seq(defaultTriggerResults,
+            withAllowedLatenessResults,
+            speculativeResults,
+            sequentialResults))
+      .saveAsTypedBigQuery(args("output"))
 
     val result = sc.close()
     exampleUtils.waitToFinish(result.internal)
@@ -122,17 +143,18 @@ object TriggerExample {
   private val MIN_DELAY = 1
   private val MAX_DELAY = 100
 
-  def insertDelays(input: SCollection[String]): SCollection[String] = input.timestampBy { _ =>
-    val timestamp = Instant.now()
-    if (Math.random() < THRESHOLD) {
-      val range = MAX_DELAY - MIN_DELAY
-      val delayInMinutes = (Math.random() * range) + MIN_DELAY
-      val delayInMillis = DateTimeConstants.MILLIS_PER_MINUTE * delayInMinutes
-      new Instant(timestamp.getMillis - delayInMillis)
-    } else {
-      timestamp
+  def insertDelays(input: SCollection[String]): SCollection[String] =
+    input.timestampBy { _ =>
+      val timestamp = Instant.now()
+      if (Math.random() < THRESHOLD) {
+        val range = MAX_DELAY - MIN_DELAY
+        val delayInMinutes = (Math.random() * range) + MIN_DELAY
+        val delayInMillis = DateTimeConstants.MILLIS_PER_MINUTE * delayInMinutes
+        new Instant(timestamp.getMillis - delayInMillis)
+      } else {
+        timestamp
+      }
     }
-  }
 
   def extractFlowInfo(input: SCollection[String]): SCollection[(String, Int)] =
     input
@@ -154,24 +176,27 @@ object TriggerExample {
         }
       }
 
-  def totalFlow(flowInfo: SCollection[(String, Int)], triggerType: String): SCollection[Record] =
-    flowInfo
-      .groupByKey
-      .toWindowed
-      .map { wv =>
-        val (key, values) = wv.value
-        var sum = 0
-        var numberOfRecords = 0L
-        values.foreach { v =>
-          sum += v
-          numberOfRecords += 1
-        }
-        val newValue = Record(
-          triggerType, key, sum, numberOfRecords, wv.window.toString,
-          wv.pane.isFirst, wv.pane.isLast, wv.pane.getTiming.toString,
-          wv.timestamp, Instant.now())
-        wv.withValue(newValue)
+  def totalFlow(flowInfo: SCollection[(String, Int)],
+                triggerType: String): SCollection[Record] =
+    flowInfo.groupByKey.toWindowed.map { wv =>
+      val (key, values) = wv.value
+      var sum = 0
+      var numberOfRecords = 0L
+      values.foreach { v =>
+        sum += v
+        numberOfRecords += 1
       }
-      .toSCollection
+      val newValue = Record(triggerType,
+                            key,
+                            sum,
+                            numberOfRecords,
+                            wv.window.toString,
+                            wv.pane.isFirst,
+                            wv.pane.isLast,
+                            wv.pane.getTiming.toString,
+                            wv.timestamp,
+                            Instant.now())
+      wv.withValue(newValue)
+    }.toSCollection
 
 }

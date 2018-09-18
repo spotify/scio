@@ -38,7 +38,8 @@ object TsvExampleWrite {
     val output = args("output")
 
     // Create a Write Transformation with tsv suffix, single file and specific header.
-    val transform = beam.TextIO.write()
+    val transform = beam.TextIO
+      .write()
       .to(pathWithShards(output))
       .withSuffix(".tsv")
       .withNumShards(1)
@@ -85,7 +86,8 @@ object TsvExampleRead {
       // Parse count (second element) as `Int` to get a `SCollection[Long]`
       .map { e =>
         // Fail on invalid records
-        assume(e.length == 2, "Invalid record, should be two fields separated by '\\t'")
+        assume(e.length == 2,
+               "Invalid record, should be two fields separated by '\\t'")
         e(1).toLong
       }
       // Sum the content to get a single `Long` element in a `SCollection[Long]`

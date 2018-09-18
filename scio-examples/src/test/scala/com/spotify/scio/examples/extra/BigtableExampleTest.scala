@@ -27,31 +27,32 @@ class BigtableExampleTest extends PipelineSpec {
 
   import BigtableExample._
 
-  val bigtableOptions = Seq(
-    "--bigtableProjectId=my-project",
-    "--bigtableInstanceId=my-instance",
-    "--bigtableTableId=my-table")
+  val bigtableOptions = Seq("--bigtableProjectId=my-project",
+                            "--bigtableInstanceId=my-instance",
+                            "--bigtableTableId=my-table")
 
   val textIn = Seq("a b c d e", "a b a b")
   val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
-  val expectedMutations = wordCount.map(kv => BigtableExample.toMutation(kv._1, kv._2))
+  val expectedMutations =
+    wordCount.map(kv => BigtableExample.toMutation(kv._1, kv._2))
 
   "BigtableV1WriteExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.BigtableWriteExample.type]
       .args(bigtableOptions :+ "--input=in.txt": _*)
       .input(TextIO("in.txt"), textIn)
-      .output(BigtableIO[(ByteString, Iterable[Mutation])](
-        "my-project", "my-instance", "my-table")) {
-        _ should containInAnyOrder (expectedMutations)
+      .output(BigtableIO[(ByteString, Iterable[Mutation])]("my-project",
+                                                           "my-instance",
+                                                           "my-table")) {
+        _ should containInAnyOrder(expectedMutations)
       }
       .run()
   }
 
-
   def toRow(key: String, value: Long): Row =
-    Rows.newRow(
-      ByteString.copyFromUtf8(key), FAMILY_NAME, COLUMN_QUALIFIER,
-      ByteString.copyFromUtf8(value.toString))
+    Rows.newRow(ByteString.copyFromUtf8(key),
+                FAMILY_NAME,
+                COLUMN_QUALIFIER,
+                ByteString.copyFromUtf8(value.toString))
 
   val rowsIn = wordCount.map(kv => toRow(kv._1, kv._2))
   val expectedText = wordCount.map(kv => kv._1 + ": " + kv._2)
@@ -60,7 +61,7 @@ class BigtableExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.BigtableReadExample.type]
       .args(bigtableOptions :+ "--output=out.txt": _*)
       .input(BigtableIO("my-project", "my-instance", "my-table"), rowsIn)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (expectedText))
+      .output(TextIO("out.txt"))(_ should containInAnyOrder(expectedText))
       .run()
   }
 

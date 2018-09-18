@@ -23,18 +23,26 @@ class GameStatsTest extends PipelineSpec {
 
   "GameStats.calculateSpammyUsers" should "work" in {
     val userScores = Seq(
-      ("Robot-2", 66), ("Robot-1", 116),
-      ("user7_AndroidGreenKookaburra", 23), ("user7_AndroidGreenKookaburra", 1),
-      ("user19_BisqueBilby", 14), ("user13_ApricotQuokka", 15),
-      ("user18_BananaEmu", 25), ("user6_AmberEchidna", 8),
-      ("user2_AmberQuokka", 6), ("user0_MagentaKangaroo", 4),
-      ("user0_MagentaKangaroo", 3), ("user2_AmberCockatoo", 13),
-      ("user7_AlmondWallaby", 15), ("user6_AmberNumbat", 11),
-      ("user6_AmberQuokka", 4))
+      ("Robot-2", 66),
+      ("Robot-1", 116),
+      ("user7_AndroidGreenKookaburra", 23),
+      ("user7_AndroidGreenKookaburra", 1),
+      ("user19_BisqueBilby", 14),
+      ("user13_ApricotQuokka", 15),
+      ("user18_BananaEmu", 25),
+      ("user6_AmberEchidna", 8),
+      ("user2_AmberQuokka", 6),
+      ("user0_MagentaKangaroo", 4),
+      ("user0_MagentaKangaroo", 3),
+      ("user2_AmberCockatoo", 13),
+      ("user7_AlmondWallaby", 15),
+      ("user6_AmberNumbat", 11),
+      ("user6_AmberQuokka", 4)
+    )
     val spammers = Seq(("Robot-2", 66), ("Robot-1", 116))
     runWithContext { sc =>
       val p = GameStats.calculateSpammyUsers(sc.parallelize(userScores))
-      p should containInAnyOrder (spammers)
+      p should containInAnyOrder(spammers)
     }
   }
 

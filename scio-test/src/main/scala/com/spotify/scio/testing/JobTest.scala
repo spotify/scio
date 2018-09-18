@@ -70,17 +70,19 @@ object JobTest {
 
   case class BeamOptions(opts: List[String])
 
-  private case class BuilderState(className: String,
-                                  cmdlineArgs: Array[String] = Array(),
-                                  input: Map[String, Iterable[_]] = Map.empty,
-                                  output: Map[String, SCollection[_] => Unit] = Map.empty,
-                                  distCaches: Map[DistCacheIO[_], _] = Map.empty,
-                                  counters: Map[beam.Counter, Long => Unit] = Map.empty,
-                                  // scalastyle:off line.size.limit
-                                  distributions: Map[beam.Distribution, beam.DistributionResult => Unit] = Map.empty,
-                                  // scalastyle:on line.size.limit
-                                  gauges: Map[beam.Gauge, beam.GaugeResult => Unit] = Map.empty,
-                                  wasRunInvoked: Boolean = false)
+  private case class BuilderState(
+    className: String,
+    cmdlineArgs: Array[String] = Array(),
+    input: Map[String, Iterable[_]] = Map.empty,
+    output: Map[String, SCollection[_] => Unit] = Map.empty,
+    distCaches: Map[DistCacheIO[_], _] = Map.empty,
+    counters: Map[beam.Counter, Long => Unit] = Map.empty,
+    // scalastyle:off line.size.limit
+    distributions: Map[beam.Distribution, beam.DistributionResult => Unit] =
+      Map.empty,
+    // scalastyle:on line.size.limit
+    gauges: Map[beam.Gauge, beam.GaugeResult => Unit] = Map.empty,
+    wasRunInvoked: Boolean = false)
 
   class Builder(private var state: BuilderState) {
 
@@ -91,7 +93,8 @@ object JobTest {
 
     /** Feed command line arguments to the pipeline being tested. */
     def args(newArgs: String*): Builder = {
-      state = state.copy(cmdlineArgs = (state.cmdlineArgs.toSeq ++ newArgs).toArray)
+      state =
+        state.copy(cmdlineArgs = (state.cmdlineArgs.toSeq ++ newArgs).toArray)
       this
     }
 
@@ -101,7 +104,8 @@ object JobTest {
      * `sc.avroFile[MyRecord]("in.avro")`.
      */
     def input[T](io: ScioIO[T], value: Iterable[T]): Builder = {
-      require(!state.input.contains(io.toString), "Duplicate test input: " + io.toString)
+      require(!state.input.contains(io.toString),
+              "Duplicate test input: " + io.toString)
       state = state.copy(input = state.input + (io.testId -> value))
       this
     }
@@ -115,9 +119,11 @@ object JobTest {
      *                  matchers on an [[com.spotify.scio.values.SCollection SCollection]].
      */
     def output[T](io: ScioIO[T])(assertion: SCollection[T] => Unit): Builder = {
-      require(!state.output.contains(io.toString), "Duplicate test output: " + io.toString)
+      require(!state.output.contains(io.toString),
+              "Duplicate test output: " + io.toString)
       state = state.copy(
-        output = state.output + (io.testId -> assertion.asInstanceOf[SCollection[_] => Unit]))
+        output = state.output + (io.testId -> assertion
+          .asInstanceOf[SCollection[_] => Unit]))
       this
     }
 
@@ -129,7 +135,8 @@ object JobTest {
      * @param value mock value, must be serializable.
      */
     def distCache[T](key: DistCacheIO[T], value: T): Builder = {
-      require(!state.distCaches.contains(key), "Duplicate test dist cache: " + key)
+      require(!state.distCaches.contains(key),
+              "Duplicate test dist cache: " + key)
       state = state.copy(distCaches = state.distCaches + (key -> (() => value)))
       this
     }
@@ -142,7 +149,8 @@ object JobTest {
      * @param initFn init function, must be serializable.
      */
     def distCacheFunc[T](key: DistCacheIO[T], initFn: () => T): Builder = {
-      require(!state.distCaches.contains(key), "Duplicate test dist cache: " + key)
+      require(!state.distCaches.contains(key),
+              "Duplicate test dist cache: " + key)
       state = state.copy(distCaches = state.distCaches + (key -> initFn))
       this
     }
@@ -153,7 +161,8 @@ object JobTest {
      * @param assertion assertion for the counter result's committed value
      */
     def counter(counter: beam.Counter)(assertion: Long => Unit): Builder = {
-      require(!state.counters.contains(counter), "Duplicate test counter: " + counter.getName)
+      require(!state.counters.contains(counter),
+              "Duplicate test counter: " + counter.getName)
       state = state.copy(counters = state.counters + (counter -> assertion))
       this
     }
@@ -164,12 +173,12 @@ object JobTest {
      * @param distribution distribution to be evaluated
      * @param assertion assertion for the distribution result's committed value
      */
-    def distribution(distribution: beam.Distribution)
-                    (assertion: beam.DistributionResult => Unit): Builder = {
-      require(
-        !state.distributions.contains(distribution),
-        "Duplicate test distribution: " + distribution.getName)
-      state = state.copy(distributions = state.distributions + (distribution -> assertion))
+    def distribution(distribution: beam.Distribution)(
+      assertion: beam.DistributionResult => Unit): Builder = {
+      require(!state.distributions.contains(distribution),
+              "Duplicate test distribution: " + distribution.getName)
+      state = state.copy(
+        distributions = state.distributions + (distribution -> assertion))
       this
     }
 
@@ -178,8 +187,10 @@ object JobTest {
      * @param gauge gauge to be evaluated
      * @param assertion assertion for the gauge result's committed value
      */
-    def gauge(gauge: beam.Gauge)(assertion: beam.GaugeResult => Unit): Builder = {
-      require(!state.gauges.contains(gauge), "Duplicate test gauge: " + gauge.getName)
+    def gauge(gauge: beam.Gauge)(
+      assertion: beam.GaugeResult => Unit): Builder = {
+      require(!state.gauges.contains(gauge),
+              "Duplicate test gauge: " + gauge.getName)
       state = state.copy(gauges = state.gauges + (gauge -> assertion))
       this
     }
@@ -196,15 +207,18 @@ object JobTest {
         state.distCaches
       )
 
-
     /**
      * Tear down test wiring. Use this only if you have custom pipeline wiring and are bypassing
      * [[run]]. Make sure [[setUp]] is called before.
      */
     def tearDown(): Unit = {
       val metricsFn = (result: ScioResult) => {
-        state.counters.foreach { case (k, v) => v(result.counter(k).committed.get) }
-        state.distributions.foreach { case (k, v) => v(result.distribution(k).committed.get) }
+        state.counters.foreach {
+          case (k, v) => v(result.counter(k).committed.get)
+        }
+        state.distributions.foreach {
+          case (k, v) => v(result.distribution(k).committed.get)
+        }
         state.gauges.foreach { case (k, v) => v(result.gauge(k).committed.get) }
       }
       TestDataManager.tearDown(testId, metricsFn)
@@ -223,7 +237,7 @@ object JobTest {
       } catch {
         // InvocationTargetException stacktrace is noisy and useless
         case e: InvocationTargetException => throw e.getCause
-        case NonFatal(e) => throw e
+        case NonFatal(e)                  => throw e
       }
 
       tearDown()
@@ -240,12 +254,12 @@ object JobTest {
   /** Create a new JobTest.Builder instance. */
   def apply(className: String)(implicit bo: BeamOptions): Builder =
     new Builder(BuilderState(className))
-      .args(bo.opts:_*)
+      .args(bo.opts: _*)
 
   /** Create a new JobTest.Builder instance. */
   def apply[T: ClassTag](implicit bo: BeamOptions): Builder = {
-    val className=  ScioUtil.classOf[T].getName.replaceAll("\\$$", "")
-    apply(className).args(bo.opts:_*)
+    val className = ScioUtil.classOf[T].getName.replaceAll("\\$$", "")
+    apply(className).args(bo.opts: _*)
   }
 
 }

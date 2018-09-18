@@ -33,7 +33,8 @@ object TableRowJsonInOut {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     // Open text files a `SCollection[TableRow]`
-    sc.tableRowJsonFile(args.getOrElse("input", ExampleData.EXPORTED_WIKI_TABLE))
+    sc.tableRowJsonFile(
+        args.getOrElse("input", ExampleData.EXPORTED_WIKI_TABLE))
       .take(100)
       // Save result as text files under the output path
       .saveAsTableRowJsonFile(args("output"))

@@ -32,7 +32,7 @@ import scala.concurrent.Future
 import scala.collection.JavaConverters._
 
 final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions)
-  extends ScioIO[T] {
+    extends ScioIO[T] {
 
   override type ReadP = Nothing
   override type WriteP = ElasticsearchIO.WriteParam[T]
@@ -54,14 +54,17 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions)
       beam.ElasticsearchIO.Write
         .withClusterName(esOptions.clusterName)
         .withServers(esOptions.servers.toArray)
-        .withFunction(new SerializableFunction[T, JIterable[DocWriteRequest[_]]]() {
-          override def apply(t: T): JIterable[DocWriteRequest[_]] = params.f(t).asJava
-        })
+        .withFunction(
+          new SerializableFunction[T, JIterable[DocWriteRequest[_]]]() {
+            override def apply(t: T): JIterable[DocWriteRequest[_]] =
+              params.f(t).asJava
+          })
         .withFlushInterval(params.flushInterval)
         .withNumOfShard(shards)
         .withMaxBulkRequestSize(params.maxBulkRequestSize)
         .withError(new beam.ThrowingConsumer[BulkExecutionException] {
-          override def accept(t: BulkExecutionException): Unit = params.errorFn(t)
+          override def accept(t: BulkExecutionException): Unit =
+            params.errorFn(t)
         }))
     Future.failed(new NotImplementedError("Custom future not implemented"))
   }
@@ -71,9 +74,10 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions)
 }
 
 object ElasticsearchIO {
-  final case class WriteParam[T](f: T => Iterable[DocWriteRequest[_]],
-                                 errorFn: BulkExecutionException => Unit = m => throw m,
-                                 flushInterval: Duration = Duration.standardSeconds(1),
-                                 numOfShards: Long = 0,
-                                 maxBulkRequestSize: Int = 3000)
+  final case class WriteParam[T](
+    f: T => Iterable[DocWriteRequest[_]],
+    errorFn: BulkExecutionException => Unit = m => throw m,
+    flushInterval: Duration = Duration.standardSeconds(1),
+    numOfShards: Long = 0,
+    maxBulkRequestSize: Int = 3000)
 }

@@ -43,18 +43,21 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   "ParquetAvroIO" should "work with specific records" in {
     val xs = (1 to 100).map(AvroUtils.newSpecificRecord)
     testTap(xs)(_.saveAsParquetAvroFile(_))(".parquet")
-    testJobTest(xs)(
-      ParquetAvroIO(_))(_.parquetAvroFile[TestRecord](_).map(identity))(_.saveAsParquetAvroFile(_))
+    testJobTest(xs)(ParquetAvroIO(_))(
+      _.parquetAvroFile[TestRecord](_).map(identity))(
+      _.saveAsParquetAvroFile(_))
   }
 
   it should "read specific records with projection" in {
     val sc = ScioContext()
     val projection = Projection[TestRecord](_.getIntField)
-    val data = sc.parquetAvroFile[TestRecord](dir + "/*.parquet", projection = projection)
-    data.map(_.getIntField.toInt) should containInAnyOrder (1 to 10)
+    val data = sc
+      .parquetAvroFile[TestRecord](dir + "/*.parquet", projection = projection)
+    data.map(_.getIntField.toInt) should containInAnyOrder(1 to 10)
     data.map(identity) should forAll[TestRecord] { r =>
       r.getLongField == null && r.getFloatField == null && r.getDoubleField == null &&
-        r.getBooleanField == null && r.getStringField == null && r.getArrayField.size() == 0
+      r.getBooleanField == null && r.getStringField == null && r.getArrayField
+        .size() == 0
     }
     sc.close()
   }
@@ -62,8 +65,10 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   it should "read specific records with predicate" in {
     val sc = ScioContext()
     val predicate = Predicate[TestRecord](_.getIntField <= 5)
-    val data = sc.parquetAvroFile[TestRecord](dir + "/*.parquet", predicate = predicate)
-    data.map(identity) should containInAnyOrder (specificRecords.filter(_.getIntField <= 5))
+    val data =
+      sc.parquetAvroFile[TestRecord](dir + "/*.parquet", predicate = predicate)
+    data.map(identity) should containInAnyOrder(
+      specificRecords.filter(_.getIntField <= 5))
     sc.close()
   }
 
@@ -71,11 +76,13 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val sc = ScioContext()
     val projection = Projection[TestRecord](_.getIntField)
     val predicate = Predicate[TestRecord](_.getIntField <= 5)
-    val data = sc.parquetAvroFile[TestRecord](dir + "/*.parquet", projection, predicate)
-    data.map(_.getIntField.toInt) should containInAnyOrder (1 to 5)
+    val data =
+      sc.parquetAvroFile[TestRecord](dir + "/*.parquet", projection, predicate)
+    data.map(_.getIntField.toInt) should containInAnyOrder(1 to 5)
     data.map(identity) should forAll[TestRecord] { r =>
       r.getLongField == null && r.getFloatField == null && r.getDoubleField == null &&
-        r.getBooleanField == null && r.getStringField == null && r.getArrayField.size() == 0
+      r.getBooleanField == null && r.getStringField == null && r.getArrayField
+        .size() == 0
     }
     sc.close()
   }
@@ -84,17 +91,21 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val dir = tmpDir
 
     val sc1 = ScioContext()
-    val nestedRecords = (1 to 10).map(x => new Account(x, x.toString, x.toString, x.toDouble))
-    sc1.parallelize(nestedRecords)
+    val nestedRecords =
+      (1 to 10).map(x => new Account(x, x.toString, x.toString, x.toDouble))
+    sc1
+      .parallelize(nestedRecords)
       .saveAsParquetAvroFile(dir.toString)
     sc1.close()
 
     val sc2 = ScioContext()
     val projection = Projection[Account](_.getName)
-    val data = sc2.parquetAvroFile[Account](dir + "/*.parquet", projection = projection)
+    val data =
+      sc2.parquetAvroFile[Account](dir + "/*.parquet", projection = projection)
     val expected = nestedRecords.map(_.getName.toString)
-    data.map(_.getName.toString) should containInAnyOrder (expected)
-    data.flatMap(a => Some(a.getName.toString)) should containInAnyOrder (expected)
+    data.map(_.getName.toString) should containInAnyOrder(expected)
+    data.flatMap(a => Some(a.getName.toString)) should containInAnyOrder(
+      expected)
     sc2.close()
 
     FileUtils.deleteDirectory(dir)
@@ -107,14 +118,18 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val sc = ScioContext()
     implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
     sc.parallelize(genericRecords)
-      .saveAsParquetAvroFile(dir.toString, numShards = 1, schema = AvroUtils.schema)
+      .saveAsParquetAvroFile(dir.toString,
+                             numShards = 1,
+                             schema = AvroUtils.schema)
     sc.close()
 
     val files = dir.listFiles()
     files.length shouldBe 1
 
     val params =
-      ParquetAvroIO.ReadParam[GenericRecord, GenericRecord](AvroUtils.schema, null, identity)
+      ParquetAvroIO.ReadParam[GenericRecord, GenericRecord](AvroUtils.schema,
+                                                            null,
+                                                            identity)
     val tap = ParquetAvroTap(files.head.getAbsolutePath, params)
     tap.value.toList should contain theSameElementsAs genericRecords
 

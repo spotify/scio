@@ -28,14 +28,15 @@ runMain
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
   --input=gs://apache-beam-samples/shakespeare/kinglear.txt
   --output=gs://[BUCKET]/[PATH]/safe_flat_map
-*/
+ */
 
 object SafeFlatMapExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val (longs, errors) = sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
+    val (longs, errors) = sc
+      .textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z0-9']+")
-      .filter(_.nonEmpty))
+        .filter(_.nonEmpty))
       .safeFlatMap(e => Seq(e.toLong))
 
     // rescue from number format exceptions:

@@ -24,7 +24,10 @@ import com.spotify.scio.testing._
 class FilterExamplesTest extends PipelineSpec {
 
   private def gsodRow(year: Int, month: Int, day: Int, meanTemp: Double) =
-    TableRow("year" -> year, "month" -> month, "day" -> day, "mean_temp" -> meanTemp)
+    TableRow("year" -> year,
+             "month" -> month,
+             "day" -> day,
+             "mean_temp" -> meanTemp)
 
   val input = Seq(
     (2015, 1, 1, 40.0),
@@ -41,7 +44,8 @@ class FilterExamplesTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.cookbook.FilterExamples.type]
       .args("--output=dataset.table")
       .input(BigQueryIO(ExampleData.WEATHER_SAMPLES_TABLE), input)
-      .output(BigQueryIO[TableRow]("dataset.table"))(_ should containInAnyOrder (expected))
+      .output(BigQueryIO[TableRow]("dataset.table"))(_ should containInAnyOrder(
+        expected))
       .run()
   }
 

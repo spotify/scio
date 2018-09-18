@@ -99,7 +99,10 @@ class SchemaProviderTest extends FlatSpec with Matchers {
   it should "support doc annotation" in {
     // Schema.equals() ignores doc property.
     // Hence we need to turn Schemas to string in order to compare them.
-    SchemaProvider.schemaOf[User].toString shouldBe parseSchema(userSchema).toString
-    SchemaProvider.schemaOf[Account].toString shouldBe parseSchema(accountSchema).toString
+    SchemaProvider
+      .schemaOf[User]
+      .toString shouldBe parseSchema(userSchema).toString
+    SchemaProvider.schemaOf[Account].toString shouldBe parseSchema(
+      accountSchema).toString
   }
 }

@@ -26,7 +26,7 @@ runMain
   com.spotify.scio.examples.extra.TypedBigQueryTornadoes
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
   --output=[DATASET].typed_bigquery_tornadoes
-*/
+ */
 
 object TypedBigQueryTornadoes {
 
@@ -34,7 +34,8 @@ object TypedBigQueryTornadoes {
   // Class Row will be expanded into a case class with fields from the SELECT query. A companion
   // object will also be generated to provide easy access to original query/table from annotation,
   // TableSchema and converter methods between the generated case class and TableRow.
-  @BigQueryType.fromQuery("SELECT tornado, month FROM [publicdata:samples.gsod]")
+  @BigQueryType.fromQuery(
+    "SELECT tornado, month FROM [publicdata:samples.gsod]")
   class Row
 
   // Annotate output case class.

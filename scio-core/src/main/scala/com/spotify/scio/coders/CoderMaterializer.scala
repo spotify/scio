@@ -28,33 +28,38 @@ final object CoderMaterializer {
   final def beam[T](sc: ScioContext, c: Coder[T]): BCoder[T] =
     beam(sc.pipeline.getCoderRegistry, sc.options, c)
 
-  final def beamWithDefault[T](
-    coder: Coder[T],
-    r: CoderRegistry = CoderRegistry.createDefault(),
-    o: PipelineOptions = PipelineOptionsFactory.create()): BCoder[T] =
-      beam(r, o, coder)
+  final def beamWithDefault[T](coder: Coder[T],
+                               r: CoderRegistry = CoderRegistry.createDefault(),
+                               o: PipelineOptions =
+                                 PipelineOptionsFactory.create()): BCoder[T] =
+    beam(r, o, coder)
 
-  final def beam[T](r: CoderRegistry, o: PipelineOptions, c: Coder[T]): BCoder[T] = {
+  final def beam[T](r: CoderRegistry,
+                    o: PipelineOptions,
+                    c: Coder[T]): BCoder[T] = {
     c match {
       case Beam(c) => c
       case Fallback(ct) =>
-        WrappedBCoder.create(com.spotify.scio.Implicits.RichCoderRegistry(r)
-          .getScalaCoder[T](o)(ct))
+        WrappedBCoder.create(
+          com.spotify.scio.Implicits
+            .RichCoderRegistry(r)
+            .getScalaCoder[T](o)(ct))
       case Transform(c, f) =>
         val u = f(beam(r, o, c))
         WrappedBCoder.create(beam(r, o, u))
       case Record(coders) =>
         new RecordCoder(coders.map(c => c._1 -> beam(r, o, c._2)))
       case Disjunction(idCoder, id, coders) =>
-        WrappedBCoder.create(DisjunctionCoder(
-          beam(r, o, idCoder),
-          id,
-          coders.mapValues(u => beam(r, o, u)).map(identity)))
+        WrappedBCoder.create(
+          DisjunctionCoder(beam(r, o, idCoder),
+                           id,
+                           coders.mapValues(u => beam(r, o, u)).map(identity)))
       case KVCoder(koder, voder) =>
         KvCoder.of(beam(r, o, koder), beam(r, o, voder))
     }
   }
 
-  def kvCoder[K, V](ctx: ScioContext)(implicit k: Coder[K], v: Coder[V]): KvCoder[K, V] =
+  def kvCoder[K, V](ctx: ScioContext)(implicit k: Coder[K],
+                                      v: Coder[V]): KvCoder[K, V] =
     KvCoder.of(beam(ctx, Coder[K]), beam(ctx, Coder[V]))
 }

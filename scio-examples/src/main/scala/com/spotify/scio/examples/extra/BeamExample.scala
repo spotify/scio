@@ -44,20 +44,19 @@ object BeamExample {
       .triggering(
         AfterWatermark
           .pastEndOfWindow()
-          .withEarlyFirings(
-            AfterProcessingTime
-              .pastFirstElementInPane()
-              .plusDelayOf(Duration.standardMinutes(5)))
-          .withLateFirings(
-            AfterProcessingTime
-              .pastFirstElementInPane()
-              .plusDelayOf(Duration.standardMinutes(10))))
+          .withEarlyFirings(AfterProcessingTime
+            .pastFirstElementInPane()
+            .plusDelayOf(Duration.standardMinutes(5)))
+          .withLateFirings(AfterProcessingTime
+            .pastFirstElementInPane()
+            .plusDelayOf(Duration.standardMinutes(10))))
       .accumulatingFiredPanes()
 
   // A Beam native aggregation `PTransform`
   //
   // `Sum.doublesPerKey()` sums `java.lang.Double` which is a different type from `scala.Double`
-  val sumByKey: PTransform[PCollection[KV[String, JDouble]], PCollection[KV[String, JDouble]]] =
+  val sumByKey: PTransform[PCollection[KV[String, JDouble]],
+                           PCollection[KV[String, JDouble]]] =
     Sum.doublesPerKey[String]()
 
   // A Beam native sink `PTransform` where the output type is `PDone`
@@ -80,13 +79,14 @@ object BeamExample {
     val pipeline: Pipeline = sc.pipeline
 
     // Custom input with a Beam source `PTransform`
-    val accounts: SCollection[Account] = sc.customInput("Input", pubsubIn(args("inputTopic")))
+    val accounts: SCollection[Account] =
+      sc.customInput("Input", pubsubIn(args("inputTopic")))
 
     // Underlying Beam `PCollection`
     val p: PCollection[Account] = accounts.internal
 
     accounts
-      // Beam `PTransform`
+    // Beam `PTransform`
       .applyTransform(window)
       // Scio `map` transform
       .map(a => KV.of(a.getName.toString, a.getAmount))

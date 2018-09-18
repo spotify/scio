@@ -89,7 +89,8 @@ trait SCollectionMatchers {
     MatchResult(r, "", "")
   }
 
-  private def makeFn[T](f: JIterable[T] => Unit): SerializableFunction[JIterable[T], Void] =
+  private def makeFn[T](
+    f: JIterable[T] => Unit): SerializableFunction[JIterable[T], Void] =
     new SerializableFunction[JIterable[T], Void] {
       override def apply(input: JIterable[T]) = {
         f(input)
@@ -107,7 +108,8 @@ trait SCollectionMatchers {
 
   // Due to  https://github.com/GoogleCloudPlatform/DataflowJavaSDK/issues/434
   // SerDe cycle on each element to keep consistent with values on the expected side
-  private def serDeCycle[T: Coder](scollection: SCollection[T]): SCollection[T] = {
+  private def serDeCycle[T: Coder](
+    scollection: SCollection[T]): SCollection[T] = {
     val coder = scollection.internal.getCoder
     scollection
       .map(
@@ -120,8 +122,8 @@ trait SCollectionMatchers {
    * SCollection assertion only applied to the specified window,
    * running the checker only on the on-time pane for each key.
    */
-  def inOnTimePane[T: ClassTag](window: BoundedWindow)
-                               (matcher: MatcherBuilder[T]): Matcher[T] =
+  def inOnTimePane[T: ClassTag](window: BoundedWindow)(
+    matcher: MatcherBuilder[T]): Matcher[T] =
     matcher match {
       case value: SingleMatcher[T, _] =>
         value.matcher(_.inOnTimePane(window))
@@ -130,25 +132,24 @@ trait SCollectionMatchers {
     }
 
   /** SCollection assertion only applied to the specified window. */
-  def inWindow[T: ClassTag, B: ClassTag](window: BoundedWindow)
-                                        (matcher: IterableMatcher[T, B]): Matcher[T] =
+  def inWindow[T: ClassTag, B: ClassTag](window: BoundedWindow)(
+    matcher: IterableMatcher[T, B]): Matcher[T] =
     matcher.matcher(_.inWindow(window))
 
   /**
    * SCollection assertion only applied to the specified window across
    * all panes that were not produced by the arrival of late data.
    */
-  def inCombinedNonLatePanes[T: ClassTag, B: ClassTag](window: BoundedWindow)
-                                                      (matcher: IterableMatcher[T, B])
-  : Matcher[T] =
+  def inCombinedNonLatePanes[T: ClassTag, B: ClassTag](window: BoundedWindow)(
+    matcher: IterableMatcher[T, B]): Matcher[T] =
     matcher.matcher(_.inCombinedNonLatePanes(window))
 
   /**
    * SCollection assertion only applied to the specified window,
    * running the checker only on the final pane for each key.
    */
-  def inFinalPane[T: ClassTag, B: ClassTag](window: BoundedWindow)
-                                           (matcher: MatcherBuilder[T]): Matcher[T] =
+  def inFinalPane[T: ClassTag, B: ClassTag](window: BoundedWindow)(
+    matcher: MatcherBuilder[T]): Matcher[T] =
     matcher match {
       case value: SingleMatcher[T, _] =>
         value.matcher(_.inFinalPane(window))
@@ -160,17 +161,18 @@ trait SCollectionMatchers {
    * SCollection assertion only applied to the specified window.
    * The assertion expect outputs to be produced to the provided window exactly once.
    */
-  def inOnlyPane[T: ClassTag, B: ClassTag](window: BoundedWindow)
-                                          (matcher: SingleMatcher[T, B]): Matcher[T] =
+  def inOnlyPane[T: ClassTag, B: ClassTag](window: BoundedWindow)(
+    matcher: SingleMatcher[T, B]): Matcher[T] =
     matcher.matcher(_.inOnlyPane(window))
 
   /** SCollection assertion only applied to early timing global window. */
-  def inEarlyGlobalWindowPanes[T: ClassTag, B: ClassTag](matcher: IterableMatcher[T, B])
-  : Matcher[T] =
+  def inEarlyGlobalWindowPanes[T: ClassTag, B: ClassTag](
+    matcher: IterableMatcher[T, B]): Matcher[T] =
     matcher.matcher(_.inEarlyGlobalWindowPanes)
 
   /** Assert that the SCollection in question contains the provided elements. */
-  def containInAnyOrder[T: Coder](value: Iterable[T]): IterableMatcher[SCollection[T], T] =
+  def containInAnyOrder[T: Coder](
+    value: Iterable[T]): IterableMatcher[SCollection[T], T] =
     new IterableMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
@@ -224,13 +226,20 @@ trait SCollectionMatchers {
               import org.hamcrest.Matchers
               import org.junit.Assert
               (
-                makeFn[T] { in => Assert.assertThat(in, Matchers.hasItem(v)) },
-                makeFn[T] { in => Assert.assertThat(in, Matchers.not(Matchers.hasItem(v))) }
+                makeFn[T] { in =>
+                  Assert.assertThat(in, Matchers.hasItem(v))
+                },
+                makeFn[T] { in =>
+                  Assert.assertThat(in, Matchers.not(Matchers.hasItem(v)))
+                }
               )
             }
-            m(
-              () => builder(PAssert.that(serDeCycle(left).internal).satisfies(should)),
-              () => builder(PAssert.that(serDeCycle(left).internal).satisfies(shouldNot)))
+            m(() =>
+                builder(
+                  PAssert.that(serDeCycle(left).internal).satisfies(should)),
+              () =>
+                builder(
+                  PAssert.that(serDeCycle(left).internal).satisfies(shouldNot)))
           }
         }
     }
@@ -265,12 +274,12 @@ trait SCollectionMatchers {
             val f = makeFn[Any] { in =>
               val inSize = in.asScala.size
               assert(inSize == s,
-                s"SCollection expected size: $s, actual: $inSize")
+                     s"SCollection expected size: $s, actual: $inSize")
             }
             val g = makeFn[Any] { in =>
               val inSize = in.asScala.size
               assert(inSize != s,
-                s"SCollection expected size: not $s, actual: $inSize")
+                     s"SCollection expected size: not $s, actual: $inSize")
             }
             m(
               () =>
@@ -287,10 +296,11 @@ trait SCollectionMatchers {
     }
 
   /** Assert that the SCollection in question is equivalent to the provided map. */
-  def equalMapOf[K: Coder, V: Coder](value: Map[K, V])
-  : SingleMatcher[SCollection[(K, V)], JMap[K, V]] =
+  def equalMapOf[K: Coder, V: Coder](
+    value: Map[K, V]): SingleMatcher[SCollection[(K, V)], JMap[K, V]] =
     new SingleMatcher[SCollection[(K, V)], JMap[K, V]] {
-      override def matcher(builder: AssertBuilder): Matcher[SCollection[(K, V)]] =
+      override def matcher(
+        builder: AssertBuilder): Matcher[SCollection[(K, V)]] =
         new Matcher[SCollection[(K, V)]] {
           override def apply(left: SCollection[(K, V)]): MatchResult =
             m(
@@ -307,8 +317,8 @@ trait SCollectionMatchers {
   // TODO: investigate why multi-map doesn't work
 
   /** Assert that the SCollection in question satisfies the provided function. */
-  def satisfy[T: Coder](predicate: Iterable[T] => Boolean)
-  : IterableMatcher[SCollection[T], T] =
+  def satisfy[T: Coder](
+    predicate: Iterable[T] => Boolean): IterableMatcher[SCollection[T], T] =
     new IterableMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
@@ -317,7 +327,7 @@ trait SCollectionMatchers {
             val f = makeFn[T](in => assert(p(in.asScala)))
             val g = makeFn[T](in => assert(!p(in.asScala)))
             m(() =>
-              builder(PAssert.that(serDeCycle(left).internal)).satisfies(f),
+                builder(PAssert.that(serDeCycle(left).internal)).satisfies(f),
               () =>
                 builder(PAssert.that(serDeCycle(left).internal)).satisfies(g))
           }
@@ -328,7 +338,8 @@ trait SCollectionMatchers {
    * Assert that the SCollection in question contains a single element which satisfies the
    * provided function.
    */
-  def satisfySingleValue[T: Coder](predicate: T => Boolean): SingleMatcher[SCollection[T], T] =
+  def satisfySingleValue[T: Coder](
+    predicate: T => Boolean): SingleMatcher[SCollection[T], T] =
     new SingleMatcher[SCollection[T], T] {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[T]] =
         new Matcher[SCollection[T]] {
@@ -349,13 +360,15 @@ trait SCollectionMatchers {
     }
 
   /** Assert that all elements of the SCollection in question satisfy the provided function. */
-  def forAll[T: Coder](predicate: T => Boolean): IterableMatcher[SCollection[T], T] = {
+  def forAll[T: Coder](
+    predicate: T => Boolean): IterableMatcher[SCollection[T], T] = {
     val f = ClosureCleaner(predicate)
     satisfy(_.forall(f))
   }
 
   /** Assert that some elements of the SCollection in question satisfy the provided function. */
-  def exist[T: Coder](predicate: T => Boolean): IterableMatcher[SCollection[T], T] = {
+  def exist[T: Coder](
+    predicate: T => Boolean): IterableMatcher[SCollection[T], T] = {
     val f = ClosureCleaner(predicate)
     satisfy(_.exists(f))
   }

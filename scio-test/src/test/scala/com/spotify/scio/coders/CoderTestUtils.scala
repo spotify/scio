@@ -25,12 +25,19 @@ import org.apache.beam.sdk.util.CoderUtils
 object CoderTestUtils {
 
   case class Pair(name: String, size: Int)
-  case class CaseClassWithGenericRecord(name: String, size: Int, record: GenericRecord)
-  case class CaseClassWithSpecificRecord(name: String, size: Int, record: TestRecord)
+  case class CaseClassWithGenericRecord(name: String,
+                                        size: Int,
+                                        record: GenericRecord)
+  case class CaseClassWithSpecificRecord(name: String,
+                                         size: Int,
+                                         record: TestRecord)
 
-  def testRoundTrip[T](coder: BCoder[T], value: T): Boolean = testRoundTrip(coder, coder, value)
+  def testRoundTrip[T](coder: BCoder[T], value: T): Boolean =
+    testRoundTrip(coder, coder, value)
 
-  def testRoundTrip[T](writer: BCoder[T], reader: BCoder[T], value: T): Boolean = {
+  def testRoundTrip[T](writer: BCoder[T],
+                       reader: BCoder[T],
+                       value: T): Boolean = {
     val bytes = CoderUtils.encodeToByteArray(writer, value)
     val result = CoderUtils.decodeFromByteArray(reader, bytes)
     result == value

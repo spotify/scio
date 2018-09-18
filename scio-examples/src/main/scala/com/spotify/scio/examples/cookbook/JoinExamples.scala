@@ -38,7 +38,8 @@ object JoinUtil {
     val sourceUrl = row.getString("SOURCEURL")
     val eventInfo = s"Date: $sqlDate, Actor1: $actor1Name, url: $sourceUrl"
 
-    if (countryCode == null || eventInfo == null) Nil else Seq((countryCode, eventInfo))
+    if (countryCode == null || eventInfo == null) Nil
+    else Seq((countryCode, eventInfo))
   }
 
   // Function to extract country information from BigQuery `TableRow`s
@@ -49,7 +50,9 @@ object JoinUtil {
   }
 
   // Function to format output string
-  def formatOutput(countryCode: String, countryName: String, eventInfo: String): String =
+  def formatOutput(countryCode: String,
+                   countryName: String,
+                   eventInfo: String): String =
     s"Country code: $countryCode, Country name: $countryName, Event info: $eventInfo"
 
 }
@@ -62,11 +65,13 @@ object JoinExamples {
     import JoinUtil._
 
     // Extract both sides as `SCollection[(String, String)]`s
-    val eventsInfo = sc.bigQueryTable(ExampleData.EVENT_TABLE).flatMap(extractEventInfo)
-    val countryInfo = sc.bigQueryTable(ExampleData.COUNTRY_TABLE).map(extractCountryInfo)
+    val eventsInfo =
+      sc.bigQueryTable(ExampleData.EVENT_TABLE).flatMap(extractEventInfo)
+    val countryInfo =
+      sc.bigQueryTable(ExampleData.COUNTRY_TABLE).map(extractCountryInfo)
 
     eventsInfo
-      // Left outer join to produce `SCollection[(String, (String, Option[String]))]
+    // Left outer join to produce `SCollection[(String, (String, Option[String]))]
       .leftOuterJoin(countryInfo)
       .map { t =>
         val (countryCode, (eventInfo, countryNameOpt)) = t
@@ -88,12 +93,15 @@ object SideInputJoinExamples {
 
     // Extract both sides as `SCollection[(String, String)]`s, and then convert right hand side as
     // a `SideInput` of `Map[String, String]`
-    val eventsInfo = sc.bigQueryTable(ExampleData.EVENT_TABLE).flatMap(extractEventInfo)
-    val countryInfo = sc.bigQueryTable(ExampleData.COUNTRY_TABLE).map(extractCountryInfo)
+    val eventsInfo =
+      sc.bigQueryTable(ExampleData.EVENT_TABLE).flatMap(extractEventInfo)
+    val countryInfo = sc
+      .bigQueryTable(ExampleData.COUNTRY_TABLE)
+      .map(extractCountryInfo)
       .asMapSideInput
 
     eventsInfo
-      // Replicate right hand side to all workers as a side input
+    // Replicate right hand side to all workers as a side input
       .withSideInputs(countryInfo)
       // Specialized version of `map` with access to side inputs via `SideInputContext`
       .map { (kv, side) =>
@@ -119,11 +127,13 @@ object HashJoinExamples {
     import JoinUtil._
 
     // Extract both sides as `SCollection[(String, String)]`s
-    val eventsInfo = sc.bigQueryTable(ExampleData.EVENT_TABLE).flatMap(extractEventInfo)
-    val countryInfo = sc.bigQueryTable(ExampleData.COUNTRY_TABLE).map(extractCountryInfo)
+    val eventsInfo =
+      sc.bigQueryTable(ExampleData.EVENT_TABLE).flatMap(extractEventInfo)
+    val countryInfo =
+      sc.bigQueryTable(ExampleData.COUNTRY_TABLE).map(extractCountryInfo)
 
     eventsInfo
-      // Hash join uses side input under the hood and is a drop-in replacement for regular join
+    // Hash join uses side input under the hood and is a drop-in replacement for regular join
       .hashLeftJoin(countryInfo)
       .map { t =>
         val (countryCode, (eventInfo, countryNameOpt)) = t

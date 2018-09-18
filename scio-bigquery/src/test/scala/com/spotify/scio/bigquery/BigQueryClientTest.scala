@@ -21,7 +21,10 @@ import org.scalacheck.Gen
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest._
 
-class BigQueryClientTest extends FlatSpec with Matchers with GeneratorDrivenPropertyChecks {
+class BigQueryClientTest
+    extends FlatSpec
+    with Matchers
+    with GeneratorDrivenPropertyChecks {
 
   "BigQueryClient" should "throw an exception when an empty or null ProjectId is provided" in {
     assertThrows[IllegalArgumentException] {

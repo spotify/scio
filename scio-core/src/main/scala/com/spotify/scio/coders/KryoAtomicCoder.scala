@@ -94,9 +94,11 @@ private final class ScioKryoRegistrar extends IKryoRegistrar {
     // Java Iterable/Collection are missing proper equality check, use custom CBF as a
     // workaround
     k.register(classOf[Wrappers.JIterableWrapper[_]],
-               new JTraversableSerializer[Any, Iterable[Any]]()(new JIterableWrapperCBF[Any]))
+               new JTraversableSerializer[Any, Iterable[Any]]()(
+                 new JIterableWrapperCBF[Any]))
     k.register(classOf[Wrappers.JCollectionWrapper[_]],
-               new JTraversableSerializer[Any, Iterable[Any]]()(new JCollectionWrapperCBF[Any]))
+               new JTraversableSerializer[Any, Iterable[Any]]()(
+                 new JCollectionWrapperCBF[Any]))
     // Wrapped Java collections may have immutable implementations, i.e. Guava, treat them
     // as regular Scala collections as a workaround
     k.register(classOf[Wrappers.JListWrapper[_]],
@@ -148,21 +150,24 @@ private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
       }
     }
 
-  override def decode(is: InputStream): T = withKryoState(instanceId, options) { kryoState =>
-    val chunked = kryoState.inputChunked
-    val o = if (VarInt.decodeInt(is) == Header) {
-      chunked.setInputStream(is)
+  override def decode(is: InputStream): T = withKryoState(instanceId, options) {
+    kryoState =>
+      val chunked = kryoState.inputChunked
+      val o = if (VarInt.decodeInt(is) == Header) {
+        chunked.setInputStream(is)
 
-      kryoState.kryo.readClassAndObject(chunked)
-    } else {
-      kryoState.kryo.readClassAndObject(new Input(chunked.getBuffer))
-    }
-    o.asInstanceOf[T]
+        kryoState.kryo.readClassAndObject(chunked)
+      } else {
+        kryoState.kryo.readClassAndObject(new Input(chunked.getBuffer))
+      }
+      o.asInstanceOf[T]
   }
 
   // This method is called by PipelineRunner to sample elements in a PCollection and estimate
   // size. This could be expensive for collections with small number of very large elements.
-  override def registerByteSizeObserver(value: T, observer: ElementByteSizeObserver): Unit =
+  override def registerByteSizeObserver(
+    value: T,
+    observer: ElementByteSizeObserver): Unit =
     value match {
       // (K, Iterable[V]) is the return type of `groupBy` or `groupByKey`. This could be very slow
       // when there're few keys with many values.
@@ -191,13 +196,15 @@ private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
             wrapper.underlying match {
               case c: _root_.java.util.Collection[_] =>
                 // extrapolate remaining bytes in the collection
-                val remaining = (bytes.toDouble / count * (c.size - count)).toLong
+                val remaining =
+                  (bytes.toDouble / count * (c.size - count)).toLong
                 observer.update(remaining)
                 logger.warn(
                   s"Extrapolated size estimation for ${wrapper.underlying.getClass} " +
                     s"count: ${c.size}, bytes: ${bytes + remaining}")
               case _ =>
-                logger.warn("Can't get size of internal collection, thus can't extrapolate size")
+                logger.warn(
+                  "Can't get size of internal collection, thus can't extrapolate size")
             }
           } else if (elapsed > warningThreshold && !warned) {
             warned = true
@@ -210,15 +217,15 @@ private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
         observer.update(kryoEncodedElementByteSize(value))
     }
 
-  private def kryoEncodedElementByteSize(obj: Any): Long = withKryoState(instanceId, options) {
-    kryoState: KryoState =>
+  private def kryoEncodedElementByteSize(obj: Any): Long =
+    withKryoState(instanceId, options) { kryoState: KryoState =>
       val s = new CountingOutputStream(ByteStreams.nullOutputStream())
       val output = new Output(options.bufferSize, options.maxBufferSize)
       output.setOutputStream(s)
       kryoState.kryo.writeClassAndObject(output, obj)
       output.flush()
       s.getCount + VarInt.getLength(s.getCount)
-  }
+    }
 
 }
 
@@ -233,28 +240,34 @@ private[scio] object KryoAtomicCoder {
 
   // We want to have one Kryo instance per thread per instance.
   // Also the instances should be garbage collected when the thread dies.
-  private[this] val KryoStateMap: ThreadLocal[mutable.HashMap[String, KryoState]] =
+  private[this] val KryoStateMap
+    : ThreadLocal[mutable.HashMap[String, KryoState]] =
     new ThreadLocal[mutable.HashMap[String, KryoState]] {
       override def initialValue(): mutable.HashMap[String, KryoState] =
         mutable.HashMap[String, KryoState]()
     }
 
-  final def withKryoState[R](instanceId: String, options: KryoOptions)(f: KryoState => R): R = {
-    val ks = KryoStateMap.get().getOrElseUpdate(instanceId, {
-      val k = KryoSerializer.registered.newKryo()
-      k.setReferences(options.referenceTracking)
-      k.setRegistrationRequired(options.registrationRequired)
+  final def withKryoState[R](instanceId: String, options: KryoOptions)(
+    f: KryoState => R): R = {
+    val ks = KryoStateMap
+      .get()
+      .getOrElseUpdate(
+        instanceId, {
+          val k = KryoSerializer.registered.newKryo()
+          k.setReferences(options.referenceTracking)
+          k.setRegistrationRequired(options.registrationRequired)
 
-      new ScioKryoRegistrar()(k)
-      new AlgebirdRegistrar()(k)
+          new ScioKryoRegistrar()(k)
+          new AlgebirdRegistrar()(k)
 
-      KryoRegistrarLoader.load(k)
+          KryoRegistrarLoader.load(k)
 
-      val input = new InputChunked(options.bufferSize)
-      val output = new OutputChunked(options.bufferSize)
+          val input = new InputChunked(options.bufferSize)
+          val output = new OutputChunked(options.bufferSize)
 
-      KryoState(k, input, output)
-    })
+          KryoState(k, input, output)
+        }
+      )
 
     f(ks)
   }
@@ -266,7 +279,8 @@ private[scio] final case class KryoOptions(bufferSize: Int,
                                            registrationRequired: Boolean)
 
 private[scio] object KryoOptions {
-  @inline def apply(): KryoOptions = KryoOptions(PipelineOptionsFactory.create())
+  @inline def apply(): KryoOptions =
+    KryoOptions(PipelineOptionsFactory.create())
 
   def apply(options: PipelineOptions): KryoOptions = {
     val o = options.as(classOf[ScioOptions])

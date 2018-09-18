@@ -50,28 +50,27 @@ class KryoAtomicCoderTest extends PipelineSpec {
 
   private def roundTrip[T: ClassTag](value: T) = new Matcher[CoderFactory] {
     override def apply(left: CoderFactory): MatchResult = {
-      MatchResult(
-        testRoundTrip(left(), left(), value),
-        s"Coder did not round trip $value",
-        s"Coder did round trip $value")
+      MatchResult(testRoundTrip(left(), left(), value),
+                  s"Coder did not round trip $value",
+                  s"Coder did round trip $value")
     }
   }
 
   "KryoAtomicCoder" should "support Scala collections" in {
-    cf should roundTrip (Seq(1, 2, 3))
-    cf should roundTrip (List(1, 2, 3))
-    cf should roundTrip (Set(1, 2, 3))
-    cf should roundTrip (Map("a" -> 1, "b" -> 2, "c" -> 3))
+    cf should roundTrip(Seq(1, 2, 3))
+    cf should roundTrip(List(1, 2, 3))
+    cf should roundTrip(Set(1, 2, 3))
+    cf should roundTrip(Map("a" -> 1, "b" -> 2, "c" -> 3))
   }
 
   it should "support Scala tuples" in {
-    cf should roundTrip (("hello", 10))
-    cf should roundTrip (("hello", 10, 10.0))
-    cf should roundTrip (("hello", (10, 10.0)))
+    cf should roundTrip(("hello", 10))
+    cf should roundTrip(("hello", 10, 10.0))
+    cf should roundTrip(("hello", (10, 10.0)))
   }
 
   it should "support Scala case classes" in {
-    cf should roundTrip (Pair("record", 10))
+    cf should roundTrip(Pair("record", 10))
   }
 
   it should "support wrapped iterables" in {
@@ -79,50 +78,50 @@ class KryoAtomicCoderTest extends PipelineSpec {
     val list = ImmutableList.of(1, 2, 3)
 
     // Iterable/Collection should have proper equality
-    cf should roundTrip (list.asInstanceOf[jl.Iterable[Int]].asScala)
-    cf should roundTrip (list.asInstanceOf[ju.Collection[Int]].asScala)
-    cf should roundTrip (list.asScala)
+    cf should roundTrip(list.asInstanceOf[jl.Iterable[Int]].asScala)
+    cf should roundTrip(list.asInstanceOf[ju.Collection[Int]].asScala)
+    cf should roundTrip(list.asScala)
   }
 
   it should "support Avro GenericRecord" in {
     val r = newGenericRecord(1)
-    cf should roundTrip (r)
-    cf should roundTrip (("key", r))
-    cf should roundTrip (CaseClassWithGenericRecord("record", 10, r))
+    cf should roundTrip(r)
+    cf should roundTrip(("key", r))
+    cf should roundTrip(CaseClassWithGenericRecord("record", 10, r))
   }
 
   it should "support Avro SpecificRecord" in {
     val r = newSpecificRecord(1)
-    cf should roundTrip (r)
-    cf should roundTrip (("key", r))
-    cf should roundTrip (CaseClassWithSpecificRecord("record", 10, r))
+    cf should roundTrip(r)
+    cf should roundTrip(("key", r))
+    cf should roundTrip(CaseClassWithSpecificRecord("record", 10, r))
   }
 
   it should "support KV" in {
-    cf should roundTrip (KV.of("key", 1.0))
-    cf should roundTrip (KV.of("key", (10, 10.0)))
-    cf should roundTrip (KV.of("key", newSpecificRecord(1)))
-    cf should roundTrip (KV.of("key", newGenericRecord(1)))
+    cf should roundTrip(KV.of("key", 1.0))
+    cf should roundTrip(KV.of("key", (10, 10.0)))
+    cf should roundTrip(KV.of("key", newSpecificRecord(1)))
+    cf should roundTrip(KV.of("key", newGenericRecord(1)))
   }
 
   it should "support Instant" in {
-    cf should roundTrip (Instant.now())
+    cf should roundTrip(Instant.now())
   }
 
   it should "support TableRow" in {
     val r = new TableRow().set("repeated_field", ImmutableList.of("a", "b"))
-    cf should roundTrip (r)
+    cf should roundTrip(r)
   }
 
   it should "support large objects" in {
     val vs = iterable((1 to 1000000).map("value-%08d".format(_)): _*)
     val kv = ("key", vs)
-    cf should roundTrip (kv)
+    cf should roundTrip(kv)
   }
 
   it should "support BigDecimal" in {
     val bigDecimal = BigDecimal(1000.42)
-    cf should roundTrip (bigDecimal)
+    cf should roundTrip(bigDecimal)
   }
 
   it should "support custom KryoRegistrar" in {
@@ -168,7 +167,8 @@ class KryoAtomicCoderTest extends PipelineSpec {
     implicit val recordBfallbackCoder = Coder.kryo[RecordB]
     // ensure we get a different kryo instance from object pool.
     val options = PipelineOptionsFactory
-      .fromArgs("--kryoReferenceTracking=false", "--kryoRegistrationRequired=false")
+      .fromArgs("--kryoReferenceTracking=false",
+                "--kryoRegistrationRequired=false")
       .create()
     val sc = ScioContext(options)
     sc.parallelize(1 to 10).map(x => RecordB(x.toString, x))
@@ -192,7 +192,9 @@ class RecordAKryoRegistrar extends IKryoRegistrar {
         output.writeInt(obj.value)
       }
 
-      override def read(kryo: Kryo, input: Input, tpe: Class[RecordA]): RecordA =
+      override def read(kryo: Kryo,
+                        input: Input,
+                        tpe: Class[RecordA]): RecordA =
         RecordA(input.readString(), input.readInt() + 10)
     })
 }
@@ -205,7 +207,9 @@ class RecordBKryoRegistrar extends IKryoRegistrar {
         output.writeInt(obj.value)
       }
 
-      override def read(kryo: Kryo, input: Input, tpe: Class[RecordB]): RecordB =
+      override def read(kryo: Kryo,
+                        input: Input,
+                        tpe: Class[RecordB]): RecordB =
         RecordB(input.readString(), input.readInt() + 10)
     })
 }

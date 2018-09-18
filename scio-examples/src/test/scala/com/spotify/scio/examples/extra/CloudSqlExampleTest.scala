@@ -23,11 +23,11 @@ import com.spotify.scio.testing._
 
 class CloudSqlExampleTest extends PipelineSpec {
   "CloudSqlExample" should "work" in {
-    val args = Array(
-      "--cloudSqlUsername=john",
-      "--cloudSqlPassword=secret",
-      "--cloudSqlDb=mydb",
-      "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name")
+    val args =
+      Array("--cloudSqlUsername=john",
+            "--cloudSqlPassword=secret",
+            "--cloudSqlDb=mydb",
+            "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name")
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
     val connOpts = CloudSqlExample.getConnectionOptions(opts)
     val readOpts = CloudSqlExample.getReadOptions(connOpts)
@@ -39,7 +39,8 @@ class CloudSqlExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.CloudSqlExample.type]
       .args(args: _*)
       .input(JdbcIO(readOpts), input)
-      .output(JdbcIO[(String, Long)](writeOpts))(_ should containInAnyOrder (expected))
+      .output(JdbcIO[(String, Long)](writeOpts))(_ should containInAnyOrder(
+        expected))
       .run()
   }
 }

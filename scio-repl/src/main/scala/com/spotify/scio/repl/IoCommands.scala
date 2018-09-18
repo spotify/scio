@@ -22,10 +22,18 @@ import java.nio.channels.Channels
 import java.nio.charset.StandardCharsets
 
 import com.spotify.scio.util.ScioUtil
-import kantan.csv.{RowDecoder, RowEncoder, rfc}
+import kantan.csv.{rfc, RowDecoder, RowEncoder}
 import org.apache.avro.file.{DataFileStream, DataFileWriter}
-import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
-import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter, SpecificRecordBase}
+import org.apache.avro.generic.{
+  GenericDatumReader,
+  GenericDatumWriter,
+  GenericRecord
+}
+import org.apache.avro.specific.{
+  SpecificDatumReader,
+  SpecificDatumWriter,
+  SpecificRecordBase
+}
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.util.MimeTypes
@@ -47,7 +55,7 @@ class IoCommands(options: PipelineOptions) {
   // =======================================================================
 
   /** Read from an Avro file on local filesystem or GCS. */
-  def readAvro[T : ClassTag](path: String): Iterator[T] = {
+  def readAvro[T: ClassTag](path: String): Iterator[T] = {
     val cls = ScioUtil.classOf[T]
     val reader = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
       new SpecificDatumReader[T]()
@@ -67,13 +75,16 @@ class IoCommands(options: PipelineOptions) {
                              header: Boolean = false): Iterator[T] = {
     import kantan.csv.ops._
     implicit val codec = scala.io.Codec.UTF8
-    inputStream(path).asUnsafeCsvReader(rfc.withCellSeparator(sep).withHeader(header)).toIterator
+    inputStream(path)
+      .asUnsafeCsvReader(rfc.withCellSeparator(sep).withHeader(header))
+      .toIterator
   }
 
   /** Read from a TSV file on local filesystem or GCS. */
   def readTsv[T: RowDecoder](path: String,
                              sep: Char = '\t',
-                             header: Boolean = false): Iterator[T] = readCsv[T](path, sep, header)
+                             header: Boolean = false): Iterator[T] =
+    readCsv[T](path, sep, header)
 
   // =======================================================================
   // Write operations
@@ -84,11 +95,14 @@ class IoCommands(options: PipelineOptions) {
   /** Write to an Avro file on local filesystem or GCS. */
   def writeAvro[T: ClassTag](path: String, data: Seq[T]): Unit = {
     val cls = ScioUtil.classOf[T]
-    val (writer, schema) = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-      (new SpecificDatumWriter[T](cls), data.head.asInstanceOf[SpecificRecordBase].getSchema)
-    } else {
-      (new GenericDatumWriter[T](), data.head.asInstanceOf[GenericRecord].getSchema)
-    }
+    val (writer, schema) =
+      if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+        (new SpecificDatumWriter[T](cls),
+         data.head.asInstanceOf[SpecificRecordBase].getSchema)
+      } else {
+        (new GenericDatumWriter[T](),
+         data.head.asInstanceOf[GenericRecord].getSchema)
+      }
     val fileWriter = new DataFileWriter[T](writer)
       .create(schema, outputStream(path, MimeTypes.BINARY))
     data.foreach(fileWriter.append)
@@ -98,25 +112,28 @@ class IoCommands(options: PipelineOptions) {
 
   /** Write to a text file on local filesystem or GCS. */
   def writeText(path: String, data: Seq[String]): Unit = {
-    IOUtils.writeLines(
-      data.asJava, IOUtils.LINE_SEPARATOR,
-      outputStream(path, MimeTypes.TEXT), StandardCharsets.UTF_8)
+    IOUtils.writeLines(data.asJava,
+                       IOUtils.LINE_SEPARATOR,
+                       outputStream(path, MimeTypes.TEXT),
+                       StandardCharsets.UTF_8)
     logger.info(s"${data.size} record${plural(data)} written to $path")
   }
 
   /** Write to a CSV file on local filesystem or GCS. */
-  def writeCsv[T: RowEncoder](path: String, data: Seq[T],
+  def writeCsv[T: RowEncoder](path: String,
+                              data: Seq[T],
                               sep: Char = ',',
                               header: Seq[String] = Seq.empty): Unit = {
     import kantan.csv.ops._
     implicit val codec = scala.io.Codec.UTF8
     outputStream(path, MimeTypes.TEXT)
-      .writeCsv(data, rfc.withCellSeparator(sep).withHeader(header:_*))
+      .writeCsv(data, rfc.withCellSeparator(sep).withHeader(header: _*))
     logger.info(s"${data.size} record${plural(data)} written to $path")
   }
 
   /** Write to a TSV file on local filesystem or GCS. */
-  def writeTsv[T: RowEncoder](path: String, data: Seq[T],
+  def writeTsv[T: RowEncoder](path: String,
+                              data: Seq[T],
                               sep: Char = '\t',
                               header: Seq[String] = Seq.empty): Unit =
     writeCsv[T](path, data, sep, header)

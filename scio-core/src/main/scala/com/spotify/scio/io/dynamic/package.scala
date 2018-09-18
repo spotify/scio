@@ -45,19 +45,20 @@ package object dynamic {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
    * destinations methods.
    */
-  implicit class DynamicIoSCollection[T](val self: SCollection[T]) extends AnyVal {
+  implicit class DynamicIoSCollection[T](val self: SCollection[T])
+      extends AnyVal {
 
     /**
      * Save this SCollection as Avro files specified by the destination function.
      */
-    def saveAsDynamicAvroFile(path: String,
-                              numShards: Int = 0,
-                              schema: Schema = null,
-                              suffix: String = ".avro",
-                              codec: CodecFactory = CodecFactory.deflateCodec(6),
-                              metadata: Map[String, AnyRef] = Map.empty)
-                             (destinationFn: T => String)
-                             (implicit ct: ClassTag[T]): Future[Tap[T]] = {
+    def saveAsDynamicAvroFile(
+      path: String,
+      numShards: Int = 0,
+      schema: Schema = null,
+      suffix: String = ".avro",
+      codec: CodecFactory = CodecFactory.deflateCodec(6),
+      metadata: Map[String, AnyRef] = Map.empty)(destinationFn: T => String)(
+      implicit ct: ClassTag[T]): Future[Tap[T]] = {
       if (self.context.isTest) {
         throw new NotImplementedError(
           "Avro file with dynamic destinations cannot be used in a test context")
@@ -67,18 +68,27 @@ package object dynamic {
           if (classOf[SpecificRecordBase] isAssignableFrom cls) {
             beam.AvroIO.sink(cls)
           } else {
-            beam.AvroIO.sinkViaGenericRecords(schema, new RecordFormatter[GenericRecord] {
-              override def formatRecord(element: GenericRecord, schema: Schema): GenericRecord =
-                element
-            }).asInstanceOf[beam.AvroIO.Sink[T]]
+            beam.AvroIO
+              .sinkViaGenericRecords(
+                schema,
+                new RecordFormatter[GenericRecord] {
+                  override def formatRecord(element: GenericRecord,
+                                            schema: Schema): GenericRecord =
+                    element
+                })
+              .asInstanceOf[beam.AvroIO.Sink[T]]
           }
-        }.withCodec(codec).withMetadata(com.google.common.collect.Maps.newHashMap(metadata.asJava))
-        val write = writeDynamic(path, numShards, suffix, destinationFn).via(sink)
+        }.withCodec(codec)
+          .withMetadata(com.google.common.collect.Maps
+            .newHashMap(metadata.asJava))
+        val write =
+          writeDynamic(path, numShards, suffix, destinationFn).via(sink)
         self.applyInternal(write)
       }
 
       Future.failed(
-        new NotImplementedError("Avro file future with dynamic destinations not implemented"))
+        new NotImplementedError(
+          "Avro file future with dynamic destinations not implemented"))
     }
 
     /**
@@ -87,9 +97,10 @@ package object dynamic {
     def saveAsDynamicTextFile(path: String,
                               numShards: Int = 0,
                               suffix: String = ".txt",
-                              compression: Compression = Compression.UNCOMPRESSED)
-                             (destinationFn: String => String)
-                             (implicit ct: ClassTag[T]): Future[Tap[String]] = {
+                              compression: Compression =
+                                Compression.UNCOMPRESSED)(
+      destinationFn: String => String)(
+      implicit ct: ClassTag[T]): Future[Tap[String]] = {
       val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
         self.asInstanceOf[SCollection[String]]
       } else {
@@ -99,28 +110,32 @@ package object dynamic {
         throw new NotImplementedError(
           "Text file with dynamic destinations cannot be used in a test context")
       } else {
-        val write = writeDynamic(path, numShards, suffix, destinationFn).via(beam.TextIO.sink())
-            .withCompression(compression)
+        val write = writeDynamic(path, numShards, suffix, destinationFn)
+          .via(beam.TextIO.sink())
+          .withCompression(compression)
         s.applyInternal(write)
       }
 
       Future.failed(
-        new NotImplementedError("Text file future with dynamic destinations not implemented"))
+        new NotImplementedError(
+          "Text file future with dynamic destinations not implemented"))
     }
 
   }
 
-  private def writeDynamic[A](path: String,
-                              numShards: Int,
-                              suffix: String,
-                              destinationFn: A => String): FileIO.Write[String, A] = {
-    FileIO.writeDynamic[String, A]()
+  private def writeDynamic[A](
+    path: String,
+    numShards: Int,
+    suffix: String,
+    destinationFn: A => String): FileIO.Write[String, A] = {
+    FileIO
+      .writeDynamic[String, A]()
       .to(path)
       .withNumShards(numShards)
       .by(Functions.serializableFn(destinationFn))
       .withDestinationCoder(StringUtf8Coder.of())
       .withNaming(Functions.serializableFn { destination: String =>
-        FileIO.Write.defaultNaming(s"$destination/part" , suffix)
+        FileIO.Write.defaultNaming(s"$destination/part", suffix)
       })
   }
 }

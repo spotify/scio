@@ -23,6 +23,6 @@ import scala.tools.nsc.interpreter.{ILoop, JPrintWriter}
 
 /** ILoop for ScioLoop. */
 class ILoopCompat(in: Option[BufferedReader], out: JPrintWriter)
-  extends ILoop(in, out) {
+    extends ILoop(in, out) {
   def addThunk(f: => Unit): Unit = intp.initialize(f)
 }

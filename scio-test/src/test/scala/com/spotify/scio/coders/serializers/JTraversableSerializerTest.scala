@@ -24,8 +24,9 @@ import scala.reflect.ClassTag
 
 class JTraversableSerializerTest extends FlatSpec with Matchers {
 
-  private def testRoundTrip[T : ClassTag, C <: Traversable[T]]
-  (ser: JTraversableSerializer[T, C], elems: C): Unit = {
+  private def testRoundTrip[T: ClassTag, C <: Traversable[T]](
+    ser: JTraversableSerializer[T, C],
+    elems: C): Unit = {
     val k: Kryo = KryoSerializer.registered.newKryo()
     val bufferSize: Int = 1024
     val o = new Array[Byte](bufferSize)

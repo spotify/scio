@@ -39,13 +39,13 @@ object SchemaUtil {
                            fieldSchema: Schema,
                            indent: Int): (String, Seq[String]) = {
     fieldSchema.getType match {
-      case BOOLEAN => ("Boolean", Seq.empty)
-      case INT => ("Int", Seq.empty)
-      case LONG => ("Long", Seq.empty)
-      case FLOAT => ("Float", Seq.empty)
-      case DOUBLE => ("Double", Seq.empty)
+      case BOOLEAN       => ("Boolean", Seq.empty)
+      case INT           => ("Int", Seq.empty)
+      case LONG          => ("Long", Seq.empty)
+      case FLOAT         => ("Float", Seq.empty)
+      case DOUBLE        => ("Double", Seq.empty)
       case STRING | ENUM => ("String", Seq.empty)
-      case BYTES => ("ByteString", Seq.empty)
+      case BYTES         => ("ByteString", Seq.empty)
       case ARRAY =>
         val (fieldType, nested) =
           getFieldType(className, fieldName, fieldSchema.getElementType, indent)
@@ -59,10 +59,11 @@ object SchemaUtil {
         if (unionTypes.size != 2 || !unionTypes.contains(NULL)) {
           throw new IllegalArgumentException(
             s"type: ${fieldSchema.getType} is not supported. " +
-            s"Union type needs to contain exactly one 'null' type and one non null type.")
+              s"Union type needs to contain exactly one 'null' type and one non null type.")
         }
         val (fieldType, nested) =
-          getFieldType(className,
+          getFieldType(
+            className,
             fieldName,
             fieldSchema.getTypes.asScala.filter(_.getType != NULL).head,
             indent)
@@ -70,9 +71,7 @@ object SchemaUtil {
       case RECORD =>
         val nestedClassName = s"$className$$${fieldSchema.getName}"
         val nested =
-          getCaseClass(nestedClassName,
-            fieldSchema,
-            indent)
+          getCaseClass(nestedClassName, fieldSchema, indent)
         (nestedClassName, Seq(nested))
       case t => throw new IllegalArgumentException(s"Type: $t not supported")
     }
@@ -129,9 +128,45 @@ object SchemaUtil {
   }
 
   private[types] val scalaReservedWords = Seq(
-    "abstract", "case", "catch", "class", "def", "do", "else", "extends", "false", "final",
-    "finally", "for", "forSome", "if", "implicit", "import", "lazy", "match", "new", "null",
-    "object", "override", "package", "private", "protected", "return", "sealed", "super", "this",
-    "throw", "trait", "try", "true", "type", "val", "var", "while", "with", "yield")
+    "abstract",
+    "case",
+    "catch",
+    "class",
+    "def",
+    "do",
+    "else",
+    "extends",
+    "false",
+    "final",
+    "finally",
+    "for",
+    "forSome",
+    "if",
+    "implicit",
+    "import",
+    "lazy",
+    "match",
+    "new",
+    "null",
+    "object",
+    "override",
+    "package",
+    "private",
+    "protected",
+    "return",
+    "sealed",
+    "super",
+    "this",
+    "throw",
+    "trait",
+    "try",
+    "true",
+    "type",
+    "val",
+    "var",
+    "while",
+    "with",
+    "yield"
+  )
 
 }

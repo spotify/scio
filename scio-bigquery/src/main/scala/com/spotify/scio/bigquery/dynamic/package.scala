@@ -22,8 +22,14 @@ import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.io.Tap
 import com.spotify.scio.util.Functions
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import org.apache.beam.sdk.io.gcp.bigquery.{DynamicDestinations, TableDestination}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
+  CreateDisposition,
+  WriteDisposition
+}
+import org.apache.beam.sdk.io.gcp.bigquery.{
+  DynamicDestinations,
+  TableDestination
+}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.values.ValueInSingleWindow
 
@@ -43,7 +49,8 @@ package object dynamic {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
    * destinations methods.
    */
-  implicit class DynamicBigQuerySCollection[T](val self: SCollection[T]) extends AnyVal {
+  implicit class DynamicBigQuerySCollection[T](val self: SCollection[T])
+      extends AnyVal {
 
     /**
      * Save this SCollection to dynamic BigQuery tables using the table and schema specified by the
@@ -54,10 +61,11 @@ package object dynamic {
                        writeDisposition: WriteDisposition,
                        createDisposition: CreateDisposition): Future[Tap[T]] = {
       if (self.context.isTest) {
-          throw new NotImplementedError(
-            "BigQuery with dynamic destinations cannot be used in a test context")
+        throw new NotImplementedError(
+          "BigQuery with dynamic destinations cannot be used in a test context")
       } else {
-        var transform = beam.BigQueryIO.write()
+        var transform = beam.BigQueryIO
+          .write()
           .to(destinations)
           .withFormatFunction(Functions.serializableFn(formatFn))
         if (createDisposition != null) {
@@ -70,7 +78,8 @@ package object dynamic {
       }
 
       Future.failed(
-        new NotImplementedError("BigQuery future with dynamic destinations not implemented"))
+        new NotImplementedError(
+          "BigQuery future with dynamic destinations not implemented"))
     }
 
     /**
@@ -80,16 +89,14 @@ package object dynamic {
      */
     def saveAsBigQuery(schema: TableSchema,
                        writeDisposition: WriteDisposition = null,
-                       createDisposition: CreateDisposition = null)
-                      (tableFn: ValueInSingleWindow[T] => TableDestination)
-                      (implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
-      saveAsBigQuery(
-        DynamicDestinationsUtil.tableFn(tableFn, schema),
-        (t: T) => t.asInstanceOf[TableRow],
-        writeDisposition,
-        createDisposition)
+                       createDisposition: CreateDisposition = null)(
+      tableFn: ValueInSingleWindow[T] => TableDestination)(
+      implicit ev: T <:< TableRow): Future[Tap[TableRow]] =
+      saveAsBigQuery(DynamicDestinationsUtil.tableFn(tableFn, schema),
+                     (t: T) => t.asInstanceOf[TableRow],
+                     writeDisposition,
+                     createDisposition)
         .asInstanceOf[Future[Tap[TableRow]]]
-
 
     /**
      * Save this SCollection to dynamic BigQuery tables using the specified table function.
@@ -97,18 +104,17 @@ package object dynamic {
      * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
      */
     def saveAsTypedBigQuery(writeDisposition: WriteDisposition = null,
-                            createDisposition: CreateDisposition = null)
-                           (tableFn: ValueInSingleWindow[T] => TableDestination)
-                           (implicit tt: TypeTag[T], ev: T <:< HasAnnotation)
-    : Future[Tap[T]] = {
+                            createDisposition: CreateDisposition = null)(
+      tableFn: ValueInSingleWindow[T] => TableDestination)(
+      implicit tt: TypeTag[T],
+      ev: T <:< HasAnnotation): Future[Tap[T]] = {
       val bqt = BigQueryType[T]
       val destinations = DynamicDestinationsUtil.tableFn(tableFn, bqt.schema)
 
-      saveAsBigQuery(
-        destinations,
-        bqt.toTableRow,
-        writeDisposition,
-        createDisposition)
+      saveAsBigQuery(destinations,
+                     bqt.toTableRow,
+                     writeDisposition,
+                     createDisposition)
     }
 
   }

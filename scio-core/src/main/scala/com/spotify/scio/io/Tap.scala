@@ -74,22 +74,23 @@ private[scio] final class InMemoryTap[T: Coder] extends Tap[T] {
     sc.parallelize[T](InMemorySink.get(id))
 }
 
-private[scio] class MaterializeTap[T: Coder] private (
-  val path: String, coder: BCoder[T]) extends Tap[T] {
+private[scio] class MaterializeTap[T: Coder] private (val path: String,
+                                                      coder: BCoder[T])
+    extends Tap[T] {
   private val _path = ScioUtil.addPartSuffix(path)
 
   override def value: Iterator[T] = {
     FileStorage(_path)
-    .avroFile[GenericRecord](AvroBytesUtil.schema)
+      .avroFile[GenericRecord](AvroBytesUtil.schema)
       .map(AvroBytesUtil.decode(coder, _))
   }
 
   private def dofn =
     new DoFn[GenericRecord, T] {
       @ProcessElement
-      private[scio] def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit = {
+      private[scio] def processElement(
+        c: DoFn[GenericRecord, T]#ProcessContext): Unit =
         c.output(AvroBytesUtil.decode(coder, c.element()))
-      }
     }
 
   override def open(sc: ScioContext): SCollection[T] = sc.requireNotClosed {

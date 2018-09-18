@@ -40,11 +40,18 @@ package object metrics {
                            state: String,
                            beamMetrics: BeamMetrics)
 
-  final case class BeamMetrics(counters: Iterable[BeamMetric[Long]],
-                               distributions: Iterable[BeamMetric[BeamDistribution]],
-                               gauges: Iterable[BeamMetric[BeamGauge]])
-  final case class BeamMetric[T](namespace: String, name: String, value: MetricValue[T])
-  final case class BeamDistribution(sum: Long, count: Long, min: Long, max: Long, mean: Double)
+  final case class BeamMetrics(
+    counters: Iterable[BeamMetric[Long]],
+    distributions: Iterable[BeamMetric[BeamDistribution]],
+    gauges: Iterable[BeamMetric[BeamGauge]])
+  final case class BeamMetric[T](namespace: String,
+                                 name: String,
+                                 value: MetricValue[T])
+  final case class BeamDistribution(sum: Long,
+                                    count: Long,
+                                    min: Long,
+                                    max: Long,
+                                    mean: Double)
   final case class BeamGauge(value: Long, timestamp: Instant)
 
 }

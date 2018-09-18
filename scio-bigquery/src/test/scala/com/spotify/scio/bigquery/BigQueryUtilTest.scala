@@ -26,16 +26,38 @@ import scala.collection.JavaConverters._
 class BigQueryUtilTest extends FlatSpec with Matchers {
 
   "parseSchema" should "work" in {
-    val schema = new TableSchema().setFields(List(
-      new TableFieldSchema().setName("f1").setType("INTEGER").setMode("REQUIRED"),
-      new TableFieldSchema().setName("f2").setType("FLOAT").setMode("NULLABLE"),
-      new TableFieldSchema().setName("f3").setType("TIMESTAMP").setMode("REPEATED"),
-      new TableFieldSchema().setName("f4").setMode("RECORD").setFields(List(
-        new TableFieldSchema().setName("f5").setType("BOOLEAN").setMode("REQUIRED"),
-        new TableFieldSchema().setName("f6").setType("STRING").setMode("NULLABLE"),
-        new TableFieldSchema().setName("f6").setType("STRING").setMode("REPEATED")
+    val schema = new TableSchema().setFields(
+      List(
+        new TableFieldSchema()
+          .setName("f1")
+          .setType("INTEGER")
+          .setMode("REQUIRED"),
+        new TableFieldSchema()
+          .setName("f2")
+          .setType("FLOAT")
+          .setMode("NULLABLE"),
+        new TableFieldSchema()
+          .setName("f3")
+          .setType("TIMESTAMP")
+          .setMode("REPEATED"),
+        new TableFieldSchema()
+          .setName("f4")
+          .setMode("RECORD")
+          .setFields(List(
+            new TableFieldSchema()
+              .setName("f5")
+              .setType("BOOLEAN")
+              .setMode("REQUIRED"),
+            new TableFieldSchema()
+              .setName("f6")
+              .setType("STRING")
+              .setMode("NULLABLE"),
+            new TableFieldSchema()
+              .setName("f6")
+              .setType("STRING")
+              .setMode("REPEATED")
+          ).asJava)
       ).asJava)
-    ).asJava)
     schema.setFactory(new JacksonFactory)
     BigQueryUtil.parseSchema(schema.toString) shouldBe schema
   }

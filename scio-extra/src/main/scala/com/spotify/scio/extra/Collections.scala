@@ -37,7 +37,9 @@ import scala.collection.JavaConverters._
  */
 object Collections {
 
-  private def topImpl[T](xs: Iterable[T], num: Int, ord: Ordering[T]): Iterable[T] = {
+  private def topImpl[T](xs: Iterable[T],
+                         num: Int,
+                         ord: Ordering[T]): Iterable[T] = {
     require(num > 0, "num must be > 0")
     if (xs.isEmpty) {
       Iterable.empty[T]
@@ -52,7 +54,8 @@ object Collections {
     }
   }
 
-  private def topByKeyImpl[K, V](xs: Iterable[(K, V)], num: Int,
+  private def topByKeyImpl[K, V](xs: Iterable[(K, V)],
+                                 num: Int,
                                  ord: Ordering[V]): Map[K, Iterable[V]] = {
     require(num > 0, "num must be > 0")
     val size = math.min(num, xs.size)
@@ -78,12 +81,14 @@ object Collections {
 
   /** Enhance Array by adding a `top` method. */
   implicit class TopArray[T](val self: Array[T]) extends AnyVal {
-    def top(num: Int)(implicit ord: Ordering[T]): Iterable[T] = topImpl(self, num, ord)
+    def top(num: Int)(implicit ord: Ordering[T]): Iterable[T] =
+      topImpl(self, num, ord)
   }
 
   /** Enhance Iterable by adding a `top` method. */
   implicit class TopIterable[T](val self: Iterable[T]) extends AnyVal {
-    def top(num: Int)(implicit ord: Ordering[T]): Iterable[T] = topImpl(self, num, ord)
+    def top(num: Int)(implicit ord: Ordering[T]): Iterable[T] =
+      topImpl(self, num, ord)
   }
 
   /** Enhance Array by adding a `topByKey` method. */
@@ -93,7 +98,8 @@ object Collections {
   }
 
   /** Enhance Iterable by adding a `topByKey` method. */
-  implicit class TopByKeyIterable[K, V](val self: Iterable[(K, V)]) extends AnyVal {
+  implicit class TopByKeyIterable[K, V](val self: Iterable[(K, V)])
+      extends AnyVal {
     def topByKey(num: Int)(implicit ord: Ordering[V]): Map[K, Iterable[V]] =
       topByKeyImpl(self, num, ord)
   }

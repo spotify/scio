@@ -18,35 +18,39 @@
 package com.spotify.scio.coders
 
 import java.io.{InputStream, OutputStream}
-import org.apache.beam.sdk.coders.{ Coder => BCoder, _}
+import org.apache.beam.sdk.coders.{Coder => BCoder, _}
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.Schema
 
-final class AvroRawCoder[T] private (@transient var schema: org.apache.avro.Schema)
-  extends AtomicCoder[T] {
+final class AvroRawCoder[T] private (
+  @transient var schema: org.apache.avro.Schema)
+    extends AtomicCoder[T] {
 
-    // makes the schema scerializable
-    val schemaString = schema.toString
+  // makes the schema scerializable
+  val schemaString = schema.toString
 
-    @transient lazy val _schema = new org.apache.avro.Schema.Parser().parse(schemaString)
+  @transient lazy val _schema =
+    new org.apache.avro.Schema.Parser().parse(schemaString)
 
-    @transient lazy val model = new org.apache.avro.specific.SpecificData()
-    @transient lazy val encoder = new org.apache.avro.message.RawMessageEncoder[T](model, _schema)
-    @transient lazy val decoder = new org.apache.avro.message.RawMessageDecoder[T](model, _schema)
+  @transient lazy val model = new org.apache.avro.specific.SpecificData()
+  @transient lazy val encoder =
+    new org.apache.avro.message.RawMessageEncoder[T](model, _schema)
+  @transient lazy val decoder =
+    new org.apache.avro.message.RawMessageDecoder[T](model, _schema)
 
-    def encode(value: T, os: OutputStream): Unit =
-      encoder.encode(value, os)
+  def encode(value: T, os: OutputStream): Unit =
+    encoder.encode(value, os)
 
-    def decode(is: InputStream): T =
-      decoder.decode(is)
-  }
-
-object AvroRawCoder {
-  def apply[T](schema: org.apache.avro.Schema): AvroRawCoder[T] = new AvroRawCoder[T](schema)
+  def decode(is: InputStream): T =
+    decoder.decode(is)
 }
 
+object AvroRawCoder {
+  def apply[T](schema: org.apache.avro.Schema): AvroRawCoder[T] =
+    new AvroRawCoder[T](schema)
+}
 
-private final class SlowGenericRecordCoder extends AtomicCoder[GenericRecord]{
+private final class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
 
   var coder: BCoder[GenericRecord] = _
   // TODO: can we find something more efficient than String ?
@@ -54,7 +58,7 @@ private final class SlowGenericRecordCoder extends AtomicCoder[GenericRecord]{
 
   def encode(value: GenericRecord, os: OutputStream): Unit = {
     val schema = value.getSchema
-    if(coder == null) {
+    if (coder == null) {
       coder = AvroCoder.of(schema)
     }
     sc.encode(schema.toString, os)
@@ -63,7 +67,7 @@ private final class SlowGenericRecordCoder extends AtomicCoder[GenericRecord]{
 
   def decode(is: InputStream): GenericRecord = {
     val schemaStr = sc.decode(is)
-    if(coder == null) {
+    if (coder == null) {
       val schema = new Schema.Parser().parse(schemaStr)
       coder = AvroCoder.of(schema)
     }

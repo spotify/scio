@@ -71,9 +71,14 @@ class JoinBenchmark {
   def forYield(as: JIterable[Int], bs: JIterable[Int], bh: Blackhole): Unit =
     forYield(as, bs, new BlackholeContext[(Int, Int)](bh))
 
-  def forYield(as: JIterable[Int], bs: JIterable[Int], c: Context[(Int, Int)]): Unit = {
+  def forYield(as: JIterable[Int],
+               bs: JIterable[Int],
+               c: Context[(Int, Int)]): Unit = {
     val xs: TraversableOnce[(Int, Int)] =
-      for (a <- as.asScala.iterator; b <- bs.asScala.iterator) yield (a, b)
+      for {
+        a <- as.asScala.iterator
+        b <- bs.asScala.iterator
+      } yield (a, b)
     val i = xs.toIterator
     while (i.hasNext) c.output(i.next())
   }
@@ -81,7 +86,9 @@ class JoinBenchmark {
   def artisan(as: JIterable[Int], bs: JIterable[Int], bh: Blackhole): Unit =
     artisan(as, bs, new BlackholeContext[(Int, Int)](bh))
 
-  def artisan(as: JIterable[Int], bs: JIterable[Int], c: Context[(Int, Int)]): Unit = {
+  def artisan(as: JIterable[Int],
+              bs: JIterable[Int],
+              c: Context[(Int, Int)]): Unit = {
     (peak(as), peak(bs)) match {
       case ((1, a), (1, b)) => c.output((a, b))
       case ((1, a), (2, _)) =>
@@ -107,7 +114,9 @@ class JoinBenchmark {
     muchArtisan(as, bs, new BlackholeContext[(Int, Int)](bh))
 
   // scalastyle:off cyclomatic.complexity
-  def muchArtisan(as: JIterable[Int], bs: JIterable[Int], c: Context[(Int, Int)]): Unit = {
+  def muchArtisan(as: JIterable[Int],
+                  bs: JIterable[Int],
+                  c: Context[(Int, Int)]): Unit = {
     var ai = as.iterator()
     var bi = bs.iterator()
     if (ai.hasNext && bi.hasNext) {
@@ -146,7 +155,9 @@ class JoinBenchmark {
   def suchArtisan(as: JIterable[Int], bs: JIterable[Int], bh: Blackhole): Unit =
     suchArtisan(as, bs, new BlackholeContext[(Int, Int)](bh))
 
-  def suchArtisan(as: JIterable[Int], bs: JIterable[Int], c: Context[(Int, Int)]): Unit = {
+  def suchArtisan(as: JIterable[Int],
+                  bs: JIterable[Int],
+                  c: Context[(Int, Int)]): Unit = {
     val ai = as.iterator()
     while (ai.hasNext) {
       val a = ai.next()
@@ -160,7 +171,9 @@ class JoinBenchmark {
   def iterator(as: JIterable[Int], bs: JIterable[Int], bh: Blackhole): Unit =
     iterator(as, bs, new BlackholeContext[(Int, Int)](bh))
 
-  def iterator(as: JIterable[Int], bs: JIterable[Int], c: Context[(Int, Int)]): Unit = {
+  def iterator(as: JIterable[Int],
+               bs: JIterable[Int],
+               c: Context[(Int, Int)]): Unit = {
     val i = new CartesianIterator(as, bs)
     while (i.hasNext) {
       c.output(i.next())
@@ -223,7 +236,7 @@ class JoinBenchmark {
 }
 
 private class CartesianIterator[A, B](as: JIterable[A], bs: JIterable[B])
-  extends AbstractIterator[(A, B)] {
+    extends AbstractIterator[(A, B)] {
   private val asi = as.iterator()
   private var bsi = bs.iterator()
   private var a: A = _
@@ -236,7 +249,7 @@ private class CartesianIterator[A, B](as: JIterable[A], bs: JIterable[B])
 
   override def computeNext(): (A, B) = {
     if (!bsi.hasNext) {
-      if (!asi.hasNext)  {
+      if (!asi.hasNext) {
         endOfData()
       } else {
         a = asi.next()

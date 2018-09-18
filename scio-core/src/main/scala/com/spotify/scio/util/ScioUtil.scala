@@ -38,20 +38,24 @@ private[scio] object ScioUtil {
   @transient lazy private val log = LoggerFactory.getLogger(this.getClass)
   @transient lazy val jsonFactory = Transport.getJsonFactory
 
-  def isLocalUri(uri: URI): Boolean = uri.getScheme == null || uri.getScheme == "file"
+  def isLocalUri(uri: URI): Boolean =
+    uri.getScheme == null || uri.getScheme == "file"
 
   def isRemoteUri(uri: URI): Boolean = !isLocalUri(uri)
 
-  def isLocalRunner(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Boolean = {
+  def isLocalRunner(
+    runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Boolean = {
     require(runner != null, "Pipeline runner not set!")
     // FIXME: cover Flink, Spark, etc. in local mode
     runner.getName == "org.apache.beam.runners.direct.DirectRunner"
   }
 
-  def isRemoteRunner(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Boolean =
+  def isRemoteRunner(
+    runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Boolean =
     !isLocalRunner(runner)
 
-  def classOf[T: ClassTag]: Class[T] = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
+  def classOf[T: ClassTag]: Class[T] =
+    implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
 
   def getScalaCoder[T: ClassTag]: Coder[T] = {
     import com.spotify.scio.Implicits._
@@ -63,13 +67,15 @@ private[scio] object ScioUtil {
     coderRegistry.getScalaCoder[T](options)
   }
 
-  def getScalaJsonMapper: ObjectMapper = new ObjectMapper().registerModule(DefaultScalaModule)
+  def getScalaJsonMapper: ObjectMapper =
+    new ObjectMapper().registerModule(DefaultScalaModule)
 
   def addPartSuffix(path: String, ext: String = ""): String =
     if (path.endsWith("/")) s"${path}part-*$ext" else s"$path/part-*$ext"
 
   def getTempFile(context: ScioContext, fileOrPath: String = null): String = {
-    val fop = Option(fileOrPath).getOrElse("scio-materialize-" + UUID.randomUUID().toString)
+    val fop = Option(fileOrPath).getOrElse(
+      "scio-materialize-" + UUID.randomUUID().toString)
     val uri = URI.create(fop)
     if ((ScioUtil.isLocalUri(uri) && uri.toString.startsWith("/")) || uri.isAbsolute) {
       fop
@@ -86,7 +92,8 @@ private[scio] object ScioUtil {
               "Using GCP temporary location as a temporary location to materialize data. " + m)
             l
           case Failure(_) =>
-            throw new IllegalArgumentException("No temporary location was specified. " + m)
+            throw new IllegalArgumentException(
+              "No temporary location was specified. " + m)
         }
       }
       tmpDir + (if (tmpDir.endsWith("/")) "" else "/") + filename

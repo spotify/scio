@@ -30,9 +30,9 @@ class TapsTest extends FlatSpec with Matchers {
 
   val data = Seq("a", "b", "c")
 
-  private def tmpFile: Path = new File(
-    new File(sys.props("java.io.tmpdir")),
-    "taps-test-" + UUID.randomUUID()).toPath
+  private def tmpFile: Path =
+    new File(new File(sys.props("java.io.tmpdir")),
+             "taps-test-" + UUID.randomUUID()).toPath
 
   private def writeText(p: Path, data: Seq[String]) = {
     val writer = Files.newBufferedWriter(p)

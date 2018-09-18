@@ -40,7 +40,8 @@ class AsyncLookupDoFnTest extends PipelineSpec {
     val fn = new TestCachingAsyncLookupDoFn
     val output = runWithData((1 to 10) ++ (6 to 15))(_.parDo(fn))
       .map(kv => (kv.getKey, kv.getValue.asScala.get))
-    output should contain theSameElementsAs ((1 to 10) ++ (6 to 15)).map(x => (x, x.toString))
+    output should contain theSameElementsAs ((1 to 10) ++ (6 to 15)).map(x =>
+      (x, x.toString))
     AsyncLookupDoFnTest.queue.asScala.toSet should contain theSameElementsAs (1 to 15)
     AsyncLookupDoFnTest.queue.size() should be <= 20
   }
@@ -65,27 +66,31 @@ object AsyncLookupDoFnTest {
   val queue: ConcurrentLinkedQueue[Int] = new ConcurrentLinkedQueue[Int]()
 }
 
-class AsyncClient {
-}
+class AsyncClient {}
 
 class TestAsyncLookupDoFn extends AsyncLookupDoFn[Int, String, AsyncClient]() {
   override protected def newClient(): AsyncClient = null
-  override def asyncLookup(session: AsyncClient, input: Int): ListenableFuture[String] =
+  override def asyncLookup(session: AsyncClient,
+                           input: Int): ListenableFuture[String] =
     Futures.immediateFuture(input.toString)
 }
 
-class TestCachingAsyncLookupDoFn extends
-  AsyncLookupDoFn[Int, String, AsyncClient](100, new TestCacheSupplier) {
+class TestCachingAsyncLookupDoFn
+    extends AsyncLookupDoFn[Int, String, AsyncClient](100,
+                                                      new TestCacheSupplier) {
   override protected def newClient(): AsyncClient = null
-  override def asyncLookup(session: AsyncClient, input: Int): ListenableFuture[String] = {
+  override def asyncLookup(session: AsyncClient,
+                           input: Int): ListenableFuture[String] = {
     AsyncLookupDoFnTest.queue.add(input)
     Futures.immediateFuture(input.toString)
   }
 }
 
-class TestFailingAsyncLookupDoFn extends AsyncLookupDoFn[Int, String, AsyncClient]() {
+class TestFailingAsyncLookupDoFn
+    extends AsyncLookupDoFn[Int, String, AsyncClient]() {
   override protected def newClient(): AsyncClient = null
-  override def asyncLookup(session: AsyncClient, input: Int): ListenableFuture[String] =
+  override def asyncLookup(session: AsyncClient,
+                           input: Int): ListenableFuture[String] =
     if (input % 2 == 0) {
       Futures.immediateFuture("success" + input)
     } else {

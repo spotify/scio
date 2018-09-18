@@ -30,10 +30,11 @@ class PipeDoFnTest extends PipelineSpec {
   "PipeDoFn" should "work" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(input).pipe("tr '[:lower:]' '[:upper:]'")
-      val p2 = sc.parallelize(input)
+      val p2 = sc
+        .parallelize(input)
         .pipe(Array("tr", "[:lower:]", "[:upper:]"), null, null, null, null)
-      p1 should containInAnyOrder (input.map(_.toUpperCase))
-      p2 should containInAnyOrder (input.map(_.toUpperCase))
+      p1 should containInAnyOrder(input.map(_.toUpperCase))
+      p2 should containInAnyOrder(input.map(_.toUpperCase))
     }
   }
 
@@ -45,10 +46,11 @@ class PipeDoFnTest extends PipelineSpec {
 
     runWithContext { sc =>
       val p1 = sc.parallelize(input).pipe(s"bash $file", env, null)
-      val p2 = sc.parallelize(input)
+      val p2 = sc
+        .parallelize(input)
         .pipe(Array("bash", file.toString), env, null, null, null)
-      p1 should containInAnyOrder (input.map(_.toUpperCase))
-      p2 should containInAnyOrder (input.map(_.toUpperCase))
+      p1 should containInAnyOrder(input.map(_.toUpperCase))
+      p2 should containInAnyOrder(input.map(_.toUpperCase))
     }
 
     Files.delete(file)
@@ -62,10 +64,11 @@ class PipeDoFnTest extends PipelineSpec {
 
     runWithContext { sc =>
       val p1 = sc.parallelize(input).pipe("bash tr.sh", null, tmpDir.toFile)
-      val p2 = sc.parallelize(input)
+      val p2 = sc
+        .parallelize(input)
         .pipe(Array("bash", "tr.sh"), null, tmpDir.toFile, null, null)
-      p1 should containInAnyOrder (input.map(_.toUpperCase))
-      p2 should containInAnyOrder (input.map(_.toUpperCase))
+      p1 should containInAnyOrder(input.map(_.toUpperCase))
+      p2 should containInAnyOrder(input.map(_.toUpperCase))
     }
 
     Files.delete(file)
@@ -75,19 +78,25 @@ class PipeDoFnTest extends PipelineSpec {
   it should "support setup and teardown commands" in {
     runWithContext { sc =>
       val tmpDir = Files.createTempDirectory("pipedofn-").toFile
-      tmpDir.deleteOnExit()  // teardown happens asynchronously
-      val p1 = sc.parallelize(input)
+      tmpDir.deleteOnExit() // teardown happens asynchronously
+      val p1 = sc
+        .parallelize(input)
+        .pipe("tr '[:lower:]' '[:upper:]'",
+              null,
+              tmpDir,
+              Seq("touch tmp1.txt", s"wc tmp1.txt"),
+              Seq("wc tmp1.txt", s"rm tmp1.txt"))
+      val p2 = sc
+        .parallelize(input)
         .pipe(
-          "tr '[:lower:]' '[:upper:]'", null, tmpDir,
-          Seq("touch tmp1.txt", s"wc tmp1.txt"),
-          Seq("wc tmp1.txt", s"rm tmp1.txt"))
-      val p2 = sc.parallelize(input)
-        .pipe(
-          Array("tr", "[:lower:]", "[:upper:]"), null, tmpDir,
+          Array("tr", "[:lower:]", "[:upper:]"),
+          null,
+          tmpDir,
           Seq(Array("touch", "tmp2.txt"), Array("wc", "tmp2.txt")),
-          Seq(Array("wc", "tmp2.txt"), Array("rm", "tmp2.txt")))
-      p1 should containInAnyOrder (input.map(_.toUpperCase))
-      p2 should containInAnyOrder (input.map(_.toUpperCase))
+          Seq(Array("wc", "tmp2.txt"), Array("rm", "tmp2.txt"))
+        )
+      p1 should containInAnyOrder(input.map(_.toUpperCase))
+      p2 should containInAnyOrder(input.map(_.toUpperCase))
     }
   }
 
@@ -95,13 +104,17 @@ class PipeDoFnTest extends PipelineSpec {
   it should "fail if command fails" in {
     // the exception thrown could be UncheckedIOException for broken pipe or IllegalStateException
     // for non-zero exit code, depending on which happens first
-    an [Exception] should be thrownBy {
+    an[Exception] should be thrownBy {
       runWithContext { _.parallelize(input).pipe("rm /non-existent-path") }
     }
 
-    an [Exception] should be thrownBy {
+    an[Exception] should be thrownBy {
       runWithContext {
-        _.parallelize(input).pipe(Array("rm", "/non-existent-path"), null, null, null, null)
+        _.parallelize(input).pipe(Array("rm", "/non-existent-path"),
+                                  null,
+                                  null,
+                                  null,
+                                  null)
       }
     }
   }
@@ -109,35 +122,51 @@ class PipeDoFnTest extends PipelineSpec {
   it should "fail if setup commands fail" in {
     // the exception thrown could be UncheckedIOException for broken pipe or IllegalStateException
     // for non-zero exit code, depending on which happens first
-    val e1 = the [Exception] thrownBy {
+    val e1 = the[Exception] thrownBy {
       runWithContext {
-        _.parallelize(input).pipe("cat", null, null, Seq("rm /non-exist-path"), null)
+        _.parallelize(input).pipe("cat",
+                                  null,
+                                  null,
+                                  Seq("rm /non-exist-path"),
+                                  null)
       }
     }
-    errorMessages(e1) should contain ("Non-zero exit code: 1")
+    errorMessages(e1) should contain("Non-zero exit code: 1")
 
-    val e2 = the [Exception] thrownBy {
+    val e2 = the[Exception] thrownBy {
       runWithContext {
         _.parallelize(input)
-          .pipe(Array("cat"), null, null, Seq(Array("rm", "/non-exist-path")), null)
+          .pipe(Array("cat"),
+                null,
+                null,
+                Seq(Array("rm", "/non-exist-path")),
+                null)
       }
     }
-    errorMessages(e2) should contain ("Non-zero exit code: 1")
+    errorMessages(e2) should contain("Non-zero exit code: 1")
   }
 
   // FIXME: this test is flaky because teardown is called asynchronously
   ignore should "fail if teardown commands fail" in {
     // Beam swallows user exception in `@Teardown`
-    the [RuntimeException] thrownBy {
+    the[RuntimeException] thrownBy {
       runWithContext {
-        _.parallelize(input).pipe("cat", null, null, null, Seq("rm /non-exist-path"))
+        _.parallelize(input).pipe("cat",
+                                  null,
+                                  null,
+                                  null,
+                                  Seq("rm /non-exist-path"))
       }
     } should have message "java.lang.Exception: Exceptions thrown while tearing down DoFns"
 
-    the [RuntimeException] thrownBy {
+    the[RuntimeException] thrownBy {
       runWithContext {
         _.parallelize(input)
-          .pipe(Array("cat"), null, null, null, Seq(Array("rm", "/non-exist-path")))
+          .pipe(Array("cat"),
+                null,
+                null,
+                null,
+                Seq(Array("rm", "/non-exist-path")))
       }
     } should have message "java.lang.Exception: Exceptions thrown while tearing down DoFns"
   }

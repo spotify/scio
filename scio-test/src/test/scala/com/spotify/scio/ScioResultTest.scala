@@ -68,7 +68,8 @@ class ScioResultTest extends PipelineSpec {
 
     val dist = BeamDistribution(6L, 3L, 1L, 3L, 2L)
     m.distributions.map(_.name) shouldBe Iterable("d")
-    m.distributions.map(_.value) shouldBe Iterable(MetricValue(dist, Some(dist)))
+    m.distributions.map(_.value) shouldBe Iterable(
+      MetricValue(dist, Some(dist)))
 
     val gauge = m.gauges.map(_.value)
     m.gauges.map(_.name) shouldBe Iterable("g")

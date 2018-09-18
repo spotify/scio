@@ -40,7 +40,8 @@ private[scio] object JMapWrapper {
       // scalastyle:on method.name
 
       // lazy transform underlying j.u.Map
-      override def get(key: A): Option[Iterable[B]] = Option(self.get(key)).map(_.asScala)
+      override def get(key: A): Option[Iterable[B]] =
+        Option(self.get(key)).map(_.asScala)
       override def iterator: Iterator[(A, Iterable[B])] =
         self.asScala.iterator.map(kv => (kv._1, kv._2.asScala))
     }

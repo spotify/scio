@@ -34,7 +34,8 @@ class DistCacheExampleTest extends PipelineSpec {
     TableRow("timestamp" -> d2t("20150103")),
     TableRow("timestamp" -> d2t("20150201")),
     TableRow("timestamp" -> d2t("20150202")),
-    TableRow("timestamp" -> d2t("20150301")))
+    TableRow("timestamp" -> d2t("20150301"))
+  )
 
   val distCache = Map(1 -> "Jan", 2 -> "Feb", 3 -> "Mar")
 
@@ -44,8 +45,9 @@ class DistCacheExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.DistCacheExample.type]
       .args("--output=out.txt")
       .input(TableRowJsonIO(ExampleData.EXPORTED_WIKI_TABLE), in)
-      .distCache(DistCacheIO("gs://dataflow-samples/samples/misc/months.txt"), distCache)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (expected))
+      .distCache(DistCacheIO("gs://dataflow-samples/samples/misc/months.txt"),
+                 distCache)
+      .output(TextIO("out.txt"))(_ should containInAnyOrder(expected))
       .run()
   }
 

@@ -25,30 +25,34 @@ private[scio] object FunctionsWithSideOutput {
 
   trait SideOutputFn[T, U] extends NamedDoFn[T, U] {
     private var ctx: SideOutputContext[T] = _
-    def sideOutputContext(c: DoFn[T, U]#ProcessContext): SideOutputContext[T] = {
+    def sideOutputContext(
+      c: DoFn[T, U]#ProcessContext): SideOutputContext[T] = {
       if (ctx == null || ctx.context != c) {
         // Workaround for type inference limit
-        ctx = new SideOutputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])
+        ctx = new SideOutputContext(
+          c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext])
       }
       ctx
     }
   }
 
-  def mapFn[T, U](f: (T, SideOutputContext[T]) => U): DoFn[T, U] = new SideOutputFn[T, U] {
-    val g = ClosureCleaner(f)  // defeat closure
-    @ProcessElement
-    private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit =
-      c.output(g(c.element(), sideOutputContext(c)))
-  }
-
-  def flatMapFn[T, U](f: (T, SideOutputContext[T]) => TraversableOnce[U])
-  : DoFn[T, U] = new SideOutputFn[T, U] {
-    val g = ClosureCleaner(f)  // defeat closure
-    @ProcessElement
-    private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-      val i = g(c.element(), sideOutputContext(c)).toIterator
-      while (i.hasNext) c.output(i.next())
+  def mapFn[T, U](f: (T, SideOutputContext[T]) => U): DoFn[T, U] =
+    new SideOutputFn[T, U] {
+      val g = ClosureCleaner(f) // defeat closure
+      @ProcessElement
+      private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit =
+        c.output(g(c.element(), sideOutputContext(c)))
     }
-  }
+
+  def flatMapFn[T, U](
+    f: (T, SideOutputContext[T]) => TraversableOnce[U]): DoFn[T, U] =
+    new SideOutputFn[T, U] {
+      val g = ClosureCleaner(f) // defeat closure
+      @ProcessElement
+      private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
+        val i = g(c.element(), sideOutputContext(c)).toIterator
+        while (i.hasNext) c.output(i.next())
+      }
+    }
 
 }

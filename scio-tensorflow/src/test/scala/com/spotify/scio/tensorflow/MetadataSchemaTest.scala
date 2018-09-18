@@ -21,7 +21,13 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.testing.PipelineSpec
 import org.tensorflow.example._
 import org.tensorflow.metadata.v0.{
-  FeaturePresence,FeatureType, FixedShape, Schema, ValueCount, Feature => MFeature}
+  FeaturePresence,
+  FeatureType,
+  FixedShape,
+  Schema,
+  ValueCount,
+  Feature => MFeature
+}
 
 import scala.collection.JavaConverters._
 
@@ -42,48 +48,71 @@ object MetadataSchemaTest {
     "bytes" -> byteStrFeature(Seq("d", "e", "f").map(ByteString.copyFromUtf8)),
     "floats" -> floatFeature(Seq(4.0f, 5.0f)),
     "indices" -> longFeature(Seq(1, 2, 80)),
-    "values" -> byteStrFeature(Seq("one", "two", "eighty").map(ByteString.copyFromUtf8)),
+    "values" -> byteStrFeature(
+      Seq("one", "two", "eighty").map(ByteString.copyFromUtf8)),
     "dense_shape" -> longFeature(Seq(100))
   )
 
   val examples = Seq(e1Features, e2Features).map(mkExample)
 
-  val expectedSchema = Schema.newBuilder()
-    .addFeature(MFeature.newBuilder()
-      .setName("long")
-      .setType(FeatureType.INT)
-      .setValueCount(ValueCount.newBuilder().setMin(1).setMax(3))
-      .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
-    .addFeature(MFeature.newBuilder()
+  val expectedSchema = Schema
+    .newBuilder()
+    .addFeature(
+      MFeature
+        .newBuilder()
+        .setName("long")
+        .setType(FeatureType.INT)
+        .setValueCount(ValueCount.newBuilder().setMin(1).setMax(3))
+        .setPresence(
+          FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
+    .addFeature(MFeature
+      .newBuilder()
       .setName("bytes")
       .setType(FeatureType.BYTES)
-      .setShape(FixedShape.newBuilder().addDim(FixedShape.Dim.newBuilder().setSize(3)))
-      .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
-    .addFeature(MFeature.newBuilder()
-      .setName("floats")
-      .setType(FeatureType.FLOAT)
-      .setValueCount(ValueCount.newBuilder().setMin(2).setMax(3))
-      .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
-    .addFeature(MFeature.newBuilder()
-      .setName("indices")
-      .setType(FeatureType.INT)
-      .setValueCount(ValueCount.newBuilder().setMin(2).setMax(3))
-      .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
-    .addFeature(MFeature.newBuilder()
-      .setName("values")
-      .setType(FeatureType.BYTES)
-      .setValueCount(ValueCount.newBuilder().setMin(2).setMax(3))
-      .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
-    .addFeature(MFeature.newBuilder()
-      .setName("dense_shape")
-      .setType(FeatureType.INT)
-      .setShape(FixedShape.newBuilder())
-      .setPresence(FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
-    .addFeature(MFeature.newBuilder()
-      .setName("missing_feature")
-      .setType(FeatureType.INT)
-      .setValueCount(ValueCount.newBuilder().setMin(1).setMax(1))
-      .setPresence(FeaturePresence.newBuilder().setMinCount(1).setMinFraction(0.5)))
+      .setShape(
+        FixedShape.newBuilder().addDim(FixedShape.Dim.newBuilder().setSize(3)))
+      .setPresence(
+        FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
+    .addFeature(
+      MFeature
+        .newBuilder()
+        .setName("floats")
+        .setType(FeatureType.FLOAT)
+        .setValueCount(ValueCount.newBuilder().setMin(2).setMax(3))
+        .setPresence(
+          FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
+    .addFeature(
+      MFeature
+        .newBuilder()
+        .setName("indices")
+        .setType(FeatureType.INT)
+        .setValueCount(ValueCount.newBuilder().setMin(2).setMax(3))
+        .setPresence(
+          FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
+    .addFeature(
+      MFeature
+        .newBuilder()
+        .setName("values")
+        .setType(FeatureType.BYTES)
+        .setValueCount(ValueCount.newBuilder().setMin(2).setMax(3))
+        .setPresence(
+          FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
+    .addFeature(
+      MFeature
+        .newBuilder()
+        .setName("dense_shape")
+        .setType(FeatureType.INT)
+        .setShape(FixedShape.newBuilder())
+        .setPresence(
+          FeaturePresence.newBuilder().setMinCount(2).setMinFraction(1.0)))
+    .addFeature(
+      MFeature
+        .newBuilder()
+        .setName("missing_feature")
+        .setType(FeatureType.INT)
+        .setValueCount(ValueCount.newBuilder().setMin(1).setMax(1))
+        .setPresence(
+          FeaturePresence.newBuilder().setMinCount(1).setMinFraction(0.5)))
     .build()
 
   private def longFeature(raw: Seq[Long]): Feature = {
@@ -110,11 +139,12 @@ object MetadataSchemaTest {
     fb.build
   }
 
-  private def mkExample(features: Map[String, Feature]): Example = {
-    Example.newBuilder().setFeatures(Features.newBuilder().putAllFeature(features.asJava)).build
-  }
+  private def mkExample(features: Map[String, Feature]): Example =
+    Example
+      .newBuilder()
+      .setFeatures(Features.newBuilder().putAllFeature(features.asJava))
+      .build
 }
-
 
 class MetadataSchemaTest extends PipelineSpec {
   import MetadataSchemaTest._

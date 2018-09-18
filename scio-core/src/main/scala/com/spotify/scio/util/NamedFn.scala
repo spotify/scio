@@ -18,7 +18,11 @@
 package com.spotify.scio.util
 
 import org.apache.beam.sdk.transforms.Partition.PartitionFn
-import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction, SimpleFunction}
+import org.apache.beam.sdk.transforms.{
+  DoFn,
+  SerializableFunction,
+  SimpleFunction
+}
 
 /** Helper trait to decorate anonymous functions with a meaningful toString. */
 private[util] trait NamedFn {
@@ -26,7 +30,11 @@ private[util] trait NamedFn {
   override def toString: String = s"anonymous function $callSite"
 }
 
-private[util] trait NamedSerializableFn[T, U] extends SerializableFunction[T, U] with NamedFn
+private[util] trait NamedSerializableFn[T, U]
+    extends SerializableFunction[T, U]
+    with NamedFn
 private[util] trait NamedPartitionFn[T] extends PartitionFn[T] with NamedFn
 private[scio] class NamedDoFn[T, U] extends DoFn[T, U] with NamedFn
-private[util] class NamedSimpleFn[T, U] extends SimpleFunction[T, U] with NamedFn
+private[util] class NamedSimpleFn[T, U]
+    extends SimpleFunction[T, U]
+    with NamedFn

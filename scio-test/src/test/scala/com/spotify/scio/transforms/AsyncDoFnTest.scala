@@ -17,7 +17,12 @@
 
 package com.spotify.scio.transforms
 
-import java.util.concurrent.{Callable, CompletableFuture, Executors, ThreadPoolExecutor}
+import java.util.concurrent.{
+  Callable,
+  CompletableFuture,
+  Executors,
+  ThreadPoolExecutor
+}
 import java.util.function.Supplier
 
 import com.google.common.util.concurrent.{ListenableFuture, MoreExecutors}
@@ -36,13 +41,13 @@ class AsyncDoFnTest extends PipelineSpec {
     for (input <- inputs) {
       runWithContext { sc =>
         val p = sc.parallelize(input).applyTransform(ParDo.of(doFn))
-        p should containInAnyOrder (input.map("output-" + _))
+        p should containInAnyOrder(input.map("output-" + _))
       }
     }
 
   private def testFailure(doFn: DoFn[Int, String]): Unit = {
     // scalastyle:off no.whitespace.before.left.bracket
-    val e = the [PipelineExecutionException] thrownBy {
+    val e = the[PipelineExecutionException] thrownBy {
       runWithContext {
         _.parallelize(Seq(1, 2, -1, -2)).applyTransform(ParDo.of(doFn))
       }
@@ -53,11 +58,12 @@ class AsyncDoFnTest extends PipelineSpec {
       if (t == null) {
         Nil
       } else {
-        t.getMessage +: (errorMessages(t.getCause) ++ t.getSuppressed.flatMap(errorMessages))
+        t.getMessage +: (errorMessages(t.getCause) ++ t.getSuppressed.flatMap(
+          errorMessages))
       }
 
-    errorMessages(e) should contain ("Failed to process futures")
-    errorMessages(e) should contain ("requirement failed: input must be >= 0")
+    errorMessages(e) should contain("Failed to process futures")
+    errorMessages(e) should contain("requirement failed: input must be >= 0")
   }
 
   "GuavaAsyncDoFn" should "work" in {
@@ -97,7 +103,9 @@ private object Client {
 private class GuavaClient(val numThreads: Int) {
   private val es = MoreExecutors.listeningDecorator(
     MoreExecutors.getExitingExecutorService(
-      Executors.newFixedThreadPool(numThreads).asInstanceOf[ThreadPoolExecutor]))
+      Executors
+        .newFixedThreadPool(numThreads)
+        .asInstanceOf[ThreadPoolExecutor]))
   def request(input: Int): ListenableFuture[String] =
     es.submit(new Callable[String] {
       override def call(): String = Client.process(input)
@@ -114,24 +122,31 @@ private class JavaClient(val numThreads: Int) {
 }
 
 private class ScalaClient(val numThreads: Int) {
-  private val es = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(numThreads))
+  private val es = ExecutionContext.fromExecutorService(
+    Executors.newFixedThreadPool(numThreads))
   def request(input: Int): Future[String] = Future(Client.process(input))(es)
 }
 
-private class GuavaDoFn(val numThreads: Int) extends GuavaAsyncDoFn[Int, String, GuavaClient] {
+private class GuavaDoFn(val numThreads: Int)
+    extends GuavaAsyncDoFn[Int, String, GuavaClient] {
   override def getResourceType: ResourceType = ResourceType.PER_CLASS
   override def createResource(): GuavaClient = new GuavaClient(numThreads)
-  override def processElement(input: Int): ListenableFuture[String] = getResource.request(input)
+  override def processElement(input: Int): ListenableFuture[String] =
+    getResource.request(input)
 }
 
-private class JavaDoFn(val numThreads: Int) extends JavaAsyncDoFn[Int, String, JavaClient] {
+private class JavaDoFn(val numThreads: Int)
+    extends JavaAsyncDoFn[Int, String, JavaClient] {
   override def getResourceType: ResourceType = ResourceType.PER_CLASS
   override def createResource(): JavaClient = new JavaClient(numThreads)
-  override def processElement(input: Int): CompletableFuture[String] = getResource.request(input)
+  override def processElement(input: Int): CompletableFuture[String] =
+    getResource.request(input)
 }
 
-private class ScalaDoFn(val numThreads: Int) extends ScalaAsyncDoFn[Int, String, ScalaClient] {
+private class ScalaDoFn(val numThreads: Int)
+    extends ScalaAsyncDoFn[Int, String, ScalaClient] {
   override def getResourceType: ResourceType = ResourceType.PER_CLASS
   override def createResource(): ScalaClient = new ScalaClient(numThreads)
-  override def processElement(input: Int): Future[String] = getResource.request(input)
+  override def processElement(input: Int): Future[String] =
+    getResource.request(input)
 }

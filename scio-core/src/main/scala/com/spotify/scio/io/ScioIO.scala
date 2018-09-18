@@ -68,7 +68,8 @@ object ScioIO {
         io.read(sc, params)
 
       override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
-        throw new IllegalStateException("read-only IO. This code should be unreachable")
+        throw new IllegalStateException(
+          "read-only IO. This code should be unreachable")
 
       override def tap(params: ReadP): Tap[T] =
         io.tap(params)

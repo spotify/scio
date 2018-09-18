@@ -19,10 +19,17 @@ package com.spotify.scio.coders.serializers
 
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
-import org.joda.time.{LocalDate, LocalDateTime, LocalTime, DateTime, DateTimeZone}
+import org.joda.time.{
+  DateTime,
+  DateTimeZone,
+  LocalDate,
+  LocalDateTime,
+  LocalTime
+}
 import org.joda.time.chrono.ISOChronology
 
-private[coders] class JodaLocalDateTimeSerializer extends Serializer[LocalDateTime] {
+private[coders] class JodaLocalDateTimeSerializer
+    extends Serializer[LocalDateTime] {
   setImmutable(true)
 
   def write(kryo: Kryo, output: Output, ldt: LocalDateTime): Unit = {
@@ -37,8 +44,10 @@ private[coders] class JodaLocalDateTimeSerializer extends Serializer[LocalDateTi
     }
   }
 
-  def read(kryo: Kryo, input: Input, tpe: Class[LocalDateTime]): LocalDateTime = {
-    val year = input.readInt(/*optimizePositive=*/ false)
+  def read(kryo: Kryo,
+           input: Input,
+           tpe: Class[LocalDateTime]): LocalDateTime = {
+    val year = input.readInt( /*optimizePositive=*/ false)
     val month = input.readByte().toInt
     val day = input.readByte().toInt
 
@@ -64,11 +73,9 @@ private[coders] class JodaLocalTimeSerializer extends Serializer[LocalTime] {
     }
   }
 
-  def read(kryo: Kryo, input: Input, tpe: Class[LocalTime]): LocalTime = {
-    LocalTime.fromMillisOfDay(input.readInt(/*optimizePositive=*/ false))
-  }
+  def read(kryo: Kryo, input: Input, tpe: Class[LocalTime]): LocalTime =
+    LocalTime.fromMillisOfDay(input.readInt( /*optimizePositive=*/ false))
 }
-
 
 private[coders] class JodaLocalDateSerializer extends Serializer[LocalDate] {
   setImmutable(true)
@@ -85,7 +92,7 @@ private[coders] class JodaLocalDateSerializer extends Serializer[LocalDate] {
   }
 
   def read(kryo: Kryo, input: Input, tpe: Class[LocalDate]): LocalDate = {
-    val year = input.readInt(/*optimizePositive=*/ false)
+    val year = input.readInt( /*optimizePositive=*/ false)
     val month = input.readByte().toInt
     val day = input.readByte().toInt
 
@@ -104,6 +111,6 @@ private[coders] class JodaDateTimeSerializer extends Serializer[DateTime] {
   def read(kryo: Kryo, input: Input, tpe: Class[DateTime]): DateTime = {
     val millis = input.readLong()
     val zone = DateTimeZone.forID(input.readString())
-    new DateTime(millis,zone)
+    new DateTime(millis, zone)
   }
 }

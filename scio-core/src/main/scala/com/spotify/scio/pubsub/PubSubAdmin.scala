@@ -19,7 +19,13 @@ package com.spotify.scio.pubsub
 
 import com.google.pubsub.v1.PublisherGrpc.PublisherBlockingStub
 import com.google.pubsub.v1.SubscriberGrpc.SubscriberBlockingStub
-import com.google.pubsub.v1.{GetTopicRequest, PublisherGrpc, SubscriberGrpc, Subscription, Topic}
+import com.google.pubsub.v1.{
+  GetTopicRequest,
+  PublisherGrpc,
+  SubscriberGrpc,
+  Subscription,
+  Topic
+}
 import io.grpc.ManagedChannel
 import io.grpc.auth.MoreCallCredentials
 import io.grpc.netty.{GrpcSslContexts, NegotiationType, NettyChannelBuilder}
@@ -38,22 +44,26 @@ object PubSubAdmin {
         .build
     }
 
-    def subscriber[A](pubsubOptions: PubsubOptions)(f: SubscriberBlockingStub => A): Try[A] = {
+    def subscriber[A](pubsubOptions: PubsubOptions)(
+      f: SubscriberBlockingStub => A): Try[A] = {
       val channel = newChannel(pubsubOptions)
       val client = SubscriberGrpc
         .newBlockingStub(channel)
-        .withCallCredentials(MoreCallCredentials.from(pubsubOptions.getGcpCredential))
+        .withCallCredentials(
+          MoreCallCredentials.from(pubsubOptions.getGcpCredential))
 
       val result = Try(f(client))
       channel.shutdownNow()
       result
     }
 
-    def publisher[A](pubsubOptions: PubsubOptions)(f: PublisherBlockingStub => A): Try[A] = {
+    def publisher[A](pubsubOptions: PubsubOptions)(
+      f: PublisherBlockingStub => A): Try[A] = {
       val channel = newChannel(pubsubOptions)
       val client = PublisherGrpc
         .newBlockingStub(channel)
-        .withCallCredentials(MoreCallCredentials.from(pubsubOptions.getGcpCredential))
+        .withCallCredentials(
+          MoreCallCredentials.from(pubsubOptions.getGcpCredential))
 
       val result = Try(f(client))
       channel.shutdownNow()

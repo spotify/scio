@@ -37,7 +37,8 @@ object TopWikipediaSessions {
 
     val samplingThreshold = 0.1
 
-    val input = sc.tableRowJsonFile(args.getOrElse("input", ExampleData.EXPORTED_WIKI_TABLE))
+    val input = sc.tableRowJsonFile(
+      args.getOrElse("input", ExampleData.EXPORTED_WIKI_TABLE))
     computeTopSessions(input, samplingThreshold).saveAsTextFile(args("output"))
 
     sc.close()
@@ -46,14 +47,14 @@ object TopWikipediaSessions {
   def computeTopSessions(input: SCollection[TableRow],
                          samplingThreshold: Double): SCollection[String] = {
     input
-      // Extract fields from `TableRow` JSON
+    // Extract fields from `TableRow` JSON
       .flatMap { row =>
         val username = row.getString("contributor_username")
         val timestamp = row.getLong("timestamp")
         if (username == null) {
           None
         } else {
-         Some((username, timestamp))
+          Some((username, timestamp))
         }
       }
       // Assign timestamp to each element
@@ -80,7 +81,9 @@ object TopWikipediaSessions {
       .flatMap { wv =>
         wv.value.map { kv =>
           // Format output with username, count and window start timestamp
-          val o = kv._1 + " : " + kv._2 + " : " + wv.window.asInstanceOf[IntervalWindow].start()
+          val o = kv._1 + " : " + kv._2 + " : " + wv.window
+            .asInstanceOf[IntervalWindow]
+            .start()
           wv.copy(value = o)
         }
       }

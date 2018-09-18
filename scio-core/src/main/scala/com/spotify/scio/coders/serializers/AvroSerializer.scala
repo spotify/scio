@@ -33,8 +33,10 @@ private[coders] class GenericAvroSerializer extends KSerializer[GenericRecord] {
   private lazy val cache: MMap[String, AvroCoder[GenericRecord]] = MMap()
 
   private def getCoder(schemaStr: String): AvroCoder[GenericRecord] =
-    cache.getOrElseUpdate(schemaStr, AvroCoder.of(new Schema.Parser().parse(schemaStr)))
-  private def getCoder(schemaStr: String, schema: Schema): AvroCoder[GenericRecord] =
+    cache.getOrElseUpdate(schemaStr,
+                          AvroCoder.of(new Schema.Parser().parse(schemaStr)))
+  private def getCoder(schemaStr: String,
+                       schema: Schema): AvroCoder[GenericRecord] =
     cache.getOrElseUpdate(schemaStr, AvroCoder.of(schema))
 
   override def write(kryo: Kryo, out: Output, obj: GenericRecord): Unit = {
@@ -45,19 +47,23 @@ private[coders] class GenericAvroSerializer extends KSerializer[GenericRecord] {
     coder.encode(obj, out)
   }
 
-  override def read(kryo: Kryo, in: Input, cls: Class[GenericRecord]): GenericRecord = {
+  override def read(kryo: Kryo,
+                    in: Input,
+                    cls: Class[GenericRecord]): GenericRecord = {
     val coder = this.getCoder(in.readString())
     coder.decode(in)
   }
 
 }
 
-private[coders] class SpecificAvroSerializer[T <: SpecificRecordBase] extends KSerializer[T] {
+private[coders] class SpecificAvroSerializer[T <: SpecificRecordBase]
+    extends KSerializer[T] {
 
   private lazy val cache: MMap[Class[T], AvroCoder[T]] = MMap()
 
   private def getCoder(cls: Class[T]): AvroCoder[T] =
-    cache.getOrElseUpdate(cls,
+    cache.getOrElseUpdate(
+      cls,
       Try(cls.getMethod("getClassSchema").invoke(null).asInstanceOf[Schema])
         .map(AvroCoder.of(cls, _))
         .getOrElse(AvroCoder.of(cls)))

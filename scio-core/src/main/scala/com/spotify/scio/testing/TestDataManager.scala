@@ -34,8 +34,8 @@ private[scio] class TestInput(val m: Map[String, Iterable[_]]) {
       m.contains(key),
       s"Missing test input: $key, available: ${m.keys.mkString("[", ", ", "]")}")
     require(!s.contains(key),
-      s"There already exists test input for $key, currently " +
-        s"registered inputs: ${s.mkString("[", ", ", "]")}")
+            s"There already exists test input for $key, currently " +
+              s"registered inputs: ${s.mkString("[", ", ", "]")}")
     s.add(key)
     m(key).asInstanceOf[Iterable[T]]
   }
@@ -57,8 +57,8 @@ private[scio] class TestOutput(val m: Map[String, SCollection[_] => Unit]) {
       m.contains(key),
       s"Missing test output: $key, available: ${m.keys.mkString("[", ", ", "]")}")
     require(!s.contains(key),
-      s"There already exists test output for $key, currently " +
-        s"registered outputs: ${s.mkString("[", ", ", "]")}")
+            s"There already exists test output for $key, currently " +
+              s"registered outputs: ${s.mkString("[", ", ", "]")}")
     s.add(key)
     m(key)
   }
@@ -92,16 +92,19 @@ private[scio] object TestDataManager {
   private val closed = TrieMap.empty[String, Boolean]
   private val results = TrieMap.empty[String, ScioResult]
 
-  private def getValue[V](key: String, m: TrieMap[String, V], ioMsg: String): V = {
-    require(m.contains(key), s"Missing test data. Are you $ioMsg outside of JobTest?")
+  private def getValue[V](key: String,
+                          m: TrieMap[String, V],
+                          ioMsg: String): V = {
+    require(m.contains(key),
+            s"Missing test data. Are you $ioMsg outside of JobTest?")
     m(key)
   }
 
-  def getInput(testId: String)
-  : TestInput = getValue(testId, inputs, "reading input")
+  def getInput(testId: String): TestInput =
+    getValue(testId, inputs, "reading input")
 
-  def getOutput(testId: String)
-  : TestOutput = getValue(testId, outputs, "writing output")
+  def getOutput(testId: String): TestOutput =
+    getValue(testId, outputs, "writing output")
 
   def getDistCache(testId: String): TestDistCache =
     getValue(testId, distCaches, "using dist cache")
@@ -131,7 +134,8 @@ private[scio] object TestDataManager {
   }
 
   def ensureClosed(testId: String): Unit = {
-    require(closed(testId), "ScioContext was not closed. Did you forget close()?")
+    require(closed(testId),
+            "ScioContext was not closed. Did you forget close()?")
     closed -= testId
   }
 
@@ -140,5 +144,6 @@ private[scio] object TestDataManager {
 case class DistCacheIO[T](uri: String)
 
 object DistCacheIO {
-  def apply[T](uris: Seq[String]): DistCacheIO[T] = DistCacheIO(uris.mkString("\t"))
+  def apply[T](uris: Seq[String]): DistCacheIO[T] =
+    DistCacheIO(uris.mkString("\t"))
 }

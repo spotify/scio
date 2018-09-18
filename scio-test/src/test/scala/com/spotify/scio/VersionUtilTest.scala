@@ -39,19 +39,18 @@ class VersionUtilTest extends FlatSpec with Matchers {
   }
 
   private def verifyNewVersion(oldVer: String, newVer: String) =
-  VersionUtil.checkVersion(oldVer, Some(newVer)) shouldBe Seq(
-    s"A newer version of Scio is available: $oldVer -> $newVer")
+    VersionUtil.checkVersion(oldVer, Some(newVer)) shouldBe Seq(
+      s"A newer version of Scio is available: $oldVer -> $newVer")
 
   it should "warn about newer version" in {
-    val versions = Array(
-      "0.1.0",
-      "0.1.1-alpha1",
-      "0.1.1-alpha2",
-      "0.1.1-beta1",
-      "0.1.1-beta2",
-      "0.1.1-RC1",
-      "0.1.1-RC2",
-      "0.1.1")
+    val versions = Array("0.1.0",
+                         "0.1.1-alpha1",
+                         "0.1.1-alpha2",
+                         "0.1.1-beta1",
+                         "0.1.1-beta2",
+                         "0.1.1-RC1",
+                         "0.1.1-RC2",
+                         "0.1.1")
     for (i <- versions.indices) {
       VersionUtil.checkVersion(versions(i), Some(versions(i))) shouldBe Nil
       for (j <- (i + 1) until versions.length) {

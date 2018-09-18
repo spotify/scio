@@ -51,7 +51,8 @@ class MockBigQuery private (private val bq: BigQueryClient) {
   /**
    * Mock a BigQuery table. Each table can be mocked only once in a test class.
    */
-  def mockTable(original: String): MockTable = mockTable(BigQueryHelpers.parseTableSpec(original))
+  def mockTable(original: String): MockTable =
+    mockTable(BigQueryHelpers.parseTableSpec(original))
 
   /**
    * Mock a BigQuery table. Each table can be mocked only once in a test class.
@@ -71,17 +72,21 @@ class MockBigQuery private (private val bq: BigQueryClient) {
    * Get result of a live query against BigQuery service, substituting mocked tables with test
    * data.
    */
-  def queryResult(sqlQuery: String, flattenResults: Boolean = false): Seq[TableRow] = {
+  def queryResult(sqlQuery: String,
+                  flattenResults: Boolean = false): Seq[TableRow] = {
     val isLegacy = bq.isLegacySql(sqlQuery, flattenResults)
-    val mockQuery = mapping.foldLeft(sqlQuery){ case (q, (src, dst)) =>
-      q.replace(toTableSpec(src, isLegacy), toTableSpec(dst, isLegacy))
+    val mockQuery = mapping.foldLeft(sqlQuery) {
+      case (q, (src, dst)) =>
+        q.replace(toTableSpec(src, isLegacy), toTableSpec(dst, isLegacy))
     }
     try {
       bq.getQueryRows(mockQuery, flattenResults).toList
     } catch {
-      case e: GoogleJsonResponseException if new ApiErrorExtractor().itemNotFound(e) =>
+      case e: GoogleJsonResponseException
+          if new ApiErrorExtractor().itemNotFound(e) =>
         throw new RuntimeException(
-          "404 Not Found, this is most likely caused by missing source table or mock data", e)
+          "404 Not Found, this is most likely caused by missing source table or mock data",
+          e)
     }
   }
 
@@ -89,8 +94,9 @@ class MockBigQuery private (private val bq: BigQueryClient) {
    * Get result of a live query against BigQuery service, substituting mocked tables with test
    * data.
    */
-  def typedQueryResult[T <: HasAnnotation : ClassTag : TypeTag]
-  (sqlQuery: String, flattenResults: Boolean = false): Seq[T] = {
+  def typedQueryResult[T <: HasAnnotation: ClassTag: TypeTag](
+    sqlQuery: String,
+    flattenResults: Boolean = false): Seq[T] = {
     val bqt = BigQueryType[T]
     queryResult(sqlQuery, flattenResults).map(bqt.fromTableRow)
   }
@@ -121,9 +127,8 @@ class MockTable(private val bq: BigQueryClient,
     this.mocked = true
   }
 
-  private def writeRows(rows: Seq[TableRow]): Unit = {
+  private def writeRows(rows: Seq[TableRow]): Unit =
     bq.writeTableRows(temp, rows.toList, schema, WRITE_EMPTY, CREATE_IF_NEEDED)
-  }
 
   /**
    * Populate the table with mock data.
@@ -136,7 +141,8 @@ class MockTable(private val bq: BigQueryClient,
   /**
    * Populate the table with mock data.
    */
-  def withTypedData[T <: HasAnnotation : ClassTag : TypeTag](rows: Seq[T]): Unit = {
+  def withTypedData[T <: HasAnnotation: ClassTag: TypeTag](
+    rows: Seq[T]): Unit = {
     val bqt = BigQueryType[T]
     withData(rows.map(bqt.toTableRow))
   }
@@ -148,7 +154,8 @@ class MockTable(private val bq: BigQueryClient,
   def withSample(numRows: Int): Unit = {
     ensureUnique()
     val rows = bq.getTableRows(original).take(numRows).toList
-    require(rows.length == numRows, s"Sample size ${rows.length} != requested $numRows")
+    require(rows.length == numRows,
+            s"Sample size ${rows.length} != requested $numRows")
     writeRows(rows)
   }
 
@@ -159,9 +166,8 @@ class MockTable(private val bq: BigQueryClient,
   def withSample(minNumRows: Int, maxNumRows: Int): Unit = {
     ensureUnique()
     val rows = bq.getTableRows(original).take(maxNumRows).toList
-    require(
-      rows.length >= minNumRows && rows.length <= maxNumRows,
-      s"Sample size ${rows.length} < requested minimal $minNumRows")
+    require(rows.length >= minNumRows && rows.length <= maxNumRows,
+            s"Sample size ${rows.length} < requested minimal $minNumRows")
     writeRows(rows)
   }
 

@@ -30,14 +30,20 @@ import com.google.api.services.bigquery.{Bigquery, BigqueryScopes}
 import com.google.auth.Credentials
 import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.GoogleCredentials
-import com.google.cloud.hadoop.util.{ApiErrorExtractor, ChainingHttpRequestInitializer}
+import com.google.cloud.hadoop.util.{
+  ApiErrorExtractor,
+  ChainingHttpRequestInitializer
+}
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
+  CreateDisposition,
+  WriteDisposition
+}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.commons.io.FileUtils
@@ -74,7 +80,7 @@ private[scio] sealed trait BigQueryJob {
 private[scio] case class ExtractJob(destinationUris: List[String],
                                     jobReference: Option[JobReference],
                                     table: TableReference)
-  extends BigQueryJob {
+    extends BigQueryJob {
 
   val jobType = "Extract"
 }
@@ -83,7 +89,7 @@ private[scio] case class ExtractJob(destinationUris: List[String],
 private[scio] case class LoadJob(sources: List[String],
                                  jobReference: Option[JobReference],
                                  table: TableReference)
-  extends BigQueryJob {
+    extends BigQueryJob {
 
   val jobType = "Load"
 }
@@ -103,15 +109,15 @@ private[scio] trait QueryJob extends BigQueryJob {
 class BigQueryClient private (private val projectId: String,
                               _credentials: Credentials = null) { self =>
 
-  require(projectId != null && projectId.nonEmpty, "Invalid projectId. " +
-    "It should be a non-empty string")
+  require(projectId != null && projectId.nonEmpty,
+          "Invalid projectId. " +
+            "It should be a non-empty string")
 
   def this(projectId: String, secretFile: File) =
-    this(
-      projectId,
-      GoogleCredentials
-        .fromStream(new FileInputStream(secretFile))
-        .createScoped(BigQueryClient.SCOPES))
+    this(projectId,
+         GoogleCredentials
+           .fromStream(new FileInputStream(secretFile))
+           .createScoped(BigQueryClient.SCOPES))
 
   private lazy val credentials = Option(_credentials).getOrElse(
     GoogleCredentials.getApplicationDefault.createScoped(BigQueryClient.SCOPES))
@@ -126,13 +132,16 @@ class BigQueryClient private (private val projectId: String,
         }
       }
     )
-    new Bigquery.Builder(new NetHttpTransport, new JacksonFactory, requestInitializer)
+    new Bigquery.Builder(new NetHttpTransport,
+                         new JacksonFactory,
+                         requestInitializer)
       .setApplicationName("scio")
       .build()
   }
 
   private lazy val bqService = {
-    val options = PipelineOptionsFactory.create().as(classOf[beam.BigQueryOptions])
+    val options =
+      PipelineOptionsFactory.create().as(classOf[beam.BigQueryOptions])
     options.setProject(projectId)
     options.setGcpCredential(credentials)
 
@@ -144,14 +153,18 @@ class BigQueryClient private (private val projectId: String,
   private val TABLE_PREFIX = "scio_query"
   private val TIME_FORMATTER = DateTimeFormat.forPattern("yyyyMMddHHmmss")
   private val PERIOD_FORMATTER = new PeriodFormatterBuilder()
-    .appendHours().appendSuffix("h")
-    .appendMinutes().appendSuffix("m")
-    .appendSecondsWithOptionalMillis().appendSuffix("s")
+    .appendHours()
+    .appendSuffix("h")
+    .appendMinutes()
+    .appendSuffix("m")
+    .appendSecondsWithOptionalMillis()
+    .appendSuffix("s")
     .toFormatter
 
   private val STAGING_DATASET_PREFIX = "scio_bigquery_staging_"
   private val STAGING_DATASET_TABLE_EXPIRATION_MS = 86400000L
-  private val STAGING_DATASET_DESCRIPTION = "Staging dataset for temporary tables"
+  private val STAGING_DATASET_DESCRIPTION =
+    "Staging dataset for temporary tables"
 
   private val DEFAULT_LOCATION = "US"
 
@@ -182,30 +195,39 @@ class BigQueryClient private (private val projectId: String,
       val temp = temporaryTable(location)
 
       // Create temporary table view and get schema
-      logger.info(s"Creating temporary view ${beam.BigQueryHelpers.toTableSpec(temp)}")
+      logger.info(
+        s"Creating temporary view ${beam.BigQueryHelpers.toTableSpec(temp)}")
       val view = new ViewDefinition().setQuery(sqlQuery)
       val viewTable = new Table().setView(view).setTableReference(temp)
       val schema = bigquery
-        .tables().insert(temp.getProjectId, temp.getDatasetId, viewTable)
-        .execute().getSchema
+        .tables()
+        .insert(temp.getProjectId, temp.getDatasetId, viewTable)
+        .execute()
+        .getSchema
 
       // Delete temporary table
-      logger.info(s"Deleting temporary view ${beam.BigQueryHelpers.toTableSpec(temp)}")
-      bigquery.tables().delete(temp.getProjectId, temp.getDatasetId, temp.getTableId).execute()
+      logger.info(
+        s"Deleting temporary view ${beam.BigQueryHelpers.toTableSpec(temp)}")
+      bigquery
+        .tables()
+        .delete(temp.getProjectId, temp.getDatasetId, temp.getTableId)
+        .execute()
 
       schema
     } else {
       // Get query schema via dry-run
       logger.info("Getting SQL query schema with dry-run")
-      runQuery(
-        sqlQuery, null,
-        flattenResults = false, useLegacySql = false, dryRun = true)
-        .get.getStatistics.getQuery.getSchema
+      runQuery(sqlQuery,
+               null,
+               flattenResults = false,
+               useLegacySql = false,
+               dryRun = true).get.getStatistics.getQuery.getSchema
     }
   }
 
   /** Get rows from a query. */
-  def getQueryRows(sqlQuery: String, flattenResults: Boolean = false): Iterator[TableRow] = {
+  def getQueryRows(sqlQuery: String,
+                   flattenResults: Boolean = false): Iterator[TableRow] = {
     val queryJob = newQueryJob(sqlQuery, flattenResults)
     queryJob.waitForResult()
     getTableRows(queryJob.table)
@@ -216,30 +238,32 @@ class BigQueryClient private (private val projectId: String,
     getTableRows(beam.BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Get rows from a table. */
-  def getTableRows(table: TableReference): Iterator[TableRow] = new Iterator[TableRow] {
-    private val iterator = beam.PatchedBigQueryTableRowIterator.fromTable(table, bigquery)
-    private var _isOpen = false
-    private var _hasNext = false
-    private def init(): Unit = if (!_isOpen) {
-      iterator.open()
-      _isOpen = true
-      _hasNext = iterator.advance()
-    }
-    override def hasNext: Boolean = {
-      init()
-      _hasNext
-    }
-    override def next(): TableRow = {
-      init()
-      if (_hasNext) {
-        val r = iterator.getCurrent
+  def getTableRows(table: TableReference): Iterator[TableRow] =
+    new Iterator[TableRow] {
+      private val iterator =
+        beam.PatchedBigQueryTableRowIterator.fromTable(table, bigquery)
+      private var _isOpen = false
+      private var _hasNext = false
+      private def init(): Unit = if (!_isOpen) {
+        iterator.open()
+        _isOpen = true
         _hasNext = iterator.advance()
-        r
-      } else {
-        throw new NoSuchElementException
+      }
+      override def hasNext: Boolean = {
+        init()
+        _hasNext
+      }
+      override def next(): TableRow = {
+        init()
+        if (_hasNext) {
+          val r = iterator.getCurrent
+          _hasNext = iterator.advance()
+          r
+        } else {
+          throw new NoSuchElementException
+        }
       }
     }
-  }
 
   /** Get schema from a table. */
   def getTableSchema(tableSpec: String): TableSchema =
@@ -257,7 +281,8 @@ class BigQueryClient private (private val projectId: String,
 
   /** Get table metadata. */
   def getTable(table: TableReference): Table = {
-    val p = if (table.getProjectId == null) this.projectId else table.getProjectId
+    val p =
+      if (table.getProjectId == null) this.projectId else table.getProjectId
     bigquery.tables().get(p, table.getDatasetId, table.getTableId).execute()
   }
 
@@ -279,14 +304,16 @@ class BigQueryClient private (private val projectId: String,
    * Check if table exists. Returns `true` if table exists, `false` is table definitely does not
    * exist, throws in other cases (BigQuery exception, network issue etc.).
    */
-  def tableExists(table: TableReference): Boolean = try {
-    getTable(table)
-    true
-  } catch {
-    case e: GoogleJsonResponseException if e.getDetails.getErrors.get(0).getReason == "notFound" =>
-      false
-    case e: Throwable => throw e
-  }
+  def tableExists(table: TableReference): Boolean =
+    try {
+      getTable(table)
+      true
+    } catch {
+      case e: GoogleJsonResponseException
+          if e.getDetails.getErrors.get(0).getReason == "notFound" =>
+        false
+      case e: Throwable => throw e
+    }
 
   /**
    * Check if table exists. Returns `true` if table exists, `false` is table definitely does not
@@ -296,10 +323,11 @@ class BigQueryClient private (private val projectId: String,
     tableExists(beam.BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Deletes a table */
-  private[bigquery] def deleteTable(table: TableReference): Unit = {
-    bigquery.tables().delete(table.getProjectId, table.getDatasetId, table.getTableId)
+  private[bigquery] def deleteTable(table: TableReference): Unit =
+    bigquery
+      .tables()
+      .delete(table.getProjectId, table.getDatasetId, table.getTableId)
       .execute()
-  }
 
   /**
    * Make a query and save results to a destination table.
@@ -322,7 +350,9 @@ class BigQueryClient private (private val projectId: String,
     }
 
   /** Write rows to a table. */
-  def writeTableRows(table: TableReference, rows: List[TableRow], schema: TableSchema,
+  def writeTableRows(table: TableReference,
+                     rows: List[TableRow],
+                     schema: TableSchema,
                      writeDisposition: WriteDisposition,
                      createDisposition: CreateDisposition): Unit = {
     try {
@@ -337,12 +367,17 @@ class BigQueryClient private (private val projectId: String,
   }
 
   /** Write rows to a table. */
-  def writeTableRows(tableSpec: String, rows: List[TableRow], schema: TableSchema,
-                     writeDisposition: WriteDisposition = WRITE_EMPTY,
-                     createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =
-    writeTableRows(
-      beam.BigQueryHelpers.parseTableSpec(tableSpec),
-      rows, schema, writeDisposition, createDisposition)
+  def writeTableRows(
+    tableSpec: String,
+    rows: List[TableRow],
+    schema: TableSchema,
+    writeDisposition: WriteDisposition = WRITE_EMPTY,
+    createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =
+    writeTableRows(beam.BigQueryHelpers.parseTableSpec(tableSpec),
+                   rows,
+                   schema,
+                   writeDisposition,
+                   createDisposition)
 
   def createTable(table: Table): Unit =
     bqService.createTable(table)
@@ -380,8 +415,8 @@ class BigQueryClient private (private val projectId: String,
    * bq.getTypedRows[Row]("SELECT * FROM [publicdata:samples.gsod] LIMIT 1000")
    * }}}
    */
-  def getTypedRows[T <: HasAnnotation : TypeTag](newSource: String = null)
-  : Iterator[T] = {
+  def getTypedRows[T <: HasAnnotation: TypeTag](
+    newSource: String = null): Iterator[T] = {
     val bqt = BigQueryType[T]
     val rows = if (newSource == null) {
       // newSource is missing, T's companion object must have either table or query
@@ -390,11 +425,13 @@ class BigQueryClient private (private val projectId: String,
       } else if (bqt.isQuery) {
         self.getQueryRows(bqt.query.get)
       } else {
-        throw new IllegalArgumentException(s"Missing table or query field in companion object")
+        throw new IllegalArgumentException(
+          s"Missing table or query field in companion object")
       }
     } else {
       // newSource can be either table or query
-      val table = scala.util.Try(beam.BigQueryHelpers.parseTableSpec(newSource)).toOption
+      val table =
+        scala.util.Try(beam.BigQueryHelpers.parseTableSpec(newSource)).toOption
       if (table.isDefined) {
         self.getTableRows(table.get)
       } else {
@@ -408,32 +445,38 @@ class BigQueryClient private (private val projectId: String,
    * Write a List of rows to a BigQuery table. Note that element type `T` must be annotated with
    * [[BigQueryType]].
    */
-  def writeTypedRows[T <: HasAnnotation : TypeTag]
-  (table: TableReference, rows: List[T],
-   writeDisposition: WriteDisposition,
-   createDisposition: CreateDisposition): Unit = {
+  def writeTypedRows[T <: HasAnnotation: TypeTag](
+    table: TableReference,
+    rows: List[T],
+    writeDisposition: WriteDisposition,
+    createDisposition: CreateDisposition): Unit = {
     val bqt = BigQueryType[T]
-    self.writeTableRows(
-      table, rows.map(bqt.toTableRow), bqt.schema,
-      writeDisposition, createDisposition)
+    self.writeTableRows(table,
+                        rows.map(bqt.toTableRow),
+                        bqt.schema,
+                        writeDisposition,
+                        createDisposition)
   }
 
   /**
    * Write a List of rows to a BigQuery table. Note that element type `T` must be annotated with
    * [[BigQueryType]].
    */
-  def writeTypedRows[T <: HasAnnotation : TypeTag]
-  (tableSpec: String, rows: List[T],
-   writeDisposition: WriteDisposition = WRITE_EMPTY,
-   createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =
-    writeTypedRows(
-      beam.BigQueryHelpers.parseTableSpec(tableSpec), rows,
-      writeDisposition, createDisposition)
+  def writeTypedRows[T <: HasAnnotation: TypeTag](
+    tableSpec: String,
+    rows: List[T],
+    writeDisposition: WriteDisposition = WRITE_EMPTY,
+    createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =
+    writeTypedRows(beam.BigQueryHelpers.parseTableSpec(tableSpec),
+                   rows,
+                   writeDisposition,
+                   createDisposition)
 
   def createTypedTable[T <: HasAnnotation: TypeTag](table: Table): Unit =
     createTable(table.setSchema(BigQueryType[T].schema))
 
-  def createTypedTable[T <: HasAnnotation: TypeTag](table: TableReference): Unit =
+  def createTypedTable[T <: HasAnnotation: TypeTag](
+    table: TableReference): Unit =
     createTable(table, BigQueryType[T].schema)
 
   def createTypedTable[T <: HasAnnotation: TypeTag](tableSpec: String): Unit =
@@ -443,17 +486,20 @@ class BigQueryClient private (private val projectId: String,
   // Job execution
   // =======================================================================
 
-  private[scio] def newQueryJob(sqlQuery: String, flattenResults: Boolean): QueryJob = {
+  private[scio] def newQueryJob(sqlQuery: String,
+                                flattenResults: Boolean): QueryJob = {
     if (isCacheEnabled) {
       newCachedQueryJob(sqlQuery, flattenResults)
     } else {
       logger.info(s"BigQuery caching is disabled")
-      val tempTable = temporaryTable(extractLocation(sqlQuery).getOrElse(DEFAULT_LOCATION))
+      val tempTable = temporaryTable(
+        extractLocation(sqlQuery).getOrElse(DEFAULT_LOCATION))
       delayedQueryJob(sqlQuery, tempTable, flattenResults)
     }
   }
 
-  private[scio] def newCachedQueryJob(sqlQuery: String, flattenResults: Boolean): QueryJob = {
+  private[scio] def newCachedQueryJob(sqlQuery: String,
+                                      flattenResults: Boolean): QueryJob = {
     try {
       val sourceTimes = extractTables(sqlQuery)
         .map(t => BigInt(getTable(t).getLastModifiedTime))
@@ -461,7 +507,8 @@ class BigQueryClient private (private val projectId: String,
       val time = BigInt(getTable(temp).getLastModifiedTime)
       if (sourceTimes.forall(_ < time)) {
         logger.info(s"Cache hit for query: `$sqlQuery`")
-        logger.info(s"Existing destination table: ${beam.BigQueryHelpers.toTableSpec(temp)}")
+        logger.info(
+          s"Existing destination table: ${beam.BigQueryHelpers.toTableSpec(temp)}")
         new QueryJob {
           override def waitForResult(): Unit = {}
           override val jobReference: Option[JobReference] = None
@@ -470,17 +517,22 @@ class BigQueryClient private (private val projectId: String,
         }
       } else {
         logger.info(s"Cache invalid for query: `$sqlQuery`")
-        val newTemp = temporaryTable(extractLocation(sqlQuery).getOrElse(DEFAULT_LOCATION))
-        logger.info(s"New destination table: ${beam.BigQueryHelpers.toTableSpec(newTemp)}")
+        val newTemp = temporaryTable(
+          extractLocation(sqlQuery).getOrElse(DEFAULT_LOCATION))
+        logger.info(
+          s"New destination table: ${beam.BigQueryHelpers.toTableSpec(newTemp)}")
         setCacheDestinationTable(sqlQuery, newTemp)
         delayedQueryJob(sqlQuery, newTemp, flattenResults)
       }
     } catch {
-      case NonFatal(e: GoogleJsonResponseException) if isInvalidQuery(e) => throw e
+      case NonFatal(e: GoogleJsonResponseException) if isInvalidQuery(e) =>
+        throw e
       case NonFatal(_) =>
-        val temp = temporaryTable(extractLocation(sqlQuery).getOrElse(DEFAULT_LOCATION))
+        val temp = temporaryTable(
+          extractLocation(sqlQuery).getOrElse(DEFAULT_LOCATION))
         logger.info(s"Cache miss for query: `$sqlQuery`")
-        logger.info(s"New destination table: ${beam.BigQueryHelpers.toTableSpec(temp)}")
+        logger.info(
+          s"New destination table: ${beam.BigQueryHelpers.toTableSpec(temp)}")
         setCacheDestinationTable(sqlQuery, temp)
         delayedQueryJob(sqlQuery, temp, flattenResults)
     }
@@ -492,9 +544,11 @@ class BigQueryClient private (private val projectId: String,
       bigquery.datasets().get(projectId, datasetId).execute()
       logger.info(s"Staging dataset $projectId:$datasetId already exists")
     } catch {
-      case e: GoogleJsonResponseException if new ApiErrorExtractor().itemNotFound(e) =>
+      case e: GoogleJsonResponseException
+          if new ApiErrorExtractor().itemNotFound(e) =>
         logger.info(s"Creating staging dataset $projectId:$datasetId")
-        val dsRef = new DatasetReference().setProjectId(projectId).setDatasetId(datasetId)
+        val dsRef =
+          new DatasetReference().setProjectId(projectId).setDatasetId(datasetId)
         val ds = new Dataset()
           .setDatasetReference(dsRef)
           .setDefaultTableExpirationMs(STAGING_DATASET_TABLE_EXPIRATION_MS)
@@ -519,29 +573,35 @@ class BigQueryClient private (private val projectId: String,
 
   private def delayedQueryJob(sqlQuery: String,
                               destinationTable: TableReference,
-                              flattenResults: Boolean): QueryJob = new QueryJob {
-    override def waitForResult(): Unit = self.waitForJobs(this)
-    override lazy val jobReference: Option[JobReference] = {
-      val location = extractLocation(sqlQuery).getOrElse(DEFAULT_LOCATION)
-      prepareStagingDataset(location)
-      val isLegacy = isLegacySql(sqlQuery, flattenResults)
-      if (isLegacy) {
-        logger.info(s"Executing legacy query: `$sqlQuery`")
-      } else {
-        logger.info(s"Executing SQL query: `$sqlQuery`")
+                              flattenResults: Boolean): QueryJob =
+    new QueryJob {
+      override def waitForResult(): Unit = self.waitForJobs(this)
+      override lazy val jobReference: Option[JobReference] = {
+        val location = extractLocation(sqlQuery).getOrElse(DEFAULT_LOCATION)
+        prepareStagingDataset(location)
+        val isLegacy = isLegacySql(sqlQuery, flattenResults)
+        if (isLegacy) {
+          logger.info(s"Executing legacy query: `$sqlQuery`")
+        } else {
+          logger.info(s"Executing SQL query: `$sqlQuery`")
+        }
+        val tryRun = runQuery(sqlQuery,
+                              destinationTable,
+                              flattenResults,
+                              isLegacy,
+                              dryRun = false)
+        Some(tryRun.get.getJobReference)
       }
-      val tryRun = runQuery(sqlQuery, destinationTable, flattenResults, isLegacy, dryRun = false)
-      Some(tryRun.get.getJobReference)
+      override val query: String = sqlQuery
+      override val table: TableReference = destinationTable
     }
-    override val query: String = sqlQuery
-    override val table: TableReference = destinationTable
-  }
 
   // =======================================================================
   // Query handling
   // =======================================================================
 
-  private val dryRunCache: MMap[(String, Boolean, Boolean), Try[Job]] = MMap.empty
+  private val dryRunCache: MMap[(String, Boolean, Boolean), Try[Job]] =
+    MMap.empty
 
   private def runQuery(sqlQuery: String,
                        destinationTable: TableReference,
@@ -557,12 +617,17 @@ class BigQueryClient private (private val projectId: String,
         .setCreateDisposition("CREATE_IF_NEEDED")
         .setWriteDisposition("WRITE_EMPTY")
       if (!dryRun) {
-        queryConfig.setAllowLargeResults(true).setDestinationTable(destinationTable)
+        queryConfig
+          .setAllowLargeResults(true)
+          .setDestinationTable(destinationTable)
       }
-      val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(dryRun)
+      val jobConfig =
+        new JobConfiguration().setQuery(queryConfig).setDryRun(dryRun)
       val fullJobId = projectId + "-" + UUID.randomUUID().toString
-      val jobReference = new JobReference().setProjectId(projectId).setJobId(fullJobId)
-      val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
+      val jobReference =
+        new JobReference().setProjectId(projectId).setJobId(fullJobId)
+      val job =
+        new Job().setConfiguration(jobConfig).setJobReference(jobReference)
       bigquery.jobs().insert(projectId, job).execute()
     }
 
@@ -576,24 +641,25 @@ class BigQueryClient private (private val projectId: String,
   private def isInvalidQuery(e: GoogleJsonResponseException): Boolean =
     e.getDetails.getErrors.get(0).getReason == "invalidQuery"
 
-  private[scio] def isLegacySql(sqlQuery: String, flattenResults: Boolean): Boolean = {
+  private[scio] def isLegacySql(sqlQuery: String,
+                                flattenResults: Boolean): Boolean = {
     def dryRunQuery(useLegacySql: Boolean): Try[Job] =
       runQuery(sqlQuery, null, flattenResults, useLegacySql, dryRun = true)
 
     sqlQuery.trim.split("\n")(0).trim.toLowerCase match {
-      case "#legacysql" => true
+      case "#legacysql"   => true
       case "#standardsql" => false
-      case _ =>
-
+      case _              =>
         // dry run with SQL syntax first
         dryRunQuery(false) match {
-          case Success(_) => false
+          case Success(_)                                                   => false
           case Failure(e: GoogleJsonResponseException) if isInvalidQuery(e) =>
             // dry run with legacy syntax next
             dryRunQuery(true) match {
               case Success(_) =>
-                logger.warn("Legacy syntax is deprecated, use SQL syntax instead. " +
-                  "See https://cloud.google.com/bigquery/docs/reference/standard-sql/")
+                logger.warn(
+                  "Legacy syntax is deprecated, use SQL syntax instead. " +
+                    "See https://cloud.google.com/bigquery/docs/reference/standard-sql/")
                 logger.warn(s"Legacy query: `$sqlQuery`")
                 true
               case Failure(f) =>
@@ -612,10 +678,11 @@ class BigQueryClient private (private val projectId: String,
   /** Extract tables to be accessed by a query. */
   def extractTables(sqlQuery: String): Set[TableReference] = {
     val isLegacy = isLegacySql(sqlQuery, flattenResults = false)
-    val tryJob = runQuery(sqlQuery, null, flattenResults = false, isLegacy, dryRun = true)
+    val tryJob =
+      runQuery(sqlQuery, null, flattenResults = false, isLegacy, dryRun = true)
     Option(tryJob.get.getStatistics.getQuery.getReferencedTables) match {
       case Some(l) => l.asScala.toSet
-      case None => Set.empty
+      case None    => Set.empty
     }
   }
 
@@ -623,11 +690,13 @@ class BigQueryClient private (private val projectId: String,
   def extractLocation(sqlQuery: String): Option[String] = {
     val locations = extractTables(sqlQuery)
       .map(t => (t.getProjectId, t.getDatasetId))
-      .map { case (pId, dId) =>
-        val l = bigquery.datasets().get(pId, dId).execute().getLocation
-        if (l != null) l else DEFAULT_LOCATION
+      .map {
+        case (pId, dId) =>
+          val l = bigquery.datasets().get(pId, dId).execute().getLocation
+          if (l != null) l else DEFAULT_LOCATION
       }
-    require(locations.size <= 1, "Tables in the query must be in the same location")
+    require(locations.size <= 1,
+            "Tables in the query must be in the same location")
     locations.headOption
   }
 
@@ -651,26 +720,37 @@ class BigQueryClient private (private val projectId: String,
   private def setCacheSchema(key: String, schema: TableSchema): Unit =
     Files.write(schema.toPrettyString, schemaCacheFile(key), Charsets.UTF_8)
 
-  private def getCacheSchema(key: String): Option[TableSchema] = Try {
-    BigQueryUtil.parseSchema(scala.io.Source.fromFile(schemaCacheFile(key)).mkString)
-  }.toOption
+  private def getCacheSchema(key: String): Option[TableSchema] =
+    Try {
+      BigQueryUtil.parseSchema(
+        scala.io.Source.fromFile(schemaCacheFile(key)).mkString)
+    }.toOption
 
-  private def setCacheDestinationTable(key: String, table: TableReference): Unit =
-    Files.write(beam.BigQueryHelpers.toTableSpec(table), tableCacheFile(key), Charsets.UTF_8)
+  private def setCacheDestinationTable(key: String,
+                                       table: TableReference): Unit =
+    Files.write(beam.BigQueryHelpers.toTableSpec(table),
+                tableCacheFile(key),
+                Charsets.UTF_8)
 
-  private def getCacheDestinationTable(key: String): Option[TableReference] = Try {
-    beam.BigQueryHelpers.parseTableSpec(scala.io.Source.fromFile(tableCacheFile(key)).mkString)
-  }.toOption
+  private def getCacheDestinationTable(key: String): Option[TableReference] =
+    Try {
+      beam.BigQueryHelpers.parseTableSpec(
+        scala.io.Source.fromFile(tableCacheFile(key)).mkString)
+    }.toOption
 
   private def cacheFile(key: String, suffix: String): File = {
     val cacheDir = BigQueryClient.cacheDirectory
-    val filename = Hashing.murmur3_128().hashString(key, Charsets.UTF_8).toString + suffix
+    val filename = Hashing
+      .murmur3_128()
+      .hashString(key, Charsets.UTF_8)
+      .toString + suffix
     val cacheFile = new File(s"$cacheDir/$filename")
     Files.createParentDirs(cacheFile)
     cacheFile
   }
 
-  private def schemaCacheFile(key: String): File = cacheFile(key, ".schema.json")
+  private def schemaCacheFile(key: String): File =
+    cacheFile(key, ".schema.json")
 
   private def tableCacheFile(key: String): File = cacheFile(key, ".table.txt")
 
@@ -685,12 +765,14 @@ class BigQueryClient private (private val projectId: String,
                        fieldDelimiter: Option[String] = None,
                        printHeader: Option[Boolean] = None): Unit = {
 
-    exportTable(sourceTable = sourceTable,
+    exportTable(
+      sourceTable = sourceTable,
       destinationUris = destinationUris,
       format = "CSV",
       gzipCompression = gzipCompression,
       fieldDelimiter = fieldDelimiter,
-      printHeader = printHeader)
+      printHeader = printHeader
+    )
   }
 
   /** Export a table as Json */
@@ -699,9 +781,9 @@ class BigQueryClient private (private val projectId: String,
                         gzipCompression: Boolean = false): Unit = {
 
     exportTable(sourceTable = sourceTable,
-      destinationUris = destinationUris,
-      format = "NEWLINE_DELIMITED_JSON",
-      gzipCompression = gzipCompression)
+                destinationUris = destinationUris,
+                format = "NEWLINE_DELIMITED_JSON",
+                gzipCompression = gzipCompression)
   }
 
   /** Export a table as Avro */
@@ -710,9 +792,9 @@ class BigQueryClient private (private val projectId: String,
                         gzipCompression: Boolean = false): Unit = {
 
     exportTable(sourceTable = sourceTable,
-      destinationUris = destinationUris,
-      format = "AVRO",
-      gzipCompression = gzipCompression)
+                destinationUris = destinationUris,
+                format = "AVRO",
+                gzipCompression = gzipCompression)
   }
 
   private def exportTable(sourceTable: String,
@@ -737,10 +819,13 @@ class BigQueryClient private (private val projectId: String,
       .setExtract(jobConfigExtract)
 
     val fullJobId = projectId + "-" + UUID.randomUUID().toString
-    val jobReference = new JobReference().setProjectId(projectId).setJobId(fullJobId)
-    val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
+    val jobReference =
+      new JobReference().setProjectId(projectId).setJobId(fullJobId)
+    val job =
+      new Job().setConfiguration(jobConfig).setJobReference(jobReference)
 
-    logger.info(s"Extracting table $sourceTable to ${destinationUris.mkString(", ")}")
+    logger.info(
+      s"Extracting table $sourceTable to ${destinationUris.mkString(", ")}")
 
     bigquery.jobs().insert(projectId, job).execute()
 
@@ -770,13 +855,23 @@ class BigQueryClient private (private val projectId: String,
                        ignoreUnknownValues: Boolean = false,
                        encoding: Option[String] = None): TableReference = {
 
-    loadTable(sources = sources, sourceFormat = "CSV", destinationTable = destinationTable,
-      createDisposition = createDisposition, writeDisposition = writeDisposition,
-      schema = schema, autodetect = Some(autodetect), allowJaggedRows = Some(allowJaggedRows),
-      allowQuotedNewLines = Some(allowQuotedNewLines), quote = quote,
-      maxBadRecords = maxBadRecords, skipLeadingRows = Some(skipLeadingRows),
+    loadTable(
+      sources = sources,
+      sourceFormat = "CSV",
+      destinationTable = destinationTable,
+      createDisposition = createDisposition,
+      writeDisposition = writeDisposition,
+      schema = schema,
+      autodetect = Some(autodetect),
+      allowJaggedRows = Some(allowJaggedRows),
+      allowQuotedNewLines = Some(allowQuotedNewLines),
+      quote = quote,
+      maxBadRecords = maxBadRecords,
+      skipLeadingRows = Some(skipLeadingRows),
       fieldDelimiter = fieldDelimiter,
-      ignoreUnknownValues = Some(ignoreUnknownValues), encoding = encoding)
+      ignoreUnknownValues = Some(ignoreUnknownValues),
+      encoding = encoding
+    )
   }
 
   def loadTableFromJson(sources: List[String],
@@ -789,12 +884,18 @@ class BigQueryClient private (private val projectId: String,
                         ignoreUnknownValues: Boolean = false,
                         encoding: Option[String] = None): TableReference = {
 
-    loadTable(sources = sources, sourceFormat = "NEWLINE_DELIMITED_JSON",
+    loadTable(
+      sources = sources,
+      sourceFormat = "NEWLINE_DELIMITED_JSON",
       destinationTable = destinationTable,
-      createDisposition = createDisposition, writeDisposition = writeDisposition,
-      schema = schema, autodetect = Some(autodetect),
+      createDisposition = createDisposition,
+      writeDisposition = writeDisposition,
+      schema = schema,
+      autodetect = Some(autodetect),
       maxBadRecords = maxBadRecords,
-      ignoreUnknownValues = Some(ignoreUnknownValues), encoding = encoding)
+      ignoreUnknownValues = Some(ignoreUnknownValues),
+      encoding = encoding
+    )
   }
 
   def loadTableFromAvro(sources: List[String],
@@ -805,27 +906,34 @@ class BigQueryClient private (private val projectId: String,
                         maxBadRecords: Int = 0,
                         encoding: Option[String] = None): TableReference = {
 
-    loadTable(sources = sources, sourceFormat = "AVRO",
+    loadTable(
+      sources = sources,
+      sourceFormat = "AVRO",
       destinationTable = destinationTable,
-      createDisposition = createDisposition, writeDisposition = writeDisposition,
-      schema = schema, maxBadRecords = maxBadRecords, encoding = encoding)
+      createDisposition = createDisposition,
+      writeDisposition = writeDisposition,
+      schema = schema,
+      maxBadRecords = maxBadRecords,
+      encoding = encoding
+    )
   }
 
-  private def loadTable(sources: List[String],
-                        sourceFormat: String,
-                        destinationTable: String,
-                        createDisposition: CreateDisposition,
-                        writeDisposition: WriteDisposition,
-                        schema: Option[TableSchema],
-                        autodetect: Option[Boolean] = None,
-                        maxBadRecords: Int,
-                        encoding: Option[String],
-                        allowJaggedRows: Option[Boolean] = None,
-                        allowQuotedNewLines: Option[Boolean] = None,
-                        quote: Option[String] = None,
-                        skipLeadingRows: Option[Int] = None,
-                        fieldDelimiter: Option[String] = None,
-                        ignoreUnknownValues: Option[Boolean] = None): TableReference = {
+  private def loadTable(
+    sources: List[String],
+    sourceFormat: String,
+    destinationTable: String,
+    createDisposition: CreateDisposition,
+    writeDisposition: WriteDisposition,
+    schema: Option[TableSchema],
+    autodetect: Option[Boolean] = None,
+    maxBadRecords: Int,
+    encoding: Option[String],
+    allowJaggedRows: Option[Boolean] = None,
+    allowQuotedNewLines: Option[Boolean] = None,
+    quote: Option[String] = None,
+    skipLeadingRows: Option[Int] = None,
+    fieldDelimiter: Option[String] = None,
+    ignoreUnknownValues: Option[Boolean] = None): TableReference = {
 
     val tableRef = beam.BigQueryHelpers.parseTableSpec(destinationTable)
 
@@ -851,10 +959,13 @@ class BigQueryClient private (private val projectId: String,
       .setLoad(jobConfigLoad)
 
     val fullJobId = projectId + "-" + UUID.randomUUID().toString
-    val jobReference = new JobReference().setProjectId(projectId).setJobId(fullJobId)
-    val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
+    val jobReference =
+      new JobReference().setProjectId(projectId).setJobId(fullJobId)
+    val job =
+      new Job().setConfiguration(jobConfig).setJobReference(jobReference)
 
-    logger.info(s"Loading data into $destinationTable from ${sources.mkString(", ")}")
+    logger.info(
+      s"Loading data into $destinationTable from ${sources.mkString(", ")}")
 
     bigquery.jobs().insert(projectId, job).execute()
 
@@ -875,12 +986,11 @@ class BigQueryClient private (private val projectId: String,
   /** Wait for all jobs to finish. */
   private[scio] def waitForJobs(jobs: BigQueryJob*): Unit = {
     val numTotal = jobs.size
-    var pendingJobs = jobs.flatMap {
-      job =>
-        job.jobReference match {
-          case Some(reference) => Some((job, reference))
-          case None => None
-        }
+    var pendingJobs = jobs.flatMap { job =>
+      job.jobReference match {
+        case Some(reference) => Some((job, reference))
+        case None            => None
+      }
     }
 
     while (pendingJobs.nonEmpty) {
@@ -924,28 +1034,35 @@ class BigQueryClient private (private val projectId: String,
 
     bqJob match {
       case _: ExtractJob =>
-        val destinationFileCount = stats.getExtract.getDestinationUriFileCounts
-          .asScala.reduce(_ + _)
+        val destinationFileCount =
+          stats.getExtract.getDestinationUriFileCounts.asScala.reduce(_ + _)
 
         logger.info(s"Total destination file count: $destinationFileCount")
 
       case _: LoadJob =>
-        val inputFileBytes = FileUtils.byteCountToDisplaySize(stats.getLoad.getInputFileBytes)
-        val outputBytes = FileUtils.byteCountToDisplaySize(stats.getLoad.getOutputBytes)
+        val inputFileBytes =
+          FileUtils.byteCountToDisplaySize(stats.getLoad.getInputFileBytes)
+        val outputBytes =
+          FileUtils.byteCountToDisplaySize(stats.getLoad.getOutputBytes)
         val outputRows = stats.getLoad.getOutputRows
-        logger.info(s"Input file bytes: $inputFileBytes, output bytes: $outputBytes, " +
-          s"output rows: $outputRows")
+        logger.info(
+          s"Input file bytes: $inputFileBytes, output bytes: $outputBytes, " +
+            s"output rows: $outputRows")
 
       case queryJob: QueryJob =>
         logger.info(s"Query: `${queryJob.query}`")
-        val bytes = FileUtils.byteCountToDisplaySize(stats.getQuery.getTotalBytesProcessed)
+        val bytes = FileUtils.byteCountToDisplaySize(
+          stats.getQuery.getTotalBytesProcessed)
         val cacheHit = stats.getQuery.getCacheHit
         logger.info(s"Total bytes processed: $bytes, cache hit: $cacheHit")
     }
 
-    val elapsed = PERIOD_FORMATTER.print(new Period(stats.getEndTime - stats.getCreationTime))
-    val pending = PERIOD_FORMATTER.print(new Period(stats.getStartTime - stats.getCreationTime))
-    val execution = PERIOD_FORMATTER.print(new Period(stats.getEndTime - stats.getStartTime))
+    val elapsed = PERIOD_FORMATTER.print(
+      new Period(stats.getEndTime - stats.getCreationTime))
+    val pending = PERIOD_FORMATTER.print(
+      new Period(stats.getStartTime - stats.getCreationTime))
+    val execution =
+      PERIOD_FORMATTER.print(new Period(stats.getEndTime - stats.getStartTime))
     logger.info(s"Elapsed: $elapsed, pending: $pending, execution: $execution")
   }
 }
@@ -1039,14 +1156,19 @@ object BigQueryClient {
   def apply(project: String, secretFile: File): BigQueryClient =
     new BigQueryClient(project, secretFile)
 
-  private def isCacheEnabled: Boolean = Option(sys.props(CACHE_ENABLED_KEY))
-    .flatMap(x => Try(x.toBoolean).toOption).getOrElse(CACHE_ENABLED_DEFAULT)
+  private def isCacheEnabled: Boolean =
+    Option(sys.props(CACHE_ENABLED_KEY))
+      .flatMap(x => Try(x.toBoolean).toOption)
+      .getOrElse(CACHE_ENABLED_DEFAULT)
 
-  private def cacheDirectory: String = getPropOrElse(CACHE_DIRECTORY_KEY, CACHE_DIRECTORY_DEFAULT)
+  private def cacheDirectory: String =
+    getPropOrElse(CACHE_DIRECTORY_KEY, CACHE_DIRECTORY_DEFAULT)
 
-  private def connectTimeoutMs: Option[Int] = Option(sys.props(CONNECT_TIMEOUT_MS_KEY)).map(_.toInt)
+  private def connectTimeoutMs: Option[Int] =
+    Option(sys.props(CONNECT_TIMEOUT_MS_KEY)).map(_.toInt)
 
-  private def readTimeoutMs: Option[Int] = Option(sys.props(READ_TIMEOUT_MS_KEY)).map(_.toInt)
+  private def readTimeoutMs: Option[Int] =
+    Option(sys.props(READ_TIMEOUT_MS_KEY)).map(_.toInt)
 
   private def priority: Option[String] = Option(sys.props(PRIORITY_KEY))
 

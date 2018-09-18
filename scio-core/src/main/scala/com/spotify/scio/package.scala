@@ -37,7 +37,8 @@ package object scio {
    * Wait for [[com.spotify.scio.io.Tap Tap]] to be available and get Tap reference from `Future`.
    */
   implicit class WaitableFutureTap[T](self: Future[Tap[T]]) {
-    def waitForResult(atMost: Duration = Duration.Inf): Tap[T] = Await.result(self, atMost)
+    def waitForResult(atMost: Duration = Duration.Inf): Tap[T] =
+      Await.result(self, atMost)
   }
 
   /**
@@ -62,8 +63,9 @@ package object scio {
   /** [[com.twitter.algebird.Monoid Monoid]] for `Array[Double]`. */
   implicit val doubleArrayMon: Monoid[Array[Double]] = new ArrayMonoid[Double]
 
-  private class ArrayMonoid[@specialized(Int, Long, Float, Double) T : ClassTag : Numeric]
-    extends Monoid[Array[T]]{
+  private class ArrayMonoid[
+    @specialized(Int, Long, Float, Double) T: ClassTag: Numeric]
+      extends Monoid[Array[T]] {
 
     private val num = implicitly[Numeric[T]]
 

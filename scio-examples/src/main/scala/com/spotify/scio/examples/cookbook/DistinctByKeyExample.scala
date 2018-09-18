@@ -39,19 +39,20 @@ object DistinctByKeyExample {
     val minWordLength = 9
 
     // Schema for result BigQuery table
-    val schema = new TableSchema().setFields(List(
-      new TableFieldSchema().setName("word").setType("STRING"),
-      new TableFieldSchema().setName("reference_play").setType("STRING")
-    ).asJava)
+    val schema = new TableSchema().setFields(
+      List(
+        new TableFieldSchema().setName("word").setType("STRING"),
+        new TableFieldSchema().setName("reference_play").setType("STRING")
+      ).asJava)
 
     // Open a BigQuery table as a `SCollection[TableRow]`
     sc.bigQueryTable(args.getOrElse("input", ExampleData.SHAKESPEARE_TABLE))
       // Extract words and corresponding play names
       .flatMap { row =>
-      val playName = row.getString("corpus")
-      val word = row.getString("word")
-      if (word.length > minWordLength) Some((word, playName)) else None
-    }
+        val playName = row.getString("corpus")
+        val word = row.getString("word")
+        if (word.length > minWordLength) Some((word, playName)) else None
+      }
       // Select any one play where the word appears
       .distinctByKey
       // Map `(String, String)` tuples into result `TableRow`s

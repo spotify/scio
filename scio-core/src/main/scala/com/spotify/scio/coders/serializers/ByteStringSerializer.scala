@@ -23,11 +23,12 @@ import com.google.protobuf.ByteString
 import com.twitter.chill.KSerializer
 
 private[coders] class ByteStringSerializer extends KSerializer[ByteString] {
-  override def read(kryo: Kryo, input: Input, tpe: Class[ByteString]): ByteString = {
+  override def read(kryo: Kryo,
+                    input: Input,
+                    tpe: Class[ByteString]): ByteString = {
     val n = input.readInt()
     ByteString.copyFrom(input.readBytes(n))
   }
-
 
   override def write(kryo: Kryo, output: Output, byteStr: ByteString): Unit = {
     val len = byteStr.size

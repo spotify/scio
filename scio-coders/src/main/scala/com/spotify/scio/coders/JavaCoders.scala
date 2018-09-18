@@ -18,16 +18,16 @@
 package com.spotify.scio.coders
 
 import org.apache.beam.sdk.{coders => bcoders}
-import org.apache.beam.sdk.coders.{ Coder => _, _}
+import org.apache.beam.sdk.coders.{Coder => _, _}
 import org.apache.beam.sdk.values.KV
 import java.nio.ByteBuffer
-import java.io.{OutputStream, InputStream}
+import java.io.{InputStream, OutputStream}
 
 final class ByteBufferCoder private[coders] () extends AtomicCoder[ByteBuffer] {
   val bac = ByteArrayCoder.of()
   def encode(value: ByteBuffer, os: OutputStream): Unit = {
     val array =
-      if(value.hasArray) {
+      if (value.hasArray) {
         value.array()
       } else {
         value.clear()
@@ -50,10 +50,13 @@ final class ByteBufferCoder private[coders] () extends AtomicCoder[ByteBuffer] {
 trait JavaCoders {
 
   implicit def uriCoder: Coder[java.net.URI] =
-    Coder.xmap(Coder.beam(StringUtf8Coder.of()))(s => new java.net.URI(s), _.toString)
+    Coder.xmap(Coder.beam(StringUtf8Coder.of()))(s => new java.net.URI(s),
+                                                 _.toString)
 
   implicit def pathCoder: Coder[java.nio.file.Path] =
-    Coder.xmap(Coder.beam(StringUtf8Coder.of()))(s => java.nio.file.Paths.get(s), _.toString)
+    Coder.xmap(Coder.beam(StringUtf8Coder.of()))(
+      s => java.nio.file.Paths.get(s),
+      _.toString)
 
   import java.lang.{Iterable => jIterable}
   implicit def jIterableCoder[T](implicit c: Coder[T]): Coder[jIterable[T]] =
@@ -66,38 +69,52 @@ trait JavaCoders {
       Coder.beam(bcoders.ListCoder.of(bc))
     }
 
-  implicit def jMapCoder[K, V](implicit ck: Coder[K], cv: Coder[V]): Coder[java.util.Map[K, V]] =
+  implicit def jMapCoder[K, V](implicit ck: Coder[K],
+                               cv: Coder[V]): Coder[java.util.Map[K, V]] =
     Coder.transform(ck) { bk =>
       Coder.transform(cv) { bv =>
         Coder.beam(bcoders.MapCoder.of(bk, bv))
       }
     }
 
-  private def fromScalaCoder[J <: java.lang.Number, S <: AnyVal](coder: Coder[S]): Coder[J] =
+  private def fromScalaCoder[J <: java.lang.Number, S <: AnyVal](
+    coder: Coder[S]): Coder[J] =
     coder.asInstanceOf[Coder[J]]
 
-  implicit val jIntegerCoder: Coder[java.lang.Integer] = fromScalaCoder(Coder.intCoder)
-  implicit val jLongCoder: Coder[java.lang.Long] = fromScalaCoder(Coder.longCoder)
-  implicit val jDoubleCoder: Coder[java.lang.Double] = fromScalaCoder(Coder.doubleCoder)
+  implicit val jIntegerCoder: Coder[java.lang.Integer] = fromScalaCoder(
+    Coder.intCoder)
+  implicit val jLongCoder: Coder[java.lang.Long] = fromScalaCoder(
+    Coder.longCoder)
+  implicit val jDoubleCoder: Coder[java.lang.Double] = fromScalaCoder(
+    Coder.doubleCoder)
   // TODO: Byte, Float, Short
 
-  implicit def mutationCaseCoder: Coder[com.google.bigtable.v2.Mutation.MutationCase] = Coder.kryo
+  implicit def mutationCaseCoder
+    : Coder[com.google.bigtable.v2.Mutation.MutationCase] = Coder.kryo
   // implicit def mutationCoder: Coder[com.google.bigtable.v2.Mutation] = ???
 
-  import org.apache.beam.sdk.transforms.windowing.{IntervalWindow, BoundedWindow}
+  import org.apache.beam.sdk.transforms.windowing.{
+    BoundedWindow,
+    IntervalWindow
+  }
   implicit def intervalWindowCoder: Coder[IntervalWindow] =
     Coder.beam(IntervalWindow.getCoder())
 
-  implicit def boundedWindowCoder: Coder[BoundedWindow] = Coder.kryo[BoundedWindow]
+  implicit def boundedWindowCoder: Coder[BoundedWindow] =
+    Coder.kryo[BoundedWindow]
 
   implicit def serializableCoder: Coder[Serializable] = Coder.kryo[Serializable]
 
   // implicit def paneinfoCoder: Coder[PaneInfo] = ???
-  implicit def instantCoder: Coder[org.joda.time.Instant] = Coder.beam(InstantCoder.of())
-  implicit def tablerowCoder: Coder[com.google.api.services.bigquery.model.TableRow] =
+  implicit def instantCoder: Coder[org.joda.time.Instant] =
+    Coder.beam(InstantCoder.of())
+  implicit def tablerowCoder
+    : Coder[com.google.api.services.bigquery.model.TableRow] =
     Coder.beam(org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder.of())
-  implicit def messageCoder: Coder[org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage] =
-    Coder.beam(org.apache.beam.sdk.io.gcp.pubsub.PubsubMessageWithAttributesCoder.of())
+  implicit def messageCoder
+    : Coder[org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage] =
+    Coder.beam(
+      org.apache.beam.sdk.io.gcp.pubsub.PubsubMessageWithAttributesCoder.of())
 
   import java.nio.ByteBuffer
   implicit def byteBufferCoder: Coder[ByteBuffer] =

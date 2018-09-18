@@ -38,6 +38,7 @@ import scala.util.Try
 
 /** Represent a Beam runner specific result. */
 trait RunnerResult {
+
   /** Get a generic [[ScioResult]]. */
   def asScioResult: ScioResult
 }
@@ -46,13 +47,15 @@ trait RunnerResult {
 abstract class ScioResult private[scio] (val internal: PipelineResult) {
 
   /** Get a Beam runner specific result. */
-  def as[T <: RunnerResult : ClassTag]: T = {
+  def as[T <: RunnerResult: ClassTag]: T = {
     val cls = ScioUtil.classOf[T]
     try {
       cls.getConstructor(classOf[PipelineResult]).newInstance(internal)
     } catch {
       case e: Throwable =>
-        throw new RuntimeException(s"Failed to construct runner specific result $cls", e)
+        throw new RuntimeException(
+          s"Failed to construct runner specific result $cls",
+          e)
     }
   }
 
@@ -69,9 +72,9 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
   def getAwaitDuration: Duration = Duration.Inf
 
   /** Wait until the pipeline finishes. If timeout duration is exceeded and `cancelJob` is set,
-    * cancel the internal [[PipelineResult]]. */
-  def waitUntilFinish(duration: Duration = getAwaitDuration, cancelJob: Boolean = true):
-  ScioResult = {
+   * cancel the internal [[PipelineResult]]. */
+  def waitUntilFinish(duration: Duration = getAwaitDuration,
+                      cancelJob: Boolean = true): ScioResult = {
     try {
       Await.ready(finalState, duration)
     } catch {
@@ -79,7 +82,8 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
         if (cancelJob) {
           internal.cancel()
           throw new PipelineExecutionException(
-            new Exception(s"Job cancelled after exceeding timeout value $duration"))
+            new Exception(
+              s"Job cancelled after exceeding timeout value $duration"))
         }
     }
     this
@@ -89,12 +93,13 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
    * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
    * `FAILED`). Throw exception otherwise.
    */
-  def waitUntilDone(duration: Duration = getAwaitDuration, cancelJob: Boolean = true):
-  ScioResult = {
+  def waitUntilDone(duration: Duration = getAwaitDuration,
+                    cancelJob: Boolean = true): ScioResult = {
     waitUntilFinish(duration, cancelJob)
 
     if (!this.state.equals(State.DONE)) {
-      throw new PipelineExecutionException(new Exception(s"Job finished with state ${this.state}"))
+      throw new PipelineExecutionException(
+        new Exception(s"Job finished with state ${this.state}"))
     }
     this
   }
@@ -128,68 +133,85 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
 
     def mkDist(d: beam.DistributionResult): BeamDistribution = {
       val dist = Option(d).getOrElse(DistributionResult.IDENTITY_ELEMENT)
-      BeamDistribution(dist.getSum, dist.getCount, dist.getMin, dist.getMax, dist.getMean)
+      BeamDistribution(dist.getSum,
+                       dist.getCount,
+                       dist.getMin,
+                       dist.getMax,
+                       dist.getMean)
     }
     def mkGauge(g: beam.GaugeResult): BeamGauge = {
       val gauge = Option(g).getOrElse(GaugeResult.empty())
       BeamGauge(gauge.getValue, gauge.getTimestamp)
     }
-    val beamCounters = allCounters.map { case (k, v) =>
-      BeamMetric(k.getNamespace, k.getName, v)
+    val beamCounters = allCounters.map {
+      case (k, v) =>
+        BeamMetric(k.getNamespace, k.getName, v)
     }
-    val beamDistributions = allDistributions.map { case (k, v) =>
-      BeamMetric(k.getNamespace, k.getName,
-        MetricValue(mkDist(v.attempted), v.committed.map(mkDist)))
+    val beamDistributions = allDistributions.map {
+      case (k, v) =>
+        BeamMetric(k.getNamespace,
+                   k.getName,
+                   MetricValue(mkDist(v.attempted), v.committed.map(mkDist)))
     }
-    val beamGauges = allGauges.map { case (k, v) =>
-      BeamMetric(k.getNamespace, k.getName,
-        MetricValue(mkGauge(v.attempted), v.committed.map(mkGauge)))
+    val beamGauges = allGauges.map {
+      case (k, v) =>
+        BeamMetric(k.getNamespace,
+                   k.getName,
+                   MetricValue(mkGauge(v.attempted), v.committed.map(mkGauge)))
     }
     BeamMetrics(beamCounters, beamDistributions, beamGauges)
   }
 
   /** Retrieve aggregated value of a single counter from the pipeline. */
-  def counter(c: beam.Counter): MetricValue[Long] = getMetric(allCounters, c.getName)
+  def counter(c: beam.Counter): MetricValue[Long] =
+    getMetric(allCounters, c.getName)
 
   /** Retrieve aggregated value of a single distribution from the pipeline. */
   def distribution(d: beam.Distribution): MetricValue[beam.DistributionResult] =
     getMetric(allDistributions, d.getName)
 
   /** Retrieve latest value of a single gauge from the pipeline. */
-  def gauge(g: beam.Gauge): MetricValue[beam.GaugeResult] = getMetric(allGauges, g.getName)
+  def gauge(g: beam.Gauge): MetricValue[beam.GaugeResult] =
+    getMetric(allGauges, g.getName)
 
   /** Retrieve per step values of a single counter from the pipeline. */
   def counterAtSteps(c: beam.Counter): Map[String, MetricValue[Long]] =
     getMetric(allCountersAtSteps, c.getName)
 
   /** Retrieve per step values of a single distribution from the pipeline. */
-  def distributionAtSteps(d: beam.Distribution): Map[String, MetricValue[beam.DistributionResult]] =
+  def distributionAtSteps(
+    d: beam.Distribution): Map[String, MetricValue[beam.DistributionResult]] =
     getMetric(allDistributionsAtSteps, d.getName)
 
   /** Retrieve per step values of a single gauge from the pipeline. */
   def gaugeAtSteps(g: beam.Gauge): Map[String, MetricValue[beam.GaugeResult]] =
     getMetric(allGaugesAtSteps, g.getName)
 
-  private def getMetric[V](m: Map[beam.MetricName, V], k: beam.MetricName): V = m.get(k) match {
-    case Some(value) => value
-    case None =>
-      val e = new NoSuchElementException(
-        s"metric not found: $k, the metric might not have been accessed inside the pipeline")
-      throw e
-  }
+  private def getMetric[V](m: Map[beam.MetricName, V], k: beam.MetricName): V =
+    m.get(k) match {
+      case Some(value) => value
+      case None =>
+        val e = new NoSuchElementException(
+          s"metric not found: $k, the metric might not have been accessed inside the pipeline")
+        throw e
+    }
 
   /** Retrieve aggregated values of all counters from the pipeline. */
   lazy val allCounters: Map[beam.MetricName, MetricValue[Long]] =
     allCountersAtSteps.mapValues(reduceMetricValues[Long])
 
   /** Retrieve aggregated values of all distributions from the pipeline. */
-  lazy val allDistributions: Map[beam.MetricName, MetricValue[beam.DistributionResult]] = {
-    implicit val distributionResultSg = Semigroup.from[beam.DistributionResult] { (x, y) =>
-      beam.DistributionResult.create(
-        x.getSum + y.getSum, x.getCount + y.getCount,
-        math.min(x.getMin, y.getMin), math.max(x.getMax, y.getMax))
-    }
-    allDistributionsAtSteps.mapValues(reduceMetricValues[beam.DistributionResult])
+  lazy val allDistributions
+    : Map[beam.MetricName, MetricValue[beam.DistributionResult]] = {
+    implicit val distributionResultSg =
+      Semigroup.from[beam.DistributionResult] { (x, y) =>
+        beam.DistributionResult.create(x.getSum + y.getSum,
+                                       x.getCount + y.getCount,
+                                       math.min(x.getMin, y.getMin),
+                                       math.max(x.getMax, y.getMax))
+      }
+    allDistributionsAtSteps.mapValues(
+      reduceMetricValues[beam.DistributionResult])
   }
 
   /** Retrieve latest values of all gauges from the pipeline. */
@@ -202,38 +224,43 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
   }
 
   /** Retrieve per step values of all counters from the pipeline. */
-  lazy val allCountersAtSteps: Map[beam.MetricName, Map[String, MetricValue[Long]]] =
+  lazy val allCountersAtSteps
+    : Map[beam.MetricName, Map[String, MetricValue[Long]]] =
     metricsAtSteps(
-      internalMetrics.getCounters.asScala.asInstanceOf[Iterable[beam.MetricResult[Long]]])
+      internalMetrics.getCounters.asScala
+        .asInstanceOf[Iterable[beam.MetricResult[Long]]])
 
   /** Retrieve per step values of all distributions from the pipeline. */
   lazy val allDistributionsAtSteps
-  : Map[beam.MetricName, Map[String, MetricValue[beam.DistributionResult]]] =
+    : Map[beam.MetricName, Map[String, MetricValue[beam.DistributionResult]]] =
     metricsAtSteps(internalMetrics.getDistributions.asScala)
 
   /** Retrieve aggregated values of all gauges from the pipeline. */
-  lazy val allGaugesAtSteps: Map[beam.MetricName, Map[String, MetricValue[beam.GaugeResult]]] =
+  lazy val allGaugesAtSteps
+    : Map[beam.MetricName, Map[String, MetricValue[beam.GaugeResult]]] =
     metricsAtSteps(internalMetrics.getGauges.asScala)
 
-  private lazy val internalMetrics = internal.metrics.queryMetrics(
-    beam.MetricsFilter.builder().build())
+  private lazy val internalMetrics =
+    internal.metrics.queryMetrics(beam.MetricsFilter.builder().build())
 
   private def metricsAtSteps[T](results: Iterable[beam.MetricResult[T]])
-  : Map[beam.MetricName, Map[String, MetricValue[T]]] =
+    : Map[beam.MetricName, Map[String, MetricValue[T]]] =
     results
       .groupBy(_.getName)
       .mapValues { xs =>
         val m: Map[String, MetricValue[T]] = xs.map { r =>
           r.getStep -> MetricValue(r.getAttempted, Try(r.getCommitted).toOption)
-        } (scala.collection.breakOut)
+        }(scala.collection.breakOut)
         m
       }
 
-  private def reduceMetricValues[T: Semigroup](xs: Map[String, MetricValue[T]]) = {
+  private def reduceMetricValues[T: Semigroup](
+    xs: Map[String, MetricValue[T]]) = {
     val sg = Semigroup.from[MetricValue[T]] { (x, y) =>
       val sg = implicitly[Semigroup[T]]
       val sgO = implicitly[Semigroup[Option[T]]]
-      MetricValue(sg.plus(x.attempted, y.attempted), sgO.plus(x.committed, y.committed))
+      MetricValue(sg.plus(x.attempted, y.attempted),
+                  sgO.plus(x.committed, y.committed))
     }
     xs.values.reduce(sg.plus)
   }

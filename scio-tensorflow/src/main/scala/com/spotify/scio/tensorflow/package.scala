@@ -20,5 +20,6 @@ package com.spotify.scio
 import com.spotify.scio.coders.Coder
 
 package object tensorflow extends TensorFlowImplicits {
-  implicit def featureTypeCoder: Coder[org.tensorflow.metadata.v0.FeatureType] = Coder.kryo
+  implicit def featureTypeCoder: Coder[org.tensorflow.metadata.v0.FeatureType] =
+    Coder.kryo
 }

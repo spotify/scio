@@ -49,16 +49,22 @@ private[tensorflow] object TFSavedJob {
 
   def main(argv: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(argv)
-    val options = TensorFlowModel.Options.builder.tags(Collections.singletonList("serve")).build
-    val settings = sc.parallelize(List(Source.fromURL(args("settings")).getLines.mkString))
+    val options = TensorFlowModel.Options.builder
+      .tags(Collections.singletonList("serve"))
+      .build
+    val settings =
+      sc.parallelize(List(Source.fromURL(args("settings")).getLines.mkString))
 
     val collection =
-      sc.parallelize(List(Iris(Some(5.1), Some(3.5), Some(1.4), Some(0.2), Some("Iris-setosa"))))
+      sc.parallelize(List(
+        Iris(Some(5.1), Some(3.5), Some(1.4), Some(0.2), Some("Iris-setosa"))))
 
     Spec
       .extractWithSettings(collection, settings)
       .featureValues[Example]
-      .predict(args("savedModelUri"), Seq("linear/head/predictions/class_ids"), options) { e =>
+      .predict(args("savedModelUri"),
+               Seq("linear/head/predictions/class_ids"),
+               options) { e =>
         Map("input_example_tensor" -> Tensors.create(Array(e.toByteArray)))
       } { (r, o) =>
         (r, o.map {
@@ -82,7 +88,9 @@ class TensorflowSpec extends PipelineSpec {
     val settings = getClass.getResource("/settings.json")
 
     JobTest[TFSavedJob.type]
-      .args(s"--savedModelUri=$resource", s"--settings=$settings", "--output=output")
+      .args(s"--savedModelUri=$resource",
+            s"--settings=$settings",
+            "--output=output")
       .output(TextIO("output")) {
         _ should containInAnyOrder(List("0"))
       }

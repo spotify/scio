@@ -29,7 +29,7 @@ class DoFnExampleTest extends PipelineSpec {
     JobTest[DoFnExample.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), inData)
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (outData))
+      .output(TextIO("out.txt"))(_ should containInAnyOrder(outData))
       .run()
   }
 

@@ -22,9 +22,27 @@ import com.spotify.scio.testing.PipelineSpec
 
 class LibSvmTest extends PipelineSpec {
   val expected = List(
-    (0.0, SparseVector[Double](34)((0,1), (8,1), (18,1), (20,1), (23,1), (33,1))),
-    (1.0, SparseVector[Double](34)((2,1), (8,1), (18,1), (20,1), (29,1), (33,1))),
-    (0.0, SparseVector[Double](34)((0,1), (8,1), (19,1), (20,1), (23,1), (33,1)))
+    (0.0,
+     SparseVector[Double](34)((0, 1),
+                              (8, 1),
+                              (18, 1),
+                              (20, 1),
+                              (23, 1),
+                              (33, 1))),
+    (1.0,
+     SparseVector[Double](34)((2, 1),
+                              (8, 1),
+                              (18, 1),
+                              (20, 1),
+                              (29, 1),
+                              (33, 1))),
+    (0.0,
+     SparseVector[Double](34)((0, 1),
+                              (8, 1),
+                              (19, 1),
+                              (20, 1),
+                              (23, 1),
+                              (33, 1)))
   )
 
   val data = List(
@@ -34,16 +52,16 @@ class LibSvmTest extends PipelineSpec {
   )
 
   "libSVMCollection" should "parse libsvm files" in {
-    runWithContext{ sc =>
+    runWithContext { sc =>
       val res = libSVMCollection(sc.parallelize(data))
-      res should containInAnyOrder (expected)
+      res should containInAnyOrder(expected)
     }
   }
 
   it should "parse libsvm files with length" in {
-    runWithContext{ sc =>
+    runWithContext { sc =>
       val res = libSVMCollection(sc.parallelize(data), 34)
-      res should containInAnyOrder (expected)
+      res should containInAnyOrder(expected)
     }
   }
 }

@@ -40,7 +40,8 @@ class HourlyTeamScoreTest extends PipelineSpec {
     "user18_BananaEmu,BananaEmu,7,1447965690000,2015-11-19 12:41:31.053",
     "user3_BananaEmu,BananaEmu,17,1447965690000,2015-11-19 12:41:31.053",
     "user18_BananaEmu,BananaEmu,1,1447965690000,2015-11-19 12:41:31.053",
-    "user18_ApricotCaneToad,ApricotCaneToad,14,1447965690000,2015-11-19 12:41:31.053")
+    "user18_ApricotCaneToad,ApricotCaneToad,14,1447965690000,2015-11-19 12:41:31.053"
+  )
 
   val expected = Seq(
     TeamScoreSums("AlmondWallaby", 15, "2015-11-19 09:00:00.000"),
@@ -53,13 +54,15 @@ class HourlyTeamScoreTest extends PipelineSpec {
     TeamScoreSums("BananaEmu", 25, "2015-11-19 12:00:00.000"),
     TeamScoreSums("BisqueBilby", 14, "2015-11-19 09:00:00.000"),
     TeamScoreSums("MagentaKangaroo", 3, "2015-11-19 09:00:00.000"),
-    TeamScoreSums("MagentaKangaroo", 4, "2015-11-19 12:00:00.000"))
+    TeamScoreSums("MagentaKangaroo", 4, "2015-11-19 12:00:00.000")
+  )
 
   "HourlyTeamScore" should "work" in {
     JobTest[com.spotify.scio.examples.complete.game.HourlyTeamScore.type]
       .args("--input=in.txt", "--output=dataset.table")
       .input(TextIO("in.txt"), inData)
-      .output(BigQueryIO[TeamScoreSums]("dataset.table"))(_ should containInAnyOrder (expected))
+      .output(BigQueryIO[TeamScoreSums]("dataset.table"))(
+        _ should containInAnyOrder(expected))
       .run()
   }
 

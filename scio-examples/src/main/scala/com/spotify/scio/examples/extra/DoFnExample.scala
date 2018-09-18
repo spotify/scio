@@ -44,7 +44,7 @@ object DoFnExample {
       //
       // `private[<package>]` is required for anonymous instance methods to be publicly visible
       // in compiled class file, which is a requirement for the annotated methods.
-      .applyTransform(ParDo.of(new DoFn[String, Int]{
+      .applyTransform(ParDo.of(new DoFn[String, Int] {
         // `@Setup` (optional) is called once per worker thread before any processing starts.
         @Setup
         private[extra] def setup(): Unit = Unit
@@ -52,17 +52,20 @@ object DoFnExample {
         // `@StartBundle` (optional) is called once per worker thread before processing each batch
         // of elements, e.g. elements in a window.
         @StartBundle
-        private[extra] def startBundle(c: DoFn[String, Int]#StartBundleContext): Unit = Unit
+        private[extra] def startBundle(
+          c: DoFn[String, Int]#StartBundleContext): Unit = Unit
 
         // `@ProcessElement` is called once per element.
         @ProcessElement
-        private[extra] def processElement(c: DoFn[String, Int]#ProcessContext): Unit =
+        private[extra] def processElement(
+          c: DoFn[String, Int]#ProcessContext): Unit =
           c.output(c.element().length)
 
         // `@FinishBundle` (optional) is called once per worker thread after processing each batch
         // of elements, e.g. elements in a window.
         @FinishBundle
-        private[extra] def finishBundle(c: DoFn[String, Int]#FinishBundleContext): Unit = Unit
+        private[extra] def finishBundle(
+          c: DoFn[String, Int]#FinishBundleContext): Unit = Unit
 
         // `@Teardown` (optional) is called once per worker thread after all processing completes.
         @Teardown

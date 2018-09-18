@@ -60,7 +60,7 @@ class SparkeyTest extends PipelineSpec {
     val index = new File(basePath + ".spi")
     Files.createFile(index.toPath)
     // scalastyle:off no.whitespace.before.left.bracket
-    the [IllegalArgumentException] thrownBy {
+    the[IllegalArgumentException] thrownBy {
       runWithContext {
         _.parallelize(sideData).asSparkey(basePath)
       }

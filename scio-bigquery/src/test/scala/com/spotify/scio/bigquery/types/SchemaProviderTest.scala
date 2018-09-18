@@ -18,7 +18,7 @@
 package com.spotify.scio.bigquery.types
 
 import com.spotify.scio.bigquery.BigQueryUtil.parseSchema
-import org.scalatest.{Matchers, FlatSpec}
+import org.scalatest.{FlatSpec, Matchers}
 
 class SchemaProviderTest extends FlatSpec with Matchers {
 
@@ -43,41 +43,51 @@ class SchemaProviderTest extends FlatSpec with Matchers {
        |""".stripMargin
 
   "SchemaProvider.toSchema" should "support required primitive types" in {
-    SchemaProvider.schemaOf[Required] shouldBe parseSchema(s"{${basicFields("REQUIRED")}}")
+    SchemaProvider.schemaOf[Required] shouldBe parseSchema(
+      s"{${basicFields("REQUIRED")}}")
   }
 
   it should "support nullable primitive types" in {
-    SchemaProvider.schemaOf[Optional] shouldBe parseSchema(s"{${basicFields("NULLABLE")}}")
+    SchemaProvider.schemaOf[Optional] shouldBe parseSchema(
+      s"{${basicFields("NULLABLE")}}")
   }
 
   it should "support repeated primitive types" in {
-    SchemaProvider.schemaOf[Repeated] shouldBe parseSchema(s"{${basicFields("REPEATED")}}")
+    SchemaProvider.schemaOf[Repeated] shouldBe parseSchema(
+      s"{${basicFields("REPEATED")}}")
   }
 
   private def recordFields(mode: String) =
     s"""
        |{
        |  "fields": [
-       |    {"mode": "$mode", "name": "required", "type": "RECORD", ${basicFields("REQUIRED")}},
-       |    {"mode": "$mode", "name": "optional", "type": "RECORD", ${basicFields("NULLABLE")}},
-       |    {"mode": "$mode", "name": "repeated", "type": "RECORD", ${basicFields("REPEATED")}}
+       |    {"mode": "$mode", "name": "required", "type": "RECORD", ${basicFields(
+         "REQUIRED")}},
+       |    {"mode": "$mode", "name": "optional", "type": "RECORD", ${basicFields(
+         "NULLABLE")}},
+       |    {"mode": "$mode", "name": "repeated", "type": "RECORD", ${basicFields(
+         "REPEATED")}}
        |  ]
        |}
        |""".stripMargin
 
   it should "support required records" in {
-    SchemaProvider.schemaOf[RequiredNested] shouldBe parseSchema(recordFields("REQUIRED"))
+    SchemaProvider.schemaOf[RequiredNested] shouldBe parseSchema(
+      recordFields("REQUIRED"))
   }
 
   it should "support nullable records" in {
-    SchemaProvider.schemaOf[OptionalNested] shouldBe parseSchema(recordFields("NULLABLE"))
+    SchemaProvider.schemaOf[OptionalNested] shouldBe parseSchema(
+      recordFields("NULLABLE"))
   }
 
   it should "support repeated records" in {
-    SchemaProvider.schemaOf[RepeatedNested] shouldBe parseSchema(recordFields("REPEATED"))
+    SchemaProvider.schemaOf[RepeatedNested] shouldBe parseSchema(
+      recordFields("REPEATED"))
   }
 
-  case class User(@description("user name") name: String, @description("user age") age: Int)
+  case class User(@description("user name") name: String,
+                  @description("user age") age: Int)
   case class Account(@description("account user") user: User,
                      @description("in USD") balance: Double)
 

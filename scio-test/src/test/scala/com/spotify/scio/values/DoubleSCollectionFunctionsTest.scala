@@ -33,7 +33,6 @@ class DoubleSCollectionFunctionsTest extends PipelineSpec {
     s.head shouldBe e +- 1e-10
   }
 
-
   "DoubleSCollection" should "support sampleStdev()" in {
     val e = expected.sampleStdev
     test(runWithData(ints)(_.sampleStdev), e)

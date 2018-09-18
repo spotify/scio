@@ -41,7 +41,8 @@ class BigtableDoFnTest extends PipelineSpec {
     val fn = new TestCachingBigtableDoFn
     val output = runWithData((1 to 10) ++ (6 to 15))(_.parDo(fn))
       .map(kv => (kv.getKey, kv.getValue.get()))
-    output should contain theSameElementsAs ((1 to 10) ++ (6 to 15)).map(x => (x, x.toString))
+    output should contain theSameElementsAs ((1 to 10) ++ (6 to 15)).map(x =>
+      (x, x.toString))
     BigtableDoFnTest.queue.asScala.toSet should contain theSameElementsAs (1 to 15)
     BigtableDoFnTest.queue.size() should be <= 20
   }
@@ -68,13 +69,16 @@ object BigtableDoFnTest {
 
 class TestBigtableDoFn extends BigtableDoFn[Int, String](null) {
   override def newClient(): BigtableSession = null
-  override def asyncLookup(session: BigtableSession, input: Int): ListenableFuture[String] =
+  override def asyncLookup(session: BigtableSession,
+                           input: Int): ListenableFuture[String] =
     Futures.immediateFuture(input.toString)
 }
 
-class TestCachingBigtableDoFn extends BigtableDoFn[Int, String](null, 100, new TestCacheSupplier) {
+class TestCachingBigtableDoFn
+    extends BigtableDoFn[Int, String](null, 100, new TestCacheSupplier) {
   override def newClient(): BigtableSession = null
-  override def asyncLookup(session: BigtableSession, input: Int): ListenableFuture[String] = {
+  override def asyncLookup(session: BigtableSession,
+                           input: Int): ListenableFuture[String] = {
     BigtableDoFnTest.queue.add(input)
     Futures.immediateFuture(input.toString)
   }
@@ -82,7 +86,8 @@ class TestCachingBigtableDoFn extends BigtableDoFn[Int, String](null, 100, new T
 
 class TestFailingBigtableDoFn extends BigtableDoFn[Int, String](null) {
   override def newClient(): BigtableSession = null
-  override def asyncLookup(session: BigtableSession, input: Int): ListenableFuture[String] =
+  override def asyncLookup(session: BigtableSession,
+                           input: Int): ListenableFuture[String] =
     if (input % 2 == 0) {
       Futures.immediateFuture("success" + input)
     } else {

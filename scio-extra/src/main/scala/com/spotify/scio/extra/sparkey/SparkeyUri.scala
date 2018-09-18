@@ -56,13 +56,14 @@ private[sparkey] object SparkeyUri {
 }
 
 private class LocalSparkeyUri(val basePath: String) extends SparkeyUri {
-  override def getReader: SparkeyReader = new ThreadLocalSparkeyReader(new File(basePath))
-  override private[sparkey] def exists: Boolean = {
+  override def getReader: SparkeyReader =
+    new ThreadLocalSparkeyReader(new File(basePath))
+  override private[sparkey] def exists: Boolean =
     SparkeyUri.extensions.map(e => new File(basePath + e)).exists(_.exists)
-  }
 }
 
-private class RemoteSparkeyUri(val basePath: String, options: PipelineOptions) extends SparkeyUri {
+private class RemoteSparkeyUri(val basePath: String, options: PipelineOptions)
+    extends SparkeyUri {
 
   val rfu: RemoteFileUtil = RemoteFileUtil.create(options)
 
@@ -76,11 +77,13 @@ private class RemoteSparkeyUri(val basePath: String, options: PipelineOptions) e
       .exists(e => rfu.remoteExists(new URI(basePath + e)))
 }
 
-private[sparkey] class SparkeyWriter(val uri: SparkeyUri, maxMemoryUsage: Long = -1) {
+private[sparkey] class SparkeyWriter(val uri: SparkeyUri,
+                                     maxMemoryUsage: Long = -1) {
 
   private val localFile = uri match {
     case u: LocalSparkeyUri => u.basePath
-    case _: RemoteSparkeyUri => Files.createTempDirectory("sparkey-").resolve("data").toString
+    case _: RemoteSparkeyUri =>
+      Files.createTempDirectory("sparkey-").resolve("data").toString
   }
 
   private lazy val delegate = Sparkey.createNew(new File(localFile))

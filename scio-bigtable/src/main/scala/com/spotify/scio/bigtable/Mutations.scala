@@ -19,7 +19,12 @@ package com.spotify.scio.bigtable
 
 import java.util.concurrent.TimeUnit
 
-import com.google.bigtable.v2.Mutation.{DeleteFromColumn, DeleteFromFamily, DeleteFromRow, SetCell}
+import com.google.bigtable.v2.Mutation.{
+  DeleteFromColumn,
+  DeleteFromFamily,
+  DeleteFromRow,
+  SetCell
+}
 import com.google.bigtable.v2._
 import com.google.protobuf.ByteString
 
@@ -27,47 +32,71 @@ import com.google.protobuf.ByteString
 object Mutations {
 
   /** New `SetCell` mutation using the current timestamp. */
-  def newSetCell(familyName: String, columnQualifier: ByteString, value: ByteString): Mutation =
-    Mutation.newBuilder()
-      .setSetCell(SetCell.newBuilder()
-        .setFamilyName(familyName)
-        .setColumnQualifier(columnQualifier)
-        .setValue(value)
-        .setTimestampMicros(TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis())))
+  def newSetCell(familyName: String,
+                 columnQualifier: ByteString,
+                 value: ByteString): Mutation =
+    Mutation
+      .newBuilder()
+      .setSetCell(
+        SetCell
+          .newBuilder()
+          .setFamilyName(familyName)
+          .setColumnQualifier(columnQualifier)
+          .setValue(value)
+          .setTimestampMicros(
+            TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis())))
       .build()
 
   /** New `SetCell` mutation. */
-  def newSetCell(familyName: String, columnQualifier: ByteString, value: ByteString,
+  def newSetCell(familyName: String,
+                 columnQualifier: ByteString,
+                 value: ByteString,
                  timestampMicros: Long): Mutation =
-    Mutation.newBuilder()
-      .setSetCell(SetCell.newBuilder()
-        .setFamilyName(familyName)
-        .setColumnQualifier(columnQualifier)
-        .setValue(value)
-        .setTimestampMicros(timestampMicros))
+    Mutation
+      .newBuilder()
+      .setSetCell(
+        SetCell
+          .newBuilder()
+          .setFamilyName(familyName)
+          .setColumnQualifier(columnQualifier)
+          .setValue(value)
+          .setTimestampMicros(timestampMicros))
       .build()
 
   /** New `DeleteFromColumn` mutation. */
-  def newDeleteFromColumn(familyName: String, columnQualifier: ByteString,
-                          startTimestampMicros: Long, endTimestampMicros: Long): Mutation =
-    Mutation.newBuilder()
-      .setDeleteFromColumn(DeleteFromColumn.newBuilder()
-        .setFamilyName(familyName)
-        .setColumnQualifier(columnQualifier)
-        .setTimeRange(TimestampRange.newBuilder()
-          .setStartTimestampMicros(startTimestampMicros)
-          .setEndTimestampMicros(endTimestampMicros)))
+  def newDeleteFromColumn(familyName: String,
+                          columnQualifier: ByteString,
+                          startTimestampMicros: Long,
+                          endTimestampMicros: Long): Mutation =
+    Mutation
+      .newBuilder()
+      .setDeleteFromColumn(
+        DeleteFromColumn
+          .newBuilder()
+          .setFamilyName(familyName)
+          .setColumnQualifier(columnQualifier)
+          .setTimeRange(
+            TimestampRange
+              .newBuilder()
+              .setStartTimestampMicros(startTimestampMicros)
+              .setEndTimestampMicros(endTimestampMicros)))
       .build()
 
   /** New `DeleteFromFamily` mutation. */
   def newDeleteFromFamily(familyName: String): Mutation =
-    Mutation.newBuilder()
-      .setDeleteFromFamily(DeleteFromFamily.newBuilder()
-        .setFamilyName(familyName))
+    Mutation
+      .newBuilder()
+      .setDeleteFromFamily(
+        DeleteFromFamily
+          .newBuilder()
+          .setFamilyName(familyName))
       .build()
 
   /** New `DeleteFromRow` mutation. */
   def newDeleteFromRow: Mutation =
-    Mutation.newBuilder().setDeleteFromRow(DeleteFromRow.getDefaultInstance).build()
+    Mutation
+      .newBuilder()
+      .setDeleteFromRow(DeleteFromRow.getDefaultInstance)
+      .build()
 
 }

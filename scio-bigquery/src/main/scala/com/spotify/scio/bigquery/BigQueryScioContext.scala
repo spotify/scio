@@ -27,7 +27,8 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
-final class BigQueryScioContext(@transient val self: ScioContext) extends Serializable {
+final class BigQueryScioContext(@transient val self: ScioContext)
+    extends Serializable {
 
   /**
    * Get an SCollection for a BigQuery SELECT query.
@@ -38,7 +39,8 @@ final class BigQueryScioContext(@transient val self: ScioContext) extends Serial
    */
   def bigQuerySelect(sqlQuery: String,
                      flattenResults: Boolean = false): SCollection[TableRow] =
-    self.read(BigQuerySelect(sqlQuery))(BigQuerySelect.ReadParam(flattenResults))
+    self.read(BigQuerySelect(sqlQuery))(
+      BigQuerySelect.ReadParam(flattenResults))
 
   /**
    * Get an SCollection for a BigQuery table.
@@ -83,8 +85,9 @@ final class BigQueryScioContext(@transient val self: ScioContext) extends Serial
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
-  def typedBigQuery[T <: HasAnnotation : ClassTag : TypeTag : Coder](newSource: String = null)
-    : SCollection[T] = self.read(BigQueryTyped.dynamic[T](newSource))
+  def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+    newSource: String = null): SCollection[T] =
+    self.read(BigQueryTyped.dynamic[T](newSource))
 
   /**
    * Get an SCollection for a BigQuery TableRow JSON file.

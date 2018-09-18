@@ -32,21 +32,30 @@ object Args {
 
   /** Parse arguments. */
   def apply(args: Array[String]): Args = {
-    val (properties, booleans) = args.map { arg =>
-      if (!arg.startsWith("--")) {
-        throw new IllegalArgumentException(s"Argument '$arg' does not begin with '--'")
+    val (properties, booleans) = args
+      .map { arg =>
+        if (!arg.startsWith("--")) {
+          throw new IllegalArgumentException(
+            s"Argument '$arg' does not begin with '--'")
+        }
+        arg.substring(2)
       }
-      arg.substring(2)
-    }.partition(_.contains("="))
+      .partition(_.contains("="))
 
-    val propertyMap = properties.map { s =>
-      val Array(k, v) = s.split("=", 2)
-      (k, Splitter.onPattern(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)").split(v).asScala)
-    }.groupBy(_._1).mapValues(_.flatMap(_._2).toList)
-    val booleanMap: Map[String, List[String]] = booleans.map((_, List("true")))(breakOut)
+    val propertyMap = properties
+      .map { s =>
+        val Array(k, v) = s.split("=", 2)
+        (k,
+         Splitter.onPattern(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)").split(v).asScala)
+      }
+      .groupBy(_._1)
+      .mapValues(_.flatMap(_._2).toList)
+    val booleanMap: Map[String, List[String]] =
+      booleans.map((_, List("true")))(breakOut)
 
     propertyMap.keySet.intersect(booleanMap.keySet).foreach { arg =>
-      throw new IllegalArgumentException(s"Conflicting boolean and property '$arg'")
+      throw new IllegalArgumentException(
+        s"Conflicting boolean and property '$arg'")
     }
 
     // Workaround to ensure Map is serializable
@@ -58,26 +67,29 @@ object Args {
 }
 
 /** Encapsulate parsed commandline arguments. */
-class Args private (private val m: Map[String, List[String]]) extends Serializable {
+class Args private (private val m: Map[String, List[String]])
+    extends Serializable {
 
   /** All arguments as a map. */
   def asMap: Map[String, List[String]] = m
 
   def toString(start: String, sep: String, end: String): String = {
-    m.keys.toArray.sorted.map { k =>
-      val values = m(k) match {
-        case v :: Nil => v.toString
-        case vs => vs.mkString("[", ", ", "]")
+    m.keys.toArray.sorted
+      .map { k =>
+        val values = m(k) match {
+          case v :: Nil => v.toString
+          case vs       => vs.mkString("[", ", ", "]")
+        }
+        s"--$k=$values"
       }
-      s"--$k=$values"
-    }.mkString(start, sep, end)
+      .mkString(start, sep, end)
   }
 
   override def toString: String = toString("Args(", ", ", ")")
 
   override def equals(obj: Any): Boolean = obj match {
     case that: Args => this.m == that.m
-    case _ => false
+    case _          => false
   }
 
   override def hashCode(): Int = m.hashCode()
@@ -86,23 +98,27 @@ class Args private (private val m: Map[String, List[String]]) extends Serializab
   def apply(key: String): String = required(key)
 
   /** Shortcut for `optional(key).getOrElse(default)`. */
-  def getOrElse(key: String, default: => String): String = optional(key).getOrElse(default)
+  def getOrElse(key: String, default: => String): String =
+    optional(key).getOrElse(default)
 
   /** Get the list of values for a given key. */
   def list(key: String): List[String] = m.getOrElse(key, Nil)
 
   /** Get an `Option` if there is zero or one element for a given key. */
   def optional(key: String): Option[String] = list(key) match {
-    case Nil => None
+    case Nil     => None
     case List(v) => Some(v)
-    case _ => throw new IllegalArgumentException(s"Multiple values for property '$key'")
+    case _ =>
+      throw new IllegalArgumentException(s"Multiple values for property '$key'")
   }
 
   /** Get exactly one value for a given key. */
   def required(key: String): String = list(key) match {
-    case Nil => throw new IllegalArgumentException(s"Missing value for property '$key'")
+    case Nil =>
+      throw new IllegalArgumentException(s"Missing value for property '$key'")
     case List(v) => v
-    case _ => throw new IllegalArgumentException(s"Multiple values for property '$key'")
+    case _ =>
+      throw new IllegalArgumentException(s"Multiple values for property '$key'")
   }
 
   /** Get value as `Int` with a default. */
@@ -118,33 +134,45 @@ class Args private (private val m: Map[String, List[String]]) extends Serializab
   def long(key: String): Long = get(key, _.toLong)
 
   /** Get value as `Float` with a default. */
-  def float(key: String, default: Float): Float = getOrElse(key, default, _.toFloat)
+  def float(key: String, default: Float): Float =
+    getOrElse(key, default, _.toFloat)
 
   /** Get value as `Float`. */
   def float(key: String): Float = get(key, _.toFloat)
 
   /** Get value as `Double` with a default. */
-  def double(key: String, default: Double): Double = getOrElse(key, default, _.toDouble)
+  def double(key: String, default: Double): Double =
+    getOrElse(key, default, _.toDouble)
 
   /** Get value as `Double`. */
   def double(key: String): Double = get(key, _.toDouble)
 
   /** Get value as `Boolean` with a default. */
-  def boolean(key: String, default: Boolean): Boolean = getOrElse(key, default, _.toBoolean)
+  def boolean(key: String, default: Boolean): Boolean =
+    getOrElse(key, default, _.toBoolean)
 
   /** Get value as `Boolean`. */
   def boolean(key: String): Boolean = get(key, _.toBoolean)
 
   private def getOrElse[T](key: String, default: T, f: String => T): T = {
-    optional(key).map(value => try f(value) catch {
-      case NonFatal(_) => throw new IllegalArgumentException(s"Invalid value '$value' for '$key'")
-    }).getOrElse(default)
+    optional(key)
+      .map(
+        value =>
+          try f(value)
+          catch {
+            case NonFatal(_) =>
+              throw new IllegalArgumentException(
+                s"Invalid value '$value' for '$key'")
+        })
+      .getOrElse(default)
   }
 
   private def get[T](key: String, f: String => T): T = {
     val value = required(key)
-    try f(value) catch {
-      case NonFatal(_) => throw new IllegalArgumentException(s"Invalid value '$value' for '$key'")
+    try f(value)
+    catch {
+      case NonFatal(_) =>
+        throw new IllegalArgumentException(s"Invalid value '$value' for '$key'")
     }
   }
 

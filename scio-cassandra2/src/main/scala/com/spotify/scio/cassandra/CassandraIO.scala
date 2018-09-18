@@ -23,7 +23,8 @@ import com.spotify.scio.io.{ScioIO, Tap}
 
 import scala.concurrent.Future
 
-final case class CassandraIO[T](opts: CassandraOptions, parallelism: Int = 0) extends ScioIO[T] {
+final case class CassandraIO[T](opts: CassandraOptions, parallelism: Int = 0)
+    extends ScioIO[T] {
 
   override type ReadP = Nothing
   override type WriteP = CassandraIO.WriteParam[T]
@@ -46,7 +47,8 @@ final case class CassandraIO[T](opts: CassandraOptions, parallelism: Int = 0) ex
       .map(params.outputFn.andThen(bulkOps.serializeFn))
       .groupBy(bulkOps.partitionFn)
       .map(bulkOps.writeFn)
-    Future.failed(new NotImplementedError("Cassandra future is not implemented"))
+    Future.failed(
+      new NotImplementedError("Cassandra future is not implemented"))
   }
 
   override def tap(params: ReadP): Tap[T] =

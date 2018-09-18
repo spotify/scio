@@ -23,26 +23,33 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.Compression
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
+  CreateDisposition,
+  WriteDisposition
+}
 
 import scala.concurrent._
 import scala.reflect.runtime.universe._
 
-
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
-final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends Serializable {
+final class BigQuerySCollection[T](@transient val self: SCollection[T])
+    extends Serializable {
 
   /**
    * Save this SCollection as a BigQuery table. Note that elements must be of type
    * [[com.google.api.services.bigquery.model.TableRow TableRow]].
    */
-  def saveAsBigQuery(table: TableReference, schema: TableSchema,
+  def saveAsBigQuery(table: TableReference,
+                     schema: TableSchema,
                      writeDisposition: WriteDisposition,
                      createDisposition: CreateDisposition,
-                     tableDescription: String)
-                    (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
+                     tableDescription: String)(
+    implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
     val param =
-      BigQueryTable.WriteParam(schema, writeDisposition, createDisposition, tableDescription)
+      BigQueryTable.WriteParam(schema,
+                               writeDisposition,
+                               createDisposition,
+                               tableDescription)
     self.asInstanceOf[SCollection[TableRow]].write(BigQueryTable(table))(param)
   }
 
@@ -50,14 +57,20 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
    * Save this SCollection as a BigQuery table. Note that elements must be of type
    * [[com.google.api.services.bigquery.model.TableRow TableRow]].
    */
-  def saveAsBigQuery(tableSpec: String, schema: TableSchema = null,
+  def saveAsBigQuery(tableSpec: String,
+                     schema: TableSchema = null,
                      writeDisposition: WriteDisposition = null,
                      createDisposition: CreateDisposition = null,
-                     tableDescription: String = null)
-                    (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
+                     tableDescription: String = null)(
+    implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
     val param =
-      BigQueryTable.WriteParam(schema, writeDisposition, createDisposition, tableDescription)
-    self.asInstanceOf[SCollection[TableRow]].write(BigQueryTable(tableSpec))(param)
+      BigQueryTable.WriteParam(schema,
+                               writeDisposition,
+                               createDisposition,
+                               tableDescription)
+    self
+      .asInstanceOf[SCollection[TableRow]]
+      .write(BigQueryTable(tableSpec))(param)
   }
 
   /**
@@ -66,14 +79,15 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
    */
   def saveAsTypedBigQuery(table: TableReference,
                           writeDisposition: WriteDisposition,
-                          createDisposition: CreateDisposition)
-                         (implicit tt: TypeTag[T],
-                         ev: T <:< HasAnnotation,
-                         coder: Coder[T])
-  : Future[Tap[T]] = {
-    val param = BigQueryTyped.Table.WriteParam(writeDisposition, createDisposition)
+                          createDisposition: CreateDisposition)(
+    implicit tt: TypeTag[T],
+    ev: T <:< HasAnnotation,
+    coder: Coder[T]): Future[Tap[T]] = {
+    val param =
+      BigQueryTyped.Table.WriteParam(writeDisposition, createDisposition)
     implicit val hcoder = coder.asInstanceOf[Coder[T with HasAnnotation]]
-    self.asInstanceOf[SCollection[T with HasAnnotation]]
+    self
+      .asInstanceOf[SCollection[T with HasAnnotation]]
       .write(BigQueryTyped.Table[T with HasAnnotation](table))(param)
       .asInstanceOf[Future[Tap[T]]]
   }
@@ -110,27 +124,28 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
    */
   def saveAsTypedBigQuery(tableSpec: String,
                           writeDisposition: WriteDisposition = null,
-                          createDisposition: CreateDisposition = null)
-                         (implicit tt: TypeTag[T],
-                         ev: T <:< HasAnnotation,
-                         coder: Coder[T])
-  : Future[Tap[T]] = {
-    val param = BigQueryTyped.Table.WriteParam(writeDisposition, createDisposition)
+                          createDisposition: CreateDisposition = null)(
+    implicit tt: TypeTag[T],
+    ev: T <:< HasAnnotation,
+    coder: Coder[T]): Future[Tap[T]] = {
+    val param =
+      BigQueryTyped.Table.WriteParam(writeDisposition, createDisposition)
     implicit val hcoder = coder.asInstanceOf[Coder[T with HasAnnotation]]
-    self.asInstanceOf[SCollection[T with HasAnnotation]]
+    self
+      .asInstanceOf[SCollection[T with HasAnnotation]]
       .write(BigQueryTyped.Table[T with HasAnnotation](tableSpec))(param)
       .asInstanceOf[Future[Tap[T]]]
   }
-
 
   /**
    * Save this SCollection as a BigQuery TableRow JSON text file. Note that elements must be of
    * type [[com.google.api.services.bigquery.model.TableRow TableRow]].
    */
-  def saveAsTableRowJsonFile(path: String,
-                             numShards: Int = 0,
-                             compression: Compression = Compression.UNCOMPRESSED)
-                            (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
+  def saveAsTableRowJsonFile(
+    path: String,
+    numShards: Int = 0,
+    compression: Compression = Compression.UNCOMPRESSED)(
+    implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
     val param = TableRowJsonIO.WriteParam(numShards, compression)
     self.asInstanceOf[SCollection[TableRow]].write(TableRowJsonIO(path))(param)
   }
