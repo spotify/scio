@@ -18,9 +18,12 @@
 package com.spotify.scio.coders
 
 import java.io.{InputStream, OutputStream}
+
 import scala.annotation.implicitNotFound
-import org.apache.beam.sdk.coders.{Coder => BCoder, AtomicCoder}
+import org.apache.beam.sdk.coders.{AtomicCoder, Coder => BCoder}
+import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.values.KV
+
 import scala.reflect.ClassTag
 
 @implicitNotFound(
@@ -70,11 +73,20 @@ private final case class DisjunctionCoder[T, Id](idCoder: BCoder[Id],
 // info]   java.lang.NullPointerException: null value in entry: T=null
 private case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
   override def toString: String = u.toString
-  def encode(value: T, os: OutputStream): Unit = u.encode(value, os)
-  def decode(is: InputStream): T = u.decode(is)
-  def getCoderArguments(): java.util.List[_ <: BCoder[_]] =
-    u.getCoderArguments()
-  def verifyDeterministic(): Unit = u.verifyDeterministic()
+  override def encode(value: T, os: OutputStream): Unit = u.encode(value, os)
+  override def decode(is: InputStream): T = u.decode(is)
+  override def getCoderArguments: java.util.List[_ <: BCoder[_]] = u.getCoderArguments
+
+  // delegate methods for determinism and equality checks
+  override def verifyDeterministic(): Unit = u.verifyDeterministic()
+  override def consistentWithEquals(): Boolean = u.consistentWithEquals()
+  override def structuralValue(value: T): AnyRef = u.structuralValue(value)
+
+  // delegate methods for byte size estimation
+  override def isRegisterByteSizeObserverCheap(value: T): Boolean =
+    u.isRegisterByteSizeObserverCheap(value)
+  override def registerByteSizeObserver(value: T, observer: ElementByteSizeObserver): Unit =
+    u.registerByteSizeObserver(value, observer)
 }
 
 private object WrappedBCoder {
