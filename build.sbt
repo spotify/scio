@@ -589,7 +589,9 @@ lazy val scioExtra: Project = Project(
   .dependsOn(
     scioCore,
     scioTest % "it->it;test->test",
-    scioAvro
+    scioAvro,
+    scioCoders,
+    scioCodersMacros
   )
   .configs(IntegrationTest)
 

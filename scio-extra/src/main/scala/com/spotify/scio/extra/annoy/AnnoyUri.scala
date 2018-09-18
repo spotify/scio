@@ -22,6 +22,7 @@ import java.net.URI
 import java.nio.file.{Files, Paths}
 
 import annoy4s._
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.sun.jna.Native
 import org.apache.beam.sdk.options.PipelineOptions
@@ -44,6 +45,8 @@ private[annoy] object AnnoyUri {
     } else {
       new RemoteAnnoyUri(path, opts)
     }
+
+  implicit val annoyUriCoder: Coder[AnnoyUri] = Coder.kryo[AnnoyUri]
 }
 
 private class LocalAnnoyUri(val path: String) extends AnnoyUri {
