@@ -25,6 +25,7 @@ import scala.language.higherKinds
 trait AtomCoders extends LowPriorityFallbackCoder {
   implicit def byteCoder: Coder[Byte] = beam(ByteCoder.of().asInstanceOf[BCoder[Byte]])
   implicit def stringCoder: Coder[String] = beam(StringUtf8Coder.of())
+  implicit def shortCoder: Coder[Short] = beam(BigEndianShortCoder.of().asInstanceOf[BCoder[Short]])
   implicit def intCoder: Coder[Int] = beam(VarIntCoder.of().asInstanceOf[BCoder[Int]])
   implicit def longCoder: Coder[Long] = beam(BigEndianLongCoder.of().asInstanceOf[BCoder[Long]])
   implicit def floatCoder: Coder[Float] = beam(FloatCoder.of().asInstanceOf[BCoder[Float]])
