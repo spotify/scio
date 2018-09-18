@@ -184,13 +184,23 @@ sealed trait CoderGrammar {
   def disjunction[T, Id: Coder](coder: Map[Id, Coder[T]])(id: T => Id): Coder[T] =
     Disjunction(Coder[Id], id, coder)
   def xmap[A, B](c: Coder[A])(f: A => B, t: B => A): Coder[B] = {
-    @inline def toB(bc: BCoder[A]) =
-      new AtomicCoder[B] {
-        def encode(value: B, os: OutputStream): Unit =
-          bc.encode(t(value), os)
-        def decode(is: InputStream): B =
-          f(bc.decode(is))
-      }
+    @inline def toB(bc: BCoder[A]) = new AtomicCoder[B] {
+      override def encode(value: B, os: OutputStream): Unit =
+        bc.encode(t(value), os)
+      override def decode(is: InputStream): B =
+        f(bc.decode(is))
+
+      // delegate methods for determinism and equality checks
+      override def verifyDeterministic(): Unit = bc.verifyDeterministic()
+      override def consistentWithEquals(): Boolean = bc.consistentWithEquals()
+      override def structuralValue(value: B): AnyRef = bc.structuralValue(t(value))
+
+      // delegate methods for byte size estimation
+      override def isRegisterByteSizeObserverCheap(value: B): Boolean =
+        bc.isRegisterByteSizeObserverCheap(t(value))
+      override def registerByteSizeObserver(value: B, observer: ElementByteSizeObserver): Unit =
+        bc.registerByteSizeObserver(t(value), observer)
+    }
     Transform[A, B](c, bc => Coder.beam(toB(bc)))
   }
   private[scio] def sequence[T](cs: Array[(String, Coder[T])]): Coder[Array[T]] =
