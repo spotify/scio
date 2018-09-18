@@ -18,153 +18,201 @@
 package com.spotify.scio.coders
 
 import java.io.{InputStream, OutputStream}
-import org.apache.beam.sdk.coders.{Coder => BCoder, _}
-import scala.reflect.ClassTag
-import scala.collection.{mutable => m}
-import scala.collection.SortedSet
 
-private final object UnitCoder extends AtomicCoder[Unit] {
+import com.google.common.collect.Lists
+import org.apache.beam.sdk.coders.Coder.NonDeterministicException
+import org.apache.beam.sdk.coders.{Coder => BCoder, _}
+import org.apache.beam.sdk.util.common.ElementByteSizeObserver
+
+import scala.reflect.ClassTag
+import scala.collection.{SortedSet, TraversableOnce, mutable => m}
+import scala.collection.convert.Wrappers
+import scala.language.higherKinds
+
+private object UnitCoder extends AtomicCoder[Unit] {
   def encode(value: Unit, os: OutputStream): Unit = ()
   def decode(is: InputStream): Unit = ()
 }
 
-private final object NothingCoder extends AtomicCoder[Nothing] {
+private object NothingCoder extends AtomicCoder[Nothing] {
   def encode(value: Nothing, os: OutputStream): Unit = ()
   def decode(is: InputStream): Nothing = ??? // can't possibly happen
 }
 
-private class OptionCoder[T](tc: BCoder[T]) extends AtomicCoder[Option[T]] {
-  val bcoder = BooleanCoder.of().asInstanceOf[BCoder[Boolean]]
-  def encode(value: Option[T], os: OutputStream): Unit = {
+private abstract class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])
+                                                (implicit toSeq: M[T] => TraversableOnce[T])
+  extends AtomicCoder[M[T]] {
+  override def getCoderArguments: java.util.List[_ <: BCoder[_]] = Lists.newArrayList(elemCoder)
+
+  // delegate methods for determinism and equality checks
+  override def verifyDeterministic(): Unit = elemCoder.verifyDeterministic()
+  override def consistentWithEquals(): Boolean = elemCoder.consistentWithEquals()
+  override def structuralValue(value: M[T]): AnyRef = {
+    val b = Seq.newBuilder[AnyRef]
+    value.foreach(v => b += elemCoder.structuralValue(v))
+    b.result()
+  }
+
+  // delegate methods for byte size estimation
+  override def isRegisterByteSizeObserverCheap(value: M[T]): Boolean = false
+  override def registerByteSizeObserver(value: M[T], observer: ElementByteSizeObserver): Unit = {
+    if (value.isInstanceOf[Wrappers.JIterableWrapper[_]]) {
+      val wrapper = value.asInstanceOf[Wrappers.JIterableWrapper[T]]
+      IterableCoder.of(elemCoder).registerByteSizeObserver(wrapper.underlying, observer)
+    } else {
+      super.registerByteSizeObserver(value, observer)
+    }
+  }
+}
+
+private abstract class SeqLikeCoder[M[_], T](bc: BCoder[T])
+                                            (implicit toSeq: M[T] => TraversableOnce[T])
+  extends BaseSeqLikeCoder[M, T](bc) {
+  private val lc = VarIntCoder.of()
+  override def encode(value: M[T], outStream: OutputStream): Unit = {
+    lc.encode(value.size, outStream)
+    value.foreach(bc.encode(_, outStream))
+  }
+  def decode(inStream: InputStream, builder: scala.collection.mutable.Builder[T, M[T]]): M[T] = {
+    val size = lc.decode(inStream)
+    (1 to size).foreach(_ => builder += bc.decode(inStream))
+    builder.result()
+  }
+}
+
+private class OptionCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Option, T](bc) {
+  private val bcoder = BooleanCoder.of().asInstanceOf[BCoder[Boolean]]
+  override def encode(value: Option[T], os: OutputStream): Unit = {
     bcoder.encode(value.isDefined, os)
-    value.foreach { tc.encode(_, os) }
+    value.foreach { bc.encode(_, os) }
   }
 
-  def decode(is: InputStream): Option[T] =
-    Option(bcoder.decode(is)).collect {
-      case true => tc.decode(is)
-    }
-}
-
-private class SeqCoder[T](bc: BCoder[T]) extends AtomicCoder[Seq[T]] {
-  val lc = VarIntCoder.of()
-  def decode(in: InputStream): Seq[T] = {
-    val l = lc.decode(in)
-    (1 to l).map { _ =>
-      bc.decode(in)
-    }
-  }
-
-  def encode(ts: Seq[T], out: OutputStream): Unit = {
-    lc.encode(ts.length, out)
-    ts.foreach { v =>
-      bc.encode(v, out)
-    }
+  override def decode(is: InputStream): Option[T] = {
+    val isDefined = bcoder.decode(is)
+    if (isDefined) Some(bc.decode(is)) else None
   }
 }
 
-private class ListCoder[T](bc: BCoder[T]) extends AtomicCoder[List[T]] {
-  val seqCoder = new SeqCoder[T](bc)
-  def encode(value: List[T], os: OutputStream): Unit =
-    seqCoder.encode(value.toSeq, os)
-  def decode(is: InputStream): List[T] =
-    seqCoder.decode(is).toList
+private class SeqCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Seq, T](bc) {
+  override def decode(inStream: InputStream): Seq[T] = decode(inStream, Seq.newBuilder[T])
 }
 
-private class TraversableOnceCoder[T](bc: BCoder[T]) extends AtomicCoder[TraversableOnce[T]] {
-  val seqCoder = new SeqCoder[T](bc)
-  def encode(value: TraversableOnce[T], os: OutputStream): Unit =
-    seqCoder.encode(value.toSeq, os)
-  def decode(is: InputStream): TraversableOnce[T] =
-    seqCoder.decode(is)
+private class ListCoder[T](bc: BCoder[T]) extends SeqLikeCoder[List, T](bc) {
+  override def decode(inStream: InputStream): List[T] = decode(inStream, List.newBuilder[T])
 }
 
-private class IterableCoder[T](bc: BCoder[T]) extends AtomicCoder[Iterable[T]] {
-  val seqCoder = new SeqCoder[T](bc)
-  def encode(value: Iterable[T], os: OutputStream): Unit =
-    seqCoder.encode(value.toSeq, os)
-  def decode(is: InputStream): Iterable[T] =
-    seqCoder.decode(is)
+// TODO: implement chunking
+private class TraversableOnceCoder[T](bc: BCoder[T]) extends SeqLikeCoder[TraversableOnce, T](bc) {
+  override def decode(inStream: InputStream): TraversableOnce[T] =
+    decode(inStream, Seq.newBuilder[T])
 }
 
-private class VectorCoder[T](bc: BCoder[T]) extends AtomicCoder[Vector[T]] {
-  val seqCoder = new SeqCoder[T](bc)
-  def encode(value: Vector[T], os: OutputStream): Unit =
-    seqCoder.encode(value.toSeq, os)
-  def decode(is: InputStream): Vector[T] =
-    seqCoder.decode(is).toVector
+// TODO: implement chunking
+private class IterableCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Iterable, T](bc) {
+  def decode(inStream: InputStream): Iterable[T] = decode(inStream, Iterable.newBuilder[T])
 }
 
-private class ArrayCoder[T: ClassTag](bc: BCoder[T]) extends AtomicCoder[Array[T]] {
-  val seqCoder = new SeqCoder[T](bc)
-  def encode(value: Array[T], os: OutputStream): Unit =
-    seqCoder.encode(value.toSeq, os)
-  def decode(is: InputStream): Array[T] =
-    seqCoder.decode(is).toArray
+private class VectorCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Vector, T](bc) {
+  def decode(inStream: InputStream): Vector[T] = decode(inStream, Vector.newBuilder[T])
 }
 
-private class ArrayBufferCoder[T](c: BCoder[T]) extends AtomicCoder[m.ArrayBuffer[T]] {
-  val seqCoder = new SeqCoder[T](c)
-  def encode(value: m.ArrayBuffer[T], os: OutputStream): Unit =
-    seqCoder.encode(value.toSeq, os)
-  def decode(is: InputStream): m.ArrayBuffer[T] =
-    m.ArrayBuffer(seqCoder.decode(is): _*)
+private class ArrayCoder[T: ClassTag](bc: BCoder[T]) extends SeqLikeCoder[Array, T](bc) {
+  def decode(inStream: InputStream): Array[T] = decode(inStream, Array.newBuilder[T])
 }
 
-private class SetCoder[T](c: BCoder[T]) extends AtomicCoder[Set[T]] {
-  val seqCoder = new SeqCoder[T](c)
-  def encode(value: Set[T], os: OutputStream): Unit =
-    seqCoder.encode(value.toSeq, os)
-  def decode(is: InputStream): Set[T] =
-    Set(seqCoder.decode(is): _*)
+private class ArrayBufferCoder[T](bc: BCoder[T]) extends SeqLikeCoder[m.ArrayBuffer, T](bc) {
+  def decode(inStream: InputStream): m.ArrayBuffer[T] =
+    decode(inStream, m.ArrayBuffer.newBuilder[T])
 }
 
-private class SortedSetCoder[T: Ordering](c: BCoder[T]) extends AtomicCoder[SortedSet[T]] {
-  val seqCoder = new SeqCoder[T](c)
-  def encode(value: SortedSet[T], os: OutputStream): Unit =
-    seqCoder.encode(value.toSeq, os)
-  def decode(is: InputStream): SortedSet[T] =
-    SortedSet(seqCoder.decode(is): _*)
+private class BufferCoder[T](bc: BCoder[T]) extends SeqLikeCoder[m.Buffer, T](bc) {
+  def decode(inStream: InputStream): m.Buffer[T] = decode(inStream, m.Buffer.newBuilder[T])
+}
+
+private class SetCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Set, T](bc) {
+  def decode(inStream: InputStream): Set[T] = decode(inStream, Set.newBuilder[T])
+}
+
+private class SortedSetCoder[T: Ordering](bc: BCoder[T]) extends SeqLikeCoder[SortedSet, T](bc) {
+  def decode(inStream: InputStream): SortedSet[T] = decode(inStream, SortedSet.newBuilder[T])
 }
 
 private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[Map[K, V]] {
-  val lc = VarIntCoder.of()
-  def decode(in: InputStream): Map[K, V] = {
-    val l = lc.decode(in)
-    (1 to l).map { _ =>
-      val k = kc.decode(in)
-      val v = vc.decode(in)
-      (k, v)
-    }.toMap
+  private val lc = VarIntCoder.of()
+
+  def encode(value: Map[K, V], os: OutputStream): Unit = {
+    lc.encode(value.size, os)
+    value.foreach { case (k, v) =>
+      kc.encode(k, os)
+      vc.encode(v, os)
+    }
   }
 
-  def encode(ts: Map[K, V], out: OutputStream): Unit = {
-    lc.encode(ts.size, out)
-    ts.foreach {
-      case (k, v) =>
-        kc.encode(k, out)
-        vc.encode(v, out)
+  def decode(is: InputStream): Map[K, V] = {
+    val l = lc.decode(is)
+    val builder = Map.newBuilder[K, V]
+    (1 to l).map { _ =>
+      val k = kc.decode(is)
+      val v = vc.decode(is)
+      builder += (k -> v)
+    }
+    builder.result()
+  }
+
+  // delegate methods for determinism and equality checks
+  override def verifyDeterministic(): Unit =
+    throw new NonDeterministicException(
+      this, "Ordering of entries in a Map may be non-deterministic.")
+  override def consistentWithEquals(): Boolean = false
+
+  // delegate methods for byte size estimation
+  override def isRegisterByteSizeObserverCheap(value: Map[K, V]): Boolean = false
+  override def registerByteSizeObserver(value: Map[K, V],
+                                        observer: ElementByteSizeObserver): Unit = {
+    lc.registerByteSizeObserver(value.size, observer)
+    value.foreach { case (k, v) =>
+      kc.registerByteSizeObserver(k, observer)
+      vc.registerByteSizeObserver(v, observer)
     }
   }
 }
 
 private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[m.Map[K, V]] {
-  val lc = VarIntCoder.of()
-  def decode(in: InputStream): m.Map[K, V] = {
-    val l = lc.decode(in)
-    m.Map((1 to l).map { _ =>
-      val k = kc.decode(in)
-      val v = vc.decode(in)
-      (k, v)
-    }: _*)
+  private val lc = VarIntCoder.of()
+
+  override def encode(value: m.Map[K, V], os: OutputStream): Unit = {
+    lc.encode(value.size, os)
+    value.foreach { case (k, v) =>
+      kc.encode(k, os)
+      vc.encode(v, os)
+    }
   }
 
-  def encode(ts: m.Map[K, V], out: OutputStream): Unit = {
-    lc.encode(ts.size, out)
-    ts.foreach {
-      case (k, v) =>
-        kc.encode(k, out)
-        vc.encode(v, out)
+  override def decode(is: InputStream): m.Map[K, V] = {
+    val l = lc.decode(is)
+    val builder = m.Map.newBuilder[K, V]
+    (1 to l).map { _ =>
+      val k = kc.decode(is)
+      val v = vc.decode(is)
+      builder += (k -> v)
+    }
+    builder.result()
+  }
+
+  // delegate methods for determinism and equality checks
+  override def verifyDeterministic(): Unit =
+    throw new NonDeterministicException(
+      this, "Ordering of entries in a Map may be non-deterministic.")
+  override def consistentWithEquals(): Boolean = false
+
+  // delegate methods for byte size estimation
+  override def isRegisterByteSizeObserverCheap(value: m.Map[K, V]): Boolean = false
+  override def registerByteSizeObserver(value: m.Map[K, V],
+                                        observer: ElementByteSizeObserver): Unit = {
+    lc.registerByteSizeObserver(value.size, observer)
+    value.foreach { case (k, v) =>
+      kc.registerByteSizeObserver(k, observer)
+      vc.registerByteSizeObserver(v, observer)
     }
   }
 }
@@ -218,14 +266,14 @@ trait ScalaCoders {
       Coder.beam(new VectorCoder[T](bc))
     }
 
-  implicit def arraybufferCoder[T: Coder]: Coder[m.ArrayBuffer[T]] =
+  implicit def arrayBufferCoder[T: Coder]: Coder[m.ArrayBuffer[T]] =
     Coder.transform(Coder[T]) { bc =>
       Coder.beam(new ArrayBufferCoder[T](bc))
     }
 
-  implicit def bufferCoder[T: Coder]: Coder[scala.collection.mutable.Buffer[T]] =
+  implicit def bufferCoder[T: Coder]: Coder[m.Buffer[T]] =
     Coder.transform(Coder[T]) { bc =>
-      Coder.xmap(Coder.beam(new SeqCoder[T](bc)))(_.toBuffer, _.toSeq) // Buffer <: Seq
+      Coder.beam(new BufferCoder[T](bc))
     }
 
   implicit def arrayCoder[T: Coder: ClassTag]: Coder[Array[T]] =
