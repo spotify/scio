@@ -24,7 +24,7 @@ import java.nio.ByteBuffer
 import java.io.{InputStream, OutputStream}
 
 final class ByteBufferCoder private[coders] () extends AtomicCoder[ByteBuffer] {
-  val bac = ByteArrayCoder.of()
+  private[this] val bac = ByteArrayCoder.of()
   def encode(value: ByteBuffer, os: OutputStream): Unit = {
     val array =
       if (value.hasArray) {

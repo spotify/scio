@@ -26,15 +26,15 @@ final class AvroRawCoder[T] private (@transient var schema: org.apache.avro.Sche
     extends AtomicCoder[T] {
 
   // makes the schema scerializable
-  val schemaString = schema.toString
+  private[this] val schemaString = schema.toString
 
-  @transient lazy val _schema =
+  @transient private lazy val _schema =
     new org.apache.avro.Schema.Parser().parse(schemaString)
 
-  @transient lazy val model = new org.apache.avro.specific.SpecificData()
-  @transient lazy val encoder =
+  @transient private lazy val model = new org.apache.avro.specific.SpecificData()
+  @transient private lazy val encoder =
     new org.apache.avro.message.RawMessageEncoder[T](model, _schema)
-  @transient lazy val decoder =
+  @transient private lazy val decoder =
     new org.apache.avro.message.RawMessageDecoder[T](model, _schema)
 
   def encode(value: T, os: OutputStream): Unit =
@@ -45,15 +45,15 @@ final class AvroRawCoder[T] private (@transient var schema: org.apache.avro.Sche
 }
 
 object AvroRawCoder {
-  def apply[T](schema: org.apache.avro.Schema): AvroRawCoder[T] =
+  @inline final def apply[T](schema: org.apache.avro.Schema): AvroRawCoder[T] =
     new AvroRawCoder[T](schema)
 }
 
 private final class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
 
-  var coder: BCoder[GenericRecord] = _
+  private[this] var coder: BCoder[GenericRecord] = _
   // TODO: can we find something more efficient than String ?
-  val sc = StringUtf8Coder.of()
+  private[this] val sc = StringUtf8Coder.of()
 
   def encode(value: GenericRecord, os: OutputStream): Unit = {
     val schema = value.getSchema
