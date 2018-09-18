@@ -22,7 +22,7 @@ import java.io.{InputStream, OutputStream}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
-import org.apache.beam.sdk.coders.{Coder => BCoder, _}
+import org.apache.beam.sdk.coders.{AtomicCoder, AvroCoder, StringUtf8Coder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
 private final class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
