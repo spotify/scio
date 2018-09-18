@@ -76,17 +76,19 @@ trait JavaCoders {
   private def fromScalaCoder[J <: java.lang.Number, S <: AnyVal](coder: Coder[S]): Coder[J] =
     coder.asInstanceOf[Coder[J]]
 
+  implicit val jShortCoder: Coder[java.lang.Short] = fromScalaCoder(Coder.shortCoder)
+  implicit val jByteCoder: Coder[java.lang.Byte] = fromScalaCoder(Coder.byteCoder)
   implicit val jIntegerCoder: Coder[java.lang.Integer] = fromScalaCoder(Coder.intCoder)
   implicit val jLongCoder: Coder[java.lang.Long] = fromScalaCoder(Coder.longCoder)
+  implicit val jFloatCoder: Coder[java.lang.Float] = fromScalaCoder(Coder.floatCoder)
   implicit val jDoubleCoder: Coder[java.lang.Double] = fromScalaCoder(Coder.doubleCoder)
-  // TODO: Byte, Float, Short
 
   implicit def mutationCaseCoder: Coder[com.google.bigtable.v2.Mutation.MutationCase] = Coder.kryo
   // implicit def mutationCoder: Coder[com.google.bigtable.v2.Mutation] = ???
 
   import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow}
   implicit def intervalWindowCoder: Coder[IntervalWindow] =
-    Coder.beam(IntervalWindow.getCoder())
+    Coder.beam(IntervalWindow.getCoder)
 
   implicit def boundedWindowCoder: Coder[BoundedWindow] =
     Coder.kryo[BoundedWindow]

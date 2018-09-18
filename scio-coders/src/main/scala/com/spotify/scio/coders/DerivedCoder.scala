@@ -17,7 +17,7 @@
 
 package com.spotify.scio.coders
 
-private final object Derived extends Serializable {
+private object Derived extends Serializable {
   import magnolia._
   import Coder.xmap
 

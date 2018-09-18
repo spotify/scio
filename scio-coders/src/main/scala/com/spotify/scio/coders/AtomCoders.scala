@@ -17,26 +17,22 @@
 
 package com.spotify.scio.coders
 
+import com.spotify.scio.coders.Coder.beam
 import org.apache.beam.sdk.coders.{Coder => BCoder, _}
+
 import scala.language.higherKinds
-import Coder.beam
 
 trait AtomCoders extends LowPriorityFallbackCoder {
-  implicit def byteCoder: Coder[Byte] =
-    beam(ByteCoder.of().asInstanceOf[BCoder[Byte]])
+  implicit def byteCoder: Coder[Byte] = beam(ByteCoder.of().asInstanceOf[BCoder[Byte]])
   implicit def stringCoder: Coder[String] = beam(StringUtf8Coder.of())
-  implicit def intCoder: Coder[Int] =
-    beam(VarIntCoder.of().asInstanceOf[BCoder[Int]])
-  implicit def doubleCoder: Coder[Double] =
-    beam(DoubleCoder.of().asInstanceOf[BCoder[Double]])
-  implicit def floatCoder: Coder[Float] =
-    beam(FloatCoder.of().asInstanceOf[BCoder[Float]])
+  implicit def shortCoder: Coder[Short] = beam(BigEndianShortCoder.of().asInstanceOf[BCoder[Short]])
+  implicit def intCoder: Coder[Int] = beam(VarIntCoder.of().asInstanceOf[BCoder[Int]])
+  implicit def longCoder: Coder[Long] = beam(BigEndianLongCoder.of().asInstanceOf[BCoder[Long]])
+  implicit def floatCoder: Coder[Float] = beam(FloatCoder.of().asInstanceOf[BCoder[Float]])
+  implicit def doubleCoder: Coder[Double] = beam(DoubleCoder.of().asInstanceOf[BCoder[Double]])
+  implicit def booleanCoder: Coder[Boolean] = beam(BooleanCoder.of().asInstanceOf[BCoder[Boolean]])
   implicit def unitCoder: Coder[Unit] = beam(UnitCoder)
   implicit def nothingCoder: Coder[Nothing] = beam[Nothing](NothingCoder)
-  implicit def booleanCoder: Coder[Boolean] =
-    beam(BooleanCoder.of().asInstanceOf[BCoder[Boolean]])
-  implicit def longCoder: Coder[Long] =
-    beam(BigEndianLongCoder.of().asInstanceOf[BCoder[Long]])
   implicit def bigdecimalCoder: Coder[BigDecimal] =
     Coder.xmap(beam(BigDecimalCoder.of()))(BigDecimal.apply, _.bigDecimal)
 
