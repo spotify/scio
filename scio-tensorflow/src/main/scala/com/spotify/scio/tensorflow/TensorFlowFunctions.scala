@@ -188,26 +188,6 @@ private[tensorflow] class PredictSCollectionFunctions[T: ClassTag](
     outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
     self.parDo(new SavedBundlePredictDoFn[T, V](savedModelUri, options, fetchOps, inFn, outFn))
 
-  /**
-   * Predict/infer/forward-pass on TensorFlow Graph.
-   *
-   * @param graphUri URI of Graph TensorFlow model
-   * @param fetchOps names of [[org.tensorflow.Operation]]s to fetch the results from
-   * @param config   configuration parameters for the session specified as a serialized
-   *                 `org.tensorflow.framework.ConfigProto` protocol buffer.
-   * @param inFn     translates input elements of T to map of input-operation ->
-   *                 [[org.tensorflow.Tensor Tensor]]. This method takes ownership of the
-   *                 [[org.tensorflow.Tensor Tensor]]s.
-   * @param outFn    translates output of prediction from map of output-operation ->
-   *                 [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
-   *                 ownership of the [[org.tensorflow.Tensor Tensor]]s.
-   */
-  @deprecated("TensorFlow Graph model support will be removed. Use Saved Model predict.",
-              "scio-tensorflow 0.5.4")
-  def predict[V: Coder, W](graphUri: String, fetchOps: Seq[String], config: Array[Byte] = null)(
-    inFn: T => Map[String, Tensor[_]])(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
-    self.parDo(new GraphPredictDoFn[T, V](graphUri, fetchOps, config, inFn, outFn))
-
 }
 
 class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
