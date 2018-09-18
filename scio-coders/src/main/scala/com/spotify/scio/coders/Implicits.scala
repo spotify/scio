@@ -27,4 +27,4 @@ trait Implicits
     with AlgebirdCoders
     with Serializable
 
-final object Implicits extends Implicits
+object Implicits extends Implicits
