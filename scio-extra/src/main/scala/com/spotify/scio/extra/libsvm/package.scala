@@ -69,6 +69,7 @@ package object libsvm {
 
   def libSVMCollection(col: SCollection[String],
                        numFeatures: Int = 0): SCollection[(Double, SparseVector[Double])] = {
+    implicit val sparseArrayCoder: Coder[SparseVector[Double]] = Coder.kryo[SparseVector[Double]]
     val data = col
       .map(_.trim)
       .filter(line => !(line.isEmpty || line.startsWith("#")))
