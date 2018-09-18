@@ -24,7 +24,7 @@ private final object Derived extends Serializable {
   def combineCoder[T](ps: Seq[Param[Coder, T]], rawConstruct: Seq[Any] => T): Coder[T] = {
     val cs = new Array[(String, Coder[Any])](ps.length)
     var i = 0
-    while(i < ps.length) {
+    while (i < ps.length) {
       val p = ps(i)
       cs.update(i, (p.label, p.typeclass.asInstanceOf[Coder[Any]]))
       i = i + 1
@@ -34,7 +34,7 @@ private final object Derived extends Serializable {
     @inline def cToArray(v: T): Array[Any] = {
       val arr = new Array[Any](ps.length)
       var i = 0
-      while(i < ps.length) {
+      while (i < ps.length) {
         val p = ps(i)
         arr.update(i, p.dereference(v))
         i = i + 1
@@ -58,12 +58,16 @@ trait LowPriorityCoderDerivation {
     val idx: Map[magnolia.TypeName, Int] =
       sealedTrait.subtypes.map(_.typeName).zipWithIndex.toMap
     val coders: Map[Int, Coder[T]] =
-      sealedTrait.subtypes.map(_.typeclass.asInstanceOf[Coder[T]]).zipWithIndex
-        .map{ case (c, i) => (i, c) }
+      sealedTrait.subtypes
+        .map(_.typeclass.asInstanceOf[Coder[T]])
+        .zipWithIndex
+        .map { case (c, i) => (i, c) }
         .toMap
 
-    Coder.disjunction[T, Int](coders){
-      t => sealedTrait.dispatch(t) { subtype => idx(subtype.typeName) }
+    Coder.disjunction[T, Int](coders) { t =>
+      sealedTrait.dispatch(t) { subtype =>
+        idx(subtype.typeName)
+      }
     }
   }
 

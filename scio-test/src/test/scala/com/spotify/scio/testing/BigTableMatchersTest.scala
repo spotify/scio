@@ -38,9 +38,9 @@ class BigTableMatchersTest extends PipelineSpec with BigTableMatchers {
       _.parallelize(tableData) should containRowKeys(key1, key2)
     }
 
-    an [AssertionError] should be thrownBy {
+    an[AssertionError] should be thrownBy {
       runWithContext {
-        _.parallelize(tableData) should containRowKeys (key1)
+        _.parallelize(tableData) should containRowKeys(key1)
       }
     }
 
@@ -49,7 +49,7 @@ class BigTableMatchersTest extends PipelineSpec with BigTableMatchers {
       _.parallelize(tableData) shouldNot containRowKeys(key1)
     }
 
-    an [AssertionError] should be thrownBy {
+    an[AssertionError] should be thrownBy {
       runWithContext {
         _.parallelize(tableData) shouldNot containRowKeys(key1, key2)
       }
@@ -60,14 +60,20 @@ class BigTableMatchersTest extends PipelineSpec with BigTableMatchers {
   private lazy val columnFamily2 = "cf2"
 
   it should "support containColumnFamilies" in {
-    val cell1 = Mutation.newBuilder()
-      .setSetCell(SetCell.newBuilder()
-      .setFamilyName(columnFamily1))
+    val cell1 = Mutation
+      .newBuilder()
+      .setSetCell(
+        SetCell
+          .newBuilder()
+          .setFamilyName(columnFamily1))
       .build()
 
-    val cell2 = Mutation.newBuilder()
-      .setSetCell(SetCell.newBuilder()
-        .setFamilyName(columnFamily2))
+    val cell2 = Mutation
+      .newBuilder()
+      .setSetCell(
+        SetCell
+          .newBuilder()
+          .setFamilyName(columnFamily2))
       .build()
 
     val tableData: Seq[BTRow] = Seq(
@@ -80,9 +86,9 @@ class BigTableMatchersTest extends PipelineSpec with BigTableMatchers {
       _.parallelize(tableData) should containColumnFamilies(columnFamily1, columnFamily2)
     }
 
-    an [AssertionError] should be thrownBy {
+    an[AssertionError] should be thrownBy {
       runWithContext {
-        _.parallelize(tableData) should containColumnFamilies (columnFamily1)
+        _.parallelize(tableData) should containColumnFamilies(columnFamily1)
       }
     }
 
@@ -91,9 +97,9 @@ class BigTableMatchersTest extends PipelineSpec with BigTableMatchers {
       _.parallelize(tableData) shouldNot containColumnFamilies(columnFamily1)
     }
 
-    an [AssertionError] should be thrownBy {
+    an[AssertionError] should be thrownBy {
       runWithContext {
-        _.parallelize(tableData) shouldNot containColumnFamilies (columnFamily1, columnFamily2)
+        _.parallelize(tableData) shouldNot containColumnFamilies(columnFamily1, columnFamily2)
       }
     }
   }
@@ -102,19 +108,25 @@ class BigTableMatchersTest extends PipelineSpec with BigTableMatchers {
   val cellValue2 = "cv2"
 
   it should "support containSetCellValue" in {
-    val cell1 = Mutation.newBuilder()
-      .setSetCell(SetCell.newBuilder()
-        .setFamilyName(columnFamily1)
-        .setColumnQualifier(columnFamily1)
-        .setValue(ByteString.copyFromUtf8(cellValue1))
-      ).build()
+    val cell1 = Mutation
+      .newBuilder()
+      .setSetCell(
+        SetCell
+          .newBuilder()
+          .setFamilyName(columnFamily1)
+          .setColumnQualifier(columnFamily1)
+          .setValue(ByteString.copyFromUtf8(cellValue1)))
+      .build()
 
-    val cell2 = Mutation.newBuilder()
-      .setSetCell(SetCell.newBuilder()
-        .setFamilyName(columnFamily2)
-        .setColumnQualifier(columnFamily2)
-        .setValue(ByteString.copyFromUtf8(cellValue2))
-      ).build()
+    val cell2 = Mutation
+      .newBuilder()
+      .setSetCell(
+        SetCell
+          .newBuilder()
+          .setFamilyName(columnFamily2)
+          .setColumnQualifier(columnFamily2)
+          .setValue(ByteString.copyFromUtf8(cellValue2)))
+      .build()
 
     val tableData: Seq[BTRow] = Seq(
       (key1, Seq(cell1, cell2))
@@ -126,7 +138,7 @@ class BigTableMatchersTest extends PipelineSpec with BigTableMatchers {
       sc.parallelize(tableData) should containSetCellValue(key1, columnFamily2, cellValue2)
     }
 
-    an [AssertionError] should be thrownBy {
+    an[AssertionError] should be thrownBy {
       runWithContext {
         _.parallelize(tableData) should containSetCellValue(key2, columnFamily1, cellValue1)
       }
@@ -137,7 +149,7 @@ class BigTableMatchersTest extends PipelineSpec with BigTableMatchers {
       _.parallelize(tableData) shouldNot containSetCellValue(key2, columnFamily1, cellValue1)
     }
 
-    an [AssertionError] should be thrownBy {
+    an[AssertionError] should be thrownBy {
       runWithContext {
         _.parallelize(tableData) shouldNot containSetCellValue(key1, columnFamily1, cellValue1)
       }
@@ -145,7 +157,8 @@ class BigTableMatchersTest extends PipelineSpec with BigTableMatchers {
   }
 
   it should "support containCellMutationCase" in {
-    val cell = Mutation.newBuilder()
+    val cell = Mutation
+      .newBuilder()
       .setDeleteFromRow(Mutation.DeleteFromRow.newBuilder().build())
       .build()
 
@@ -158,7 +171,7 @@ class BigTableMatchersTest extends PipelineSpec with BigTableMatchers {
       _.parallelize(tableData) should containCellMutationCase(key1, MutationCase.DELETE_FROM_ROW)
     }
 
-    an [AssertionError] should be thrownBy {
+    an[AssertionError] should be thrownBy {
       runWithContext {
         _.parallelize(tableData) should containCellMutationCase(key1, MutationCase.SET_CELL)
       }
@@ -169,10 +182,10 @@ class BigTableMatchersTest extends PipelineSpec with BigTableMatchers {
       _.parallelize(tableData) shouldNot containCellMutationCase(key1, MutationCase.SET_CELL)
     }
 
-    an [AssertionError] should be thrownBy {
+    an[AssertionError] should be thrownBy {
       runWithContext {
         _.parallelize(tableData) shouldNot containCellMutationCase(key1,
-          MutationCase.DELETE_FROM_ROW)
+                                                                   MutationCase.DELETE_FROM_ROW)
       }
     }
   }

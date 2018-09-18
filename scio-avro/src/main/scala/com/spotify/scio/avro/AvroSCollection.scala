@@ -42,9 +42,8 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
                      schema: Schema = null,
                      suffix: String = "",
                      codec: CodecFactory = CodecFactory.deflateCodec(6),
-                     metadata: Map[String, AnyRef] = Map.empty)
-                     (implicit ct: ClassTag[T], coder: Coder[T])
-  : Future[Tap[T]] = {
+                     metadata: Map[String, AnyRef] = Map.empty)(implicit ct: ClassTag[T],
+                                                                coder: Coder[T]): Future[Tap[T]] = {
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(AvroIO[T](path, schema))(param)
   }
@@ -58,12 +57,11 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
                           numShards: Int = 0,
                           suffix: String = "",
                           codec: CodecFactory = CodecFactory.deflateCodec(6),
-                          metadata: Map[String, AnyRef] = Map.empty)
-                         (implicit ct: ClassTag[T],
-                         tt: TypeTag[T],
-                         ev: T <:< HasAvroAnnotation,
-                         coder: Coder[T])
-  : Future[Tap[T]] = {
+                          metadata: Map[String, AnyRef] = Map.empty)(
+    implicit ct: ClassTag[T],
+    tt: TypeTag[T],
+    ev: T <:< HasAvroAnnotation,
+    coder: Coder[T]): Future[Tap[T]] = {
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(com.spotify.scio.io.AvroTyped.AvroIO[T](path))(param)
   }
@@ -75,10 +73,12 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
    * Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
    * serialization is not guaranteed to be compatible across Scio releases.
    */
-  def saveAsObjectFile(path: String, numShards: Int = 0, suffix: String = ".obj",
-                       codec: CodecFactory = CodecFactory.deflateCodec(6),
-                       metadata: Map[String, AnyRef] = Map.empty)
-                       (implicit coder: Coder[T]): Future[Tap[T]] = {
+  def saveAsObjectFile(
+    path: String,
+    numShards: Int = 0,
+    suffix: String = ".obj",
+    codec: CodecFactory = CodecFactory.deflateCodec(6),
+    metadata: Map[String, AnyRef] = Map.empty)(implicit coder: Coder[T]): Future[Tap[T]] = {
     val param = ObjectFileIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(ObjectFileIO[T](path))(param)
   }
@@ -89,12 +89,14 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
    * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage
    * Avro's block file format.
    */
-  def saveAsProtobufFile(path: String, numShards: Int = 0, suffix: String = ".protobuf",
+  def saveAsProtobufFile(path: String,
+                         numShards: Int = 0,
+                         suffix: String = ".protobuf",
                          codec: CodecFactory = CodecFactory.deflateCodec(6),
-                         metadata: Map[String, AnyRef] = Map.empty)
-                        (implicit ev: T <:< Message,
-                        ct: ClassTag[T],
-                        coder: Coder[T]): Future[Tap[T]] = {
+                         metadata: Map[String, AnyRef] = Map.empty)(
+    implicit ev: T <:< Message,
+    ct: ClassTag[T],
+    coder: Coder[T]): Future[Tap[T]] = {
     val param = ProtobufIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(ProtobufIO[T](path))(param)
   }

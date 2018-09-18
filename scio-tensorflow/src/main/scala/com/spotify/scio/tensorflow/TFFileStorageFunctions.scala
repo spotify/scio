@@ -29,7 +29,8 @@ class TFFileStorageFunctions(self: FileStorage) {
     new Iterator[Array[Byte]] {
       private def wrapInputStream(in: InputStream) =
         TFRecordCodec.wrapInputStream(in, Compression.AUTO)
-      private val input = self.getDirectoryInputStream(self.path, wrapInputStream)
+      private val input =
+        self.getDirectoryInputStream(self.path, wrapInputStream)
       private var current: Array[Byte] = TFRecordCodec.read(input)
       override def hasNext: Boolean = current != null
       override def next(): Array[Byte] = {

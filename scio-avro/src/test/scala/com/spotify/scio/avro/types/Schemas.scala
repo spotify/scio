@@ -146,33 +146,33 @@ object Schemas {
 
   private def fieldType(basicType: String, mode: FieldMode): String =
     mode match {
-      case NONE => basicType
+      case NONE     => basicType
       case OPTIONAL => s"""["null", $basicType]"""
-      case ARRAY => s"""{ "type" : "array", "items" : $basicType }"""
-      case MAP => s"""{ "type" : "map", "values" : $basicType }"""
+      case ARRAY    => s"""{ "type" : "array", "items" : $basicType }"""
+      case MAP      => s"""{ "type" : "map", "values" : $basicType }"""
     }
 
   private def setDefaultValue(mode: FieldMode): String =
     mode match {
-      case NONE => ""
+      case NONE     => ""
       case OPTIONAL => s""", "default": null"""
-      case ARRAY => s""", "default": []"""
-      case MAP => s""", "default": {}"""
+      case ARRAY    => s""", "default": []"""
+      case MAP      => s""", "default": {}"""
     }
 
   private def basicRecordName(mode: FieldMode): String =
     mode match {
-      case NONE => "BasicFields"
+      case NONE     => "BasicFields"
       case OPTIONAL => "OptionalFields"
-      case ARRAY => "ArrayFields"
-      case MAP => "MapFields"
+      case ARRAY    => "ArrayFields"
+      case MAP      => "MapFields"
     }
 
   private def nestedRecordName(mode: FieldMode): String =
     mode match {
-      case NONE => "NestedFields"
+      case NONE     => "NestedFields"
       case OPTIONAL => "OptionalNestedFields"
-      case ARRAY => "ArrayNestedFields"
-      case MAP => "MapNestedFields"
+      case ARRAY    => "ArrayNestedFields"
+      case MAP      => "MapNestedFields"
     }
 }

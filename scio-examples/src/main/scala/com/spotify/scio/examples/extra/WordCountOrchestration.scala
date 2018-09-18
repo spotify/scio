@@ -31,7 +31,7 @@ runMain
   com.spotify.scio.examples.extra.WordCountOrchestration
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
   --output=gs://[BUCKET]/[PATH]/wordcount
-*/
+ */
 
 // Use Futures and Taps to orchestrate multiple jobs with dependencies
 object WordCountOrchestration {
@@ -66,7 +66,8 @@ object WordCountOrchestration {
 
   def count(opts: PipelineOptions, inputPath: String): FT[(String, Long)] = {
     val sc = ScioContext(opts)
-    val f = sc.textFile(inputPath)
+    val f = sc
+      .textFile(inputPath)
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
       .materialize
@@ -75,14 +76,10 @@ object WordCountOrchestration {
   }
 
   // Split out transform for unit testing
-  def countWords(in: SCollection[String]): SCollection[(String, Long)] = {
-    in.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-      .countByValue
-  }
+  def countWords(in: SCollection[String]): SCollection[(String, Long)] =
+    in.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty)).countByValue
 
-  def merge(opts: PipelineOptions,
-            s: Seq[Tap[(String, Long)]],
-            outputPath: String): FT[String] = {
+  def merge(opts: PipelineOptions, s: Seq[Tap[(String, Long)]], outputPath: String): FT[String] = {
     val sc = ScioContext(opts)
     val f = mergeCounts(s.map(_.open(sc)))
       .map(kv => kv._1 + " " + kv._2)
@@ -92,8 +89,7 @@ object WordCountOrchestration {
   }
 
   // Split out transform for unit testing
-  def mergeCounts(ins: Seq[SCollection[(String, Long)]]): SCollection[(String, Long)] = {
+  def mergeCounts(ins: Seq[SCollection[(String, Long)]]): SCollection[(String, Long)] =
     SCollection.unionAll(ins).sumByKey
-  }
 
 }

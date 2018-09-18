@@ -53,7 +53,8 @@ private final class ImmediateTaps extends Taps {
   override private[scio] def mkTap[T](name: String,
                                       readyFn: () => Boolean,
                                       tapFn: () => Tap[T]): Future[Tap[T]] =
-    if (readyFn()) Future.successful(tapFn()) else Future.failed(new TapNotAvailableException(name))
+    if (readyFn()) Future.successful(tapFn())
+    else Future.failed(new TapNotAvailableException(name))
 }
 
 private object PollingTaps {
@@ -73,42 +74,43 @@ private final class PollingTaps(private[this] val backOff: BackOff) extends Taps
 
   override private[scio] def mkTap[T](name: String,
                                       readyFn: () => Boolean,
-                                      tapFn: () => Tap[T]): Future[Tap[T]] = this.synchronized {
-    val p = Promise[AnyRef]()
-    val init = if (polls == null) {
-      polls = Nil
-      true
-    } else {
-      false
-    }
-
-    logger.info(s"Polling for tap $name")
-    polls +:= Poll(name, readyFn, tapFn.asInstanceOf[() => Tap[Any]], p)
-
-    if (init) {
-      import scala.concurrent.ExecutionContext.Implicits.global
-      Future {
-        val sleeper = Sleeper.DEFAULT
-        do {
-          if (polls.nonEmpty) {
-            val tap = if (polls.size > 1) "taps" else "tap"
-            logger.info(s"Polling for ${polls.size} $tap")
-          }
-          this.synchronized {
-            val (ready, pending) = polls.partition(_.readyFn())
-            ready.foreach { p =>
-              logger.info(s"Tap available: ${p.name}")
-              p.promise.success(tapFn())
-            }
-            polls = pending
-          }
-        } while (BackOffUtils.next(sleeper, backOff))
-        polls.foreach(p => p.promise.failure(new TapNotAvailableException(p.name)))
+                                      tapFn: () => Tap[T]): Future[Tap[T]] =
+    this.synchronized {
+      val p = Promise[AnyRef]()
+      val init = if (polls == null) {
+        polls = Nil
+        true
+      } else {
+        false
       }
-    }
 
-    p.future.asInstanceOf[Future[Tap[T]]]
-  }
+      logger.info(s"Polling for tap $name")
+      polls +:= Poll(name, readyFn, tapFn.asInstanceOf[() => Tap[Any]], p)
+
+      if (init) {
+        import scala.concurrent.ExecutionContext.Implicits.global
+        Future {
+          val sleeper = Sleeper.DEFAULT
+          do {
+            if (polls.nonEmpty) {
+              val tap = if (polls.size > 1) "taps" else "tap"
+              logger.info(s"Polling for ${polls.size} $tap")
+            }
+            this.synchronized {
+              val (ready, pending) = polls.partition(_.readyFn())
+              ready.foreach { p =>
+                logger.info(s"Tap available: ${p.name}")
+                p.promise.success(tapFn())
+              }
+              polls = pending
+            }
+          } while (BackOffUtils.next(sleeper, backOff))
+          polls.foreach(p => p.promise.failure(new TapNotAvailableException(p.name)))
+        }
+      }
+
+      p.future.asInstanceOf[Future[Tap[T]]]
+    }
 
 }
 

@@ -19,7 +19,7 @@ package com.spotify.scio.bigquery
 
 import scala.concurrent.Future
 
-import com.spotify.scio.io.{Tap, Taps, FileStorage}
+import com.spotify.scio.io.{FileStorage, Tap, Taps}
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
@@ -32,13 +32,16 @@ import scala.language.implicitConversions
 /** Tap for BigQuery TableRow JSON files. */
 final case class TableRowJsonTap(path: String) extends Tap[TableRow] {
   override def value: Iterator[TableRow] = FileStorage(path).tableRowJsonFile
-  override def open(sc: ScioContext): SCollection[TableRow] = sc.tableRowJsonFile(path)
+  override def open(sc: ScioContext): SCollection[TableRow] =
+    sc.tableRowJsonFile(path)
 }
 
 /** Tap for BigQuery tables. */
 final case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
-  override def value: Iterator[TableRow] = BigQueryClient.defaultInstance().getTableRows(table)
-  override def open(sc: ScioContext): SCollection[TableRow] = sc.bigQueryTable(table)
+  override def value: Iterator[TableRow] =
+    BigQueryClient.defaultInstance().getTableRows(table)
+  override def open(sc: ScioContext): SCollection[TableRow] =
+    sc.bigQueryTable(table)
 }
 
 final case class BigQueryTaps(self: Taps) {
@@ -52,26 +55,26 @@ final case class BigQueryTaps(self: Taps) {
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery SELECT query. */
   def bigQuerySelect(sqlQuery: String, flattenResults: Boolean = false): Future[Tap[TableRow]] =
-    mkTap(
-      s"BigQuery SELECT: $sqlQuery",
-      () => isQueryDone(sqlQuery),
-      () => BigQuerySelect(sqlQuery).tap(BigQuerySelect.ReadParam(flattenResults)))
+    mkTap(s"BigQuery SELECT: $sqlQuery",
+          () => isQueryDone(sqlQuery),
+          () => BigQuerySelect(sqlQuery).tap(BigQuerySelect.ReadParam(flattenResults)))
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
   def bigQueryTable(table: TableReference): Future[Tap[TableRow]] =
     mkTap(s"BigQuery Table: $table",
-      () => bqc.tableExists(table),
-      () => BigQueryTable(table).tap(()))
+          () => bqc.tableExists(table),
+          () => BigQueryTable(table).tap(()))
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery table. */
   def bigQueryTable(tableSpec: String): Future[Tap[TableRow]] =
     bigQueryTable(BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Get a `Future[Tap[T]]` for typed BigQuery source. */
-  def typedBigQuery[T <: HasAnnotation : TypeTag : ClassTag : Coder](newSource: String = null)
-  : Future[Tap[T]] = {
+  def typedBigQuery[T <: HasAnnotation: TypeTag: ClassTag: Coder](
+    newSource: String = null): Future[Tap[T]] = {
     val bqt = BigQueryType[T]
-    lazy val table = scala.util.Try(BigQueryHelpers.parseTableSpec(newSource)).toOption
+    lazy val table =
+      scala.util.Try(BigQueryHelpers.parseTableSpec(newSource)).toOption
     val rows =
       newSource match {
         // newSource is missing, T's companion object must have either table or query
@@ -92,9 +95,7 @@ final case class BigQueryTaps(self: Taps) {
 
   /** Get a `Future[Tap[TableRow]]` for a BigQuery TableRow JSON file. */
   def tableRowJsonFile(path: String): Future[Tap[TableRow]] =
-    mkTap(s"TableRowJson: $path",
-      () => self.isPathDone(path),
-      () => TableRowJsonIO(path).tap(()))
+    mkTap(s"TableRowJson: $path", () => self.isPathDone(path), () => TableRowJsonIO(path).tap(()))
 
   private def isQueryDone(sqlQuery: String): Boolean =
     bqc.extractTables(sqlQuery).forall(bqc.tableExists)

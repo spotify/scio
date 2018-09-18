@@ -42,7 +42,8 @@ private object TFRecordCodec {
   def read(input: InputStream): Array[Byte] = {
     val headerBytes = readFully(input, headerLength)
     if (headerBytes != null) {
-      val headerBuf = ByteBuffer.wrap(headerBytes).order(ByteOrder.LITTLE_ENDIAN)
+      val headerBuf =
+        ByteBuffer.wrap(headerBytes).order(ByteOrder.LITTLE_ENDIAN)
       val length = headerBuf.getLong
       val maskedCrc32OfLength = headerBuf.getInt
       require(hashLong(length) == maskedCrc32OfLength, "Invalid masked CRC32 of length")
@@ -50,7 +51,8 @@ private object TFRecordCodec {
       val data = readFully(input, length.toInt)
 
       val footerBytes = readFully(input, footerLength)
-      val footerBuf = ByteBuffer.wrap(footerBytes).order(ByteOrder.LITTLE_ENDIAN)
+      val footerBuf =
+        ByteBuffer.wrap(footerBytes).order(ByteOrder.LITTLE_ENDIAN)
       val maskedCrc32OfData = footerBuf.getInt
       require(hashBytes(data) == maskedCrc32OfData, "Invalid masked CRC32 of data")
       data
@@ -88,7 +90,8 @@ private object TFRecordCodec {
           pushback
         }
       case Compression.UNCOMPRESSED => stream
-      case _ => Channels.newInputStream(compression.readDecompressed(Channels.newChannel(stream)))
+      case _ =>
+        Channels.newInputStream(compression.readDecompressed(Channels.newChannel(stream)))
     }
   }
 

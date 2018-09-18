@@ -40,7 +40,7 @@ runMain
   --outputToBigqueryTable=true
   --outputToDatastore=false
   --output=[DATASET].auto_complete
-*/
+ */
 
 object AutoComplete {
 
@@ -60,41 +60,49 @@ object AutoComplete {
     }
   }
 
-  def computeTopFlat(input: SCollection[(String, Long)], candidatesPerPrefix: Int, minPrefix: Int)
-  : SCollection[(String, Iterable[(String, Long)])] =
+  def computeTopFlat(input: SCollection[(String, Long)],
+                     candidatesPerPrefix: Int,
+                     minPrefix: Int): SCollection[(String, Iterable[(String, Long)])] =
     input
       .flatMap(allPrefixes(minPrefix))
       .topByKey(candidatesPerPrefix, Ordering.by(_._2))
 
   def computeTopRecursive(input: SCollection[(String, Long)],
-                           candidatesPerPrefix: Int, minPrefix: Int)
-  : Seq[SCollection[(String, Iterable[(String, Long)])]] =
+                          candidatesPerPrefix: Int,
+                          minPrefix: Int): Seq[SCollection[(String, Iterable[(String, Long)])]] =
     if (minPrefix > 10) {
       computeTopFlat(input, candidatesPerPrefix, minPrefix)
         .partition(2, t => if (t._1.length > minPrefix) 0 else 1)
     } else {
-      val larger = computeTopRecursive(input, candidatesPerPrefix, minPrefix + 1)
-      val small = (larger(1).flatMap(_._2) ++ input.filter(_._1.length == minPrefix))
-        .flatMap(allPrefixes(minPrefix, minPrefix))
-        .topByKey(candidatesPerPrefix, Ordering.by(_._2))
+      val larger =
+        computeTopRecursive(input, candidatesPerPrefix, minPrefix + 1)
+      val small =
+        (larger(1).flatMap(_._2) ++ input.filter(_._1.length == minPrefix))
+          .flatMap(allPrefixes(minPrefix, minPrefix))
+          .topByKey(candidatesPerPrefix, Ordering.by(_._2))
       Seq(larger.head ++ larger(1), small)
     }
 
-  def allPrefixes(minPrefix: Int, maxPrefix: Int = Int.MaxValue)
-  : ((String, Long)) => Iterable[(String, (String, Long))] = { case (word, count) =>
-    (minPrefix to Math.min(word.length, maxPrefix)).map(i => (word.substring(0, i), (word, count)))
+  def allPrefixes(
+    minPrefix: Int,
+    maxPrefix: Int = Int.MaxValue): ((String, Long)) => Iterable[(String, (String, Long))] = {
+    case (word, count) =>
+      (minPrefix to Math.min(word.length, maxPrefix)).map(i =>
+        (word.substring(0, i), (word, count)))
   }
 
   def makeEntity(kind: String, kv: (String, Iterable[(String, Long)])): Entity = {
     val key = makeKey(kind, kv._1).build()
     val candidates = kv._2.map { p =>
-      makeValue(Entity.newBuilder()
-        .putAllProperties(ImmutableMap.of(
-          "tag", makeValue(p._1).build(),
-          "count", makeValue(p._2).build()))
-      ).build()
+      makeValue(
+        Entity
+          .newBuilder()
+          .putAllProperties(
+            ImmutableMap.of("tag", makeValue(p._1).build(), "count", makeValue(p._2).build())))
+        .build()
     }
-    Entity.newBuilder()
+    Entity
+      .newBuilder()
       .setKey(key)
       .putAllProperties(ImmutableMap.of("candidates", makeValue(candidates.asJava).build()))
       .build()
@@ -117,12 +125,15 @@ object AutoComplete {
     // initialize input
     val windowFn = if (isStreaming) {
       require(!outputToDatastore, "DatastoreIO is not supported in streaming.")
-      SlidingWindows.of(Duration.standardMinutes(30)).every(Duration.standardSeconds(5))
+      SlidingWindows
+        .of(Duration.standardMinutes(30))
+        .every(Duration.standardSeconds(5))
     } else {
       new GlobalWindows
     }
 
-    val lines = sc.textFile(input)
+    val lines = sc
+      .textFile(input)
       .flatMap("#\\S+".r.findAllMatchIn(_).map(_.matched))
       .withWindowFn(windowFn)
 

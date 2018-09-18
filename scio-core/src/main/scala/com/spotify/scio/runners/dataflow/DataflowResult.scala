@@ -37,17 +37,22 @@ import scala.concurrent.Future
 /** Represent a Dataflow runner specific result. */
 class DataflowResult(val internal: DataflowPipelineJob) extends RunnerResult {
 
-  def this(internal: PipelineResult) = this(internal.asInstanceOf[DataflowPipelineJob])
+  def this(internal: PipelineResult) =
+    this(internal.asInstanceOf[DataflowPipelineJob])
 
-  private val client = DataflowResult.getOptions(internal.getProjectId).getDataflowClient
+  private val client =
+    DataflowResult.getOptions(internal.getProjectId).getDataflowClient
 
   /** Get Dataflow [[com.google.api.services.dataflow.model.Job Job]]. */
-  def getJob: Job = DataflowResult.getJob(
-    client, internal.getProjectId, internal.getRegion, internal.getJobId)
+  def getJob: Job =
+    DataflowResult.getJob(client, internal.getProjectId, internal.getRegion, internal.getJobId)
 
   /** Get Dataflow [[com.google.api.services.dataflow.model.JobMetrics JobMetrics]]. */
-  def getJobMetrics: JobMetrics = DataflowResult.getJobMetrics(
-    client, internal.getProjectId, internal.getRegion, internal.getJobId)
+  def getJobMetrics: JobMetrics =
+    DataflowResult.getJobMetrics(client,
+                                 internal.getProjectId,
+                                 internal.getRegion,
+                                 internal.getJobId)
 
   /** Get a generic [[ScioResult]]. */
   override def asScioResult: ScioResult = new DataflowScioResult(internal)
@@ -62,14 +67,14 @@ class DataflowResult(val internal: DataflowPipelineJob) extends RunnerResult {
     }
 
     override def getMetrics: Metrics = {
-      val options = getJob.getEnvironment.getSdkPipelineOptions.get("options")
+      val options = getJob.getEnvironment.getSdkPipelineOptions
+        .get("options")
         .asInstanceOf[java.util.Map[String, AnyRef]]
-      Metrics(
-        options.get("scioVersion").toString,
-        options.get("scalaVersion").toString,
-        options.get("appName").toString,
-        internal.getState.toString,
-        getBeamMetrics)
+      Metrics(options.get("scioVersion").toString,
+              options.get("scalaVersion").toString,
+              options.get("appName").toString,
+              internal.getState.toString,
+              getBeamMetrics)
     }
   }
 
@@ -77,6 +82,7 @@ class DataflowResult(val internal: DataflowPipelineJob) extends RunnerResult {
 
 /** Companion object for [[DataflowResult]]. */
 object DataflowResult {
+
   /** Create a new [[DataflowResult]] instance. */
   def apply(projectId: String, jobId: String): DataflowResult = {
     val options = getOptions(projectId)
@@ -98,30 +104,47 @@ object DataflowResult {
         }(scala.collection.breakOut)
 
     val client = DataflowClient.create(options)
-    val internal = new DataflowPipelineJob(client, jobId, options, transformStepNames.asJava)
+    val internal =
+      new DataflowPipelineJob(client, jobId, options, transformStepNames.asJava)
     new DataflowResult(internal)
   }
 
   private def getOptions(projectId: String): DataflowPipelineOptions = {
-    val options = PipelineOptionsFactory.create().as(classOf[DataflowPipelineOptions])
+    val options =
+      PipelineOptionsFactory.create().as(classOf[DataflowPipelineOptions])
     options.setProject(projectId)
     options
   }
 
   private def getJob(dataflow: Dataflow, projectId: String, location: String, jobId: String): Job =
-    dataflow.projects().locations().jobs().get(projectId, location, jobId).setView("JOB_VIEW_ALL")
+    dataflow
+      .projects()
+      .locations()
+      .jobs()
+      .get(projectId, location, jobId)
+      .setView("JOB_VIEW_ALL")
       .execute()
 
-  private def getJobMetrics(dataflow: Dataflow, projectId: String, location: String,
+  private def getJobMetrics(dataflow: Dataflow,
+                            projectId: String,
+                            location: String,
                             jobId: String): JobMetrics =
-    dataflow.projects().locations().jobs().getMetrics(projectId, location, jobId).execute()
+    dataflow
+      .projects()
+      .locations()
+      .jobs()
+      .getMetrics(projectId, location, jobId)
+      .execute()
 
   // wiring to reconstruct AppliedPTransform for name mapping
 
-  private def newAppliedPTransform(fullName: String)
-  : AppliedPTransform[PInput, POutput, EmptyPTransform] = AppliedPTransform.of(
-    fullName, Collections.emptyMap(), Collections.emptyMap(),
-    new EmptyPTransform, new EmptyPipeline)
+  private def newAppliedPTransform(
+    fullName: String): AppliedPTransform[PInput, POutput, EmptyPTransform] =
+    AppliedPTransform.of(fullName,
+                         Collections.emptyMap(),
+                         Collections.emptyMap(),
+                         new EmptyPTransform,
+                         new EmptyPipeline)
 
   private class EmptyPTransform extends PTransform[PInput, POutput] {
     override def expand(input: PInput): POutput = ???

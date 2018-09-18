@@ -121,7 +121,7 @@ class ScioContextTest extends PipelineSpec {
     opts.setRunner(classOf[DirectRunner])
     opts.as(classOf[ScioOptions]).setMetricsLocation(metricsFile.toString)
     val sc = ScioContext(opts)
-    sc.close().waitUntilFinish()  // block non-test runner
+    sc.close().waitUntilFinish() // block non-test runner
 
     val mapper = ScioUtil.getScalaJsonMapper
 
@@ -133,7 +133,7 @@ class ScioContextTest extends PipelineSpec {
   it should "fail to close() on closed context" in {
     val sc = ScioContext()
     sc.close()
-    the [IllegalArgumentException] thrownBy {
+    the[IllegalArgumentException] thrownBy {
       sc.close()
     } should have message "requirement failed: ScioContext already closed"
   }
@@ -160,13 +160,18 @@ class ScioContextTest extends PipelineSpec {
   }
 
   it should "parse valid, invalid, and missing blockFor argument passed from command line" in {
-    val (validOpts, _) = ScioContext.parseArguments[PipelineOptions](Array(s"--blockFor=1h"))
+    val (validOpts, _) =
+      ScioContext.parseArguments[PipelineOptions](Array(s"--blockFor=1h"))
     ScioContext.apply(validOpts).close().getAwaitDuration shouldBe Duration("1h")
 
     val (missingOpts, _) = ScioContext.parseArguments[PipelineOptions](Array())
-    ScioContext.apply(missingOpts).close().getAwaitDuration shouldBe Duration.Inf
+    ScioContext
+      .apply(missingOpts)
+      .close()
+      .getAwaitDuration shouldBe Duration.Inf
 
-    val (invalidOpts, _) = ScioContext.parseArguments[PipelineOptions](Array(s"--blockFor=foo"))
+    val (invalidOpts, _) =
+      ScioContext.parseArguments[PipelineOptions](Array(s"--blockFor=foo"))
     the[IllegalArgumentException] thrownBy { ScioContext.apply(invalidOpts) } should have message
       s"blockFor param foo cannot be cast to type scala.concurrent.duration.Duration"
   }

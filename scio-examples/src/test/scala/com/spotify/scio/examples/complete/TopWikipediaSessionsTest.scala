@@ -31,13 +31,15 @@ class TopWikipediaSessionsTest extends PipelineSpec {
       TableRow("timestamp" -> 1, "contributor_username" -> "user2"),
       TableRow("timestamp" -> 3601, "contributor_username" -> "user2"),
       TableRow("timestamp" -> 3602, "contributor_username" -> "user2"),
-      TableRow("timestamp" -> 35 * 24 * 3600, "contributor_username" -> "user3"))
+      TableRow("timestamp" -> 35 * 24 * 3600, "contributor_username" -> "user3")
+    )
     val expected = Seq(
       "user1 : [1970-01-01T00:00:00.000Z..1970-01-01T01:00:02.000Z) : 3 : 1970-01-01T00:00:00.000Z",
-      "user3 : [1970-02-05T00:00:00.000Z..1970-02-05T01:00:00.000Z) : 1 : 1970-02-01T00:00:00.000Z")
+      "user3 : [1970-02-05T00:00:00.000Z..1970-02-05T01:00:00.000Z) : 1 : 1970-02-01T00:00:00.000Z"
+    )
     runWithContext { sc =>
       val p = TopWikipediaSessions.computeTopSessions(sc.parallelize(data), 1.0)
-      p should containInAnyOrder (expected)
+      p should containInAnyOrder(expected)
     }
   }
 }

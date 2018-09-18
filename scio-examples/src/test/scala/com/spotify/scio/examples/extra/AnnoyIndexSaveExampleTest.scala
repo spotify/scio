@@ -36,7 +36,8 @@ class AnnoyIndexSaveExampleTest extends PipelineSpec {
     // verify with annoy-java
     val annoyIndex = new ANNIndex(dim, annoyFile.toString)
     val vec = annoyIndex.getItemVector(0)
-    val nearest = annoyIndex.getNearest(vec, 10).asScala.map(annoyIndex.getItemVector(_))
+    val nearest =
+      annoyIndex.getNearest(vec, 10).asScala.map(annoyIndex.getItemVector(_))
     val sims = nearest.map(cosineSim(vec, _))
 
     nearest.head shouldBe vec

@@ -28,12 +28,23 @@ class ShapelessTensorFlowExampleTest extends PipelineSpec {
   val textIn = Seq("a b c d e", "a b a b")
   val wordCount = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
   val examples = wordCount.map { kv =>
-    Example.newBuilder().setFeatures(Features.newBuilder()
-      .putFeature("word", Feature.newBuilder()
-        .setBytesList(BytesList.newBuilder().addValue(ByteString.copyFromUtf8(kv._1))).build())
-      .putFeature("count", Feature.newBuilder()
-        .setInt64List(Int64List.newBuilder().addValue(kv._2)).build())
-    ).build()
+    Example
+      .newBuilder()
+      .setFeatures(
+        Features
+          .newBuilder()
+          .putFeature(
+            "word",
+            Feature
+              .newBuilder()
+              .setBytesList(BytesList.newBuilder().addValue(ByteString.copyFromUtf8(kv._1)))
+              .build())
+          .putFeature("count",
+                      Feature
+                        .newBuilder()
+                        .setInt64List(Int64List.newBuilder().addValue(kv._2))
+                        .build()))
+      .build()
   }
   val textOut = wordCount.map(kv => kv._1 + ": " + kv._2)
 
@@ -42,7 +53,7 @@ class ShapelessTensorFlowExampleTest extends PipelineSpec {
       .args("--input=in.txt", "--output=wc.tfrecords")
       .input(TextIO("in.txt"), textIn)
       .output(TFRecordIO("wc.tfrecords")) {
-        _.map(Example.parseFrom) should containInAnyOrder (examples)
+        _.map(Example.parseFrom) should containInAnyOrder(examples)
       }
       .run()
   }
@@ -51,7 +62,7 @@ class ShapelessTensorFlowExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.ShapelessTensorFlowReadExample.type]
       .args("--input=wc.tfrecords", "--output=out.txt")
       .input(TFRecordIO("wc.tfrecords"), examples.map(_.toByteArray))
-      .output(TextIO("out.txt"))(_ should containInAnyOrder (textOut))
+      .output(TextIO("out.txt"))(_ should containInAnyOrder(textOut))
       .run()
   }
 

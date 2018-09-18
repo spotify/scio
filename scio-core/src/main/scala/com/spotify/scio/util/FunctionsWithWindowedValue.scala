@@ -24,36 +24,41 @@ import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 
 private[scio] object FunctionsWithWindowedValue {
 
-  def filterFn[T, U](f: WindowedValue[T] => Boolean): DoFn[T, T] = new NamedDoFn[T, T] {
-    val g = ClosureCleaner(f)  // defeat closure
-    @ProcessElement
-    private[scio] def processElement(c: DoFn[T, T]#ProcessContext, window: BoundedWindow): Unit = {
-      val wv = WindowedValue(c.element(), c.timestamp(), window, c.pane())
-      if (g(wv)) c.output(c.element())
-    }
-  }
-
-  def flatMapFn[T, U](f: WindowedValue[T] => TraversableOnce[WindowedValue[U]])
-  : DoFn[T, U] = new NamedDoFn[T, U] {
-    val g = ClosureCleaner(f)  // defeat closure
-    @ProcessElement
-    private[scio] def processElement(c: DoFn[T, U]#ProcessContext, window: BoundedWindow): Unit = {
-      val wv = WindowedValue(c.element(), c.timestamp(), window, c.pane())
-      val i = g(wv).toIterator
-      while (i.hasNext) {
-        val v = i.next()
-        c.outputWithTimestamp(v.value, v.timestamp)
+  def filterFn[T, U](f: WindowedValue[T] => Boolean): DoFn[T, T] =
+    new NamedDoFn[T, T] {
+      val g = ClosureCleaner(f) // defeat closure
+      @ProcessElement
+      private[scio] def processElement(c: DoFn[T, T]#ProcessContext,
+                                       window: BoundedWindow): Unit = {
+        val wv = WindowedValue(c.element(), c.timestamp(), window, c.pane())
+        if (g(wv)) c.output(c.element())
       }
     }
-  }
 
-  def mapFn[T, U](f: WindowedValue[T] => WindowedValue[U]): DoFn[T, U] = new NamedDoFn[T, U] {
-    val g = ClosureCleaner(f)  // defeat closure
-    @ProcessElement
-    private[scio] def processElement(c: DoFn[T, U]#ProcessContext, window: BoundedWindow): Unit = {
-      val wv = g(WindowedValue(c.element(), c.timestamp(), window, c.pane()))
-      c.outputWithTimestamp(wv.value, wv.timestamp)
+  def flatMapFn[T, U](f: WindowedValue[T] => TraversableOnce[WindowedValue[U]]): DoFn[T, U] =
+    new NamedDoFn[T, U] {
+      val g = ClosureCleaner(f) // defeat closure
+      @ProcessElement
+      private[scio] def processElement(c: DoFn[T, U]#ProcessContext,
+                                       window: BoundedWindow): Unit = {
+        val wv = WindowedValue(c.element(), c.timestamp(), window, c.pane())
+        val i = g(wv).toIterator
+        while (i.hasNext) {
+          val v = i.next()
+          c.outputWithTimestamp(v.value, v.timestamp)
+        }
+      }
     }
-  }
+
+  def mapFn[T, U](f: WindowedValue[T] => WindowedValue[U]): DoFn[T, U] =
+    new NamedDoFn[T, U] {
+      val g = ClosureCleaner(f) // defeat closure
+      @ProcessElement
+      private[scio] def processElement(c: DoFn[T, U]#ProcessContext,
+                                       window: BoundedWindow): Unit = {
+        val wv = g(WindowedValue(c.element(), c.timestamp(), window, c.pane()))
+        c.outputWithTimestamp(wv.value, wv.timestamp)
+      }
+    }
 
 }

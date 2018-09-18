@@ -40,39 +40,51 @@ class StateTest extends FlatSpec with Matchers {
   }
 
   "SCollection.State" should "pass MultiJoin" in {
-    testCogroup { case (a, b, c) =>
-      noException shouldBe thrownBy { MultiJoin(a, b, c) }
+    testCogroup {
+      case (a, b, c) =>
+        noException shouldBe thrownBy { MultiJoin(a, b, c) }
     }
   }
 
   // scalastyle:off no.whitespace.before.left.bracket
   it should "fail chained cogroups" in {
-    testCogroup { case (a, b, c) =>
-    an [RuntimeException] shouldBe thrownBy { a.cogroup(b).cogroup(c) }
+    testCogroup {
+      case (a, b, c) =>
+        an[RuntimeException] shouldBe thrownBy { a.cogroup(b).cogroup(c) }
     }
   }
 
   it should "fail chained joins" in {
-    testCogroup { case (a, b, c) =>
-      an [RuntimeException] shouldBe thrownBy { a.join(b).join(c) }
+    testCogroup {
+      case (a, b, c) =>
+        an[RuntimeException] shouldBe thrownBy { a.join(b).join(c) }
     }
   }
 
   it should "fail chained left outer joins" in {
-    testCogroup { case (a, b, c) =>
-      an [RuntimeException] shouldBe thrownBy { a.leftOuterJoin(b).leftOuterJoin(c) }
+    testCogroup {
+      case (a, b, c) =>
+        an[RuntimeException] shouldBe thrownBy {
+          a.leftOuterJoin(b).leftOuterJoin(c)
+        }
     }
   }
 
   it should "fail chained right outer joins" in {
-    testCogroup { case (a, b, c) =>
-      an [RuntimeException] shouldBe thrownBy { a.rightOuterJoin(b).rightOuterJoin(c) }
+    testCogroup {
+      case (a, b, c) =>
+        an[RuntimeException] shouldBe thrownBy {
+          a.rightOuterJoin(b).rightOuterJoin(c)
+        }
     }
   }
 
   it should "fail chained full outer joins" in {
-    testCogroup { case (a, b, c) =>
-      an [RuntimeException] shouldBe thrownBy { a.fullOuterJoin(b).fullOuterJoin(c) }
+    testCogroup {
+      case (a, b, c) =>
+        an[RuntimeException] shouldBe thrownBy {
+          a.fullOuterJoin(b).fullOuterJoin(c)
+        }
     }
   }
   // scalastyle:on no.whitespace.before.left.bracket

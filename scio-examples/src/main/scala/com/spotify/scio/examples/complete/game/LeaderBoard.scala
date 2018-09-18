@@ -45,8 +45,11 @@ object LeaderBoard {
 
   // The schemas for the BigQuery tables to write output to are defined as annotated case classes
   @BigQueryType.toTable
-  case class TeamScoreSums(team: String, total_score: Int,
-                           window_start: String, processing_time: String, timing: String)
+  case class TeamScoreSums(team: String,
+                           total_score: Int,
+                           window_start: String,
+                           processing_time: String,
+                           timing: String)
 
   @BigQueryType.toTable
   case class UserScoreSums(user: String, total_score: Int, processing_time: String)
@@ -60,21 +63,26 @@ object LeaderBoard {
     val exampleUtils = new ExampleUtils(sc.options)
 
     // Date formatter for full timestamp
-    def fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
-      .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
+    def fmt =
+      DateTimeFormat
+        .forPattern("yyyy-MM-dd HH:mm:ss.SSS")
+        .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
     // Duration in minutes over which to calculate team scores, defaults to 1 hour
-    val teamWindowDuration = Duration.standardMinutes(args.int("teamWindowDuration", 60))
+    val teamWindowDuration =
+      Duration.standardMinutes(args.int("teamWindowDuration", 60))
     // Data that comes in from our streaming pipeline after this duration isn't considered in our
     // processing. Measured in minutes, defaults to 2 hours
-    val allowedLateness = Duration.standardMinutes(args.int("allowedLateness", 120))
+    val allowedLateness =
+      Duration.standardMinutes(args.int("allowedLateness", 120))
 
     // Read in streaming data from PubSub and parse each row as `GameActionInfo` events
-    val gameEvents = sc.pubsubTopic[String](args("topic"), timestampAttribute = "timestamp_ms")
+    val gameEvents = sc
+      .pubsubTopic[String](args("topic"), timestampAttribute = "timestamp_ms")
       .flatMap(UserScore.parseEvent)
 
     calculateTeamScores(gameEvents, teamWindowDuration, allowedLateness)
-      // Add windowing information to team score results by converting to `WindowedSCollection`
-      .toWindowed
+    // Add windowing information to team score results by converting to `WindowedSCollection`
+    .toWindowed
       .map { wv =>
         // Convert from score tuple to TeamScoreSums object with both tuple and windowing info
         val start = fmt.print(wv.window.asInstanceOf[IntervalWindow].start())
@@ -88,21 +96,22 @@ object LeaderBoard {
       .saveAsTypedBigQuery(args("output") + "_team")
 
     gameEvents
-      // Use a global window for unbounded data, which updates calculation every 10 minutes,
-      // starting 10 minutes after the first event arrives.
-      // Recalculates immediately when late data arrives, according to these rules:
-      // - Accumulates fired panes (rather than discarding), which means subsequent calculations
-      // use all data, not just data collected after the last calculation was done.
-      // - Accepts late entries (and recalculates based on them) only if they arrive within the
-      // allowedLateness duration.
-      // For more information on these options, see the Beam docs:
-      // https://beam.apache.org/documentation/programming-guide/#triggers
+    // Use a global window for unbounded data, which updates calculation every 10 minutes,
+    // starting 10 minutes after the first event arrives.
+    // Recalculates immediately when late data arrives, according to these rules:
+    // - Accumulates fired panes (rather than discarding), which means subsequent calculations
+    // use all data, not just data collected after the last calculation was done.
+    // - Accepts late entries (and recalculates based on them) only if they arrive within the
+    // allowedLateness duration.
+    // For more information on these options, see the Beam docs:
+    // https://beam.apache.org/documentation/programming-guide/#triggers
       .withGlobalWindow(WindowOptions(
-        trigger = Repeatedly.forever(AfterProcessingTime.pastFirstElementInPane()
+        trigger = Repeatedly.forever(AfterProcessingTime
+          .pastFirstElementInPane()
           .plusDelayOf(Duration.standardMinutes(10))),
         accumulationMode = ACCUMULATING_FIRED_PANES,
-        allowedLateness = allowedLateness)
-      )
+        allowedLateness = allowedLateness
+      ))
       // Change each event into a tuple of: user, and that user's score
       .map(i => (i.user, i.score))
       // Sum the scores by user
@@ -122,27 +131,34 @@ object LeaderBoard {
   def calculateTeamScores(infos: SCollection[GameActionInfo],
                           teamWindowDuration: Duration,
                           allowedLateness: Duration): SCollection[(String, Int)] =
-    infos.withFixedWindows(
-      // Using a fixed window, calculate every time the window ends.
-      // Also calculate an early/"speculative" result from partial data, 5 minutes after the first
-      // element in our window is processed (withEarlyFirings).
-      // If late data arrives, 10 minutes after the late data arrives, recalculate according to:
-      // - Accumulates fired panes (rather than discarding), which means subsequent calculations
-      // use all data, not just data collected after the last calculation was done.
-      // - Accepts late entries (and recalculates based on them) only if they arrive within the
-      // allowedLateness duration.
-      // For more information on these options, see the Beam
-      // [doc](https://beam.apache.org/documentation/programming-guide/#composite-triggers)
-      // (subsection 8.5.2, "Composition with AfterWatermark", is especially relevant)
-      teamWindowDuration,
-      options = WindowOptions(
-        trigger = AfterWatermark.pastEndOfWindow()
-          .withEarlyFirings(AfterProcessingTime.pastFirstElementInPane()
-            .plusDelayOf(Duration.standardMinutes(5)))
-          .withLateFirings(AfterProcessingTime.pastFirstElementInPane()
-            .plusDelayOf(Duration.standardMinutes(10))),
-        accumulationMode = ACCUMULATING_FIRED_PANES,
-        allowedLateness = allowedLateness))
+    infos
+      .withFixedWindows(
+        // Using a fixed window, calculate every time the window ends.
+        // Also calculate an early/"speculative" result from partial data, 5 minutes after the first
+        // element in our window is processed (withEarlyFirings).
+        // If late data arrives, 10 minutes after the late data arrives, recalculate according to:
+        // - Accumulates fired panes (rather than discarding), which means subsequent calculations
+        // use all data, not just data collected after the last calculation was done.
+        // - Accepts late entries (and recalculates based on them) only if they arrive within the
+        // allowedLateness duration.
+        // For more information on these options, see the Beam
+        // [doc](https://beam.apache.org/documentation/programming-guide/#composite-triggers)
+        // (subsection 8.5.2, "Composition with AfterWatermark", is especially relevant)
+        teamWindowDuration,
+        options = WindowOptions(
+          trigger = AfterWatermark
+            .pastEndOfWindow()
+            .withEarlyFirings(
+              AfterProcessingTime
+                .pastFirstElementInPane()
+                .plusDelayOf(Duration.standardMinutes(5)))
+            .withLateFirings(AfterProcessingTime
+              .pastFirstElementInPane()
+              .plusDelayOf(Duration.standardMinutes(10))),
+          accumulationMode = ACCUMULATING_FIRED_PANES,
+          allowedLateness = allowedLateness
+        )
+      )
       // Change each event into a tuple of: team user was on, and that user's score
       .map(i => (i.team, i.score))
       // Sum the scores across the defined window, using "team" as the key to sum by

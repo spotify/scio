@@ -21,7 +21,6 @@ package com.spotify.scio.values
 
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 
-
 import java.io.PrintStream
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.concurrent.ThreadLocalRandom
@@ -73,21 +72,21 @@ object SCollection {
     new DoubleSCollectionFunctions(s)
 
   /** Implicit conversion from SCollection to DoubleSCollectionFunctions. */
-  implicit def makeDoubleSCollectionFunctions[T](s: SCollection[T])(implicit num: Numeric[T])
-  : DoubleSCollectionFunctions =
+  implicit def makeDoubleSCollectionFunctions[T](s: SCollection[T])(
+    implicit num: Numeric[T]): DoubleSCollectionFunctions =
     new DoubleSCollectionFunctions(s.map(num.toDouble))
 
   /** Implicit conversion from SCollection to PairSCollectionFunctions. */
-  implicit def makePairSCollectionFunctions[K, V](s: SCollection[(K, V)])
-  : PairSCollectionFunctions[K, V] =
+  implicit def makePairSCollectionFunctions[K, V](
+    s: SCollection[(K, V)]): PairSCollectionFunctions[K, V] =
     new PairSCollectionFunctions(s)
 
-  implicit def makePairHashSCollectionFunctions[K, V](s: SCollection[(K, V)])
-  : PairHashSCollectionFunctions[K, V] =
+  implicit def makePairHashSCollectionFunctions[K, V](
+    s: SCollection[(K, V)]): PairHashSCollectionFunctions[K, V] =
     new PairHashSCollectionFunctions(s)
 
-  implicit def makePairSkewedSCollectionFunctions[K, V](s: SCollection[(K, V)])
-  : PairSkewedSCollectionFunctions[K, V] =
+  implicit def makePairSkewedSCollectionFunctions[K, V](
+    s: SCollection[(K, V)]): PairSkewedSCollectionFunctions[K, V] =
     new PairSkewedSCollectionFunctions(s)
 
   private[scio] final case class State(postCoGroup: Boolean = false)
@@ -143,11 +142,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Apply a [[org.apache.beam.sdk.transforms.PTransform PTransform]] and wrap the output in an
    * [[SCollection]].
    */
-  def applyTransform[U: Coder](transform: PTransform[_ >: PCollection[T], PCollection[U]])
-  : SCollection[U] = {
+  def applyTransform[U: Coder](
+    transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {
     if (context.isTest) {
-      org.apache.beam.sdk.util.SerializableUtils.ensureSerializable(
-        CoderMaterializer.beam(context, Coder[U]))
+      org.apache.beam.sdk.util.SerializableUtils
+        .ensureSerializable(CoderMaterializer.beam(context, Coder[U]))
     }
     this.pApply(transform).setCoder(CoderMaterializer.beam(context, Coder[U]))
   }
@@ -157,24 +156,21 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * [[SCollection]]. This is a special case of [[applyTransform]] for transforms with [[KV]]
    * output.
    */
-  def applyKvTransform[K, V]
-  (transform: PTransform[_ >: PCollection[T], PCollection[KV[K, V]]])(
-    implicit koder: Coder[K], voder: Coder[V])
-  : SCollection[KV[K, V]] = {
+  def applyKvTransform[K, V](transform: PTransform[_ >: PCollection[T], PCollection[KV[K, V]]])(
+    implicit koder: Coder[K],
+    voder: Coder[V]): SCollection[KV[K, V]] = {
     if (context.isTest) {
-      org.apache.beam.sdk.util.SerializableUtils.ensureSerializable(
-        CoderMaterializer.kvCoder[K, V](context))
+      org.apache.beam.sdk.util.SerializableUtils
+        .ensureSerializable(CoderMaterializer.kvCoder[K, V](context))
     }
     this.pApply(transform).setCoder(CoderMaterializer.kvCoder[K, V](context))
   }
 
   /** Apply a transform. */
-  private[scio] def transform[U](f: SCollection[T] => SCollection[U])
-  : SCollection[U] = {
+  private[scio] def transform[U](f: SCollection[T] => SCollection[U]): SCollection[U] = {
     val o = internal.apply(this.tfName, new PTransform[PCollection[T], PCollection[U]]() {
-      override def expand(input: PCollection[T]): PCollection[U] = {
+      override def expand(input: PCollection[T]): PCollection[U] =
         f(context.wrap(input)).internal
-      }
     })
     context.wrap(o)
   }
@@ -207,7 +203,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def union(that: SCollection[T]): SCollection[T] = {
     val o = PCollectionList
-      .of(internal).and(that.internal)
+      .of(internal)
+      .and(that.internal)
       .apply(this.tfName, Flatten.pCollections())
     context.wrap(o)
   }
@@ -236,8 +233,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group collection
    */
   def partition(numPartitions: Int, f: T => Int): Seq[SCollection[T]] =
-    this.applyInternal(Partition.of[T](numPartitions, Functions.partitionFn[T](numPartitions, f)))
-      .getAll.asScala.map(p => context.wrap(p))
+    this
+      .applyInternal(Partition.of[T](numPartitions, Functions.partitionFn[T](numPartitions, f)))
+      .getAll
+      .asScala
+      .map(p => context.wrap(p))
 
   /**
    * Partition this SCollection into a pair of SCollections according to a predicate.
@@ -252,7 +252,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     (left, right)
   }
 
-
   // =======================================================================
   // Transformations
   // =======================================================================
@@ -265,8 +264,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * of creating a new `U` to avoid memory allocation.
    * @group transform
    */
-  def aggregate[U: Coder](zeroValue: U)(
-    seqOp: (U, T) => U, combOp: (U, U) => U)(implicit coder: Coder[T]): SCollection[U] =
+  def aggregate[U: Coder](zeroValue: U)(seqOp: (U, T) => U, combOp: (U, U) => U)(
+    implicit coder: Coder[T]): SCollection[U] =
     this.pApply(Combine.globally(Functions.aggregateFn(zeroValue)(seqOp, combOp)))
 
   /**
@@ -276,9 +275,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * some cases.
    * @group transform
    */
-  def aggregate[A: Coder, U: Coder](aggregator: Aggregator[T, A, U])(implicit coder: Coder[T])
-  : SCollection[U] = this.transform { in =>
-    val a = aggregator  // defeat closure
+  def aggregate[A: Coder, U: Coder](aggregator: Aggregator[T, A, U])(
+    implicit coder: Coder[T]): SCollection[U] = this.transform { in =>
+    val a = aggregator // defeat closure
     in.map(a.prepare).sum(a.semigroup, Coder[A]).map(a.present)
   }
 
@@ -286,9 +285,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Filter the elements for which the given `PartialFunction` is defined, and then map.
    * @group transform
    */
-  def collect[U: Coder](pfn: PartialFunction[T, U]): SCollection[U] = this.transform {
-    _.filter(pfn.isDefinedAt).map(pfn)
-  }
+  def collect[U: Coder](pfn: PartialFunction[T, U]): SCollection[U] =
+    this.transform {
+      _.filter(pfn.isDefinedAt).map(pfn)
+    }
 
   /**
    * Generic function to combine the elements using a custom set of aggregation functions. Turns
@@ -303,9 +303,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * - `mergeCombiners`, to combine two `C`'s into a single one.
    * @group transform
    */
-  def combine[C: Coder](createCombiner: T => C)
-                          (mergeValue: (C, T) => C)
-                          (mergeCombiners: (C, C) => C)(implicit coder: Coder[T]): SCollection[C] =
+  def combine[C: Coder](createCombiner: T => C)(mergeValue: (C, T) => C)(
+    mergeCombiners: (C, C) => C)(implicit coder: Coder[T]): SCollection[C] =
     this.pApply(Combine.globally(Functions.combineFn(createCombiner, mergeValue, mergeCombiners)))
 
   /**
@@ -313,7 +312,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @return a new SCollection with the count
    * @group transform
    */
-  def count: SCollection[Long] = this.pApply(Count.globally[T]()).asInstanceOf[SCollection[Long]]
+  def count: SCollection[Long] =
+    this.pApply(Count.globally[T]()).asInstanceOf[SCollection[Long]]
 
   /**
    * Count approximate number of distinct elements in the SCollection.
@@ -322,7 +322,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def countApproxDistinct(sampleSize: Int): SCollection[Long] =
-    this.pApply(ApproximateUnique.globally[T](sampleSize)).asInstanceOf[SCollection[Long]]
+    this
+      .pApply(ApproximateUnique.globally[T](sampleSize))
+      .asInstanceOf[SCollection[Long]]
 
   /**
    * Count approximate number of distinct elements in the SCollection.
@@ -339,9 +341,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Count of each unique value in this SCollection as an SCollection of (value, count) pairs.
    * @group transform
    */
-  def countByValue(implicit coder: Coder[(T, Long)]): SCollection[(T, Long)] = this.transform {
-    _.pApply(Count.perElement[T]()).map(TupleFunctions.klToTuple)
-  }
+  def countByValue(implicit coder: Coder[(T, Long)]): SCollection[(T, Long)] =
+    this.transform {
+      _.pApply(Count.perElement[T]()).map(TupleFunctions.klToTuple)
+    }
 
   /**
    * Return a new SCollection containing the distinct elements in this SCollection.
@@ -412,13 +415,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * [[PairSCollectionFunctions.reduceByKey]] will provide much better performance.
    * @group transform
    */
-  def groupBy[K](f: T => K)(
-    implicit kcoder: Coder[K], vcoder: Coder[T]): SCollection[(K, Iterable[T])] = this.transform {
-    val coder = CoderMaterializer.kvCoder[K, T](context)
-    _
-      .pApply(WithKeys.of(Functions.serializableFn(f))).setCoder(coder)
-      .pApply(GroupByKey.create[K, T]()).map(kvIterableToTuple)
-  }
+  def groupBy[K](f: T => K)(implicit kcoder: Coder[K],
+                            vcoder: Coder[T]): SCollection[(K, Iterable[T])] =
+    this.transform {
+      val coder = CoderMaterializer.kvCoder[K, T](context)
+      _.pApply(WithKeys.of(Functions.serializableFn(f)))
+        .setCoder(coder)
+        .pApply(GroupByKey.create[K, T]())
+        .map(kvIterableToTuple)
+    }
 
   /**
    * Create tuples of the elements in this SCollection by applying `f`.
@@ -443,7 +448,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def max(implicit ord: Ordering[T], coder: Coder[T], dummy: DummyImplicit): SCollection[T] =
     max(ord)(coder)
 
-  def max(ord: Ordering[T])(implicit coder: Coder[T]): SCollection[T] = this.reduce(ord.max)
+  def max(ord: Ordering[T])(implicit coder: Coder[T]): SCollection[T] =
+    this.reduce(ord.max)
 
   /**
    * Return the mean of this SCollection as defined by the implicit `Numeric[T]`.
@@ -451,10 +457,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def mean(implicit ev: Numeric[T]): SCollection[Double] = this.transform { in =>
-    val e = ev  // defeat closure
-    in
-      .map(e.toDouble).asInstanceOf[SCollection[JDouble]]
-      .pApply(Mean.globally()).asInstanceOf[SCollection[Double]]
+    val e = ev // defeat closure
+    in.map(e.toDouble)
+      .asInstanceOf[SCollection[JDouble]]
+      .pApply(Mean.globally())
+      .asInstanceOf[SCollection[Double]]
   }
 
   /**
@@ -466,7 +473,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def min(implicit ord: Ordering[T], coder: Coder[T], dummy: DummyImplicit): SCollection[T] =
     min(ord)(coder)
 
-  def min(ord: Ordering[T])(implicit coder: Coder[T]): SCollection[T] = this.reduce(ord.min)
+  def min(ord: Ordering[T])(implicit coder: Coder[T]): SCollection[T] =
+    this.reduce(ord.min)
 
   /**
    * Compute the SCollection's data distribution using approximate `N`-tiles.
@@ -474,16 +482,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * the elements
    * @group transform
    */
-  def quantilesApprox(numQuantiles: Int)
-                     (implicit ord: Ordering[T],
-                      coder: Coder[T],
-                      dummy: DummyImplicit): SCollection[Iterable[T]] =
-                     quantilesApprox(numQuantiles, ord)
+  def quantilesApprox(numQuantiles: Int)(implicit ord: Ordering[T],
+                                         coder: Coder[T],
+                                         dummy: DummyImplicit): SCollection[Iterable[T]] =
+    quantilesApprox(numQuantiles, ord)
 
-  def quantilesApprox(numQuantiles: Int, ord: Ordering[T])
-                     (implicit coder: Coder[T]): SCollection[Iterable[T]] = this.transform {
-    _
-      .pApply(ApproximateQuantiles.globally(numQuantiles, ord))
+  def quantilesApprox(numQuantiles: Int, ord: Ordering[T])(
+    implicit coder: Coder[T]): SCollection[Iterable[T]] = this.transform {
+    _.pApply(ApproximateQuantiles.globally(numQuantiles, ord))
       .map(_.asInstanceOf[JIterable[T]].asScala)
   }
 
@@ -494,11 +500,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @return split SCollections in an array
    * @group transform
    */
-  def randomSplit(weights: Array[Double])(
-    implicit coder: Coder[T], ct: ClassTag[T]): Array[SCollection[T]] = {
+  def randomSplit(weights: Array[Double])(implicit coder: Coder[T],
+                                          ct: ClassTag[T]): Array[SCollection[T]] = {
     val sum = weights.sum
     val normalizedCumWeights = weights.map(_ / sum).scanLeft(0.0d)(_ + _)
-    val m = TreeMap(normalizedCumWeights.zipWithIndex: _*)  // Map[lower bound, split]
+    val m = TreeMap(normalizedCumWeights.zipWithIndex: _*) // Map[lower bound, split]
 
     val sides = (1 until weights.length).map(_ => SideOutput[T]())
     val (head, tail) = this
@@ -506,9 +512,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .flatMap { (x, c) =>
         val i = m.to(ThreadLocalRandom.current().nextDouble()).last._2
         if (i == 0) {
-          Seq(x)  // Main output
+          Seq(x) // Main output
         } else {
-          c.output(sides(i - 1), x)  // Side output
+          c.output(sides(i - 1), x) // Side output
           Nil
         }
       }
@@ -522,8 +528,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @return split SCollections in a Tuple2
    * @group transform
    */
-  def randomSplit(weight: Double)(
-    implicit coder: Coder[T], ct: ClassTag[T]): (SCollection[T], SCollection[T]) = {
+  def randomSplit(weight: Double)(implicit coder: Coder[T],
+                                  ct: ClassTag[T]): (SCollection[T], SCollection[T]) = {
     require(weight > 0.0 && weight < 1.0)
     val splits = randomSplit(Array(weight, 1d - weight))
     (splits(0), splits(1))
@@ -538,8 +544,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @return split SCollections in a Tuple3
    * @group transform
    */
-  def randomSplit(weightA: Double, weightB: Double)(implicit coder: Coder[T], ct: ClassTag[T]):
-  (SCollection[T], SCollection[T], SCollection[T]) = {
+  def randomSplit(weightA: Double, weightB: Double)(
+    implicit coder: Coder[T],
+    ct: ClassTag[T]): (SCollection[T], SCollection[T], SCollection[T]) = {
     require(weightA > 0.0 && weightB > 0.0 && (weightA + weightB) < 1.0)
     val splits = randomSplit(Array(weightA, weightB, 1d - (weightA + weightB)))
     (splits(0), splits(1), splits(2))
@@ -579,9 +586,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Return an SCollection with the elements from `this` that are not in `other`.
    * @group transform
    */
-  def subtract(that: SCollection[T])(implicit coder: Coder[T]): SCollection[T] = this.transform {
-    _.map((_, ())).subtractByKey(that).keys
-  }
+  def subtract(that: SCollection[T])(implicit coder: Coder[T]): SCollection[T] =
+    this.transform {
+      _.map((_, ())).subtractByKey(that).keys
+    }
 
   /**
    * Reduce with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful and
@@ -603,14 +611,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @return a new SCollection whose single value is an `Iterable` of the top k
    * @group transform
    */
-  def top(num: Int)(
-    implicit ord: Ordering[T], coder: Coder[T], d: DummyImplicit): SCollection[Iterable[T]] =
+  def top(num: Int)(implicit ord: Ordering[T],
+                    coder: Coder[T],
+                    d: DummyImplicit): SCollection[Iterable[T]] =
     top(num, ord)
 
-  def top(num: Int, ord: Ordering[T])(
-    implicit coder: Coder[T]): SCollection[Iterable[T]] = this.transform {
-    _.pApply(Top.of(num, ord)).map(_.asInstanceOf[JIterable[T]].asScala)
-  }
+  def top(num: Int, ord: Ordering[T])(implicit coder: Coder[T]): SCollection[Iterable[T]] =
+    this.transform {
+      _.pApply(Top.of(num, ord)).map(_.asInstanceOf[JIterable[T]].asScala)
+    }
 
   // =======================================================================
   // Hash operations
@@ -625,8 +634,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.transform { in =>
       // TODO: switch to ListSideInput when https://github.com/spotify/scio/issues/1152 is resolved
       val side = that.aggregate(Aggregator.toList[U]).asSingletonSideInput
-      in
-        .withSideInputs(side)
+      in.withSideInputs(side)
         .flatMap((t, s) => s(side).map((t, _)))
         .toSCollection
     }
@@ -636,11 +644,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * replicating `that` to all workers. The right side should be tiny and fit in memory.
    * @group hash
    */
-  def hashLookup[V: Coder](that: SCollection[(T, V)])(implicit coder: Coder[T])
-  : SCollection[(T, Iterable[V])] = this.transform { in =>
+  def hashLookup[V: Coder](that: SCollection[(T, V)])(
+    implicit coder: Coder[T]): SCollection[(T, Iterable[V])] = this.transform { in =>
     val side = that.asMultiMapSideInput
-    in
-      .withSideInputs(side)
+    in.withSideInputs(side)
       .map((t, s) => (t, s(side).getOrElse(t, Iterable())))
       .toSCollection
   }
@@ -654,7 +661,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *                debugging when running in production.
    * @group debug
    */
-  def debug(out: () => PrintStream = () => Console.out, prefix: String = "",
+  def debug(out: () => PrintStream = () => Console.out,
+            prefix: String = "",
             enabled: Boolean = true): SCollection[T] =
     if (enabled) {
       this.filter { e =>
@@ -782,8 +790,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group window
    */
   def withWindowFn[W <: BoundedWindow](fn: WindowFn[AnyRef, W],
-                                       options: WindowOptions = WindowOptions())
-  : SCollection[T] = {
+                                       options: WindowOptions = WindowOptions()): SCollection[T] = {
     var transform = Window.into(fn).asInstanceOf[Window[T]]
     if (options.trigger != null) {
       transform = transform.triggering(options.trigger)
@@ -853,23 +860,22 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Window values into by years.
    * @group window
    */
-  def windowByYears(number: Int,
-                    options: WindowOptions = WindowOptions()): SCollection[T] =
+  def windowByYears(number: Int, options: WindowOptions = WindowOptions()): SCollection[T] =
     this.withWindowFn(CalendarWindows.years(number), options)
 
   /**
    * Window values into by months.
    * @group window
    */
-  def windowByMonths(number: Int,
-                     options: WindowOptions = WindowOptions()): SCollection[T] =
+  def windowByMonths(number: Int, options: WindowOptions = WindowOptions()): SCollection[T] =
     this.withWindowFn(CalendarWindows.months(number), options)
 
   /**
    * Window values into by weeks.
    * @group window
    */
-  def windowByWeeks(number: Int, startDayOfWeek: Int,
+  def windowByWeeks(number: Int,
+                    startDayOfWeek: Int,
                     options: WindowOptions = WindowOptions()): SCollection[T] =
     this.withWindowFn(CalendarWindows.weeks(number, startDayOfWeek), options)
 
@@ -877,8 +883,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Window values into by days.
    * @group window
    */
-  def windowByDays(number: Int,
-                   options: WindowOptions = WindowOptions()): SCollection[T] =
+  def windowByDays(number: Int, options: WindowOptions = WindowOptions()): SCollection[T] =
     this.withWindowFn(CalendarWindows.days(number), options)
 
   /**
@@ -914,25 +919,27 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *           windowed.
    * @group window
    */
-  def withWindow[W <: BoundedWindow](
-    implicit tcoder: Coder[T]): SCollection[(T, W)] = this.parDo(
-    new DoFn[T, (T, BoundedWindow)] {
-      @ProcessElement
-      private[scio] def processElement(c: DoFn[T, (T, BoundedWindow)]#ProcessContext,
-                                       window: BoundedWindow): Unit =
-        c.output((c.element(), window))
-    }).asInstanceOf[SCollection[(T, W)]]
+  def withWindow[W <: BoundedWindow](implicit tcoder: Coder[T]): SCollection[(T, W)] =
+    this
+      .parDo(new DoFn[T, (T, BoundedWindow)] {
+        @ProcessElement
+        private[scio] def processElement(c: DoFn[T, (T, BoundedWindow)]#ProcessContext,
+                                         window: BoundedWindow): Unit =
+          c.output((c.element(), window))
+      })
+      .asInstanceOf[SCollection[(T, W)]]
 
   /**
    * Assign timestamps to values.
    * With a optional skew
    * @group window
    */
-  def timestampBy(
-    f: T => Instant, allowedTimestampSkew: Duration = Duration.ZERO)(
-      implicit coder: Coder[T]): SCollection[T] =
-    this.applyTransform(WithTimestamps.of(Functions.serializableFn(f))
-      .withAllowedTimestampSkew(allowedTimestampSkew))
+  def timestampBy(f: T => Instant, allowedTimestampSkew: Duration = Duration.ZERO)(
+    implicit coder: Coder[T]): SCollection[T] =
+    this.applyTransform(
+      WithTimestamps
+        .of(Functions.serializableFn(f))
+        .withAllowedTimestampSkew(allowedTimestampSkew))
 
   // =======================================================================
   // Read operations
@@ -945,42 +952,44 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * sc.parallelize("a.txt").readAll(TextIO.readAll())
    * }}}
    */
-  def readAll[U: Coder](read: PTransform[PCollection[String], PCollection[U]])
-                       (implicit ev: T <:< String)
-  : SCollection[U] = if (context.isTest) {
-    val id = context.testId.get
-    this
-      .asInstanceOf[SCollection[String]]
-      .flatMap(s => TestDataManager.getInput(id)(ReadIO(s)))
-  } else {
-    this.asInstanceOf[SCollection[String]].applyTransform(read)
-  }
+  def readAll[U: Coder](read: PTransform[PCollection[String], PCollection[U]])(
+    implicit ev: T <:< String): SCollection[U] =
+    if (context.isTest) {
+      val id = context.testId.get
+      this
+        .asInstanceOf[SCollection[String]]
+        .flatMap(s => TestDataManager.getInput(id)(ReadIO(s)))
+    } else {
+      this.asInstanceOf[SCollection[String]].applyTransform(read)
+    }
 
   /**
    * Read files as byte arrays represented by elements of this [[SCollection]] as file patterns.
    */
-  def readAllBytes(implicit ev: T <:< String)
-  : SCollection[Array[Byte]] = if (context.isTest) {
-    val id = context.testId.get
-    this
-      .asInstanceOf[SCollection[String]]
-      .flatMap(s => TestDataManager.getInput(id)(ReadIO(s)))
-  } else {
-    this.asInstanceOf[SCollection[String]]
-      .applyTransform(new PTransform[PCollection[String], PCollection[Array[Byte]]]() {
-        override def expand(input: PCollection[String]): PCollection[Array[Byte]] =
-          input
-            .apply(beam.FileIO.matchAll())
-            .apply(beam.FileIO.readMatches())
-            .apply(ParDo.of(Functions.mapFn((f: beam.FileIO.ReadableFile) => f.readFullyAsBytes())))
-      })
-  }
+  def readAllBytes(implicit ev: T <:< String): SCollection[Array[Byte]] =
+    if (context.isTest) {
+      val id = context.testId.get
+      this
+        .asInstanceOf[SCollection[String]]
+        .flatMap(s => TestDataManager.getInput(id)(ReadIO(s)))
+    } else {
+      this
+        .asInstanceOf[SCollection[String]]
+        .applyTransform(new PTransform[PCollection[String], PCollection[Array[Byte]]]() {
+          override def expand(input: PCollection[String]): PCollection[Array[Byte]] =
+            input
+              .apply(beam.FileIO.matchAll())
+              .apply(beam.FileIO.readMatches())
+              .apply(ParDo.of(Functions.mapFn((f: beam.FileIO.ReadableFile) =>
+                f.readFullyAsBytes())))
+        })
+    }
 
   // =======================================================================
   // Write operations
   // =======================================================================
 
-   /**
+  /**
    * Extract data from this SCollection as a `Future`. The `Future` will be completed once the
    * pipeline completes successfully.
    * @group output
@@ -988,8 +997,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def materialize(implicit coder: Coder[T]): Future[Tap[T]] =
     materialize(ScioUtil.getTempFile(context), isCheckpoint = false)
 
-  private[scio] def materialize(path: String, isCheckpoint: Boolean)
-                               (implicit coder: Coder[T]): Future[Tap[T]] =
+  private[scio] def materialize(path: String, isCheckpoint: Boolean)(
+    implicit coder: Coder[T]): Future[Tap[T]] =
     if (context.isTest) {
       // Do not run assertions on materialized value but still access test context to trigger
       // the test checking if we're running inside a JobTest
@@ -997,7 +1006,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       saveAsInMemoryTap
     } else {
       val elemCoder = CoderMaterializer.beam(context, coder)
-      val write = beam.AvroIO.writeGenericRecords(AvroBytesUtil.schema)
+      val write = beam.AvroIO
+        .writeGenericRecords(AvroBytesUtil.schema)
         .to(this.pathWithShards(path))
         .withSuffix(".obj.avro")
         .withCodec(CodecFactory.deflateCodec(6))
@@ -1012,13 +1022,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       context.makeFuture(MaterializeTap[T](path, context))
     }
 
-  private[scio] def pathWithShards(path: String) = path.replaceAll("\\/+$", "") + "/part"
+  private[scio] def pathWithShards(path: String) =
+    path.replaceAll("\\/+$", "") + "/part"
 
   private[scio] def textOut(path: String,
                             suffix: String,
                             numShards: Int,
                             compression: Compression) = {
-    beam.TextIO.write()
+    beam.TextIO
+      .write()
       .to(pathWithShards(path))
       .withSuffix(suffix)
       .withNumShards(numShards)
@@ -1036,21 +1048,19 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as a Pub/Sub topic.
    * @group output
    */
-  def saveAsPubsub(topic: String,
-                   idAttribute: String = null,
-                   timestampAttribute: String = null)(implicit ct: ClassTag[T], coder: Coder[T])
-  : Future[Tap[T]] =
+  def saveAsPubsub(topic: String, idAttribute: String = null, timestampAttribute: String = null)(
+    implicit ct: ClassTag[T],
+    coder: Coder[T]): Future[Tap[T]] =
     this.write(PubsubIO[T](topic))
 
   /**
-    * Save this SCollection as a Pub/Sub topic using the given map as message attributes.
-    * @group output
-    */
-  def saveAsPubsubWithAttributes[V: ClassTag : Coder](topic: String,
-                                              idAttribute: String = null,
-                                              timestampAttribute: String = null)
-                                             (implicit ev: T <:< (V, Map[String, String]))
-  : Future[Tap[(V, Map[String, String])]] = {
+   * Save this SCollection as a Pub/Sub topic using the given map as message attributes.
+   * @group output
+   */
+  def saveAsPubsubWithAttributes[V: ClassTag: Coder](topic: String,
+                                                     idAttribute: String = null,
+                                                     timestampAttribute: String = null)(
+    implicit ev: T <:< (V, Map[String, String])): Future[Tap[(V, Map[String, String])]] = {
     val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
     this.asInstanceOf[SCollection[(V, Map[String, String])]].write(io)
   }
@@ -1062,8 +1072,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def saveAsTextFile(path: String,
                      numShards: Int = 0,
                      suffix: String = ".txt",
-                     compression: Compression = Compression.UNCOMPRESSED)(implicit ct: ClassTag[T])
-  : Future[Tap[String]] = {
+                     compression: Compression = Compression.UNCOMPRESSED)(
+    implicit ct: ClassTag[T]): Future[Tap[String]] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
     } else {
@@ -1076,8 +1086,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection with a custom output transform. The transform should have a unique name.
    * @group output
    */
-  def saveAsCustomOutput[O <: POutput](name: String, transform: PTransform[PCollection[T], O])
-  : Future[Tap[T]] = {
+  def saveAsCustomOutput[O <: POutput](name: String,
+                                       transform: PTransform[PCollection[T], O]): Future[Tap[T]] = {
     if (context.isTest) {
       context.testOut(CustomIO[T](name))(this)
     } else {
@@ -1104,8 +1114,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def write(io: ScioIO[T])(params: io.WriteP)(implicit coder: Coder[T]): Future[Tap[T]] =
     writeImpl(io)(params)
 
-  private def writeImpl(
-    io: ScioIO[T])(params: io.WriteP)(implicit coder: Coder[T]): Future[Tap[T]] = {
+  private def writeImpl(io: ScioIO[T])(params: io.WriteP)(
+    implicit coder: Coder[T]): Future[Tap[T]] = {
     if (context.isTest) {
       context.testOut(io)(this)
       this.saveAsInMemoryTap
@@ -1115,16 +1125,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   // scalastyle:off structural.type
-  def write(io: ScioIO[T]{ type WriteP = Unit })(implicit coder: Coder[T]): Future[Tap[T]] =
+  def write(io: ScioIO[T] { type WriteP = Unit })(implicit coder: Coder[T]): Future[Tap[T]] =
     writeImpl(io)(())
   // scalastyle:on structural.type
 
 }
 // scalastyle:on number.of.methods
 
-private[scio] class SCollectionImpl[T](val internal: PCollection[T],
-                                                 val context: ScioContext)
-  extends SCollection[T] {
-}
+private[scio] class SCollectionImpl[T](val internal: PCollection[T], val context: ScioContext)
+    extends SCollection[T] {}
 
 // scalastyle:on file.size.limit

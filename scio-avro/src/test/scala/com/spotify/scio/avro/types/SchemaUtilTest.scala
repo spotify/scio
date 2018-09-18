@@ -92,7 +92,8 @@ class SchemaUtilTest extends FlatSpec with Matchers {
   }
 
   it should "support multiple levels of nested records" in {
-    val schema = parseSchema("""
+    val schema =
+      parseSchema("""
                                |{
                                |  "type" : "record",
                                |  "name" : "Record",
@@ -147,16 +148,18 @@ class SchemaUtilTest extends FlatSpec with Matchers {
 
   it should "support reserved words" in {
     val expectedFields = SchemaUtil.scalaReservedWords
-      .map(e => s"`$e`").mkString(start = "", sep = ": Long, ", end = ": Long")
+      .map(e => s"`$e`")
+      .mkString(start = "", sep = ": Long, ", end = ": Long")
     val schema =
-      Schema.createRecord("Row",
+      Schema.createRecord(
+        "Row",
         null,
         null,
         false,
-        SchemaUtil.scalaReservedWords.map {
-          name =>
-            new Schema.Field(name, Schema.create(Schema.Type.LONG), null, null.asInstanceOf[Any])
-        }.asJava)
+        SchemaUtil.scalaReservedWords.map { name =>
+          new Schema.Field(name, Schema.create(Schema.Type.LONG), null, null.asInstanceOf[Any])
+        }.asJava
+      )
     SchemaUtil.toPrettyString1(schema) shouldBe s"case class Row($expectedFields)"
   }
 

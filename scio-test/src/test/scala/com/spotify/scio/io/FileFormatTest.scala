@@ -31,9 +31,15 @@ class FileFormatTest extends PipelineSpec {
 
   private val path = "scio-test/src/test/resources"
 
-  private val objects = (1 to 100).map(x => (x, x.toDouble, x % 2 == 0, "s" + x))
+  private val objects =
+    (1 to 100).map(x => (x, x.toDouble, x % 2 == 0, "s" + x))
   private val protobufs = (1 to 100)
-    .map(x => com.google.protobuf.Timestamp.newBuilder.setSeconds(x * 1000).setNanos(x).build)
+    .map(
+      x =>
+        com.google.protobuf.Timestamp.newBuilder
+          .setSeconds(x * 1000)
+          .setNanos(x)
+          .build)
 
   // Object file is NOT backwards compatible
   "Object file" should "round trip latest file format" in {
@@ -46,7 +52,7 @@ class FileFormatTest extends PipelineSpec {
 
     val sc2 = ScioContext()
     val p = sc2.objectFile[(Int, Double, Boolean, String)](temp.toString + "/*")
-    p should containInAnyOrder (objects)
+    p should containInAnyOrder(objects)
     sc2.close()
   }
 
@@ -54,7 +60,7 @@ class FileFormatTest extends PipelineSpec {
   "Protobuf file" should "work with legacy file format" in {
     val sc = ScioContext()
     val p = sc.protobufFile[Timestamp](s"$path/protobuf-file.avro")
-    p should containInAnyOrder (protobufs)
+    p should containInAnyOrder(protobufs)
     sc.close()
   }
 
@@ -68,7 +74,7 @@ class FileFormatTest extends PipelineSpec {
 
     val sc2 = ScioContext()
     val p = sc2.protobufFile[Timestamp](temp.toString + "/*")
-    p should containInAnyOrder (protobufs)
+    p should containInAnyOrder(protobufs)
     sc2.close()
   }
 

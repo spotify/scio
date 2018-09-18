@@ -28,25 +28,23 @@ object AvroUtils {
     new Schema.Field(
       name,
       Schema.createUnion(List(Schema.create(Schema.Type.NULL), Schema.create(tpe)).asJava),
-      null: String, null: AnyRef)
+      null: String,
+      null: AnyRef)
 
-  private def fArr(name: String, tpe: Schema.Type) = {
-    new Schema.Field(
-      name,
-      Schema.createArray(Schema.create(tpe)),
-      null: String, null: AnyRef)
-  }
+  private def fArr(name: String, tpe: Schema.Type) =
+    new Schema.Field(name, Schema.createArray(Schema.create(tpe)), null: String, null: AnyRef)
 
   val schema = Schema.createRecord("GenericTestRecord", null, null, false)
-  schema.setFields(List(
-    f("int_field", Schema.Type.INT),
-    f("long_field", Schema.Type.LONG),
-    f("float_field", Schema.Type.FLOAT),
-    f("double_field", Schema.Type.DOUBLE),
-    f("boolean_field", Schema.Type.BOOLEAN),
-    f("string_field", Schema.Type.STRING),
-    fArr("array_field", Schema.Type.STRING)
-  ).asJava)
+  schema.setFields(
+    List(
+      f("int_field", Schema.Type.INT),
+      f("long_field", Schema.Type.LONG),
+      f("float_field", Schema.Type.FLOAT),
+      f("double_field", Schema.Type.DOUBLE),
+      f("boolean_field", Schema.Type.BOOLEAN),
+      f("string_field", Schema.Type.STRING),
+      fArr("array_field", Schema.Type.STRING)
+    ).asJava)
 
   def newGenericRecord(i: Int): GenericRecord = {
     val r = new GenericData.Record(schema)
@@ -61,7 +59,12 @@ object AvroUtils {
   }
 
   def newSpecificRecord(i: Int): TestRecord =
-    new TestRecord(i, i.toLong, i.toFloat, i.toDouble, true, "hello",
-      List[CharSequence]("a", "b", "c").asJava)
+    new TestRecord(i,
+                   i.toLong,
+                   i.toFloat,
+                   i.toDouble,
+                   true,
+                   "hello",
+                   List[CharSequence]("a", "b", "c").asJava)
 
 }

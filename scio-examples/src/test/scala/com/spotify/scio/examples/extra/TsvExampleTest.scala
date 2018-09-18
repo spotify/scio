@@ -29,7 +29,7 @@ class TsvExampleTest extends PipelineSpec {
     JobTest[TsvExampleWrite.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), inData)
-      .output(CustomIO[String]("out.txt"))(_ should containInAnyOrder (tsvData))
+      .output(CustomIO[String]("out.txt"))(_ should containInAnyOrder(tsvData))
       .run()
   }
 
@@ -37,7 +37,7 @@ class TsvExampleTest extends PipelineSpec {
     JobTest[TsvExampleRead.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), tsvData)
-      .output(TextIO("out.txt"))(_ should containSingleValue ("9"))
+      .output(TextIO("out.txt"))(_ should containSingleValue("9"))
       .run()
   }
 

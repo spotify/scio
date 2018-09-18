@@ -43,11 +43,14 @@ private[dynamic] object DynamicDestinationsUtil {
       override def getDestination(element: ValueInSingleWindow[T]): TableDestination =
         fn(element)
 
-      override def getSchema(destination: TableDestination): TableSchema = tableSchema
+      override def getSchema(destination: TableDestination): TableSchema =
+        tableSchema
 
-      override def getTable(destination: TableDestination): TableDestination = destination
+      override def getTable(destination: TableDestination): TableDestination =
+        destination
 
-      override def getDestinationCoder: Coder[TableDestination] = TableDestinationCoder.of
+      override def getDestinationCoder: Coder[TableDestination] =
+        TableDestinationCoder.of
     }
   }
 

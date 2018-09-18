@@ -18,13 +18,13 @@
 package com.spotify.scio.coders
 
 trait Implicits
-  extends AtomCoders
-  with TupleCoders
-  with ScalaCoders
-  with AvroCoders
-  with ProtobufCoders
-  with JavaCoders
-  with AlgebirdCoders
-  with Serializable
+    extends AtomCoders
+    with TupleCoders
+    with ScalaCoders
+    with AvroCoders
+    with ProtobufCoders
+    with JavaCoders
+    with AlgebirdCoders
+    with Serializable
 
 final object Implicits extends Implicits

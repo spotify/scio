@@ -105,19 +105,24 @@ private case class TestResource(id: String) {
 }
 
 abstract private class BaseDoFn extends DoFnWithResource[String, String, TestResource] {
-  override def createResource(): TestResource = TestResource(UUID.randomUUID().toString)
+  override def createResource(): TestResource =
+    TestResource(UUID.randomUUID().toString)
   @ProcessElement
-  def processElement(c: ProcessContext): Unit = c.output(getResource.processElement(c.element()))
+  def processElement(c: ProcessContext): Unit =
+    c.output(getResource.processElement(c.element()))
 }
 
 private class DoFnWithPerClassResource extends BaseDoFn {
-  override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_CLASS
+  override def getResourceType: DoFnWithResource.ResourceType =
+    ResourceType.PER_CLASS
 }
 
 private class DoFnWithPerInstanceResource extends BaseDoFn {
-  override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_INSTANCE
+  override def getResourceType: DoFnWithResource.ResourceType =
+    ResourceType.PER_INSTANCE
 }
 
 private class DoFnWithPerCoreResource extends BaseDoFn {
-  override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_CLONE
+  override def getResourceType: DoFnWithResource.ResourceType =
+    ResourceType.PER_CLONE
 }

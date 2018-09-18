@@ -17,7 +17,7 @@
 
 package com.spotify.scio.coders
 
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.{classTag, ClassTag}
 
 import com.google.protobuf._
 import org.apache.beam.sdk.extensions.protobuf._
@@ -30,6 +30,6 @@ trait ProtobufCoders {
   implicit def bytestringCoder: Coder[ByteString] =
     Coder.beam(ByteStringCoder.of())
 
-  implicit def protoMessageCoder[T <: Message : ClassTag]: Coder[T] =
+  implicit def protoMessageCoder[T <: Message: ClassTag]: Coder[T] =
     Coder.beam(ProtoCoder.of(classTag[T].runtimeClass.asInstanceOf[Class[T]]))
 }

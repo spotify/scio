@@ -31,6 +31,7 @@ package object testing {
 
   /** Enhanced version of [[ScioContext]] with streaming methods. */
   implicit class TestStreamScioContext(val self: ScioContext) extends AnyVal {
+
     /** Distribute a local `TestStream` to form an SCollection. */
     def testStream[T: ClassTag](ts: TestStream[T]): SCollection[T] =
       self.wrap(self.pipeline.apply(ts.toString, ts))

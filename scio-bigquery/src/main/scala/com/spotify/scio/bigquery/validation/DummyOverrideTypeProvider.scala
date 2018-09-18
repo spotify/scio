@@ -26,7 +26,8 @@ import scala.reflect.runtime.universe
 final class DummyOverrideTypeProvider extends OverrideTypeProvider {
   override def shouldOverrideType(tfs: TableFieldSchema): Boolean = false
 
-  override def shouldOverrideType(c: blackbox.Context)(tpe: c.Type): Boolean = false
+  override def shouldOverrideType(c: blackbox.Context)(tpe: c.Type): Boolean =
+    false
 
   override def shouldOverrideType(tpe: universe.Type): Boolean = false
 

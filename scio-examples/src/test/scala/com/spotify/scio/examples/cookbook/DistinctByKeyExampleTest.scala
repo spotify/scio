@@ -43,7 +43,7 @@ class DistinctByKeyExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.cookbook.DistinctByKeyExample.type]
       .args("--input=input.table", "--output=dataset.table")
       .input(BigQueryIO("input.table"), input)
-      .output(BigQueryIO[TableRow]("dataset.table"))(_ should containInAnyOrder (expected))
+      .output(BigQueryIO[TableRow]("dataset.table"))(_ should containInAnyOrder(expected))
       .run()
   }
 

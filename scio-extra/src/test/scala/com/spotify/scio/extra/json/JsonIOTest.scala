@@ -30,7 +30,6 @@ import org.apache.commons.io.FileUtils
 import scala.collection.JavaConverters._
 import scala.io.Source
 
-
 object JsonIOTest {
   case class Record(i: Int, s: String, o: Option[Int])
 }
@@ -49,12 +48,14 @@ class JsonIOTest extends ScioIOSpec with TapSpec {
   it should "support custom printer" in {
     val dir = tmpDir
     val t = runWithFileFuture {
-      _
-        .parallelize(xs)
+      _.parallelize(xs)
         .saveAsJsonFile(dir.getPath, printer = Printer.noSpaces.copy(dropNullValues = true))
     }
     verifyTap(t, xs.toSet)
-    val result = Files.list(dir.toPath).iterator().asScala
+    val result = Files
+      .list(dir.toPath)
+      .iterator()
+      .asScala
       .flatMap(p => Source.fromFile(p.toFile).getLines())
       .toSeq
     val expected = (1 to 100).map { x =>
@@ -65,12 +66,11 @@ class JsonIOTest extends ScioIOSpec with TapSpec {
   }
 
   it should "handle invalid JSON" in {
-    val badData = Seq(
-      """{"i":1, "s":hello}""",
-      """{"i":1}""",
-      """{"s":"hello"}""",
-      """{"i":1, "s":1}""",
-      """{"i":"hello", "s":1}""")
+    val badData = Seq("""{"i":1, "s":hello}""",
+                      """{"i":1}""",
+                      """{"s":"hello"}""",
+                      """{"i":1, "s":1}""",
+                      """{"i":"hello", "s":1}""")
     val dir = tmpDir
     runWithFileFuture {
       _.parallelize(badData).saveAsTextFile(dir.getPath)
@@ -79,7 +79,7 @@ class JsonIOTest extends ScioIOSpec with TapSpec {
     val sc = ScioContext()
     sc.jsonFile[Record](ScioUtil.addPartSuffix(dir.getPath))
     // scalastyle:off no.whitespace.before.left.bracket
-    a [PipelineExecutionException] should be thrownBy { sc.close() }
+    a[PipelineExecutionException] should be thrownBy { sc.close() }
     // scalastyle:on no.whitespace.before.left.bracket
     FileUtils.deleteDirectory(dir)
   }

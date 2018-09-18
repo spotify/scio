@@ -30,13 +30,15 @@ import java.sql.{PreparedStatement, ResultSet}
 sealed trait JdbcIO[T] extends TestIO[T]
 
 object JdbcIO {
-  final def apply[T](opts: JdbcIoOptions): JdbcIO[T] = new JdbcIO[T] with TestIO[T] {
-    override def testId: String = s"JdbcIO(${jdbcIoId(opts)})"
-  }
+  final def apply[T](opts: JdbcIoOptions): JdbcIO[T] =
+    new JdbcIO[T] with TestIO[T] {
+      override def testId: String = s"JdbcIO(${jdbcIoId(opts)})"
+    }
 
   private[jdbc] def jdbcIoId(opts: JdbcIoOptions): String = opts match {
     case JdbcReadOptions(connOpts, query, _, _, _) => jdbcIoId(connOpts, query)
-    case JdbcWriteOptions(connOpts, statement, _, _) => jdbcIoId(connOpts, statement)
+    case JdbcWriteOptions(connOpts, statement, _, _) =>
+      jdbcIoId(connOpts, statement)
   }
 
   private[jdbc] def jdbcIoId(opts: JdbcConnectionOptions, query: String): String = {
@@ -55,21 +57,20 @@ final case class JdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T]) extend
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
-    var transform = beam.JdbcIO.read[T]()
+    var transform = beam.JdbcIO
+      .read[T]()
       .withCoder(coder)
       .withDataSourceConfiguration(getDataSourceConfig(readOptions.connectionOptions))
       .withQuery(readOptions.query)
       .withRowMapper(new beam.JdbcIO.RowMapper[T] {
-        override def mapRow(resultSet: ResultSet): T = {
+        override def mapRow(resultSet: ResultSet): T =
           readOptions.rowMapper(resultSet)
-        }
       })
     if (readOptions.statementPreparator != null) {
       transform = transform
         .withStatementPreparator(new beam.JdbcIO.StatementPreparator {
-          override def setParameters(preparedStatement: PreparedStatement): Unit = {
+          override def setParameters(preparedStatement: PreparedStatement): Unit =
             readOptions.statementPreparator(preparedStatement)
-          }
         })
     }
     if (readOptions.fetchSize != USE_BEAM_DEFAULT_FETCH_SIZE) {
@@ -97,18 +98,18 @@ final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends ScioIO[
     throw new IllegalStateException("jdbc.Write is write-only")
 
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
-    var transform = beam.JdbcIO.write[T]()
+    var transform = beam.JdbcIO
+      .write[T]()
       .withDataSourceConfiguration(getDataSourceConfig(writeOptions.connectionOptions))
       .withStatement(writeOptions.statement)
     if (writeOptions.preparedStatementSetter != null) {
       transform = transform
         .withPreparedStatementSetter(new beam.JdbcIO.PreparedStatementSetter[T] {
-          override def setParameters(element: T, preparedStatement: PreparedStatement): Unit = {
+          override def setParameters(element: T, preparedStatement: PreparedStatement): Unit =
             writeOptions.preparedStatementSetter(element, preparedStatement)
-          }
         })
     }
-    if(writeOptions.batchSize != USE_BEAM_DEFAULT_BATCH_SIZE) {
+    if (writeOptions.batchSize != USE_BEAM_DEFAULT_BATCH_SIZE) {
       // override default batch size.
       transform = transform.withBatchSize(writeOptions.batchSize)
     }

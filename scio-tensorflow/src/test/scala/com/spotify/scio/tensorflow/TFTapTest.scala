@@ -26,7 +26,8 @@ import shapeless.datatype.tensorflow._
 class TFTapTest extends TapSpec {
 
   object TestFeatureSpec {
-    val featuresType: TensorFlowType[TestFeatures] = TensorFlowType[TestFeatures]
+    val featuresType: TensorFlowType[TestFeatures] =
+      TensorFlowType[TestFeatures]
 
     case class TestFeatures(f1: Float, f2: Float)
 
@@ -38,8 +39,7 @@ class TFTapTest extends TapSpec {
     for (compressionType <- Seq(CType.UNCOMPRESSED, CType.DEFLATE, CType.GZIP)) {
       val dir = tmpDir
       val t = runWithFileFuture {
-        _
-          .parallelize(data)
+        _.parallelize(data)
           .map(_.getBytes)
           .saveAsTfRecordFile(dir.getPath, compression = compressionType)
       }

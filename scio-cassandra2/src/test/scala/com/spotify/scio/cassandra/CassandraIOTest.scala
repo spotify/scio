@@ -24,8 +24,9 @@ class CassandraIOTest extends ScioIOSpec {
     val xs = 1 to 100
     def opts(query: String): CassandraOptions =
       CassandraOptions("keyspace", "table", query, "seed")
-    testJobTestOutput(xs)(q => CassandraIO(opts(q))) { case (data, q) =>
-      data.saveAsCassandra(opts(q))(Seq(_))
+    testJobTestOutput(xs)(q => CassandraIO(opts(q))) {
+      case (data, q) =>
+        data.saveAsCassandra(opts(q))(Seq(_))
     }
   }
 }

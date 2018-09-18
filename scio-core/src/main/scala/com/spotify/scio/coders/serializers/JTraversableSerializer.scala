@@ -63,7 +63,8 @@ private[coders] abstract class JWrapperCBF[T] extends CanBuildFrom[Iterable[T], 
     from.foreach(b += _)
     b
   }
-  override def apply(): mutable.Builder[T, Iterable[T]] = new JIterableWrapperBuilder
+  override def apply(): mutable.Builder[T, Iterable[T]] =
+    new JIterableWrapperBuilder
   def asScala(xs: java.util.List[T]): Iterable[T]
 
   class JIterableWrapperBuilder extends mutable.Builder[T, Iterable[T]] {

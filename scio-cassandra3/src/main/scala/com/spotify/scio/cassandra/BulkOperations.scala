@@ -29,10 +29,13 @@ import org.apache.hadoop.mapred.TaskAttemptContext
 import scala.collection.JavaConverters._
 
 private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallelism: Int)
-  extends Serializable {
+    extends Serializable {
 
-  case class BulkConfig(protocol: ProtocolVersion, partitioner: String, numOfNodes: Int,
-                        tableSchema: String, partitionKeyIndices: Seq[Int],
+  case class BulkConfig(protocol: ProtocolVersion,
+                        partitioner: String,
+                        numOfNodes: Int,
+                        tableSchema: String,
+                        partitionKeyIndices: Seq[Int],
                         dataTypes: Seq[DataTypeExternalizer])
 
   private val config = {
@@ -46,7 +49,8 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallel
     val cluster = b.build()
 
     val table = for {
-      k <- cluster.getMetadata.getKeyspaces.asScala.find(_.getName == opts.keyspace)
+      k <- cluster.getMetadata.getKeyspaces.asScala
+        .find(_.getName == opts.keyspace)
       t <- k.getTables.asScala.find(_.getName == opts.table)
     } yield t
     require(table.isDefined, s"Invalid keyspace.table: ${opts.keyspace}.${opts.table}")
@@ -56,7 +60,8 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallel
     val numOfNodes = cluster.getMetadata.getAllHosts.size()
     val tableSchema = table.get.asCQLQuery()
 
-    val variables = cluster.connect().prepare(opts.cql).getVariables.asList().asScala
+    val variables =
+      cluster.connect().prepare(opts.cql).getVariables.asList().asScala
     val partitionKeys = table.get.getPartitionKey.asScala.map(_.getName).toSet
     val partitionKeyIndices = variables
       .map(_.getName)
@@ -90,16 +95,17 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallel
     val (q, mod) = (maxToken - minToken + 1) /% numPartitions
     val rangePerGroup = (if (mod != 0) q + 1 else q).bigInteger
 
-    (values: Array[ByteBuffer]) => {
-      val key = if (config.partitionKeyIndices.length == 1) {
-        values(config.partitionKeyIndices.head)
-      } else {
-        val keys = config.partitionKeyIndices.map(values)
-        CompositeType.build(keys: _*)
+    (values: Array[ByteBuffer]) =>
+      {
+        val key = if (config.partitionKeyIndices.length == 1) {
+          values(config.partitionKeyIndices.head)
+        } else {
+          val keys = config.partitionKeyIndices.map(values)
+          CompositeType.build(keys: _*)
+        }
+        val token = CompatUtil.getToken(config.partitioner, key)
+        token.divide(rangePerGroup).intValue()
       }
-      val token = CompatUtil.getToken(config.partitioner, key)
-      token.divide(rangePerGroup).intValue()
-    }
   }
 
   val writeFn: ((Int, Iterable[Array[ByteBuffer]])) => Unit =
@@ -111,9 +117,16 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallel
 
   private def newWriter: CqlBulkRecordWriter = {
     val conf = new Configuration()
-    CqlBulkRecordWriterUtil.newWriter(
-      conf, opts.seedNodeHost, opts.seedNodePort, opts.username, opts.password,
-      opts.keyspace, opts.table, config.partitioner, config.tableSchema, opts.cql)
+    CqlBulkRecordWriterUtil.newWriter(conf,
+                                      opts.seedNodeHost,
+                                      opts.seedNodePort,
+                                      opts.username,
+                                      opts.password,
+                                      opts.keyspace,
+                                      opts.table,
+                                      config.partitioner,
+                                      config.tableSchema,
+                                      opts.cql)
   }
 
 }
@@ -121,7 +134,9 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallel
 private[cassandra] object CassandraUtil {
   def cleanup(): Unit = {
     val mbs = ManagementFactory.getPlatformMBeanServer
-    mbs.queryNames(null, null).asScala
+    mbs
+      .queryNames(null, null)
+      .asScala
       .filter(_.getCanonicalName.startsWith("org.apache.cassandra."))
       .foreach(mbs.unregisterMBean)
   }

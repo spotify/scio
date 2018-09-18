@@ -43,32 +43,36 @@ object DebuggingWordCount {
     // Create `ScioContext` and `Args`
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    val filter = Pattern.compile(args.getOrElse("filterPattern", "Flourish|stomach"))
+    val filter =
+      Pattern.compile(args.getOrElse("filterPattern", "Flourish|stomach"))
 
     // Create two counter metrics
     val matchedWords = ScioMetrics.counter("matchedWords")
     val unmatchedWords = ScioMetrics.counter("unmatchedWords")
 
-    val filteredWords = sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
+    val filteredWords = sc
+      .textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       // Split input lines, filter out empty tokens and expand into a collection of tokens
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       // Count occurrences of each unique `String` to get `(String, Long)`
       .countByValue
       // Filter out tokens that matches the pattern, log, and increment counters
-      .filter { case (k, _) =>
-        val matched = filter.matcher(k).matches()
-        if (matched) {
-          logger.debug(s"Matched $k")
-          matchedWords.inc()
-        } else {
-          logger.trace(s"Did not match: $k")
-          unmatchedWords.inc()
-        }
-        matched
+      .filter {
+        case (k, _) =>
+          val matched = filter.matcher(k).matches()
+          if (matched) {
+            logger.debug(s"Matched $k")
+            matchedWords.inc()
+          } else {
+            logger.trace(s"Did not match: $k")
+            unmatchedWords.inc()
+          }
+          matched
       }
 
     // Verify internal Beam `PCollection` with `PAssert`
-    PAssert.that(filteredWords.internal)
+    PAssert
+      .that(filteredWords.internal)
       .containsInAnyOrder(List(("Flourish", 3L), ("stomach", 1L)).asJava)
 
     // Close the context, execute the pipeline and block until it finishes

@@ -27,25 +27,24 @@ import scala.collection.JavaConverters._
 object SchemaUtil {
 
   /** Convert schema to case class definitions. */
-  def toPrettyString(schema: TableSchema, name: String, indent: Int): String = {
+  def toPrettyString(schema: TableSchema, name: String, indent: Int): String =
     "@BigQueryType.toTable\n" +
-    getCaseClass(schema.getFields, name, indent)
-  }
+      getCaseClass(schema.getFields, name, indent)
 
   // scalastyle:off cyclomatic.complexity
   private def getRawType(tfs: TableFieldSchema, indent: Int): (String, Seq[String]) = {
     val name = tfs.getType match {
-      case "BOOLEAN" => "Boolean"
-      case "INTEGER" => "Long"
-      case "FLOAT" => "Double"
-      case "STRING" => "String"
-      case "BYTES" => "ByteString"
+      case "BOOLEAN"   => "Boolean"
+      case "INTEGER"   => "Long"
+      case "FLOAT"     => "Double"
+      case "STRING"    => "String"
+      case "BYTES"     => "ByteString"
       case "TIMESTAMP" => "Instant"
-      case "DATE" => "LocalDate"
-      case "TIME" => "LocalTime"
-      case "DATETIME" => "LocalDateTime"
-      case "RECORD" => NameProvider.getUniqueName(tfs.getName)
-      case t => throw new IllegalArgumentException(s"Type: $t not supported")
+      case "DATE"      => "LocalDate"
+      case "TIME"      => "LocalTime"
+      case "DATETIME"  => "LocalDateTime"
+      case "RECORD"    => NameProvider.getUniqueName(tfs.getName)
+      case t           => throw new IllegalArgumentException(s"Type: $t not supported")
     }
     if (tfs.getType == "RECORD") {
       val nested = getCaseClass(tfs.getFields, name, indent)
@@ -56,19 +55,17 @@ object SchemaUtil {
   }
   // scalastyle:on cyclomatic.complexity
 
-  private def getFieldType(tfs: TableFieldSchema,
-                           indent: Int): (String, Seq[String]) = {
+  private def getFieldType(tfs: TableFieldSchema, indent: Int): (String, Seq[String]) = {
     val (rawType, nested) = getRawType(tfs, indent)
     val fieldType = tfs.getMode match {
       case "NULLABLE" | null => "Option[" + rawType + "]"
-      case "REQUIRED" => rawType
-      case "REPEATED" => "List[" + rawType + "]"
+      case "REQUIRED"        => rawType
+      case "REPEATED"        => "List[" + rawType + "]"
     }
     (fieldType, nested)
   }
 
-  private def getCaseClass(fields: JList[TableFieldSchema], name: String,
-                           indent: Int): String = {
+  private def getCaseClass(fields: JList[TableFieldSchema], name: String, indent: Int): String = {
     val xs = fields.asScala
       .map { f =>
         val (fieldType, nested) = getFieldType(f, indent)
@@ -102,9 +99,45 @@ object SchemaUtil {
   }
 
   private[types] val scalaReservedWords = Seq(
-    "abstract", "case", "catch", "class", "def", "do", "else", "extends", "false", "final",
-    "finally", "for", "forSome", "if", "implicit", "import", "lazy", "match", "new", "null",
-    "object", "override", "package", "private", "protected", "return", "sealed", "super", "this",
-    "throw", "trait", "try", "true", "type", "val", "var", "while", "with", "yield")
+    "abstract",
+    "case",
+    "catch",
+    "class",
+    "def",
+    "do",
+    "else",
+    "extends",
+    "false",
+    "final",
+    "finally",
+    "for",
+    "forSome",
+    "if",
+    "implicit",
+    "import",
+    "lazy",
+    "match",
+    "new",
+    "null",
+    "object",
+    "override",
+    "package",
+    "private",
+    "protected",
+    "return",
+    "sealed",
+    "super",
+    "this",
+    "throw",
+    "trait",
+    "try",
+    "true",
+    "type",
+    "val",
+    "var",
+    "while",
+    "with",
+    "yield"
+  )
 
 }

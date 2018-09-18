@@ -57,23 +57,22 @@ package object json extends AutoDerivation {
 
   /** Enhanced version of [[ScioContext]] with JSON methods. */
   implicit class JsonScioContext(@transient val self: ScioContext) extends Serializable {
-    def jsonFile[T: ClassTag : Encoder : Decoder : Coder](path: String): SCollection[T] =
+    def jsonFile[T: ClassTag: Encoder: Decoder: Coder](path: String): SCollection[T] =
       self.read(JsonIO[T](path))
   }
 
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JSON methods.
    */
-  implicit class JsonSCollection[T : ClassTag : Encoder : Decoder]
-  (@transient val self: SCollection[T]) extends Serializable {
-    def saveAsJsonFile(path: String,
-                       suffix: String = ".json",
-                       numShards: Int = 0,
-                       compression: Compression = Compression.UNCOMPRESSED,
-                       printer: Printer = Printer.noSpaces)
-                       (implicit coder: Coder[T]): Future[Tap[T]] = {
+  implicit class JsonSCollection[T: ClassTag: Encoder: Decoder](@transient val self: SCollection[T])
+      extends Serializable {
+    def saveAsJsonFile(
+      path: String,
+      suffix: String = ".json",
+      numShards: Int = 0,
+      compression: Compression = Compression.UNCOMPRESSED,
+      printer: Printer = Printer.noSpaces)(implicit coder: Coder[T]): Future[Tap[T]] =
       self.write(JsonIO[T](path))(JsonIO.WriteParam(suffix, numShards, compression, printer))
-    }
   }
 
 }

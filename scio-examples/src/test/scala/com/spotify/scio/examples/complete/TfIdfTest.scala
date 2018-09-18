@@ -22,13 +22,10 @@ import com.spotify.scio.testing._
 class TfIdfTest extends PipelineSpec {
 
   "TfIdf.computeTfIdf" should "work" in {
-    val data = Seq(
-      ("x", "a b c d"),
-      ("y", "a b c"),
-      ("z", "a m n"))
+    val data = Seq(("x", "a b c d"), ("y", "a b c"), ("z", "a m n"))
     runWithContext { sc =>
       val p = TfIdf.computeTfIdf(sc.parallelize(data))
-      p.keys.distinct should containInAnyOrder (Seq("a", "m", "n", "b", "c", "d"))
+      p.keys.distinct should containInAnyOrder(Seq("a", "m", "n", "b", "c", "d"))
     }
   }
 

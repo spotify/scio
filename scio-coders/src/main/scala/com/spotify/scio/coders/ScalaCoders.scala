@@ -18,12 +18,12 @@
 package com.spotify.scio.coders
 
 import java.io.{InputStream, OutputStream}
-import org.apache.beam.sdk.coders.{ Coder => BCoder, _}
+import org.apache.beam.sdk.coders.{Coder => BCoder, _}
 import scala.reflect.ClassTag
-import scala.collection.{ mutable => m }
+import scala.collection.{mutable => m}
 import scala.collection.SortedSet
 
-private final object UnitCoder extends AtomicCoder[Unit]{
+private final object UnitCoder extends AtomicCoder[Unit] {
   def encode(value: Unit, os: OutputStream): Unit = ()
   def decode(is: InputStream): Unit = ()
 }
@@ -57,7 +57,9 @@ private class SeqCoder[T](bc: BCoder[T]) extends AtomicCoder[Seq[T]] {
 
   def encode(ts: Seq[T], out: OutputStream): Unit = {
     lc.encode(ts.length, out)
-    ts.foreach { v => bc.encode(v, out) }
+    ts.foreach { v =>
+      bc.encode(v, out)
+    }
   }
 }
 
@@ -93,7 +95,7 @@ private class VectorCoder[T](bc: BCoder[T]) extends AtomicCoder[Vector[T]] {
     seqCoder.decode(is).toVector
 }
 
-private class ArrayCoder[T : ClassTag](bc: BCoder[T]) extends AtomicCoder[Array[T]] {
+private class ArrayCoder[T: ClassTag](bc: BCoder[T]) extends AtomicCoder[Array[T]] {
   val seqCoder = new SeqCoder[T](bc)
   def encode(value: Array[T], os: OutputStream): Unit =
     seqCoder.encode(value.toSeq, os)
@@ -106,7 +108,7 @@ private class ArrayBufferCoder[T](c: BCoder[T]) extends AtomicCoder[m.ArrayBuffe
   def encode(value: m.ArrayBuffer[T], os: OutputStream): Unit =
     seqCoder.encode(value.toSeq, os)
   def decode(is: InputStream): m.ArrayBuffer[T] =
-    m.ArrayBuffer(seqCoder.decode(is):_*)
+    m.ArrayBuffer(seqCoder.decode(is): _*)
 }
 
 private class SetCoder[T](c: BCoder[T]) extends AtomicCoder[Set[T]] {
@@ -114,7 +116,7 @@ private class SetCoder[T](c: BCoder[T]) extends AtomicCoder[Set[T]] {
   def encode(value: Set[T], os: OutputStream): Unit =
     seqCoder.encode(value.toSeq, os)
   def decode(is: InputStream): Set[T] =
-    Set(seqCoder.decode(is):_*)
+    Set(seqCoder.decode(is): _*)
 }
 
 private class SortedSetCoder[T: Ordering](c: BCoder[T]) extends AtomicCoder[SortedSet[T]] {
@@ -122,7 +124,7 @@ private class SortedSetCoder[T: Ordering](c: BCoder[T]) extends AtomicCoder[Sort
   def encode(value: SortedSet[T], os: OutputStream): Unit =
     seqCoder.encode(value.toSeq, os)
   def decode(is: InputStream): SortedSet[T] =
-    SortedSet(seqCoder.decode(is):_*)
+    SortedSet(seqCoder.decode(is): _*)
 }
 
 private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[Map[K, V]] {
@@ -138,9 +140,10 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
 
   def encode(ts: Map[K, V], out: OutputStream): Unit = {
     lc.encode(ts.size, out)
-    ts.foreach { case (k, v) =>
-      kc.encode(k, out)
-      vc.encode(v, out)
+    ts.foreach {
+      case (k, v) =>
+        kc.encode(k, out)
+        vc.encode(v, out)
     }
   }
 }
@@ -153,14 +156,15 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
       val k = kc.decode(in)
       val v = vc.decode(in)
       (k, v)
-    }:_*)
+    }: _*)
   }
 
   def encode(ts: m.Map[K, V], out: OutputStream): Unit = {
     lc.encode(ts.size, out)
-    ts.foreach { case (k, v) =>
-      kc.encode(k, out)
-      vc.encode(v, out)
+    ts.foreach {
+      case (k, v) =>
+        kc.encode(k, out)
+        vc.encode(v, out)
     }
   }
 }
@@ -180,56 +184,76 @@ trait ScalaCoders {
 
   // implicit def traversableCoder[T](implicit c: Coder[T]): Coder[TraversableOnce[T]] = ???
   implicit def seqCoder[T: Coder]: Coder[Seq[T]] =
-     Coder.transform(Coder[T]){ bc => Coder.beam(new SeqCoder[T](bc)) }
+    Coder.transform(Coder[T]) { bc =>
+      Coder.beam(new SeqCoder[T](bc))
+    }
 
   // TODO: proper chunking implementation
   implicit def iterableCoder[T: Coder]: Coder[Iterable[T]] =
-    Coder.transform(Coder[T]){ bc => Coder.beam(new IterableCoder[T](bc)) }
+    Coder.transform(Coder[T]) { bc =>
+      Coder.beam(new IterableCoder[T](bc))
+    }
 
-  implicit def throwableCoder[T <: Throwable : ClassTag]: Coder[T] = Coder.kryo[T]
+  implicit def throwableCoder[T <: Throwable: ClassTag]: Coder[T] =
+    Coder.kryo[T]
 
   // specialized coder. Since `::` is a case class, Magnolia would derive an incorrect one...
   implicit def listCoder[T: Coder]: Coder[List[T]] =
-    Coder.transform(Coder[T]){ bc => Coder.beam(new ListCoder[T](bc)) }
+    Coder.transform(Coder[T]) { bc =>
+      Coder.beam(new ListCoder[T](bc))
+    }
 
   implicit def traversableOnceCoder[T: Coder]: Coder[TraversableOnce[T]] =
-    Coder.transform(Coder[T]){ bc => Coder.beam(new TraversableOnceCoder[T](bc)) }
+    Coder.transform(Coder[T]) { bc =>
+      Coder.beam(new TraversableOnceCoder[T](bc))
+    }
 
   implicit def setCoder[T: Coder]: Coder[Set[T]] =
-    Coder.transform(Coder[T]){ bc => Coder.beam(new SetCoder[T](bc)) }
+    Coder.transform(Coder[T]) { bc =>
+      Coder.beam(new SetCoder[T](bc))
+    }
 
   implicit def vectorCoder[T: Coder]: Coder[Vector[T]] =
-    Coder.transform(Coder[T]){ bc => Coder.beam(new VectorCoder[T](bc)) }
+    Coder.transform(Coder[T]) { bc =>
+      Coder.beam(new VectorCoder[T](bc))
+    }
 
   implicit def arraybufferCoder[T: Coder]: Coder[m.ArrayBuffer[T]] =
-    Coder.transform(Coder[T]){ bc => Coder.beam(new ArrayBufferCoder[T](bc)) }
+    Coder.transform(Coder[T]) { bc =>
+      Coder.beam(new ArrayBufferCoder[T](bc))
+    }
 
   implicit def bufferCoder[T: Coder]: Coder[scala.collection.mutable.Buffer[T]] =
     Coder.transform(Coder[T]) { bc =>
       Coder.xmap(Coder.beam(new SeqCoder[T](bc)))(_.toBuffer, _.toSeq) // Buffer <: Seq
     }
 
-  implicit def arrayCoder[T: Coder : ClassTag]: Coder[Array[T]] =
-    Coder.transform(Coder[T]){ bc => Coder.beam(new ArrayCoder[T](bc)) }
+  implicit def arrayCoder[T: Coder: ClassTag]: Coder[Array[T]] =
+    Coder.transform(Coder[T]) { bc =>
+      Coder.beam(new ArrayCoder[T](bc))
+    }
 
-  implicit def arrayByteCoder: Coder[Array[Byte]] = Coder.beam(ByteArrayCoder.of())
+  implicit def arrayByteCoder: Coder[Array[Byte]] =
+    Coder.beam(ByteArrayCoder.of())
 
   implicit def mutableMapCoder[K: Coder, V: Coder]: Coder[m.Map[K, V]] =
-    Coder.transform(Coder[K]){ kc =>
-      Coder.transform(Coder[V]){ vc =>
+    Coder.transform(Coder[K]) { kc =>
+      Coder.transform(Coder[V]) { vc =>
         Coder.beam(new MutableMapCoder[K, V](kc, vc))
       }
     }
 
   implicit def mapCoder[K: Coder, V: Coder]: Coder[Map[K, V]] =
-    Coder.transform(Coder[K]){ kc =>
-      Coder.transform(Coder[V]){ vc =>
+    Coder.transform(Coder[K]) { kc =>
+      Coder.transform(Coder[V]) { vc =>
         Coder.beam(new MapCoder[K, V](kc, vc))
       }
     }
 
-  implicit def sortedSetCoder[T: Coder : Ordering]: Coder[SortedSet[T]] =
-    Coder.transform(Coder[T]){ bc => Coder.beam(new SortedSetCoder[T](bc)) }
+  implicit def sortedSetCoder[T: Coder: Ordering]: Coder[SortedSet[T]] =
+    Coder.transform(Coder[T]) { bc =>
+      Coder.beam(new SortedSetCoder[T](bc))
+    }
 
   // implicit def enumerationCoder[E <: Enumeration]: Coder[E#Value] = ???
 }

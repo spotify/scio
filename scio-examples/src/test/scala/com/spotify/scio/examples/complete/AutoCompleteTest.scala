@@ -23,17 +23,16 @@ import org.joda.time.{Duration, Instant}
 class AutoCompleteTest extends PipelineSpec {
 
   "AutoComplete" should "work" in {
-    val data = Seq(
-      "apple",
-      "apple",
-      "apricot",
-      "banana",
-      "blackberry",
-      "blackberry",
-      "blackberry",
-      "blueberry",
-      "blueberry",
-      "cherry")
+    val data = Seq("apple",
+                   "apple",
+                   "apricot",
+                   "banana",
+                   "blackberry",
+                   "blackberry",
+                   "blackberry",
+                   "blueberry",
+                   "blueberry",
+                   "cherry")
     val expected = Seq(
       ("a", Map("apple" -> 2L, "apricot" -> 1L)),
       ("ap", Map("apple" -> 2L, "apricot" -> 1L)),
@@ -41,40 +40,42 @@ class AutoCompleteTest extends PipelineSpec {
       ("ba", Map("banana" -> 1L)),
       ("bl", Map("blackberry" -> 3L, "blueberry" -> 2L)),
       ("c", Map("cherry" -> 1L)),
-      ("ch", Map("cherry" -> 1L)))
+      ("ch", Map("cherry" -> 1L))
+    )
     runWithContext { sc =>
       val in = sc.parallelize(data)
       for (recursive <- Seq(true, false)) {
-        val r = AutoComplete.computeTopCompletions(in, 2, recursive)
+        val r = AutoComplete
+          .computeTopCompletions(in, 2, recursive)
           .filter(_._1.length <= 2)
           .mapValues(_.toMap)
-        r should containInAnyOrder (expected)
+        r should containInAnyOrder(expected)
       }
     }
   }
 
   it should "work with tiny input" in {
     val data = Seq("x", "x", "x", "xy", "xy", "xyz")
-    val expected = Seq(
-      ("x", Map("x" -> 3L, "xy" -> 2L)),
-      ("xy", Map("xy" -> 2L, "xyz" -> 1L)),
-      ("xyz", Map("xyz" -> 1L)))
+    val expected = Seq(("x", Map("x" -> 3L, "xy" -> 2L)),
+                       ("xy", Map("xy" -> 2L, "xyz" -> 1L)),
+                       ("xyz", Map("xyz" -> 1L)))
     runWithContext { sc =>
       val in = sc.parallelize(data)
       for (recursive <- Seq(true, false)) {
-        val r = AutoComplete.computeTopCompletions(in, 2, recursive).mapValues(_.toMap)
-        r should containInAnyOrder (expected)
+        val r = AutoComplete
+          .computeTopCompletions(in, 2, recursive)
+          .mapValues(_.toMap)
+        r should containInAnyOrder(expected)
       }
     }
   }
 
   it should "work with windowed input" in {
-    val data = Seq(
-      ("xA", new Instant(1)),
-      ("xA", new Instant(1)),
-      ("xB", new Instant(1)),
-      ("xB", new Instant(2)),
-      ("xB", new Instant(2)))
+    val data = Seq(("xA", new Instant(1)),
+                   ("xA", new Instant(1)),
+                   ("xB", new Instant(1)),
+                   ("xB", new Instant(2)),
+                   ("xB", new Instant(2)))
     val expected = Seq(
       // window [0, 2)
       ("x", Map("xA" -> 2L, "xB" -> 1L)),
@@ -86,12 +87,16 @@ class AutoCompleteTest extends PipelineSpec {
       ("xB", Map("xB" -> 3L)),
       // window [2, 3)
       ("x", Map("xB" -> 2L)),
-      ("xB", Map("xB" -> 2L)))
+      ("xB", Map("xB" -> 2L))
+    )
     runWithContext { sc =>
-      val in = sc.parallelizeTimestamped(data).withSlidingWindows(new Duration(2))
+      val in =
+        sc.parallelizeTimestamped(data).withSlidingWindows(new Duration(2))
       for (recursive <- Seq(true, false)) {
-        val r = AutoComplete.computeTopCompletions(in, 2, recursive).mapValues(_.toMap)
-        r should containInAnyOrder (expected)
+        val r = AutoComplete
+          .computeTopCompletions(in, 2, recursive)
+          .mapValues(_.toMap)
+        r should containInAnyOrder(expected)
       }
     }
   }

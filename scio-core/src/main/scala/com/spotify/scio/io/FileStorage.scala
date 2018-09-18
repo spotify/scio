@@ -43,7 +43,8 @@ private[scio] object FileStorage {
 
 private[scio] final class FileStorage(protected[scio] val path: String) {
 
-  private def listFiles: Seq[Metadata] = FileSystems.`match`(path).metadata().asScala
+  private def listFiles: Seq[Metadata] =
+    FileSystems.`match`(path).metadata().asScala
 
   private def getObjectInputStream(meta: Metadata): InputStream =
     Channels.newInputStream(FileSystems.open(meta.resourceId()))
@@ -51,7 +52,8 @@ private[scio] final class FileStorage(protected[scio] val path: String) {
   private def getAvroSeekableInput(meta: Metadata): SeekableInput =
     new SeekableInput {
       require(meta.isReadSeekEfficient)
-      private val in = FileSystems.open(meta.resourceId()).asInstanceOf[SeekableByteChannel]
+      private val in =
+        FileSystems.open(meta.resourceId()).asInstanceOf[SeekableByteChannel]
       override def read(b: Array[Byte], off: Int, len: Int): Int =
         in.read(ByteBuffer.wrap(b, off, len))
       override def tell(): Long = in.position()
@@ -68,8 +70,10 @@ private[scio] final class FileStorage(protected[scio] val path: String) {
       new GenericDatumReader[T](schema)
     }
 
-    listFiles.map(m => DataFileReader.openReader(getAvroSeekableInput(m), reader))
-      .map(_.iterator().asScala).reduce(_ ++ _)
+    listFiles
+      .map(m => DataFileReader.openReader(getAvroSeekableInput(m), reader))
+      .map(_.iterator().asScala)
+      .reduce(_ ++ _)
   }
 
   def textFile: Iterator[String] = {
@@ -112,17 +116,17 @@ private[scio] final class FileStorage(protected[scio] val path: String) {
       // found xxxxx-of-yyyyy pattern
       val parts = nums.map(_._1).sorted
       val total = nums.map(_._2).toSet
-      metadata.size == nums.size &&  // all paths matched
-        total.size == 1 && total.head == parts.size &&  // yyyyy part
-        parts.head == 0 && parts.last + 1 == parts.size // xxxxx part
+      metadata.size == nums.size && // all paths matched
+      total.size == 1 && total.head == parts.size && // yyyyy part
+      parts.head == 0 && parts.last + 1 == parts.size // xxxxx part
     } else {
       true
     }
   }
 
-  private[scio] def getDirectoryInputStream(path: String,
-                                            wrapperFn: InputStream => InputStream = identity)
-  : InputStream = {
+  private[scio] def getDirectoryInputStream(
+    path: String,
+    wrapperFn: InputStream => InputStream = identity): InputStream = {
     val inputs = listFiles.map(getObjectInputStream).map(wrapperFn).asJava
     new SequenceInputStream(Collections.enumeration(inputs))
   }

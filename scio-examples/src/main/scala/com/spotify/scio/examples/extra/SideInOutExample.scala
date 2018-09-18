@@ -41,14 +41,15 @@ object SideInOutExample {
     // Prepare an `SCollection[String]` of stop words
     val stopWords = args.optional("stopWords") match {
       case Some(path) => sc.textFile(path)
-      case None => sc.parallelize(Seq("a", "an", "the", "of", "and", "or"))
+      case None       => sc.parallelize(Seq("a", "an", "the", "of", "and", "or"))
     }
 
     // Convert stop words to a `SideInput[Map[String, Unit]]`
     val sideIn = stopWords.map(_ -> Unit).asMapSideInput
 
     // Open text files a `SCollection[String]`
-    val wordCount = sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
+    val wordCount = sc
+      .textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       // Begin side input operation. Any side inputs to be accessed in the following transforms
       // must be specified.
       .withSideInputs(sideIn)
@@ -62,10 +63,10 @@ object SideInOutExample {
           .map(_.toLowerCase)
           // Filter stop words using the map side input
           .filter(!stop.contains(_))
-        }
-        // End of side input operation, convert back to a regular `SCollection`
-        .toSCollection
-        .countByValue
+      }
+      // End of side input operation, convert back to a regular `SCollection`
+      .toSCollection
+      .countByValue
 
     // Initialize side outputs
     val oneLetter = SideOutput[(String, Long)]()
@@ -73,22 +74,23 @@ object SideInOutExample {
     val threeLetter = SideOutput[(String, Long)]()
 
     val (fourOrMoreLetters, sideOutputs) = wordCount
-      // Begin side output operation. Any side outputs to be accessed in the following transforms
-      // must be specified.
+    // Begin side output operation. Any side outputs to be accessed in the following transforms
+    // must be specified.
       .withSideOutputs(oneLetter, twoLetter, threeLetter)
       // Specialized version of `map` with access to side outputs via `SideOutputContext`. Returns
       // a tuple 2 where the first element is the main output and the second element is a
       // `SideOutputCollections` that encapsulates side outputs.
-      .flatMap { case ((word, count), ctx) =>
-        word.length match {
-          // Send to side outputs via `SideOutputContext`
-          case 1 => ctx.output(oneLetter, (word, count))
-          case 2 => ctx.output(twoLetter, (word, count))
-          case 3 => ctx.output(threeLetter, (word, count))
-          case _ =>
-        }
-        // Send to main output via return value
-        if (word.length >= 4) Some((word, count)) else None
+      .flatMap {
+        case ((word, count), ctx) =>
+          word.length match {
+            // Send to side outputs via `SideOutputContext`
+            case 1 => ctx.output(oneLetter, (word, count))
+            case 2 => ctx.output(twoLetter, (word, count))
+            case 3 => ctx.output(threeLetter, (word, count))
+            case _ =>
+          }
+          // Send to main output via return value
+          if (word.length >= 4) Some((word, count)) else None
       }
 
     def toString(kv: (String, Long)) = kv._1 + ": " + kv._2

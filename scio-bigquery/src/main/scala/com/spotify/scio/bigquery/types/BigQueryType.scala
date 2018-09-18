@@ -56,6 +56,7 @@ object BigQueryType {
    * @group trait
    */
   trait HasTable {
+
     /** Table for case class schema. */
     def table: String
   }
@@ -73,6 +74,7 @@ object BigQueryType {
    * @group trait
    */
   trait HasSchema[T] {
+
     /** Case class schema. */
     def schema: TableSchema
 
@@ -94,6 +96,7 @@ object BigQueryType {
    * @group trait
    */
   trait HasQuery {
+
     /** SELECT query for case class schema. */
     def query: String
   }
@@ -111,6 +114,7 @@ object BigQueryType {
    * @group trait
    */
   trait HasTableDescription {
+
     /** Case class table description. */
     def tableDescription: String
   }
@@ -240,16 +244,17 @@ object BigQueryType {
   def schemaOf[T: TypeTag]: TableSchema = SchemaProvider.schemaOf[T]
 
   /**
-    * Generate a converter function from Avro [[GenericRecord]] to the given case class `T`.
-    * @group converters
-    */
+   * Generate a converter function from Avro [[GenericRecord]] to the given case class `T`.
+   * @group converters
+   */
   def fromAvro[T]: GenericRecord => T = macro ConverterProvider.fromAvroImpl[T]
 
   /**
    * Generate a converter function from [[TableRow]] to the given case class `T`.
    * @group converters
    */
-  def fromTableRow[T]: TableRow => T = macro ConverterProvider.fromTableRowImpl[T]
+  def fromTableRow[T]: TableRow => T =
+    macro ConverterProvider.fromTableRowImpl[T]
 
   /**
    * Generate a converter function from the given case class `T` to [[TableRow]].
@@ -275,32 +280,40 @@ class BigQueryType[T: TypeTag] {
     .reflectModule(typeOf[T].typeSymbol.companion.asModule)
     .instance
 
-  private def getField(key: String) = instance.getClass.getMethod(key).invoke(instance)
+  private def getField(key: String) =
+    instance.getClass.getMethod(key).invoke(instance)
 
   /** Whether the case class is annotated for a table. */
-  def isTable: Boolean = bases.contains(typeOf[BigQueryType.HasTable].typeSymbol)
+  def isTable: Boolean =
+    bases.contains(typeOf[BigQueryType.HasTable].typeSymbol)
 
   /** Whether the case class is annotated for a query. */
-  def isQuery: Boolean = bases.contains(typeOf[BigQueryType.HasQuery].typeSymbol)
+  def isQuery: Boolean =
+    bases.contains(typeOf[BigQueryType.HasQuery].typeSymbol)
 
   /** Table reference from the annotation. */
-  def table: Option[String] = Try(getField("table").asInstanceOf[String]).toOption
+  def table: Option[String] =
+    Try(getField("table").asInstanceOf[String]).toOption
 
   /** Query from the annotation. */
-  def query: Option[String] = Try(getField("query").asInstanceOf[String]).toOption
+  def query: Option[String] =
+    Try(getField("query").asInstanceOf[String]).toOption
 
   /** Table description from the annotation. */
   def tableDescription: Option[String] =
     Try(getField("tableDescription").asInstanceOf[String]).toOption
 
   /** Avro [[GenericRecord]] to `T` converter. */
-  def fromAvro: GenericRecord => T = getField("fromAvro").asInstanceOf[GenericRecord => T]
+  def fromAvro: GenericRecord => T =
+    getField("fromAvro").asInstanceOf[GenericRecord => T]
 
   /** TableRow to `T` converter. */
-  def fromTableRow: TableRow => T = getField("fromTableRow").asInstanceOf[TableRow => T]
+  def fromTableRow: TableRow => T =
+    getField("fromTableRow").asInstanceOf[TableRow => T]
 
   /** `T` to TableRow converter. */
-  def toTableRow: T => TableRow = getField("toTableRow").asInstanceOf[T => TableRow]
+  def toTableRow: T => TableRow =
+    getField("toTableRow").asInstanceOf[T => TableRow]
 
   /** TableSchema of `T`. */
   def schema: TableSchema = BigQueryType.schemaOf[T]

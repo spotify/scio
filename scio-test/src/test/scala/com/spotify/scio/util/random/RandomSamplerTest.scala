@@ -44,21 +44,25 @@ class RandomSamplerTest extends PipelineSpec {
     buffer
   }
 
-  private def newContext[T](f: DoFn[T, T], e: T, buffer: MBuffer[T]) = new f.ProcessContext {
-    override def element(): T = e
-    override def sideInput[U](view: PCollectionView[U]): U = ???
-    override def timestamp(): Instant = ???
-    override def pane(): PaneInfo = ???
-    override def updateWatermark(watermark: Instant): Unit = ???
-    override def getPipelineOptions: PipelineOptions = ???
-    override def output(output: T): Unit = buffer.append(output)
-    override def output[U](tag: TupleTag[U], output: U): Unit = ???
-    override def outputWithTimestamp(output: T, timestamp: Instant): Unit = ???
-    override def outputWithTimestamp[U](tag: TupleTag[U], output: U, timestamp: Instant): Unit = ???
-  }
+  private def newContext[T](f: DoFn[T, T], e: T, buffer: MBuffer[T]) =
+    new f.ProcessContext {
+      override def element(): T = e
+      override def sideInput[U](view: PCollectionView[U]): U = ???
+      override def timestamp(): Instant = ???
+      override def pane(): PaneInfo = ???
+      override def updateWatermark(watermark: Instant): Unit = ???
+      override def getPipelineOptions: PipelineOptions = ???
+      override def output(output: T): Unit = buffer.append(output)
+      override def output[U](tag: TupleTag[U], output: U): Unit = ???
+      override def outputWithTimestamp(output: T, timestamp: Instant): Unit =
+        ???
+      override def outputWithTimestamp[U](tag: TupleTag[U], output: U, timestamp: Instant): Unit =
+        ???
+    }
 
   def testSampler(withReplacement: Boolean,
-                  expectedFraction: Double, actualFraction: Double): Double = {
+                  expectedFraction: Double,
+                  actualFraction: Double): Double = {
     rngSeed.setSeed(fixedSeed)
     val expected = expectedSamples(withReplacement, expectedFraction)
 
@@ -89,12 +93,13 @@ class RandomSamplerTest extends PipelineSpec {
   }
 
   def testValueSampler(withReplacement: Boolean,
-                       expectedFraction1: Double, actualFraction1: Double,
-                       expectedFraction2: Double, actualFraction2: Double): (Double, Double) = {
+                       expectedFraction1: Double,
+                       actualFraction1: Double,
+                       expectedFraction2: Double,
+                       actualFraction2: Double): (Double, Double) = {
     rngSeed.setSeed(fixedSeed)
-    val expected = Map(
-      "a" -> expectedSamples(withReplacement, expectedFraction1),
-      "b" -> expectedSamples(withReplacement, expectedFraction2))
+    val expected = Map("a" -> expectedSamples(withReplacement, expectedFraction1),
+                       "b" -> expectedSamples(withReplacement, expectedFraction2))
 
     val fractions = Map("a" -> actualFraction1, "b" -> actualFraction2)
     val sampler = if (withReplacement) {

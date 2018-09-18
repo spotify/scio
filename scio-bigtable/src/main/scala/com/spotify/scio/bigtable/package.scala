@@ -55,11 +55,14 @@ package object bigtable {
     def getFamilyMap(familyName: String): Map[ByteString, ByteString] =
       self.getFamiliesList.asScala.find(_.getName == familyName) match {
         case None => Map.empty
-        case Some(f) => if (f.getColumnsCount > 0) {
-          f.getColumnsList.asScala.map(c => c.getQualifier -> c.getCells(0).getValue).toMap
-        } else {
-          Map.empty
-        }
+        case Some(f) =>
+          if (f.getColumnsCount > 0) {
+            f.getColumnsList.asScala
+              .map(c => c.getQualifier -> c.getCells(0).getValue)
+              .toMap
+          } else {
+            Map.empty
+          }
       }
 
     /** Map of families to all versions of its qualifiers and values. */
@@ -80,7 +83,9 @@ package object bigtable {
 
     /** Map of families to their most recent qualifiers and values. */
     def getNoVersionMap: Map[String, Map[ByteString, ByteString]] =
-      self.getFamiliesList.asScala.map(f => f.getName -> getFamilyMap(f.getName)).toMap
+      self.getFamiliesList.asScala
+        .map(f => f.getName -> getFamilyMap(f.getName))
+        .toMap
 
     /** Get the latest version of the specified column. */
     def getValue(familyName: String, columnQualifier: ByteString): Option[ByteString] =
@@ -144,23 +149,24 @@ package object bigtable {
      */
     def updateNumberOfBigtableNodes(bigtableOptions: BigtableOptions,
                                     numberOfNodes: Int,
-                                    sleepDuration: Duration): Unit = if (!self.isTest) {
-      // No need to update the number of nodes in a test
-      BigtableUtil.updateNumberOfBigtableNodes(
-        bigtableOptions,
-        numberOfNodes,
-        sleepDuration)
-    }
+                                    sleepDuration: Duration): Unit =
+      if (!self.isTest) {
+        // No need to update the number of nodes in a test
+        BigtableUtil.updateNumberOfBigtableNodes(bigtableOptions, numberOfNodes, sleepDuration)
+      }
 
     /**
      * Get size of all clusters for specified Bigtable instance.
      *
      * @return map of clusterId to its number of nodes
      */
-    def getBigtableClusterSizes(projectId: String,
-                                instanceId: String): Map[String, Int] = {
+    def getBigtableClusterSizes(projectId: String, instanceId: String): Map[String, Int] = {
       if (!self.isTest) {
-        BigtableUtil.getClusterSizes(projectId, instanceId).asScala.toMap.mapValues(_.toInt)
+        BigtableUtil
+          .getClusterSizes(projectId, instanceId)
+          .asScala
+          .toMap
+          .mapValues(_.toInt)
       } else {
         Map.empty
       }
@@ -206,30 +212,27 @@ package object bigtable {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Bigtable methods.
    */
   implicit class BigtableSCollection[T](val self: SCollection[(ByteString, Iterable[T])])
-    extends AnyVal {
+      extends AnyVal {
 
     /**
      * Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`.
      */
-    def saveAsBigtable(projectId: String,
-                       instanceId: String,
-                       tableId: String)
-                      (implicit ev: T <:< Mutation)
-    : Future[Tap[(ByteString, Iterable[Mutation])]] = {
+    def saveAsBigtable(projectId: String, instanceId: String, tableId: String)(
+      implicit ev: T <:< Mutation): Future[Tap[(ByteString, Iterable[Mutation])]] = {
       val param = BigtableWrite.Default
-      self.write(BigtableWrite[T](projectId, instanceId, tableId))(param)
+      self
+        .write(BigtableWrite[T](projectId, instanceId, tableId))(param)
         .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
     }
 
     /**
      * Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`.
      */
-    def saveAsBigtable(bigtableOptions: BigtableOptions,
-                       tableId: String)
-                      (implicit ev: T <:< Mutation)
-    : Future[Tap[(ByteString, Iterable[Mutation])]] = {
+    def saveAsBigtable(bigtableOptions: BigtableOptions, tableId: String)(
+      implicit ev: T <:< Mutation): Future[Tap[(ByteString, Iterable[Mutation])]] = {
       val param = BigtableWrite.Default
-      self.write(BigtableWrite[T](bigtableOptions, tableId))(param)
+      self
+        .write(BigtableWrite[T](bigtableOptions, tableId))(param)
         .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
     }
 
@@ -240,11 +243,11 @@ package object bigtable {
     def saveAsBigtable(bigtableOptions: BigtableOptions,
                        tableId: String,
                        numOfShards: Int,
-                       flushInterval: Duration = Duration.standardSeconds(1))
-                      (implicit ev: T <:< Mutation)
-    : Future[Tap[(ByteString, Iterable[Mutation])]] = {
+                       flushInterval: Duration = Duration.standardSeconds(1))(
+      implicit ev: T <:< Mutation): Future[Tap[(ByteString, Iterable[Mutation])]] = {
       val param = BigtableWrite.Bulk(numOfShards, flushInterval)
-      self.write(BigtableWrite[T](bigtableOptions, tableId))(param)
+      self
+        .write(BigtableWrite[T](bigtableOptions, tableId))(param)
         .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
     }
   }

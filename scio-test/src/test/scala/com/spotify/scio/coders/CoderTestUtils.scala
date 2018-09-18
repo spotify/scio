@@ -28,7 +28,8 @@ object CoderTestUtils {
   case class CaseClassWithGenericRecord(name: String, size: Int, record: GenericRecord)
   case class CaseClassWithSpecificRecord(name: String, size: Int, record: TestRecord)
 
-  def testRoundTrip[T](coder: BCoder[T], value: T): Boolean = testRoundTrip(coder, coder, value)
+  def testRoundTrip[T](coder: BCoder[T], value: T): Boolean =
+    testRoundTrip(coder, coder, value)
 
   def testRoundTrip[T](writer: BCoder[T], reader: BCoder[T], value: T): Boolean = {
     val bytes = CoderUtils.encodeToByteArray(writer, value)

@@ -66,7 +66,8 @@ class ScioIOTest extends ScioIOSpec {
   }
 
   "ProtobufIO" should "work" in {
-    val xs = (1 to 100).map(x => TrackPB.newBuilder().setTrackId(x.toString).build())
+    val xs =
+      (1 to 100).map(x => TrackPB.newBuilder().setTrackId(x.toString).build())
     val suffix = ".protobuf.avro"
     testTap(xs)(_.saveAsProtobufFile(_))(suffix)
     testJobTest(xs)(ProtobufIO(_))(_.protobufFile[TrackPB](_))(_.saveAsProtobufFile(_))
@@ -96,12 +97,13 @@ class ScioIOTest extends ScioIOSpec {
 
   "DatastoreIO" should "work" in {
     val xs = (1 to 100).map { x =>
-      Entity.newBuilder()
+      Entity
+        .newBuilder()
         .putProperties("int", DatastoreHelper.makeValue(x).build())
         .build()
     }
-      testJobTest(xs)(DatastoreIO(_))(_.datastore(_, null))(_.saveAsDatastore(_))
-    }
+    testJobTest(xs)(DatastoreIO(_))(_.datastore(_, null))(_.saveAsDatastore(_))
+  }
 
   "PubsubIO" should "work with subscription" in {
     val xs = (1 to 100).map(_.toString)

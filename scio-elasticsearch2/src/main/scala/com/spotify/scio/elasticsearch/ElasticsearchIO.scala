@@ -31,8 +31,7 @@ import org.joda.time.Duration
 import scala.concurrent.Future
 import scala.collection.JavaConverters._
 
-final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions)
-  extends ScioIO[T] {
+final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends ScioIO[T] {
 
   override type ReadP = Nothing
   override type WriteP = ElasticsearchIO.WriteParam[T]
@@ -44,19 +43,22 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions)
    * Save this SCollection into Elasticsearch.
    */
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
-    val shards = if (params.numOfShards > 0) params.numOfShards else esOptions.servers.size
+    val shards =
+      if (params.numOfShards > 0) params.numOfShards else esOptions.servers.size
     data.applyInternal(
       beam.ElasticsearchIO.Write
         .withClusterName(esOptions.clusterName)
         .withServers(esOptions.servers.toArray)
         .withFunction(new SerializableFunction[T, JIterable[ActionRequest[_]]]() {
-          override def apply(t: T): JIterable[ActionRequest[_]] = params.f(t).asJava
+          override def apply(t: T): JIterable[ActionRequest[_]] =
+            params.f(t).asJava
         })
         .withFlushInterval(params.flushInterval)
         .withNumOfShard(shards)
         .withMaxBulkRequestSize(params.maxBulkRequestSize)
         .withError(new beam.ThrowingConsumer[BulkExecutionException] {
-          override def accept(t: BulkExecutionException): Unit = params.errorFn(t)
+          override def accept(t: BulkExecutionException): Unit =
+            params.errorFn(t)
         }))
     Future.failed(new NotImplementedError("Custom future not implemented"))
   }

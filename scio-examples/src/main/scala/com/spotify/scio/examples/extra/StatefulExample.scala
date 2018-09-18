@@ -50,7 +50,10 @@ object StatefulExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    val input = for (k <- Seq("a", "b"); v <- 1 to 10) yield (k, v)
+    val input = for {
+      k <- Seq("a", "b")
+      v <- 1 to 10
+    } yield (k, v)
 
     sc.parallelize(input)
       // Apply a stateful DoFn

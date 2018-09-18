@@ -32,7 +32,8 @@ class SerializationTest extends FlatSpec with Matchers {
   "DistCache" should "be serializable" in {
     val sc = ScioContext()
     val dc1 = sc.distCache("a.txt")(Source.fromFile(_).getLines())
-    val dc2 = sc.distCache(Seq("a.txt", "b.txt"))(_.map(Source.fromFile(_).getLines()))
+    val dc2 =
+      sc.distCache(Seq("a.txt", "b.txt"))(_.map(Source.fromFile(_).getLines()))
     SerializableUtils.ensureSerializable(dc1)
     SerializableUtils.ensureSerializable(dc2)
   }

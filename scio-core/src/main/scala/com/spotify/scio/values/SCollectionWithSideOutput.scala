@@ -32,11 +32,10 @@ import scala.collection.JavaConverters._
  * [[SCollection]]s of the [[SideOutput]]s are accessed via the additional
  * [[SideOutputCollections]] return value.
  */
-class SCollectionWithSideOutput[T] private[values]
-(val internal: PCollection[T],
- val context: ScioContext,
- sides: Iterable[SideOutput[_]])
-  extends PCollectionWrapper[T] {
+class SCollectionWithSideOutput[T] private[values] (val internal: PCollection[T],
+                                                    val context: ScioContext,
+                                                    sides: Iterable[SideOutput[_]])
+    extends PCollectionWrapper[T] {
 
   private val sideTags = TupleTagList.of(sides.map(_.tupleTag).toList.asJava)
 
@@ -44,13 +43,16 @@ class SCollectionWithSideOutput[T] private[values]
    * [[SCollection.flatMap]] with an additional [[SideOutputContext]] argument and additional
    * [[SideOutputCollections]] return value.
    */
-  def flatMap[U: Coder](f: (T, SideOutputContext[T]) => TraversableOnce[U])
-  : (SCollection[U], SideOutputCollections) = {
+  def flatMap[U: Coder](
+    f: (T, SideOutputContext[T]) => TraversableOnce[U]): (SCollection[U], SideOutputCollections) = {
     val mainTag = new TupleTag[U]
     val tuple = this.applyInternal(
-      ParDo.of(FunctionsWithSideOutput.flatMapFn(f)).withOutputTags(mainTag, sideTags))
+      ParDo
+        .of(FunctionsWithSideOutput.flatMapFn(f))
+        .withOutputTags(mainTag, sideTags))
 
-    val main = tuple.get(mainTag).setCoder(CoderMaterializer.beam(context, Coder[U]))
+    val main =
+      tuple.get(mainTag).setCoder(CoderMaterializer.beam(context, Coder[U]))
     (context.wrap(main), new SideOutputCollections(tuple, context))
   }
 
@@ -58,13 +60,15 @@ class SCollectionWithSideOutput[T] private[values]
    * [[SCollection.map]] with an additional [[SideOutputContext]] argument and additional
    * [[SideOutputCollections]] return value.
    */
-  def map[U: Coder](f: (T, SideOutputContext[T]) => U)
-  : (SCollection[U], SideOutputCollections) = {
+  def map[U: Coder](f: (T, SideOutputContext[T]) => U): (SCollection[U], SideOutputCollections) = {
     val mainTag = new TupleTag[U]
     val tuple = this.applyInternal(
-      ParDo.of(FunctionsWithSideOutput.mapFn(f)).withOutputTags(mainTag, sideTags))
+      ParDo
+        .of(FunctionsWithSideOutput.mapFn(f))
+        .withOutputTags(mainTag, sideTags))
 
-    val main = tuple.get(mainTag).setCoder(CoderMaterializer.beam(context, Coder[U]))
+    val main =
+      tuple.get(mainTag).setCoder(CoderMaterializer.beam(context, Coder[U]))
     (context.wrap(main), new SideOutputCollections(tuple, context))
   }
 

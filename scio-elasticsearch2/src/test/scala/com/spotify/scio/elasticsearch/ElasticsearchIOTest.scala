@@ -23,9 +23,11 @@ import org.elasticsearch.action.index.IndexRequest
 class ElasticsearchIOTest extends ScioIOSpec {
   "ElasticsearchIO" should "work with output" in {
     val xs = 1 to 100
-    def opts(clusterName: String): ElasticsearchOptions = ElasticsearchOptions(clusterName, Nil)
-    testJobTestOutput(xs)(c => ElasticsearchIO(opts(c))) { case (data, c) =>
-      data.saveAsElasticsearch(opts(c))(x => Seq(new IndexRequest))
+    def opts(clusterName: String): ElasticsearchOptions =
+      ElasticsearchOptions(clusterName, Nil)
+    testJobTestOutput(xs)(c => ElasticsearchIO(opts(c))) {
+      case (data, c) =>
+        data.saveAsElasticsearch(opts(c))(x => Seq(new IndexRequest))
     }
   }
 }

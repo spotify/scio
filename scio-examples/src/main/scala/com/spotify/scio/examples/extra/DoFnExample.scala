@@ -44,7 +44,7 @@ object DoFnExample {
       //
       // `private[<package>]` is required for anonymous instance methods to be publicly visible
       // in compiled class file, which is a requirement for the annotated methods.
-      .applyTransform(ParDo.of(new DoFn[String, Int]{
+      .applyTransform(ParDo.of(new DoFn[String, Int] {
         // `@Setup` (optional) is called once per worker thread before any processing starts.
         @Setup
         private[extra] def setup(): Unit = Unit

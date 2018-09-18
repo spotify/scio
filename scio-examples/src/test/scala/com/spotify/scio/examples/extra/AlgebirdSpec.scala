@@ -63,10 +63,12 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
   }
 
   // Generator for non-empty SColl[T]
-  def sCollOf[T](g: => Gen[T]): Gen[SColl[T]] = Gen.nonEmptyListOf(g).map(new SColl(_))
+  def sCollOf[T](g: => Gen[T]): Gen[SColl[T]] =
+    Gen.nonEmptyListOf(g).map(new SColl(_))
 
   // Generator for SColl[T] of given length
-  def sCollOfN[T](n: Int, g: => Gen[T]): Gen[SColl[T]] = Gen.listOfN(n, g).map(new SColl(_))
+  def sCollOfN[T](n: Int, g: => Gen[T]): Gen[SColl[T]] =
+    Gen.listOfN(n, g).map(new SColl(_))
 
   // Arbitrary for non-empty SColl[T]
   implicit def arbSColl[T](implicit a: Arbitrary[T]): Arbitrary[SColl[T]] =
@@ -109,10 +111,8 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
   // Sum fields of tuples individually
   property("sum of tuples") {
     forAll { xs: SColl[(Int, Double, Set[String])] =>
-      val expected = (
-        xs.internal.map(_._1).sum,
-        xs.internal.map(_._2).sum,
-        xs.internal.map(_._3).reduce(_ ++ _))
+      val expected =
+        (xs.internal.map(_._1).sum, xs.internal.map(_._2).sum, xs.internal.map(_._3).reduce(_ ++ _))
       xs.sum shouldBe expected
     }
   }
@@ -126,10 +126,8 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
       // Combine 3 Semigroup[Double] into 1 Semigroup[(Double, Double, Double)]
       val colSg = Semigroup.semigroup3(sumOp, maxOp, minOp)
 
-      val expected = (
-        xs.internal.map(_._1).sum,
-        xs.internal.map(_._2).max,
-        xs.internal.map(_._3).min)
+      val expected =
+        (xs.internal.map(_._1).sum, xs.internal.map(_._2).max, xs.internal.map(_._3).min)
       xs.sum(colSg) shouldBe expected
     }
   }
@@ -162,11 +160,10 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
       // Combine 4 Aggregator[C, Double, Double] into 1 Aggregator[C, C, C]
       val colAgg = MultiAggregator((sumOp, maxOp, minOp, avgOp))
 
-      val expected = (
-        xs.internal.map(_._1).sum,
-        xs.internal.map(_._2).max,
-        xs.internal.map(_._3).min,
-        mean(xs.internal.map(_._4)))
+      val expected = (xs.internal.map(_._1).sum,
+                      xs.internal.map(_._2).max,
+                      xs.internal.map(_._3).min,
+                      mean(xs.internal.map(_._4)))
       val actual = xs.aggregate(colAgg)
       actual._1 shouldBe expected._1
       actual._2 shouldBe expected._2
@@ -182,9 +179,10 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
       val minOp = Aggregator.min[Double]
       val momentsOp = Moments.aggregator
       val colAgg = MultiAggregator((maxOp, minOp, momentsOp))
-        .andThenPresent { case (max, min, moments) =>
-          // Present mean and stddev in Moments
-          (max, min, moments.mean, moments.stddev)
+        .andThenPresent {
+          case (max, min, moments) =>
+            // Present mean and stddev in Moments
+            (max, min, moments.mean, moments.stddev)
         }
 
       val expected = (xs.internal.max, xs.internal.min, mean(xs.internal), stddev(xs.internal))
@@ -211,10 +209,9 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
     import com.twitter.algebird.macros.caseclass._
 
     forAll(sCollOf(recordGen)) { xs =>
-      val expected = Record(
-        xs.internal.map(_.i).sum,
-        xs.internal.map(_.d).sum,
-        xs.internal.map(_.s).reduce(_ ++ _))
+      val expected = Record(xs.internal.map(_.i).sum,
+                            xs.internal.map(_.d).sum,
+                            xs.internal.map(_.s).reduce(_ ++ _))
       xs.sum shouldBe expected
     }
   }
@@ -224,14 +221,15 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
   // =======================================================================
 
   val hllBits = 8
-  val hllError = 1.04 / math.sqrt(math.pow(2, hllBits))  // 0.065
+  val hllError = 1.04 / math.sqrt(math.pow(2, hllBits)) // 0.065
   val hllInput = Gen.listOfN(100, sCollOf(Gen.alphaStr))
 
   property("sum with HyperLogLog") {
     forAll(hllInput) { xss =>
       val m = new HyperLogLogMonoid(hllBits)
       val e = xss.count { xs =>
-        val pass = xs.map(i => m.create(i.getBytes))
+        val pass = xs
+          .map(i => m.create(i.getBytes))
           .sum(m)
           .approximateSize
           // approximate bounds should contain exact distinct count
@@ -245,7 +243,8 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
   property("aggregate with HyperLogLog") {
     forAll(hllInput) { xss =>
       val e = xss.count { xs =>
-        val pass = xs.aggregate(HyperLogLogAggregator(hllBits).composePrepare(_.getBytes))
+        val pass = xs
+          .aggregate(HyperLogLogAggregator(hllBits).composePrepare(_.getBytes))
           .approximateSize
           // approximate bounds should contain exact distinct count
           .boundsContain(xs.internal.toSet.size)
@@ -296,18 +295,19 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
       val bounds = Seq(0.25, 0.50, 0.75).map(qt.quantileBounds)
       val expected = Seq(l / 4, l / 2, l / 4 * 3).map(xs.internal.sorted)
       // approximate bounds should contain exact 25, 50 and 75 percentile
-      bounds.zip(expected).forall { case ((lower, upper), x) =>
-        lower <= x && x <= upper
+      bounds.zip(expected).forall {
+        case ((lower, upper), x) =>
+          lower <= x && x <= upper
       } shouldBe true
     }
   }
-
 
   property("aggregate with QTree") {
     forAll(posInts) { xs =>
       val l = xs.internal.length
       val s = xs.internal.sorted
-      val bounds = Seq(0.25, 0.50, 0.75).map(p => xs.aggregate(QTreeAggregator(p, 10)))
+      val bounds =
+        Seq(0.25, 0.50, 0.75).map(p => xs.aggregate(QTreeAggregator(p, 10)))
       val expected = Seq(l / 4, l / 2, l / 4 * 3).map(s)
       // approximate bounds should contain exact 25, 50 and 75 percentile
       bounds.zip(expected).forall { case (b, x) => b.contains(x) } shouldBe true
@@ -324,9 +324,10 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
       val m = CMS.monoid[String](0.001, 1e-10, 1)
       val cms = xs.map(m.create).sum(m)
       val expected = xs.internal.groupBy(identity).mapValues(_.size)
-      expected.forall { case (item, freq) =>
-        // approximate bounds of each item should contain exact frequency
-        cms.frequency(item).boundsContain(freq)
+      expected.forall {
+        case (item, freq) =>
+          // approximate bounds of each item should contain exact frequency
+          cms.frequency(item).boundsContain(freq)
       } shouldBe true
     }
   }
@@ -336,9 +337,10 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
       import CMSHasherImplicits._
       val cms = xs.aggregate(CMS.aggregator(0.01, 1e-10, 1))
       val expected = xs.internal.groupBy(identity).mapValues(_.size)
-      expected.forall { case (item, freq) =>
-        // approximate bounds of each item should contain exact frequency
-        cms.frequency(item).boundsContain(freq)
+      expected.forall {
+        case (item, freq) =>
+          // approximate bounds of each item should contain exact frequency
+          cms.frequency(item).boundsContain(freq)
       } shouldBe true
     }
   }
@@ -348,15 +350,19 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
   // =======================================================================
 
   // Generator for SColl[(Double, Int)]
-  val timeSeries = Gen.listOfN(1000, Gen.posNum[Double]).map(_.zipWithIndex).map(new SColl(_))
+  val timeSeries =
+    Gen.listOfN(1000, Gen.posNum[Double]).map(_.zipWithIndex).map(new SColl(_))
 
   property("sum with DecayedValue") {
     forAll(timeSeries) { xs =>
       val halfLife = 10.0
       val decayFactor = math.exp(math.log(0.5) / halfLife)
       val normalization = halfLife / math.log(2)
-      val expected = xs.internal.map(_._1).reduce(_ * decayFactor + _) / normalization
-      val actual = xs.map { case (v, t) => DecayedValue.build(v, t, halfLife) }
+      val expected = xs.internal
+        .map(_._1)
+        .reduce(_ * decayFactor + _) / normalization
+      val actual = xs
+        .map { case (v, t) => DecayedValue.build(v, t, halfLife) }
         .sum(DecayedValue.monoidWithEpsilon(1e-3))
         .average(halfLife)
       // approximate decayed value should be close to exact value
@@ -369,11 +375,14 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
       val halfLife = 10.0
       val decayFactor = math.exp(math.log(0.5) / halfLife)
       val normalization = halfLife / math.log(2)
-      val expected = xs.internal.map(_._1).reduce(_ * decayFactor + _) / normalization
-      val actual = xs.aggregate(
-        Aggregator
-          .fromMonoid(DecayedValue.monoidWithEpsilon(1e-3))
-          .composePrepare { case (v, t) => DecayedValue.build(v, t, halfLife) })
+      val expected = xs.internal
+        .map(_._1)
+        .reduce(_ * decayFactor + _) / normalization
+      val actual = xs
+        .aggregate(
+          Aggregator
+            .fromMonoid(DecayedValue.monoidWithEpsilon(1e-3))
+            .composePrepare { case (v, t) => DecayedValue.build(v, t, halfLife) })
         .average(halfLife)
       // approximate decayed value should be close to exact value
       actual shouldBe expected +- 1e-3

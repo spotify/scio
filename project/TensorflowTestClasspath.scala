@@ -18,6 +18,7 @@
 import sbt._, Keys._
 
 object TensorflowTestClasspath {
+
   /**
    * Workaround a JNI issue by forcing tensorflow-java to be loaded with the
    * system classloader. This garantuee that the java library and the native lib

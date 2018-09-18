@@ -31,6 +31,7 @@ trait SideOutput[T] extends Serializable {
 
 /** Companion object for [[SideOutput]]. */
 object SideOutput {
+
   /** Create a new [[SideOutput]] instance. */
   def apply[T](): SideOutput[T] = new SideOutput[T] {
     override private[scio] val tupleTag: TupleTag[T] = new TupleTag[T]()
@@ -39,6 +40,7 @@ object SideOutput {
 
 /** Encapsulate context of one or more [[SideOutput]]s in an [[SCollectionWithSideOutput]]. */
 class SideOutputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessContext) {
+
   /** Write a value to a given [[SideOutput]]. */
   def output[S](sideOutput: SideOutput[S],
                 output: S,
@@ -60,7 +62,9 @@ class SideOutputCollections private[values] (private val tuple: PCollectionTuple
   /** Extract the [[SCollection]] of a given [[SideOutput]]. */
   def apply[T: ClassTag](sideOutput: SideOutput[T]): SCollection[T] = {
     val r = context.pipeline.getCoderRegistry
-    val o = tuple.get(sideOutput.tupleTag).setCoder(r.getScalaCoder[T](context.options))
+    val o = tuple
+      .get(sideOutput.tupleTag)
+      .setCoder(r.getScalaCoder[T](context.options))
     context.wrap(o)
   }
 }

@@ -62,7 +62,7 @@ private trait ImmutableCollectionSerializer[M] extends KSerializer[M] {
 }
 
 private final class ImmutableListSerializer[T]
-  extends ImmutableCollectionSerializer[ImmutableList[T]] {
+    extends ImmutableCollectionSerializer[ImmutableList[T]] {
   override def read(kser: Kryo, in: Input, cls: Class[ImmutableList[T]]): ImmutableList[T] =
     ImmutableList.copyOf(readList(kser, in): JIterable[T])
   override def write(kser: Kryo, out: Output, obj: ImmutableList[T]): Unit =
@@ -70,7 +70,7 @@ private final class ImmutableListSerializer[T]
 }
 
 private final class ImmutableSetSerializer[T]
-  extends ImmutableCollectionSerializer[ImmutableSet[T]] {
+    extends ImmutableCollectionSerializer[ImmutableSet[T]] {
   override def read(kser: Kryo, in: Input, cls: Class[ImmutableSet[T]]): ImmutableSet[T] =
     ImmutableSet.copyOf(readList(kser, in): JIterable[T])
   override def write(kser: Kryo, out: Output, obj: ImmutableSet[T]): Unit =

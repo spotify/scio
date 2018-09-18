@@ -49,8 +49,11 @@ private[tensorflow] object TFSavedJob {
 
   def main(argv: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(argv)
-    val options = TensorFlowModel.Options.builder.tags(Collections.singletonList("serve")).build
-    val settings = sc.parallelize(List(Source.fromURL(args("settings")).getLines.mkString))
+    val options = TensorFlowModel.Options.builder
+      .tags(Collections.singletonList("serve"))
+      .build
+    val settings =
+      sc.parallelize(List(Source.fromURL(args("settings")).getLines.mkString))
 
     val collection =
       sc.parallelize(List(Iris(Some(5.1), Some(3.5), Some(1.4), Some(0.2), Some("Iris-setosa"))))

@@ -24,7 +24,7 @@ class MetricsExampleTest extends PipelineSpec {
 
   "MetricsExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.MetricsExample.type]
-      // static metrics
+    // static metrics
       .counter(MetricsExample.sum)(_ shouldBe (1 to 100).sum)
       .counter(MetricsExample.sum2)(_ shouldBe (1 to 100).sum + (1 to 50).sum)
       .counter(MetricsExample.count)(_ shouldBe 100)

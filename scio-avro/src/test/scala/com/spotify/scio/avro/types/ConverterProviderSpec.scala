@@ -47,8 +47,8 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
 
   property("round trip optional primitive types") {
     forAll { r1: OptionalFields =>
-      val r2 = AvroType.fromGenericRecord[OptionalFields](
-        AvroType.toGenericRecord[OptionalFields](r1))
+      val r2 =
+        AvroType.fromGenericRecord[OptionalFields](AvroType.toGenericRecord[OptionalFields](r1))
       RecordMatcher[OptionalFields](r1, r2) shouldBe true
     }
   }
@@ -84,8 +84,7 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
 
   property("round trip required nested types") {
     forAll { r1: NestedFields =>
-      val r2 = AvroType.fromGenericRecord[NestedFields](
-        AvroType.toGenericRecord[NestedFields](r1))
+      val r2 = AvroType.fromGenericRecord[NestedFields](AvroType.toGenericRecord[NestedFields](r1))
       RecordMatcher[NestedFields](r1, r2) shouldBe true
     }
   }
@@ -119,16 +118,16 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
 
   property("round trip nested type maps") {
     forAll { r1: MapNestedFields =>
-      val r2 = AvroType.fromGenericRecord[MapNestedFields](
-        AvroType.toGenericRecord[MapNestedFields](r1))
+      val r2 =
+        AvroType.fromGenericRecord[MapNestedFields](AvroType.toGenericRecord[MapNestedFields](r1))
       RecordMatcher[MapNestedFields](r1, r2) shouldBe true
     }
   }
 
   property("round trip byte array types") {
     forAll { r1: ByteArrayFields =>
-      val r2 = AvroType.fromGenericRecord[ByteArrayFields](
-        AvroType.toGenericRecord[ByteArrayFields](r1))
+      val r2 =
+        AvroType.fromGenericRecord[ByteArrayFields](AvroType.toGenericRecord[ByteArrayFields](r1))
       RecordMatcher[ByteArrayFields](r1, r2) shouldBe true
     }
   }

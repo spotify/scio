@@ -26,7 +26,7 @@ runMain
   com.spotify.scio.examples.extra.TypedBigQueryTornadoes
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
   --output=[DATASET].typed_bigquery_tornadoes
-*/
+ */
 
 object TypedBigQueryTornadoes {
 

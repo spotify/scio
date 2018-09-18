@@ -44,14 +44,12 @@ object BeamExample {
       .triggering(
         AfterWatermark
           .pastEndOfWindow()
-          .withEarlyFirings(
-            AfterProcessingTime
-              .pastFirstElementInPane()
-              .plusDelayOf(Duration.standardMinutes(5)))
-          .withLateFirings(
-            AfterProcessingTime
-              .pastFirstElementInPane()
-              .plusDelayOf(Duration.standardMinutes(10))))
+          .withEarlyFirings(AfterProcessingTime
+            .pastFirstElementInPane()
+            .plusDelayOf(Duration.standardMinutes(5)))
+          .withLateFirings(AfterProcessingTime
+            .pastFirstElementInPane()
+            .plusDelayOf(Duration.standardMinutes(10))))
       .accumulatingFiredPanes()
 
   // A Beam native aggregation `PTransform`
@@ -80,13 +78,14 @@ object BeamExample {
     val pipeline: Pipeline = sc.pipeline
 
     // Custom input with a Beam source `PTransform`
-    val accounts: SCollection[Account] = sc.customInput("Input", pubsubIn(args("inputTopic")))
+    val accounts: SCollection[Account] =
+      sc.customInput("Input", pubsubIn(args("inputTopic")))
 
     // Underlying Beam `PCollection`
     val p: PCollection[Account] = accounts.internal
 
     accounts
-      // Beam `PTransform`
+    // Beam `PTransform`
       .applyTransform(window)
       // Scio `map` transform
       .map(a => KV.of(a.getName.toString, a.getAmount))

@@ -30,9 +30,10 @@ private[scio] object AvroBytesUtil {
 
   val schema: Schema = {
     val s = Schema.createRecord("AvroBytesRecord", null, null, false)
-    s.setFields(List(
-      new Schema.Field("bytes", Schema.create(Schema.Type.BYTES), null, null.asInstanceOf[Object])
-    ).asJava)
+    s.setFields(
+      List(
+        new Schema.Field("bytes", Schema.create(Schema.Type.BYTES), null, null.asInstanceOf[Object])
+      ).asJava)
     s
   }
 
@@ -45,7 +46,8 @@ private[scio] object AvroBytesUtil {
 
   def decode[T](coder: BCoder[T], record: GenericRecord): T = {
     val bb = record.get("bytes").asInstanceOf[ByteBuffer]
-    val bytes = java.util.Arrays.copyOfRange(bb.array(), bb.position(), bb.limit())
+    val bytes =
+      java.util.Arrays.copyOfRange(bb.array(), bb.position(), bb.limit())
     CoderUtils.decodeFromByteArray(coder, bytes)
   }
 

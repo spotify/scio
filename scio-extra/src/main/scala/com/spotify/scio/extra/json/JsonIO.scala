@@ -31,7 +31,7 @@ import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.util.{Left, Right}
 
-final case class JsonIO[T: ClassTag : Encoder : Decoder : Coder](path: String) extends ScioIO[T] {
+final case class JsonIO[T: ClassTag: Encoder: Decoder: Coder](path: String) extends ScioIO[T] {
 
   override type ReadP = Unit
   override type WriteP = JsonIO.WriteParam
@@ -40,7 +40,9 @@ final case class JsonIO[T: ClassTag : Encoder : Decoder : Coder](path: String) e
     sc.wrap(sc.applyInternal(beam.TextIO.read().from(path))).map(decodeJson)
 
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
-    data.map(x => params.printer.pretty(x.asJson)).applyInternal(jsonOut(path, params))
+    data
+      .map(x => params.printer.pretty(x.asJson))
+      .applyInternal(jsonOut(path, params))
     data.context.makeFuture(tap(Unit))
   }
 
@@ -52,19 +54,21 @@ final case class JsonIO[T: ClassTag : Encoder : Decoder : Coder](path: String) e
   }
 
   private def decodeJson(json: String): T = decode[T](json) match {
-    case Left(e) => throw e
+    case Left(e)  => throw e
     case Right(t) => t
   }
 
   private def jsonOut(path: String, params: WriteP) =
-    beam.TextIO.write()
+    beam.TextIO
+      .write()
       .to(pathWithShards(path))
       .withSuffix(params.suffix)
       .withNumShards(params.numShards)
       .withWritableByteChannelFactory(
         beam.FileBasedSink.CompressionType.fromCanonical(params.compression))
 
-  private[scio] def pathWithShards(path: String) = path.replaceAll("\\/+$", "") + "/part"
+  private[scio] def pathWithShards(path: String) =
+    path.replaceAll("\\/+$", "") + "/part"
 
 }
 

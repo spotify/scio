@@ -54,7 +54,8 @@ object ShapelessDatastoreWriteExample {
       .countByValue
       .map { t =>
         // Convert case class to `Entity.Builder`
-        wordCountType.toEntityBuilder(WordCount.tupled(t))
+        wordCountType
+          .toEntityBuilder(WordCount.tupled(t))
           // Set entity key
           .setKey(makeKey(kind, t._1))
           .build()

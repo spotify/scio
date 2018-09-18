@@ -65,8 +65,7 @@ object AsyncLookupDoFnTest {
   val queue: ConcurrentLinkedQueue[Int] = new ConcurrentLinkedQueue[Int]()
 }
 
-class AsyncClient {
-}
+class AsyncClient {}
 
 class TestAsyncLookupDoFn extends AsyncLookupDoFn[Int, String, AsyncClient]() {
   override protected def newClient(): AsyncClient = null
@@ -74,8 +73,8 @@ class TestAsyncLookupDoFn extends AsyncLookupDoFn[Int, String, AsyncClient]() {
     Futures.immediateFuture(input.toString)
 }
 
-class TestCachingAsyncLookupDoFn extends
-  AsyncLookupDoFn[Int, String, AsyncClient](100, new TestCacheSupplier) {
+class TestCachingAsyncLookupDoFn
+    extends AsyncLookupDoFn[Int, String, AsyncClient](100, new TestCacheSupplier) {
   override protected def newClient(): AsyncClient = null
   override def asyncLookup(session: AsyncClient, input: Int): ListenableFuture[String] = {
     AsyncLookupDoFnTest.queue.add(input)

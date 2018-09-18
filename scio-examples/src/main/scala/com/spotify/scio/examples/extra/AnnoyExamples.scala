@@ -48,7 +48,7 @@ runMain
   com.spotify.scio.examples.extra.AnnoyIndexSaveExample
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
   --output=gs://[BUCKET]/[PATH]/annoy.tree
-*/
+ */
 object AnnoyIndexSaveExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     import AnnoyExamples._
@@ -69,7 +69,7 @@ runMain
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
   --input=gs://[BUCKET]/[PATH]/annoy.tree
   --output=gs://[BUCKET]/[PATH]/otuput
-*/
+ */
 object AnnoySideInputExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     import AnnoyExamples._
@@ -78,10 +78,12 @@ object AnnoySideInputExample {
 
     // create Annoy side input from SCollection
     val data = (0 until 100).map(x => (x, Array.fill(40)(Random.nextFloat())))
-    val annoySideInput = sc.parallelize(data).asAnnoySideInput(metric, dim, nTrees)
+    val annoySideInput =
+      sc.parallelize(data).asAnnoySideInput(metric, dim, nTrees)
 
     // querying
-    sc.parallelize(0 until 100).withSideInputs(annoySideInput)
+    sc.parallelize(0 until 100)
+      .withSideInputs(annoySideInput)
       .map { (i, s) =>
         val annoyReader = s(annoySideInput)
         // get vector by item id

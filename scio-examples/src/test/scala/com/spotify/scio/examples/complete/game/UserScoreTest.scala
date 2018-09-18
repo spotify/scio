@@ -34,12 +34,14 @@ class UserScoreTest extends PipelineSpec {
     "user7_AndroidGreenKookaburra,AndroidGreenKookaburra,11,1447955630000,2015-11-19 09:53:53.444",
     "THIS IS A PARSE ERROR,2015-11-19 09:53:53.444",
     "user19_BisqueBilby,BisqueBilby,6,1447955630000,2015-11-19 09:53:53.444",
-    "user19_BisqueBilby,BisqueBilby,8,1447955630000,2015-11-19 09:53:53.444")
+    "user19_BisqueBilby,BisqueBilby,8,1447955630000,2015-11-19 09:53:53.444"
+  )
 
   val inData2 = Seq(
     "user6_AliceBlueDingo,AliceBlueDingo,4,xxxxxxx,2015-11-19 09:53:53.444",
     "THIS IS A PARSE ERROR,2015-11-19 09:53:53.444",
-    "user13_BisqueBilby,BisqueBilby,xxx,1447955630000,2015-11-19 09:53:53.444")
+    "user13_BisqueBilby,BisqueBilby,xxx,1447955630000,2015-11-19 09:53:53.444"
+  )
 
   val expected = Seq(
     UserScoreSums("user0_MagentaKangaroo", 3),
@@ -47,13 +49,14 @@ class UserScoreTest extends PipelineSpec {
     UserScoreSums("user6_AmberNumbat", 11),
     UserScoreSums("user7_AlmondWallaby", 15),
     UserScoreSums("user7_AndroidGreenKookaburra", 23),
-    UserScoreSums("user19_BisqueBilby", 14))
+    UserScoreSums("user19_BisqueBilby", 14)
+  )
 
   "UserScore" should "work" in {
     JobTest[com.spotify.scio.examples.complete.game.UserScore.type]
       .args("--input=in.txt", "--output=dataset.table")
       .input(TextIO("in.txt"), inData1)
-      .output(BigQueryIO[UserScoreSums]("dataset.table"))(_ should containInAnyOrder (expected))
+      .output(BigQueryIO[UserScoreSums]("dataset.table"))(_ should containInAnyOrder(expected))
       .run()
   }
 

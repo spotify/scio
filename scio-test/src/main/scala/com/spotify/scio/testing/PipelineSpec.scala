@@ -17,23 +17,23 @@
 
 package com.spotify.scio.testing
 
-import org.scalatest.{FlatSpec, Matchers, ConfigMap, Status, Args}
+import org.scalatest.{Args, ConfigMap, FlatSpec, Matchers, Status}
 import JobTest.BeamOptions
 
 /**
-  * Trait for unit testing pipelines.
-  *
-  * A simple test might look like this:
-  * {{{
-  * class SimplePipelineTest extends PipelineSpec {
-  *   "A simple pipeline" should "sum integers" in {
-  *     runWithContext { sc =>
-  *       sc.parallelize(Seq(1, 2, 3)).sum should containSingleValue (6)
-  *     }
-  *   }
-  * }
-  * }}}
-  */
+ * Trait for unit testing pipelines.
+ *
+ * A simple test might look like this:
+ * {{{
+ * class SimplePipelineTest extends PipelineSpec {
+ *   "A simple pipeline" should "sum integers" in {
+ *     runWithContext { sc =>
+ *       sc.parallelize(Seq(1, 2, 3)).sum should containSingleValue (6)
+ *     }
+ *   }
+ * }
+ * }}}
+ */
 trait PipelineSpec
     extends FlatSpec
     with Matchers

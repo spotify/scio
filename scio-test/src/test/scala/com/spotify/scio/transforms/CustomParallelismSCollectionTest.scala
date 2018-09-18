@@ -22,15 +22,18 @@ import com.spotify.scio.testing.PipelineSpec
 class CustomParallelismSCollectionTest extends PipelineSpec {
   "CustomParallelismSCollection" should "support filterWithParallelism()" in {
     runWithContext { sc =>
-      val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).filterWithParallelism(1)(_ % 2 == 0)
-      p should containInAnyOrder (Seq(2, 4))
+      val p =
+        sc.parallelize(Seq(1, 2, 3, 4, 5)).filterWithParallelism(1)(_ % 2 == 0)
+      p should containInAnyOrder(Seq(2, 4))
     }
   }
 
   it should "support flatMapWithParallelism()" in {
     runWithContext { sc =>
-      val p = sc.parallelize(Seq("a b c", "d e", "f")).flatMapWithParallelism(1)(_.split(" "))
-      p should containInAnyOrder (Seq("a", "b", "c", "d", "e", "f"))
+      val p = sc
+        .parallelize(Seq("a b c", "d e", "f"))
+        .flatMapWithParallelism(1)(_.split(" "))
+      p should containInAnyOrder(Seq("a", "b", "c", "d", "e", "f"))
     }
   }
 
@@ -39,7 +42,7 @@ class CustomParallelismSCollectionTest extends PipelineSpec {
       val p = sc
         .parallelize(Seq("1", "2", "3"))
         .mapWithParallelism(2)(_.toInt)
-      p should containInAnyOrder (Seq(1, 2, 3))
+      p should containInAnyOrder(Seq(1, 2, 3))
     }
   }
 
@@ -50,8 +53,10 @@ class CustomParallelismSCollectionTest extends PipelineSpec {
         ("test2", 2),
         ("test3", 3)
       )
-      val p = sc.parallelize(records).collectWithParallelism(1) { case ("test2", x) => 2 * x }
-      p should containSingleValue (4)
+      val p = sc.parallelize(records).collectWithParallelism(1) {
+        case ("test2", x) => 2 * x
+      }
+      p should containSingleValue(4)
     }
   }
 }

@@ -28,7 +28,6 @@ private[coders] class ByteStringSerializer extends KSerializer[ByteString] {
     ByteString.copyFrom(input.readBytes(n))
   }
 
-
   override def write(kryo: Kryo, output: Output, byteStr: ByteString): Unit = {
     val len = byteStr.size
     output.writeInt(len)

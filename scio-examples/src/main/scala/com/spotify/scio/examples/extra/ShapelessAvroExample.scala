@@ -45,7 +45,7 @@ runMain
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
   --input=gs://apache-beam-samples/shakespeare/kinglear.txt
   --output=gs://[BUCKET]/[PATH]/wordcount-avro
-*/
+ */
 
 // Count words and save result to Avro
 object ShapelessAvroWriteExample {
@@ -70,7 +70,7 @@ runMain
   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
   --input=gs://[BUCKET]/[PATH]/wordcount-avro
   --output=gs://[BUCKET]/[PATH]/wordcount
-*/
+ */
 
 // Read word count result back from Avro
 object ShapelessAvroReadExample {
