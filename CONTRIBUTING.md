@@ -11,7 +11,7 @@ Don't hesitate to create [GitHub issues](https://github.com/spotify/scio/issues)
 
 # Submitting Pull Requests
 
-Before opening a pull request, make sure `sbt scalastyle test` runs successfully. It's usually a good idea to keep changes simple and small. Please also be consistent with the code base and our [style guide](https://github.com/spotify/scio/wiki/Style-Guide).
+Before opening a pull request, make sure `sbt scalastyle test` runs successfully. You can also format your code automatically with `sbt scalafmt test:scalafmt scalafmtSbt`. It's usually a good idea to keep changes simple and small. Please also be consistent with the code base and our [style guide](https://github.com/spotify/scio/wiki/Style-Guide).
 
 If there is already a GitHub issue for the task you are working on, leave a comment to let people know that you are working on it. If there isn't already an issue and it is a non-trivial task, it's a good idea to create one (and note that you're working on it). This prevents contributors from duplicating effort.
 
