@@ -636,11 +636,13 @@ class TypeProviderTest extends FlatSpec with Matchers {
       x: (Boolean, Int, Long, Float, Double, String, ByteString)): ToSchema =
       f(x._1, x._2, x._3, x._4, x._5, x._6, x._7)
 
-    doApply(ToSchema.apply _)((true, 1, 2L, 1.5f, 2.5, "string", ByteString.copyFromUtf8("bytes"))) shouldBe
-      doApply(ToSchema)((true, 1, 2L, 1.5f, 2.5, "string", ByteString.copyFromUtf8("bytes")))
+    val bytes = ByteString.copyFromUtf8("bytes")
 
-    doApply(ToSchema)((true, 1, 2L, 1.5f, 2.5, "string", ByteString.copyFromUtf8("bytes"))) shouldBe
-      ToSchema(true, 1, 2L, 1.5f, 2.5, "string", ByteString.copyFromUtf8("bytes"))
+    val expected1 = doApply(ToSchema)((true, 1, 2L, 1.5f, 2.5, "string", bytes))
+    doApply(ToSchema.apply _)((true, 1, 2L, 1.5f, 2.5, "string", bytes)) shouldBe expected1
+
+    val expected2 = ToSchema(true, 1, 2L, 1.5f, 2.5, "string", bytes)
+    doApply(ToSchema)((true, 1, 2L, 1.5f, 2.5, "string", bytes)) shouldBe expected2
   }
 
   @AvroType.toSchema
