@@ -30,9 +30,9 @@ import scala.reflect.ClassTag
 
 /**
  * Trait with ScalaTest [[org.scalatest.matchers.Matcher Matcher]]s for
- * [[com.spotify.scio.values.SCollection SCollection]]s specific to BigTable output.
+ * [[com.spotify.scio.values.SCollection SCollection]]s specific to Bigtable output.
  */
-trait BigTableMatchers extends SCollectionMatchers {
+trait BigtableMatchers extends SCollectionMatchers {
   type BTRow = (ByteString, Iterable[Mutation])
   type BTCollection = SCollection[BTRow]
 
@@ -120,10 +120,10 @@ trait BigTableMatchers extends SCollectionMatchers {
       override def apply(left: BTCollection): MatchResult = {
         val flattenedRows = left.flatMap {
           case (rowKey, rowValue) =>
-            rowValue.map(cell => (rowKey, cell.getMutationCase))
+            rowValue.map(cell => (rowKey, cell.getMutationCase.toString))
         }
 
-        containValue((key, mutation)).apply(flattenedRows)
+        containValue((key, mutation.toString)).apply(flattenedRows)
       }
     }
 }

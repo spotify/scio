@@ -83,9 +83,6 @@ trait JavaCoders {
   implicit val jFloatCoder: Coder[java.lang.Float] = fromScalaCoder(Coder.floatCoder)
   implicit val jDoubleCoder: Coder[java.lang.Double] = fromScalaCoder(Coder.doubleCoder)
 
-  implicit def mutationCaseCoder: Coder[com.google.bigtable.v2.Mutation.MutationCase] = Coder.kryo
-  // implicit def mutationCoder: Coder[com.google.bigtable.v2.Mutation] = ???
-
   import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow}
   implicit def intervalWindowCoder: Coder[IntervalWindow] =
     Coder.beam(IntervalWindow.getCoder)

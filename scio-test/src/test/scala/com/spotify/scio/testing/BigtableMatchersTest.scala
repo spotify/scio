@@ -22,12 +22,12 @@ import com.google.bigtable.v2._
 import com.google.protobuf.ByteString
 
 // scalastyle:off no.whitespace.before.left.bracket
-class BigTableMatchersTest extends PipelineSpec with BigTableMatchers {
+class BigtableMatchersTest extends PipelineSpec with BigtableMatchers {
   private lazy val key1 = ByteString.copyFromUtf8("k1")
   private lazy val key2 = ByteString.copyFromUtf8("k2")
   private lazy val emptyCell = Seq(Mutation.newBuilder().build())
 
-  "BigTableMatchers" should "support containRowKeys" in {
+  "BigtableMatchers" should "support containRowKeys" in {
     val tableData: Seq[BTRow] = Seq(
       (key1, emptyCell),
       (key2, emptyCell)
