@@ -23,8 +23,8 @@ import com.spotify.scio.coders.Coder
 
 trait BreezeCoders {
 
-  implicit def sparseArrayCoder[T]: Coder[SparseArray[T]] = Coder.kryo
+  implicit def sparseArrayCoder[T]: Coder[SparseArray[T]] = Coder.kryo[SparseArray[T]]
 
-  implicit def sparseVectorCoder[T]: Coder[SparseVector[T]] = Coder.kryo
+  implicit def sparseVectorCoder[T]: Coder[SparseVector[T]] = Coder.kryo[SparseVector[T]]
 
 }

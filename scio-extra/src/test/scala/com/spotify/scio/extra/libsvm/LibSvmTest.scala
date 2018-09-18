@@ -19,6 +19,7 @@ package com.spotify.scio.extra.libsvm
 
 import breeze.linalg.SparseVector
 import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.extra.coders._
 
 class LibSvmTest extends PipelineSpec {
   val expected = List(

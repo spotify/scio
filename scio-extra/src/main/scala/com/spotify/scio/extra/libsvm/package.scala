@@ -67,8 +67,8 @@ package object libsvm {
     (label, indices, values)
   }
 
-  def libSVMCollection(col: SCollection[String],
-                       numFeatures: Int = 0): SCollection[(Double, SparseVector[Double])] = {
+  def libSVMCollection(col: SCollection[String], numFeatures: Int = 0)(
+    implicit c: Coder[SparseVector[Double]]): SCollection[(Double, SparseVector[Double])] = {
     val data = col
       .map(_.trim)
       .filter(line => !(line.isEmpty || line.startsWith("#")))
@@ -111,8 +111,8 @@ package object libsvm {
      *                    feature dimensions.
      * @return            labeled data stored as an SCollection[(Double, SparseVector)]
      */
-    def libSVMFile(path: String,
-                   numFeatures: Int = 0): SCollection[(Double, SparseVector[Double])] =
+    def libSVMFile(path: String, numFeatures: Int = 0)(
+      implicit c: Coder[SparseVector[Double]]): SCollection[(Double, SparseVector[Double])] =
       libSVMCollection(self.textFile(path), numFeatures)
   }
 
