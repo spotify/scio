@@ -19,11 +19,11 @@ package com.spotify.scio.coders
 
 import java.io.{InputStream, OutputStream}
 
-import scala.annotation.implicitNotFound
 import org.apache.beam.sdk.coders.{AtomicCoder, Coder => BCoder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.values.KV
 
+import scala.annotation.implicitNotFound
 import scala.reflect.ClassTag
 
 @implicitNotFound(
@@ -207,6 +207,6 @@ sealed trait CoderGrammar {
     Record(cs)
 }
 
-final object Coder extends CoderGrammar with Implicits {
-  def apply[T](implicit c: Coder[T]): Coder[T] = c
+object Coder extends CoderGrammar with Implicits {
+  @inline final def apply[T](implicit c: Coder[T]): Coder[T] = c
 }
