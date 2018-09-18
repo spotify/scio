@@ -20,6 +20,7 @@ package com.spotify.scio
 import com.google.bigtable.v2._
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.range.ByteKeyRange
@@ -218,7 +219,9 @@ package object bigtable {
      * Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`.
      */
     def saveAsBigtable(projectId: String, instanceId: String, tableId: String)(
-      implicit ev: T <:< Mutation): Future[Tap[(ByteString, Iterable[Mutation])]] = {
+      implicit ev: T <:< Mutation,
+      coder: Coder[T]
+    ): Future[Tap[(ByteString, Iterable[Mutation])]] = {
       val param = BigtableWrite.Default
       self
         .write(BigtableWrite[T](projectId, instanceId, tableId))(param)
@@ -229,7 +232,9 @@ package object bigtable {
      * Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`.
      */
     def saveAsBigtable(bigtableOptions: BigtableOptions, tableId: String)(
-      implicit ev: T <:< Mutation): Future[Tap[(ByteString, Iterable[Mutation])]] = {
+      implicit ev: T <:< Mutation,
+      coder: Coder[T]
+    ): Future[Tap[(ByteString, Iterable[Mutation])]] = {
       val param = BigtableWrite.Default
       self
         .write(BigtableWrite[T](bigtableOptions, tableId))(param)
@@ -244,7 +249,9 @@ package object bigtable {
                        tableId: String,
                        numOfShards: Int,
                        flushInterval: Duration = Duration.standardSeconds(1))(
-      implicit ev: T <:< Mutation): Future[Tap[(ByteString, Iterable[Mutation])]] = {
+      implicit ev: T <:< Mutation,
+      coder: Coder[T]
+    ): Future[Tap[(ByteString, Iterable[Mutation])]] = {
       val param = BigtableWrite.Bulk(numOfShards, flushInterval)
       self
         .write(BigtableWrite[T](bigtableOptions, tableId))(param)
