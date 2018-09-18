@@ -96,8 +96,6 @@ trait JavaCoders {
   implicit def paneInfoCoder: Coder[PaneInfo] =
     Coder.beam(PaneInfo.PaneInfoCoder.of())
 
-  implicit def instantCoder: Coder[org.joda.time.Instant] =
-    Coder.beam(InstantCoder.of())
   implicit def tablerowCoder: Coder[com.google.api.services.bigquery.model.TableRow] =
     Coder.beam(org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder.of())
   implicit def messageCoder: Coder[org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage] =

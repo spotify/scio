@@ -25,6 +25,7 @@ trait Implicits
     with ProtobufCoders
     with JavaCoders
     with AlgebirdCoders
+    with JodaCoders
     with Serializable
 
 object Implicits extends Implicits
