@@ -20,29 +20,6 @@ package com.spotify.scio.coders
 import org.apache.beam.sdk.{coders => bcoders}
 import org.apache.beam.sdk.coders.{Coder => _, _}
 import org.apache.beam.sdk.values.KV
-import java.nio.ByteBuffer
-import java.io.{InputStream, OutputStream}
-
-final class ByteBufferCoder private[coders] () extends AtomicCoder[ByteBuffer] {
-  val bac = ByteArrayCoder.of()
-  def encode(value: ByteBuffer, os: OutputStream): Unit = {
-    val array =
-      if (value.hasArray) {
-        value.array()
-      } else {
-        value.clear()
-        val a = new Array[Byte](value.capacity())
-        value.get(a, 0, a.length)
-        a
-      }
-    bac.encode(array, os)
-  }
-
-  def decode(is: InputStream): ByteBuffer = {
-    val bytes = bac.decode(is)
-    ByteBuffer.wrap(bytes)
-  }
-}
 
 //
 // Java Coders
@@ -100,10 +77,6 @@ trait JavaCoders {
     Coder.beam(org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder.of())
   implicit def messageCoder: Coder[org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage] =
     Coder.beam(org.apache.beam.sdk.io.gcp.pubsub.PubsubMessageWithAttributesCoder.of())
-
-  import java.nio.ByteBuffer
-  implicit def byteBufferCoder: Coder[ByteBuffer] =
-    Coder.beam(new ByteBufferCoder())
 
   implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] =
     Coder.kv(Coder[K], Coder[V])
