@@ -23,6 +23,17 @@ import org.apache.beam.sdk.Pipeline
 import org.apache.beam.sdk.runners.TransformHierarchy
 import org.apache.beam.sdk.values.PCollection
 
+object SimpleJob {
+  import com.spotify.scio._
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val output = args("output")
+    sc.parallelize(1 to 5)
+      .saveAsTextFile(output)
+    sc.close()
+  }
+}
+
 class NamedTransformTest extends PipelineSpec {
 
   "ScioContext" should "support custom transform name" in {
@@ -180,6 +191,16 @@ class NamedTransformTest extends PipelineSpec {
     val msg = "requirement failed: withName() has already been used to set 'Double' as " +
       "the name for the next transform."
     e should have message msg
+  }
+
+  it should "not generate duplicated names" in {
+    import com.spotify.scio.io.TextIO
+    JobTest[SimpleJob.type]
+      .args(
+        "--output=top.txt",
+        "--stableUniqueNames=ERROR")
+      .output(TextIO("top.txt"))(_ => true)
+      .run()
   }
 
   private def assertTransformNameStartsWith(p: PCollectionWrapper[_], tfName: String) = {

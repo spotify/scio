@@ -59,7 +59,7 @@ private[scio] object CallSites {
     val n = nameCache.merge(name, 1, new BiFunction[Int, Int, Int] {
       override def apply(t: Int, u: Int): Int = t + u
     })
-    if (n == 1) name else name + 1
+    if (n == 1) name else name + n
   }
 
   /** Get current call site name in the form of "method@{file:line}". */
