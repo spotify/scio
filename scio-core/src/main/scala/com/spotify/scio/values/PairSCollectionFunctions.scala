@@ -325,8 +325,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @param fpProb false positive probability when computing the overlap
    */
   def sparseRightOuterJoin[W: Coder](that: SCollection[(K, W)],
-                                    thatNumKeys: Long,
-                                    fpProb: Double = 0.01)(
+                                     thatNumKeys: Long,
+                                     fpProb: Double = 0.01)(
     implicit hash: Hash128[K],
     koder: Coder[K],
     voder: Coder[V]): SCollection[(K, (Option[V], W))] =
