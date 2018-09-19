@@ -22,7 +22,7 @@ import org.apache.beam.sdk.coders.{Coder => BCoder, _}
 
 import scala.language.higherKinds
 
-trait AtomCoders extends LowPriorityFallbackCoder {
+trait AtomCoders {
   implicit def byteCoder: Coder[Byte] = beam(ByteCoder.of().asInstanceOf[BCoder[Byte]])
   implicit def stringCoder: Coder[String] = beam(StringUtf8Coder.of())
   implicit def shortCoder: Coder[Short] = beam(BigEndianShortCoder.of().asInstanceOf[BCoder[Short]])
