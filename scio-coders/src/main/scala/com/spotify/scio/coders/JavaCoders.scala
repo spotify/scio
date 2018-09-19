@@ -17,9 +17,15 @@
 
 package com.spotify.scio.coders
 
+import java.math.{BigDecimal, BigInteger}
+
+import com.google.api.services.bigquery.model.TableRow
 import org.apache.beam.sdk.{coders => bcoders}
-import org.apache.beam.sdk.coders.{Coder => _, _}
 import org.apache.beam.sdk.values.KV
+import org.apache.beam.sdk.io.gcp.pubsub.{PubsubMessage, PubsubMessageWithAttributesCoder}
+import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
+import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
+import org.apache.beam.sdk.coders.{Coder => _, _}
 
 //
 // Java Coders
@@ -50,6 +56,8 @@ trait JavaCoders {
       }
     }
 
+  implicit def jBitSetCoder: Coder[java.util.BitSet] = Coder.beam(BitSetCoder.of())
+
   private def fromScalaCoder[J <: java.lang.Number, S <: AnyVal](coder: Coder[S]): Coder[J] =
     coder.asInstanceOf[Coder[J]]
 
@@ -60,24 +68,22 @@ trait JavaCoders {
   implicit val jFloatCoder: Coder[java.lang.Float] = fromScalaCoder(Coder.floatCoder)
   implicit val jDoubleCoder: Coder[java.lang.Double] = fromScalaCoder(Coder.doubleCoder)
 
-  import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow}
-  implicit def intervalWindowCoder: Coder[IntervalWindow] =
-    Coder.beam(IntervalWindow.getCoder)
+  implicit def jBigIntegerCoder: Coder[BigInteger] = Coder.beam(BigIntegerCoder.of())
 
-  implicit def boundedWindowCoder: Coder[BoundedWindow] =
-    Coder.kryo[BoundedWindow]
+  implicit def jBigDecimalCoder: Coder[BigDecimal] = Coder.beam(BigDecimalCoder.of())
+
+  implicit def intervalWindowCoder: Coder[IntervalWindow] = Coder.beam(IntervalWindow.getCoder)
+
+  implicit def boundedWindowCoder: Coder[BoundedWindow] = Coder.kryo[BoundedWindow]
 
   implicit def serializableCoder: Coder[Serializable] = Coder.kryo[Serializable]
 
-  import org.apache.beam.sdk.transforms.windowing.PaneInfo
-  implicit def paneInfoCoder: Coder[PaneInfo] =
-    Coder.beam(PaneInfo.PaneInfoCoder.of())
+  implicit def paneInfoCoder: Coder[PaneInfo] = Coder.beam(PaneInfo.PaneInfoCoder.of())
 
-  implicit def tablerowCoder: Coder[com.google.api.services.bigquery.model.TableRow] =
-    Coder.beam(org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder.of())
-  implicit def messageCoder: Coder[org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage] =
-    Coder.beam(org.apache.beam.sdk.io.gcp.pubsub.PubsubMessageWithAttributesCoder.of())
+  implicit def tableRowCoder: Coder[TableRow] = Coder.beam(TableRowJsonCoder.of())
 
-  implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] =
-    Coder.kv(Coder[K], Coder[V])
+  implicit def messageCoder: Coder[PubsubMessage] =
+    Coder.beam(PubsubMessageWithAttributesCoder.of())
+
+  implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] = Coder.kv(Coder[K], Coder[V])
 }

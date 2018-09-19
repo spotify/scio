@@ -18,14 +18,14 @@
 package com.spotify.scio.coders
 
 import java.io.{InputStream, OutputStream}
+import java.util.Collections
 
-import com.google.common.collect.Lists
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder, _}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
 import scala.reflect.ClassTag
-import scala.collection.{SortedSet, TraversableOnce, mutable => m}
+import scala.collection.{BitSet, SortedSet, TraversableOnce, mutable => m}
 import scala.collection.convert.Wrappers
 import scala.language.higherKinds
 
@@ -39,10 +39,11 @@ private object NothingCoder extends AtomicCoder[Nothing] {
   override def decode(is: InputStream): Nothing = ??? // can't possibly happen
 }
 
-private abstract class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])
-                                                (implicit toSeq: M[T] => TraversableOnce[T])
-  extends AtomicCoder[M[T]] {
-  override def getCoderArguments: java.util.List[_ <: BCoder[_]] = Lists.newArrayList(elemCoder)
+private abstract class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])(
+  implicit toSeq: M[T] => TraversableOnce[T])
+    extends AtomicCoder[M[T]] {
+  override def getCoderArguments: java.util.List[_ <: BCoder[_]] =
+    Collections.singletonList(elemCoder)
 
   // delegate methods for determinism and equality checks
   override def verifyDeterministic(): Unit = elemCoder.verifyDeterministic()
@@ -65,9 +66,9 @@ private abstract class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])
   }
 }
 
-private abstract class SeqLikeCoder[M[_], T](bc: BCoder[T])
-                                            (implicit toSeq: M[T] => TraversableOnce[T])
-  extends BaseSeqLikeCoder[M, T](bc) {
+private abstract class SeqLikeCoder[M[_], T](bc: BCoder[T])(
+  implicit toSeq: M[T] => TraversableOnce[T])
+    extends BaseSeqLikeCoder[M, T](bc) {
   private[this] val lc = VarIntCoder.of()
   override def encode(value: M[T], outStream: OutputStream): Unit = {
     lc.encode(value.size, outStream)
@@ -139,14 +140,32 @@ private class SortedSetCoder[T: Ordering](bc: BCoder[T]) extends SeqLikeCoder[So
     decode(inStream, SortedSet.newBuilder[T])
 }
 
+private class BitSetCoder extends AtomicCoder[BitSet] {
+  private[this] val lc = VarIntCoder.of()
+
+  def decode(in: InputStream): BitSet = {
+    val l = lc.decode(in)
+    val builder = BitSet.newBuilder
+    (1 to l).foreach(_ => builder += lc.decode(in))
+
+    builder.result()
+  }
+
+  def encode(ts: BitSet, out: OutputStream): Unit = {
+    lc.encode(ts.size, out)
+    ts.foreach(v => lc.encode(v, out))
+  }
+}
+
 private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[Map[K, V]] {
   private[this] val lc = VarIntCoder.of()
 
   override def encode(value: Map[K, V], os: OutputStream): Unit = {
     lc.encode(value.size, os)
-    value.foreach { case (k, v) =>
-      kc.encode(k, os)
-      vc.encode(v, os)
+    value.foreach {
+      case (k, v) =>
+        kc.encode(k, os)
+        vc.encode(v, os)
     }
   }
 
@@ -163,8 +182,8 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
 
   // delegate methods for determinism and equality checks
   override def verifyDeterministic(): Unit =
-    throw new NonDeterministicException(
-      this, "Ordering of entries in a Map may be non-deterministic.")
+    throw new NonDeterministicException(this,
+                                        "Ordering of entries in a Map may be non-deterministic.")
   override def consistentWithEquals(): Boolean = false
 
   // delegate methods for byte size estimation
@@ -172,9 +191,10 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
   override def registerByteSizeObserver(value: Map[K, V],
                                         observer: ElementByteSizeObserver): Unit = {
     lc.registerByteSizeObserver(value.size, observer)
-    value.foreach { case (k, v) =>
-      kc.registerByteSizeObserver(k, observer)
-      vc.registerByteSizeObserver(v, observer)
+    value.foreach {
+      case (k, v) =>
+        kc.registerByteSizeObserver(k, observer)
+        vc.registerByteSizeObserver(v, observer)
     }
   }
 }
@@ -184,9 +204,10 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
 
   override def encode(value: m.Map[K, V], os: OutputStream): Unit = {
     lc.encode(value.size, os)
-    value.foreach { case (k, v) =>
-      kc.encode(k, os)
-      vc.encode(v, os)
+    value.foreach {
+      case (k, v) =>
+        kc.encode(k, os)
+        vc.encode(v, os)
     }
   }
 
@@ -203,8 +224,8 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
 
   // delegate methods for determinism and equality checks
   override def verifyDeterministic(): Unit =
-    throw new NonDeterministicException(
-      this, "Ordering of entries in a Map may be non-deterministic.")
+    throw new NonDeterministicException(this,
+                                        "Ordering of entries in a Map may be non-deterministic.")
   override def consistentWithEquals(): Boolean = false
 
   // delegate methods for byte size estimation
@@ -212,27 +233,53 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
   override def registerByteSizeObserver(value: m.Map[K, V],
                                         observer: ElementByteSizeObserver): Unit = {
     lc.registerByteSizeObserver(value.size, observer)
-    value.foreach { case (k, v) =>
-      kc.registerByteSizeObserver(k, observer)
-      vc.registerByteSizeObserver(v, observer)
+    value.foreach {
+      case (k, v) =>
+        kc.registerByteSizeObserver(k, observer)
+        vc.registerByteSizeObserver(v, observer)
     }
   }
 }
 
 trait ScalaCoders {
-  // TODO: support all primitive types
-  // BigDecimalCoder
-  // BigIntegerCoder
-  // BitSetCoder
-  // BooleanCoder
-  // ByteStringCoder
 
-  // DurationCoder
-  // InstantCoder
+  implicit def byteCoder: Coder[Byte] =
+    Coder.beam(ByteCoder.of().asInstanceOf[BCoder[Byte]])
+  implicit def stringCoder: Coder[String] =
+    Coder.beam(StringUtf8Coder.of())
+  implicit def shortCoder: Coder[Short] =
+    Coder.beam(BigEndianShortCoder.of().asInstanceOf[BCoder[Short]])
+  implicit def intCoder: Coder[Int] =
+    Coder.beam(VarIntCoder.of().asInstanceOf[BCoder[Int]])
+  implicit def longCoder: Coder[Long] =
+    Coder.beam(BigEndianLongCoder.of().asInstanceOf[BCoder[Long]])
+  implicit def floatCoder: Coder[Float] =
+    Coder.beam(FloatCoder.of().asInstanceOf[BCoder[Float]])
+  implicit def doubleCoder: Coder[Double] =
+    Coder.beam(DoubleCoder.of().asInstanceOf[BCoder[Double]])
+  implicit def booleanCoder: Coder[Boolean] =
+    Coder.beam(BooleanCoder.of().asInstanceOf[BCoder[Boolean]])
+  implicit def unitCoder: Coder[Unit] = Coder.beam(UnitCoder)
+  implicit def nothingCoder: Coder[Nothing] = Coder.beam[Nothing](NothingCoder)
 
-  // TableRowJsonCoder
+  implicit def bigIntCoder: Coder[BigInt] =
+    Coder.xmap(Coder.beam(BigIntegerCoder.of()))(BigInt.apply, _.bigInteger)
 
-  // implicit def traversableCoder[T](implicit c: Coder[T]): Coder[TraversableOnce[T]] = ???
+  implicit def bigDecimalCoder: Coder[BigDecimal] =
+    Coder.xmap(Coder.beam(BigDecimalCoder.of()))(BigDecimal.apply, _.bigDecimal)
+
+  implicit def optionCoder[T, S[_] <: Option[_]](implicit c: Coder[T]): Coder[S[T]] =
+    Coder
+      .transform(c) { bc =>
+        Coder.beam(new OptionCoder[T](bc))
+      }
+      .asInstanceOf[Coder[S[T]]]
+
+  implicit def noneCoder: Coder[None.type] =
+    optionCoder[Nothing, Option](nothingCoder).asInstanceOf[Coder[None.type]]
+
+  implicit def bitSetCoder: Coder[BitSet] = Coder.beam(new BitSetCoder)
+
   implicit def seqCoder[T: Coder]: Coder[Seq[T]] =
     Coder.transform(Coder[T]) { bc =>
       Coder.beam(new SeqCoder[T](bc))
