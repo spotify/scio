@@ -19,10 +19,22 @@ package com.spotify.scio.coders
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
-import org.joda.time.{LocalDate, LocalDateTime, LocalTime}
+import org.joda.time.{DateTime, LocalDate, LocalDateTime, LocalTime}
+import org.joda.time.chrono.ISOChronology
 import org.scalatest.{FlatSpec, Matchers}
 
 class JodaCodersTest extends FlatSpec with Matchers {
+  "JodaDateTimeCoder" should "work" in {
+    val coder = new JodaDateTimeCoder()
+    val value = new DateTime(2018, 3, 12, 7, 15, 5, 900, ISOChronology.getInstanceUTC)
+    val bytesOut = new ByteArrayOutputStream()
+    coder.encode(value, bytesOut)
+
+    val bytesIn = new ByteArrayInputStream(bytesOut.toByteArray)
+    val decoded = coder.decode(bytesIn)
+    decoded shouldEqual value
+  }
+
   "JodaLocalDateTimeCoder" should "work" in {
     val coder = new JodaLocalDateTimeCoder()
     val value = new LocalDateTime(2018, 3, 12, 7, 15, 5, 900)

@@ -21,10 +21,11 @@ import java.io.{DataInputStream, DataOutputStream, InputStream, OutputStream}
 
 import org.apache.beam.sdk.coders.{AtomicCoder, InstantCoder}
 import org.joda.time.chrono.ISOChronology
-import org.joda.time.{Chronology, LocalDate, LocalDateTime, LocalTime}
+import org.joda.time.{Chronology, DateTime, DateTimeZone, LocalDate, LocalDateTime, LocalTime}
 
 trait JodaCoders {
   implicit def instantCoder: Coder[org.joda.time.Instant] = Coder.beam(InstantCoder.of())
+  implicit def jodaDateTimeCoder: Coder[DateTime] = Coder.beam(new JodaDateTimeCoder)
   implicit def jodaLocalDateTimeCoder: Coder[LocalDateTime] = Coder.beam(new JodaLocalDateTimeCoder)
   implicit def jodaLocalDateCoder: Coder[LocalDate] = Coder.beam(new JodaLocalDateCoder)
   implicit def jodaLocalTimeCoder: Coder[LocalTime] = Coder.beam(new JodaLocalTimeCoder)
@@ -35,6 +36,24 @@ object JodaCoders {
     if (chronology != null && chronology != ISOChronology.getInstanceUTC) {
       throw new IllegalArgumentException(s"Unsupported chronology: $chronology")
     }
+  }
+}
+
+private final class JodaDateTimeCoder extends AtomicCoder[DateTime] {
+  override def encode(value: DateTime, os: OutputStream): Unit = {
+    val dos = new DataOutputStream(os)
+
+    dos.writeLong(value.getMillis)
+    dos.writeUTF(value.getZone.getID)
+  }
+
+  override def decode(is: InputStream): DateTime = {
+    val dis = new DataInputStream(is)
+
+    val ms = dis.readLong()
+    val zone = DateTimeZone.forID(dis.readUTF())
+
+    new DateTime(ms, zone)
   }
 }
 
