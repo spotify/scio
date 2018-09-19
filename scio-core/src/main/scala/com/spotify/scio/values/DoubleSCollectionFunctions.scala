@@ -113,61 +113,22 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
   def histogram(buckets: Array[Double], evenBuckets: Boolean = false): SCollection[Array[Long]] =
     histogramImpl(self.context.parallelize(Seq(buckets)), evenBuckets)
 
-  // scalastyle:off cyclomatic.complexity
-  // scalastyle:off method.length
   private def histogramImpl(buckets: SCollection[Array[Double]],
                             evenBuckets: Boolean): SCollection[Array[Long]] = {
+    import com.spotify.scio.values.BucketFunctions._
     // Map buckets into a side input of bucket function
     val side = buckets.map { b =>
       require(b.length >= 2, "buckets array must have at least two elements")
-      // Basic bucket function. This works using Java's built in Array
-      // binary search. Takes log(size(buckets))
-      def basicBucketFunction(e: Double): Option[Int] = {
-        val location = java.util.Arrays.binarySearch(b, e)
-        if (location < 0) {
-          // If the location is less than 0 then the insertion point in the array
-          // to keep it sorted is -location-1
-          val insertionPoint = -location - 1
-          // If we have to insert before the first element or after the last one
-          // its out of bounds.
-          // We do this rather than buckets.lengthCompare(insertionPoint)
-          // because Array[Double] fails to override it (for now).
-          if (insertionPoint > 0 && insertionPoint < b.length) {
-            Some(insertionPoint - 1)
-          } else {
-            None
-          }
-        } else if (location < b.length - 1) {
-          // Exact match, just insert here
-          Some(location)
-        } else {
-          // Exact match to the last element
-          Some(location - 1)
-        }
-      }
 
-      // Determine the bucket function in constant time. Requires that buckets are evenly spaced
-      def fastBucketFunction(min: Double, max: Double, count: Int)(e: Double): Option[Int] = {
-        // If our input is not a number unless the increment is also NaN then we fail fast
-        if (e.isNaN || e < min || e > max) {
-          None
-        } else {
-          // Compute ratio of e's distance along range to total range first, for better precision
-          val bucketNumber = (((e - min) / (max - min)) * count).toInt
-          // should be less than count, but will equal count if e == max, in which case
-          // it's part of the last end-range-inclusive bucket, so return count-1
-          Some(math.min(bucketNumber, count - 1))
-        }
-      }
       // Decide which bucket function to pass to histogramPartition. We decide here
       // rather than having a general function so that the decision need only be made
       // once rather than once per shard
-      val bucketFunction = if (evenBuckets) {
-        fastBucketFunction(b.head, b.last, b.length - 1) _
+      val bucketParams: Either[(Double, Double, Int), Array[Double]] = if (evenBuckets) {
+        Left((b.head, b.last, b.length - 1))
       } else {
-        basicBucketFunction _
+        Right(b)
       }
-      bucketFunction
+      bucketParams
     }.asSingletonSideInput
 
     val bucketSize = buckets.map(_.length - 1)
@@ -175,7 +136,10 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
       .withSideInputs(side)
       .flatMap { (x, c) =>
         // Map values to buckets
-        val bucketFunction = c(side)
+        val bucketFunction = c(side) match {
+          case Left(p) => (fastBucketFunction _).tupled(p)
+          case Right(b) => basicBucketFunction(b) _
+        }
         bucketFunction(x).iterator
       }
       .toSCollection
@@ -205,7 +169,47 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
       }
       .toSCollection
   }
-  // scalastyle:on cyclomatic.complexity
-  // scalastyle:on method.length
 
+}
+
+private object BucketFunctions {
+  // Basic bucket function. This works using Java's built in Array
+  // binary search. Takes log(size(buckets))
+  def basicBucketFunction(b: Array[Double])(e: Double): Option[Int] = {
+    val location = java.util.Arrays.binarySearch(b, e)
+    if (location < 0) {
+      // If the location is less than 0 then the insertion point in the array
+      // to keep it sorted is -location-1
+      val insertionPoint = -location - 1
+      // If we have to insert before the first element or after the last one
+      // its out of bounds.
+      // We do this rather than buckets.lengthCompare(insertionPoint)
+      // because Array[Double] fails to override it (for now).
+      if (insertionPoint > 0 && insertionPoint < b.length) {
+        Some(insertionPoint - 1)
+      } else {
+        None
+      }
+    } else if (location < b.length - 1) {
+      // Exact match, just insert here
+      Some(location)
+    } else {
+      // Exact match to the last element
+      Some(location - 1)
+    }
+  }
+
+  // Determine the bucket function in constant time. Requires that buckets are evenly spaced
+  def fastBucketFunction(min: Double, max: Double, count: Int)(e: Double): Option[Int] = {
+    // If our input is not a number unless the increment is also NaN then we fail fast
+    if (e.isNaN || e < min || e > max) {
+      None
+    } else {
+      // Compute ratio of e's distance along range to total range first, for better precision
+      val bucketNumber = (((e - min) / (max - min)) * count).toInt
+      // should be less than count, but will equal count if e == max, in which case
+      // it's part of the last end-range-inclusive bucket, so return count-1
+      Some(math.min(bucketNumber, count - 1))
+    }
+  }
 }
