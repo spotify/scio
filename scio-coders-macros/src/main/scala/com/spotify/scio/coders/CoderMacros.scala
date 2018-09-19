@@ -17,30 +17,9 @@
 
 package com.spotify.scio.coders
 
-import org.apache.avro.specific.SpecificRecordBase
 import scala.reflect.macros._
 
 private[coders] object CoderMacros {
-
-  /**
-   * Generate a coder which does not serialize the schema and relies exclusively on types.
-   */
-  def staticInvokeCoder[T <: SpecificRecordBase: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
-    import c.universe._
-    val wtt = weakTypeOf[T]
-    val companioned = wtt.typeSymbol
-    val companionSymbol = companioned.companion
-    val companionType = companionSymbol.typeSignature
-
-    q"""
-    _root_.com.spotify.scio.coders.Coder.beam(
-      _root_.org.apache.beam.sdk.coders.AvroCoder.of[$companioned](
-        classOf[$companioned],
-        ${companionType}.getClassSchema()
-      )
-    )
-    """
-  }
 
   var verbose = true
   val reported: scala.collection.mutable.Set[(String, String)] =
@@ -159,11 +138,10 @@ private[coders] object CoderMacros {
 
     val isPrivateContructor =
       wtt.decls
-        .collect {
+        .collectFirst {
           case m: MethodSymbol if m.isConstructor =>
             m.isPrivate
         }
-        .headOption
         .getOrElse(false)
 
     val tree: c.Tree =

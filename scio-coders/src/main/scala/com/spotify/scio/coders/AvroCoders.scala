@@ -72,5 +72,5 @@ trait AvroCoders {
 
   import org.apache.avro.specific.SpecificRecordBase
   implicit def genAvro[T <: SpecificRecordBase]: Coder[T] =
-    macro com.spotify.scio.coders.CoderMacros.staticInvokeCoder[T]
+    macro AvroCoderMacros.staticInvokeCoder[T]
 }
