@@ -67,7 +67,7 @@ private class LocalAnnoyUri(val path: String) extends AnnoyUri {
 
 private class RemoteAnnoyUri(val path: String, options: PipelineOptions) extends AnnoyUri {
 
-  val rfu: RemoteFileUtil = RemoteFileUtil.create(options)
+  private[this] val rfu: RemoteFileUtil = RemoteFileUtil.create(options)
 
   override private[annoy] def getReader(metric: AnnoyMetric, dim: Int): AnnoyReader = {
     val localPath = rfu.download(new URI(path))

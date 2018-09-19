@@ -18,6 +18,7 @@
 package com.spotify.scio.tensorflow
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
 import org.tensorflow.example.Example
 
@@ -25,6 +26,8 @@ import scala.reflect.ClassTag
 import scala.language.implicitConversions
 
 trait TensorFlowImplicits {
+
+  implicit val featureTypeCoder: Coder[org.tensorflow.metadata.v0.FeatureType] = Coder.kryo
 
   /**
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
