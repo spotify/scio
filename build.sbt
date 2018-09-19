@@ -65,7 +65,7 @@ val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.3.0"
 val tensorFlowVersion = "1.8.0"
 val zoltarVersion = "0.4.0"
-val magnoliaVersion = "0.10.1-jto-SNAPSHOT"
+val magnoliaVersion = "0.10.1-jto"
 val grpcVersion = "1.7.0"
 val caseappVersion = "2.0.0-M3"
 
