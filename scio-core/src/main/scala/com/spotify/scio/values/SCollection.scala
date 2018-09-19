@@ -232,12 +232,18 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @return partitioned SCollections in a `Seq`
    * @group collection
    */
-  def partition(numPartitions: Int, f: T => Int): Seq[SCollection[T]] =
-    this
-      .applyInternal(Partition.of[T](numPartitions, Functions.partitionFn[T](numPartitions, f)))
-      .getAll
-      .asScala
-      .map(p => context.wrap(p))
+  def partition(numPartitions: Int, f: T => Int): Seq[SCollection[T]] = {
+    require(numPartitions > 0, "Number of partitions should be positive")
+    if (numPartitions == 1) {
+      Seq(this)
+    } else {
+      this
+        .applyInternal(Partition.of[T](numPartitions, Functions.partitionFn[T](numPartitions, f)))
+        .getAll
+        .asScala
+        .map(p => context.wrap(p))
+    }
+  }
 
   /**
    * Partition this SCollection into a pair of SCollections according to a predicate.
