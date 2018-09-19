@@ -18,9 +18,9 @@
 package com.spotify.scio.cassandra
 
 import java.lang.management.ManagementFactory
-import java.nio.ByteBuffer
 
 import com.datastax.driver.core.{Cluster, ProtocolVersion}
+import com.google.protobuf.ByteString
 import org.apache.cassandra.db.marshal.CompositeType
 import org.apache.cassandra.hadoop.cql3._
 import org.apache.hadoop.conf.Configuration
@@ -75,17 +75,17 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallel
     BulkConfig(protocol, partitioner, numOfNodes, tableSchema, partitionKeyIndices, dataTypes)
   }
 
-  val serializeFn: Seq[Any] => Array[ByteBuffer] = (values: Seq[Any]) => {
-    val b = Array.newBuilder[ByteBuffer]
+  val serializeFn: Seq[Any] => Array[ByteString] = (values: Seq[Any]) => {
+    val b = Array.newBuilder[ByteString]
     val i = values.iterator
     val j = config.dataTypes.iterator
     while (i.hasNext && j.hasNext) {
-      b += CompatUtil.serialize(j.next().get, i.next(), config.protocol)
+      b += ByteString.copyFrom(CompatUtil.serialize(j.next().get, i.next(), config.protocol))
     }
     b.result()
   }
 
-  val partitionFn: Array[ByteBuffer] => Int = {
+  val partitionFn: Array[ByteString] => Int = {
     // Partition tokens equally across workers regardless of cluster token distribution
     // This may not create 1-to-1 mapping between partitions and C* nodes but handles multi-DC
     // clusters better
@@ -95,12 +95,12 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallel
     val (q, mod) = (maxToken - minToken + 1) /% numPartitions
     val rangePerGroup = (if (mod != 0) q + 1 else q).bigInteger
 
-    (values: Array[ByteBuffer]) =>
+    values: Array[ByteString] =>
       {
         val key = if (config.partitionKeyIndices.length == 1) {
-          values(config.partitionKeyIndices.head)
+          values(config.partitionKeyIndices.head).asReadOnlyByteBuffer()
         } else {
-          val keys = config.partitionKeyIndices.map(values)
+          val keys = config.partitionKeyIndices.map(values).map(_.asReadOnlyByteBuffer())
           CompositeType.build(keys: _*)
         }
         val token = CompatUtil.getToken(config.partitioner, key)
@@ -108,10 +108,10 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallel
       }
   }
 
-  val writeFn: ((Int, Iterable[Array[ByteBuffer]])) => Unit =
-    (kv: (Int, Iterable[Array[ByteBuffer]])) => {
+  val writeFn: ((Int, Iterable[Array[ByteString]])) => Unit =
+    (kv: (Int, Iterable[Array[ByteString]])) => {
       val w = newWriter
-      kv._2.foreach(row => w.write(null, row.toList.asJava))
+      kv._2.foreach(row => w.write(null, row.map(_.asReadOnlyByteBuffer()).toList.asJava))
       w.close(null: TaskAttemptContext)
     }
 
