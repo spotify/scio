@@ -278,47 +278,97 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
                                 fpProb: Double = 0.01)(
     implicit hash: Hash128[K],
     koder: Coder[K],
-    voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] = {
-    val bfSettings =
-      PairSCollectionFunctions.optimalBFSettings(thatNumKeys, fpProb)
-    if (bfSettings.numBFs == 1) {
-      sparseOuterJoinImpl(that, thatNumKeys.toInt, fpProb)
-    } else {
-      val n = bfSettings.numBFs
-      val thisParts = self.partition(n, _._1.hashCode() % n)
-      val thatParts = that.partition(n, _._1.hashCode() % n)
-      val joined = (thisParts zip thatParts).map {
-        case (lhs, rhs) =>
-          lhs.sparseOuterJoinImpl(rhs, bfSettings.capacity, fpProb)
+    voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] =
+    SCollection.unionAll(
+      splitSelfUsing(that, thatNumKeys, fpProb).map {
+        case (lhsUnique, lhsOverlap, rhs) =>
+          val unique = lhsUnique.map(kv => (kv._1, (Option(kv._2), Option.empty[W])))
+          unique ++ lhsOverlap.fullOuterJoin(rhs)
       }
-      SCollection.unionAll(joined)
-    }
-  }
+    )
 
-  protected def sparseOuterJoinImpl[W: Coder](that: SCollection[(K, W)],
-                                              thatNumKeys: Int,
-                                              fpProb: Double)(
+  /**
+   * Left outer join for cases when `this` is much larger than `that` which cannot fit in memory,
+   * but contains a mostly overlapping set of keys as `this`, i.e. when the intersection of keys
+   * is sparse in `this`. A Bloom Filter of keys in `that` is used to split `this` into 2
+   * partitions. Only those with keys in the filter go through the join and the rest are
+   * concatenated. This is useful for joining historical aggregates with incremental updates.
+   * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
+   * @group join
+   * @param thatNumKeys estimated number of keys in `that`
+   * @param fpProb false positive probability when computing the overlap
+   */
+  def sparseLeftOuterJoin[W: Coder](that: SCollection[(K, W)],
+                                    thatNumKeys: Long,
+                                    fpProb: Double = 0.01)(
     implicit hash: Hash128[K],
     koder: Coder[K],
-    voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] = {
-    val width = BloomFilter.optimalWidth(thatNumKeys, fpProb).get
-    val numHashes = BloomFilter.optimalNumHashes(thatNumKeys, width)
-    val rhsBf = that.keys
-      .aggregate(BloomFilterAggregator[K](numHashes, width))
-      .asIterableSideInput
-    val (lhsUnique, lhsOverlap) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
-    val partitionedSelf = self
-      .withSideInputs(rhsBf)
-      .transformWithSideOutputs(Seq(lhsUnique, lhsOverlap)) { (e, c) =>
-        if (c(rhsBf).nonEmpty && c(rhsBf).head.maybeContains(e._1)) {
-          lhsOverlap
-        } else {
-          lhsUnique
-        }
+    voder: Coder[V]): SCollection[(K, (V, Option[W]))] =
+    SCollection.unionAll(
+      splitSelfUsing(that, thatNumKeys, fpProb).map {
+        case (lhsUnique, lhsOverlap, rhs) =>
+          val unique =
+            lhsUnique.map(kv => (kv._1, (kv._2, Option.empty[W])))(Coder.gen[(K, (V, Option[W]))])
+          unique ++ lhsOverlap.leftOuterJoin(rhs)
       }
-    val unique = partitionedSelf(lhsUnique).map(kv => (kv._1, (Option(kv._2), Option.empty[W])))
-    val overlap = partitionedSelf(lhsOverlap).fullOuterJoin(that)
-    unique ++ overlap
+    )
+
+  /**
+   * Right outer join for cases when `this` is much larger than `that` which cannot fit in memory,
+   * but contains a mostly overlapping set of keys as `this`, i.e. when the intersection of keys
+   * is sparse in `this`. A Bloom Filter of keys in `that` is used to split `this` into 2
+   * partitions. Only those with keys in the filter go through the join and the rest are
+   * concatenated. This is useful for joining historical aggregates with incremental updates.
+   * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
+   * @group join
+   * @param thatNumKeys estimated number of keys in `that`
+   * @param fpProb false positive probability when computing the overlap
+   */
+  def sparseRightOuterJoin[W: Coder](that: SCollection[(K, W)],
+                                    thatNumKeys: Long,
+                                    fpProb: Double = 0.01)(
+    implicit hash: Hash128[K],
+    koder: Coder[K],
+    voder: Coder[V]): SCollection[(K, (Option[V], W))] =
+    SCollection.unionAll(
+      splitSelfUsing(that, thatNumKeys, fpProb).map {
+        case (_, lhsOverlap, rhs) =>
+          lhsOverlap.rightOuterJoin(rhs)
+      }
+    )
+
+  private def splitSelfUsing[W: Coder](that: SCollection[(K, W)],
+                                       thatNumKeys: Long,
+                                       fpProb: Double)(
+    implicit hash: Hash128[K],
+    koder: Coder[K],
+    voder: Coder[V]): Seq[(SCollection[(K, V)], SCollection[(K, V)], SCollection[(K, W)])] = {
+    val bfSettings = PairSCollectionFunctions.optimalBFSettings(thatNumKeys, fpProb)
+
+    val numKeysPerPartition = if (bfSettings.numBFs == 1) thatNumKeys.toInt else bfSettings.capacity
+    val n = bfSettings.numBFs
+    val thisParts = self.partition(n, _._1.hashCode() % n)
+    val thatParts = that.partition(n, _._1.hashCode() % n)
+
+    (thisParts zip thatParts).map {
+      case (lhs, rhs) =>
+        val width = BloomFilter.optimalWidth(numKeysPerPartition, fpProb).get
+        val numHashes = BloomFilter.optimalNumHashes(numKeysPerPartition, width)
+        val rhsBf = that.keys
+          .aggregate(BloomFilterAggregator[K](numHashes, width))
+          .asIterableSideInput
+        val (lhsUnique, lhsOverlap) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
+        val partitionedLhs = lhs
+          .withSideInputs(rhsBf)
+          .transformWithSideOutputs(Seq(lhsUnique, lhsOverlap)) { (e, c) =>
+            if (c(rhsBf).nonEmpty && c(rhsBf).head.maybeContains(e._1)) {
+              lhsOverlap
+            } else {
+              lhsUnique
+            }
+          }
+        (partitionedLhs(lhsUnique), partitionedLhs(lhsOverlap), rhs)
+    }
   }
 
   // =======================================================================

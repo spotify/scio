@@ -71,7 +71,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   }
 
   /**
-   * Perform a gull outer join by replicating `that` to all workers. The right side should be tiny
+   * Perform a full outer join by replicating `that` to all workers. The right side should be tiny
    * and fit in memory.
    *
    * @group join
