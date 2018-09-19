@@ -51,7 +51,7 @@ private[coders] object CoderMacros {
     lp: c.Expr[shapeless.LowPriority]): c.Tree = {
     import c.universe._
     val wtt = weakTypeOf[T]
-    val TypeRef(pre, sym, args) = wtt
+    val TypeRef(_, sym, args) = wtt
 
     val typeName = sym.name
     val params = args.headOption
