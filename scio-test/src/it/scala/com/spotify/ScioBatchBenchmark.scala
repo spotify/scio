@@ -82,7 +82,9 @@ object ScioBatchBenchmark {
       }
     }
 
-  val benchmarkNames: Seq[String] = benchmarks.map(_.name).toSeq.sorted
+  val benchmarkNames: Seq[String] = benchmarks.toSeq.sortBy(_.name).flatMap { b =>
+    b.name :: Option(b.extraConfs).getOrElse(Map.empty).keys.map(b.name + _).toList
+  }
 
   // ===== Combine =====
 
