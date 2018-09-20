@@ -263,7 +263,7 @@ class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try
 
           metricsToCompare.foreach { k: String =>
             val List(prev, curr) = props.map(_(k).getStringValue.toDouble).toList
-            val delta = (curr - prev) / curr * 100.0
+            val delta = (curr - prev) / prev * 100.0
             val signed = if (delta.isNaN) {
               "0.00%"
             } else {
