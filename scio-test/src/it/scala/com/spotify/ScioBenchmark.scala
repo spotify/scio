@@ -164,6 +164,7 @@ class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try
   val Storage: Datastore = DatastoreHelper.getDatastoreFromEnv
   val Kind = "Benchmarks"
   val OrderByBuildNumQuery = s"SELECT * from ${Kind}_%s ORDER BY buildNum DESC LIMIT 2"
+  val WhereBuildNumQuery = s"SELECT * from ${Kind}_%s WHERE buildNum = %s"
 
   def dsKeyId(benchmark: BenchmarkResult): String = benchmark.buildNum.toString
 
@@ -211,27 +212,46 @@ class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try
           case (f @ Failure(_), _) => f
         }
         .map(_.map(_._1.name))
-        .map(metrics => printMetricsComparison(benchmarks))
+        .map(metrics => printMetricsComparison(benchmarks.map(_.name)))
     }.getOrElse {
       Success(Unit)
     }
   }
 
-  // TODO: move this to email generator
-  def printMetricsComparison(benchmarks: Iterable[BenchmarkResult]): Unit = {
-    benchmarks.map(_.name).foreach { benchmarkName =>
-      try {
-        val comparisonMetrics = Storage.runQuery(
-          RunQueryRequest.newBuilder().setGqlQuery(
-            GqlQuery.newBuilder()
-              .setAllowLiterals(true)
-              .setQueryString(OrderByBuildNumQuery.format(benchmarkName))
-              .build()
-          ).build())
+  private def getMetrics(benchmarkName: String,
+                         buildNums: Option[(String, String)]) = buildNums match {
+    case Some((prev, curr)) =>
+      Seq(prev, curr)
+        .map { b =>
+          Storage.runQuery(
+            RunQueryRequest.newBuilder().setGqlQuery(
+              GqlQuery.newBuilder()
+                .setAllowLiterals(true)
+                .setQueryString(WhereBuildNumQuery.format(benchmarkName, b))
+                .build()
+            ).build())
+        }
+        .map(_.getBatch.getEntityResults(0).getEntity)
+    case None =>
+      val comparisonMetrics = Storage.runQuery(
+        RunQueryRequest.newBuilder().setGqlQuery(
+          GqlQuery.newBuilder()
+            .setAllowLiterals(true)
+            .setQueryString(OrderByBuildNumQuery.format(benchmarkName))
+            .build()
+        ).build())
 
-        val metrics = comparisonMetrics.getBatch.getEntityResultsList.asScala
-          .sortBy(_.getEntity.getKey.getPath(0).getName)
-          .map(_.getEntity)
+      comparisonMetrics.getBatch.getEntityResultsList.asScala
+        .sortBy(_.getEntity.getKey.getPath(0).getName)
+        .map(_.getEntity)
+  }
+
+  // TODO: move this to email generator
+  def printMetricsComparison(benchmarks: Iterable[String],
+                             buildNums: Option[(String, String)] = None): Unit = {
+    benchmarks.foreach { benchmarkName =>
+      try {
+        val metrics = getMetrics(benchmarkName, buildNums)
         if (metrics.size == 2) {
           val opName = metrics.head.getKey.getPath(0).getKind.substring(Kind.length + 1)
           val props = metrics.map(_.getPropertiesMap.asScala)
@@ -243,7 +263,7 @@ class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try
 
           metricsToCompare.foreach { k: String =>
             val List(prev, curr) = props.map(_(k).getStringValue.toDouble).toList
-            val delta = (curr - prev) / curr * 100.0
+            val delta = (curr - prev) / prev * 100.0
             val signed = if (delta.isNaN) {
               "0.00%"
             } else {
@@ -290,5 +310,17 @@ private[this] object PrettyPrint {
     // scalastyle:off regex
     println("%-30s: %s".format(k, v))
     // scalastyle:on regex
+  }
+}
+
+// Usage:
+// export DATASTORE_PROJECT_ID=data-integration-test
+// sbt scio-test/it:runMain com.spotify.ScioBatchBenchmarkResult $buildNum1 $buildNum2
+// where $buildNum1 and $buildNum2 are build number of "bench" jobs in CircleCI
+object ScioBatchBenchmarkResult {
+  import ScioBenchmarkSettings._
+  def main(args: Array[String]): Unit = {
+    new DatastoreLogger(BatchMetrics)
+      .printMetricsComparison(ScioBatchBenchmark.benchmarkNames, Some((args(0), args(1))))
   }
 }
