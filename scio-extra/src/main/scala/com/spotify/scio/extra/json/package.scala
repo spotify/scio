@@ -53,7 +53,7 @@ package object json extends AutoDerivation {
   type Decoder[T] = io.circe.Decoder[T]
 
   /** A wrapper for `io.circe.Error` that also retains the original input string. */
-  case class DecodeError(error: io.circe.Error, input: String)
+  final case class DecodeError(error: io.circe.Error, input: String)
 
   /** Enhanced version of [[ScioContext]] with JSON methods. */
   implicit class JsonScioContext(@transient val self: ScioContext) extends Serializable {
@@ -64,14 +64,14 @@ package object json extends AutoDerivation {
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JSON methods.
    */
-  implicit class JsonSCollection[T: ClassTag: Encoder: Decoder](@transient val self: SCollection[T])
+  implicit class JsonSCollection[T: ClassTag: Encoder: Decoder: Coder](
+    @transient val self: SCollection[T])
       extends Serializable {
-    def saveAsJsonFile(
-      path: String,
-      suffix: String = ".json",
-      numShards: Int = 0,
-      compression: Compression = Compression.UNCOMPRESSED,
-      printer: Printer = Printer.noSpaces)(implicit coder: Coder[T]): Future[Tap[T]] =
+    def saveAsJsonFile(path: String,
+                       suffix: String = ".json",
+                       numShards: Int = 0,
+                       compression: Compression = Compression.UNCOMPRESSED,
+                       printer: Printer = Printer.noSpaces): Future[Tap[T]] =
       self.write(JsonIO[T](path))(JsonIO.WriteParam(suffix, numShards, compression, printer))
   }
 
