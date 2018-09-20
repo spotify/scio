@@ -355,12 +355,12 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
         val numHashes = BloomFilter.optimalNumHashes(numKeysPerPartition, width)
         val rhsBf = that.keys
           .aggregate(BloomFilterAggregator[K](numHashes, width))
-          .asIterableSideInput
+          .asSingletonSideInput(BFZero[K](BFHash[K](0, 0), 0))
         val (lhsUnique, lhsOverlap) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
         val partitionedLhs = lhs
           .withSideInputs(rhsBf)
           .transformWithSideOutputs(Seq(lhsUnique, lhsOverlap)) { (e, c) =>
-            if (c(rhsBf).nonEmpty && c(rhsBf).head.maybeContains(e._1)) {
+            if (c(rhsBf).maybeContains(e._1)) {
               lhsOverlap
             } else {
               lhsUnique
@@ -534,6 +534,67 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     _.cogroup(that.map((_, ()))).flatMap { t =>
       if (t._2._1.nonEmpty && t._2._2.nonEmpty) t._2._1.map((t._1, _))
       else Seq.empty
+    }
+  }
+
+  /**
+   * Return an SCollection with the pairs from `this` whose keys are in `that`
+   * when the cardinality of `this` >> `that`, but neither can fit in memory
+   * (see [[PairHashSCollectionFunctions.hashIntersectByKey]]).
+   * @param computeExact Whether or not to directly pass through bloom filter results (with a small
+   *                     false positive rate) or perform an additional inner join to confirm
+   *                     exact result set.
+   * @group per key
+   */
+  def sparseIntersectByKey(that: SCollection[K],
+                           thatNumKeys: Int,
+                           computeExact: Boolean = false,
+                           fpProb: Double = 0.1)(implicit koder: Coder[K],
+                                                 voder: Coder[V],
+                                                 hash: Hash128[K]): SCollection[(K, V)] = {
+    val bfSettings =
+      PairSCollectionFunctions.optimalBFSettings(thatNumKeys, fpProb)
+    if (bfSettings.numBFs == 1) {
+      sparseIntersectByKeyImpl(that, thatNumKeys.toInt, computeExact, fpProb)
+    } else {
+      val n = bfSettings.numBFs
+      val thisParts = self.partition(n, _._1.hashCode() % n)
+      val thatParts = that.partition(n, _.hashCode() % n)
+      val joined = (thisParts zip thatParts).map {
+        case (lhs, rhs) =>
+          lhs.sparseIntersectByKeyImpl(rhs, bfSettings.capacity, computeExact, fpProb)
+      }
+      SCollection.unionAll(joined)
+    }
+  }
+
+  protected def sparseIntersectByKeyImpl(that: SCollection[K],
+                                         thatNumKeys: Int,
+                                         computeExact: Boolean = false,
+                                         fpProb: Double = 0.1)(
+    implicit koder: Coder[K],
+    voder: Coder[V],
+    hash: Hash128[K]): SCollection[(K, V)] = {
+    val width = BloomFilter.optimalWidth(thatNumKeys, fpProb).get
+    val numHashes = BloomFilter.optimalNumHashes(thatNumKeys, width)
+    val rhsBf = that
+      .aggregate(BloomFilterAggregator[K](numHashes, width))
+      .asSingletonSideInput(BFZero[K](BFHash[K](0, 0), 0))
+
+    val approxResults = self
+      .withSideInputs(rhsBf)
+      .filter { case (e, c) => c(rhsBf).maybeContains(e._1) }
+      .toSCollection
+
+    if (computeExact) {
+      approxResults
+        .cogroup(that.map((_, ())))
+        .flatMap { t =>
+          if (t._2._1.nonEmpty && t._2._2.nonEmpty) t._2._1.map((t._1, _))
+          else Seq.empty
+        }
+    } else {
+      approxResults
     }
   }
 

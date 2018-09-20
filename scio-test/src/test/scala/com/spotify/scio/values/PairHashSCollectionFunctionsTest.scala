@@ -117,4 +117,40 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
             ("d", (None, Some(14)))))
     }
   }
+
+  it should "support hashIntersectByKey()" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
+      val p2 = sc.parallelize(Seq("a", "b", "d"))
+      val p = p1.hashIntersectByKey(p2)
+      p should containInAnyOrder(Seq(("a", 1), ("b", 2)))
+    }
+  }
+
+  it should "support hashIntersectByKey() with duplicate keys" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
+      val p2 = sc.parallelize(Seq("a", "b", "b", "d"))
+      val p = p1.hashIntersectByKey(p2)
+      p should containInAnyOrder(Seq(("a", 1), ("b", 2), ("b", 4)))
+    }
+  }
+
+  it should "support hashIntersectByKey() with empty LHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq[(String, Unit)]())
+      val p2 = sc.parallelize(Seq("a", "b", "d"))
+      val p = p1.hashIntersectByKey(p2)
+      p should beEmpty
+    }
+  }
+
+  it should "support hashIntersectByKey() with empty RHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
+      val p2 = sc.parallelize(Seq[String]())
+      val p = p1.hashIntersectByKey(p2)
+      p should beEmpty
+    }
+  }
 }
