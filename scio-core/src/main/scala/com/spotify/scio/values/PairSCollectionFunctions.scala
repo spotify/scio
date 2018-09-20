@@ -342,27 +342,20 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     implicit hash: Hash128[K],
     koder: Coder[K],
     voder: Coder[V]): Seq[(SCollection[(K, V)], SCollection[(K, V)], SCollection[(K, W)])] = {
-    val bfSettings = PairSCollectionFunctions.optimalBFSettings(thatNumKeys, fpProb)
 
-    val numKeysPerPartition = if (bfSettings.numBFs == 1) thatNumKeys.toInt else bfSettings.capacity
-    val n = bfSettings.numBFs
+    val thatBfSIs = that.getOptimalKeysBloomFiltersAsSideInputs(thatNumKeys, fpProb)
+    val n = thatBfSIs.size
+
     val thisParts = self.partition(n, _._1.hashCode() % n)
     val thatParts = that.partition(n, _._1.hashCode() % n)
 
-    (thisParts zip thatParts).map {
-      case (lhs, rhs) =>
-        val width = BloomFilter.optimalWidth(numKeysPerPartition, fpProb).get
-        val numHashes = BloomFilter.optimalNumHashes(numKeysPerPartition, width)
-        val bfAggregator = BloomFilterAggregator[K](numHashes, width)
-        val rhsBf = that.keys
-          .aggregate(bfAggregator)
-          .asSingletonSideInput(bfAggregator.monoid.zero)
-
+    (thisParts zip thatParts zip thatBfSIs).map {
+      case ((lhs, rhs), bfsi) =>
         val (lhsUnique, lhsOverlap) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
         val partitionedLhs = lhs
-          .withSideInputs(rhsBf)
+          .withSideInputs(bfsi)
           .transformWithSideOutputs(Seq(lhsUnique, lhsOverlap)) { (e, c) =>
-            if (c(rhsBf).maybeContains(e._1)) {
+            if (c(bfsi).maybeContains(e._1)) {
               lhsOverlap
             } else {
               lhsUnique
@@ -370,6 +363,138 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
           }
         (partitionedLhs(lhsUnique), partitionedLhs(lhsOverlap), rhs)
     }
+
+  }
+
+  /**
+   * Look up values from `that` where `that` is much larger and keys from `this` wont fit in memory,
+   * and is sparse in `that`. A Bloom Filter of keys in `this` is used to filter out irrelevant keys
+   * in `that`. This is useful when searching for a limited number of values from one or more vaery
+   * large tables. Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
+   * @group join
+   * @param thisNumKeys estimated number of keys in `this`
+   * @param fpProb false positive probability when filtering `that`
+   */
+  def sparseLookup[A: Coder](that: SCollection[(K, A)], thisNumKeys: Long, fpProb: Double)(
+    implicit hash: Hash128[K],
+    koder: Coder[K],
+    voder: Coder[V]): SCollection[(K, (V, Iterable[A]))] = {
+    val selfBfSideInputs = self.getOptimalKeysBloomFiltersAsSideInputs(thisNumKeys, fpProb)
+    val n = selfBfSideInputs.size
+
+    val thisParts = self.partition(n, _._1.hashCode() % n)
+    val thatParts = that.partition(n, _._1.hashCode() % n)
+
+    SCollection.unionAll(
+      (thisParts zip selfBfSideInputs zip thatParts).map {
+        case ((lhs, lhsBfSi), rhs1) =>
+          lhs
+            .cogroup(
+              rhs1
+                .withSideInputs(lhsBfSi)
+                .filter { (e, c) =>
+                  c(lhsBfSi).maybeContains(e._1)
+                }
+                .toSCollection
+            )
+            .flatMap { case (k, (iV, iA)) => iV.map(v => (k, (v, iA))) }
+      }
+    )
+  }
+
+  /**
+   * Look up values from `that` where `that` is much larger and keys from `this` wont fit in memory,
+   * and is sparse in `that`. A Bloom Filter of keys in `this` is used to filter out irrelevant keys
+   * in `that`. This is useful when searching for a limited number of values from one or more vaery
+   * large tables. Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
+   * @group join
+   * @param thisNumKeys estimated number of keys in `this`
+   */
+  def sparseLookup[A: Coder](that: SCollection[(K, A)], thisNumKeys: Long)(
+    implicit hash: Hash128[K],
+    koder: Coder[K],
+    voder: Coder[V]): SCollection[(K, (V, Iterable[A]))] = sparseLookup(that, thisNumKeys, 0.01)
+
+  /**
+   * Look up values from `that` where `that` is much larger and keys from `this` wont fit in memory,
+   * and is sparse in `that`. A Bloom Filter of keys in `this` is used to filter out irrelevant keys
+   * in `that`. This is useful when searching for a limited number of values from one or more vaery
+   * large tables. Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
+   * @group join
+   * @param thisNumKeys estimated number of keys in `this`
+   * @param fpProb false positive probability when filtering `that`
+   */
+  def sparseLookup[A: Coder, B: Coder](that1: SCollection[(K, A)],
+                                       that2: SCollection[(K, B)],
+                                       thisNumKeys: Long,
+                                       fpProb: Double)(
+    implicit hash: Hash128[K],
+    koder: Coder[K],
+    voder: Coder[V]): SCollection[(K, (V, Iterable[A], Iterable[B]))] = {
+    val selfBfSideInputs = self.getOptimalKeysBloomFiltersAsSideInputs(thisNumKeys, fpProb)
+    val n = selfBfSideInputs.size
+
+    val thisParts = self.partition(n, _._1.hashCode() % n)
+    val that1Parts = that1.partition(n, _._1.hashCode() % n)
+    val that2Parts = that2.partition(n, _._1.hashCode() % n)
+
+    SCollection.unionAll(
+      (thisParts zip selfBfSideInputs zip that1Parts zip that2Parts).map {
+        case (((lhs, lhsBfSi), rhs1), rhs2) =>
+          lhs
+            .cogroup(
+              rhs1
+                .withSideInputs(lhsBfSi)
+                .filter { (e, c) =>
+                  c(lhsBfSi).maybeContains(e._1)
+                }
+                .toSCollection,
+              rhs2
+                .withSideInputs(lhsBfSi)
+                .filter { (e, c) =>
+                  c(lhsBfSi).maybeContains(e._1)
+                }
+                .toSCollection
+            )
+            .flatMap { case (k, (iV, iA, iB)) => iV.map(v => (k, (v, iA, iB))) }
+      }
+    )
+  }
+
+  /**
+   * Look up values from `that` where `that` is much larger and keys from `this` wont fit in memory,
+   * and is sparse in `that`. A Bloom Filter of keys in `this` is used to filter out irrelevant keys
+   * in `that`. This is useful when searching for a limited number of values from one or more vaery
+   * large tables. Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
+   * @group join
+   * @param thisNumKeys estimated number of keys in `this`
+   */
+  def sparseLookup[A: Coder, B: Coder](that1: SCollection[(K, A)],
+                                       that2: SCollection[(K, B)],
+                                       thisNumKeys: Long)(
+    implicit hash: Hash128[K],
+    koder: Coder[K],
+    voder: Coder[V]): SCollection[(K, (V, Iterable[A], Iterable[B]))] =
+    sparseLookup(that1, that2, thisNumKeys, 0.01)
+
+  protected def getOptimalKeysBloomFiltersAsSideInputs(thisNumKeys: Long, fpProb: Double)(
+    implicit hash: Hash128[K],
+    koder: Coder[K],
+    voder: Coder[V]): Seq[SideInput[BF[K]]] = {
+    val bfSettings = PairSCollectionFunctions.optimalBFSettings(thisNumKeys, fpProb)
+
+    val numKeysPerPartition = if (bfSettings.numBFs == 1) thisNumKeys.toInt else bfSettings.capacity
+    val n = bfSettings.numBFs
+    self
+      .partition(n, _._1.hashCode() % n)
+      .map { me =>
+        val width = BloomFilter.optimalWidth(numKeysPerPartition, fpProb).get
+        val numHashes = BloomFilter.optimalNumHashes(numKeysPerPartition, width)
+        val bfAggregator = BloomFilterAggregator[K](numHashes, width)
+        me.keys
+          .aggregate(bfAggregator)
+          .asSingletonSideInput(bfAggregator.monoid.zero)
+      }
   }
 
   // =======================================================================

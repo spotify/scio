@@ -470,13 +470,10 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
                                     ("b", (Some(3), None)),
                                     ("c", (Some(4), None)),
                                     ("d", (None, Some(5))))
-  val sparseRightOuterJoinExpected = Seq(("a", (Some(1), 11)),
-                                         ("a", (Some(2), 11)),
-                                         ("d", (None, 5)))
-  val sparseLeftOuterJoinExpected = Seq(("a", (1, Some(11))),
-                                        ("a", (2, Some(11))),
-                                        ("b", (3, None)),
-                                        ("c", (4, None)))
+  val sparseRightOuterJoinExpected =
+    Seq(("a", (Some(1), 11)), ("a", (Some(2), 11)), ("d", (None, 5)))
+  val sparseLeftOuterJoinExpected =
+    Seq(("a", (1, Some(11))), ("a", (2, Some(11))), ("b", (3, None)), ("c", (4, None)))
 
   it should "support sparseOuterJoin()" in {
     runWithContext { sc =>
@@ -529,6 +526,57 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p2 = sc.parallelize(sparseRhs)
       val p = p1.sparseRightOuterJoin(p2, 1000000000L)
       p should containInAnyOrder(sparseRightOuterJoinExpected)
+    }
+  }
+
+  val sparseLookup1 = Seq(("a", 11), ("a", 12), ("b", 13), ("d", 15), ("e", 16))
+  val sparseLookup2 = Seq(("a", 21), ("a", 22), ("b", 23), ("d", 25), ("e", 26))
+  val expected1: Seq[(String, (Int, Iterable[Int]))] =
+    Seq(("a", (1, Seq(11, 12))), ("a", (2, Seq(11, 12))), ("b", (3, Seq(13))), ("c", (4, Seq())))
+  val expected12: Seq[(String, (Int, Iterable[Int], Iterable[Int]))] =
+    Seq(("a", (1, Seq(11, 12), Seq(21, 22))),
+        ("a", (2, Seq(11, 12), Seq(21, 22))),
+        ("b", (3, Seq(13), Seq(23))),
+        ("c", (4, Seq(), Seq())))
+  it should "support sparseLookup()" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(sparseLhs)
+      val p2 = sc.parallelize(sparseLookup1)
+      val p = p1.sparseLookup(p2, 10)
+
+      p should containInAnyOrder(expected1)
+    }
+  }
+
+  it should "support sparseLookup() with partitions" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(sparseLhs)
+      val p2 = sc.parallelize(sparseLookup1)
+      val p = p1.sparseLookup(p2, 1000000000L)
+
+      p should containInAnyOrder(expected1)
+    }
+  }
+
+  it should "support sparseLookup2()" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(sparseLhs)
+      val p2 = sc.parallelize(sparseLookup1)
+      val p3 = sc.parallelize(sparseLookup2)
+      val p = p1.sparseLookup(p2, p3, 10)
+
+      p should containInAnyOrder(expected12)
+    }
+  }
+
+  it should "support sparseLookup2() with partitions" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(sparseLhs)
+      val p2 = sc.parallelize(sparseLookup1)
+      val p3 = sc.parallelize(sparseLookup2)
+      val p = p1.sparseLookup(p2, p3, 1000000000L)
+
+      p should containInAnyOrder(expected12)
     }
   }
 
