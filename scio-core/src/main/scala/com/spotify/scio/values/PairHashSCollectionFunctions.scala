@@ -122,12 +122,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val side = combineAsMapSideInput(that.map((_, ())))
     self
       .withSideInputs(side)
-      .flatMap {
-        case ((k, v), s) =>
-          if (s(side).contains(k)) {
-            Some((k, v))
-          } else None
-      }
+      .filter { case ((k, v), s) => s(side).contains(k) }
       .toSCollection
   }
 

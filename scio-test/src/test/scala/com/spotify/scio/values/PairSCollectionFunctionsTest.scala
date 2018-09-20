@@ -318,6 +318,15 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  it should "support sparseIntersectByKey() with computeExact set to true" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
+      val p2 = sc.parallelize(Seq("a", "b", "d"))
+      val p = p1.sparseIntersectByKey(p2, 5, computeExact = true)
+      p should containInAnyOrder(Seq(("a", 1), ("b", 2)))
+    }
+  }
+
   it should "support sparseIntersectByKey() with duplicate keys" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
@@ -532,6 +541,19 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  it should "support sparseOuterJoin() with empty RHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(sparseLhs)
+      val p2 = sc.parallelize(Seq[(String, Int)]())
+      val p = p1.sparseOuterJoin(p2, 10)
+      p should containInAnyOrder(Seq[(String, (Option[Int], Option[Int]))](
+        ("a", (Some(1), None)),
+        ("a", (Some(2), None)),
+        ("b", (Some(3), None)),
+        ("c", (Some(4), None))))
+    }
+  }
+
   it should "support sparseOuterJoin() with partitions" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(sparseLhs)
@@ -547,6 +569,19 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p2 = sc.parallelize(sparseRhs)
       val p = p1.sparseLeftOuterJoin(p2, 10)
       p should containInAnyOrder(sparseLeftOuterJoinExpected)
+    }
+  }
+
+  it should "support sparseLeftOuterJoin() with empty RHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(sparseLhs)
+      val p2 = sc.parallelize(Seq[(String, Int)]())
+      val p = p1.sparseLeftOuterJoin(p2, 10)
+      p should containInAnyOrder(Seq[(String, (Int, Option[Int]))](
+        ("a", (1, None)),
+        ("a", (2, None)),
+        ("b", (3, None)),
+        ("c", (4, None))))
     }
   }
 
@@ -574,6 +609,15 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p2 = sc.parallelize(sparseRhs)
       val p = p1.sparseRightOuterJoin(p2, 1000000000L)
       p should containInAnyOrder(sparseRightOuterJoinExpected)
+    }
+  }
+
+  it should "support sparseRightOuterJoin() with empty RHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(sparseLhs)
+      val p2 = sc.parallelize(Seq[(String, Int)]())
+      val p = p1.sparseRightOuterJoin(p2, 10)
+      p should beEmpty
     }
   }
 
