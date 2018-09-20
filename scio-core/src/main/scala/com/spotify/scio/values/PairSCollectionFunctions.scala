@@ -477,7 +477,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     voder: Coder[V]): SCollection[(K, (V, Iterable[A], Iterable[B]))] =
     sparseLookup(that1, that2, thisNumKeys, 0.01)
 
-  protected def getOptimalKeysBloomFiltersAsSideInputs(thisNumKeys: Long, fpProb: Double)(
+  private[values] def getOptimalKeysBloomFiltersAsSideInputs(thisNumKeys: Long, fpProb: Double)(
     implicit hash: Hash128[K],
     koder: Coder[K],
     voder: Coder[V]): Seq[SideInput[BF[K]]] = {
