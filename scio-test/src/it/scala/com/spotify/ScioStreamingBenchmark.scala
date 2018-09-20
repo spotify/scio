@@ -160,7 +160,7 @@ abstract class StreamingBenchmark {
           prefix: String,
           args: Array[String]): (String, ScioResult) = {
     val username = sys.props("user.name")
-    val buildNum = circleCIEnv.map(_.buildNum).getOrElse(-1)
+    val buildNum = circleCIEnv.map(_.buildNum).getOrElse(-1L)
 
     val (sc, _) = ContextAndArgs(args)
     sc.setAppName(name)
