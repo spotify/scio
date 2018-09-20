@@ -18,6 +18,7 @@
 package com.spotify.scio.coders
 
 import java.math.{BigDecimal, BigInteger}
+import java.time.Instant
 
 import com.google.api.services.bigquery.model.TableRow
 import org.apache.beam.sdk.{coders => bcoders}
@@ -86,4 +87,7 @@ trait JavaCoders {
     Coder.beam(PubsubMessageWithAttributesCoder.of())
 
   implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] = Coder.kv(Coder[K], Coder[V])
+
+  implicit def instantCoder: Coder[Instant] =
+    Coder.xmap(Coder.jLongCoder)(Instant.ofEpochMilli(_), _.toEpochMilli)
 }
