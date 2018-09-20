@@ -24,6 +24,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.{JMapWrapper, ScioUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.avro.specific.SpecificRecordBase
+import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage
 import org.apache.beam.sdk.io.gcp.{pubsub => beam}
 import org.apache.beam.sdk.util.CoderUtils
 
@@ -91,6 +92,9 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](name: Str
     } else if (classOf[Message] isAssignableFrom cls) {
       val t = setup(beam.PubsubIO.readProtos(cls.asSubclass(classOf[Message])))
       sc.wrap(sc.applyInternal(t)).asInstanceOf[SCollection[T]]
+    } else if (classOf[PubsubMessage] isAssignableFrom cls) {
+      val t = setup(beam.PubsubIO.readMessages())
+      sc.wrap(sc.applyInternal(t)).asInstanceOf[SCollection[T]]
     } else {
       val coder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
       val t = setup(beam.PubsubIO.readMessages())
@@ -121,6 +125,9 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](name: Str
     } else if (classOf[Message] isAssignableFrom cls) {
       val t = beam.PubsubIO.writeProtos(cls.asInstanceOf[Class[Message]])
       data.asInstanceOf[SCollection[Message]].applyInternal(t)
+    } else if (classOf[PubsubMessage] isAssignableFrom cls) {
+      val t = beam.PubsubIO.writeMessages()
+      data.asInstanceOf[SCollection[PubsubMessage]].applyInternal(t)
     } else {
       val coder = data.internal.getPipeline.getCoderRegistry
         .getScalaCoder[T](data.context.options)
