@@ -309,6 +309,51 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  it should "support sparseIntersectByKey()" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
+      val p2 = sc.parallelize(Seq("a", "b", "d"))
+      val p = p1.sparseIntersectByKey(p2, 5)
+      p should containInAnyOrder(Seq(("a", 1), ("b", 2)))
+    }
+  }
+
+  it should "support sparseIntersectByKey() with duplicate keys" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
+      val p2 = sc.parallelize(Seq("a", "b", "b", "d"))
+      val p = p1.sparseIntersectByKey(p2, 5)
+      p should containInAnyOrder(Seq(("a", 1), ("b", 2), ("b", 4)))
+    }
+  }
+
+  it should "support sparseIntersectByKey() with partitions" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
+      val p2 = sc.parallelize(Seq("a", "b", "d"))
+      val p = p1.sparseIntersectByKey(p2, 1000000000)
+      p should containInAnyOrder(Seq(("a", 1), ("b", 2)))
+    }
+  }
+
+  it should "support sparseIntersectByKey() with empty LHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq[(String, Unit)]())
+      val p2 = sc.parallelize(Seq("a", "b", "d"))
+      val p = p1.sparseIntersectByKey(p2, 5)
+      p should beEmpty
+    }
+  }
+
+  it should "support sparseIntersectByKey() with empty RHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
+      val p2 = sc.parallelize(Seq[String]())
+      val p = p1.sparseIntersectByKey(p2, 5)
+      p should beEmpty
+    }
+  }
+
   it should "support keys()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3))).keys

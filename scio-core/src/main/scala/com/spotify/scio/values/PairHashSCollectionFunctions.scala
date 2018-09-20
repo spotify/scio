@@ -112,6 +112,25 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       leftHashed.map(x => (x._1, x._2)) ++ rightHashed
     }
 
+  /**
+   * Return an SCollection with the pairs from `this` whose keys are in `that`
+   * given `that` is small enough to fit in memory.
+   * @group per key
+   */
+  def hashIntersectByKey(that: SCollection[K])(implicit koder: Coder[K],
+                                               voder: Coder[V]): SCollection[(K, V)] = {
+    val side = combineAsMapSideInput(that.map((_, ())))
+    self
+      .withSideInputs(side)
+      .flatMap {
+        case ((k, v), s) =>
+          if (s(side).contains(k)) {
+            Some((k, v))
+          } else None
+      }
+      .toSCollection
+  }
+
   private def combineAsMapSideInput[W: Coder](that: SCollection[(K, W)])(
     implicit koder: Coder[K]): SideInput[MMap[K, ArrayBuffer[W]]] = {
     that
