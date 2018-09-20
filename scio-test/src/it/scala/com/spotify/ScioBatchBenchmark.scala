@@ -82,6 +82,8 @@ object ScioBatchBenchmark {
       }
     }
 
+  val benchmarkNames: Seq[String] = benchmarks.map(_.name).toSeq.sorted
+
   // ===== Combine =====
 
   // 100M items, into a set of 1000 unique items
