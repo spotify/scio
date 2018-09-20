@@ -97,6 +97,6 @@ trait JavaCoders {
 
   implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] = Coder.kv(Coder[K], Coder[V])
 
-  implicit def instantCoder: Coder[Instant] =
+  implicit def jInstantCoder: Coder[Instant] =
     Coder.xmap(Coder.jLongCoder)(Instant.ofEpochMilli(_), _.toEpochMilli)
 }
