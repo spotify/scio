@@ -353,14 +353,16 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       case (lhs, rhs) =>
         val width = BloomFilter.optimalWidth(numKeysPerPartition, fpProb).get
         val numHashes = BloomFilter.optimalNumHashes(numKeysPerPartition, width)
+        val bfAggregator = BloomFilterAggregator[K](numHashes, width)
         val rhsBf = that.keys
-          .aggregate(BloomFilterAggregator[K](numHashes, width))
-          .asIterableSideInput
+          .aggregate(bfAggregator)
+          .asSingletonSideInput(bfAggregator.monoid.zero)
+
         val (lhsUnique, lhsOverlap) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
         val partitionedLhs = lhs
           .withSideInputs(rhsBf)
           .transformWithSideOutputs(Seq(lhsUnique, lhsOverlap)) { (e, c) =>
-            if (c(rhsBf).nonEmpty && c(rhsBf).head.maybeContains(e._1)) {
+            if (c(rhsBf).maybeContains(e._1)) {
               lhsOverlap
             } else {
               lhsUnique
