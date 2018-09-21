@@ -17,7 +17,9 @@
 
 package com.spotify.scio.coders
 
+import java.io.{InputStream, OutputStream}
 import java.math.{BigDecimal, BigInteger}
+import java.time.Instant
 
 import com.google.api.services.bigquery.model.TableRow
 import org.apache.beam.sdk.{coders => bcoders}
@@ -27,10 +29,18 @@ import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.beam.sdk.coders.{Coder => _, _}
 
+private object VoidCoder extends AtomicCoder[Void] {
+  override def encode(value: Void, outStream: OutputStream): Unit = ()
+
+  override def decode(inStream: InputStream): Void = ???
+}
+
 //
 // Java Coders
 //
 trait JavaCoders {
+
+  implicit def voidCoder: Coder[Void] = Coder.beam[Void](VoidCoder)
 
   implicit def uriCoder: Coder[java.net.URI] =
     Coder.xmap(Coder.beam(StringUtf8Coder.of()))(s => new java.net.URI(s), _.toString)
@@ -86,4 +96,7 @@ trait JavaCoders {
     Coder.beam(PubsubMessageWithAttributesCoder.of())
 
   implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] = Coder.kv(Coder[K], Coder[V])
+
+  implicit def jInstantCoder: Coder[Instant] =
+    Coder.xmap(Coder.jLongCoder)(Instant.ofEpochMilli(_), _.toEpochMilli)
 }
