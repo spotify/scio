@@ -169,7 +169,11 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
     Developer(id = "jto",
               name = "Julien Tournay",
               email = "julient@spotify.com",
-              url = url("https://twitter.com/skaalf"))
+              url = url("https://twitter.com/skaalf")),
+    Developer(id = "clairemcginty",
+              name = "Claire McGinty",
+              email = "clairem@spotify.com",
+              url = url("http://github.com/clairemcginty"))
   ),
   credentials ++= (for {
     username <- sys.env.get("SONATYPE_USERNAME")
