@@ -76,7 +76,11 @@ private abstract class SeqLikeCoder[M[_], T](bc: BCoder[T])(
   }
   def decode(inStream: InputStream, builder: scala.collection.mutable.Builder[T, M[T]]): M[T] = {
     val size = lc.decode(inStream)
-    (1 to size).foreach(_ => builder += bc.decode(inStream))
+    var i = 0
+    while(i < size) {
+      builder += bc.decode(inStream)
+      i = i + 1
+    }
     builder.result()
   }
 }
@@ -162,20 +166,23 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
 
   override def encode(value: Map[K, V], os: OutputStream): Unit = {
     lc.encode(value.size, os)
-    value.foreach {
-      case (k, v) =>
-        kc.encode(k, os)
-        vc.encode(v, os)
+    val it = value.iterator
+    while(it.hasNext) {
+      val (k, v) = it.next
+      kc.encode(k, os)
+      vc.encode(v, os)
     }
   }
 
   override def decode(is: InputStream): Map[K, V] = {
     val l = lc.decode(is)
     val builder = Map.newBuilder[K, V]
-    (1 to l).map { _ =>
+    var i = 0
+    while(i < l) {
       val k = kc.decode(is)
       val v = vc.decode(is)
       builder += (k -> v)
+      i = i + 1
     }
     builder.result()
   }
@@ -214,10 +221,12 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
   override def decode(is: InputStream): m.Map[K, V] = {
     val l = lc.decode(is)
     val builder = m.Map.newBuilder[K, V]
-    (1 to l).map { _ =>
+    var i = 0
+    while(i < l) {
       val k = kc.decode(is)
       val v = vc.decode(is)
       builder += (k -> v)
+      i = i + 1
     }
     builder.result()
   }
@@ -245,6 +254,7 @@ trait ScalaCoders {
 
   implicit def byteCoder: Coder[Byte] =
     Coder.beam(ByteCoder.of().asInstanceOf[BCoder[Byte]])
+  // TODO: keep an eye on https://issues.apache.org/jira/browse/BEAM-5439
   implicit def stringCoder: Coder[String] =
     Coder.beam(StringUtf8Coder.of())
   implicit def shortCoder: Coder[Short] =

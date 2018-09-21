@@ -62,6 +62,15 @@ class KryoAtomicCoderBenchmark {
   val derivedListCoder =
     CoderMaterializer.beamWithDefault(Coder[List[SpecializedUserForDerived]])
 
+
+  val specializedMapKryoCoder = new KryoAtomicCoder[Map[String, Long]](KryoOptions())
+  val derivedMapCoder = CoderMaterializer.beamWithDefault(Coder[Map[String, Long]])
+  val mapExample = (1 to 1000).map { x => (s"stringvalue$x", x.toLong) }.toMap
+
+  val specializedStringListKryoCoder = new KryoAtomicCoder[List[String]](KryoOptions())
+  val derivedStringListCoder = CoderMaterializer.beamWithDefault(Coder[List[String]])
+  val stringListExample = (1 to 1000).map { x => s"stringvalue$x" }.toList
+
   @Benchmark
   def kryoEncode: Array[Byte] =
     CoderUtils.encodeToByteArray(kryoCoder, user)
@@ -86,12 +95,32 @@ class KryoAtomicCoderBenchmark {
   def derivedListEncode: Array[Byte] =
     CoderUtils.encodeToByteArray(derivedListCoder, tenTimes)
 
+  @Benchmark
+  def kryoMapEncode: Array[Byte] =
+    CoderUtils.encodeToByteArray(specializedMapKryoCoder, mapExample)
+
+  @Benchmark
+  def derivedMapEncode: Array[Byte] =
+    CoderUtils.encodeToByteArray(derivedMapCoder, mapExample)
+
+  @Benchmark
+  def kryoStringListEncode: Array[Byte] =
+    CoderUtils.encodeToByteArray(specializedStringListKryoCoder, stringListExample)
+
+  @Benchmark
+  def derivedStringListEncode: Array[Byte] =
+    CoderUtils.encodeToByteArray(derivedStringListCoder, stringListExample)
+
   val kryoEncoded = kryoEncode
   val javaEncoded = javaEncode
   val customEncoded = customEncode
   val customKryoEncoded = customKryoEncode
   val derivedEncoded = derivedEncode
   val derivedListEncoded = derivedListEncode
+  val kryoMapEncoded = kryoMapEncode
+  val derivedMapEncoded = derivedMapEncode
+  val kryoStringListEncoded = kryoStringListEncode
+  val derivedStringListEncoded = derivedStringListEncode
 
   @Benchmark
   def kryoDecode: User =
@@ -116,6 +145,22 @@ class KryoAtomicCoderBenchmark {
   @Benchmark
   def derivedListDecode: List[SpecializedUserForDerived] =
     CoderUtils.decodeFromByteArray(derivedListCoder, derivedListEncoded)
+
+  @Benchmark
+  def kryoMapDecode =
+    CoderUtils.decodeFromByteArray(specializedMapKryoCoder, kryoMapEncoded)
+
+  @Benchmark
+  def derivedMapDecode =
+    CoderUtils.decodeFromByteArray(derivedMapCoder, derivedMapEncoded)
+
+  @Benchmark
+  def kryoStringListDecode =
+    CoderUtils.decodeFromByteArray(specializedStringListKryoCoder, kryoStringListEncoded)
+
+  @Benchmark
+  def derivedStringListDecode =
+    CoderUtils.decodeFromByteArray(derivedStringListCoder, derivedStringListEncoded)
 }
 
 final class SpecializedCoder extends AtomicCoder[SpecializedUser] {
