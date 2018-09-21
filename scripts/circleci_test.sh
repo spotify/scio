@@ -22,7 +22,15 @@ fi
 "$DIR_OF_SCRIPT/gen_schemas.sh"
 
 if [ $SCOVERAGE -eq 1 ]; then
-  sbt -v $PROPS ++$SCALA_VERSION scalastyle coverage $TESTS coverageReport coverageAggregate
+  sbt -v $PROPS ++$SCALA_VERSION \
+    scalafmtCheck test:scalafmtCheck scalafmtSbtCheck \
+    scalastyle \
+    coverage \
+    $TESTS \
+    coverageReport coverageAggregate
 else
-  sbt -v $PROPS ++$SCALA_VERSION scalastyle $TESTS
+  sbt -v $PROPS ++$SCALA_VERSION \
+    scalafmtCheck test:scalafmtCheck scalafmtSbtCheck \
+    scalastyle \
+    $TESTS
 fi

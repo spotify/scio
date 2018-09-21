@@ -34,10 +34,13 @@ private[coders] object CoderMacros {
    * "-Xmacro-settings:show-coder-fallback=true" as a Scalac option.
    */
   private[this] def showWarn(c: whitebox.Context) =
-    c.settings.collect { case KVS(value) =>
-        value.toBoolean
-    }.headOption.getOrElse(DEFAULT_SHOW_WARN)
-
+    c.settings
+      .collect {
+        case KVS(value) =>
+          value.toBoolean
+      }
+      .headOption
+      .getOrElse(DEFAULT_SHOW_WARN)
 
   // scalastyle:off method.length
   def issueFallbackWarning[T: c.WeakTypeTag](c: whitebox.Context)(
@@ -98,10 +101,10 @@ private[coders] object CoderMacros {
 
     (verbose, alreadyReported) match {
       case (false, false) =>
-        if(show) c.echo(c.enclosingPosition, shortMessage.stripMargin)
+        if (show) c.echo(c.enclosingPosition, shortMessage.stripMargin)
         fallback
       case (true, false) =>
-        if(show) c.echo(c.enclosingPosition, longMessage.stripMargin)
+        if (show) c.echo(c.enclosingPosition, longMessage.stripMargin)
         verbose = false
         fallback
       case (_, _) =>

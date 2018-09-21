@@ -196,9 +196,7 @@ class NamedTransformTest extends PipelineSpec {
   it should "not generate duplicated names" in {
     import com.spotify.scio.io.TextIO
     JobTest[SimpleJob.type]
-      .args(
-        "--output=top.txt",
-        "--stableUniqueNames=ERROR")
+      .args("--output=top.txt", "--stableUniqueNames=ERROR")
       .output(TextIO("top.txt"))(_ => true)
       .run()
   }

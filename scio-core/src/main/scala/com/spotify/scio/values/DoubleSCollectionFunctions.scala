@@ -137,7 +137,7 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
       .flatMap { (x, c) =>
         // Map values to buckets
         val bucketFunction = c(side) match {
-          case Left(p) => (fastBucketFunction _).tupled(p)
+          case Left(p)  => (fastBucketFunction _).tupled(p)
           case Right(b) => basicBucketFunction(b) _
         }
         bucketFunction(x).iterator

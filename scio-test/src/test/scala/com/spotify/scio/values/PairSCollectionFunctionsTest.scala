@@ -524,13 +524,10 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
                                     ("b", (Some(3), None)),
                                     ("c", (Some(4), None)),
                                     ("d", (None, Some(5))))
-  val sparseRightOuterJoinExpected = Seq(("a", (Some(1), 11)),
-                                         ("a", (Some(2), 11)),
-                                         ("d", (None, 5)))
-  val sparseLeftOuterJoinExpected = Seq(("a", (1, Some(11))),
-                                        ("a", (2, Some(11))),
-                                        ("b", (3, None)),
-                                        ("c", (4, None)))
+  val sparseRightOuterJoinExpected =
+    Seq(("a", (Some(1), 11)), ("a", (Some(2), 11)), ("d", (None, 5)))
+  val sparseLeftOuterJoinExpected =
+    Seq(("a", (1, Some(11))), ("a", (2, Some(11))), ("b", (3, None)), ("c", (4, None)))
 
   it should "support sparseOuterJoin()" in {
     runWithContext { sc =>
@@ -546,11 +543,11 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(sparseLhs)
       val p2 = sc.parallelize(Seq[(String, Int)]())
       val p = p1.sparseOuterJoin(p2, 10)
-      p should containInAnyOrder(Seq[(String, (Option[Int], Option[Int]))](
-        ("a", (Some(1), None)),
-        ("a", (Some(2), None)),
-        ("b", (Some(3), None)),
-        ("c", (Some(4), None))))
+      p should containInAnyOrder(
+        Seq[(String, (Option[Int], Option[Int]))](("a", (Some(1), None)),
+                                                  ("a", (Some(2), None)),
+                                                  ("b", (Some(3), None)),
+                                                  ("c", (Some(4), None))))
     }
   }
 
@@ -577,11 +574,11 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(sparseLhs)
       val p2 = sc.parallelize(Seq[(String, Int)]())
       val p = p1.sparseLeftOuterJoin(p2, 10)
-      p should containInAnyOrder(Seq[(String, (Int, Option[Int]))](
-        ("a", (1, None)),
-        ("a", (2, None)),
-        ("b", (3, None)),
-        ("c", (4, None))))
+      p should containInAnyOrder(
+        Seq[(String, (Int, Option[Int]))](("a", (1, None)),
+                                          ("a", (2, None)),
+                                          ("b", (3, None)),
+                                          ("c", (4, None))))
     }
   }
 

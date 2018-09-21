@@ -77,7 +77,7 @@ private abstract class SeqLikeCoder[M[_], T](bc: BCoder[T])(
   def decode(inStream: InputStream, builder: scala.collection.mutable.Builder[T, M[T]]): M[T] = {
     val size = lc.decode(inStream)
     var i = 0
-    while(i < size) {
+    while (i < size) {
       builder += bc.decode(inStream)
       i = i + 1
     }
@@ -167,7 +167,7 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
   override def encode(value: Map[K, V], os: OutputStream): Unit = {
     lc.encode(value.size, os)
     val it = value.iterator
-    while(it.hasNext) {
+    while (it.hasNext) {
       val (k, v) = it.next
       kc.encode(k, os)
       vc.encode(v, os)
@@ -178,7 +178,7 @@ private class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[M
     val l = lc.decode(is)
     val builder = Map.newBuilder[K, V]
     var i = 0
-    while(i < l) {
+    while (i < l) {
       val k = kc.decode(is)
       val v = vc.decode(is)
       builder += (k -> v)
@@ -222,7 +222,7 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
     val l = lc.decode(is)
     val builder = m.Map.newBuilder[K, V]
     var i = 0
-    while(i < l) {
+    while (i < l) {
       val k = kc.decode(is)
       val v = vc.decode(is)
       builder += (k -> v)

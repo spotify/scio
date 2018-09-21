@@ -24,8 +24,8 @@ import scala.reflect.macros.blackbox
 private[coders] object AvroCoderMacros {
 
   /**
-    * Generate a coder which does not serialize the schema and relies exclusively on types.
-    */
+   * Generate a coder which does not serialize the schema and relies exclusively on types.
+   */
   def staticInvokeCoder[T <: SpecificRecordBase: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
     import c.universe._
     val wtt = weakTypeOf[T]
@@ -44,4 +44,3 @@ private[coders] object AvroCoderMacros {
   }
 
 }
-

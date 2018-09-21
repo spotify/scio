@@ -103,6 +103,10 @@ def previousVersion(currentVersion: String): Option[String] = {
   else Some(s"$x.$y.${z.toInt - 1}")
 }
 
+lazy val scalafmtSettings = Seq(
+  scalafmtOnCompile := true
+)
+
 val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   organization := "com.spotify",
   scalaVersion := "2.12.6",
@@ -201,7 +205,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   },
   buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
   buildInfoPackage := "com.spotify.scio"
-) ++ mimaSettings
+) ++ mimaSettings ++ scalafmtSettings
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
   scalastyleSources in Compile ++= (unmanagedSourceDirectories in IntegrationTest).value,

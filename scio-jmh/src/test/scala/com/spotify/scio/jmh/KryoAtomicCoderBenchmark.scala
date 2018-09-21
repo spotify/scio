@@ -62,14 +62,17 @@ class KryoAtomicCoderBenchmark {
   val derivedListCoder =
     CoderMaterializer.beamWithDefault(Coder[List[SpecializedUserForDerived]])
 
-
   val specializedMapKryoCoder = new KryoAtomicCoder[Map[String, Long]](KryoOptions())
   val derivedMapCoder = CoderMaterializer.beamWithDefault(Coder[Map[String, Long]])
-  val mapExample = (1 to 1000).map { x => (s"stringvalue$x", x.toLong) }.toMap
+  val mapExample = (1 to 1000).map { x =>
+    (s"stringvalue$x", x.toLong)
+  }.toMap
 
   val specializedStringListKryoCoder = new KryoAtomicCoder[List[String]](KryoOptions())
   val derivedStringListCoder = CoderMaterializer.beamWithDefault(Coder[List[String]])
-  val stringListExample = (1 to 1000).map { x => s"stringvalue$x" }.toList
+  val stringListExample = (1 to 1000).map { x =>
+    s"stringvalue$x"
+  }.toList
 
   @Benchmark
   def kryoEncode: Array[Byte] =
@@ -147,19 +150,19 @@ class KryoAtomicCoderBenchmark {
     CoderUtils.decodeFromByteArray(derivedListCoder, derivedListEncoded)
 
   @Benchmark
-  def kryoMapDecode =
+  def kryoMapDecode: Map[String, Long] =
     CoderUtils.decodeFromByteArray(specializedMapKryoCoder, kryoMapEncoded)
 
   @Benchmark
-  def derivedMapDecode =
+  def derivedMapDecode: Map[String, Long] =
     CoderUtils.decodeFromByteArray(derivedMapCoder, derivedMapEncoded)
 
   @Benchmark
-  def kryoStringListDecode =
+  def kryoStringListDecode: Seq[String] =
     CoderUtils.decodeFromByteArray(specializedStringListKryoCoder, kryoStringListEncoded)
 
   @Benchmark
-  def derivedStringListDecode =
+  def derivedStringListDecode: Seq[String] =
     CoderUtils.decodeFromByteArray(derivedStringListCoder, derivedStringListEncoded)
 }
 
