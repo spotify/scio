@@ -25,10 +25,27 @@ private[coders] object CoderMacros {
   val reported: scala.collection.mutable.Set[(String, String)] =
     scala.collection.mutable.Set.empty
 
+  private[this] val SETTING_SHOW_WARN = "show-coder-fallback"
+  private[this] val DEFAULT_SHOW_WARN = true
+  private[this] val KVS = "show-coder-fallback=(true|false)".r
+
+  /**
+   * Makes it possible to configure fallback warnings by passing
+   * "-Xmacro-settings:show-coder-fallback=true" as a Scalac option.
+   */
+  private[this] def showWarn(c: whitebox.Context) =
+    c.settings.collect { case KVS(value) =>
+        value.toBoolean
+    }.headOption.getOrElse(DEFAULT_SHOW_WARN)
+
+
   // scalastyle:off method.length
   def issueFallbackWarning[T: c.WeakTypeTag](c: whitebox.Context)(
     lp: c.Expr[shapeless.LowPriority]): c.Tree = {
     import c.universe._
+
+    val show = showWarn(c)
+
     val wtt = weakTypeOf[T]
     val TypeRef(_, sym, args) = wtt
 
@@ -81,10 +98,10 @@ private[coders] object CoderMacros {
 
     (verbose, alreadyReported) match {
       case (false, false) =>
-        c.echo(c.enclosingPosition, shortMessage.stripMargin)
+        if(show) c.echo(c.enclosingPosition, shortMessage.stripMargin)
         fallback
       case (true, false) =>
-        c.echo(c.enclosingPosition, longMessage.stripMargin)
+        if(show) c.echo(c.enclosingPosition, longMessage.stripMargin)
         verbose = false
         fallback
       case (_, _) =>
