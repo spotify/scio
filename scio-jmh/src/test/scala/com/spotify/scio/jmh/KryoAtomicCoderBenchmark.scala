@@ -150,19 +150,19 @@ class KryoAtomicCoderBenchmark {
     CoderUtils.decodeFromByteArray(derivedListCoder, derivedListEncoded)
 
   @Benchmark
-  def kryoMapDecode =
+  def kryoMapDecode: Map[String, Long] =
     CoderUtils.decodeFromByteArray(specializedMapKryoCoder, kryoMapEncoded)
 
   @Benchmark
-  def derivedMapDecode =
+  def derivedMapDecode: Map[String, Long] =
     CoderUtils.decodeFromByteArray(derivedMapCoder, derivedMapEncoded)
 
   @Benchmark
-  def kryoStringListDecode =
+  def kryoStringListDecode: Seq[String] =
     CoderUtils.decodeFromByteArray(specializedStringListKryoCoder, kryoStringListEncoded)
 
   @Benchmark
-  def derivedStringListDecode =
+  def derivedStringListDecode: Seq[String] =
     CoderUtils.decodeFromByteArray(derivedStringListCoder, derivedStringListEncoded)
 }
 
