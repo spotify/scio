@@ -343,7 +343,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     koder: Coder[K],
     voder: Coder[V]): Seq[(SCollection[(K, V)], SCollection[(K, V)], SCollection[(K, W)])] = {
 
-    val thatBfSIs = that.getOptimalKeysBloomFiltersAsSideInputs(thatNumKeys, fpProb)
+    val thatBfSIs = that.optimalKeysBloomFiltersAsSideInputs(thatNumKeys, fpProb)
     val n = thatBfSIs.size
 
     val thisParts = self.partition(n, _._1.hashCode() % n)
@@ -379,7 +379,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     implicit hash: Hash128[K],
     koder: Coder[K],
     voder: Coder[V]): SCollection[(K, (V, Iterable[A]))] = {
-    val selfBfSideInputs = self.getOptimalKeysBloomFiltersAsSideInputs(thisNumKeys, fpProb)
+    val selfBfSideInputs = self.optimalKeysBloomFiltersAsSideInputs(thisNumKeys, fpProb)
     val n = selfBfSideInputs.size
 
     val thisParts = self.partition(n, _._1.hashCode() % n)
@@ -431,7 +431,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     implicit hash: Hash128[K],
     koder: Coder[K],
     voder: Coder[V]): SCollection[(K, (V, Iterable[A], Iterable[B]))] = {
-    val selfBfSideInputs = self.getOptimalKeysBloomFiltersAsSideInputs(thisNumKeys, fpProb)
+    val selfBfSideInputs = self.optimalKeysBloomFiltersAsSideInputs(thisNumKeys, fpProb)
     val n = selfBfSideInputs.size
 
     val thisParts = self.partition(n, _._1.hashCode() % n)
@@ -477,7 +477,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     voder: Coder[V]): SCollection[(K, (V, Iterable[A], Iterable[B]))] =
     sparseLookup(that1, that2, thisNumKeys, 0.01)
 
-  private[values] def getOptimalKeysBloomFiltersAsSideInputs(thisNumKeys: Long, fpProb: Double)(
+  private[values] def optimalKeysBloomFiltersAsSideInputs(thisNumKeys: Long, fpProb: Double)(
     implicit hash: Hash128[K],
     koder: Coder[K],
     voder: Coder[V]): Seq[SideInput[BF[K]]] = {

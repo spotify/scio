@@ -695,6 +695,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p3 = sc.parallelize(sparseLookup2)
       val p = p1.sparseLookup(p2, p3, 10)
 
+      p should beEmpty
     }
   }
 
