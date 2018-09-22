@@ -35,11 +35,10 @@ private[coders] object CoderMacros {
    */
   private[this] def showWarn(c: whitebox.Context) =
     c.settings
-      .collect {
+      .collectFirst {
         case KVS(value) =>
           value.toBoolean
       }
-      .headOption
       .getOrElse(DEFAULT_SHOW_WARN)
 
   // scalastyle:off method.length
