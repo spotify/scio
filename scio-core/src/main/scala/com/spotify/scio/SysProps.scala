@@ -8,6 +8,11 @@ final case class SysProp(flag: String, description: String) {
   def value: String = sys.props(flag)
 
   def valueOption[T >: String]: Option[T] = sys.props.get(flag)
+
+  // scalastyle:off method.name
+  def value_=[T >: String](t: T): Unit =
+    sys.props(flag) = t.asInstanceOf[String]
+  // scalastyle:on method.name
 }
 
 trait SysProps {
@@ -40,11 +45,13 @@ object SysProps {
   }
 }
 
-object JavaSysProps extends SysProps {
+object CoreSysProps extends SysProps {
 
-  val TmpDir = SysProp("java.io.tmpdir", "temporary directory")
-
+  val Project = SysProp("project", "")
+  val Home = SysProp("java.home", "java home directory")
+  val TmpDir = SysProp("java.io.tmpdir", "java temporary directory")
   val User = SysProp("user.name", "system username")
+  val UserDir = SysProp("user.dir", "user dir")
 
   override def properties: List[SysProp] = List(TmpDir)
 }

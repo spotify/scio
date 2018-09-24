@@ -17,6 +17,7 @@
 
 package com.spotify.scio.io
 
+import com.spotify.scio.{registerSysProps, SysProp}
 import org.apache.beam.sdk.util.{BackOff, BackOffUtils, FluentBackoff, Sleeper}
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
@@ -116,33 +117,19 @@ private final class PollingTaps(private[this] val backOff: BackOff) extends Taps
 
 /** Companion object for [[Taps]]. */
 object Taps extends {
-
-  /** System property key for taps algorithm. */
-  val ALGORITHM_KEY = "taps.algorithm"
+  import TapsSysProps._
 
   /** Default taps algorithm. */
-  val ALGORITHM_DEFAULT = "immediate"
-
-  /** System property key for polling taps maximum interval in milliseconds. */
-  val POLLING_MAXIMUM_INTERVAL_KEY = "taps.polling.maximum_interval"
+  val AlgorithmDefault = "immediate"
 
   /** Default polling taps maximum interval. */
-  val POLLING_MAXIMUM_INTERVAL_DEFAULT = "600000"
-
-  /** System property key for polling taps initial interval in milliseconds. */
-  val POLLING_INITIAL_INTERVAL_KEY = "taps.polling.initial_interval"
+  val PollingMaximumIntervalDefault = "600000"
 
   /** Default polling taps initial interval. */
-  val POLLING_INITIAL_INTERVAL_DEFAULT = "10000"
-
-  /**
-   * System property key for polling taps maximum number of attempts, unlimited if <= 0. Default is
-   * 0.
-   */
-  val POLLING_MAXIMUM_ATTEMPTS_KEY = "taps.polling.maximum_attempts"
+  val PollingInitialIntervalDefault = "10000"
 
   /** Default polling taps maximum number of attempts. */
-  val POLLING_MAXIMUM_ATTEMPTS_DEFAULT = "0"
+  val PollingMaximumAttemptsDefault = "0"
 
   /**
    * Create a new [[Taps]] instance.
@@ -159,16 +146,16 @@ object Taps extends {
    * - `taps.polling.maximum_attempts`: maximum number of attempts, unlimited if <= 0. Default is 0.
    */
   def apply(): Taps = {
-    getPropOrElse(ALGORITHM_KEY, ALGORITHM_DEFAULT) match {
+    Algorithm.value(AlgorithmDefault) match {
       case "immediate" => new ImmediateTaps
       case "polling" =>
         val maxAttempts =
-          getPropOrElse(POLLING_MAXIMUM_ATTEMPTS_KEY, POLLING_MAXIMUM_ATTEMPTS_DEFAULT).toInt
+          PollingMaximumAttempts.value(PollingMaximumAttemptsDefault).toInt
         val initInterval =
-          getPropOrElse(POLLING_INITIAL_INTERVAL_KEY, POLLING_INITIAL_INTERVAL_DEFAULT).toLong
+          PollingInitialInterval.value(PollingInitialIntervalDefault).toLong
         val backOff = if (maxAttempts <= 0) {
           val maxInterval =
-            getPropOrElse(POLLING_MAXIMUM_INTERVAL_KEY, POLLING_MAXIMUM_INTERVAL_DEFAULT).toLong
+            PollingMaximumInterval.value(PollingMaximumIntervalDefault).toLong
           FluentBackoff.DEFAULT
             .withInitialBackoff(Duration.millis(initInterval))
             .withMaxBackoff(Duration.millis(maxInterval))
@@ -184,7 +171,24 @@ object Taps extends {
     }
   }
 
-  @inline private def getPropOrElse(key: String, default: String): String =
-    sys.props.getOrElse(key, default)
+}
+
+@registerSysProps
+object TapsSysProps {
+
+  /** System property key for taps algorithm. */
+  val Algorithm = SysProp("taps.algorithm", "")
+
+  /** System property key for polling taps maximum interval in milliseconds. */
+  val PollingMaximumInterval = SysProp("taps.polling.maximum_interval", "")
+
+  /** System property key for polling taps initial interval in milliseconds. */
+  val PollingInitialInterval = SysProp("taps.polling.initial_interval", "")
+
+  /**
+   * System property key for polling taps maximum number of attempts, unlimited if <= 0. Default is
+   * 0.
+   */
+  val PollingMaximumAttempts = SysProp("taps.polling.maximum_attempts", "")
 
 }

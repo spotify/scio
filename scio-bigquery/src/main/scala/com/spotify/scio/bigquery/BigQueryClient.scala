@@ -34,6 +34,7 @@ import com.google.cloud.hadoop.util.{ApiErrorExtractor, ChainingHttpRequestIniti
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
+import com.spotify.scio.CoreSysProps
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
@@ -1028,51 +1029,23 @@ class BigQueryClient private (private val projectId: String, _credentials: Crede
 /** Companion object for [[BigQueryClient]]. */
 object BigQueryClient {
 
-  /** System property key for billing project. */
-  val PROJECT_KEY: String = "bigquery.project"
-
-  /** System property key for JSON secret path. */
-  val SECRET_KEY: String = "bigquery.secret"
-
-  /** System property key for local schema cache directory. */
-  val CACHE_DIRECTORY_KEY: String = "bigquery.cache.directory"
-
   /** Default cache directory. */
-  val CACHE_DIRECTORY_DEFAULT: String = sys.props("user.dir") + "/.bigquery"
-
-  /** System property key for enabling or disabling scio bigquery caching */
-  val CACHE_ENABLED_KEY: String = "bigquery.cache.enabled"
+  val CACHE_DIRECTORY_DEFAULT: String =
+    CoreSysProps.UserDir.value + "/.bigquery"
 
   /** Default cache behavior is enabled. */
   val CACHE_ENABLED_DEFAULT: Boolean = true
 
-  /** System property key for priority, "BATCH" or "INTERACTIVE". */
-  val PRIORITY_KEY = "bigquery.priority"
-
-  /**
-   * System property key for timeout in milliseconds to establish a connection.
-   * Default is 20000 (20 seconds). 0 for an infinite timeout.
-   */
-  val CONNECT_TIMEOUT_MS_KEY: String = "bigquery.connect_timeout"
-
-  /**
-   * System property key for timeout in milliseconds to read data from an established connection.
-   * Default is 20000 (20 seconds). 0 for an infinite timeout.
-   */
-  val READ_TIMEOUT_MS_KEY: String = "bigquery.read_timeout"
-
   private val SCOPES = List(BigqueryScopes.BIGQUERY).asJava
 
   private lazy val instance: BigQueryClient =
-    if (sys.props(PROJECT_KEY) != null) {
-      BigQueryClient(sys.props(PROJECT_KEY))
-    } else {
+    BigQuerySysProps.Project.valueOption.map(BigQueryClient(_)).getOrElse {
       val project = new DefaultProjectFactory().create(null)
       if (project != null) {
         BigQueryClient(project)
       } else {
-        throw new RuntimeException(
-          s"Property $PROJECT_KEY not set. Use -D$PROJECT_KEY=<BILLING_PROJECT>")
+        val flag = BigQuerySysProps.Project.flag
+        throw new RuntimeException(s"Property $flag not set. Use -D$flag=<BILLING_PROJECT>")
       }
     }
 
@@ -1095,14 +1068,14 @@ object BigQueryClient {
   def defaultInstance(): BigQueryClient = instance
 
   /** Create a new BigQueryClient instance with the given project. */
-  def apply(project: String): BigQueryClient = {
-    val secret = sys.props(SECRET_KEY)
-    if (secret == null) {
-      new BigQueryClient(project)
-    } else {
-      BigQueryClient(project, new File(secret))
-    }
-  }
+  def apply(project: String): BigQueryClient =
+    BigQuerySysProps.Secret.valueOption
+      .map { secret =>
+        BigQueryClient(project, new File(secret))
+      }
+      .getOrElse {
+        new BigQueryClient(project)
+      }
 
   /** Create a new BigQueryClient instance with the given project and credential. */
   def apply(project: String, credentials: Credentials): BigQueryClient =
@@ -1113,24 +1086,19 @@ object BigQueryClient {
     new BigQueryClient(project, secretFile)
 
   private def isCacheEnabled: Boolean =
-    Option(sys.props(CACHE_ENABLED_KEY))
+    BigQuerySysProps.CacheEnabled.valueOption
       .flatMap(x => Try(x.toBoolean).toOption)
       .getOrElse(CACHE_ENABLED_DEFAULT)
 
   private def cacheDirectory: String =
-    getPropOrElse(CACHE_DIRECTORY_KEY, CACHE_DIRECTORY_DEFAULT)
+    BigQuerySysProps.CacheDirectory.value(CACHE_DIRECTORY_DEFAULT)
 
   private def connectTimeoutMs: Option[Int] =
-    Option(sys.props(CONNECT_TIMEOUT_MS_KEY)).map(_.toInt)
+    BigQuerySysProps.ConnectTimeoutMs.valueOption.map(_.toInt)
 
   private def readTimeoutMs: Option[Int] =
-    Option(sys.props(READ_TIMEOUT_MS_KEY)).map(_.toInt)
+    BigQuerySysProps.ReadTimeoutMs.valueOption.map(_.toInt)
 
-  private def priority: Option[String] = Option(sys.props(PRIORITY_KEY))
-
-  private def getPropOrElse(key: String, default: String): String = {
-    val value = sys.props(key)
-    if (value == null) default else value
-  }
+  private def priority: Option[String] = BigQuerySysProps.Priority.valueOption
 
 }

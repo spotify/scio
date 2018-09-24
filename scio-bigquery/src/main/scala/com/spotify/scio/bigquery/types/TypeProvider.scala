@@ -24,9 +24,10 @@ import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
+import com.spotify.scio.CoreSysProps
 import com.spotify.scio.bigquery.types.MacroUtil._
 import com.spotify.scio.bigquery.validation.{OverrideTypeProvider, OverrideTypeProviderFinder}
-import com.spotify.scio.bigquery.{BigQueryClient, BigQueryPartitionUtil, BigQueryUtil}
+import com.spotify.scio.bigquery.{BigQueryClient, BigQueryPartitionUtil, BigQuerySysProps, BigQueryUtil}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -52,7 +53,7 @@ private[types] object TypeProvider {
 
     val ta =
       annottees.map(_.tree) match {
-        case (q"class $cName") :: tail =>
+        case q"class $cName" :: tail =>
           List(q"""
             implicit def bqTable: ${p(c, SType)}.Table[$cName] =
               new ${p(c, SType)}.Table[$cName]{
@@ -366,17 +367,14 @@ private[types] object TypeProvider {
    * This is used to mitigate lack of support for Scala macros in IntelliJ.
    */
   private def shouldDumpClassesForPlugin =
-    sys.props("bigquery.plugin.disable.dump") == null ||
-      !sys.props("bigquery.plugin.disable.dump").toBoolean
+    !BigQuerySysProps.DisableDump.value("true").toBoolean
 
   private def getBQClassCacheDir: Path = {
     // TODO: add this as key/value settings with default etc
-    if (sys.props("bigquery.class.cache.directory") != null) {
-      Paths.get(sys.props("bigquery.class.cache.directory"))
-    } else {
+    BigQuerySysProps.Debug.valueOption.map(Paths.get(_)).getOrElse {
       Paths
-        .get(sys.props("java.io.tmpdir"))
-        .resolve(sys.props("user.name"))
+        .get(CoreSysProps.TmpDir.value)
+        .resolve(CoreSysProps.User.value)
         .resolve("bigquery-classes")
     }
   }

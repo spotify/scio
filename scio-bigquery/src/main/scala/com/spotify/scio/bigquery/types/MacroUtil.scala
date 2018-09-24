@@ -70,7 +70,7 @@ private[types] object MacroUtil {
   // Debugging
 
   @inline def debug(msg: Any): Unit = {
-    if (BigQuerySysProps.Debug.value != null && BigQuerySysProps.Debug.value.toBoolean) {
+    if (BigQuerySysProps.Debug.value("false").toBoolean) {
       logger.info(msg.toString)
     }
   }
