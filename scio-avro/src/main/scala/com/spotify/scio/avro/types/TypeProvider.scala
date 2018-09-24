@@ -390,7 +390,7 @@ private[types] object TypeProvider {
       Paths
         .get(CoreSysProps.TmpDir.value)
         .resolve(CoreSysProps.User.value)
-        .resolve("avro-classes")
+        .resolve("bigquery-classes")
     }
   }
 

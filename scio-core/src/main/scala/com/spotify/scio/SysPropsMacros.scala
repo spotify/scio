@@ -21,7 +21,7 @@ import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 
-class registerSysProps extends StaticAnnotation {
+final class registerSysProps extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro registerSysPropsMacro.impl
 }
 

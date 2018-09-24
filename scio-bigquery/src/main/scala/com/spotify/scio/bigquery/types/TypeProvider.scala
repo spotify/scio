@@ -27,7 +27,12 @@ import com.google.common.io.Files
 import com.spotify.scio.CoreSysProps
 import com.spotify.scio.bigquery.types.MacroUtil._
 import com.spotify.scio.bigquery.validation.{OverrideTypeProvider, OverrideTypeProviderFinder}
-import com.spotify.scio.bigquery.{BigQueryClient, BigQueryPartitionUtil, BigQuerySysProps, BigQueryUtil}
+import com.spotify.scio.bigquery.{
+  BigQueryClient,
+  BigQueryPartitionUtil,
+  BigQuerySysProps,
+  BigQueryUtil
+}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
