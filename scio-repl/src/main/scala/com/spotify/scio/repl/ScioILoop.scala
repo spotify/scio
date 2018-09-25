@@ -57,7 +57,7 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
 
   settings = new GenericRunnerSettings(echo)
 
-  override def printWelcome() {}
+  override def printWelcome(): Unit = {}
 
   override def prompt: String =
     if (scioIsInitialized) {

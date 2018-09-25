@@ -39,7 +39,7 @@ import scala.concurrent.Future
 package object bigtable {
 
   /** Enhanced version of `Row` with convenience methods. */
-  implicit class RichRow(val self: Row) extends AnyVal {
+  implicit class RichRow(private val self: Row) extends AnyVal {
 
     /** Return the `Cell`s for the specific column. */
     def getColumnCells(familyName: String, columnQualifier: ByteString): List[Cell] =
@@ -100,7 +100,7 @@ package object bigtable {
   private[this] val DEFAULT_SLEEP_DURATION = Duration.standardMinutes(20)
 
   /** Enhanced version of [[ScioContext]] with Bigtable methods. */
-  implicit class BigtableScioContext(val self: ScioContext) extends AnyVal {
+  implicit class BigtableScioContext(private val self: ScioContext) extends AnyVal {
 
     /** Get an SCollection for a Bigtable table. */
     def bigtable(projectId: String,
@@ -212,7 +212,7 @@ package object bigtable {
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Bigtable methods.
    */
-  implicit class BigtableSCollection[T](val self: SCollection[(ByteString, Iterable[T])])
+  implicit class BigtableSCollection[T](private val self: SCollection[(ByteString, Iterable[T])])
       extends AnyVal {
 
     /**

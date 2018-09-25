@@ -45,7 +45,7 @@ package object dynamic {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
    * destinations methods.
    */
-  implicit class DynamicIoSCollection[T](val self: SCollection[T]) extends AnyVal {
+  implicit class DynamicIoSCollection[T](private val self: SCollection[T]) extends AnyVal {
 
     /**
      * Save this SCollection as Avro files specified by the destination function.

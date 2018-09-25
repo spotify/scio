@@ -48,7 +48,7 @@ package object avro {
   val Predicate = me.lyh.parquet.avro.Predicate
 
   /** Enhanced version of [[ScioContext]] with Parquet Avro methods. */
-  implicit class ParquetAvroScioContext(val self: ScioContext) extends AnyVal {
+  implicit class ParquetAvroScioContext(private val self: ScioContext) extends AnyVal {
 
     /**
      * Get an SCollection for a Parquet file as Avro records. Since Avro records produced by

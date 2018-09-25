@@ -121,7 +121,7 @@ class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader, detachedParent:
    */
   private def addVirtualDirectoryToJar(dir: VirtualDirectory,
                                        entryPath: String,
-                                       jarStream: JarOutputStream) {
+                                       jarStream: JarOutputStream): Unit = {
     dir.foreach { file =>
       if (file.isDirectory) {
         // Recursively descend into subdirectories, adjusting the package name as we do.

@@ -42,7 +42,7 @@ package object checkpoint {
   type CheckpointIO[T] = ObjectFileIO[T]
   val CheckpointIO = ObjectFileIO
 
-  implicit class CheckpointScioContext(val self: ScioContext) extends AnyVal {
+  implicit class CheckpointScioContext(private val self: ScioContext) extends AnyVal {
 
     /**
      * Checkpoints are useful for debugging one part of a long flow, when you would otherwise have

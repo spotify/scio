@@ -31,7 +31,7 @@ import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 object JavaConverters {
 
   /** Enhanced version of [[String]] with Beam Java SDK converter methods. */
-  implicit class RichString(val s: String) extends AnyVal {
+  implicit class RichString(private val s: String) extends AnyVal {
 
     /** Convert the string to a [[ResourceId]]. */
     def toResourceId: ResourceId =
@@ -63,7 +63,7 @@ object JavaConverters {
   }
 
   /** Enhanced version of [[Any]] with Beam Java SDK converter methods. */
-  implicit class RichAny[T](val value: T) extends AnyVal {
+  implicit class RichAny[T](private val value: T) extends AnyVal {
 
     /**
      * Convert the value to a

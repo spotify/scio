@@ -82,7 +82,7 @@ import scala.collection.JavaConverters._
 package object sparkey {
 
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
-  implicit class SparkeyScioContext(val self: ScioContext) extends AnyVal {
+  implicit class SparkeyScioContext(private val self: ScioContext) extends AnyVal {
 
     /**
      * Create a SideInput of `SparkeyReader` from a [[SparkeyUri]] base path, to be used with
@@ -164,7 +164,7 @@ package object sparkey {
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
    */
-  implicit class SparkeySCollection(val self: SCollection[SparkeyUri]) extends AnyVal {
+  implicit class SparkeySCollection(private val self: SCollection[SparkeyUri]) extends AnyVal {
 
     /**
      * Convert this SCollection to a SideInput of `SparkeyReader`, to be used with
@@ -199,7 +199,7 @@ package object sparkey {
   }
 
   sealed trait SparkeyWritable[K, V] extends Serializable {
-    private[sparkey] def put(w: SparkeyWriter, key: K, value: V)
+    private[sparkey] def put(w: SparkeyWriter, key: K, value: V): Unit
   }
 
   implicit val stringSparkeyWritable = new SparkeyWritable[String, String] {

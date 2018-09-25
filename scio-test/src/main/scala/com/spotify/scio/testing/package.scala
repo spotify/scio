@@ -30,7 +30,7 @@ package object testing {
     TestStream.create(ScioUtil.getScalaCoder[T])
 
   /** Enhanced version of [[ScioContext]] with streaming methods. */
-  implicit class TestStreamScioContext(val self: ScioContext) extends AnyVal {
+  implicit class TestStreamScioContext(private val self: ScioContext) extends AnyVal {
 
     /** Distribute a local `TestStream` to form an SCollection. */
     def testStream[T: ClassTag](ts: TestStream[T]): SCollection[T] =
