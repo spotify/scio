@@ -21,6 +21,7 @@ import java.io.File
 import java.nio.file.{Files, Path}
 import java.util.UUID
 
+import com.spotify.scio.CoreSysProps
 import org.scalatest._
 
 import scala.concurrent.Await
@@ -31,9 +32,9 @@ class TapsTest extends FlatSpec with Matchers {
   val data = Seq("a", "b", "c")
 
   private def tmpFile: Path =
-    new File(new File(sys.props("java.io.tmpdir")), "taps-test-" + UUID.randomUUID()).toPath
+    new File(new File(CoreSysProps.TmpDir.value), "taps-test-" + UUID.randomUUID()).toPath
 
-  private def writeText(p: Path, data: Seq[String]) = {
+  private def writeText(p: Path, data: Seq[String]): Unit = {
     val writer = Files.newBufferedWriter(p)
     data.foreach { s =>
       writer.write(s)
@@ -43,7 +44,7 @@ class TapsTest extends FlatSpec with Matchers {
   }
 
   "ImmediateTap" should "work with text file" in {
-    sys.props(Taps.ALGORITHM_KEY) = "immediate"
+    TapsSysProps.Algorithm.value = "immediate"
     val f = tmpFile
     writeText(f, data)
     val future = Taps().textFile(f.toString)
@@ -54,7 +55,7 @@ class TapsTest extends FlatSpec with Matchers {
   }
 
   it should "fail missing text file" in {
-    sys.props(Taps.ALGORITHM_KEY) = "immediate"
+    TapsSysProps.Algorithm.value = "immediate"
     val f = tmpFile
     val future = Taps().textFile(f.toString)
     future.isCompleted shouldBe true
@@ -62,9 +63,9 @@ class TapsTest extends FlatSpec with Matchers {
   }
 
   "PollingTap" should "work with text file" in {
-    sys.props(Taps.ALGORITHM_KEY) = "polling"
-    sys.props(Taps.POLLING_INITIAL_INTERVAL_KEY) = "1000"
-    sys.props(Taps.POLLING_MAXIMUM_ATTEMPTS_KEY) = "1"
+    TapsSysProps.Algorithm.value = "polling"
+    TapsSysProps.PollingInitialInterval.value = "1000"
+    TapsSysProps.PollingMaximumAttempts.value = "1"
     val f = tmpFile
     val future = Taps().textFile(f.toString)
     future.isCompleted shouldBe false
@@ -77,9 +78,9 @@ class TapsTest extends FlatSpec with Matchers {
   }
 
   it should "fail missing text file" in {
-    sys.props(Taps.ALGORITHM_KEY) = "polling"
-    sys.props(Taps.POLLING_INITIAL_INTERVAL_KEY) = "1000"
-    sys.props(Taps.POLLING_MAXIMUM_ATTEMPTS_KEY) = "1"
+    TapsSysProps.Algorithm.value = "polling"
+    TapsSysProps.PollingInitialInterval.value = "1000"
+    TapsSysProps.PollingMaximumAttempts.value = "1"
     val f = tmpFile
     val future = Taps().textFile(f.toString)
     future.isCompleted shouldBe false

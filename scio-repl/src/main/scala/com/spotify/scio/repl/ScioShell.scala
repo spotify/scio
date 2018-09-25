@@ -17,6 +17,8 @@
 
 package com.spotify.scio.repl
 
+import com.spotify.scio.bigquery.BigQuerySysProps
+
 import scala.reflect.io.File
 import scala.tools.nsc.util.ClassPath
 import scala.tools.nsc.{GenericRunnerCommand, MainGenericRunner}
@@ -106,7 +108,7 @@ trait BaseScioShell extends MainGenericRunner {
 
   /** Runs an instance of the shell. */
   def main(args: Array[String]): Unit = {
-    sys.props("bigquery.plugin.disable.dump") = "true"
+    sys.props(BigQuerySysProps.DisableDump.flag) = "true"
     val retVal = process(args)
     if (!retVal) {
       sys.exit(1)
