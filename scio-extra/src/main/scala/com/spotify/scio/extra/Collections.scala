@@ -78,25 +78,25 @@ object Collections {
   }
 
   /** Enhance Array by adding a `top` method. */
-  implicit class TopArray[T](val self: Array[T]) extends AnyVal {
+  implicit class TopArray[T](private val self: Array[T]) extends AnyVal {
     def top(num: Int)(implicit ord: Ordering[T]): Iterable[T] =
       topImpl(self, num, ord)
   }
 
   /** Enhance Iterable by adding a `top` method. */
-  implicit class TopIterable[T](val self: Iterable[T]) extends AnyVal {
+  implicit class TopIterable[T](private val self: Iterable[T]) extends AnyVal {
     def top(num: Int)(implicit ord: Ordering[T]): Iterable[T] =
       topImpl(self, num, ord)
   }
 
   /** Enhance Array by adding a `topByKey` method. */
-  implicit class TopByKeyArray[K, V](val self: Array[(K, V)]) extends AnyVal {
+  implicit class TopByKeyArray[K, V](private val self: Array[(K, V)]) extends AnyVal {
     def topByKey(num: Int)(implicit ord: Ordering[V]): Map[K, Iterable[V]] =
       topByKeyImpl(self, num, ord)
   }
 
   /** Enhance Iterable by adding a `topByKey` method. */
-  implicit class TopByKeyIterable[K, V](val self: Iterable[(K, V)]) extends AnyVal {
+  implicit class TopByKeyIterable[K, V](private val self: Iterable[(K, V)]) extends AnyVal {
     def topByKey(num: Int)(implicit ord: Ordering[V]): Map[K, Iterable[V]] =
       topByKeyImpl(self, num, ord)
   }

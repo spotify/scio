@@ -107,7 +107,7 @@ trait BaseScioShell extends MainGenericRunner {
   // scalastyle:on method.length
 
   /** Runs an instance of the shell. */
-  def main(args: Array[String]) {
+  def main(args: Array[String]): Unit = {
     sys.props(BigQuerySysProps.DisableDump.flag) = "true"
     val retVal = process(args)
     if (!retVal) {

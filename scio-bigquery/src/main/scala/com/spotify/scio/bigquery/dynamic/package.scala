@@ -43,7 +43,7 @@ package object dynamic {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
    * destinations methods.
    */
-  implicit class DynamicBigQuerySCollection[T](val self: SCollection[T]) extends AnyVal {
+  implicit class DynamicBigQuerySCollection[T](private val self: SCollection[T]) extends AnyVal {
 
     /**
      * Save this SCollection to dynamic BigQuery tables using the table and schema specified by the

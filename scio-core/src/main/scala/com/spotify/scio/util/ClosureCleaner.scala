@@ -260,7 +260,7 @@ private final class InnerClosureFinder(output: MSet[Class[_]]) extends ClassVisi
                                    owner: String,
                                    name: String,
                                    desc: String,
-                                   itf: Boolean) {
+                                   itf: Boolean): Unit = {
         val argTypes = Type.getArgumentTypes(desc)
         if (op == INVOKESPECIAL && name == "<init>" && argTypes.nonEmpty
             && argTypes(0).toString.startsWith("L")

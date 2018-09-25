@@ -41,7 +41,7 @@ package object transforms {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with
    * [[java.net.URI URI]] methods.
    */
-  implicit class URISCollection(val self: SCollection[URI]) extends AnyVal {
+  implicit class URISCollection(private val self: SCollection[URI]) extends AnyVal {
 
     /**
      * Download [[java.net.URI URI]] elements and process as local [[java.nio.file.Path Path]]s.
@@ -160,7 +160,7 @@ package object transforms {
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with pipe methods.
    */
-  implicit class PipeSCollection(val self: SCollection[String]) extends AnyVal {
+  implicit class PipeSCollection(private val self: SCollection[String]) extends AnyVal {
 
     /**
      * Pipe elements through an external command via StdIn & StdOut.
@@ -250,7 +250,8 @@ package object transforms {
   }
 
   /** Enhanced version of `AsyncLookupDoFn.Try` with convenience methods. */
-  implicit class RichAsyncLookupDoFnTry[A](val self: AsyncLookupDoFn.Try[A]) extends AnyVal {
+  implicit class RichAsyncLookupDoFnTry[A](private val self: AsyncLookupDoFn.Try[A])
+      extends AnyVal {
 
     /** Convert this `AsyncLookupDoFn.Try` to a Scala `Try`. */
     def asScala: Try[A] =

@@ -169,7 +169,7 @@ object Iterators {
   }
 
   /** Enhance Iterator by adding a `timeSeries` method. */
-  implicit class RichIterator[T](val self: Iterator[T]) extends AnyVal {
+  implicit class RichIterator[T](private val self: Iterator[T]) extends AnyVal {
 
     /**
      * Convert this iterator to a [[TimeSeriesIterator]].

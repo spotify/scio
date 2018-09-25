@@ -22,7 +22,7 @@ import com.spotify.scio.coders.Coder
 
 package object repl {
 
-  implicit class ReplSCollection[T](val self: SCollection[T]) extends AnyVal {
+  implicit class ReplSCollection[T](private val self: SCollection[T]) extends AnyVal {
 
     /** Convenience method to close the current [[ScioContext]] and collect elements. */
     def closeAndCollect()(implicit c: Coder[T]): Iterator[T] = {
