@@ -762,7 +762,7 @@ lazy val scioRepl: Project = Project(
   "scio-repl",
   file("scio-repl")
 ).settings(
-    commonSettings,
+    commonSettings ++ macroSettings,
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,

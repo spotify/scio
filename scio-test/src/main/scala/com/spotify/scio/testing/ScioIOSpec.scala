@@ -34,7 +34,7 @@ trait ScioIOSpec extends PipelineSpec {
 
   def testTap[T: Coder](xs: Seq[T])(writeFn: (SCollection[T], String) => Future[Tap[T]])(
     suffix: String): Unit = {
-    val tmpDir = new File(new File(sys.props("java.io.tmpdir")), "scio-test-" + UUID.randomUUID())
+    val tmpDir = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
 
     val sc = ScioContext()
     val data = sc.parallelize(xs)

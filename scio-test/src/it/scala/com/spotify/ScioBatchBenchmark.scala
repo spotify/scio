@@ -335,7 +335,7 @@ abstract class Benchmark(val extraConfs: Map[String, Array[String]] = null) {
   def run(projectId: String,
           prefix: String,
           args: Array[String]): Iterable[Future[BenchmarkResult]] = {
-    val username = sys.props("user.name")
+    val username = CoreSysProps.User.value
     configurations
       .map {
         case (confName, extraArgs) =>

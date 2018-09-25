@@ -159,7 +159,7 @@ abstract class StreamingBenchmark {
   def run(projectId: String,
           prefix: String,
           args: Array[String]): (String, ScioResult) = {
-    val username = sys.props("user.name")
+    val username = CoreSysProps.User.value
     val buildNum = circleCIEnv.map(_.buildNum).getOrElse(-1L)
 
     val (sc, _) = ContextAndArgs(args)

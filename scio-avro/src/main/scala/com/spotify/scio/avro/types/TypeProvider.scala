@@ -25,6 +25,8 @@ import java.nio.file.{Path, Paths}
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
+import com.spotify.scio.CoreSysProps
+import com.spotify.scio.avro.AvroSysProps
 import com.spotify.scio.avro.types.MacroUtil._
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Type._
@@ -380,17 +382,14 @@ private[types] object TypeProvider {
    * This is used to mitigate lack of support for Scala macros in IntelliJ.
    */
   private def shouldDumpClassesForPlugin =
-    sys.props("bigquery.plugin.disable.dump") == null ||
-      !sys.props("bigquery.plugin.disable.dump").toBoolean
+    !AvroSysProps.DisableDump.value("true").toBoolean
 
   private def getBQClassCacheDir: Path = {
     // TODO: add this as key/value settings with default etc
-    if (sys.props("bigquery.class.cache.directory") != null) {
-      Paths.get(sys.props("bigquery.class.cache.directory"))
-    } else {
+    AvroSysProps.Debug.valueOption.map(Paths.get(_)).getOrElse {
       Paths
-        .get(sys.props("java.io.tmpdir"))
-        .resolve(sys.props("user.name"))
+        .get(CoreSysProps.TmpDir.value)
+        .resolve(CoreSysProps.User.value)
         .resolve("bigquery-classes")
     }
   }

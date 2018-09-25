@@ -20,7 +20,7 @@ package com.spotify.scio.runners.dataflow
 import java.io.File
 import java.net.URLClassLoader
 
-import com.spotify.scio.RunnerContext
+import com.spotify.scio.{CoreSysProps, RunnerContext}
 import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions
 import org.apache.beam.sdk.options.PipelineOptions
@@ -57,8 +57,8 @@ case object DataflowContext extends RunnerContext {
             "Current ClassLoader is '" + classLoader + "' only URLClassLoaders are supported")
 
     // exclude jars from JAVA_HOME and files from current directory
-    val javaHome = new File(sys.props("java.home")).getCanonicalPath
-    val userDir = new File(sys.props("user.dir")).getCanonicalPath
+    val javaHome = new File(CoreSysProps.Home.value).getCanonicalPath
+    val userDir = new File(CoreSysProps.UserDir.value).getCanonicalPath
 
     val classPathJars = classLoader
       .asInstanceOf[URLClassLoader]

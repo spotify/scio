@@ -17,6 +17,7 @@
 
 package com.spotify.scio.bigquery.types
 
+import com.spotify.scio.bigquery.BigQuerySysProps
 import org.slf4j.LoggerFactory
 
 import scala.reflect.macros._
@@ -69,9 +70,7 @@ private[types] object MacroUtil {
   // Debugging
 
   @inline def debug(msg: Any): Unit = {
-    if (sys.props("bigquery.types.debug") != null && sys
-          .props("bigquery.types.debug")
-          .toBoolean) {
+    if (BigQuerySysProps.Debug.value("false").toBoolean) {
       logger.info(msg.toString)
     }
   }
