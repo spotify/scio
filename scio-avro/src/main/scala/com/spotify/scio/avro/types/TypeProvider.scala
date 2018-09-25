@@ -386,7 +386,7 @@ private[types] object TypeProvider {
 
   private def getBQClassCacheDir: Path = {
     // TODO: add this as key/value settings with default etc
-    AvroSysProps.Debug.valueOption[String].map(Paths.get(_)).getOrElse {
+    AvroSysProps.Debug.valueOption.map(Paths.get(_)).getOrElse {
       Paths
         .get(CoreSysProps.TmpDir.value)
         .resolve(CoreSysProps.User.value)

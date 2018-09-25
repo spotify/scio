@@ -20,15 +20,15 @@ package com.spotify.scio
 import com.google.common.reflect.ClassPath
 
 final case class SysProp(flag: String, description: String) {
-  def value[T >: String](default: => T): T = sys.props.getOrElse(flag, default)
+  def value(default: => String): String = sys.props.getOrElse(flag, default)
 
   def value: String = sys.props(flag)
 
-  def valueOption[T >: String]: Option[T] = sys.props.get(flag)
+  def valueOption: Option[String] = sys.props.get(flag)
 
   // scalastyle:off method.name
-  def value_=[T >: String](t: T): Unit =
-    sys.props(flag) = t.asInstanceOf[String]
+  def value_=(str: String): Unit =
+    sys.props(flag) = str
   // scalastyle:on method.name
 }
 

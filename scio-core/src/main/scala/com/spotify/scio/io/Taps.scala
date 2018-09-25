@@ -17,7 +17,7 @@
 
 package com.spotify.scio.io
 
-import com.spotify.scio.{registerSysProps, SysProp}
+import com.spotify.scio.{registerSysProps, SysProp, SysProps}
 import org.apache.beam.sdk.util.{BackOff, BackOffUtils, FluentBackoff, Sleeper}
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
@@ -173,22 +173,24 @@ object Taps extends {
 
 }
 
-@registerSysProps
-object TapsSysProps {
+object TapsSysProps extends SysProps {
 
-  /** System property key for taps algorithm. */
-  val Algorithm = SysProp("taps.algorithm", "")
+  val Algorithm = SysProp("taps.algorithm", "System property key for taps algorithm")
+  val PollingMaximumInterval = SysProp(
+    "taps.polling.maximum_interval",
+    "System property key for polling taps maximum interval in milliseconds")
+  val PollingInitialInterval = SysProp(
+    "taps.polling.initial_interval",
+    "System property key for polling taps initial interval in milliseconds")
+  val PollingMaximumAttempts = SysProp(
+    "taps.polling.maximum_attempts",
+    "System property key for polling taps maximum number of attempts, unlimited if <= 0. " +
+      "Default is 0")
 
-  /** System property key for polling taps maximum interval in milliseconds. */
-  val PollingMaximumInterval = SysProp("taps.polling.maximum_interval", "")
-
-  /** System property key for polling taps initial interval in milliseconds. */
-  val PollingInitialInterval = SysProp("taps.polling.initial_interval", "")
-
-  /**
-   * System property key for polling taps maximum number of attempts, unlimited if <= 0. Default is
-   * 0.
-   */
-  val PollingMaximumAttempts = SysProp("taps.polling.maximum_attempts", "")
-
+  override def properties: List[SysProp] = List(
+    Algorithm,
+    PollingMaximumInterval,
+    PollingInitialInterval,
+    PollingMaximumAttempts
+  )
 }
