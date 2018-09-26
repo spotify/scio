@@ -133,10 +133,15 @@ object ContextAndArgs {
         Console.out.println(Help[T].help)
         sys.exit(0)
       case Right((_, usage, help, _)) if usage =>
+        SysProps.properties
+          .map(_.show)
+          .foreach(Console.out.println)
+
         Console.out.println(Help[T].help)
         for {
           i <- PipelineOptionsFactory.getRegisteredOptions.asScala
         } PipelineOptionsFactory.printHelp(Console.out, i)
+
         sys.exit(0)
       case Right((Right(t), usage, help, _)) =>
         val (ctx, _) = ContextAndArgs(remainingArgs)

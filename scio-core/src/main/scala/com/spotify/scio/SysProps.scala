@@ -30,10 +30,19 @@ final case class SysProp(flag: String, description: String) {
   def value_=(str: String): Unit =
     sys.props(flag) = str
   // scalastyle:on method.name
+
+  def show: String =
+    s"-D$flag=<String>\n\t$description"
 }
 
 trait SysProps {
   def properties: List[SysProp]
+
+  def show: String = {
+    val props = properties.map(p => s"  ${p.show}").mkString("\n")
+    val name = this.getClass.getName.replace("$", "")
+    s"$name:\n$props\n"
+  }
 }
 
 object SysProps {
