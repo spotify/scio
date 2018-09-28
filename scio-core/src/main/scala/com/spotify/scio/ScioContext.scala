@@ -109,6 +109,7 @@ object ContextAndArgs {
   def typed[T: Parser: Help](args: Array[String]): (ScioContext, T) = {
     // limit the options passed to case-app
     // to options supported in T
+    // fail if there are unsupported options
     val supportedCustomArgs =
       Parser[T].args
         .flatMap { a =>
@@ -144,8 +145,13 @@ object ContextAndArgs {
 
         sys.exit(0)
       case Right((Right(t), usage, help, _)) =>
-        val (ctx, _) = ContextAndArgs(remainingArgs)
-        (ctx, t)
+        val (ctx, unused) = ContextAndArgs(remainingArgs)
+        if (unused.asMap.isEmpty) {
+          (ctx, t)
+        } else {
+          Console.err.println("Unknown arguments: " + unused.asMap.keys.mkString(", "))
+          sys.exit(1)
+        }
       case Right((Left(message), usage, help, _)) =>
         Console.err.println(message.message)
         sys.exit(1)
