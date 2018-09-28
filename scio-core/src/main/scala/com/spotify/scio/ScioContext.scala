@@ -234,6 +234,16 @@ object ScioContext {
     }
   }
 
+  def parseOptions[T <: PipelineOptions: ClassTag](args: Array[String],
+                                                   withValidation: Boolean = false): T = {
+    val (opts, extra) = parseArguments[T](args)
+    val extraArgs = extra.asMap.keys
+    if (extraArgs.nonEmpty) {
+      throw new IllegalArgumentException("Unsupported arguments: " + extraArgs.mkString(", "))
+    }
+    opts
+  }
+
   import scala.language.implicitConversions
 
   /** Implicit conversion from ScioContext to DistCacheScioContext. */
