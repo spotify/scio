@@ -9,7 +9,7 @@ lazy val commonSettings = Defaults.coreDefaultSettings ++ Seq(
   organization          := "com.spotify",
   // Semantic versioning http://semver.org/
   version               := "0.1.0-SNAPSHOT",
-  scalaVersion          := "2.12.6",
+  scalaVersion          := "2.12.7",
   scalacOptions         ++= Seq("-target:jvm-1.8",
                                 "-deprecation",
                                 "-feature",
