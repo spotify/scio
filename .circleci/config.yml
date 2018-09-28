@@ -3,7 +3,7 @@
 ####################
 
 scala_211_version: &scala_211_version 2.11.12
-scala_212_version: &scala_212_version 2.12.6
+scala_212_version: &scala_212_version 2.12.7
 
 common_settings: &common_settings
   working_directory: ~/scio
