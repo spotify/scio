@@ -228,4 +228,10 @@ class CodersTest extends FlatSpec with Matchers {
     checkFallback(PrivateClass(42L))
   }
 
+  it should "not derive Coders for org.apache.beam.sdk.values.Row" in {
+    import org.apache.beam.sdk.values.Row
+    "Coder[Row]" shouldNot compile
+    "Coder.gen[Row]" shouldNot compile
+  }
+
 }

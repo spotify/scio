@@ -734,7 +734,8 @@ lazy val scioExamples: Project = Project(
       "mysql" % "mysql-connector-java" % "5.1.+",
       "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.2",
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
+      "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion
     ),
     addCompilerPlugin(paradiseDependency),
     // exclude problematic sources if we don't have GCP credentials

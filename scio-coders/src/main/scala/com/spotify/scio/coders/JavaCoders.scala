@@ -22,6 +22,8 @@ import java.math.{BigDecimal, BigInteger}
 import java.time.Instant
 
 import com.google.api.services.bigquery.model.TableRow
+import org.apache.beam.sdk.values.Row
+import org.apache.beam.sdk.schemas.Schema
 import org.apache.beam.sdk.{coders => bcoders}
 import org.apache.beam.sdk.values.KV
 import org.apache.beam.sdk.io.gcp.pubsub.{PubsubMessage, PubsubMessageWithAttributesCoder}
@@ -91,6 +93,8 @@ trait JavaCoders {
   implicit def paneInfoCoder: Coder[PaneInfo] = Coder.beam(PaneInfo.PaneInfoCoder.of())
 
   implicit def tableRowCoder: Coder[TableRow] = Coder.beam(TableRowJsonCoder.of())
+
+  def row(schema: Schema): Coder[Row] = Coder.beam(RowCoder.of(schema))
 
   implicit def messageCoder: Coder[PubsubMessage] =
     Coder.beam(PubsubMessageWithAttributesCoder.of())
