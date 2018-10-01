@@ -349,7 +349,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val thisParts = self.partition(n, _._1.hashCode() % n)
     val thatParts = that.partition(n, _._1.hashCode() % n)
 
-    (thisParts zip thatParts zip thatBfSIs).map {
+    thisParts.zip(thatParts).zip(thatBfSIs).map {
       case ((lhs, rhs), bfsi) =>
         val (lhsUnique, lhsOverlap) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
         val partitionedLhs = lhs
@@ -386,19 +386,22 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val thatParts = that.partition(n, _._1.hashCode() % n)
 
     SCollection.unionAll(
-      (thisParts zip selfBfSideInputs zip thatParts).map {
-        case ((lhs, lhsBfSi), rhs1) =>
-          lhs
-            .cogroup(
-              rhs1
-                .withSideInputs(lhsBfSi)
-                .filter { (e, c) =>
-                  c(lhsBfSi).maybeContains(e._1)
-                }
-                .toSCollection
-            )
-            .flatMap { case (k, (iV, iA)) => iV.map(v => (k, (v, iA))) }
-      }
+      thisParts
+        .zip(selfBfSideInputs)
+        .zip(thatParts)
+        .map {
+          case ((lhs, lhsBfSi), rhs1) =>
+            lhs
+              .cogroup(
+                rhs1
+                  .withSideInputs(lhsBfSi)
+                  .filter { (e, c) =>
+                    c(lhsBfSi).maybeContains(e._1)
+                  }
+                  .toSCollection
+              )
+              .flatMap { case (k, (iV, iA)) => iV.map(v => (k, (v, iA))) }
+        }
     )
   }
 
@@ -439,7 +442,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val that2Parts = that2.partition(n, _._1.hashCode() % n)
 
     SCollection.unionAll(
-      (thisParts zip selfBfSideInputs zip that1Parts zip that2Parts).map {
+      thisParts.zip(selfBfSideInputs).zip(that1Parts).zip(that2Parts).map {
         case (((lhs, lhsBfSi), rhs1), rhs2) =>
           lhs
             .cogroup(
@@ -687,7 +690,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       val n = bfSettings.numBFs
       val thisParts = self.partition(n, _._1.hashCode() % n)
       val thatParts = that.partition(n, _.hashCode() % n)
-      val joined = (thisParts zip thatParts).map {
+      val joined = thisParts.zip(thatParts).map {
         case (lhs, rhs) =>
           lhs.sparseIntersectByKeyImpl(rhs, bfSettings.capacity, computeExact, fpProb)
       }
