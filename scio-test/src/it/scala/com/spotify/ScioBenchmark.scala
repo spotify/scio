@@ -154,17 +154,21 @@ object BenchmarkResult {
   }
 }
 
-class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try] {
-  import ScioBenchmarkSettings.circleCIEnv
-
+object DatastoreLogger {
   final case class ScioBenchmarkRun(timestamp: Instant,
                                     gitHash: String,
                                     buildNum: Long,
                                     operation: String)
-  val Storage: Datastore = DatastoreHelper.getDatastoreFromEnv
+
+  lazy val Storage: Datastore = DatastoreHelper.getDatastoreFromEnv
   val Kind = "Benchmarks"
   val OrderByBuildNumQuery = s"SELECT * from ${Kind}_%s ORDER BY buildNum DESC LIMIT 2"
   val WhereBuildNumQuery = s"SELECT * from ${Kind}_%s WHERE buildNum = %s"
+}
+
+class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try] {
+  import DatastoreLogger._
+  import ScioBenchmarkSettings.circleCIEnv
 
   def dsKeyId(benchmark: BenchmarkResult): String = benchmark.buildNum.toString
 
