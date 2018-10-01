@@ -29,6 +29,8 @@ private[coders] object CoderMacros {
   private[this] val DEFAULT_SHOW_WARN = true
   private[this] val KVS = "show-coder-fallback=(true|false)".r
 
+  val blacklistedTypes = List("org.apache.beam.sdk.values.Row")
+
   /**
    * Makes it possible to configure fallback warnings by passing
    * "-Xmacro-settings:show-coder-fallback=true" as a Scalac option.
@@ -99,6 +101,10 @@ private[coders] object CoderMacros {
     val fallback = q"""_root_.com.spotify.scio.coders.Coder.kryo[$wtt]"""
 
     (verbose, alreadyReported) match {
+      case _ if blacklistedTypes.contains(wtt.toString) =>
+        val msg =
+          s"Can't use a Kryo coder for ${wtt}. You need to explicitly set the Coder for this type"
+        c.abort(c.enclosingPosition, msg)
       case (false, false) =>
         if (show) c.echo(c.enclosingPosition, shortMessage.stripMargin)
         fallback
