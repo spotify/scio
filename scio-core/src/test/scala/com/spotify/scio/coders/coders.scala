@@ -20,6 +20,9 @@ package com.spotify.scio.coders
 import scala.collection.JavaConverters._
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.coders.Coder.NonDeterministicException
+import org.apache.beam.sdk.coders.CoderRegistry
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.scalatest.{Assertion, FlatSpec, Matchers}
 
 import scala.reflect.{classTag, ClassTag}
@@ -232,6 +235,24 @@ class CodersTest extends FlatSpec with Matchers {
     import org.apache.beam.sdk.values.Row
     "Coder[Row]" shouldNot compile
     "Coder.gen[Row]" shouldNot compile
+  }
+
+  it should "have a nice verifyDeterministic exception" in {
+    val caught =
+      intercept[NonDeterministicException] {
+        val coder = Coder[(Double, Double)]
+
+        CoderMaterializer
+          .beam(
+            CoderRegistry.createDefault(),
+            PipelineOptionsFactory.create(),
+            coder
+          )
+          .verifyDeterministic()
+      }
+
+    val expectedMsg = "RecordCoder[scala.Tuple2] is not deterministic"
+    caught.getMessage should startWith(expectedMsg)
   }
 
 }

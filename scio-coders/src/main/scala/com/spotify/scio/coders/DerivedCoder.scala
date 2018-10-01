@@ -19,9 +19,10 @@ package com.spotify.scio.coders
 
 private object Derived extends Serializable {
   import magnolia._
-  import Coder.xmap
 
-  def combineCoder[T](ps: Seq[Param[Coder, T]], rawConstruct: Seq[Any] => T): Coder[T] = {
+  def combineCoder[T](typeName: TypeName,
+                      ps: Seq[Param[Coder, T]],
+                      rawConstruct: Seq[Any] => T): Coder[T] = {
     val cs = new Array[(String, Coder[Any])](ps.length)
     var i = 0
     while (i < ps.length) {
@@ -30,8 +31,7 @@ private object Derived extends Serializable {
       i = i + 1
     }
 
-    val coderValues = Coder.sequence(cs)
-    @inline def cToArray(v: T): Array[Any] = {
+    @inline def destruct(v: T): Array[Any] = {
       val arr = new Array[Any](ps.length)
       var i = 0
       while (i < ps.length) {
@@ -41,7 +41,8 @@ private object Derived extends Serializable {
       }
       arr
     }
-    xmap(coderValues)(xs => rawConstruct(xs), v => cToArray(v))
+
+    Coder.record[T](typeName.full, cs, rawConstruct, destruct)
   }
 }
 
@@ -52,7 +53,7 @@ trait LowPriorityCoderDerivation {
   type Typeclass[T] = Coder[T]
 
   def combine[T](ctx: CaseClass[Coder, T]): Coder[T] =
-    Derived.combineCoder(ctx.parameters, ctx.rawConstruct _)
+    Derived.combineCoder(ctx.typeName, ctx.parameters, ctx.rawConstruct)
 
   def dispatch[T](sealedTrait: SealedTrait[Coder, T]): Coder[T] = {
     val idx: Map[magnolia.TypeName, Int] =
@@ -64,7 +65,7 @@ trait LowPriorityCoderDerivation {
         .map { case (c, i) => (i, c) }
         .toMap
 
-    Coder.disjunction[T, Int](coders) { t =>
+    Coder.disjunction[T, Int](sealedTrait.typeName.full, coders) { t =>
       sealedTrait.dispatch(t) { subtype =>
         idx(subtype.typeName)
       }
