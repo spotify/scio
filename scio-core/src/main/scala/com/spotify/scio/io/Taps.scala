@@ -17,7 +17,7 @@
 
 package com.spotify.scio.io
 
-import com.spotify.scio.{registerSysProps, SysProp, SysProps}
+import com.spotify.scio.{SysProp, SysProps}
 import org.apache.beam.sdk.util.{BackOff, BackOffUtils, FluentBackoff, Sleeper}
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
