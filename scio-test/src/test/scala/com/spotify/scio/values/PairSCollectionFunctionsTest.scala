@@ -600,6 +600,15 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  it should "support sparseRightOuterJoin() with empty RHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(sparseLhs)
+      val p2 = sc.parallelize(Seq[(String, Int)]())
+      val p = p1.sparseRightOuterJoin(p2, 10)
+      p should beEmpty
+    }
+  }
+
   it should "support sparseRightOuterJoin() with partitions" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(sparseLhs)
@@ -609,11 +618,83 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support sparseRightOuterJoin() with empty RHS" in {
+  val sparseLookup1 = Seq(("a", 11), ("a", 12), ("b", 13), ("d", 15), ("e", 16))
+  val sparseLookup2 = Seq(("a", 21), ("a", 22), ("b", 23), ("d", 25), ("e", 26))
+  val expected1: Seq[(String, (Int, Set[Int]))] =
+    Seq(("a", (1, Set(11, 12))), ("a", (2, Set(11, 12))), ("b", (3, Set(13))), ("c", (4, Set())))
+  val expected12: Seq[(String, (Int, Set[Int], Set[Int]))] =
+    Seq(("a", (1, Set(11, 12), Set(21, 22))),
+        ("a", (2, Set(11, 12), Set(21, 22))),
+        ("b", (3, Set(13), Set(23))),
+        ("c", (4, Set(), Set())))
+
+  it should "support sparseLookup()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(sparseLhs)
-      val p2 = sc.parallelize(Seq[(String, Int)]())
-      val p = p1.sparseRightOuterJoin(p2, 10)
+      val p2 = sc.parallelize(sparseLookup1)
+      val p = p1
+        .sparseLookup(p2, 10)
+        .mapValues(v => (v._1, v._2.toSet))
+
+      p should containInAnyOrder(expected1)
+    }
+  }
+
+  it should "support sparseLookup() with partitions" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(sparseLhs)
+      val p2 = sc.parallelize(sparseLookup1)
+      val p = p1
+        .sparseLookup(p2, 1000000000L)
+        .mapValues(v => (v._1, v._2.toSet))
+
+      p should containInAnyOrder(expected1)
+    }
+  }
+
+  it should "support sparseLookup2()" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(sparseLhs)
+      val p2 = sc.parallelize(sparseLookup1)
+      val p3 = sc.parallelize(sparseLookup2)
+      val p = p1
+        .sparseLookup(p2, p3, 10)
+        .mapValues(v => (v._1, v._2.toSet, v._3.toSet))
+
+      p should containInAnyOrder(expected12)
+    }
+  }
+
+  it should "support sparseLookup2() with partitions" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(sparseLhs)
+      val p2 = sc.parallelize(sparseLookup1)
+      val p3 = sc.parallelize(sparseLookup2)
+      val p = p1
+        .sparseLookup(p2, p3, 1000000000L)
+        .mapValues(v => (v._1, v._2.toSet, v._3.toSet))
+
+      p should containInAnyOrder(expected12)
+    }
+  }
+
+  it should "support sparseLookup() with Empty LHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq[(String, Unit)]())
+      val p2 = sc.parallelize(sparseLookup1)
+      val p = p1.sparseLookup(p2, 10)
+
+      p should beEmpty
+    }
+  }
+
+  it should "support sparseLookup2() with Empty LHS" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq[(String, Unit)]())
+      val p2 = sc.parallelize(sparseLookup1)
+      val p3 = sc.parallelize(sparseLookup2)
+      val p = p1.sparseLookup(p2, p3, 10)
+
       p should beEmpty
     }
   }
