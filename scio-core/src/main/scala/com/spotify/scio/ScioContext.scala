@@ -574,7 +574,13 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
     idAttribute: String,
     timestampAttribute: String): SCollection[(T, Map[String, String])] = {
     val io = PubsubIO.withAttributes[T](name, idAttribute, timestampAttribute)
-    this.read(io)(PubsubIO.ReadParam(isSubscription))
+    val read = this.read(io)(PubsubIO.ReadParam(isSubscription))
+
+    if (this.isTest && timestampAttribute != null) {
+      read.timestampBy(kv => new Instant(kv._2(timestampAttribute)))
+    } else {
+      read
+    }
   }
 
   /**

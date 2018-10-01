@@ -29,7 +29,9 @@ import com.spotify.scio.io._
 import com.spotify.scio.avro.{AvroUtils, TestRecord}
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.{io => beam}
+import org.joda.time.Instant
 import org.scalatest.exceptions.TestFailedException
 
 import scala.io.Source
@@ -103,11 +105,13 @@ object PubsubJob {
 }
 
 object PubsubWithAttributesJob {
+  val timestampAttribute = "tsAttribute"
+
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.pubsubTopicWithAttributes[String](args("input"))
+    sc.pubsubTopicWithAttributes[String](args("input"), timestampAttribute = timestampAttribute)
       .map(kv => (kv._1 + "X", kv._2))
-      .saveAsPubsubWithAttributes[String](args("output"))
+      .saveAsPubsubWithAttributes[String](args("output"), timestampAttribute = timestampAttribute)
     sc.close()
   }
 }
@@ -386,26 +390,55 @@ class JobTestTest extends PipelineSpec {
     }
   }
 
-  def testPubsubWithAttributesJob(xs: String*): Unit = {
+  def testPubsubWithAttributesJob(timestampAttribute: Map[String, String], xs: String*): Unit = {
     type M = Map[String, String]
-    val m = Map("a" -> "1", "b" -> "2", "c" -> "3")
+    val m = Map("a" -> "1", "b" -> "2", "c" -> "3") ++ timestampAttribute
     JobTest[PubsubWithAttributesJob.type]
       .args("--input=in", "--output=out")
-      .input(PubsubIO[(String, M)]("in"), Seq("a", "b", "c").map((_, m)))
-      .output(PubsubIO[(String, M)]("out"))(_ should containInAnyOrder(xs.map((_, m))))
+      .input(PubsubIO[(String, M)]("in", null, PubsubWithAttributesJob.timestampAttribute),
+             Seq("a", "b", "c").map((_, m)))
+      .output(
+        PubsubIO[(String, M)]("out", null, PubsubWithAttributesJob.timestampAttribute)
+      )(_ should containInAnyOrder(xs.map((_, m))))
       .run()
   }
 
   it should "pass correct PubsubIO with attributes" in {
-    testPubsubWithAttributesJob("aX", "bX", "cX")
+    testPubsubWithAttributesJob(
+      Map(PubsubWithAttributesJob.timestampAttribute -> new Instant().toString),
+      "aX",
+      "bX",
+      "cX")
   }
 
   it should "fail incorrect PubsubIO with attributes" in {
     an[AssertionError] should be thrownBy {
-      testPubsubWithAttributesJob("aX", "bX")
+      testPubsubWithAttributesJob(
+        Map(PubsubWithAttributesJob.timestampAttribute -> new Instant().toString),
+        "aX",
+        "bX")
     }
     an[AssertionError] should be thrownBy {
-      testPubsubWithAttributesJob("aX", "bX", "cX", "dX")
+      testPubsubWithAttributesJob(
+        Map(PubsubWithAttributesJob.timestampAttribute -> new Instant().toString),
+        "aX",
+        "bX",
+        "cX",
+        "dX")
+    }
+  }
+
+  it should "fail PubsubIO with invalid or missing timestamp attribute" in {
+    an[PipelineExecutionException] should be thrownBy {
+      testPubsubWithAttributesJob(
+        Map(PubsubWithAttributesJob.timestampAttribute -> "invalidTimestamp"),
+        "aX",
+        "bX",
+        "cX")
+    }
+
+    an[PipelineExecutionException] should be thrownBy {
+      testPubsubWithAttributesJob(timestampAttribute = Map(), xs = "aX", "bX", "cX")
     }
   }
 
