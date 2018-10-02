@@ -21,15 +21,14 @@ import scala.reflect.macros._
 
 private[coders] object CoderMacros {
 
-  var verbose = true
-  val reported: scala.collection.mutable.Set[(String, String)] =
+  private[this] var verbose = true
+  private[this] val Reported: scala.collection.mutable.Set[(String, String)] =
     scala.collection.mutable.Set.empty
 
-  private[this] val SETTING_SHOW_WARN = "show-coder-fallback"
-  private[this] val DEFAULT_SHOW_WARN = true
-  private[this] val KVS = "show-coder-fallback=(true|false)".r
+  private[this] val ShowWarnDefault = true
+  private[this] val ShowWarnSettingRegex = "show-coder-fallback=(true|false)".r
 
-  val blacklistedTypes = List("org.apache.beam.sdk.values.Row")
+  private[this] val BlacklistedTypes = List("org.apache.beam.sdk.values.Row")
 
   /**
    * Makes it possible to configure fallback warnings by passing
@@ -38,10 +37,10 @@ private[coders] object CoderMacros {
   private[this] def showWarn(c: whitebox.Context) =
     c.settings
       .collectFirst {
-        case KVS(value) =>
+        case ShowWarnSettingRegex(value) =>
           value.toBoolean
       }
-      .getOrElse(DEFAULT_SHOW_WARN)
+      .getOrElse(ShowWarnDefault)
 
   // scalastyle:off method.length
   def issueFallbackWarning[T: c.WeakTypeTag](c: whitebox.Context)(
@@ -61,9 +60,9 @@ private[coders] object CoderMacros {
       .getOrElse("")
     val fullType = typeName + params
 
-    val toReport = (c.enclosingPosition.toString -> wtt.toString)
-    val alreadyReported = reported.contains(toReport)
-    if (!alreadyReported) reported += toReport
+    val toReport = c.enclosingPosition.toString -> wtt.toString
+    val alreadyReported = Reported.contains(toReport)
+    if (!alreadyReported) Reported += toReport
 
     def shortMessage =
       s"""
@@ -101,7 +100,7 @@ private[coders] object CoderMacros {
     val fallback = q"""_root_.com.spotify.scio.coders.Coder.kryo[$wtt]"""
 
     (verbose, alreadyReported) match {
-      case _ if blacklistedTypes.contains(wtt.toString) =>
+      case _ if BlacklistedTypes.contains(wtt.toString) =>
         val msg =
           s"Can't use a Kryo coder for ${wtt}. You need to explicitly set the Coder for this type"
         c.abort(c.enclosingPosition, msg)
