@@ -198,7 +198,7 @@ private class RecordCoder[T](typeName: String,
 
     problems match {
       case (_, e) :: _ =>
-        val reasons = problems.map { case (reason, e) => reason }
+        val reasons = problems.map { case (reason, _) => reason }
         throw new NonDeterministicException(this, reasons.asJava, e)
       case Nil =>
     }
