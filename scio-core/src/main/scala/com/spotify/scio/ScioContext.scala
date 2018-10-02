@@ -195,10 +195,10 @@ object ContextAndArgs {
 
   /** Create [[ScioContext]] and [[Args]] for command line arguments. */
   def apply(args: Array[String]): (ScioContext, Args) =
-    withParser(DefaultParser()).apply(args)
+    withParser(DefaultParser[PipelineOptions]()).apply(args)
 
   def typed[T: Parser: Help](args: Array[String]): (ScioContext, T) =
-    withParser(TypedParser()).apply(args)
+    withParser(TypedParser[T]()).apply(args)
 
 }
 
