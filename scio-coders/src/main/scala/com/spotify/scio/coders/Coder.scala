@@ -25,7 +25,7 @@ import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.values.KV
 
 import scala.annotation.implicitNotFound
-import scala.collection.JavaConverters
+import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 @implicitNotFound(
@@ -77,6 +77,40 @@ private final case class DisjunctionCoder[T, Id](typeName: String,
     val i = idCoder.decode(is)
     coders(i).decode(is)
   }
+
+  override def verifyDeterministic(): Unit = {
+    def verify(label: String, c: BCoder[_]): List[(String, NonDeterministicException)] = {
+      try {
+        c.verifyDeterministic()
+        Nil
+      } catch {
+        case e: NonDeterministicException =>
+          val reason = s"case $label is using non-deterministic $c"
+          List(reason -> e)
+      }
+    }
+
+    val problems =
+      coders.toList.flatMap { case (id, c) => verify(id.toString, c) } ++
+        verify("id", idCoder)
+
+    problems match {
+      case (_, e) :: _ =>
+        val reasons = problems.map { case (reason, _) => reason }
+        throw new NonDeterministicException(this, reasons.asJava, e)
+      case Nil =>
+    }
+  }
+
+  override def toString: String = {
+    val parts = s"id -> $idCoder" :: coders.map { case (id, coder) => s"$id -> $coder" }.toList
+    val body = parts.mkString(", ")
+
+    s"DisjunctionCoder[$typeName]($body)"
+  }
+
+  override def consistentWithEquals(): Boolean =
+    coders.values.forall(_.consistentWithEquals())
 }
 
 // XXX: Workaround a NPE deep down the stack in Beam
@@ -165,12 +199,15 @@ private class RecordCoder[T](typeName: String,
     problems match {
       case (_, e) :: _ =>
         val reasons = problems.map { case (reason, e) => reason }
-        throw new NonDeterministicException(this, JavaConverters.seqAsJavaList(reasons), e)
+        throw new NonDeterministicException(this, reasons.asJava, e)
       case Nil =>
     }
   }
 
-  override def toString: String = s"RecordCoder[$typeName]"
+  override def toString: String = {
+    val body = cs.map { case (label, c) => s"$label -> $c" }.mkString(", ")
+    s"RecordCoder[$typeName]($body)"
+  }
 
   override def consistentWithEquals(): Boolean = cs.forall(_._2.consistentWithEquals())
   override def structuralValue(value: T): AnyRef = {
