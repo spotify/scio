@@ -20,8 +20,9 @@
 package com.spotify.scio
 
 import java.beans.Introspector
-import java.io.File
+import java.io.{ByteArrayOutputStream, File, PrintStream}
 import java.net.URI
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
 import com.google.datastore.v1.{Entity, Query}
@@ -96,70 +97,109 @@ private object RunnerContext {
 
 /** Convenience object for creating [[ScioContext]] and [[Args]]. */
 object ContextAndArgs {
-  // scalastyle:off regex
-  // scalastyle:off cyclomatic.complexity
-  /** Create [[ScioContext]] and [[Args]] for command line arguments. */
-  def apply(args: Array[String]): (ScioContext, Args) = {
-    val (_opts, _args) = ScioContext.parseArguments[PipelineOptions](args)
-    (new ScioContext(_opts, Nil), _args)
+
+  import scala.language.higherKinds
+  sealed trait ArgsParser[F[_]] {
+    type ArgsType
+    type UsageOrHelp = String
+    type Result = Either[UsageOrHelp, (PipelineOptions, ArgsType)]
+
+    def parse(args: Array[String]): F[Result]
+  }
+
+  final case class DefaultParser[T <: PipelineOptions: ClassTag] private ()
+      extends ArgsParser[Try] {
+    override type ArgsType = Args
+
+    override def parse(args: Array[String]): Try[Result] = Try {
+      Right(ScioContext.parseArguments[T](args))
+    }
   }
 
   import caseapp._
   import caseapp.core.help._
-  def typed[T: Parser: Help](args: Array[String]): (ScioContext, T) = {
-    // limit the options passed to case-app
-    // to options supported in T
-    // fail if there are unsupported options
-    val supportedCustomArgs =
-      Parser[T].args
-        .flatMap { a =>
-          a.name +: a.extraNames
-        }
-        .map(_.name) ++ List("help", "usage")
 
-    val Reg = "^-{1,2}(.+)$".r
-    val (customArgs, remainingArgs) =
-      args.partition {
-        case Reg(a) =>
-          val name = a.takeWhile(_ != '=')
-          supportedCustomArgs.contains(name)
-        case _ => true
+  final case class TypedParser[T: Parser: Help] private () extends ArgsParser[Try] {
+    override type ArgsType = T
+
+    // scalastyle:off regex
+    // scalastyle:off cyclomatic.complexity
+    override def parse(args: Array[String]): Try[Result] = {
+      // limit the options passed to case-app
+      // to options supported in T
+      // fail if there are unsupported options
+      val supportedCustomArgs =
+        Parser[T].args
+          .flatMap { a =>
+            a.name +: a.extraNames
+          }
+          .map(_.name) ++ List("help", "usage")
+
+      val Reg = "^-{1,2}(.+)$".r
+      val (customArgs, remainingArgs) =
+        args.partition {
+          case Reg(a) =>
+            val name = a.takeWhile(_ != '=')
+            supportedCustomArgs.contains(name)
+          case _ => true
+        }
+
+      CaseApp.detailedParseWithHelp[T](customArgs) match {
+        case Left(message) =>
+          Failure(new Exception(message.message))
+        case Right((_, usage, help, _)) if help =>
+          Success(Left(Help[T].help))
+        case Right((_, usage, help, _)) if usage =>
+          val sysProps = SysProps.properties.map(_.show).mkString("\n")
+          val baos = new ByteArrayOutputStream()
+          val pos = new PrintStream(baos)
+
+          for {
+            i <- PipelineOptionsFactory.getRegisteredOptions.asScala
+          } PipelineOptionsFactory.printHelp(pos, i)
+          pos.close()
+
+          val msg = sysProps + Help[T].help + new String(baos.toByteArray, StandardCharsets.UTF_8)
+          Success(Left(msg))
+        case Right((Right(t), usage, help, _)) =>
+          val (opts, unused) = ScioContext.parseArguments[PipelineOptions](remainingArgs)
+          val unusedMap = unused.asMap
+          if (unusedMap.isEmpty) {
+            Success(Right((opts, t)))
+          } else {
+            val msg = "Unknown arguments: " + unusedMap.keys.mkString(", ")
+            Failure(new Exception(msg))
+          }
+        case Right((Left(message), usage, help, _)) =>
+          Failure(new Exception(message.message))
       }
-
-    CaseApp.detailedParseWithHelp[T](customArgs) match {
-      case Left(message) =>
-        Console.err.println(message.message)
-        sys.exit(1)
-      case Right((_, usage, help, _)) if help =>
-        Console.out.println(Help[T].help)
-        sys.exit(0)
-      case Right((_, usage, help, _)) if usage =>
-        SysProps.properties
-          .map(_.show)
-          .foreach(Console.out.println)
-
-        Console.out.println(Help[T].help)
-        for {
-          i <- PipelineOptionsFactory.getRegisteredOptions.asScala
-        } PipelineOptionsFactory.printHelp(Console.out, i)
-
-        sys.exit(0)
-      case Right((Right(t), usage, help, _)) =>
-        val (ctx, unused) = ContextAndArgs(remainingArgs)
-        val unusedMap = unused.asMap
-        if (unusedMap.isEmpty) {
-          (ctx, t)
-        } else {
-          Console.err.println("Unknown arguments: " + unusedMap.keys.mkString(", "))
-          sys.exit(1)
-        }
-      case Right((Left(message), usage, help, _)) =>
-        Console.err.println(message.message)
-        sys.exit(1)
     }
+    // scalastyle:on regex
+    // scalastyle:on cyclomatic.complexity
   }
-  // scalastyle:on regex
-  // scalastyle:on cyclomatic.complexity
+
+  def withParser[T](parser: ArgsParser[Try]): Array[String] => (ScioContext, T) =
+    args =>
+      parser.parse(args) match {
+        // scalastyle:off regex
+        case Failure(exception) =>
+          Console.err.println(exception.getMessage)
+          sys.exit(1)
+        case Success(Left(usageOrHelp)) =>
+          Console.out.println(usageOrHelp)
+          sys.exit(0)
+        case Success(Right((_opts, _args))) =>
+          (new ScioContext(_opts, Nil), _args.asInstanceOf[T])
+        // scalastyle:on regex
+    }
+
+  /** Create [[ScioContext]] and [[Args]] for command line arguments. */
+  def apply(args: Array[String]): (ScioContext, Args) =
+    withParser(DefaultParser()).apply(args)
+
+  def typed[T: Parser: Help](args: Array[String]): (ScioContext, T) =
+    withParser(TypedParser()).apply(args)
+
 }
 
 /** Companion object for [[ScioContext]]. */
