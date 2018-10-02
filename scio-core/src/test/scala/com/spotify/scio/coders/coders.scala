@@ -19,7 +19,11 @@ package com.spotify.scio.coders
 
 import scala.collection.JavaConverters._
 import org.apache.beam.sdk.util.CoderUtils
+import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.coders.Coder.NonDeterministicException
+import org.apache.beam.sdk.coders.CoderRegistry
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.scalatest.{Assertion, FlatSpec, Matchers}
 
 import scala.reflect.{classTag, ClassTag}
@@ -95,6 +99,15 @@ class CodersTest extends FlatSpec with Matchers {
   def checkFallback[T: ClassTag](t: T)(implicit C: Coder[T], eq: Equality[T]): Assertion = {
     C should ===(Coder.kryo[T])
     check[T](t)(C, eq)
+  }
+
+  def materialize[T](coder: Coder[T]): BCoder[T] = {
+    CoderMaterializer
+      .beam(
+        CoderRegistry.createDefault(),
+        PipelineOptionsFactory.create(),
+        coder
+      )
   }
 
   "Coders" should "support primitives" in {
@@ -223,7 +236,7 @@ class CodersTest extends FlatSpec with Matchers {
     checkFallback(record)
   }
 
-  it should "support classes with private contructors" in {
+  it should "support classes with private constructors" in {
     Coder.gen[PrivateClass]
     checkFallback(PrivateClass(42L))
   }
@@ -232,6 +245,41 @@ class CodersTest extends FlatSpec with Matchers {
     import org.apache.beam.sdk.values.Row
     "Coder[Row]" shouldNot compile
     "Coder.gen[Row]" shouldNot compile
+  }
+
+  it should "have a nice verifyDeterministic exception for case classes" in {
+    val caught =
+      intercept[NonDeterministicException] {
+        val coder = Coder[(Double, Double)]
+
+        materialize(coder).verifyDeterministic()
+      }
+
+    val expectedMsg =
+      "RecordCoder[scala.Tuple2](_1 -> DoubleCoder, _2 -> DoubleCoder) is not deterministic"
+
+    caught.getMessage should startWith(expectedMsg)
+    caught.getMessage should include("field _1 is using non-deterministic DoubleCoder")
+    caught.getMessage should include("field _2 is using non-deterministic DoubleCoder")
+  }
+
+  it should "have a nice verifyDeterministic exception for disjunctions" in {
+    val caught =
+      intercept[NonDeterministicException] {
+        val coder = Coder[Either[Double, Int]]
+
+        materialize(coder).verifyDeterministic()
+      }
+
+    // field names vary between Scala 2.11 and 2.12
+    val leftCoder = materialize(Coder[scala.util.Left[Double, Int]]).toString
+    val rightCoder = materialize(Coder[scala.util.Right[Double, Int]]).toString
+
+    val expectedMsg = s"DisjunctionCoder[scala.util.Either](" +
+      s"id -> VarIntCoder, 0 -> $leftCoder, 1 -> $rightCoder) is not deterministic"
+
+    caught.getMessage should startWith(expectedMsg)
+    caught.getMessage should include(s"case 0 is using non-deterministic $leftCoder")
   }
 
 }

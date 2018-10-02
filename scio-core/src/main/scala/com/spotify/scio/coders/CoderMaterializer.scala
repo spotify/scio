@@ -44,11 +44,12 @@ final object CoderMaterializer {
       case Transform(c, f) =>
         val u = f(beam(r, o, c))
         WrappedBCoder.create(beam(r, o, u))
-      case Record(coders) =>
-        new RecordCoder(coders.map(c => c._1 -> beam(r, o, c._2)))
-      case Disjunction(idCoder, id, coders) =>
+      case Record(typeName, coders, construct, destruct) =>
+        new RecordCoder(typeName, coders.map(c => c._1 -> beam(r, o, c._2)), construct, destruct)
+      case Disjunction(typeName, idCoder, id, coders) =>
         WrappedBCoder.create(
-          DisjunctionCoder(beam(r, o, idCoder),
+          DisjunctionCoder(typeName,
+                           beam(r, o, idCoder),
                            id,
                            coders.mapValues(u => beam(r, o, u)).map(identity)))
       case KVCoder(koder, voder) =>

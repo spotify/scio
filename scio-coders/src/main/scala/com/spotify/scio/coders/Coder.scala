@@ -19,11 +19,13 @@ package com.spotify.scio.coders
 
 import java.io.{InputStream, OutputStream}
 
+import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, Coder => BCoder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.values.KV
 
 import scala.annotation.implicitNotFound
+import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 @implicitNotFound(
@@ -45,15 +47,23 @@ sealed trait Coder[T] extends Serializable
 final case class Beam[T] private (beam: BCoder[T]) extends Coder[T]
 final case class Fallback[T] private (ct: ClassTag[T]) extends Coder[T]
 final case class Transform[A, B] private (c: Coder[A], f: BCoder[A] => Coder[B]) extends Coder[B]
-final case class Disjunction[T, Id] private (idCoder: Coder[Id],
+final case class Disjunction[T, Id] private (typeName: String,
+                                             idCoder: Coder[Id],
                                              id: T => Id,
                                              coder: Map[Id, Coder[T]])
     extends Coder[T]
-final case class Record[T] private (cs: Array[(String, Coder[T])]) extends Coder[Array[T]]
+
+final case class Record[T] private (typeName: String,
+                                    cs: Array[(String, Coder[Any])],
+                                    construct: Seq[Any] => T,
+                                    destruct: T => Array[Any])
+    extends Coder[T]
+
 // KV are special in beam and need to be serialized using an instance of KvCoder.
 final case class KVCoder[K, V] private (koder: Coder[K], voder: Coder[V]) extends Coder[KV[K, V]]
 
-private final case class DisjunctionCoder[T, Id](idCoder: BCoder[Id],
+private final case class DisjunctionCoder[T, Id](typeName: String,
+                                                 idCoder: BCoder[Id],
                                                  id: T => Id,
                                                  coders: Map[Id, BCoder[T]])
     extends AtomicCoder[T] {
@@ -67,6 +77,40 @@ private final case class DisjunctionCoder[T, Id](idCoder: BCoder[Id],
     val i = idCoder.decode(is)
     coders(i).decode(is)
   }
+
+  override def verifyDeterministic(): Unit = {
+    def verify(label: String, c: BCoder[_]): List[(String, NonDeterministicException)] = {
+      try {
+        c.verifyDeterministic()
+        Nil
+      } catch {
+        case e: NonDeterministicException =>
+          val reason = s"case $label is using non-deterministic $c"
+          List(reason -> e)
+      }
+    }
+
+    val problems =
+      coders.toList.flatMap { case (id, c) => verify(id.toString, c) } ++
+        verify("id", idCoder)
+
+    problems match {
+      case (_, e) :: _ =>
+        val reasons = problems.map { case (reason, _) => reason }
+        throw new NonDeterministicException(this, reasons.asJava, e)
+      case Nil =>
+    }
+  }
+
+  override def toString: String = {
+    val parts = s"id -> $idCoder" :: coders.map { case (id, coder) => s"$id -> $coder" }.toList
+    val body = parts.mkString(", ")
+
+    s"DisjunctionCoder[$typeName]($body)"
+  }
+
+  override def consistentWithEquals(): Boolean =
+    coders.values.forall(_.consistentWithEquals())
 }
 
 // XXX: Workaround a NPE deep down the stack in Beam
@@ -100,19 +144,23 @@ private object WrappedBCoder {
 // Coder used internally specifically for Magnolia derived coders.
 // It's technically possible to define Product coders only in terms of `Coder.transform`
 // This is just faster
-private class RecordCoder[T: ClassTag](cs: Array[(String, BCoder[T])])
-    extends AtomicCoder[Array[T]] {
+private class RecordCoder[T](typeName: String,
+                             cs: Array[(String, BCoder[Any])],
+                             construct: Seq[Any] => T,
+                             destruct: T => Array[Any])
+    extends AtomicCoder[T] {
   @inline def onErrorMsg[A](msg: => String)(f: => A): A =
     try { f } catch {
       case e: Exception =>
         throw new RuntimeException(msg, e)
     }
 
-  override def encode(value: Array[T], os: OutputStream): Unit = {
+  override def encode(value: T, os: OutputStream): Unit = {
     var i = 0
-    while (i < value.length) {
+    val array = destruct(value)
+    while (i < array.length) {
       val (label, c) = cs(i)
-      val v = value(i)
+      val v = array(i)
       onErrorMsg(s"Exception while trying to `encode` field $label with value $v") {
         c.encode(v, os)
       }
@@ -120,8 +168,8 @@ private class RecordCoder[T: ClassTag](cs: Array[(String, BCoder[T])])
     }
   }
 
-  override def decode(is: InputStream): Array[T] = {
-    val vs = new Array[T](cs.length)
+  override def decode(is: InputStream): T = {
+    val vs = new Array[Any](cs.length)
     var i = 0
     while (i < cs.length) {
       val (label, c) = cs(i)
@@ -130,18 +178,45 @@ private class RecordCoder[T: ClassTag](cs: Array[(String, BCoder[T])])
       }
       i += 1
     }
-    vs
+    construct(vs.toSeq)
   }
 
   // delegate methods for determinism and equality checks
-  override def verifyDeterministic(): Unit = cs.foreach(_._2.verifyDeterministic())
+
+  override def verifyDeterministic(): Unit = {
+    val problems = cs.toList.flatMap {
+      case (label, c) =>
+        try {
+          c.verifyDeterministic()
+          Nil
+        } catch {
+          case e: NonDeterministicException =>
+            val reason = s"field $label is using non-deterministic $c"
+            List(reason -> e)
+        }
+    }
+
+    problems match {
+      case (_, e) :: _ =>
+        val reasons = problems.map { case (reason, _) => reason }
+        throw new NonDeterministicException(this, reasons.asJava, e)
+      case Nil =>
+    }
+  }
+
+  override def toString: String = {
+    val body = cs.map { case (label, c) => s"$label -> $c" }.mkString(", ")
+    s"RecordCoder[$typeName]($body)"
+  }
+
   override def consistentWithEquals(): Boolean = cs.forall(_._2.consistentWithEquals())
-  override def structuralValue(value: Array[T]): AnyRef = {
+  override def structuralValue(value: T): AnyRef = {
     val b = Seq.newBuilder[AnyRef]
     var i = 0
+    val array = destruct(value)
     while (i < cs.length) {
       val (label, c) = cs(i)
-      val v = value(i)
+      val v = array(i)
       onErrorMsg(s"Exception while trying to `encode` field $label with value $v") {
         b += c.structuralValue(v)
       }
@@ -151,21 +226,22 @@ private class RecordCoder[T: ClassTag](cs: Array[(String, BCoder[T])])
   }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: Array[T]): Boolean = {
+  override def isRegisterByteSizeObserverCheap(value: T): Boolean = {
     var res = true
     var i = 0
+    val array = destruct(value)
     while (res && i < cs.length) {
-      res = cs(i)._2.isRegisterByteSizeObserverCheap(value(i))
+      res = cs(i)._2.isRegisterByteSizeObserverCheap(array(i))
       i += 1
     }
     res
   }
-  override def registerByteSizeObserver(value: Array[T],
-                                        observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: T, observer: ElementByteSizeObserver): Unit = {
     var i = 0
+    val array = destruct(value)
     while (i < cs.length) {
       val (_, c) = cs(i)
-      val v = value(i)
+      val v = array(i)
       c.registerByteSizeObserver(v, observer)
       i += 1
     }
@@ -181,8 +257,8 @@ sealed trait CoderGrammar {
     Fallback[T](ct)
   def transform[A, B](c: Coder[A])(f: BCoder[A] => Coder[B]): Coder[B] =
     Transform(c, f)
-  def disjunction[T, Id: Coder](coder: Map[Id, Coder[T]])(id: T => Id): Coder[T] =
-    Disjunction(Coder[Id], id, coder)
+  def disjunction[T, Id: Coder](typeName: String, coder: Map[Id, Coder[T]])(id: T => Id): Coder[T] =
+    Disjunction(typeName, Coder[Id], id, coder)
   def xmap[A, B](c: Coder[A])(f: A => B, t: B => A): Coder[B] = {
     @inline def toB(bc: BCoder[A]) = new AtomicCoder[B] {
       override def encode(value: B, os: OutputStream): Unit =
@@ -203,8 +279,12 @@ sealed trait CoderGrammar {
     }
     Transform[A, B](c, bc => Coder.beam(toB(bc)))
   }
-  private[scio] def sequence[T](cs: Array[(String, Coder[T])]): Coder[Array[T]] =
-    Record(cs)
+
+  private[scio] def record[T](typeName: String,
+                              cs: Array[(String, Coder[Any])],
+                              construct: Seq[Any] => T,
+                              destruct: T => Array[Any]): Coder[T] =
+    Record[T](typeName, cs, construct, destruct)
 }
 
 object Coder extends CoderGrammar with Implicits {
