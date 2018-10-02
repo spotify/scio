@@ -618,10 +618,9 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
     }
 
   /**
-   * Generic read method for all `ScioIO[T]` implementations, if it is test pipeline this will
-   * feed value of pre-registered input IO implementation which match for the passing `ScioIO[T]`
-   * implementation. if not this will invoke [[com.spotify.scio.io.ScioIO[T]#read]] method along
-   * with read configurations passed by.
+   * Generic read method for all `ScioIO[T]` implementations, which will invoke the provided IO's
+   * [[com.spotify.scio.io.ScioIO[T]#readWithContext]] method along with read configurations
+   * passed in. The IO class can delegate test-specific behavior if necessary.
    *
    * @param io     an implementation of `ScioIO[T]` trait
    * @param params configurations need to pass to perform underline read implementation

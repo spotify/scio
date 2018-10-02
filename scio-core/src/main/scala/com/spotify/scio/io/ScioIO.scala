@@ -28,7 +28,8 @@ import scala.concurrent.Future
  * Base trait for all Read/Write IO classes. Every IO connector must implement this.
  * This trait has two abstract implicit methods #read, #write that need to be implemented
  * in every subtype. Look at the [[com.spotify.scio.io.TextIO]] subclass for a reference
- * implementation.
+ * implementation. IO connectors can choose to override #readTest and #writeTest if custom
+ * test logic is necessary.
  */
 trait ScioIO[T] {
   // abstract types for read/write params.
@@ -58,14 +59,14 @@ trait ScioIO[T] {
 
   protected def read(sc: ScioContext, params: ReadP): SCollection[T]
 
+  protected def write(data: SCollection[T], params: WriteP): Future[Tap[T]]
+
   protected def readTest(sc: ScioContext, params: ReadP)(
     implicit coder: Coder[T]): SCollection[T] = {
     sc.parallelize(
       TestDataManager.getInput(sc.testId.get)(this).asInstanceOf[Seq[T]]
     )
   }
-
-  protected def write(data: SCollection[T], params: WriteP): Future[Tap[T]]
 
   protected def writeTest(data: SCollection[T], params: WriteP)(
     implicit coder: Coder[T]): Future[Tap[T]] = {
