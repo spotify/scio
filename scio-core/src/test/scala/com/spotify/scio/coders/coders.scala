@@ -271,8 +271,9 @@ class CodersTest extends FlatSpec with Matchers {
         materialize(coder).verifyDeterministic()
       }
 
-    val leftCoder = "RecordCoder[scala.util.Left](value -> DoubleCoder)"
-    val rightCoder = "RecordCoder[scala.util.Right](value -> VarIntCoder)"
+    // field names vary between Scala 2.11 and 2.12
+    val leftCoder = materialize(Coder[scala.util.Left[Double, Int]]).toString
+    val rightCoder = materialize(Coder[scala.util.Right[Double, Int]]).toString
 
     val expectedMsg = s"DisjunctionCoder[scala.util.Either](" +
       s"id -> VarIntCoder, 0 -> $leftCoder, 1 -> $rightCoder) is not deterministic"
