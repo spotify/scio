@@ -145,8 +145,8 @@ object ContextAndArgs {
         }
 
       CaseApp.detailedParseWithHelp[T](customArgs) match {
-        case Left(message) =>
-          Failure(new Exception(message.message))
+        case Left(error) =>
+          Failure(new Exception(error.message))
         case Right((_, usage, help, _)) if help =>
           Success(Left(Help[T].help))
         case Right((_, usage, help, _)) if usage =>
@@ -170,8 +170,8 @@ object ContextAndArgs {
             val msg = "Unknown arguments: " + unusedMap.keys.mkString(", ")
             Failure(new Exception(msg))
           }
-        case Right((Left(message), usage, help, _)) =>
-          Failure(new Exception(message.message))
+        case Right((Left(error), usage, help, _)) =>
+          Failure(new Exception(error.message))
       }
     }
     // scalastyle:on regex
