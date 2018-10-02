@@ -522,18 +522,6 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   /**  Whether this is a test context. */
   def isTest: Boolean = testId.isDefined
 
-  private[scio] def testInput: TestInput = TestDataManager.getInput(testId.get)
-  private[scio] def testOutput: TestOutput =
-    TestDataManager.getOutput(testId.get)
-  private[scio] def testDistCache: TestDistCache =
-    TestDataManager.getDistCache(testId.get)
-
-  private[scio] def testOut[T](io: ScioIO[T]): SCollection[T] => Unit =
-    testOutput(io)
-
-  private[scio] def getTestInput[T: Coder](io: ScioIO[T]): SCollection[T] =
-    this.parallelize(testInput(io).asInstanceOf[Seq[T]])
-
   // =======================================================================
   // Read operations
   // =======================================================================
@@ -627,7 +615,9 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
     transform: PTransform[I, PCollection[T]]): SCollection[T] =
     requireNotClosed {
       if (this.isTest) {
-        this.getTestInput(CustomIO[T](name))
+        this.parallelize(
+          TestDataManager.getInput(testId.get)(CustomIO[T](name)).asInstanceOf[Seq[T]]
+        )
       } else {
         wrap(this.pipeline.apply(name, transform))
       }
@@ -643,20 +633,11 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
    * @param params configurations need to pass to perform underline read implementation
    */
   def read[T: Coder](io: ScioIO[T])(params: io.ReadP): SCollection[T] =
-    readImpl[T](io)(params)
-
-  private def readImpl[T: Coder](io: ScioIO[T])(params: io.ReadP): SCollection[T] =
-    requireNotClosed {
-      if (this.isTest) {
-        this.getTestInput(io)
-      } else {
-        io.read(this, params)
-      }
-    }
+    io.readWithContext(this, params)
 
   // scalastyle:off structural.type
   def read[T: Coder](io: ScioIO[T] { type ReadP = Unit }): SCollection[T] =
-    readImpl[T](io)(())
+    io.readWithContext(this, ())
   // scalastyle:on structural.type
 
   private[scio] def addPreRunFn(f: () => Unit): Unit = _preRunFns += f

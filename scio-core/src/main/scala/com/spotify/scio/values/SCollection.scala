@@ -1008,7 +1008,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     if (context.isTest) {
       // Do not run assertions on materialized value but still access test context to trigger
       // the test checking if we're running inside a JobTest
-      if (!isCheckpoint) context.testOutput
+      if (!isCheckpoint) TestDataManager.getOutput(context.testId.get)
       saveAsInMemoryTap
     } else {
       val elemCoder = CoderMaterializer.beam(context, coder)
@@ -1095,7 +1095,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def saveAsCustomOutput[O <: POutput](name: String,
                                        transform: PTransform[PCollection[T], O]): Future[Tap[T]] = {
     if (context.isTest) {
-      context.testOut(CustomIO[T](name))(this)
+      TestDataManager.getOutput(context.testId.get)(CustomIO[T](name))(this)
     } else {
       this.internal.apply(name, transform)
     }
@@ -1118,21 +1118,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @param params configurations need to pass to perform underline write implementation
    */
   def write(io: ScioIO[T])(params: io.WriteP)(implicit coder: Coder[T]): Future[Tap[T]] =
-    writeImpl(io)(params)
-
-  private def writeImpl(io: ScioIO[T])(params: io.WriteP)(
-    implicit coder: Coder[T]): Future[Tap[T]] = {
-    if (context.isTest) {
-      context.testOut(io)(this)
-      this.saveAsInMemoryTap
-    } else {
-      io.write(this, params)
-    }
-  }
+    io.writeWithContext(this, params)
 
   // scalastyle:off structural.type
   def write(io: ScioIO[T] { type WriteP = Unit })(implicit coder: Coder[T]): Future[Tap[T]] =
-    writeImpl(io)(())
+    io.writeWithContext(this, ())
   // scalastyle:on structural.type
 
 }
