@@ -21,12 +21,14 @@ import com.google.protobuf.Message
 import com.spotify.scio.Implicits._
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.{JMapWrapper, ScioUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage
 import org.apache.beam.sdk.io.gcp.{pubsub => beam}
 import org.apache.beam.sdk.util.CoderUtils
+import org.joda.time.Instant
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -169,6 +171,17 @@ private final case class PubsubIOWithAttributes[T: ClassTag: Coder](name: String
         val attributes = JMapWrapper.of(m.getAttributeMap)
         (payload, attributes)
       }
+  }
+
+  override def readTest(sc: ScioContext, params: ReadP)(
+    implicit coder: Coder[WithAttributeMap]): SCollection[WithAttributeMap] = {
+    val read = sc.parallelize(TestDataManager.getInput(sc.testId.get)(this))
+
+    if (timestampAttribute != null) {
+      read.timestampBy(kv => new Instant(kv._2(timestampAttribute)))
+    } else {
+      read
+    }
   }
 
   override def write(data: SCollection[WithAttributeMap],
