@@ -17,6 +17,8 @@
 
 package com.spotify.scio
 
+import caseapp._
+import com.spotify.scio.ContextAndArgs.TypedParser
 import org.scalatest.{FlatSpec, Matchers}
 
 class ArgsTest extends FlatSpec with Matchers {
@@ -109,6 +111,37 @@ class ArgsTest extends FlatSpec with Matchers {
     val args =
       Args(Array("--key1=value1", "--key2=value2", "--key2=value3", "--key3"))
     args.toString shouldBe "Args(--key1=value1, --key2=[value2, value3], --key3=true)"
+  }
+
+  @AppName("FooBar App")
+  @AppVersion(BuildInfo.version)
+  @ProgName("foobar")
+  case class Arguments(@HelpMessage("Path of the file to read from")
+                       @ExtraName("i")
+                       input: String,
+                       @HelpMessage("Path of the file to write to")
+                       @ExtraName("o")
+                       output: String)
+
+  it should "support typed args" in {
+    val rawArgs = Array("--input=value1", "--output=value2")
+    val result = TypedParser[Arguments]().parse(rawArgs)
+
+    result should be a 'success
+  }
+
+  it should "fail on missing args" in {
+    val rawArgs = Array("--input=value1")
+    val result = TypedParser[Arguments]().parse(rawArgs)
+
+    result should be a 'failure
+  }
+
+  it should "fail on unused args" in {
+    val rawArgs = Array("--input=value1", "--output=value2", "--unused")
+    val result = TypedParser[Arguments]().parse(rawArgs)
+
+    result should be a 'failure
   }
 
 }
