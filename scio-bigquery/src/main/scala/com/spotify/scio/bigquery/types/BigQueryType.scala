@@ -276,7 +276,7 @@ class BigQueryType[T: TypeTag] {
   private[this] val bases = typeOf[T].companion.baseClasses
 
   private[this] val instance = runtimeMirror(getClass.getClassLoader)
-    .reflectModule(typeOf[T].typeSymbol.companion.asModule)
+    .reflectModule(typeOf[T].erasure.typeSymbol.companion.asModule)
     .instance
 
   private def getField(key: String) =
