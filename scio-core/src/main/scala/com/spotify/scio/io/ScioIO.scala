@@ -39,7 +39,7 @@ trait ScioIO[T] {
   // identifier for JobTest IO matching
   def testId: String = this.toString
 
-  protected[scio] def readWithContext(sc: ScioContext, params: ReadP)(
+  private[scio] def readWithContext(sc: ScioContext, params: ReadP)(
     implicit coder: Coder[T]): SCollection[T] =
     sc.requireNotClosed {
       if (sc.isTest) {
@@ -49,7 +49,7 @@ trait ScioIO[T] {
       }
     }
 
-  protected[scio] def writeWithContext(data: SCollection[T], params: WriteP)(
+  private[scio] def writeWithContext(data: SCollection[T], params: WriteP)(
     implicit coder: Coder[T]): Future[Tap[T]] =
     if (data.context.isTest) {
       writeTest(data, params)
