@@ -117,6 +117,8 @@ class CodersTest extends FlatSpec with Matchers {
   }
 
   it should "support Scala collections" in {
+    import scala.collection.BitSet
+
     val nil: Seq[String] = Nil
     val s: Seq[String] = (1 to 10).toSeq.map(_.toString)
     val m = s.map { v =>
@@ -126,8 +128,13 @@ class CodersTest extends FlatSpec with Matchers {
     checkNotFallback(nil)
     checkNotFallback(s)
     checkNotFallback(s.toList)
+    checkNotFallback(s.toVector)
     checkNotFallback(m)
     checkNotFallback(s.toSet)
+    checkNotFallback(None)
+    checkNotFallback(Option(1))
+    checkNotFallback(Some(1))
+    checkNotFallback(BitSet(1 to 100000: _*))
   }
 
   it should "support Java collections" in {
@@ -142,10 +149,6 @@ class CodersTest extends FlatSpec with Matchers {
       .asJava
     checkNotFallback(s)
     checkNotFallback(m)
-  }
-
-  it should "support Java POJOs ?" ignore {
-    ???
   }
 
   object Avro {
@@ -204,9 +207,12 @@ class CodersTest extends FlatSpec with Matchers {
   }
 
   // FIXME: implement the missing coders
-  ignore should "support all the already supported types" in {
+  it should "support all the already supported types" in {
     import org.joda.time._
     import java.nio.file.FileSystems
+    import java.math.{BigInteger, BigDecimal => jBigDecimal}
+    import org.apache.beam.sdk.transforms.windowing.IntervalWindow
+
     // TableRowJsonCoder
     // SpecificRecordBase
     // Message
@@ -218,6 +224,58 @@ class CodersTest extends FlatSpec with Matchers {
     checkNotFallback(new LocalDateTime)
     checkNotFallback(new DateTime)
     checkNotFallback(FileSystems.getDefault().getPath("logs", "access.log"))
+
+    "Coder[Void]" should compile
+    "Coder[Unit]" should compile
+
+    import java.util.BitSet
+    val bs = new BitSet()
+    (1 to 100000).foreach { x =>
+      bs.set(x)
+    }
+    checkNotFallback(bs)
+
+    checkNotFallback(new BigInteger("123456789"))
+    checkNotFallback(new jBigDecimal("123456789.98765"))
+    checkNotFallback(new IntervalWindow((new Instant).minus(4000), new Instant))
+
+  }
+
+  it should "Serialize java's Instant" in {
+    import java.time.{Instant => jInstant}
+
+    // Both thow exceptions but they should be unusual enough to not be an issue
+    // checkNotFallback(jInstant.MIN)
+    // checkNotFallback(jInstant.MAX)
+    checkNotFallback(jInstant.EPOCH)
+    checkNotFallback(jInstant.now)
+  }
+
+  // Broken because of a bug in Beam
+  // See: https://issues.apache.org/jira/browse/BEAM-5645
+  ignore should "Serialize Row (see: BEAM-5645)" in {
+    import org.apache.beam.sdk.schemas.{Schema => bSchema}
+    import org.apache.beam.sdk.values.Row
+    import java.lang.{Integer => jInt, String => jString, Double => jDouble}
+
+    val beamSchema =
+      bSchema
+        .builder()
+        .addInt32Field("c1")
+        .addStringField("c2")
+        .addDoubleField("c3")
+        .build()
+
+    implicit val coderRow = Coder.row(beamSchema)
+    val rows =
+      List[(jInt, jString, jDouble)]((1, "row", 1.0), (2, "row", 2.0), (3, "row", 3.0))
+        .map {
+          case (a, b, c) =>
+            Row.withSchema(beamSchema).addValues(a, b, c).build()
+        }
+        .foreach { r =>
+          checkNotFallback(r)
+        }
   }
 
   it should "Serialize objects" in {
