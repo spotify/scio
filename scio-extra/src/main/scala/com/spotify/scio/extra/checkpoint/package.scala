@@ -21,6 +21,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
 import com.spotify.scio.io.{FileStorage, ObjectFileIO}
+import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.FileSystems
@@ -71,7 +72,8 @@ package object checkpoint {
     }
 
     private def isCheckpointAvailable(path: String): Boolean = {
-      if (self.isTest && self.testInput.m.contains(CheckpointIO[Unit](path).testId)) {
+      if (self.isTest &&
+          TestDataManager.getInput(self.testId.get).m.contains(CheckpointIO[Unit](path).testId)) {
         // if it's test and checkpoint was registered in test
         true
       } else {

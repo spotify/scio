@@ -18,6 +18,8 @@
 package com.spotify.scio.io
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.values.SCollection
 
 import scala.concurrent.Future
@@ -26,7 +28,8 @@ import scala.concurrent.Future
  * Base trait for all Read/Write IO classes. Every IO connector must implement this.
  * This trait has two abstract implicit methods #read, #write that need to be implemented
  * in every subtype. Look at the [[com.spotify.scio.io.TextIO]] subclass for a reference
- * implementation.
+ * implementation. IO connectors can choose to override #readTest and #writeTest if custom
+ * test logic is necessary.
  */
 trait ScioIO[T] {
   // abstract types for read/write params.
@@ -36,9 +39,40 @@ trait ScioIO[T] {
   // identifier for JobTest IO matching
   def testId: String = this.toString
 
-  def read(sc: ScioContext, params: ReadP): SCollection[T]
+  private[scio] def readWithContext(sc: ScioContext, params: ReadP)(
+    implicit coder: Coder[T]): SCollection[T] =
+    sc.requireNotClosed {
+      if (sc.isTest) {
+        readTest(sc, params)
+      } else {
+        read(sc, params)
+      }
+    }
 
-  def write(data: SCollection[T], params: WriteP): Future[Tap[T]]
+  private[scio] def writeWithContext(data: SCollection[T], params: WriteP)(
+    implicit coder: Coder[T]): Future[Tap[T]] =
+    if (data.context.isTest) {
+      writeTest(data, params)
+    } else {
+      write(data, params)
+    }
+
+  protected def read(sc: ScioContext, params: ReadP): SCollection[T]
+
+  protected def write(data: SCollection[T], params: WriteP): Future[Tap[T]]
+
+  protected def readTest(sc: ScioContext, params: ReadP)(
+    implicit coder: Coder[T]): SCollection[T] = {
+    sc.parallelize(
+      TestDataManager.getInput(sc.testId.get)(this).asInstanceOf[Seq[T]]
+    )
+  }
+
+  protected def writeTest(data: SCollection[T], params: WriteP)(
+    implicit coder: Coder[T]): Future[Tap[T]] = {
+    TestDataManager.getOutput(data.context.testId.get)(this)(data)
+    data.saveAsInMemoryTap
+  }
 
   def tap(params: ReadP): Tap[T]
 }
