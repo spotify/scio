@@ -24,6 +24,12 @@ import org.scalatest.{Assertion, FlatSpec, Matchers}
 import scala.annotation.StaticAnnotation
 import scala.reflect.runtime.universe._
 
+// scalastyle:off number.of.types
+object TypeProviderTest {
+  @BigQueryType.toTable
+  case class RefinedClass(a1: Int)
+}
+
 // TODO: mock BigQueryClient for fromTable and fromQuery
 class TypeProviderTest extends FlatSpec with Matchers {
 
@@ -513,4 +519,10 @@ class TypeProviderTest extends FlatSpec with Matchers {
   it should "preserve sequential user defined annotations" in {
     containsAllAnnotTypes[SchemaWithSequentialAnnotations]
   }
+
+  "BigQueryType" should " #1414: not fail on refined types" in {
+    noException should be thrownBy
+      BigQueryType[TypeProviderTest.RefinedClass with BigQueryType.HasAnnotation]
+  }
 }
+// scalastyle:on number.of.types
