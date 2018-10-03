@@ -22,7 +22,7 @@ import org.apache.beam.sdk.coders.CoderRegistry
 import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 
-final object CoderMaterializer {
+object CoderMaterializer {
   import com.spotify.scio.ScioContext
 
   final def beam[T](sc: ScioContext, c: Coder[T]): BCoder[T] =
@@ -33,8 +33,8 @@ final object CoderMaterializer {
                                o: PipelineOptions = PipelineOptionsFactory.create()): BCoder[T] =
     beam(r, o, coder)
 
-  final def beam[T](r: CoderRegistry, o: PipelineOptions, c: Coder[T]): BCoder[T] = {
-    c match {
+  final def beam[T](r: CoderRegistry, o: PipelineOptions, coder: Coder[T]): BCoder[T] = {
+    coder match {
       case Beam(c) => c
       case Fallback(ct) =>
         WrappedBCoder.create(
