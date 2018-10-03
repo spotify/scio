@@ -22,7 +22,7 @@ import scala.reflect.macros._
 private[coders] object CoderMacros {
 
   private[this] var verbose = true
-  private[this] val Reported: scala.collection.mutable.Set[(String, String)] =
+  private[this] val reported: scala.collection.mutable.Set[(String, String)] =
     scala.collection.mutable.Set.empty
 
   private[this] val ShowWarnDefault = true
@@ -61,8 +61,8 @@ private[coders] object CoderMacros {
     val fullType = typeName + params
 
     val toReport = c.enclosingPosition.toString -> wtt.toString
-    val alreadyReported = Reported.contains(toReport)
-    if (!alreadyReported) Reported += toReport
+    val alreadyReported = reported.contains(toReport)
+    if (!alreadyReported) reported += toReport
 
     def shortMessage =
       s"""
