@@ -21,6 +21,7 @@ import com.google.api.services.bigquery.model.Table;
 import com.google.api.services.bigquery.model.TableReference;
 import com.google.api.services.bigquery.model.TableRow;
 import com.google.api.services.bigquery.model.TableSchema;
+import java.util.ArrayList;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.beam.sdk.transforms.windowing.GlobalWindow;
 import org.apache.beam.sdk.transforms.windowing.PaneInfo;
@@ -62,7 +63,7 @@ public class BigQueryServicesWrapper {
           rows,
           null,
           InsertRetryPolicy.alwaysRetry(),
-          null,
+          new ArrayList<>(),
           ErrorContainer.TABLE_ROW_ERROR_CONTAINER,
           false,
           false);
