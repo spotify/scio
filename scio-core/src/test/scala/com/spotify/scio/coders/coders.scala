@@ -18,6 +18,7 @@
 package com.spotify.scio.coders
 
 import scala.collection.JavaConverters._
+import scala.collection.{mutable => mut}
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.avro.generic.GenericRecord
@@ -128,6 +129,7 @@ class CodersTest extends FlatSpec with Matchers {
     checkNotFallback(s.toList)
     checkNotFallback(m)
     checkNotFallback(s.toSet)
+    checkNotFallback(mut.ListBuffer((1 to 10): _*))
   }
 
   it should "support Java collections" in {
