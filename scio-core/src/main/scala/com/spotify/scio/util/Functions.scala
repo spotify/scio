@@ -135,9 +135,16 @@ private[scio] object Functions {
 
       override def mergeAccumulators(
         accumulators: JIterable[(Option[C], JList[T])]): (Option[C], JList[T]) = {
+        val flattened: Iterator[C] = accumulators.iterator.asScala.flatMap(foldOption)
+        // make sure not to fail when flattened is empty
+        // see: https://github.com/spotify/scio/issues/1425
         val combined =
-          accumulators.iterator.asScala.flatMap(foldOption).reduce(mc)
-        (Some(combined), Lists.newArrayList())
+          if (flattened.hasNext) {
+            Option(flattened.reduce(mc))
+          } else {
+            None
+          }
+        (combined, Lists.newArrayList())
       }
 
     }
