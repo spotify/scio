@@ -216,7 +216,7 @@ object BigQueryType {
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    * @group annotation
    */
-  class fromQuery(query: String, args: String*) extends StaticAnnotation {
+  class fromQuery(query: String, args: Any*) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.queryImpl
   }
 

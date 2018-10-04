@@ -36,7 +36,7 @@ import com.spotify.scio.bigquery.{
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.{Map => MMap}
+import scala.collection.mutable.{Map => MMap, Stack => MStack}
 import scala.reflect.macros._
 
 // scalastyle:off line.size.limit
@@ -44,17 +44,20 @@ private[types] object TypeProvider {
 
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
   private lazy val bigquery: BigQueryClient = BigQueryClient.defaultInstance()
+  private[this] val FormatSpecifierRegex =
+    "(%(\\d+\\$)?([-#+ 0,(\\<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%]))".r
 
   def tableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
     val args = extractStrings(c, "Missing table specification")
+    val query = args.head.asInstanceOf[String]
     val tableSpec =
       BigQueryPartitionUtil.latestTable(bigquery, formatString(args))
     val schema = bigquery.getTableSchema(tableSpec)
     val traits = List(tq"${p(c, SType)}.HasTable")
 
-    val tableDef = q"override def table: _root_.java.lang.String = ${args.head}"
+    val tableDef = q"override def table: _root_.java.lang.String = $query"
 
     val ta =
       annottees.map(_.tree) match {
@@ -74,24 +77,49 @@ private[types] object TypeProvider {
   }
 
   def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    val schemaString = extractStrings(c, "Missing schema").head
+    val schemaString = extractStrings(c, "Missing schema").head.asInstanceOf[String]
     val schema = BigQueryUtil.parseSchema(schemaString)
     schemaToType(c)(schema, annottees, Nil, Nil)
   }
 
+  // scalastyle:off cyclomatic.complexity
   def queryImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
     val args = extractStrings(c, "Missing query")
+    val (queryFormat: String) :: tail = args
+    val argsStack = MStack[Any](tail: _*)
     val query = BigQueryPartitionUtil.latestQuery(bigquery, formatString(args))
     val schema = bigquery.getQuerySchema(query)
     val traits = List(tq"${p(c, SType)}.HasQuery")
 
-    val queryDef = q"override def query: _root_.java.lang.String = ${args.head}"
+    val queryDef =
+      q"override def query: _root_.java.lang.String = $queryFormat"
+
+    val formatTerms = FormatSpecifierRegex
+      .findAllMatchIn(queryFormat)
+      .map(m => (TermName(c.freshName("queryArg$")), m.matched.last, argsStack.pop()))
+      .collect {
+        case (termName, 's', _: String) => typeOf[String] -> termName
+        case (termName, 'd', _: Int)    => typeOf[Int] -> termName
+        case (termName, 'd', _: Long)   => typeOf[Long] -> termName
+        case (termName, 'f', _: Float)  => typeOf[Float] -> termName
+        case (termName, 'f', _: Double) => typeOf[Double] -> termName
+        case _ =>
+          c.abort(c.enclosingPosition, "format specifier not supported")
+      }
+      .toList
+
+    val queryFnDef = if (formatTerms.nonEmpty) {
+      val typesQ = formatTerms.map { case (tpt, termName) => q"$termName: $tpt" }
+      Some(q"def query(..$typesQ): String = $queryFormat.format(..${formatTerms.map(_._2)})")
+    } else {
+      None
+    }
 
     val qa =
       annottees.map(_.tree) match {
-        case (q"class $cName") :: tail =>
+        case q"class $cName" :: _ =>
           List(q"""
             implicit def bqQuery: ${p(c, SType)}.Query[$cName] =
               new ${p(c, SType)}.Query[$cName]{
@@ -101,10 +129,11 @@ private[types] object TypeProvider {
         case _ =>
           Nil
       }
-    val overrides = List(queryDef) ++ qa
+    val overrides = queryFnDef.getOrElse(EmptyTree) :: queryDef :: qa
 
     schemaToType(c)(schema, annottees, traits, overrides)
   }
+  // scalastyle:on cyclomatic.complexity
 
   private def getTableDescription(c: blackbox.Context)(
     cd: c.universe.ClassDef): List[c.universe.Tree] = {
@@ -136,13 +165,12 @@ private[types] object TypeProvider {
         val traits = (if (fields.size <= 22) Seq(fnTrait) else Seq()) ++ defTblDesc
           .map(_ => tq"${p(c, SType)}.HasTableDescription")
         val taggedFields = fields.map {
-          case ValDef(m, n, tpt, rhs) => {
+          case ValDef(m, n, tpt, rhs) =>
             provider.initializeToTable(c)(m, n, tpt)
             c.universe.ValDef(c.universe.Modifiers(m.flags, m.privateWithin, m.annotations),
                               n,
                               tq"$tpt @${typeOf[BigQueryTag]}",
                               rhs)
-          }
         }
         val caseClassTree =
           q"""${caseClass(c)(mods, cName, taggedFields, body)}"""
@@ -273,12 +301,12 @@ private[types] object TypeProvider {
   // scalastyle:on method.length
 
   /** Extract string from annotation. */
-  private def extractStrings(c: blackbox.Context, errorMessage: String): List[String] = {
+  private def extractStrings(c: blackbox.Context, errorMessage: String): List[Any] = {
     import c.universe._
 
     def str(tree: c.Tree) = tree match {
-      // "string literal"
-      case Literal(Constant(s: String)) => s
+      // "argument literal"
+      case Literal(Constant(arg @ (_: String | _: Float | _: Double | _: Int | _: Long))) => arg
       // "string literal".stripMargin
       case Select(Literal(Constant(s: String)), TermName("stripMargin")) =>
         s.stripMargin
@@ -296,8 +324,8 @@ private[types] object TypeProvider {
     }
   }
 
-  private def formatString(xs: List[String]): String =
-    if (xs.tail.isEmpty) xs.head else xs.head.format(xs.tail: _*)
+  private def formatString(xs: List[Any]): String =
+    xs.head.asInstanceOf[String].format(xs.tail: _*)
 
   /** Generate a case class. */
   private def caseClass(c: blackbox.Context)(mods: c.Modifiers,
