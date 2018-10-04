@@ -335,6 +335,9 @@ trait ScalaCoders {
       Coder.beam(new BufferCoder[T](bc))
     }
 
+  implicit def listBufferCoder[T: Coder]: Coder[m.ListBuffer[T]] =
+    Coder.xmap(bufferCoder[T])(m.ListBuffer(_: _*), identity)
+
   implicit def arrayCoder[T: Coder: ClassTag]: Coder[Array[T]] =
     Coder.transform(Coder[T]) { bc =>
       Coder.beam(new ArrayCoder[T](bc))
