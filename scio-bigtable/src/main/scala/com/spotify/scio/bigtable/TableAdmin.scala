@@ -38,7 +38,7 @@ object TableAdmin {
   private def adminClient[A](bigtableOptions: BigtableOptions)(
     f: BigtableTableAdminClient => A): Try[A] = {
     val channel =
-      ChannelPoolCreator.createPool(bigtableOptions.getTableAdminHost)
+      ChannelPoolCreator.createPool(bigtableOptions.getAdminHost)
     val executorService =
       BigtableSessionSharedThreadPools.getInstance().getRetryExecutor
     val client = new BigtableTableAdminGrpcClient(channel, executorService, bigtableOptions)

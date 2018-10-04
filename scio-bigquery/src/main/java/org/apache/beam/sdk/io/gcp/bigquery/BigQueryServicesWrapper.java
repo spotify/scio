@@ -58,7 +58,14 @@ public class BigQueryServicesWrapper {
                 PaneInfo.NO_FIRING))
         .collect(Collectors.toList());
     return bqServices.getDatasetService(bqOptions)
-        .insertAll(ref, rows, null, InsertRetryPolicy.alwaysRetry(), null);
+        .insertAll(ref,
+          rows,
+          null,
+          InsertRetryPolicy.alwaysRetry(),
+          null,
+          ErrorContainer.TABLE_ROW_ERROR_CONTAINER,
+          false,
+          false);
   }
 
 }
