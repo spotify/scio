@@ -51,7 +51,7 @@ private[types] object TypeProvider {
     import c.universe._
 
     val args = extractStrings(c, "Missing table specification")
-    val query = args.head.asInstanceOf[String]
+    val (query: String) :: _ = args
     val tableSpec =
       BigQueryPartitionUtil.latestTable(bigquery, formatString(args))
     val schema = bigquery.getTableSchema(tableSpec)
@@ -77,7 +77,7 @@ private[types] object TypeProvider {
   }
 
   def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    val schemaString = extractStrings(c, "Missing schema").head.asInstanceOf[String]
+    val (schemaString: String) :: _ = extractStrings(c, "Missing schema")
     val schema = BigQueryUtil.parseSchema(schemaString)
     schemaToType(c)(schema, annottees, Nil, Nil)
   }

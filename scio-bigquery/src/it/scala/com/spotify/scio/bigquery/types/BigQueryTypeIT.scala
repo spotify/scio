@@ -169,6 +169,16 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
     SqlLatestT.query("TABLE") shouldBe sqlLatestQuery.format("TABLE")
   }
 
+  it should "type check annotation arguments" in {
+    """
+      |  @BigQueryType.fromQuery(
+      |    "SELECT word, word_count FROM `data-integration-test.partition_a.table_%s` LIMIT %d",
+      |    "$LATEST",
+      |    "1")
+      |  class WrongFormatSupplied
+    """.stripMargin shouldNot compile
+  }
+
   "fromTable" should "work" in {
     val bqt = BigQueryType[FromTableT]
     bqt.isQuery shouldBe false
