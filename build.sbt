@@ -20,7 +20,7 @@ import Keys._
 import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 
-val beamVersion = "2.6.0"
+val beamVersion = "2.7.0"
 
 val algebirdVersion = "0.13.4"
 val annoy4sVersion = "0.6.0"
@@ -54,7 +54,7 @@ val kryoVersion = "4.0.2" // explicitly depend on 4.0.1+ due to https://github.c
 val parquetAvroExtraVersion = "0.2.2"
 val parquetVersion = "1.10.0"
 val protobufGenericVersion = "0.2.4"
-val protobufVersion = "3.5.1"
+val protobufVersion = "3.6.0"
 val scalacheckShapelessVersion = "1.1.8"
 val scalacheckVersion = "1.13.5"
 val scalaMacrosVersion = "2.1.1"
@@ -66,7 +66,7 @@ val sparkeyVersion = "2.3.0"
 val tensorFlowVersion = "1.8.0"
 val zoltarVersion = "0.4.0"
 val magnoliaVersion = "0.10.1-jto"
-val grpcVersion = "1.7.0"
+val grpcVersion = "1.13.1"
 val caseappVersion = "2.0.0-M3"
 
 lazy val mimaSettings = Seq(

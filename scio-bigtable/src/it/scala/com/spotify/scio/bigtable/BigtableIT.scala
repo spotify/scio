@@ -124,7 +124,7 @@ class BigtableIT extends PipelineSpec {
       s"scio-bigtable-one-cf-table-$uuid" -> List("colfam1"),
       s"scio-bigtable-two-cf-table-$uuid" -> List("colfam1", "colfam2")
     )
-    val channel = ChannelPoolCreator.createPool(bigtableOptions.getTableAdminHost)
+    val channel = ChannelPoolCreator.createPool(bigtableOptions.getAdminHost)
     val executorService = BigtableSessionSharedThreadPools.getInstance().getRetryExecutor
     val client = new BigtableTableAdminGrpcClient(channel, executorService, bigtableOptions)
     val instancePath = s"projects/$projectId/instances/$instanceId"

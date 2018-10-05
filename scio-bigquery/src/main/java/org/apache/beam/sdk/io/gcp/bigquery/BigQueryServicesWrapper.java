@@ -21,6 +21,7 @@ import com.google.api.services.bigquery.model.Table;
 import com.google.api.services.bigquery.model.TableReference;
 import com.google.api.services.bigquery.model.TableRow;
 import com.google.api.services.bigquery.model.TableSchema;
+import java.util.ArrayList;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.beam.sdk.transforms.windowing.GlobalWindow;
 import org.apache.beam.sdk.transforms.windowing.PaneInfo;
@@ -58,7 +59,14 @@ public class BigQueryServicesWrapper {
                 PaneInfo.NO_FIRING))
         .collect(Collectors.toList());
     return bqServices.getDatasetService(bqOptions)
-        .insertAll(ref, rows, null, InsertRetryPolicy.alwaysRetry(), null);
+        .insertAll(ref,
+          rows,
+          null,
+          InsertRetryPolicy.alwaysRetry(),
+          new ArrayList<>(),
+          ErrorContainer.TABLE_ROW_ERROR_CONTAINER,
+          false,
+          false);
   }
 
 }
