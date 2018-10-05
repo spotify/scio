@@ -7,10 +7,9 @@ Scio
 [![Maven Central](https://img.shields.io/maven-central/v/com.spotify/scio-core_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/com.spotify/scio-core_2.11)
 [![Join the chat at https://gitter.im/spotify/scio](https://badges.gitter.im/spotify/scio.svg)](https://gitter.im/spotify/scio)
 
-![Scio Logo](https://raw.github.com/spotify/scio/master/logo/logo.png)
+<img src="https://raw.github.com/spotify/scio/master/logo/logo.png" alt="Scio Logo" width="250"/>
 
-> Ecclesiastical Latin IPA: /ˈʃi.o/, [ˈʃiː.o], [ˈʃi.i̯o]
-
+> Ecclesiastical Latin IPA: /ˈʃi.o/, [ˈʃiː.o], [ˈʃi.i̯o]  
 > Verb: I can, know, understand, have knowledge.
 
 Scio is a Scala API for [Apache Beam](http://beam.incubator.apache.org/) and [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) inspired by [Apache Spark](http://spark.apache.org/) and [Scalding](https://github.com/twitter/scalding).
@@ -34,7 +33,7 @@ Scio 0.3.0 and future versions depend on Apache Beam (`org.apache.beam`) while e
 
 # Quick Start
 
-Use our [giter8 template](https://github.com/spotify/scio.g8) to quickly setup a project:  
+Use our [giter8 template](https://github.com/spotify/scio.g8) to quickly setup a project:
 
 `sbt new spotify/scio.g8`
 
