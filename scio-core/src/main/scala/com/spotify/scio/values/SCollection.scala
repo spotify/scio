@@ -1054,10 +1054,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as a Pub/Sub topic.
    * @group output
    */
-  def saveAsPubsub(topic: String, idAttribute: String = null, timestampAttribute: String = null)(
-    implicit ct: ClassTag[T],
-    coder: Coder[T]): Future[Tap[T]] =
-    this.write(PubsubIO[T](topic))
+  def saveAsPubsub(topic: String,
+                   idAttribute: String = null,
+                   timestampAttribute: String = null,
+                   maxBatchSize: Option[Int] = None,
+                   maxBatchBytesSize: Option[Int] = None)(implicit ct: ClassTag[T],
+                                                          coder: Coder[T]): Future[Tap[T]] =
+    this.write(PubsubIO[T](topic))(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
 
   /**
    * Save this SCollection as a Pub/Sub topic using the given map as message attributes.
@@ -1065,10 +1068,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def saveAsPubsubWithAttributes[V: ClassTag: Coder](topic: String,
                                                      idAttribute: String = null,
-                                                     timestampAttribute: String = null)(
+                                                     timestampAttribute: String = null,
+                                                     maxBatchSize: Option[Int] = None,
+                                                     maxBatchBytesSize: Option[Int] = None)(
     implicit ev: T <:< (V, Map[String, String])): Future[Tap[(V, Map[String, String])]] = {
     val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
-    this.asInstanceOf[SCollection[(V, Map[String, String])]].write(io)
+    this
+      .asInstanceOf[SCollection[(V, Map[String, String])]]
+      .write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
   }
 
   /**
