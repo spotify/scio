@@ -37,12 +37,20 @@ object BigQueryTypeIT {
   class FromTableT
 
   @BigQueryType.fromQuery(
-    "SELECT word, word_count FROM [data-integration-test:partition_a.table_%s]", "$LATEST")
+    "SELECT word, word_count FROM [data-integration-test:partition_a.table_%s]",
+    "$LATEST")
   class LegacyLatestT
 
   @BigQueryType.fromQuery(
-    "SELECT word, word_count FROM `data-integration-test.partition_a.table_%s`", "$LATEST")
+    "SELECT word, word_count FROM `data-integration-test.partition_a.table_%s`",
+    "$LATEST")
   class SqlLatestT
+
+  @BigQueryType.fromQuery(
+    "SELECT word, word_count FROM `data-integration-test.partition_a.table_%s` LIMIT %d",
+    "$LATEST",
+    1)
+  class SqlLatestTWithMultiArgs
 
   @BigQueryType.fromTable("data-integration-test:partition_a.table_%s", "$LATEST")
   class FromTableLatestT
@@ -141,6 +149,36 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
     BigQueryType[SqlLatestT].query shouldBe Some(sqlLatestQuery)
   }
 
+  it should "have query fn" in {
+    """LegacyLatestT.query("TABLE")""" should compile
+    """SqlLatestT.query("TABLE")""" should compile
+  }
+
+  it should "have query fn with only 1 argument" in {
+    """LegacyLatestT.query("TABLE", 1)""" shouldNot typeCheck
+    """SqlLatestT.query("TABLE", 1)""" shouldNot typeCheck
+  }
+
+  it should "have query fn with multiple arguments" in {
+    """SqlLatestTWithMultiArgs.query("TABLE", 1)""" should compile
+    """SqlLatestTWithMultiArgs.query(1, "TABLE")""" shouldNot typeCheck
+  }
+
+  it should "format query" in {
+    LegacyLatestT.query("TABLE") shouldBe legacyLatestQuery.format("TABLE")
+    SqlLatestT.query("TABLE") shouldBe sqlLatestQuery.format("TABLE")
+  }
+
+  it should "type check annotation arguments" in {
+    """
+      |  @BigQueryType.fromQuery(
+      |    "SELECT word, word_count FROM `data-integration-test.partition_a.table_%s` LIMIT %d",
+      |    "$LATEST",
+      |    "1")
+      |  class WrongFormatSupplied
+    """.stripMargin shouldNot compile
+  }
+
   "fromTable" should "work" in {
     val bqt = BigQueryType[FromTableT]
     bqt.isQuery shouldBe false
@@ -159,9 +197,7 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
   }
 
   def containsAllAnnotTypes[T: TypeTag]: Assertion = {
-    val types = typeOf[T]
-      .typeSymbol
-      .annotations
+    val types = typeOf[T].typeSymbol.annotations
       .map(_.tree.tpe)
     Seq(typeOf[Annotation1], typeOf[Annotation2])
       .forall(lt => types.exists(rt => lt =:= rt)) shouldBe true
