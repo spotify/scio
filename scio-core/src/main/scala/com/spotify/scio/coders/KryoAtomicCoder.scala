@@ -26,7 +26,7 @@ import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
 import com.google.common.io.{ByteStreams, CountingOutputStream}
 import com.google.common.reflect.ClassPath
 import com.google.protobuf.{ByteString, Message}
-import com.spotify.scio.coders.serializers._
+import com.spotify.scio.coders.instances.kryo._
 import com.spotify.scio.options.ScioOptions
 import com.twitter.chill._
 import com.twitter.chill.algebird.AlgebirdRegistrar
@@ -83,7 +83,7 @@ object ScioKryoRegistrar {
 }
 
 /** serializers we've written in Scio and want to add to Kryo serialization
- * @see com.spotify.scio.coders.serializers */
+ * @see com.spotify.scio.coders.instances.serializers */
 private final class ScioKryoRegistrar extends IKryoRegistrar {
   import ScioKryoRegistrar.logger
 
