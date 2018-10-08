@@ -73,13 +73,14 @@ class MockBigQuery private (private val bq: BigQueryClient) {
    */
   def queryResult(sqlQuery: String, flattenResults: Boolean = false): Seq[TableRow] = {
     val isLegacy = bq.query.isLegacySql(sqlQuery, flattenResults)
-    val mockQuery = mapping.foldLeft(sqlQuery){ case (q, (src, dst)) =>
-      q.replace(toTableSpec(src, isLegacy), toTableSpec(dst, isLegacy))
+    val mockQuery = mapping.foldLeft(sqlQuery) {
+      case (q, (src, dst)) =>
+        q.replace(toTableSpec(src, isLegacy), toTableSpec(dst, isLegacy))
     }
     try {
       bq.query.getRows(mockQuery, flattenResults).toList
     } catch {
-      case e: GoogleJsonResponseException if new ApiErrorExtractor().itemNotFound(e) =>
+      case e: GoogleJsonResponseException if ApiErrorExtractor.INSTANCE.itemNotFound(e) =>
         throw new RuntimeException(
           "404 Not Found, this is most likely caused by missing source table or mock data",
           e)
@@ -122,9 +123,8 @@ class MockTable(private val bq: BigQueryClient,
     this.mocked = true
   }
 
-  private def writeRows(rows: Seq[TableRow]): Unit = {
+  private def writeRows(rows: Seq[TableRow]): Unit =
     bq.tables.writeRows(temp, rows.toList, schema, WRITE_EMPTY, CREATE_IF_NEEDED)
-  }
 
   /**
    * Populate the table with mock data.
@@ -160,9 +160,8 @@ class MockTable(private val bq: BigQueryClient,
   def withSample(minNumRows: Int, maxNumRows: Int): Unit = {
     ensureUnique()
     val rows = bq.tables.getRows(original).take(maxNumRows).toList
-    require(
-      rows.length >= minNumRows && rows.length <= maxNumRows,
-      s"Sample size ${rows.length} < requested minimal $minNumRows")
+    require(rows.length >= minNumRows && rows.length <= maxNumRows,
+            s"Sample size ${rows.length} < requested minimal $minNumRows")
     writeRows(rows)
   }
 

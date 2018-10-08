@@ -17,50 +17,26 @@
 
 package com.spotify.scio.bigquery
 
-import java.io.{File, FileInputStream, StringReader}
+import java.io.{File, FileInputStream}
 
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.http.{HttpRequest, HttpRequestInitializer}
-import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.services.bigquery.Bigquery
 import com.google.api.services.bigquery.model._
-import com.google.api.services.bigquery.{Bigquery, BigqueryScopes}
 import com.google.auth.Credentials
 import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.GoogleCredentials
-import com.google.cloud.hadoop.util.{ApiErrorExtractor, ChainingHttpRequestInitializer}
-import com.google.common.base.Charsets
-import com.google.common.hash.Hashing
-import com.google.common.io.Files
-import com.spotify.scio.CoreSysProps
 import com.google.cloud.hadoop.util.ChainingHttpRequestInitializer
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
-import org.apache.beam.sdk.options.PipelineOptionsFactory
 
 import scala.reflect.runtime.universe._
-import scala.util.control.NonFatal
-import scala.util.{Failure, Random, Success, Try}
-import scala.collection.JavaConverters._
-
-/** Utility for BigQuery data types. */
-object BigQueryUtil {
-
-  private lazy val jsonObjectParser = new JsonObjectParser(new JacksonFactory)
-
-  /** Parse a schema string. */
-  def parseSchema(schemaString: String): TableSchema =
-    jsonObjectParser
-      .parseAndClose(new StringReader(schemaString), classOf[TableSchema])
-
-}
 
 /** A simple BigQuery client. */
-// scalastyle:off number.of.methods
-// scalastyle:off file.size.limit
 class BigQueryClient private (private val projectId: String, _credentials: Credentials = null) {
   self =>
 
@@ -69,11 +45,10 @@ class BigQueryClient private (private val projectId: String, _credentials: Crede
             "It should be a non-empty string")
 
   def this(projectId: String, secretFile: File) =
-    this(
-      projectId,
-      GoogleCredentials
-        .fromStream(new FileInputStream(secretFile))
-        .createScoped(BigQueryConfig.SCOPES))
+    this(projectId,
+         GoogleCredentials
+           .fromStream(new FileInputStream(secretFile))
+           .createScoped(BigQueryConfig.SCOPES))
 
   private lazy val credentials = Option(_credentials).getOrElse(
     GoogleCredentials.getApplicationDefault.createScoped(BigQueryConfig.SCOPES))
@@ -167,9 +142,11 @@ class BigQueryClient private (private val projectId: String, _credentials: Crede
                                                   writeDisposition: WriteDisposition,
                                                   createDisposition: CreateDisposition): Unit = {
     val bqt = BigQueryType[T]
-    self.tables.writeRows(
-      table, rows.map(bqt.toTableRow), bqt.schema,
-      writeDisposition, createDisposition)
+    self.tables.writeRows(table,
+                          rows.map(bqt.toTableRow),
+                          bqt.schema,
+                          writeDisposition,
+                          createDisposition)
   }
 
   /**
@@ -207,20 +184,16 @@ class BigQueryClient private (private val projectId: String, _credentials: Crede
 /** Companion object for [[BigQueryClient]]. */
 object BigQueryClient {
 
-  /** Default cache directory. */
-  val CACHE_DIRECTORY_DEFAULT: String =
-    CoreSysProps.UserDir.value + "/.bigquery"
-
-  /** Default cache behavior is enabled. */
-  val CACHE_ENABLED_DEFAULT: Boolean = true
-
-  private val SCOPES = List(BigqueryScopes.BIGQUERY).asJava
-
   private lazy val instance: BigQueryClient =
     BigQuerySysProps.Project.valueOption.map(BigQueryClient(_)).getOrElse {
+      val project = new DefaultProjectFactory().create(null)
+      if (project != null) {
+        BigQueryClient(project)
+      } else {
         val flag = BigQuerySysProps.Project.flag
         throw new RuntimeException(s"Property $flag not set. Use -D$flag=<BILLING_PROJECT>")
       }
+    }
 
   /**
    * Get the default BigQueryClient instance.
@@ -257,20 +230,4 @@ object BigQueryClient {
   /** Create a new BigQueryClient instance with the given project and secret file. */
   def apply(project: String, secretFile: File): BigQueryClient =
     new BigQueryClient(project, secretFile)
-
-  private def isCacheEnabled: Boolean =
-    BigQuerySysProps.CacheEnabled.valueOption
-      .flatMap(x => Try(x.toBoolean).toOption)
-      .getOrElse(CACHE_ENABLED_DEFAULT)
-
-  private def cacheDirectory: String =
-    BigQuerySysProps.CacheDirectory.value(CACHE_DIRECTORY_DEFAULT)
-
-  private def connectTimeoutMs: Option[Int] =
-    BigQuerySysProps.ConnectTimeoutMs.valueOption.map(_.toInt)
-
-  private def readTimeoutMs: Option[Int] =
-    BigQuerySysProps.ReadTimeoutMs.valueOption.map(_.toInt)
-
-  private def priority: Option[String] = BigQuerySysProps.Priority.valueOption
 }

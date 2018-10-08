@@ -22,7 +22,6 @@ import java.io.BufferedReader
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import com.spotify.scio.bigquery.BigQuerySysProps
 import com.spotify.scio.BuildInfo
-import com.spotify.scio.bigquery.BigQueryConfig
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.commons.lang.StringEscapeUtils
 

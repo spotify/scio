@@ -47,16 +47,18 @@ private[scio] object Cache {
   private def setCacheSchema(key: String, schema: TableSchema): Unit =
     Files.write(schema.toPrettyString, schemaCacheFile(key), Charsets.UTF_8)
 
-  private def getCacheSchema(key: String): Option[TableSchema] = Try {
-    BigQueryUtil.parseSchema(scala.io.Source.fromFile(schemaCacheFile(key)).mkString)
-  }.toOption
+  private def getCacheSchema(key: String): Option[TableSchema] =
+    Try {
+      BigQueryUtil.parseSchema(scala.io.Source.fromFile(schemaCacheFile(key)).mkString)
+    }.toOption
 
   private[bigquery] def setCacheDestinationTable(key: String, table: TableReference): Unit =
     Files.write(bq.BigQueryHelpers.toTableSpec(table), tableCacheFile(key), Charsets.UTF_8)
 
-  private[bigquery] def getCacheDestinationTable(key: String): Option[TableReference] = Try {
-    bq.BigQueryHelpers.parseTableSpec(scala.io.Source.fromFile(tableCacheFile(key)).mkString)
-  }.toOption
+  private[bigquery] def getCacheDestinationTable(key: String): Option[TableReference] =
+    Try {
+      bq.BigQueryHelpers.parseTableSpec(scala.io.Source.fromFile(tableCacheFile(key)).mkString)
+    }.toOption
 
   private def cacheFile(key: String, suffix: String): File = {
     val cacheDir = BigQueryConfig.cacheDirectory

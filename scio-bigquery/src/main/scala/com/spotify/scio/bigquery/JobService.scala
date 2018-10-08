@@ -33,21 +33,22 @@ private[scio] object JobService {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   private[bigquery] val PERIOD_FORMATTER = new PeriodFormatterBuilder()
-    .appendHours().appendSuffix("h")
-    .appendMinutes().appendSuffix("m")
-    .appendSecondsWithOptionalMillis().appendSuffix("s")
+    .appendHours()
+    .appendSuffix("h")
+    .appendMinutes()
+    .appendSuffix("m")
+    .appendSecondsWithOptionalMillis()
+    .appendSuffix("s")
     .toFormatter
-
 
   /** Wait for all jobs to finish. */
   def waitForJobs(projectId: String, bigquery: Bigquery, jobs: BigQueryJob*): Unit = {
     val numTotal = jobs.size
-    var pendingJobs = jobs.flatMap {
-      job =>
-        job.jobReference match {
-          case Some(reference) => Some(job, reference)
-          case None => None
-        }
+    var pendingJobs = jobs.flatMap { job =>
+      job.jobReference match {
+        case Some(reference) => Some((job, reference))
+        case None            => None
+      }
     }
 
     while (pendingJobs.nonEmpty) {
@@ -90,8 +91,8 @@ private[scio] object JobService {
 
     bqJob match {
       case _: ExtractJob =>
-        val destinationFileCount = stats.getExtract.getDestinationUriFileCounts
-          .asScala.reduce(_ + _)
+        val destinationFileCount =
+          stats.getExtract.getDestinationUriFileCounts.asScala.reduce(_ + _)
 
         logger.info(s"Total destination file count: $destinationFileCount")
 
@@ -99,8 +100,9 @@ private[scio] object JobService {
         val inputFileBytes = FileUtils.byteCountToDisplaySize(stats.getLoad.getInputFileBytes)
         val outputBytes = FileUtils.byteCountToDisplaySize(stats.getLoad.getOutputBytes)
         val outputRows = stats.getLoad.getOutputRows
-        logger.info(s"Input file bytes: $inputFileBytes, output bytes: $outputBytes, " +
-          s"output rows: $outputRows")
+        logger.info(
+          s"Input file bytes: $inputFileBytes, output bytes: $outputBytes, " +
+            s"output rows: $outputRows")
 
       case queryJob: QueryJob =>
         logger.info(s"Query: `${queryJob.query}`")

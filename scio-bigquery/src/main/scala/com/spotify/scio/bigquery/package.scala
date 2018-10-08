@@ -17,14 +17,14 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.values.SCollection
 import com.google.api.services.bigquery.model.{TableReference, TableRow => GTableRow}
+import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
-import scala.language.implicitConversions
 import scala.collection.JavaConverters._
+import scala.language.implicitConversions
 import scala.util.Try
 
 /**

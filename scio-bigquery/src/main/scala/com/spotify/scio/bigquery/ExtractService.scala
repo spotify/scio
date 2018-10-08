@@ -24,8 +24,7 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 
-private[scio] class ExtractService(private val projectId: String,
-                                   private val bigquery: Bigquery) {
+private[scio] class ExtractService(private val projectId: String, private val bigquery: Bigquery) {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
   def asCsv(sourceTable: String,
@@ -34,12 +33,14 @@ private[scio] class ExtractService(private val projectId: String,
             fieldDelimiter: Option[String] = None,
             printHeader: Option[Boolean] = None): Unit = {
 
-    exportTable(sourceTable = sourceTable,
+    exportTable(
+      sourceTable = sourceTable,
       destinationUris = destinationUris,
       format = "CSV",
       gzipCompression = gzipCompression,
       fieldDelimiter = fieldDelimiter,
-      printHeader = printHeader)
+      printHeader = printHeader
+    )
   }
 
   /** Export a table as Json */
@@ -48,9 +49,9 @@ private[scio] class ExtractService(private val projectId: String,
              gzipCompression: Boolean = false): Unit = {
 
     exportTable(sourceTable = sourceTable,
-      destinationUris = destinationUris,
-      format = "NEWLINE_DELIMITED_JSON",
-      gzipCompression = gzipCompression)
+                destinationUris = destinationUris,
+                format = "NEWLINE_DELIMITED_JSON",
+                gzipCompression = gzipCompression)
   }
 
   /** Export a table as Avro */
@@ -59,9 +60,9 @@ private[scio] class ExtractService(private val projectId: String,
              gzipCompression: Boolean = false): Unit = {
 
     exportTable(sourceTable = sourceTable,
-      destinationUris = destinationUris,
-      format = "AVRO",
-      gzipCompression = gzipCompression)
+                destinationUris = destinationUris,
+                format = "AVRO",
+                gzipCompression = gzipCompression)
   }
 
   private def exportTable(sourceTable: String,

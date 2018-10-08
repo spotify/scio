@@ -43,7 +43,7 @@ private[scio] class QueryService(private val projectId: String,
           .getStackTrace
           .exists { e =>
             e.getClassName.startsWith("scala.tools.nsc.interpreter.") ||
-              e.getClassName.startsWith("org.scalatest.tools.")
+            e.getClassName.startsWith("org.scalatest.tools.")
           }
       )
 
@@ -63,8 +63,10 @@ private[scio] class QueryService(private val projectId: String,
       val view = new ViewDefinition().setQuery(sqlQuery)
       val viewTable = new Table().setView(view).setTableReference(temp)
       val schema = bigquery
-        .tables().insert(temp.getProjectId, temp.getDatasetId, viewTable)
-        .execute().getSchema
+        .tables()
+        .insert(temp.getProjectId, temp.getDatasetId, viewTable)
+        .execute()
+        .getSchema
 
       // Delete temporary table
       logger.info(s"Deleting temporary view ${bq.BigQueryHelpers.toTableSpec(temp)}")
@@ -74,10 +76,9 @@ private[scio] class QueryService(private val projectId: String,
     } else {
       // Get query schema via dry-run
       logger.info("Getting SQL query schema with dry-run")
-      run(
-        sqlQuery, null,
-        flattenResults = false, useLegacySql = false, dryRun = true)
-        .get.getStatistics.getQuery.getSchema
+      // scalastyle:off line.size.limit
+      run(sqlQuery, null, flattenResults = false, useLegacySql = false, dryRun = true).get.getStatistics.getQuery.getSchema
+      // scalastyle:on line.size.limit
     }
   }
 
@@ -97,8 +98,9 @@ private[scio] class QueryService(private val projectId: String,
       newCachedQueryJob(sqlQuery, flattenResults)
     } else {
       logger.info(s"BigQuery caching is disabled")
-      val tempTable = tables.createTemporary(extractLocation(sqlQuery)
-        .getOrElse(tables.DEFAULT_LOCATION))
+      val tempTable = tables.createTemporary(
+        extractLocation(sqlQuery)
+          .getOrElse(tables.DEFAULT_LOCATION))
       delayedQueryJob(sqlQuery, tempTable, flattenResults)
     }
   }
@@ -115,8 +117,9 @@ private[scio] class QueryService(private val projectId: String,
         QueryJob(sqlQuery, jobReference = None, table = temp)
       } else {
         logger.info(s"Cache invalid for query: `$sqlQuery`")
-        val newTemp = tables.createTemporary(extractLocation(sqlQuery)
-          .getOrElse(tables.DEFAULT_LOCATION))
+        val newTemp = tables.createTemporary(
+          extractLocation(sqlQuery)
+            .getOrElse(tables.DEFAULT_LOCATION))
         logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(newTemp)}")
         Cache.setCacheDestinationTable(sqlQuery, newTemp)
         delayedQueryJob(sqlQuery, newTemp, flattenResults)
@@ -124,8 +127,9 @@ private[scio] class QueryService(private val projectId: String,
     } catch {
       case NonFatal(e: GoogleJsonResponseException) if isInvalidQuery(e) => throw e
       case NonFatal(_) =>
-        val temp = tables.createTemporary(extractLocation(sqlQuery)
-          .getOrElse(tables.DEFAULT_LOCATION))
+        val temp = tables.createTemporary(
+          extractLocation(sqlQuery)
+            .getOrElse(tables.DEFAULT_LOCATION))
         logger.info(s"Cache miss for query: `$sqlQuery`")
         logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
         Cache.setCacheDestinationTable(sqlQuery, temp)
@@ -208,19 +212,19 @@ private[scio] class QueryService(private val projectId: String,
       run(sqlQuery, null, flattenResults, useLegacySql, dryRun = true)
 
     sqlQuery.trim.split("\n")(0).trim.toLowerCase match {
-      case "#legacysql" => true
+      case "#legacysql"   => true
       case "#standardsql" => false
-      case _ =>
-
+      case _              =>
         // dry run with SQL syntax first
         dryRun(false) match {
-          case Success(_) => false
+          case Success(_)                                                   => false
           case Failure(e: GoogleJsonResponseException) if isInvalidQuery(e) =>
             // dry run with legacy syntax next
             dryRun(true) match {
               case Success(_) =>
-                logger.warn("Legacy syntax is deprecated, use SQL syntax instead. " +
-                  "See https://cloud.google.com/bigquery/docs/reference/standard-sql/")
+                logger.warn(
+                  "Legacy syntax is deprecated, use SQL syntax instead. " +
+                    "See https://cloud.google.com/bigquery/docs/reference/standard-sql/")
                 logger.warn(s"Legacy query: `$sqlQuery`")
                 true
               case Failure(f) =>
@@ -242,7 +246,7 @@ private[scio] class QueryService(private val projectId: String,
     val tryJob = run(sqlQuery, null, flattenResults = false, isLegacy, dryRun = true)
     Option(tryJob.get.getStatistics.getQuery.getReferencedTables) match {
       case Some(l) => l.asScala.toSet
-      case None => Set.empty
+      case None    => Set.empty
     }
   }
 
@@ -250,9 +254,10 @@ private[scio] class QueryService(private val projectId: String,
   def extractLocation(sqlQuery: String): Option[String] = {
     val locations = extractTables(sqlQuery)
       .map(t => (t.getProjectId, t.getDatasetId))
-      .map { case (pId, dId) =>
-        val l = bigquery.datasets().get(pId, dId).execute().getLocation
-        if (l != null) l else tables.DEFAULT_LOCATION
+      .map {
+        case (pId, dId) =>
+          val l = bigquery.datasets().get(pId, dId).execute().getLocation
+          if (l != null) l else tables.DEFAULT_LOCATION
       }
     require(locations.size <= 1, "Tables in the query must be in the same location")
     locations.headOption

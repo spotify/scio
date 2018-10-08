@@ -87,9 +87,8 @@ private[scio] class TableService(private val projectId: String,
     getSchema(bq.BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Get schema from a table. */
-  def getSchema(table: TableReference): TableSchema = {
+  def getSchema(table: TableReference): TableSchema =
     get(table).getSchema
-  }
 
   /** Get table metadata. */
   def get(tableSpec: String): Table =
@@ -138,14 +137,16 @@ private[scio] class TableService(private val projectId: String,
    * Check if table exists. Returns `true` if table exists, `false` is table definitely does not
    * exist, throws in other cases (BigQuery exception, network issue etc.).
    */
-  def exists(table: TableReference): Boolean = try {
-    get(table)
-    true
-  } catch {
-    case e: GoogleJsonResponseException if e.getDetails.getErrors.get(0).getReason == "notFound" =>
-      false
-    case e: Throwable => throw e
-  }
+  def exists(table: TableReference): Boolean =
+    try {
+      get(table)
+      true
+    } catch {
+      case e: GoogleJsonResponseException
+          if e.getDetails.getErrors.get(0).getReason == "notFound" =>
+        false
+      case e: Throwable => throw e
+    }
 
   /**
    * Check if table exists. Returns `true` if table exists, `false` is table definitely does not
@@ -155,7 +156,9 @@ private[scio] class TableService(private val projectId: String,
     exists(bq.BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Write rows to a table. */
-  def writeRows(table: TableReference, rows: List[TableRow], schema: TableSchema,
+  def writeRows(table: TableReference,
+                rows: List[TableRow],
+                schema: TableSchema,
                 writeDisposition: WriteDisposition,
                 createDisposition: CreateDisposition): Unit = {
     val options = PipelineOptionsFactory.create().as(classOf[bq.BigQueryOptions])
@@ -174,18 +177,23 @@ private[scio] class TableService(private val projectId: String,
   }
 
   /** Write rows to a table. */
-  def writeRows(tableSpec: String, rows: List[TableRow], schema: TableSchema = null,
+  def writeRows(tableSpec: String,
+                rows: List[TableRow],
+                schema: TableSchema = null,
                 writeDisposition: WriteDisposition = WRITE_EMPTY,
                 createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =
-    writeRows(
-      bq.BigQueryHelpers.parseTableSpec(tableSpec),
-      rows, schema, writeDisposition, createDisposition)
+    writeRows(bq.BigQueryHelpers.parseTableSpec(tableSpec),
+              rows,
+              schema,
+              writeDisposition,
+              createDisposition)
 
   /** Delete table */
-  private[bigquery] def delete(table: TableReference): Unit = {
-    bigquery.tables().delete(table.getProjectId, table.getDatasetId, table.getTableId)
+  private[bigquery] def delete(table: TableReference): Unit =
+    bigquery
+      .tables()
+      .delete(table.getProjectId, table.getDatasetId, table.getTableId)
       .execute()
-  }
 
   /* Create a staging dataset at a specified location, e.g US */
   private[bigquery] def prepareStagingDataset(location: String): Unit = {
@@ -194,7 +202,7 @@ private[scio] class TableService(private val projectId: String,
       bigquery.datasets().get(projectId, datasetId).execute()
       logger.info(s"Staging dataset $projectId:$datasetId already exists")
     } catch {
-      case e: GoogleJsonResponseException if new ApiErrorExtractor().itemNotFound(e) =>
+      case e: GoogleJsonResponseException if ApiErrorExtractor.INSTANCE.itemNotFound(e) =>
         logger.info(s"Creating staging dataset $projectId:$datasetId")
         val dsRef = new DatasetReference().setProjectId(projectId).setDatasetId(datasetId)
         val ds = new Dataset()

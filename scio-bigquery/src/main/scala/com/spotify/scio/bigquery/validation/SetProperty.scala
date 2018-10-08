@@ -18,8 +18,8 @@
 package com.spotify.scio.bigquery.validation
 
 import scala.annotation.StaticAnnotation
-import scala.reflect.macros.blackbox
 import scala.language.experimental.macros
+import scala.reflect.macros.blackbox
 
 // This shouldn't be necessary in most production use cases. However passing System properties from
 // Intellij can cause issues. The ideal place to set this system property is in your build.sbt file.

@@ -18,66 +18,34 @@
 package com.spotify.scio.bigquery
 
 import com.google.api.services.bigquery.BigqueryScopes
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
 import scala.util.Try
 
 object BigQueryConfig {
 
-  /** System property key for billing project. */
-  val PROJECT_KEY: String = "bigquery.project"
-
-  /** System property key for JSON secret path. */
-  val SECRET_KEY: String = "bigquery.secret"
-
-  /** System property key for local schema cache directory. */
-  val CACHE_DIRECTORY_KEY: String = "bigquery.cache.directory"
-
   /** Default cache directory. */
   val CACHE_DIRECTORY_DEFAULT: String = sys.props("user.dir") + "/.bigquery"
-
-  /** System property key for enabling or disabling scio bigquery caching */
-  val CACHE_ENABLED_KEY: String = "bigquery.cache.enabled"
 
   /** Default cache behavior is enabled. */
   val CACHE_ENABLED_DEFAULT: Boolean = true
 
-  /** System property key for priority, "BATCH" or "INTERACTIVE". */
-  val PRIORITY_KEY = "bigquery.priority"
-
-  /**
-   * System property key for timeout in milliseconds to establish a connection.
-   * Default is 20000 (20 seconds). 0 for an infinite timeout.
-   */
-  val CONNECT_TIMEOUT_MS_KEY: String = "bigquery.connect_timeout"
-
-  /**
-   * System property key for timeout in milliseconds to read data from an established connection.
-   * Default is 20000 (20 seconds). 0 for an infinite timeout.
-   */
-  val READ_TIMEOUT_MS_KEY: String = "bigquery.read_timeout"
-
   val SCOPES: java.util.List[String] = List(BigqueryScopes.BIGQUERY).asJava
 
-  /* caching config */
-  def isCacheEnabled: Boolean = Option(sys.props(CACHE_ENABLED_KEY))
-    .flatMap(x => Try(x.toBoolean).toOption).getOrElse(CACHE_ENABLED_DEFAULT)
+  def isCacheEnabled: Boolean =
+    BigQuerySysProps.CacheEnabled.valueOption
+      .flatMap(x => Try(x.toBoolean).toOption)
+      .getOrElse(CACHE_ENABLED_DEFAULT)
 
-  //private[bigquery]
   def cacheDirectory: String =
-    getPropOrElse(CACHE_DIRECTORY_KEY, CACHE_DIRECTORY_DEFAULT)
+    BigQuerySysProps.CacheDirectory.value(CACHE_DIRECTORY_DEFAULT)
 
-  /* bigquery config */
-  def connectTimeoutMs: Option[Int] = Option(sys.props(CONNECT_TIMEOUT_MS_KEY)).map(_.toInt)
+  def connectTimeoutMs: Option[Int] =
+    BigQuerySysProps.ConnectTimeoutMs.valueOption.map(_.toInt)
 
-  def readTimeoutMs: Option[Int] = Option(sys.props(READ_TIMEOUT_MS_KEY)).map(_.toInt)
+  def readTimeoutMs: Option[Int] =
+    BigQuerySysProps.ReadTimeoutMs.valueOption.map(_.toInt)
 
-  /* query job config */
-  def priority: Option[String] = Option(sys.props(PRIORITY_KEY))
-
-  def getPropOrElse(key: String, default: String): String = {
-    val value = sys.props(key)
-    if (value == null) default else value
-  }
+  def priority: Option[String] = BigQuerySysProps.Priority.valueOption
 
 }

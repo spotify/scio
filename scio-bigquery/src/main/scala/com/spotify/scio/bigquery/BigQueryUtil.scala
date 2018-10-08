@@ -35,8 +35,7 @@ object BigQueryUtil {
       .parseAndClose(new StringReader(schemaString), classOf[TableSchema])
 
   /* Generates job ID */
-  def generateJobId(projectId: String): String = {
+  def generateJobId(projectId: String): String =
     projectId + "-" + UUID.randomUUID().toString
-  }
 
 }

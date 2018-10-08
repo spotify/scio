@@ -20,7 +20,7 @@ package com.spotify.scio.bigquery
 import com.google.api.services.bigquery.model._
 
 /** A BigQueryJob */
-private[scio] sealed trait BigQueryJob {
+sealed trait BigQueryJob {
   val jobReference: Option[JobReference]
   val jobType: String
   val table: TableReference
@@ -30,7 +30,7 @@ private[scio] sealed trait BigQueryJob {
 private[scio] case class ExtractJob(destinationUris: List[String],
                                     jobReference: Option[JobReference],
                                     table: TableReference)
-  extends BigQueryJob {
+    extends BigQueryJob {
 
   val jobType = "Extract"
 }
@@ -39,7 +39,7 @@ private[scio] case class ExtractJob(destinationUris: List[String],
 private[scio] case class LoadJob(sources: List[String],
                                  jobReference: Option[JobReference],
                                  table: TableReference)
-  extends BigQueryJob {
+    extends BigQueryJob {
 
   val jobType = "Load"
 }
@@ -48,6 +48,6 @@ private[scio] case class LoadJob(sources: List[String],
 private[scio] case class QueryJob(query: String,
                                   jobReference: Option[JobReference],
                                   table: TableReference)
-  extends BigQueryJob {
+    extends BigQueryJob {
   val jobType = "Query"
 }

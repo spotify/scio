@@ -20,8 +20,8 @@ package com.spotify.scio.bigquery
 import java.util.regex.Pattern
 
 import com.google.api.services.bigquery.model.TableReference
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import com.google.common.primitives.Longs
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 
 private[bigquery] object BigQueryPartitionUtil {
 
@@ -56,7 +56,8 @@ private[bigquery] object BigQueryPartitionUtil {
 
   private def getPartitions(bq: BigQueryClient, tableRef: TableReference): Set[String] = {
     val prefix = tableRef.getTableId.split('$')(0)
-    bq.tables.get(tableRef.getProjectId, tableRef.getDatasetId)
+    bq.tables
+      .get(tableRef.getProjectId, tableRef.getDatasetId)
       .filter(_.getTableId.startsWith(prefix))
       .map(_.getTableId.substring(prefix.length))
       .toSet

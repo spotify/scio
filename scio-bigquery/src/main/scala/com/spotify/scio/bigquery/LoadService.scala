@@ -27,8 +27,7 @@ import scala.collection.JavaConverters._
 import scala.util.Try
 
 // scalastyle:off parameter.number
-private[scio] class LoadService(private val projectId: String,
-                                private val bigquery: Bigquery) {
+private[scio] class LoadService(private val projectId: String, private val bigquery: Bigquery) {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -47,13 +46,23 @@ private[scio] class LoadService(private val projectId: String,
           ignoreUnknownValues: Boolean = false,
           encoding: Option[String] = None): Try[TableReference] = {
 
-    execute(sources = sources, sourceFormat = "CSV", destinationTable = destinationTable,
-      createDisposition = createDisposition, writeDisposition = writeDisposition,
-      schema = schema, autodetect = Some(autodetect), allowJaggedRows = Some(allowJaggedRows),
-      allowQuotedNewLines = Some(allowQuotedNewLines), quote = quote,
-      maxBadRecords = maxBadRecords, skipLeadingRows = Some(skipLeadingRows),
+    execute(
+      sources = sources,
+      sourceFormat = "CSV",
+      destinationTable = destinationTable,
+      createDisposition = createDisposition,
+      writeDisposition = writeDisposition,
+      schema = schema,
+      autodetect = Some(autodetect),
+      allowJaggedRows = Some(allowJaggedRows),
+      allowQuotedNewLines = Some(allowQuotedNewLines),
+      quote = quote,
+      maxBadRecords = maxBadRecords,
+      skipLeadingRows = Some(skipLeadingRows),
       fieldDelimiter = fieldDelimiter,
-      ignoreUnknownValues = Some(ignoreUnknownValues), encoding = encoding)
+      ignoreUnknownValues = Some(ignoreUnknownValues),
+      encoding = encoding
+    )
   }
 
   def json(sources: List[String],
@@ -66,12 +75,18 @@ private[scio] class LoadService(private val projectId: String,
            ignoreUnknownValues: Boolean = false,
            encoding: Option[String] = None): Try[TableReference] = {
 
-    execute(sources = sources, sourceFormat = "NEWLINE_DELIMITED_JSON",
+    execute(
+      sources = sources,
+      sourceFormat = "NEWLINE_DELIMITED_JSON",
       destinationTable = destinationTable,
-      createDisposition = createDisposition, writeDisposition = writeDisposition,
-      schema = schema, autodetect = Some(autodetect),
+      createDisposition = createDisposition,
+      writeDisposition = writeDisposition,
+      schema = schema,
+      autodetect = Some(autodetect),
       maxBadRecords = maxBadRecords,
-      ignoreUnknownValues = Some(ignoreUnknownValues), encoding = encoding)
+      ignoreUnknownValues = Some(ignoreUnknownValues),
+      encoding = encoding
+    )
   }
 
   def avro(sources: List[String],
@@ -82,10 +97,16 @@ private[scio] class LoadService(private val projectId: String,
            maxBadRecords: Int = 0,
            encoding: Option[String] = None): Try[TableReference] = {
 
-    execute(sources = sources, sourceFormat = "AVRO",
+    execute(
+      sources = sources,
+      sourceFormat = "AVRO",
       destinationTable = destinationTable,
-      createDisposition = createDisposition, writeDisposition = writeDisposition,
-      schema = schema, maxBadRecords = maxBadRecords, encoding = encoding)
+      createDisposition = createDisposition,
+      writeDisposition = writeDisposition,
+      schema = schema,
+      maxBadRecords = maxBadRecords,
+      encoding = encoding
+    )
   }
 
   // scalastyle:off method.length
