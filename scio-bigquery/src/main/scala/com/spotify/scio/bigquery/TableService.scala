@@ -34,20 +34,23 @@ import scala.collection.JavaConverters._
 import scala.util.Random
 import scala.util.control.NonFatal
 
-private[scio] class TableService(private val projectId: String,
-                                 private val bigquery: Bigquery,
-                                 private val credentials: Credentials) {
+private[scio] object TableService {
+  private val Logger = LoggerFactory.getLogger(this.getClass)
 
-  private val logger = LoggerFactory.getLogger(this.getClass)
+  private[bigquery] val TablePrefix = "scio_query"
+  private[bigquery] val TimeFormatter = DateTimeFormat.forPattern("yyyyMMddHHmmss")
 
-  private[bigquery] val TABLE_PREFIX = "scio_query"
-  private[bigquery] val TIME_FORMATTER = DateTimeFormat.forPattern("yyyyMMddHHmmss")
+  private[bigquery] val StagingDatasetPrefix = "scio_bigquery_staging_"
+  private[bigquery] val StagingDatasetTableExpirationMs = 86400000L
+  private[bigquery] val StagingDatasetDescription = "Staging dataset for temporary tables"
 
-  private[bigquery] val STAGING_DATASET_PREFIX = "scio_bigquery_staging_"
-  private[bigquery] val STAGING_DATASET_TABLE_EXPIRATION_MS = 86400000L
-  private[bigquery] val STAGING_DATASET_DESCRIPTION = "Staging dataset for temporary tables"
+  private[bigquery] val DefaultLocation = "US"
+}
 
-  private[bigquery] val DEFAULT_LOCATION = "US"
+private[scio] final class TableService(private val projectId: String,
+                                       private val bigquery: Bigquery,
+                                       private val credentials: Credentials) {
+  import TableService._
 
   /** Get rows from a table. */
   def getRows(tableSpec: String): Iterator[TableRow] =
@@ -96,7 +99,7 @@ private[scio] class TableService(private val projectId: String,
 
   /** Get table metadata. */
   def get(table: TableReference): Table = {
-    val p = if (table.getProjectId == null) this.projectId else table.getProjectId
+    val p = Option(table.getProjectId).getOrElse(projectId)
     bigquery.tables().get(p, table.getDatasetId, table.getTableId).execute()
   }
 
@@ -197,18 +200,18 @@ private[scio] class TableService(private val projectId: String,
 
   /* Create a staging dataset at a specified location, e.g US */
   private[bigquery] def prepareStagingDataset(location: String): Unit = {
-    val datasetId = STAGING_DATASET_PREFIX + location.toLowerCase
+    val datasetId = StagingDatasetPrefix + location.toLowerCase
     try {
       bigquery.datasets().get(projectId, datasetId).execute()
-      logger.info(s"Staging dataset $projectId:$datasetId already exists")
+      Logger.info(s"Staging dataset $projectId:$datasetId already exists")
     } catch {
       case e: GoogleJsonResponseException if ApiErrorExtractor.INSTANCE.itemNotFound(e) =>
-        logger.info(s"Creating staging dataset $projectId:$datasetId")
+        Logger.info(s"Creating staging dataset $projectId:$datasetId")
         val dsRef = new DatasetReference().setProjectId(projectId).setDatasetId(datasetId)
         val ds = new Dataset()
           .setDatasetReference(dsRef)
-          .setDefaultTableExpirationMs(STAGING_DATASET_TABLE_EXPIRATION_MS)
-          .setDescription(STAGING_DATASET_DESCRIPTION)
+          .setDefaultTableExpirationMs(StagingDatasetTableExpirationMs)
+          .setDescription(StagingDatasetDescription)
           .setLocation(location)
         bigquery
           .datasets()
@@ -220,11 +223,11 @@ private[scio] class TableService(private val projectId: String,
 
   /* Creates a temporary table in the staging dataset */
   private[bigquery] def createTemporary(location: String): TableReference = {
-    val now = Instant.now().toString(TIME_FORMATTER)
-    val tableId = TABLE_PREFIX + "_" + now + "_" + Random.nextInt(Int.MaxValue)
+    val now = Instant.now().toString(TimeFormatter)
+    val tableId = TablePrefix + "_" + now + "_" + Random.nextInt(Int.MaxValue)
     new TableReference()
       .setProjectId(projectId)
-      .setDatasetId(STAGING_DATASET_PREFIX + location.toLowerCase)
+      .setDatasetId(StagingDatasetPrefix + location.toLowerCase)
       .setTableId(tableId)
   }
 

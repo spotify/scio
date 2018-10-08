@@ -44,12 +44,6 @@ class BigQueryClient private (private val projectId: String, _credentials: Crede
           "Invalid projectId. " +
             "It should be a non-empty string")
 
-  def this(projectId: String, secretFile: File) =
-    this(projectId,
-         GoogleCredentials
-           .fromStream(new FileInputStream(secretFile))
-           .createScoped(BigQueryConfig.SCOPES))
-
   private lazy val credentials = Option(_credentials).getOrElse(
     GoogleCredentials.getApplicationDefault.createScoped(BigQueryConfig.SCOPES))
 
@@ -229,5 +223,8 @@ object BigQueryClient {
 
   /** Create a new BigQueryClient instance with the given project and secret file. */
   def apply(project: String, secretFile: File): BigQueryClient =
-    new BigQueryClient(project, secretFile)
+    new BigQueryClient(project,
+                       GoogleCredentials
+                         .fromStream(new FileInputStream(secretFile))
+                         .createScoped(BigQueryConfig.SCOPES))
 }

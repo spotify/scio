@@ -26,10 +26,14 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-// scalastyle:off parameter.number
-private[scio] class LoadService(private val projectId: String, private val bigquery: Bigquery) {
+private[scio] object LoadService {
+  private val Logger = LoggerFactory.getLogger(this.getClass)
+}
 
-  private val logger = LoggerFactory.getLogger(this.getClass)
+// scalastyle:off parameter.number
+private[scio] final class LoadService(private val projectId: String,
+                                      private val bigquery: Bigquery) {
+  import LoadService._
 
   def csv(sources: List[String],
           destinationTable: String,
@@ -153,7 +157,7 @@ private[scio] class LoadService(private val projectId: String, private val bigqu
     val jobReference = new JobReference().setProjectId(projectId).setJobId(fullJobId)
     val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
 
-    logger.info(s"Loading data into $destinationTable from ${sources.mkString(", ")}")
+    Logger.info(s"Loading data into $destinationTable from ${sources.mkString(", ")}")
 
     bigquery.jobs().insert(projectId, job).execute()
 

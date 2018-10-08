@@ -30,9 +30,9 @@ import scala.collection.JavaConverters._
 
 private[scio] object JobService {
 
-  private val logger = LoggerFactory.getLogger(this.getClass)
+  private val Logger = LoggerFactory.getLogger(this.getClass)
 
-  private[bigquery] val PERIOD_FORMATTER = new PeriodFormatterBuilder()
+  private[bigquery] val PeriodFormatter = new PeriodFormatterBuilder()
     .appendHours()
     .appendSuffix("h")
     .appendMinutes()
@@ -69,14 +69,14 @@ private[scio] object JobService {
             }
           } catch {
             case e: IOException =>
-              logger.warn(s"BigQuery request failed: id: $jobId, error: $e")
+              Logger.warn(s"BigQuery request failed: id: $jobId, error: $e")
               true
           }
       }
 
       pendingJobs = remainingJobs
       val numDone = numTotal - pendingJobs.size
-      logger.info(s"Job: $numDone out of $numTotal completed")
+      Logger.info(s"Job: $numDone out of $numTotal completed")
       if (pendingJobs.nonEmpty) {
         Thread.sleep(10000)
       }
@@ -87,34 +87,34 @@ private[scio] object JobService {
 
     val jobId = job.getJobReference.getJobId
     val stats = job.getStatistics
-    logger.info(s"${bqJob.jobType} completed: jobId: $jobId")
+    Logger.info(s"${bqJob.jobType} completed: jobId: $jobId")
 
     bqJob match {
       case _: ExtractJob =>
         val destinationFileCount =
           stats.getExtract.getDestinationUriFileCounts.asScala.reduce(_ + _)
 
-        logger.info(s"Total destination file count: $destinationFileCount")
+        Logger.info(s"Total destination file count: $destinationFileCount")
 
       case _: LoadJob =>
         val inputFileBytes = FileUtils.byteCountToDisplaySize(stats.getLoad.getInputFileBytes)
         val outputBytes = FileUtils.byteCountToDisplaySize(stats.getLoad.getOutputBytes)
         val outputRows = stats.getLoad.getOutputRows
-        logger.info(
+        Logger.info(
           s"Input file bytes: $inputFileBytes, output bytes: $outputBytes, " +
             s"output rows: $outputRows")
 
       case queryJob: QueryJob =>
-        logger.info(s"Query: `${queryJob.query}`")
+        Logger.info(s"Query: `${queryJob.query}`")
         val bytes = FileUtils.byteCountToDisplaySize(stats.getQuery.getTotalBytesProcessed)
         val cacheHit = stats.getQuery.getCacheHit
-        logger.info(s"Total bytes processed: $bytes, cache hit: $cacheHit")
+        Logger.info(s"Total bytes processed: $bytes, cache hit: $cacheHit")
     }
 
-    val elapsed = PERIOD_FORMATTER.print(new Period(stats.getEndTime - stats.getCreationTime))
-    val pending = PERIOD_FORMATTER.print(new Period(stats.getStartTime - stats.getCreationTime))
-    val execution = PERIOD_FORMATTER.print(new Period(stats.getEndTime - stats.getStartTime))
-    logger.info(s"Elapsed: $elapsed, pending: $pending, execution: $execution")
+    val elapsed = PeriodFormatter.print(new Period(stats.getEndTime - stats.getCreationTime))
+    val pending = PeriodFormatter.print(new Period(stats.getStartTime - stats.getCreationTime))
+    val execution = PeriodFormatter.print(new Period(stats.getEndTime - stats.getStartTime))
+    Logger.info(s"Elapsed: $elapsed, pending: $pending, execution: $execution")
   }
 
 }

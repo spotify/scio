@@ -24,9 +24,14 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 
-private[scio] class ExtractService(private val projectId: String, private val bigquery: Bigquery) {
+private[scio] object ExtractService {
+  private val Logger = LoggerFactory.getLogger(this.getClass)
+}
 
-  private val logger = LoggerFactory.getLogger(this.getClass)
+private[scio] final class ExtractService(private val projectId: String,
+                                         private val bigquery: Bigquery) {
+  import ExtractService._
+
   def asCsv(sourceTable: String,
             destinationUris: List[String],
             gzipCompression: Boolean = false,
@@ -90,7 +95,7 @@ private[scio] class ExtractService(private val projectId: String, private val bi
     val jobReference = new JobReference().setProjectId(projectId).setJobId(fullJobId)
     val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
 
-    logger.info(s"Extracting table $sourceTable to ${destinationUris.mkString(", ")}")
+    Logger.info(s"Extracting table $sourceTable to ${destinationUris.mkString(", ")}")
 
     bigquery.jobs().insert(projectId, job).execute()
 
