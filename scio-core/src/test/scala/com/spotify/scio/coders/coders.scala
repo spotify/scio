@@ -73,6 +73,9 @@ object PrivateClass {
   def apply(l: Long): PrivateClass = new PrivateClass(l)
 }
 
+import com.spotify.scio.proto._
+case class ClassWithProtoEnum(s: String, enum: OuterClassForProto.EnumExample)
+
 class CodersTest extends FlatSpec with Matchers {
 
   val userId = UserId(Array[Byte](1, 2, 3, 4))
@@ -340,6 +343,20 @@ class CodersTest extends FlatSpec with Matchers {
 
     caught.getMessage should startWith(expectedMsg)
     caught.getMessage should include(s"case 0 is using non-deterministic $leftCoder")
+  }
+
+  it should "support protobuf messages" in {
+    import com.spotify.scio.proto._
+    "Coder[OuterClassForProto.ProtoComplexMessage]" should compile
+    val b = OuterClassForProto.ProtoComplexMessage.newBuilder
+    val ex = b.setArtistGid("1").setTimeFilter(OuterClassForProto.EnumExample.OPT1).build()
+    checkNotFallback(ex)
+    checkNotFallback(ClassWithProtoEnum("somestring", OuterClassForProto.EnumExample.OPT1))
+  }
+
+  it should "support java enums" in {
+    check(JavaEnumExample.GOOD_THING)
+    check(JavaEnumExample.BAD_THING)
   }
 
 }

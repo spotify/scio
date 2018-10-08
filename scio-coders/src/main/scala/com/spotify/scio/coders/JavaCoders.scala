@@ -103,4 +103,7 @@ trait JavaCoders {
 
   implicit def jInstantCoder: Coder[Instant] =
     Coder.xmap(Coder.jLongCoder)(Instant.ofEpochMilli(_), _.toEpochMilli)
+
+  implicit def coderJEnum[E <: java.lang.Enum[_]: scala.reflect.ClassTag]: Coder[E] =
+    Coder.kryo[E]
 }
