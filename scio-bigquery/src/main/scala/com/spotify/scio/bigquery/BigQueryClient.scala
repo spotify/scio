@@ -37,15 +37,12 @@ import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import scala.reflect.runtime.universe._
 
 /** A simple BigQuery client. */
-class BigQueryClient private (private val projectId: String, _credentials: Credentials = null) {
+class BigQueryClient private (private val projectId: String, credentials: Credentials) {
   self =>
 
   require(projectId != null && projectId.nonEmpty,
           "Invalid projectId. " +
             "It should be a non-empty string")
-
-  private lazy val credentials = Option(_credentials).getOrElse(
-    GoogleCredentials.getApplicationDefault.createScoped(BigQueryConfig.SCOPES))
 
   private lazy val bigquery: Bigquery = {
     val requestInitializer = new ChainingHttpRequestInitializer(
@@ -214,7 +211,9 @@ object BigQueryClient {
         BigQueryClient(project, new File(secret))
       }
       .getOrElse {
-        new BigQueryClient(project)
+        val credentials =
+          GoogleCredentials.getApplicationDefault.createScoped(BigQueryConfig.SCOPES)
+        new BigQueryClient(project, credentials)
       }
 
   /** Create a new BigQueryClient instance with the given project and credential. */
