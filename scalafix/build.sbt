@@ -29,12 +29,14 @@ lazy val rules = project.settings(
 
 lazy val input = project.settings(
   skip in publish := true,
-  libraryDependencies += "com.spotify" %% "scio-core" % Scio.`0.6`
+  libraryDependencies += "com.spotify" %% "scio-core" % Scio.`0.6`,
+  libraryDependencies += "com.spotify" %% "scio-test" % Scio.`0.6`
 )
 
 lazy val output = project.settings(
   skip in publish := true,
-  libraryDependencies += "com.spotify" %% "scio-core" % Scio.`0.7`
+  libraryDependencies += "com.spotify" %% "scio-core" % Scio.`0.7`,
+  libraryDependencies += "com.spotify" %% "scio-test" % Scio.`0.7`
 )
 
 lazy val tests = project

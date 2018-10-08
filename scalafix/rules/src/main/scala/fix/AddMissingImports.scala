@@ -8,6 +8,18 @@ class AddMissingImports extends SyntacticRule("AddMissingImports") {
   private val imports =
     scala.collection.mutable.ArrayBuffer.empty[(String, String)]
 
+  // Check that the package is not imported multiple times in the same file
+  def addImport(p: Position, i: Importer) = {
+    val Importer(s) = i
+    val Input.VirtualFile(path, _) = p.input
+
+    val t = (s.toString, path)
+    if(!imports.contains(t)) {
+      imports += t
+      Patch.addGlobalImport(i)
+    } else Patch.empty
+  }
+
   object Avro {
     val fns =
       List("objectFile", "avroFile", "typedAvroFile", "protobufFile") ++
@@ -22,18 +34,6 @@ class AddMissingImports extends SyntacticRule("AddMissingImports") {
       List("saveAsBigQuery", "saveAsBigQuery", "saveAsTypedBigQuery", "saveAsTypedBigQuery", "saveAsTableRowJsonFile")
 
     val `import` = importer"com.spotify.scio.bigquery._"
-  }
-
-  // Check that the package is not imported multiple times in the same file
-  private def addImport(p: Position, i: Importer) = {
-    val Importer(s) = i
-    val Input.VirtualFile(path, _) = p.input
-
-    val t = (s.toString, path)
-    if(!imports.contains(t)) {
-      imports += t
-      Patch.addGlobalImport(i)
-    } else Patch.empty
   }
 
   override def fix(implicit doc: SyntacticDocument): Patch = {

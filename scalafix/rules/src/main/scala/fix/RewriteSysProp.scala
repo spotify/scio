@@ -9,7 +9,8 @@ class RewriteSysProp extends SyntacticRule("RewriteSysProp") {
   private val imports =
     scala.collection.mutable.ArrayBuffer.empty[(String, String)]
 
-  private def addImport(p: Position, i: Importer) = {
+  // Check that the package is not imported multiple times in the same file
+  def addImport(p: Position, i: Importer) = {
     val Importer(s) = i
     val Input.VirtualFile(path, _) = p.input
 

@@ -1,2 +1,3 @@
 fix.v0_7_0.AddMissingImports
 fix.v0_7_0.RewriteSysProp
+fix.v0_7_0.FixAvroIO

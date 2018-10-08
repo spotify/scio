@@ -1,4 +1,5 @@
 package fix
+package v0_7_0
 
 import com.google.protobuf.Message
 import com.spotify.scio._
