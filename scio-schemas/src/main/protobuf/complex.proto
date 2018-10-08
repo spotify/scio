@@ -1,0 +1,22 @@
+syntax = "proto2";
+
+package protobuf.schemas;
+
+option java_package = "com.spotify.scio.proto";
+option optimize_for = SPEED;
+option java_outer_classname = "OuterClassForProto";
+
+import "track.proto";
+
+enum EnumExample {
+    OPT1 = 0;
+    OPT2 = 1;
+}
+
+// Next ID: 17
+message ProtoComplexMessage {
+    optional string artistGid = 1;
+    optional EnumExample time_filter = 2;
+    optional TrackPB track = 3;
+    optional int64 delta = 4;
+}
