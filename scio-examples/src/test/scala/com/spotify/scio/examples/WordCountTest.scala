@@ -41,6 +41,14 @@ class WordCountTest extends PipelineSpec {
       .run()
   }
 
+  "MinimalWordCountTypedArguments" should "work" in {
+    JobTest[com.spotify.scio.examples.MinimalWordCountTypedArguments.type]
+      .args("--input=in.txt", "--output=out.txt")
+      .input(TextIO("in.txt"), inData)
+      .output(TextIO("out.txt"))(_ should containInAnyOrder(expected))
+      .run()
+  }
+
   "DebuggingWordCount" should "work" in {
     val in = Seq("Flourish a b", "Flourish c d", "Flourish e", "stomach a") ++ (1 to 100)
       .map("x" * _)
