@@ -25,20 +25,20 @@ import scala.util.Try
 object BigQueryConfig {
 
   /** Default cache directory. */
-  val CACHE_DIRECTORY_DEFAULT: String = sys.props("user.dir") + "/.bigquery"
+  private[this] val CacheDirectoryDefault: String = sys.props("user.dir") + "/.bigquery"
 
   /** Default cache behavior is enabled. */
-  val CACHE_ENABLED_DEFAULT: Boolean = true
+  private[this] val CacheEnabledDefault: Boolean = true
 
-  val SCOPES: java.util.List[String] = List(BigqueryScopes.BIGQUERY).asJava
+  val Scopes: java.util.List[String] = List(BigqueryScopes.BIGQUERY).asJava
 
   def isCacheEnabled: Boolean =
     BigQuerySysProps.CacheEnabled.valueOption
       .flatMap(x => Try(x.toBoolean).toOption)
-      .getOrElse(CACHE_ENABLED_DEFAULT)
+      .getOrElse(CacheEnabledDefault)
 
   def cacheDirectory: String =
-    BigQuerySysProps.CacheDirectory.value(CACHE_DIRECTORY_DEFAULT)
+    BigQuerySysProps.CacheDirectory.value(CacheDirectoryDefault)
 
   def connectTimeoutMs: Option[Int] =
     BigQuerySysProps.ConnectTimeoutMs.valueOption.map(_.toInt)

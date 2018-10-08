@@ -212,7 +212,7 @@ object BigQueryClient {
       }
       .getOrElse {
         val credentials =
-          GoogleCredentials.getApplicationDefault.createScoped(BigQueryConfig.SCOPES)
+          GoogleCredentials.getApplicationDefault.createScoped(BigQueryConfig.Scopes)
         new BigQueryClient(project, credentials)
       }
 
@@ -225,5 +225,5 @@ object BigQueryClient {
     new BigQueryClient(project,
                        GoogleCredentials
                          .fromStream(new FileInputStream(secretFile))
-                         .createScoped(BigQueryConfig.SCOPES))
+                         .createScoped(BigQueryConfig.Scopes))
 }
