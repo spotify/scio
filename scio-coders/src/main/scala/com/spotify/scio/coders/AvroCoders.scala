@@ -19,11 +19,15 @@ package com.spotify.scio.coders
 
 import java.io.{InputStream, OutputStream}
 
+import com.google.common.base.{Supplier, Suppliers}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
+import org.apache.avro.specific.{SpecificData, SpecificFixed}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, AvroCoder, StringUtf8Coder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
+
+import scala.reflect.{classTag, ClassTag}
 
 private final class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
 
@@ -60,6 +64,53 @@ private final class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
     AvroCoder.of(value.getSchema).registerByteSizeObserver(value, observer)
 }
 
+/** Implementation is legit only for SpecificFixed, not GenericFixed
+ * @see [[org.apache.beam.sdk.coders.AvroCoder]] */
+private final class SpecificFixedCoder[A <: SpecificFixed](size: Int,
+                                                           cls: Class[A],
+                                                           schemaSupplier: Supplier[Schema])
+    extends AtomicCoder[A] {
+  def schema: Schema = schemaSupplier.get()
+
+  def encode(value: A, outStream: OutputStream): Unit = {
+    assert(value.bytes().length == size)
+    outStream.write(value.bytes())
+  }
+
+  def decode(inStream: InputStream): A = {
+    val bytes = new Array[Byte](size)
+    inStream.read(bytes)
+    val old = SpecificData.newInstance(cls, schema)
+    SpecificData.get().createFixed(old, bytes, schema).asInstanceOf[A]
+  }
+
+  override def isRegisterByteSizeObserverCheap(value: A): Boolean = true
+
+  override def getEncodedElementByteSize(value: A): Long = size.toLong
+
+  override def consistentWithEquals(): Boolean = true
+
+  override def structuralValue(value: A): AnyRef = value
+}
+
+private object SpecificFixedCoder {
+  def apply[A <: SpecificFixed: ClassTag]: Coder[A] = {
+    val cls = classTag[A].runtimeClass.asInstanceOf[Class[A]]
+    val schema = SpecificData.get().getSchema(cls)
+    val size = schema.getFixedSize
+
+    Coder.beam(new SpecificFixedCoder[A](size, cls, schemaSupplier(schema)))
+  }
+
+  class ParseSchema extends com.google.common.base.Function[String, Schema] with Serializable {
+    def apply(input: String): Schema =
+      new Schema.Parser().parse(input)
+  }
+
+  def schemaSupplier(schema: Schema): Supplier[Schema] =
+    Suppliers.memoize(Suppliers.compose(new ParseSchema(), Suppliers.ofInstance(schema.toString)))
+}
+
 trait AvroCoders {
   import language.experimental.macros
   // TODO: Use a coder that does not serialize the schema
@@ -73,4 +124,7 @@ trait AvroCoders {
   import org.apache.avro.specific.SpecificRecordBase
   implicit def genAvro[T <: SpecificRecordBase]: Coder[T] =
     macro AvroCoderMacros.staticInvokeCoder[T]
+
+  implicit def avroSpecificFixedCoder[T <: SpecificFixed: ClassTag]: Coder[T] =
+    SpecificFixedCoder[T]
 }
