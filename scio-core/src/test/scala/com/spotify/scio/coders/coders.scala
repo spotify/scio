@@ -22,6 +22,7 @@ import scala.collection.{mutable => mut}
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.avro.generic.GenericRecord
+import org.apache.avro.util.Utf8
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.CoderRegistry
 import org.apache.beam.sdk.options.PipelineOptionsFactory
@@ -357,6 +358,12 @@ class CodersTest extends FlatSpec with Matchers {
   it should "support java enums" in {
     check(JavaEnumExample.GOOD_THING)
     check(JavaEnumExample.BAD_THING)
+  }
+
+  it should "support CharSequences" in {
+    val avroUtf8: CharSequence = new Utf8("foo")
+
+    check(avroUtf8)
   }
 
 }

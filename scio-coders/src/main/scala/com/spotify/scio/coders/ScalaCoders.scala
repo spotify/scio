@@ -250,13 +250,15 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
   }
 }
 
-trait ScalaCoders {
+trait ScalaCoders { // scalastyle:ignore number.of.methods
 
   implicit def byteCoder: Coder[Byte] =
     Coder.beam(ByteCoder.of().asInstanceOf[BCoder[Byte]])
   // TODO: keep an eye on https://issues.apache.org/jira/browse/BEAM-5439
   implicit def stringCoder: Coder[String] =
     Coder.beam(StringUtf8Coder.of())
+  implicit def charSequenceCoder: Coder[CharSequence] =
+    Coder.xmap(Coder[String])(x => x, _.toString)
   implicit def shortCoder: Coder[Short] =
     Coder.beam(BigEndianShortCoder.of().asInstanceOf[BCoder[Short]])
   implicit def intCoder: Coder[Int] =
