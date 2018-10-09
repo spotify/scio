@@ -36,7 +36,7 @@ import scala.reflect.ClassTag
 
 sealed trait PubsubIO[T] extends ScioIO[T] {
   override type ReadP = PubsubIO.ReadParam
-  override type WriteP = Unit
+  override type WriteP = PubsubIO.WriteParam
 
   override def tap(params: ReadP): Tap[T] =
     throw new NotImplementedError("Pubsub tap not implemented")
@@ -44,6 +44,9 @@ sealed trait PubsubIO[T] extends ScioIO[T] {
 
 object PubsubIO {
   final case class ReadParam(isSubscription: Boolean)
+
+  final case class WriteParam(maxBatchSize: Option[Int] = None,
+                              maxBatchBytesSize: Option[Int] = None)
 
   def apply[T: ClassTag: Coder](name: String,
                                 idAttribute: String = null,
@@ -114,6 +117,10 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](name: Str
       if (timestampAttribute != null) {
         w = w.withTimestampAttribute(timestampAttribute)
       }
+
+      params.maxBatchBytesSize.foreach(w.withMaxBatchBytesSize)
+      params.maxBatchSize.foreach(w.withMaxBatchSize)
+
       w
     }
     if (classOf[String] isAssignableFrom cls) {
