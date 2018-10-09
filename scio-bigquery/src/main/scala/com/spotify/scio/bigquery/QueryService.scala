@@ -18,8 +18,8 @@
 package com.spotify.scio.bigquery
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
-import com.google.api.services.bigquery.Bigquery
 import com.google.api.services.bigquery.model._
+import com.spotify.scio.bigquery.BigQueryClient.Context
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
 import org.slf4j.LoggerFactory
 
@@ -47,25 +47,25 @@ private[scio] object QueryService {
   private val Priority = if (isInteractive) "INTERACTIVE" else "BATCH"
 }
 
-private[scio] final class QueryService(private val projectId: String,
-                                       private val bigquery: Bigquery,
-                                       private val tables: TableService) {
+private[scio] final case class QueryService private (private val ctx: Context,
+                                                     private val tableService: TableService,
+                                                     private val jobService: JobService) {
   import QueryService._
 
   /** Get schema for a query without executing it. */
-  def getSchema(sqlQuery: String): TableSchema = {
+  def schema(sqlQuery: String): TableSchema = {
     if (isLegacySql(sqlQuery, flattenResults = false)) {
       // Dry-run not supported for legacy query, using view as a work around
       Logger.info("Getting legacy query schema with view")
       val location = extractLocation(sqlQuery).getOrElse(TableService.DefaultLocation)
-      tables.prepareStagingDataset(location)
-      val temp = tables.createTemporary(location)
+      tableService.prepareStagingDataset(location)
+      val temp = tableService.createTemporary(location)
 
       // Create temporary table view and get schema
       Logger.info(s"Creating temporary view ${bq.BigQueryHelpers.toTableSpec(temp)}")
       val view = new ViewDefinition().setQuery(sqlQuery)
       val viewTable = new Table().setView(view).setTableReference(temp)
-      val schema = bigquery
+      val schema = ctx.client
         .tables()
         .insert(temp.getProjectId, temp.getDatasetId, viewTable)
         .execute()
@@ -73,7 +73,7 @@ private[scio] final class QueryService(private val projectId: String,
 
       // Delete temporary table
       Logger.info(s"Deleting temporary view ${bq.BigQueryHelpers.toTableSpec(temp)}")
-      bigquery.tables().delete(temp.getProjectId, temp.getDatasetId, temp.getTableId).execute()
+      ctx.client.tables().delete(temp.getProjectId, temp.getDatasetId, temp.getTableId).execute()
 
       schema
     } else {
@@ -86,10 +86,10 @@ private[scio] final class QueryService(private val projectId: String,
   }
 
   /** Get rows from a query. */
-  def getRows(sqlQuery: String, flattenResults: Boolean = false): Iterator[TableRow] = {
+  def rows(sqlQuery: String, flattenResults: Boolean = false): Iterator[TableRow] = {
     val queryJob = newQueryJob(sqlQuery, flattenResults)
-    JobService.waitForJobs(projectId, bigquery, queryJob)
-    tables.getRows(queryJob.table)
+    jobService.waitForJobs(queryJob)
+    tableService.rows(queryJob.table)
   }
 
   // =======================================================================
@@ -101,7 +101,7 @@ private[scio] final class QueryService(private val projectId: String,
       newCachedQueryJob(sqlQuery, flattenResults)
     } else {
       Logger.info(s"BigQuery caching is disabled")
-      val tempTable = tables.createTemporary(
+      val tempTable = tableService.createTemporary(
         extractLocation(sqlQuery)
           .getOrElse(TableService.DefaultLocation))
       delayedQueryJob(sqlQuery, tempTable, flattenResults)
@@ -111,16 +111,16 @@ private[scio] final class QueryService(private val projectId: String,
   private[scio] def newCachedQueryJob(sqlQuery: String, flattenResults: Boolean): QueryJob = {
     try {
       val sourceTimes = extractTables(sqlQuery)
-        .map(t => BigInt(tables.get(t).getLastModifiedTime))
+        .map(t => BigInt(tableService.table(t).getLastModifiedTime))
       val temp = Cache.getCacheDestinationTable(sqlQuery).get
-      val time = BigInt(tables.get(temp).getLastModifiedTime)
+      val time = BigInt(tableService.table(temp).getLastModifiedTime)
       if (sourceTimes.forall(_ < time)) {
         Logger.info(s"Cache hit for query: `$sqlQuery`")
         Logger.info(s"Existing destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
         QueryJob(sqlQuery, jobReference = None, table = temp)
       } else {
         Logger.info(s"Cache invalid for query: `$sqlQuery`")
-        val newTemp = tables.createTemporary(
+        val newTemp = tableService.createTemporary(
           extractLocation(sqlQuery)
             .getOrElse(TableService.DefaultLocation))
         Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(newTemp)}")
@@ -130,7 +130,7 @@ private[scio] final class QueryService(private val projectId: String,
     } catch {
       case NonFatal(e: GoogleJsonResponseException) if isInvalidQuery(e) => throw e
       case NonFatal(_) =>
-        val temp = tables.createTemporary(
+        val temp = tableService.createTemporary(
           extractLocation(sqlQuery)
             .getOrElse(TableService.DefaultLocation))
         Logger.info(s"Cache miss for query: `$sqlQuery`")
@@ -145,7 +145,7 @@ private[scio] final class QueryService(private val projectId: String,
                               flattenResults: Boolean): QueryJob = {
     val jobReference = {
       val location = extractLocation(sqlQuery).getOrElse(TableService.DefaultLocation)
-      tables.prepareStagingDataset(location)
+      tableService.prepareStagingDataset(location)
       val isLegacy = isLegacySql(sqlQuery, flattenResults)
       if (isLegacy) {
         Logger.info(s"Executing legacy query: `$sqlQuery`")
@@ -168,11 +168,11 @@ private[scio] final class QueryService(private val projectId: String,
     if (destinationTable != null) {
       val tableRef = bq.BigQueryHelpers.parseTableSpec(destinationTable)
       val queryJob = delayedQueryJob(sqlQuery, tableRef, flattenResults)
-      JobService.waitForJobs(projectId, bigquery, queryJob)
+      jobService.waitForJobs(queryJob)
       tableRef
     } else {
       val queryJob = newQueryJob(sqlQuery, flattenResults)
-      JobService.waitForJobs(projectId, bigquery, queryJob)
+      jobService.waitForJobs(queryJob)
       queryJob.table
     }
 
@@ -194,10 +194,10 @@ private[scio] final class QueryService(private val projectId: String,
         queryConfig.setAllowLargeResults(true).setDestinationTable(destinationTable)
       }
       val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(dryRun)
-      val fullJobId = BigQueryUtil.generateJobId(projectId)
-      val jobReference = new JobReference().setProjectId(projectId).setJobId(fullJobId)
+      val fullJobId = BigQueryUtil.generateJobId(ctx.project)
+      val jobReference = new JobReference().setProjectId(ctx.project).setJobId(fullJobId)
       val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
-      bigquery.jobs().insert(projectId, job).execute()
+      ctx.client.jobs().insert(ctx.project, job).execute()
     }
 
     if (dryRun) {
@@ -259,7 +259,7 @@ private[scio] final class QueryService(private val projectId: String,
       .map(t => (t.getProjectId, t.getDatasetId))
       .map {
         case (pId, dId) =>
-          val l = bigquery.datasets().get(pId, dId).execute().getLocation
+          val l = ctx.client.datasets().get(pId, dId).execute().getLocation
           if (l != null) l else TableService.DefaultLocation
       }
     require(locations.size <= 1, "Tables in the query must be in the same location")

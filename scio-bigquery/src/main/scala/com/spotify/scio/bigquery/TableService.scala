@@ -18,12 +18,12 @@
 package com.spotify.scio.bigquery
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
-import com.google.api.services.bigquery.Bigquery
 import com.google.api.services.bigquery.model._
-import com.google.auth.Credentials
 import com.google.cloud.hadoop.util.ApiErrorExtractor
+import com.spotify.scio.bigquery.BigQueryClient.Context
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryOptions
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.joda.time.Instant
@@ -47,66 +47,65 @@ private[scio] object TableService {
   private[bigquery] val DefaultLocation = "US"
 }
 
-private[scio] final class TableService(private val projectId: String,
-                                       private val bigquery: Bigquery,
-                                       private val credentials: Credentials) {
+private[scio] final case class TableService private (private val ctx: Context) {
   import TableService._
 
   /** Get rows from a table. */
-  def getRows(tableSpec: String): Iterator[TableRow] =
-    getRows(bq.BigQueryHelpers.parseTableSpec(tableSpec))
+  def rows(tableSpec: String): Iterator[TableRow] =
+    rows(bq.BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Get rows from a table. */
-  def getRows(table: TableReference): Iterator[TableRow] = new Iterator[TableRow] {
-    private val iterator = bq.PatchedBigQueryTableRowIterator.fromTable(table, bigquery)
-    private var _isOpen = false
-    private var _hasNext = false
+  def rows(table: TableReference): Iterator[TableRow] =
+    new Iterator[TableRow] {
+      private val iterator = bq.PatchedBigQueryTableRowIterator.fromTable(table, ctx.client)
+      private var _isOpen = false
+      private var _hasNext = false
 
-    private def init(): Unit = if (!_isOpen) {
-      iterator.open()
-      _isOpen = true
-      _hasNext = iterator.advance()
-    }
-
-    override def hasNext: Boolean = {
-      init()
-      _hasNext
-    }
-
-    override def next(): TableRow = {
-      init()
-      if (_hasNext) {
-        val r = iterator.getCurrent
+      private def init(): Unit = if (!_isOpen) {
+        iterator.open()
+        _isOpen = true
         _hasNext = iterator.advance()
-        r
-      } else {
-        throw new NoSuchElementException
+      }
+
+      override def hasNext: Boolean = {
+        init()
+        _hasNext
+      }
+
+      override def next(): TableRow = {
+        init()
+        if (_hasNext) {
+          val r = iterator.getCurrent
+          _hasNext = iterator.advance()
+          r
+        } else {
+          throw new NoSuchElementException
+        }
       }
     }
-  }
 
   /** Get schema from a table. */
-  def getSchema(tableSpec: String): TableSchema =
-    getSchema(bq.BigQueryHelpers.parseTableSpec(tableSpec))
+  def schema(tableSpec: String): TableSchema =
+    schema(bq.BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Get schema from a table. */
-  def getSchema(table: TableReference): TableSchema =
-    get(table).getSchema
+  def schema(tableRef: TableReference): TableSchema =
+    table(tableRef).getSchema
 
   /** Get table metadata. */
-  def get(tableSpec: String): Table =
-    get(bq.BigQueryHelpers.parseTableSpec(tableSpec))
+  def table(tableSpec: String): Table =
+    table(bq.BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Get table metadata. */
-  def get(table: TableReference): Table = {
-    val p = Option(table.getProjectId).getOrElse(projectId)
-    bigquery.tables().get(p, table.getDatasetId, table.getTableId).execute()
+  def table(tableRef: TableReference): Table = {
+    val p = Option(tableRef.getProjectId).getOrElse(ctx.project)
+    ctx.client.tables().get(p, tableRef.getDatasetId, tableRef.getTableId).execute()
   }
 
   /** Get list of tables in a dataset. */
-  def get(projectId: String, datasetId: String): Seq[TableReference] = {
+  def tableReferences(projectId: String, datasetId: String): Seq[TableReference] = {
     val b = Seq.newBuilder[TableReference]
-    val req = bigquery.tables().list(projectId, datasetId)
+    val req = ctx.client.tables().list(projectId, datasetId)
     var rep = req.execute()
     Option(rep.getTables).foreach(_.asScala.foreach(b += _.getTableReference))
     while (rep.getNextPageToken != null) {
@@ -118,9 +117,11 @@ private[scio] final class TableService(private val projectId: String,
   }
 
   def create(table: Table): Unit = {
-    val options = PipelineOptionsFactory.create().as(classOf[bq.BigQueryOptions])
-    options.setProject(projectId)
-    options.setGcpCredential(credentials)
+    val options = PipelineOptionsFactory
+      .create()
+      .as(classOf[BigQueryOptions])
+    options.setProject(ctx.project)
+    options.setGcpCredential(ctx.credentials)
     try {
       val service = new bq.BigQueryServicesWrapper(options)
       service.createTable(table)
@@ -140,9 +141,9 @@ private[scio] final class TableService(private val projectId: String,
    * Check if table exists. Returns `true` if table exists, `false` is table definitely does not
    * exist, throws in other cases (BigQuery exception, network issue etc.).
    */
-  def exists(table: TableReference): Boolean =
+  def exists(tableRef: TableReference): Boolean =
     try {
-      get(table)
+      table(tableRef)
       true
     } catch {
       case e: GoogleJsonResponseException
@@ -164,9 +165,11 @@ private[scio] final class TableService(private val projectId: String,
                 schema: TableSchema,
                 writeDisposition: WriteDisposition,
                 createDisposition: CreateDisposition): Unit = {
-    val options = PipelineOptionsFactory.create().as(classOf[bq.BigQueryOptions])
-    options.setProject(projectId)
-    options.setGcpCredential(credentials)
+    val options = PipelineOptionsFactory
+      .create()
+      .as(classOf[BigQueryOptions])
+    options.setProject(ctx.project)
+    options.setGcpCredential(ctx.credentials)
     try {
       val service = new bq.BigQueryServicesWrapper(options)
       if (createDisposition == CREATE_IF_NEEDED) {
@@ -193,7 +196,7 @@ private[scio] final class TableService(private val projectId: String,
 
   /** Delete table */
   private[bigquery] def delete(table: TableReference): Unit =
-    bigquery
+    ctx.client
       .tables()
       .delete(table.getProjectId, table.getDatasetId, table.getTableId)
       .execute()
@@ -202,20 +205,20 @@ private[scio] final class TableService(private val projectId: String,
   private[bigquery] def prepareStagingDataset(location: String): Unit = {
     val datasetId = StagingDatasetPrefix + location.toLowerCase
     try {
-      bigquery.datasets().get(projectId, datasetId).execute()
-      Logger.info(s"Staging dataset $projectId:$datasetId already exists")
+      ctx.client.datasets().get(ctx.project, datasetId).execute()
+      Logger.info(s"Staging dataset ${ctx.project}:$datasetId already exists")
     } catch {
       case e: GoogleJsonResponseException if ApiErrorExtractor.INSTANCE.itemNotFound(e) =>
-        Logger.info(s"Creating staging dataset $projectId:$datasetId")
-        val dsRef = new DatasetReference().setProjectId(projectId).setDatasetId(datasetId)
+        Logger.info(s"Creating staging dataset ${ctx.project}:$datasetId")
+        val dsRef = new DatasetReference().setProjectId(ctx.project).setDatasetId(datasetId)
         val ds = new Dataset()
           .setDatasetReference(dsRef)
           .setDefaultTableExpirationMs(StagingDatasetTableExpirationMs)
           .setDescription(StagingDatasetDescription)
           .setLocation(location)
-        bigquery
+        ctx.client
           .datasets()
-          .insert(projectId, ds)
+          .insert(ctx.project, ds)
           .execute()
       case NonFatal(e) => throw e
     }
@@ -226,7 +229,7 @@ private[scio] final class TableService(private val projectId: String,
     val now = Instant.now().toString(TimeFormatter)
     val tableId = TablePrefix + "_" + now + "_" + Random.nextInt(Int.MaxValue)
     new TableReference()
-      .setProjectId(projectId)
+      .setProjectId(ctx.project)
       .setDatasetId(StagingDatasetPrefix + location.toLowerCase)
       .setTableId(tableId)
   }

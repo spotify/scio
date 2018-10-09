@@ -28,6 +28,7 @@ import com.google.auth.Credentials
 import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.hadoop.util.ChainingHttpRequestInitializer
+import com.spotify.scio.bigquery.BigQueryClient.Context
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
@@ -37,41 +38,22 @@ import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import scala.reflect.runtime.universe._
 
 /** A simple BigQuery client. */
-class BigQueryClient private (private val projectId: String, credentials: Credentials) {
-  self =>
-
-  require(projectId != null && projectId.nonEmpty,
-          "Invalid projectId. " +
-            "It should be a non-empty string")
-
-  private lazy val bigquery: Bigquery = {
-    val requestInitializer = new ChainingHttpRequestInitializer(
-      new HttpCredentialsAdapter(credentials),
-      new HttpRequestInitializer {
-        override def initialize(request: HttpRequest): Unit = {
-          BigQueryConfig.connectTimeoutMs.foreach(request.setConnectTimeout)
-          BigQueryConfig.readTimeoutMs.foreach(request.setReadTimeout)
-        }
-      }
-    )
-    new Bigquery.Builder(new NetHttpTransport, new JacksonFactory, requestInitializer)
-      .setApplicationName("scio")
-      .build()
-  }
-
+class BigQueryClient private (private val ctx: Context) {
   private[scio] def isCacheEnabled: Boolean = BigQueryConfig.isCacheEnabled
 
+  val jobs: JobService = JobService(ctx)
+
   /** Tables services */
-  lazy val tables = new TableService(projectId, bigquery, credentials)
+  val tables: TableService = TableService(ctx)
 
   /** Extract operations */
-  lazy val extract: ExtractService = new ExtractService(projectId, bigquery)
+  val extract: ExtractService = ExtractService(ctx, jobs)
 
   /** Load operations */
-  lazy val load: LoadService = new LoadService(projectId, bigquery)
+  val load: LoadService = LoadService(ctx, jobs)
 
   /** Query operations */
-  lazy val query = new QueryService(projectId, bigquery, tables)
+  val query: QueryService = QueryService(ctx, tables, jobs)
 
   // =======================================================================
   // Type safe API
@@ -105,9 +87,9 @@ class BigQueryClient private (private val projectId: String, credentials: Creden
     val rows = if (newSource == null) {
       // newSource is missing, T's companion object must have either table or query
       if (bqt.isTable) {
-        self.tables.getRows(bqt.table.get)
+        tables.rows(bqt.table.get)
       } else if (bqt.isQuery) {
-        self.query.getRows(bqt.query.get)
+        query.rows(bqt.query.get)
       } else {
         throw new IllegalArgumentException(s"Missing table or query field in companion object")
       }
@@ -116,9 +98,9 @@ class BigQueryClient private (private val projectId: String, credentials: Creden
       val table = scala.util.Try(BigQueryHelpers.parseTableSpec(newSource)).toOption
 
       if (table.isDefined) {
-        self.tables.getRows(table.get)
+        tables.rows(table.get)
       } else {
-        self.query.getRows(newSource)
+        query.rows(newSource)
       }
     }
     rows.map(bqt.fromTableRow)
@@ -133,11 +115,11 @@ class BigQueryClient private (private val projectId: String, credentials: Creden
                                                   writeDisposition: WriteDisposition,
                                                   createDisposition: CreateDisposition): Unit = {
     val bqt = BigQueryType[T]
-    self.tables.writeRows(table,
-                          rows.map(bqt.toTableRow),
-                          bqt.schema,
-                          writeDisposition,
-                          createDisposition)
+    tables.writeRows(table,
+                     rows.map(bqt.toTableRow),
+                     bqt.schema,
+                     writeDisposition,
+                     createDisposition)
   }
 
   /**
@@ -168,8 +150,7 @@ class BigQueryClient private (private val projectId: String, credentials: Creden
   // =======================================================================
 
   /** Wait for all jobs to finish. */
-  def waitForJobs(jobs: BigQueryJob*): Unit =
-    JobService.waitForJobs(projectId, bigquery, jobs: _*)
+  def waitForJobs(bqJobs: BigQueryJob*): Unit = jobs.waitForJobs(bqJobs: _*)
 }
 
 /** Companion object for [[BigQueryClient]]. */
@@ -211,19 +192,40 @@ object BigQueryClient {
         BigQueryClient(project, new File(secret))
       }
       .getOrElse {
-        val credentials =
-          GoogleCredentials.getApplicationDefault.createScoped(BigQueryConfig.Scopes)
-        new BigQueryClient(project, credentials)
+        BigQueryClient(project,
+                       GoogleCredentials.getApplicationDefault.createScoped(BigQueryConfig.Scopes))
       }
-
-  /** Create a new BigQueryClient instance with the given project and credential. */
-  def apply(project: String, credentials: Credentials): BigQueryClient =
-    new BigQueryClient(project, credentials)
 
   /** Create a new BigQueryClient instance with the given project and secret file. */
   def apply(project: String, secretFile: File): BigQueryClient =
-    new BigQueryClient(project,
-                       GoogleCredentials
-                         .fromStream(new FileInputStream(secretFile))
-                         .createScoped(BigQueryConfig.Scopes))
+    BigQueryClient(project,
+                   GoogleCredentials
+                     .fromStream(new FileInputStream(secretFile))
+                     .createScoped(BigQueryConfig.Scopes))
+
+  /** Create a new BigQueryClient instance with the given project and credential. */
+  def apply(project: String, credentials: => Credentials): BigQueryClient =
+    new BigQueryClient(new Context(project, credentials))
+
+  private[scio] final class Context(val project: String, _credentials: => Credentials) {
+    require(project != null && project.nonEmpty,
+            "Invalid projectId. It should be a non-empty string")
+
+    def credentials: Credentials = _credentials
+
+    lazy val client: Bigquery = {
+      val requestInitializer = new ChainingHttpRequestInitializer(
+        new HttpCredentialsAdapter(credentials),
+        new HttpRequestInitializer {
+          override def initialize(request: HttpRequest): Unit = {
+            BigQueryConfig.connectTimeoutMs.foreach(request.setConnectTimeout)
+            BigQueryConfig.readTimeoutMs.foreach(request.setReadTimeout)
+          }
+        }
+      )
+      new Bigquery.Builder(new NetHttpTransport, new JacksonFactory, requestInitializer)
+        .setApplicationName("scio")
+        .build()
+    }
+  }
 }

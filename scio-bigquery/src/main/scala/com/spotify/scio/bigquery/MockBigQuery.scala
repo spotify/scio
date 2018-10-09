@@ -61,7 +61,7 @@ class MockBigQuery private (private val bq: BigQueryClient) {
     require(!mapping.contains(original),
             s"Table ${BigQueryHelpers.toTableSpec(original)} already registered for mocking")
 
-    val t = bq.tables.get(original)
+    val t = bq.tables.table(original)
     val temp = bq.tables.createTemporary(t.getLocation)
     mapping += (original -> temp)
     new MockTable(bq, t.getSchema, original, temp)
@@ -78,7 +78,7 @@ class MockBigQuery private (private val bq: BigQueryClient) {
         q.replace(toTableSpec(src, isLegacy), toTableSpec(dst, isLegacy))
     }
     try {
-      bq.query.getRows(mockQuery, flattenResults).toList
+      bq.query.rows(mockQuery, flattenResults).toList
     } catch {
       case e: GoogleJsonResponseException if ApiErrorExtractor.INSTANCE.itemNotFound(e) =>
         throw new RuntimeException(
@@ -148,7 +148,7 @@ class MockTable(private val bq: BigQueryClient,
    */
   def withSample(numRows: Int): Unit = {
     ensureUnique()
-    val rows = bq.tables.getRows(original).take(numRows).toList
+    val rows = bq.tables.rows(original).take(numRows).toList
     require(rows.length == numRows, s"Sample size ${rows.length} != requested $numRows")
     writeRows(rows)
   }
@@ -159,7 +159,7 @@ class MockTable(private val bq: BigQueryClient,
    */
   def withSample(minNumRows: Int, maxNumRows: Int): Unit = {
     ensureUnique()
-    val rows = bq.tables.getRows(original).take(maxNumRows).toList
+    val rows = bq.tables.rows(original).take(maxNumRows).toList
     require(rows.length >= minNumRows && rows.length <= maxNumRows,
             s"Sample size ${rows.length} < requested minimal $minNumRows")
     writeRows(rows)

@@ -54,7 +54,7 @@ private[types] object TypeProvider {
     val (query: String) :: _ = args
     val tableSpec =
       BigQueryPartitionUtil.latestTable(bigquery, formatString(args))
-    val schema = bigquery.tables.getSchema(tableSpec)
+    val schema = bigquery.tables.schema(tableSpec)
     val traits = List(tq"${p(c, SType)}.HasTable")
 
     val tableDef = q"override def table: _root_.java.lang.String = $query"
@@ -90,7 +90,7 @@ private[types] object TypeProvider {
     val (queryFormat: String) :: tail = args
     val argsStack = MStack[Any](tail: _*)
     val query = BigQueryPartitionUtil.latestQuery(bigquery, formatString(args))
-    val schema = bigquery.query.getSchema(query)
+    val schema = bigquery.query.schema(query)
     val traits = List(tq"${p(c, SType)}.HasQuery")
 
     val queryDef =

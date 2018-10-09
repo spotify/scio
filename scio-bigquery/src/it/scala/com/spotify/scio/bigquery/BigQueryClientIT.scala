@@ -67,7 +67,7 @@ class BigQueryClientIT extends FlatSpec with Matchers {
       new TableFieldSchema().setName("word").setType("STRING").setMode("REQUIRED"),
       new TableFieldSchema().setName("word_count").setType("INTEGER").setMode("REQUIRED")
     ).asJava)
-    bq.query.getSchema(legacyQuery) shouldBe expected
+    bq.query.schema(legacyQuery) shouldBe expected
   }
 
   it should "work with SQL syntax" in {
@@ -75,37 +75,37 @@ class BigQueryClientIT extends FlatSpec with Matchers {
       new TableFieldSchema().setName("word").setType("STRING").setMode("NULLABLE"),
       new TableFieldSchema().setName("word_count").setType("INTEGER").setMode("NULLABLE")
     ).asJava)
-    bq.query.getSchema(sqlQuery) shouldBe expected
+    bq.query.schema(sqlQuery) shouldBe expected
   }
 
   // scalastyle:off no.whitespace.before.left.bracket
   it should "fail invalid legacy syntax" in {
     (the [GoogleJsonResponseException] thrownBy {
-      bq.query.getSchema("SELECT word, count FROM [bigquery-public-data:samples.shakespeare]")
+      bq.query.schema("SELECT word, count FROM [bigquery-public-data:samples.shakespeare]")
     }).getDetails.getCode shouldBe 400
   }
 
   it should "fail invalid SQL syntax" in {
     (the [GoogleJsonResponseException] thrownBy {
-      bq.query.getSchema("SELECT word, count FROM `bigquery-public-data.samples.shakespeare`")
+      bq.query.schema("SELECT word, count FROM `bigquery-public-data.samples.shakespeare`")
     }).getDetails.getCode shouldBe 400
   }
   // scalastyle:on no.whitespace.before.left.bracket
 
   "QueryService.getRows" should "work with legacy syntax" in {
-    val rows = bq.query.getRows(legacyQuery).toList
+    val rows = bq.query.rows(legacyQuery).toList
     rows.size shouldBe 10
     all(rows.map(_.keySet().asScala)) shouldBe Set("word", "word_count")
   }
 
   it should "work with SQL syntax" in {
-    val rows = bq.query.getRows(sqlQuery).toList
+    val rows = bq.query.rows(sqlQuery).toList
     rows.size shouldBe 10
     all(rows.map(_.keySet().asScala)) shouldBe Set("word", "word_count")
   }
 
   "TableService.getTableSchema" should "work" in {
-    val schema = bq.tables.getSchema("bigquery-public-data:samples.shakespeare")
+    val schema = bq.tables.schema("bigquery-public-data:samples.shakespeare")
     val fields = schema.getFields.asScala
     fields.size shouldBe 4
     fields.map(_.getName) shouldBe Seq("word", "word_count", "corpus", "corpus_date")
@@ -114,7 +114,7 @@ class BigQueryClientIT extends FlatSpec with Matchers {
   }
 
   "TableService.getRows" should "work" in {
-    val rows = bq.tables.getRows("bigquery-public-data:samples.shakespeare").take(10).toList
+    val rows = bq.tables.rows("bigquery-public-data:samples.shakespeare").take(10).toList
     val columns = Set("word", "word_count", "corpus", "corpus_date")
     all(rows.map(_.keySet().asScala)) shouldBe columns
   }
@@ -135,7 +135,7 @@ class BigQueryClientIT extends FlatSpec with Matchers {
     val table = bq.tables.createTemporary(location = "EU")
     val tableRef = bq.load.csv(sources, table.asTableSpec, skipLeadingRows = 1,
       schema = Some(schema))
-    val createdTable = tableRef.map(bq.tables.get)
+    val createdTable = tableRef.map(bq.tables.table)
     createdTable.map(_.getNumRows.intValue()) shouldBe Success(10)
     tableRef.map(bq.tables.delete)
   }
@@ -155,7 +155,7 @@ class BigQueryClientIT extends FlatSpec with Matchers {
     val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.json")
     val table = bq.tables.createTemporary(location = "EU")
     val tableRef = bq.load.json(sources, table.asTableSpec, schema = Some(schema))
-    val createdTable = tableRef.map(bq.tables.get)
+    val createdTable = tableRef.map(bq.tables.table)
     createdTable.map(_.getNumRows.intValue()) shouldBe Success(10)
     tableRef.map(bq.tables.delete)
   }
@@ -164,7 +164,7 @@ class BigQueryClientIT extends FlatSpec with Matchers {
     val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.avro")
     val table = bq.tables.createTemporary(location = "EU")
     val tableRef = bq.load.avro(sources, table.asTableSpec)
-    val createdTable = tableRef.map(bq.tables.get)
+    val createdTable = tableRef.map(bq.tables.table)
     createdTable.map(_.getNumRows.intValue()) shouldBe Success(10)
     tableRef.map(bq.tables.delete)
   }

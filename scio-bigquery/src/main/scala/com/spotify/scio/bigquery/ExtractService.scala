@@ -17,8 +17,8 @@
 
 package com.spotify.scio.bigquery
 
-import com.google.api.services.bigquery.Bigquery
 import com.google.api.services.bigquery.model._
+import com.spotify.scio.bigquery.BigQueryClient.Context
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
 import org.slf4j.LoggerFactory
 
@@ -28,8 +28,8 @@ private[scio] object ExtractService {
   private val Logger = LoggerFactory.getLogger(this.getClass)
 }
 
-private[scio] final class ExtractService(private val projectId: String,
-                                         private val bigquery: Bigquery) {
+private[scio] final case class ExtractService private (private val ctx: Context,
+                                                       private val jobService: JobService) {
   import ExtractService._
 
   def asCsv(sourceTable: String,
@@ -91,16 +91,16 @@ private[scio] final class ExtractService(private val projectId: String,
     val jobConfig = new JobConfiguration()
       .setExtract(jobConfigExtract)
 
-    val fullJobId = BigQueryUtil.generateJobId(projectId)
-    val jobReference = new JobReference().setProjectId(projectId).setJobId(fullJobId)
+    val fullJobId = BigQueryUtil.generateJobId(ctx.project)
+    val jobReference = new JobReference().setProjectId(ctx.project).setJobId(fullJobId)
     val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
 
     Logger.info(s"Extracting table $sourceTable to ${destinationUris.mkString(", ")}")
 
-    bigquery.jobs().insert(projectId, job).execute()
+    ctx.client.jobs().insert(ctx.project, job).execute()
 
     val extractJob = ExtractJob(destinationUris, Some(jobReference), tableRef)
 
-    JobService.waitForJobs(projectId, bigquery, extractJob)
+    jobService.waitForJobs(extractJob)
   }
 }

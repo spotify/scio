@@ -127,7 +127,7 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
 
   it should "round trip rows with legacy syntax" in {
     val bqt = BigQueryType[LegacyT]
-    val rows = bq.query.getRows(legacyQuery).toList
+    val rows = bq.query.rows(legacyQuery).toList
     val typed = Seq(LegacyT("Romeo", 117L))
     rows.map(bqt.fromTableRow) shouldBe typed
     typed.map(bqt.toTableRow).map(bqt.fromTableRow) shouldBe typed
@@ -135,7 +135,7 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
 
   it should "round trip rows with SQL syntax" in {
     val bqt = BigQueryType[SqlT]
-    val rows = bq.query.getRows(sqlQuery).toList
+    val rows = bq.query.rows(sqlQuery).toList
     val typed = Seq(SqlT(Some("Romeo"), Some(117L)))
     rows.map(bqt.fromTableRow) shouldBe typed
     typed.map(bqt.toTableRow).map(bqt.fromTableRow) shouldBe typed

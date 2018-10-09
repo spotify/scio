@@ -19,8 +19,8 @@ package com.spotify.scio.bigquery
 
 import java.io.IOException
 
-import com.google.api.services.bigquery.Bigquery
 import com.google.api.services.bigquery.model.Job
+import com.spotify.scio.bigquery.BigQueryClient.Context
 import org.apache.commons.io.FileUtils
 import org.joda.time.Period
 import org.joda.time.format.PeriodFormatterBuilder
@@ -40,48 +40,6 @@ private[scio] object JobService {
     .appendSecondsWithOptionalMillis()
     .appendSuffix("s")
     .toFormatter
-
-  /** Wait for all jobs to finish. */
-  def waitForJobs(projectId: String, bigquery: Bigquery, jobs: BigQueryJob*): Unit = {
-    val numTotal = jobs.size
-    var pendingJobs = jobs.flatMap { job =>
-      job.jobReference match {
-        case Some(reference) => Some((job, reference))
-        case None            => None
-      }
-    }
-
-    while (pendingJobs.nonEmpty) {
-      val remainingJobs = pendingJobs.filter {
-        case (bqJob, jobReference) =>
-          val jobId = jobReference.getJobId
-          try {
-            val poll = bigquery.jobs().get(projectId, jobId).execute()
-            val error = poll.getStatus.getErrorResult
-            if (error != null) {
-              throw new RuntimeException(s"${bqJob.jobType} Job failed: id: $jobId, error: $error")
-            }
-            if (poll.getStatus.getState == "DONE") {
-              logJobStatistics(bqJob, poll)
-              false
-            } else {
-              true
-            }
-          } catch {
-            case e: IOException =>
-              Logger.warn(s"BigQuery request failed: id: $jobId, error: $e")
-              true
-          }
-      }
-
-      pendingJobs = remainingJobs
-      val numDone = numTotal - pendingJobs.size
-      Logger.info(s"Job: $numDone out of $numTotal completed")
-      if (pendingJobs.nonEmpty) {
-        Thread.sleep(10000)
-      }
-    }
-  }
 
   private def logJobStatistics(bqJob: BigQueryJob, job: Job): Unit = {
 
@@ -117,4 +75,50 @@ private[scio] object JobService {
     Logger.info(s"Elapsed: $elapsed, pending: $pending, execution: $execution")
   }
 
+}
+
+private[scio] final case class JobService private (private val ctx: Context) {
+  import JobService._
+
+  /** Wait for all jobs to finish. */
+  def waitForJobs(jobs: BigQueryJob*): Unit = {
+    val numTotal = jobs.size
+    var pendingJobs = jobs.flatMap { job =>
+      job.jobReference match {
+        case Some(reference) => Some((job, reference))
+        case None            => None
+      }
+    }
+
+    while (pendingJobs.nonEmpty) {
+      val remainingJobs = pendingJobs.filter {
+        case (bqJob, jobReference) =>
+          val jobId = jobReference.getJobId
+          try {
+            val poll = ctx.client.jobs().get(ctx.project, jobId).execute()
+            val error = poll.getStatus.getErrorResult
+            if (error != null) {
+              throw new RuntimeException(s"${bqJob.jobType} Job failed: id: $jobId, error: $error")
+            }
+            if (poll.getStatus.getState == "DONE") {
+              logJobStatistics(bqJob, poll)
+              false
+            } else {
+              true
+            }
+          } catch {
+            case e: IOException =>
+              Logger.warn(s"BigQuery request failed: id: $jobId, error: $e")
+              true
+          }
+      }
+
+      pendingJobs = remainingJobs
+      val numDone = numTotal - pendingJobs.size
+      Logger.info(s"Job: $numDone out of $numTotal completed")
+      if (pendingJobs.nonEmpty) {
+        Thread.sleep(10000)
+      }
+    }
+  }
 }
