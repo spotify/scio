@@ -322,8 +322,7 @@ lazy val root: Project = Project(
     scioExamples,
     scioRepl,
     scioJmh,
-    scioCoders,
-    scioCodersMacros
+    scioMacros
   )
 
 lazy val scioCore: Project = Project(
@@ -353,12 +352,13 @@ lazy val scioCore: Project = Project(
       "org.apache.xbean" % "xbean-asm6-shaded" % asmVersion,
       "io.grpc" % "grpc-all" % grpcVersion exclude ("io.opencensus", "opencensus-api"),
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
+      "me.lyh" %% "magnolia" % magnoliaVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % "test"
     )
   )
   .dependsOn(
     scioSchemas % "test->test",
-    scioCoders
+    scioMacros
   )
   .configs(
     IntegrationTest
@@ -399,38 +399,18 @@ lazy val scioTest: Project = Project(
     scioBigQuery % "compile->test"
   )
 
-lazy val scioCodersMacros: Project = Project(
-  "scio-coders-macros",
-  file("scio-coders-macros")
+lazy val scioMacros: Project = Project(
+  "scio-macros",
+  file("scio-macros")
 ).settings(
   commonSettings ++ macroSettings,
-  description := "Scio add-on for static Coder derivation (macros)",
+  description := "Scio macros",
   libraryDependencies ++= Seq(
-    "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-    "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "provided",
-    "org.scalatest" %% "scalatest" % scalatestVersion % "test",
     "me.lyh" %% "magnolia" % magnoliaVersion,
     "com.chuusai" %% "shapeless" % shapelessVersion,
-    "com.twitter" %% "algebird-core" % algebirdVersion
+    "com.esotericsoftware" % "kryo-shaded" % kryoVersion
   )
 )
-
-lazy val scioCoders: Project = Project(
-  "scio-coders",
-  file("scio-coders")
-).settings(
-    commonSettings,
-    description := "Scio add-on for static Coder derivation",
-    libraryDependencies ++= Seq(
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "provided",
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test",
-      "me.lyh" %% "magnolia" % magnoliaVersion,
-      "com.chuusai" %% "shapeless" % shapelessVersion,
-      "com.twitter" %% "algebird-core" % algebirdVersion
-    )
-  )
-  .dependsOn(scioCodersMacros)
 
 lazy val scioAvro: Project = Project(
   "scio-avro",
@@ -598,8 +578,7 @@ lazy val scioExtra: Project = Project(
     scioCore,
     scioTest % "it->it;test->test",
     scioAvro,
-    scioCoders,
-    scioCodersMacros
+    scioMacros
   )
   .configs(IntegrationTest)
 

@@ -77,7 +77,7 @@ def main(out):
         // scalastyle:off number.of.methods
         // scalastyle:off parameter.number
 
-        package com.spotify.scio.coders
+        package com.spotify.scio.coders.instances
 
         import shapeless.Strict
 
