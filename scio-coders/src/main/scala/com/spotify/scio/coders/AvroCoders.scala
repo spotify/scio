@@ -19,7 +19,6 @@ package com.spotify.scio.coders
 
 import java.io.{InputStream, OutputStream}
 
-import com.google.common.base.{Supplier, Suppliers}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.{SpecificData, SpecificFixed}
@@ -66,11 +65,10 @@ private final class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
 
 /** Implementation is legit only for SpecificFixed, not GenericFixed
  * @see [[org.apache.beam.sdk.coders.AvroCoder]] */
-private final class SpecificFixedCoder[A <: SpecificFixed](size: Int,
-                                                           cls: Class[A],
-                                                           schemaSupplier: Supplier[Schema])
-    extends AtomicCoder[A] {
-  def schema: Schema = schemaSupplier.get()
+private final class SpecificFixedCoder[A <: SpecificFixed](cls: Class[A]) extends AtomicCoder[A] {
+  // lazy because AVRO Schema isn't serializable
+  private[this] lazy val schema: Schema = SpecificData.get().getSchema(cls)
+  private[this] val size = SpecificData.get().getSchema(cls).getFixedSize
 
   def encode(value: A, outStream: OutputStream): Unit = {
     assert(value.bytes().length == size)
@@ -96,19 +94,8 @@ private final class SpecificFixedCoder[A <: SpecificFixed](size: Int,
 private object SpecificFixedCoder {
   def apply[A <: SpecificFixed: ClassTag]: Coder[A] = {
     val cls = classTag[A].runtimeClass.asInstanceOf[Class[A]]
-    val schema = SpecificData.get().getSchema(cls)
-    val size = schema.getFixedSize
-
-    Coder.beam(new SpecificFixedCoder[A](size, cls, schemaSupplier(schema)))
+    Coder.beam(new SpecificFixedCoder[A](cls))
   }
-
-  class ParseSchema extends com.google.common.base.Function[String, Schema] with Serializable {
-    def apply(input: String): Schema =
-      new Schema.Parser().parse(input)
-  }
-
-  def schemaSupplier(schema: Schema): Supplier[Schema] =
-    Suppliers.memoize(Suppliers.compose(new ParseSchema(), Suppliers.ofInstance(schema.toString)))
 }
 
 trait AvroCoders {
