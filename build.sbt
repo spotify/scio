@@ -341,6 +341,7 @@ lazy val scioCore: Project = Project(
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" %% "chill-algebird" % chillVersion,
       "com.twitter" % "chill-protobuf" % chillVersion,
+      "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.apache.commons" % "commons-math3" % commonsMath3Version,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaModuleVersion,
