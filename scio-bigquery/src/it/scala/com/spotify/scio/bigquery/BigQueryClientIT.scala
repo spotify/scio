@@ -39,13 +39,11 @@ class BigQueryClientIT extends FlatSpec with Matchers {
 
   "extractLocation" should "work with legacy syntax" in {
     val query = "SELECT word FROM [data-integration-test:samples_%s.shakespeare]"
-    bq.extractLocation(query.format("us")) shouldBe Some("US")
     bq.extractLocation(query.format("eu")) shouldBe Some("EU")
   }
 
   it should "work with SQL syntax" in {
     val query = "SELECT word FROM `data-integration-test.samples_%s.shakespeare`"
-    bq.extractLocation(query.format("us")) shouldBe Some("US")
     bq.extractLocation(query.format("eu")) shouldBe Some("EU")
   }
 
@@ -133,7 +131,7 @@ class BigQueryClientIT extends FlatSpec with Matchers {
         |}
       """.stripMargin)
     val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.csv")
-    val table = bq.temporaryTable(location = "US")
+    val table = bq.temporaryTable(location = "EU")
     val tableRef = bq.loadTableFromCsv(sources, table.asTableSpec, skipLeadingRows = 1,
       schema = Some(schema))
     val createdTable = bq.getTable(tableRef)
@@ -154,7 +152,7 @@ class BigQueryClientIT extends FlatSpec with Matchers {
         |}
       """.stripMargin)
     val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.json")
-    val table = bq.temporaryTable(location = "US")
+    val table = bq.temporaryTable(location = "EU")
     val tableRef = bq.loadTableFromJson(sources, table.asTableSpec, schema = Some(schema))
     val createdTable = bq.getTable(tableRef)
     createdTable.getNumRows.intValue() shouldBe 10
@@ -163,7 +161,7 @@ class BigQueryClientIT extends FlatSpec with Matchers {
 
   "loadTableFromAvro" should "work" in {
     val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.avro")
-    val table = bq.temporaryTable(location = "US")
+    val table = bq.temporaryTable(location = "EU")
     val tableRef = bq.loadTableFromAvro(sources, table.asTableSpec)
     val createdTable = bq.getTable(tableRef)
     createdTable.getNumRows.intValue() shouldBe 10

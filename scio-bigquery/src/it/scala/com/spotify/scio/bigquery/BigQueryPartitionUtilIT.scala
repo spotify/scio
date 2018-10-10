@@ -27,7 +27,7 @@ class BigQueryPartitionUtilIT extends FlatSpec with Matchers {
     val input =
       """
         |SELECT *
-        |FROM [data-integration-test:samples_us.shakespeare]
+        |FROM [data-integration-test:samples_eu.shakespeare]
         |JOIN [data-integration-test:partition_a.table_$LATEST]
         |JOIN [data-integration-test:partition_b.table_$LATEST]
         |WHERE x = 0
@@ -40,7 +40,7 @@ class BigQueryPartitionUtilIT extends FlatSpec with Matchers {
     val input =
       """
         |SELECT *
-        |FROM `data-integration-test.samples_us.shakespeare`
+        |FROM `data-integration-test.samples_eu.shakespeare`
         |JOIN `data-integration-test.partition_a.table_$LATEST`
         |JOIN `data-integration-test.partition_b.table_$LATEST`
         |WHERE x = 0
@@ -50,12 +50,12 @@ class BigQueryPartitionUtilIT extends FlatSpec with Matchers {
   }
 
   it should "work with legacy syntax without $LATEST" in {
-    val input = "SELECT * FROM [data-integration-test:samples_us.shakespeare]"
+    val input = "SELECT * FROM [data-integration-test:samples_eu.shakespeare]"
     BigQueryPartitionUtil.latestQuery(bq, input) shouldBe input
   }
 
   it should "work with SQL syntax without $LATEST" in {
-    val input = "SELECT * FROM `data-integration-test.samples_us.shakespeare`"
+    val input = "SELECT * FROM `data-integration-test.samples_eu.shakespeare`"
     BigQueryPartitionUtil.latestQuery(bq, input) shouldBe input
   }
 
@@ -63,7 +63,7 @@ class BigQueryPartitionUtilIT extends FlatSpec with Matchers {
     val input =
       """
         |SELECT *
-        |FROM [data-integration-test:samples_us.shakespeare]
+        |FROM [data-integration-test:samples_eu.shakespeare]
         |JOIN [data-integration-test:partition_a.table_$LATEST]
         |JOIN [data-integration-test:partition_b.table_$LATEST]
         |JOIN [data-integration-test:partition_c.table_$LATEST]
@@ -84,7 +84,7 @@ class BigQueryPartitionUtilIT extends FlatSpec with Matchers {
     val input =
       """
         |SELECT *
-        |FROM `data-integration-test.samples_us.shakespeare`
+        |FROM `data-integration-test.samples_eu.shakespeare`
         |JOIN `data-integration-test.partition_a.table_$LATEST`
         |JOIN `data-integration-test.partition_b.table_$LATEST`
         |JOIN `data-integration-test.partition_c.table_$LATEST`
@@ -113,7 +113,7 @@ class BigQueryPartitionUtilIT extends FlatSpec with Matchers {
   }
 
   it should "fail table specification without latest partition" in {
-    val input = "data-integration-test:samples_us.shakespeare_$LATEST"
+    val input = "data-integration-test:samples_eu.shakespeare_$LATEST"
     val msg = s"requirement failed: Cannot find latest partition for $input"
     // scalastyle:off no.whitespace.before.left.bracket
     the [IllegalArgumentException] thrownBy {
