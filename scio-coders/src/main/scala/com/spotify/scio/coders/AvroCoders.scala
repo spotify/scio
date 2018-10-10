@@ -21,9 +21,12 @@ import java.io.{InputStream, OutputStream}
 
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
+import org.apache.avro.specific.{SpecificData, SpecificFixed}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, AvroCoder, StringUtf8Coder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
+
+import scala.reflect.{classTag, ClassTag}
 
 private final class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
 
@@ -60,6 +63,41 @@ private final class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
     AvroCoder.of(value.getSchema).registerByteSizeObserver(value, observer)
 }
 
+/** Implementation is legit only for SpecificFixed, not GenericFixed
+ * @see [[org.apache.beam.sdk.coders.AvroCoder]] */
+private final class SpecificFixedCoder[A <: SpecificFixed](cls: Class[A]) extends AtomicCoder[A] {
+  // lazy because AVRO Schema isn't serializable
+  private[this] lazy val schema: Schema = SpecificData.get().getSchema(cls)
+  private[this] val size = SpecificData.get().getSchema(cls).getFixedSize
+
+  def encode(value: A, outStream: OutputStream): Unit = {
+    assert(value.bytes().length == size)
+    outStream.write(value.bytes())
+  }
+
+  def decode(inStream: InputStream): A = {
+    val bytes = new Array[Byte](size)
+    inStream.read(bytes)
+    val old = SpecificData.newInstance(cls, schema)
+    SpecificData.get().createFixed(old, bytes, schema).asInstanceOf[A]
+  }
+
+  override def isRegisterByteSizeObserverCheap(value: A): Boolean = true
+
+  override def getEncodedElementByteSize(value: A): Long = size.toLong
+
+  override def consistentWithEquals(): Boolean = true
+
+  override def structuralValue(value: A): AnyRef = value
+}
+
+private object SpecificFixedCoder {
+  def apply[A <: SpecificFixed: ClassTag]: Coder[A] = {
+    val cls = classTag[A].runtimeClass.asInstanceOf[Class[A]]
+    Coder.beam(new SpecificFixedCoder[A](cls))
+  }
+}
+
 trait AvroCoders {
   import language.experimental.macros
   // TODO: Use a coder that does not serialize the schema
@@ -73,4 +111,7 @@ trait AvroCoders {
   import org.apache.avro.specific.SpecificRecordBase
   implicit def genAvro[T <: SpecificRecordBase]: Coder[T] =
     macro AvroCoderMacros.staticInvokeCoder[T]
+
+  implicit def avroSpecificFixedCoder[T <: SpecificFixed: ClassTag]: Coder[T] =
+    SpecificFixedCoder[T]
 }

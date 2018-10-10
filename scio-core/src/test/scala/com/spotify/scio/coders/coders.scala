@@ -359,4 +359,9 @@ class CodersTest extends FlatSpec with Matchers {
     check(JavaEnumExample.BAD_THING)
   }
 
+  it should "support specific fixed data" in {
+    val bytes = (0 to 15).map(_.toByte).toArray
+    check(new FixedSpefificDataExample(bytes))
+  }
+
 }
