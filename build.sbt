@@ -351,7 +351,9 @@ lazy val scioCore: Project = Project(
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
       "org.apache.xbean" % "xbean-asm6-shaded" % asmVersion,
-      "io.grpc" % "grpc-all" % grpcVersion exclude ("io.opencensus", "opencensus-api"),
+      ("io.grpc" % "grpc-all" % grpcVersion)
+        .exclude("io.opencensus", "opencensus-api")
+        .exclude("io.grpc", "grpc-okhttp"),
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % "test"
     )
