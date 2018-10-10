@@ -110,10 +110,16 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
   def state: State = Try(internal.getState).getOrElse(State.UNKNOWN)
 
   /** Save metrics of the finished pipeline to a file. */
-  def saveMetrics(filename: String): Unit = {
+  def saveMetrics(fileUri: String): Unit = {
     require(isCompleted, "Pipeline has to be finished to save metrics.")
     val mapper = ScioUtil.getScalaJsonMapper
-    val resourceId = FileSystems.matchNewResource(filename, false)
+
+    /**
+     * Workaround for BEAM-5677. If we pass URIs with "file" scheme through,
+     * LocalFileSystem.matchNewResource mishandles them.
+     */
+    val fileUriOrPath = if (fileUri.startsWith("file:")) fileUri.substring(5) else fileUri
+    val resourceId = FileSystems.matchNewResource(fileUriOrPath, false)
     val out = FileSystems.create(resourceId, MimeTypes.TEXT)
     try {
       out.write(ByteBuffer.wrap(mapper.writeValueAsBytes(getMetrics)))
