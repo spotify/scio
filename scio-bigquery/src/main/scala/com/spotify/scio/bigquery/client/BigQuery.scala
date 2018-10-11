@@ -37,8 +37,8 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, 
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 
 import scala.collection.JavaConverters._
-import scala.reflect.runtime.universe._
-import scala.util._
+import scala.reflect.runtime.universe.TypeTag
+import scala.util.Try
 
 /** A simple BigQuery client. */
 final class BigQuery private (client: Client) {
