@@ -25,14 +25,10 @@ import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import com.spotify.scio.CoreSysProps
+import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.MacroUtil._
 import com.spotify.scio.bigquery.validation.{OverrideTypeProvider, OverrideTypeProviderFinder}
-import com.spotify.scio.bigquery.{
-  BigQueryClient,
-  BigQueryPartitionUtil,
-  BigQuerySysProps,
-  BigQueryUtil
-}
+import com.spotify.scio.bigquery.{BigQueryPartitionUtil, BigQuerySysProps, BigQueryUtil}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -43,7 +39,7 @@ import scala.reflect.macros._
 private[types] object TypeProvider {
 
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
-  private lazy val bigquery: BigQueryClient = BigQueryClient.defaultInstance()
+  private lazy val bigquery: BigQuery = BigQuery.defaultInstance()
   private[this] val FormatSpecifierRegex =
     "(%(\\d+\\$)?([-#+ 0,(\\<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%]))".r
 

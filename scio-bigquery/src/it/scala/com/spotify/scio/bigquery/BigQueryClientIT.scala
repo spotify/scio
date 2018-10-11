@@ -23,6 +23,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.cloud.storage.Storage.BlobListOption
 import com.google.cloud.storage.{Blob, StorageOptions}
+import com.spotify.scio.bigquery.client.BigQuery
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -31,7 +32,7 @@ import scala.util.Success
 
 class BigQueryClientIT extends FlatSpec with Matchers {
 
-  val bq = BigQueryClient.defaultInstance()
+  val bq = BigQuery.defaultInstance()
 
   val legacyQuery =
     "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] LIMIT 10"

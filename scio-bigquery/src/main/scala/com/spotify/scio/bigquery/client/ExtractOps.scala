@@ -15,29 +15,28 @@
  * under the License.
  */
 
-package com.spotify.scio.bigquery
+package com.spotify.scio.bigquery.client
 
 import com.google.api.services.bigquery.model._
-import com.spotify.scio.bigquery.BigQueryClient.Context
+import com.spotify.scio.bigquery.client.BigQuery.Client
+import com.spotify.scio.bigquery.BigQueryUtil
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 
-private[scio] object ExtractService {
+private[client] object ExtractOps {
   private val Logger = LoggerFactory.getLogger(this.getClass)
 }
 
-private[scio] final case class ExtractService private (private val ctx: Context,
-                                                       private val jobService: JobService) {
-  import ExtractService._
+private[client] final class ExtractOps(client: Client, jobService: JobOps) {
+  import ExtractOps._
 
   def asCsv(sourceTable: String,
             destinationUris: List[String],
             gzipCompression: Boolean = false,
             fieldDelimiter: Option[String] = None,
-            printHeader: Option[Boolean] = None): Unit = {
-
+            printHeader: Option[Boolean] = None): Unit =
     exportTable(
       sourceTable = sourceTable,
       destinationUris = destinationUris,
@@ -46,29 +45,24 @@ private[scio] final case class ExtractService private (private val ctx: Context,
       fieldDelimiter = fieldDelimiter,
       printHeader = printHeader
     )
-  }
 
   /** Export a table as Json */
   def asJson(sourceTable: String,
              destinationUris: List[String],
-             gzipCompression: Boolean = false): Unit = {
-
+             gzipCompression: Boolean = false): Unit =
     exportTable(sourceTable = sourceTable,
                 destinationUris = destinationUris,
                 format = "NEWLINE_DELIMITED_JSON",
                 gzipCompression = gzipCompression)
-  }
 
   /** Export a table as Avro */
   def asAvro(sourceTable: String,
              destinationUris: List[String],
-             gzipCompression: Boolean = false): Unit = {
-
+             gzipCompression: Boolean = false): Unit =
     exportTable(sourceTable = sourceTable,
                 destinationUris = destinationUris,
                 format = "AVRO",
                 gzipCompression = gzipCompression)
-  }
 
   private def exportTable(sourceTable: String,
                           destinationUris: List[String],
@@ -84,20 +78,21 @@ private[scio] final case class ExtractService private (private val ctx: Context,
       .setDestinationUris(destinationUris.asJava)
       .setDestinationFormat(format)
 
-    if (gzipCompression) jobConfigExtract.setCompression("GZIP")
+    if (gzipCompression) {
+      jobConfigExtract.setCompression("GZIP")
+    }
     fieldDelimiter.foreach(jobConfigExtract.setFieldDelimiter)
     printHeader.foreach(jobConfigExtract.setPrintHeader(_))
 
-    val jobConfig = new JobConfiguration()
-      .setExtract(jobConfigExtract)
+    val jobConfig = new JobConfiguration().setExtract(jobConfigExtract)
 
-    val fullJobId = BigQueryUtil.generateJobId(ctx.project)
-    val jobReference = new JobReference().setProjectId(ctx.project).setJobId(fullJobId)
+    val fullJobId = BigQueryUtil.generateJobId(client.project)
+    val jobReference = new JobReference().setProjectId(client.project).setJobId(fullJobId)
     val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
 
     Logger.info(s"Extracting table $sourceTable to ${destinationUris.mkString(", ")}")
 
-    ctx.client.jobs().insert(ctx.project, job).execute()
+    client.underlying.jobs().insert(client.project, job).execute()
 
     val extractJob = ExtractJob(destinationUris, Some(jobReference), tableRef)
 

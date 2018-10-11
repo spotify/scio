@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.bigquery
+package com.spotify.scio.bigquery.client
 
 import java.io.File
 
@@ -23,15 +23,16 @@ import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.google.common.base.Charsets
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
+import com.spotify.scio.bigquery.BigQueryUtil
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
 
 import scala.util.Try
 
-private[scio] object Cache {
+private[client] object Cache {
 
-  private[scio] def isCacheEnabled: Boolean = BigQueryConfig.isCacheEnabled
+  private[this] def isCacheEnabled: Boolean = BigQueryConfig.isCacheEnabled
 
-  private[bigquery] def withCacheKey(key: String)(method: => TableSchema): TableSchema =
+  def withCacheKey(key: String)(method: => TableSchema): TableSchema =
     if (isCacheEnabled) {
       getCacheSchema(key) match {
         case Some(schema) => schema
@@ -44,18 +45,18 @@ private[scio] object Cache {
       method
     }
 
-  private def setCacheSchema(key: String, schema: TableSchema): Unit =
+  private[this] def setCacheSchema(key: String, schema: TableSchema): Unit =
     Files.write(schema.toPrettyString, schemaCacheFile(key), Charsets.UTF_8)
 
-  private def getCacheSchema(key: String): Option[TableSchema] =
+  private[this] def getCacheSchema(key: String): Option[TableSchema] =
     Try {
       BigQueryUtil.parseSchema(scala.io.Source.fromFile(schemaCacheFile(key)).mkString)
     }.toOption
 
-  private[bigquery] def setCacheDestinationTable(key: String, table: TableReference): Unit =
+  def setCacheDestinationTable(key: String, table: TableReference): Unit =
     Files.write(bq.BigQueryHelpers.toTableSpec(table), tableCacheFile(key), Charsets.UTF_8)
 
-  private[bigquery] def getCacheDestinationTable(key: String): Option[TableReference] =
+  def getCacheDestinationTable(key: String): Option[TableReference] =
     Try {
       bq.BigQueryHelpers.parseTableSpec(scala.io.Source.fromFile(tableCacheFile(key)).mkString)
     }.toOption
@@ -68,7 +69,7 @@ private[scio] object Cache {
     cacheFile
   }
 
-  private def schemaCacheFile(key: String): File = cacheFile(key, ".schema.json")
+  private[this] def schemaCacheFile(key: String): File = cacheFile(key, ".schema.json")
 
-  private def tableCacheFile(key: String): File = cacheFile(key, ".table.txt")
+  private[this] def tableCacheFile(key: String): File = cacheFile(key, ".table.txt")
 }

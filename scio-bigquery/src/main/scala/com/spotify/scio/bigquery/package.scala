@@ -38,9 +38,9 @@ import scala.util.Try
  * [[https://cloud.google.com/bigquery/docs/reference/legacy-sql legacy]] and
  * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ standard]].
  * APIs that take a BigQuery query string as argument, e.g.
- * [[com.spotify.scio.bigquery.BigQueryClient.query.rows BigQueryClient.query.getRows]],
- * [[com.spotify.scio.bigquery.BigQueryClient.query.schema BigQueryClient.query.getSchema]],
- * [[com.spotify.scio.bigquery.BigQueryClient.getTypedRows BigQueryClient.getTypedRows]] and
+ * [[com.spotify.scio.bigquery.client.BigQuery.query.rows]],
+ * [[com.spotify.scio.bigquery.client.BigQuery.query.schema]],
+ * [[com.spotify.scio.bigquery.client.BigQuery.getTypedRows]] and
  * [[com.spotify.scio.bigquery.BigQueryType.fromQuery BigQueryType.fromQuery]], automatically
  * detects the query's dialect. To override this, start the query with either `#legacysql` or
  * `#standardsql` comment line.

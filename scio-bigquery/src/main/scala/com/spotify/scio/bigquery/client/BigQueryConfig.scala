@@ -15,11 +15,11 @@
  * under the License.
  */
 
-package com.spotify.scio.bigquery
+package com.spotify.scio.bigquery.client
 
 import com.google.api.services.bigquery.BigqueryScopes
+import com.spotify.scio.bigquery.BigQuerySysProps
 
-import scala.collection.JavaConverters._
 import scala.util.Try
 
 object BigQueryConfig {
@@ -30,7 +30,13 @@ object BigQueryConfig {
   /** Default cache behavior is enabled. */
   private[this] val CacheEnabledDefault: Boolean = true
 
-  val Scopes: java.util.List[String] = List(BigqueryScopes.BIGQUERY).asJava
+  private[this] val DefaultScopes = List(BigqueryScopes.BIGQUERY)
+
+  private[this] val DefaultLocation = "US"
+
+  def location: String = DefaultLocation
+
+  def scopes: Seq[String] = DefaultScopes
 
   def isCacheEnabled: Boolean =
     BigQuerySysProps.CacheEnabled.valueOption

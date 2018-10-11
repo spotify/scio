@@ -15,12 +15,12 @@
  * under the License.
  */
 
-package com.spotify.scio.bigquery
+package com.spotify.scio.bigquery.client
 
 import java.io.IOException
 
 import com.google.api.services.bigquery.model.Job
-import com.spotify.scio.bigquery.BigQueryClient.Context
+import com.spotify.scio.bigquery.client.BigQuery.Client
 import org.apache.commons.io.FileUtils
 import org.joda.time.Period
 import org.joda.time.format.PeriodFormatterBuilder
@@ -28,11 +28,11 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 
-private[scio] object JobService {
+private[client] object JobOps {
 
   private val Logger = LoggerFactory.getLogger(this.getClass)
 
-  private[bigquery] val PeriodFormatter = new PeriodFormatterBuilder()
+  private val PeriodFormatter = new PeriodFormatterBuilder()
     .appendHours()
     .appendSuffix("h")
     .appendMinutes()
@@ -42,10 +42,8 @@ private[scio] object JobService {
     .toFormatter
 
   private def logJobStatistics(bqJob: BigQueryJob, job: Job): Unit = {
-
-    val jobId = job.getJobReference.getJobId
     val stats = job.getStatistics
-    Logger.info(s"${bqJob.jobType} completed: jobId: $jobId")
+    Logger.info(s"${bqJob.show} completed")
 
     bqJob match {
       case _: ExtractJob =>
@@ -77,8 +75,8 @@ private[scio] object JobService {
 
 }
 
-private[scio] final case class JobService private (private val ctx: Context) {
-  import JobService._
+private[client] final class JobOps(client: Client) {
+  import JobOps._
 
   /** Wait for all jobs to finish. */
   def waitForJobs(jobs: BigQueryJob*): Unit = {
@@ -95,10 +93,10 @@ private[scio] final case class JobService private (private val ctx: Context) {
         case (bqJob, jobReference) =>
           val jobId = jobReference.getJobId
           try {
-            val poll = ctx.client.jobs().get(ctx.project, jobId).execute()
+            val poll = client.underlying.jobs().get(client.project, jobId).execute()
             val error = poll.getStatus.getErrorResult
             if (error != null) {
-              throw new RuntimeException(s"${bqJob.jobType} Job failed: id: $jobId, error: $error")
+              throw new RuntimeException(s"${bqJob.show} failed with error: $error")
             }
             if (poll.getStatus.getState == "DONE") {
               logJobStatistics(bqJob, poll)

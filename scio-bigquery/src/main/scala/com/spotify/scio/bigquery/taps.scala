@@ -19,6 +19,7 @@ package com.spotify.scio.bigquery
 
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.ScioContext
+import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{FileStorage, Tap, Taps}
 import com.spotify.scio.values.SCollection
@@ -38,7 +39,7 @@ final case class TableRowJsonTap(path: String) extends Tap[TableRow] {
 /** Tap for BigQuery tables. */
 final case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
   override def value: Iterator[TableRow] =
-    BigQueryClient.defaultInstance().tables.rows(table)
+    BigQuery.defaultInstance().tables.rows(table)
   override def open(sc: ScioContext): SCollection[TableRow] =
     sc.bigQueryTable(table)
 }
@@ -49,7 +50,7 @@ final case class BigQueryTaps(self: Taps) {
   import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
   import self.mkTap
 
-  private lazy val bqc = BigQueryClient.defaultInstance()
+  private lazy val bqc = BigQuery.defaultInstance()
 
   /** Get a `Future[Tap[TableRow]]` for BigQuery SELECT query. */
   def bigQuerySelect(sqlQuery: String, flattenResults: Boolean = false): Future[Tap[TableRow]] =

@@ -15,11 +15,12 @@
  * under the License.
  */
 
-package com.spotify.scio.bigquery
+package com.spotify.scio.bigquery.client
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model._
-import com.spotify.scio.bigquery.BigQueryClient.Context
+import com.spotify.scio.bigquery.client.BigQuery.Client
+import com.spotify.scio.bigquery.{BigQueryUtil, TableRow}
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
 import org.slf4j.LoggerFactory
 
@@ -28,7 +29,7 @@ import scala.collection.mutable.{Map => MMap}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
-private[scio] object QueryService {
+private[client] object QueryOps {
   private val Logger = LoggerFactory.getLogger(this.getClass)
 
   private def isInteractive =
@@ -47,17 +48,15 @@ private[scio] object QueryService {
   private val Priority = if (isInteractive) "INTERACTIVE" else "BATCH"
 }
 
-private[scio] final case class QueryService private (private val ctx: Context,
-                                                     private val tableService: TableService,
-                                                     private val jobService: JobService) {
-  import QueryService._
+private[client] final class QueryOps(client: Client, tableService: TableOps, jobService: JobOps) {
+  import QueryOps._
 
   /** Get schema for a query without executing it. */
   def schema(sqlQuery: String): TableSchema = {
     if (isLegacySql(sqlQuery, flattenResults = false)) {
       // Dry-run not supported for legacy query, using view as a work around
       Logger.info("Getting legacy query schema with view")
-      val location = extractLocation(sqlQuery).getOrElse(TableService.DefaultLocation)
+      val location = extractLocation(sqlQuery).getOrElse(BigQueryConfig.location)
       tableService.prepareStagingDataset(location)
       val temp = tableService.createTemporary(location)
 
@@ -65,7 +64,7 @@ private[scio] final case class QueryService private (private val ctx: Context,
       Logger.info(s"Creating temporary view ${bq.BigQueryHelpers.toTableSpec(temp)}")
       val view = new ViewDefinition().setQuery(sqlQuery)
       val viewTable = new Table().setView(view).setTableReference(temp)
-      val schema = ctx.client
+      val schema = client.underlying
         .tables()
         .insert(temp.getProjectId, temp.getDatasetId, viewTable)
         .execute()
@@ -73,7 +72,10 @@ private[scio] final case class QueryService private (private val ctx: Context,
 
       // Delete temporary table
       Logger.info(s"Deleting temporary view ${bq.BigQueryHelpers.toTableSpec(temp)}")
-      ctx.client.tables().delete(temp.getProjectId, temp.getDatasetId, temp.getTableId).execute()
+      client.underlying
+        .tables()
+        .delete(temp.getProjectId, temp.getDatasetId, temp.getTableId)
+        .execute()
 
       schema
     } else {
@@ -103,7 +105,7 @@ private[scio] final case class QueryService private (private val ctx: Context,
       Logger.info(s"BigQuery caching is disabled")
       val tempTable = tableService.createTemporary(
         extractLocation(sqlQuery)
-          .getOrElse(TableService.DefaultLocation))
+          .getOrElse(BigQueryConfig.location))
       delayedQueryJob(sqlQuery, tempTable, flattenResults)
     }
   }
@@ -122,7 +124,7 @@ private[scio] final case class QueryService private (private val ctx: Context,
         Logger.info(s"Cache invalid for query: `$sqlQuery`")
         val newTemp = tableService.createTemporary(
           extractLocation(sqlQuery)
-            .getOrElse(TableService.DefaultLocation))
+            .getOrElse(BigQueryConfig.location))
         Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(newTemp)}")
         Cache.setCacheDestinationTable(sqlQuery, newTemp)
         delayedQueryJob(sqlQuery, newTemp, flattenResults)
@@ -132,7 +134,7 @@ private[scio] final case class QueryService private (private val ctx: Context,
       case NonFatal(_) =>
         val temp = tableService.createTemporary(
           extractLocation(sqlQuery)
-            .getOrElse(TableService.DefaultLocation))
+            .getOrElse(BigQueryConfig.location))
         Logger.info(s"Cache miss for query: `$sqlQuery`")
         Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
         Cache.setCacheDestinationTable(sqlQuery, temp)
@@ -144,7 +146,7 @@ private[scio] final case class QueryService private (private val ctx: Context,
                               destinationTable: TableReference,
                               flattenResults: Boolean): QueryJob = {
     val jobReference = {
-      val location = extractLocation(sqlQuery).getOrElse(TableService.DefaultLocation)
+      val location = extractLocation(sqlQuery).getOrElse(BigQueryConfig.location)
       tableService.prepareStagingDataset(location)
       val isLegacy = isLegacySql(sqlQuery, flattenResults)
       if (isLegacy) {
@@ -194,10 +196,10 @@ private[scio] final case class QueryService private (private val ctx: Context,
         queryConfig.setAllowLargeResults(true).setDestinationTable(destinationTable)
       }
       val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(dryRun)
-      val fullJobId = BigQueryUtil.generateJobId(ctx.project)
-      val jobReference = new JobReference().setProjectId(ctx.project).setJobId(fullJobId)
+      val fullJobId = BigQueryUtil.generateJobId(client.project)
+      val jobReference = new JobReference().setProjectId(client.project).setJobId(fullJobId)
       val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
-      ctx.client.jobs().insert(ctx.project, job).execute()
+      client.underlying.jobs().insert(client.project, job).execute()
     }
 
     if (dryRun) {
@@ -259,8 +261,8 @@ private[scio] final case class QueryService private (private val ctx: Context,
       .map(t => (t.getProjectId, t.getDatasetId))
       .map {
         case (pId, dId) =>
-          val l = ctx.client.datasets().get(pId, dId).execute().getLocation
-          if (l != null) l else TableService.DefaultLocation
+          val l = client.underlying.datasets().get(pId, dId).execute().getLocation
+          if (l != null) l else BigQueryConfig.location
       }
     require(locations.size <= 1, "Tables in the query must be in the same location")
     locations.headOption

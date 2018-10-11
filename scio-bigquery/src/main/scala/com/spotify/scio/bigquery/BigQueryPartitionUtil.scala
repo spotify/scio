@@ -21,6 +21,7 @@ import java.util.regex.Pattern
 
 import com.google.api.services.bigquery.model.TableReference
 import com.google.common.primitives.Longs
+import com.spotify.scio.bigquery.client.BigQuery
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 
 private[bigquery] object BigQueryPartitionUtil {
@@ -54,7 +55,7 @@ private[bigquery] object BigQueryPartitionUtil {
     b.result()
   }
 
-  private def getPartitions(bq: BigQueryClient, tableRef: TableReference): Set[String] = {
+  private def getPartitions(bq: BigQuery, tableRef: TableReference): Set[String] = {
     val prefix = tableRef.getTableId.split('$')(0)
     bq.tables
       .tableReferences(tableRef.getProjectId, tableRef.getDatasetId)
@@ -66,7 +67,7 @@ private[bigquery] object BigQueryPartitionUtil {
       .filter(e => Longs.tryParse(e) != null)
   }
 
-  def latestQuery(bq: BigQueryClient, sqlQuery: String): String = {
+  def latestQuery(bq: BigQuery, sqlQuery: String): String = {
     val tables =
       extractTables(sqlQuery).filter(_._2.getTableId.endsWith("$LATEST"))
     if (tables.isEmpty) {
@@ -85,7 +86,7 @@ private[bigquery] object BigQueryPartitionUtil {
     }
   }
 
-  def latestTable(bq: BigQueryClient, tableSpec: String): String = {
+  def latestTable(bq: BigQuery, tableSpec: String): String = {
     val ref = BigQueryHelpers.parseTableSpec(tableSpec)
     if (ref.getTableId.endsWith("$LATEST")) {
       val partitions = getPartitions(bq, ref)

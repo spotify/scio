@@ -15,10 +15,11 @@
  * under the License.
  */
 
-package com.spotify.scio.bigquery
+package com.spotify.scio.bigquery.client
 
 import com.google.api.services.bigquery.model._
-import com.spotify.scio.bigquery.BigQueryClient.Context
+import com.spotify.scio.bigquery.client.BigQuery.Client
+import com.spotify.scio.bigquery.{BigQueryUtil, CREATE_IF_NEEDED, WRITE_APPEND}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
 import org.slf4j.LoggerFactory
@@ -26,14 +27,13 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-private[scio] object LoadService {
+private[client] object LoadOps {
   private val Logger = LoggerFactory.getLogger(this.getClass)
 }
 
 // scalastyle:off parameter.number
-private[scio] final case class LoadService private (private val ctx: Context,
-                                                    private val jobService: JobService) {
-  import LoadService._
+private[client] final class LoadOps(client: Client, jobService: JobOps) {
+  import LoadOps._
 
   def csv(sources: List[String],
           destinationTable: String,
@@ -48,8 +48,7 @@ private[scio] final case class LoadService private (private val ctx: Context,
           skipLeadingRows: Int = 0,
           fieldDelimiter: Option[String] = None,
           ignoreUnknownValues: Boolean = false,
-          encoding: Option[String] = None): Try[TableReference] = {
-
+          encoding: Option[String] = None): Try[TableReference] =
     execute(
       sources = sources,
       sourceFormat = "CSV",
@@ -67,7 +66,6 @@ private[scio] final case class LoadService private (private val ctx: Context,
       ignoreUnknownValues = Some(ignoreUnknownValues),
       encoding = encoding
     )
-  }
 
   def json(sources: List[String],
            destinationTable: String,
@@ -77,8 +75,7 @@ private[scio] final case class LoadService private (private val ctx: Context,
            autodetect: Boolean = false,
            maxBadRecords: Int = 0,
            ignoreUnknownValues: Boolean = false,
-           encoding: Option[String] = None): Try[TableReference] = {
-
+           encoding: Option[String] = None): Try[TableReference] =
     execute(
       sources = sources,
       sourceFormat = "NEWLINE_DELIMITED_JSON",
@@ -91,7 +88,6 @@ private[scio] final case class LoadService private (private val ctx: Context,
       ignoreUnknownValues = Some(ignoreUnknownValues),
       encoding = encoding
     )
-  }
 
   def avro(sources: List[String],
            destinationTable: String,
@@ -99,8 +95,7 @@ private[scio] final case class LoadService private (private val ctx: Context,
            writeDisposition: WriteDisposition = WRITE_APPEND,
            schema: Option[TableSchema] = None,
            maxBadRecords: Int = 0,
-           encoding: Option[String] = None): Try[TableReference] = {
-
+           encoding: Option[String] = None): Try[TableReference] =
     execute(
       sources = sources,
       sourceFormat = "AVRO",
@@ -111,7 +106,6 @@ private[scio] final case class LoadService private (private val ctx: Context,
       maxBadRecords = maxBadRecords,
       encoding = encoding
     )
-  }
 
   // scalastyle:off method.length
   private def execute(sources: List[String],
@@ -153,13 +147,13 @@ private[scio] final case class LoadService private (private val ctx: Context,
     val jobConfig = new JobConfiguration()
       .setLoad(jobConfigLoad)
 
-    val fullJobId = BigQueryUtil.generateJobId(ctx.project)
-    val jobReference = new JobReference().setProjectId(ctx.project).setJobId(fullJobId)
+    val fullJobId = BigQueryUtil.generateJobId(client.project)
+    val jobReference = new JobReference().setProjectId(client.project).setJobId(fullJobId)
     val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
 
     Logger.info(s"Loading data into $destinationTable from ${sources.mkString(", ")}")
 
-    ctx.client.jobs().insert(ctx.project, job).execute()
+    client.underlying.jobs().insert(client.project, job).execute()
 
     val loadJob = LoadJob(sources, Some(jobReference), tableRef)
 

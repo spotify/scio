@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.bigquery
+package com.spotify.scio.bigquery.client
 
 import java.io.{File, FileInputStream}
 
@@ -28,32 +28,27 @@ import com.google.auth.Credentials
 import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.hadoop.util.ChainingHttpRequestInitializer
-import com.spotify.scio.bigquery.BigQueryClient.Context
+import com.spotify.scio.bigquery.client.BigQuery.Client
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
+import com.spotify.scio.bigquery.{BigQuerySysProps, BigQueryType, CREATE_IF_NEEDED, WRITE_EMPTY}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 
+import scala.collection.JavaConverters._
 import scala.reflect.runtime.universe._
+import scala.util._
 
 /** A simple BigQuery client. */
-class BigQueryClient private (private val ctx: Context) {
+final class BigQuery private (client: Client) {
   private[scio] def isCacheEnabled: Boolean = BigQueryConfig.isCacheEnabled
 
-  val jobs: JobService = JobService(ctx)
-
-  /** Tables services */
-  val tables: TableService = TableService(ctx)
-
-  /** Extract operations */
-  val extract: ExtractService = ExtractService(ctx, jobs)
-
-  /** Load operations */
-  val load: LoadService = LoadService(ctx, jobs)
-
-  /** Query operations */
-  val query: QueryService = QueryService(ctx, tables, jobs)
+  val jobs: JobOps = new JobOps(client)
+  val tables: TableOps = new TableOps(client)
+  val extract: ExtractOps = new ExtractOps(client, jobs)
+  val load: LoadOps = new LoadOps(client, jobs)
+  val query: QueryOps = new QueryOps(client, tables, jobs)
 
   // =======================================================================
   // Type safe API
@@ -95,13 +90,9 @@ class BigQueryClient private (private val ctx: Context) {
       }
     } else {
       // newSource can be either table or query
-      val table = scala.util.Try(BigQueryHelpers.parseTableSpec(newSource)).toOption
-
-      if (table.isDefined) {
-        tables.rows(table.get)
-      } else {
-        query.rows(newSource)
-      }
+      Try(BigQueryHelpers.parseTableSpec(newSource)).toOption
+        .map(tables.rows)
+        .getOrElse(query.rows(newSource))
     }
     rows.map(bqt.fromTableRow)
   }
@@ -153,18 +144,17 @@ class BigQueryClient private (private val ctx: Context) {
   def waitForJobs(bqJobs: BigQueryJob*): Unit = jobs.waitForJobs(bqJobs: _*)
 }
 
-/** Companion object for [[BigQueryClient]]. */
-object BigQueryClient {
+/** Companion object for [[BigQuery]]. */
+object BigQuery {
 
-  private lazy val instance: BigQueryClient =
-    BigQuerySysProps.Project.valueOption.map(BigQueryClient(_)).getOrElse {
-      val project = new DefaultProjectFactory().create(null)
-      if (project != null) {
-        BigQueryClient(project)
-      } else {
-        val flag = BigQuerySysProps.Project.flag
-        throw new RuntimeException(s"Property $flag not set. Use -D$flag=<BILLING_PROJECT>")
-      }
+  private lazy val instance: BigQuery =
+    BigQuerySysProps.Project.valueOption.map(BigQuery(_)).getOrElse {
+      Option(new DefaultProjectFactory().create(null))
+        .map(BigQuery(_))
+        .getOrElse {
+          val flag = BigQuerySysProps.Project.flag
+          throw new RuntimeException(s"Property $flag not set. Use -D$flag=<BILLING_PROJECT>")
+        }
     }
 
   /**
@@ -183,37 +173,37 @@ object BigQueryClient {
    * sbt -Dbigquery.project=my-project -Dbigquery.secret=/path/to/secret.json
    * }}}
    */
-  def defaultInstance(): BigQueryClient = instance
+  def defaultInstance(): BigQuery = instance
 
   /** Create a new BigQueryClient instance with the given project. */
-  def apply(project: String): BigQueryClient =
+  def apply(project: String): BigQuery =
     BigQuerySysProps.Secret.valueOption
       .map { secret =>
-        BigQueryClient(project, new File(secret))
+        BigQuery(project, new File(secret))
       }
       .getOrElse {
-        BigQueryClient(project,
-                       GoogleCredentials.getApplicationDefault.createScoped(BigQueryConfig.Scopes))
+        BigQuery(project,
+                 GoogleCredentials.getApplicationDefault.createScoped(BigQueryConfig.scopes.asJava))
       }
 
   /** Create a new BigQueryClient instance with the given project and secret file. */
-  def apply(project: String, secretFile: File): BigQueryClient =
-    BigQueryClient(project,
-                   GoogleCredentials
-                     .fromStream(new FileInputStream(secretFile))
-                     .createScoped(BigQueryConfig.Scopes))
+  def apply(project: String, secretFile: File): BigQuery =
+    BigQuery(project,
+             GoogleCredentials
+               .fromStream(new FileInputStream(secretFile))
+               .createScoped(BigQueryConfig.scopes.asJava))
 
   /** Create a new BigQueryClient instance with the given project and credential. */
-  def apply(project: String, credentials: => Credentials): BigQueryClient =
-    new BigQueryClient(new Context(project, credentials))
+  def apply(project: String, credentials: => Credentials): BigQuery =
+    new BigQuery(new Client(project, credentials))
 
-  private[scio] final class Context(val project: String, _credentials: => Credentials) {
+  private[client] final class Client(val project: String, _credentials: => Credentials) {
     require(project != null && project.nonEmpty,
             "Invalid projectId. It should be a non-empty string")
 
     def credentials: Credentials = _credentials
 
-    lazy val client: Bigquery = {
+    lazy val underlying: Bigquery = {
       val requestInitializer = new ChainingHttpRequestInitializer(
         new HttpCredentialsAdapter(credentials),
         new HttpRequestInitializer {

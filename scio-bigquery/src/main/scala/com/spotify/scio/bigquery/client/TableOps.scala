@@ -15,12 +15,13 @@
  * under the License.
  */
 
-package com.spotify.scio.bigquery
+package com.spotify.scio.bigquery.client
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model._
 import com.google.cloud.hadoop.util.ApiErrorExtractor
-import com.spotify.scio.bigquery.BigQueryClient.Context
+import com.spotify.scio.bigquery.client.BigQuery.Client
+import com.spotify.scio.bigquery.{CREATE_IF_NEEDED, TableRow, WRITE_EMPTY}
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryOptions
@@ -34,21 +35,18 @@ import scala.collection.JavaConverters._
 import scala.util.Random
 import scala.util.control.NonFatal
 
-private[scio] object TableService {
+private[client] object TableOps {
   private val Logger = LoggerFactory.getLogger(this.getClass)
 
-  private[bigquery] val TablePrefix = "scio_query"
-  private[bigquery] val TimeFormatter = DateTimeFormat.forPattern("yyyyMMddHHmmss")
-
-  private[bigquery] val StagingDatasetPrefix = "scio_bigquery_staging_"
-  private[bigquery] val StagingDatasetTableExpirationMs = 86400000L
-  private[bigquery] val StagingDatasetDescription = "Staging dataset for temporary tables"
-
-  private[bigquery] val DefaultLocation = "US"
+  private val TablePrefix = "scio_query"
+  private val TimeFormatter = DateTimeFormat.forPattern("yyyyMMddHHmmss")
+  private val StagingDatasetPrefix = "scio_bigquery_staging_"
+  private val StagingDatasetTableExpirationMs = 86400000L
+  private val StagingDatasetDescription = "Staging dataset for temporary tables"
 }
 
-private[scio] final case class TableService private (private val ctx: Context) {
-  import TableService._
+private[client] final class TableOps(client: Client) {
+  import TableOps._
 
   /** Get rows from a table. */
   def rows(tableSpec: String): Iterator[TableRow] =
@@ -57,7 +55,7 @@ private[scio] final case class TableService private (private val ctx: Context) {
   /** Get rows from a table. */
   def rows(table: TableReference): Iterator[TableRow] =
     new Iterator[TableRow] {
-      private val iterator = bq.PatchedBigQueryTableRowIterator.fromTable(table, ctx.client)
+      private val iterator = bq.PatchedBigQueryTableRowIterator.fromTable(table, client.underlying)
       private var _isOpen = false
       private var _hasNext = false
 
@@ -98,14 +96,14 @@ private[scio] final case class TableService private (private val ctx: Context) {
 
   /** Get table metadata. */
   def table(tableRef: TableReference): Table = {
-    val p = Option(tableRef.getProjectId).getOrElse(ctx.project)
-    ctx.client.tables().get(p, tableRef.getDatasetId, tableRef.getTableId).execute()
+    val p = Option(tableRef.getProjectId).getOrElse(client.project)
+    client.underlying.tables().get(p, tableRef.getDatasetId, tableRef.getTableId).execute()
   }
 
   /** Get list of tables in a dataset. */
   def tableReferences(projectId: String, datasetId: String): Seq[TableReference] = {
     val b = Seq.newBuilder[TableReference]
-    val req = ctx.client.tables().list(projectId, datasetId)
+    val req = client.underlying.tables().list(projectId, datasetId)
     var rep = req.execute()
     Option(rep.getTables).foreach(_.asScala.foreach(b += _.getTableReference))
     while (rep.getNextPageToken != null) {
@@ -120,8 +118,8 @@ private[scio] final case class TableService private (private val ctx: Context) {
     val options = PipelineOptionsFactory
       .create()
       .as(classOf[BigQueryOptions])
-    options.setProject(ctx.project)
-    options.setGcpCredential(ctx.credentials)
+    options.setProject(client.project)
+    options.setGcpCredential(client.credentials)
     try {
       val service = new bq.BigQueryServicesWrapper(options)
       service.createTable(table)
@@ -168,8 +166,8 @@ private[scio] final case class TableService private (private val ctx: Context) {
     val options = PipelineOptionsFactory
       .create()
       .as(classOf[BigQueryOptions])
-    options.setProject(ctx.project)
-    options.setGcpCredential(ctx.credentials)
+    options.setProject(client.project)
+    options.setGcpCredential(client.credentials)
     try {
       val service = new bq.BigQueryServicesWrapper(options)
       if (createDisposition == CREATE_IF_NEEDED) {
@@ -196,7 +194,7 @@ private[scio] final case class TableService private (private val ctx: Context) {
 
   /** Delete table */
   private[bigquery] def delete(table: TableReference): Unit =
-    ctx.client
+    client.underlying
       .tables()
       .delete(table.getProjectId, table.getDatasetId, table.getTableId)
       .execute()
@@ -205,20 +203,20 @@ private[scio] final case class TableService private (private val ctx: Context) {
   private[bigquery] def prepareStagingDataset(location: String): Unit = {
     val datasetId = StagingDatasetPrefix + location.toLowerCase
     try {
-      ctx.client.datasets().get(ctx.project, datasetId).execute()
-      Logger.info(s"Staging dataset ${ctx.project}:$datasetId already exists")
+      client.underlying.datasets().get(client.project, datasetId).execute()
+      Logger.info(s"Staging dataset ${client.project}:$datasetId already exists")
     } catch {
       case e: GoogleJsonResponseException if ApiErrorExtractor.INSTANCE.itemNotFound(e) =>
-        Logger.info(s"Creating staging dataset ${ctx.project}:$datasetId")
-        val dsRef = new DatasetReference().setProjectId(ctx.project).setDatasetId(datasetId)
+        Logger.info(s"Creating staging dataset ${client.project}:$datasetId")
+        val dsRef = new DatasetReference().setProjectId(client.project).setDatasetId(datasetId)
         val ds = new Dataset()
           .setDatasetReference(dsRef)
           .setDefaultTableExpirationMs(StagingDatasetTableExpirationMs)
           .setDescription(StagingDatasetDescription)
           .setLocation(location)
-        ctx.client
+        client.underlying
           .datasets()
-          .insert(ctx.project, ds)
+          .insert(client.project, ds)
           .execute()
       case NonFatal(e) => throw e
     }
@@ -229,7 +227,7 @@ private[scio] final case class TableService private (private val ctx: Context) {
     val now = Instant.now().toString(TimeFormatter)
     val tableId = TablePrefix + "_" + now + "_" + Random.nextInt(Int.MaxValue)
     new TableReference()
-      .setProjectId(ctx.project)
+      .setProjectId(client.project)
       .setDatasetId(StagingDatasetPrefix + location.toLowerCase)
       .setTableId(tableId)
   }

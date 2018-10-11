@@ -19,6 +19,7 @@ package com.spotify.scio.bigquery
 
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.spotify.scio.ScioContext
+import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.{Coder, KryoAtomicCoder, KryoOptions}
 import com.spotify.scio.io.{ScioIO, Tap, TestIO}
@@ -37,9 +38,9 @@ import scala.reflect.runtime.universe._
 
 private object Reads {
   @inline private def client(sc: ScioContext) =
-    sc.cached[BigQueryClient] {
+    sc.cached[BigQuery] {
       val o = sc.optionsAs[GcpOptions]
-      BigQueryClient(o.getProject, o.getGcpCredential)
+      BigQuery(o.getProject, o.getGcpCredential)
     }
 
   private[scio] def bqReadQuery[T: ClassTag](sc: ScioContext)(
@@ -107,7 +108,7 @@ final case class BigQuerySelect(sqlQuery: String) extends BigQueryIO[TableRow] {
   override type ReadP = BigQuerySelect.ReadParam
   override type WriteP = Nothing // ReadOnly
 
-  private lazy val bqc = BigQueryClient.defaultInstance()
+  private lazy val bqc = BigQuery.defaultInstance()
 
   override def testId: String = s"BigQueryIO($sqlQuery)"
 
