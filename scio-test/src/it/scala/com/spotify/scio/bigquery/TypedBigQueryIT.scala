@@ -67,7 +67,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
   private val options = PipelineOptionsFactory
     .fromArgs(
       "--project=data-integration-test",
-      "--tempLocation=gs://data-integration-test-us/temp")
+      "--tempLocation=gs://data-integration-test-eu/temp")
     .create()
 
   "TypedBigQuery" should "work" in {

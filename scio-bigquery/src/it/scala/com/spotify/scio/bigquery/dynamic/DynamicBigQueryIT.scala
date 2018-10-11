@@ -51,7 +51,7 @@ class DynamicBigQueryIT extends FlatSpec with Matchers {
   private val options = PipelineOptionsFactory
     .fromArgs(
       s"--project=$projectId",
-      "--tempLocation=gs://data-integration-test-us/temp")
+      "--tempLocation=gs://data-integration-test-eu/temp")
     .create()
 
   "Dynamic BigQuery" should "support typed output" in {
