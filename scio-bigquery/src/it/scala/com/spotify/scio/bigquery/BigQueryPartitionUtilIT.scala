@@ -109,7 +109,7 @@ class BigQueryPartitionUtilIT extends FlatSpec with Matchers {
   }
 
   it should "work without $LATEST" in {
-    val input = "data-integration-test:samples_us.shakespeare"
+    val input = "data-integration-test:samples_eu.shakespeare"
     BigQueryPartitionUtil.latestTable(bq, input) shouldBe input
   }
 
