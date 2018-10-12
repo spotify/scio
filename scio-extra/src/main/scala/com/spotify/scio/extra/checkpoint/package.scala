@@ -20,7 +20,7 @@ package com.spotify.scio.extra
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
-import com.spotify.scio.io.{FileStorage, ObjectFileIO}
+import com.spotify.scio.io.FileStorage
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection

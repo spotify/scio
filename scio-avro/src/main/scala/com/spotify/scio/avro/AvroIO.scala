@@ -15,28 +15,27 @@
  * under the License.
  */
 
-package com.spotify.scio.io
+package com.spotify.scio.avro
 
 import com.google.protobuf.Message
-import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.{io => beam}
-import org.apache.avro.generic.GenericRecord
+import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
+import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
+import com.spotify.scio.io._
+import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.values._
+import com.spotify.scio.{avro, ScioContext}
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
+import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
-import com.spotify.scio.ScioContext
-import com.spotify.scio.values._
-import com.spotify.scio.coders.AvroBytesUtil
-import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.avro.types.AvroType
-import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
+import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
+import org.apache.beam.sdk.{io => beam}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
-import scala.reflect.{classTag, ClassTag}
 import scala.reflect.runtime.universe._
+import scala.reflect.{classTag, ClassTag}
 
 final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
   override type ReadP = Unit
@@ -197,7 +196,7 @@ object AvroTyped {
       extends ScioIO[T] {
 
     override type ReadP = Unit
-    override type WriteP = com.spotify.scio.io.AvroIO.WriteParam
+    override type WriteP = avro.AvroIO.WriteParam
 
     private def typedAvroOut[U](sc: SCollection[T],
                                 write: beam.AvroIO.TypedWrite[U, Void, GenericRecord],

@@ -19,9 +19,9 @@ package com.spotify.scio.avro
 
 import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.io._
 import com.spotify.scio.values._
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.io.Tap
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 
@@ -63,7 +63,7 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
     ev: T <:< HasAvroAnnotation,
     coder: Coder[T]): Future[Tap[T]] = {
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
-    self.write(com.spotify.scio.io.AvroTyped.AvroIO[T](path))(param)
+    self.write(AvroTyped.AvroIO[T](path))(param)
   }
   // scalastyle:on parameter.number
 
