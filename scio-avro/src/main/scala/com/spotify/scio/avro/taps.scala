@@ -15,19 +15,17 @@
  * under the License.
  */
 
-package com.spotify.scio.io
+package com.spotify.scio.avro
 
+import com.google.protobuf.Message
+import com.spotify.scio._
+import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
+import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
+import com.spotify.scio.io.{FileStorage, Tap, Taps}
+import com.spotify.scio.values._
+import com.twitter.chill.Externalizer
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
-import com.google.protobuf.Message
-import com.twitter.chill.Externalizer
-import com.spotify.scio._
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.avro._
-import com.spotify.scio.values._
-import com.spotify.scio.avro.types.AvroType
-import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.coders.AvroBytesUtil
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -62,19 +60,17 @@ case class ObjectFileTap[T: Coder](path: String) extends Tap[T] {
 
 final case class AvroTaps(self: Taps) {
 
-  import self.{isPathDone, mkTap}
-
   /** Get a `Future[Tap[T]]` of a Protobuf file. */
   def protobufFile[T: ClassTag: Coder](path: String)(implicit ev: T <:< Message): Future[Tap[T]] =
-    mkTap(s"Protobuf: $path", () => isPathDone(path), () => ObjectFileTap[T](path))
+    self.mkTap(s"Protobuf: $path", () => self.isPathDone(path), () => ObjectFileTap[T](path))
 
   /** Get a `Future[Tap[T]]` of an object file. */
   def objectFile[T: ClassTag: Coder](path: String): Future[Tap[T]] =
-    mkTap(s"Object file: $path", () => isPathDone(path), () => ObjectFileTap[T](path))
+    self.mkTap(s"Object file: $path", () => self.isPathDone(path), () => ObjectFileTap[T](path))
 
   /** Get a `Future[Tap[T]]` for an Avro file. */
   def avroFile[T: ClassTag: Coder](path: String, schema: Schema = null): Future[Tap[T]] =
-    mkTap(s"Avro: $path", () => isPathDone(path), () => AvroTap[T](path, schema))
+    self.mkTap(s"Avro: $path", () => self.isPathDone(path), () => AvroTap[T](path, schema))
 
   /** Get a `Future[Tap[T]]` for typed Avro source. */
   def typedAvroFile[T <: HasAvroAnnotation: TypeTag: ClassTag: Coder](

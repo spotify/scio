@@ -22,7 +22,6 @@ import org.apache.avro.Schema
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.io._
 import com.spotify.scio.values._
 
 import scala.reflect.ClassTag
@@ -58,7 +57,7 @@ final class AvroScioContext(@transient val self: ScioContext) extends Serializab
    */
   def typedAvroFile[T <: HasAvroAnnotation: ClassTag: TypeTag: Coder](
     path: String): SCollection[T] =
-    self.read(com.spotify.scio.io.AvroTyped.AvroIO[T](path))
+    self.read(AvroTyped.AvroIO[T](path))
 
   /**
    * Get an SCollection for a Protobuf file.
