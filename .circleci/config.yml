@@ -11,11 +11,11 @@ common_settings: &common_settings
 
 restore_cache_settings: &restore_cache_settings
   keys:
-    - scio-{{ .Environment.CIRCLE_JOB }}-{{ .Branch }}-{{ checksum "build.sbt" }}
-    - scio-{{ .Environment.CIRCLE_JOB }}-
+    - v2-scio-{{ .Environment.CIRCLE_JOB }}-{{ .Branch }}-{{ checksum "build.sbt" }}
+    - v2-scio-{{ .Environment.CIRCLE_JOB }}-
 
 save_cache_settings: &save_cache_settings
-  key: scio-{{ .Environment.CIRCLE_JOB }}-{{ .Branch }}-{{ checksum "build.sbt" }}
+  key: v2-scio-{{ .Environment.CIRCLE_JOB }}-{{ .Branch }}-{{ checksum "build.sbt" }}
   paths:
     - ~/.ivy2
     - ~/.sbt
