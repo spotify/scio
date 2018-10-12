@@ -86,7 +86,7 @@ final class BigQuery private (client: Client) {
       } else if (bqt.isQuery) {
         query.rows(bqt.query.get)
       } else {
-        throw new IllegalArgumentException(s"Missing table or query field in companion object")
+        throw new IllegalArgumentException("Missing table or query field in companion object")
       }
     } else {
       // newSource can be either table or query
