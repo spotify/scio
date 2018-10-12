@@ -81,7 +81,7 @@ private[scio] object ItUtils {
       new ChainingHttpRequestInitializer(new NullCredentialInitializer(), httpRequestInitializer)
     } else {
       new ChainingHttpRequestInitializer(new HttpCredentialsAdapter(credential),
-        httpRequestInitializer);
+        httpRequestInitializer)
     }
   }
 }

@@ -17,7 +17,7 @@
 
 package com.spotify.scio.bigquery.types
 
-import com.spotify.scio.bigquery.BigQueryClient
+import com.spotify.scio.bigquery.client.BigQuery
 import org.scalatest.{Assertion, FlatSpec, Matchers}
 
 import scala.annotation.StaticAnnotation
@@ -73,7 +73,7 @@ object BigQueryTypeIT {
 
   // run this to re-populate tables used for this test and BigQueryPartitionUtilIT
   def main(args: Array[String]): Unit = {
-    val bq = BigQueryClient.defaultInstance()
+    val bq = BigQuery.defaultInstance()
     val data = List(ToTableT("a", 1), ToTableT("b", 2))
     bq.writeTypedRows("data-integration-test:partition_a.table_20170101", data)
     bq.writeTypedRows("data-integration-test:partition_a.table_20170102", data)
@@ -88,7 +88,7 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
 
   import BigQueryTypeIT._
 
-  val bq = BigQueryClient.defaultInstance()
+  val bq = BigQuery.defaultInstance()
 
   val legacyQuery =
     "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] WHERE word = 'Romeo'"
@@ -127,7 +127,7 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
 
   it should "round trip rows with legacy syntax" in {
     val bqt = BigQueryType[LegacyT]
-    val rows = bq.getQueryRows(legacyQuery).toList
+    val rows = bq.query.rows(legacyQuery).toList
     val typed = Seq(LegacyT("Romeo", 117L))
     rows.map(bqt.fromTableRow) shouldBe typed
     typed.map(bqt.toTableRow).map(bqt.fromTableRow) shouldBe typed
@@ -135,7 +135,7 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
 
   it should "round trip rows with SQL syntax" in {
     val bqt = BigQueryType[SqlT]
-    val rows = bq.getQueryRows(sqlQuery).toList
+    val rows = bq.query.rows(sqlQuery).toList
     val typed = Seq(SqlT(Some("Romeo"), Some(117L)))
     rows.map(bqt.fromTableRow) shouldBe typed
     typed.map(bqt.toTableRow).map(bqt.fromTableRow) shouldBe typed

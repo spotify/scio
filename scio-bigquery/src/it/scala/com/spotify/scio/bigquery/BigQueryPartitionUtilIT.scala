@@ -17,11 +17,12 @@
 
 package com.spotify.scio.bigquery
 
+import com.spotify.scio.bigquery.client.BigQuery
 import org.scalatest._
 
 class BigQueryPartitionUtilIT extends FlatSpec with Matchers {
 
-  val bq = BigQueryClient.defaultInstance()
+  val bq = BigQuery.defaultInstance()
 
   "latestQuery" should "work with legacy syntax" in {
     val input =

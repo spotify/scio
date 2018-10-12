@@ -17,19 +17,20 @@
 
 package com.spotify.scio.bigquery
 
-import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.ScioContext
-import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.io.{ScioIO, Tap, TestIO}
-import com.spotify.scio.values.SCollection
-import com.spotify.scio.coders.{Coder, KryoAtomicCoder, KryoOptions}
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
+import com.spotify.scio.ScioContext
+import com.spotify.scio.bigquery.client.BigQuery
+import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
+import com.spotify.scio.coders.{Coder, KryoAtomicCoder, KryoOptions}
+import com.spotify.scio.io.{ScioIO, Tap, TestIO}
+import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
-import org.apache.beam.sdk.io.gcp.{bigquery => beam}
-import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import org.apache.beam.sdk.transforms.SerializableFunction
+import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
+import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
+import org.apache.beam.sdk.transforms.SerializableFunction
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -37,9 +38,9 @@ import scala.reflect.runtime.universe._
 
 private object Reads {
   @inline private def client(sc: ScioContext) =
-    sc.cached[BigQueryClient] {
+    sc.cached[BigQuery] {
       val o = sc.optionsAs[GcpOptions]
-      BigQueryClient(o.getProject, o.getGcpCredential)
+      BigQuery(o.getProject, o.getGcpCredential)
     }
 
   private[scio] def bqReadQuery[T: ClassTag](sc: ScioContext)(
@@ -49,7 +50,7 @@ private object Reads {
     val bigQueryClient = client(sc)
     import sc.wrap
     if (bigQueryClient.isCacheEnabled) {
-      val queryJob = bigQueryClient.newQueryJob(sqlQuery, flattenResults)
+      val queryJob = bigQueryClient.query.newQueryJob(sqlQuery, flattenResults)
 
       sc.onClose { _ =>
         bigQueryClient.waitForJobs(queryJob)
@@ -63,7 +64,7 @@ private object Reads {
       } else {
         typedRead.fromQuery(sqlQuery)
       }
-      val query = if (bigQueryClient.isLegacySql(sqlQuery, flattenResults)) {
+      val query = if (bigQueryClient.query.isLegacySql(sqlQuery, flattenResults)) {
         baseQuery
       } else {
         baseQuery.usingStandardSql()
@@ -107,7 +108,7 @@ final case class BigQuerySelect(sqlQuery: String) extends BigQueryIO[TableRow] {
   override type ReadP = BigQuerySelect.ReadParam
   override type WriteP = Nothing // ReadOnly
 
-  private lazy val bqc = BigQueryClient.defaultInstance()
+  private lazy val bqc = BigQuery.defaultInstance()
 
   override def testId: String = s"BigQueryIO($sqlQuery)"
 
@@ -118,7 +119,7 @@ final case class BigQuerySelect(sqlQuery: String) extends BigQueryIO[TableRow] {
     throw new IllegalStateException("BigQuerySelect is read-only")
 
   override def tap(params: ReadP): Tap[TableRow] =
-    BigQueryTap(bqc.query(sqlQuery, flattenResults = params.flattenResults))
+    BigQueryTap(bqc.query.run(sqlQuery, flattenResults = params.flattenResults))
 }
 
 object BigQuerySelect {

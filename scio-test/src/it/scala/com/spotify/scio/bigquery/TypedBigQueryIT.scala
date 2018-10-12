@@ -19,6 +19,7 @@ package com.spotify.scio.bigquery
 
 import com.google.protobuf.ByteString
 import com.spotify.scio._
+import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.testing._
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.joda.time.format.DateTimeFormat
@@ -60,7 +61,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
   private val records = Gen.listOfN(1000, recordGen).sample.get
 
   override protected def beforeAll(): Unit = {
-    val bq = BigQueryClient.defaultInstance()
+    val bq = BigQuery.defaultInstance()
     bq.writeTypedRows[Record](table, records)
   }
 

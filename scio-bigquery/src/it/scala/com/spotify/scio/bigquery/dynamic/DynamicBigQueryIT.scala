@@ -22,6 +22,7 @@ import java.util.UUID
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
+import com.spotify.scio.bigquery.client.BigQuery
 import org.apache.beam.sdk.io.gcp.bigquery.TableDestination
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.scalatest._
@@ -46,7 +47,7 @@ class DynamicBigQueryIT extends FlatSpec with Matchers {
 
   import DynamicBigQueryIT._
 
-  private val bq = BigQueryClient.defaultInstance()
+  private val bq = BigQuery.defaultInstance()
 
   private val options = PipelineOptionsFactory
     .fromArgs(

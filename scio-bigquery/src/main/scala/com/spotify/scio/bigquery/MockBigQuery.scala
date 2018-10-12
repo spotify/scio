@@ -20,6 +20,7 @@ package com.spotify.scio.bigquery
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.google.cloud.hadoop.util.ApiErrorExtractor
+import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 
@@ -31,10 +32,10 @@ import scala.reflect.runtime.universe._
 object MockBigQuery {
 
   /** Create a new MockBigQuery instance. */
-  def apply(): MockBigQuery = new MockBigQuery(BigQueryClient.defaultInstance())
+  def apply(): MockBigQuery = new MockBigQuery(BigQuery.defaultInstance())
 
   /** Create a new MockBigQuery instance with the given BigQueryClient. */
-  def apply(bq: BigQueryClient): MockBigQuery = new MockBigQuery(bq)
+  def apply(bq: BigQuery): MockBigQuery = new MockBigQuery(bq)
 
 }
 
@@ -44,7 +45,7 @@ object MockBigQuery {
  * Use [[mockTable(original:String)* mockTable]] to feed data into live BigQuery service and
  * [[queryResult]] to query them.
  */
-class MockBigQuery private (private val bq: BigQueryClient) {
+class MockBigQuery private (private val bq: BigQuery) {
 
   private val mapping = MMap.empty[TableReference, TableReference]
 
@@ -61,8 +62,8 @@ class MockBigQuery private (private val bq: BigQueryClient) {
     require(!mapping.contains(original),
             s"Table ${BigQueryHelpers.toTableSpec(original)} already registered for mocking")
 
-    val t = bq.getTable(original)
-    val temp = bq.temporaryTable(t.getLocation)
+    val t = bq.tables.table(original)
+    val temp = bq.tables.createTemporary(t.getLocation)
     mapping += (original -> temp)
     new MockTable(bq, t.getSchema, original, temp)
   }
@@ -72,15 +73,15 @@ class MockBigQuery private (private val bq: BigQueryClient) {
    * data.
    */
   def queryResult(sqlQuery: String, flattenResults: Boolean = false): Seq[TableRow] = {
-    val isLegacy = bq.isLegacySql(sqlQuery, flattenResults)
+    val isLegacy = bq.query.isLegacySql(sqlQuery, flattenResults)
     val mockQuery = mapping.foldLeft(sqlQuery) {
       case (q, (src, dst)) =>
         q.replace(toTableSpec(src, isLegacy), toTableSpec(dst, isLegacy))
     }
     try {
-      bq.getQueryRows(mockQuery, flattenResults).toList
+      bq.query.rows(mockQuery, flattenResults).toList
     } catch {
-      case e: GoogleJsonResponseException if new ApiErrorExtractor().itemNotFound(e) =>
+      case e: GoogleJsonResponseException if ApiErrorExtractor.INSTANCE.itemNotFound(e) =>
         throw new RuntimeException(
           "404 Not Found, this is most likely caused by missing source table or mock data",
           e)
@@ -110,7 +111,7 @@ class MockBigQuery private (private val bq: BigQueryClient) {
 /**
  * A BigQuery table being mocked for test.
  */
-class MockTable(private val bq: BigQueryClient,
+class MockTable(private val bq: BigQuery,
                 private val schema: TableSchema,
                 private val original: TableReference,
                 private val temp: TableReference) {
@@ -124,7 +125,7 @@ class MockTable(private val bq: BigQueryClient,
   }
 
   private def writeRows(rows: Seq[TableRow]): Unit =
-    bq.writeTableRows(temp, rows.toList, schema, WRITE_EMPTY, CREATE_IF_NEEDED)
+    bq.tables.writeRows(temp, rows.toList, schema, WRITE_EMPTY, CREATE_IF_NEEDED)
 
   /**
    * Populate the table with mock data.
@@ -148,7 +149,7 @@ class MockTable(private val bq: BigQueryClient,
    */
   def withSample(numRows: Int): Unit = {
     ensureUnique()
-    val rows = bq.getTableRows(original).take(numRows).toList
+    val rows = bq.tables.rows(original).take(numRows).toList
     require(rows.length == numRows, s"Sample size ${rows.length} != requested $numRows")
     writeRows(rows)
   }
@@ -159,7 +160,7 @@ class MockTable(private val bq: BigQueryClient,
    */
   def withSample(minNumRows: Int, maxNumRows: Int): Unit = {
     ensureUnique()
-    val rows = bq.getTableRows(original).take(maxNumRows).toList
+    val rows = bq.tables.rows(original).take(maxNumRows).toList
     require(rows.length >= minNumRows && rows.length <= maxNumRows,
             s"Sample size ${rows.length} < requested minimal $minNumRows")
     writeRows(rows)

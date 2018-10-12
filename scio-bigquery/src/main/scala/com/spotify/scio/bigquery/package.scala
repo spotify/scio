@@ -17,14 +17,14 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.values.SCollection
 import com.google.api.services.bigquery.model.{TableReference, TableRow => GTableRow}
+import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 
-import scala.language.implicitConversions
 import scala.collection.JavaConverters._
+import scala.language.implicitConversions
 import scala.util.Try
 
 /**
@@ -38,9 +38,9 @@ import scala.util.Try
  * [[https://cloud.google.com/bigquery/docs/reference/legacy-sql legacy]] and
  * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ standard]].
  * APIs that take a BigQuery query string as argument, e.g.
- * [[com.spotify.scio.bigquery.BigQueryClient.getQueryRows BigQueryClient.getQueryRows]],
- * [[com.spotify.scio.bigquery.BigQueryClient.getQuerySchema BigQueryClient.getQuerySchema]],
- * [[com.spotify.scio.bigquery.BigQueryClient.getTypedRows BigQueryClient.getTypedRows]] and
+ * [[com.spotify.scio.bigquery.client.BigQuery.query.rows]],
+ * [[com.spotify.scio.bigquery.client.BigQuery.query.schema]],
+ * [[com.spotify.scio.bigquery.client.BigQuery.getTypedRows]] and
  * [[com.spotify.scio.bigquery.BigQueryType.fromQuery BigQueryType.fromQuery]], automatically
  * detects the query's dialect. To override this, start the query with either `#legacysql` or
  * `#standardsql` comment line.

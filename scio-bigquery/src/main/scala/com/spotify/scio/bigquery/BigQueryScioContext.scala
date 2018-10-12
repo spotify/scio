@@ -19,9 +19,9 @@ package com.spotify.scio.bigquery
 
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.ScioContext
+import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
-import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._

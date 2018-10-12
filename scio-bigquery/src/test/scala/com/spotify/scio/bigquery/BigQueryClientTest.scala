@@ -17,6 +17,7 @@
 
 package com.spotify.scio.bigquery
 
+import com.spotify.scio.bigquery.client.BigQuery
 import org.scalacheck.Gen
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest._
@@ -25,11 +26,11 @@ class BigQueryClientTest extends FlatSpec with Matchers with GeneratorDrivenProp
 
   "BigQueryClient" should "throw an exception when an empty or null ProjectId is provided" in {
     assertThrows[IllegalArgumentException] {
-      BigQueryClient("")
+      BigQuery("")
     }
 
     assertThrows[IllegalArgumentException] {
-      BigQueryClient(null)
+      BigQuery(null)
     }
   }
 
@@ -37,7 +38,7 @@ class BigQueryClientTest extends FlatSpec with Matchers with GeneratorDrivenProp
     val projectIdGen = Gen.alphaNumStr.suchThat(_.nonEmpty)
 
     forAll(projectIdGen) { projectId =>
-      BigQueryClient(projectId)
+      BigQuery(projectId)
     }
   }
 
