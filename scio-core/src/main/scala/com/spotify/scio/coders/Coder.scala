@@ -40,9 +40,16 @@ Cannot find a Coder instance for type:
   some debugging hints:
     - For Option types, ensure that a Coder instance is in scope for the non-Option version.
     - For List and Seq types, ensure that a Coder instance is in scope for a single element.
+    - For generic methods, you may need to add an implicit parameter
+        def foo[T](coll: SCollection[SomeClass], param: String): SCollection[T]
+      may become:
+        def foo[T](coll: SCollection[SomeClass],
+                   param: String)(implicit c: Coder[T]): SCollection[T]
+      or:
+        def foo[T: Coder](coll: SCollection[SomeClass], param: String): SCollection[T]
     - You can check that an instance exists for Coder in the REPL or in your code:
-        scala> Coder[Foo]
-    And find the missing instance and construct it as needed.
+        scala> com.spotify.scio.coders.Coder[Foo]
+      And find the missing instance and construct it as needed.
 """)
 sealed trait Coder[T] extends Serializable
 final case class Beam[T] private (beam: BCoder[T]) extends Coder[T]
