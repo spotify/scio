@@ -43,7 +43,8 @@ Cannot find a Coder instance for type:
     - For generic methods, you may need to add an implicit parameter
         def foo[T](coll: SCollection[SomeClass], param: String): SCollection[T]
       may become:
-        def foo[T](coll: SCollection[SomeClass], param: String)(implicit c: Coder[T]): SCollection[T]
+        def foo[T](coll: SCollection[SomeClass],
+                   param: String)(implicit c: Coder[T]): SCollection[T]
       or:
         def foo[T: Coder](coll: SCollection[SomeClass], param: String): SCollection[T]
     - You can check that an instance exists for Coder in the REPL or in your code:
