@@ -88,7 +88,7 @@ private[client] final class TableOps(client: Client) {
 
   /** Get schema from a table. */
   def schema(tableRef: TableReference): TableSchema =
-    table(tableRef).getSchema
+    Cache.withCacheKey(bq.BigQueryHelpers.toTableSpec(tableRef))(table(tableRef).getSchema)
 
   /** Get table metadata. */
   def table(tableSpec: String): Table =
