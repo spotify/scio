@@ -208,13 +208,14 @@ class ScioILoop(scioClassLoader: ScioReplClassLoader,
         |import com.spotify.scio.{io => _, _}
         |import com.spotify.scio.avro._
         |import com.spotify.scio.bigquery._
+        |import com.spotify.scio.bigquery.client._
         |import com.spotify.scio.repl._
         |import scala.concurrent.ExecutionContext.Implicits.global
       """.stripMargin)
 
   private def createBigQueryClient(): IR.Result = {
     def create(projectId: String): IR.Result = {
-      val r = intp.interpret(s"""val bq = BigQueryClient("$projectId")""")
+      val r = intp.interpret(s"""val bq = BigQuery("$projectId")""")
       echo(s"BigQuery client available as 'bq'")
       r
     }
