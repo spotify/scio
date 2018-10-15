@@ -31,6 +31,7 @@ import org.apache.beam.sdk.io.gcp.pubsub.{PubsubMessage, PubsubMessageWithAttrib
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.beam.sdk.coders.{Coder => _, _}
+import org.apache.beam.sdk.io.gcp.spanner.ReadOperation
 
 private object VoidCoder extends AtomicCoder[Void] {
   override def encode(value: Void, outStream: OutputStream): Unit = ()
@@ -107,4 +108,8 @@ trait JavaCoders {
 
   implicit def coderJEnum[E <: java.lang.Enum[_]: scala.reflect.ClassTag]: Coder[E] =
     Coder.kryo[E]
+
+  // #1447: Kryo throws a NPE
+  implicit def spannerReadOperationCoder: Coder[ReadOperation] =
+    Coder.beam(bcoders.SerializableCoder.of(classOf[ReadOperation]))
 }

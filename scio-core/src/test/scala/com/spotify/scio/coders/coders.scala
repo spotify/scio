@@ -364,4 +364,10 @@ class CodersTest extends FlatSpec with Matchers {
     check(new FixedSpefificDataExample(bytes))
   }
 
+  it should "#1447: Properly serde spanner's ReadOperation" in {
+    import org.apache.beam.sdk.io.gcp.spanner.ReadOperation
+    val ro = ReadOperation.create().withQuery("SELECT 1")
+    check(ro)
+  }
+
 }
