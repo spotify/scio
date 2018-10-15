@@ -66,9 +66,11 @@ private[coders] object CoderMacros {
 
     def shortMessage =
       s"""
-      | Warning: No implicit Coder found for type, using Kryo fallback:
+      | Warning: No implicit Coder found for the following type:
       |
       |   >> $wtt
+      |
+      | using Kryo fallback instead.
       """
 
     def longMessage =
