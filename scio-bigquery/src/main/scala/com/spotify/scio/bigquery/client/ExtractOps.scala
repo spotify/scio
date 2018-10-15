@@ -29,19 +29,43 @@ private[client] object ExtractOps {
   private val Logger = LoggerFactory.getLogger(this.getClass)
 }
 
+sealed trait CompressionT {
+  class Compression(val name: Option[String])
+}
+
+sealed trait GzipT extends CompressionT {
+  case class Gzip() extends Compression(Some("GZIP"))
+}
+
+sealed trait DeflateT extends CompressionT {
+  case class Deflate() extends Compression(Some("DEFLATE"))
+}
+
+sealed trait SnappyT extends CompressionT {
+  case class Snappy() extends Compression(Some("SNAPPY"))
+}
+
+sealed trait NoCompressionT extends CompressionT {
+  case class NoCompression() extends Compression(None)
+}
+
+object CsvCompression extends NoCompressionT with GzipT
+object AvroCompression extends NoCompressionT with DeflateT with SnappyT
+object JsonCompression extends NoCompressionT with GzipT
+
 private[client] final class ExtractOps(client: Client, jobService: JobOps) {
   import ExtractOps._
 
   def asCsv(sourceTable: String,
             destinationUris: List[String],
-            gzipCompression: Boolean = false,
+            compression: CsvCompression.Compression = CsvCompression.NoCompression(),
             fieldDelimiter: Option[String] = None,
             printHeader: Option[Boolean] = None): Unit =
     exportTable(
       sourceTable = sourceTable,
       destinationUris = destinationUris,
       format = "CSV",
-      gzipCompression = gzipCompression,
+      compression = compression.name,
       fieldDelimiter = fieldDelimiter,
       printHeader = printHeader
     )
@@ -49,25 +73,25 @@ private[client] final class ExtractOps(client: Client, jobService: JobOps) {
   /** Export a table as Json */
   def asJson(sourceTable: String,
              destinationUris: List[String],
-             gzipCompression: Boolean = false): Unit =
+             compression: JsonCompression.Compression = JsonCompression.NoCompression()): Unit =
     exportTable(sourceTable = sourceTable,
                 destinationUris = destinationUris,
                 format = "NEWLINE_DELIMITED_JSON",
-                gzipCompression = gzipCompression)
+                compression = compression.name)
 
   /** Export a table as Avro */
   def asAvro(sourceTable: String,
              destinationUris: List[String],
-             gzipCompression: Boolean = false): Unit =
+             compression: AvroCompression.Compression = AvroCompression.NoCompression()): Unit =
     exportTable(sourceTable = sourceTable,
                 destinationUris = destinationUris,
                 format = "AVRO",
-                gzipCompression = gzipCompression)
+                compression = compression.name)
 
   private def exportTable(sourceTable: String,
                           destinationUris: List[String],
                           format: String,
-                          gzipCompression: Boolean = false,
+                          compression: Option[String],
                           fieldDelimiter: Option[String] = None,
                           printHeader: Option[Boolean] = None): Unit = {
 
@@ -78,9 +102,7 @@ private[client] final class ExtractOps(client: Client, jobService: JobOps) {
       .setDestinationUris(destinationUris.asJava)
       .setDestinationFormat(format)
 
-    if (gzipCompression) {
-      jobConfigExtract.setCompression("GZIP")
-    }
+    compression.foreach(jobConfigExtract.setCompression)
     fieldDelimiter.foreach(jobConfigExtract.setFieldDelimiter)
     printHeader.foreach(jobConfigExtract.setPrintHeader(_))
 
