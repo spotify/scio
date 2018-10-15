@@ -152,9 +152,9 @@
 <a href="https://cloud.google.com/bigquery/docs/reference/legacy-sql" target="_blank">legacy</a> and
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/" target="_blank">standard</a>.
 APIs that take a BigQuery query string as argument, e.g.
-<a href="../bigquery/BigQueryClient.html#getQueryRows(sqlQuery:String,flattenResults:Boolean):Iterator[com.spotify.scio.bigquery.TableRow]" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getQueryRows">BigQueryClient.getQueryRows</a>,
-<a href="../bigquery/BigQueryClient.html#getQuerySchema(sqlQuery:String):com.google.api.services.bigquery.model.TableSchema" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getQuerySchema">BigQueryClient.getQuerySchema</a>,
-<a href="../bigquery/BigQueryClient.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getTypedRows">BigQueryClient.getTypedRows</a> and
+<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.rows">com.spotify.scio.bigquery.client.BigQuery.query.rows</span>,
+<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.schema">com.spotify.scio.bigquery.client.BigQuery.query.schema</span>,
+<a href="../bigquery/client/BigQuery.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.client.BigQuery#getTypedRows">com.spotify.scio.bigquery.client.BigQuery.getTypedRows</a> and
 <a href="../bigquery/types/BigQueryType$$fromQuery.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.fromQuery">BigQueryType.fromQuery</a>, automatically
 detects the query's dialect. To override this, start the query with either <code>#legacysql</code> or
 <code>#standardsql</code> comment line.
@@ -273,20 +273,28 @@ detects the query's dialect. To override this, start the query with either <code
       <p class="shortcomment cmt">IO package for dynamic destinations.</p><div class="fullcomment"><div class="comment cmt"><p>IO package for dynamic destinations. Import All.</p><pre><span class="kw">import</span> com.spotify.scio.io.dynamic._</pre></div></div>
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="AvroTap.html" title="Tap for Avro files on local file system or GCS."></a>
-                        <a href="AvroTap.html" title="Tap for Avro files on local file system or GCS.">AvroTap</a>
+                        <a class="class" href="CustomIO.html" title="Special version of ScioIO for use with ScioContext.customInput and SCollection.saveAsCustomOutput."></a>
+                        <a href="CustomIO.html" title="Special version of ScioIO for use with ScioContext.customInput and SCollection.saveAsCustomOutput.">CustomIO</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="DatastoreIO$.html" title=""></a>
+                        <a class="class" href="DatastoreIO.html" title=""></a>
+                        <a href="DatastoreIO.html" title="">DatastoreIO</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="BigQueryTap.html" title="Tap for BigQuery tables."></a>
-                        <a href="BigQueryTap.html" title="Tap for BigQuery tables.">BigQueryTap</a>
+                        <a class="object" href="MaterializeTap$.html" title=""></a>
+                        <a href="MaterializeTap$.html" title="">MaterializeTap</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="PubsubIO$.html" title=""></a>
+                        <a class="trait" href="PubsubIO.html" title=""></a>
+                        <a href="PubsubIO.html" title="">PubsubIO</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="ObjectFileTap.html" title="Tap for object files on local file system or GCS."></a>
-                        <a href="ObjectFileTap.html" title="Tap for object files on local file system or GCS.">ObjectFileTap</a>
+                        <a class="class" href="ReadIO.html" title="Special version of ScioIO for use with SCollection.readAll and SCollection.readAllBytes."></a>
+                        <a href="ReadIO.html" title="Special version of ScioIO for use with SCollection.readAll and SCollection.readAllBytes.">ReadIO</a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="TableRowJsonTap.html" title="Tap for BigQuery TableRow JSON files on local file system or GCS."></a>
-                        <a href="TableRowJsonTap.html" title="Tap for BigQuery TableRow JSON files on local file system or GCS.">TableRowJsonTap</a>
+                        <a class="object" href="ScioIO$.html" title=""></a>
+                        <a class="trait" href="ScioIO.html" title="Base trait for all Read/Write IO classes."></a>
+                        <a href="ScioIO.html" title="Base trait for all Read/Write IO classes.">ScioIO</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="Tap.html" title="Placeholder to an external data set that can either be load into memory as an iterator or opened in a new ScioContext as an SCollection."></a>
@@ -299,6 +307,18 @@ detects the query's dialect. To override this, start the query with either <code
                         <a class="object" href="Taps$.html" title="Companion object for Taps."></a>
                         <a class="trait" href="Taps.html" title="Utility for managing Future[Tap[T]]s."></a>
                         <a href="Taps.html" title="Utility for managing Future[Tap[T]]s.">Taps</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="object" href="TapsSysProps$.html" title=""></a>
+                        <a href="TapsSysProps$.html" title="">TapsSysProps</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="TestIO.html" title="Base trait for ScioIO without business logic, for stubbing mock data with JobTest."></a>
+                        <a href="TestIO.html" title="Base trait for ScioIO without business logic, for stubbing mock data with JobTest.">TestIO</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="TextIO$.html" title=""></a>
+                        <a class="class" href="TextIO.html" title=""></a>
+                        <a href="TextIO.html" title="">TextIO</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="TextTap.html" title="Tap for text files on local file system or GCS."></a>
@@ -543,73 +563,93 @@ detects the query's dialect. To override this, start the query with either <code
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.spotify.scio.io.AvroTap" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="AvroTap[T]extendsTap[T]withProductwithSerializable"></a><a id="AvroTap[T]:AvroTap[T]"></a>
+              <ol><li name="com.spotify.scio.io.CustomIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CustomIO[T]extendsTestIO[T]withProductwithSerializable"></a><a id="CustomIO[T]:CustomIO[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/index.html#AvroTap[T]extendsTap[T]withProductwithSerializable" title="Permalink">
+      <a href="../../../../com/spotify/scio/io/index.html#CustomIO[T]extendsTestIO[T]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="Special version of ScioIO for use with ScioContext.customInput and SCollection.saveAsCustomOutput." href="CustomIO.html"><span class="name">CustomIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="id">id: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.io.CustomIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Special version of <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a> for use with <a href="../ScioContext.html#customInput[T,I&gt;:org.apache.beam.sdk.values.PBegin&lt;:org.apache.beam.sdk.values.PInput](name:String,transform:org.apache.beam.sdk.transforms.PTransform[I,org.apache.beam.sdk.values.PCollection[T]])(implicitevidence$21:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" class="extmbr" name="com.spotify.scio.ScioContext#customInput">ScioContext.customInput</a> and
+<span class="extype" name="SCollection.saveAsCustomOutput">SCollection.saveAsCustomOutput</span>.</p>
+    </li><li name="com.spotify.scio.io.DatastoreIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DatastoreIOextendsScioIO[com.google.datastore.v1.Entity]withProductwithSerializable"></a><a id="DatastoreIO:DatastoreIO"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/index.html#DatastoreIOextendsScioIO[com.google.datastore.v1.Entity]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="DatastoreIO.html"><span class="name">DatastoreIO</span></a><span class="params">(<span name="projectId">projectId: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.google.datastore.v1.Entity">Entity</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.PubsubIO" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="PubsubIO[T]extendsScioIO[T]"></a><a id="PubsubIO[T]:PubsubIO[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/index.html#PubsubIO[T]extendsScioIO[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="PubsubIO.html"><span class="name">PubsubIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.io.PubsubIO.T">T</span>]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.ReadIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ReadIO[T]extendsTestIO[T]withProductwithSerializable"></a><a id="ReadIO[T]:ReadIO[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/index.html#ReadIO[T]extendsTestIO[T]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="Special version of ScioIO for use with SCollection.readAll and SCollection.readAllBytes." href="ReadIO.html"><span class="name">ReadIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="id">id: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.io.ReadIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Special version of <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a> for use with <span class="extype" name="SCollection.readAll">SCollection.readAll</span> and
+<span class="extype" name="SCollection.readAllBytes">SCollection.readAllBytes</span>.</p>
+    </li><li name="com.spotify.scio.io.ScioIO" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="ScioIO[T]extendsAnyRef"></a><a id="ScioIO[T]:ScioIO[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/index.html#ScioIO[T]extendsAnyRef" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">case class</span>
+        <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Tap for Avro files on local file system or GCS." href="AvroTap.html"><span class="name">AvroTap</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <span class="extype" name="org.apache.avro.Schema">Schema</span> = <span class="symbol">null</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$2">evidence$2: <a href="http://www.scala-lang.org/api/2.12.6/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.io.AvroTap.T">T</span>]</span>)</span><span class="result"> extends <a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.io.AvroTap.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Base trait for all Read/Write IO classes." href="ScioIO.html"><span class="name">ScioIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
-      <p class="shortcomment cmt">Tap for Avro files on local file system or GCS.</p><div class="fullcomment"><div class="comment cmt"><p>Tap for Avro files on local file system or GCS.</p></div><dl class="paramcmts block"><dt class="param">schema</dt><dd class="cmt"><p>must be not null if <code>T</code> is of type
-              <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/generic/GenericRecord.html" class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</a>.</p></dd></dl></div>
-    </li><li name="com.spotify.scio.io.BigQueryTap" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="BigQueryTapextendsTap[com.spotify.scio.bigquery.TableRow]withProductwithSerializable"></a><a id="BigQueryTap:BigQueryTap"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/index.html#BigQueryTapextendsTap[com.spotify.scio.bigquery.TableRow]withProductwithSerializable" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="Tap for BigQuery tables." href="BigQueryTap.html"><span class="name">BigQueryTap</span></a><span class="params">(<span name="table">table: <a href="https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/com/google/api/services/bigquery/model/TableReference.html#com.google.api.services.bigquery.model.TableReference" class="extype" name="com.google.api.services.bigquery.model.TableReference">TableReference</a></span>)</span><span class="result"> extends <a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="../bigquery/index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
-      </span>
-      
-      <p class="shortcomment cmt">Tap for BigQuery tables.</p>
-    </li><li name="com.spotify.scio.io.ObjectFileTap" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="ObjectFileTap[T]extendsTap[T]withProductwithSerializable"></a><a id="ObjectFileTap[T]:ObjectFileTap[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/index.html#ObjectFileTap[T]extendsTap[T]withProductwithSerializable" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="Tap for object files on local file system or GCS." href="ObjectFileTap.html"><span class="name">ObjectFileTap</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$3">evidence$3: <a href="http://www.scala-lang.org/api/2.12.6/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.io.ObjectFileTap.T">T</span>]</span>)</span><span class="result"> extends <a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.io.ObjectFileTap.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
-      </span>
-      
-      <p class="shortcomment cmt">Tap for object files on local file system or GCS.</p><div class="fullcomment"><div class="comment cmt"><p>Tap for object files on local file system or GCS. Note that serialization is not guaranteed to
-be compatible across Scio releases.
+      <p class="shortcomment cmt">Base trait for all Read/Write IO classes.</p><div class="fullcomment"><div class="comment cmt"><p>Base trait for all Read/Write IO classes. Every IO connector must implement this.
+This trait has two abstract implicit methods #read, #write that need to be implemented
+in every subtype. Look at the <a href="TextIO.html" class="extype" name="com.spotify.scio.io.TextIO">com.spotify.scio.io.TextIO</a> subclass for a reference
+implementation. IO connectors can choose to override #readTest and #writeTest if custom
+test logic is necessary.
 </p></div></div>
-    </li><li name="com.spotify.scio.io.TableRowJsonTap" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="TableRowJsonTapextendsTap[com.spotify.scio.bigquery.TableRow]withProductwithSerializable"></a><a id="TableRowJsonTap:TableRowJsonTap"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/index.html#TableRowJsonTapextendsTap[com.spotify.scio.bigquery.TableRow]withProductwithSerializable" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="Tap for BigQuery TableRow JSON files on local file system or GCS." href="TableRowJsonTap.html"><span class="name">TableRowJsonTap</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="../bigquery/index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
-      </span>
-      
-      <p class="shortcomment cmt">Tap for BigQuery TableRow JSON files on local file system or GCS.</p>
     </li><li name="com.spotify.scio.io.Tap" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="Tap[T]extendsSerializable"></a><a id="Tap[T]:Tap[T]"></a>
       <span class="permalink">
@@ -622,7 +662,7 @@ be compatible across Scio releases.
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Placeholder to an external data set that can either be load into memory as an iterator or opened in a new ScioContext as an SCollection." href="Tap.html"><span class="name">Tap</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Placeholder to an external data set that can either be load into memory as an iterator or opened in a new ScioContext as an SCollection." href="Tap.html"><span class="name">Tap</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Placeholder to an external data set that can either be load into memory as an iterator or
@@ -655,10 +695,42 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Utility for managing Future[Tap[T]]s." href="Taps.html"><span class="name">Taps</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Utility for managing Future[Tap[T]]s." href="Taps.html"><span class="name">Taps</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Utility for managing <code>Future[Tap[T]]</code>s.</p>
+    </li><li name="com.spotify.scio.io.TestIO" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="TestIO[T]extendsScioIO[T]"></a><a id="TestIO[T]:TestIO[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/index.html#TestIO[T]extendsScioIO[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="Base trait for ScioIO without business logic, for stubbing mock data with JobTest." href="TestIO.html"><span class="name">TestIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.io.TestIO.T">T</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Base trait for <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a> without business logic, for stubbing mock data with <code>JobTest</code>.</p>
+    </li><li name="com.spotify.scio.io.TextIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TextIOextendsScioIO[String]withProductwithSerializable"></a><a id="TextIO:TextIO"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/index.html#TextIOextendsScioIO[String]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="TextIO.html"><span class="name">TextIO</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="scala.Predef.String">String</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
     </li><li name="com.spotify.scio.io.TextTap" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="TextTapextendsTap[String]withProductwithSerializable"></a><a id="TextTap:TextTap"></a>
       <span class="permalink">
@@ -667,11 +739,11 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="Tap for text files on local file system or GCS." href="TextTap.html"><span class="name">TextTap</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="scala.Predef.String">String</span>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Tap for text files on local file system or GCS." href="TextTap.html"><span class="name">TextTap</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="scala.Predef.String">String</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Tap for text files on local file system or GCS.</p>
@@ -683,7 +755,71 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <div class="values members">
               <h3>Value Members</h3>
               <ol>
-                <li name="com.spotify.scio.io.Taps" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+                <li name="com.spotify.scio.io.DatastoreIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DatastoreIO"></a><a id="DatastoreIO:DatastoreIO"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/index.html#DatastoreIO" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="DatastoreIO$.html"><span class="name">DatastoreIO</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.MaterializeTap" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MaterializeTap"></a><a id="MaterializeTap:MaterializeTap"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/index.html#MaterializeTap" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="MaterializeTap$.html"><span class="name">MaterializeTap</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.PubsubIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PubsubIO"></a><a id="PubsubIO:PubsubIO"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/index.html#PubsubIO" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="PubsubIO$.html"><span class="name">PubsubIO</span></a>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.ScioIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ScioIO"></a><a id="ScioIO:ScioIO"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/index.html#ScioIO" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="ScioIO$.html"><span class="name">ScioIO</span></a>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.Taps" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="Taps"></a><a id="Taps:Taps"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/io/index.html#Taps" title="Permalink">
@@ -699,6 +835,38 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
       </span>
       
       <p class="shortcomment cmt">Companion object for <a href="Taps.html" class="extype" name="com.spotify.scio.io.Taps">Taps</a>.</p>
+    </li><li name="com.spotify.scio.io.TapsSysProps" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TapsSysProps"></a><a id="TapsSysProps:TapsSysProps"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/index.html#TapsSysProps" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="TapsSysProps$.html"><span class="name">TapsSysProps</span></a><span class="result"> extends <a href="../SysProps.html" class="extype" name="com.spotify.scio.SysProps">SysProps</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.TextIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TextIO"></a><a id="TextIO:TextIO"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/index.html#TextIO" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="TextIO$.html"><span class="name">TextIO</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
     </li>
               </ol>
             </div>

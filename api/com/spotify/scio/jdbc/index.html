@@ -152,9 +152,9 @@
 <a href="https://cloud.google.com/bigquery/docs/reference/legacy-sql" target="_blank">legacy</a> and
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/" target="_blank">standard</a>.
 APIs that take a BigQuery query string as argument, e.g.
-<a href="../bigquery/BigQueryClient.html#getQueryRows(sqlQuery:String,flattenResults:Boolean):Iterator[com.spotify.scio.bigquery.TableRow]" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getQueryRows">BigQueryClient.getQueryRows</a>,
-<a href="../bigquery/BigQueryClient.html#getQuerySchema(sqlQuery:String):com.google.api.services.bigquery.model.TableSchema" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getQuerySchema">BigQueryClient.getQuerySchema</a>,
-<a href="../bigquery/BigQueryClient.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getTypedRows">BigQueryClient.getTypedRows</a> and
+<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.rows">com.spotify.scio.bigquery.client.BigQuery.query.rows</span>,
+<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.schema">com.spotify.scio.bigquery.client.BigQuery.query.schema</span>,
+<a href="../bigquery/client/BigQuery.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.client.BigQuery#getTypedRows">com.spotify.scio.bigquery.client.BigQuery.getTypedRows</a> and
 <a href="../bigquery/types/BigQueryType$$fromQuery.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.fromQuery">BigQueryType.fromQuery</a>, automatically
 detects the query's dialect. To override this, start the query with either <code>#legacysql</code> or
 <code>#standardsql</code> comment line.
@@ -284,9 +284,9 @@ detects the query's dialect. To override this, start the query with either <code
                         <a class="class" href="package$$JdbcConnectionOptions.html" title="Options for a JDBC connection."></a>
                         <a href="package$$JdbcConnectionOptions.html" title="Options for a JDBC connection.">JdbcConnectionOptions</a>
                       </li><li class="current-entities indented4">
-                        <a class="object" href="package$$JdbcIO$.html" title=""></a>
-                        <a class="class" href="package$$JdbcIO.html" title=""></a>
-                        <a href="package$$JdbcIO.html" title="">JdbcIO</a>
+                        <a class="object" href="JdbcIO$.html" title=""></a>
+                        <a class="trait" href="JdbcIO.html" title=""></a>
+                        <a href="JdbcIO.html" title="">JdbcIO</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="package$$JdbcIoOptions.html" title=""></a>
@@ -303,6 +303,14 @@ detects the query's dialect. To override this, start the query with either <code
                         <span class="separator"></span>
                         <a class="class" href="package$$JdbcScioContext.html" title="Enhanced version of ScioContext with JDBC methods."></a>
                         <a href="package$$JdbcScioContext.html" title="Enhanced version of ScioContext with JDBC methods.">JdbcScioContext</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="JdbcSelect.html" title=""></a>
+                        <a href="JdbcSelect.html" title="">JdbcSelect</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="JdbcWrite.html" title=""></a>
+                        <a href="JdbcWrite.html" title="">JdbcWrite</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="package$$JdbcWriteOptions.html" title="Options for writing to a JDBC source."></a>
@@ -500,7 +508,7 @@ detects the query's dialect. To override this, start the query with either <code
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -560,7 +568,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="CloudSqlOptions.html"><span class="name">CloudSqlOptions</span></a><span class="result"> extends <a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/options/PipelineOptions.html#org.apache.beam.sdk.options.PipelineOptions" class="extype" name="org.apache.beam.sdk.options.PipelineOptions">PipelineOptions</a></span>
+        <a title="" href="CloudSqlOptions.html"><span class="name">CloudSqlOptions</span></a><span class="result"> extends <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/options/PipelineOptions.html#org.apache.beam.sdk.options.PipelineOptions" class="extype" name="org.apache.beam.sdk.options.PipelineOptions">PipelineOptions</a></span>
       </span>
       
       
@@ -576,7 +584,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="CloudSqlOptionsRegistrar.html"><span class="name">CloudSqlOptionsRegistrar</span></a><span class="result"> extends <a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/options/PipelineOptionsRegistrar.html#org.apache.beam.sdk.options.PipelineOptionsRegistrar" class="extype" name="org.apache.beam.sdk.options.PipelineOptionsRegistrar">PipelineOptionsRegistrar</a></span>
+        <a title="" href="CloudSqlOptionsRegistrar.html"><span class="name">CloudSqlOptionsRegistrar</span></a><span class="result"> extends <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/options/PipelineOptionsRegistrar.html#org.apache.beam.sdk.options.PipelineOptionsRegistrar" class="extype" name="org.apache.beam.sdk.options.PipelineOptionsRegistrar">PipelineOptionsRegistrar</a></span>
       </span>
       
       
@@ -588,28 +596,28 @@ detects the query's dialect. To override this, start the query with either <code
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="Options for a JDBC connection." href="package$$JdbcConnectionOptions.html"><span class="name">JdbcConnectionOptions</span></a><span class="params">(<span name="username">username: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="password">password: <a href="http://www.scala-lang.org/api/2.12.6/scala/Option.html#scala.Option" class="extype" name="scala.Option">Option</a>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="connectionUrl">connectionUrl: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="driverClass">driverClass: <span class="extype" name="scala.Predef.Class">Class</span>[_ &lt;: <a href="http://docs.oracle.com/javase/8/docs/api/java/sql/Driver.html#java.sql.Driver" class="extype" name="java.sql.Driver">Driver</a>]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Options for a JDBC connection." href="package$$JdbcConnectionOptions.html"><span class="name">JdbcConnectionOptions</span></a><span class="params">(<span name="username">username: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="password">password: <a href="http://www.scala-lang.org/api/2.12.7/scala/Option.html#scala.Option" class="extype" name="scala.Option">Option</a>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="connectionUrl">connectionUrl: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="driverClass">driverClass: <span class="extype" name="scala.Predef.Class">Class</span>[_ &lt;: <a href="http://docs.oracle.com/javase/8/docs/api/java/sql/Driver.html#java.sql.Driver" class="extype" name="java.sql.Driver">Driver</a>]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Options for a JDBC connection.</p><div class="fullcomment"><div class="comment cmt"><p>Options for a JDBC connection.
 </p></div><dl class="paramcmts block"><dt class="param">username</dt><dd class="cmt"><p>database login username</p></dd><dt class="param">password</dt><dd class="cmt"><p>database login password if exists</p></dd><dt class="param">connectionUrl</dt><dd class="cmt"><p>connection url, i.e &quot;jdbc:mysql://[host]:[port]/db?&quot;</p></dd><dt class="param">driverClass</dt><dd class="cmt"><p>subclass of <a href="http://docs.oracle.com/javase/8/docs/api/java/sql/Driver.html" class="extype" name="java.sql.Driver">java.sql.Driver</a></p></dd></dl></div>
-    </li><li name="com.spotify.scio.jdbc.JdbcIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="JdbcIO[T]extendsTestIO[T]withProductwithSerializable"></a><a id="JdbcIO[T]:JdbcIO[T]"></a>
+    </li><li name="com.spotify.scio.jdbc.JdbcIO" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="JdbcIO[T]extendsTestIO[T]"></a><a id="JdbcIO[T]:JdbcIO[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/jdbc/index.html#JdbcIO[T]extendsTestIO[T]withProductwithSerializable" title="Permalink">
+      <a href="../../../../com/spotify/scio/jdbc/index.html#JdbcIO[T]extendsTestIO[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="package$$JdbcIO.html"><span class="name">JdbcIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="uniqueId">uniqueId: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="../testing/TestIO.html" class="extype" name="com.spotify.scio.testing.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="JdbcIO.html"><span class="name">JdbcIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="../io/TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcIO.T">T</span>]</span>
       </span>
       
       
@@ -625,7 +633,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="package$$JdbcIoOptions.html"><span class="name">JdbcIoOptions</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="" href="package$$JdbcIoOptions.html"><span class="name">JdbcIoOptions</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -637,15 +645,15 @@ detects the query's dialect. To override this, start the query with either <code
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="Options for reading from a JDBC source." href="package$$JdbcReadOptions.html"><span class="name">JdbcReadOptions</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="connectionOptions">connectionOptions: <a href="package$$JdbcConnectionOptions.html" class="extype" name="com.spotify.scio.jdbc.JdbcConnectionOptions">JdbcConnectionOptions</a></span>, <span name="query">query: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="statementPreparator">statementPreparator: (<a href="http://docs.oracle.com/javase/8/docs/api/java/sql/PreparedStatement.html#java.sql.PreparedStatement" class="extype" name="java.sql.PreparedStatement">PreparedStatement</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a> = <span class="symbol">null</span></span>, <span name="rowMapper">rowMapper: (<a href="http://docs.oracle.com/javase/8/docs/api/java/sql/ResultSet.html#java.sql.ResultSet" class="extype" name="java.sql.ResultSet">ResultSet</a>) ⇒ <span class="extype" name="com.spotify.scio.jdbc.JdbcReadOptions.T">T</span></span>)</span><span class="result"> extends <a href="package$$JdbcIoOptions.html" class="extype" name="com.spotify.scio.jdbc.JdbcIoOptions">JdbcIoOptions</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Options for reading from a JDBC source." href="package$$JdbcReadOptions.html"><span class="name">JdbcReadOptions</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="connectionOptions">connectionOptions: <a href="package$$JdbcConnectionOptions.html" class="extype" name="com.spotify.scio.jdbc.JdbcConnectionOptions">JdbcConnectionOptions</a></span>, <span name="query">query: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="statementPreparator">statementPreparator: (<a href="http://docs.oracle.com/javase/8/docs/api/java/sql/PreparedStatement.html#java.sql.PreparedStatement" class="extype" name="java.sql.PreparedStatement">PreparedStatement</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a> = <span class="symbol">null</span></span>, <span name="rowMapper">rowMapper: (<a href="http://docs.oracle.com/javase/8/docs/api/java/sql/ResultSet.html#java.sql.ResultSet" class="extype" name="java.sql.ResultSet">ResultSet</a>) ⇒ <span class="extype" name="com.spotify.scio.jdbc.JdbcReadOptions.T">T</span></span>, <span name="fetchSize">fetchSize: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">USE_BEAM_DEFAULT_FETCH_SIZE</span></span>)</span><span class="result"> extends <a href="package$$JdbcIoOptions.html" class="extype" name="com.spotify.scio.jdbc.JdbcIoOptions">JdbcIoOptions</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Options for reading from a JDBC source.</p><div class="fullcomment"><div class="comment cmt"><p>Options for reading from a JDBC source.
-</p></div><dl class="paramcmts block"><dt class="param">connectionOptions</dt><dd class="cmt"><p>connection options</p></dd><dt class="param">query</dt><dd class="cmt"><p>query string</p></dd><dt class="param">statementPreparator</dt><dd class="cmt"><p>function to prepare a <a href="http://docs.oracle.com/javase/8/docs/api/java/sql/PreparedStatement.html" class="extype" name="java.sql.PreparedStatement">java.sql.PreparedStatement</a></p></dd><dt class="param">rowMapper</dt><dd class="cmt"><p>function to map from a SQL <a href="http://docs.oracle.com/javase/8/docs/api/java/sql/ResultSet.html" class="extype" name="java.sql.ResultSet">java.sql.ResultSet</a> to <code>T</code></p></dd></dl></div>
+</p></div><dl class="paramcmts block"><dt class="param">connectionOptions</dt><dd class="cmt"><p>connection options</p></dd><dt class="param">query</dt><dd class="cmt"><p>query string</p></dd><dt class="param">statementPreparator</dt><dd class="cmt"><p>function to prepare a <a href="http://docs.oracle.com/javase/8/docs/api/java/sql/PreparedStatement.html" class="extype" name="java.sql.PreparedStatement">java.sql.PreparedStatement</a></p></dd><dt class="param">rowMapper</dt><dd class="cmt"><p>function to map from a SQL <a href="http://docs.oracle.com/javase/8/docs/api/java/sql/ResultSet.html" class="extype" name="java.sql.ResultSet">java.sql.ResultSet</a> to <code>T</code></p></dd><dt class="param">fetchSize</dt><dd class="cmt"><p>use apache beam default fetch size if the value is -1</p></dd></dl></div>
     </li><li name="com.spotify.scio.jdbc.JdbcSCollection" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="JdbcSCollection[T]extendsAnyRef"></a><a id="JdbcSCollection[T]:JdbcSCollection[T]"></a>
       <span class="permalink">
@@ -658,7 +666,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Enhanced version of SCollection with JDBC methods." href="package$$JdbcSCollection.html"><span class="name">JdbcSCollection</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Enhanced version of SCollection with JDBC methods." href="package$$JdbcSCollection.html"><span class="name">JdbcSCollection</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Enhanced version of <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a> with JDBC methods.</p>
@@ -674,10 +682,42 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Enhanced version of ScioContext with JDBC methods." href="package$$JdbcScioContext.html"><span class="name">JdbcScioContext</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Enhanced version of ScioContext with JDBC methods." href="package$$JdbcScioContext.html"><span class="name">JdbcScioContext</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Enhanced version of <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a> with JDBC methods.</p>
+    </li><li name="com.spotify.scio.jdbc.JdbcSelect" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="JdbcSelect[T]extendsScioIO[T]withProductwithSerializable"></a><a id="JdbcSelect[T]:JdbcSelect[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/jdbc/index.html#JdbcSelect[T]extendsScioIO[T]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="JdbcSelect.html"><span class="name">JdbcSelect</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="readOptions">readOptions: <a href="package$$JdbcReadOptions.html" class="extype" name="com.spotify.scio.jdbc.JdbcReadOptions">JdbcReadOptions</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcSelect.T">T</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$1">evidence$1: <a href="http://www.scala-lang.org/api/2.12.7/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcSelect.T">T</span>]</span>)</span><span class="result"> extends <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcSelect.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.jdbc.JdbcWrite" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="JdbcWrite[T]extendsScioIO[T]withProductwithSerializable"></a><a id="JdbcWrite[T]:JdbcWrite[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/jdbc/index.html#JdbcWrite[T]extendsScioIO[T]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="JdbcWrite.html"><span class="name">JdbcWrite</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="writeOptions">writeOptions: <a href="package$$JdbcWriteOptions.html" class="extype" name="com.spotify.scio.jdbc.JdbcWriteOptions">JdbcWriteOptions</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcWrite.T">T</span>]</span>)</span><span class="result"> extends <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.jdbc.JdbcWrite.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
     </li><li name="com.spotify.scio.jdbc.JdbcWriteOptions" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="JdbcWriteOptions[T]extendspackage.JdbcIoOptionswithProductwithSerializable"></a><a id="JdbcWriteOptions[T]:JdbcWriteOptions[T]"></a>
       <span class="permalink">
@@ -686,15 +726,15 @@ detects the query's dialect. To override this, start the query with either <code
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="Options for writing to a JDBC source." href="package$$JdbcWriteOptions.html"><span class="name">JdbcWriteOptions</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="connectionOptions">connectionOptions: <a href="package$$JdbcConnectionOptions.html" class="extype" name="com.spotify.scio.jdbc.JdbcConnectionOptions">JdbcConnectionOptions</a></span>, <span name="statement">statement: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="preparedStatementSetter">preparedStatementSetter: (<span class="extype" name="com.spotify.scio.jdbc.JdbcWriteOptions.T">T</span>, <a href="http://docs.oracle.com/javase/8/docs/api/java/sql/PreparedStatement.html#java.sql.PreparedStatement" class="extype" name="java.sql.PreparedStatement">PreparedStatement</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a> = <span class="symbol">null</span></span>)</span><span class="result"> extends <a href="package$$JdbcIoOptions.html" class="extype" name="com.spotify.scio.jdbc.JdbcIoOptions">JdbcIoOptions</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Options for writing to a JDBC source." href="package$$JdbcWriteOptions.html"><span class="name">JdbcWriteOptions</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="connectionOptions">connectionOptions: <a href="package$$JdbcConnectionOptions.html" class="extype" name="com.spotify.scio.jdbc.JdbcConnectionOptions">JdbcConnectionOptions</a></span>, <span name="statement">statement: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="preparedStatementSetter">preparedStatementSetter: (<span class="extype" name="com.spotify.scio.jdbc.JdbcWriteOptions.T">T</span>, <a href="http://docs.oracle.com/javase/8/docs/api/java/sql/PreparedStatement.html#java.sql.PreparedStatement" class="extype" name="java.sql.PreparedStatement">PreparedStatement</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a> = <span class="symbol">null</span></span>, <span name="batchSize">batchSize: <a href="http://www.scala-lang.org/api/2.12.7/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a> = <span class="symbol">USE_BEAM_DEFAULT_BATCH_SIZE</span></span>)</span><span class="result"> extends <a href="package$$JdbcIoOptions.html" class="extype" name="com.spotify.scio.jdbc.JdbcIoOptions">JdbcIoOptions</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Options for writing to a JDBC source.</p><div class="fullcomment"><div class="comment cmt"><p>Options for writing to a JDBC source.
-</p></div><dl class="paramcmts block"><dt class="param">connectionOptions</dt><dd class="cmt"><p>connection options</p></dd><dt class="param">statement</dt><dd class="cmt"><p>query statement</p></dd><dt class="param">preparedStatementSetter</dt><dd class="cmt"><p>function to set values in a <a href="http://docs.oracle.com/javase/8/docs/api/java/sql/PreparedStatement.html" class="extype" name="java.sql.PreparedStatement">java.sql.PreparedStatement</a></p></dd></dl></div>
+</p></div><dl class="paramcmts block"><dt class="param">connectionOptions</dt><dd class="cmt"><p>connection options</p></dd><dt class="param">statement</dt><dd class="cmt"><p>query statement</p></dd><dt class="param">preparedStatementSetter</dt><dd class="cmt"><p>function to set values in a <a href="http://docs.oracle.com/javase/8/docs/api/java/sql/PreparedStatement.html" class="extype" name="java.sql.PreparedStatement">java.sql.PreparedStatement</a></p></dd><dt class="param">batchSize</dt><dd class="cmt"><p>use apache beam default batch size if the value is -1</p></dd></dl></div>
     </li></ol>
             </div>
 
@@ -715,7 +755,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="package$$JdbcIO$.html"><span class="name">JdbcIO</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="JdbcIO$.html"><span class="name">JdbcIO</span></a>
       </span>
       
       
@@ -730,9 +770,9 @@ detects the query's dialect. To override this, start the query with either <code
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

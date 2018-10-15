@@ -152,9 +152,9 @@
 <a href="https://cloud.google.com/bigquery/docs/reference/legacy-sql" target="_blank">legacy</a> and
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/" target="_blank">standard</a>.
 APIs that take a BigQuery query string as argument, e.g.
-<a href="../bigquery/BigQueryClient.html#getQueryRows(sqlQuery:String,flattenResults:Boolean):Iterator[com.spotify.scio.bigquery.TableRow]" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getQueryRows">BigQueryClient.getQueryRows</a>,
-<a href="../bigquery/BigQueryClient.html#getQuerySchema(sqlQuery:String):com.google.api.services.bigquery.model.TableSchema" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getQuerySchema">BigQueryClient.getQuerySchema</a>,
-<a href="../bigquery/BigQueryClient.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getTypedRows">BigQueryClient.getTypedRows</a> and
+<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.rows">com.spotify.scio.bigquery.client.BigQuery.query.rows</span>,
+<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.schema">com.spotify.scio.bigquery.client.BigQuery.query.schema</span>,
+<a href="../bigquery/client/BigQuery.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.client.BigQuery#getTypedRows">com.spotify.scio.bigquery.client.BigQuery.getTypedRows</a> and
 <a href="../bigquery/types/BigQueryType$$fromQuery.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.fromQuery">BigQueryType.fromQuery</a>, automatically
 detects the query's dialect. To override this, start the query with either <code>#legacysql</code> or
 <code>#standardsql</code> comment line.
@@ -177,16 +177,20 @@ detects the query's dialect. To override this, start the query with either <code
       <p class="shortcomment cmt">Main package for Bigtable APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for Bigtable APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.bigtable._</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="BigtableBulkWriter.html" title=""></a>
+                        <a href="BigtableBulkWriter.html" title="">BigtableBulkWriter</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="BigtableDoFn.html" title=""></a>
                         <a href="BigtableDoFn.html" title="">BigtableDoFn</a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$BigtableInput.html" title=""></a>
-                        <a href="package$$BigtableInput.html" title="">BigtableInput</a>
+                        <a class="object" href="BigtableIO$.html" title=""></a>
+                        <a class="trait" href="BigtableIO.html" title=""></a>
+                        <a href="BigtableIO.html" title="">BigtableIO</a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$BigtableOutput.html" title=""></a>
-                        <a href="package$$BigtableOutput.html" title="">BigtableOutput</a>
+                        <a class="object" href="BigtableRead$.html" title=""></a>
+                        <a class="class" href="BigtableRead.html" title=""></a>
+                        <a href="BigtableRead.html" title="">BigtableRead</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="package$$BigtableSCollection.html" title="Enhanced version of SCollection with Bigtable methods."></a>
@@ -199,6 +203,10 @@ detects the query's dialect. To override this, start the query with either <code
                         <span class="separator"></span>
                         <a class="class" href="BigtableUtil.html" title=""></a>
                         <a href="BigtableUtil.html" title="">BigtableUtil</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="BigtableWrite$.html" title=""></a>
+                        <a class="class" href="BigtableWrite.html" title=""></a>
+                        <a href="BigtableWrite.html" title="">BigtableWrite</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="ChannelPoolCreator.html" title=""></a>
@@ -508,7 +516,7 @@ detects the query's dialect. To override this, start the query with either <code
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -556,7 +564,23 @@ detects the query's dialect. To override this, start the query with either <code
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.spotify.scio.bigtable.BigtableDoFn" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+              <ol><li name="com.spotify.scio.bigtable.BigtableBulkWriter" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BigtableBulkWriterextendsPTransform[org.apache.beam.sdk.values.PCollection[org.apache.beam.sdk.values.KV[com.google.protobuf.ByteString,Iterable[com.google.bigtable.v2.Mutation]]],org.apache.beam.sdk.values.PDone]"></a><a id="BigtableBulkWriter:BigtableBulkWriter"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigtable/index.html#BigtableBulkWriterextendsPTransform[org.apache.beam.sdk.values.PCollection[org.apache.beam.sdk.values.KV[com.google.protobuf.ByteString,Iterable[com.google.bigtable.v2.Mutation]]],org.apache.beam.sdk.values.PDone]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="BigtableBulkWriter.html"><span class="name">BigtableBulkWriter</span></a><span class="result"> extends <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/transforms/PTransform.html#org.apache.beam.sdk.transforms.PTransform" class="extype" name="org.apache.beam.sdk.transforms.PTransform">PTransform</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/values/PCollection.html#org.apache.beam.sdk.values.PCollection" class="extype" name="org.apache.beam.sdk.values.PCollection">PCollection</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/values/KV.html#org.apache.beam.sdk.values.KV" class="extype" name="org.apache.beam.sdk.values.KV">KV</a>[<span class="extype" name="com.google.protobuf.ByteString">ByteString</span>, <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Iterable.html#java.lang.Iterable" class="extype" name="java.lang.Iterable">Iterable</a>[<span class="extype" name="com.google.bigtable.v2.Mutation">Mutation</span>]]], <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/values/PDone.html#org.apache.beam.sdk.values.PDone" class="extype" name="org.apache.beam.sdk.values.PDone">PDone</a>]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.bigtable.BigtableDoFn" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="BigtableDoFn[A,B]extendsAsyncLookupDoFn[A,B,com.google.cloud.bigtable.grpc.BigtableSession]"></a><a id="BigtableDoFn[A,B]:BigtableDoFn[A,B]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/bigtable/index.html#BigtableDoFn[A,B]extendsAsyncLookupDoFn[A,B,com.google.cloud.bigtable.grpc.BigtableSession]" title="Permalink">
@@ -572,35 +596,35 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       
-    </li><li name="com.spotify.scio.bigtable.BigtableInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="BigtableInputextendsTestIO[com.google.bigtable.v2.Row]withProductwithSerializable"></a><a id="BigtableInput:BigtableInput"></a>
+    </li><li name="com.spotify.scio.bigtable.BigtableIO" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="BigtableIO[T]extendsScioIO[T]"></a><a id="BigtableIO[T]:BigtableIO[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigtable/index.html#BigtableInputextendsTestIO[com.google.bigtable.v2.Row]withProductwithSerializable" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigtable/index.html#BigtableIO[T]extendsScioIO[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="package$$BigtableInput.html"><span class="name">BigtableInput</span></a><span class="params">(<span name="projectId">projectId: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="instanceId">instanceId: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="tableId">tableId: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="../testing/TestIO.html" class="extype" name="com.spotify.scio.testing.TestIO">TestIO</a>[<span class="extype" name="com.google.bigtable.v2.Row">Row</span>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="BigtableIO.html"><span class="name">BigtableIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.bigtable.BigtableIO.T">T</span>]</span>
       </span>
       
       
-    </li><li name="com.spotify.scio.bigtable.BigtableOutput" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="BigtableOutput[T&lt;:com.google.bigtable.v2.Mutation]extendsTestIO[(com.google.protobuf.ByteString,Iterable[T])]withProductwithSerializable"></a><a id="BigtableOutput[T&lt;:Mutation]:BigtableOutput[T]"></a>
+    </li><li name="com.spotify.scio.bigtable.BigtableRead" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BigtableReadextendsBigtableIO[com.google.bigtable.v2.Row]withProductwithSerializable"></a><a id="BigtableRead:BigtableRead"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigtable/index.html#BigtableOutput[T&lt;:com.google.bigtable.v2.Mutation]extendsTestIO[(com.google.protobuf.ByteString,Iterable[T])]withProductwithSerializable" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigtable/index.html#BigtableReadextendsBigtableIO[com.google.bigtable.v2.Row]withProductwithSerializable" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="package$$BigtableOutput.html"><span class="name">BigtableOutput</span></a><span class="tparams">[<span name="T">T &lt;: <span class="extype" name="com.google.bigtable.v2.Mutation">Mutation</span></span>]</span><span class="params">(<span name="projectId">projectId: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="instanceId">instanceId: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="tableId">tableId: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="../testing/TestIO.html" class="extype" name="com.spotify.scio.testing.TestIO">TestIO</a>[(<span class="extype" name="com.google.protobuf.ByteString">ByteString</span>, <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.spotify.scio.bigtable.BigtableOutput.T">T</span>])] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="BigtableRead.html"><span class="name">BigtableRead</span></a><span class="params">(<span name="bigtableOptions">bigtableOptions: <span class="extype" name="com.google.cloud.bigtable.config.BigtableOptions">BigtableOptions</span></span>, <span name="tableId">tableId: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="BigtableIO.html" class="extype" name="com.spotify.scio.bigtable.BigtableIO">BigtableIO</a>[<span class="extype" name="com.google.bigtable.v2.Row">Row</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -616,7 +640,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Enhanced version of SCollection with Bigtable methods." href="package$$BigtableSCollection.html"><span class="name">BigtableSCollection</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
+        <a title="Enhanced version of SCollection with Bigtable methods." href="package$$BigtableSCollection.html"><span class="name">BigtableSCollection</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
       </span>
       
       <p class="shortcomment cmt">Enhanced version of <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a> with Bigtable methods.</p>
@@ -632,7 +656,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Enhanced version of ScioContext with Bigtable methods." href="package$$BigtableScioContext.html"><span class="name">BigtableScioContext</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
+        <a title="Enhanced version of ScioContext with Bigtable methods." href="package$$BigtableScioContext.html"><span class="name">BigtableScioContext</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
       </span>
       
       <p class="shortcomment cmt">Enhanced version of <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a> with Bigtable methods.</p>
@@ -648,7 +672,23 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="BigtableUtil.html"><span class="name">BigtableUtil</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="" href="BigtableUtil.html"><span class="name">BigtableUtil</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.bigtable.BigtableWrite" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BigtableWrite[T]extendsBigtableIO[(com.google.protobuf.ByteString,Iterable[T])]withProductwithSerializable"></a><a id="BigtableWrite[T]:BigtableWrite[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigtable/index.html#BigtableWrite[T]extendsBigtableIO[(com.google.protobuf.ByteString,Iterable[T])]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="BigtableWrite.html"><span class="name">BigtableWrite</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="bigtableOptions">bigtableOptions: <span class="extype" name="com.google.cloud.bigtable.config.BigtableOptions">BigtableOptions</span></span>, <span name="tableId">tableId: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ev">ev: <span class="extype" name="scala.Predef.&lt;:&lt;">&lt;:&lt;</span>[<span class="extype" name="com.spotify.scio.bigtable.BigtableWrite.T">T</span>, <span class="extype" name="com.google.bigtable.v2.Mutation">Mutation</span>]</span>)</span><span class="result"> extends <a href="BigtableIO.html" class="extype" name="com.spotify.scio.bigtable.BigtableIO">BigtableIO</a>[(<span class="extype" name="com.google.protobuf.ByteString">ByteString</span>, <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.spotify.scio.bigtable.BigtableWrite.T">T</span>])] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -664,7 +704,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="ChannelPoolCreator.html"><span class="name">ChannelPoolCreator</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="" href="ChannelPoolCreator.html"><span class="name">ChannelPoolCreator</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -680,7 +720,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Enhanced version of Row with convenience methods." href="package$$RichRow.html"><span class="name">RichRow</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
+        <a title="Enhanced version of Row with convenience methods." href="package$$RichRow.html"><span class="name">RichRow</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
       </span>
       
       <p class="shortcomment cmt">Enhanced version of <code>Row</code> with convenience methods.</p>
@@ -692,7 +732,55 @@ detects the query's dialect. To override this, start the query with either <code
         <div class="values members">
               <h3>Value Members</h3>
               <ol>
-                <li name="com.spotify.scio.bigtable.Mutations" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+                <li name="com.spotify.scio.bigtable.BigtableIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BigtableIO"></a><a id="BigtableIO:BigtableIO"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigtable/index.html#BigtableIO" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="BigtableIO$.html"><span class="name">BigtableIO</span></a>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.bigtable.BigtableRead" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BigtableRead"></a><a id="BigtableRead:BigtableRead"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigtable/index.html#BigtableRead" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="BigtableRead$.html"><span class="name">BigtableRead</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.bigtable.BigtableWrite" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BigtableWrite"></a><a id="BigtableWrite:BigtableWrite"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigtable/index.html#BigtableWrite" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="BigtableWrite$.html"><span class="name">BigtableWrite</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.bigtable.Mutations" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="Mutations"></a><a id="Mutations:Mutations"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/bigtable/index.html#Mutations" title="Permalink">
@@ -751,9 +839,9 @@ detects the query's dialect. To override this, start the query with either <code
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

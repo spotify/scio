@@ -154,6 +154,10 @@
                         <a class="class" href="package$$ParquetAvroFile.html" title=""></a>
                         <a href="package$$ParquetAvroFile.html" title="">ParquetAvroFile</a>
                       </li><li class="current-entities indented5">
+                        <a class="object" href="ParquetAvroIO$.html" title=""></a>
+                        <a class="class" href="ParquetAvroIO.html" title=""></a>
+                        <a href="ParquetAvroIO.html" title="">ParquetAvroIO</a>
+                      </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="package$$ParquetAvroSCollection.html" title="Enhanced version of SCollection with Parquet Avro methods."></a>
                         <a href="package$$ParquetAvroSCollection.html" title="Enhanced version of SCollection with Parquet Avro methods.">ParquetAvroSCollection</a>
@@ -165,6 +169,10 @@
                         <span class="separator"></span>
                         <a class="class" href="ParquetAvroSink.html" title=""></a>
                         <a href="ParquetAvroSink.html" title="">ParquetAvroSink</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="class" href="ParquetAvroTap.html" title=""></a>
+                        <a href="ParquetAvroTap.html" title="">ParquetAvroTap</a>
                       </li>
               </ul>
             </div>
@@ -197,7 +205,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -257,23 +265,39 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="package$$ParquetAvroFile.html"><span class="name">ParquetAvroFile</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="" href="package$$ParquetAvroFile.html"><span class="name">ParquetAvroFile</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
-    </li><li name="com.spotify.scio.parquet.avro.ParquetAvroSCollection" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="ParquetAvroSCollection[T]extendsAnyVal"></a><a id="ParquetAvroSCollection[T]:ParquetAvroSCollection[T]"></a>
+    </li><li name="com.spotify.scio.parquet.avro.ParquetAvroIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ParquetAvroIO[T]extendsScioIO[T]withProductwithSerializable"></a><a id="ParquetAvroIO[T]:ParquetAvroIO[T]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/parquet/avro/index.html#ParquetAvroSCollection[T]extendsAnyVal" title="Permalink">
+      <a href="../../../../../com/spotify/scio/parquet/avro/index.html#ParquetAvroIO[T]extendsScioIO[T]withProductwithSerializable" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier">implicit final </span>
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="ParquetAvroIO.html"><span class="name">ParquetAvroIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$1">evidence$1: <a href="http://www.scala-lang.org/api/2.12.7/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroIO.T">T</span>]</span>, <span name="evidence$2">evidence$2: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroIO.T">T</span>]</span>)</span><span class="result"> extends <a href="../../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.parquet.avro.ParquetAvroSCollection" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ParquetAvroSCollection[T]extendsAnyRef"></a><a id="ParquetAvroSCollection[T]:ParquetAvroSCollection[T]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/parquet/avro/index.html#ParquetAvroSCollection[T]extendsAnyRef" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Enhanced version of SCollection with Parquet Avro methods." href="package$$ParquetAvroSCollection.html"><span class="name">ParquetAvroSCollection</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
+        <a title="Enhanced version of SCollection with Parquet Avro methods." href="package$$ParquetAvroSCollection.html"><span class="name">ParquetAvroSCollection</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Enhanced version of <a href="../../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a> with Parquet Avro
@@ -290,14 +314,14 @@ methods.</p>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Enhanced version of ScioContext with Parquet Avro methods." href="package$$ParquetAvroScioContext.html"><span class="name">ParquetAvroScioContext</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
+        <a title="Enhanced version of ScioContext with Parquet Avro methods." href="package$$ParquetAvroScioContext.html"><span class="name">ParquetAvroScioContext</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
       </span>
       
       <p class="shortcomment cmt">Enhanced version of <a href="../../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a> with Parquet Avro methods.</p>
     </li><li name="com.spotify.scio.parquet.avro.ParquetAvroSink" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="ParquetAvroSink[T]extendsHadoopFileBasedSink[T,Void,T]"></a><a id="ParquetAvroSink[T]:ParquetAvroSink[T]"></a>
+      <a id="ParquetAvroSink[T]extendsFileBasedSink[T,Void,T]"></a><a id="ParquetAvroSink[T]:ParquetAvroSink[T]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/parquet/avro/index.html#ParquetAvroSink[T]extendsHadoopFileBasedSink[T,Void,T]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/parquet/avro/index.html#ParquetAvroSink[T]extendsFileBasedSink[T,Void,T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -306,7 +330,23 @@ methods.</p>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="ParquetAvroSink.html"><span class="name">ParquetAvroSink</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="org.apache.beam.sdk.io.HadoopFileBasedSink">HadoopFileBasedSink</span>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>, <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Void.html#java.lang.Void" class="extype" name="java.lang.Void">Void</a>, <span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>]</span>
+        <a title="" href="ParquetAvroSink.html"><span class="name">ParquetAvroSink</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="org.apache.beam.sdk.io.FileBasedSink">FileBasedSink</span>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>, <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Void.html#java.lang.Void" class="extype" name="java.lang.Void">Void</a>, <span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.parquet.avro.ParquetAvroTap" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ParquetAvroTap[A,T]extendsTap[T]withProductwithSerializable"></a><a id="ParquetAvroTap[A,T]:ParquetAvroTap[A,T]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/parquet/avro/index.html#ParquetAvroTap[A,T]extendsTap[T]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="ParquetAvroTap.html"><span class="name">ParquetAvroTap</span></a><span class="tparams">[<span name="A">A</span>, <span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="params">params: <a href="ParquetAvroIO$$ReadParam.html" class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroIO.ReadParam">ReadParam</a>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroTap.A">A</span>, <span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroTap.T">T</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$5">evidence$5: <a href="http://www.scala-lang.org/api/2.12.7/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroTap.T">T</span>]</span>, <span name="evidence$6">evidence$6: <a href="../../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroTap.T">T</span>]</span>)</span><span class="result"> extends <a href="../../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroTap.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -366,6 +406,22 @@ methods.</p>
       </span>
       
       
+    </li><li name="com.spotify.scio.parquet.avro.ParquetAvroIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ParquetAvroIO"></a><a id="ParquetAvroIO:ParquetAvroIO"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/parquet/avro/index.html#ParquetAvroIO" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="ParquetAvroIO$.html"><span class="name">ParquetAvroIO</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
     </li>
               </ol>
             </div>
@@ -377,9 +433,9 @@ methods.</p>
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

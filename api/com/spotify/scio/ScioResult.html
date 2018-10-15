@@ -152,9 +152,9 @@
 <a href="https://cloud.google.com/bigquery/docs/reference/legacy-sql" target="_blank">legacy</a> and
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/" target="_blank">standard</a>.
 APIs that take a BigQuery query string as argument, e.g.
-<a href="bigquery/BigQueryClient.html#getQueryRows(sqlQuery:String,flattenResults:Boolean):Iterator[com.spotify.scio.bigquery.TableRow]" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getQueryRows">BigQueryClient.getQueryRows</a>,
-<a href="bigquery/BigQueryClient.html#getQuerySchema(sqlQuery:String):com.google.api.services.bigquery.model.TableSchema" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getQuerySchema">BigQueryClient.getQuerySchema</a>,
-<a href="bigquery/BigQueryClient.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getTypedRows">BigQueryClient.getTypedRows</a> and
+<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.rows">com.spotify.scio.bigquery.client.BigQuery.query.rows</span>,
+<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.schema">com.spotify.scio.bigquery.client.BigQuery.query.schema</span>,
+<a href="bigquery/client/BigQuery.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.client.BigQuery#getTypedRows">com.spotify.scio.bigquery.client.BigQuery.getTypedRows</a> and
 <a href="bigquery/types/BigQueryType$$fromQuery.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.fromQuery">BigQueryType.fromQuery</a>, automatically
 detects the query's dialect. To override this, start the query with either <code>#legacysql</code> or
 <code>#standardsql</code> comment line.
@@ -446,6 +446,10 @@ detects the query's dialect. To override this, start the query with either <code
                         <a href="ContextAndArgs$.html" title="Convenience object for creating ScioContext and Args.">ContextAndArgs</a>
                       </li><li class="current-entities indented3">
                         <span class="separator"></span>
+                        <a class="object" href="CoreSysProps$.html" title=""></a>
+                        <a href="CoreSysProps$.html" title="">CoreSysProps</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
                         <a class="class" href="DistCacheScioContext.html" title="An enhanced ScioContext with distributed cache features."></a>
                         <a href="DistCacheScioContext.html" title="An enhanced ScioContext with distributed cache features.">DistCacheScioContext</a>
                       </li><li class="current-entities indented3">
@@ -474,12 +478,24 @@ detects the query's dialect. To override this, start the query with either <code
                         <a href="" title="Represent a Scio pipeline result.">ScioResult</a>
                       </li><li class="current-entities indented3">
                         <span class="separator"></span>
+                        <a class="class" href="SysProp.html" title=""></a>
+                        <a href="SysProp.html" title="">SysProp</a>
+                      </li><li class="current-entities indented3">
+                        <a class="object" href="SysProps$.html" title=""></a>
+                        <a class="trait" href="SysProps.html" title=""></a>
+                        <a href="SysProps.html" title="">SysProps</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
                         <a class="class" href="package$$WaitableFutureTap.html" title="Wait for Tap to be available and get Tap reference from Future."></a>
                         <a href="package$$WaitableFutureTap.html" title="Wait for Tap to be available and get Tap reference from Future.">WaitableFutureTap</a>
                       </li><li class="current-entities indented3">
                         <span class="separator"></span>
                         <a class="class" href="package$$WaitableNestedFutureTap.html" title="Wait for nested Tap to be available, flatten result and get Tap reference from Future."></a>
                         <a href="package$$WaitableNestedFutureTap.html" title="Wait for nested Tap to be available, flatten result and get Tap reference from Future.">WaitableNestedFutureTap</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="class" href="registerSysProps.html" title=""></a>
+                        <a href="registerSysProps.html" title="">registerSysProps</a>
                       </li>
               </ul>
             </div>
@@ -503,7 +519,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">ScioResult</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">ScioResult</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       </h4>
 
@@ -512,7 +528,7 @@ detects the query's dialect. To override this, start the query with either <code
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -574,7 +590,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">finalState</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<span class="extype" name="org.apache.beam.sdk.PipelineResult.State">State</span>]</span>
+        <span class="name">finalState</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<span class="extype" name="org.apache.beam.sdk.PipelineResult.State">State</span>]</span>
       </span>
       
       <p class="shortcomment cmt"><code>Future</code> for pipeline's final state.</p><div class="fullcomment"><div class="comment cmt"><p><code>Future</code> for pipeline's final state. The <code>Future</code> will be completed once the pipeline
@@ -614,7 +630,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -630,7 +646,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -646,7 +662,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -662,7 +678,7 @@ completes successfully.
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">allCounters</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/MetricName.html#org.apache.beam.sdk.metrics.MetricName" class="extype" name="org.apache.beam.sdk.metrics.MetricName">MetricName</a>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]]</span>
+        <span class="name">allCounters</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/MetricName.html#org.apache.beam.sdk.metrics.MetricName" class="extype" name="org.apache.beam.sdk.metrics.MetricName">MetricName</a>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="http://www.scala-lang.org/api/2.12.7/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]]</span>
       </span>
       
       <p class="shortcomment cmt">Retrieve aggregated values of all counters from the pipeline.</p>
@@ -678,7 +694,7 @@ completes successfully.
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">allCountersAtSteps</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/MetricName.html#org.apache.beam.sdk.metrics.MetricName" class="extype" name="org.apache.beam.sdk.metrics.MetricName">MetricName</a>, <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]]]</span>
+        <span class="name">allCountersAtSteps</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/MetricName.html#org.apache.beam.sdk.metrics.MetricName" class="extype" name="org.apache.beam.sdk.metrics.MetricName">MetricName</a>, <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="http://www.scala-lang.org/api/2.12.7/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]]]</span>
       </span>
       
       <p class="shortcomment cmt">Retrieve per step values of all counters from the pipeline.</p>
@@ -694,7 +710,7 @@ completes successfully.
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">allDistributions</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/MetricName.html#org.apache.beam.sdk.metrics.MetricName" class="extype" name="org.apache.beam.sdk.metrics.MetricName">MetricName</a>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/DistributionResult.html#org.apache.beam.sdk.metrics.DistributionResult" class="extype" name="org.apache.beam.sdk.metrics.DistributionResult">DistributionResult</a>]]</span>
+        <span class="name">allDistributions</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/MetricName.html#org.apache.beam.sdk.metrics.MetricName" class="extype" name="org.apache.beam.sdk.metrics.MetricName">MetricName</a>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/DistributionResult.html#org.apache.beam.sdk.metrics.DistributionResult" class="extype" name="org.apache.beam.sdk.metrics.DistributionResult">DistributionResult</a>]]</span>
       </span>
       
       <p class="shortcomment cmt">Retrieve aggregated values of all distributions from the pipeline.</p>
@@ -710,7 +726,7 @@ completes successfully.
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">allDistributionsAtSteps</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/MetricName.html#org.apache.beam.sdk.metrics.MetricName" class="extype" name="org.apache.beam.sdk.metrics.MetricName">MetricName</a>, <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/DistributionResult.html#org.apache.beam.sdk.metrics.DistributionResult" class="extype" name="org.apache.beam.sdk.metrics.DistributionResult">DistributionResult</a>]]]</span>
+        <span class="name">allDistributionsAtSteps</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/MetricName.html#org.apache.beam.sdk.metrics.MetricName" class="extype" name="org.apache.beam.sdk.metrics.MetricName">MetricName</a>, <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/DistributionResult.html#org.apache.beam.sdk.metrics.DistributionResult" class="extype" name="org.apache.beam.sdk.metrics.DistributionResult">DistributionResult</a>]]]</span>
       </span>
       
       <p class="shortcomment cmt">Retrieve per step values of all distributions from the pipeline.</p>
@@ -726,7 +742,7 @@ completes successfully.
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">allGauges</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/MetricName.html#org.apache.beam.sdk.metrics.MetricName" class="extype" name="org.apache.beam.sdk.metrics.MetricName">MetricName</a>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/GaugeResult.html#org.apache.beam.sdk.metrics.GaugeResult" class="extype" name="org.apache.beam.sdk.metrics.GaugeResult">GaugeResult</a>]]</span>
+        <span class="name">allGauges</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/MetricName.html#org.apache.beam.sdk.metrics.MetricName" class="extype" name="org.apache.beam.sdk.metrics.MetricName">MetricName</a>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/GaugeResult.html#org.apache.beam.sdk.metrics.GaugeResult" class="extype" name="org.apache.beam.sdk.metrics.GaugeResult">GaugeResult</a>]]</span>
       </span>
       
       <p class="shortcomment cmt">Retrieve latest values of all gauges from the pipeline.</p>
@@ -742,7 +758,7 @@ completes successfully.
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">allGaugesAtSteps</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/MetricName.html#org.apache.beam.sdk.metrics.MetricName" class="extype" name="org.apache.beam.sdk.metrics.MetricName">MetricName</a>, <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/GaugeResult.html#org.apache.beam.sdk.metrics.GaugeResult" class="extype" name="org.apache.beam.sdk.metrics.GaugeResult">GaugeResult</a>]]]</span>
+        <span class="name">allGaugesAtSteps</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/MetricName.html#org.apache.beam.sdk.metrics.MetricName" class="extype" name="org.apache.beam.sdk.metrics.MetricName">MetricName</a>, <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/GaugeResult.html#org.apache.beam.sdk.metrics.GaugeResult" class="extype" name="org.apache.beam.sdk.metrics.GaugeResult">GaugeResult</a>]]]</span>
       </span>
       
       <p class="shortcomment cmt">Retrieve aggregated values of all gauges from the pipeline.</p>
@@ -758,7 +774,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">as</span><span class="tparams">[<span name="T">T &lt;: <a href="RunnerResult.html" class="extype" name="com.spotify.scio.RunnerResult">RunnerResult</a></span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.ScioResult.as.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="com.spotify.scio.ScioResult.as.T">T</span></span>
+        <span class="name">as</span><span class="tparams">[<span name="T">T &lt;: <a href="RunnerResult.html" class="extype" name="com.spotify.scio.RunnerResult">RunnerResult</a></span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.ScioResult.as.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="com.spotify.scio.ScioResult.as.T">T</span></span>
       </span>
       
       <p class="shortcomment cmt">Get a Beam runner specific result.</p>
@@ -790,7 +806,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -814,7 +830,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">counter</span><span class="params">(<span name="c">c: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/Counter.html#org.apache.beam.sdk.metrics.Counter" class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</a></span>)</span><span class="result">: <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
+        <span class="name">counter</span><span class="params">(<span name="c">c: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/Counter.html#org.apache.beam.sdk.metrics.Counter" class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</a></span>)</span><span class="result">: <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="http://www.scala-lang.org/api/2.12.7/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Retrieve aggregated value of a single counter from the pipeline.</p>
@@ -830,7 +846,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">counterAtSteps</span><span class="params">(<span name="c">c: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/Counter.html#org.apache.beam.sdk.metrics.Counter" class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</a></span>)</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]]</span>
+        <span class="name">counterAtSteps</span><span class="params">(<span name="c">c: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/Counter.html#org.apache.beam.sdk.metrics.Counter" class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</a></span>)</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="http://www.scala-lang.org/api/2.12.7/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]]</span>
       </span>
       
       <p class="shortcomment cmt">Retrieve per step values of a single counter from the pipeline.</p>
@@ -846,7 +862,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">distribution</span><span class="params">(<span name="d">d: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/Distribution.html#org.apache.beam.sdk.metrics.Distribution" class="extype" name="org.apache.beam.sdk.metrics.Distribution">Distribution</a></span>)</span><span class="result">: <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/DistributionResult.html#org.apache.beam.sdk.metrics.DistributionResult" class="extype" name="org.apache.beam.sdk.metrics.DistributionResult">DistributionResult</a>]</span>
+        <span class="name">distribution</span><span class="params">(<span name="d">d: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/Distribution.html#org.apache.beam.sdk.metrics.Distribution" class="extype" name="org.apache.beam.sdk.metrics.Distribution">Distribution</a></span>)</span><span class="result">: <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/DistributionResult.html#org.apache.beam.sdk.metrics.DistributionResult" class="extype" name="org.apache.beam.sdk.metrics.DistributionResult">DistributionResult</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Retrieve aggregated value of a single distribution from the pipeline.</p>
@@ -862,7 +878,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">distributionAtSteps</span><span class="params">(<span name="d">d: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/Distribution.html#org.apache.beam.sdk.metrics.Distribution" class="extype" name="org.apache.beam.sdk.metrics.Distribution">Distribution</a></span>)</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/DistributionResult.html#org.apache.beam.sdk.metrics.DistributionResult" class="extype" name="org.apache.beam.sdk.metrics.DistributionResult">DistributionResult</a>]]</span>
+        <span class="name">distributionAtSteps</span><span class="params">(<span name="d">d: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/Distribution.html#org.apache.beam.sdk.metrics.Distribution" class="extype" name="org.apache.beam.sdk.metrics.Distribution">Distribution</a></span>)</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/DistributionResult.html#org.apache.beam.sdk.metrics.DistributionResult" class="extype" name="org.apache.beam.sdk.metrics.DistributionResult">DistributionResult</a>]]</span>
       </span>
       
       <p class="shortcomment cmt">Retrieve per step values of a single distribution from the pipeline.</p>
@@ -878,7 +894,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -894,7 +910,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -910,7 +926,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -932,7 +948,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">gauge</span><span class="params">(<span name="g">g: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/Gauge.html#org.apache.beam.sdk.metrics.Gauge" class="extype" name="org.apache.beam.sdk.metrics.Gauge">Gauge</a></span>)</span><span class="result">: <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/GaugeResult.html#org.apache.beam.sdk.metrics.GaugeResult" class="extype" name="org.apache.beam.sdk.metrics.GaugeResult">GaugeResult</a>]</span>
+        <span class="name">gauge</span><span class="params">(<span name="g">g: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/Gauge.html#org.apache.beam.sdk.metrics.Gauge" class="extype" name="org.apache.beam.sdk.metrics.Gauge">Gauge</a></span>)</span><span class="result">: <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/GaugeResult.html#org.apache.beam.sdk.metrics.GaugeResult" class="extype" name="org.apache.beam.sdk.metrics.GaugeResult">GaugeResult</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Retrieve latest value of a single gauge from the pipeline.</p>
@@ -948,7 +964,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">gaugeAtSteps</span><span class="params">(<span name="g">g: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/Gauge.html#org.apache.beam.sdk.metrics.Gauge" class="extype" name="org.apache.beam.sdk.metrics.Gauge">Gauge</a></span>)</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/metrics/GaugeResult.html#org.apache.beam.sdk.metrics.GaugeResult" class="extype" name="org.apache.beam.sdk.metrics.GaugeResult">GaugeResult</a>]]</span>
+        <span class="name">gaugeAtSteps</span><span class="params">(<span name="g">g: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/Gauge.html#org.apache.beam.sdk.metrics.Gauge" class="extype" name="org.apache.beam.sdk.metrics.Gauge">Gauge</a></span>)</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <a href="metrics/package$$MetricValue.html" class="extype" name="com.spotify.scio.metrics.MetricValue">MetricValue</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/GaugeResult.html#org.apache.beam.sdk.metrics.GaugeResult" class="extype" name="org.apache.beam.sdk.metrics.GaugeResult">GaugeResult</a>]]</span>
       </span>
       
       <p class="shortcomment cmt">Retrieve per step values of a single gauge from the pipeline.</p>
@@ -964,7 +980,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getAwaitDuration</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/duration/Duration.html#scala.concurrent.duration.Duration" class="extype" name="scala.concurrent.duration.Duration">Duration</a></span>
+        <span class="name">getAwaitDuration</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/duration/Duration.html#scala.concurrent.duration.Duration" class="extype" name="scala.concurrent.duration.Duration">Duration</a></span>
       </span>
       
       <p class="shortcomment cmt">Get the timeout period of the Scio job.</p><div class="fullcomment"><div class="comment cmt"><p>Get the timeout period of the Scio job. Default to <code>Duration.Inf</code>.</p></div></div>
@@ -1015,7 +1031,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
@@ -1050,7 +1066,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isCompleted</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isCompleted</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <p class="shortcomment cmt">Whether the pipeline is completed.</p>
@@ -1066,7 +1082,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -1082,7 +1098,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isTest</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isTest</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <p class="shortcomment cmt">Whether this is the result of a test.</p>
@@ -1098,7 +1114,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1114,7 +1130,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1133,7 +1149,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1152,7 +1168,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">saveMetrics</span><span class="params">(<span name="filename">filename: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">saveMetrics</span><span class="params">(<span name="filename">filename: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <p class="shortcomment cmt">Save metrics of the finished pipeline to a file.</p>
@@ -1216,7 +1232,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1238,7 +1254,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1260,7 +1276,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1284,7 +1300,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">waitUntilDone</span><span class="params">(<span name="duration">duration: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/duration/Duration.html#scala.concurrent.duration.Duration" class="extype" name="scala.concurrent.duration.Duration">Duration</a> = <span class="symbol"><span class="name"><a href="#getAwaitDuration:scala.concurrent.duration.Duration">getAwaitDuration</a></span></span></span>, <span name="cancelJob">cancelJob: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a> = <span class="symbol">true</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.ScioResult">ScioResult</a></span>
+        <span class="name">waitUntilDone</span><span class="params">(<span name="duration">duration: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/duration/Duration.html#scala.concurrent.duration.Duration" class="extype" name="scala.concurrent.duration.Duration">Duration</a> = <span class="symbol"><span class="name"><a href="#getAwaitDuration:scala.concurrent.duration.Duration">getAwaitDuration</a></span></span></span>, <span name="cancelJob">cancelJob: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a> = <span class="symbol">true</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.ScioResult">ScioResult</a></span>
       </span>
       
       <p class="shortcomment cmt">Wait until the pipeline finishes with the State <code>DONE</code> (as opposed to <code>CANCELLED</code> or
@@ -1303,7 +1319,7 @@ completes successfully.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">waitUntilFinish</span><span class="params">(<span name="duration">duration: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/duration/Duration.html#scala.concurrent.duration.Duration" class="extype" name="scala.concurrent.duration.Duration">Duration</a> = <span class="symbol"><span class="name"><a href="#getAwaitDuration:scala.concurrent.duration.Duration">getAwaitDuration</a></span></span></span>, <span name="cancelJob">cancelJob: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a> = <span class="symbol">true</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.ScioResult">ScioResult</a></span>
+        <span class="name">waitUntilFinish</span><span class="params">(<span name="duration">duration: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/duration/Duration.html#scala.concurrent.duration.Duration" class="extype" name="scala.concurrent.duration.Duration">Duration</a> = <span class="symbol"><span class="name"><a href="#getAwaitDuration:scala.concurrent.duration.Duration">getAwaitDuration</a></span></span></span>, <span name="cancelJob">cancelJob: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a> = <span class="symbol">true</span></span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.ScioResult">ScioResult</a></span>
       </span>
       
       <p class="shortcomment cmt">Wait until the pipeline finishes.</p><div class="fullcomment"><div class="comment cmt"><p>Wait until the pipeline finishes. If timeout duration is exceeded and <code>cancelJob</code> is set,
@@ -1319,9 +1335,9 @@ cancel the internal <span class="extype" name="PipelineResult">PipelineResult</s
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

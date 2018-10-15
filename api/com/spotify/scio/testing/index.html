@@ -152,9 +152,9 @@
 <a href="https://cloud.google.com/bigquery/docs/reference/legacy-sql" target="_blank">legacy</a> and
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/" target="_blank">standard</a>.
 APIs that take a BigQuery query string as argument, e.g.
-<a href="../bigquery/BigQueryClient.html#getQueryRows(sqlQuery:String,flattenResults:Boolean):Iterator[com.spotify.scio.bigquery.TableRow]" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getQueryRows">BigQueryClient.getQueryRows</a>,
-<a href="../bigquery/BigQueryClient.html#getQuerySchema(sqlQuery:String):com.google.api.services.bigquery.model.TableSchema" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getQuerySchema">BigQueryClient.getQuerySchema</a>,
-<a href="../bigquery/BigQueryClient.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getTypedRows">BigQueryClient.getTypedRows</a> and
+<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.rows">com.spotify.scio.bigquery.client.BigQuery.query.rows</span>,
+<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.schema">com.spotify.scio.bigquery.client.BigQuery.query.schema</span>,
+<a href="../bigquery/client/BigQuery.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.client.BigQuery#getTypedRows">com.spotify.scio.bigquery.client.BigQuery.getTypedRows</a> and
 <a href="../bigquery/types/BigQueryType$$fromQuery.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.fromQuery">BigQueryType.fromQuery</a>, automatically
 detects the query's dialect. To override this, start the query with either <code>#legacysql</code> or
 <code>#standardsql</code> comment line.
@@ -385,24 +385,8 @@ detects the query's dialect. To override this, start the query with either <code
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="AvroIO.html" title=""></a>
-                        <a href="AvroIO.html" title="">AvroIO</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="BigQueryIO.html" title=""></a>
-                        <a href="BigQueryIO.html" title="">BigQueryIO</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="trait" href="BigTableMatchers.html" title="Trait with ScalaTest Matchers for SCollections specific to BigTable output."></a>
-                        <a href="BigTableMatchers.html" title="Trait with ScalaTest Matchers for SCollections specific to BigTable output.">BigTableMatchers</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="CustomIO.html" title=""></a>
-                        <a href="CustomIO.html" title="">CustomIO</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="DatastoreIO.html" title=""></a>
-                        <a href="DatastoreIO.html" title="">DatastoreIO</a>
+                        <a class="trait" href="BigtableMatchers.html" title="Trait with ScalaTest Matchers for SCollections specific to Bigtable output."></a>
+                        <a href="BigtableMatchers.html" title="Trait with ScalaTest Matchers for SCollections specific to Bigtable output.">BigtableMatchers</a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="DistCacheIO$.html" title=""></a>
                         <a class="class" href="DistCacheIO.html" title=""></a>
@@ -413,24 +397,12 @@ detects the query's dialect. To override this, start the query with either <code
                         <a href="JobTest$.html" title="Set up a Scio job for end-to-end unit testing.">JobTest</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="ObjectFileIO.html" title=""></a>
-                        <a href="ObjectFileIO.html" title="">ObjectFileIO</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
                         <a class="trait" href="PipelineSpec.html" title="Trait for unit testing pipelines."></a>
                         <a href="PipelineSpec.html" title="Trait for unit testing pipelines.">PipelineSpec</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="PipelineTestUtils.html" title="Trait with utility methods for unit testing pipelines."></a>
                         <a href="PipelineTestUtils.html" title="Trait with utility methods for unit testing pipelines.">PipelineTestUtils</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="ProtobufIO.html" title=""></a>
-                        <a href="ProtobufIO.html" title="">ProtobufIO</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="PubsubIO.html" title=""></a>
-                        <a href="PubsubIO.html" title="">PubsubIO</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="RunEnforcementJobTest.html" title="Trait that enforces JobTest.Builder.run is called."></a>
@@ -441,20 +413,12 @@ detects the query's dialect. To override this, start the query with either <code
                         <a href="SCollectionMatchers.html" title="Trait with ScalaTest Matchers for SCollections.">SCollectionMatchers</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="TableRowJsonIO.html" title=""></a>
-                        <a href="TableRowJsonIO.html" title="">TableRowJsonIO</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="TestIO.html" title=""></a>
-                        <a href="TestIO.html" title="">TestIO</a>
+                        <a class="trait" href="ScioIOSpec.html" title="Trait for unit testing ScioIO."></a>
+                        <a href="ScioIOSpec.html" title="Trait for unit testing ScioIO.">ScioIOSpec</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="package$$TestStreamScioContext.html" title="Enhanced version of ScioContext with streaming methods."></a>
                         <a href="package$$TestStreamScioContext.html" title="Enhanced version of ScioContext with streaming methods.">TestStreamScioContext</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="TextIO.html" title=""></a>
-                        <a href="TextIO.html" title="">TextIO</a>
                       </li><li name="com.spotify.scio.transforms" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="transforms"></a><a id="transforms:transforms"></a>
       <span class="permalink">
@@ -536,7 +500,7 @@ detects the query's dialect. To override this, start the query with either <code
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -584,42 +548,10 @@ detects the query's dialect. To override this, start the query with either <code
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.spotify.scio.testing.AvroIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="AvroIO[T]extendsTestIO[T]withProductwithSerializable"></a><a id="AvroIO[T]:AvroIO[T]"></a>
+              <ol><li name="com.spotify.scio.testing.BigtableMatchers" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="BigtableMatchersextendsSCollectionMatchers"></a><a id="BigtableMatchers:BigtableMatchers"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/index.html#AvroIO[T]extendsTestIO[T]withProductwithSerializable" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="AvroIO.html"><span class="name">AvroIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="TestIO.html" class="extype" name="com.spotify.scio.testing.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.testing.AvroIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.testing.BigQueryIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="BigQueryIO[T]extendsTestIO[T]withProductwithSerializable"></a><a id="BigQueryIO[T]:BigQueryIO[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/index.html#BigQueryIO[T]extendsTestIO[T]withProductwithSerializable" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="BigQueryIO.html"><span class="name">BigQueryIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="tableSpecOrQuery">tableSpecOrQuery: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="TestIO.html" class="extype" name="com.spotify.scio.testing.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.testing.BigQueryIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.testing.BigTableMatchers" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="BigTableMatchersextendsSCollectionMatchers"></a><a id="BigTableMatchers:BigTableMatchers"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/index.html#BigTableMatchersextendsSCollectionMatchers" title="Permalink">
+      <a href="../../../../com/spotify/scio/testing/index.html#BigtableMatchersextendsSCollectionMatchers" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -628,43 +560,11 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Trait with ScalaTest Matchers for SCollections specific to BigTable output." href="BigTableMatchers.html"><span class="name">BigTableMatchers</span></a><span class="result"> extends <a href="SCollectionMatchers.html" class="extype" name="com.spotify.scio.testing.SCollectionMatchers">SCollectionMatchers</a></span>
+        <a title="Trait with ScalaTest Matchers for SCollections specific to Bigtable output." href="BigtableMatchers.html"><span class="name">BigtableMatchers</span></a><span class="result"> extends <a href="SCollectionMatchers.html" class="extype" name="com.spotify.scio.testing.SCollectionMatchers">SCollectionMatchers</a></span>
       </span>
       
       <p class="shortcomment cmt">Trait with ScalaTest <a href="http://doc.scalatest.org/3.0.0/org/scalatest/matchers/Matcher.html" class="extype" name="org.scalatest.matchers.Matcher">Matcher</a>s for
-<a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>s specific to BigTable output.</p>
-    </li><li name="com.spotify.scio.testing.CustomIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="CustomIO[T]extendsTestIO[T]withProductwithSerializable"></a><a id="CustomIO[T]:CustomIO[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/index.html#CustomIO[T]extendsTestIO[T]withProductwithSerializable" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="CustomIO.html"><span class="name">CustomIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="TestIO.html" class="extype" name="com.spotify.scio.testing.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.testing.CustomIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.testing.DatastoreIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="DatastoreIOextendsTestIO[com.google.datastore.v1.Entity]withProductwithSerializable"></a><a id="DatastoreIO:DatastoreIO"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/index.html#DatastoreIOextendsTestIO[com.google.datastore.v1.Entity]withProductwithSerializable" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="DatastoreIO.html"><span class="name">DatastoreIO</span></a><span class="params">(<span name="projectId">projectId: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="query">query: <span class="extype" name="com.google.datastore.v1.Query">Query</span> = <span class="symbol">null</span></span>, <span name="namespace">namespace: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>)</span><span class="result"> extends <a href="TestIO.html" class="extype" name="com.spotify.scio.testing.TestIO">TestIO</a>[<span class="extype" name="com.google.datastore.v1.Entity">Entity</span>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
-      </span>
-      
-      
+<a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>s specific to Bigtable output.</p>
     </li><li name="com.spotify.scio.testing.DistCacheIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="DistCacheIO[T]extendsProductwithSerializable"></a><a id="DistCacheIO[T]:DistCacheIO[T]"></a>
       <span class="permalink">
@@ -677,23 +577,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="DistCacheIO.html"><span class="name">DistCacheIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="uri">uri: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.testing.ObjectFileIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="ObjectFileIO[T]extendsTestIO[T]withProductwithSerializable"></a><a id="ObjectFileIO[T]:ObjectFileIO[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/index.html#ObjectFileIO[T]extendsTestIO[T]withProductwithSerializable" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="ObjectFileIO.html"><span class="name">ObjectFileIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="TestIO.html" class="extype" name="com.spotify.scio.testing.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.testing.ObjectFileIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="DistCacheIO.html"><span class="name">DistCacheIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="uri">uri: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -731,42 +615,10 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Trait with utility methods for unit testing pipelines." href="PipelineTestUtils.html"><span class="name">PipelineTestUtils</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Trait with utility methods for unit testing pipelines." href="PipelineTestUtils.html"><span class="name">PipelineTestUtils</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Trait with utility methods for unit testing pipelines.</p>
-    </li><li name="com.spotify.scio.testing.ProtobufIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="ProtobufIO[T]extendsTestIO[T]withProductwithSerializable"></a><a id="ProtobufIO[T]:ProtobufIO[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/index.html#ProtobufIO[T]extendsTestIO[T]withProductwithSerializable" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="ProtobufIO.html"><span class="name">ProtobufIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="TestIO.html" class="extype" name="com.spotify.scio.testing.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.testing.ProtobufIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
-      </span>
-      
-      
-    </li><li name="com.spotify.scio.testing.PubsubIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="PubsubIO[T]extendsTestIO[T]withProductwithSerializable"></a><a id="PubsubIO[T]:PubsubIO[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/index.html#PubsubIO[T]extendsTestIO[T]withProductwithSerializable" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="PubsubIO.html"><span class="name">PubsubIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="topic">topic: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="TestIO.html" class="extype" name="com.spotify.scio.testing.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.testing.PubsubIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
-      </span>
-      
-      
     </li><li name="com.spotify.scio.testing.RunEnforcementJobTest" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="RunEnforcementJobTestextendsFlatSpec"></a><a id="RunEnforcementJobTest:RunEnforcementJobTest"></a>
       <span class="permalink">
@@ -795,43 +647,27 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Trait with ScalaTest Matchers for SCollections." href="SCollectionMatchers.html"><span class="name">SCollectionMatchers</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Trait with ScalaTest Matchers for SCollections." href="SCollectionMatchers.html"><span class="name">SCollectionMatchers</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Trait with ScalaTest <a href="http://doc.scalatest.org/3.0.0/org/scalatest/matchers/Matcher.html" class="extype" name="org.scalatest.matchers.Matcher">Matcher</a>s for
 <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>s.</p>
-    </li><li name="com.spotify.scio.testing.TableRowJsonIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="TableRowJsonIOextendsTestIO[com.google.api.services.bigquery.model.TableRow]withProductwithSerializable"></a><a id="TableRowJsonIO:TableRowJsonIO"></a>
+    </li><li name="com.spotify.scio.testing.ScioIOSpec" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="ScioIOSpecextendsFlatSpecwithPipelineSpec"></a><a id="ScioIOSpec:ScioIOSpec"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/index.html#TableRowJsonIOextendsTestIO[com.google.api.services.bigquery.model.TableRow]withProductwithSerializable" title="Permalink">
+      <a href="../../../../com/spotify/scio/testing/index.html#ScioIOSpecextendsFlatSpecwithPipelineSpec" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">case class</span>
+        <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="TableRowJsonIO.html"><span class="name">TableRowJsonIO</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="TestIO.html" class="extype" name="com.spotify.scio.testing.TestIO">TestIO</a>[<a href="https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/com/google/api/services/bigquery/model/TableRow.html#com.google.api.services.bigquery.model.TableRow" class="extype" name="com.google.api.services.bigquery.model.TableRow">TableRow</a>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Trait for unit testing ScioIO." href="ScioIOSpec.html"><span class="name">ScioIOSpec</span></a><span class="result"> extends <a href="http://doc.scalatest.org/3.0.0/org/scalatest/FlatSpec.html#org.scalatest.FlatSpec" class="extype" name="org.scalatest.FlatSpec">FlatSpec</a> with <a href="PipelineSpec.html" class="extype" name="com.spotify.scio.testing.PipelineSpec">PipelineSpec</a></span>
       </span>
       
-      
-    </li><li name="com.spotify.scio.testing.TestIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="TestIO[+T]extendsAnyRef"></a><a id="TestIO[+T]:TestIO[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/index.html#TestIO[+T]extendsAnyRef" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="TestIO.html"><span class="name">TestIO</span></a><span class="tparams">[<span name="T">+T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
-      </span>
-      
-      
+      <p class="shortcomment cmt">Trait for unit testing <span class="extype" name="ScioIO">ScioIO</span>.</p>
     </li><li name="com.spotify.scio.testing.TestStreamScioContext" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="TestStreamScioContextextendsAnyVal"></a><a id="TestStreamScioContext:TestStreamScioContext"></a>
       <span class="permalink">
@@ -844,26 +680,10 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Enhanced version of ScioContext with streaming methods." href="package$$TestStreamScioContext.html"><span class="name">TestStreamScioContext</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
+        <a title="Enhanced version of ScioContext with streaming methods." href="package$$TestStreamScioContext.html"><span class="name">TestStreamScioContext</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
       </span>
       
       <p class="shortcomment cmt">Enhanced version of <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a> with streaming methods.</p>
-    </li><li name="com.spotify.scio.testing.TextIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="TextIOextendsTestIO[String]withProductwithSerializable"></a><a id="TextIO:TextIO"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/testing/index.html#TextIOextendsTestIO[String]withProductwithSerializable" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="TextIO.html"><span class="name">TextIO</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="TestIO.html" class="extype" name="com.spotify.scio.testing.TestIO">TestIO</a>[<span class="extype" name="scala.Predef.String">String</span>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
-      </span>
-      
-      
     </li></ol>
             </div>
 
@@ -884,7 +704,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">testStreamOf</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.testing.testStreamOf.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.beam.sdk.testing.TestStream.Builder">Builder</span>[<span class="extype" name="com.spotify.scio.testing.testStreamOf.T">T</span>]</span>
+        <span class="name">testStreamOf</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.testing.testStreamOf.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.apache.beam.sdk.testing.TestStream.Builder">Builder</span>[<span class="extype" name="com.spotify.scio.testing.testStreamOf.T">T</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Create a <code>TestStream.Builder</code> instance.</p>
@@ -900,7 +720,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="DistCacheIO$.html"><span class="name">DistCacheIO</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="DistCacheIO$.html"><span class="name">DistCacheIO</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -962,9 +782,9 @@ To be used in a <a href="PipelineSpec.html" class="extype" name="com.spotify.sci
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

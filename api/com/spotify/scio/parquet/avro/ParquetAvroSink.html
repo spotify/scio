@@ -154,6 +154,10 @@
                         <a class="class" href="package$$ParquetAvroFile.html" title=""></a>
                         <a href="package$$ParquetAvroFile.html" title="">ParquetAvroFile</a>
                       </li><li class="current-entities indented5">
+                        <a class="object" href="ParquetAvroIO$.html" title=""></a>
+                        <a class="class" href="ParquetAvroIO.html" title=""></a>
+                        <a href="ParquetAvroIO.html" title="">ParquetAvroIO</a>
+                      </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="package$$ParquetAvroSCollection.html" title="Enhanced version of SCollection with Parquet Avro methods."></a>
                         <a href="package$$ParquetAvroSCollection.html" title="Enhanced version of SCollection with Parquet Avro methods.">ParquetAvroSCollection</a>
@@ -165,6 +169,10 @@
                         <span class="separator"></span>
                         <a class="class" href="" title=""></a>
                         <a href="" title="">ParquetAvroSink</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="class" href="ParquetAvroTap.html" title=""></a>
+                        <a href="ParquetAvroTap.html" title="">ParquetAvroTap</a>
                       </li>
               </ul>
             </div>
@@ -188,7 +196,7 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">ParquetAvroSink</span><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="org.apache.beam.sdk.io.HadoopFileBasedSink">HadoopFileBasedSink</span>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>, <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Void.html#java.lang.Void" class="extype" name="java.lang.Void">Void</a>, <span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>]</span>
+        <span class="name">ParquetAvroSink</span><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="org.apache.beam.sdk.io.FileBasedSink">FileBasedSink</span>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>, <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Void.html#java.lang.Void" class="extype" name="java.lang.Void">Void</a>, <span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>]</span>
       </span>
       </h4>
 
@@ -197,7 +205,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><span class="extype" name="org.apache.beam.sdk.io.HadoopFileBasedSink">HadoopFileBasedSink</span>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>, <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Void.html#java.lang.Void" class="extype" name="java.lang.Void">Void</a>, <span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>], <a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/transforms/display/HasDisplayData.html#org.apache.beam.sdk.transforms.display.HasDisplayData" class="extype" name="org.apache.beam.sdk.transforms.display.HasDisplayData">HasDisplayData</a>, <a href="http://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html#java.io.Serializable" class="extype" name="java.io.Serializable">Serializable</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="org.apache.beam.sdk.io.FileBasedSink">FileBasedSink</span>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>, <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Void.html#java.lang.Void" class="extype" name="java.lang.Void">Void</a>, <span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>], <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/transforms/display/HasDisplayData.html#org.apache.beam.sdk.transforms.display.HasDisplayData" class="extype" name="org.apache.beam.sdk.transforms.display.HasDisplayData">HasDisplayData</a>, <a href="http://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html#java.io.Serializable" class="extype" name="java.io.Serializable">Serializable</a>, <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -223,7 +231,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.spotify.scio.parquet.avro.ParquetAvroSink"><span>ParquetAvroSink</span></li><li class="in" name="org.apache.beam.sdk.io.HadoopFileBasedSink"><span>HadoopFileBasedSink</span></li><li class="in" name="org.apache.beam.sdk.transforms.display.HasDisplayData"><span>HasDisplayData</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.spotify.scio.parquet.avro.ParquetAvroSink"><span>ParquetAvroSink</span></li><li class="in" name="org.apache.beam.sdk.io.FileBasedSink"><span>FileBasedSink</span></li><li class="in" name="org.apache.beam.sdk.transforms.display.HasDisplayData"><span>HasDisplayData</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -244,9 +252,9 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.spotify.scio.parquet.avro.ParquetAvroSink#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(baseOutputFileName:org.apache.beam.sdk.options.ValueProvider[org.apache.beam.sdk.io.fs.ResourceId],dynamicDestinations:org.apache.beam.sdk.io.FileBasedSink.DynamicDestinations[T,Void,T],schema:org.apache.avro.Schema,conf:org.apache.hadoop.conf.Configuration):com.spotify.scio.parquet.avro.ParquetAvroSink[T]"></a><a id="&lt;init&gt;:ParquetAvroSink[T]"></a>
+      <a id="&lt;init&gt;(baseOutputFileName:org.apache.beam.sdk.options.ValueProvider[org.apache.beam.sdk.io.fs.ResourceId],dynamicDestinations:org.apache.beam.sdk.io.FileBasedSink.DynamicDestinations[T,Void,T],schema:org.apache.avro.Schema,conf:org.apache.hadoop.conf.Configuration,compression:org.apache.parquet.hadoop.metadata.CompressionCodecName):com.spotify.scio.parquet.avro.ParquetAvroSink[T]"></a><a id="&lt;init&gt;:ParquetAvroSink[T]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/parquet/avro/ParquetAvroSink.html#&lt;init&gt;(baseOutputFileName:org.apache.beam.sdk.options.ValueProvider[org.apache.beam.sdk.io.fs.ResourceId],dynamicDestinations:org.apache.beam.sdk.io.FileBasedSink.DynamicDestinations[T,Void,T],schema:org.apache.avro.Schema,conf:org.apache.hadoop.conf.Configuration):com.spotify.scio.parquet.avro.ParquetAvroSink[T]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/parquet/avro/ParquetAvroSink.html#&lt;init&gt;(baseOutputFileName:org.apache.beam.sdk.options.ValueProvider[org.apache.beam.sdk.io.fs.ResourceId],dynamicDestinations:org.apache.beam.sdk.io.FileBasedSink.DynamicDestinations[T,Void,T],schema:org.apache.avro.Schema,conf:org.apache.hadoop.conf.Configuration,compression:org.apache.parquet.hadoop.metadata.CompressionCodecName):com.spotify.scio.parquet.avro.ParquetAvroSink[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -255,7 +263,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">ParquetAvroSink</span><span class="params">(<span name="baseOutputFileName">baseOutputFileName: <span class="extype" name="org.apache.beam.sdk.options.ValueProvider">ValueProvider</span>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/io/fs/ResourceId.html#org.apache.beam.sdk.io.fs.ResourceId" class="extype" name="org.apache.beam.sdk.io.fs.ResourceId">ResourceId</a>]</span>, <span name="dynamicDestinations">dynamicDestinations: <span class="extype" name="org.apache.beam.sdk.io.FileBasedSink.DynamicDestinations">DynamicDestinations</span>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>, <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Void.html#java.lang.Void" class="extype" name="java.lang.Void">Void</a>, <span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>]</span>, <span name="schema">schema: <span class="extype" name="org.apache.avro.Schema">Schema</span></span>, <span name="conf">conf: <span class="extype" name="org.apache.hadoop.conf.Configuration">Configuration</span></span>)</span>
+        <span class="name">ParquetAvroSink</span><span class="params">(<span name="baseOutputFileName">baseOutputFileName: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/options/ValueProvider.html#org.apache.beam.sdk.options.ValueProvider" class="extype" name="org.apache.beam.sdk.options.ValueProvider">ValueProvider</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/io/fs/ResourceId.html#org.apache.beam.sdk.io.fs.ResourceId" class="extype" name="org.apache.beam.sdk.io.fs.ResourceId">ResourceId</a>]</span>, <span name="dynamicDestinations">dynamicDestinations: <span class="extype" name="org.apache.beam.sdk.io.FileBasedSink.DynamicDestinations">DynamicDestinations</span>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>, <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Void.html#java.lang.Void" class="extype" name="java.lang.Void">Void</a>, <span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>]</span>, <span name="schema">schema: <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/Schema.html#org.apache.avro.Schema" class="extype" name="org.apache.avro.Schema">Schema</a></span>, <span name="conf">conf: <span class="extype" name="org.apache.hadoop.conf.Configuration">Configuration</span></span>, <span name="compression">compression: <span class="extype" name="org.apache.parquet.hadoop.metadata.CompressionCodecName">CompressionCodecName</span></span>)</span>
       </span>
       
       
@@ -281,7 +289,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -297,7 +305,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -313,7 +321,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -345,7 +353,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -358,9 +366,9 @@
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.parquet.avro.ParquetAvroSink#createWriteOperation" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="createWriteOperation():org.apache.beam.sdk.io.HadoopFileBasedSink.WriteOperation[Void,T]"></a><a id="createWriteOperation():WriteOperation[Void,T]"></a>
+      <a id="createWriteOperation():org.apache.beam.sdk.io.FileBasedSink.WriteOperation[Void,T]"></a><a id="createWriteOperation():WriteOperation[Void,T]"></a>
       <span class="permalink">
-      <a href="../../../../../com/spotify/scio/parquet/avro/ParquetAvroSink.html#createWriteOperation():org.apache.beam.sdk.io.HadoopFileBasedSink.WriteOperation[Void,T]" title="Permalink">
+      <a href="../../../../../com/spotify/scio/parquet/avro/ParquetAvroSink.html#createWriteOperation():org.apache.beam.sdk.io.FileBasedSink.WriteOperation[Void,T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -369,10 +377,10 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">createWriteOperation</span><span class="params">()</span><span class="result">: <span class="extype" name="org.apache.beam.sdk.io.HadoopFileBasedSink.WriteOperation">WriteOperation</span>[<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Void.html#java.lang.Void" class="extype" name="java.lang.Void">Void</a>, <span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>]</span>
+        <span class="name">createWriteOperation</span><span class="params">()</span><span class="result">: <span class="extype" name="org.apache.beam.sdk.io.FileBasedSink.WriteOperation">WriteOperation</span>[<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Void.html#java.lang.Void" class="extype" name="java.lang.Void">Void</a>, <span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink">ParquetAvroSink</a> → HadoopFileBasedSink</dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink">ParquetAvroSink</a> → FileBasedSink</dd></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
       <span class="permalink">
@@ -385,7 +393,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -401,7 +409,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -417,7 +425,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -446,7 +454,7 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="org.apache.beam.sdk.io.HadoopFileBasedSink#getDynamicDestinations" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="org.apache.beam.sdk.io.FileBasedSink#getDynamicDestinations" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getDynamicDestinations():org.apache.beam.sdk.io.FileBasedSink.DynamicDestinations[UserT,DestinationT,OutputT]"></a><a id="getDynamicDestinations():DynamicDestinations[T,Void,T]"></a>
       <span class="permalink">
       <a href="../../../../../com/spotify/scio/parquet/avro/ParquetAvroSink.html#getDynamicDestinations():org.apache.beam.sdk.io.FileBasedSink.DynamicDestinations[UserT,DestinationT,OutputT]" title="Permalink">
@@ -461,24 +469,8 @@
         <span class="name">getDynamicDestinations</span><span class="params">()</span><span class="result">: <span class="extype" name="org.apache.beam.sdk.io.FileBasedSink.DynamicDestinations">DynamicDestinations</span>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>, <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Void.html#java.lang.Void" class="extype" name="java.lang.Void">Void</a>, <span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>HadoopFileBasedSink</dd></dl></div>
-    </li><li name="com.spotify.scio.parquet.avro.ParquetAvroSink#getOutputFileHints" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="getOutputFileHints():org.apache.beam.sdk.io.FileBasedSink.OutputFileHints"></a><a id="getOutputFileHints():OutputFileHints"></a>
-      <span class="permalink">
-      <a href="../../../../../com/spotify/scio/parquet/avro/ParquetAvroSink.html#getOutputFileHints():org.apache.beam.sdk.io.FileBasedSink.OutputFileHints" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">getOutputFileHints</span><span class="params">()</span><span class="result">: <span class="extype" name="org.apache.beam.sdk.io.FileBasedSink.OutputFileHints">OutputFileHints</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink">ParquetAvroSink</a> → HadoopFileBasedSink</dd></dl></div>
-    </li><li name="org.apache.beam.sdk.io.HadoopFileBasedSink#getTempDirectoryProvider" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>FileBasedSink</dd></dl></div>
+    </li><li name="org.apache.beam.sdk.io.FileBasedSink#getTempDirectoryProvider" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getTempDirectoryProvider():org.apache.beam.sdk.options.ValueProvider[org.apache.beam.sdk.io.fs.ResourceId]"></a><a id="getTempDirectoryProvider():ValueProvider[ResourceId]"></a>
       <span class="permalink">
       <a href="../../../../../com/spotify/scio/parquet/avro/ParquetAvroSink.html#getTempDirectoryProvider():org.apache.beam.sdk.options.ValueProvider[org.apache.beam.sdk.io.fs.ResourceId]" title="Permalink">
@@ -490,10 +482,26 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getTempDirectoryProvider</span><span class="params">()</span><span class="result">: <span class="extype" name="org.apache.beam.sdk.options.ValueProvider">ValueProvider</span>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/io/fs/ResourceId.html#org.apache.beam.sdk.io.fs.ResourceId" class="extype" name="org.apache.beam.sdk.io.fs.ResourceId">ResourceId</a>]</span>
+        <span class="name">getTempDirectoryProvider</span><span class="params">()</span><span class="result">: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/options/ValueProvider.html#org.apache.beam.sdk.options.ValueProvider" class="extype" name="org.apache.beam.sdk.options.ValueProvider">ValueProvider</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/io/fs/ResourceId.html#org.apache.beam.sdk.io.fs.ResourceId" class="extype" name="org.apache.beam.sdk.io.fs.ResourceId">ResourceId</a>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>HadoopFileBasedSink</dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>FileBasedSink</dd></dl></div>
+    </li><li name="org.apache.beam.sdk.io.FileBasedSink#getWritableByteChannelFactory" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="getWritableByteChannelFactory():org.apache.beam.sdk.io.FileBasedSink.WritableByteChannelFactory"></a><a id="getWritableByteChannelFactory():WritableByteChannelFactory"></a>
+      <span class="permalink">
+      <a href="../../../../../com/spotify/scio/parquet/avro/ParquetAvroSink.html#getWritableByteChannelFactory():org.apache.beam.sdk.io.FileBasedSink.WritableByteChannelFactory" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getWritableByteChannelFactory</span><span class="params">()</span><span class="result">: <span class="extype" name="org.apache.beam.sdk.io.FileBasedSink.WritableByteChannelFactory">WritableByteChannelFactory</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../org/apache/beam/sdk/io/index.html" class="extype" name="org.apache.beam.sdk.io">org.apache.beam.sdk.io</a>] </dd><dt>Definition Classes</dt><dd>FileBasedSink</dd></dl></div>
     </li><li name="scala.AnyRef#hashCode" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="hashCode():Int"></a>
       <span class="permalink">
@@ -506,7 +514,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
@@ -525,7 +533,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -541,7 +549,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -557,7 +565,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -576,14 +584,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="org.apache.beam.sdk.io.HadoopFileBasedSink#populateDisplayData" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="org.apache.beam.sdk.io.FileBasedSink#populateDisplayData" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="populateDisplayData(builder:org.apache.beam.sdk.transforms.display.DisplayData.Builder):Unit"></a><a id="populateDisplayData(Builder):Unit"></a>
       <span class="permalink">
       <a href="../../../../../com/spotify/scio/parquet/avro/ParquetAvroSink.html#populateDisplayData(builder:org.apache.beam.sdk.transforms.display.DisplayData.Builder):Unit" title="Permalink">
@@ -595,10 +603,10 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">populateDisplayData</span><span class="params">(<span name="builder">builder: <span class="extype" name="org.apache.beam.sdk.transforms.display.DisplayData.Builder">Builder</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">populateDisplayData</span><span class="params">(<span name="builder">builder: <span class="extype" name="org.apache.beam.sdk.transforms.display.DisplayData.Builder">Builder</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>HadoopFileBasedSink → HasDisplayData</dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>FileBasedSink → HasDisplayData</dd></dl></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
@@ -631,7 +639,7 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="org.apache.beam.sdk.io.HadoopFileBasedSink#validate" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="org.apache.beam.sdk.io.FileBasedSink#validate" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="validate(options:org.apache.beam.sdk.options.PipelineOptions):Unit"></a><a id="validate(PipelineOptions):Unit"></a>
       <span class="permalink">
       <a href="../../../../../com/spotify/scio/parquet/avro/ParquetAvroSink.html#validate(options:org.apache.beam.sdk.options.PipelineOptions):Unit" title="Permalink">
@@ -643,10 +651,10 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">validate</span><span class="params">(<span name="options">options: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/options/PipelineOptions.html#org.apache.beam.sdk.options.PipelineOptions" class="extype" name="org.apache.beam.sdk.options.PipelineOptions">PipelineOptions</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">validate</span><span class="params">(<span name="options">options: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/options/PipelineOptions.html#org.apache.beam.sdk.options.PipelineOptions" class="extype" name="org.apache.beam.sdk.options.PipelineOptions">PipelineOptions</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>HadoopFileBasedSink</dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>FileBasedSink</dd></dl></div>
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <span class="permalink">
@@ -659,7 +667,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -681,7 +689,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -703,7 +711,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -725,16 +733,16 @@
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="org.apache.beam.sdk.io.HadoopFileBasedSink">
-              <h3>Inherited from <span class="extype" name="org.apache.beam.sdk.io.HadoopFileBasedSink">HadoopFileBasedSink</span>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>, <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Void.html#java.lang.Void" class="extype" name="java.lang.Void">Void</a>, <span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>]</h3>
+        <div class="parent" name="org.apache.beam.sdk.io.FileBasedSink">
+              <h3>Inherited from <span class="extype" name="org.apache.beam.sdk.io.FileBasedSink">FileBasedSink</span>[<span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>, <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Void.html#java.lang.Void" class="extype" name="java.lang.Void">Void</a>, <span class="extype" name="com.spotify.scio.parquet.avro.ParquetAvroSink.T">T</span>]</h3>
             </div><div class="parent" name="org.apache.beam.sdk.transforms.display.HasDisplayData">
-              <h3>Inherited from <a href="https://beam.apache.org/documentation/sdks/javadoc/2.6.0/org/apache/beam/sdk/transforms/display/HasDisplayData.html#org.apache.beam.sdk.transforms.display.HasDisplayData" class="extype" name="org.apache.beam.sdk.transforms.display.HasDisplayData">HasDisplayData</a></h3>
+              <h3>Inherited from <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/transforms/display/HasDisplayData.html#org.apache.beam.sdk.transforms.display.HasDisplayData" class="extype" name="org.apache.beam.sdk.transforms.display.HasDisplayData">HasDisplayData</a></h3>
             </div><div class="parent" name="java.io.Serializable">
               <h3>Inherited from <a href="http://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html#java.io.Serializable" class="extype" name="java.io.Serializable">Serializable</a></h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

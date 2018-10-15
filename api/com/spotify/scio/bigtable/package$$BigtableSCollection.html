@@ -135,16 +135,20 @@
       <p class="shortcomment cmt">Main package for Bigtable APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for Bigtable APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.bigtable._</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="BigtableBulkWriter.html" title=""></a>
+                        <a href="BigtableBulkWriter.html" title="">BigtableBulkWriter</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="BigtableDoFn.html" title=""></a>
                         <a href="BigtableDoFn.html" title="">BigtableDoFn</a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$BigtableInput.html" title=""></a>
-                        <a href="package$$BigtableInput.html" title="">BigtableInput</a>
+                        <a class="object" href="BigtableIO$.html" title=""></a>
+                        <a class="trait" href="BigtableIO.html" title=""></a>
+                        <a href="BigtableIO.html" title="">BigtableIO</a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$BigtableOutput.html" title=""></a>
-                        <a href="package$$BigtableOutput.html" title="">BigtableOutput</a>
+                        <a class="object" href="BigtableRead$.html" title=""></a>
+                        <a class="class" href="BigtableRead.html" title=""></a>
+                        <a href="BigtableRead.html" title="">BigtableRead</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="" title="Enhanced version of SCollection with Bigtable methods."></a>
@@ -157,6 +161,10 @@
                         <span class="separator"></span>
                         <a class="class" href="BigtableUtil.html" title=""></a>
                         <a href="BigtableUtil.html" title="">BigtableUtil</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="BigtableWrite$.html" title=""></a>
+                        <a class="class" href="BigtableWrite.html" title=""></a>
+                        <a href="BigtableWrite.html" title="">BigtableWrite</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="ChannelPoolCreator.html" title=""></a>
@@ -200,7 +208,7 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">BigtableSCollection</span><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
+        <span class="name">BigtableSCollection</span><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
       </span>
       </h4>
 
@@ -210,7 +218,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.6/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.7/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a>, <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -294,7 +302,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -310,7 +318,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -326,7 +334,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -358,7 +366,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Predef.Class">Class</span>[_ &lt;: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a>]</span>
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Predef.Class">Class</span>[_ &lt;: <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyVal → Any</dd></dl></div>
@@ -374,14 +382,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
     </li><li name="com.spotify.scio.bigtable.BigtableSCollection#saveAsBigtable" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="saveAsBigtable(bigtableOptions:com.google.cloud.bigtable.config.BigtableOptions,tableId:String,numOfShards:Int,flushInterval:org.joda.time.Duration)(implicitev:T&lt;:&lt;com.google.bigtable.v2.Mutation):scala.concurrent.Future[com.spotify.scio.io.Tap[(com.google.protobuf.ByteString,Iterable[com.google.bigtable.v2.Mutation])]]"></a><a id="saveAsBigtable(BigtableOptions,String,Int,Duration)(&lt;:&lt;[T,Mutation]):Future[Tap[(ByteString,Iterable[Mutation])]]"></a>
+      <a id="saveAsBigtable(bigtableOptions:com.google.cloud.bigtable.config.BigtableOptions,tableId:String,numOfShards:Int,flushInterval:org.joda.time.Duration)(implicitev:T&lt;:&lt;com.google.bigtable.v2.Mutation,implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[(com.google.protobuf.ByteString,Iterable[com.google.bigtable.v2.Mutation])]]"></a><a id="saveAsBigtable(BigtableOptions,String,Int,Duration)(&lt;:&lt;[T,Mutation],Coder[T]):Future[Tap[(ByteString,Iterable[Mutation])]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigtable/package$$BigtableSCollection.html#saveAsBigtable(bigtableOptions:com.google.cloud.bigtable.config.BigtableOptions,tableId:String,numOfShards:Int,flushInterval:org.joda.time.Duration)(implicitev:T&lt;:&lt;com.google.bigtable.v2.Mutation):scala.concurrent.Future[com.spotify.scio.io.Tap[(com.google.protobuf.ByteString,Iterable[com.google.bigtable.v2.Mutation])]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigtable/package$$BigtableSCollection.html#saveAsBigtable(bigtableOptions:com.google.cloud.bigtable.config.BigtableOptions,tableId:String,numOfShards:Int,flushInterval:org.joda.time.Duration)(implicitev:T&lt;:&lt;com.google.bigtable.v2.Mutation,implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[(com.google.protobuf.ByteString,Iterable[com.google.bigtable.v2.Mutation])]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -390,16 +398,16 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">saveAsBigtable</span><span class="params">(<span name="bigtableOptions">bigtableOptions: <span class="extype" name="com.google.cloud.bigtable.config.BigtableOptions">BigtableOptions</span></span>, <span name="tableId">tableId: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="numOfShards">numOfShards: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>, <span name="flushInterval">flushInterval: <span class="extype" name="org.joda.time.Duration">Duration</span> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Duration.standardSeconds(1)</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ev">ev: <span class="extype" name="scala.Predef.&lt;:&lt;">&lt;:&lt;</span>[<span class="extype" name="com.spotify.scio.bigtable.BigtableSCollection.T">T</span>, <span class="extype" name="com.google.bigtable.v2.Mutation">Mutation</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<span class="extype" name="com.google.protobuf.ByteString">ByteString</span>, <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.google.bigtable.v2.Mutation">Mutation</span>])]]</span>
+        <span class="name">saveAsBigtable</span><span class="params">(<span name="bigtableOptions">bigtableOptions: <span class="extype" name="com.google.cloud.bigtable.config.BigtableOptions">BigtableOptions</span></span>, <span name="tableId">tableId: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="numOfShards">numOfShards: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>, <span name="flushInterval">flushInterval: <a href="http://www.joda.org/joda-time/apidocs/org/joda/time/Duration.html#org.joda.time.Duration" class="extype" name="org.joda.time.Duration">Duration</a> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Duration.standardSeconds(1)</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ev">ev: <span class="extype" name="scala.Predef.&lt;:&lt;">&lt;:&lt;</span>[<span class="extype" name="com.spotify.scio.bigtable.BigtableSCollection.T">T</span>, <span class="extype" name="com.google.bigtable.v2.Mutation">Mutation</span>]</span>, <span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigtable.BigtableSCollection.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<span class="extype" name="com.google.protobuf.ByteString">ByteString</span>, <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.google.bigtable.v2.Mutation">Mutation</span>])]]</span>
       </span>
       
       <p class="shortcomment cmt">Save this SCollection as a Bigtable table.</p><div class="fullcomment"><div class="comment cmt"><p>Save this SCollection as a Bigtable table. This version supports batching. Note that
 elements must be of type <code>Mutation</code>.
 </p></div></div>
     </li><li name="com.spotify.scio.bigtable.BigtableSCollection#saveAsBigtable" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="saveAsBigtable(bigtableOptions:com.google.cloud.bigtable.config.BigtableOptions,tableId:String)(implicitev:T&lt;:&lt;com.google.bigtable.v2.Mutation):scala.concurrent.Future[com.spotify.scio.io.Tap[(com.google.protobuf.ByteString,Iterable[com.google.bigtable.v2.Mutation])]]"></a><a id="saveAsBigtable(BigtableOptions,String)(&lt;:&lt;[T,Mutation]):Future[Tap[(ByteString,Iterable[Mutation])]]"></a>
+      <a id="saveAsBigtable(bigtableOptions:com.google.cloud.bigtable.config.BigtableOptions,tableId:String)(implicitev:T&lt;:&lt;com.google.bigtable.v2.Mutation,implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[(com.google.protobuf.ByteString,Iterable[com.google.bigtable.v2.Mutation])]]"></a><a id="saveAsBigtable(BigtableOptions,String)(&lt;:&lt;[T,Mutation],Coder[T]):Future[Tap[(ByteString,Iterable[Mutation])]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigtable/package$$BigtableSCollection.html#saveAsBigtable(bigtableOptions:com.google.cloud.bigtable.config.BigtableOptions,tableId:String)(implicitev:T&lt;:&lt;com.google.bigtable.v2.Mutation):scala.concurrent.Future[com.spotify.scio.io.Tap[(com.google.protobuf.ByteString,Iterable[com.google.bigtable.v2.Mutation])]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigtable/package$$BigtableSCollection.html#saveAsBigtable(bigtableOptions:com.google.cloud.bigtable.config.BigtableOptions,tableId:String)(implicitev:T&lt;:&lt;com.google.bigtable.v2.Mutation,implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[(com.google.protobuf.ByteString,Iterable[com.google.bigtable.v2.Mutation])]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -408,15 +416,15 @@ elements must be of type <code>Mutation</code>.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">saveAsBigtable</span><span class="params">(<span name="bigtableOptions">bigtableOptions: <span class="extype" name="com.google.cloud.bigtable.config.BigtableOptions">BigtableOptions</span></span>, <span name="tableId">tableId: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ev">ev: <span class="extype" name="scala.Predef.&lt;:&lt;">&lt;:&lt;</span>[<span class="extype" name="com.spotify.scio.bigtable.BigtableSCollection.T">T</span>, <span class="extype" name="com.google.bigtable.v2.Mutation">Mutation</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<span class="extype" name="com.google.protobuf.ByteString">ByteString</span>, <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.google.bigtable.v2.Mutation">Mutation</span>])]]</span>
+        <span class="name">saveAsBigtable</span><span class="params">(<span name="bigtableOptions">bigtableOptions: <span class="extype" name="com.google.cloud.bigtable.config.BigtableOptions">BigtableOptions</span></span>, <span name="tableId">tableId: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ev">ev: <span class="extype" name="scala.Predef.&lt;:&lt;">&lt;:&lt;</span>[<span class="extype" name="com.spotify.scio.bigtable.BigtableSCollection.T">T</span>, <span class="extype" name="com.google.bigtable.v2.Mutation">Mutation</span>]</span>, <span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigtable.BigtableSCollection.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<span class="extype" name="com.google.protobuf.ByteString">ByteString</span>, <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.google.bigtable.v2.Mutation">Mutation</span>])]]</span>
       </span>
       
       <p class="shortcomment cmt">Save this SCollection as a Bigtable table.</p><div class="fullcomment"><div class="comment cmt"><p>Save this SCollection as a Bigtable table. Note that elements must be of type <code>Mutation</code>.
 </p></div></div>
     </li><li name="com.spotify.scio.bigtable.BigtableSCollection#saveAsBigtable" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="saveAsBigtable(projectId:String,instanceId:String,tableId:String)(implicitev:T&lt;:&lt;com.google.bigtable.v2.Mutation):scala.concurrent.Future[com.spotify.scio.io.Tap[(com.google.protobuf.ByteString,Iterable[com.google.bigtable.v2.Mutation])]]"></a><a id="saveAsBigtable(String,String,String)(&lt;:&lt;[T,Mutation]):Future[Tap[(ByteString,Iterable[Mutation])]]"></a>
+      <a id="saveAsBigtable(projectId:String,instanceId:String,tableId:String)(implicitev:T&lt;:&lt;com.google.bigtable.v2.Mutation,implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[(com.google.protobuf.ByteString,Iterable[com.google.bigtable.v2.Mutation])]]"></a><a id="saveAsBigtable(String,String,String)(&lt;:&lt;[T,Mutation],Coder[T]):Future[Tap[(ByteString,Iterable[Mutation])]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigtable/package$$BigtableSCollection.html#saveAsBigtable(projectId:String,instanceId:String,tableId:String)(implicitev:T&lt;:&lt;com.google.bigtable.v2.Mutation):scala.concurrent.Future[com.spotify.scio.io.Tap[(com.google.protobuf.ByteString,Iterable[com.google.bigtable.v2.Mutation])]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigtable/package$$BigtableSCollection.html#saveAsBigtable(projectId:String,instanceId:String,tableId:String)(implicitev:T&lt;:&lt;com.google.bigtable.v2.Mutation,implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[(com.google.protobuf.ByteString,Iterable[com.google.bigtable.v2.Mutation])]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -425,27 +433,11 @@ elements must be of type <code>Mutation</code>.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">saveAsBigtable</span><span class="params">(<span name="projectId">projectId: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="instanceId">instanceId: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="tableId">tableId: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ev">ev: <span class="extype" name="scala.Predef.&lt;:&lt;">&lt;:&lt;</span>[<span class="extype" name="com.spotify.scio.bigtable.BigtableSCollection.T">T</span>, <span class="extype" name="com.google.bigtable.v2.Mutation">Mutation</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<span class="extype" name="com.google.protobuf.ByteString">ByteString</span>, <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.google.bigtable.v2.Mutation">Mutation</span>])]]</span>
+        <span class="name">saveAsBigtable</span><span class="params">(<span name="projectId">projectId: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="instanceId">instanceId: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="tableId">tableId: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ev">ev: <span class="extype" name="scala.Predef.&lt;:&lt;">&lt;:&lt;</span>[<span class="extype" name="com.spotify.scio.bigtable.BigtableSCollection.T">T</span>, <span class="extype" name="com.google.bigtable.v2.Mutation">Mutation</span>]</span>, <span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.bigtable.BigtableSCollection.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<span class="extype" name="com.google.protobuf.ByteString">ByteString</span>, <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.google.bigtable.v2.Mutation">Mutation</span>])]]</span>
       </span>
       
       <p class="shortcomment cmt">Save this SCollection as a Bigtable table.</p><div class="fullcomment"><div class="comment cmt"><p>Save this SCollection as a Bigtable table. Note that elements must be of type <code>Mutation</code>.
 </p></div></div>
-    </li><li name="com.spotify.scio.bigtable.BigtableSCollection#self" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="self:com.spotify.scio.values.SCollection[(com.google.protobuf.ByteString,Iterable[T])]"></a><a id="self:SCollection[(ByteString,Iterable[T])]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigtable/package$$BigtableSCollection.html#self:com.spotify.scio.values.SCollection[(com.google.protobuf.ByteString,Iterable[T])]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">self</span><span class="result">: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.google.protobuf.ByteString">ByteString</span>, <span class="extype" name="scala.Iterable">Iterable</span>[<span class="extype" name="com.spotify.scio.bigtable.BigtableSCollection.T">T</span>])]</span>
-      </span>
-      
-      
     </li><li name="scala.Any#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <span class="permalink">
@@ -473,9 +465,9 @@ elements must be of type <code>Mutation</code>.
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.AnyVal">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

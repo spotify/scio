@@ -152,9 +152,9 @@
 <a href="https://cloud.google.com/bigquery/docs/reference/legacy-sql" target="_blank">legacy</a> and
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/" target="_blank">standard</a>.
 APIs that take a BigQuery query string as argument, e.g.
-<a href="../bigquery/BigQueryClient.html#getQueryRows(sqlQuery:String,flattenResults:Boolean):Iterator[com.spotify.scio.bigquery.TableRow]" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getQueryRows">BigQueryClient.getQueryRows</a>,
-<a href="../bigquery/BigQueryClient.html#getQuerySchema(sqlQuery:String):com.google.api.services.bigquery.model.TableSchema" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getQuerySchema">BigQueryClient.getQuerySchema</a>,
-<a href="../bigquery/BigQueryClient.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getTypedRows">BigQueryClient.getTypedRows</a> and
+<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.rows">com.spotify.scio.bigquery.client.BigQuery.query.rows</span>,
+<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.schema">com.spotify.scio.bigquery.client.BigQuery.query.schema</span>,
+<a href="../bigquery/client/BigQuery.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.client.BigQuery#getTypedRows">com.spotify.scio.bigquery.client.BigQuery.getTypedRows</a> and
 <a href="../bigquery/types/BigQueryType$$fromQuery.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.fromQuery">BigQueryType.fromQuery</a>, automatically
 detects the query's dialect. To override this, start the query with either <code>#legacysql</code> or
 <code>#standardsql</code> comment line.
@@ -207,18 +207,74 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
+    </li><li name="com.spotify.scio.coders.instances" visbl="pub" class="indented5 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="instances"></a><a id="instances:instances"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/coders/index.html#instances" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="instances/index.html"><span class="name">instances</span></a>
+      </span>
+      
+      
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="AnnotatedKryoRegistrar.html" title="Trait to be added to Kryo registrar class annotated with @KryoRegistrar."></a>
                         <a href="AnnotatedKryoRegistrar.html" title="Trait to be added to Kryo registrar class annotated with @KryoRegistrar.">AnnotatedKryoRegistrar</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="Beam.html" title=""></a>
+                        <a href="Beam.html" title="">Beam</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="Coder$.html" title=""></a>
+                        <a class="trait" href="Coder.html" title=""></a>
+                        <a href="Coder.html" title="">Coder</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="CoderGrammar.html" title=""></a>
+                        <a href="CoderGrammar.html" title="">CoderGrammar</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="object" href="CoderMaterializer$.html" title=""></a>
+                        <a href="CoderMaterializer$.html" title="">CoderMaterializer</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="Disjunction.html" title=""></a>
+                        <a href="Disjunction.html" title="">Disjunction</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="Fallback.html" title=""></a>
+                        <a href="Fallback.html" title="">Fallback</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="KVCoder.html" title=""></a>
+                        <a href="KVCoder.html" title="">KVCoder</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="KryoRegistrar.html" title="Annotation for custom Kryo registrar classes."></a>
                         <a href="KryoRegistrar.html" title="Annotation for custom Kryo registrar classes.">KryoRegistrar</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="trait" href="LowPriorityCoderDerivation.html" title=""></a>
+                        <a href="LowPriorityCoderDerivation.html" title="">LowPriorityCoderDerivation</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="Record.html" title=""></a>
+                        <a href="Record.html" title="">Record</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="object" href="ScioKryoRegistrar$.html" title=""></a>
                         <a href="ScioKryoRegistrar$.html" title="">ScioKryoRegistrar</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="Transform.html" title=""></a>
+                        <a href="Transform.html" title="">Transform</a>
                       </li><li name="com.spotify.scio.elasticsearch" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="elasticsearch"></a><a id="elasticsearch:elasticsearch"></a>
       <span class="permalink">
@@ -519,10 +575,112 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Trait to be added to Kryo registrar class annotated with @KryoRegistrar." href="AnnotatedKryoRegistrar.html"><span class="name">AnnotatedKryoRegistrar</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Trait to be added to Kryo registrar class annotated with @KryoRegistrar." href="AnnotatedKryoRegistrar.html"><span class="name">AnnotatedKryoRegistrar</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Trait to be added to Kryo registrar class annotated with <code>@KryoRegistrar</code>.</p>
+    </li><li name="com.spotify.scio.coders.Beam" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Beam[T]extendsCoder[T]withProductwithSerializable"></a><a id="Beam[T]:Beam[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/coders/index.html#Beam[T]extendsCoder[T]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="Beam.html"><span class="name">Beam</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.Beam.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.coders.Coder" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="Coder[T]extendsSerializable"></a><a id="Coder[T]:Coder[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/coders/index.html#Coder[T]extendsSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="Coder.html"><span class="name">Coder</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@implicitNotFound</span><span class="args">(<span>
+      
+      <span class="defval" name="&quot;&quot;&quot;<br/>Cannot find a Coder instance for type:<br/><br/>  &gt;&gt; ${T}<br/><br/>  This can happen for a few reasons, but the most common case is that a data<br/>  member somewhere within this type doesn't have a Coder instance in scope. Here are<br/>  some debugging hints:<br/>    - For Option types, ensure that a Coder instance is in scope for the non-Option version.<br/>    - For List and Seq types, ensure that a Coder instance is in scope for a single element.<br/>    - For generic methods, you may need to add an implicit parameter<br/>        def foo[T](coll: SCollection[SomeClass], param: String): SCollection[T]<br/>      may become:<br/>        def foo[T](coll: SCollection[SomeClass],<br/>                   param: String)(implicit c: Coder[T]): SCollection[T]<br/>      or:<br/>        def foo[T: Coder](coll: SCollection[SomeClass], param: String): SCollection[T]<br/>    - You can check that an instance exists for Coder in the REPL or in your code:<br/>        scala&gt; com.spotify.scio.coders.Coder[Foo]<br/>      And find the missing instance and construct it as needed.<br/>&quot;&quot;&quot;">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="com.spotify.scio.coders.CoderGrammar" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="CoderGrammarextendsAnyRef"></a><a id="CoderGrammar:CoderGrammar"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/coders/index.html#CoderGrammarextendsAnyRef" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="CoderGrammar.html"><span class="name">CoderGrammar</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.coders.Disjunction" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Disjunction[T,Id]extendsCoder[T]withProductwithSerializable"></a><a id="Disjunction[T,Id]:Disjunction[T,Id]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/coders/index.html#Disjunction[T,Id]extendsCoder[T]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="Disjunction.html"><span class="name">Disjunction</span></a><span class="tparams">[<span name="T">T</span>, <span name="Id">Id</span>]</span><span class="result"> extends <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.Disjunction.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.coders.Fallback" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Fallback[T]extendsCoder[T]withProductwithSerializable"></a><a id="Fallback[T]:Fallback[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/coders/index.html#Fallback[T]extendsCoder[T]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="Fallback.html"><span class="name">Fallback</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.Fallback.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.coders.KVCoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="KVCoder[K,V]extendsCoder[org.apache.beam.sdk.values.KV[K,V]]withProductwithSerializable"></a><a id="KVCoder[K,V]:KVCoder[K,V]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/coders/index.html#KVCoder[K,V]extendsCoder[org.apache.beam.sdk.values.KV[K,V]]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="KVCoder.html"><span class="name">KVCoder</span></a><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="result"> extends <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/values/KV.html#org.apache.beam.sdk.values.KV" class="extype" name="org.apache.beam.sdk.values.KV">KV</a>[<span class="extype" name="com.spotify.scio.coders.KVCoder.K">K</span>, <span class="extype" name="com.spotify.scio.coders.KVCoder.V">V</span>]] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
     </li><li name="com.spotify.scio.coders.KryoRegistrar" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="KryoRegistrarextendsAnnotationwithStaticAnnotation"></a><a id="KryoRegistrar:KryoRegistrar"></a>
       <span class="permalink">
@@ -535,11 +693,59 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Annotation for custom Kryo registrar classes." href="KryoRegistrar.html"><span class="name">KryoRegistrar</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Annotation for custom Kryo registrar classes." href="KryoRegistrar.html"><span class="name">KryoRegistrar</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">Annotation for custom Kryo registrar classes.</p><div class="fullcomment"><div class="comment cmt"><p>Annotation for custom Kryo registrar classes.</p><p>Annotated class must extend <code>IKryoRegistrar</code> and has name that ends with &quot;KryoRegistrar&quot;.
 </p></div></div>
+    </li><li name="com.spotify.scio.coders.LowPriorityCoderDerivation" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="LowPriorityCoderDerivationextendsAnyRef"></a><a id="LowPriorityCoderDerivation:LowPriorityCoderDerivation"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/coders/index.html#LowPriorityCoderDerivationextendsAnyRef" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="LowPriorityCoderDerivation.html"><span class="name">LowPriorityCoderDerivation</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.coders.Record" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Record[T]extendsCoder[T]withProductwithSerializable"></a><a id="Record[T]:Record[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/coders/index.html#Record[T]extendsCoder[T]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="Record.html"><span class="name">Record</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.Record.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.coders.Transform" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Transform[A,B]extendsCoder[B]withProductwithSerializable"></a><a id="Transform[A,B]:Transform[A,B]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/coders/index.html#Transform[A,B]extendsCoder[B]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="Transform.html"><span class="name">Transform</span></a><span class="tparams">[<span name="A">A</span>, <span name="B">B</span>]</span><span class="result"> extends <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.Transform.B">B</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
     </li></ol>
             </div>
 
@@ -548,7 +754,39 @@ detects the query's dialect. To override this, start the query with either <code
         <div class="values members">
               <h3>Value Members</h3>
               <ol>
-                <li name="com.spotify.scio.coders.ScioKryoRegistrar" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+                <li name="com.spotify.scio.coders.Coder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Coder"></a><a id="Coder:Coder"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/coders/index.html#Coder" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="Coder$.html"><span class="name">Coder</span></a><span class="result"> extends <a href="CoderGrammar.html" class="extype" name="com.spotify.scio.coders.CoderGrammar">CoderGrammar</a> with <a href="instances/Implicits.html" class="extype" name="com.spotify.scio.coders.instances.Implicits">coders.instances.Implicits</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.coders.CoderMaterializer" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CoderMaterializer"></a><a id="CoderMaterializer:CoderMaterializer"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/coders/index.html#CoderMaterializer" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="CoderMaterializer$.html"><span class="name">CoderMaterializer</span></a>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.coders.ScioKryoRegistrar" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ScioKryoRegistrar"></a><a id="ScioKryoRegistrar:ScioKryoRegistrar"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/coders/index.html#ScioKryoRegistrar" title="Permalink">
@@ -560,7 +798,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="ScioKryoRegistrar$.html"><span class="name">ScioKryoRegistrar</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="ScioKryoRegistrar$.html"><span class="name">ScioKryoRegistrar</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       

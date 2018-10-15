@@ -151,20 +151,28 @@
       <p class="shortcomment cmt">IO package for dynamic destinations.</p><div class="fullcomment"><div class="comment cmt"><p>IO package for dynamic destinations. Import All.</p><pre><span class="kw">import</span> com.spotify.scio.io.dynamic._</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio.io">io</a></dd></dl></div>
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="AvroTap.html" title="Tap for Avro files on local file system or GCS."></a>
-                        <a href="AvroTap.html" title="Tap for Avro files on local file system or GCS.">AvroTap</a>
+                        <a class="class" href="CustomIO.html" title="Special version of ScioIO for use with ScioContext.customInput and SCollection.saveAsCustomOutput."></a>
+                        <a href="CustomIO.html" title="Special version of ScioIO for use with ScioContext.customInput and SCollection.saveAsCustomOutput.">CustomIO</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="DatastoreIO$.html" title=""></a>
+                        <a class="class" href="DatastoreIO.html" title=""></a>
+                        <a href="DatastoreIO.html" title="">DatastoreIO</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="BigQueryTap.html" title="Tap for BigQuery tables."></a>
-                        <a href="BigQueryTap.html" title="Tap for BigQuery tables.">BigQueryTap</a>
+                        <a class="object" href="MaterializeTap$.html" title=""></a>
+                        <a href="MaterializeTap$.html" title="">MaterializeTap</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="PubsubIO$.html" title=""></a>
+                        <a class="trait" href="PubsubIO.html" title=""></a>
+                        <a href="PubsubIO.html" title="">PubsubIO</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="ObjectFileTap.html" title="Tap for object files on local file system or GCS."></a>
-                        <a href="ObjectFileTap.html" title="Tap for object files on local file system or GCS.">ObjectFileTap</a>
+                        <a class="class" href="ReadIO.html" title="Special version of ScioIO for use with SCollection.readAll and SCollection.readAllBytes."></a>
+                        <a href="ReadIO.html" title="Special version of ScioIO for use with SCollection.readAll and SCollection.readAllBytes.">ReadIO</a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="TableRowJsonTap.html" title="Tap for BigQuery TableRow JSON files on local file system or GCS."></a>
-                        <a href="TableRowJsonTap.html" title="Tap for BigQuery TableRow JSON files on local file system or GCS.">TableRowJsonTap</a>
+                        <a class="object" href="ScioIO$.html" title=""></a>
+                        <a class="trait" href="ScioIO.html" title="Base trait for all Read/Write IO classes."></a>
+                        <a href="ScioIO.html" title="Base trait for all Read/Write IO classes.">ScioIO</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="Tap.html" title="Placeholder to an external data set that can either be load into memory as an iterator or opened in a new ScioContext as an SCollection."></a>
@@ -177,6 +185,18 @@
                         <a class="object" href="" title="Companion object for Taps."></a>
                         <a class="trait" href="Taps.html" title="Utility for managing Future[Tap[T]]s."></a>
                         <a href="Taps.html" title="Utility for managing Future[Tap[T]]s.">Taps</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="object" href="TapsSysProps$.html" title=""></a>
+                        <a href="TapsSysProps$.html" title="">TapsSysProps</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="TestIO.html" title="Base trait for ScioIO without business logic, for stubbing mock data with JobTest."></a>
+                        <a href="TestIO.html" title="Base trait for ScioIO without business logic, for stubbing mock data with JobTest.">TestIO</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="TextIO$.html" title=""></a>
+                        <a class="class" href="TextIO.html" title=""></a>
+                        <a href="TextIO.html" title="">TextIO</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="TextTap.html" title="Tap for text files on local file system or GCS."></a>
@@ -215,7 +235,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -280,7 +300,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -296,7 +316,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -312,14 +332,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="com.spotify.scio.io.Taps#ALGORITHM_DEFAULT" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="ALGORITHM_DEFAULT:String"></a>
+    </li><li name="com.spotify.scio.io.Taps#AlgorithmDefault" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AlgorithmDefault:String"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/Taps$.html#ALGORITHM_DEFAULT:String" title="Permalink">
+      <a href="../../../../com/spotify/scio/io/Taps$.html#AlgorithmDefault:String" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -328,14 +348,14 @@
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">ALGORITHM_DEFAULT</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
+        <span class="name">AlgorithmDefault</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
       </span>
       
       <p class="shortcomment cmt">Default taps algorithm.</p>
-    </li><li name="com.spotify.scio.io.Taps#ALGORITHM_KEY" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="ALGORITHM_KEY:String"></a>
+    </li><li name="com.spotify.scio.io.Taps#PollingInitialIntervalDefault" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PollingInitialIntervalDefault:String"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/Taps$.html#ALGORITHM_KEY:String" title="Permalink">
+      <a href="../../../../com/spotify/scio/io/Taps$.html#PollingInitialIntervalDefault:String" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -344,30 +364,14 @@
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">ALGORITHM_KEY</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
-      </span>
-      
-      <p class="shortcomment cmt">System property key for taps algorithm.</p>
-    </li><li name="com.spotify.scio.io.Taps#POLLING_INITIAL_INTERVAL_DEFAULT" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="POLLING_INITIAL_INTERVAL_DEFAULT:String"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/Taps$.html#POLLING_INITIAL_INTERVAL_DEFAULT:String" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">POLLING_INITIAL_INTERVAL_DEFAULT</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
+        <span class="name">PollingInitialIntervalDefault</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
       </span>
       
       <p class="shortcomment cmt">Default polling taps initial interval.</p>
-    </li><li name="com.spotify.scio.io.Taps#POLLING_INITIAL_INTERVAL_KEY" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="POLLING_INITIAL_INTERVAL_KEY:String"></a>
+    </li><li name="com.spotify.scio.io.Taps#PollingMaximumAttemptsDefault" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PollingMaximumAttemptsDefault:String"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/Taps$.html#POLLING_INITIAL_INTERVAL_KEY:String" title="Permalink">
+      <a href="../../../../com/spotify/scio/io/Taps$.html#PollingMaximumAttemptsDefault:String" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -376,30 +380,14 @@
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">POLLING_INITIAL_INTERVAL_KEY</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
-      </span>
-      
-      <p class="shortcomment cmt">System property key for polling taps initial interval in milliseconds.</p>
-    </li><li name="com.spotify.scio.io.Taps#POLLING_MAXIMUM_ATTEMPTS_DEFAULT" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="POLLING_MAXIMUM_ATTEMPTS_DEFAULT:String"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/Taps$.html#POLLING_MAXIMUM_ATTEMPTS_DEFAULT:String" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">POLLING_MAXIMUM_ATTEMPTS_DEFAULT</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
+        <span class="name">PollingMaximumAttemptsDefault</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
       </span>
       
       <p class="shortcomment cmt">Default polling taps maximum number of attempts.</p>
-    </li><li name="com.spotify.scio.io.Taps#POLLING_MAXIMUM_ATTEMPTS_KEY" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="POLLING_MAXIMUM_ATTEMPTS_KEY:String"></a>
+    </li><li name="com.spotify.scio.io.Taps#PollingMaximumIntervalDefault" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PollingMaximumIntervalDefault:String"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/Taps$.html#POLLING_MAXIMUM_ATTEMPTS_KEY:String" title="Permalink">
+      <a href="../../../../com/spotify/scio/io/Taps$.html#PollingMaximumIntervalDefault:String" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -408,44 +396,10 @@
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">POLLING_MAXIMUM_ATTEMPTS_KEY</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
-      </span>
-      
-      <p class="shortcomment cmt">System property key for polling taps maximum number of attempts, unlimited if &lt;= 0.</p><div class="fullcomment"><div class="comment cmt"><p>System property key for polling taps maximum number of attempts, unlimited if &lt;= 0. Default is
-0.
-</p></div></div>
-    </li><li name="com.spotify.scio.io.Taps#POLLING_MAXIMUM_INTERVAL_DEFAULT" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="POLLING_MAXIMUM_INTERVAL_DEFAULT:String"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/Taps$.html#POLLING_MAXIMUM_INTERVAL_DEFAULT:String" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">POLLING_MAXIMUM_INTERVAL_DEFAULT</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
+        <span class="name">PollingMaximumIntervalDefault</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
       </span>
       
       <p class="shortcomment cmt">Default polling taps maximum interval.</p>
-    </li><li name="com.spotify.scio.io.Taps#POLLING_MAXIMUM_INTERVAL_KEY" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="POLLING_MAXIMUM_INTERVAL_KEY:String"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/Taps$.html#POLLING_MAXIMUM_INTERVAL_KEY:String" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">POLLING_MAXIMUM_INTERVAL_KEY</span><span class="result">: <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html#java.lang.String" class="extype" name="java.lang.String">String</a></span>
-      </span>
-      
-      <p class="shortcomment cmt">System property key for polling taps maximum interval in milliseconds.</p>
     </li><li name="com.spotify.scio.io.Taps#apply" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="apply():com.spotify.scio.io.Taps"></a><a id="apply():Taps"></a>
       <span class="permalink">
@@ -492,7 +446,7 @@ Available algorithms are <code>immediate</code> (default) and <code>polling</cod
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -516,7 +470,7 @@ Available algorithms are <code>immediate</code> (default) and <code>polling</cod
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -532,7 +486,7 @@ Available algorithms are <code>immediate</code> (default) and <code>polling</cod
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -548,7 +502,7 @@ Available algorithms are <code>immediate</code> (default) and <code>polling</cod
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -589,7 +543,7 @@ Available algorithms are <code>immediate</code> (default) and <code>polling</cod
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
@@ -608,7 +562,7 @@ Available algorithms are <code>immediate</code> (default) and <code>polling</cod
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -624,7 +578,7 @@ Available algorithms are <code>immediate</code> (default) and <code>polling</cod
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -640,7 +594,7 @@ Available algorithms are <code>immediate</code> (default) and <code>polling</cod
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -659,7 +613,7 @@ Available algorithms are <code>immediate</code> (default) and <code>polling</cod
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -710,7 +664,7 @@ Available algorithms are <code>immediate</code> (default) and <code>polling</cod
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -732,7 +686,7 @@ Available algorithms are <code>immediate</code> (default) and <code>polling</cod
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -754,7 +708,7 @@ Available algorithms are <code>immediate</code> (default) and <code>polling</cod
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -777,9 +731,9 @@ Available algorithms are <code>immediate</code> (default) and <code>polling</cod
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

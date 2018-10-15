@@ -136,13 +136,29 @@
 <a href="https://cloud.google.com/bigquery/docs/reference/legacy-sql" target="_blank">legacy</a> and
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/" target="_blank">standard</a>.
 APIs that take a BigQuery query string as argument, e.g.
-<a href="../BigQueryClient.html#getQueryRows(sqlQuery:String,flattenResults:Boolean):Iterator[com.spotify.scio.bigquery.TableRow]" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getQueryRows">BigQueryClient.getQueryRows</a>,
-<a href="../BigQueryClient.html#getQuerySchema(sqlQuery:String):com.google.api.services.bigquery.model.TableSchema" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getQuerySchema">BigQueryClient.getQuerySchema</a>,
-<a href="../BigQueryClient.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getTypedRows">BigQueryClient.getTypedRows</a> and
+<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.rows">com.spotify.scio.bigquery.client.BigQuery.query.rows</span>,
+<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.schema">com.spotify.scio.bigquery.client.BigQuery.query.schema</span>,
+<a href="../client/BigQuery.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.client.BigQuery#getTypedRows">com.spotify.scio.bigquery.client.BigQuery.getTypedRows</a> and
 <a href="BigQueryType$$fromQuery.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.fromQuery">BigQueryType.fromQuery</a>, automatically
 detects the query's dialect. To override this, start the query with either <code>#legacysql</code> or
 <code>#standardsql</code> comment line.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
+    </li><li name="com.spotify.scio.bigquery.client" visbl="pub" class="indented5 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="client"></a><a id="client:client"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigquery/index.html#client" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../client/index.html"><span class="name">client</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio.bigquery">bigquery</a></dd></dl></div>
     </li><li name="com.spotify.scio.bigquery.dynamic" visbl="pub" class="indented5 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="dynamic"></a><a id="dynamic:dynamic"></a>
       <span class="permalink">
@@ -243,7 +259,7 @@ detects the query's dialect. To override this, start the query with either <code
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -303,7 +319,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="BigQueryTag.html"><span class="name">BigQueryTag</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="" href="BigQueryTag.html"><span class="name">BigQueryTag</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       
@@ -319,7 +335,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Type class for case class T annotated for BigQuery IO." href="BigQueryType.html"><span class="name">BigQueryType</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Type class for case class T annotated for BigQuery IO." href="BigQueryType.html"><span class="name">BigQueryType</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Type class for case class <code>T</code> annotated for BigQuery IO.</p><div class="fullcomment"><div class="comment cmt"><p>Type class for case class <code>T</code> annotated for BigQuery IO.</p><p>This decouples generated fields and methods from macro expansion to keep core macro free.
@@ -332,11 +348,11 @@ detects the query's dialect. To override this, start the query with either <code
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Case class field annotation for BigQuery field description." href="package$$description.html"><span class="name">description</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Case class field annotation for BigQuery field description." href="package$$description.html"><span class="name">description</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">Case class field annotation for BigQuery field description.</p><div class="fullcomment"><div class="comment cmt"><p>Case class field annotation for BigQuery field description.</p><p>To be used with case class fields annotated with <a href="BigQueryType$$toTable.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.toTable">BigQueryType.toTable</a>, For example:</p><pre>@BigQueryType.toTable
@@ -365,18 +381,13 @@ detects the query's dialect. To override this, start the query with either <code
         <a title="Macro annotations and converter generators for BigQuery types." href="BigQueryType$.html"><span class="name">BigQueryType</span></a>
       </span>
       
-      <p class="shortcomment cmt">Macro annotations and converter generators for BigQuery types.</p><div class="fullcomment"><div class="comment cmt"><p>Macro annotations and converter generators for BigQuery types.</p><p>The following table lists each legacy SQL data type, its standard SQL equivalent and Scala type.</p><pre>Legacy SQL      Standard SQL    Scala <span class="kw">type</span>
-BOOLEAN         BOOL            <span class="std">Boolean</span>
-INTEGER         INT64           <span class="std">Long</span>, <span class="std">Int</span>
-FLOAT           FLOAT64         <span class="std">Double</span>, <span class="std">Float</span>
-STRING          STRING          <span class="std">String</span>
-BYTES           BYTES           com.google.protobuf.ByteString, <span class="std">Array</span>[<span class="std">Byte</span>]
-RECORD          STRUCT          Nested <span class="kw">case</span> <span class="kw">class</span>
-REPEATED        ARRAY           <span class="std">List</span>[T]
-TIMESTAMP       TIMESTAMP       org.joda.time.Instant
-DATE            DATE            org.joda.time.LocalDate
-TIME            TIME            org.joda.time.LocalTime
-DATETIME        DATETIME        org.joda.time.LocalDateTime</pre></div></div>
+      <p class="shortcomment cmt">Macro annotations and converter generators for BigQuery types.</p><div class="fullcomment"><div class="comment cmt"><p>Macro annotations and converter generators for BigQuery types.</p><p>The following table lists each legacy SQL data type, its standard SQL equivalent and Scala type.</p><table class="doctbl">
+      <thead>
+        <tr><th class="doctbl-left"><p> Legacy SQL </p></th><th class="doctbl-left"><p> Standard SQL </p></th><th class="doctbl-left"><p> Scala type                                      </p></th></tr>
+      </thead>
+      <tbody><tr><td class="doctbl-left"><p> BOOLEAN    </p></td><td class="doctbl-left"><p> BOOL         </p></td><td class="doctbl-left"><p> <code>Boolean</code>                                       </p></td></tr><tr><td class="doctbl-left"><p> INTEGER    </p></td><td class="doctbl-left"><p> INT64        </p></td><td class="doctbl-left"><p> <code>Long</code>, <code>Int</code>                                   </p></td></tr><tr><td class="doctbl-left"><p> FLOAT      </p></td><td class="doctbl-left"><p> FLOAT64      </p></td><td class="doctbl-left"><p> <code>Double</code>, <code>Float</code>                               </p></td></tr><tr><td class="doctbl-left"><p> STRING     </p></td><td class="doctbl-left"><p> STRING       </p></td><td class="doctbl-left"><p> <code>String</code>                                        </p></td></tr><tr><td class="doctbl-left"><p> BYTES      </p></td><td class="doctbl-left"><p> BYTES        </p></td><td class="doctbl-left"><p> <code>com.google.protobuf.ByteString</code>, <code>Array[Byte]</code> </p></td></tr><tr><td class="doctbl-left"><p> RECORD     </p></td><td class="doctbl-left"><p> STRUCT       </p></td><td class="doctbl-left"><p> Nested case class                               </p></td></tr><tr><td class="doctbl-left"><p> REPEATED   </p></td><td class="doctbl-left"><p> ARRAY        </p></td><td class="doctbl-left"><p> <code>List[T]</code>                                       </p></td></tr><tr><td class="doctbl-left"><p> TIMESTAMP  </p></td><td class="doctbl-left"><p> TIMESTAMP    </p></td><td class="doctbl-left"><p> <code>org.joda.time.Instant</code>                         </p></td></tr><tr><td class="doctbl-left"><p> DATE       </p></td><td class="doctbl-left"><p> DATE         </p></td><td class="doctbl-left"><p> <code>org.joda.time.LocalDate</code>                       </p></td></tr><tr><td class="doctbl-left"><p> TIME       </p></td><td class="doctbl-left"><p> TIME         </p></td><td class="doctbl-left"><p> <code>org.joda.time.LocalTime</code>                       </p></td></tr><tr><td class="doctbl-left"><p> DATETIME   </p></td><td class="doctbl-left"><p> DATETIME     </p></td><td class="doctbl-left"><p> <code>org.joda.time.LocalDateTime</code>                   </p></td></tr>
+          </tbody>
+    </table></div></div>
     </li><li name="com.spotify.scio.bigquery.types.ConverterUtil" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ConverterUtil"></a><a id="ConverterUtil:ConverterUtil"></a>
       <span class="permalink">
@@ -420,9 +431,9 @@ DATETIME        DATETIME        org.joda.time.LocalDateTime</pre></div></div>
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

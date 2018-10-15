@@ -149,7 +149,47 @@
       </span>
       
       
-    </li><li name="com.spotify.scio.bigquery" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li class="current-entities indented4">
+                        <a class="object" href="AvroIO$.html" title=""></a>
+                        <a class="class" href="AvroIO.html" title=""></a>
+                        <a href="AvroIO.html" title="">AvroIO</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="AvroSCollection.html" title="Enhanced version of SCollection with Avro methods."></a>
+                        <a href="AvroSCollection.html" title="Enhanced version of SCollection with Avro methods.">AvroSCollection</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="AvroScioContext.html" title="Enhanced version of ScioContext with Avro methods."></a>
+                        <a href="AvroScioContext.html" title="Enhanced version of ScioContext with Avro methods.">AvroScioContext</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="object" href="AvroSysProps$.html" title=""></a>
+                        <a href="AvroSysProps$.html" title="">AvroSysProps</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="AvroTap.html" title="Tap for Avro files."></a>
+                        <a href="AvroTap.html" title="Tap for Avro files.">AvroTap</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="AvroTaps.html" title=""></a>
+                        <a href="AvroTaps.html" title="">AvroTaps</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="object" href="AvroTyped$.html" title=""></a>
+                        <a href="AvroTyped$.html" title="">AvroTyped</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="ObjectFileIO$.html" title=""></a>
+                        <a class="class" href="ObjectFileIO.html" title=""></a>
+                        <a href="ObjectFileIO.html" title="">ObjectFileIO</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="ObjectFileTap.html" title="Tap for object files."></a>
+                        <a href="ObjectFileTap.html" title="Tap for object files.">ObjectFileTap</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="ProtobufIO$.html" title=""></a>
+                        <a class="class" href="ProtobufIO.html" title=""></a>
+                        <a href="ProtobufIO.html" title="">ProtobufIO</a>
+                      </li><li name="com.spotify.scio.bigquery" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="bigquery"></a><a id="bigquery:bigquery"></a>
       <span class="permalink">
       <a href="../../../com/spotify/scio/index.html#bigquery" title="Permalink">
@@ -168,9 +208,9 @@
 <a href="https://cloud.google.com/bigquery/docs/reference/legacy-sql" target="_blank">legacy</a> and
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/" target="_blank">standard</a>.
 APIs that take a BigQuery query string as argument, e.g.
-<a href="../bigquery/BigQueryClient.html#getQueryRows(sqlQuery:String,flattenResults:Boolean):Iterator[com.spotify.scio.bigquery.TableRow]" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getQueryRows">BigQueryClient.getQueryRows</a>,
-<a href="../bigquery/BigQueryClient.html#getQuerySchema(sqlQuery:String):com.google.api.services.bigquery.model.TableSchema" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getQuerySchema">BigQueryClient.getQuerySchema</a>,
-<a href="../bigquery/BigQueryClient.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.BigQueryClient#getTypedRows">BigQueryClient.getTypedRows</a> and
+<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.rows">com.spotify.scio.bigquery.client.BigQuery.query.rows</span>,
+<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.schema">com.spotify.scio.bigquery.client.BigQuery.query.schema</span>,
+<a href="../bigquery/client/BigQuery.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.client.BigQuery#getTypedRows">com.spotify.scio.bigquery.client.BigQuery.getTypedRows</a> and
 <a href="../bigquery/types/BigQueryType$$fromQuery.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.fromQuery">BigQueryType.fromQuery</a>, automatically
 detects the query's dialect. To override this, start the query with either <code>#legacysql</code> or
 <code>#standardsql</code> comment line.
@@ -480,7 +520,7 @@ detects the query's dialect. To override this, start the query with either <code
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -528,7 +568,138 @@ detects the query's dialect. To override this, start the query with either <code
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.spotify.scio.avro.doc" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+              <ol><li name="com.spotify.scio.avro.AvroIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AvroIO[T]extendsScioIO[T]withProductwithSerializable"></a><a id="AvroIO[T]:AvroIO[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#AvroIO[T]extendsScioIO[T]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="AvroIO.html"><span class="name">AvroIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/Schema.html#org.apache.avro.Schema" class="extype" name="org.apache.avro.Schema">Schema</a> = <span class="symbol">null</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$4">evidence$4: <a href="http://www.scala-lang.org/api/2.12.7/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.avro.AvroIO.T">T</span>]</span>, <span name="evidence$5">evidence$5: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.AvroIO.T">T</span>]</span>)</span><span class="result"> extends <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.avro.AvroIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.avro.AvroSCollection" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AvroSCollection[T]extendsSerializable"></a><a id="AvroSCollection[T]:AvroSCollection[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#AvroSCollection[T]extendsSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="Enhanced version of SCollection with Avro methods." href="AvroSCollection.html"><span class="name">AvroSCollection</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Enhanced version of <span class="extype" name="SCollection">SCollection</span> with Avro methods.</p>
+    </li><li name="com.spotify.scio.avro.AvroScioContext" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AvroScioContextextendsSerializable"></a><a id="AvroScioContext:AvroScioContext"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#AvroScioContextextendsSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="Enhanced version of ScioContext with Avro methods." href="AvroScioContext.html"><span class="name">AvroScioContext</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Enhanced version of <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a> with Avro methods.</p>
+    </li><li name="com.spotify.scio.avro.AvroTap" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="AvroTap[T]extendsTap[T]withProductwithSerializable"></a><a id="AvroTap[T]:AvroTap[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#AvroTap[T]extendsTap[T]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="Tap for Avro files." href="AvroTap.html"><span class="name">AvroTap</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/Schema.html#org.apache.avro.Schema" class="extype" name="org.apache.avro.Schema">Schema</a> = <span class="symbol">null</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$1">evidence$1: <a href="http://www.scala-lang.org/api/2.12.7/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.avro.AvroTap.T">T</span>]</span>, <span name="evidence$2">evidence$2: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.AvroTap.T">T</span>]</span>)</span><span class="result"> extends <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.avro.AvroTap.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Tap for Avro files.</p><div class="fullcomment"><div class="comment cmt"><p>Tap for Avro files.</p></div><dl class="paramcmts block"><dt class="param">schema</dt><dd class="cmt"><p>must be not null if <code>T</code> is of type
+              <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/generic/GenericRecord.html" class="extype" name="org.apache.avro.generic.GenericRecord">GenericRecord</a>.</p></dd></dl></div>
+    </li><li name="com.spotify.scio.avro.AvroTaps" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AvroTapsextendsProductwithSerializable"></a><a id="AvroTaps:AvroTaps"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#AvroTapsextendsProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="AvroTaps.html"><span class="name">AvroTaps</span></a><span class="params">(<span name="self">self: <a href="../io/Taps.html" class="extype" name="com.spotify.scio.io.Taps">Taps</a></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.avro.ObjectFileIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ObjectFileIO[T]extendsScioIO[T]withProductwithSerializable"></a><a id="ObjectFileIO[T]:ObjectFileIO[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#ObjectFileIO[T]extendsScioIO[T]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="ObjectFileIO.html"><span class="name">ObjectFileIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$1">evidence$1: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.ObjectFileIO.T">T</span>]</span>)</span><span class="result"> extends <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.avro.ObjectFileIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.avro.ObjectFileTap" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ObjectFileTap[T]extendsTap[T]withProductwithSerializable"></a><a id="ObjectFileTap[T]:ObjectFileTap[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#ObjectFileTap[T]extendsTap[T]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="Tap for object files." href="ObjectFileTap.html"><span class="name">ObjectFileTap</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$3">evidence$3: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.ObjectFileTap.T">T</span>]</span>)</span><span class="result"> extends <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.avro.ObjectFileTap.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Tap for object files.</p><div class="fullcomment"><div class="comment cmt"><p>Tap for object files. Note that serialization is not guaranteed to be compatible across Scio
+releases.
+</p></div></div>
+    </li><li name="com.spotify.scio.avro.ProtobufIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ProtobufIO[T]extendsScioIO[T]withProductwithSerializable"></a><a id="ProtobufIO[T]:ProtobufIO[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#ProtobufIO[T]extendsScioIO[T]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="ProtobufIO.html"><span class="name">ProtobufIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="evidence$2">evidence$2: <a href="http://www.scala-lang.org/api/2.12.7/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.avro.ProtobufIO.T">T</span>]</span>, <span name="evidence$3">evidence$3: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.avro.ProtobufIO.T">T</span>]</span>, <span name="ev">ev: <span class="extype" name="scala.Predef.&lt;:&lt;">&lt;:&lt;</span>[<span class="extype" name="com.spotify.scio.avro.ProtobufIO.T">T</span>, <span class="extype" name="com.google.protobuf.Message">Message</span>]</span>)</span><span class="result"> extends <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.avro.ProtobufIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.avro.doc" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="doc=com.spotify.scio.avro.types.doc"></a><a id="doc:doc"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/avro/index.html#doc=com.spotify.scio.avro.types.doc" title="Permalink">
@@ -568,6 +739,121 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       <p class="shortcomment cmt">Typed Avro annotations and converters.</p>
+    </li><li name="com.spotify.scio.avro#toAvroSCollection" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="toAvroSCollection[T](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.AvroSCollection[T]"></a><a id="toAvroSCollection[T](SCollection[T]):AvroSCollection[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#toAvroSCollection[T](c:com.spotify.scio.values.SCollection[T]):com.spotify.scio.avro.AvroSCollection[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">toAvroSCollection</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="c">c: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.avro.toAvroSCollection.T">T</span>]</span>)</span><span class="result">: <a href="AvroSCollection.html" class="extype" name="com.spotify.scio.avro.AvroSCollection">AvroSCollection</a>[<span class="extype" name="com.spotify.scio.avro.toAvroSCollection.T">T</span>]</span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.avro#toAvroScioContext" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="toAvroScioContext(c:com.spotify.scio.ScioContext):com.spotify.scio.avro.AvroScioContext"></a><a id="toAvroScioContext(ScioContext):AvroScioContext"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#toAvroScioContext(c:com.spotify.scio.ScioContext):com.spotify.scio.avro.AvroScioContext" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">toAvroScioContext</span><span class="params">(<span name="c">c: <a href="../ScioContext.html" class="extype" name="com.spotify.scio.ScioContext">ScioContext</a></span>)</span><span class="result">: <a href="AvroScioContext.html" class="extype" name="com.spotify.scio.avro.AvroScioContext">AvroScioContext</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.avro.AvroIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AvroIO"></a><a id="AvroIO:AvroIO"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#AvroIO" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="AvroIO$.html"><span class="name">AvroIO</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.avro.AvroSysProps" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="AvroSysProps"></a><a id="AvroSysProps:AvroSysProps"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#AvroSysProps" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="AvroSysProps$.html"><span class="name">AvroSysProps</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@<a href="../registerSysProps.html" class="extype" name="com.spotify.scio.registerSysProps">registerSysProps</a></span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="com.spotify.scio.avro.AvroTyped" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AvroTyped"></a><a id="AvroTyped:AvroTyped"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#AvroTyped" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="AvroTyped$.html"><span class="name">AvroTyped</span></a>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.avro.ObjectFileIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ObjectFileIO"></a><a id="ObjectFileIO:ObjectFileIO"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#ObjectFileIO" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="ObjectFileIO$.html"><span class="name">ObjectFileIO</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.avro.ProtobufIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ProtobufIO"></a><a id="ProtobufIO:ProtobufIO"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/avro/index.html#ProtobufIO" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="ProtobufIO$.html"><span class="name">ProtobufIO</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
     </li>
               </ol>
             </div>
@@ -579,9 +865,9 @@ detects the query's dialect. To override this, start the query with either <code
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.7/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>
