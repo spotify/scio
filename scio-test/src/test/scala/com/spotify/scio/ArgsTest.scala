@@ -155,7 +155,7 @@ class ArgsTest extends FlatSpec with Matchers {
                                 output: String,
                                 camelCaseTest: String) // This param will not be parsed properly.
 
-  it should "#1436: support came case" in {
+  it should "#1436: support camel case" in {
     val rawArgs = Array("--output=/path/to/output", "--camel-case-test=value1")
     val result = TypedParser[CamelCaseArguments]().parse(rawArgs)
     result should be a 'success
