@@ -23,6 +23,7 @@ import com.spotify.scio.testing.util.ItUtils
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.runners.dataflow.DataflowRunner
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
+import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.scalatest._
 
@@ -67,4 +68,11 @@ class ScioContextIT extends FlatSpec with Matchers {
     noException shouldBe thrownBy { sc.close() }
   }
 
+  it should "register remote file systems in the test context" in {
+    val sc = ScioContext.forTest()
+    noException shouldBe thrownBy {
+      FileSystems.matchSingleFileSpec("gs://data-integration-test-eu/shakespeare.json")
+    }
+    sc.close()
+  }
 }

@@ -36,6 +36,7 @@ import com.spotify.scio.values._
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
+import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.metrics.Counter
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms._
@@ -379,6 +380,10 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
     val tmpDir = Files.createTempDirectory("scio-temp-")
     logger.debug(s"New temp directory at $tmpDir")
     options.setTempLocation(tmpDir.toString)
+  }
+
+  if (isTest) {
+    FileSystems.setDefaultPipelineOptions(PipelineOptionsFactory.create)
   }
 
   /** Underlying pipeline. */
