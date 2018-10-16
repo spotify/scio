@@ -565,7 +565,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   // =======================================================================
 
   /**  Whether this is a test context. */
-  lazy val isTest: Boolean = testId.isDefined
+  def isTest: Boolean = testId.isDefined
 
   // =======================================================================
   // Read operations
