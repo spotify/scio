@@ -9,8 +9,21 @@ import com.spotify.scio.testing._
 import org.apache.avro.generic.GenericRecord
 import com.spotify.scio.avro._
 
-case class InputClass(s: String, i: Int)
-case class OutputClass(result: String)
+case class InputClass(s: String, i: Int) extends GenericRecord {
+  def getSchema(): org.apache.avro.Schema = ???
+  def get(x$1: String): Object = ???
+  def put(x$1: String,x$2: Any): Unit = ???
+  def get(x$1: Int): Object = ???
+  def put(x$1: Int,x$2: Any): Unit = ???
+}
+
+case class OutputClass(result: String) extends GenericRecord {
+  def getSchema(): org.apache.avro.Schema = ???
+  def get(x$1: String): Object = ???
+  def put(x$1: String,x$2: Any): Unit = ???
+  def get(x$1: Int): Object = ???
+  def put(x$1: Int,x$2: Any): Unit = ???
+}
 
 object TestJob
 
