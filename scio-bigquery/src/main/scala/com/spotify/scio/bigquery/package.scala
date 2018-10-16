@@ -17,7 +17,11 @@
 
 package com.spotify.scio
 
-import com.google.api.services.bigquery.model.{TableReference, TableRow => GTableRow}
+import com.google.api.services.bigquery.model.{
+  TableReference,
+  TableRow => GTableRow,
+  TimePartitioning => GTimePartitioning
+}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
@@ -282,6 +286,23 @@ package object bigquery {
     /** Convert BigQuery `DATETIME` string to `LocalDateTime`. */
     def parse(datetime: String): LocalDateTime =
       parser.parseLocalDateTime(datetime)
+  }
+
+  /**
+   * Scala wrapper for [[com.google.api.services.bigquery.model.TimePartitioning]].
+   */
+  case class TimePartitioning(`type`: String,
+                              field: String = null,
+                              expirationMs: Long = 0,
+                              requirePartitionFilter: Boolean = false) {
+    def asJava: GTimePartitioning = {
+      var p = new GTimePartitioning()
+        .setType(`type`)
+        .setRequirePartitionFilter(requirePartitionFilter)
+      if (field != null) p = p.setField(field)
+      if (expirationMs > 0) p = p.setExpirationMs(expirationMs)
+      p
+    }
   }
 
 }

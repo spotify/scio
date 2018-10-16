@@ -40,9 +40,14 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
     schema: TableSchema,
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition,
-    tableDescription: String)(implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
+    tableDescription: String,
+    timePartitioning: TimePartitioning)(implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
     val param =
-      BigQueryTable.WriteParam(schema, writeDisposition, createDisposition, tableDescription)
+      BigQueryTable.WriteParam(schema,
+                               writeDisposition,
+                               createDisposition,
+                               tableDescription,
+                               timePartitioning)
     self.asInstanceOf[SCollection[TableRow]].write(BigQueryTable(table))(param)
   }
 
@@ -55,9 +60,15 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
     schema: TableSchema = null,
     writeDisposition: WriteDisposition = null,
     createDisposition: CreateDisposition = null,
-    tableDescription: String = null)(implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
+    tableDescription: String = null,
+    timePartitioning: TimePartitioning = null
+  )(implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
     val param =
-      BigQueryTable.WriteParam(schema, writeDisposition, createDisposition, tableDescription)
+      BigQueryTable.WriteParam(schema,
+                               writeDisposition,
+                               createDisposition,
+                               tableDescription,
+                               timePartitioning)
     self
       .asInstanceOf[SCollection[TableRow]]
       .write(BigQueryTable(tableSpec))(param)
@@ -69,11 +80,12 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
    */
   def saveAsTypedBigQuery(table: TableReference,
                           writeDisposition: WriteDisposition,
-                          createDisposition: CreateDisposition)(implicit tt: TypeTag[T],
-                                                                ev: T <:< HasAnnotation,
-                                                                coder: Coder[T]): Future[Tap[T]] = {
+                          createDisposition: CreateDisposition,
+                          timePartitioning: TimePartitioning)(implicit tt: TypeTag[T],
+                                                              ev: T <:< HasAnnotation,
+                                                              coder: Coder[T]): Future[Tap[T]] = {
     val param =
-      BigQueryTyped.Table.WriteParam(writeDisposition, createDisposition)
+      BigQueryTyped.Table.WriteParam(writeDisposition, createDisposition, timePartitioning)
     implicit val hcoder = coder.asInstanceOf[Coder[T with HasAnnotation]]
     self
       .asInstanceOf[SCollection[T with HasAnnotation]]
@@ -113,12 +125,13 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
    */
   def saveAsTypedBigQuery(tableSpec: String,
                           writeDisposition: WriteDisposition = null,
-                          createDisposition: CreateDisposition = null)(
+                          createDisposition: CreateDisposition = null,
+                          timePartitioning: TimePartitioning = null)(
     implicit tt: TypeTag[T],
     ev: T <:< HasAnnotation,
     coder: Coder[T]): Future[Tap[T]] = {
     val param =
-      BigQueryTyped.Table.WriteParam(writeDisposition, createDisposition)
+      BigQueryTyped.Table.WriteParam(writeDisposition, createDisposition, timePartitioning)
     implicit val hcoder = coder.asInstanceOf[Coder[T with HasAnnotation]]
     self
       .asInstanceOf[SCollection[T with HasAnnotation]]
