@@ -84,7 +84,9 @@ class RewriteSysProp extends SyntacticRule("RewriteSysProp") {
         val pname = Term.Name(toCamelCase(key.replaceAll("_KEY", "")))
         addImport(t.pos, importer"com.spotify.scio.io.TapsSysProps") +
         Patch.replaceTree(t, q"TapsSysProps.${pname}.value".toString)
-      case _ =>
+      case i @ Importee.Name(Name.Indeterminate("BigQueryClient")) =>
+        Patch.removeImportee(i)
+      case c =>
         Patch.empty
     }.asPatch
   }
