@@ -34,11 +34,11 @@ private object registerSysPropsMacro {
     annottees.map(_.tree) match {
       case List(q"$mod object $name extends ..$parents { ..$body }") =>
         val vars = body.collect {
-          case ValDef(_, _, _, rhs) => c.Expr[SysProp](rhs)
+          case ValDef(_, _, _, rhs) => c.Expr(rhs)
         }
 
         val propertiesMethod =
-          q"""override def properties: ${typeOf[List[SysProp]]} = List(..$vars)"""
+          q"""override def properties: List[SysProp] = List(..$vars)"""
 
         c.Expr[Any](q"""
             $mod object $name extends ..$parents with $traitT {
