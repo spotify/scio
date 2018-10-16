@@ -11,8 +11,8 @@ object BQClientRefactoring {
   val table = "bigquery-public-data:samples.shakespeare"
 
   val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.csv")
-  val schema = BigQueryUtil.parseSchema(
-      """
+  val schema =
+    BigQueryUtil.parseSchema("""
         |{
         |  "fields": [
         |    {"mode": "NULLABLE", "name": "word", "type": "STRING"},
@@ -29,9 +29,20 @@ object BQClientRefactoring {
   bq.query.rows(query)
   bq.tables.schema(table)
   bq.tables.rows(table)
+  bq.tables.create(table, schema)
+  bq.tables.table(table)
+  bq.tables.tableReferences("projectId", "datasetId")
 
-  val tableRef = bq.load.csv(sources, table, skipLeadingRows = 1, schema = Some(schema))
-  bq.load.json(sources, table, schema = Some(schema))
-  bq.load.avro(sources, table)
-  tableRef.map(bq.tables.table)
+  bq.extract.asCsv(table, List())
+  bq.extract.asJson(table, List())
+  bq.extract.asAvro(table, List())
+
+  val tableRefFromCsv = bq.load.csv(sources, table, skipLeadingRows = 1, schema = Some(schema)).get
+  bq.load.json(sources, table, schema = Some(schema)).get
+  bq.load.avro(sources, table).get
+  bq.tables.table(tableRefFromCsv)
+
+  import org.apache.beam.sdk.io.gcp.{bigquery => beam}
+  val tableRef = beam.BigQueryHelpers.parseTableSpec(table)
+  bq.tables.create(tableRef, schema)
 }
