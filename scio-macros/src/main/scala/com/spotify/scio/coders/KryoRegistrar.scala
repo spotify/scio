@@ -37,14 +37,14 @@ private object KryoRegistrarMacro {
     val traitT = tq"_root_.com.spotify.scio.coders.AnnotatedKryoRegistrar"
 
     annottees.map(_.tree) match {
-      case List(q"class $name extends ..$parents { ..$body }") =>
+      case List(q"$mod class $name extends ..$parents { ..$body }") =>
         if (!parents.exists(_.toString() == "IKryoRegistrar")) {
           c.abort(c.enclosingPosition, s"Registrar class must extend IKryoRegistrar")
         }
         if (!name.toString().endsWith("KryoRegistrar")) {
           c.abort(c.enclosingPosition, s"Registrar class name must end with KryoRegistrar")
         }
-        c.Expr[Any](q"class $name extends ..$parents with $traitT { ..$body }")
+        c.Expr[Any](q"$mod class $name extends ..$parents with $traitT { ..$body }")
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
   }
