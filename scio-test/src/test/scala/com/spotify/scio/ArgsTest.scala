@@ -144,4 +144,21 @@ class ArgsTest extends FlatSpec with Matchers {
     result should be a 'failure
   }
 
+  @AppName("Scio Examples")
+  @AppVersion(BuildInfo.version)
+  @ProgName("com.spotify.scio.examples.MinimalWordCount")
+  case class CamelCaseArguments(@HelpMessage("Path of the file to read from")
+                                @ExtraName("i")
+                                input: String = "/path/to/input",
+                                @HelpMessage("Path of the file to write to")
+                                @ExtraName("o")
+                                output: String,
+                                camelCaseTest: String) // This param will not be parsed properly.
+
+  it should "#1436: support came case" in {
+    val rawArgs = Array("--output=/path/to/output", "--camel-case-test=value1")
+    val result = TypedParser[CamelCaseArguments]().parse(rawArgs)
+    result should be a 'success
+  }
+
 }

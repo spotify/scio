@@ -118,6 +118,7 @@ object ContextAndArgs {
 
   import caseapp._
   import caseapp.core.help._
+  import caseapp.core.util.CaseUtil
 
   final case class TypedParser[T: Parser: Help] private () extends ArgsParser[Try] {
     override type ArgsType = T
@@ -131,9 +132,10 @@ object ContextAndArgs {
       val supportedCustomArgs =
         Parser[T].args
           .flatMap { a =>
-            a.name +: a.extraNames
-          }
-          .map(_.name) ++ List("help", "usage")
+            val pname =
+              CaseUtil.pascalCaseSplit(a.name.name.toList).map(_.toLowerCase).mkString("-")
+            pname +: a.extraNames.map(_.name)
+          } ++ List("help", "usage")
 
       val Reg = "^-{1,2}(.+)$".r
       val (customArgs, remainingArgs) =
