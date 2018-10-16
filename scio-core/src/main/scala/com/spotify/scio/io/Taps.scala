@@ -17,7 +17,7 @@
 
 package com.spotify.scio.io
 
-import com.spotify.scio.{SysProp, SysProps}
+import com.spotify.scio.{registerSysProps, SysProp}
 import org.apache.beam.sdk.util.{BackOff, BackOffUtils, FluentBackoff, Sleeper}
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
@@ -173,7 +173,8 @@ object Taps extends {
 
 }
 
-object TapsSysProps extends SysProps {
+@registerSysProps
+object TapsSysProps {
 
   val Algorithm = SysProp("taps.algorithm", "System property key for taps algorithm")
   val PollingMaximumInterval = SysProp(
@@ -187,10 +188,4 @@ object TapsSysProps extends SysProps {
     "System property key for polling taps maximum number of attempts, unlimited if <= 0. " +
       "Default is 0")
 
-  override def properties: List[SysProp] = List(
-    Algorithm,
-    PollingMaximumInterval,
-    PollingInitialInterval,
-    PollingMaximumAttempts
-  )
 }

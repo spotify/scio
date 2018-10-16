@@ -71,7 +71,8 @@ object SysProps {
   }
 }
 
-object CoreSysProps extends SysProps {
+@registerSysProps
+object CoreSysProps {
 
   val Project = SysProp("project", "")
   val Home = SysProp("java.home", "java home directory")
@@ -79,5 +80,4 @@ object CoreSysProps extends SysProps {
   val User = SysProp("user.name", "system username")
   val UserDir = SysProp("user.dir", "user dir")
 
-  override def properties: List[SysProp] = List(TmpDir)
 }
