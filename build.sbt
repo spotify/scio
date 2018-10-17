@@ -645,7 +645,7 @@ lazy val scioTensorFlow: Project = Project(
   file("scio-tensorflow")
 ).enablePlugins(ProtobufPlugin)
   .settings(
-    commonSettings,
+    commonSettings ++ itSettings,
     description := "Scio add-on for TensorFlow",
     version in ProtobufConfig := protobufVersion,
     protobufRunProtoc in ProtobufConfig := (args =>
@@ -676,8 +676,9 @@ lazy val scioTensorFlow: Project = Project(
   .dependsOn(
     scioAvro,
     scioCore,
-    scioTest % "test->test"
+    scioTest % "it->it;test->test"
   )
+  .configs(IntegrationTest)
 
 lazy val scioSchemas: Project = Project(
   "scio-schemas",
