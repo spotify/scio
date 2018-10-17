@@ -29,40 +29,43 @@ class BQClientRefactoring extends SyntacticRule("BQClientRefactoring") {
       }
   }
 
+  def addBQImport(i: Tree) =
+    addImport(i.pos, importer"com.spotify.scio.bigquery.client.BigQuery")
+
   override def fix(implicit doc: SyntacticDocument): Patch = {
     doc.tree.collect {
       case i @ Importee.Name(Name.Indeterminate("BigQueryClient")) =>
-        Patch.removeImportee(i) + addImport(i.pos, importer"com.spotify.scio.bigquery.client.BigQuery")
+        Patch.removeImportee(i) + addBQImport(i)
       case BQDef(t, "extractLocation" | "extractTables") =>
-        Patch.addLeft(t, "query.")
+        Patch.addLeft(t, "query.") + addBQImport(t)
       case Term.Apply(Term.Select(n @ Term.Name("BigQueryClient"), Term.Name("defaultInstance")), _) =>
-        Patch.replaceTree(n, "BigQuery")
+        Patch.replaceTree(n, "BigQuery") + addBQImport(n)
       case BQDef(t, "getQuerySchema") =>
-        Patch.replaceTree(t, "query.schema")
+        Patch.replaceTree(t, "query.schema") + addBQImport(t)
       case BQDef(t, "getQueryRows") =>
-        Patch.replaceTree(t, "query.rows")
+        Patch.replaceTree(t, "query.rows") + addBQImport(t)
       case BQDef(t, "getTableSchema") =>
-        Patch.replaceTree(t, "tables.schema")
+        Patch.replaceTree(t, "tables.schema") + addBQImport(t)
       case BQDef(t, "createTable") =>
-        Patch.replaceTree(t, "tables.create")
+        Patch.replaceTree(t, "tables.create") + addBQImport(t)
       case BQDef(t, "getTable") =>
-        Patch.replaceTree(t, "tables.table")
+        Patch.replaceTree(t, "tables.table") + addBQImport(t)
       case BQDef(t, "getTables") =>
-        Patch.replaceTree(t, "tables.tableReferences")
+        Patch.replaceTree(t, "tables.tableReferences") + addBQImport(t)
       case BQDef(t, "getTableRows") =>
-        Patch.replaceTree(t, "tables.rows")
+        Patch.replaceTree(t, "tables.rows") + addBQImport(t)
       case ap @ BQDef(t, "loadTableFromCsv") =>
-        Patch.addRight(ap, ".get") + Patch.replaceTree(t, "load.csv")
+        Patch.addRight(ap, ".get") + Patch.replaceTree(t, "load.csv") + addBQImport(t)
       case ap @ BQDef(t, "loadTableFromJson") =>
-        Patch.addRight(ap, ".get") + Patch.replaceTree(t, "load.json")
+        Patch.addRight(ap, ".get") + Patch.replaceTree(t, "load.json") + addBQImport(t)
       case ap @ BQDef(t, "loadTableFromAvro") =>
-        Patch.addRight(ap, ".get") + Patch.replaceTree(t, "load.avro")
+        Patch.addRight(ap, ".get") + Patch.replaceTree(t, "load.avro") + addBQImport(t)
       case BQDef(t, "exportTableAsCsv") =>
-        Patch.replaceTree(t, "extract.asCsv")
+        Patch.replaceTree(t, "extract.asCsv") + addBQImport(t)
       case BQDef(t, "exportTableAsJson") =>
-        Patch.replaceTree(t, "extract.asJson")
+        Patch.replaceTree(t, "extract.asJson") + addBQImport(t)
       case BQDef(t, "exportTableAsAvro") =>
-        Patch.replaceTree(t, "extract.asAvro")
+        Patch.replaceTree(t, "extract.asAvro") + addBQImport(t)
       case c if c.toString.contains("BigQueryClient") =>
         Patch.empty
     }.asPatch
