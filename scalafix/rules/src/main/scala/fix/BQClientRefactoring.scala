@@ -43,17 +43,27 @@ class BQClientRefactoring extends SyntacticRule("BQClientRefactoring") {
         Patch.replaceTree(t, "query.rows")
       case BQDef(t, "getTableSchema") =>
         Patch.replaceTree(t, "tables.schema")
+      case BQDef(t, "createTable") =>
+        Patch.replaceTree(t, "tables.create")
+      case BQDef(t, "getTable") =>
+        Patch.replaceTree(t, "tables.table")
+      case BQDef(t, "getTables") =>
+        Patch.replaceTree(t, "tables.tableReferences")
       case BQDef(t, "getTableRows") =>
         Patch.replaceTree(t, "tables.rows")
-      case BQDef(t, "loadTableFromCsv") =>
-        Patch.replaceTree(t, "load.csv")
-      case BQDef(t, "loadTableFromJson") =>
-        Patch.replaceTree(t, "load.json")
-      case BQDef(t, "loadTableFromAvro") =>
-        Patch.replaceTree(t, "load.avro")
-      case ap @ Term.Apply(Term.Select(bq, t @ Term.Name("getTable")), List(ref)) =>
-        Patch.replaceTree(ap, s"${ref}.map(${bq}.tables.table)")
-      case c if (c.toString.contains("BigQueryClient")) =>
+      case ap @ BQDef(t, "loadTableFromCsv") =>
+        Patch.addRight(ap, ".get") + Patch.replaceTree(t, "load.csv")
+      case ap @ BQDef(t, "loadTableFromJson") =>
+        Patch.addRight(ap, ".get") + Patch.replaceTree(t, "load.json")
+      case ap @ BQDef(t, "loadTableFromAvro") =>
+        Patch.addRight(ap, ".get") + Patch.replaceTree(t, "load.avro")
+      case BQDef(t, "exportTableAsCsv") =>
+        Patch.replaceTree(t, "extract.asCsv")
+      case BQDef(t, "exportTableAsJson") =>
+        Patch.replaceTree(t, "extract.asJson")
+      case BQDef(t, "exportTableAsAvro") =>
+        Patch.replaceTree(t, "extract.asAvro")
+      case c if c.toString.contains("BigQueryClient") =>
         Patch.empty
     }.asPatch
   }
