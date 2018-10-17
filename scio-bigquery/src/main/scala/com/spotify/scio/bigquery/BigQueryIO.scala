@@ -148,11 +148,14 @@ final case class BigQueryTable(tableSpec: String) extends BigQueryIO[TableRow] {
     if (params.createDisposition != null) {
       transform = transform.withCreateDisposition(params.createDisposition)
     }
-    if (params.writeDisposition != null) transform = {
-      transform.withWriteDisposition(params.writeDisposition)
+    if (params.writeDisposition != null) {
+      transform = transform.withWriteDisposition(params.writeDisposition)
     }
-    if (params.tableDescription != null) transform = {
-      transform.withTableDescription(params.tableDescription)
+    if (params.tableDescription != null) {
+      transform = transform.withTableDescription(params.tableDescription)
+    }
+    if (params.timePartitioning != null) {
+      transform = transform.withTimePartitioning(params.timePartitioning.asJava)
     }
     data.applyInternal(transform)
 
@@ -170,7 +173,8 @@ object BigQueryTable {
   final case class WriteParam(schema: TableSchema,
                               writeDisposition: WriteDisposition,
                               createDisposition: CreateDisposition,
-                              tableDescription: String)
+                              tableDescription: String,
+                              timePartitioning: TimePartitioning)
 
   @inline final def apply(table: TableReference): BigQueryTable =
     BigQueryTable(beam.BigQueryHelpers.toTableSpec(table))
@@ -313,7 +317,8 @@ object BigQueryTyped {
         BigQueryTable.WriteParam(bqt.schema,
                                  params.writeDisposition,
                                  params.createDisposition,
-                                 bqt.tableDescription.orNull)
+                                 bqt.tableDescription.orNull,
+                                 params.timePartitioning)
 
       BigQueryTable(table)
         .write(rows, ps)
@@ -328,7 +333,8 @@ object BigQueryTyped {
 
   object Table {
     final case class WriteParam(writeDisposition: WriteDisposition,
-                                createDisposition: CreateDisposition)
+                                createDisposition: CreateDisposition,
+                                timePartitioning: TimePartitioning)
 
     @inline
     final def apply[T <: HasAnnotation: ClassTag: TypeTag: Coder](table: TableReference): Table[T] =
