@@ -40,13 +40,16 @@ Cannot find a Coder instance for type:
   some debugging hints:
     - For Option types, ensure that a Coder instance is in scope for the non-Option version.
     - For List and Seq types, ensure that a Coder instance is in scope for a single element.
-    - For generic methods, you may need to add an implicit parameter
+    - For generic methods, you may need to add an implicit parameter so that
         def foo[T](coll: SCollection[SomeClass], param: String): SCollection[T]
+
       may become:
         def foo[T](coll: SCollection[SomeClass],
                    param: String)(implicit c: Coder[T]): SCollection[T]
-      or:
+                                                ^
+      Alternativelly, you can use a context bound instead of an implicit parameter:
         def foo[T: Coder](coll: SCollection[SomeClass], param: String): SCollection[T]
+                    ^
     - You can check that an instance exists for Coder in the REPL or in your code:
         scala> com.spotify.scio.coders.Coder[Foo]
       And find the missing instance and construct it as needed.
