@@ -23,7 +23,7 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.testing.util.ItUtils
 import com.spotify.scio.testing.{PipelineSpec, PipelineTestUtils}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
-import org.apache.beam.sdk.io.{Compression, FileSystems}
+import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.GcsUtil.GcsUtilFactory
 import org.apache.beam.sdk.util.gcsfs.GcsPath
@@ -80,11 +80,9 @@ class TensorFlowImplicitsIT extends PipelineSpec with PipelineTestUtils with Bef
   }
 
   "Storing and loading a Schema file remotely" should "work" in {
-    val outputPath = s"$outputPrefix/${UUID.randomUUID()}"
+    val outputPath = s"$outputPrefix/${UUID.randomUUID}"
 
     runWithRealContext(options) { sc =>
-      FileSystems.setDefaultPipelineOptions(options)
-
       val writeFuture = sc.parallelize(examples).saveAsTfExampleFile(
         path = outputPath,
         schema = tfSchema,
