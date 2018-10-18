@@ -47,7 +47,7 @@ object BigQueryTypeIT {
   class SqlLatestT
 
   @BigQueryType.fromQuery(
-    "SELECT word, word_count FROM `data-integration-test.partition_a.table_%s` LIMIT %d",
+    "SELECT word, word_count FROM `data-integration-test.partition_a.table_%s` WHERE word_count > %2$d LIMIT %2$d",
     "$LATEST",
     1)
   class SqlLatestTWithMultiArgs
