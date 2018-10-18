@@ -7,7 +7,6 @@ package v0_7_0
 import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.testing._
 import org.apache.avro.generic.GenericRecord
-import com.spotify.scio.avro._
 
 case class InputClass(s: String, i: Int) extends GenericRecord {
   def getSchema(): org.apache.avro.Schema = ???
