@@ -48,7 +48,7 @@ object BigQueryTypeIT {
 
   @BigQueryType.fromQuery(
     """
-      |SELECT word, word_count 
+      |SELECT word, word_count
       |FROM `data-integration-test.partition_a.table_%s`
       |WHERE word_count > %2$d
       |LIMIT %2$d
