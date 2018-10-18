@@ -2,22 +2,11 @@ lazy val V = _root_.scalafix.sbt.BuildInfo
 inThisBuild(
   List(
     organization := "com.spotify",
-    homepage := Some(url("https://github.com/spotify/scio")),
-    licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
-    developers := List(
-      Developer(
-        "jto",
-        "Julien Tournay",
-        "julient@spotify.com",
-        url("https://example.com")
-      )
-    ),
     scalaVersion := V.scala212,
     addCompilerPlugin(scalafixSemanticdb),
     scalacOptions ++= List(
       "-Yrangepos"
-    ),
-    resolvers += Resolver.sonatypeRepo("snapshots")
+    )
   )
 )
 
