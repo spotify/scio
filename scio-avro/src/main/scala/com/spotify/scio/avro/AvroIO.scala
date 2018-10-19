@@ -183,7 +183,7 @@ final case class AvroIO[T: ClassTag: Coder](path: String, schema: Schema = null)
 }
 
 object AvroIO {
-  final object WriteParam {
+  object WriteParam {
     private[avro] val DefaultNumShards = 0
     private[avro] val DefaultSuffix = ""
     private[avro] val DefaultCodec: CodecFactory = CodecFactory.deflateCodec(6)

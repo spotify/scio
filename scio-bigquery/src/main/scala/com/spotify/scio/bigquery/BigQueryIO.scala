@@ -123,7 +123,7 @@ final case class BigQuerySelect(sqlQuery: String) extends BigQueryIO[TableRow] {
 }
 
 object BigQuerySelect {
-  final object ReadParam {
+  object ReadParam {
     private[bigquery] val DefaultFlattenResults = false
   }
 
@@ -174,7 +174,7 @@ final case class BigQueryTable(tableSpec: String) extends BigQueryIO[TableRow] {
 }
 
 object BigQueryTable {
-  final object WriteParam {
+  object WriteParam {
     private[bigquery] val DefaultSchema: TableSchema = null
     private[bigquery] val DefaultWriteDisposition: WriteDisposition = null
     private[bigquery] val DefaultCreateDisposition: CreateDisposition = null
@@ -216,7 +216,7 @@ final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
 }
 
 object TableRowJsonIO {
-  final object WriteParam {
+  object WriteParam {
     private[bigquery] val DefaultNumShards = 0
     private[bigquery] val DefaultCompression = Compression.UNCOMPRESSED
   }
@@ -350,7 +350,7 @@ object BigQueryTyped {
   }
 
   object Table {
-    final object WriteParam {
+    object WriteParam {
       private[bigquery] val DefaultWriteDisposition: WriteDisposition = null
       private[bigquery] val DefaultCreateDisposition: CreateDisposition = null
       private[bigquery] val DefaultTimePartitioning: TimePartitioning = null
