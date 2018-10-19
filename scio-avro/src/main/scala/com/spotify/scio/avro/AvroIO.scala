@@ -139,7 +139,7 @@ final case class AvroIO[T: ClassTag: Coder](path: String, schema: Schema = null)
     write
       .to(sc.pathWithShards(path))
       .withNumShards(numShards)
-      .withSuffix(suffix + ".avro")
+      .withSuffix(suffix)
       .withCodec(codec)
       .withMetadata(metadata.asJava)
 
@@ -183,10 +183,19 @@ final case class AvroIO[T: ClassTag: Coder](path: String, schema: Schema = null)
 }
 
 object AvroIO {
-  final case class WriteParam(numShards: Int = 0,
-                              suffix: String = "",
-                              codec: CodecFactory = CodecFactory.deflateCodec(6),
-                              metadata: Map[String, AnyRef] = Map.empty)
+  final object WriteParam {
+    private[avro] val DefaultNumShards = 0
+    private[avro] val DefaultSuffix = ""
+    private[avro] val DefaultCodec: CodecFactory = CodecFactory.deflateCodec(6)
+    private[avro] val DefaultMetadata: Map[String, AnyRef] = Map.empty
+  }
+
+  final case class WriteParam private (numShards: Int = WriteParam.DefaultNumShards,
+                                       private val _suffix: String = WriteParam.DefaultSuffix,
+                                       codec: CodecFactory = WriteParam.DefaultCodec,
+                                       metadata: Map[String, AnyRef] = WriteParam.DefaultMetadata) {
+    val suffix: String = _suffix + ".avro"
+  }
 }
 
 object AvroTyped {
@@ -208,7 +217,7 @@ object AvroTyped {
       write
         .to(sc.pathWithShards(path))
         .withNumShards(numShards)
-        .withSuffix(suffix + ".avro")
+        .withSuffix(suffix)
         .withCodec(codec)
         .withMetadata(metadata.asJava)
 
