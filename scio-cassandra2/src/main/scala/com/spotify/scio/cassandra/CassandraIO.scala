@@ -23,7 +23,7 @@ import com.spotify.scio.io.{ScioIO, Tap}
 
 import scala.concurrent.Future
 
-final case class CassandraIO[T](opts: CassandraOptions, parallelism: Int = 0) extends ScioIO[T] {
+final case class CassandraIO[T](opts: CassandraOptions) extends ScioIO[T] {
 
   override type ReadP = Nothing
   override type WriteP = CassandraIO.WriteParam[T]
@@ -41,7 +41,7 @@ final case class CassandraIO[T](opts: CassandraOptions, parallelism: Int = 0) ex
    * cluster so remote nodes in a multi-datacenter cluster may become a bottleneck.
    */
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
-    val bulkOps = new BulkOperations(opts, parallelism)
+    val bulkOps = new BulkOperations(opts, params.parallelism)
     data
       .map(params.outputFn.andThen(bulkOps.serializeFn))
       .groupBy(bulkOps.partitionFn)
@@ -54,5 +54,10 @@ final case class CassandraIO[T](opts: CassandraOptions, parallelism: Int = 0) ex
 }
 
 object CassandraIO {
-  final case class WriteParam[T](outputFn: T => Seq[Any])
+  object WriteParam {
+    private[cassandra] val DefaultPar = 0
+  }
+
+  final case class WriteParam[T] private (outputFn: T => Seq[Any],
+                                          parallelism: Int = WriteParam.DefaultPar)
 }

@@ -62,8 +62,9 @@ package object cassandra {
      * @param parallelism number of concurrent bulk writers, default to number of Cassandra nodes
      * @param f function to convert input data to values for the CQL statement
      */
-    def saveAsCassandra(opts: CassandraOptions, parallelism: Int = 0)(f: T => Seq[Any])(
+    def saveAsCassandra(opts: CassandraOptions,
+                        parallelism: Int = CassandraIO.WriteParam.DefaultPar)(f: T => Seq[Any])(
       implicit coder: Coder[T]): Future[Tap[T]] =
-      self.write(CassandraIO[T](opts, parallelism))(CassandraIO.WriteParam(f))
+      self.write(CassandraIO[T](opts))(CassandraIO.WriteParam(f, parallelism))
   }
 }
