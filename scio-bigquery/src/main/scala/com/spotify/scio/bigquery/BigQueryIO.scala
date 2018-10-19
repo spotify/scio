@@ -123,7 +123,11 @@ final case class BigQuerySelect(sqlQuery: String) extends BigQueryIO[TableRow] {
 }
 
 object BigQuerySelect {
-  final case class ReadParam(flattenResults: Boolean = false)
+  final object ReadParam {
+    private[bigquery] val DefaultFlattenResults = false
+  }
+
+  final case class ReadParam private (flattenResults: Boolean = ReadParam.DefaultFlattenResults)
 }
 
 /**
@@ -170,11 +174,20 @@ final case class BigQueryTable(tableSpec: String) extends BigQueryIO[TableRow] {
 }
 
 object BigQueryTable {
-  final case class WriteParam(schema: TableSchema,
-                              writeDisposition: WriteDisposition,
-                              createDisposition: CreateDisposition,
-                              tableDescription: String,
-                              timePartitioning: TimePartitioning)
+  final object WriteParam {
+    private[bigquery] val DefaultSchema: TableSchema = null
+    private[bigquery] val DefaultWriteDisposition: WriteDisposition = null
+    private[bigquery] val DefaultCreateDisposition: CreateDisposition = null
+    private[bigquery] val DefaultTableDescription: String = null
+    private[bigquery] val DefaultTimePartitioning: TimePartitioning = null
+  }
+
+  final case class WriteParam private (
+    schema: TableSchema = WriteParam.DefaultSchema,
+    writeDisposition: WriteDisposition = WriteParam.DefaultWriteDisposition,
+    createDisposition: CreateDisposition = WriteParam.DefaultCreateDisposition,
+    tableDescription: String = WriteParam.DefaultTableDescription,
+    timePartitioning: TimePartitioning = WriteParam.DefaultTimePartitioning)
 
   @inline final def apply(table: TableReference): BigQueryTable =
     BigQueryTable(beam.BigQueryHelpers.toTableSpec(table))
@@ -203,8 +216,13 @@ final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
 }
 
 object TableRowJsonIO {
-  final case class WriteParam(numShards: Int = 0,
-                              compression: Compression = Compression.UNCOMPRESSED)
+  final object WriteParam {
+    private[bigquery] val DefaultNumShards = 0
+    private[bigquery] val DefaultCompression = Compression.UNCOMPRESSED
+  }
+
+  final case class WriteParam private (numShards: Int = WriteParam.DefaultNumShards,
+                                       compression: Compression = WriteParam.DefaultCompression)
 }
 
 object BigQueryTyped {
@@ -332,9 +350,16 @@ object BigQueryTyped {
   }
 
   object Table {
-    final case class WriteParam(writeDisposition: WriteDisposition,
-                                createDisposition: CreateDisposition,
-                                timePartitioning: TimePartitioning)
+    final object WriteParam {
+      private[bigquery] val DefaultWriteDisposition: WriteDisposition = null
+      private[bigquery] val DefaultCreateDisposition: CreateDisposition = null
+      private[bigquery] val DefaultTimePartitioning: TimePartitioning = null
+    }
+
+    final case class WriteParam private (
+      writeDisposition: WriteDisposition = WriteParam.DefaultWriteDisposition,
+      createDisposition: CreateDisposition = WriteParam.DefaultCreateDisposition,
+      timePartitioning: TimePartitioning = WriteParam.DefaultTimePartitioning)
 
     @inline
     final def apply[T <: HasAnnotation: ClassTag: TypeTag: Coder](table: TableReference): Table[T] =
