@@ -32,16 +32,29 @@ import com.spotify.scio.bigquery.{BigQueryPartitionUtil, BigQuerySysProps, BigQu
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.{Map => MMap, Stack => MStack}
+import scala.collection.mutable.{Map => MMap}
 import scala.reflect.macros._
+import scala.util.matching.Regex
+import scala.util.matching.Regex.Match
 
 // scalastyle:off line.size.limit
 private[types] object TypeProvider {
 
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
   private lazy val bigquery: BigQuery = BigQuery.defaultInstance()
-  private[this] val FormatSpecifierRegex =
-    "(%(\\d+\\$)?([-#+ 0,(\\<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%]))".r
+
+  private[this] object FormatSpecifier {
+    val Regex: Regex =
+      "%((\\d+)\\$)?([-#+ 0,(\\<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])".r
+
+    def unapply(m: Match): Option[(Char, Int)] = {
+      val idx = Option(m.group(2))
+        .map(_.toInt - 1)
+        .getOrElse(0)
+
+      Some(m.group(7).head -> idx)
+    }
+  }
 
   def tableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
@@ -82,29 +95,30 @@ private[types] object TypeProvider {
   def queryImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
-    val args = extractStrings(c, "Missing query")
-    val (queryFormat: String) :: tail = args
-    val argsStack = MStack[Any](tail: _*)
-    val query = BigQueryPartitionUtil.latestQuery(bigquery, formatString(args))
+    val extractedArgs = extractStrings(c, "Missing query")
+    val (queryFormat: String) :: queryArgs = extractedArgs
+    val query = BigQueryPartitionUtil.latestQuery(bigquery, formatString(extractedArgs))
     val schema = bigquery.query.schema(query)
     val traits = List(tq"${p(c, SType)}.HasQuery")
 
     val queryDef =
       q"override def query: _root_.java.lang.String = $queryFormat"
 
-    val formatTerms = FormatSpecifierRegex
+    val formatTerms = FormatSpecifier.Regex
       .findAllMatchIn(queryFormat)
-      .map(m => (TermName(c.freshName("queryArg$")), m.matched.last, argsStack.pop()))
-      .collect {
-        case (termName, 's', _: String) => typeOf[String] -> termName
-        case (termName, 'd', _: Int)    => typeOf[Int] -> termName
-        case (termName, 'd', _: Long)   => typeOf[Long] -> termName
-        case (termName, 'f', _: Float)  => typeOf[Float] -> termName
-        case (termName, 'f', _: Double) => typeOf[Double] -> termName
-        case _ =>
-          c.abort(c.enclosingPosition, "format specifier not supported")
+      .map {
+        case FormatSpecifier(format, argIdx) => (argIdx, format, queryArgs(argIdx))
       }
-      .toList
+      .collect {
+        case (idx, 's', _: String) => idx -> typeOf[String]
+        case (idx, 'd', _: Int)    => idx -> typeOf[Int]
+        case (idx, 'd', _: Long)   => idx -> typeOf[Long]
+        case (idx, 'f', _: Float)  => idx -> typeOf[Float]
+        case (idx, 'f', _: Double) => idx -> typeOf[Double]
+        case _                     => c.abort(c.enclosingPosition, "format specifier not supported")
+      }
+      .toSet[(Int, c.universe.Type)]
+      .map(e => e._2 -> TermName(c.freshName("queryArg$")))
 
     val queryFnDef = if (formatTerms.nonEmpty) {
       val typesQ = formatTerms.map { case (tpt, termName) => q"$termName: $tpt" }
