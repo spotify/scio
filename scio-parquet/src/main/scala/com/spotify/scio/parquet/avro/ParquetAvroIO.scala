@@ -116,9 +116,9 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
 }
 
 object ParquetAvroIO {
-  final case class ReadParam[A: ClassTag, T: ClassTag](projection: Schema,
-                                                       predicate: FilterPredicate,
-                                                       projectionFn: A => T) {
+  final case class ReadParam[A: ClassTag, T: ClassTag] private (projection: Schema,
+                                                                predicate: FilterPredicate,
+                                                                projectionFn: A => T) {
     val avroClass: Class[A] = ScioUtil.classOf[A]
     val readSchema: Schema = {
       if (classOf[SpecificRecordBase] isAssignableFrom avroClass) {
@@ -147,10 +147,19 @@ object ParquetAvroIO {
         })
     }
   }
-  final case class WriteParam(schema: Schema = null,
-                              numShards: Int = 0,
-                              suffix: String = "",
-                              compression: CompressionCodecName = CompressionCodecName.SNAPPY)
+
+  object WriteParam {
+    private[avro] val DefaultSchema = null
+    private[avro] val DefaultNumShards = 0
+    private[avro] val DefaultSuffix = ""
+    private[avro] val DefaultCompression = CompressionCodecName.SNAPPY
+  }
+
+  final case class WriteParam private (schema: Schema = WriteParam.DefaultSchema,
+                                       numShards: Int = WriteParam.DefaultNumShards,
+                                       suffix: String = WriteParam.DefaultSuffix,
+                                       compression: CompressionCodecName =
+                                         WriteParam.DefaultCompression)
 }
 
 case class ParquetAvroTap[A, T: ClassTag: Coder](path: String,
