@@ -19,7 +19,14 @@ package com.spotify.scio.pubsub
 
 import com.google.pubsub.v1.PublisherGrpc.PublisherBlockingStub
 import com.google.pubsub.v1.SubscriberGrpc.SubscriberBlockingStub
-import com.google.pubsub.v1.{GetTopicRequest, PublisherGrpc, SubscriberGrpc, Subscription, Topic}
+import com.google.pubsub.v1.{
+  GetSubscriptionRequest,
+  GetTopicRequest,
+  PublisherGrpc,
+  SubscriberGrpc,
+  Subscription,
+  Topic
+}
 import io.grpc.ManagedChannel
 import io.grpc.auth.MoreCallCredentials
 import io.grpc.netty.{GrpcSslContexts, NegotiationType, NettyChannelBuilder}
@@ -30,7 +37,7 @@ import scala.util.Try
 object PubSubAdmin {
 
   private object GrpcClient {
-    private def newChannel(pubsubOptions: PubsubOptions): ManagedChannel = {
+    private def newChannel: ManagedChannel = {
       NettyChannelBuilder
         .forAddress("pubsub.googleapis.com", 443)
         .negotiationType(NegotiationType.TLS)
@@ -39,7 +46,7 @@ object PubSubAdmin {
     }
 
     def subscriber[A](pubsubOptions: PubsubOptions)(f: SubscriberBlockingStub => A): Try[A] = {
-      val channel = newChannel(pubsubOptions)
+      val channel = newChannel
       val client = SubscriberGrpc
         .newBlockingStub(channel)
         .withCallCredentials(MoreCallCredentials.from(pubsubOptions.getGcpCredential))
@@ -50,7 +57,7 @@ object PubSubAdmin {
     }
 
     def publisher[A](pubsubOptions: PubsubOptions)(f: PublisherBlockingStub => A): Try[A] = {
-      val channel = newChannel(pubsubOptions)
+      val channel = newChannel
       val client = PublisherGrpc
         .newBlockingStub(channel)
         .withCallCredentials(MoreCallCredentials.from(pubsubOptions.getGcpCredential))
@@ -65,7 +72,7 @@ object PubSubAdmin {
    * Ensure PubSub topic exists.
    *
    * @param name Topic path. Needs to follow `projects/projectId/topics/topicName`
-   * @return
+   * @return a Topic if it alreadys exists or has been successfully created, a failure otherwise
    */
   def ensureTopic(pubsubOptions: PubsubOptions, name: String): Try[Topic] =
     GrpcClient.publisher(pubsubOptions) { client =>
@@ -77,7 +84,7 @@ object PubSubAdmin {
    * Get the configuration of a topic.
    *
    * @param name Topic path. Needs to follow `projects/projectId/topics/topicName`
-   * @return
+   * @return a Topic if it exists, a failure otherwise
    */
   def topic(pubsubOptions: PubsubOptions, name: String): Try[Topic] =
     GrpcClient.publisher(pubsubOptions) { client =>
@@ -90,7 +97,8 @@ object PubSubAdmin {
    *
    * @param topic Topic path. Needs to follow `projects/projectId/topics/topicName`
    * @param name  Subscription path. Needs to follow `projects/projectId/topics/topicName`
-   * @return
+   * @return a Subscription if it alreadys exists or has been successfully created, a failure
+   * otherwise
    */
   def ensureSubscription(pubsubOptions: PubsubOptions,
                          topic: String,
@@ -98,5 +106,17 @@ object PubSubAdmin {
     GrpcClient.subscriber(pubsubOptions) { client =>
       val sub = Subscription.newBuilder().setTopic(topic).setName(name).build()
       client.createSubscription(sub)
+    }
+
+  /**
+   * Get the configuration of a subscription.
+   *
+   * @param name Subscription path. Needs to follow `projects/projectId/subscriptions/subscription`
+   * @return a Subscription if it exists, a failure otherwise
+   */
+  def subscription(pubsubOptions: PubsubOptions, name: String): Try[Subscription] =
+    GrpcClient.subscriber(pubsubOptions) { client =>
+      val subRequest = GetSubscriptionRequest.newBuilder().setSubscription(name).build()
+      client.getSubscription(subRequest)
     }
 }

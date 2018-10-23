@@ -198,10 +198,7 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
     this.saveAsTfExampleFile(
       path,
       schema = null,
-      schemaFilename = "_inferred_schema.pb",
-      suffix = ".tfrecords",
-      compression = Compression.UNCOMPRESSED,
-      numShards = 0
+      schemaFilename = "_inferred_schema.pb"
     )
   }
 
@@ -214,10 +211,7 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
     this.saveAsTfExampleFile(
       path,
       schema,
-      schemaFilename = "_schema.pb",
-      suffix = ".tfrecords",
-      compression = Compression.UNCOMPRESSED,
-      numShards = 0
+      schemaFilename = "_schema.pb"
     )
   }
 
@@ -226,12 +220,13 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
    * along with `org.tensorflow.metadata.v0.Schema`.
    * @return
    */
-  def saveAsTfExampleFile(path: String,
-                          schema: Schema,
-                          schemaFilename: String,
-                          suffix: String,
-                          compression: Compression,
-                          numShards: Int): Future[Tap[Example]] = {
+  def saveAsTfExampleFile(
+    path: String,
+    schema: Schema,
+    schemaFilename: String,
+    suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
+    compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[Example]] = {
     require(schemaFilename != null && schemaFilename != "", "schema filename has to be set!")
     val schemaPath = path.replaceAll("\\/+$", "") + "/" + schemaFilename
     if (schema == null) {
@@ -348,16 +343,8 @@ class SeqTFExampleSCollectionFunctions[T <: Example](@transient val self: SColle
    *
    * @group output
    */
-  def saveAsTfExampleFile(path: String): Future[Tap[Example]] = {
-    this.saveAsTfExampleFile(
-      path,
-      schema = null,
-      schemaFilename = "_inferred_schema.pb",
-      suffix = ".tfrecords",
-      compression = Compression.UNCOMPRESSED,
-      numShards = 0
-    )
-  }
+  def saveAsTfExampleFile(path: String): Future[Tap[Example]] =
+    saveAsTfExampleFile(path, schema = null, schemaFilename = "_inferred_schema.pb")
 
   /**
    * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
@@ -365,16 +352,8 @@ class SeqTFExampleSCollectionFunctions[T <: Example](@transient val self: SColle
    *
    * @group output
    */
-  def saveAsTfExampleFile(path: String, schema: Schema): Future[Tap[Example]] = {
-    this.saveAsTfExampleFile(
-      path,
-      schema,
-      schemaFilename = "_schema.pb",
-      suffix = ".tfrecords",
-      compression = Compression.UNCOMPRESSED,
-      numShards = 0
-    )
-  }
+  def saveAsTfExampleFile(path: String, schema: Schema): Future[Tap[Example]] =
+    saveAsTfExampleFile(path, schema, schemaFilename = "_schema.pb")
 
   /**
    * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
@@ -382,12 +361,13 @@ class SeqTFExampleSCollectionFunctions[T <: Example](@transient val self: SColle
    *
    * @group output
    */
-  def saveAsTfExampleFile(path: String,
-                          schema: Schema,
-                          schemaFilename: String,
-                          suffix: String,
-                          compression: Compression,
-                          numShards: Int): Future[Tap[Example]] =
+  def saveAsTfExampleFile(
+    path: String,
+    schema: Schema,
+    schemaFilename: String,
+    suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
+    compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[Example]] =
     self
       .map(this.mergeExamples)
       .saveAsTfExampleFile(path, schema, schemaFilename, suffix, compression, numShards)
@@ -403,11 +383,11 @@ class TFRecordSCollectionFunctions[T <: Array[Byte]](val self: SCollection[T]) {
    *
    * @group output
    */
-  def saveAsTfRecordFile(
-    path: String,
-    suffix: String = ".tfrecords",
-    compression: Compression = Compression.UNCOMPRESSED,
-    numShards: Int = 0)(implicit ev: T <:< Array[Byte]): Future[Tap[Array[Byte]]] = {
+  def saveAsTfRecordFile(path: String,
+                         suffix: String = TFRecordIO.WriteParam.DefaultSuffix,
+                         compression: Compression = TFRecordIO.WriteParam.DefaultCompression,
+                         numShards: Int = TFRecordIO.WriteParam.DefaultNumShards)(
+    implicit ev: T <:< Array[Byte]): Future[Tap[Array[Byte]]] = {
     val param = TFRecordIO.WriteParam(suffix, compression, numShards)
     self.asInstanceOf[SCollection[Array[Byte]]].write(TFRecordIO(path))(param)
   }

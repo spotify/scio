@@ -22,6 +22,7 @@ import java.net.InetSocketAddress
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.elasticsearch.ElasticsearchIO.WriteParam
 import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException
 import org.elasticsearch.action.ActionRequest
 import org.joda.time.Duration
@@ -52,15 +53,13 @@ package object elasticsearch {
      * @param errorFn function to handle error when performing Elasticsearch bulk writes
      */
     def saveAsElasticsearch(esOptions: ElasticsearchOptions,
-                            flushInterval: Duration = Duration.standardSeconds(1),
-                            numOfShards: Long = 0,
-                            maxBulkRequestSize: Int = 3000,
-                            errorFn: BulkExecutionException => Unit = m => throw m)(
+                            flushInterval: Duration = WriteParam.DefaultFlushInterval,
+                            numOfShards: Long = WriteParam.DefaultNumShards,
+                            maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
+                            errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn)(
       f: T => Iterable[ActionRequest[_]])(implicit coder: Coder[T]): Future[Tap[T]] = {
-      val io = ElasticsearchIO[T](esOptions)
-      val param =
-        ElasticsearchIO.WriteParam(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize)
-      self.write(io)(param)
+      val param = WriteParam(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize)
+      self.write(ElasticsearchIO[T](esOptions))(param)
     }
   }
 
