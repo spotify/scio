@@ -86,26 +86,34 @@ object DataflowResult {
   /** Create a new [[DataflowResult]] instance. */
   def apply(projectId: String, jobId: String): DataflowResult = {
     val options = getOptions(projectId)
-
     val job = getJob(options.getDataflowClient, options.getProject, options.getRegion, jobId)
+    apply(options, job)
+  }
+
+  def apply(job: Job): DataflowResult = {
+    val options = getOptions(job.getProjectId)
+    apply(options, job)
+  }
+
+  def apply(options: DataflowPipelineOptions, job: Job): DataflowResult = {
     // DataflowPipelineJob require a mapping of human-readable transform names via
     // AppliedPTransform#getUserName, e.g. flatMap@MyJob.scala:12, to Dataflow service generated
     // transform names, e.g. s12
     val transformStepNames: Map[AppliedPTransform[_, _, _], String] =
-      job.getPipelineDescription.getExecutionPipelineStage.asScala
-        .flatMap { s =>
-          if (s.getComponentTransform != null) {
-            s.getComponentTransform.asScala.map { t =>
-              newAppliedPTransform(t.getUserName) -> t.getName
-            }
-          } else {
-            Nil
+    job.getPipelineDescription.getExecutionPipelineStage.asScala
+      .flatMap { s =>
+        if (s.getComponentTransform != null) {
+          s.getComponentTransform.asScala.map { t =>
+            newAppliedPTransform(t.getUserName) -> t.getName
           }
-        }(scala.collection.breakOut)
+        } else {
+          Nil
+        }
+      }(scala.collection.breakOut)
 
     val client = DataflowClient.create(options)
     val internal =
-      new DataflowPipelineJob(client, jobId, options, transformStepNames.asJava)
+      new DataflowPipelineJob(client, job.getId, options, transformStepNames.asJava)
     new DataflowResult(internal)
   }
 
