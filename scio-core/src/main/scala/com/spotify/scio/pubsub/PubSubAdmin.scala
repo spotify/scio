@@ -37,7 +37,7 @@ import scala.util.Try
 object PubSubAdmin {
 
   private object GrpcClient {
-    private def newChannel(pubsubOptions: PubsubOptions): ManagedChannel = {
+    private def newChannel: ManagedChannel = {
       NettyChannelBuilder
         .forAddress("pubsub.googleapis.com", 443)
         .negotiationType(NegotiationType.TLS)
@@ -46,7 +46,7 @@ object PubSubAdmin {
     }
 
     def subscriber[A](pubsubOptions: PubsubOptions)(f: SubscriberBlockingStub => A): Try[A] = {
-      val channel = newChannel(pubsubOptions)
+      val channel = newChannel
       val client = SubscriberGrpc
         .newBlockingStub(channel)
         .withCallCredentials(MoreCallCredentials.from(pubsubOptions.getGcpCredential))
@@ -57,7 +57,7 @@ object PubSubAdmin {
     }
 
     def publisher[A](pubsubOptions: PubsubOptions)(f: PublisherBlockingStub => A): Try[A] = {
-      val channel = newChannel(pubsubOptions)
+      val channel = newChannel
       val client = PublisherGrpc
         .newBlockingStub(channel)
         .withCallCredentials(MoreCallCredentials.from(pubsubOptions.getGcpCredential))
