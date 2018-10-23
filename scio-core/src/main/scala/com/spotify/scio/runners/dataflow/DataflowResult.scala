@@ -84,10 +84,10 @@ class DataflowResult(val internal: DataflowPipelineJob) extends RunnerResult {
 object DataflowResult {
 
   /** Create a new [[DataflowResult]] instance. */
-  def apply(projectId: String, jobId: String): DataflowResult = {
+  def apply(projectId: String, region: String, jobId: String): DataflowResult = {
     val options = getOptions(projectId)
 
-    val job = getJob(options.getDataflowClient, options.getProject, options.getRegion, jobId)
+    val job = getJob(options.getDataflowClient, options.getProject, region, jobId)
     // DataflowPipelineJob require a mapping of human-readable transform names via
     // AppliedPTransform#getUserName, e.g. flatMap@MyJob.scala:12, to Dataflow service generated
     // transform names, e.g. s12
