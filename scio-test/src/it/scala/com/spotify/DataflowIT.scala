@@ -62,7 +62,9 @@ class DataflowIT extends FlatSpec with Matchers {
   }
 
   it should "work independently" taggedAs Slow in {
-    val r = DataflowResult(dfResult.internal.getProjectId, dfResult.internal.getJobId)
+    val r = DataflowResult(dfResult.internal.getProjectId,
+                           dfResult.internal.getRegion,
+                           dfResult.internal.getJobId)
     r.getJob.getProjectId shouldBe dfResult.internal.getProjectId
     r.getJobMetrics.getMetrics.asScala should not be empty
     r.asScioResult.state shouldBe scioResult.state
