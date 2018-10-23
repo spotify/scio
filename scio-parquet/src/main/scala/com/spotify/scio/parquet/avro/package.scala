@@ -21,6 +21,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam
 import org.apache.avro.Schema
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.hadoop.mapreduce.Job
@@ -130,12 +131,11 @@ package object avro {
      */
     def saveAsParquetAvroFile(
       path: String,
-      schema: Schema = null,
-      numShards: Int = 0,
-      suffix: String = "",
-      compression: CompressionCodecName = CompressionCodecName.SNAPPY): Future[Tap[T]] = {
-      val param =
-        ParquetAvroIO.WriteParam(schema, numShards, suffix, compression)
+      schema: Schema = WriteParam.DefaultSchema,
+      numShards: Int = WriteParam.DefaultNumShards,
+      suffix: String = WriteParam.DefaultSuffix,
+      compression: CompressionCodecName = WriteParam.DefaultCompression): Future[Tap[T]] = {
+      val param = WriteParam(schema, numShards, suffix, compression)
       self.write(ParquetAvroIO[T](path))(param)
     }
   }

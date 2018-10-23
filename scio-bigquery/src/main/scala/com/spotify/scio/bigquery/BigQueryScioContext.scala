@@ -36,7 +36,9 @@ final class BigQueryScioContext(@transient val self: ScioContext) extends Serial
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    */
-  def bigQuerySelect(sqlQuery: String, flattenResults: Boolean = false): SCollection[TableRow] =
+  def bigQuerySelect(sqlQuery: String,
+                     flattenResults: Boolean = BigQuerySelect.ReadParam.DefaultFlattenResults)
+    : SCollection[TableRow] =
     self.read(BigQuerySelect(sqlQuery))(BigQuerySelect.ReadParam(flattenResults))
 
   /**

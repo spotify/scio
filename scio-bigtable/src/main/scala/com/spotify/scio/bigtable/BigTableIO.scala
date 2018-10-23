@@ -80,7 +80,14 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
 }
 
 object BigtableRead {
-  final case class ReadParam(keyRange: ByteKeyRange = null, rowFilter: RowFilter = null)
+
+  object ReadParam {
+    private[bigtable] val DefaultKeyRange: ByteKeyRange = null
+    private[bigtable] val DefaultRowFilter: RowFilter = null
+  }
+
+  final case class ReadParam private (keyRange: ByteKeyRange = ReadParam.DefaultKeyRange,
+                                      rowFilter: RowFilter = ReadParam.DefaultRowFilter)
 
   final def apply(projectId: String, instanceId: String, tableId: String): BigtableRead = {
     val bigtableOptions = new BigtableOptions.Builder()
@@ -139,7 +146,13 @@ final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: Str
 object BigtableWrite {
   sealed trait WriteParam
   object Default extends WriteParam
-  final case class Bulk(numOfShards: Int, flushInterval: Duration = Duration.standardSeconds(1))
+
+  object Bulk {
+    private[bigtable] val DefaultFlushInterval = Duration.standardSeconds(1)
+  }
+
+  final case class Bulk private (numOfShards: Int,
+                                 flushInterval: Duration = Bulk.DefaultFlushInterval)
       extends WriteParam
 
   final def apply[T](projectId: String, instanceId: String, tableId: String)(

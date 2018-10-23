@@ -97,17 +97,18 @@ package object bigtable {
 
   }
 
-  private[this] val DEFAULT_SLEEP_DURATION = Duration.standardMinutes(20)
+  private[this] val DefaultSleepDuration = Duration.standardMinutes(20)
 
   /** Enhanced version of [[ScioContext]] with Bigtable methods. */
   implicit class BigtableScioContext(private val self: ScioContext) extends AnyVal {
 
     /** Get an SCollection for a Bigtable table. */
-    def bigtable(projectId: String,
-                 instanceId: String,
-                 tableId: String,
-                 keyRange: ByteKeyRange = null,
-                 rowFilter: RowFilter = null): SCollection[Row] = {
+    def bigtable(
+      projectId: String,
+      instanceId: String,
+      tableId: String,
+      keyRange: ByteKeyRange = BigtableRead.ReadParam.DefaultKeyRange,
+      rowFilter: RowFilter = BigtableRead.ReadParam.DefaultRowFilter): SCollection[Row] = {
       val parameters = BigtableRead.ReadParam(keyRange, rowFilter)
       self.read(BigtableRead(projectId, instanceId, tableId))(parameters)
     }
@@ -132,7 +133,7 @@ package object bigtable {
     def updateNumberOfBigtableNodes(projectId: String,
                                     instanceId: String,
                                     numberOfNodes: Int,
-                                    sleepDuration: Duration = DEFAULT_SLEEP_DURATION): Unit = {
+                                    sleepDuration: Duration = DefaultSleepDuration): Unit = {
       val bigtableOptions = new BigtableOptions.Builder()
         .setProjectId(projectId)
         .setInstanceId(instanceId)
@@ -248,7 +249,7 @@ package object bigtable {
     def saveAsBigtable(bigtableOptions: BigtableOptions,
                        tableId: String,
                        numOfShards: Int,
-                       flushInterval: Duration = Duration.standardSeconds(1))(
+                       flushInterval: Duration = BigtableWrite.Bulk.DefaultFlushInterval)(
       implicit ev: T <:< Mutation,
       coder: Coder[T]
     ): Future[Tap[(ByteString, Iterable[Mutation])]] = {

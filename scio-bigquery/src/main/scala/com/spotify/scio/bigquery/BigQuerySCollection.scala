@@ -18,6 +18,8 @@
 package com.spotify.scio.bigquery
 
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
+import com.spotify.scio.bigquery.BigQueryTyped.Table.{WriteParam => TableWriteParam}
+import com.spotify.scio.bigquery.TableRowJsonIO.{WriteParam => TableRowJsonWriteParam}
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
@@ -57,11 +59,11 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
    */
   def saveAsBigQuery(
     tableSpec: String,
-    schema: TableSchema = null,
-    writeDisposition: WriteDisposition = null,
-    createDisposition: CreateDisposition = null,
-    tableDescription: String = null,
-    timePartitioning: TimePartitioning = null
+    schema: TableSchema = BigQueryTable.WriteParam.DefaultSchema,
+    writeDisposition: WriteDisposition = BigQueryTable.WriteParam.DefaultWriteDisposition,
+    createDisposition: CreateDisposition = BigQueryTable.WriteParam.DefaultCreateDisposition,
+    tableDescription: String = BigQueryTable.WriteParam.DefaultTableDescription,
+    timePartitioning: TimePartitioning = BigQueryTable.WriteParam.DefaultTimePartitioning
   )(implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
     val param =
       BigQueryTable.WriteParam(schema,
@@ -85,7 +87,7 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
                                                               ev: T <:< HasAnnotation,
                                                               coder: Coder[T]): Future[Tap[T]] = {
     val param =
-      BigQueryTyped.Table.WriteParam(writeDisposition, createDisposition, timePartitioning)
+      TableWriteParam(writeDisposition, createDisposition, timePartitioning)
     implicit val hcoder = coder.asInstanceOf[Coder[T with HasAnnotation]]
     self
       .asInstanceOf[SCollection[T with HasAnnotation]]
@@ -123,15 +125,15 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
    *   .saveAsTypedBigQuery("myproject:samples.gsod")
    * }}}
    */
-  def saveAsTypedBigQuery(tableSpec: String,
-                          writeDisposition: WriteDisposition = null,
-                          createDisposition: CreateDisposition = null,
-                          timePartitioning: TimePartitioning = null)(
+  def saveAsTypedBigQuery(
+    tableSpec: String,
+    writeDisposition: WriteDisposition = TableWriteParam.DefaultWriteDisposition,
+    createDisposition: CreateDisposition = TableWriteParam.DefaultCreateDisposition,
+    timePartitioning: TimePartitioning = TableWriteParam.DefaultTimePartitioning)(
     implicit tt: TypeTag[T],
     ev: T <:< HasAnnotation,
     coder: Coder[T]): Future[Tap[T]] = {
-    val param =
-      BigQueryTyped.Table.WriteParam(writeDisposition, createDisposition, timePartitioning)
+    val param = TableWriteParam(writeDisposition, createDisposition, timePartitioning)
     implicit val hcoder = coder.asInstanceOf[Coder[T with HasAnnotation]]
     self
       .asInstanceOf[SCollection[T with HasAnnotation]]
@@ -144,10 +146,10 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
    * type [[com.google.api.services.bigquery.model.TableRow TableRow]].
    */
   def saveAsTableRowJsonFile(path: String,
-                             numShards: Int = 0,
-                             compression: Compression = Compression.UNCOMPRESSED)(
+                             numShards: Int = TableRowJsonWriteParam.DefaultNumShards,
+                             compression: Compression = TableRowJsonWriteParam.DefaultCompression)(
     implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
-    val param = TableRowJsonIO.WriteParam(numShards, compression)
+    val param = TableRowJsonWriteParam(numShards, compression)
     self.asInstanceOf[SCollection[TableRow]].write(TableRowJsonIO(path))(param)
   }
 }
