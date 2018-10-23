@@ -1047,7 +1047,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as a Datastore dataset. Note that elements must be of type `Entity`.
    * @group output
    */
-  def saveAsDatastore(projectId: String)(implicit ev: T <:< Entity): Future[Tap[Entity]] =
+  def saveAsDatastore(projectId: String)(implicit ev: T <:< Entity): Future[Tap[Nothing]] =
     this.asInstanceOf[SCollection[Entity]].write(DatastoreIO(projectId))
 
   /**
@@ -1059,7 +1059,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                    timestampAttribute: String = null,
                    maxBatchSize: Option[Int] = None,
                    maxBatchBytesSize: Option[Int] = None)(implicit ct: ClassTag[T],
-                                                          coder: Coder[T]): Future[Tap[T]] =
+                                                          coder: Coder[T]): Future[Tap[Nothing]] =
     this.write(PubsubIO[T](topic))(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
 
   /**
@@ -1071,7 +1071,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                                                      timestampAttribute: String = null,
                                                      maxBatchSize: Option[Int] = None,
                                                      maxBatchBytesSize: Option[Int] = None)(
-    implicit ev: T <:< (V, Map[String, String])): Future[Tap[(V, Map[String, String])]] = {
+    implicit ev: T <:< (V, Map[String, String])): Future[Tap[Nothing]] = {
     val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
     this
       .asInstanceOf[SCollection[(V, Map[String, String])]]
@@ -1124,11 +1124,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @param io     an implementation of `ScioIO[T]` trait
    * @param params configurations need to pass to perform underline write implementation
    */
-  def write(io: ScioIO[T])(params: io.WriteP)(implicit coder: Coder[T]): Future[Tap[T]] =
+  def write(io: ScioIO[T])(params: io.WriteP)(implicit coder: Coder[T]): Future[Tap[io.tapT.T]] =
     io.writeWithContext(this, params)
 
   // scalastyle:off structural.type
-  def write(io: ScioIO[T] { type WriteP = Unit })(implicit coder: Coder[T]): Future[Tap[T]] =
+  def write(io: ScioIO[T] { type WriteP = Unit })(
+    implicit coder: Coder[T]): Future[Tap[io.tapT.T]] =
     io.writeWithContext(this, ())
   // scalastyle:on structural.type
 

@@ -112,7 +112,8 @@ package object jdbc {
   implicit class JdbcSCollection[T](val self: SCollection[T]) {
 
     /** Save this SCollection as a JDBC database. */
-    def saveAsJdbc(writeOptions: JdbcWriteOptions[T])(implicit coder: Coder[T]): Future[Tap[T]] =
+    def saveAsJdbc(writeOptions: JdbcWriteOptions[T])(
+      implicit coder: Coder[T]): Future[Tap[Nothing]] =
       self.write(JdbcWrite(writeOptions))
   }
 

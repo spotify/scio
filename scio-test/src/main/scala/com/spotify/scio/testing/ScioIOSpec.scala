@@ -80,8 +80,8 @@ trait ScioIOSpec extends PipelineSpec {
     // scalastyle:on no.whitespace.before.left.bracket
   }
 
-  def testJobTestOutput[T: Coder](xs: Seq[T], out: String = "out")(ioFn: String => ScioIO[T])(
-    writeFn: (SCollection[T], String) => Future[Tap[T]]): Unit = {
+  def testJobTestOutput[T: Coder, WT](xs: Seq[T], out: String = "out")(ioFn: String => ScioIO[T])(
+    writeFn: (SCollection[T], String) => Future[Tap[WT]]): Unit = {
     def runMain(args: Array[String]): Unit = {
       val (sc, argz) = ContextAndArgs(args)
       writeFn(sc.parallelize(xs), argz("output"))
@@ -110,7 +110,7 @@ trait ScioIOSpec extends PipelineSpec {
 
   def testJobTest[T: Coder](xs: Seq[T], in: String = "in", out: String = "out")(
     ioFn: String => ScioIO[T])(readFn: (ScioContext, String) => SCollection[T])(
-    writeFn: (SCollection[T], String) => Future[Tap[T]]): Unit = {
+    writeFn: (SCollection[T], String) => Future[Tap[_]]): Unit = {
     def runMain(args: Array[String]): Unit = {
       val (sc, argz) = ContextAndArgs(args)
       val data = readFn(sc, argz("input"))

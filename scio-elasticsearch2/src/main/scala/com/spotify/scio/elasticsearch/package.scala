@@ -57,7 +57,7 @@ package object elasticsearch {
                             numOfShards: Long = WriteParam.DefaultNumShards,
                             maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
                             errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn)(
-      f: T => Iterable[ActionRequest[_]])(implicit coder: Coder[T]): Future[Tap[T]] = {
+      f: T => Iterable[ActionRequest[_]])(implicit coder: Coder[T]): Future[Tap[Nothing]] = {
       val param = WriteParam(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize)
       self.write(ElasticsearchIO[T](esOptions))(param)
     }

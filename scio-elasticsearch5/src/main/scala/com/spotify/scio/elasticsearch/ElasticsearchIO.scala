@@ -21,7 +21,7 @@ import java.lang.{Iterable => JIterable}
 
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.{ScioIO, Tap}
+import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap}
 import org.elasticsearch.action.DocWriteRequest
 import org.apache.beam.sdk.io.{elasticsearch => beam}
 import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException
@@ -35,6 +35,7 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
 
   override type ReadP = Nothing
   override type WriteP = ElasticsearchIO.WriteParam[T]
+  override val tapT = EmptyTapOf[T]
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new IllegalStateException("Can't read from Elacticsearch")
@@ -42,7 +43,7 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
   /**
    * Save this SCollection into Elasticsearch.
    */
-  override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
+  override def write(data: SCollection[T], params: WriteP): Future[Tap[Nothing]] = {
     val shards = if (params.numOfShards > 0) {
       params.numOfShards
     } else {
@@ -64,11 +65,11 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
           override def accept(t: BulkExecutionException): Unit =
             params.errorFn(t)
         }))
-    Future.failed(new NotImplementedError("Custom future not implemented"))
+    Future.successful(EmptyTap)
   }
 
-  override def tap(params: ReadP): Tap[T] =
-    throw new NotImplementedError("Can't read from Elacticsearch")
+  override def tap(params: ReadP): Tap[Nothing] =
+    EmptyTap
 }
 
 object ElasticsearchIO {

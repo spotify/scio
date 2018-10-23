@@ -21,7 +21,7 @@ import com.google.bigtable.v2._
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.{ScioIO, Tap, TestIO}
+import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TestIO}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.{bigtable => beam}
 import org.apache.beam.sdk.io.range.ByteKeyRange
@@ -32,7 +32,9 @@ import org.joda.time.Duration
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
-sealed trait BigtableIO[T] extends ScioIO[T]
+sealed trait BigtableIO[T] extends ScioIO[T] {
+  override final val tapT = EmptyTapOf[T]
+}
 
 object BigtableIO {
   final def apply[T](projectId: String, instanceId: String, tableId: String): BigtableIO[T] =
@@ -72,10 +74,10 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
     sc.wrap(sc.applyInternal(read))
   }
 
-  override def write(data: SCollection[Row], params: WriteP): Future[Tap[Row]] =
+  override def write(data: SCollection[Row], params: WriteP): Future[Tap[Nothing]] =
     throw new IllegalStateException("BigtableRead is read-only, use Mutation to write to Bigtable")
 
-  override def tap(params: ReadP): Tap[Row] =
+  override def tap(params: ReadP): Tap[Nothing] =
     throw new NotImplementedError("Bigtable tap not implemented")
 }
 
@@ -112,7 +114,7 @@ final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: Str
     throw new IllegalStateException("BigtableWrite is write-only, use Row to read from Bigtable")
 
   override def write(data: SCollection[(ByteString, Iterable[T])],
-                     params: WriteP): Future[Tap[(ByteString, Iterable[T])]] = {
+                     params: WriteP): Future[Tap[Nothing]] = {
     val sink =
       params match {
         case BigtableWrite.Default =>
@@ -136,11 +138,11 @@ final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: Str
           KV.of(key, value.asJava.asInstanceOf[java.lang.Iterable[Mutation]])
       }
       .applyInternal(sink)
-    Future.failed(new NotImplementedError("Bigtable future not implemented"))
+    Future.successful(EmptyTap)
   }
 
-  override def tap(params: ReadP): Tap[(ByteString, Iterable[T])] =
-    throw new NotImplementedError("Bigtable tap not implemented")
+  override def tap(params: ReadP): Tap[Nothing] =
+    EmptyTap
 }
 
 object BigtableWrite {

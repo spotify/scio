@@ -38,6 +38,7 @@ final case class TextIO(path: String) extends ScioIO[String] {
 
   override type ReadP = TextIO.ReadParam
   override type WriteP = TextIO.WriteParam
+  override final val tapT = TapOf[String]
 
   override def read(sc: ScioContext, params: ReadP): SCollection[String] =
     sc.wrap(

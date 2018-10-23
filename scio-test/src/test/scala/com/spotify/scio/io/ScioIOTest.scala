@@ -62,7 +62,7 @@ class ScioIOTest extends ScioIOSpec {
     import ScioIOTest._
     val xs = (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
     testTap(xs)(_.saveAsObjectFile(_))(".obj.avro")
-    testJobTest(xs)(ObjectFileIO(_))(_.objectFile(_))(_.saveAsObjectFile(_))
+    testJobTest[AvroRecord](xs)(ObjectFileIO(_))(_.objectFile(_))(_.saveAsObjectFile(_))
   }
 
   "ProtobufIO" should "work" in {
@@ -118,13 +118,14 @@ class ScioIOTest extends ScioIOSpec {
   it should "work with subscription and attributes" in {
     val xs = (1 to 100).map(x => (x.toString, Map.empty[String, String]))
     val io = (s: String) => PubsubIO[(String, Map[String, String])](s)
-    testJobTest(xs)(io)(_.pubsubSubscriptionWithAttributes(_))(_.saveAsPubsubWithAttributes(_))
+    testJobTest(xs)(io)(_.pubsubSubscriptionWithAttributes(_))(
+      _.saveAsPubsubWithAttributes[String](_))
   }
 
   it should "work with topic and attributes" in {
     val xs = (1 to 100).map(x => (x.toString, Map.empty[String, String]))
     val io = (s: String) => PubsubIO[(String, Map[String, String])](s)
-    testJobTest(xs)(io)(_.pubsubTopicWithAttributes(_))(_.saveAsPubsubWithAttributes(_))
+    testJobTest(xs)(io)(_.pubsubTopicWithAttributes(_))(_.saveAsPubsubWithAttributes[String](_))
   }
 
 }

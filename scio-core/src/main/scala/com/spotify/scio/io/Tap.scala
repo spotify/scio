@@ -60,6 +60,11 @@ trait Tap[T] extends Serializable { self =>
 
 }
 
+case object EmptyTap extends Tap[Nothing] {
+  override def value: Iterator[Nothing] = Iterator.empty
+  override def open(sc: ScioContext): SCollection[Nothing] = sc.empty[Nothing]
+}
+
 /** Tap for text files on local file system or GCS. */
 final case class TextTap(path: String) extends Tap[String] {
   override def value: Iterator[String] = FileStorage(path).textFile

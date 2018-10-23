@@ -28,6 +28,7 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
 
   override type ReadP = DatastoreIO.ReadParam
   override type WriteP = Unit
+  override val tapT = EmptyTapOf[Entity]
 
   override def read(sc: ScioContext, params: ReadP): SCollection[Entity] =
     sc.wrap(
@@ -39,16 +40,15 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
           .withNamespace(params.namespace)
           .withQuery(params.query)))
 
-  override def write(data: SCollection[Entity], params: WriteP): Future[Tap[Entity]] = {
+  override def write(data: SCollection[Entity], params: WriteP): Future[Tap[tapT.T]] = {
     data
       .asInstanceOf[SCollection[Entity]]
       .applyInternal(beam.DatastoreIO.v1.write.withProjectId(projectId))
-    Future.failed(new NotImplementedError("Datastore future not implemented"))
+    Future.successful(EmptyTap)
   }
 
-  override def tap(params: ReadP): Tap[Entity] =
-    throw new NotImplementedError("Datastore tap not implemented")
-
+  override def tap(params: ReadP): Tap[Nothing] =
+    EmptyTap
 }
 
 object DatastoreIO {
