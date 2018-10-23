@@ -41,7 +41,7 @@ class DataflowResult(val internal: DataflowPipelineJob) extends RunnerResult {
     this(internal.asInstanceOf[DataflowPipelineJob])
 
   private val client =
-    DataflowResult.getOptions(internal.getProjectId).getDataflowClient
+    DataflowResult.getOptions(internal.getProjectId, internal.getRegion).getDataflowClient
 
   /** Get Dataflow [[com.google.api.services.dataflow.model.Job Job]]. */
   def getJob: Job =
@@ -84,14 +84,14 @@ class DataflowResult(val internal: DataflowPipelineJob) extends RunnerResult {
 object DataflowResult {
 
   /** Create a new [[DataflowResult]] instance. */
-  def apply(projectId: String, jobId: String): DataflowResult = {
-    val options = getOptions(projectId)
+  def apply(projectId: String, region: String, jobId: String): DataflowResult = {
+    val options = getOptions(projectId, region)
     val job = getJob(options.getDataflowClient, options.getProject, options.getRegion, jobId)
     apply(options, job)
   }
 
   def apply(job: Job): DataflowResult = {
-    val options = getOptions(job.getProjectId)
+    val options = getOptions(job.getProjectId, job.getLocation)
     apply(options, job)
   }
 
@@ -117,10 +117,10 @@ object DataflowResult {
     new DataflowResult(internal)
   }
 
-  private def getOptions(projectId: String): DataflowPipelineOptions = {
-    val options =
-      PipelineOptionsFactory.create().as(classOf[DataflowPipelineOptions])
+  private def getOptions(projectId: String, region: String): DataflowPipelineOptions = {
+    val options = PipelineOptionsFactory.create().as(classOf[DataflowPipelineOptions])
     options.setProject(projectId)
+    options.setRegion(region)
     options
   }
 
