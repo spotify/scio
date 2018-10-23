@@ -91,7 +91,7 @@ object DataflowResult {
   }
 
   def apply(job: Job): DataflowResult = {
-    val options = getOptions(job.getProjectId)
+    val options = getOptions(job.getProjectId, job.getLocation)
     apply(options, job)
   }
 
