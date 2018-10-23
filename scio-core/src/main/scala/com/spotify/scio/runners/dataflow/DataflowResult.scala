@@ -100,16 +100,16 @@ object DataflowResult {
     // AppliedPTransform#getUserName, e.g. flatMap@MyJob.scala:12, to Dataflow service generated
     // transform names, e.g. s12
     val transformStepNames: Map[AppliedPTransform[_, _, _], String] =
-    job.getPipelineDescription.getExecutionPipelineStage.asScala
-      .flatMap { s =>
-        if (s.getComponentTransform != null) {
-          s.getComponentTransform.asScala.map { t =>
-            newAppliedPTransform(t.getUserName) -> t.getName
+      job.getPipelineDescription.getExecutionPipelineStage.asScala
+        .flatMap { s =>
+          if (s.getComponentTransform != null) {
+            s.getComponentTransform.asScala.map { t =>
+              newAppliedPTransform(t.getUserName) -> t.getName
+            }
+          } else {
+            Nil
           }
-        } else {
-          Nil
-        }
-      }(scala.collection.breakOut)
+        }(scala.collection.breakOut)
 
     val client = DataflowClient.create(options)
     val internal =
