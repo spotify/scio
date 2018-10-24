@@ -33,7 +33,7 @@ object SoccoIndex {
     """.stripMargin
   val footer =
     """  </xmp>
-      |  <script src="http://strapdownjs.com/v/0.2/strapdown.js"></script>
+      |  <script src="https://strapdownjs.com/v/0.2/strapdown.js"></script>
       |</html>
     """.stripMargin
 
