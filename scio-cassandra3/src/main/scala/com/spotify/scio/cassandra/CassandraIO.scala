@@ -19,7 +19,7 @@ package com.spotify.scio.cassandra
 
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.{ScioIO, Tap}
+import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap}
 
 import scala.concurrent.Future
 
@@ -27,6 +27,7 @@ final case class CassandraIO[T](opts: CassandraOptions) extends ScioIO[T] {
 
   override type ReadP = Nothing
   override type WriteP = CassandraIO.WriteParam[T]
+  override val tapT = EmptyTapOf[T]
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new IllegalStateException("Can't read from Cassandra")
@@ -40,17 +41,17 @@ final case class CassandraIO[T](opts: CassandraOptions) extends ScioIO[T] {
    * occur at the end of each window in streaming mode. The bulk writer writes to all nodes in a
    * cluster so remote nodes in a multi-datacenter cluster may become a bottleneck.
    */
-  override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
+  override def write(data: SCollection[T], params: WriteP): Future[Tap[Nothing]] = {
     val bulkOps = new BulkOperations(opts, params.parallelism)
     data
       .map(params.outputFn.andThen(bulkOps.serializeFn))
       .groupBy(bulkOps.partitionFn)
       .map(bulkOps.writeFn)
-    Future.failed(new NotImplementedError("Cassandra future is not implemented"))
+    Future.successful(EmptyTap)
   }
 
-  override def tap(params: ReadP): Tap[T] =
-    throw new NotImplementedError("Can't read from Cassandra")
+  override def tap(params: ReadP): Tap[Nothing] =
+    EmptyTap
 }
 
 object CassandraIO {

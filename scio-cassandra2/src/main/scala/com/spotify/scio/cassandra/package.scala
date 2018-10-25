@@ -64,7 +64,7 @@ package object cassandra {
      */
     def saveAsCassandra(opts: CassandraOptions,
                         parallelism: Int = CassandraIO.WriteParam.DefaultPar)(f: T => Seq[Any])(
-      implicit coder: Coder[T]): Future[Tap[T]] =
+      implicit coder: Coder[T]): Future[Tap[Nothing]] =
       self.write(CassandraIO[T](opts))(CassandraIO.WriteParam(f, parallelism))
   }
 }

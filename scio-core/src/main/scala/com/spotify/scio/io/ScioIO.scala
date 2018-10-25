@@ -24,6 +24,33 @@ import com.spotify.scio.values.SCollection
 
 import scala.concurrent.Future
 
+sealed trait TapT[A] extends Serializable {
+  type T
+  def saveForTest(data: SCollection[A])(implicit c: Coder[A]): Future[Tap[T]]
+}
+
+object TapT {
+  // scalastyle:off structural.type
+  type Aux[A, T0] = TapT[A] { type T = T0 }
+  // scalastyle:on structural.type
+}
+
+final class EmptyTapOf[A] private extends TapT[A] {
+  type T = Nothing
+  def saveForTest(data: SCollection[A])(implicit c: Coder[A]): Future[Tap[T]] =
+    Future.successful(EmptyTap)
+}
+
+object EmptyTapOf { def apply[A]: TapT.Aux[A, Nothing] = new EmptyTapOf[A] }
+
+final class TapOf[A] private extends TapT[A] {
+  type T = A
+  def saveForTest(data: SCollection[A])(implicit c: Coder[A]): Future[Tap[T]] =
+    data.saveAsInMemoryTap
+}
+
+object TapOf { def apply[A]: TapT.Aux[A, A] = new TapOf[A] }
+
 /**
  * Base trait for all Read/Write IO classes. Every IO connector must implement this.
  * This trait has two abstract implicit methods #read, #write that need to be implemented
@@ -36,6 +63,9 @@ trait ScioIO[T] {
   type ReadP
   type WriteP
 
+  // !!! This needs to be a stable value (ie: a val, not a def) in every implementations,
+  // !!! otherwise the return type of write cannot be infered.
+  val tapT: TapT[T]
   // identifier for JobTest IO matching
   def testId: String = this.toString
 
@@ -49,18 +79,6 @@ trait ScioIO[T] {
       }
     }
 
-  private[scio] def writeWithContext(data: SCollection[T], params: WriteP)(
-    implicit coder: Coder[T]): Future[Tap[T]] =
-    if (data.context.isTest) {
-      writeTest(data, params)
-    } else {
-      write(data, params)
-    }
-
-  protected def read(sc: ScioContext, params: ReadP): SCollection[T]
-
-  protected def write(data: SCollection[T], params: WriteP): Future[Tap[T]]
-
   protected def readTest(sc: ScioContext, params: ReadP)(
     implicit coder: Coder[T]): SCollection[T] = {
     sc.parallelize(
@@ -68,13 +86,25 @@ trait ScioIO[T] {
     )
   }
 
+  protected def read(sc: ScioContext, params: ReadP): SCollection[T]
+
+  private[scio] def writeWithContext(data: SCollection[T], params: WriteP)(
+    implicit coder: Coder[T]): Future[Tap[tapT.T]] =
+    if (data.context.isTest) {
+      writeTest(data, params)
+    } else {
+      write(data, params)
+    }
+
+  protected def write(data: SCollection[T], params: WriteP): Future[Tap[tapT.T]]
+
   protected def writeTest(data: SCollection[T], params: WriteP)(
-    implicit coder: Coder[T]): Future[Tap[T]] = {
+    implicit coder: Coder[T]): Future[Tap[tapT.T]] = {
     TestDataManager.getOutput(data.context.testId.get)(this)(data)
-    data.saveAsInMemoryTap
+    tapT.saveForTest(data)
   }
 
-  def tap(params: ReadP): Tap[T]
+  def tap(params: ReadP): Tap[tapT.T]
 }
 
 object ScioIO {
@@ -96,15 +126,17 @@ object ScioIO {
       override type ReadP = io.ReadP
       override type WriteP = Nothing
 
+      override val tapT: TapT.Aux[T, io.tapT.T] = io.tapT
+
       override def testId: String = io.testId
 
       override def read(sc: ScioContext, params: ReadP): SCollection[T] =
         io.read(sc, params)
 
-      override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
+      override def write(data: SCollection[T], params: WriteP): Future[Tap[tapT.T]] =
         throw new IllegalStateException("read-only IO. This code should be unreachable")
 
-      override def tap(params: ReadP): Tap[T] =
+      override def tap(params: ReadP): Tap[tapT.T] =
         io.tap(params)
     }
   // scalastyle:on structural.type
@@ -117,9 +149,9 @@ trait TestIO[T] extends ScioIO[T] {
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new IllegalStateException(s"$this is for testing purpose only")
-  override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
+  override def write(data: SCollection[T], params: WriteP): Future[Tap[tapT.T]] =
     throw new IllegalStateException(s"$this is for testing purpose only")
-  override def tap(params: ReadP): Tap[T] =
+  override def tap(params: ReadP): Tap[tapT.T] =
     throw new IllegalStateException(s"$this is for testing purpose only")
 }
 
@@ -127,10 +159,14 @@ trait TestIO[T] extends ScioIO[T] {
  * Special version of [[ScioIO]] for use with [[ScioContext.customInput]] and
  * [[SCollection.saveAsCustomOutput]].
  */
-final case class CustomIO[T](id: String) extends TestIO[T]
+final case class CustomIO[T](id: String) extends TestIO[T] {
+  override val tapT = TapOf[T]
+}
 
 /**
  * Special version of [[ScioIO]] for use with [[SCollection.readAll]] and
  * [[SCollection.readAllBytes]].
  */
-final case class ReadIO[T](id: String) extends TestIO[T]
+final case class ReadIO[T](id: String) extends TestIO[T] {
+  override val tapT = TapOf[T]
+}

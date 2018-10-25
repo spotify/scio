@@ -18,7 +18,7 @@
 package com.spotify.scio.tensorflow
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.{ScioIO, Tap}
+import com.spotify.scio.io.{ScioIO, Tap, TapOf}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.Compression
@@ -30,6 +30,7 @@ import scala.concurrent.Future
 final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {
   override type ReadP = TFRecordIO.ReadParam
   override type WriteP = TFRecordIO.WriteParam
+  override val tapT = TapOf[Array[Byte]]
 
   override def read(sc: ScioContext, params: ReadP): SCollection[Array[Byte]] =
     TFRecordMethods.read(sc, path, params)
@@ -64,6 +65,7 @@ object TFRecordIO {
 final case class TFExampleIO(path: String) extends ScioIO[Example] {
   override type ReadP = TFExampleIO.ReadParam
   override type WriteP = TFExampleIO.WriteParam
+  override val tapT = TapOf[Example]
 
   override def testId: String = s"TFRecordIO($path)"
 

@@ -18,7 +18,7 @@
 package com.spotify.scio.extra.json
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.{ScioIO, Tap, TextIO}
+import com.spotify.scio.io.{ScioIO, Tap, TapOf, TextIO}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
@@ -35,6 +35,7 @@ final case class JsonIO[T: ClassTag: Encoder: Decoder: Coder](path: String) exte
 
   override type ReadP = Unit
   override type WriteP = JsonIO.WriteParam
+  override final val tapT = TapOf[T]
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
     sc.wrap(sc.applyInternal(beam.TextIO.read().from(path))).map(decodeJson)

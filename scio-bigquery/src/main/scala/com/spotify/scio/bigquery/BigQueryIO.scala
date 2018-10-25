@@ -22,7 +22,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.{Coder, KryoAtomicCoder, KryoOptions}
-import com.spotify.scio.io.{ScioIO, Tap, TestIO}
+import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
@@ -88,7 +88,9 @@ private object Reads {
     sc.wrap(sc.applyInternal(typedRead.from(table)))
 }
 
-sealed trait BigQueryIO[T] extends ScioIO[T]
+sealed trait BigQueryIO[T] extends ScioIO[T] {
+  override final val tapT = TapOf[T]
+}
 
 object BigQueryIO {
   @inline final def apply[T](id: String): BigQueryIO[T] =
@@ -199,6 +201,7 @@ object BigQueryTable {
 final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
   override type ReadP = Unit
   override type WriteP = TableRowJsonIO.WriteParam
+  override final val tapT = TapOf[TableRow]
 
   override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     sc.wrap(sc.applyInternal(TextIO.read().from(path)))

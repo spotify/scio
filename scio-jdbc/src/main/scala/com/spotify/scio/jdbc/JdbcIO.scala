@@ -20,14 +20,16 @@ package com.spotify.scio.jdbc
 import com.spotify.scio.Implicits._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.{ScioIO, Tap, TestIO}
+import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TestIO}
 import org.apache.beam.sdk.io.{jdbc => beam}
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 import java.sql.{PreparedStatement, ResultSet}
 
-sealed trait JdbcIO[T] extends TestIO[T]
+sealed trait JdbcIO[T] extends TestIO[T] {
+  override final val tapT = EmptyTapOf[T]
+}
 
 object JdbcIO {
   final def apply[T](opts: JdbcIoOptions): JdbcIO[T] =
@@ -52,6 +54,7 @@ final case class JdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T]) extend
 
   override type ReadP = Unit
   override type WriteP = Nothing
+  override final val tapT = EmptyTapOf[T]
 
   override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(readOptions)})"
 
@@ -80,24 +83,25 @@ final case class JdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T]) extend
     sc.wrap(sc.applyInternal(transform))
   }
 
-  override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
+  override def write(data: SCollection[T], params: WriteP): Future[Tap[Nothing]] =
     throw new IllegalStateException("jdbc.Select is read-only")
 
-  override def tap(params: ReadP): Tap[T] =
-    throw new NotImplementedError("JDBC tap is not implemented")
+  override def tap(params: ReadP): Tap[Nothing] =
+    EmptyTap
 }
 
 final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends ScioIO[T] {
 
   override type ReadP = Nothing
   override type WriteP = Unit
+  override final val tapT = EmptyTapOf[T]
 
   override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(writeOptions)})"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new IllegalStateException("jdbc.Write is write-only")
 
-  override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
+  override def write(data: SCollection[T], params: WriteP): Future[Tap[Nothing]] = {
     var transform = beam.JdbcIO
       .write[T]()
       .withDataSourceConfiguration(getDataSourceConfig(writeOptions.connectionOptions))
@@ -114,9 +118,9 @@ final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends ScioIO[
       transform = transform.withBatchSize(writeOptions.batchSize)
     }
     data.applyInternal(transform)
-    Future.failed(new NotImplementedError("JDBC future is not implemented"))
+    Future.successful(EmptyTap)
   }
 
-  override def tap(params: ReadP): Tap[T] =
-    throw new NotImplementedError("JDBC tap is not implemented")
+  override def tap(params: ReadP): Tap[Nothing] =
+    EmptyTap
 }

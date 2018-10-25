@@ -37,9 +37,10 @@ import scala.reflect.ClassTag
 sealed trait PubsubIO[T] extends ScioIO[T] {
   override type ReadP = PubsubIO.ReadParam
   override type WriteP = PubsubIO.WriteParam
+  override final val tapT = EmptyTapOf[T]
 
-  override def tap(params: ReadP): Tap[T] =
-    throw new NotImplementedError("Pubsub tap not implemented")
+  override def tap(params: ReadP): Tap[Nothing] =
+    EmptyTap
 }
 
 object PubsubIO {
@@ -108,7 +109,7 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](name: Str
     }
   }
 
-  override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
+  override def write(data: SCollection[T], params: WriteP): Future[Tap[Nothing]] = {
     def setup[U](write: beam.PubsubIO.Write[U]) = {
       var w = write.to(name)
       if (idAttribute != null) {
@@ -148,7 +149,7 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](name: Str
         }
         .applyInternal(t)
     }
-    Future.failed(new NotImplementedError("Pubsub future not implemented"))
+    Future.successful(EmptyTap)
   }
 }
 
@@ -191,8 +192,7 @@ private final case class PubsubIOWithAttributes[T: ClassTag: Coder](name: String
     }
   }
 
-  override def write(data: SCollection[WithAttributeMap],
-                     params: WriteP): Future[Tap[WithAttributeMap]] = {
+  override def write(data: SCollection[WithAttributeMap], params: WriteP): Future[Tap[Nothing]] = {
     var w = beam.PubsubIO.writeMessages().to(name)
     if (idAttribute != null) {
       w = w.withIdAttribute(idAttribute)
@@ -209,6 +209,6 @@ private final case class PubsubIOWithAttributes[T: ClassTag: Coder](name: String
         new beam.PubsubMessage(payload, attributes)
       }
       .applyInternal(w)
-    Future.failed(new NotImplementedError("Pubsub future not implemented"))
+    Future.successful(EmptyTap)
   }
 }
