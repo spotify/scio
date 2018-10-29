@@ -51,37 +51,40 @@ private[scio] object ItUtils {
   def gcpTempLocation(prefix: String): String = {
     val opts = PipelineOptionsFactory.as(classOf[GcpOptions])
     opts.setProject(project)
-    val bucket = DefaultBucket.tryCreateDefaultBucket(opts,
-      newCloudResourceManagerClient(opts.as(classOf[CloudResourceManagerOptions]))
-    )
+    val bucket = DefaultBucket.tryCreateDefaultBucket(
+      opts,
+      newCloudResourceManagerClient(opts.as(classOf[CloudResourceManagerOptions])))
     val uuid = UUID.randomUUID().toString
     s"$bucket/$prefix-$uuid"
   }
 
-  private def newCloudResourceManagerClient(options: CloudResourceManagerOptions):
-  CloudResourceManager = {
+  private def newCloudResourceManagerClient(
+    options: CloudResourceManagerOptions): CloudResourceManager = {
     val credentials = options.getGcpCredential
     if (credentials == null) {
       NullCredentialInitializer.throwNullCredentialException()
     }
-    new CloudResourceManager.Builder(Transport.getTransport, Transport.getJsonFactory,
+    new CloudResourceManager.Builder(
+      Transport.getTransport,
+      Transport.getJsonFactory,
       chainHttpRequestInitializer(
         credentials,
         // Do not log 404. It clutters the output and is possibly even required by the caller.
-        new RetryHttpRequestInitializer(ImmutableList.of(404))))
-      .setApplicationName(options.getAppName)
+        new RetryHttpRequestInitializer(ImmutableList.of(404))
+      )
+    ).setApplicationName(options.getAppName)
       .setGoogleClientRequestInitializer(options.getGoogleApiTrace)
-    .build()
+      .build()
   }
 
-  private def chainHttpRequestInitializer(credential: Credentials,
-                                          httpRequestInitializer: HttpRequestInitializer):
-  HttpRequestInitializer = {
+  private def chainHttpRequestInitializer(
+    credential: Credentials,
+    httpRequestInitializer: HttpRequestInitializer): HttpRequestInitializer = {
     if (credential == null) {
       new ChainingHttpRequestInitializer(new NullCredentialInitializer(), httpRequestInitializer)
     } else {
       new ChainingHttpRequestInitializer(new HttpCredentialsAdapter(credential),
-        httpRequestInitializer)
+                                         httpRequestInitializer)
     }
   }
 }

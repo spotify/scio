@@ -49,8 +49,10 @@ object BigtableIT {
   val COLUMN_QUALIFIER: ByteString = ByteString.copyFromUtf8("long")
 
   def toWriteMutation(key: String, value: Long): (ByteString, Iterable[Mutation]) = {
-    val m = Mutations.newSetCell(
-      FAMILY_NAME, COLUMN_QUALIFIER, ByteString.copyFromUtf8(value.toString), 0L)
+    val m = Mutations.newSetCell(FAMILY_NAME,
+                                 COLUMN_QUALIFIER,
+                                 ByteString.copyFromUtf8(value.toString),
+                                 0L)
     (ByteString.copyFromUtf8(key), Iterable(m))
   }
 
@@ -65,9 +67,7 @@ object BigtableIT {
   def listTables(client: BigtableTableAdminGrpcClient): Set[String] = {
     val instancePath = s"projects/$projectId/instances/$instanceId"
     val tables = client.listTables(ListTablesRequest.newBuilder().setParent(instancePath).build)
-    tables.getTablesList.asScala.map(t =>
-      new BigtableTableName(t.getName).getTableId)
-      .toSet
+    tables.getTablesList.asScala.map(t => new BigtableTableName(t.getName).getTableId).toSet
   }
 }
 
@@ -80,7 +80,7 @@ class BigtableIT extends PipelineSpec {
     val bt = new BigtableClusterUtilities(bigtableOptions)
     val sc = ScioContext()
     sc.updateNumberOfBigtableNodes(projectId, instanceId, 4, Duration.standardSeconds(10))
-    sc.getBigtableClusterSizes(projectId, instanceId)(clusterId)  shouldBe 4
+    sc.getBigtableClusterSizes(projectId, instanceId)(clusterId) shouldBe 4
     bt.getClusterNodeCount(clusterId, zoneId) shouldBe 4
     sc.updateNumberOfBigtableNodes(projectId, instanceId, 3, Duration.standardSeconds(10))
     sc.getBigtableClusterSizes(projectId, instanceId)(clusterId) shouldBe 3
@@ -100,12 +100,13 @@ class BigtableIT extends PipelineSpec {
       // Read rows back
       val sc2 = ScioContext()
       // Filter rows in case there are other keys in the table
-      val rowFilter = RowFilter.newBuilder()
+      val rowFilter = RowFilter
+        .newBuilder()
         .setRowKeyRegexFilter(ByteString.copyFromUtf8(s"$uuid-.*"))
         .build()
       sc2
         .bigtable(projectId, instanceId, tableId, rowFilter = rowFilter)
-        .map(fromRow) should containInAnyOrder (testData)
+        .map(fromRow) should containInAnyOrder(testData)
       sc2.close().waitUntilFinish()
     } catch {
       case e: Throwable => throw e
@@ -148,8 +149,11 @@ class BigtableIT extends PipelineSpec {
 
     // Assert Column families exist
     for ((table, columnFamilies) <- tables) {
-      val tableInfo = client.getTable(GetTableRequest.newBuilder()
-        .setName(tablePath(table)).build)
+      val tableInfo = client.getTable(
+        GetTableRequest
+          .newBuilder()
+          .setName(tablePath(table))
+          .build)
       val actualColumnFamilies = tableInfo.getColumnFamiliesMap.asScala.keys
       actualColumnFamilies should contain theSameElementsAs columnFamilies
     }

@@ -49,7 +49,8 @@ object ScioStreamingBenchmark {
     val name = argz("name")
     val regex = argz.getOrElse("regex", ".*")
     val projectId = argz.getOrElse("project", defaultProjectId)
-    val timestamp = DateTimeFormat.forPattern("yyyyMMddHHmmss")
+    val timestamp = DateTimeFormat
+      .forPattern("yyyyMMddHHmmss")
       .withZone(DateTimeZone.UTC)
       .print(System.currentTimeMillis())
     val prefix = s"ScioStreamingBenchmark-$name-$timestamp"
@@ -61,7 +62,8 @@ object ScioStreamingBenchmark {
       .map(_.run(projectId, prefix, commonArgs("n1-highmem-8")))
   }
 
-  private val benchmarks = ClassPath.from(Thread.currentThread().getContextClassLoader)
+  private val benchmarks = ClassPath
+    .from(Thread.currentThread().getContextClassLoader)
     .getAllClasses
     .asScala
     .filter(_.getName.matches("com\\.spotify\\.ScioStreamingBenchmark\\$[\\w]+\\$"))
@@ -85,11 +87,13 @@ object ScioStreamingBenchmark {
         if (job.getName.toLowerCase.startsWith("sciostreamingbenchmark")) {
           PrettyPrint.print("CancelCurrentJobs", s"Stopping job.... ${job.getName}")
 
-          jobs.update(
-            projectId,
-            job.getId,
-            new Job().setProjectId(projectId).setId(job.getId).setRequestedState(cancelledState)
-          ).execute()
+          jobs
+            .update(
+              projectId,
+              job.getId,
+              new Job().setProjectId(projectId).setId(job.getId).setRequestedState(cancelledState)
+            )
+            .execute()
         }
       }
     }
@@ -116,20 +120,23 @@ object ScioStreamingBenchmark {
           val nested = Nested(uuid.split(""))
           (
             CompoundKey(uuid.charAt(0).toString, Random.nextInt(50000)),
-            SomeObject(uuid, Random.nextFloat(), (1L to 10000L).toList,
-              uuid.split("").map((_, nested)).toMap)
+            SomeObject(uuid,
+                       Random.nextFloat(),
+                       (1L to 10000L).toList,
+                       uuid.split("").map((_, nested)).toMap)
           )
         }
         .groupByKey
         .withSideInputs(sideInput)
-        .flatMap { case ((key, grp), ctx) =>
-          Some((
-            key.copy(k2 = key.k2 + Random.nextInt(50000)),
-            (
-              key.k1,
-              ctx(sideInput).take(50),
-              grp.map(obj => obj.copy(key = s"${obj.key}2", list = obj.list.reverse))
-            )))
+        .flatMap {
+          case ((key, grp), ctx) =>
+            Some(
+              (key.copy(k2 = key.k2 + Random.nextInt(50000)),
+               (
+                 key.k1,
+                 ctx(sideInput).take(50),
+                 grp.map(obj => obj.copy(key = s"${obj.key}2", list = obj.list.reverse))
+               )))
         }
         .toSCollection
         .minByKey(Ordering.by(_._2.size))
@@ -139,8 +146,7 @@ object ScioStreamingBenchmark {
   }
 
   private def randomUUIDs(sc: ScioContext, perMinute: Int): SCollection[String] =
-    sc
-      .customInput(
+    sc.customInput(
         "createRandomUUIDs",
         GenerateSequence
           .from(0)
@@ -156,9 +162,7 @@ abstract class StreamingBenchmark {
   val name: String = this.getClass.getSimpleName.replaceAll("\\$$", "")
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  def run(projectId: String,
-          prefix: String,
-          args: Array[String]): (String, ScioResult) = {
+  def run(projectId: String, prefix: String, args: Array[String]): (String, ScioResult) = {
     val username = CoreSysProps.User.value
     val buildNum = circleCIEnv.map(_.buildNum).getOrElse(-1L)
 
@@ -194,25 +198,29 @@ object ScioStreamingBenchmarkMetrics {
     val jobs = dataflow.projects().jobs().list(projectId)
 
     val hourlyMetrics =
-      Option(jobs.setFilter("ACTIVE").execute().getJobs).map { activeJobs =>
-        activeJobs.asScala.flatMap { job =>
-          for (benchmarkNameAndBuildNum <- jobNamePattern.findFirstMatchIn(job.getName)) yield {
-            BenchmarkResult.streaming(
-              benchmarkNameAndBuildNum.group(1),
-              benchmarkNameAndBuildNum.group(2).toLong,
-              job.getCreateTime,
-              dataflow.projects().jobs().getMetrics(projectId, job.getId).execute()
-            )
+      Option(jobs.setFilter("ACTIVE").execute().getJobs)
+        .map { activeJobs =>
+          activeJobs.asScala.flatMap { job =>
+            for (benchmarkNameAndBuildNum <- jobNamePattern.findFirstMatchIn(job.getName)) yield {
+              BenchmarkResult.streaming(
+                benchmarkNameAndBuildNum.group(1),
+                benchmarkNameAndBuildNum.group(2).toLong,
+                job.getCreateTime,
+                dataflow.projects().jobs().getMetrics(projectId, job.getId).execute()
+              )
+            }
           }
         }
-      }.getOrElse(List())
+        .getOrElse(List())
 
     new DatastoreLogger(StreamingMetrics) {
       override def dsKeyId(benchmark: BenchmarkResult): String = {
-        val hourOffset = Hours.hoursBetween(
-          benchmark.startTime,
-          new LocalDateTime(DateTimeZone.UTC)
-        ).getHours
+        val hourOffset = Hours
+          .hoursBetween(
+            benchmark.startTime,
+            new LocalDateTime(DateTimeZone.UTC)
+          )
+          .getHours
 
         s"${benchmark.buildNum}[+${"%02d".format(hourOffset)}h]"
       }

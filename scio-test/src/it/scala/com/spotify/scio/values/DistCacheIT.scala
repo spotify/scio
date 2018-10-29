@@ -33,13 +33,12 @@ class DistCacheIT extends PipelineSpec {
   "GCS DistCache" should "work" in {
     runWithDistCache(Seq("name1", "name2")) { (sc, dc) =>
       val p = sc.parallelize(Seq(0, 1)).map(i => (i, dc()(i)))
-      p should containInAnyOrder (Seq((0, "name1"), (1, "name2")))
+      p should containInAnyOrder(Seq((0, "name1"), (1, "name2")))
     }
   }
 
-  def runWithDistCache[T: ClassTag](data: Iterable[String])
-                                   (fn: (ScioContext, DistCache[List[String]]) => T)
-  : ScioResult = {
+  def runWithDistCache[T: ClassTag](data: Iterable[String])(
+    fn: (ScioContext, DistCache[List[String]]) => T): ScioResult = {
     val sc = ScioContext()
     val uri = ItUtils.gcpTempLocation("dist-cache-it")
     val cache = sc.distCache(uri) { f =>

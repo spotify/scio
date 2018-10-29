@@ -19,6 +19,7 @@ import sbt._
 import Keys._
 import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
+import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 
 val beamVersion = "2.7.0"
 
@@ -217,7 +218,7 @@ lazy val itSettings = Defaults.itSettings ++ Seq(
       HiddenFileFilter || "*.scala"
     }
   }
-)
+) ++ inConfig(IntegrationTest)(scalafmtConfigSettings)
 
 lazy val noPublishSettings = Seq(
   publish := {},

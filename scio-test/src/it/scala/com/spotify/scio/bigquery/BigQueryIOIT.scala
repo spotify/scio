@@ -26,7 +26,8 @@ object BigQueryIOIT {
   @BigQueryType.fromTable("bigquery-public-data:samples.shakespeare")
   class ShakespeareFromTable
 
-  @BigQueryType.fromQuery("""
+  @BigQueryType.fromQuery(
+    """
     SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` LIMIT 10
   """)
   class ShakespeareFromQuery
@@ -39,16 +40,13 @@ class BigQueryIOIT extends PipelineSpec {
   import ItUtils.project
 
   val options = PipelineOptionsFactory
-      .fromArgs(
-        s"--project=$project",
-        s"--tempLocation=$tempLocation")
-      .create()
-
+    .fromArgs(s"--project=$project", s"--tempLocation=$tempLocation")
+    .create()
 
   "Select" should "read typed values from a SQL query" in
     runWithRealContext(options) { sc =>
       val scoll = BigQueryTyped[ShakespeareFromQuery].read(sc, Unit)
-      scoll should haveSize (10)
+      scoll should haveSize(10)
       scoll should satisfy[ShakespeareFromQuery] {
         _.forall(_.getClass == classOf[ShakespeareFromQuery])
       }
@@ -57,7 +55,7 @@ class BigQueryIOIT extends PipelineSpec {
   "TableRef" should "read typed values from table" in
     runWithRealContext(options) { sc =>
       val scoll = BigQueryTyped[ShakespeareFromTable].read(sc, Unit)
-      scoll.take(10) should haveSize (10)
+      scoll.take(10) should haveSize(10)
       scoll should satisfy[ShakespeareFromTable] {
         _.forall(_.getClass == classOf[ShakespeareFromTable])
       }

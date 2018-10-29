@@ -47,11 +47,14 @@ object BigtableBenchmark {
   val familyName: String = "side"
   val columnQualifier: ByteString = ByteString.copyFromUtf8("value")
 
-  val readRowsRequestTemplate: ReadRowsRequest = ReadRowsRequest.newBuilder()
+  val readRowsRequestTemplate: ReadRowsRequest = ReadRowsRequest
+    .newBuilder()
     .setTableName(new BigtableInstanceName(projectId, instanceId).toTableNameStr(tableId))
-    .setFilter(RowFilter.newBuilder()
-      .setFamilyNameRegexFilter(familyName)
-      .setColumnQualifierRegexFilter(columnQualifier))
+    .setFilter(
+      RowFilter
+        .newBuilder()
+        .setFamilyNameRegexFilter(familyName)
+        .setColumnQualifierRegexFilter(columnQualifier))
     .setRowsLimit(1L)
     .build()
 
@@ -74,13 +77,16 @@ object BigtableBenchmark {
   def bigtableLookup(session: BigtableSession, input: String): ListenableFuture[String] = {
     // Perform lookup and recover from non-fatal exception with a fallback
     val future = readFlatRowsAsync(session, input)
-    Futures.catching(future, classOf[NonFatalException],
+    Futures.catching(
+      future,
+      classOf[NonFatalException],
       new com.google.common.base.Function[NonFatalException, String] {
         override def apply(input: NonFatalException): String = {
           assert(input.getMessage.endsWith("0000000001"))
           "fallback"
         }
-      })
+      }
+    )
   }
 
   class NonFatalException(msg: String) extends RuntimeException(msg)
@@ -99,7 +105,8 @@ object BigtableBenchmark {
       val request = readRowsRequestTemplate.toBuilder
         .setRows(RowSet.newBuilder().addRowKeys(key).build())
         .build()
-      Futures.transform(session.getDataClient.readFlatRowsAsync(request),
+      Futures.transform(
+        session.getDataClient.readFlatRowsAsync(request),
         new com.google.common.base.Function[JList[FlatRow], String] {
           override def apply(input: JList[FlatRow]): String = {
             val result = input
@@ -110,7 +117,8 @@ object BigtableBenchmark {
             assert(value == expected)
             value.toStringUtf8
           }
-        })
+        }
+      )
     }
 
   def checkResult(kv: KV[String, AsyncLookupDoFn.Try[String]]): (Int, Int) =
@@ -171,9 +179,11 @@ object AsyncCachingBigtableRead {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val cache = new AsyncLookupDoFn.CacheSupplier[String, String, String] {
-      override def createCache() = CacheBuilder.newBuilder()
-        .maximumSize(1000000)
-        .build[String, String]()
+      override def createCache() =
+        CacheBuilder
+          .newBuilder()
+          .maximumSize(1000000)
+          .build[String, String]()
       override def getKey(input: String) = input
     }
 
@@ -217,9 +227,11 @@ object BlockingCachingBigtableRead {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val cache = new AsyncLookupDoFn.CacheSupplier[String, String, String] {
-      override def createCache() = CacheBuilder.newBuilder()
-        .maximumSize(1000000)
-        .build[String, String]()
+      override def createCache() =
+        CacheBuilder
+          .newBuilder()
+          .maximumSize(1000000)
+          .build[String, String]()
       override def getKey(input: String) = input
     }
 
