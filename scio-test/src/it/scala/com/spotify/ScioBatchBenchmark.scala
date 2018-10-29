@@ -21,6 +21,7 @@ import java.util.UUID
 
 import com.google.common.reflect.ClassPath
 import com.spotify.scio._
+import com.spotify.scio.coders._
 import com.spotify.scio.values.SCollection
 import com.twitter.algebird.Aggregator
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
@@ -40,6 +41,7 @@ import scala.util.{Random, Try}
  * This file is symlinked to scio-bench/src/main/scala/com/spotify/ScioBatchBenchmark.scala so
  * that it can run with past Scio releases.
  */
+// scalastyle:off number.of.methods
 object ScioBatchBenchmark {
   import ScioBenchmarkSettings._
 
@@ -136,7 +138,7 @@ object ScioBatchBenchmark {
   object ReduceByKey extends Benchmark {
     override def run(sc: ScioContext): Unit =
       randomUUIDs(sc, 100 * M)
-        .keyBy(_ => Random.nextInt(10 * K))
+        .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
         .mapValues(_.hashCode % 1000)
         .mapValues(Set(_))
         .reduceByKey(_ ++ _)
@@ -145,7 +147,7 @@ object ScioBatchBenchmark {
   object SumByKey extends Benchmark {
     override def run(sc: ScioContext): Unit =
       randomUUIDs(sc, 100 * M)
-        .keyBy(_ => Random.nextInt(10 * K))
+        .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
         .mapValues(_.hashCode % 1000)
         .mapValues(Set(_))
         .sumByKey
@@ -154,7 +156,7 @@ object ScioBatchBenchmark {
   object FoldByKey extends Benchmark {
     override def run(sc: ScioContext): Unit =
       randomUUIDs(sc, 100 * M)
-        .keyBy(_ => Random.nextInt(10 * K))
+        .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
         .mapValues(_.hashCode % 1000)
         .mapValues(Set(_))
         .foldByKey(Set.empty[Int])(_ ++ _)
@@ -163,7 +165,7 @@ object ScioBatchBenchmark {
   object FoldByKeyMonoid extends Benchmark {
     override def run(sc: ScioContext): Unit =
       randomUUIDs(sc, 100 * M)
-        .keyBy(_ => Random.nextInt(10 * K))
+        .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
         .mapValues(_.hashCode % 1000)
         .mapValues(Set(_))
         .foldByKey
@@ -172,7 +174,7 @@ object ScioBatchBenchmark {
   object AggregateByKey extends Benchmark {
     override def run(sc: ScioContext): Unit =
       randomUUIDs(sc, 100 * M)
-        .keyBy(_ => Random.nextInt(10 * K))
+        .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
         .mapValues(_.hashCode % 1000)
         .aggregateByKey(Set.empty[Int])(_ + _, _ ++ _)
   }
@@ -180,7 +182,7 @@ object ScioBatchBenchmark {
   object AggregateByKeyAggregator extends Benchmark {
     override def run(sc: ScioContext): Unit =
       randomUUIDs(sc, 100 * M)
-        .keyBy(_ => Random.nextInt(10 * K))
+        .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
         .mapValues(_.hashCode % 1000)
         .aggregateByKey(Aggregator.fromMonoid[Set[Int]].composePrepare[Int](Set(_)))
   }
@@ -188,7 +190,7 @@ object ScioBatchBenchmark {
   object CombineByKey extends Benchmark {
     override def run(sc: ScioContext): Unit =
       randomUUIDs(sc, 100 * M)
-        .keyBy(_ => Random.nextInt(10 * K))
+        .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
         .mapValues(_.hashCode % 1000)
         .combineByKey(Set(_))(_ + _)(_ ++ _)
   }
@@ -198,7 +200,11 @@ object ScioBatchBenchmark {
   // 100M items, 10K keys, average 10K values per key
   object GroupByKey extends Benchmark(shuffleConf) {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).groupBy(_ => Random.nextInt(10 * K)).values.map(_.size)
+      randomUUIDs(sc, 100 * M)
+        .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
+        .groupByKey
+        .values
+        .map(_.size)
   }
 
   // 10M items, 1 key
@@ -293,9 +299,12 @@ object ScioBatchBenchmark {
 
   final case class Elem[T](elem: T)
 
-  def partitions(n: Long,
-                 numPartitions: Int = 100,
-                 numOfWorkers: Int = numOfWorkers): Iterable[Iterable[Long]] = {
+  private def withRandomKey[T: Coder](n: Int): SCollection[T] => SCollection[(Int, T)] =
+    _.keyBy(_ => Random.nextInt(n))
+
+  private def partitions(n: Long,
+                         numPartitions: Int = 100,
+                         numOfWorkers: Int = numOfWorkers): Iterable[Iterable[Long]] = {
     val chunks = numPartitions * numOfWorkers
 
     def loop(n: Long): Seq[Long] = {
@@ -313,10 +322,11 @@ object ScioBatchBenchmark {
   }
 
   private def randomUUIDs(sc: ScioContext, n: Long): SCollection[Elem[String]] =
-    sc.parallelize(partitions(n))
-      .flatten[Long]
-      .applyTransform(ParDo.of(new FillDoFn(() => UUID.randomUUID().toString)))
-      .map(Elem(_))
+    sc.parallelize(partitions(n)).transform("UUID-generator") {
+      _.flatten[Long]
+        .applyTransform(ParDo.of(new FillDoFn(() => UUID.randomUUID().toString)))
+        .map(Elem(_))
+    }
 
   private def randomKVs(sc: ScioContext,
                         n: Long,
