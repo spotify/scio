@@ -370,4 +370,13 @@ class CodersTest extends FlatSpec with Matchers {
     check(ro)
   }
 
+  it should "support spanner's Mutation class" in {
+    import com.google.cloud.spanner.Mutation
+    check(Mutation.newInsertBuilder("myTable").set("foo").to("bar").build())
+  }
+
+  it should "support spanner's Struct class" in {
+    import com.google.cloud.spanner.Struct
+    check(Struct.newBuilder().set("foo").to("bar").build())
+  }
 }
