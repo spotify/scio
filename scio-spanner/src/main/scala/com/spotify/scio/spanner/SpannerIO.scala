@@ -32,25 +32,25 @@ sealed trait SpannerIO[T] extends ScioIO[T] {
   val config: SpannerConfig
 
   override def testId: String =
-    s"SpannerWrite(${config.getProjectId}, ${config.getInstanceId}, ${config.getDatabaseId})"
+    s"${getClass.getSimpleName}" +
+      s"(${config.getProjectId}, ${config.getInstanceId}, ${config.getDatabaseId})"
 }
 
 object SpannerRead {
   object ReadParam {
     private[spanner] val DefaultWithTransaction = false
     private[spanner] val DefaultWithBatching = true
-
-    @inline def apply(readMethod: ReadMethod,
-                      withTransaction: Boolean = ReadParam.DefaultWithTransaction,
-                      withBatching: Boolean = ReadParam.DefaultWithBatching): ReadParam =
-      new ReadParam(readMethod, withBatching, withBatching)
   }
-
-  case class ReadParam(readMethod: ReadMethod, withTransaction: Boolean, withBatching: Boolean)
 
   sealed trait ReadMethod
   case class FromTable(tableName: String, columns: Seq[String]) extends ReadMethod
   case class FromQuery(query: String) extends ReadMethod
+
+  final case class ReadParam private (
+    readMethod: ReadMethod,
+    withTransaction: Boolean = ReadParam.DefaultWithTransaction,
+    withBatching: Boolean = ReadParam.DefaultWithBatching
+  )
 }
 
 final case class SpannerRead(config: SpannerConfig) extends SpannerIO[Struct] {
@@ -89,20 +89,17 @@ object SpannerWrite {
   object WriteParam {
     private[spanner] val DefaultFailureMode = FailureMode.FAIL_FAST
     private[spanner] val DefaultBatchSizeBytes = 1024L * 1024L
-
-    @inline def apply(failureMode: FailureMode = WriteParam.DefaultFailureMode,
-                      batchSizeBytes: Long = WriteParam.DefaultBatchSizeBytes): WriteParam =
-      new WriteParam(failureMode, batchSizeBytes)
   }
 
-  final case class WriteParam(failureMode: FailureMode, batchSizeBytes: Long)
+  final case class WriteParam private (
+    failureMode: FailureMode = WriteParam.DefaultFailureMode,
+    batchSizeBytes: Long = WriteParam.DefaultBatchSizeBytes
+  )
 }
 
 final case class SpannerWrite(config: SpannerConfig) extends SpannerIO[Mutation] {
-  import SpannerWrite._
-
   override type ReadP = Nothing
-  override type WriteP = WriteParam
+  override type WriteP = SpannerWrite.WriteParam
 
   override protected def write(data: SCollection[Mutation],
                                params: WriteP): Future[Tap[Nothing]] = {
