@@ -41,8 +41,7 @@ private object DefaultBucket {
     // Look up the project number, to create a default bucket with a stable
     // name with no special characters.
     var projectNumber = 0L
-    try
-      projectNumber = getProjectNumber(projectId, crmClient)
+    try projectNumber = getProjectNumber(projectId, crmClient)
     catch {
       case e: IOException =>
         throw new RuntimeException("Unable to verify project with ID " + projectId, e)
@@ -54,8 +53,7 @@ private object DefaultBucket {
     val bucket = new Bucket().setName(bucketName).setLocation(region)
     // Always try to create the bucket before checking access, so that we do not
     // race with other pipelines that may be attempting to do the same thing.
-    try
-      gcpOptions.getGcsUtil.createBucket(projectId, bucket)
+    try gcpOptions.getGcsUtil.createBucket(projectId, bucket)
     catch {
       case e: FileAlreadyExistsException =>
         LOG.debug("Bucket '{}'' already exists, verifying access.", bucketName)
@@ -67,16 +65,18 @@ private object DefaultBucket {
     try {
       val owner = gcpOptions.getGcsUtil.bucketOwner(GcsPath.fromComponents(bucketName, ""))
       require(owner == projectNumber,
-        s"Bucket owner does not match the project from --project: $owner vs. $projectNumber")
+              s"Bucket owner does not match the project from --project: $owner vs. $projectNumber")
     } catch {
       case e: IOException =>
         throw new RuntimeException("Unable to determine the owner of the default bucket at gs://" +
-          bucketName, e)
+                                     bucketName,
+                                   e)
     }
     "gs://" + bucketName
   }
 
-  private val BACKOFF_FACTORY = FluentBackoff.DEFAULT.withMaxRetries(3)
+  private val BACKOFF_FACTORY = FluentBackoff.DEFAULT
+    .withMaxRetries(3)
     .withInitialBackoff(Duration.millis(200))
 
   private val DEFAULT_REGION = "us-central1"
@@ -96,7 +96,8 @@ private object DefaultBucket {
         BackOffAdapter.toGcpBackOff(backoff),
         RetryDeterminer.SOCKET_ERRORS,
         classOf[IOException],
-        sleeper)
+        sleeper
+      )
       project.getProjectNumber
     } catch {
       case e: Exception =>

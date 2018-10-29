@@ -48,7 +48,8 @@ object ScioBatchBenchmark {
     val name = argz("name")
     val regex = argz.getOrElse("regex", ".*")
     val projectId = argz.getOrElse("project", ScioBenchmarkSettings.defaultProjectId)
-    val timestamp = DateTimeFormat.forPattern("yyyyMMddHHmmss")
+    val timestamp = DateTimeFormat
+      .forPattern("yyyyMMddHHmmss")
       .withZone(DateTimeZone.UTC)
       .print(System.currentTimeMillis())
     val prefix = s"ScioBenchmark-$name-$timestamp"
@@ -69,7 +70,8 @@ object ScioBatchBenchmark {
   // Benchmarks
   // =======================================================================
 
-  private val benchmarks = ClassPath.from(Thread.currentThread().getContextClassLoader)
+  private val benchmarks = ClassPath
+    .from(Thread.currentThread().getContextClassLoader)
     .getAllClasses
     .asScala
     .filter(_.getName.matches("com\\.spotify\\.ScioBatchBenchmark\\$[\\w]+\\$"))
@@ -117,7 +119,8 @@ object ScioBatchBenchmark {
 
   object AggregateAggregator extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).map(_.hashCode % 1000)
+      randomUUIDs(sc, 100 * M)
+        .map(_.hashCode % 1000)
         .aggregate(Aggregator.fromMonoid[Set[Int]].composePrepare[Int](Set(_)))
   }
 
@@ -132,43 +135,61 @@ object ScioBatchBenchmark {
 
   object ReduceByKey extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
-        .mapValues(Set(_)).reduceByKey(_ ++ _)
+      randomUUIDs(sc, 100 * M)
+        .keyBy(_ => Random.nextInt(10 * K))
+        .mapValues(_.hashCode % 1000)
+        .mapValues(Set(_))
+        .reduceByKey(_ ++ _)
   }
 
   object SumByKey extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
-        .mapValues(Set(_)).sumByKey
+      randomUUIDs(sc, 100 * M)
+        .keyBy(_ => Random.nextInt(10 * K))
+        .mapValues(_.hashCode % 1000)
+        .mapValues(Set(_))
+        .sumByKey
   }
 
   object FoldByKey extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
-        .mapValues(Set(_)).foldByKey(Set.empty[Int])(_ ++ _)
+      randomUUIDs(sc, 100 * M)
+        .keyBy(_ => Random.nextInt(10 * K))
+        .mapValues(_.hashCode % 1000)
+        .mapValues(Set(_))
+        .foldByKey(Set.empty[Int])(_ ++ _)
   }
 
   object FoldByKeyMonoid extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
-        .mapValues(Set(_)).foldByKey
+      randomUUIDs(sc, 100 * M)
+        .keyBy(_ => Random.nextInt(10 * K))
+        .mapValues(_.hashCode % 1000)
+        .mapValues(Set(_))
+        .foldByKey
   }
 
   object AggregateByKey extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
+      randomUUIDs(sc, 100 * M)
+        .keyBy(_ => Random.nextInt(10 * K))
+        .mapValues(_.hashCode % 1000)
         .aggregateByKey(Set.empty[Int])(_ + _, _ ++ _)
   }
 
   object AggregateByKeyAggregator extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
+      randomUUIDs(sc, 100 * M)
+        .keyBy(_ => Random.nextInt(10 * K))
+        .mapValues(_.hashCode % 1000)
         .aggregateByKey(Aggregator.fromMonoid[Set[Int]].composePrepare[Int](Set(_)))
   }
 
   object CombineByKey extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      randomUUIDs(sc, 100 * M).keyBy(_ => Random.nextInt(10 * K)).mapValues(_.hashCode % 1000)
+      randomUUIDs(sc, 100 * M)
+        .keyBy(_ => Random.nextInt(10 * K))
+        .mapValues(_.hashCode % 1000)
         .combineByKey(Set(_))(_ + _)(_ ++ _)
   }
 
@@ -233,7 +254,8 @@ object ScioBatchBenchmark {
     override def run(sc: ScioContext): Unit = {
       val main = randomUUIDs(sc, 100 * M)
       val side = randomUUIDs(sc, 1 * M).asListSideInput
-      main.withSideInputs(side)
+      main
+        .withSideInputs(side)
         .map { case (x, s) => (x, s(side).head) }
     }
   }
@@ -297,12 +319,12 @@ object ScioBatchBenchmark {
       .map(Elem(_))
 
   private def randomKVs(sc: ScioContext,
-                        n: Long, numUniqueKeys: Int): SCollection[(String, Elem[String])] =
+                        n: Long,
+                        numUniqueKeys: Int): SCollection[(String, Elem[String])] =
     sc.parallelize(partitions(n))
       .flatten[Long]
       .applyTransform(ParDo.of(new FillDoFn(() =>
-        ("key" + Random.nextInt(numUniqueKeys), UUID.randomUUID().toString)
-      )))
+        ("key" + Random.nextInt(numUniqueKeys), UUID.randomUUID().toString))))
       .mapValues(Elem(_))
 
   private class FillDoFn[T](val f: () => T) extends DoFn[Long, T] {

@@ -23,14 +23,14 @@ fi
 
 if [ $SCOVERAGE -eq 1 ]; then
   sbt -v $PROPS ++$SCALA_VERSION \
-    scalafmtCheck test:scalafmtCheck scalafmtSbtCheck \
+    scalafmtCheck test:scalafmtCheck it:scalafmtCheck scalafmtSbtCheck \
     scalastyle \
     coverage \
     $TESTS \
     coverageReport coverageAggregate
 else
   sbt -v $PROPS ++$SCALA_VERSION \
-    scalafmtCheck test:scalafmtCheck scalafmtSbtCheck \
+    scalafmtCheck test:scalafmtCheck it:scalafmtCheck scalafmtSbtCheck \
     scalastyle \
     $TESTS
 fi

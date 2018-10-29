@@ -86,8 +86,7 @@ class CassandraIT extends FlatSpec with Matchers with BeforeAndAfterAll {
       if (cluster.getMetadata.getKeyspace("scio") != null) {
         session.execute("DROP KEYSPACE scio")
       }
-      session.execute(
-        """
+      session.execute("""
           |CREATE KEYSPACE scio
           |WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
         """.stripMargin)
@@ -159,24 +158,62 @@ object CassandraIT {
   private val time = LocalTime.now().toNanoOfDay
   private val timestamp = Date.from(Instant.now())
 
-  def toValues1(i: Int): Seq[Any] = Seq(
-    s"key$i", i.toByte, i.toShort, i, i.toLong, JBigDecimal.valueOf(i), i.toFloat, i.toDouble,
-    i % 2 == 0, ByteBuffer.wrap(s"blob$i".getBytes), date, time, timestamp,
-    u1, u2, s"varchar$i", BigInteger.valueOf(i),
-    List(s"list$i").asJava, Set(s"set$i").asJava, Map(s"key$i" -> i).asJava)
+  def toValues1(i: Int): Seq[Any] =
+    Seq(
+      s"key$i",
+      i.toByte,
+      i.toShort,
+      i,
+      i.toLong,
+      JBigDecimal.valueOf(i),
+      i.toFloat,
+      i.toDouble,
+      i % 2 == 0,
+      ByteBuffer.wrap(s"blob$i".getBytes),
+      date,
+      time,
+      timestamp,
+      u1,
+      u2,
+      s"varchar$i",
+      BigInteger.valueOf(i),
+      List(s"list$i").asJava,
+      Set(s"set$i").asJava,
+      Map(s"key$i" -> i).asJava
+    )
 
-  def fromRow1(r: Row): Seq[Any] = Seq(
-    r.getString("key"), r.getByte("i1"), r.getShort("i2"), r.getInt("i3"), r.getLong("i4"),
-    r.getDecimal("d"), r.getFloat("f1"), r.getDouble("f2"), r.getBool("b1"), r.getBytes("b2"),
-    r.getDate("dt1"), r.getTime("dt2"), r.getTimestamp("dt3"),
-    r.getUUID("u1"), r.getUUID("u2"), r.getString("v1"), r.getVarint("v2"),
-    r.getList("c1", classOf[String]), r.getSet("c2", classOf[String]),
-    r.getMap("c3", classOf[String], classOf[java.lang.Integer]))
+  def fromRow1(r: Row): Seq[Any] =
+    Seq(
+      r.getString("key"),
+      r.getByte("i1"),
+      r.getShort("i2"),
+      r.getInt("i3"),
+      r.getLong("i4"),
+      r.getDecimal("d"),
+      r.getFloat("f1"),
+      r.getDouble("f2"),
+      r.getBool("b1"),
+      r.getBytes("b2"),
+      r.getDate("dt1"),
+      r.getTime("dt2"),
+      r.getTimestamp("dt3"),
+      r.getUUID("u1"),
+      r.getUUID("u2"),
+      r.getString("v1"),
+      r.getVarint("v2"),
+      r.getList("c1", classOf[String]),
+      r.getSet("c2", classOf[String]),
+      r.getMap("c3", classOf[String], classOf[java.lang.Integer])
+    )
 
   def toValues2(i: Int): Seq[Any] = Seq(s"k1_$i", s"k2_$i", s"k3_$i", s"v1_$i", i, i.toFloat)
 
-  def fromRow2(r: Row): Seq[Any] = Seq(
-    r.getString("k1"), r.getString("k2"), r.getString("k3"),
-    r.getString("v1"), r.getInt("v2"), r.getFloat("v3"))
+  def fromRow2(r: Row): Seq[Any] =
+    Seq(r.getString("k1"),
+        r.getString("k2"),
+        r.getString("k3"),
+        r.getString("v1"),
+        r.getInt("v2"),
+        r.getFloat("v3"))
 
 }

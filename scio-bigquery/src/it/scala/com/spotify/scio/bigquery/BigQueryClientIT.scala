@@ -64,30 +64,32 @@ class BigQueryClientIT extends FlatSpec with Matchers {
   }
 
   "QueryService.getSchema" should "work with legacy syntax" in {
-    val expected = new TableSchema().setFields(List(
-      new TableFieldSchema().setName("word").setType("STRING").setMode("REQUIRED"),
-      new TableFieldSchema().setName("word_count").setType("INTEGER").setMode("REQUIRED")
-    ).asJava)
+    val expected = new TableSchema().setFields(
+      List(
+        new TableFieldSchema().setName("word").setType("STRING").setMode("REQUIRED"),
+        new TableFieldSchema().setName("word_count").setType("INTEGER").setMode("REQUIRED")
+      ).asJava)
     bq.query.schema(legacyQuery) shouldBe expected
   }
 
   it should "work with SQL syntax" in {
-    val expected = new TableSchema().setFields(List(
-      new TableFieldSchema().setName("word").setType("STRING").setMode("NULLABLE"),
-      new TableFieldSchema().setName("word_count").setType("INTEGER").setMode("NULLABLE")
-    ).asJava)
+    val expected = new TableSchema().setFields(
+      List(
+        new TableFieldSchema().setName("word").setType("STRING").setMode("NULLABLE"),
+        new TableFieldSchema().setName("word_count").setType("INTEGER").setMode("NULLABLE")
+      ).asJava)
     bq.query.schema(sqlQuery) shouldBe expected
   }
 
   // scalastyle:off no.whitespace.before.left.bracket
   it should "fail invalid legacy syntax" in {
-    (the [GoogleJsonResponseException] thrownBy {
+    (the[GoogleJsonResponseException] thrownBy {
       bq.query.schema("SELECT word, count FROM [bigquery-public-data:samples.shakespeare]")
     }).getDetails.getCode shouldBe 400
   }
 
   it should "fail invalid SQL syntax" in {
-    (the [GoogleJsonResponseException] thrownBy {
+    (the[GoogleJsonResponseException] thrownBy {
       bq.query.schema("SELECT word, count FROM `bigquery-public-data.samples.shakespeare`")
     }).getDetails.getCode shouldBe 400
   }
@@ -121,8 +123,8 @@ class BigQueryClientIT extends FlatSpec with Matchers {
   }
 
   "Load.csv" should "work" in {
-    val schema = BigQueryUtil.parseSchema(
-      """
+    val schema =
+      BigQueryUtil.parseSchema("""
         |{
         |  "fields": [
         |    {"mode": "NULLABLE", "name": "word", "type": "STRING"},
@@ -134,16 +136,16 @@ class BigQueryClientIT extends FlatSpec with Matchers {
       """.stripMargin)
     val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.csv")
     val table = bq.tables.createTemporary(location = "EU")
-    val tableRef = bq.load.csv(sources, table.asTableSpec, skipLeadingRows = 1,
-      schema = Some(schema))
+    val tableRef =
+      bq.load.csv(sources, table.asTableSpec, skipLeadingRows = 1, schema = Some(schema))
     val createdTable = tableRef.map(bq.tables.table)
     createdTable.map(_.getNumRows.intValue()) shouldBe Success(10)
     tableRef.map(bq.tables.delete)
   }
 
   "Load.json" should "work" in {
-    val schema = BigQueryUtil.parseSchema(
-      """
+    val schema =
+      BigQueryUtil.parseSchema("""
         |{
         |  "fields": [
         |    {"mode": "NULLABLE", "name": "word", "type": "STRING"},
@@ -211,19 +213,17 @@ class BigQueryClientIT extends FlatSpec with Matchers {
     private val storage = StorageOptions.getDefaultInstance.getService
 
     private def list(bucket: String, prefix: String): Iterable[Blob] = {
-      storage.list(bucket, BlobListOption.prefix(prefix))
+      storage
+        .list(bucket, BlobListOption.prefix(prefix))
         .iterateAll()
         .asScala
     }
 
-    def exists(bucket: String, prefix: String): Boolean = {
-      list(bucket, prefix)
-        .nonEmpty
-    }
+    def exists(bucket: String, prefix: String): Boolean =
+      list(bucket, prefix).nonEmpty
 
-    def remove(bucket: String, prefix: String): Unit = {
+    def remove(bucket: String, prefix: String): Unit =
       storage.delete(list(bucket, prefix).map(_.getBlobId).toSeq: _*)
-    }
   }
 
 }

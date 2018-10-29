@@ -43,13 +43,17 @@ class AnnoyIT extends PipelineSpec {
       try {
         val p1 = sc.parallelize(Seq(sideData.map(_._1)))
         val p2 = sc.parallelize(sideData).asAnnoySideInput(Angular, dim, 10)
-        val s = p1.withSideInputs(p2)
-          .flatMap((xs, si) => xs.map(x => si(p2).getItemVector(x))).toSCollection
+        val s = p1
+          .withSideInputs(p2)
+          .flatMap((xs, si) => xs.map(x => si(p2).getItemVector(x)))
+          .toSCollection
         s should containInAnyOrder(sideData.map(_._2))
       } finally {
         val files = FileSystems
           .`match`(s"${tempLocation}/annoy-*")
-           .metadata().asScala.map(_.resourceId())
+          .metadata()
+          .asScala
+          .map(_.resourceId())
         FileSystems.delete(files.asJava)
       }
     }
@@ -66,7 +70,7 @@ class AnnoyIT extends PipelineSpec {
         f.write(ByteBuffer.wrap("test-data".getBytes))
         f.close()
         // scalastyle:off no.whitespace.before.left.bracket
-        the [IllegalArgumentException] thrownBy {
+        the[IllegalArgumentException] thrownBy {
           sc.parallelize(sideData).asAnnoy(path, Angular, dim, 10)
         } should have message s"requirement failed: Annoy URI $path already exists"
         // scalastyle:on no.whitespace.before.left.bracket

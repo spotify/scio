@@ -34,7 +34,8 @@ class TypedAvroIT extends FlatSpec with Matchers {
 object TypedAvroJob {
   def main(cmdLineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdLineArgs)
-    sc.parallelize(Seq("a", "b", "c")).map(Record(_))
+    sc.parallelize(Seq("a", "b", "c"))
+      .map(Record(_))
       .saveAsTypedAvroFile(args("output"))
     sc.close().waitUntilDone()
   }
