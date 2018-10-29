@@ -225,8 +225,8 @@ class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try
               CommitRequest
                 .newBuilder()
                 .setMode(CommitRequest.Mode.NON_TRANSACTIONAL)
-                // Upsert means we can re-run a job for same build if necessary; insert would trigger
-                // a Datastore exception
+                // Upsert means we can re-run a job for same build if necessary;
+                // insert would trigger a Datastore exception
                 .addMutations(Mutation.newBuilder().setUpsert(entity.build()).build())
                 .build())
 
