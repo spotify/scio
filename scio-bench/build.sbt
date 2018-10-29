@@ -1,8 +1,8 @@
 import sbt._
 import Keys._
 
-val scioVersion = sys.props("scio.version")
-val beamVersion = sys.props("beam.version")
+val scioVersion = sysProp("scio.version", "missing -Dscio.version=<VERSION>")
+val beamVersion = sysProp("beam.version", "missing -Dbeam.version=<VERSION>")
 val scalaMacrosVersion = "2.1.1"
 
 lazy val commonSettings = Seq(
@@ -35,3 +35,11 @@ lazy val root: Project = project
     ),
     publish / skip := true
   )
+
+def sysProp(name: String, error: String): String =
+  sys.props.get(name).getOrElse {
+    //scalastyle:off
+    System.err.println(error)
+    //scalastyle:on
+    sys.exit(1)
+  }
