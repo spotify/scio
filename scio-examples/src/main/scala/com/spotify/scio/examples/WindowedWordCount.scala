@@ -58,23 +58,27 @@ object WindowedWordCount {
 
     // Open text files as an `SCollection[String]`
     sc.textFile(input)
-      // Assign random timestamps to each element
-      .timestampBy { _ =>
-        new Instant(ThreadLocalRandom.current().nextLong(minTimestamp, maxTimestamp))
+      .transform("random timestamper") {
+        // Assign random timestamps to each element
+        _.timestampBy { _ =>
+          new Instant(ThreadLocalRandom.current().nextLong(minTimestamp, maxTimestamp))
+        }
       }
-      // Apply windowing logic
-      .withFixedWindows(windowSize)
-      // Split input lines, filter out empty tokens and expand into a collection of tokens
-      .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-      // Count occurrences of each unique `String` within each window to get `(String, Long)`
-      .countByValue
-      // Expose window infomation as an `IntervalWindow`
-      .withWindow[IntervalWindow]
-      // Swap keys and values, i.e. `((String, Long), IntervalWindow)` => `(IntervalWindow,
-      // (String, Long))`
-      .swap
-      // Group elements by window to get `(IntervalWindow, Iterable[(String, Long)])
-      .groupByKey
+      .transform("windowed counter") {
+        // Apply windowing logic
+        _.withFixedWindows(windowSize)
+        // Split input lines, filter out empty tokens and expand into a collection of tokens
+          .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
+          // Count occurrences of each unique `String` within each window to get `(String, Long)`
+          .countByValue
+          // Expose window infomation as an `IntervalWindow`
+          .withWindow[IntervalWindow]
+          // Swap keys and values, i.e. `((String, Long), IntervalWindow)` => `(IntervalWindow,
+          // (String, Long))`
+          .swap
+          // Group elements by window to get `(IntervalWindow, Iterable[(String, Long)])
+          .groupByKey
+      }
       // Write values in each group to a separate text file
       .map {
         case (w, vs) =>

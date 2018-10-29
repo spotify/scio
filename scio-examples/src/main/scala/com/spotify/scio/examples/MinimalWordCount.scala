@@ -37,13 +37,14 @@ object MinimalWordCount {
     // Open text file as `SCollection[String]`. The input can be either a single file or a
     // wildcard matching multiple files.
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
-      // Split input lines, filter out empty tokens and expand into a collection of tokens
-      .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-      // Count occurrences of each unique `String` to get `(String, Long)`
-      .countByValue
+      .transform("counter") {
+        // Split input lines, filter out empty tokens and expand into a collection of tokens
+        _.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
+        // Count occurrences of each unique `String` to get `(String, Long)`
+        .countByValue
+      }
       // Map `(String, Long)` tuples into strings
       .map(t => t._1 + ": " + t._2)
-
       // Save result as text files under the output path
       .saveAsTextFile(args("output"))
 
