@@ -40,7 +40,7 @@ object SpannerIOIT {
   private val adminClient = Spanner.getAdminClient(projectId)
   private val dbClient = Spanner.getDatabaseClient(config)
 
-  private val options = PipelineOptionsFactory.fromArgs(s"--project=$projectId").create()
+  private val options = PipelineOptionsFactory.create()
 }
 
 class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
@@ -107,7 +107,8 @@ class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
       sc,
       SpannerRead.ReadParam(
         readMethod = SpannerRead.FromTable(table, Seq("Key", "Value")),
-        withTransaction = true
+        withTransaction = true,
+        withBatching = true
       )
     )
 
@@ -143,6 +144,7 @@ class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
       sc,
       SpannerRead.ReadParam(
         readMethod = SpannerRead.FromQuery(s"SELECT Key, Value FROM $table"),
+        withTransaction = true,
         withBatching = true
       )
     )

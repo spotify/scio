@@ -38,7 +38,7 @@ sealed trait SpannerIO[T] extends ScioIO[T] {
 object SpannerRead {
   object ReadParam {
     private[spanner] val DefaultWithTransaction = false
-    private[spanner] val DefaultWithBatching = false
+    private[spanner] val DefaultWithBatching = true
 
     @inline def apply(readMethod: ReadMethod,
                       withTransaction: Boolean = ReadParam.DefaultWithTransaction,
@@ -104,10 +104,6 @@ final case class SpannerWrite(config: SpannerConfig) extends SpannerIO[Mutation]
   override type ReadP = Nothing
   override type WriteP = WriteParam
 
-  override protected def read(sc: ScioContext, params: ReadP): SCollection[Mutation] = sc.wrap {
-    throw new IllegalStateException("SpannerWrite is WO")
-  }
-
   override protected def write(data: SCollection[Mutation],
                                params: WriteP): Future[Tap[Nothing]] = {
     var transform = BSpannerIO.write().withSpannerConfig(config)
@@ -117,6 +113,10 @@ final case class SpannerWrite(config: SpannerConfig) extends SpannerIO[Mutation]
 
     data.applyInternal(transform)
     Future.successful(EmptyTap)
+  }
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[Mutation] = sc.wrap {
+    throw new IllegalStateException("SpannerWrite is write-only")
   }
 
   override def tap(params: ReadP): Tap[Nothing] = EmptyTap

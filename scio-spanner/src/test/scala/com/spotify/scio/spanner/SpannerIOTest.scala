@@ -73,34 +73,32 @@ object SpannerIOTest {
 class SpannerIOTest extends PipelineSpec with Matchers {
   import SpannerIOTest.spannerConfig
 
-  "SpannerScioContext" should "support reading from query" in {
-    val out = "someOutput"
-    val spannerRows = Seq(Struct.newBuilder().set("foo").to("bar").build())
+  private val readData = Seq(Struct.newBuilder().set("foo").to("bar").build())
+  private val writeData = Seq(
+    Mutation.newInsertBuilder("someTable").set("foo").to("bar").build()
+  )
+  private val outIO = TextIO("someOutput")
 
+  "SpannerScioContext" should "support reading from query" in {
     JobTest[QueryReadJob.type]
-      .args(s"--out=$out")
-      .input[Struct](SpannerRead(spannerConfig), spannerRows)
-      .output[String](TextIO(out))(_ should containInAnyOrder(spannerRows.map(_.toString)))
+      .args(s"--out=${outIO.path}")
+      .input[Struct](SpannerRead(spannerConfig), readData)
+      .output[String](outIO)(_ should containInAnyOrder(readData.map(_.toString)))
       .run()
   }
 
   it should "support reading from table" in {
-    val out = "someOutput"
-    val spannerRows = Seq(Struct.newBuilder().set("foo").to("bar").build())
-
     JobTest[TableReadJob.type]
-      .args(s"--out=$out")
-      .input[Struct](SpannerRead(spannerConfig), spannerRows)
-      .output[String](TextIO(out))(_ should containInAnyOrder(spannerRows.map(_.toString)))
+      .args(s"--out=${outIO.path}")
+      .input[Struct](SpannerRead(spannerConfig), readData)
+      .output[String](outIO)(_ should containInAnyOrder(readData.map(_.toString)))
       .run()
   }
 
   "SpannerSCollection" should "support writes" in {
-    val spannerRows = Seq(Mutation.newInsertBuilder("someTable").set("foo").to("bar").build())
-
     JobTest[SpannerWriteJob.type]
       .output[Mutation](SpannerWrite(SpannerIOTest.spannerConfig))(_ should
-        containInAnyOrder(spannerRows))
+        containInAnyOrder(writeData))
       .run()
   }
 }

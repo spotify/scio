@@ -644,7 +644,7 @@ lazy val scioSpanner: Project = Project(
   "scio-spanner",
   file("scio-spanner")
 ).settings(
-    commonSettings ++ itSettings,
+    commonSettings ++ itSettings ++ beamRunnerSettings,
     description := "Scio add-on for Google Cloud Spanner",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % scalatestVersion % "it"
