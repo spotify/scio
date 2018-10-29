@@ -319,6 +319,7 @@ lazy val root: Project = Project(
     scioParquet,
     scioTensorFlow,
     scioSchemas,
+    scioSpanner,
     scioExamples,
     scioRepl,
     scioJmh,
