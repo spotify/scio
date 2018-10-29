@@ -33,13 +33,6 @@ package object spanner {
 
     def spannerTable(spannerConfig: SpannerConfig,
                      table: String,
-                     columns: Seq[String]): SCollection[Struct] = {
-      val params = SpannerRead.ReadParam(SpannerRead.FromTable(table, columns))
-      self.read(SpannerRead(spannerConfig))(params)
-    }
-
-    def spannerTable(spannerConfig: SpannerConfig,
-                     table: String,
                      columns: Seq[String],
                      withBatching: Boolean = DefaultWithBatching,
                      withTransaction: Boolean = DefaultWithTransaction): SCollection[Struct] = {
@@ -49,11 +42,6 @@ package object spanner {
         withBatching
       )
 
-      self.read(SpannerRead(spannerConfig))(params)
-    }
-
-    def spannerQuery(spannerConfig: SpannerConfig, query: String): SCollection[Struct] = {
-      val params = SpannerRead.ReadParam(SpannerRead.FromQuery(query))
       self.read(SpannerRead(spannerConfig))(params)
     }
 
@@ -74,13 +62,6 @@ package object spanner {
   implicit class SpannerSCollection(@transient val self: SCollection[Mutation])
       extends Serializable {
     import SpannerWrite.WriteParam._
-
-    def saveAsSpanner(spannerConfig: SpannerConfig)(
-      implicit coder: Coder[Mutation]): Future[Tap[Nothing]] = {
-      self
-        .asInstanceOf[SCollection[Mutation]]
-        .write(SpannerWrite(spannerConfig))(SpannerWrite.WriteParam())
-    }
 
     def saveAsSpanner(spannerConfig: SpannerConfig,
                       failureMode: FailureMode = DefaultFailureMode,
