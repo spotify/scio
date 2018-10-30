@@ -91,15 +91,12 @@ class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
   private class ReadableSpannerTable(val tableName: String) {
     val writeData: FakeSpannerData = fakeData(tableName)
 
-    lazy val readOperationResults: List[Struct] = {
+    lazy val readOperationResults: Seq[Struct] = {
       val txn = dbClient
         .readOnlyTransaction()
         .read(tableName, KeySet.all(), Seq("Key", "Value").asJava)
 
-      List(
-        { txn.next(); txn.getCurrentRowAsStruct },
-        { txn.next(); txn.getCurrentRowAsStruct }
-      )
+      for (_ <- writeData.asStructs) yield { txn.next(); txn.getCurrentRowAsStruct}
     }
   }
 
@@ -109,8 +106,7 @@ class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
     SpannerWrite(config)
       .writeWithContext(sc.parallelize(writeData.asMutations), SpannerWrite.WriteParam())
 
-    sc.close()
-
+    sc.close().waitUntilDone()
     readOperationResults should contain theSameElementsAs writeData.asStructs
   }
 
@@ -126,8 +122,8 @@ class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
       )
     ).materialize.map(_.value.toList)
 
-    sc.close()
-    Await.result(read, Duration.Inf) should contain theSameElementsAs spannerRows.asStructs
+    sc.close().waitUntilDone()
+    read.map(_ should contain theSameElementsAs spannerRows.asStructs)
   }
 
   it should "perform reads from query" in new PopulatedSpannerTable("read_query_test") {
@@ -142,7 +138,7 @@ class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
       )
     ).materialize.map(_.value.toList)
 
-    sc.close()
-    Await.result(read, Duration.Inf) should contain theSameElementsAs spannerRows.asStructs
+    sc.close().waitUntilDone()
+    read.map(_ should contain theSameElementsAs spannerRows.asStructs)
   }
 }
