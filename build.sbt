@@ -320,6 +320,7 @@ lazy val root: Project = Project(
     scioParquet,
     scioTensorFlow,
     scioSchemas,
+    scioSpanner,
     scioExamples,
     scioRepl,
     scioJmh,
@@ -641,6 +642,22 @@ lazy val scioParquet: Project = Project(
     scioTest % "test->test"
   )
 
+lazy val scioSpanner: Project = Project(
+  "scio-spanner",
+  file("scio-spanner")
+).settings(
+    commonSettings ++ itSettings ++ beamRunnerSettings,
+    description := "Scio add-on for Google Cloud Spanner",
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % scalatestVersion % "it"
+    )
+  )
+  .dependsOn(
+    scioCore,
+    scioTest % "test"
+  )
+  .configs(IntegrationTest)
+
 lazy val scioTensorFlow: Project = Project(
   "scio-tensorflow",
   file("scio-tensorflow")
@@ -736,6 +753,7 @@ lazy val scioExamples: Project = Project(
     scioSchemas,
     scioJdbc,
     scioExtra,
+    scioSpanner,
     scioTensorFlow,
     scioTest % "test"
   )

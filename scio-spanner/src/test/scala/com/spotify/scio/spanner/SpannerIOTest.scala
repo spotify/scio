@@ -1,0 +1,49 @@
+/*
+ * Copyright 2018 Spotify AB.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package com.spotify.scio.spanner
+
+import com.google.cloud.spanner.{Mutation, Struct}
+import com.spotify.scio.testing.ScioIOSpec
+import org.apache.beam.sdk.io.gcp.spanner.SpannerConfig
+import org.scalatest.Matchers
+
+class SpannerIOTest extends ScioIOSpec with Matchers {
+  private val config: SpannerConfig = SpannerConfig
+    .create()
+    .withProjectId("someProject")
+    .withDatabaseId("someDatabase")
+    .withInstanceId("someInstance")
+
+  private val readData = Seq(Struct.newBuilder().set("foo").to("bar").build())
+  private val writeData = Seq(
+    Mutation.newInsertBuilder("someTable").set("foo").to("bar").build()
+  )
+
+  "SpannerScioContext" should "support table input" in {
+    testJobTestInput(readData)(_ => SpannerRead(config))(
+      _.spannerTable(config, _, Seq("someColumn")))
+  }
+
+  it should "support query input" in {
+    testJobTestInput(readData)(_ => SpannerRead(config))(_.spannerQuery(config, _))
+  }
+
+  "SpannerSCollection" should "support writes" in {
+    testJobTestOutput(writeData)(_ => SpannerWrite(config))((data, _) => data.saveAsSpanner(config))
+  }
+}

@@ -22,6 +22,7 @@ import java.math.{BigDecimal, BigInteger}
 import java.time.Instant
 
 import com.google.api.services.bigquery.model.TableRow
+import com.google.cloud.spanner.{Mutation, Struct}
 import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.values.Row
 import org.apache.beam.sdk.schemas.Schema
@@ -112,4 +113,10 @@ trait JavaCoders {
   // #1447: Kryo throws a NPE
   implicit def spannerReadOperationCoder: Coder[ReadOperation] =
     Coder.beam(bcoders.SerializableCoder.of(classOf[ReadOperation]))
+
+  implicit def spannerMutationCoder: Coder[Mutation] =
+    Coder.beam(bcoders.SerializableCoder.of(classOf[Mutation]))
+
+  implicit def spannerStructCoder: Coder[Struct] =
+    Coder.beam(bcoders.SerializableCoder.of(classOf[Struct]))
 }
