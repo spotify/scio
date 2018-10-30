@@ -26,21 +26,40 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{Await, ExecutionContext}
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.util.Random
 
 object SpannerIOIT {
-  private val tablePrefix = "test_table"
   private val projectId = "data-integration-test"
+  private val options = PipelineOptionsFactory.create()
   private val config: SpannerConfig = SpannerConfig.create()
     .withProjectId(projectId)
     .withDatabaseId(s"io_it_${Random.nextInt}")
     .withInstanceId("spanner-it")
 
-  private val adminClient = Spanner.getAdminClient(projectId)
-  private val dbClient = Spanner.getDatabaseClient(config)
+  private val adminClient = Spanner.adminClient(projectId)
+  private val dbClient = Spanner.databaseClient(config)
 
-  private val options = PipelineOptionsFactory.create()
+  private final case class FakeSpannerData(asMutations: Seq[Mutation], asStructs: Seq[Struct])
+  private def fakeData(tableName: String) = FakeSpannerData(
+    Seq(
+      Mutation
+        .newInsertBuilder(tableName)
+        .set("Key").to(1L).set("Value").to("foo")
+        .build(),
+      Mutation
+        .newInsertBuilder(tableName)
+        .set("Key").to(2L).set("Value").to("bar")
+        .build()
+    ),
+    Seq(
+      Struct.newBuilder()
+        .set("Key").to(1L).set("Value").to("foo")
+        .build(),
+      Struct.newBuilder()
+        .set("Key").to(2L).set("Value").to("bar")
+        .build())
+  )
 }
 
 class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
@@ -48,121 +67,82 @@ class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
   implicit val ec: ExecutionContext = ExecutionContext.global
 
   override def beforeAll(): Unit = {
-    val create = adminClient.createDatabase(
-      config.getInstanceId.get(),
-      config.getDatabaseId.get(),
-      List(
-        s"CREATE TABLE ${tablePrefix}_1 (\n Key INT64, \n Value STRING(MAX) \n) PRIMARY KEY (Key)",
-        s"CREATE TABLE ${tablePrefix}_2 (\n Key INT64, \n Value STRING(MAX) \n) PRIMARY KEY (Key)",
-        s"CREATE TABLE ${tablePrefix}_3 (\n Key INT64, \n Value STRING(MAX) \n) PRIMARY KEY (Key)"
-      ).asJava)
-
-    create.waitFor()
+    adminClient
+      .createDatabase(
+        config.getInstanceId.get(),
+        config.getDatabaseId.get(),
+        List(
+          "CREATE TABLE read_query_test ( Key INT64, Value STRING(MAX) ) PRIMARY KEY (Key)",
+          "CREATE TABLE read_table_test ( Key INT64, Value STRING(MAX) ) PRIMARY KEY (Key)",
+          "CREATE TABLE write_test ( Key INT64, Value STRING(MAX) ) PRIMARY KEY (Key)"
+        ).asJava)
+      .waitFor()
   }
 
   override def afterAll(): Unit = {
     adminClient.dropDatabase(config.getInstanceId.get(), config.getDatabaseId.get())
   }
 
-  "SpannerIO" should "perform writes" in {
-    val table = s"${tablePrefix}_1"
-    val mutations = Seq(
-      Mutation.newInsertBuilder(table).set("Key").to(1L).set("Value").to("foo").build(),
-      Mutation.newInsertBuilder(table).set("Key").to(2L).set("Value").to("bar").build()
-    )
-
-    val sc = ScioContext(options)
-    val data = sc.parallelize(mutations)
-
-    SpannerWrite(config).writeWithContext(data, SpannerWrite.WriteParam())
-    sc.close()
-
-    val txn = dbClient.readOnlyTransaction()
-    val read = txn.read(table, KeySet.all(), Seq("Key", "Value").asJava)
-
-    val results: List[Struct] = List(
-      { read.next(); read.getCurrentRowAsStruct },
-      { read.next(); read.getCurrentRowAsStruct }
-    )
-
-    val expectedOut = List(
-      Struct.newBuilder().set("Key").to(1L).set("Value").to("foo").build(),
-      Struct.newBuilder().set("Key").to(2).set("Value").to("bar").build()
-    )
-
-    results should contain theSameElementsAs expectedOut
+  private class PopulatedSpannerTable(val tableName: String) {
+    val spannerRows: FakeSpannerData = fakeData(tableName)
+    dbClient.write(spannerRows.asMutations.asJava)
   }
 
-  it should "perform reads from table" in {
-    val table = s"${tablePrefix}_2"
-    val mutations = Seq(
-      Mutation.newInsertBuilder(table).set("Key").to(3L).set("Value").to("foo").build(),
-      Mutation.newInsertBuilder(table).set("Key").to(4L).set("Value").to("bar").build()
-    )
+  private class ReadableSpannerTable(val tableName: String) {
+    val writeData: FakeSpannerData = fakeData(tableName)
 
-    dbClient.write(mutations.asJava)
+    lazy val readOperationResults: List[Struct] = {
+      val txn = dbClient
+        .readOnlyTransaction()
+        .read(tableName, KeySet.all(), Seq("Key", "Value").asJava)
 
-    val sc = ScioContext(options)
-    val read = SpannerRead(config).readWithContext(
+      List(
+        { txn.next(); txn.getCurrentRowAsStruct },
+        { txn.next(); txn.getCurrentRowAsStruct }
+      )
+    }
+  }
+
+  "SpannerIO" should "perform writes" in new ReadableSpannerTable("write_test") {
+    private val sc = ScioContext(options)
+
+    SpannerWrite(config)
+      .writeWithContext(sc.parallelize(writeData.asMutations), SpannerWrite.WriteParam())
+
+    sc.close()
+
+    readOperationResults should contain theSameElementsAs writeData.asStructs
+  }
+
+  it should "perform reads from table" in new PopulatedSpannerTable("read_table_test") {
+    private val sc = ScioContext(options)
+
+    private val read = SpannerRead(config).readWithContext(
       sc,
       SpannerRead.ReadParam(
-        readMethod = SpannerRead.FromTable(table, Seq("Key", "Value")),
+        readMethod = SpannerRead.FromTable(tableName, Seq("Key", "Value")),
         withTransaction = true,
         withBatching = true
       )
-    )
+    ).materialize.map(_.value.toList)
 
-    val result = read.materialize.map(_.value.toList)
     sc.close()
-
-    val expectedOut = List(
-      Struct.newBuilder()
-        .set("Key").to(3L)
-        .set("Value").to("foo")
-        .build(),
-      Struct.newBuilder()
-        .set("Key").to(4L)
-        .set("Value").to("bar")
-        .build())
-
-    val awaited = Await.result(result, 10.seconds)
-
-    awaited should contain theSameElementsAs expectedOut
+    Await.result(read, Duration.Inf) should contain theSameElementsAs spannerRows.asStructs
   }
 
-  it should "perform reads from query" in {
-    val table = s"${tablePrefix}_3"
-    val mutations = Seq(
-      Mutation.newInsertBuilder(table).set("Key").to(5L).set("Value").to("foo").build(),
-      Mutation.newInsertBuilder(table).set("Key").to(6L).set("Value").to("bar").build()
-    )
+  it should "perform reads from query" in new PopulatedSpannerTable("read_query_test") {
+    private val sc = ScioContext(options)
 
-    dbClient.write(mutations.asJava)
-
-    val sc = ScioContext(options)
-    val read = SpannerRead(config).readWithContext(
+    private val read = SpannerRead(config).readWithContext(
       sc,
       SpannerRead.ReadParam(
-        readMethod = SpannerRead.FromQuery(s"SELECT Key, Value FROM $table"),
+        readMethod = SpannerRead.FromQuery(s"SELECT Key, Value FROM $tableName"),
         withTransaction = true,
         withBatching = true
       )
-    )
-
-    val result = read.materialize.map(_.value.toList)
+    ).materialize.map(_.value.toList)
 
     sc.close()
-
-    val expectedOut = List(
-      Struct.newBuilder()
-        .set("Key").to(5L)
-        .set("Value").to("foo")
-        .build(),
-      Struct.newBuilder()
-        .set("Key").to(6L)
-        .set("Value").to("bar")
-        .build())
-
-    Await.result(result, 10.seconds) should contain theSameElementsAs expectedOut
+    Await.result(read, Duration.Inf) should contain theSameElementsAs spannerRows.asStructs
   }
 }

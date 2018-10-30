@@ -21,12 +21,11 @@ import com.google.cloud.spanner._
 import org.apache.beam.sdk.io.gcp.spanner.SpannerConfig
 
 object Spanner {
-  lazy val defaultInstance: Spanner = {
+  private lazy val defaultInstance: Spanner = {
     SpannerOptions.newBuilder().build().getService
   }
 
-  def getDatabaseClient(config: SpannerConfig,
-                        instance: Spanner = defaultInstance): DatabaseClient = {
+  def databaseClient(config: SpannerConfig, instance: Spanner = defaultInstance): DatabaseClient = {
     instance.getDatabaseClient(
       DatabaseId.of(
         config.getProjectId.get(),
@@ -35,6 +34,6 @@ object Spanner {
       ))
   }
 
-  def getAdminClient(project: String, instance: Spanner = defaultInstance): DatabaseAdminClient =
+  def adminClient(project: String, instance: Spanner = defaultInstance): DatabaseAdminClient =
     instance.getDatabaseAdminClient
 }

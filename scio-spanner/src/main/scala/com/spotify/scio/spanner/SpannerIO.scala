@@ -43,8 +43,8 @@ object SpannerRead {
   }
 
   sealed trait ReadMethod
-  case class FromTable(tableName: String, columns: Seq[String]) extends ReadMethod
-  case class FromQuery(query: String) extends ReadMethod
+  final case class FromTable(tableName: String, columns: Seq[String]) extends ReadMethod
+  final case class FromQuery(query: String) extends ReadMethod
 
   final case class ReadParam private (
     readMethod: ReadMethod,
@@ -103,10 +103,11 @@ final case class SpannerWrite(config: SpannerConfig) extends SpannerIO[Mutation]
 
   override protected def write(data: SCollection[Mutation],
                                params: WriteP): Future[Tap[Nothing]] = {
-    var transform = BSpannerIO.write().withSpannerConfig(config)
-
-    transform = transform.withBatchSizeBytes(params.batchSizeBytes)
-    transform = transform.withFailureMode(params.failureMode)
+    val transform = BSpannerIO
+      .write()
+      .withSpannerConfig(config)
+      .withBatchSizeBytes(params.batchSizeBytes)
+      .withFailureMode(params.failureMode)
 
     data.applyInternal(transform)
     Future.successful(EmptyTap)
