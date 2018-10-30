@@ -81,8 +81,7 @@ final case class SpannerRead(config: SpannerConfig) extends SpannerIO[Struct] {
   override protected def write(data: SCollection[Struct], params: WriteP): Future[Tap[Nothing]] =
     throw new IllegalStateException("SpannerRead is read-only")
 
-  override def tap(params: ReadP): Tap[Nothing] =
-    throw new NotImplementedError("SpannerRead tap is not implemented")
+  override def tap(params: ReadP): Tap[Nothing] = EmptyTap
 }
 
 object SpannerWrite {
