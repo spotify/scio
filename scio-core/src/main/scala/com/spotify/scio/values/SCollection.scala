@@ -19,16 +19,14 @@
 
 package com.spotify.scio.values
 
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
-
 import java.io.PrintStream
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.concurrent.ThreadLocalRandom
 
 import com.google.datastore.v1.Entity
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.AvroBytesUtil
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.annotations.experimental
+import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util._
@@ -167,13 +165,17 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /** Apply a transform. */
-  private[scio] def transform[U](f: SCollection[T] => SCollection[U]): SCollection[U] = {
-    val o = internal.apply(this.tfName, new PTransform[PCollection[T], PCollection[U]]() {
-      override def expand(input: PCollection[T]): PCollection[U] =
-        f(context.wrap(input)).internal
-    })
-    context.wrap(o)
-  }
+  @experimental
+  def transform[U](f: SCollection[T] => SCollection[U]): SCollection[U] = transform(this.tfName)(f)
+
+  @experimental
+  def transform[U](name: String)(f: SCollection[T] => SCollection[U]): SCollection[U] =
+    context.wrap {
+      internal.apply(name, new PTransform[PCollection[T], PCollection[U]]() {
+        override def expand(input: PCollection[T]): PCollection[U] =
+          f(context.wrap(input)).internal
+      })
+    }
 
   // =======================================================================
   // Collection operations
