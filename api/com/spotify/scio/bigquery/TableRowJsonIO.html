@@ -289,6 +289,10 @@ detects the query's dialect. To override this, start the query with either <code
                         <a href="package$$Time$.html" title="Utility for BigQuery TIME type.">Time</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="package$$TimePartitioning.html" title="Scala wrapper for com.google.api.services.bigquery.model.TimePartitioning."></a>
+                        <a href="package$$TimePartitioning.html" title="Scala wrapper for com.google.api.services.bigquery.model.TimePartitioning.">TimePartitioning</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="object" href="package$$Timestamp$.html" title="Utility for BigQuery TIMESTAMP type."></a>
                         <a href="package$$Timestamp$.html" title="Utility for BigQuery TIMESTAMP type.">Timestamp</a>
                       </li>
@@ -728,6 +732,22 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.bigquery.TableRowJsonIO">TableRowJsonIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
+    </li><li name="com.spotify.scio.bigquery.TableRowJsonIO#tapT" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="tapT:com.spotify.scio.io.TapT.Aux[com.spotify.scio.bigquery.TableRow,com.spotify.scio.bigquery.TableRow]"></a><a id="tapT:Aux[TableRow,TableRow]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigquery/TableRowJsonIO.html#tapT:com.spotify.scio.io.TapT.Aux[com.spotify.scio.bigquery.TableRow,com.spotify.scio.bigquery.TableRow]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">tapT</span><span class="result">: <a href="../io/TapT$.html#Aux[A,T0]=com.spotify.scio.io.TapT[A]{typeT=T0}" class="extmbr" name="com.spotify.scio.io.TapT.Aux">Aux</a>[<a href="index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>, <a href="index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.bigquery.TableRowJsonIO">TableRowJsonIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.io.ScioIO#testId" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="testId:String"></a>
       <span class="permalink">
@@ -829,9 +849,9 @@ detects the query's dialect. To override this, start the query with either <code
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.bigquery.TableRowJsonIO">TableRowJsonIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.io.ScioIO#writeTest" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]"></a><a id="writeTest(SCollection[TableRow],WriteP)(Coder[TableRow]):Future[Tap[TableRow]]"></a>
+      <a id="writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[ScioIO.this.tapT.T]]"></a><a id="writeTest(SCollection[TableRow],WriteP)(Coder[TableRow]):Future[Tap[(tapT)#T]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/TableRowJsonIO.html#writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigquery/TableRowJsonIO.html#writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[ScioIO.this.tapT.T]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -840,7 +860,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeTest</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<a href="index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>, <span name="params">params: <a href="#WriteP=com.spotify.scio.bigquery.TableRowJsonIO.WriteParam" class="extmbr" name="com.spotify.scio.bigquery.TableRowJsonIO.WriteP">WriteP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]]</span>
+        <span class="name">writeTest</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<a href="index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>, <span name="params">params: <a href="#WriteP=com.spotify.scio.bigquery.TableRowJsonIO.WriteParam" class="extmbr" name="com.spotify.scio.bigquery.TableRowJsonIO.WriteP">WriteP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="index.html#TableRow=com.google.api.services.bigquery.model.TableRow" class="extmbr" name="com.spotify.scio.bigquery.TableRow">TableRow</a>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<a href="#tapT:com.spotify.scio.io.TapT.Aux[com.spotify.scio.bigquery.TableRow,com.spotify.scio.bigquery.TableRow]" class="extmbr" name="com.spotify.scio.bigquery.TableRowJsonIO#tapT">tapT</a>)#<span class="extype" name="com.spotify.scio.io.TapT.&lt;refinement&gt;.T">T</span>]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>

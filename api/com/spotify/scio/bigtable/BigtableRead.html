@@ -622,9 +622,9 @@
       
       
     </li><li name="com.spotify.scio.bigtable.BigtableRead#tap" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="tap(params:BigtableRead.this.ReadP):com.spotify.scio.io.Tap[com.google.bigtable.v2.Row]"></a><a id="tap(ReadP):Tap[Row]"></a>
+      <a id="tap(params:BigtableRead.this.ReadP):com.spotify.scio.io.Tap[Nothing]"></a><a id="tap(ReadP):Tap[Nothing]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigtable/BigtableRead.html#tap(params:BigtableRead.this.ReadP):com.spotify.scio.io.Tap[com.google.bigtable.v2.Row]" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigtable/BigtableRead.html#tap(params:BigtableRead.this.ReadP):com.spotify.scio.io.Tap[Nothing]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -633,10 +633,26 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">tap</span><span class="params">(<span name="params">params: <a href="#ReadP=com.spotify.scio.bigtable.BigtableRead.ReadParam" class="extmbr" name="com.spotify.scio.bigtable.BigtableRead.ReadP">ReadP</a></span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.google.bigtable.v2.Row">Row</span>]</span>
+        <span class="name">tap</span><span class="params">(<span name="params">params: <a href="#ReadP=com.spotify.scio.bigtable.BigtableRead.ReadParam" class="extmbr" name="com.spotify.scio.bigtable.BigtableRead.ReadP">ReadP</a></span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="http://www.scala-lang.org/api/2.12.7/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.bigtable.BigtableRead">BigtableRead</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
+    </li><li name="com.spotify.scio.bigtable.BigtableIO#tapT" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="tapT:com.spotify.scio.io.TapT.Aux[T,Nothing]"></a><a id="tapT:Aux[Row,Nothing]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/bigtable/BigtableRead.html#tapT:com.spotify.scio.io.TapT.Aux[T,Nothing]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">tapT</span><span class="result">: <a href="../io/TapT$.html#Aux[A,T0]=com.spotify.scio.io.TapT[A]{typeT=T0}" class="extmbr" name="com.spotify.scio.io.TapT.Aux">Aux</a>[<span class="extype" name="com.google.bigtable.v2.Row">Row</span>, <a href="http://www.scala-lang.org/api/2.12.7/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="BigtableIO.html" class="extype" name="com.spotify.scio.bigtable.BigtableIO">BigtableIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.bigtable.BigtableRead#testId" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="testId:String"></a>
       <span class="permalink">
@@ -722,9 +738,9 @@
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.bigtable.BigtableRead#write" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="write(data:com.spotify.scio.values.SCollection[com.google.bigtable.v2.Row],params:BigtableRead.this.WriteP):scala.concurrent.Future[com.spotify.scio.io.Tap[com.google.bigtable.v2.Row]]"></a><a id="write(SCollection[Row],WriteP):Future[Tap[Row]]"></a>
+      <a id="write(data:com.spotify.scio.values.SCollection[com.google.bigtable.v2.Row],params:BigtableRead.this.WriteP):scala.concurrent.Future[com.spotify.scio.io.Tap[Nothing]]"></a><a id="write(SCollection[Row],WriteP):Future[Tap[Nothing]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigtable/BigtableRead.html#write(data:com.spotify.scio.values.SCollection[com.google.bigtable.v2.Row],params:BigtableRead.this.WriteP):scala.concurrent.Future[com.spotify.scio.io.Tap[com.google.bigtable.v2.Row]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigtable/BigtableRead.html#write(data:com.spotify.scio.values.SCollection[com.google.bigtable.v2.Row],params:BigtableRead.this.WriteP):scala.concurrent.Future[com.spotify.scio.io.Tap[Nothing]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -733,14 +749,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">write</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.google.bigtable.v2.Row">Row</span>]</span>, <span name="params">params: <a href="#WriteP=Nothing" class="extmbr" name="com.spotify.scio.bigtable.BigtableRead.WriteP">WriteP</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.google.bigtable.v2.Row">Row</span>]]</span>
+        <span class="name">write</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.google.bigtable.v2.Row">Row</span>]</span>, <span name="params">params: <a href="#WriteP=Nothing" class="extmbr" name="com.spotify.scio.bigtable.BigtableRead.WriteP">WriteP</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="http://www.scala-lang.org/api/2.12.7/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.bigtable.BigtableRead">BigtableRead</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.io.ScioIO#writeTest" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]"></a><a id="writeTest(SCollection[Row],WriteP)(Coder[Row]):Future[Tap[Row]]"></a>
+      <a id="writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[ScioIO.this.tapT.T]]"></a><a id="writeTest(SCollection[Row],WriteP)(Coder[Row]):Future[Tap[(tapT)#T]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigtable/BigtableRead.html#writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/bigtable/BigtableRead.html#writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[ScioIO.this.tapT.T]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -749,7 +765,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeTest</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.google.bigtable.v2.Row">Row</span>]</span>, <span name="params">params: <a href="#WriteP=Nothing" class="extmbr" name="com.spotify.scio.bigtable.BigtableRead.WriteP">WriteP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.google.bigtable.v2.Row">Row</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.google.bigtable.v2.Row">Row</span>]]</span>
+        <span class="name">writeTest</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.google.bigtable.v2.Row">Row</span>]</span>, <span name="params">params: <a href="#WriteP=Nothing" class="extmbr" name="com.spotify.scio.bigtable.BigtableRead.WriteP">WriteP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.google.bigtable.v2.Row">Row</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<a href="#tapT:com.spotify.scio.io.TapT.Aux[T,Nothing]" class="extmbr" name="com.spotify.scio.bigtable.BigtableRead#tapT">tapT</a>)#<span class="extype" name="com.spotify.scio.io.TapT.&lt;refinement&gt;.T">T</span>]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>

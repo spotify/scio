@@ -170,7 +170,7 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <span class="name">CassandraIO</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="opts">opts: <a href="package$$CassandraOptions.html" class="extype" name="com.spotify.scio.cassandra.CassandraOptions">CassandraOptions</a></span>, <span name="parallelism">parallelism: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">0</span></span>)</span><span class="result"> extends <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.cassandra.CassandraIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <span class="name">CassandraIO</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="opts">opts: <a href="package$$CassandraOptions.html" class="extype" name="com.spotify.scio.cassandra.CassandraOptions">CassandraOptions</a></span>)</span><span class="result"> extends <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<span class="extype" name="com.spotify.scio.cassandra.CassandraIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.7/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.7/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       </h4>
 
@@ -226,9 +226,9 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.spotify.scio.cassandra.CassandraIO#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(opts:com.spotify.scio.cassandra.CassandraOptions,parallelism:Int):com.spotify.scio.cassandra.CassandraIO[T]"></a><a id="&lt;init&gt;:CassandraIO[T]"></a>
+      <a id="&lt;init&gt;(opts:com.spotify.scio.cassandra.CassandraOptions):com.spotify.scio.cassandra.CassandraIO[T]"></a><a id="&lt;init&gt;:CassandraIO[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/cassandra/CassandraIO.html#&lt;init&gt;(opts:com.spotify.scio.cassandra.CassandraOptions,parallelism:Int):com.spotify.scio.cassandra.CassandraIO[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/cassandra/CassandraIO.html#&lt;init&gt;(opts:com.spotify.scio.cassandra.CassandraOptions):com.spotify.scio.cassandra.CassandraIO[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -237,7 +237,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">CassandraIO</span><span class="params">(<span name="opts">opts: <a href="package$$CassandraOptions.html" class="extype" name="com.spotify.scio.cassandra.CassandraOptions">CassandraOptions</a></span>, <span name="parallelism">parallelism: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">0</span></span>)</span>
+        <span class="name">CassandraIO</span><span class="params">(<span name="opts">opts: <a href="package$$CassandraOptions.html" class="extype" name="com.spotify.scio.cassandra.CassandraOptions">CassandraOptions</a></span>)</span>
       </span>
       
       
@@ -517,22 +517,6 @@
       </span>
       
       
-    </li><li name="com.spotify.scio.cassandra.CassandraIO#parallelism" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="parallelism:Int"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/cassandra/CassandraIO.html#parallelism:Int" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">parallelism</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
-      </span>
-      
-      
     </li><li name="com.spotify.scio.cassandra.CassandraIO#read" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="read(sc:com.spotify.scio.ScioContext,params:CassandraIO.this.ReadP):com.spotify.scio.values.SCollection[T]"></a><a id="read(ScioContext,ReadP):SCollection[T]"></a>
       <span class="permalink">
@@ -582,9 +566,9 @@
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
     </li><li name="com.spotify.scio.cassandra.CassandraIO#tap" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="tap(params:CassandraIO.this.ReadP):com.spotify.scio.io.Tap[T]"></a><a id="tap(ReadP):Tap[T]"></a>
+      <a id="tap(params:CassandraIO.this.ReadP):com.spotify.scio.io.Tap[Nothing]"></a><a id="tap(ReadP):Tap[Nothing]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/cassandra/CassandraIO.html#tap(params:CassandraIO.this.ReadP):com.spotify.scio.io.Tap[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/cassandra/CassandraIO.html#tap(params:CassandraIO.this.ReadP):com.spotify.scio.io.Tap[Nothing]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -593,7 +577,23 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">tap</span><span class="params">(<span name="params">params: <a href="#ReadP=Nothing" class="extmbr" name="com.spotify.scio.cassandra.CassandraIO.ReadP">ReadP</a></span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.cassandra.CassandraIO.T">T</span>]</span>
+        <span class="name">tap</span><span class="params">(<span name="params">params: <a href="#ReadP=Nothing" class="extmbr" name="com.spotify.scio.cassandra.CassandraIO.ReadP">ReadP</a></span>)</span><span class="result">: <a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="http://www.scala-lang.org/api/2.12.7/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.cassandra.CassandraIO">CassandraIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
+    </li><li name="com.spotify.scio.cassandra.CassandraIO#tapT" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="tapT:com.spotify.scio.io.TapT.Aux[T,Nothing]"></a><a id="tapT:Aux[T,Nothing]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/cassandra/CassandraIO.html#tapT:com.spotify.scio.io.TapT.Aux[T,Nothing]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">tapT</span><span class="result">: <a href="../io/TapT$.html#Aux[A,T0]=com.spotify.scio.io.TapT[A]{typeT=T0}" class="extmbr" name="com.spotify.scio.io.TapT.Aux">Aux</a>[<span class="extype" name="com.spotify.scio.cassandra.CassandraIO.T">T</span>, <a href="http://www.scala-lang.org/api/2.12.7/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.cassandra.CassandraIO">CassandraIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
@@ -682,9 +682,9 @@
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.cassandra.CassandraIO#write" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="write(data:com.spotify.scio.values.SCollection[T],params:CassandraIO.this.WriteP):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]"></a><a id="write(SCollection[T],WriteP):Future[Tap[T]]"></a>
+      <a id="write(data:com.spotify.scio.values.SCollection[T],params:CassandraIO.this.WriteP):scala.concurrent.Future[com.spotify.scio.io.Tap[Nothing]]"></a><a id="write(SCollection[T],WriteP):Future[Tap[Nothing]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/cassandra/CassandraIO.html#write(data:com.spotify.scio.values.SCollection[T],params:CassandraIO.this.WriteP):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/cassandra/CassandraIO.html#write(data:com.spotify.scio.values.SCollection[T],params:CassandraIO.this.WriteP):scala.concurrent.Future[com.spotify.scio.io.Tap[Nothing]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -693,7 +693,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">write</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.cassandra.CassandraIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP=com.spotify.scio.cassandra.CassandraIO.WriteParam[T]" class="extmbr" name="com.spotify.scio.cassandra.CassandraIO.WriteP">WriteP</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.cassandra.CassandraIO.T">T</span>]]</span>
+        <span class="name">write</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.cassandra.CassandraIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP=com.spotify.scio.cassandra.CassandraIO.WriteParam[T]" class="extmbr" name="com.spotify.scio.cassandra.CassandraIO.WriteP">WriteP</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<a href="http://www.scala-lang.org/api/2.12.7/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]]</span>
       </span>
       
       <p class="shortcomment cmt">Save this SCollection as a Cassandra table.</p><div class="fullcomment"><div class="comment cmt"><p>Save this SCollection as a Cassandra table.</p><p>Cassandra <code>org.apache.cassandra.hadoop.cql3.CqlBulkRecordWriter</code> is used to perform bulk
@@ -703,9 +703,9 @@ occur at the end of each window in streaming mode. The bulk writer writes to all
 cluster so remote nodes in a multi-datacenter cluster may become a bottleneck.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.cassandra.CassandraIO">CassandraIO</a> → <a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.io.ScioIO#writeTest" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]"></a><a id="writeTest(SCollection[T],WriteP)(Coder[T]):Future[Tap[T]]"></a>
+      <a id="writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[ScioIO.this.tapT.T]]"></a><a id="writeTest(SCollection[T],WriteP)(Coder[T]):Future[Tap[(tapT)#T]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/cassandra/CassandraIO.html#writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/cassandra/CassandraIO.html#writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[ScioIO.this.tapT.T]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -714,7 +714,7 @@ cluster so remote nodes in a multi-datacenter cluster may become a bottleneck.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeTest</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.cassandra.CassandraIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP=com.spotify.scio.cassandra.CassandraIO.WriteParam[T]" class="extmbr" name="com.spotify.scio.cassandra.CassandraIO.WriteP">WriteP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.cassandra.CassandraIO.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.cassandra.CassandraIO.T">T</span>]]</span>
+        <span class="name">writeTest</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.cassandra.CassandraIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP=com.spotify.scio.cassandra.CassandraIO.WriteParam[T]" class="extmbr" name="com.spotify.scio.cassandra.CassandraIO.WriteP">WriteP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.cassandra.CassandraIO.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<a href="#tapT:com.spotify.scio.io.TapT.Aux[T,Nothing]" class="extmbr" name="com.spotify.scio.cassandra.CassandraIO#tapT">tapT</a>)#<span class="extype" name="com.spotify.scio.io.TapT.&lt;refinement&gt;.T">T</span>]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="../io/ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>

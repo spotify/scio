@@ -397,11 +397,29 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">tfRecordExampleFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="compression">compression: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/io/Compression.html#org.apache.beam.sdk.io.Compression" class="extype" name="org.apache.beam.sdk.io.Compression">Compression</a> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Compression.AUTO</a></span></span></span>)</span><span class="result">: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="org.tensorflow.example.Example">Example</span>]</span>
+        <span class="name">tfRecordExampleFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="compression">compression: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/io/Compression.html#org.apache.beam.sdk.io.Compression" class="extype" name="org.apache.beam.sdk.io.Compression">Compression</a> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Compression.AUTO</a></span></span></span>)</span><span class="result">: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="org.tensorflow.example.Example">Example</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Get an SCollection of <code>org.tensorflow.example.Example</code> from a TensorFlow TFRecord file
 encoded as serialized <code>org.tensorflow.example.Example</code> protocol buffers.</p>
+    </li><li name="com.spotify.scio.tensorflow.TFScioContextFunctions#tfRecordExampleFileWithSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="input">
+      <a id="tfRecordExampleFileWithSchema(path:String,schemaFilename:String,compression:org.apache.beam.sdk.io.Compression):(com.spotify.scio.values.SCollection[org.tensorflow.example.Example],com.spotify.scio.values.DistCache[org.tensorflow.metadata.v0.Schema])"></a><a id="tfRecordExampleFileWithSchema(String,String,Compression):(SCollection[Example],DistCache[Schema])"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFScioContextFunctions.html#tfRecordExampleFileWithSchema(path:String,schemaFilename:String,compression:org.apache.beam.sdk.io.Compression):(com.spotify.scio.values.SCollection[org.tensorflow.example.Example],com.spotify.scio.values.DistCache[org.tensorflow.metadata.v0.Schema])" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">tfRecordExampleFileWithSchema</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schemaFilename">schemaFilename: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="compression">compression: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/io/Compression.html#org.apache.beam.sdk.io.Compression" class="extype" name="org.apache.beam.sdk.io.Compression">Compression</a> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Compression.AUTO</a></span></span></span>)</span><span class="result">: (<a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="org.tensorflow.example.Example">Example</span>], <a href="../values/DistCache.html" class="extype" name="com.spotify.scio.values.DistCache">DistCache</a>[<a href="../../../../org/tensorflow/metadata/v0/Schema.html" class="extype" name="org.tensorflow.metadata.v0.Schema">Schema</a>])</span>
+      </span>
+      
+      <p class="shortcomment cmt">Get an SCollection of <code>org.tensorflow.example.Example</code> from a TensorFlow TFRecord file
+encoded as serialized <code>org.tensorflow.example.Example</code> protocol buffers, along with the
+remotely stored <code>org.tensorflow.metadata.v0.Schema</code> object available in a DistCache.</p>
     </li><li name="com.spotify.scio.tensorflow.TFScioContextFunctions#tfRecordFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="input">
       <a id="tfRecordFile(path:String,compression:org.apache.beam.sdk.io.Compression):com.spotify.scio.values.SCollection[Array[Byte]]"></a><a id="tfRecordFile(String,Compression):SCollection[Array[Byte]]"></a>
       <span class="permalink">
@@ -414,7 +432,7 @@ encoded as serialized <code>org.tensorflow.example.Example</code> protocol buffe
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">tfRecordFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="compression">compression: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/io/Compression.html#org.apache.beam.sdk.io.Compression" class="extype" name="org.apache.beam.sdk.io.Compression">Compression</a> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Compression.AUTO</a></span></span></span>)</span><span class="result">: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<a href="http://www.scala-lang.org/api/2.12.7/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="http://www.scala-lang.org/api/2.12.7/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]]</span>
+        <span class="name">tfRecordFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="compression">compression: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/io/Compression.html#org.apache.beam.sdk.io.Compression" class="extype" name="org.apache.beam.sdk.io.Compression">Compression</a> = <span class="symbol"><span class="name"><a href="../../../../org/index.html">Compression.AUTO</a></span></span></span>)</span><span class="result">: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<a href="http://www.scala-lang.org/api/2.12.7/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="http://www.scala-lang.org/api/2.12.7/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]]</span>
       </span>
       
       <p class="shortcomment cmt">Get an SCollection for a TensorFlow TFRecord file.</p><div class="fullcomment"><div class="comment cmt"><p>Get an SCollection for a TensorFlow TFRecord file. Note that TFRecord files are not

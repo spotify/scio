@@ -327,45 +327,49 @@ hr {
             
               <section class="">
                 <div class="comment "><p>Open text files as an <code>SCollection[String]</code></p></p></div>
-                <div class="code ">    <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" data-tooltip="<span>com.spotify.scio.ScioContext</span>">sc</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#textFile(path:String,compression:org.apache.beam.sdk.io.Compression):com.spotify.scio.values.SCollection[String]" data-tooltip="<span>com.spotify.scio.ScioContext.textFile(path: String, compression: org.apache.beam.sdk.io.Compression): com.spotify.scio.values.SCollection[String]</span>">textFile</a></span>(<span class="identifier">input</span>)&nbsp;</div>
+                <div class="code ">    <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" data-tooltip="<span>com.spotify.scio.ScioContext</span>">sc</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#textFile(path:String,compression:org.apache.beam.sdk.io.Compression):com.spotify.scio.values.SCollection[String]" data-tooltip="<span>com.spotify.scio.ScioContext.textFile(path: String, compression: org.apache.beam.sdk.io.Compression): com.spotify.scio.values.SCollection[String]</span>">textFile</a></span>(<span class="identifier">input</span>)
+      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#transform[U](name:String)(f:com.spotify.scio.values.SCollection[T]=>com.spotify.scio.values.SCollection[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.transform[U](name: String)(f: com.spotify.scio.values.SCollection[T] => com.spotify.scio.values.SCollection[U]): com.spotify.scio.values.SCollection[U]</span>">transform</a></span>(<span class="string">"random timestamper"</span>) {&nbsp;</div>
               </section>
             
               <section class="">
                 <div class="comment "><p>Assign random timestamps to each element</p></p></div>
-                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#timestampBy(f:T=>org.joda.time.Instant,allowedTimestampSkew:org.joda.time.Duration)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" data-tooltip="<span>com.spotify.scio.values.SCollection.timestampBy(f: T => org.joda.time.Instant, allowedTimestampSkew: org.joda.time.Duration)(implicit coder: com.spotify.scio.coders.Coder[T]): com.spotify.scio.values.SCollection[T]</span>">timestampBy</a></span> { _ =>
-        <span class="keyword">new</span> <span class="identifier">Instant</span>(<span class="identifier">ThreadLocalRandom</span>.<span class="identifier">current</span>().<span class="identifier">nextLong</span>(<span class="identifier">minTimestamp</span>, <span class="identifier">maxTimestamp</span>))
-      }&nbsp;</div>
+                <div class="code ">        _.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#timestampBy(f:T=>org.joda.time.Instant,allowedTimestampSkew:org.joda.time.Duration)(implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" data-tooltip="<span>com.spotify.scio.values.SCollection.timestampBy(f: T => org.joda.time.Instant, allowedTimestampSkew: org.joda.time.Duration)(implicit coder: com.spotify.scio.coders.Coder[T]): com.spotify.scio.values.SCollection[T]</span>">timestampBy</a></span> { _ =>
+          <span class="keyword">new</span> <span class="identifier">Instant</span>(<span class="identifier">ThreadLocalRandom</span>.<span class="identifier">current</span>().<span class="identifier">nextLong</span>(<span class="identifier">minTimestamp</span>, <span class="identifier">maxTimestamp</span>))
+        }
+      }
+      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#transform[U](name:String)(f:com.spotify.scio.values.SCollection[T]=>com.spotify.scio.values.SCollection[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.transform[U](name: String)(f: com.spotify.scio.values.SCollection[T] => com.spotify.scio.values.SCollection[U]): com.spotify.scio.values.SCollection[U]</span>">transform</a></span>(<span class="string">"windowed counter"</span>) {&nbsp;</div>
               </section>
             
               <section class="">
                 <div class="comment "><p>Apply windowing logic</p></p></div>
-                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withFixedWindows(duration:org.joda.time.Duration,offset:org.joda.time.Duration,options:com.spotify.scio.values.WindowOptions):com.spotify.scio.values.SCollection[T]" data-tooltip="<span>com.spotify.scio.values.SCollection.withFixedWindows(duration: org.joda.time.Duration, offset: org.joda.time.Duration, options: com.spotify.scio.values.WindowOptions): com.spotify.scio.values.SCollection[T]</span>">withFixedWindows</a></span>(<span class="identifier">windowSize</span>)&nbsp;</div>
+                <div class="code ">        _.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withFixedWindows(duration:org.joda.time.Duration,offset:org.joda.time.Duration,options:com.spotify.scio.values.WindowOptions):com.spotify.scio.values.SCollection[T]" data-tooltip="<span>com.spotify.scio.values.SCollection.withFixedWindows(duration: org.joda.time.Duration, offset: org.joda.time.Duration, options: com.spotify.scio.values.WindowOptions): com.spotify.scio.values.SCollection[T]</span>">withFixedWindows</a></span>(<span class="identifier">windowSize</span>)&nbsp;</div>
               </section>
             
               <section class="">
                 <div class="comment "><p>Split input lines, filter out empty tokens and expand into a collection of tokens</p></p></div>
-                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#flatMap[U](f:T=>TraversableOnce[U])(implicitevidence$7:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.flatMap[U](f: T => TraversableOnce[U])(implicit evidence$7: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">flatMap</a></span>(_.<span class="identifier">split</span>(<span class="string">"[^a-zA-Z']+"</span>).<span class="identifier">filter</span>(_.<span class="identifier">nonEmpty</span>))&nbsp;</div>
+                <div class="code ">          .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#flatMap[U](f:T=>TraversableOnce[U])(implicitevidence$7:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.flatMap[U](f: T => TraversableOnce[U])(implicit evidence$7: com.spotify.scio.coders.Coder[U]): com.spotify.scio.values.SCollection[U]</span>">flatMap</a></span>(_.<span class="identifier">split</span>(<span class="string">"[^a-zA-Z']+"</span>).<span class="identifier">filter</span>(_.<span class="identifier">nonEmpty</span>))&nbsp;</div>
               </section>
             
               <section class="">
                 <div class="comment "><p>Count occurrences of each unique <code>String</code> within each window to get <code>(String, Long)</code></p></p></div>
-                <div class="code ">      .<span class="identifier">countByValue</span>&nbsp;</div>
+                <div class="code ">          .<span class="identifier">countByValue</span>&nbsp;</div>
               </section>
             
               <section class="">
                 <div class="comment "><p>Expose window infomation as an <code>IntervalWindow</code></p></p></div>
-                <div class="code ">      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withWindow[W<:org.apache.beam.sdk.transforms.windowing.BoundedWindow](implicittcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,W)]" data-tooltip="<span>com.spotify.scio.values.SCollection.withWindow[W <: org.apache.beam.sdk.transforms.windowing.BoundedWindow](implicit tcoder: com.spotify.scio.coders.Coder[T])com.spotify.scio.values.SCollection[(T, W)]</span>">withWindow</a></span>[<span class="identifier">IntervalWindow</span>]&nbsp;</div>
+                <div class="code ">          .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withWindow[W<:org.apache.beam.sdk.transforms.windowing.BoundedWindow](implicittcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[(T,W)]" data-tooltip="<span>com.spotify.scio.values.SCollection.withWindow[W <: org.apache.beam.sdk.transforms.windowing.BoundedWindow](implicit tcoder: com.spotify.scio.coders.Coder[T])com.spotify.scio.values.SCollection[(T, W)]</span>">withWindow</a></span>[<span class="identifier">IntervalWindow</span>]&nbsp;</div>
               </section>
             
               <section class="">
                 <div class="comment "><p>Swap keys and values, i.e. <code>((String, Long), IntervalWindow)</code> =&gt; <code>(IntervalWindow,
 (String, Long))</code></p></p></div>
-                <div class="code ">      .<span class="identifier">swap</span>&nbsp;</div>
+                <div class="code ">          .<span class="identifier">swap</span>&nbsp;</div>
               </section>
             
               <section class="">
                 <div class="comment "><p>Group elements by window to get `(IntervalWindow, Iterable[(String, Long)])</p></p></div>
-                <div class="code ">      .<span class="identifier">groupByKey</span>&nbsp;</div>
+                <div class="code ">          .<span class="identifier">groupByKey</span>
+      }&nbsp;</div>
               </section>
             
               <section class="">

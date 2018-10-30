@@ -117,6 +117,22 @@
       </span>
       
       <p class="shortcomment cmt">Main package for public APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for public APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio._</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify">spotify</a></dd></dl></div>
+    </li><li name="com.spotify.scio.annotations" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="annotations"></a><a id="annotations:annotations"></a>
+      <span class="permalink">
+      <a href="../../../com/spotify/scio/index.html#annotations" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="annotations/index.html"><span class="name">annotations</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li name="com.spotify.scio.avro" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="avro"></a><a id="avro:avro"></a>
       <span class="permalink">
@@ -348,6 +364,22 @@ detects the query's dialect. To override this, start the query with either <code
       </span>
       <span class="symbol">
         <a title="" href="runners/index.html"><span class="name">runners</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
+    </li><li name="com.spotify.scio.spanner" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="spanner"></a><a id="spanner:spanner"></a>
+      <span class="permalink">
+      <a href="../../../com/spotify/scio/index.html#spanner" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="spanner/index.html"><span class="name">spanner</span></a>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
@@ -701,7 +733,7 @@ create SCollections and distributed caches on that cluster.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">customInput</span><span class="tparams">[<span name="T">T</span>, <span name="I">I &gt;: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/values/PBegin.html#org.apache.beam.sdk.values.PBegin" class="extype" name="org.apache.beam.sdk.values.PBegin">PBegin</a> &lt;: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/values/PInput.html#org.apache.beam.sdk.values.PInput" class="extype" name="org.apache.beam.sdk.values.PInput">PInput</a></span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="transform">transform: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/transforms/PTransform.html#org.apache.beam.sdk.transforms.PTransform" class="extype" name="org.apache.beam.sdk.transforms.PTransform">PTransform</a>[<span class="extype" name="com.spotify.scio.ScioContext.customInput.I">I</span>, <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/values/PCollection.html#org.apache.beam.sdk.values.PCollection" class="extype" name="org.apache.beam.sdk.values.PCollection">PCollection</a>[<span class="extype" name="com.spotify.scio.ScioContext.customInput.T">T</span>]]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.ScioContext.customInput.T">T</span>]</span>)</span><span class="result">: <a href="values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.ScioContext.customInput.T">T</span>]</span>
+        <span class="name">customInput</span><span class="tparams">[<span name="T">T</span>, <span name="I">I &gt;: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/values/PBegin.html#org.apache.beam.sdk.values.PBegin" class="extype" name="org.apache.beam.sdk.values.PBegin">PBegin</a> &lt;: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/values/PInput.html#org.apache.beam.sdk.values.PInput" class="extype" name="org.apache.beam.sdk.values.PInput">PInput</a></span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="transform">transform: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/transforms/PTransform.html#org.apache.beam.sdk.transforms.PTransform" class="extype" name="org.apache.beam.sdk.transforms.PTransform">PTransform</a>[<span class="extype" name="com.spotify.scio.ScioContext.customInput.I">I</span>, <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/values/PCollection.html#org.apache.beam.sdk.values.PCollection" class="extype" name="org.apache.beam.sdk.values.PCollection">PCollection</a>[<span class="extype" name="com.spotify.scio.ScioContext.customInput.T">T</span>]]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.ScioContext.customInput.T">T</span>]</span>)</span><span class="result">: <a href="values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.ScioContext.customInput.T">T</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Get an SCollection with a custom input transform.</p><div class="fullcomment"><div class="comment cmt"><p>Get an SCollection with a custom input transform. The transform should have a unique name.</p></div></div>
@@ -841,10 +873,10 @@ create SCollections and distributed caches on that cluster.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">initCounter</span><span class="params">(<span name="namespace">namespace: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/Counter.html#org.apache.beam.sdk.metrics.Counter" class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</a></span>
+        <span class="name">initCounter</span><span class="params">(<span name="namespace">namespace: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/metrics/Counter.html#org.apache.beam.sdk.metrics.Counter" class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</a></span>
       </span>
       
-      <p class="shortcomment cmt">Initialize a new <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/Counter.html" class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</a> metric.</p>
+      <p class="shortcomment cmt">Initialize a new <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/metrics/Counter.html" class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</a> metric.</p>
     </li><li name="com.spotify.scio.ScioContext#initCounter" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="initCounter[T](name:String)(implicitevidence$29:scala.reflect.ClassTag[T]):org.apache.beam.sdk.metrics.Counter"></a><a id="initCounter[T](String)(ClassTag[T]):Counter"></a>
       <span class="permalink">
@@ -857,10 +889,10 @@ create SCollections and distributed caches on that cluster.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">initCounter</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.ScioContext.initCounter.T">T</span>]</span>)</span><span class="result">: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/Counter.html#org.apache.beam.sdk.metrics.Counter" class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</a></span>
+        <span class="name">initCounter</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.ScioContext.initCounter.T">T</span>]</span>)</span><span class="result">: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/metrics/Counter.html#org.apache.beam.sdk.metrics.Counter" class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</a></span>
       </span>
       
-      <p class="shortcomment cmt">Initialize a new <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/Counter.html" class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</a> metric using <code>T</code> as namespace.</p><div class="fullcomment"><div class="comment cmt"><p>Initialize a new <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/metrics/Counter.html" class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</a> metric using <code>T</code> as namespace.
+      <p class="shortcomment cmt">Initialize a new <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/metrics/Counter.html" class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</a> metric using <code>T</code> as namespace.</p><div class="fullcomment"><div class="comment cmt"><p>Initialize a new <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/metrics/Counter.html" class="extype" name="org.apache.beam.sdk.metrics.Counter">Counter</a> metric using <code>T</code> as namespace.
 Default is &quot;com.spotify.scio.ScioMetrics&quot; if <code>T</code> is not specified.
 </p></div></div>
     </li><li name="com.spotify.scio.ScioContext#isClosed" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
@@ -977,7 +1009,7 @@ Default is &quot;com.spotify.scio.ScioMetrics&quot; if <code>T</code> is not spe
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">options</span><span class="result">: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/options/PipelineOptions.html#org.apache.beam.sdk.options.PipelineOptions" class="extype" name="org.apache.beam.sdk.options.PipelineOptions">PipelineOptions</a></span>
+        <span class="name">options</span><span class="result">: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/options/PipelineOptions.html#org.apache.beam.sdk.options.PipelineOptions" class="extype" name="org.apache.beam.sdk.options.PipelineOptions">PipelineOptions</a></span>
       </span>
       
       
@@ -993,7 +1025,7 @@ Default is &quot;com.spotify.scio.ScioMetrics&quot; if <code>T</code> is not spe
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">optionsAs</span><span class="tparams">[<span name="T">T &lt;: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/options/PipelineOptions.html#org.apache.beam.sdk.options.PipelineOptions" class="extype" name="org.apache.beam.sdk.options.PipelineOptions">PipelineOptions</a></span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.ScioContext.optionsAs.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="com.spotify.scio.ScioContext.optionsAs.T">T</span></span>
+        <span class="name">optionsAs</span><span class="tparams">[<span name="T">T &lt;: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/options/PipelineOptions.html#org.apache.beam.sdk.options.PipelineOptions" class="extype" name="org.apache.beam.sdk.options.PipelineOptions">PipelineOptions</a></span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.7/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.ScioContext.optionsAs.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="com.spotify.scio.ScioContext.optionsAs.T">T</span></span>
       </span>
       
       <p class="shortcomment cmt">Get PipelineOptions as a more specific sub-type.</p>
@@ -1073,7 +1105,7 @@ Default is &quot;com.spotify.scio.ScioMetrics&quot; if <code>T</code> is not spe
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">pipeline</span><span class="result">: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/Pipeline.html#org.apache.beam.sdk.Pipeline" class="extype" name="org.apache.beam.sdk.Pipeline">Pipeline</a></span>
+        <span class="name">pipeline</span><span class="result">: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/Pipeline.html#org.apache.beam.sdk.Pipeline" class="extype" name="org.apache.beam.sdk.Pipeline">Pipeline</a></span>
       </span>
       
       <p class="shortcomment cmt">Underlying pipeline.</p>
@@ -1238,7 +1270,7 @@ passed in. The IO class can delegate test-specific behavior if necessary.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">textFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="compression">compression: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/io/Compression.html#org.apache.beam.sdk.io.Compression" class="extype" name="org.apache.beam.sdk.io.Compression">Compression</a> = <span class="symbol"><span class="name"><a href="../../../org/index.html">beam.Compression.AUTO</a></span></span></span>)</span><span class="result">: <a href="values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="scala.Predef.String">String</span>]</span>
+        <span class="name">textFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="compression">compression: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/io/Compression.html#org.apache.beam.sdk.io.Compression" class="extype" name="org.apache.beam.sdk.io.Compression">Compression</a> = <span class="symbol"><span class="name"><a href="../../../org/index.html">beam.Compression.AUTO</a></span></span></span>)</span><span class="result">: <a href="values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="scala.Predef.String">String</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Get an SCollection for a text file.</p>
@@ -1370,10 +1402,10 @@ passed in. The IO class can delegate test-specific behavior if necessary.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wrap</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="p">p: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/values/PCollection.html#org.apache.beam.sdk.values.PCollection" class="extype" name="org.apache.beam.sdk.values.PCollection">PCollection</a>[<span class="extype" name="com.spotify.scio.ScioContext.wrap.T">T</span>]</span>)</span><span class="result">: <a href="values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.ScioContext.wrap.T">T</span>]</span>
+        <span class="name">wrap</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="p">p: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/values/PCollection.html#org.apache.beam.sdk.values.PCollection" class="extype" name="org.apache.beam.sdk.values.PCollection">PCollection</a>[<span class="extype" name="com.spotify.scio.ScioContext.wrap.T">T</span>]</span>)</span><span class="result">: <a href="values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.ScioContext.wrap.T">T</span>]</span>
       </span>
       
-      <p class="shortcomment cmt">Wrap a <a href="https://beam.apache.org/documentation/sdks/javadoc/2.7.0/org/apache/beam/sdk/values/PCollection.html" class="extype" name="org.apache.beam.sdk.values.PCollection">PCollection</a>.</p>
+      <p class="shortcomment cmt">Wrap a <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/values/PCollection.html" class="extype" name="org.apache.beam.sdk.values.PCollection">PCollection</a>.</p>
     </li>
               </ol>
             </div>

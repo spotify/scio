@@ -159,6 +159,14 @@
                         <a href="DatastoreIO.html" title="">DatastoreIO</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="object" href="EmptyTap$.html" title=""></a>
+                        <a href="EmptyTap$.html" title="">EmptyTap</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="EmptyTapOf$.html" title=""></a>
+                        <a class="class" href="EmptyTapOf.html" title=""></a>
+                        <a href="EmptyTapOf.html" title="">EmptyTapOf</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="object" href="MaterializeTap$.html" title=""></a>
                         <a href="MaterializeTap$.html" title="">MaterializeTap</a>
                       </li><li class="current-entities indented4">
@@ -181,6 +189,14 @@
                         <span class="separator"></span>
                         <a class="class" href="TapNotAvailableException.html" title="Exception for when a tap is not available."></a>
                         <a href="TapNotAvailableException.html" title="Exception for when a tap is not available.">TapNotAvailableException</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="TapOf$.html" title=""></a>
+                        <a class="class" href="TapOf.html" title=""></a>
+                        <a href="TapOf.html" title="">TapOf</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="TapT$.html" title=""></a>
+                        <a class="trait" href="TapT.html" title=""></a>
+                        <a href="TapT.html" title="">TapT</a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="Taps$.html" title="Companion object for Taps."></a>
                         <a class="trait" href="Taps.html" title="Utility for managing Future[Tap[T]]s."></a>
@@ -622,9 +638,9 @@
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
     </li><li name="com.spotify.scio.io.TestIO#tap" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="tap(params:TestIO.this.ReadP):com.spotify.scio.io.Tap[T]"></a><a id="tap(ReadP):Tap[T]"></a>
+      <a id="tap(params:TestIO.this.ReadP):com.spotify.scio.io.Tap[TestIO.this.tapT.T]"></a><a id="tap(ReadP):Tap[(tapT)#T]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/ReadIO.html#tap(params:TestIO.this.ReadP):com.spotify.scio.io.Tap[T]" title="Permalink">
+      <a href="../../../../com/spotify/scio/io/ReadIO.html#tap(params:TestIO.this.ReadP):com.spotify.scio.io.Tap[TestIO.this.tapT.T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -633,10 +649,26 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">tap</span><span class="params">(<span name="params">params: <a href="#ReadP=Nothing" class="extmbr" name="com.spotify.scio.io.ReadIO.ReadP">ReadP</a></span>)</span><span class="result">: <a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.io.ReadIO.T">T</span>]</span>
+        <span class="name">tap</span><span class="params">(<span name="params">params: <a href="#ReadP=Nothing" class="extmbr" name="com.spotify.scio.io.ReadIO.ReadP">ReadP</a></span>)</span><span class="result">: <a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<a href="#tapT:com.spotify.scio.io.TapT.Aux[T,T]" class="extmbr" name="com.spotify.scio.io.ReadIO#tapT">tapT</a>)#<span class="extype" name="com.spotify.scio.io.TapT.&lt;refinement&gt;.T">T</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a> → <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
+    </li><li name="com.spotify.scio.io.ReadIO#tapT" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="tapT:com.spotify.scio.io.TapT.Aux[T,T]"></a><a id="tapT:Aux[T,T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/ReadIO.html#tapT:com.spotify.scio.io.TapT.Aux[T,T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">tapT</span><span class="result">: <a href="TapT$.html#Aux[A,T0]=com.spotify.scio.io.TapT[A]{typeT=T0}" class="extmbr" name="com.spotify.scio.io.TapT.Aux">Aux</a>[<span class="extype" name="com.spotify.scio.io.ReadIO.T">T</span>, <span class="extype" name="com.spotify.scio.io.ReadIO.T">T</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.spotify.scio.io.ReadIO">ReadIO</a> → <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.io.ScioIO#testId" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="testId:String"></a>
       <span class="permalink">
@@ -722,9 +754,9 @@
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.io.TestIO#write" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="write(data:com.spotify.scio.values.SCollection[T],params:TestIO.this.WriteP):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]"></a><a id="write(SCollection[T],WriteP):Future[Tap[T]]"></a>
+      <a id="write(data:com.spotify.scio.values.SCollection[T],params:TestIO.this.WriteP):scala.concurrent.Future[com.spotify.scio.io.Tap[TestIO.this.tapT.T]]"></a><a id="write(SCollection[T],WriteP):Future[Tap[(tapT)#T]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/ReadIO.html#write(data:com.spotify.scio.values.SCollection[T],params:TestIO.this.WriteP):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/io/ReadIO.html#write(data:com.spotify.scio.values.SCollection[T],params:TestIO.this.WriteP):scala.concurrent.Future[com.spotify.scio.io.Tap[TestIO.this.tapT.T]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -733,14 +765,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">write</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.io.ReadIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP=Nothing" class="extmbr" name="com.spotify.scio.io.ReadIO.WriteP">WriteP</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.io.ReadIO.T">T</span>]]</span>
+        <span class="name">write</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.io.ReadIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP=Nothing" class="extmbr" name="com.spotify.scio.io.ReadIO.WriteP">WriteP</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<a href="#tapT:com.spotify.scio.io.TapT.Aux[T,T]" class="extmbr" name="com.spotify.scio.io.ReadIO#tapT">tapT</a>)#<span class="extype" name="com.spotify.scio.io.TapT.&lt;refinement&gt;.T">T</span>]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a> → <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
     </li><li name="com.spotify.scio.io.ScioIO#writeTest" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]"></a><a id="writeTest(SCollection[T],WriteP)(Coder[T]):Future[Tap[T]]"></a>
+      <a id="writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[ScioIO.this.tapT.T]]"></a><a id="writeTest(SCollection[T],WriteP)(Coder[T]):Future[Tap[(tapT)#T]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/io/ReadIO.html#writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/io/ReadIO.html#writeTest(data:com.spotify.scio.values.SCollection[T],params:ScioIO.this.WriteP)(implicitcoder:com.spotify.scio.coders.Coder[T]):scala.concurrent.Future[com.spotify.scio.io.Tap[ScioIO.this.tapT.T]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -749,7 +781,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeTest</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.io.ReadIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP=Nothing" class="extmbr" name="com.spotify.scio.io.ReadIO.WriteP">WriteP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.io.ReadIO.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="com.spotify.scio.io.ReadIO.T">T</span>]]</span>
+        <span class="name">writeTest</span><span class="params">(<span name="data">data: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.io.ReadIO.T">T</span>]</span>, <span name="params">params: <a href="#WriteP=Nothing" class="extmbr" name="com.spotify.scio.io.ReadIO.WriteP">WriteP</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.io.ReadIO.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[(<a href="#tapT:com.spotify.scio.io.TapT.Aux[T,T]" class="extmbr" name="com.spotify.scio.io.ReadIO#tapT">tapT</a>)#<span class="extype" name="com.spotify.scio.io.TapT.&lt;refinement&gt;.T">T</span>]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a></dd></dl></div>
