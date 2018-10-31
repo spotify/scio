@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentMap
 import java.util.function.Function
 
 import com.google.common.collect.Maps
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.Tap
 import com.spotify.scio.transforms.DoFnWithResource
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
@@ -45,8 +46,6 @@ import org.tensorflow.metadata.v0._
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.reflect.ClassTag
-
-import com.spotify.scio.coders.Coder
 
 private[this] abstract class PredictDoFn[T, V, M <: Model[_]](
   fetchOp: Seq[String],
@@ -248,6 +247,9 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
    * @return A singleton `SCollection` containing the schema
    */
   def inferExampleMetadata(schemaPath: String = null): SCollection[Schema] = {
+    implicit val sc = Coder[Schema]
+    implicit val fc = Coder[Feature]
+
     val result = examplesToFeatures(self.asInstanceOf[SCollection[Example]])
       .groupBy(_ => ())
       .values
@@ -259,7 +261,8 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
   }
 
   // scalastyle:off method.length
-  private def examplesToFeatures(examples: SCollection[Example]): SCollection[Feature] = {
+  private def examplesToFeatures(examples: SCollection[Example])(
+    implicit coder: Coder[Feature]): SCollection[Feature] = {
     // count allows us to check presence of features, could also be used for statistics
     val countSI = examples.count.asSingletonSideInput
     examples
