@@ -82,7 +82,8 @@ package object transforms {
    * parallelism, where `parallelism` is the number of concurrent `DoFn` threads per worker
    * (default to number of CPU cores).
    */
-  implicit class CustomParallelismSCollection[T](val self: SCollection[T]) {
+  implicit class CustomParallelismSCollection[T](@transient private val self: SCollection[T])
+      extends AnyVal {
     private def parallelCollectFn[U](parallelism: Int)(pfn: PartialFunction[T, U]): DoFn[T, U] =
       new ParallelLimitedFn[T, U](parallelism) {
         val isDefined = ClosureCleaner(pfn.isDefinedAt(_)) // defeat closure
@@ -160,7 +161,7 @@ package object transforms {
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with pipe methods.
    */
-  implicit class PipeSCollection(private val self: SCollection[String]) extends AnyVal {
+  implicit class PipeSCollection(@transient private val self: SCollection[String]) extends AnyVal {
 
     /**
      * Pipe elements through an external command via StdIn & StdOut.
@@ -206,7 +207,8 @@ package object transforms {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with specialized
    * versions of flatMap.
    */
-  implicit class SpecializedFlatMapSCollection[T](val self: SCollection[T]) {
+  implicit class SpecializedFlatMapSCollection[T](@transient private val self: SCollection[T])
+      extends AnyVal {
 
     /**
      * Latency optimized flavor of

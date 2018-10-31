@@ -44,7 +44,8 @@ package object cassandra {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Cassandra
    * methods.
    */
-  implicit class CassandraSCollection[T](@transient val self: SCollection[T]) extends Serializable {
+  implicit class CassandraSCollection[T](@transient private val self: SCollection[T])
+      extends AnyVal {
 
     /**
      * Save this SCollection as a Cassandra table.

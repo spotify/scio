@@ -101,7 +101,7 @@ package object jdbc {
   }
 
   /** Enhanced version of [[ScioContext]] with JDBC methods. */
-  implicit class JdbcScioContext(@transient val self: ScioContext) extends Serializable {
+  implicit class JdbcScioContext(@transient private val self: ScioContext) extends AnyVal {
 
     /** Get an SCollection for a JDBC query. */
     def jdbcSelect[T: ClassTag: Coder](readOptions: JdbcReadOptions[T]): SCollection[T] =
@@ -109,7 +109,7 @@ package object jdbc {
   }
 
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JDBC methods. */
-  implicit class JdbcSCollection[T](val self: SCollection[T]) {
+  implicit class JdbcSCollection[T](@transient private val self: SCollection[T]) extends AnyVal {
 
     /** Save this SCollection as a JDBC database. */
     def saveAsJdbc(writeOptions: JdbcWriteOptions[T])(
