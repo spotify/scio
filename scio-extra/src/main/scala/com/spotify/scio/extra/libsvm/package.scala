@@ -95,7 +95,7 @@ package object libsvm {
       }
   }
 
-  implicit class SVMReader(@transient val self: ScioContext) extends Serializable {
+  implicit class SVMReader(@transient private val self: ScioContext) extends AnyVal {
 
     /**
      * Loads labeled data in the LIBSVM format into an SCollection[(Double, SparseVector)].

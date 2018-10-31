@@ -28,7 +28,7 @@ import scala.concurrent.Future
 
 package object spanner {
 
-  implicit class SpannerScioContext(@transient private val self: ScioContext) extends Serializable {
+  implicit class SpannerScioContext(@transient private val self: ScioContext) extends AnyVal {
     import SpannerRead.ReadParam._
 
     def spannerTable(spannerConfig: SpannerConfig,
@@ -60,7 +60,7 @@ package object spanner {
   }
 
   implicit class SpannerSCollection(@transient private val self: SCollection[Mutation])
-      extends Serializable {
+      extends AnyVal {
     import SpannerWrite.WriteParam._
 
     def saveAsSpanner(spannerConfig: SpannerConfig,

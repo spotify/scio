@@ -40,7 +40,8 @@ package object elasticsearch {
 
   final case class ElasticsearchOptions(clusterName: String, servers: Seq[InetSocketAddress])
 
-  implicit class ElasticsearchSCollection[T](private val self: SCollection[T]) extends AnyVal {
+  implicit class ElasticsearchSCollection[T](@transient private val self: SCollection[T])
+      extends AnyVal {
 
     /**
      * Save this SCollection into Elasticsearch.

@@ -98,7 +98,7 @@ package object sparkey {
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
    */
-  implicit class SparkeyPairSCollection[K, V](val self: SCollection[(K, V)]) {
+  implicit class SparkeyPairSCollection[K, V](@transient private val self: SCollection[(K, V)]) {
 
     private val logger = LoggerFactory.getLogger(this.getClass)
 

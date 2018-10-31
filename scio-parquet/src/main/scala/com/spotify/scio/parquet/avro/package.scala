@@ -49,7 +49,7 @@ package object avro {
   val Predicate = me.lyh.parquet.avro.Predicate
 
   /** Enhanced version of [[ScioContext]] with Parquet Avro methods. */
-  implicit class ParquetAvroScioContext(private val self: ScioContext) extends AnyVal {
+  implicit class ParquetAvroScioContext(@transient private val self: ScioContext) extends AnyVal {
 
     /**
      * Get an SCollection for a Parquet file as Avro records. Since Avro records produced by
@@ -122,7 +122,7 @@ package object avro {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Parquet Avro
    * methods.
    */
-  implicit class ParquetAvroSCollection[T: ClassTag: Coder](val self: SCollection[T]) {
+  implicit class ParquetAvroSCollection[T](private val self: SCollection[T]) extends AnyVal {
 
     /**
      * Save this SCollection of Avro records as a Parquet file.
@@ -134,7 +134,8 @@ package object avro {
       schema: Schema = WriteParam.DefaultSchema,
       numShards: Int = WriteParam.DefaultNumShards,
       suffix: String = WriteParam.DefaultSuffix,
-      compression: CompressionCodecName = WriteParam.DefaultCompression): Future[Tap[T]] = {
+      compression: CompressionCodecName = WriteParam.DefaultCompression
+    )(implicit ct: ClassTag[T], coder: Coder[T]): Future[Tap[T]] = {
       val param = WriteParam(schema, numShards, suffix, compression)
       self.write(ParquetAvroIO[T](path))(param)
     }

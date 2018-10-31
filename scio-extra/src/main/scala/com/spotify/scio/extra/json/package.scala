@@ -56,7 +56,7 @@ package object json extends AutoDerivation {
   final case class DecodeError(error: io.circe.Error, input: String)
 
   /** Enhanced version of [[ScioContext]] with JSON methods. */
-  implicit class JsonScioContext(@transient val self: ScioContext) extends Serializable {
+  implicit class JsonScioContext(@transient private val self: ScioContext) extends AnyVal {
     def jsonFile[T: ClassTag: Encoder: Decoder: Coder](path: String): SCollection[T] =
       self.read(JsonIO[T](path))
   }
@@ -65,7 +65,7 @@ package object json extends AutoDerivation {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JSON methods.
    */
   implicit class JsonSCollection[T: ClassTag: Encoder: Decoder: Coder](
-    @transient val self: SCollection[T])
+    @transient private val self: SCollection[T])
       extends Serializable {
     def saveAsJsonFile(path: String,
                        suffix: String = ".json",

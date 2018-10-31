@@ -157,7 +157,8 @@ package object annoy {
     }
   }
 
-  implicit class AnnoyPairSCollection(val self: SCollection[(Int, Array[Float])]) {
+  implicit class AnnoyPairSCollection(@transient private val self: SCollection[(Int, Array[Float])])
+      extends AnyVal {
 
     /**
      * Write the key-value pairs of this SCollection as an Annoy file to a specific location,
@@ -238,7 +239,8 @@ package object annoy {
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Annoy methods
    */
-  implicit class AnnoySCollection(private val self: SCollection[AnnoyUri]) extends AnyVal {
+  implicit class AnnoySCollection(@transient private val self: SCollection[AnnoyUri])
+      extends AnyVal {
 
     /**
      * Load Annoy index stored at [[AnnoyUri]] in this
