@@ -56,7 +56,7 @@ object SCollection {
    * Will throw an exception if the provided iterable is empty.
    * For a version that accepts empty iterables, see [[ScioContext#unionAll]].
    */
-  def unionAll[T](scs: Iterable[SCollection[T]]): SCollection[T] =
+  def unionAll[T: Coder](scs: Iterable[SCollection[T]]): SCollection[T] =
     scs.head.context.unionAll(scs)
 
   import scala.language.implicitConversions
