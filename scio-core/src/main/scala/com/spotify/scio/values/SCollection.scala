@@ -56,12 +56,8 @@ object SCollection {
    * Will throw an exception if the provided iterable is empty.
    * For a version that accepts empty iterables, see [[ScioContext#unionAll]].
    */
-  def unionAll[T](scs: Iterable[SCollection[T]]): SCollection[T] = {
-    val o = PCollectionList
-      .of(scs.map(_.internal).asJava)
-      .apply("UnionAll", Flatten.pCollections())
-    scs.head.context.wrap(o)
-  }
+  def unionAll[T](scs: Iterable[SCollection[T]]): SCollection[T] =
+    scs.head.context.unionAll(scs)
 
   import scala.language.implicitConversions
 

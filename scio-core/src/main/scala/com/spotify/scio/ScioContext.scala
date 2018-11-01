@@ -690,7 +690,11 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   def unionAll[T: Coder](scs: Iterable[SCollection[T]]): SCollection[T] =
     scs match {
       case Nil      => empty()
-      case contents => SCollection.unionAll(contents)
+      case contents =>
+        val o = PCollectionList
+          .of(contents.map(_.internal).asJava)
+          .apply(this.tfName, Flatten.pCollections())
+        context.wrap(o)
     }
 
   /** Form an empty SCollection. */
