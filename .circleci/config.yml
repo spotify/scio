@@ -1,168 +1,204 @@
+version: &version 2.1
+
 ####################
 # Templates
 ####################
 
-scala_211_version: &scala_211_version 2.11.12
-scala_212_version: &scala_212_version 2.12.7
-
-common_settings: &common_settings
+settings: &settings
   working_directory: ~/scio
   resource_class: xlarge
 
-restore_cache_settings: &restore_cache_settings
-  keys:
-    - v2-scio-{{ .Environment.CIRCLE_JOB }}-{{ .Branch }}-{{ checksum "build.sbt" }}
-    - v2-scio-{{ .Environment.CIRCLE_JOB }}-
-
-save_cache_settings: &save_cache_settings
-  key: v2-scio-{{ .Environment.CIRCLE_JOB }}-{{ .Branch }}-{{ checksum "build.sbt" }}
-  paths:
-    - ~/.ivy2
-    - ~/.sbt
-    - ~/resolution-cache.tar.gz
-    - ~/stream.tar.gz
-
 docker_settings: &docker_settings
-  environment:
-    GOOGLE_APPLICATION_CREDENTIALS: scripts/data-integration-test.json
-    DATASTORE_PROJECT_ID: data-integration-test
-
-jdk8: &jdk8
   docker:
     - image: circleci/openjdk:8-jdk
-      <<: *docker_settings
+      environment:
+        GOOGLE_APPLICATION_CREDENTIALS: scripts/data-integration-test.json
+        DATASTORE_PROJECT_ID: data-integration-test
 
-jdk11: &jdk11
-  docker:
+executors:
+  scala_212: &scala_212
+    <<: [*settings, *docker_settings]
+    environment:
+      SCALA_VERSION: 2.12.7
+  scala_211: &scala_211
+    <<: [*settings, *docker_settings]
+    environment:
+      SCALA_VERSION: 2.11.12
+
+  scala_212_jdk11: &scala_212_jdk11
+    <<: [*scala_212]
+    docker:
     - image: circleci/openjdk:11-jdk
-      <<: *docker_settings
+  scala_211_jdk11: &scala_211_jdk11
+    <<: [*scala_211]
+    docker:
+    - image: circleci/openjdk:11-jdk
 
-build_settings: &build_settings
-  <<: *common_settings
-  steps:
+commands:
+  build:
+    parameters:
+      build-steps:
+        description: "build steps"
+        type: steps
+        default: []
+    steps:
     - checkout
-    - restore_cache: *restore_cache_settings
+    - restore_cache:
+        keys:
+        - v1-dependencies-{{ checksum "build.sbt" }}
+        - v1-dependencies-
+    - run: ./scripts/circleci_setup.sh
     - run: if [ "$CIRCLE_BRANCH" == "beam-master" ]; then ./scripts/circleci_snapshot.sh; fi
-    - run:
-        name: Unpacking sbt cache
-        command: |
-          find ~ -maxdepth 1 -name "*.tar.gz"
-          if [ -f ~/resolution-cache.tar.gz ]; then tar xzf ~/resolution-cache.tar.gz; fi
-          if [ -f ~/stream.tar.gz ]; then tar xzf ~/stream.tar.gz; fi
-    - run: ./scripts/circleci_test.sh
-    - run: ./scripts/circleci_repl.sh
-    - run:
-        name: Packing sbt cache
-        command: |
-          find ~/.sbt -name "*.lock" -delete
-          find ~/.ivy2 -name "ivydata-*.properties" -delete
-          tar czf ~/resolution-cache.tar.gz $(find . -type d -name resolution-cache)
-          tar czf ~/stream.tar.gz $(find . -type d -path "*/target/streams")
-          find ~ -maxdepth 1 -name "*.tar.gz"
-    - run: if [ $SCOVERAGE -eq 1 ]; then bash <(curl -s https://codecov.io/bash); fi
-    - save_cache: *save_cache_settings
-
-publish_settings: &publish_settings
-  <<: *common_settings
-  steps:
-    - checkout
-    - restore_cache: *restore_cache_settings
-    - run: sbt ++$SCALA_VERSION publish
-
+    - steps: << parameters.build-steps >>
+    - save_cache:
+        key: v1-dependencies-{{ checksum "build.sbt" }}
+        paths:
+        - "~/.ivy2/cache"
+        - "~/.sbt"
+        - "~/.m2"
 
 ####################
 # Jobs
 ####################
 
-version: 2
 jobs:
+  checks:
+    executor: scala_212
+    steps:
+    - build:
+        build-steps:
+        - run: sbt -v ++$SCALA_VERSION scalastyle scalafmtCheck test:scalafmtCheck it:scalafmtCheck scalafmtSbtCheck
+
   build_211:
-    <<: [*build_settings, *jdk8]
-    environment:
-      - SCALA_VERSION: *scala_211_version
-      - SCOVERAGE: 0
+    executor: scala_211
+    steps:
+      - build:
+          build-steps:
+          - run: sbt -v $PROPS ++$SCALA_VERSION test
+          - run: ./scripts/circleci_repl.sh
+
+  build_it_211:
+    executor: scala_211
+    steps:
+    - build:
+        build-steps:
+        - run: sbt -v $PROPS ++$SCALA_VERSION it:test
 
   build_212:
-    <<: [*build_settings, *jdk8]
-    environment:
-      - SCALA_VERSION: *scala_212_version
-      - SCOVERAGE: 1
+    executor: scala_212
+    steps:
+    - build:
+        build-steps:
+        - run: sbt -v $PROPS ++$SCALA_VERSION coverage test coverageReport coverageAggregate
+        - run: ./scripts/circleci_repl.sh
+        - run: bash <(curl -s https://codecov.io/bash)
+
+  build_it_212:
+    executor: scala_212
+    steps:
+    - build:
+        build-steps:
+        - run: sbt -v $PROPS ++$SCALA_VERSION it:test
 
   build_211-jdk11:
-    <<: [*build_settings, *jdk11]
-    environment:
-    - SCALA_VERSION: *scala_211_version
-    - SCOVERAGE: 0
+    executor: scala_211_jdk11
+    steps:
+    - build:
+        build-steps:
+        - run: sbt -v $PROPS ++$SCALA_VERSION test
+        - run: ./scripts/circleci_repl.sh
 
   build_212-jdk11:
-    <<: [*build_settings, *jdk11]
-    environment:
-    - SCALA_VERSION: *scala_212_version
-    - SCOVERAGE: 0
+    executor: scala_212_jdk11
+    steps:
+    - build:
+        build-steps:
+        - run: sbt -v $PROPS ++$SCALA_VERSION test
+        - run: ./scripts/circleci_repl.sh
 
   deploy:
     # Workaround for sbt-assembly hitting Docker aufs file name length limit
     # https://github.com/sbt/sbt-assembly/issues/69
     machine: true
     working_directory: ~/scio
-    environment:
-      - SCALA_VERSION: *scala_211_version
+    executor: scala_212
     steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - scio-build_211-{{ .Branch }}-{{ checksum "build.sbt" }}
-            - scio-build_211-
-      - run: sbt ++$SCALA_VERSION scio-repl/assembly
-      - run: go get -u github.com/tcnksm/ghr
-      - run: ghr -u spotify -draft $CIRCLE_TAG scio-repl/target/scala-*/scio-repl-*.jar
+    - build:
+        build-steps:
+        - run: sbt -v ++$SCALA_VERSION scio-repl/assembly
+        - run: go get -u github.com/tcnksm/ghr
+        - run: ghr -u spotify -draft $CIRCLE_TAG scio-repl/target/scala-*/scio-repl-*.jar
 
   publish_211:
-    <<: [*publish_settings, *jdk8]
-    environment:
-      - SCALA_VERSION: *scala_211_version
+    executor: scala_211
+    steps:
+    - build:
+        build-steps:
+          - run: sbt -v ++$SCALA_VERSION publish
 
   publish_212:
-    <<: [*publish_settings, *jdk8]
-    environment:
-      - SCALA_VERSION: *scala_212_version
-
-  bench:
-    <<: [*common_settings, *jdk8]
+    executor: scala_212
     steps:
-      - checkout
-      - restore_cache: *restore_cache_settings
-      - run:
-          command: ./scripts/circleci_bench.sh
-          no_output_timeout: 30m
-      - save_cache: *save_cache_settings
-    environment:
-      - SCALA_VERSION: *scala_212_version
+    - build:
+        build-steps:
+        - run: sbt -v ++$SCALA_VERSION publish
+
+  bench_batch:
+    executor: scala_212
+    steps:
+    - build:
+        build-steps:
+        - run:
+            command: sbt -v $PROPS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.ScioBatchBenchmark --name=ci"
+            no_output_timeout: 30m
+
+  bench_streaming:
+    executor: scala_212
+    steps:
+    - build:
+        build-steps:
+        - run:
+            command: sbt -v $PROPS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.ScioStreamingBenchmark --name=ci"
+            no_output_timeout: 30m
 
   bench_streaming_metrics:
-    <<: [*common_settings, *jdk8]
+    executor: scala_212
     steps:
-      - checkout
-      - restore_cache: *restore_cache_settings
-      - run:
-          command: ./scripts/circleci_streaming_bench_metrics.sh
-          no_output_timeout: 30m
-      - save_cache: *save_cache_settings
-    environment:
-      - SCALA_VERSION: *scala_212_version
+    - build:
+        build-steps:
+        - run:
+            command: sbt -v $PROPS ++$SCALA_VERSION scio-test/it:runMain com.spotify.ScioStreamingBenchmarkMetrics --name=ci
+            no_output_timeout: 30m
 
 ####################
 # Workflows
 ####################
 
 workflows:
-  version: 2
+  version: *version
 
   # Per commit build
   build:
     jobs:
-      - build_211
-      - build_212
+      - checks
+      - build_211:
+          requires:
+            - checks
+      - build_it_211:
+          requires:
+            - checks
+          filters:
+            branches:
+              ignore: /^pull.*/
+      - build_212:
+          requires:
+            - checks
+      - build_it_212:
+          requires:
+            - checks
+          filters:
+            branches:
+              ignore: /^pull.*/
       - deploy:
           requires:
             - build_211
@@ -221,7 +257,8 @@ workflows:
               only:
                 - master
     jobs:
-      - bench
+      - bench_batch
+      - bench_streaming
   bench_streaming_metrics:
     triggers:
       - schedule:
