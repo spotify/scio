@@ -689,8 +689,13 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   /** Create a union of multiple SCollections. Supports empty lists. */
   def unionAll[T: Coder](scs: Iterable[SCollection[T]]): SCollection[T] =
     scs match {
-      case Nil      => empty()
-      case contents => SCollection.unionAll(contents)
+      case Nil => empty()
+      case contents =>
+        context.wrap(
+          PCollectionList
+            .of(contents.map(_.internal).asJava)
+            .apply(this.tfName, Flatten.pCollections())
+        )
     }
 
   /** Form an empty SCollection. */
