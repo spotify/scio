@@ -51,21 +51,23 @@ commands:
         - v1-dependencies-{{ checksum "build.sbt" }}
         - v1-dependencies-
     - run: ./scripts/gen_schemas.sh
-    - run: |
-        if [ -n "$ENCRYPTION_KEY" ]; then
-          openssl aes-256-cbc -d \
-            -in "$GOOGLE_APPLICATION_CREDENTIALS.enc" \
-            -out $GOOGLE_APPLICATION_CREDENTIALS \
-            -k $ENCRYPTION_KEY
-        fi
+    - run:
+        name: setup
+        command: |
+          if [ -n "$ENCRYPTION_KEY" ]; then
+            openssl aes-256-cbc -d \
+              -in "$GOOGLE_APPLICATION_CREDENTIALS.enc" \
+              -out $GOOGLE_APPLICATION_CREDENTIALS \
+              -k $ENCRYPTION_KEY
+          fi
 
-        if [ -n "$CIRCLE_PR_USERNAME" ]; then
-          echo "Scala $SCALA_VERSION, forked PR #$CIRCLE_PR_NUMBER from $CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME"
-          SBT_OPTS="-Dbigquery.project=dummy-project"
-        else
-          echo "Scala $SCALA_VERSION, branch: $CIRCLE_BRANCH"
-          SBT_OPTS="-Dbigquery.project=data-integration-test -Dbigquery.secret=$GOOGLE_APPLICATION_CREDENTIALS"
-        fi
+          if [ -n "$CIRCLE_PR_USERNAME" ]; then
+            echo "Scala $SCALA_VERSION, forked PR #$CIRCLE_PR_NUMBER from $CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME"
+            SBT_OPTS="-Dbigquery.project=dummy-project"
+          else
+            echo "Scala $SCALA_VERSION, branch: $CIRCLE_BRANCH"
+            SBT_OPTS="-Dbigquery.project=data-integration-test -Dbigquery.secret=$GOOGLE_APPLICATION_CREDENTIALS"
+          fi
     - run: if [ "$CIRCLE_BRANCH" == "beam-master" ]; then ./scripts/circleci_snapshot.sh; fi
     - steps: << parameters.build-steps >>
     - save_cache:
