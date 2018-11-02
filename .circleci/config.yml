@@ -80,13 +80,6 @@ jobs:
           - run: sbt -v $PROPS ++$SCALA_VERSION test
           - run: ./scripts/circleci_repl.sh
 
-  build_it_211:
-    executor: scala_211
-    steps:
-    - build:
-        build-steps:
-        - run: sbt -v $PROPS ++$SCALA_VERSION it:test
-
   build_212:
     executor: scala_212
     steps:
@@ -96,14 +89,18 @@ jobs:
         - run: ./scripts/circleci_repl.sh
         - run: bash <(curl -s https://codecov.io/bash)
 
-  build_it_212:
-    executor: scala_212
+  build_it_211: &build_it_211
+    executor: scala_211
     steps:
     - build:
         build-steps:
         - run: sbt -v $PROPS ++$SCALA_VERSION it:test
 
-  build_211-jdk11:
+  build_it_212:
+    <<: [*build_it_211]
+    executor: scala_212
+
+  build_211-jdk11: &build_211-jdk11
     executor: scala_211_jdk11
     steps:
     - build:
@@ -112,12 +109,8 @@ jobs:
         - run: ./scripts/circleci_repl.sh
 
   build_212-jdk11:
+    <<: [*build_211-jdk11]
     executor: scala_212_jdk11
-    steps:
-    - build:
-        build-steps:
-        - run: sbt -v $PROPS ++$SCALA_VERSION test
-        - run: ./scripts/circleci_repl.sh
 
   deploy:
     executor: scala_212
@@ -128,7 +121,7 @@ jobs:
         - run: go get -u github.com/tcnksm/ghr
         - run: ghr -u spotify -draft $CIRCLE_TAG scio-repl/target/scala-*/scio-repl-*.jar
 
-  publish_211:
+  publish_211: &publish_211
     executor: scala_211
     steps:
     - build:
@@ -136,11 +129,8 @@ jobs:
           - run: sbt -v ++$SCALA_VERSION publish
 
   publish_212:
+    <<: [*publish_211]
     executor: scala_212
-    steps:
-    - build:
-        build-steps:
-        - run: sbt -v ++$SCALA_VERSION publish
 
   bench_batch:
     executor: scala_212
@@ -197,7 +187,7 @@ workflows:
             - checks
           filters:
             branches:
-              ignore: /^pull.*/
+              only: /^pull.*/
       - deploy:
           requires:
             - build_211
