@@ -524,7 +524,7 @@ lazy val scioCassandra3: Project = Project(
 
 lazy val scioElasticsearch2: Project = Project(
   "scio-elasticsearch2",
-  file("scio-elasticsearch2")
+  file("scio-elasticsearch/es2")
 ).settings(
     commonSettings,
     description := "Scio add-on for writing to Elasticsearch",
@@ -540,7 +540,7 @@ lazy val scioElasticsearch2: Project = Project(
 
 lazy val scioElasticsearch5: Project = Project(
   "scio-elasticsearch5",
-  file("scio-elasticsearch5")
+  file("scio-elasticsearch/es5")
 ).settings(
     commonSettings,
     description := "Scio add-on for writing to Elasticsearch",
