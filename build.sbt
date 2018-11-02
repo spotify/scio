@@ -483,7 +483,7 @@ lazy val scioBigtable: Project = Project(
 
 lazy val scioCassandra2: Project = Project(
   "scio-cassandra2",
-  file("scio-cassandra2")
+  file("scio-cassandra/cassandra2")
 ).settings(
     commonSettings ++ itSettings,
     description := "Scio add-on for Apache Cassandra 2.x",
@@ -503,7 +503,7 @@ lazy val scioCassandra2: Project = Project(
 
 lazy val scioCassandra3: Project = Project(
   "scio-cassandra3",
-  file("scio-cassandra3")
+  file("scio-cassandra/cassandra3")
 ).settings(
     commonSettings ++ itSettings,
     description := "Scio add-on for Apache Cassandra 3.x",
