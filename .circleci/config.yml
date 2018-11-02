@@ -8,31 +8,34 @@ settings: &settings
   working_directory: ~/scio
   resource_class: xlarge
 
-docker_settings: &docker_settings
-  docker:
-    - image: circleci/openjdk:8-jdk
-      environment:
-        GOOGLE_APPLICATION_CREDENTIALS: scripts/data-integration-test.json
-        DATASTORE_PROJECT_ID: data-integration-test
+env: &env
+  GOOGLE_APPLICATION_CREDENTIALS: scripts/data-integration-test.json
+  DATASTORE_PROJECT_ID: data-integration-test
 
 executors:
   scala_212: &scala_212
-    <<: [*settings, *docker_settings]
+    <<: [*settings]
+    docker:
+      - image: circleci/openjdk:8-jdk
     environment:
+      <<: *env
       SCALA_VERSION: 2.12.7
   scala_211: &scala_211
-    <<: [*settings, *docker_settings]
+    <<: [*settings]
+    docker:
+      - image: circleci/openjdk:8-jdk
     environment:
+      <<: *env
       SCALA_VERSION: 2.11.12
 
-  scala_212_jdk11: &scala_212_jdk11
+  scala_212_jdk11:
     <<: [*scala_212]
     docker:
-    - image: circleci/openjdk:11-jdk
-  scala_211_jdk11: &scala_211_jdk11
+      - image: circleci/openjdk:11-jdk
+  scala_211_jdk11:
     <<: [*scala_211]
     docker:
-    - image: circleci/openjdk:11-jdk
+      - image: circleci/openjdk:11-jdk
 
 commands:
   build:
@@ -117,10 +120,6 @@ jobs:
         - run: ./scripts/circleci_repl.sh
 
   deploy:
-    # Workaround for sbt-assembly hitting Docker aufs file name length limit
-    # https://github.com/sbt/sbt-assembly/issues/69
-    machine: true
-    working_directory: ~/scio
     executor: scala_212
     steps:
     - build:
