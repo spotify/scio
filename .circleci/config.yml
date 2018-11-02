@@ -204,7 +204,7 @@ workflows:
             - checks
           filters:
             branches:
-              only: /^pull.*/
+              ignore: /^pull.*/
       - deploy:
           requires:
             - build_211
