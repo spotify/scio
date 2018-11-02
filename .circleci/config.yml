@@ -63,10 +63,10 @@ commands:
 
           if [ -n "$CIRCLE_PR_USERNAME" ]; then
             echo "Scala $SCALA_VERSION, forked PR #$CIRCLE_PR_NUMBER from $CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME"
-            SBT_OPTS="-Dbigquery.project=dummy-project"
+            export 'SBT_OPTS="-Dbigquery.project=dummy-project"' >> $BASH_ENV
           else
             echo "Scala $SCALA_VERSION, branch: $CIRCLE_BRANCH"
-            SBT_OPTS="-Dbigquery.project=data-integration-test -Dbigquery.secret=$GOOGLE_APPLICATION_CREDENTIALS"
+            export 'SBT_OPTS="-Dbigquery.project=data-integration-test -Dbigquery.secret=$GOOGLE_APPLICATION_CREDENTIALS"' >> $BASH_ENV
           fi
     - run: if [ "$CIRCLE_BRANCH" == "beam-master" ]; then ./scripts/circleci_snapshot.sh; fi
     - steps: << parameters.build-steps >>
