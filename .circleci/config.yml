@@ -87,14 +87,14 @@ jobs:
     steps:
     - build:
         build-steps:
-        - run: sbt -v ++$SCALA_VERSION scalastyle scalafmtCheck test:scalafmtCheck it:scalafmtCheck scalafmtSbtCheck
+        - run: sbt -v $SBT_OPTS ++$SCALA_VERSION scalastyle scalafmtCheck test:scalafmtCheck it:scalafmtCheck scalafmtSbtCheck
 
   build_211:
     executor: scala_211
     steps:
       - build:
           build-steps:
-          - run: sbt -v ++$SCALA_VERSION test
+          - run: sbt -v $SBT_OPTS ++$SCALA_VERSION test
           - run: ./scripts/circleci_repl.sh
 
   build_212:
@@ -102,7 +102,7 @@ jobs:
     steps:
     - build:
         build-steps:
-        - run: sbt -v ++$SCALA_VERSION coverage test coverageReport coverageAggregate
+        - run: sbt -v $SBT_OPTS ++$SCALA_VERSION coverage test coverageReport coverageAggregate
         - run: ./scripts/circleci_repl.sh
         - run: bash <(curl -s https://codecov.io/bash)
 
@@ -111,7 +111,7 @@ jobs:
     steps:
     - build:
         build-steps:
-        - run: sbt -v ++$SCALA_VERSION it:test
+        - run: sbt -v $SBT_OPTS ++$SCALA_VERSION it:test
 
   build_it_212:
     <<: [*build_it_211]
@@ -122,7 +122,7 @@ jobs:
     steps:
     - build:
         build-steps:
-        - run: sbt -v ++$SCALA_VERSION test
+        - run: sbt -v $SBT_OPTS ++$SCALA_VERSION test
         - run: ./scripts/circleci_repl.sh
 
   build_212-jdk11:
@@ -134,7 +134,7 @@ jobs:
     steps:
     - build:
         build-steps:
-        - run: sbt -v ++$SCALA_VERSION scio-repl/assembly
+        - run: sbt -v $SBT_OPTS ++$SCALA_VERSION scio-repl/assembly
         - run: go get -u github.com/tcnksm/ghr
         - run: ghr -u spotify -draft $CIRCLE_TAG scio-repl/target/scala-*/scio-repl-*.jar
 
@@ -143,7 +143,7 @@ jobs:
     steps:
     - build:
         build-steps:
-          - run: sbt -v ++$SCALA_VERSION publish
+          - run: sbt -v $SBT_OPTS ++$SCALA_VERSION publish
 
   publish_212:
     <<: [*publish_211]
@@ -155,7 +155,7 @@ jobs:
     - build:
         build-steps:
         - run:
-            command: sbt -v ++$SCALA_VERSION "scio-test/it:runMain com.spotify.ScioBatchBenchmark --name=ci"
+            command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.ScioBatchBenchmark --name=ci"
             no_output_timeout: 30m
 
   bench_streaming:
@@ -164,7 +164,7 @@ jobs:
     - build:
         build-steps:
         - run:
-            command: sbt -v ++$SCALA_VERSION "scio-test/it:runMain com.spotify.ScioStreamingBenchmark --name=ci"
+            command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.ScioStreamingBenchmark --name=ci"
             no_output_timeout: 30m
 
   bench_streaming_metrics:
@@ -173,7 +173,7 @@ jobs:
     - build:
         build-steps:
         - run:
-            command: sbt -v ++$SCALA_VERSION scio-test/it:runMain com.spotify.ScioStreamingBenchmarkMetrics --name=ci
+            command: sbt -v $SBT_OPTS ++$SCALA_VERSION scio-test/it:runMain com.spotify.ScioStreamingBenchmarkMetrics --name=ci
             no_output_timeout: 30m
 
 ####################
