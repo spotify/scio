@@ -50,7 +50,22 @@ commands:
         keys:
         - v1-dependencies-{{ checksum "build.sbt" }}
         - v1-dependencies-
-    - run: ./scripts/circleci_setup.sh
+    - run: ./scripts/gen_schemas.sh
+    - run: |
+        if [ -n "$ENCRYPTION_KEY" ]; then
+          openssl aes-256-cbc -d \
+            -in "$GOOGLE_APPLICATION_CREDENTIALS.enc" \
+            -out $GOOGLE_APPLICATION_CREDENTIALS \
+            -k $ENCRYPTION_KEY
+        fi
+
+        if [ -n "$CIRCLE_PR_USERNAME" ]; then
+          echo "Scala $SCALA_VERSION, forked PR #$CIRCLE_PR_NUMBER from $CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME"
+          SBT_OPTS="-Dbigquery.project=dummy-project"
+        else
+          echo "Scala $SCALA_VERSION, branch: $CIRCLE_BRANCH"
+          SBT_OPTS="-Dbigquery.project=data-integration-test -Dbigquery.secret=$GOOGLE_APPLICATION_CREDENTIALS"
+        fi
     - run: if [ "$CIRCLE_BRANCH" == "beam-master" ]; then ./scripts/circleci_snapshot.sh; fi
     - steps: << parameters.build-steps >>
     - save_cache:
@@ -77,7 +92,7 @@ jobs:
     steps:
       - build:
           build-steps:
-          - run: sbt -v $PROPS ++$SCALA_VERSION test
+          - run: sbt -v ++$SCALA_VERSION test
           - run: ./scripts/circleci_repl.sh
 
   build_212:
@@ -85,7 +100,7 @@ jobs:
     steps:
     - build:
         build-steps:
-        - run: sbt -v $PROPS ++$SCALA_VERSION coverage test coverageReport coverageAggregate
+        - run: sbt -v ++$SCALA_VERSION coverage test coverageReport coverageAggregate
         - run: ./scripts/circleci_repl.sh
         - run: bash <(curl -s https://codecov.io/bash)
 
@@ -94,7 +109,7 @@ jobs:
     steps:
     - build:
         build-steps:
-        - run: sbt -v $PROPS ++$SCALA_VERSION it:test
+        - run: sbt -v ++$SCALA_VERSION it:test
 
   build_it_212:
     <<: [*build_it_211]
@@ -105,7 +120,7 @@ jobs:
     steps:
     - build:
         build-steps:
-        - run: sbt -v $PROPS ++$SCALA_VERSION test
+        - run: sbt -v ++$SCALA_VERSION test
         - run: ./scripts/circleci_repl.sh
 
   build_212-jdk11:
@@ -138,7 +153,7 @@ jobs:
     - build:
         build-steps:
         - run:
-            command: sbt -v $PROPS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.ScioBatchBenchmark --name=ci"
+            command: sbt -v ++$SCALA_VERSION "scio-test/it:runMain com.spotify.ScioBatchBenchmark --name=ci"
             no_output_timeout: 30m
 
   bench_streaming:
@@ -147,7 +162,7 @@ jobs:
     - build:
         build-steps:
         - run:
-            command: sbt -v $PROPS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.ScioStreamingBenchmark --name=ci"
+            command: sbt -v ++$SCALA_VERSION "scio-test/it:runMain com.spotify.ScioStreamingBenchmark --name=ci"
             no_output_timeout: 30m
 
   bench_streaming_metrics:
@@ -156,7 +171,7 @@ jobs:
     - build:
         build-steps:
         - run:
-            command: sbt -v $PROPS ++$SCALA_VERSION scio-test/it:runMain com.spotify.ScioStreamingBenchmarkMetrics --name=ci
+            command: sbt -v ++$SCALA_VERSION scio-test/it:runMain com.spotify.ScioStreamingBenchmarkMetrics --name=ci
             no_output_timeout: 30m
 
 ####################
