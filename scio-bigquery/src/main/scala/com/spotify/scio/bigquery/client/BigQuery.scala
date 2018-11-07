@@ -30,7 +30,7 @@ import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.hadoop.util.ChainingHttpRequestInitializer
 import com.spotify.scio.bigquery.client.BigQuery.Client
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.bigquery.{BigQuerySysProps, BigQueryType, CREATE_IF_NEEDED, WRITE_EMPTY}
+import com.spotify.scio.bigquery.{BigQuerySysProps, BigQueryType, CREATE_IF_NEEDED, WRITE_APPEND}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
@@ -119,7 +119,7 @@ final class BigQuery private (client: Client) {
    */
   def writeTypedRows[T <: HasAnnotation: TypeTag](tableSpec: String,
                                                   rows: List[T],
-                                                  writeDisposition: WriteDisposition = WRITE_EMPTY,
+                                                  writeDisposition: WriteDisposition = WRITE_APPEND,
                                                   createDisposition: CreateDisposition =
                                                     CREATE_IF_NEEDED): Unit =
     writeTypedRows(beam.BigQueryHelpers.parseTableSpec(tableSpec),

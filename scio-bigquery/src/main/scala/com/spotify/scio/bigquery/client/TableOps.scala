@@ -163,6 +163,9 @@ private[client] final class TableOps(client: Client) {
                 schema: TableSchema,
                 writeDisposition: WriteDisposition,
                 createDisposition: CreateDisposition): Unit = {
+    if (writeDisposition != WriteDisposition.WRITE_APPEND) {
+      throw new RuntimeException("Unsupported write disposition " + writeDisposition.name())
+    }
     val options = PipelineOptionsFactory
       .create()
       .as(classOf[BigQueryOptions])
