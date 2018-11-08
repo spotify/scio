@@ -97,6 +97,9 @@ private[coders] object CoderMacros {
         |
         |       implicit def coder${typeName}: Coder[$fullType] = Coder.kryo[$fullType]
         |
+        |  Additional info at:
+        |   - https://github.com/spotify/scio/wiki/Coders
+        |
         """
 
     val fallback = q"""_root_.com.spotify.scio.coders.Coder.kryo[$wtt]"""
