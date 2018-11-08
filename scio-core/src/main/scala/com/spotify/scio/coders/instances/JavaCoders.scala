@@ -83,6 +83,8 @@ trait JavaCoders {
   implicit val jFloatCoder: Coder[java.lang.Float] = fromScalaCoder(Coder.floatCoder)
   implicit val jDoubleCoder: Coder[java.lang.Double] = fromScalaCoder(Coder.doubleCoder)
 
+  implicit val jBooleanCoder: Coder[java.lang.Boolean] = Coder.beam(BooleanCoder.of())
+
   implicit def jBigIntegerCoder: Coder[BigInteger] = Coder.beam(BigIntegerCoder.of())
 
   implicit def jBigDecimalCoder: Coder[BigDecimal] = Coder.beam(BigDecimalCoder.of())
