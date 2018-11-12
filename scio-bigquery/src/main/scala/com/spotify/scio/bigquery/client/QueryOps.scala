@@ -141,45 +141,46 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
       delayedQueryJob(query.copy(destinationTable = tempTable))
     }
 
-  private[scio] def newCachedQueryJob(query: QueryJobConfig): Try[QueryJob] = {
-    try {
-      val sourceTimes = extractTables(query.sql)
-        .map { t =>
-          BigInt(tableService.table(t).getLastModifiedTime)
+  private[scio] def newCachedQueryJob(query: QueryJobConfig): Try[QueryJob] =
+    extractTables(query)
+      .flatMap { tableRefs =>
+        val sourceTimes = tableRefs
+          .map { t =>
+            BigInt(tableService.table(t).getLastModifiedTime)
+          }
+
+        val temp = Cache.getCacheDestinationTable(query.sql).get
+        val time = BigInt(tableService.table(temp).getLastModifiedTime)
+        if (sourceTimes.forall(_ < time)) {
+          Logger.info(s"Cache hit for query: `${query.sql}`")
+          Logger.info(s"Existing destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
+
+          Success(QueryJob(query.sql, jobReference = None, table = temp))
+        } else {
+          Logger.info(s"Cache invalid for query: `${query.sql}`")
+
+          val location = extractLocation(query.sql).getOrElse(BigQueryConfig.location)
+          val newTemp = tableService.createTemporary(location)
+
+          Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(newTemp)}")
+
+          Cache.setCacheDestinationTable(query.sql, newTemp)
+          delayedQueryJob(query.copy(destinationTable = newTemp))
         }
-
-      val temp = Cache.getCacheDestinationTable(query.sql).get
-      val time = BigInt(tableService.table(temp).getLastModifiedTime)
-      if (sourceTimes.forall(_ < time)) {
-        Logger.info(s"Cache hit for query: `${query.sql}`")
-        Logger.info(s"Existing destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
-
-        Success(QueryJob(query.sql, jobReference = None, table = temp))
-      } else {
-        Logger.info(s"Cache invalid for query: `${query.sql}`")
-
-        val location = extractLocation(query.sql).getOrElse(BigQueryConfig.location)
-        val newTemp = tableService.createTemporary(location)
-
-        Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(newTemp)}")
-
-        Cache.setCacheDestinationTable(query.sql, newTemp)
-        delayedQueryJob(query.copy(destinationTable = newTemp))
       }
-    } catch {
-      case NonFatal(e: GoogleJsonResponseException) if isInvalidQuery(e) => Failure(e)
-      case NonFatal(_) =>
-        val temp = tableService.createTemporary(
-          extractLocation(query.sql)
-            .getOrElse(BigQueryConfig.location))
+      .recoverWith {
+        case NonFatal(e: GoogleJsonResponseException) if isInvalidQuery(e) => Failure(e)
+        case NonFatal(_) =>
+          val temp = tableService.createTemporary(
+            extractLocation(query.sql)
+              .getOrElse(BigQueryConfig.location))
 
-        Logger.info(s"Cache miss for query: `${query.sql}`")
-        Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
+          Logger.info(s"Cache miss for query: `${query.sql}`")
+          Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
 
-        Cache.setCacheDestinationTable(query.sql, temp)
-        delayedQueryJob(query.copy(destinationTable = temp))
-    }
-  }
+          Cache.setCacheDestinationTable(query.sql, temp)
+          delayedQueryJob(query.copy(destinationTable = temp))
+      }
 
   private def delayedQueryJob(query: QueryJobConfig): Try[QueryJob] = {
     val location = extractLocation(query.sql).getOrElse(BigQueryConfig.location)
@@ -287,13 +288,14 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
   }
 
   /** Extract tables to be accessed by a query. */
-  def extractTables(sqlQuery: String): Set[TableReference] = {
-    val tryJob = run(QueryJobConfig(sqlQuery, dryRun = true, useLegacySql = isLegacySql(sqlQuery)))
-    Option(tryJob.get.getStatistics.getQuery.getReferencedTables) match {
-      case Some(l) => l.asScala.toSet
-      case None    => Set.empty
-    }
-  }
+  def extractTables(sqlQuery: String): Set[TableReference] =
+    extractTables(QueryJobConfig(sqlQuery, dryRun = true, useLegacySql = isLegacySql(sqlQuery))).get
+
+  private def extractTables(config: QueryJobConfig): Try[Set[TableReference]] =
+    run(config)
+      .map(_.getStatistics.getQuery.getReferencedTables)
+      .map(Option(_))
+      .map(_.map(_.asScala.toSet).getOrElse(Set.empty))
 
   /** Extract locations of tables to be accessed by a query. */
   def extractLocation(sqlQuery: String): Option[String] = {
