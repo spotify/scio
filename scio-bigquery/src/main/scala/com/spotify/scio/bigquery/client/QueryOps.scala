@@ -47,6 +47,16 @@ private[client] object QueryOps {
       }
 
   private val Priority = if (isInteractive) "INTERACTIVE" else "BATCH"
+
+  private[scio] final case class QueryJobConfig(
+    sql: String,
+    useLegacySql: Boolean,
+    dryRun: Boolean = false,
+    destinationTable: TableReference = null,
+    flattenResults: Boolean = false,
+    writeDisposition: WriteDisposition = WriteDisposition.WRITE_EMPTY,
+    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED)
+
 }
 
 private[client] final class QueryOps(client: Client, tableService: TableOps, jobService: JobOps) {
@@ -57,6 +67,7 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
     if (isLegacySql(sqlQuery)) {
       // Dry-run not supported for legacy query, using view as a work around
       Logger.info("Getting legacy query schema with view")
+
       val location = extractLocation(sqlQuery).getOrElse(BigQueryConfig.location)
       tableService.prepareStagingDataset(location)
       val temp = tableService.createTemporary(location)
@@ -94,81 +105,88 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
     writeDisposition: WriteDisposition = WriteDisposition.WRITE_EMPTY,
     createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED
   ): Iterator[TableRow] = {
-    val queryJob = newQueryJob(
-      QueryJobConfig(sqlQuery,
-                     useLegacySql = isLegacySql(sqlQuery),
-                     flattenResults = flattenResults,
-                     writeDisposition = writeDisposition,
-                     createDisposition = createDisposition))
-    jobService.waitForJobs(queryJob)
-    tableService.rows(queryJob.table)
+    val config = QueryJobConfig(sqlQuery,
+                                useLegacySql = isLegacySql(sqlQuery),
+                                flattenResults = flattenResults,
+                                writeDisposition = writeDisposition,
+                                createDisposition = createDisposition)
+
+    newQueryJob(config).map { job =>
+      jobService.waitForJobs(job)
+      tableService.rows(job.table)
+    }.get
   }
 
   // =======================================================================
   // Query handling
   // =======================================================================
-  private[scio] def newQueryJob(querySql: String, flattenResults: Boolean = false): QueryJob = {
-    newQueryJob(
-      QueryJobConfig(querySql,
-                     useLegacySql = isLegacySql(querySql),
-                     flattenResults = flattenResults))
+  private[scio] def newQueryJob(querySql: String,
+                                flattenResults: Boolean = false): Try[QueryJob] = {
+    val config = QueryJobConfig(querySql,
+                                useLegacySql = isLegacySql(querySql),
+                                flattenResults = flattenResults)
+
+    newQueryJob(config)
   }
 
-  private[scio] def newQueryJob(query: QueryJobConfig): QueryJob = {
+  private[scio] def newQueryJob(query: QueryJobConfig): Try[QueryJob] =
     if (BigQueryConfig.isCacheEnabled) {
       newCachedQueryJob(query)
     } else {
       Logger.info(s"BigQuery caching is disabled")
-      val tempTable = tableService.createTemporary(
-        extractLocation(query.sql)
-          .getOrElse(BigQueryConfig.location))
-      delayedQueryJob(query.withDestination(tempTable))
-    }
-  }
 
-  private[scio] def newCachedQueryJob(query: QueryJobConfig): QueryJob = {
+      val location = extractLocation(query.sql).getOrElse(BigQueryConfig.location)
+      val tempTable = tableService.createTemporary(location)
+
+      delayedQueryJob(query.copy(destinationTable = tempTable))
+    }
+
+  private[scio] def newCachedQueryJob(query: QueryJobConfig): Try[QueryJob] = {
     try {
       val sourceTimes = extractTables(query.sql)
-        .map(t => BigInt(tableService.table(t).getLastModifiedTime))
+        .map { t =>
+          BigInt(tableService.table(t).getLastModifiedTime)
+        }
+
       val temp = Cache.getCacheDestinationTable(query.sql).get
       val time = BigInt(tableService.table(temp).getLastModifiedTime)
       if (sourceTimes.forall(_ < time)) {
         Logger.info(s"Cache hit for query: `${query.sql}`")
         Logger.info(s"Existing destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
-        QueryJob(query.sql, jobReference = None, table = temp)
+
+        Success(QueryJob(query.sql, jobReference = None, table = temp))
       } else {
         Logger.info(s"Cache invalid for query: `${query.sql}`")
-        val newTemp = tableService.createTemporary(
-          extractLocation(query.sql)
-            .getOrElse(BigQueryConfig.location))
+
+        val location = extractLocation(query.sql).getOrElse(BigQueryConfig.location)
+        val newTemp = tableService.createTemporary(location)
+
         Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(newTemp)}")
+
         Cache.setCacheDestinationTable(query.sql, newTemp)
-        delayedQueryJob(query.withDestination(newTemp))
+        delayedQueryJob(query.copy(destinationTable = newTemp))
       }
     } catch {
-      case NonFatal(e: GoogleJsonResponseException) if isInvalidQuery(e) => throw e
+      case NonFatal(e: GoogleJsonResponseException) if isInvalidQuery(e) => Failure(e)
       case NonFatal(_) =>
         val temp = tableService.createTemporary(
           extractLocation(query.sql)
             .getOrElse(BigQueryConfig.location))
+
         Logger.info(s"Cache miss for query: `${query.sql}`")
         Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
+
         Cache.setCacheDestinationTable(query.sql, temp)
-        delayedQueryJob(query.withDestination(temp))
+        delayedQueryJob(query.copy(destinationTable = temp))
     }
   }
 
-  private def delayedQueryJob(query: QueryJobConfig): QueryJob = {
-    val jobReference = {
-      val location = extractLocation(query.sql).getOrElse(BigQueryConfig.location)
-      tableService.prepareStagingDataset(location)
-      val isLegacy = isLegacySql(query.sql)
-
-      val tryRun = run(query)
-      Some(tryRun.get.getJobReference)
+  private def delayedQueryJob(query: QueryJobConfig): Try[QueryJob] = {
+    val location = extractLocation(query.sql).getOrElse(BigQueryConfig.location)
+    tableService.prepareStagingDataset(location)
+    run(query).map { job =>
+      QueryJob(query.sql, Some(job.getJobReference), query.destinationTable)
     }
-
-    QueryJob(query.sql, jobReference, query.destinationTable)
   }
 
   private val dryRunCache: MMap[(String, Boolean, Boolean), Try[Job]] = MMap.empty
@@ -185,28 +203,20 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
                                flattenResults = flattenResults,
                                writeDisposition = writeDisposition,
                                createDisposition = createDisposition)
-    if (destinationTable != null) {
+    val tableReference = if (destinationTable != null) {
       val tableRef = bq.BigQueryHelpers.parseTableSpec(destinationTable)
-      val queryJob = delayedQueryJob(query.withDestination(tableRef))
-      jobService.waitForJobs(queryJob)
-      tableRef
+      delayedQueryJob(query.copy(destinationTable = tableRef)).map { job =>
+        jobService.waitForJobs(job)
+        tableRef
+      }
     } else {
-      val queryJob = newQueryJob(query)
-      jobService.waitForJobs(queryJob)
-      queryJob.table
+      newQueryJob(query).map { job =>
+        jobService.waitForJobs(job)
+        job.table
+      }
     }
-  }
 
-  private[scio] case class QueryJobConfig(
-    sql: String,
-    useLegacySql: Boolean,
-    dryRun: Boolean = false,
-    destinationTable: TableReference = null,
-    flattenResults: Boolean = false,
-    writeDisposition: WriteDisposition = WriteDisposition.WRITE_EMPTY,
-    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED) {
-
-    def withDestination(table: TableReference): QueryJobConfig = copy(destinationTable = table)
+    tableReference.get
   }
 
   /* Creates and submits a query job */
