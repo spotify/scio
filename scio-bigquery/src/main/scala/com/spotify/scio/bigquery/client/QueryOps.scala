@@ -21,6 +21,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model._
 import com.spotify.scio.bigquery.client.BigQuery.Client
 import com.spotify.scio.bigquery.{BigQueryUtil, TableRow}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
 import org.slf4j.LoggerFactory
 
@@ -53,7 +54,7 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
 
   /** Get schema for a query without executing it. */
   def schema(sqlQuery: String): TableSchema = Cache.withCacheKey(sqlQuery) {
-    if (isLegacySql(sqlQuery, flattenResults = false)) {
+    if (isLegacySql(sqlQuery)) {
       // Dry-run not supported for legacy query, using view as a work around
       Logger.info("Getting legacy query schema with view")
       val location = extractLocation(sqlQuery).getOrElse(BigQueryConfig.location)
@@ -81,15 +82,24 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
     } else {
       // Get query schema via dry-run
       Logger.info("Getting SQL query schema with dry-run")
-      // scalastyle:off line.size.limit
-      run(sqlQuery, null, flattenResults = false, useLegacySql = false, dryRun = true).get.getStatistics.getQuery.getSchema
-      // scalastyle:on line.size.limit
+      val jobConfig = QueryJobConfig(sqlQuery, dryRun = true, useLegacySql = false)
+      run(jobConfig).get.getStatistics.getQuery.getSchema
     }
   }
 
   /** Get rows from a query. */
-  def rows(sqlQuery: String, flattenResults: Boolean = false): Iterator[TableRow] = {
-    val queryJob = newQueryJob(sqlQuery, flattenResults)
+  def rows(
+    sqlQuery: String,
+    flattenResults: Boolean = false,
+    writeDisposition: WriteDisposition = WriteDisposition.WRITE_EMPTY,
+    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED
+  ): Iterator[TableRow] = {
+    val queryJob = newQueryJob(
+      QueryJobConfig(sqlQuery,
+                     useLegacySql = isLegacySql(sqlQuery),
+                     flattenResults = flattenResults,
+                     writeDisposition = writeDisposition,
+                     createDisposition = createDisposition))
     jobService.waitForJobs(queryJob)
     tableService.rows(queryJob.table)
   }
@@ -97,113 +107,134 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
   // =======================================================================
   // Query handling
   // =======================================================================
+  private[scio] def newQueryJob(querySql: String, flattenResults: Boolean = false): QueryJob = {
+    newQueryJob(
+      QueryJobConfig(querySql,
+                     useLegacySql = isLegacySql(querySql),
+                     flattenResults = flattenResults))
+  }
 
-  private[scio] def newQueryJob(sqlQuery: String, flattenResults: Boolean): QueryJob = {
+  private[scio] def newQueryJob(query: QueryJobConfig): QueryJob = {
     if (BigQueryConfig.isCacheEnabled) {
-      newCachedQueryJob(sqlQuery, flattenResults)
+      newCachedQueryJob(query)
     } else {
       Logger.info(s"BigQuery caching is disabled")
       val tempTable = tableService.createTemporary(
-        extractLocation(sqlQuery)
+        extractLocation(query.sql)
           .getOrElse(BigQueryConfig.location))
-      delayedQueryJob(sqlQuery, tempTable, flattenResults)
+      delayedQueryJob(query.withDestination(tempTable))
     }
   }
 
-  private[scio] def newCachedQueryJob(sqlQuery: String, flattenResults: Boolean): QueryJob = {
+  private[scio] def newCachedQueryJob(query: QueryJobConfig): QueryJob = {
     try {
-      val sourceTimes = extractTables(sqlQuery)
+      val sourceTimes = extractTables(query.sql)
         .map(t => BigInt(tableService.table(t).getLastModifiedTime))
-      val temp = Cache.getCacheDestinationTable(sqlQuery).get
+      val temp = Cache.getCacheDestinationTable(query.sql).get
       val time = BigInt(tableService.table(temp).getLastModifiedTime)
       if (sourceTimes.forall(_ < time)) {
-        Logger.info(s"Cache hit for query: `$sqlQuery`")
+        Logger.info(s"Cache hit for query: `${query.sql}`")
         Logger.info(s"Existing destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
-        QueryJob(sqlQuery, jobReference = None, table = temp)
+        QueryJob(query.sql, jobReference = None, table = temp)
       } else {
-        Logger.info(s"Cache invalid for query: `$sqlQuery`")
+        Logger.info(s"Cache invalid for query: `${query.sql}`")
         val newTemp = tableService.createTemporary(
-          extractLocation(sqlQuery)
+          extractLocation(query.sql)
             .getOrElse(BigQueryConfig.location))
         Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(newTemp)}")
-        Cache.setCacheDestinationTable(sqlQuery, newTemp)
-        delayedQueryJob(sqlQuery, newTemp, flattenResults)
+        Cache.setCacheDestinationTable(query.sql, newTemp)
+        delayedQueryJob(query.withDestination(newTemp))
       }
     } catch {
       case NonFatal(e: GoogleJsonResponseException) if isInvalidQuery(e) => throw e
       case NonFatal(_) =>
         val temp = tableService.createTemporary(
-          extractLocation(sqlQuery)
+          extractLocation(query.sql)
             .getOrElse(BigQueryConfig.location))
-        Logger.info(s"Cache miss for query: `$sqlQuery`")
+        Logger.info(s"Cache miss for query: `${query.sql}`")
         Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
-        Cache.setCacheDestinationTable(sqlQuery, temp)
-        delayedQueryJob(sqlQuery, temp, flattenResults)
+        Cache.setCacheDestinationTable(query.sql, temp)
+        delayedQueryJob(query.withDestination(temp))
     }
   }
 
-  private def delayedQueryJob(sqlQuery: String,
-                              destinationTable: TableReference,
-                              flattenResults: Boolean): QueryJob = {
+  private def delayedQueryJob(query: QueryJobConfig): QueryJob = {
     val jobReference = {
-      val location = extractLocation(sqlQuery).getOrElse(BigQueryConfig.location)
+      val location = extractLocation(query.sql).getOrElse(BigQueryConfig.location)
       tableService.prepareStagingDataset(location)
-      val isLegacy = isLegacySql(sqlQuery, flattenResults)
-      if (isLegacy) {
-        Logger.info(s"Executing legacy query: `$sqlQuery`")
-      } else {
-        Logger.info(s"Executing SQL query: `$sqlQuery`")
-      }
-      val tryRun = run(sqlQuery, destinationTable, flattenResults, isLegacy, dryRun = false)
+      val isLegacy = isLegacySql(query.sql)
+
+      val tryRun = run(query)
       Some(tryRun.get.getJobReference)
     }
 
-    QueryJob(sqlQuery, jobReference, destinationTable)
+    QueryJob(query.sql, jobReference, query.destinationTable)
   }
 
   private val dryRunCache: MMap[(String, Boolean, Boolean), Try[Job]] = MMap.empty
 
   /* Creates and submits a query job */
-  def run(sqlQuery: String,
-          destinationTable: String = null,
-          flattenResults: Boolean = false): TableReference =
+  def run(
+    sqlQuery: String,
+    destinationTable: String = null,
+    flattenResults: Boolean = false,
+    writeDisposition: WriteDisposition = WriteDisposition.WRITE_EMPTY,
+    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED): TableReference = {
+    val query = QueryJobConfig(sqlQuery,
+                               useLegacySql = isLegacySql(sqlQuery),
+                               flattenResults = flattenResults,
+                               writeDisposition = writeDisposition,
+                               createDisposition = createDisposition)
     if (destinationTable != null) {
       val tableRef = bq.BigQueryHelpers.parseTableSpec(destinationTable)
-      val queryJob = delayedQueryJob(sqlQuery, tableRef, flattenResults)
+      val queryJob = delayedQueryJob(query.withDestination(tableRef))
       jobService.waitForJobs(queryJob)
       tableRef
     } else {
-      val queryJob = newQueryJob(sqlQuery, flattenResults)
+      val queryJob = newQueryJob(query)
       jobService.waitForJobs(queryJob)
       queryJob.table
     }
+  }
+
+  private[scio] case class QueryJobConfig(
+    sql: String,
+    useLegacySql: Boolean,
+    dryRun: Boolean = false,
+    destinationTable: TableReference = null,
+    flattenResults: Boolean = false,
+    writeDisposition: WriteDisposition = WriteDisposition.WRITE_EMPTY,
+    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED) {
+
+    def withDestination(table: TableReference): QueryJobConfig = copy(destinationTable = table)
+  }
 
   /* Creates and submits a query job */
-  private def run(sqlQuery: String,
-                  destinationTable: TableReference,
-                  flattenResults: Boolean,
-                  useLegacySql: Boolean,
-                  dryRun: Boolean): Try[Job] = {
+  private def run(config: QueryJobConfig): Try[Job] = {
     def run = Try {
       val queryConfig = new JobConfigurationQuery()
-        .setQuery(sqlQuery)
-        .setUseLegacySql(useLegacySql)
-        .setFlattenResults(flattenResults)
+        .setQuery(config.sql)
+        .setUseLegacySql(config.useLegacySql)
+        .setFlattenResults(config.flattenResults)
         .setPriority(Priority)
-        .setCreateDisposition("CREATE_IF_NEEDED")
-        .setWriteDisposition("WRITE_EMPTY")
-      if (!dryRun) {
-        queryConfig.setAllowLargeResults(true).setDestinationTable(destinationTable)
+        .setCreateDisposition(config.createDisposition.name)
+        .setWriteDisposition(config.writeDisposition.name)
+      if (!config.dryRun) {
+        queryConfig.setAllowLargeResults(true).setDestinationTable(config.destinationTable)
       }
-      val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(dryRun)
+      val jobConfig = new JobConfiguration().setQuery(queryConfig).setDryRun(config.dryRun)
       val fullJobId = BigQueryUtil.generateJobId(client.project)
       val jobReference = new JobReference().setProjectId(client.project).setJobId(fullJobId)
       val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
       client.underlying.jobs().insert(client.project, job).execute()
     }
-
-    if (dryRun) {
-      dryRunCache.getOrElseUpdate((sqlQuery, flattenResults, useLegacySql), run)
+    if (config.useLegacySql) {
+      Logger.info(s"Executing legacy query: `${config.sql}`")
+    } else {
+      Logger.info(s"Executing standard SQL query: `${config.sql}`")
+    }
+    if (config.dryRun) {
+      dryRunCache.getOrElseUpdate((config.sql, config.flattenResults, config.useLegacySql), run)
     } else {
       run
     }
@@ -212,20 +243,20 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
   private def isInvalidQuery(e: GoogleJsonResponseException): Boolean =
     e.getDetails.getErrors.get(0).getReason == "invalidQuery"
 
-  private[scio] def isLegacySql(sqlQuery: String, flattenResults: Boolean): Boolean = {
-    def dryRun(useLegacySql: Boolean): Try[Job] =
-      run(sqlQuery, null, flattenResults, useLegacySql, dryRun = true)
+  private[scio] def isLegacySql(sqlQuery: String, flattenResults: Boolean = false): Boolean = {
+    val dryRun =
+      QueryJobConfig(sqlQuery, dryRun = true, useLegacySql = false, flattenResults = flattenResults)
 
     sqlQuery.trim.split("\n")(0).trim.toLowerCase match {
       case "#legacysql"   => true
       case "#standardsql" => false
       case _              =>
         // dry run with SQL syntax first
-        dryRun(false) match {
+        run(dryRun) match {
           case Success(_)                                                   => false
           case Failure(e: GoogleJsonResponseException) if isInvalidQuery(e) =>
             // dry run with legacy syntax next
-            dryRun(true) match {
+            run(dryRun.copy(useLegacySql = true)) match {
               case Success(_) =>
                 Logger.warn(
                   "Legacy syntax is deprecated, use SQL syntax instead. " +
@@ -247,8 +278,7 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
 
   /** Extract tables to be accessed by a query. */
   def extractTables(sqlQuery: String): Set[TableReference] = {
-    val isLegacy = isLegacySql(sqlQuery, flattenResults = false)
-    val tryJob = run(sqlQuery, null, flattenResults = false, isLegacy, dryRun = true)
+    val tryJob = run(QueryJobConfig(sqlQuery, dryRun = true, useLegacySql = isLegacySql(sqlQuery)))
     Option(tryJob.get.getStatistics.getQuery.getReferencedTables) match {
       case Some(l) => l.asScala.toSet
       case None    => Set.empty
