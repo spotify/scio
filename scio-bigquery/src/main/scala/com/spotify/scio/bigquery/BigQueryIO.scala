@@ -50,14 +50,15 @@ private object Reads {
     val bigQueryClient = client(sc)
     import sc.wrap
     if (bigQueryClient.isCacheEnabled) {
-      val queryJob = bigQueryClient.query.newQueryJob(sqlQuery, flattenResults)
+      val read = bigQueryClient.query.newQueryJob(sqlQuery, flattenResults).map { job =>
+        sc.onClose { _ =>
+          bigQueryClient.waitForJobs(job)
+        }
 
-      sc.onClose { _ =>
-        bigQueryClient.waitForJobs(queryJob)
+        typedRead.from(job.table).withoutValidation()
       }
 
-      val read = typedRead.from(queryJob.table).withoutValidation()
-      wrap(sc.applyInternal(read))
+      wrap(sc.applyInternal(read.get))
     } else {
       val baseQuery = if (!flattenResults) {
         typedRead.fromQuery(sqlQuery).withoutResultFlattening()
