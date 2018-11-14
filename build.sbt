@@ -37,7 +37,7 @@ val commonsIoVersion = "2.6"
 val commonsMath3Version = "3.6.1"
 val elasticsearch2Version = "2.1.0"
 val elasticsearch5Version = "5.5.0"
-val featranVersion = "0.2.0"
+val featranVersion = "0.3.0-RC1"
 val gcsConnectorVersion = "1.6.3-hadoop2"
 val gcsVersion = "1.8.0"
 val guavaVersion = "20.0"
@@ -678,6 +678,7 @@ lazy val scioTensorFlow: Project = Project(
       "org.tensorflow" % "proto" % tensorFlowVersion,
       "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
       "com.spotify" %% "featran-core" % featranVersion,
+      "com.spotify" %% "featran-scio" % featranVersion,
       "com.spotify" %% "featran-tensorflow" % featranVersion,
       "com.spotify" % "zoltar-api" % zoltarVersion,
       "com.spotify" % "zoltar-tensorflow" % zoltarVersion
