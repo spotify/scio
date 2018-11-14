@@ -23,7 +23,7 @@ import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 
 val beamVersion = "2.8.0"
 
-val algebirdVersion = "0.13.4"
+val algebirdVersion = "0.13.5"
 val annoy4sVersion = "0.6.0"
 val annoyVersion = "0.2.5"
 val asmVersion = "4.9"
