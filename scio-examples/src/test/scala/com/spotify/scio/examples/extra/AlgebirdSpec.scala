@@ -206,7 +206,9 @@ class AlgebirdSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matc
 
   property("sum of case classes") {
     // Macros that automatically derive Algebird type for case classes
-    import com.twitter.algebird.macros.caseclass._
+    import com.twitter.algebird.macros._
+
+    implicit val recordSemigroup: Semigroup[Record] = caseclass.semigroup
 
     forAll(sCollOf(recordGen)) { xs =>
       val expected = Record(xs.internal.map(_.i).sum,
