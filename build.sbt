@@ -678,6 +678,7 @@ lazy val scioTensorFlow: Project = Project(
       "org.tensorflow" % "proto" % tensorFlowVersion,
       "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
       "com.spotify" %% "featran-core" % featranVersion,
+      "com.spotify" %% "featran-scio" % featranVersion,
       "com.spotify" %% "featran-tensorflow" % featranVersion,
       "com.spotify" % "zoltar-api" % zoltarVersion,
       "com.spotify" % "zoltar-tensorflow" % zoltarVersion
