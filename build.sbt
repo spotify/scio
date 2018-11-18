@@ -57,7 +57,7 @@ val parquetVersion = "1.10.0"
 val protobufGenericVersion = "0.2.4"
 val protobufVersion = "3.6.0"
 val scalacheckShapelessVersion = "1.1.8"
-val scalacheckVersion = "1.13.5"
+val scalacheckVersion = "1.14.0"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.0.5"
 val shapelessVersion = "2.3.3"
@@ -68,7 +68,7 @@ val tensorFlowVersion = "1.11.0"
 val zoltarVersion = "0.4.0"
 val magnoliaVersion = "0.10.1-jto"
 val grpcVersion = "1.13.1"
-val caseappVersion = "2.0.0-M3"
+val caseappVersion = "2.0.0-M5"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
