@@ -68,7 +68,7 @@ val tensorFlowVersion = "1.11.0"
 val zoltarVersion = "0.4.0"
 val magnoliaVersion = "0.10.1-jto"
 val grpcVersion = "1.13.1"
-val caseappVersion = "2.0.0-M3"
+val caseappVersion = "2.0.0-M5"
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
