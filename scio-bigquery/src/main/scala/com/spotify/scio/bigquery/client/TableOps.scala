@@ -171,7 +171,7 @@ private[client] final class TableOps(client: Client) {
   def writeRows(tableSpec: String,
                 rows: List[TableRow],
                 schema: TableSchema = null,
-                writeDisposition: WriteDisposition = WriteDisposition.WRITE_EMPTY,
+                writeDisposition: WriteDisposition = WriteDisposition.WRITE_APPEND,
                 createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED): Unit =
     writeRows(bq.BigQueryHelpers.parseTableSpec(tableSpec),
               rows,
