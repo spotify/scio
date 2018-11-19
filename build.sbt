@@ -67,7 +67,7 @@ val sparkeyVersion = "2.3.1"
 val tensorFlowVersion = "1.11.0"
 val zoltarVersion = "0.5.0"
 val magnoliaVersion = "0.10.1-jto"
-val grpcVersion = "1.13.1"
+val grpcVersion = "1.13.2"
 val caseappVersion = "2.0.0-M5"
 
 lazy val mimaSettings = Seq(
