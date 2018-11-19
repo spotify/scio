@@ -24,7 +24,7 @@ import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 val beamVersion = "2.8.0"
 
 val algebirdVersion = "0.13.5"
-val annoy4sVersion = "0.6.0"
+val annoy4sVersion = "0.7.0"
 val annoyVersion = "0.2.5"
 val asmVersion = "4.9"
 val autoServiceVersion = "1.0-rc4"
@@ -46,7 +46,7 @@ val hamcrestVersion = "1.3"
 val jacksonScalaModuleVersion = "2.9.2"
 val javaLshVersion = "0.11"
 val jlineVersion = "2.14.6"
-val jodaConvertVersion = "1.8.3"
+val jodaConvertVersion = "1.9.2"
 val jodaTimeVersion = "2.10.1"
 val junitInterfaceVersion = "0.11"
 val junitVersion = "4.12"
@@ -64,7 +64,7 @@ val shapelessVersion = "2.3.3"
 val shapelessDatatypeVersion = "0.1.10"
 val slf4jVersion = "1.7.25"
 val sparkeyVersion = "2.3.1"
-val tensorFlowVersion = "1.11.0"
+val tensorFlowVersion = "1.12.0"
 val zoltarVersion = "0.5.0"
 val magnoliaVersion = "0.10.1-jto"
 val grpcVersion = "1.13.1"
@@ -731,7 +731,7 @@ lazy val scioExamples: Project = Project(
       "me.lyh" %% "shapeless-datatype-datastore_1.3" % shapelessDatatypeVersion,
       "me.lyh" %% "shapeless-datatype-tensorflow" % shapelessDatatypeVersion,
       "mysql" % "mysql-connector-java" % "8.0.13",
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.2",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.0.11",
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion
