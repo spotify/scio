@@ -14,5 +14,5 @@ addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.9.0")
 addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.5.1")
 
 libraryDependencies ++= Seq(
-  "com.github.os72" % "protoc-jar" % "3.5.1.1"
+  "com.github.os72" % "protoc-jar" % "3.6.0"
 )
