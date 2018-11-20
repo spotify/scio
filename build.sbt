@@ -440,7 +440,6 @@ lazy val scioBigQuery: Project = Project(
 ).settings(
     commonSettings ++ macroSettings ++ itSettings ++ beamRunnerSettings,
     description := "Scio add-on for Google BigQuery",
-    addCompilerPlugin(paradiseDependency),
     libraryDependencies ++= Seq(
       "commons-io" % "commons-io" % commonsIoVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
