@@ -20,8 +20,8 @@ package com.spotify.scio.bigquery.client
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model._
 import com.google.cloud.hadoop.util.ApiErrorExtractor
+import com.spotify.scio.bigquery.TableRow
 import com.spotify.scio.bigquery.client.BigQuery.Client
-import com.spotify.scio.bigquery.{CREATE_IF_NEEDED, TableRow, WRITE_EMPTY}
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryOptions
@@ -114,20 +114,7 @@ private[client] final class TableOps(client: Client) {
     b.result()
   }
 
-  def create(table: Table): Unit = {
-    val options = PipelineOptionsFactory
-      .create()
-      .as(classOf[BigQueryOptions])
-    options.setProject(client.project)
-    options.setGcpCredential(client.credentials)
-    try {
-      val service = new bq.BigQueryServicesWrapper(options)
-      service.createTable(table)
-    } finally {
-      Option(options.as(classOf[GcsOptions]).getExecutorService)
-        .foreach(_.shutdown())
-    }
-  }
+  def create(table: Table): Unit = withBigQueryService(_.createTable(table))
 
   def create(table: TableReference, schema: TableSchema): Unit =
     create(new Table().setTableReference(table).setSchema(schema))
@@ -158,39 +145,54 @@ private[client] final class TableOps(client: Client) {
     exists(bq.BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Write rows to a table. */
-  def writeRows(table: TableReference,
+  def writeRows(tableReference: TableReference,
                 rows: List[TableRow],
                 schema: TableSchema,
                 writeDisposition: WriteDisposition,
-                createDisposition: CreateDisposition): Unit = {
-    val options = PipelineOptionsFactory
-      .create()
-      .as(classOf[BigQueryOptions])
-    options.setProject(client.project)
-    options.setGcpCredential(client.credentials)
-    try {
-      val service = new bq.BigQueryServicesWrapper(options)
-      if (createDisposition == CREATE_IF_NEEDED) {
-        service.createTable(new Table().setTableReference(table).setSchema(schema))
-      }
-      service.insertAll(table, rows.asJava)
-    } finally {
-      Option(options.as(classOf[GcsOptions]).getExecutorService)
-        .foreach(_.shutdown())
+                createDisposition: CreateDisposition): Unit = withBigQueryService { service =>
+    val table = new Table().setTableReference(tableReference).setSchema(schema)
+    if (createDisposition == CreateDisposition.CREATE_IF_NEEDED) {
+      service.createTable(table)
     }
+
+    writeDisposition match {
+      case WriteDisposition.WRITE_TRUNCATE =>
+        delete(tableReference)
+        service.createTable(table)
+      case WriteDisposition.WRITE_EMPTY =>
+        require(service.isTableEmpty(tableReference))
+      case WriteDisposition.WRITE_APPEND =>
+    }
+
+    service.insertAll(tableReference, rows.asJava)
   }
 
   /** Write rows to a table. */
   def writeRows(tableSpec: String,
                 rows: List[TableRow],
                 schema: TableSchema = null,
-                writeDisposition: WriteDisposition = WRITE_EMPTY,
-                createDisposition: CreateDisposition = CREATE_IF_NEEDED): Unit =
+                writeDisposition: WriteDisposition = WriteDisposition.WRITE_APPEND,
+                createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED): Unit =
     writeRows(bq.BigQueryHelpers.parseTableSpec(tableSpec),
               rows,
               schema,
               writeDisposition,
               createDisposition)
+
+  private[bigquery] def withBigQueryService[T](f: bq.BigQueryServicesWrapper => T): T = {
+    val options = PipelineOptionsFactory
+      .create()
+      .as(classOf[BigQueryOptions])
+    options.setProject(client.project)
+    options.setGcpCredential(client.credentials)
+
+    try {
+      f(new bq.BigQueryServicesWrapper(options))
+    } finally {
+      Option(options.as(classOf[GcsOptions]).getExecutorService)
+        .foreach(_.shutdown())
+    }
+  }
 
   /** Delete table */
   private[bigquery] def delete(table: TableReference): Unit =

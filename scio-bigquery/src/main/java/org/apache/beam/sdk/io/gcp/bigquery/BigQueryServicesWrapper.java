@@ -48,6 +48,11 @@ public class BigQueryServicesWrapper {
     bqServices.getDatasetService(bqOptions).createTable(table);
   }
 
+  public boolean isTableEmpty(TableReference tableReference)
+      throws IOException, InterruptedException {
+    return bqServices.getDatasetService(bqOptions).isTableEmpty(tableReference);
+  }
+
   public long insertAll(TableReference ref, List<TableRow> rowList)
       throws IOException, InterruptedException {
     List<ValueInSingleWindow<TableRow>> rows = rowList.stream()
