@@ -46,7 +46,6 @@ val hamcrestVersion = "1.3"
 val jacksonScalaModuleVersion = "2.9.2"
 val javaLshVersion = "0.11"
 val jlineVersion = "2.14.6"
-val jodaConvertVersion = "2.1.2"
 val jodaTimeVersion = "2.10.1"
 val junitInterfaceVersion = "0.11"
 val junitVersion = "4.12"
@@ -443,7 +442,6 @@ lazy val scioBigQuery: Project = Project(
     libraryDependencies ++= Seq(
       "commons-io" % "commons-io" % commonsIoVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "org.joda" % "joda-convert" % jodaConvertVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
@@ -666,8 +664,7 @@ lazy val scioTensorFlow: Project = Project(
     description := "Scio add-on for TensorFlow",
     version in ProtobufConfig := protobufVersion,
     protobufRunProtoc in ProtobufConfig := (args =>
-      // protoc-jar does not include 3.3.1 binary
-      com.github.os72.protocjar.Protoc.runProtoc("-v3.5.1" +: args.toArray)),
+      com.github.os72.protocjar.Protoc.runProtoc("-v3.6.0" +: args.toArray)),
     sourceDirectories in Compile := (sourceDirectories in Compile).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     managedSourceDirectories in Compile := (managedSourceDirectories in Compile).value
@@ -708,8 +705,7 @@ lazy val scioSchemas: Project = Project(
     version in AvroConfig := avroVersion,
     version in ProtobufConfig := protobufVersion,
     protobufRunProtoc in ProtobufConfig := (args =>
-      // protoc-jar does not include 3.3.1 binary
-      com.github.os72.protocjar.Protoc.runProtoc("-v3.3.0" +: args.toArray)),
+      com.github.os72.protocjar.Protoc.runProtoc("-v3.6.0" +: args.toArray)),
     // Avro and Protobuf files are compiled to src_managed/main/compiled_{avro,protobuf}
     // Exclude their parent to avoid confusing IntelliJ
     sourceDirectories in Compile := (sourceDirectories in Compile).value
