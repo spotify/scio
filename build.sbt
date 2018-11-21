@@ -92,8 +92,7 @@ val beamSDKIO =
     "io.grpc" % "grpc-context" % grpcVersion,
     "io.grpc" % "grpc-auth" % grpcVersion,
     "io.grpc" % "grpc-netty" % grpcVersion,
-    "io.grpc" % "grpc-stub" % grpcVersion,
-    "com.google.cloud.bigtable" % "bigtable-protos" % "1.0.0"
+    "io.grpc" % "grpc-stub" % grpcVersion
   )
 
 def previousVersion(currentVersion: String): Option[String] = {
