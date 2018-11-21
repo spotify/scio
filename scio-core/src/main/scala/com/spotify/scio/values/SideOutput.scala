@@ -17,12 +17,11 @@
 
 package com.spotify.scio.values
 
-import com.spotify.scio.{Implicits, ScioContext}
+import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.values.{PCollectionTuple, TupleTag}
 import org.joda.time.Instant
-
-import scala.reflect.ClassTag
 
 /** Encapsulate a side output for a transform. */
 trait SideOutput[T] extends Serializable {
@@ -57,14 +56,11 @@ class SideOutputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessCo
 /** Encapsulate output of one or more [[SideOutput]]s in an [[SCollectionWithSideOutput]]. */
 class SideOutputCollections private[values] (private val tuple: PCollectionTuple,
                                              private val context: ScioContext) {
-  import Implicits._
 
   /** Extract the [[SCollection]] of a given [[SideOutput]]. */
-  def apply[T: ClassTag](sideOutput: SideOutput[T]): SCollection[T] = {
-    val r = context.pipeline.getCoderRegistry
-    val o = tuple
+  def apply[T: Coder](sideOutput: SideOutput[T]): SCollection[T] = context.wrap {
+    tuple
       .get(sideOutput.tupleTag)
-      .setCoder(r.getScalaCoder[T](context.options))
-    context.wrap(o)
+      .setCoder(CoderMaterializer.beam(context, Coder[T]))
   }
 }
