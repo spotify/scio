@@ -388,7 +388,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Return a new `SCollection[U]` by flattening each element of an `SCollection[Traversable[U]]`.
    * @group transform
    */
-  def flatten[U: Coder](implicit ev: T => TraversableOnce[U]): SCollection[U] =
+  def flatten[U](implicit ev: T => TraversableOnce[U], coder: Coder[U]): SCollection[U] =
     flatMap(ev)
 
   /**
