@@ -252,10 +252,10 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc
         .parallelize(Seq(Seq("a b", "c d"), Seq("e f", "g h")))
-        .flatten[String]
+        .flatten
       p1 should containInAnyOrder(Seq("a b", "c d", "e f", "g h"))
 
-      val p2 = sc.parallelize(Seq(Some(1), None)).flatten[Int]
+      val p2 = sc.parallelize(Seq(Some(1), None)).flatten
       p2 should containInAnyOrder(Seq(1))
     }
   }
