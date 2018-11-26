@@ -53,7 +53,7 @@ object ExamplesJobV2WithSchema {
   def main(argv: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(argv)
     val examples = sc.parallelize(MetadataSchemaTest.examples)
-    examples.saveAsTfExampleFile(args("output"), dummySchema())
+    examples.saveAsTfExampleFileWithSchema(args("output"), dummySchema())
     sc.close()
   }
 }

@@ -30,7 +30,13 @@ class TFExampleIOTest extends ScioIOSpec {
 
   import TFExampleIOTest._
 
-  "TFEXampleIO" should "work" in {
+  "TFExampleIO" should "work (with schema)" in {
+    val xs = (1 to 100).map(x => recordT.toExample(Record(x, x.toString)))
+    testTap(xs)(_.saveAsTfExampleFileWithSchema(_))(".tfrecords")
+    testJobTest(xs)(TFExampleIO(_))(_.tfRecordExampleFile(_))(_.saveAsTfExampleFileWithSchema(_))
+  }
+
+  "TFExampleIO" should "work" in {
     val xs = (1 to 100).map(x => recordT.toExample(Record(x, x.toString)))
     testTap(xs)(_.saveAsTfExampleFile(_))(".tfrecords")
     testJobTest(xs)(TFExampleIO(_))(_.tfRecordExampleFile(_))(_.saveAsTfExampleFile(_))

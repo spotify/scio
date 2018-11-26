@@ -191,10 +191,25 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
 
   /**
    * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
+   * @return
+   */
+  def saveAsTfExampleFile(
+    path: String,
+    suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
+    compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[Example]] = {
+    val param = TFExampleIO.WriteParam(suffix, compression, numShards)
+    self.asInstanceOf[SCollection[Example]].write(TFExampleIO(path))(param)
+  }
+
+  /**
+   * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
    * @group output
    */
-  def saveAsTfExampleFile(path: String): Future[Tap[Example]] = {
-    this.saveAsTfExampleFile(
+  @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
+              "Scio 0.7.0")
+  def saveAsTfExampleFileWithSchema(path: String): Future[Tap[Example]] = {
+    this.saveAsTfExampleFileWithSchema(
       path,
       schema = null,
       schemaFilename = "_inferred_schema.pb"
@@ -206,8 +221,10 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
    * along with  `org.tensorflow.metadata.v0.Schema`.
    * @group output
    */
-  def saveAsTfExampleFile(path: String, schema: Schema): Future[Tap[Example]] = {
-    this.saveAsTfExampleFile(
+  @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
+              "Scio 0.7.0")
+  def saveAsTfExampleFileWithSchema(path: String, schema: Schema): Future[Tap[Example]] = {
+    this.saveAsTfExampleFileWithSchema(
       path,
       schema,
       schemaFilename = "_schema.pb"
@@ -219,7 +236,9 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
    * along with `org.tensorflow.metadata.v0.Schema`.
    * @return
    */
-  def saveAsTfExampleFile(
+  @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
+              "Scio 0.7.0")
+  def saveAsTfExampleFileWithSchema(
     path: String,
     schema: Schema,
     schemaFilename: String,
@@ -232,7 +251,6 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
       // by default if there is no schema provided infer and save schema
       self.inferExampleMetadata(schemaPath)
     } else {
-      // TODO (#1252): maybe enforce some schema checks, but at least save the schema along the data
       TFExampleSCollectionFunctions
         .saveExampleMetadata(self.context.parallelize(Some(schema)), schemaPath)
     }
@@ -246,7 +264,9 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
    * @param schemaPath optional path to save infered schema
    * @return A singleton `SCollection` containing the schema
    */
-  def inferExampleMetadata(schemaPath: String = null): SCollection[Schema] = {
+  @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
+              "Scio 0.7.0")
+  private[tensorflow] def inferExampleMetadata(schemaPath: String = null): SCollection[Schema] = {
     implicit val sc = Coder[Schema]
     implicit val fc = Coder[Feature]
 
@@ -261,6 +281,8 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
   }
 
   // scalastyle:off method.length
+  @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
+              "Scio 0.7.0")
   private def examplesToFeatures(examples: SCollection[Example])(
     implicit coder: Coder[Feature]): SCollection[Feature] = {
     // count allows us to check presence of features, could also be used for statistics
@@ -317,6 +339,8 @@ class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
   // scalastyle:on method.length
 }
 
+@deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
+            "Scio 0.7.0")
 private object TFExampleSCollectionFunctions {
   def saveExampleMetadata(schema: SCollection[Schema], schemaPath: String): Unit =
     if (!schema.context.isTest) {
@@ -346,25 +370,46 @@ class SeqTFExampleSCollectionFunctions[T <: Example](@transient val self: SColle
    *
    * @group output
    */
-  def saveAsTfExampleFile(path: String): Future[Tap[Example]] =
-    saveAsTfExampleFile(path, schema = null, schemaFilename = "_inferred_schema.pb")
-
-  /**
-   * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
-   * Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
-   *
-   * @group output
-   */
-  def saveAsTfExampleFile(path: String, schema: Schema): Future[Tap[Example]] =
-    saveAsTfExampleFile(path, schema, schemaFilename = "_schema.pb")
-
-  /**
-   * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
-   * Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
-   *
-   * @group output
-   */
   def saveAsTfExampleFile(
+    path: String,
+    suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
+    compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[Example]] =
+    self
+      .map(this.mergeExamples)
+      .saveAsTfExampleFile(path, suffix, compression, numShards)
+
+  /**
+   * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
+   * Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
+   *
+   * @group output
+   */
+  @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
+              "Scio 0.7.0")
+  def saveAsTfExampleFileWithSchema(path: String): Future[Tap[Example]] =
+    saveAsTfExampleFileWithSchema(path, schema = null, schemaFilename = "_inferred_schema.pb")
+
+  /**
+   * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
+   * Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
+   *
+   * @group output
+   */
+  @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
+              "Scio 0.7.0")
+  def saveAsTfExampleFileWithSchema(path: String, schema: Schema): Future[Tap[Example]] =
+    saveAsTfExampleFileWithSchema(path, schema, schemaFilename = "_schema.pb")
+
+  /**
+   * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
+   * Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
+   *
+   * @group output
+   */
+  @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
+              "Scio 0.7.0")
+  def saveAsTfExampleFileWithSchema(
     path: String,
     schema: Schema,
     schemaFilename: String,
@@ -373,7 +418,7 @@ class SeqTFExampleSCollectionFunctions[T <: Example](@transient val self: SColle
     numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[Example]] =
     self
       .map(this.mergeExamples)
-      .saveAsTfExampleFile(path, schema, schemaFilename, suffix, compression, numShards)
+      .saveAsTfExampleFileWithSchema(path, schema, schemaFilename, suffix, compression, numShards)
 
 }
 
