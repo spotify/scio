@@ -48,8 +48,8 @@ commands:
     - checkout
     - restore_cache:
         keys:
-        - v7-dependencies-{{ checksum "build.sbt" }}
-        - v7-dependencies-
+        - v1-dependencies-{{ .Environment.CIRCLE_JOB }}-{{ checksum "build.sbt" }}
+        - v1-dependencies-
     - run: ./scripts/gen_schemas.sh
     - run:
         name: setup
@@ -71,7 +71,7 @@ commands:
     - run: if [ "$CIRCLE_BRANCH" == "beam-master" ]; then ./scripts/circleci_snapshot.sh; fi
     - steps: << parameters.build-steps >>
     - save_cache:
-        key: v7-dependencies-{{ checksum "build.sbt" }}
+        key: v1-dependencies-{{ .Environment.CIRCLE_JOB }}-{{ checksum "build.sbt" }}
         paths:
         - "~/.ivy2/cache"
         - "~/.sbt"
@@ -91,7 +91,6 @@ jobs:
         - run:
             command: |
               sbt -v $SBT_OPTS \
-                +update +updateSbtClassifiers \
                 scalastyle \
                 scalafmtCheck test:scalafmtCheck it:scalafmtCheck scalafmtSbtCheck
 
