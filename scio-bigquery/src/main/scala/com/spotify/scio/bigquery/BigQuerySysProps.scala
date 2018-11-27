@@ -26,7 +26,7 @@ object BigQuerySysProps {
 
   val DisableDump = SysProp("bigquery.plugin.disable.dump", "disable class dump")
 
-  val ClassCacheDirectory = SysProp("bigquery.class.cache.directory", "class cache directory")
+  val ClassCacheDirectory = SysProp("generated.class.cache.directory", "class cache directory")
 
   val CacheDirectory =
     SysProp("bigquery.cache.directory", "System property key for local schema cache directory")

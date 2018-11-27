@@ -386,11 +386,11 @@ private[types] object TypeProvider {
 
   private def getBQClassCacheDir: Path = {
     // TODO: add this as key/value settings with default etc
-    AvroSysProps.CacheDirectory.valueOption.map(Paths.get(_)).getOrElse {
+    AvroSysProps.ClassCacheDirectory.valueOption.map(Paths.get(_)).getOrElse {
       Paths
         .get(CoreSysProps.TmpDir.value)
         .resolve(CoreSysProps.User.value)
-        .resolve("bigquery-classes")
+        .resolve("generated-classes")
     }
   }
 
