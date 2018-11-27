@@ -382,11 +382,11 @@ private[types] object TypeProvider {
    * This is used to mitigate lack of support for Scala macros in IntelliJ.
    */
   private def shouldDumpClassesForPlugin =
-    !AvroSysProps.DisableDump.value("true").toBoolean
+    AvroSysProps.DisableDump.value("true").toBoolean
 
   private def getBQClassCacheDir: Path = {
     // TODO: add this as key/value settings with default etc
-    AvroSysProps.Debug.valueOption.map(Paths.get(_)).getOrElse {
+    AvroSysProps.CacheDirectory.valueOption.map(Paths.get(_)).getOrElse {
       Paths
         .get(CoreSysProps.TmpDir.value)
         .resolve(CoreSysProps.User.value)
@@ -436,8 +436,7 @@ private[types] object TypeProvider {
     val hash = genHashForMacro(owner, srcFile)
 
     val prettyCode = pShowCode(c)(records, caseClassTree).mkString("\n")
-    val classCacheDir = getBQClassCacheDir
-    val genSrcFile = classCacheDir.resolve(s"$name-$hash.scala").toFile
+    val genSrcFile = getBQClassCacheDir.resolve(s"$name-$hash.scala").toFile
 
     logger.debug(s"Will dump generated $name of $owner from $srcFile to $genSrcFile")
 

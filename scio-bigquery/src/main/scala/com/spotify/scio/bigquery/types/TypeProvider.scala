@@ -410,11 +410,11 @@ private[types] object TypeProvider {
    * This is used to mitigate lack of support for Scala macros in IntelliJ.
    */
   private def shouldDumpClassesForPlugin =
-    !BigQuerySysProps.DisableDump.value("true").toBoolean
+    BigQuerySysProps.DisableDump.value("true").toBoolean
 
   private def getBQClassCacheDir: Path = {
     // TODO: add this as key/value settings with default etc
-    BigQuerySysProps.Debug.valueOption.map(Paths.get(_)).getOrElse {
+    BigQuerySysProps.ClassCacheDirectory.valueOption.map(Paths.get(_)).getOrElse {
       Paths
         .get(CoreSysProps.TmpDir.value)
         .resolve(CoreSysProps.User.value)
