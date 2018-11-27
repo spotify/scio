@@ -85,12 +85,12 @@ class TensorFlowImplicitsIT extends PipelineSpec with PipelineTestUtils with Bef
     runWithRealContext(options) { sc =>
       val writeFuture = sc
         .parallelize(examples)
-        .saveAsTfExampleFile(path = outputPath,
-                             schema = tfSchema,
-                             schemaFilename = "schema_it.pb",
-                             suffix = ".tfrecords",
-                             compression = Compression.UNCOMPRESSED,
-                             numShards = 0)
+        .saveAsTfExampleFileWithSchema(path = outputPath,
+                                       schema = tfSchema,
+                                       schemaFilename = "schema_it.pb",
+                                       suffix = ".tfrecords",
+                                       compression = Compression.UNCOMPRESSED,
+                                       numShards = 0)
 
       import scala.concurrent.ExecutionContext.Implicits.global
 
