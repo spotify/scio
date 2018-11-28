@@ -1057,8 +1057,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                    timestampAttribute: String = null,
                    maxBatchSize: Option[Int] = None,
                    maxBatchBytesSize: Option[Int] = None)(implicit ct: ClassTag[T],
-                                                          coder: Coder[T]): Future[Tap[Nothing]] =
-    this.write(PubsubIO[T](topic))(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
+                                                          coder: Coder[T]): Future[Tap[Nothing]] = {
+    val io = PubsubIO[T](topic, idAttribute, timestampAttribute)
+    this.write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
+  }
 
   /**
    * Save this SCollection as a Pub/Sub topic using the given map as message attributes.
