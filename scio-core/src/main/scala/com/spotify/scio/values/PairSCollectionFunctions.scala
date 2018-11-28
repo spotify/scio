@@ -757,7 +757,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     this.reduceByKey(ord.max)
 
   def maxByKey(ord: Ordering[V])(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
-    maxByKey(ord)(koder, voder)
+    maxByKey(ord, koder, voder, DummyImplicit.dummyImplicit)
 
   /**
    * Return the min of values for each key as defined by the implicit `Ordering[T]`.
