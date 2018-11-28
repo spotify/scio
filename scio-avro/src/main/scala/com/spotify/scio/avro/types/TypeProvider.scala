@@ -382,7 +382,7 @@ private[types] object TypeProvider {
    * This is used to mitigate lack of support for Scala macros in IntelliJ.
    */
   private def shouldDumpClassesForPlugin =
-    AvroSysProps.DisableDump.value("true").toBoolean
+    !AvroSysProps.DisableDump.value(default = "false").toBoolean
 
   private def getBQClassCacheDir: Path = {
     // TODO: add this as key/value settings with default etc
