@@ -21,7 +21,7 @@ import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.coders.{Coder, KryoAtomicCoder, KryoOptions}
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
@@ -80,7 +80,7 @@ private object Reads {
       .read(new SerializableFunction[SchemaAndRecord, T] {
         override def apply(input: SchemaAndRecord): T = fn(input.getRecord)
       })
-      .withCoder(new KryoAtomicCoder[T](KryoOptions(sc.options)))
+      .withCoder(CoderMaterializer.beam(sc, Coder.kryo[T]))
   }
 
   private[scio] def bqReadTable[T: ClassTag](sc: ScioContext)(
