@@ -410,9 +410,9 @@ multiple times (use <a href="#distinct:com.spotify.scio.values.SCollection[T]" c
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
     </li><li name="com.spotify.scio.values.SCollection#aggregate" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="transform">
-      <a id="aggregate[A,U](aggregator:com.twitter.algebird.Aggregator[T,A,U])(implicitevidence$3:com.spotify.scio.coders.Coder[A],implicitevidence$4:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]"></a><a id="aggregate[A,U](Aggregator[T,A,U])(Coder[A],Coder[U],Coder[T]):SCollection[U]"></a>
+      <a id="aggregate[A,U](aggregator:com.twitter.algebird.Aggregator[T,A,U])(implicitevidence$4:com.spotify.scio.coders.Coder[A],implicitevidence$5:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]"></a><a id="aggregate[A,U](Aggregator[T,A,U])(Coder[A],Coder[U],Coder[T]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#aggregate[A,U](aggregator:com.twitter.algebird.Aggregator[T,A,U])(implicitevidence$3:com.spotify.scio.coders.Coder[A],implicitevidence$4:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#aggregate[A,U](aggregator:com.twitter.algebird.Aggregator[T,A,U])(implicitevidence$4:com.spotify.scio.coders.Coder[A],implicitevidence$5:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -429,9 +429,9 @@ to <code>A</code>, then we reduce with a <a href="https://twitter.github.io/alge
 finally we present the results as <code>U</code>. This could be more powerful and better optimized in
 some cases.</p></div></div>
     </li><li name="com.spotify.scio.values.SCollection#aggregate" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="transform">
-      <a id="aggregate[U](zeroValue:U)(seqOp:(U,T)=&gt;U,combOp:(U,U)=&gt;U)(implicitevidence$2:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]"></a><a id="aggregate[U](U)((U,T)⇒U,(U,U)⇒U)(Coder[U],Coder[T]):SCollection[U]"></a>
+      <a id="aggregate[U](zeroValue:U)(seqOp:(U,T)=&gt;U,combOp:(U,U)=&gt;U)(implicitevidence$3:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]"></a><a id="aggregate[U](U)((U,T)⇒U,(U,U)⇒U)(Coder[U],Coder[T]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#aggregate[U](zeroValue:U)(seqOp:(U,T)=&gt;U,combOp:(U,U)=&gt;U)(implicitevidence$2:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#aggregate[U](zeroValue:U)(seqOp:(U,T)=&gt;U,combOp:(U,U)=&gt;U)(implicitevidence$3:com.spotify.scio.coders.Coder[U],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -465,13 +465,13 @@ of creating a new <code>U</code> to avoid memory allocation.</p></div></div>
       
       <p class="shortcomment cmt">Apply a <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/transforms/PTransform.html" class="extype" name="org.apache.beam.sdk.transforms.PTransform">PTransform</a> and wrap the output in an
 <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Apply a <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/transforms/PTransform.html" class="extype" name="org.apache.beam.sdk.transforms.PTransform">PTransform</a> and wrap the output in an
-<a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>. This is a special case of <a href="#applyTransform[U](transform:org.apache.beam.sdk.transforms.PTransform[_&gt;:org.apache.beam.sdk.values.PCollection[T],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$1:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" class="extmbr" name="com.spotify.scio.values.SCollection#applyTransform">applyTransform</a> for transforms with <span class="extype" name="KV">KV</span>
+<a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>. This is a special case of <a href="#applyTransform[U](transform:org.apache.beam.sdk.transforms.PTransform[_&gt;:org.apache.beam.sdk.values.PCollection[T],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$2:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" class="extmbr" name="com.spotify.scio.values.SCollection#applyTransform">applyTransform</a> for transforms with <span class="extype" name="KV">KV</span>
 output.
 </p></div></div>
     </li><li name="com.spotify.scio.values.SCollection#applyTransform" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="applyTransform[U](transform:org.apache.beam.sdk.transforms.PTransform[_&gt;:org.apache.beam.sdk.values.PCollection[T],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$1:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="applyTransform[U](PTransform[_&gt;:PCollection[T],PCollection[U]])(Coder[U]):SCollection[U]"></a>
+      <a id="applyTransform[U](transform:org.apache.beam.sdk.transforms.PTransform[_&gt;:org.apache.beam.sdk.values.PCollection[T],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$2:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="applyTransform[U](PTransform[_&gt;:PCollection[T],PCollection[U]])(Coder[U]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#applyTransform[U](transform:org.apache.beam.sdk.transforms.PTransform[_&gt;:org.apache.beam.sdk.values.PCollection[T],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$1:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#applyTransform[U](transform:org.apache.beam.sdk.transforms.PTransform[_&gt;:org.apache.beam.sdk.values.PCollection[T],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$2:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -598,9 +598,9 @@ to be used with <a href="#withSideInputs(sides:com.spotify.scio.values.SideInput
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.values.SCollection#collect" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="transform">
-      <a id="collect[U](pfn:PartialFunction[T,U])(implicitevidence$5:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="collect[U](PartialFunction[T,U])(Coder[U]):SCollection[U]"></a>
+      <a id="collect[U](pfn:PartialFunction[T,U])(implicitevidence$6:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="collect[U](PartialFunction[T,U])(Coder[U]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#collect[U](pfn:PartialFunction[T,U])(implicitevidence$5:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#collect[U](pfn:PartialFunction[T,U])(implicitevidence$6:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -614,9 +614,9 @@ to be used with <a href="#withSideInputs(sides:com.spotify.scio.values.SideInput
       
       <p class="shortcomment cmt">Filter the elements for which the given <code>PartialFunction</code> is defined, and then map.</p>
     </li><li name="com.spotify.scio.values.SCollection#combine" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="transform">
-      <a id="combine[C](createCombiner:T=&gt;C)(mergeValue:(C,T)=&gt;C)(mergeCombiners:(C,C)=&gt;C)(implicitevidence$6:com.spotify.scio.coders.Coder[C],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[C]"></a><a id="combine[C]((T)⇒C)((C,T)⇒C)((C,C)⇒C)(Coder[C],Coder[T]):SCollection[C]"></a>
+      <a id="combine[C](createCombiner:T=&gt;C)(mergeValue:(C,T)=&gt;C)(mergeCombiners:(C,C)=&gt;C)(implicitevidence$7:com.spotify.scio.coders.Coder[C],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[C]"></a><a id="combine[C]((T)⇒C)((C,T)⇒C)((C,C)⇒C)(Coder[C],Coder[T]):SCollection[C]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#combine[C](createCombiner:T=&gt;C)(mergeValue:(C,T)=&gt;C)(mergeCombiners:(C,C)=&gt;C)(implicitevidence$6:com.spotify.scio.coders.Coder[C],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[C]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#combine[C](createCombiner:T=&gt;C)(mergeValue:(C,T)=&gt;C)(mergeCombiners:(C,C)=&gt;C)(implicitevidence$7:com.spotify.scio.coders.Coder[C],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[C]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -839,9 +839,9 @@ representative value for each input element.
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.values.SCollection#flatMap" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="transform">
-      <a id="flatMap[U](f:T=&gt;TraversableOnce[U])(implicitevidence$7:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="flatMap[U]((T)⇒TraversableOnce[U])(Coder[U]):SCollection[U]"></a>
+      <a id="flatMap[U](f:T=&gt;TraversableOnce[U])(implicitevidence$8:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="flatMap[U]((T)⇒TraversableOnce[U])(Coder[U]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#flatMap[U](f:T=&gt;TraversableOnce[U])(implicitevidence$7:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#flatMap[U](f:T=&gt;TraversableOnce[U])(implicitevidence$8:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -856,9 +856,9 @@ representative value for each input element.
       <p class="shortcomment cmt">Return a new SCollection by first applying a function to all elements of
 this SCollection, and then flattening the results.</p>
     </li><li name="com.spotify.scio.values.SCollection#flatten" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="transform">
-      <a id="flatten[U](implicitevidence$8:com.spotify.scio.coders.Coder[U],implicitev:T=&gt;TraversableOnce[U]):com.spotify.scio.values.SCollection[U]"></a><a id="flatten[U](Coder[U],(T)⇒TraversableOnce[U]):SCollection[U]"></a>
+      <a id="flatten[U](implicitev:T=&gt;TraversableOnce[U],implicitcoder:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]"></a><a id="flatten[U]((T)⇒TraversableOnce[U],Coder[U]):SCollection[U]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/SCollection.html#flatten[U](implicitevidence$8:com.spotify.scio.coders.Coder[U],implicitev:T=&gt;TraversableOnce[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/SCollection.html#flatten[U](implicitev:T=&gt;TraversableOnce[U],implicitcoder:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -867,7 +867,7 @@ this SCollection, and then flattening the results.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">flatten</span><span class="tparams">[<span name="U">U</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.flatten.U">U</span>]</span>, <span name="ev">ev: (<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>) ⇒ <span class="extype" name="scala.TraversableOnce">TraversableOnce</span>[<span class="extype" name="com.spotify.scio.values.SCollection.flatten.U">U</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.flatten.U">U</span>]</span>
+        <span class="name">flatten</span><span class="tparams">[<span name="U">U</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="ev">ev: (<span class="extype" name="com.spotify.scio.values.SCollection.T">T</span>) ⇒ <span class="extype" name="scala.TraversableOnce">TraversableOnce</span>[<span class="extype" name="com.spotify.scio.values.SCollection.flatten.U">U</span>]</span>, <span name="coder">coder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.SCollection.flatten.U">U</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<span class="extype" name="com.spotify.scio.values.SCollection.flatten.U">U</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Return a new <code>SCollection[U]</code> by flattening each element of an <code>SCollection[Traversable[U]]</code>.</p>

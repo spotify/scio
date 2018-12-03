@@ -135,6 +135,10 @@
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="PredictSCollectionFunctions.html" title="Enhanced version of SCollection with TensorFlow methods."></a>
+                        <a href="PredictSCollectionFunctions.html" title="Enhanced version of SCollection with TensorFlow methods.">PredictSCollectionFunctions</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="SeqTFExampleSCollectionFunctions.html" title=""></a>
                         <a href="SeqTFExampleSCollectionFunctions.html" title="">SeqTFExampleSCollectionFunctions</a>
                       </li><li class="current-entities indented4">
@@ -453,24 +457,6 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.tensorflow.TFExampleSCollectionFunctions#inferExampleMetadata" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="inferExampleMetadata(schemaPath:String):com.spotify.scio.values.SCollection[org.tensorflow.metadata.v0.Schema]"></a><a id="inferExampleMetadata(String):SCollection[Schema]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions.html#inferExampleMetadata(schemaPath:String):com.spotify.scio.values.SCollection[org.tensorflow.metadata.v0.Schema]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">inferExampleMetadata</span><span class="params">(<span name="schemaPath">schemaPath: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>)</span><span class="result">: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<a href="../../../../org/tensorflow/metadata/v0/Schema.html" class="extype" name="org.tensorflow.metadata.v0.Schema">Schema</a>]</span>
-      </span>
-      
-      <p class="shortcomment cmt">Infer a <code>org.tensorflow.metadata.v0.Schema</code> from this SCollection of
-<code>org.tensorflow.example.Example</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Infer a <code>org.tensorflow.metadata.v0.Schema</code> from this SCollection of
-<code>org.tensorflow.example.Example</code>.</p></div><dl class="paramcmts block"><dt class="param">schemaPath</dt><dd class="cmt"><p>optional path to save infered schema</p></dd><dt>returns</dt><dd class="cmt"><p>A singleton <code>SCollection</code> containing the schema</p></dd></dl></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
@@ -542,9 +528,9 @@
               
         </dd></dl></div>
     </li><li name="com.spotify.scio.tensorflow.TFExampleSCollectionFunctions#saveAsTfExampleFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="saveAsTfExampleFile(path:String,schema:org.tensorflow.metadata.v0.Schema,schemaFilename:String,suffix:String,compression:org.apache.beam.sdk.io.Compression,numShards:Int):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]"></a><a id="saveAsTfExampleFile(String,Schema,String,String,Compression,Int):Future[Tap[Example]]"></a>
+      <a id="saveAsTfExampleFile(path:String,suffix:String,compression:org.apache.beam.sdk.io.Compression,numShards:Int):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]"></a><a id="saveAsTfExampleFile(String,String,Compression,Int):Future[Tap[Example]]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions.html#saveAsTfExampleFile(path:String,schema:org.tensorflow.metadata.v0.Schema,schemaFilename:String,suffix:String,compression:org.apache.beam.sdk.io.Compression,numShards:Int):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions.html#saveAsTfExampleFile(path:String,suffix:String,compression:org.apache.beam.sdk.io.Compression,numShards:Int):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -553,41 +539,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">saveAsTfExampleFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <a href="../../../../org/tensorflow/metadata/v0/Schema.html" class="extype" name="org.tensorflow.metadata.v0.Schema">Schema</a></span>, <span name="schemaFilename">schemaFilename: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="defval" name='<span class="name"><a href="TFExampleIO$.html">TFExampleIO.WriteParam.DefaultSuffix</a></span>'>...</span></span>, <span name="compression">compression: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/io/Compression.html#org.apache.beam.sdk.io.Compression" class="extype" name="org.apache.beam.sdk.io.Compression">Compression</a> = <span class="defval" name='<span class="name"><a href="TFExampleIO$.html">TFExampleIO.WriteParam.DefaultCompression</a></span>'>...</span></span>, <span name="numShards">numShards: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="defval" name='<span class="name"><a href="TFExampleIO$.html">TFExampleIO.WriteParam.DefaultNumShards</a></span>'>...</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="org.tensorflow.example.Example">Example</span>]]</span>
-      </span>
-      
-      <p class="shortcomment cmt">Saves this SCollection of <code>org.tensorflow.example.Example</code> as a TensorFlow TFRecord file,
-along with <code>org.tensorflow.metadata.v0.Schema</code>.</p>
-    </li><li name="com.spotify.scio.tensorflow.TFExampleSCollectionFunctions#saveAsTfExampleFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="output">
-      <a id="saveAsTfExampleFile(path:String,schema:org.tensorflow.metadata.v0.Schema):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]"></a><a id="saveAsTfExampleFile(String,Schema):Future[Tap[Example]]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions.html#saveAsTfExampleFile(path:String,schema:org.tensorflow.metadata.v0.Schema):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">saveAsTfExampleFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <a href="../../../../org/tensorflow/metadata/v0/Schema.html" class="extype" name="org.tensorflow.metadata.v0.Schema">Schema</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="org.tensorflow.example.Example">Example</span>]]</span>
-      </span>
-      
-      <p class="shortcomment cmt">Saves this SCollection of <code>org.tensorflow.example.Example</code> as a TensorFlow TFRecord file,
-along with  <code>org.tensorflow.metadata.v0.Schema</code>.</p>
-    </li><li name="com.spotify.scio.tensorflow.TFExampleSCollectionFunctions#saveAsTfExampleFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="output">
-      <a id="saveAsTfExampleFile(path:String):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]"></a><a id="saveAsTfExampleFile(String):Future[Tap[Example]]"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions.html#saveAsTfExampleFile(path:String):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">saveAsTfExampleFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="org.tensorflow.example.Example">Example</span>]]</span>
+        <span class="name">saveAsTfExampleFile</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="defval" name='<span class="name"><a href="TFExampleIO$.html">TFExampleIO.WriteParam.DefaultSuffix</a></span>'>...</span></span>, <span name="compression">compression: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/io/Compression.html#org.apache.beam.sdk.io.Compression" class="extype" name="org.apache.beam.sdk.io.Compression">Compression</a> = <span class="defval" name='<span class="name"><a href="TFExampleIO$.html">TFExampleIO.WriteParam.DefaultCompression</a></span>'>...</span></span>, <span name="numShards">numShards: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="defval" name='<span class="name"><a href="TFExampleIO$.html">TFExampleIO.WriteParam.DefaultNumShards</a></span>'>...</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="org.tensorflow.example.Example">Example</span>]]</span>
       </span>
       
       <p class="shortcomment cmt">Saves this SCollection of <code>org.tensorflow.example.Example</code> as a TensorFlow TFRecord file.</p>
@@ -713,7 +665,71 @@ along with  <code>org.tensorflow.metadata.v0.Schema</code>.</p>
 
         
 
-        
+        <div class="values members">
+              <h3>Deprecated Value Members</h3>
+              <ol><li name="com.spotify.scio.tensorflow.TFExampleSCollectionFunctions#saveAsTfExampleFileWithSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="saveAsTfExampleFileWithSchema(path:String,schema:org.tensorflow.metadata.v0.Schema,schemaFilename:String,suffix:String,compression:org.apache.beam.sdk.io.Compression,numShards:Int):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]"></a><a id="saveAsTfExampleFileWithSchema(String,Schema,String,String,Compression,Int):Future[Tap[Example]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions.html#saveAsTfExampleFileWithSchema(path:String,schema:org.tensorflow.metadata.v0.Schema,schemaFilename:String,suffix:String,compression:org.apache.beam.sdk.io.Compression,numShards:Int):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version Scio 0.7.0) Schema inference will be removed. We recommend using TensorFlow Data Validation">saveAsTfExampleFileWithSchema</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <a href="../../../../org/tensorflow/metadata/v0/Schema.html" class="extype" name="org.tensorflow.metadata.v0.Schema">Schema</a></span>, <span name="schemaFilename">schemaFilename: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="suffix">suffix: <span class="extype" name="scala.Predef.String">String</span> = <span class="defval" name='<span class="name"><a href="TFExampleIO$.html">TFExampleIO.WriteParam.DefaultSuffix</a></span>'>...</span></span>, <span name="compression">compression: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.8.0/org/apache/beam/sdk/io/Compression.html#org.apache.beam.sdk.io.Compression" class="extype" name="org.apache.beam.sdk.io.Compression">Compression</a> = <span class="defval" name='<span class="name"><a href="TFExampleIO$.html">TFExampleIO.WriteParam.DefaultCompression</a></span>'>...</span></span>, <span name="numShards">numShards: <a href="http://www.scala-lang.org/api/2.12.7/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="defval" name='<span class="name"><a href="TFExampleIO$.html">TFExampleIO.WriteParam.DefaultNumShards</a></span>'>...</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="org.tensorflow.example.Example">Example</span>]]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Saves this SCollection of <code>org.tensorflow.example.Example</code> as a TensorFlow TFRecord file,
+along with <code>org.tensorflow.metadata.v0.Schema</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Saves this SCollection of <code>org.tensorflow.example.Example</code> as a TensorFlow TFRecord file,
+along with <code>org.tensorflow.metadata.v0.Schema</code>.</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version Scio 0.7.0)</i> Schema inference will be removed. We recommend using TensorFlow Data Validation</p></dd></dl></div>
+    </li><li name="com.spotify.scio.tensorflow.TFExampleSCollectionFunctions#saveAsTfExampleFileWithSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="output">
+      <a id="saveAsTfExampleFileWithSchema(path:String,schema:org.tensorflow.metadata.v0.Schema):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]"></a><a id="saveAsTfExampleFileWithSchema(String,Schema):Future[Tap[Example]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions.html#saveAsTfExampleFileWithSchema(path:String,schema:org.tensorflow.metadata.v0.Schema):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version Scio 0.7.0) Schema inference will be removed. We recommend using TensorFlow Data Validation">saveAsTfExampleFileWithSchema</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="schema">schema: <a href="../../../../org/tensorflow/metadata/v0/Schema.html" class="extype" name="org.tensorflow.metadata.v0.Schema">Schema</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="org.tensorflow.example.Example">Example</span>]]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Saves this SCollection of <code>org.tensorflow.example.Example</code> as a TensorFlow TFRecord file,
+along with  <code>org.tensorflow.metadata.v0.Schema</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Saves this SCollection of <code>org.tensorflow.example.Example</code> as a TensorFlow TFRecord file,
+along with  <code>org.tensorflow.metadata.v0.Schema</code>.</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version Scio 0.7.0)</i> Schema inference will be removed. We recommend using TensorFlow Data Validation</p></dd></dl></div>
+    </li><li name="com.spotify.scio.tensorflow.TFExampleSCollectionFunctions#saveAsTfExampleFileWithSchema" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="output">
+      <a id="saveAsTfExampleFileWithSchema(path:String):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]"></a><a id="saveAsTfExampleFileWithSchema(String):Future[Tap[Example]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions.html#saveAsTfExampleFileWithSchema(path:String):scala.concurrent.Future[com.spotify.scio.io.Tap[org.tensorflow.example.Example]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version Scio 0.7.0) Schema inference will be removed. We recommend using TensorFlow Data Validation">saveAsTfExampleFileWithSchema</span><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.7/scala/concurrent/Future.html#scala.concurrent.Future" class="extype" name="scala.concurrent.Future">Future</a>[<a href="../io/Tap.html" class="extype" name="com.spotify.scio.io.Tap">Tap</a>[<span class="extype" name="org.tensorflow.example.Example">Example</span>]]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Saves this SCollection of <code>org.tensorflow.example.Example</code> as a TensorFlow TFRecord file.</p><div class="fullcomment"><div class="comment cmt"><p>Saves this SCollection of <code>org.tensorflow.example.Example</code> as a TensorFlow TFRecord file.</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version Scio 0.7.0)</i> Schema inference will be removed. We recommend using TensorFlow Data Validation</p></dd></dl></div>
+    </li></ol>
+            </div>
         </div>
 
         <div id="inheritedMembers">
