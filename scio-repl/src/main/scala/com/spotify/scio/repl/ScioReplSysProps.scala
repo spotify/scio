@@ -22,4 +22,7 @@ import com.spotify.scio.{registerSysProps, SysProp}
 @registerSysProps
 object ScioReplSysProps {
   val Key = SysProp("key", "")
+
+  val MaxPrintString =
+    SysProp("scala.repl.maxprintstring", "Max characters to display in REPL before truncation")
 }

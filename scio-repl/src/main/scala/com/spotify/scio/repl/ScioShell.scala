@@ -109,6 +109,8 @@ trait BaseScioShell extends MainGenericRunner {
   /** Runs an instance of the shell. */
   def main(args: Array[String]): Unit = {
     sys.props(BigQuerySysProps.DisableDump.flag) = "true"
+    sys.props(ScioReplSysProps.MaxPrintString.flag) = "1500"
+
     val retVal = process(args)
     if (!retVal) {
       sys.exit(1)
