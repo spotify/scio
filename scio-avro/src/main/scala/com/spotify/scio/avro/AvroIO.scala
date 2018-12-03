@@ -88,11 +88,16 @@ object ObjectFileIO {
   val WriteParam = AvroIO.WriteParam
 }
 
-final case class ProtobufIO[T: ClassTag: Coder](path: String)(implicit ev: T <:< Message)
+final case class ProtobufIO[T: ClassTag](path: String)(implicit ev: T <:< Message)
     extends ScioIO[T] {
   override type ReadP = Unit
   override type WriteP = ProtobufIO.WriteParam
   override final val tapT = TapOf[T]
+
+  private val protoCoder =
+    Coder
+      .protoMessageCoder[Message](classTag[T].asInstanceOf[ClassTag[Message]])
+      .asInstanceOf[Coder[T]]
 
   /**
    * Get an SCollection for a Protobuf file.
@@ -101,7 +106,7 @@ final case class ProtobufIO[T: ClassTag: Coder](path: String)(implicit ev: T <:<
    * Avro's block file format.
    */
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    ObjectFileIO[T](path).read(sc, params)
+    ObjectFileIO[T](path)(protoCoder).read(sc, params)
 
   /**
    * Save this SCollection as a Protobuf file.
@@ -115,11 +120,11 @@ final case class ProtobufIO[T: ClassTag: Coder](path: String)(implicit ev: T <:<
       .of[Message](classTag[T].asInstanceOf[ClassTag[Message]])
       .toJson
     val metadata = params.metadata ++ Map("protobuf.generic.schema" -> schema)
-    ObjectFileIO[T](path).write(data, params.copy(metadata = metadata))
+    ObjectFileIO[T](path)(protoCoder).write(data, params.copy(metadata = metadata))
   }
 
   override def tap(read: ReadP): Tap[T] =
-    ObjectFileTap[T](ScioUtil.addPartSuffix(path))
+    ObjectFileTap[T](ScioUtil.addPartSuffix(path))(protoCoder)
 }
 
 object ProtobufIO {
