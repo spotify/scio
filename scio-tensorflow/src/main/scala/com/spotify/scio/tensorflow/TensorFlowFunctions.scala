@@ -162,8 +162,7 @@ private[tensorflow] class GraphPredictDoFn[T, V](uri: String,
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with TensorFlow methods.
  */
-private[tensorflow] class PredictSCollectionFunctions[T: ClassTag](
-  @transient val self: SCollection[T])
+final class PredictSCollectionFunctions[T: ClassTag](@transient private val self: SCollection[T])
     extends Serializable {
 
   /**
@@ -187,7 +186,7 @@ private[tensorflow] class PredictSCollectionFunctions[T: ClassTag](
     self.parDo(new SavedBundlePredictDoFn[T, V](savedModelUri, options, fetchOps, inFn, outFn))
 }
 
-class TFExampleSCollectionFunctions[T <: Example](val self: SCollection[T]) {
+final class TFExampleSCollectionFunctions[T <: Example](private val self: SCollection[T]) {
 
   /**
    * Saves this SCollection of `org.tensorflow.example.Example` as a TensorFlow TFRecord file.
@@ -357,7 +356,8 @@ private object TFExampleSCollectionFunctions {
     }
 }
 
-class SeqTFExampleSCollectionFunctions[T <: Example](@transient val self: SCollection[Seq[T]])
+final class SeqTFExampleSCollectionFunctions[T <: Example](
+  @transient private val self: SCollection[Seq[T]])
     extends Serializable {
 
   def mergeExamples(e: Seq[Example]): Example =
@@ -422,7 +422,7 @@ class SeqTFExampleSCollectionFunctions[T <: Example](@transient val self: SColle
 
 }
 
-class TFRecordSCollectionFunctions[T <: Array[Byte]](val self: SCollection[T]) {
+final class TFRecordSCollectionFunctions[T <: Array[Byte]](private val self: SCollection[T]) {
 
   /**
    * Save this SCollection as a TensorFlow TFRecord file. Note that elements must be of type
