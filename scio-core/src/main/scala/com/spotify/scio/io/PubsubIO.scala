@@ -133,10 +133,10 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](name: Str
       val t = setup(beam.PubsubIO.writeAvros(cls))
       data.applyInternal(t)
     } else if (classOf[Message] isAssignableFrom cls) {
-      val t = beam.PubsubIO.writeProtos(cls.asInstanceOf[Class[Message]])
+      val t = setup(beam.PubsubIO.writeProtos(cls.asInstanceOf[Class[Message]]))
       data.asInstanceOf[SCollection[Message]].applyInternal(t)
     } else if (classOf[PubsubMessage] isAssignableFrom cls) {
-      val t = beam.PubsubIO.writeMessages()
+      val t = setup(beam.PubsubIO.writeMessages())
       data.asInstanceOf[SCollection[PubsubMessage]].applyInternal(t)
     } else {
       val coder = data.internal.getPipeline.getCoderRegistry
