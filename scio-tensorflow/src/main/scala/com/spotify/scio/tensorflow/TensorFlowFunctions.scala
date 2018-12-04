@@ -159,7 +159,7 @@ private[tensorflow] class GraphPredictDoFn[T, V](uri: String,
   }
 }
 
-private object TFExampleSCollectionFunctions {
+object TFExampleSCollectionFunctions {
   @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
               "Scio 0.7.0")
   def saveExampleMetadata(schema: SCollection[Schema], schemaPath: String): Unit =
@@ -358,9 +358,9 @@ final class TFExampleSCollectionFunctions[T <: Example](private val self: SColle
 
 }
 
-private object SeqTFExampleSCollectionFunctions {
+object SeqTFExampleSCollectionFunctions {
 
-  val mergeExamples: Seq[Example] => Example =
+  private val mergeExamples: Seq[Example] => Example =
     _.foldLeft(Example.newBuilder)((b, i) => b.mergeFrom(i))
       .build()
 
