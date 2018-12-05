@@ -19,7 +19,7 @@ executors:
       - image: circleci/openjdk:8-jdk
     environment:
       <<: *env
-      SCALA_VERSION: 2.12.7
+      SCALA_VERSION: 2.12.8
   scala_211: &scala_211
     <<: [*settings]
     docker:
