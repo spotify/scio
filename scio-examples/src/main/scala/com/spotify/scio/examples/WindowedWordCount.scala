@@ -71,7 +71,7 @@ object WindowedWordCount {
           .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
           // Count occurrences of each unique `String` within each window to get `(String, Long)`
           .countByValue
-          // Expose window infomation as an `IntervalWindow`
+          // Expose window information as an `IntervalWindow`
           .withWindow[IntervalWindow]
           // Swap keys and values, i.e. `((String, Long), IntervalWindow)` => `(IntervalWindow,
           // (String, Long))`

@@ -62,7 +62,7 @@ public class ElasticsearchIO {
   public static class Write {
 
     /**
-     * Returns a tranform for writing to Elasticsearch cluster for a given name.
+     * Returns a transform for writing to Elasticsearch cluster for a given name.
      *
      * @param clusterName name of the Elasticsearch cluster
      */

@@ -64,7 +64,7 @@ trait ScioIO[T] {
   type WriteP
 
   // !!! This needs to be a stable value (ie: a val, not a def) in every implementations,
-  // !!! otherwise the return type of write cannot be infered.
+  // !!! otherwise the return type of write cannot be inferred.
   val tapT: TapT[T]
   // identifier for JobTest IO matching
   def testId: String = this.toString
