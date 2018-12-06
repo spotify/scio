@@ -72,7 +72,7 @@ object TfIdf {
               .map((uri, _))
           }
       // TODO: add splittable DoFn approach once available
-      case m => throw new IllegalArgumentException(s"Unkonwn mode: $m")
+      case m => throw new IllegalArgumentException(s"Unknown mode: $m")
     }
 
     computeTfIdf(uriToContent)

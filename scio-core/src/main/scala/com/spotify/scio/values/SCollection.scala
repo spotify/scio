@@ -360,7 +360,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Returns a new SCollection with distinct elements using given function to obtain a
    * representative value for each input element.
    *
-   * @param f The funciton to use to get representative values.
+   * @param f The function to use to get representative values.
    * @tparam U The type of representative values used to dedup.
    * @group transform
    */

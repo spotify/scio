@@ -336,7 +336,7 @@ final class TFExampleSCollectionFunctions[T <: Example](private val self: SColle
   /**
    * Infer a `org.tensorflow.metadata.v0.Schema` from this SCollection of
    * `org.tensorflow.example.Example`.
-   * @param schemaPath optional path to save infered schema
+   * @param schemaPath optional path to save inferred schema
    * @return A singleton `SCollection` containing the schema
    */
   @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
