@@ -107,7 +107,7 @@ object TrafficRoutes {
         val slowdownEvent = slowdowns >= 2 * speedups
         RouteInfo(kv._1, speedAvg, slowdownEvent)
       }
-      .withTimestamp // explose internal timestamp
+      .withTimestamp // explodes internal timestamp
       .map {
         case (r, ts) =>
           Record(r.route, r.avgSpeed, r.slowdownEvent, ts)

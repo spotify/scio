@@ -49,7 +49,7 @@ Cannot find an implicit Coder instance for type:
         def foo[T](coll: SCollection[SomeClass],
                    param: String)(implicit c: Coder[T]): SCollection[T]
                                                 ^
-      Alternativelly, you can use a context bound instead of an implicit parameter:
+      Alternatively, you can use a context bound instead of an implicit parameter:
         def foo[T: Coder](coll: SCollection[SomeClass], param: String): SCollection[T]
                     ^
       read more here: https://github.com/spotify/scio/wiki/v0.7.0-Migration-Guide#add-missing-context-bounds

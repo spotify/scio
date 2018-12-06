@@ -78,7 +78,7 @@ public class CallingSubProcessUtils {
     try {
       semaphores.get(binaryName).acquire();
     } catch (InterruptedException ex) {
-      LOG.error("Interupted during aquire", ex);
+      LOG.error("Interupted during acquire", ex);
     }
   }
 

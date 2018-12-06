@@ -62,7 +62,7 @@ object BigQueryType {
 
   /**
    * Trait for companion objects of case classes generated with table.
-   * Instance of this trait are provided as implicits alowing static discovery.
+   * Instance of this trait are provided as implicits allowing static discovery.
    * That trait provide evidence that a BQ table is statically known for a given type T.
    * @group trait
    */
@@ -102,7 +102,7 @@ object BigQueryType {
 
   /**
    * Trait for companion objects of case classes generated with query.
-   * Instance of this trait are provided as implicits alowing static discovery.
+   * Instance of this trait are provided as implicits allowing static discovery.
    * That trait provide evidence that a BQ query is statically known for a given type T.
    * @group trait
    */
