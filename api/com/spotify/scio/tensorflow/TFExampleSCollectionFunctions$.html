@@ -117,10 +117,10 @@
       </span>
       
       <p class="shortcomment cmt">Main package for public APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for public APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio._</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../index.html" class="extype" name="com.spotify">spotify</a></dd></dl></div>
-    </li><li name="com.spotify.scio.bigquery" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="bigquery"></a><a id="bigquery:bigquery"></a>
+    </li><li name="com.spotify.scio.tensorflow" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="tensorflow"></a><a id="tensorflow:tensorflow"></a>
       <span class="permalink">
-      <a href="../../../com/spotify/scio/index.html#bigquery" title="Permalink">
+      <a href="../../../com/spotify/scio/index.html#tensorflow" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -129,172 +129,50 @@
         <span class="kind">package</span>
       </span>
       <span class="symbol">
-        <a title="Main package for BigQuery APIs." href="index.html"><span class="name">bigquery</span></a>
+        <a title="" href="index.html"><span class="name">tensorflow</span></a>
       </span>
       
-      <p class="shortcomment cmt">Main package for BigQuery APIs.</p><div class="fullcomment"><div class="comment cmt"><p>Main package for BigQuery APIs. Import all.</p><pre><span class="kw">import</span> com.spotify.scio.bigquery._</pre><p>There are two BigQuery dialects,
-<a href="https://cloud.google.com/bigquery/docs/reference/legacy-sql" target="_blank">legacy</a> and
-<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/" target="_blank">standard</a>.
-APIs that take a BigQuery query string as argument, e.g.
-<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.rows">com.spotify.scio.bigquery.client.BigQuery.query.rows</span>,
-<span class="extype" name="com.spotify.scio.bigquery.client.BigQuery.query.schema">com.spotify.scio.bigquery.client.BigQuery.query.schema</span>,
-<a href="client/BigQuery.html#getTypedRows[T&lt;:com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation](newSource:String)(implicitevidence$1:reflect.runtime.universe.TypeTag[T]):Iterator[T]" class="extmbr" name="com.spotify.scio.bigquery.client.BigQuery#getTypedRows">com.spotify.scio.bigquery.client.BigQuery.getTypedRows</a> and
-<a href="types/BigQueryType$$fromQuery.html" class="extype" name="com.spotify.scio.bigquery.types.BigQueryType.fromQuery">BigQueryType.fromQuery</a>, automatically
-detects the query's dialect. To override this, start the query with either <code>#legacysql</code> or
-<code>#standardsql</code> comment line.
-</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
-    </li><li name="com.spotify.scio.bigquery.client" visbl="pub" class="indented5 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="client"></a><a id="client:client"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/index.html#client" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">package</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="client/index.html"><span class="name">client</span></a>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio.bigquery">bigquery</a></dd></dl></div>
-    </li><li name="com.spotify.scio.bigquery.dynamic" visbl="pub" class="indented5 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="dynamic"></a><a id="dynamic:dynamic"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/index.html#dynamic" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">package</span>
-      </span>
-      <span class="symbol">
-        <a title="BigQuery package for dynamic table destinations." href="dynamic/index.html"><span class="name">dynamic</span></a>
-      </span>
-      
-      <p class="shortcomment cmt">BigQuery package for dynamic table destinations.</p><div class="fullcomment"><div class="comment cmt"><p>BigQuery package for dynamic table destinations. Import All.</p><pre><span class="kw">import</span> com.spotify.scio.bigquery.dynamic._</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio.bigquery">bigquery</a></dd></dl></div>
-    </li><li name="com.spotify.scio.bigquery.types" visbl="pub" class="indented5 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="types"></a><a id="types:types"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/index.html#types" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">package</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="types/index.html"><span class="name">types</span></a>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio.bigquery">bigquery</a></dd></dl></div>
-    </li><li name="com.spotify.scio.bigquery.validation" visbl="pub" class="indented5 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="validation"></a><a id="validation:validation"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/index.html#validation" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">package</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="validation/index.html"><span class="name">validation</span></a>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="com.spotify.scio.bigquery">bigquery</a></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.spotify.scio">scio</a></dd></dl></div>
     </li><li class="current-entities indented4">
-                        <a class="object" href="BigQueryIO$.html" title=""></a>
-                        <a class="trait" href="BigQueryIO.html" title=""></a>
-                        <a href="BigQueryIO.html" title="">BigQueryIO</a>
-                      </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="BigQuerySCollection.html" title="Enhanced version of SCollection with BigQuery methods."></a>
-                        <a href="BigQuerySCollection.html" title="Enhanced version of SCollection with BigQuery methods.">BigQuerySCollection</a>
+                        <a class="class" href="PredictSCollectionFunctions.html" title="Enhanced version of SCollection with TensorFlow methods."></a>
+                        <a href="PredictSCollectionFunctions.html" title="Enhanced version of SCollection with TensorFlow methods.">PredictSCollectionFunctions</a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="BigQueryScioContext.html" title="Enhanced version of ScioContext with BigQuery methods."></a>
-                        <a href="BigQueryScioContext.html" title="Enhanced version of ScioContext with BigQuery methods.">BigQueryScioContext</a>
+                        <a class="object" href="SeqTFExampleSCollectionFunctions$.html" title=""></a>
+                        <a class="class" href="SeqTFExampleSCollectionFunctions.html" title=""></a>
+                        <a href="SeqTFExampleSCollectionFunctions.html" title="">SeqTFExampleSCollectionFunctions</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="TFExampleIO$.html" title=""></a>
+                        <a class="class" href="TFExampleIO.html" title=""></a>
+                        <a href="TFExampleIO.html" title="">TFExampleIO</a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="" title=""></a>
-                        <a class="class" href="BigQuerySelect.html" title="Get an SCollection for a BigQuery SELECT query."></a>
-                        <a href="BigQuerySelect.html" title="Get an SCollection for a BigQuery SELECT query.">BigQuerySelect</a>
+                        <a class="class" href="TFExampleSCollectionFunctions.html" title=""></a>
+                        <a href="TFExampleSCollectionFunctions.html" title="">TFExampleSCollectionFunctions</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="object" href="BigQuerySysProps$.html" title=""></a>
-                        <a href="BigQuerySysProps$.html" title="">BigQuerySysProps</a>
-                      </li><li class="current-entities indented4">
-                        <a class="object" href="BigQueryTable$.html" title=""></a>
-                        <a class="class" href="BigQueryTable.html" title="Get an IO for a BigQuery table."></a>
-                        <a href="BigQueryTable.html" title="Get an IO for a BigQuery table.">BigQueryTable</a>
+                        <a class="class" href="TFFileStorageFunctions.html" title="File storage functions for Tensorflow TFRecord files."></a>
+                        <a href="TFFileStorageFunctions.html" title="File storage functions for Tensorflow TFRecord files.">TFFileStorageFunctions</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="BigQueryTap.html" title="Tap for BigQuery tables."></a>
-                        <a href="BigQueryTap.html" title="Tap for BigQuery tables.">BigQueryTap</a>
+                        <a class="class" href="TFRecordFileTap.html" title="Tap for Tensorflow TFRecord files."></a>
+                        <a href="TFRecordFileTap.html" title="Tap for Tensorflow TFRecord files.">TFRecordFileTap</a>
                       </li><li class="current-entities indented4">
-                        <a class="object" href="BigQueryTaps$.html" title=""></a>
-                        <a class="class" href="BigQueryTaps.html" title=""></a>
-                        <a href="BigQueryTaps.html" title="">BigQueryTaps</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="object" href="BigQueryTyped$.html" title=""></a>
-                        <a href="BigQueryTyped$.html" title="">BigQueryTyped</a>
+                        <a class="object" href="TFRecordIO$.html" title=""></a>
+                        <a class="class" href="TFRecordIO.html" title=""></a>
+                        <a href="TFRecordIO.html" title="">TFRecordIO</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="object" href="BigQueryUtil$.html" title="Utility for BigQuery data types."></a>
-                        <a href="BigQueryUtil$.html" title="Utility for BigQuery data types.">BigQueryUtil</a>
+                        <a class="class" href="TFRecordSCollectionFunctions.html" title=""></a>
+                        <a href="TFRecordSCollectionFunctions.html" title="">TFRecordSCollectionFunctions</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="object" href="package$$Date$.html" title="Utility for BigQuery DATE type."></a>
-                        <a href="package$$Date$.html" title="Utility for BigQuery DATE type.">Date</a>
+                        <a class="class" href="TFScioContextFunctions.html" title=""></a>
+                        <a href="TFScioContextFunctions.html" title="">TFScioContextFunctions</a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="object" href="package$$DateTime$.html" title="Utility for BigQuery DATETIME type."></a>
-                        <a href="package$$DateTime$.html" title="Utility for BigQuery DATETIME type.">DateTime</a>
-                      </li><li class="current-entities indented4">
-                        <a class="object" href="MockBigQuery$.html" title="Companion object for MockBigQuery."></a>
-                        <a class="class" href="MockBigQuery.html" title="Mock BigQuery environment for integration test."></a>
-                        <a href="MockBigQuery.html" title="Mock BigQuery environment for integration test.">MockBigQuery</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="MockTable.html" title="A BigQuery table being mocked for test."></a>
-                        <a href="MockTable.html" title="A BigQuery table being mocked for test.">MockTable</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$RichTableReference.html" title="Enhanced version of TableReference."></a>
-                        <a href="package$$RichTableReference.html" title="Enhanced version of TableReference.">RichTableReference</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$RichTableRow.html" title="Enhanced version of TableRow with typed getters."></a>
-                        <a href="package$$RichTableRow.html" title="Enhanced version of TableRow with typed getters.">RichTableRow</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="object" href="package$$TableRow$.html" title="Create a TableRow with Map-like syntax."></a>
-                        <a href="package$$TableRow$.html" title="Create a TableRow with Map-like syntax.">TableRow</a>
-                      </li><li class="current-entities indented4">
-                        <a class="object" href="TableRowJsonIO$.html" title=""></a>
-                        <a class="class" href="TableRowJsonIO.html" title="Get an IO for a BigQuery TableRow JSON file."></a>
-                        <a href="TableRowJsonIO.html" title="Get an IO for a BigQuery TableRow JSON file.">TableRowJsonIO</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="TableRowJsonTap.html" title="Tap for BigQuery TableRow JSON files."></a>
-                        <a href="TableRowJsonTap.html" title="Tap for BigQuery TableRow JSON files.">TableRowJsonTap</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="object" href="package$$Time$.html" title="Utility for BigQuery TIME type."></a>
-                        <a href="package$$Time$.html" title="Utility for BigQuery TIME type.">Time</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="class" href="package$$TimePartitioning.html" title="Scala wrapper for com.google.api.services.bigquery.model.TimePartitioning."></a>
-                        <a href="package$$TimePartitioning.html" title="Scala wrapper for com.google.api.services.bigquery.model.TimePartitioning.">TimePartitioning</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="object" href="package$$Timestamp$.html" title="Utility for BigQuery TIMESTAMP type."></a>
-                        <a href="package$$Timestamp$.html" title="Utility for BigQuery TIMESTAMP type.">Timestamp</a>
+                        <a class="object" href="TensorFlowImplicits$.html" title="This allows to not only use TensorFlowImplicits as:"></a>
+                        <a class="trait" href="TensorFlowImplicits.html" title=""></a>
+                        <a href="TensorFlowImplicits.html" title="">TensorFlowImplicits</a>
                       </li>
               </ul>
             </div>
@@ -302,15 +180,15 @@ detects the query's dialect. To override this, start the query with either <code
           <div id="content">
             <body class="object value">
       <div id="definition">
-        <a href="BigQuerySelect.html" title="See companion class"><div class="big-circle object-companion-class">o</div></a>
-        <p id="owner"><a href="../../../index.html" class="extype" name="com">com</a>.<a href="../../index.html" class="extype" name="com.spotify">spotify</a>.<a href="../index.html" class="extype" name="com.spotify.scio">scio</a>.<a href="index.html" class="extype" name="com.spotify.scio.bigquery">bigquery</a></p>
-        <h1><a href="BigQuerySelect.html" title="See companion class">BigQuerySelect</a><span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html" title="Permalink">
+        <a href="TFExampleSCollectionFunctions.html" title="See companion class"><div class="big-circle object-companion-class">o</div></a>
+        <p id="owner"><a href="../../../index.html" class="extype" name="com">com</a>.<a href="../../index.html" class="extype" name="com.spotify">spotify</a>.<a href="../index.html" class="extype" name="com.spotify.scio">scio</a>.<a href="index.html" class="extype" name="com.spotify.scio.tensorflow">tensorflow</a></p>
+        <h1><a href="TFExampleSCollectionFunctions.html" title="See companion class">TFExampleSCollectionFunctions</a><span class="permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span></h1>
         <h3><span class="morelinks"><div>
-            Companion <a href="BigQuerySelect.html" title="See companion class">class BigQuerySelect</a>
+            Companion <a href="TFExampleSCollectionFunctions.html" title="See companion class">class TFExampleSCollectionFunctions</a>
           </div></span></h3>
       </div>
 
@@ -320,7 +198,7 @@ detects the query's dialect. To override this, start the query with either <code
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <span class="name">BigQuerySelect</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <span class="name">TFExampleSCollectionFunctions</span>
       </span>
       </h4>
 
@@ -329,7 +207,7 @@ detects the query's dialect. To override this, start the query with either <code
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a>, <a href="http://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html#java.io.Serializable" class="extype" name="java.io.Serializable">Serializable</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -355,7 +233,7 @@ detects the query's dialect. To override this, start the query with either <code
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.spotify.scio.bigquery.BigQuerySelect"><span>BigQuerySelect</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.spotify.scio.tensorflow.TFExampleSCollectionFunctions"><span>TFExampleSCollectionFunctions</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -375,26 +253,7 @@ detects the query's dialect. To override this, start the query with either <code
         <div id="allMembers">
         
 
-        <div id="types" class="types members">
-              <h3>Type Members</h3>
-              <ol><li name="com.spotify.scio.bigquery.BigQuerySelect.ReadParam" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="ReadParamextendsProductwithSerializable"></a><a id="ReadParam:ReadParam"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#ReadParamextendsProductwithSerializable" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="BigQuerySelect$$ReadParam.html"><span class="name">ReadParam</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
-      </span>
-      
-      
-    </li></ol>
-            </div>
+        
 
         
 
@@ -404,7 +263,7 @@ detects the query's dialect. To override this, start the query with either <code
                 <li name="scala.AnyRef#!=" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="!=(x$1:Any):Boolean"></a><a id="!=(Any):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#!=(x$1:Any):Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#!=(x$1:Any):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -420,7 +279,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.AnyRef###" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="##():Int"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html###():Int" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html###():Int" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -436,7 +295,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.AnyRef#==" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="==(x$1:Any):Boolean"></a><a id="==(Any):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#==(x$1:Any):Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#==(x$1:Any):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -452,7 +311,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#asInstanceOf[T0]:T0" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#asInstanceOf[T0]:T0" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -468,7 +327,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.AnyRef#clone" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a><a id="clone():AnyRef"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#clone():Object" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#clone():Object" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -492,7 +351,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#eq(x$1:AnyRef):Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#eq(x$1:AnyRef):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -508,7 +367,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.AnyRef#equals" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="equals(x$1:Any):Boolean"></a><a id="equals(Any):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#equals(x$1:Any):Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#equals(x$1:Any):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -524,7 +383,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#finalize():Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#finalize():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -546,7 +405,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.AnyRef#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#getClass():Class[_]" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#getClass():Class[_]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -565,7 +424,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.AnyRef#hashCode" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="hashCode():Int"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#hashCode():Int" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#hashCode():Int" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -584,7 +443,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#isInstanceOf[T0]:Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#isInstanceOf[T0]:Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -600,7 +459,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.AnyRef#ne" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a><a id="ne(AnyRef):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#ne(x$1:AnyRef):Boolean" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#ne(x$1:AnyRef):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -616,7 +475,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.AnyRef#notify" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notify():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#notify():Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#notify():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -635,7 +494,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.AnyRef#notifyAll" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notifyAll():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#notifyAll():Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#notifyAll():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -654,7 +513,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#synchronized[T0](x$1:=&gt;T0):T0" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#synchronized[T0](x$1:=&gt;T0):T0" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -670,7 +529,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.AnyRef#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#toString():String" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#toString():String" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -686,7 +545,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#wait():Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#wait():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -708,7 +567,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait(x$1:Long,x$2:Int):Unit"></a><a id="wait(Long,Int):Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#wait(x$1:Long,x$2:Int):Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#wait(x$1:Long,x$2:Int):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -730,7 +589,7 @@ detects the query's dialect. To override this, start the query with either <code
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait(x$1:Long):Unit"></a><a id="wait(Long):Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#wait(x$1:Long):Unit" title="Permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#wait(x$1:Long):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -751,37 +610,39 @@ detects the query's dialect. To override this, start the query with either <code
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="com.spotify.scio.bigquery.BigQuerySelect.ReadParam" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="ReadParam"></a><a id="ReadParam:ReadParam"></a>
-      <span class="permalink">
-      <a href="../../../../com/spotify/scio/bigquery/BigQuerySelect$.html#ReadParam" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="BigQuerySelect$$ReadParam$.html"><span class="name">ReadParam</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
-      </span>
-      
-      
     </li>
               </ol>
             </div>
 
         
 
-        
+        <div class="values members">
+              <h3>Deprecated Value Members</h3>
+              <ol><li name="com.spotify.scio.tensorflow.TFExampleSCollectionFunctions#saveExampleMetadata" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="saveExampleMetadata(schema:com.spotify.scio.values.SCollection[org.tensorflow.metadata.v0.Schema],schemaPath:String):Unit"></a><a id="saveExampleMetadata(SCollection[Schema],String):Unit"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/tensorflow/TFExampleSCollectionFunctions$.html#saveExampleMetadata(schema:com.spotify.scio.values.SCollection[org.tensorflow.metadata.v0.Schema],schemaPath:String):Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version Scio 0.7.0) Schema inference will be removed. We recommend using TensorFlow Data Validation">saveExampleMetadata</span><span class="params">(<span name="schema">schema: <a href="../values/SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[<a href="../../../../org/tensorflow/metadata/v0/Schema.html" class="extype" name="org.tensorflow.metadata.v0.Schema">Schema</a>]</span>, <span name="schemaPath">schemaPath: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version Scio 0.7.0)</i> Schema inference will be removed. We recommend using TensorFlow Data Validation</p></dd></dl></div>
+    </li></ol>
+            </div>
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="scala.Serializable">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></h3>
-            </div><div class="parent" name="java.io.Serializable">
-              <h3>Inherited from <a href="http://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html#java.io.Serializable" class="extype" name="java.io.Serializable">Serializable</a></h3>
-            </div><div class="parent" name="scala.AnyRef">
+        <div class="parent" name="scala.AnyRef">
               <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
               <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
