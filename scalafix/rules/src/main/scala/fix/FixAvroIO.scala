@@ -51,6 +51,20 @@ class FixAvroIO extends SemanticRule("FixAvroIO") {
               ) if (isJobTest(parent)) =>
           addImport(t.pos, importer"com.spotify.scio.avro._") +
           Patch.addRight(name, s"[GenericRecord]")
+      // fix IO imports
+      case t @ Importer(q"com.spotify.scio.testing", imps) =>
+        val imports =
+          imps.collect {
+            case i @ Importee.Name(Name.Indeterminate("TextIO")) =>
+              Patch.removeImportee(i) + addImport(t.pos, importer"com.spotify.scio.io._")
+            case i @ Importee.Name(Name.Indeterminate("AvroIO")) =>
+              Patch.removeImportee(i) + addImport(t.pos, importer"com.spotify.scio.avro._")
+            case i @ Importee.Name(Name.Indeterminate("BigQueryIO")) =>
+              Patch.removeImportee(i) + addImport(t.pos, importer"com.spotify.scio.bigquery._")
+            case i @ Importee.Name(Name.Indeterminate("PubsubIO")) =>
+              Patch.removeImportee(i) + addImport(t.pos, importer"com.spotify.scio.io._")
+          }
+        imports.foldLeft(Patch.empty)(_ + _)
     }.asPatch
   }
 
