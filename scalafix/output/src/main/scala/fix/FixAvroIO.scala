@@ -2,9 +2,11 @@ package fix
 package v0_7_0
 
 import com.spotify.scio.ContextAndArgs
-import com.spotify.scio.testing._
 import org.apache.avro.generic.GenericRecord
+import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.avro._
+import com.spotify.scio.bigquery._
+import com.spotify.scio.io._
 
 case class InputClass(s: String, i: Int) extends GenericRecord {
   def getSchema(): org.apache.avro.Schema = ???
