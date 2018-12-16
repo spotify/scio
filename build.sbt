@@ -663,7 +663,7 @@ lazy val scioTensorFlow: Project = Project(
     description := "Scio add-on for TensorFlow",
     version in ProtobufConfig := protobufVersion,
     protobufRunProtoc in ProtobufConfig := (args =>
-      com.github.os72.protocjar.Protoc.runProtoc("-v3.6.0" +: args.toArray)),
+      com.github.os72.protocjar.Protoc.runProtoc("-v3.6.0.1" +: args.toArray)),
     sourceDirectories in Compile := (sourceDirectories in Compile).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     managedSourceDirectories in Compile := (managedSourceDirectories in Compile).value
@@ -704,7 +704,7 @@ lazy val scioSchemas: Project = Project(
     version in AvroConfig := avroVersion,
     version in ProtobufConfig := protobufVersion,
     protobufRunProtoc in ProtobufConfig := (args =>
-      com.github.os72.protocjar.Protoc.runProtoc("-v3.6.0" +: args.toArray)),
+      com.github.os72.protocjar.Protoc.runProtoc("-v3.6.0.1" +: args.toArray)),
     // Avro and Protobuf files are compiled to src_managed/main/compiled_{avro,protobuf}
     // Exclude their parent to avoid confusing IntelliJ
     sourceDirectories in Compile := (sourceDirectories in Compile).value
