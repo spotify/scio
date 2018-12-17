@@ -37,6 +37,7 @@ val commonsIoVersion = "2.6"
 val commonsMath3Version = "3.6.1"
 val elasticsearch2Version = "2.4.6"
 val elasticsearch5Version = "5.5.0"
+val elasticsearch6Version = "6.5.2"
 val featranVersion = "0.3.0-RC1"
 val gcsConnectorVersion = "1.6.10-hadoop2"
 val gcsVersion = "1.8.0"
@@ -312,6 +313,7 @@ lazy val root: Project = Project(
     scioCassandra3,
     scioElasticsearch2,
     scioElasticsearch5,
+    scioElasticsearch6,
     scioExtra,
     scioHdfs,
     scioJdbc,
@@ -543,6 +545,22 @@ lazy val scioElasticsearch5: Project = Project(
     libraryDependencies ++= Seq(
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.elasticsearch.client" % "transport" % elasticsearch5Version
+    )
+  )
+  .dependsOn(
+    scioCore,
+    scioTest % "test"
+  )
+
+lazy val scioElasticsearch6: Project = Project(
+  "scio-elasticsearch6",
+  file("scio-elasticsearch/es6")
+).settings(
+    commonSettings,
+    description := "Scio add-on for writing to Elasticsearch",
+    libraryDependencies ++= Seq(
+      "joda-time" % "joda-time" % jodaTimeVersion,
+      "org.elasticsearch.client" % "transport" % elasticsearch6Version
     )
   )
   .dependsOn(
