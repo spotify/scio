@@ -28,7 +28,6 @@ val annoy4sVersion = "0.8.0"
 val annoyVersion = "0.2.5"
 val asmVersion = "4.9"
 val autoServiceVersion = "1.0-rc4"
-val autoValueVersion = "1.6.2"
 val avroVersion = "1.8.2"
 val breezeVersion = "1.0-RC2"
 val chillVersion = "0.9.3"
@@ -642,7 +641,6 @@ lazy val scioParquet: Project = Project(
     description := "Scio add-on for Parquet",
     libraryDependencies ++= Seq(
       "me.lyh" %% "parquet-avro-extra" % parquetAvroExtraVersion,
-      "com.google.auto.value" % "auto-value" % autoValueVersion % "provided",
       "com.google.cloud.bigdataoss" % "gcs-connector" % gcsConnectorVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-input-format" % beamVersion,
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion,
