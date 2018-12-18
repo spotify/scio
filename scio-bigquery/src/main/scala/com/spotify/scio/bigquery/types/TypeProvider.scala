@@ -44,7 +44,10 @@ private[types] object TypeProvider {
   def tableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
-    val args = extractArgs(c)("Missing table specification")
+    val args = extractArgs(c) match {
+      case Nil => c.abort(c.enclosingPosition, "Missing table specification")
+      case l   => l
+    }
     val (query: String, _) :: _ = args
     val tableSpec =
       BigQueryPartitionUtil.latestTable(bigquery, formatString(args.map(_._1)))
@@ -71,7 +74,10 @@ private[types] object TypeProvider {
   }
 
   def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    val (schemaString: String, _) :: _ = extractArgs(c)("Missing schema")
+    val (schemaString: String, _) :: _ = extractArgs(c) match {
+      case Nil => c.abort(c.enclosingPosition, "Missing schema")
+      case l   => l
+    }
     val schema = BigQueryUtil.parseSchema(schemaString)
     schemaToType(c)(schema, annottees, Nil, Nil)
   }
@@ -80,7 +86,10 @@ private[types] object TypeProvider {
   def queryImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
-    val extractedArgs = extractArgs(c)("Missing query")
+    val extractedArgs = extractArgs(c) match {
+      case Nil => c.abort(c.enclosingPosition, "Missing query")
+      case l   => l
+    }
     val (queryFormat: String, _) :: queryArgs = extractedArgs
     val query = BigQueryPartitionUtil.latestQuery(bigquery, formatString(extractedArgs.map(_._1)))
     val schema = bigquery.query.schema(query)
@@ -281,8 +290,7 @@ private[types] object TypeProvider {
   // scalastyle:on method.length
 
   /** Extract string from annotation. */
-  private def extractArgs(c: blackbox.Context)(
-    errorMessage: String): List[(Any, c.universe.Type)] = {
+  private def extractArgs(c: blackbox.Context): List[(Any, c.universe.Type)] = {
     import c.universe._
 
     def str(tree: c.Tree) = tree match {
@@ -295,17 +303,12 @@ private[types] object TypeProvider {
       // "string literal".stripMargin
       case Select(Literal(Constant(s: String)), TermName("stripMargin")) =>
         (s.stripMargin, typeOf[String])
-      case _ => c.abort(c.enclosingPosition, errorMessage)
+      case arg => c.abort(c.enclosingPosition, s"Unsupported argument $arg")
     }
 
     c.macroApplication match {
-      case Apply(Select(Apply(_, xs: List[_]), _), _) =>
-        val args = xs.map(str(_))
-        if (args.isEmpty) {
-          c.abort(c.enclosingPosition, errorMessage)
-        }
-        args
-      case _ => c.abort(c.enclosingPosition, errorMessage)
+      case Apply(Select(Apply(_, xs: List[_]), _), _) => xs.map(str(_))
+      case _                                          => Nil
     }
   }
 
