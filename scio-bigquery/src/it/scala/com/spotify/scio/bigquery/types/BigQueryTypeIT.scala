@@ -50,10 +50,11 @@ object BigQueryTypeIT {
     """
       |SELECT word, word_count
       |FROM `data-integration-test.partition_a.table_%s`
-      |WHERE word_count > %2$d
-      |LIMIT %2$d
+      |WHERE word_count > %3$d and word != '%%'
+      |LIMIT %d
     """.stripMargin,
     "$LATEST",
+    1,
     1
   )
   class SqlLatestTWithMultiArgs
@@ -166,8 +167,8 @@ class BigQueryTypeIT extends FlatSpec with Matchers {
   }
 
   it should "have query fn with multiple arguments" in {
-    """SqlLatestTWithMultiArgs.query("TABLE", 1)""" should compile
-    """SqlLatestTWithMultiArgs.query(1, "TABLE")""" shouldNot typeCheck
+    """SqlLatestTWithMultiArgs.query("TABLE", 1, 1)""" should compile
+    """SqlLatestTWithMultiArgs.query(1, "TABLE", 1)""" shouldNot typeCheck
   }
 
   it should "format query" in {

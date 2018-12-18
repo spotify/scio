@@ -34,8 +34,6 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Map => MMap}
 import scala.reflect.macros._
-import scala.util.matching.Regex
-import scala.util.matching.Regex.Match
 
 // scalastyle:off line.size.limit
 private[types] object TypeProvider {
@@ -43,26 +41,13 @@ private[types] object TypeProvider {
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
   private lazy val bigquery: BigQuery = BigQuery.defaultInstance()
 
-  private[this] object FormatSpecifier {
-    val Regex: Regex =
-      "%((\\d+)\\$)?([-#+ 0,(\\<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])".r
-
-    def unapply(m: Match): Option[(Char, Int)] = {
-      val idx = Option(m.group(2))
-        .map(_.toInt - 1)
-        .getOrElse(0)
-
-      Some(m.group(7).head -> idx)
-    }
-  }
-
   def tableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
-    val args = extractStrings(c, "Missing table specification")
-    val (query: String) :: _ = args
+    val args = extractArgs(c)("Missing table specification")
+    val (query: String, _) :: _ = args
     val tableSpec =
-      BigQueryPartitionUtil.latestTable(bigquery, formatString(args))
+      BigQueryPartitionUtil.latestTable(bigquery, formatString(args.map(_._1)))
     val schema = bigquery.tables.schema(tableSpec)
     val traits = List(tq"${p(c, SType)}.HasTable")
 
@@ -86,7 +71,7 @@ private[types] object TypeProvider {
   }
 
   def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    val (schemaString: String) :: _ = extractStrings(c, "Missing schema")
+    val (schemaString: String, _) :: _ = extractArgs(c)("Missing schema")
     val schema = BigQueryUtil.parseSchema(schemaString)
     schemaToType(c)(schema, annottees, Nil, Nil)
   }
@@ -95,34 +80,19 @@ private[types] object TypeProvider {
   def queryImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
-    val extractedArgs = extractStrings(c, "Missing query")
-    val (queryFormat: String) :: queryArgs = extractedArgs
-    val query = BigQueryPartitionUtil.latestQuery(bigquery, formatString(extractedArgs))
+    val extractedArgs = extractArgs(c)("Missing query")
+    val (queryFormat: String, _) :: queryArgs = extractedArgs
+    val query = BigQueryPartitionUtil.latestQuery(bigquery, formatString(extractedArgs.map(_._1)))
     val schema = bigquery.query.schema(query)
     val traits = List(tq"${p(c, SType)}.HasQuery")
 
     val queryDef =
       q"override def query: _root_.java.lang.String = $queryFormat"
 
-    val formatTerms = FormatSpecifier.Regex
-      .findAllMatchIn(queryFormat)
-      .map {
-        case FormatSpecifier(format, argIdx) => (argIdx, format, queryArgs(argIdx))
-      }
-      .collect {
-        case (idx, 's', _: String) => idx -> typeOf[String]
-        case (idx, 'd', _: Int)    => idx -> typeOf[Int]
-        case (idx, 'd', _: Long)   => idx -> typeOf[Long]
-        case (idx, 'f', _: Float)  => idx -> typeOf[Float]
-        case (idx, 'f', _: Double) => idx -> typeOf[Double]
-        case _                     => c.abort(c.enclosingPosition, "format specifier not supported")
-      }
-      .toSet[(Int, c.universe.Type)]
-      .map(e => e._2 -> TermName(c.freshName("queryArg$")))
-
-    val queryFnDef = if (formatTerms.nonEmpty) {
-      val typesQ = formatTerms.map { case (tpt, termName) => q"$termName: $tpt" }
-      Some(q"def query(..$typesQ): String = $queryFormat.format(..${formatTerms.map(_._2)})")
+    val queryArgTypes = queryArgs.map(t => t._2 -> TermName(c.freshName("queryArg$")))
+    val queryFnDef = if (queryArgTypes.nonEmpty) {
+      val typesQ = queryArgTypes.map { case (tpt, termName) => q"$termName: $tpt" }
+      Some(q"def query(..$typesQ): String = $queryFormat.format(..${queryArgTypes.map(_._2)})")
     } else {
       None
     }
@@ -311,21 +281,26 @@ private[types] object TypeProvider {
   // scalastyle:on method.length
 
   /** Extract string from annotation. */
-  private def extractStrings(c: blackbox.Context, errorMessage: String): List[Any] = {
+  private def extractArgs(c: blackbox.Context)(
+    errorMessage: String): List[(Any, c.universe.Type)] = {
     import c.universe._
 
     def str(tree: c.Tree) = tree match {
       // "argument literal"
-      case Literal(Constant(arg @ (_: String | _: Float | _: Double | _: Int | _: Long))) => arg
+      case Literal(Constant(arg @ (_: String))) => (arg, typeOf[String])
+      case Literal(Constant(arg @ (_: Float)))  => (arg, typeOf[Float])
+      case Literal(Constant(arg @ (_: Double))) => (arg, typeOf[Double])
+      case Literal(Constant(arg @ (_: Int)))    => (arg, typeOf[Int])
+      case Literal(Constant(arg @ (_: Long)))   => (arg, typeOf[Long])
       // "string literal".stripMargin
       case Select(Literal(Constant(s: String)), TermName("stripMargin")) =>
-        s.stripMargin
+        (s.stripMargin, typeOf[String])
       case _ => c.abort(c.enclosingPosition, errorMessage)
     }
 
     c.macroApplication match {
       case Apply(Select(Apply(_, xs: List[_]), _), _) =>
-        val args = xs.map(str)
+        val args = xs.map(str(_))
         if (args.isEmpty) {
           c.abort(c.enclosingPosition, errorMessage)
         }
