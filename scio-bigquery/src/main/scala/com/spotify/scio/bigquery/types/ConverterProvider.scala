@@ -78,7 +78,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Float]      => q"$tree.asInstanceOf[Double].toFloat"
         case t if t =:= typeOf[Double]     => q"$tree.asInstanceOf[Double]"
         case t if t =:= typeOf[String]     => q"$tree.toString"
-        case t if t =:= typeOf[BigDecimal] => bdecimal(tree)
+        case t if t =:= typeOf[BigDecimal] => q"BigDecimal($tree.toString)"
 
         case t if t =:= typeOf[ByteString] =>
           val b = q"$tree.asInstanceOf[_root_.java.nio.ByteBuffer]"
@@ -105,11 +105,6 @@ private[types] object ConverterProvider {
           """
         case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
-    }
-
-    def bdecimal(tree: Tree): Tree = {
-      val mc = q"new java.math.MathContext(38)"
-      q"BigDecimal($tree.toString, $mc)"
     }
 
     def option(tree: Tree, tpe: Type): Tree =
@@ -181,7 +176,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Float]      => q"$s.toFloat"
         case t if t =:= typeOf[Double]     => q"$s.toDouble"
         case t if t =:= typeOf[String]     => q"$s"
-        case t if t =:= typeOf[BigDecimal] => bdecimal(tree)
+        case t if t =:= typeOf[BigDecimal] => q"BigDecimal($tree.toString)"
 
         case t if t =:= typeOf[ByteString] =>
           val b =
@@ -208,11 +203,6 @@ private[types] object ConverterProvider {
           """
         case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
-    }
-
-    def bdecimal(tree: Tree): Tree = {
-      val mc = q"new java.math.MathContext(38)"
-      q"BigDecimal($tree.toString, $mc)"
     }
 
     def option(tree: Tree, tpe: Type): Tree =
@@ -293,8 +283,11 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[String]              => tree
 
         case t if t =:= typeOf[BigDecimal] =>
-          val roundingMode = q"_root_.scala.math.BigDecimal.RoundingMode.HALF_UP"
-          q"(if ($tree.scale > 9) $tree.setScale(9, $roundingMode) else $tree).toString"
+          // bq does "half away from zero", which is identical to HALF_UP
+          val rm = q"_root_.scala.math.BigDecimal.RoundingMode.HALF_UP"
+          // NUMERIC's max scale is 9, precision is 38
+          val scaleLimit = 9
+          q"(if ($tree.scale > $scaleLimit) $tree.setScale($scaleLimit, $rm) else $tree).toString"
         case t if t =:= typeOf[ByteString] =>
           q"_root_.com.google.common.io.BaseEncoding.base64().encode($tree.toByteArray)"
         case t if t =:= typeOf[Array[Byte]] =>
