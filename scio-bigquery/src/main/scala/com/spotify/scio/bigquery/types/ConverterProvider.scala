@@ -72,12 +72,13 @@ private[types] object ConverterProvider {
       tpe match {
         case t if provider.shouldOverrideType(c)(t) =>
           provider.createInstance(c)(t, q"$tree")
-        case t if t =:= typeOf[Boolean] => q"$tree.asInstanceOf[Boolean]"
-        case t if t =:= typeOf[Int]     => q"$tree.asInstanceOf[Long].toInt"
-        case t if t =:= typeOf[Long]    => q"$tree.asInstanceOf[Long]"
-        case t if t =:= typeOf[Float]   => q"$tree.asInstanceOf[Double].toFloat"
-        case t if t =:= typeOf[Double]  => q"$tree.asInstanceOf[Double]"
-        case t if t =:= typeOf[String]  => q"$tree.toString"
+        case t if t =:= typeOf[Boolean]    => q"$tree.asInstanceOf[Boolean]"
+        case t if t =:= typeOf[Int]        => q"$tree.asInstanceOf[Long].toInt"
+        case t if t =:= typeOf[Long]       => q"$tree.asInstanceOf[Long]"
+        case t if t =:= typeOf[Float]      => q"$tree.asInstanceOf[Double].toFloat"
+        case t if t =:= typeOf[Double]     => q"$tree.asInstanceOf[Double]"
+        case t if t =:= typeOf[String]     => q"$tree.toString"
+        case t if t =:= typeOf[BigDecimal] => q"BigDecimal($tree.toString)"
 
         case t if t =:= typeOf[ByteString] =>
           val b = q"$tree.asInstanceOf[_root_.java.nio.ByteBuffer]"
@@ -169,12 +170,13 @@ private[types] object ConverterProvider {
       tpe match {
         case t if provider.shouldOverrideType(c)(t) =>
           provider.createInstance(c)(t, q"$tree")
-        case t if t =:= typeOf[Boolean] => q"$s.toBoolean"
-        case t if t =:= typeOf[Int]     => q"$s.toInt"
-        case t if t =:= typeOf[Long]    => q"$s.toLong"
-        case t if t =:= typeOf[Float]   => q"$s.toFloat"
-        case t if t =:= typeOf[Double]  => q"$s.toDouble"
-        case t if t =:= typeOf[String]  => q"$s"
+        case t if t =:= typeOf[Boolean]    => q"$s.toBoolean"
+        case t if t =:= typeOf[Int]        => q"$s.toInt"
+        case t if t =:= typeOf[Long]       => q"$s.toLong"
+        case t if t =:= typeOf[Float]      => q"$s.toFloat"
+        case t if t =:= typeOf[Double]     => q"$s.toDouble"
+        case t if t =:= typeOf[String]     => q"$s"
+        case t if t =:= typeOf[BigDecimal] => q"BigDecimal($tree.toString)"
 
         case t if t =:= typeOf[ByteString] =>
           val b =
@@ -280,6 +282,12 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Double]              => tree
         case t if t =:= typeOf[String]              => tree
 
+        case t if t =:= typeOf[BigDecimal] =>
+          // bq does "half away from zero", which is identical to HALF_UP
+          val rm = q"_root_.scala.math.BigDecimal.RoundingMode.HALF_UP"
+          // NUMERIC's max scale is 9, precision is 38
+          val scaleLimit = 9
+          q"(if ($tree.scale > $scaleLimit) $tree.setScale($scaleLimit, $rm) else $tree).toString"
         case t if t =:= typeOf[ByteString] =>
           q"_root_.com.google.common.io.BaseEncoding.base64().encode($tree.toByteArray)"
         case t if t =:= typeOf[Array[Byte]] =>
