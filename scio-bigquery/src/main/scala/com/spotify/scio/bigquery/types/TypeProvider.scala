@@ -453,7 +453,7 @@ private[types] object TypeProvider {
     logger.info(s"Will dump generated $name of $owner from $srcFile to $genSrcFile")
 
     Files.createParentDirs(genSrcFile)
-    Files.write(prettyCode, genSrcFile, Charsets.UTF_8)
+    Files.asCharSink(genSrcFile, Charsets.UTF_8).write(prettyCode)
   }
 
 }

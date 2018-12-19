@@ -76,7 +76,7 @@ class FileDownloadDoFnTest extends PipelineSpec {
   private def createFiles(dir: Path, n: Int): Seq[Path] =
     (1 to n).map { i =>
       val file = dir.resolve("part-%05d-of-%05d.txt".format(i, n))
-      GFiles.write(i.toString, file.toFile, Charsets.UTF_8)
+      GFiles.asCharSink(file.toFile, Charsets.UTF_8).write(i.toString)
       file
     }
 
