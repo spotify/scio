@@ -25,7 +25,7 @@ private[coders] object CoderMacros {
   private[this] val reported: scala.collection.mutable.Set[(String, String)] =
     scala.collection.mutable.Set.empty
 
-  private[this] val ShowWarnDefault = true
+  private[this] val ShowWarnDefault = false
   private[this] val ShowWarnSettingRegex = "show-coder-fallback=(true|false)".r
 
   private[this] val BlacklistedTypes = List("org.apache.beam.sdk.values.Row")
