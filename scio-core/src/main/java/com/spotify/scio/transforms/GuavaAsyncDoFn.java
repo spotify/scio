@@ -20,6 +20,7 @@ package com.spotify.scio.transforms;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.beam.sdk.transforms.DoFn;
 
 import javax.annotation.Nullable;
@@ -50,7 +51,8 @@ public abstract class GuavaAsyncDoFn<InputT, OutputT, ResourceT>
       public void onFailure(Throwable t) {
         onFailure.apply(t);
       }
-    });
+    }, MoreExecutors.directExecutor());
+
     return Futures.transform(future, new com.google.common.base.Function<OutputT, OutputT>() {
       @Nullable
       @Override
@@ -58,6 +60,6 @@ public abstract class GuavaAsyncDoFn<InputT, OutputT, ResourceT>
         onSuccess.apply(input);
         return input;
       }
-    });
+    }, MoreExecutors.directExecutor());
   }
 }
