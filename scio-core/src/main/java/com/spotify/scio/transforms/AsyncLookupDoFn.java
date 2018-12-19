@@ -8,6 +8,7 @@ import com.google.common.collect.Queues;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.Serializable;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -141,7 +142,7 @@ public abstract class AsyncLookupDoFn<A, B, C> extends DoFn<A, KV<A, AsyncLookup
         results.add(new Result(input, new Try<>(t), c.timestamp(), window));
         futures.remove(uuid);
       }
-    });
+    }, MoreExecutors.directExecutor());
 
     // Handle success
     ListenableFuture<B> f = Futures.transform(future, new Function<B, B>() {
@@ -158,7 +159,7 @@ public abstract class AsyncLookupDoFn<A, B, C> extends DoFn<A, KV<A, AsyncLookup
           throw e;
         }
       }
-    });
+    }, MoreExecutors.directExecutor());
 
     // This `put` may happen after `remove` in the callbacks but it's OK since either the result
     // or the error would've already been pushed to the corresponding queues and we are not losing

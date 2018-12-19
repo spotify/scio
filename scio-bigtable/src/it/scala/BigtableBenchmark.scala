@@ -22,7 +22,7 @@ import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.cloud.bigtable.grpc.scanner.FlatRow
 import com.google.cloud.bigtable.grpc.{BigtableInstanceName, BigtableSession}
 import com.google.common.cache.CacheBuilder
-import com.google.common.util.concurrent.{Futures, ListenableFuture}
+import com.google.common.util.concurrent.{Futures, ListenableFuture, MoreExecutors}
 import com.google.protobuf.ByteString
 import com.spotify.scio._
 import com.spotify.scio.bigtable._
@@ -85,7 +85,8 @@ object BigtableBenchmark {
           assert(input.getMessage.endsWith("0000000001"))
           "fallback"
         }
-      }
+      },
+      MoreExecutors.directExecutor()
     )
   }
 
@@ -117,7 +118,8 @@ object BigtableBenchmark {
             assert(value == expected)
             value.toStringUtf8
           }
-        }
+        },
+        MoreExecutors.directExecutor()
       )
     }
 
