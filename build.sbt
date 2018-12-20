@@ -69,6 +69,10 @@ val magnoliaVersion = "0.10.1-jto"
 val grpcVersion = "1.13.1"
 val caseappVersion = "2.0.0-M5"
 
+lazy val scalafixSettings = Def.settings(
+  addCompilerPlugin(scalafixSemanticdb)
+)
+
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts :=
     previousVersion(version.value)
@@ -136,9 +140,8 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   ).mkString(";"),
   coverageHighlighting := true,
   // Release settings
-  publishTo := Some(
-    if (isSnapshot.value) Opts.resolver.sonatypeSnapshots
-    else Opts.resolver.sonatypeStaging),
+  publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeSnapshots
+  else Opts.resolver.sonatypeStaging),
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   publishMavenStyle := true,
@@ -197,14 +200,13 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
       .getProperty("sun.boot.class.path")
       .split(sys.props("path.separator"))
       .map(file(_))
-    val jdkMapping = Map(
-      bootClasspath.find(_.getPath.endsWith("rt.jar")).get -> url(
-        "http://docs.oracle.com/javase/8/docs/api/"))
+    val jdkMapping = Map(bootClasspath.find(_.getPath.endsWith("rt.jar")).get -> url(
+      "http://docs.oracle.com/javase/8/docs/api/"))
     docMappings.flatMap((mappingFn _).tupled).toMap ++ jdkMapping
   },
   buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
   buildInfoPackage := "com.spotify.scio"
-) ++ mimaSettings ++ scalafmtSettings
+) ++ mimaSettings ++ scalafmtSettings ++ scalafixSettings
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
   scalastyleSources in Compile ++= (unmanagedSourceDirectories in IntegrationTest).value,
@@ -216,7 +218,9 @@ lazy val itSettings = Defaults.itSettings ++ Seq(
       HiddenFileFilter || "*.scala"
     }
   }
-) ++ inConfig(IntegrationTest)(scalafmtConfigSettings)
+) ++
+  inConfig(IntegrationTest)(scalafmtConfigSettings) ++
+  inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest))
 
 lazy val noPublishSettings = Seq(
   publish := {},
