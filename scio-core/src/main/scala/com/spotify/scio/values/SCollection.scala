@@ -510,7 +510,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     val normalizedCumWeights = weights.map(_ / sum).scanLeft(0.0d)(_ + _)
     val m = TreeMap(normalizedCumWeights.zipWithIndex: _*) // Map[lower bound, split]
 
-    val sides = (1 until weights.length).map(_ => SideOutput[T]())
+    val sides = (1 until weights.length).map(_ => (SideOutput[T](), coder))
     val (head, tail) = this
       .withSideOutputs(sides: _*)
       .flatMap { (x, c) =>
@@ -518,11 +518,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         if (i == 0) {
           Seq(x) // Main output
         } else {
-          c.output(sides(i - 1), x) // Side output
+          c.output(sides(i - 1)._1, x) // Side output
           Nil
         }
       }
-    (head +: sides.map(tail(_))).toArray
+    (head +: sides.map(x => tail(x._1))).toArray
   }
 
   /**
@@ -775,7 +775,39 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * }}}
    * @group side
    */
-  def withSideOutputs(sides: SideOutput[_]*): SCollectionWithSideOutput[T] =
+  def withSideOutputs[A: Coder](sides: SideOutput[A]): SCollectionWithSideOutput[T] =
+    withSideOutputs((sides, Coder[A]))
+
+  def withSideOutputs[A: Coder, B: Coder](sidea: SideOutput[A],
+                                          sideb: SideOutput[B]): SCollectionWithSideOutput[T] =
+    withSideOutputs((sidea, Coder[A]), (sideb, Coder[B]))
+
+  def withSideOutputs[A: Coder, B: Coder, C: Coder](
+    sidea: SideOutput[A],
+    sideb: SideOutput[B],
+    sidec: SideOutput[C]): SCollectionWithSideOutput[T] =
+    withSideOutputs((sidea, Coder[A]), (sideb, Coder[B]), (sidec, Coder[C]))
+
+  def withSideOutputs[A: Coder, B: Coder, C: Coder, D: Coder](
+    sidea: SideOutput[A],
+    sideb: SideOutput[B],
+    sidec: SideOutput[C],
+    sided: SideOutput[D]): SCollectionWithSideOutput[T] =
+    withSideOutputs((sidea, Coder[A]), (sideb, Coder[B]), (sidec, Coder[C]), (sided, Coder[D]))
+
+  def withSideOutputs[A: Coder, B: Coder, C: Coder, D: Coder, E: Coder](
+    sidea: SideOutput[A],
+    sideb: SideOutput[B],
+    sidec: SideOutput[C],
+    sided: SideOutput[D],
+    sidee: SideOutput[E]): SCollectionWithSideOutput[T] =
+    withSideOutputs((sidea, Coder[A]),
+                    (sideb, Coder[B]),
+                    (sidec, Coder[C]),
+                    (sided, Coder[D]),
+                    (sidee, Coder[E]))
+
+  def withSideOutputs(sides: (SideOutput[_], Coder[_])*): SCollectionWithSideOutput[T] =
     new SCollectionWithSideOutput[T](internal, context, sides)
 
   // =======================================================================

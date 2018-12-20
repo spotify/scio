@@ -46,4 +46,24 @@ class SCollectionWithSideOutputTest extends PipelineSpec {
     }
   }
 
+  it should "not break when a side output is not applied (#1587)" in runWithContext { sc =>
+    val nSideOut = SideOutput[Int]()
+    val expected = List(2, 4, 6, 8, 10)
+    val elements = sc.parallelize(1 to 10)
+    val (even, side) =
+      elements
+        .withSideOutputs(nSideOut)
+        .flatMap {
+          case (n, ctx) =>
+            if (n % 2 == 0)
+              Some(n)
+            else {
+              ctx.output(nSideOut, n)
+              None
+            }
+        }
+
+    even should containInAnyOrder(expected)
+  }
+
 }

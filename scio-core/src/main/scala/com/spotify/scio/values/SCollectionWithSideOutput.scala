@@ -22,7 +22,7 @@ import com.spotify.scio.coders.{Coder, CoderMaterializer}
 
 import com.spotify.scio.util.FunctionsWithSideOutput
 import org.apache.beam.sdk.transforms.ParDo
-import org.apache.beam.sdk.values.{PCollection, TupleTag, TupleTagList}
+import org.apache.beam.sdk.values.{PCollection, PCollectionTuple, TupleTag, TupleTagList}
 
 import scala.collection.JavaConverters._
 
@@ -34,10 +34,24 @@ import scala.collection.JavaConverters._
  */
 class SCollectionWithSideOutput[T] private[values] (val internal: PCollection[T],
                                                     val context: ScioContext,
-                                                    sides: Iterable[SideOutput[_]])
+                                                    sides: Iterable[(SideOutput[_], Coder[_])])
     extends PCollectionWrapper[T] {
 
-  private val sideTags = TupleTagList.of(sides.map(_.tupleTag).toList.asJava)
+  private val sideTags = TupleTagList.of(sides.map(_._1.tupleTag).toList.asJava)
+
+  @inline private def setCoders[U: Coder](mainTag: TupleTag[U], tuple: PCollectionTuple) = {
+    val main =
+      tuple.get(mainTag).setCoder(CoderMaterializer.beam(context, Coder[U]))
+
+    sides.foreach {
+      case (so, c) =>
+        tuple
+          .get(so.tupleTag)
+          .asInstanceOf[PCollection[Any]]
+          .setCoder(CoderMaterializer.beam(context, c.asInstanceOf[Coder[Any]]))
+    }
+    (context.wrap(main), new SideOutputCollections(tuple, context))
+  }
 
   /**
    * [[SCollection.flatMap]] with an additional [[SideOutputContext]] argument and additional
@@ -51,9 +65,7 @@ class SCollectionWithSideOutput[T] private[values] (val internal: PCollection[T]
         .of(FunctionsWithSideOutput.flatMapFn(f))
         .withOutputTags(mainTag, sideTags))
 
-    val main =
-      tuple.get(mainTag).setCoder(CoderMaterializer.beam(context, Coder[U]))
-    (context.wrap(main), new SideOutputCollections(tuple, context))
+    setCoders[U](mainTag, tuple)
   }
 
   /**
@@ -67,9 +79,7 @@ class SCollectionWithSideOutput[T] private[values] (val internal: PCollection[T]
         .of(FunctionsWithSideOutput.mapFn(f))
         .withOutputTags(mainTag, sideTags))
 
-    val main =
-      tuple.get(mainTag).setCoder(CoderMaterializer.beam(context, Coder[U]))
-    (context.wrap(main), new SideOutputCollections(tuple, context))
+    setCoders[U](mainTag, tuple)
   }
 
 }
