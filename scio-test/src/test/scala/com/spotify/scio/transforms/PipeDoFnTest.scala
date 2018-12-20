@@ -41,7 +41,7 @@ class PipeDoFnTest extends PipelineSpec {
   it should "support environment" in {
     val tmpDir = Files.createTempDirectory("pipedofn-")
     val file = tmpDir.resolve("tr.sh")
-    GFiles.write("tr $PARG1 $PARG2", file.toFile, Charsets.UTF_8)
+    GFiles.asCharSink(file.toFile, Charsets.UTF_8).write("tr $PARG1 $PARG2")
     val env = Map("PARG1" -> "[:lower:]", "PARG2" -> "[:upper:]")
 
     runWithContext { sc =>
@@ -60,7 +60,7 @@ class PipeDoFnTest extends PipelineSpec {
   it should "support working directory" in {
     val tmpDir = Files.createTempDirectory("pipedofn-")
     val file = tmpDir.resolve("tr.sh")
-    GFiles.write("tr '[:lower:]' '[:upper:]'", file.toFile, Charsets.UTF_8)
+    GFiles.asCharSink(file.toFile, Charsets.UTF_8).write("tr '[:lower:]' '[:upper:]'")
 
     runWithContext { sc =>
       val p1 = sc.parallelize(input).pipe("bash tr.sh", null, tmpDir.toFile)

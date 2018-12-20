@@ -46,7 +46,7 @@ private[client] object Cache {
     }
 
   private[this] def setCacheSchema(key: String, schema: TableSchema): Unit =
-    Files.write(schema.toPrettyString, schemaCacheFile(key), Charsets.UTF_8)
+    Files.asCharSink(schemaCacheFile(key), Charsets.UTF_8).write(schema.toPrettyString)
 
   private[this] def getCacheSchema(key: String): Option[TableSchema] =
     Try {
@@ -54,7 +54,9 @@ private[client] object Cache {
     }.toOption
 
   def setCacheDestinationTable(key: String, table: TableReference): Unit =
-    Files.write(bq.BigQueryHelpers.toTableSpec(table), tableCacheFile(key), Charsets.UTF_8)
+    Files
+      .asCharSink(tableCacheFile(key), Charsets.UTF_8)
+      .write(bq.BigQueryHelpers.toTableSpec(table))
 
   def getCacheDestinationTable(key: String): Option[TableReference] =
     Try {
