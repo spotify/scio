@@ -24,16 +24,18 @@ import org.apache.beam.sdk.values.{PCollectionTuple, TupleTag}
 import org.joda.time.Instant
 
 /** Encapsulate a side output for a transform. */
-trait SideOutput[T] extends Serializable {
+sealed trait SideOutput[T] extends Serializable {
   private[scio] val tupleTag: TupleTag[T]
+  private[scio] val coder: Coder[T]
 }
 
 /** Companion object for [[SideOutput]]. */
 object SideOutput {
 
   /** Create a new [[SideOutput]] instance. */
-  def apply[T](): SideOutput[T] = new SideOutput[T] {
+  def apply[T: Coder](): SideOutput[T] = new SideOutput[T] {
     override private[scio] val tupleTag: TupleTag[T] = new TupleTag[T]()
+    override private[scio] val coder = Coder[T]
   }
 }
 
@@ -58,9 +60,7 @@ class SideOutputCollections private[values] (private val tuple: PCollectionTuple
                                              private val context: ScioContext) {
 
   /** Extract the [[SCollection]] of a given [[SideOutput]]. */
-  def apply[T: Coder](sideOutput: SideOutput[T]): SCollection[T] = context.wrap {
-    tuple
-      .get(sideOutput.tupleTag)
-      .setCoder(CoderMaterializer.beam(context, Coder[T]))
+  def apply[T](sideOutput: SideOutput[T]): SCollection[T] = context.wrap {
+    tuple.get(sideOutput.tupleTag)
   }
 }

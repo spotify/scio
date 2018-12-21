@@ -21,7 +21,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 
 import com.spotify.scio.util.FunctionsWithSideOutput
-import org.apache.beam.sdk.transforms.ParDo
+import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{PCollection, TupleTag, TupleTagList}
 
 import scala.collection.JavaConverters._
@@ -39,37 +39,39 @@ class SCollectionWithSideOutput[T] private[values] (val internal: PCollection[T]
 
   private val sideTags = TupleTagList.of(sides.map(_.tupleTag).toList.asJava)
 
+  private def apply[U: Coder](f: DoFn[T, U]): (SCollection[U], SideOutputCollections) = {
+    val mainTag = new TupleTag[U]
+    val dofn = ParDo.of(f).withOutputTags(mainTag, sideTags)
+    val tuple = this.applyInternal(dofn)
+
+    val main =
+      tuple.get(mainTag).setCoder(CoderMaterializer.beam(context, Coder[U]))
+
+    sides.foreach { s =>
+      tuple
+        .get(s.tupleTag)
+        // The compiler can't unify the type of the PCollection returned by `get`
+        // with the type of the coder in SideOutput. We just force everything to `Any`.
+        .asInstanceOf[PCollection[Any]]
+        .setCoder(CoderMaterializer.beam(context, s.coder.asInstanceOf[Coder[Any]]))
+    }
+
+    (context.wrap(main), new SideOutputCollections(tuple, context))
+  }
+
   /**
    * [[SCollection.flatMap]] with an additional [[SideOutputContext]] argument and additional
    * [[SideOutputCollections]] return value.
    */
   def flatMap[U: Coder](
-    f: (T, SideOutputContext[T]) => TraversableOnce[U]): (SCollection[U], SideOutputCollections) = {
-    val mainTag = new TupleTag[U]
-    val tuple = this.applyInternal(
-      ParDo
-        .of(FunctionsWithSideOutput.flatMapFn(f))
-        .withOutputTags(mainTag, sideTags))
-
-    val main =
-      tuple.get(mainTag).setCoder(CoderMaterializer.beam(context, Coder[U]))
-    (context.wrap(main), new SideOutputCollections(tuple, context))
-  }
+    f: (T, SideOutputContext[T]) => TraversableOnce[U]): (SCollection[U], SideOutputCollections) =
+    apply[U](FunctionsWithSideOutput.flatMapFn(f))
 
   /**
    * [[SCollection.map]] with an additional [[SideOutputContext]] argument and additional
    * [[SideOutputCollections]] return value.
    */
-  def map[U: Coder](f: (T, SideOutputContext[T]) => U): (SCollection[U], SideOutputCollections) = {
-    val mainTag = new TupleTag[U]
-    val tuple = this.applyInternal(
-      ParDo
-        .of(FunctionsWithSideOutput.mapFn(f))
-        .withOutputTags(mainTag, sideTags))
-
-    val main =
-      tuple.get(mainTag).setCoder(CoderMaterializer.beam(context, Coder[U]))
-    (context.wrap(main), new SideOutputCollections(tuple, context))
-  }
+  def map[U: Coder](f: (T, SideOutputContext[T]) => U): (SCollection[U], SideOutputCollections) =
+    apply[U](FunctionsWithSideOutput.mapFn(f))
 
 }
