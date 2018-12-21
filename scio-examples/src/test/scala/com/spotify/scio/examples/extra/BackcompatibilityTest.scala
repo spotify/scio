@@ -20,7 +20,6 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio.avro.ProtobufIO
 import com.spotify.scio.ScioContext
 import com.spotify.scio.proto.SimpleV2.SimplePB
-import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
 
 class BackcompatibilityTest extends PipelineSpec {

@@ -92,6 +92,7 @@ jobs:
             command: |
               sbt -v $SBT_OPTS \
                 scalastyle \
+                "; scalafix --check; test:scalafix --check; it:scalafix --check" \
                 scalafmtCheck test:scalafmtCheck it:scalafmtCheck scalafmtSbtCheck
 
   build_211:

@@ -21,7 +21,7 @@ import com.spotify.scio.extra.Iterators._
 import org.scalacheck._
 
 object IteratorsSpec {
-  implicit class PairsIterable[T](val self: Iterable[T]) extends AnyVal {
+  implicit class PairsIterable[T](private val self: Iterable[T]) extends AnyVal {
     def pairs: Iterator[(T, T)] =
       self.sliding(2).filter(_.size == 2).map(s => (s.head, s.last))
   }

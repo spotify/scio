@@ -25,8 +25,7 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{Await, ExecutionContext}
-import scala.concurrent.duration.Duration
+import scala.concurrent.ExecutionContext
 import scala.util.Random
 
 object SpannerIOIT {
