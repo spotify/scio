@@ -18,7 +18,7 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.values.{PCollectionTuple, TupleTag}
 import org.joda.time.Instant
