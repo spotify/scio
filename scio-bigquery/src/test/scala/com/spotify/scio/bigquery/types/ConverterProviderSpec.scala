@@ -17,6 +17,8 @@
 
 package com.spotify.scio.bigquery.types
 
+import java.math.MathContext
+
 import com.google.protobuf.ByteString
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import org.scalacheck.ScalacheckShapeless._
@@ -24,6 +26,7 @@ import org.scalacheck._
 import org.scalatest._
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import shapeless.datatype.record._
+import com.spotify.scio.bigquery.Numeric
 
 class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matchers {
 
@@ -39,6 +42,14 @@ class ConverterProviderSpec extends PropSpec with GeneratorDrivenPropertyChecks 
   implicit val arbDate = Arbitrary(Gen.const(LocalDate.now()))
   implicit val arbTime = Arbitrary(Gen.const(LocalTime.now()))
   implicit val arbDatetime = Arbitrary(Gen.const(LocalDateTime.now()))
+  implicit val arbNumericBigDecimal = Arbitrary {
+    for {
+      bd <- Arbitrary.arbitrary[BigDecimal]
+    } yield {
+      val rounded = BigDecimal(bd.toString(), new MathContext(Numeric.MaxNumericPrecision))
+      Numeric(rounded)
+    }
+  }
 
   implicit def compareByteArrays(x: Array[Byte], y: Array[Byte]): Boolean =
     ByteString.copyFrom(x) == ByteString.copyFrom(y)
