@@ -34,7 +34,8 @@ object Schemas {
                       timestampF: Instant,
                       dateF: LocalDate,
                       timeF: LocalTime,
-                      datetimeF: LocalDateTime)
+                      datetimeF: LocalDateTime,
+                      bigDecimalF: BigDecimal)
   case class Optional(boolF: Option[Boolean],
                       intF: Option[Int],
                       longF: Option[Long],
@@ -46,7 +47,8 @@ object Schemas {
                       timestampF: Option[Instant],
                       dateF: Option[LocalDate],
                       timeF: Option[LocalTime],
-                      datetimeF: Option[LocalDateTime])
+                      datetimeF: Option[LocalDateTime],
+                      bigDecimalF: Option[BigDecimal])
   case class Repeated(boolF: List[Boolean],
                       intF: List[Int],
                       longF: List[Long],
@@ -58,7 +60,8 @@ object Schemas {
                       timestampF: List[Instant],
                       dateF: List[LocalDate],
                       timeF: List[LocalTime],
-                      datetimeF: List[LocalDateTime])
+                      datetimeF: List[LocalDateTime],
+                      bigDecimalF: List[BigDecimal])
 
   // records
   case class RequiredNested(required: Required, optional: Optional, repeated: Repeated)
@@ -68,5 +71,4 @@ object Schemas {
   case class RepeatedNested(required: List[Required],
                             optional: List[Optional],
                             repeated: List[Repeated])
-
 }

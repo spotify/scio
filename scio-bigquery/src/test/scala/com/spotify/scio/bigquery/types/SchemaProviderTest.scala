@@ -38,7 +38,8 @@ class SchemaProviderTest extends FlatSpec with Matchers {
        |  {"mode": "$mode", "name": "timestampF", "type": "TIMESTAMP"},
        |  {"mode": "$mode", "name": "dateF", "type": "DATE"},
        |  {"mode": "$mode", "name": "timeF", "type": "TIME"},
-       |  {"mode": "$mode", "name": "datetimeF", "type": "DATETIME"}
+       |  {"mode": "$mode", "name": "datetimeF", "type": "DATETIME"},
+       |  {"mode": "$mode", "name": "bigDecimalF", "type": "NUMERIC"}
        |]
        |""".stripMargin
 

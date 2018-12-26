@@ -59,12 +59,13 @@ private[types] object SchemaProvider {
     tpe match {
       case t if provider.shouldOverrideType(t) =>
         (provider.getBigQueryType(t), Iterable.empty)
-      case t if t =:= typeOf[Boolean] => ("BOOLEAN", Iterable.empty)
-      case t if t =:= typeOf[Int]     => ("INTEGER", Iterable.empty)
-      case t if t =:= typeOf[Long]    => ("INTEGER", Iterable.empty)
-      case t if t =:= typeOf[Float]   => ("FLOAT", Iterable.empty)
-      case t if t =:= typeOf[Double]  => ("FLOAT", Iterable.empty)
-      case t if t =:= typeOf[String]  => ("STRING", Iterable.empty)
+      case t if t =:= typeOf[Boolean]    => ("BOOLEAN", Iterable.empty)
+      case t if t =:= typeOf[Int]        => ("INTEGER", Iterable.empty)
+      case t if t =:= typeOf[Long]       => ("INTEGER", Iterable.empty)
+      case t if t =:= typeOf[Float]      => ("FLOAT", Iterable.empty)
+      case t if t =:= typeOf[Double]     => ("FLOAT", Iterable.empty)
+      case t if t =:= typeOf[String]     => ("STRING", Iterable.empty)
+      case t if t =:= typeOf[BigDecimal] => ("NUMERIC", Iterable.empty)
 
       case t if t =:= typeOf[ByteString]  => ("BYTES", Iterable.empty)
       case t if t =:= typeOf[Array[Byte]] => ("BYTES", Iterable.empty)

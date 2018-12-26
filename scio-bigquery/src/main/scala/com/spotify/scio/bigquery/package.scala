@@ -17,6 +17,8 @@
 
 package com.spotify.scio
 
+import java.math.MathContext
+
 import com.google.api.services.bigquery.model.{
   TableReference,
   TableRow => GTableRow,
@@ -302,6 +304,26 @@ package object bigquery {
       if (field != null) p = p.setField(field)
       if (expirationMs > 0) p = p.setExpirationMs(expirationMs)
       p
+    }
+  }
+
+  object Numeric {
+    val MaxNumericPrecision = 38
+    val MaxNumericScale = 9
+
+    def apply(value: String): BigDecimal = apply(BigDecimal(value))
+
+    def apply(value: BigDecimal): BigDecimal = {
+      // NUMERIC's max scale is 9, precision is 38
+      val scaled = if (value.scale > MaxNumericScale) {
+        value.setScale(MaxNumericScale, scala.math.BigDecimal.RoundingMode.HALF_UP)
+      } else {
+        value
+      }
+      require(scaled.precision <= MaxNumericPrecision,
+              s"max allowed precision is $MaxNumericPrecision")
+
+      BigDecimal(scaled.toString, new MathContext(MaxNumericPrecision))
     }
   }
 

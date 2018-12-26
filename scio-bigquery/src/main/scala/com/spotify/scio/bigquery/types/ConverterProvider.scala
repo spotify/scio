@@ -78,6 +78,8 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Float]   => q"$tree.asInstanceOf[Double].toFloat"
         case t if t =:= typeOf[Double]  => q"$tree.asInstanceOf[Double]"
         case t if t =:= typeOf[String]  => q"$tree.toString"
+        case t if t =:= typeOf[BigDecimal] =>
+          q"_root_.com.spotify.scio.bigquery.Numeric($tree.toString)"
 
         case t if t =:= typeOf[ByteString] =>
           val b = q"$tree.asInstanceOf[_root_.java.nio.ByteBuffer]"
@@ -175,6 +177,8 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Float]   => q"$s.toFloat"
         case t if t =:= typeOf[Double]  => q"$s.toDouble"
         case t if t =:= typeOf[String]  => q"$s"
+        case t if t =:= typeOf[BigDecimal] =>
+          q"_root_.com.spotify.scio.bigquery.Numeric($s)"
 
         case t if t =:= typeOf[ByteString] =>
           val b =
@@ -280,6 +284,8 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Double]              => tree
         case t if t =:= typeOf[String]              => tree
 
+        case t if t =:= typeOf[BigDecimal] =>
+          q"_root_.com.spotify.scio.bigquery.Numeric($tree).toString"
         case t if t =:= typeOf[ByteString] =>
           q"_root_.com.google.common.io.BaseEncoding.base64().encode($tree.toByteArray)"
         case t if t =:= typeOf[Array[Byte]] =>
