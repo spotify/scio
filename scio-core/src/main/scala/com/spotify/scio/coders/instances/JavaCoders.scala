@@ -74,7 +74,10 @@ trait JavaCoders {
   implicit def jBitSetCoder: Coder[java.util.BitSet] = Coder.beam(BitSetCoder.of())
 
   private def fromScalaCoder[J <: java.lang.Number, S <: AnyVal](coder: Coder[S]): Coder[J] =
-    coder.asInstanceOf[Coder[J]]
+    coder match {
+      case com.spotify.scio.coders.Beam(c) =>
+        com.spotify.scio.coders.Beam(NullableCoder.of(c)).asInstanceOf[Coder[J]]
+    }
 
   implicit val jShortCoder: Coder[java.lang.Short] = fromScalaCoder(Coder.shortCoder)
   implicit val jByteCoder: Coder[java.lang.Byte] = fromScalaCoder(Coder.byteCoder)

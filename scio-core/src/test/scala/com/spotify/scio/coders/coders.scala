@@ -379,4 +379,22 @@ class CodersTest extends FlatSpec with Matchers {
     import com.google.cloud.spanner.Struct
     check(Struct.newBuilder().set("foo").to("bar").build())
   }
+
+  it should "#1604: not throw on null" in {
+    import java.lang.{
+      Integer => jInt,
+      Float => jFloat,
+      Double => jDouble,
+      Long => jLong,
+      Short => jShort
+    }
+    check[String](null)
+    check[jInt](null)
+    check[jFloat](null)
+    check[jDouble](null)
+    check[jLong](null)
+    check[jShort](null)
+    check[(String, String)]((null, null))
+    check(DummyCC(null))
+  }
 }
