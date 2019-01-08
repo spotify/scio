@@ -390,7 +390,7 @@ class CodersTest extends FlatSpec with Matchers {
       Short => jShort
     }
 
-    def opts =
+    def opts: PipelineOptions =
       PipelineOptionsFactory
         .fromArgs("--nullableCoders=true")
         .create()
