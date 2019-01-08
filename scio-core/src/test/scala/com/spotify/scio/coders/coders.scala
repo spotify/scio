@@ -24,9 +24,8 @@ import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.CoderRegistry
-import org.apache.beam.sdk.options.PipelineOptionsFactory
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.scalatest.{Assertion, FlatSpec, Matchers}
-
 import scala.reflect.{classTag, ClassTag}
 
 final case class UserId(bytes: Seq[Byte])
@@ -87,8 +86,10 @@ class CodersTest extends FlatSpec with Matchers {
   }
 
   import org.scalactic.Equality
-  def check[T](t: T)(implicit C: Coder[T], eq: Equality[T]): Assertion = {
-    val beamCoder = CoderMaterializer.beamWithDefault(C)
+  def check[T](t: T, options: PipelineOptions = PipelineOptionsFactory.create())(
+    implicit C: Coder[T],
+    eq: Equality[T]): Assertion = {
+    val beamCoder = CoderMaterializer.beamWithDefault(C, o = options)
     org.apache.beam.sdk.util.SerializableUtils.ensureSerializable(beamCoder)
     val enc = CoderUtils.encodeToByteArray(beamCoder, t)
     val dec = CoderUtils.decodeFromByteArray(beamCoder, enc)
@@ -378,5 +379,29 @@ class CodersTest extends FlatSpec with Matchers {
   it should "support spanner's Struct class" in {
     import com.google.cloud.spanner.Struct
     check(Struct.newBuilder().set("foo").to("bar").build())
+  }
+
+  it should "#1604: not throw on null" in {
+    import java.lang.{
+      Integer => jInt,
+      Float => jFloat,
+      Double => jDouble,
+      Long => jLong,
+      Short => jShort
+    }
+
+    def opts: PipelineOptions =
+      PipelineOptionsFactory
+        .fromArgs("--nullableCoders=true")
+        .create()
+
+    check[String](null, opts)
+    check[jInt](null, opts)
+    check[jFloat](null, opts)
+    check[jDouble](null, opts)
+    check[jLong](null, opts)
+    check[jShort](null, opts)
+    check[(String, String)]((null, null), opts)
+    check(DummyCC(null), opts)
   }
 }

@@ -17,7 +17,7 @@
 
 package com.spotify.scio.coders
 
-import org.apache.beam.sdk.coders.{Coder => BCoder, KvCoder}
+import org.apache.beam.sdk.coders.{Coder => BCoder, KvCoder, NullableCoder}
 import org.apache.beam.sdk.coders.CoderRegistry
 import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.options.PipelineOptionsFactory
@@ -35,7 +35,10 @@ object CoderMaterializer {
 
   final def beam[T](r: CoderRegistry, o: PipelineOptions, coder: Coder[T]): BCoder[T] = {
     coder match {
-      case Beam(c) => c
+      case Beam(c) =>
+        val nullableCoder = o.as(classOf[com.spotify.scio.options.ScioOptions]).getNullableCoders()
+        if (nullableCoder) NullableCoder.of(c)
+        else c
       case Fallback(ct) =>
         WrappedBCoder.create(
           com.spotify.scio.Implicits

@@ -64,4 +64,9 @@ public interface ScioOptions extends PipelineOptions, KryoOptions {
     WARNING,
     ERROR
   }
+
+  @Description("Should scio use NullableCoder to serialize data.")
+  @Default.Boolean(false)
+  boolean getNullableCoders();
+  void setNullableCoders(boolean value);
 }
