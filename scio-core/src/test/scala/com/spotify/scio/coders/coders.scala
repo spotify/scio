@@ -24,9 +24,8 @@ import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.CoderRegistry
-import org.apache.beam.sdk.options.PipelineOptionsFactory
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.scalatest.{Assertion, FlatSpec, Matchers}
-
 import scala.reflect.{classTag, ClassTag}
 
 final case class UserId(bytes: Seq[Byte])
@@ -87,8 +86,10 @@ class CodersTest extends FlatSpec with Matchers {
   }
 
   import org.scalactic.Equality
-  def check[T](t: T)(implicit C: Coder[T], eq: Equality[T]): Assertion = {
-    val beamCoder = CoderMaterializer.beamWithDefault(C)
+  def check[T](t: T, options: PipelineOptions = PipelineOptionsFactory.create())(
+    implicit C: Coder[T],
+    eq: Equality[T]): Assertion = {
+    val beamCoder = CoderMaterializer.beamWithDefault(C, o = options)
     org.apache.beam.sdk.util.SerializableUtils.ensureSerializable(beamCoder)
     val enc = CoderUtils.encodeToByteArray(beamCoder, t)
     val dec = CoderUtils.decodeFromByteArray(beamCoder, enc)
@@ -388,13 +389,19 @@ class CodersTest extends FlatSpec with Matchers {
       Long => jLong,
       Short => jShort
     }
-    check[String](null)
-    check[jInt](null)
-    check[jFloat](null)
-    check[jDouble](null)
-    check[jLong](null)
-    check[jShort](null)
-    check[(String, String)]((null, null))
-    check(DummyCC(null))
+
+    def opts =
+      PipelineOptionsFactory
+        .fromArgs("--nullableCoders=true")
+        .create()
+
+    check[String](null, opts)
+    check[jInt](null, opts)
+    check[jFloat](null, opts)
+    check[jDouble](null, opts)
+    check[jLong](null, opts)
+    check[jShort](null, opts)
+    check[(String, String)]((null, null), opts)
+    check(DummyCC(null), opts)
   }
 }

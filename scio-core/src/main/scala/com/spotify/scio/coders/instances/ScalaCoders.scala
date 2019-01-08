@@ -257,7 +257,7 @@ trait ScalaCoders {
     Coder.beam(ByteCoder.of().asInstanceOf[BCoder[Byte]])
   // TODO: keep an eye on https://issues.apache.org/jira/browse/BEAM-5439
   implicit def stringCoder: Coder[String] =
-    Coder.beam(NullableCoder.of(StringUtf8Coder.of()))
+    Coder.beam(StringUtf8Coder.of())
   implicit def shortCoder: Coder[Short] =
     Coder.beam(BigEndianShortCoder.of().asInstanceOf[BCoder[Short]])
   implicit def intCoder: Coder[Int] =
