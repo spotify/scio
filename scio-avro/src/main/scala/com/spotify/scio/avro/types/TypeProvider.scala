@@ -142,8 +142,21 @@ private[types] object TypeProvider {
 
     val r = annottees.map(_.tree) match {
       case l @ List(
-            q"$mods class $name[..$tparams] $ctorMods(..$fields) extends { ..$earlydefns } with ..$parents { $self => ..$body }")
-          if mods.asInstanceOf[Modifiers].hasFlag(Flag.CASE) =>
+            q"$mods class $name[..$tparams] $ctorMods(..$fields) extends { ..$earlydefns } with ..$parents { $self => ..$body }") =>
+        // Check that it's a case class
+        if (!mods.asInstanceOf[Modifiers].hasFlag(Flag.CASE)) {
+          val error = s"""Invalid annotation
+            |
+            |@AvroType.toSchema annotation requires a case class, which fields will be translated to an Avro schema.
+            |
+            |Example: case class Foo(fieldA: String, fieldB: Int)
+            |
+            |Tree:
+            |
+            |$l
+          """.stripMargin
+          c.abort(c.enclosingPosition, error)
+        }
         if (parents.map(_.toString()).toSet != Set("scala.Product", "scala.Serializable")) {
           c.abort(c.enclosingPosition, s"Invalid annotation, don't extend the case class $l")
         }
