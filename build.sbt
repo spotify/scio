@@ -293,7 +293,8 @@ lazy val root: Project = Project(
   .settings(
     commonSettings ++ siteSettings ++ noPublishSettings,
     unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
-      -- inProjects(scioCassandra2) -- inProjects(scioElasticsearch2)
+      -- inProjects(scioCassandra2)
+      -- inProjects(scioElasticsearch2, scioElasticsearch5)
       -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples)
       -- inProjects(scioJmh),
     // unidoc handles class paths differently than compile and may give older
