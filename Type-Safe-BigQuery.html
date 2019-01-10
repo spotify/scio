@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="description" content="site">
+<meta name="generator" content="Paradox, paradox-material-theme=0.5.1, mkdocs-material=3.0.3">
+
+<meta name="lang:clipboard.copy" content="Copy to clipboard">
+<meta name="lang:clipboard.copied" content="Copied to clipboard">
+<meta name="lang:search.language" content="">
+<meta name="lang:search.pipeline.stopwords" content="true">
+<meta name="lang:search.pipeline.trimmer" content="true">
+<meta name="lang:search.result.none" content="No matching documents">
+<meta name="lang:search.result.one" content="1 matching document">
+<meta name="lang:search.result.other" content="# matching documents">
+<meta name="lang:search.tokenizer" content="[\s\-]+">
+
+
+<meta name="description" content="site">
+<link rel="shortcut icon" href="assets/images/favicon.png">
+<title>Background</title>
+<link rel="stylesheet" href="assets/stylesheets/application.451f80e5.css">
+<link rel="stylesheet" href="assets/stylesheets/application-palette.22915126.css">
+<link rel="stylesheet" href="lib/material__tabs/dist/mdc.tabs.min.css">
+<link rel="stylesheet" href="lib/prettify/prettify.css">
+<script src="assets/javascripts/modernizr.1aa3b519.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+<style>
+body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}
+code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}
+</style>
+<link rel="stylesheet" href="assets/fonts/font-awesome.css">
+<link rel="stylesheet" href="assets/fonts/material-icons.css">
+<link rel="stylesheet" href="assets/stylesheets/paradox-material-theme.css">
+</head>
+<body
+data-md-color-primary="white"
+data-md-color-accent="indigo"
+>
+<input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+<input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+<label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+<header class="md-header" data-md-component="header">
+<nav class="md-header-nav md-grid">
+<div class="md-flex">
+<div class="md-flex__cell md-flex__cell--shrink">
+<a href="Type-Safe-BigQuery.html" title="Background" class="md-header-nav__button md-logo">
+<img src="images/logo.png" width="24" height="24">
+</a>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch">
+<div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+Background
+</div>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+<label class="md-icon md-search__icon" for="__search"></label>
+<button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">&#xE5CD;</button>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix>
+<div class="md-search-result" data-md-component="result">
+<div class="md-search-result__meta">
+Type to start searching
+</div>
+<ol class="md-search-result__list"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<div class="md-header-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+</div>
+</div>
+</nav>
+</header>
+
+<div class="md-container">
+<main class="md-main">
+<div class="md-main__inner md-grid" data-md-component="container">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--primary" data-md-level="0" style="visibility: hidden">
+<label class="md-nav__title md-nav__title--site" for="drawer">
+<a href="Type-Safe-BigQuery.html" title="Background" class="md-nav__button md-logo">
+<span class="md-nav__button md-logo">
+<img src="images/logo.png" width="24" height="24">
+</a>
+<a href="Type-Safe-BigQuery.html" title="Background">
+Background
+</a>
+</label>
+<div class="md-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+<ul>
+</ul>
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="Type-Safe-BigQuery.html#background" class="header">Background</a>
+  <ul>
+    <li><a href="Type-Safe-BigQuery.html#tablerow" class="header">TableRow</a></li>
+    <li><a href="Type-Safe-BigQuery.html#type-safe-bigquery" class="header">Type safe BigQuery</a></li>
+    <li><a href="Type-Safe-BigQuery.html#type-annotations" class="header">Type annotations</a></li>
+    <li><a href="Type-Safe-BigQuery.html#using-type-safe-bigquery" class="header">Using type safe BigQuery</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</nav>
+<ul style="display: none">
+<li class="md-nav__item md-version" id="project.version">
+<label class="md-nav__link" for="__version">
+<i class="md-icon" title="Version">label_outline</i> 0.7.0*
+</label>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="Type-Safe-BigQuery.html#background" class="header">Background</a>
+  <ul>
+    <li><a href="Type-Safe-BigQuery.html#tablerow" class="header">TableRow</a></li>
+    <li><a href="Type-Safe-BigQuery.html#type-safe-bigquery" class="header">Type safe BigQuery</a></li>
+    <li><a href="Type-Safe-BigQuery.html#type-annotations" class="header">Type annotations</a></li>
+    <li><a href="Type-Safe-BigQuery.html#using-type-safe-bigquery" class="header">Using type safe BigQuery</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<div class="md-content__searchable">
+<h2><a href="#background" name="background" class="anchor"><span class="anchor-link"></span></a>Background</h2>
+<p><strong>NOTE that there are currently two BigQuery dialects, the <a href="https://cloud.google.com/bigquery/query-reference">legacy query</a> syntax and the new <a href="https://cloud.google.com/bigquery/sql-reference/">SQL 2011 standard</a>. The SQL standard is highly recommended since it generates dry-run schemas consistent with actual result and eliminates a lot of edge cases when working with records in a type-safe manner. To use standard SQL, prefix your query with <code>#standardsql</code>.</strong></p>
+<h3><a href="#tablerow" name="tablerow" class="anchor"><span class="anchor-link"></span></a>TableRow</h3>
+<p>BigQuery rows are represented as <a href="https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/com/google/api/services/bigquery/model/TableRow.html"><code>TableRow</code></a> in the BigQuery Java API which is basically a <code>Map&lt;String, Object&gt;</code>. Fields are accessed by name strings and values must be cast or converted to the desired type, both of which are error prone process.</p>
+<h3><a href="#type-safe-bigquery" name="type-safe-bigquery" class="anchor"><span class="anchor-link"></span></a>Type safe BigQuery</h3>
+<p>The type safe BigQuery API in Scio represents rows as case classes and generates <a href="https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/com/google/api/services/bigquery/model/TableSchema.html"><code>TableSchema</code></a> converters automatically at compile time with the following mapping logic:</p>
+<ul>
+  <li>Nullable fields are mapped to <code>Option[T]</code>s</li>
+  <li>Repeated fields are mapped to <code>List[T]</code>s</li>
+  <li>Records are mapped to nested case classes</li>
+  <li>Timestamps are mapped to Joda Time <a href="http://www.joda.org/joda-time/apidocs/org/joda/time/class-use/Instant.html"><code>Instant</code></a></li>
+</ul>
+<p>See documentation for <a href="http://spotify.github.io/scio/api/com/spotify/scio/bigquery/types/BigQueryType$.html">BigQueryType</a> for the complete list of supported types.</p>
+<h2><a href="#type-annotations" name="type-annotations" class="anchor"><span class="anchor-link"></span></a>Type annotations</h2>
+<p>There are 4 annotations for type safe code generation.</p>
+<h3><a href="#bigquerytype-fromtable" name="bigquerytype-fromtable" class="anchor"><span class="anchor-link"></span></a>BigQueryType.fromTable</h3>
+<p>This expands a class with fields that map to a BigQuery table. Note that <code>class Row</code> has no body definition and is expanded by the annotation at compile time based on actual table schema.</p>
+<pre class="prettyprint"><code class="language-scala">@BigQueryType.fromTable(&quot;publicdata:samples.gsod&quot;)
+class Row
+</code></pre>
+<h3><a href="#bigquerytype-fromquery" name="bigquerytype-fromquery" class="anchor"><span class="anchor-link"></span></a>BigQueryType.fromQuery</h3>
+<p>This expands a class with output fields from a SELECT query. A dry run is executed at compile time to get output schema and does not incur additional cost.</p>
+<pre class="prettyprint"><code class="language-scala">@BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [publicdata:samples.gsod]&quot;)
+class Row
+</code></pre>
+<p>The query string may also contain <code>&quot;%s&quot;</code>s and additional arguments for parameterized query. This could be handy for log type data.</p>
+<pre class="prettyprint"><code class="language-scala">// generate schema at compile time from a specific date
+@BigQueryType.fromQuery(&quot;SELECT user, url FROM [my-project:logs.log_%s]&quot;, &quot;20160101&quot;)
+class Row
+
+// generate new query strings at runtime
+val newQuery = Row.query.format(args(0))
+</code></pre>
+<p>There&rsquo;s also a <code>$LATEST</code> placeholder for table partitions. The latest common partition for all tables with the placeholder will be used.</p>
+<pre class="prettyprint"><code class="language-scala">// generate schema at compile time from the latest date available in both my-project:log1.log_* and my-project:log2.log_*
+@BigQueryType.fromQuery(
+  &quot;SELECT user, url, action FROM [my-project:log1.log_%s] JOIN [my-project:log2.log_%s] USING user&quot;,
+  &quot;$LATEST&quot;, &quot;$LATEST&quot;)
+class Row
+
+// generate new query strings at runtime
+val newQuery = Row.query.format(args(0), args(0))
+</code></pre>
+<h3><a href="#bigquerytype-fromschema" name="bigquerytype-fromschema" class="anchor"><span class="anchor-link"></span></a>BigQueryType.fromSchema</h3>
+<p>This annotation gets schema from a string parameter and is useful in tests.</p>
+<pre class="prettyprint"><code class="language-scala">@BigQueryType.fromSchema(
+  &quot;&quot;&quot;
+    |{
+    |  &quot;fields&quot;: [
+    |    {&quot;mode&quot;: &quot;REQUIRED&quot;, &quot;name&quot;: &quot;f1&quot;, &quot;type&quot;: &quot;INTEGER&quot;},
+    |    {&quot;mode&quot;: &quot;REQUIRED&quot;, &quot;name&quot;: &quot;f2&quot;, &quot;type&quot;: &quot;FLOAT&quot;},
+    |    {&quot;mode&quot;: &quot;REQUIRED&quot;, &quot;name&quot;: &quot;f3&quot;, &quot;type&quot;: &quot;BOOLEAN&quot;},
+    |    {&quot;mode&quot;: &quot;REQUIRED&quot;, &quot;name&quot;: &quot;f4&quot;, &quot;type&quot;: &quot;STRING&quot;},
+    |    {&quot;mode&quot;: &quot;REQUIRED&quot;, &quot;name&quot;: &quot;f5&quot;, &quot;type&quot;: &quot;TIMESTAMP&quot;}
+    |    ]
+    |}
+  &quot;&quot;&quot;.stripMargin)
+class Row
+</code></pre>
+<h3><a href="#bigquerytype-totable" name="bigquerytype-totable" class="anchor"><span class="anchor-link"></span></a>BigQueryType.toTable</h3>
+<p>This annotation works the other way around. Instead of generating class definition from a BigQuery schema, it generates BigQuery schema from a case class definition.</p>
+<pre class="prettyprint"><code class="language-scala">@BigQueryType.toTable
+case class Result(user: String, url: String, time: Long)
+</code></pre>
+<p>Fields in the case class and the class itself can also be annotated with <code>@description</code> which propagates to BigQuery schema.</p>
+<pre class="prettyprint"><code class="language-scala">@BigQueryType.toTable
+@description(&quot;A list of users mapped to the urls they visited&quot;)
+case class Result(user: String, 
+                  url: String,
+                  @description(&quot;Milliseconds since Unix epoch&quot;) time: Long)
+</code></pre>
+<h3><a href="#annotation-parameters" name="annotation-parameters" class="anchor"><span class="anchor-link"></span></a>Annotation parameters</h3>
+<p>Note that due to the nature of Scala macros, only string literals and multi-line strings with optional <code>.stripMargin</code> are allowed as parameters to <code>BigQueryType.fromTable</code>, <code>BigQueryType.fromQuery</code> and <code>BigQueryType.fromSchema</code>.</p>
+<p>These are OK:</p>
+<pre class="prettyprint"><code class="language-scala">@BigQueryType.fromTable(&quot;project-id:dataset-id.table-id&quot;)
+class Row1
+
+@BigQueryType.fromQuery(
+  &quot;&quot;&quot;
+    |SELECT user, url
+    |FROM [project-id:dataset-id.table-id]
+  &quot;&quot;&quot;.stripMargin)
+class Row2
+</code></pre>
+<p>And these are not:</p>
+<pre class="prettyprint"><code class="language-scala">@BigQueryType.fromQuery(&quot;SELECT &quot; + args(1) + &quot; FROM [&quot; + args(2) + &quot;]&quot;)
+class Row1
+
+val sql = &quot;SELECT &quot; + args(1) + &quot; FROM [&quot; + args(2) + &quot;]&quot;
+@BigQueryType.fromQuery(sql)
+class Row2
+</code></pre>
+<h3><a href="#companion-objects" name="companion-objects" class="anchor"><span class="anchor-link"></span></a>Companion objects</h3>
+<p>Classes annotated with the type safe BigQuery API have a few more convenience methods.</p>
+<ul>
+  <li><code>schema: TableSchema</code> - BigQuery schema</li>
+  <li><code>fromTableRow: (TableRow =&gt; T)</code> - <code>TableRow</code> to case class converter</li>
+  <li><code>toTableRow: (T =&gt; TableRow)</code> - case class to <code>TableRow</code> converter</li>
+  <li><code>toPrettyString(indent: Int = 0)</code> - pretty string representation of the schema</li>
+</ul>
+<pre><code>scio&gt; @BigQueryType.fromTable(&quot;publicdata:samples.gsod&quot;)
+     | class Row
+defined class Row
+defined object Row
+
+scio&gt; println(Row.toPrettyString(2))
+(
+  station_number: Int,
+  wban_number: Int,
+  year: Int,
+  month: Int,
+  day: Int,
+  mean_temp: Double,
+  num_mean_temp_samples: Int,
+  mean_dew_point: Double,
+  num_mean_dew_point_samples: Int,
+  mean_sealevel_pressure: Double,
+  num_mean_sealevel_pressure_samples: Int,
+  mean_station_pressure: Double,
+  num_mean_station_pressure_samples: Int,
+  mean_visibility: Double,
+  num_mean_visibility_samples: Int,
+  mean_wind_speed: Double,
+  num_mean_wind_speed_samples: Int,
+  max_sustained_wind_speed: Double,
+  max_gust_wind_speed: Double,
+  max_temperature: Double,
+  max_temperature_explicit: Boolean,
+  min_temperature: Double,
+  min_temperature_explicit: Boolean,
+  total_precipitation: Double,
+  snow_depth: Double,
+  fog: Boolean,
+  rain: Boolean,
+  snow: Boolean,
+  hail: Boolean,
+  thunder: Boolean,
+  tornado: Boolean)
+</code></pre>
+<p>In addition, <code>BigQueryType.fromTable</code> and <code>BigQueryTable.fromQuery</code> generate <code>table: String</code> and <code>query: String</code> respectively that refers to parameters in the original annotation.</p>
+<p>User defined companion objects may interfere with macro code generation so for now do not provide one to a case class annotated with <code>@BigQueryType.toTable</code>, i.e. <code>object Row</code>.</p>
+<h2><a href="#using-type-safe-bigquery" name="using-type-safe-bigquery" class="anchor"><span class="anchor-link"></span></a>Using type safe BigQuery</h2>
+<h3><a href="#type-safe-bigquery-with-scio" name="type-safe-bigquery-with-scio" class="anchor"><span class="anchor-link"></span></a>Type safe BigQuery with Scio</h3>
+<p>To enable type safe BigQuery for <code>ScioContext</code>:</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery._
+
+@BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [publicdata:samples.gsod]&quot;)
+class Row
+
+@BigQueryType.toTable
+case class Result(month: Long, tornado_count: Long)
+
+def main(cmdlineArgs: Array[String]): Unit = {
+  val (sc, args) = ContextAndArgs(cmdlineArgs)
+  sc.typedBigQuery[Row]()  // query string from Row.query
+    .flatMap(r =&gt; if (r.tornado.getOrElse(false)) Seq(r.month) else Nil)
+    .countByValue
+    .map(kv =&gt; Result(kv._1, kv._2))
+    .saveAsTypedBigQuery(args(&quot;output&quot;))  // schema from Row.schema
+  sc.close()
+}
+</code></pre>
+<h3><a href="#type-safe-bigqueryclient" name="type-safe-bigqueryclient" class="anchor"><span class="anchor-link"></span></a>Type safe BigQueryClient</h3>
+<p>Annotated classes can be used with the <code>BigQueryClient</code> directly too.</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.bigquery.client.BigQuery
+
+val bq = new BigQuery()
+val rows = bq.getTypedRows[Row]()
+bq.writeTypedRows(&quot;project-id:dataset-id.table-id&quot;, rows.toList)
+</code></pre>
+<h3><a href="#using-type-safe-bigquery-directly-with-beams-io-library" name="using-type-safe-bigquery-directly-with-beams-io-library" class="anchor"><span class="anchor-link"></span></a>Using type safe BigQuery directly with Beam&rsquo;s IO library</h3>
+<p>If there are any BigQuery I/O operations supported in the Apache Beam client but not exposed in Scio, you may choose to use the Beam transform directly using Scio&rsquo;s <code>.saveAsCustomOutput()</code> option:</p>
+<pre class="prettyprint"><code class="language-scala">import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO
+
+val bigQueryType = BigQueryType[Foo]
+val tableRows: SCollection[Foo] = ...
+
+tableRows
+  .map(bigQueryType.toTableRow)
+  .saveAsCustomOutput(
+    &quot;custom bigquery IO&quot;,
+    BigQueryIO
+      .writeTableRows()
+      .to(&quot;my-project:my-dataset.my-table&quot;)
+      .withSchema(bigQueryType.schema)
+      .withCreateDisposition(...)
+      .withWriteDisposition(...)
+      .withFailedInsertRetryPolicy(...)
+    )
+</code></pre>
+<h3><a href="#bigquerytype-and-intellij-idea" name="bigquerytype-and-intellij-idea" class="anchor"><span class="anchor-link"></span></a>BigQueryType and IntelliJ IDEA</h3>
+<p>See <a href="./FAQ%23how-to-make-intellij-idea-work-with-type-safe-bigquery-classes.html">FAQ#how-to-make-intellij-idea-work-with-type-safe-bigquery-classes</a> for making IntelliJ happy with type safe BigQuery.</p>
+<h3><a href="#custom-types-and-validation" name="custom-types-and-validation" class="anchor"><span class="anchor-link"></span></a>Custom types and validation</h3>
+<p>See <a href="./OverrideTypeProvider.html">OverrideTypeProvider</a> for details about the custom types and validation mechanism.</p>
+</div>
+<div>
+<a href="https://github.com/spotify/scio/tree/master/site/src/paradox/Type-Safe-BigQuery.md" title="Edit this page" class="md-source-file md-edit">
+Edit this page
+</a>
+</div>
+<div class="print-only">
+<span class="md-source-file md-version">
+0.7.0*
+</span>
+</div>
+</article>
+</div>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
+<div class="md-footer-copyright__highlight">
+Copyright (C) 2018 Spotify AB
+</div>
+Powered by
+<a href="https://github.com/lightbend/paradox">Paradox</a>
+and
+<a href="https://jonas.github.io/paradox-material-theme/">Paradox Material Theme</a>
+
+</div>
+<div class="md-footer-social">
+<a href="https://github.com/spotify" class="md-footer-social__link fa fa-github"></a><a href="https://twitter.com/spotifyeng" class="md-footer-social__link fa fa-twitter"></a>
+</div>
+
+</div>
+</div>
+</footer>
+
+</div>
+<script src="assets/javascripts/application.583bbe55.js"></script>
+<script src="assets/javascripts/paradox-material-theme.js"></script>
+<script>app.initialize({version:"0.17",url:{base:"."}})</script>
+<script type="text/javascript" src="lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function(event) {
+window.prettyPrint && prettyPrint();
+});
+</script>
+</body>
+</html>

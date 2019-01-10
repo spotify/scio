@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="description" content="site">
+<meta name="generator" content="Paradox, paradox-material-theme=0.5.1, mkdocs-material=3.0.3">
+
+<meta name="lang:clipboard.copy" content="Copy to clipboard">
+<meta name="lang:clipboard.copied" content="Copied to clipboard">
+<meta name="lang:search.language" content="">
+<meta name="lang:search.pipeline.stopwords" content="true">
+<meta name="lang:search.pipeline.trimmer" content="true">
+<meta name="lang:search.result.none" content="No matching documents">
+<meta name="lang:search.result.one" content="1 matching document">
+<meta name="lang:search.result.other" content="# matching documents">
+<meta name="lang:search.tokenizer" content="[\s\-]+">
+
+
+<meta name="description" content="site">
+<link rel="shortcut icon" href="assets/images/favicon.png">
+<title>Scio Unit Tests</title>
+<link rel="stylesheet" href="assets/stylesheets/application.451f80e5.css">
+<link rel="stylesheet" href="assets/stylesheets/application-palette.22915126.css">
+<link rel="stylesheet" href="lib/material__tabs/dist/mdc.tabs.min.css">
+<link rel="stylesheet" href="lib/prettify/prettify.css">
+<script src="assets/javascripts/modernizr.1aa3b519.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+<style>
+body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}
+code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}
+</style>
+<link rel="stylesheet" href="assets/fonts/font-awesome.css">
+<link rel="stylesheet" href="assets/fonts/material-icons.css">
+<link rel="stylesheet" href="assets/stylesheets/paradox-material-theme.css">
+</head>
+<body
+data-md-color-primary="white"
+data-md-color-accent="indigo"
+>
+<input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+<input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+<label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+<header class="md-header" data-md-component="header">
+<nav class="md-header-nav md-grid">
+<div class="md-flex">
+<div class="md-flex__cell md-flex__cell--shrink">
+<a href="Scio-Unit-Tests.html" title="Scio Unit Tests" class="md-header-nav__button md-logo">
+<img src="images/logo.png" width="24" height="24">
+</a>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch">
+<div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+Scio Unit Tests
+</div>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+<label class="md-icon md-search__icon" for="__search"></label>
+<button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">&#xE5CD;</button>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix>
+<div class="md-search-result" data-md-component="result">
+<div class="md-search-result__meta">
+Type to start searching
+</div>
+<ol class="md-search-result__list"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<div class="md-header-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+</div>
+</div>
+</nav>
+</header>
+
+<div class="md-container">
+<main class="md-main">
+<div class="md-main__inner md-grid" data-md-component="container">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--primary" data-md-level="0" style="visibility: hidden">
+<label class="md-nav__title md-nav__title--site" for="drawer">
+<a href="Scio-Unit-Tests.html" title="Scio Unit Tests" class="md-nav__button md-logo">
+<span class="md-nav__button md-logo">
+<img src="images/logo.png" width="24" height="24">
+</a>
+<a href="Scio-Unit-Tests.html" title="Scio Unit Tests">
+Scio Unit Tests
+</a>
+</label>
+<div class="md-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+<ul>
+</ul>
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="Scio-Unit-Tests.html#scio-unit-tests" class="header">Scio Unit Tests</a>
+  <ul>
+    <li><a href="Scio-Unit-Tests.html#test-entire-pipeline" class="header">Test entire pipeline</a></li>
+    <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-sideinput" class="header">Test for pipeline with sideinput</a></li>
+    <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-sideoutput" class="header">Test for pipeline with sideoutput</a></li>
+    <li><a href="Scio-Unit-Tests.html#test-partial-pipeline" class="header">Test partial pipeline</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</nav>
+<ul style="display: none">
+<li class="md-nav__item md-version" id="project.version">
+<label class="md-nav__link" for="__version">
+<i class="md-icon" title="Version">label_outline</i> 0.7.0*
+</label>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="Scio-Unit-Tests.html#scio-unit-tests" class="header">Scio Unit Tests</a>
+  <ul>
+    <li><a href="Scio-Unit-Tests.html#test-entire-pipeline" class="header">Test entire pipeline</a></li>
+    <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-sideinput" class="header">Test for pipeline with sideinput</a></li>
+    <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-sideoutput" class="header">Test for pipeline with sideoutput</a></li>
+    <li><a href="Scio-Unit-Tests.html#test-partial-pipeline" class="header">Test partial pipeline</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<div class="md-content__searchable">
+<h2><a href="#scio-unit-tests" name="scio-unit-tests" class="anchor"><span class="anchor-link"></span></a>Scio Unit Tests</h2>
+<p>To write Scio unit tests you will need to add the following dependency to your build.sbt</p>
+<pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
+.......
+&quot;com.spotify&quot; %% &quot;scio-test&quot; % scioVersion % Test,
+</code></pre>
+<p>To run the test, you can run the following commands. You can skip the first two lines if you already ran them and are still in the sbt shell.</p>
+<pre class="prettyprint"><code class="language-cmd">$ sbt
+&gt; project scio-examples
+&gt; test
+</code></pre>
+<p>Click on this <a href="https://www.scala-sbt.org/1.x/docs/Testing.html">link</a> for more Scala testing tasks.</p>
+<h3><a href="#test-entire-pipeline" name="test-entire-pipeline" class="anchor"><span class="anchor-link"></span></a>Test entire pipeline</h3>
+<p>We will use the WordCountTest to explain how Scio tests work. <a href="https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/WordCount.scala">WordCount</a> is the pipeline under test. Full example code for WordCountTest and other test examples can be found <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test">here</a>.</p>
+<p>Let’s walk through the details of the test: The test class should extend the <code>PipelineSpec</code> which is a trait for unit testing pipelines.</p>
+<p>The inData variable holds the input data for your test and the expected variable contains the expected results after your pipeline processes the inData. The WordCount pipeline counts the occurrence of each word, the given the input data , we should expect a count of a=3, b=3, c=1 etc</p>
+<pre class="prettyprint"><code class="language-scala"> val inData = Seq(&quot;a b c d e&quot;, &quot;a b a b&quot;, &quot;&quot;)
+ val expected = Seq(&quot;a: 3&quot;, &quot;b: 3&quot;, &quot;c: 1&quot;, &quot;d: 1&quot;, &quot;e: 1&quot;)
+</code></pre>
+<p>Using <code>JobTest</code>, you can test the entire pipeline. Specify the type of the class under test, in this case it is com.spotify.scio.examples.WordCount.type . The <code>args</code> function takes the list of command line arguments passed to the main function of WordCount. The WordCount’s main function expects input and output arguments passed to it.</p>
+<pre class="prettyprint"><code class="language-scala">&quot;WordCount&quot; should &quot;work&quot; in {
+ JobTest[com.spotify.scio.examples.WordCount.type]
+   .args(&quot;--input=in.txt&quot;, &quot;--output=out.txt&quot;)
+   .input(TextIO(&quot;in.txt&quot;), inData)
+   .output(TextIO(&quot;out.txt&quot;))(_ should containInAnyOrder(expected))
+   .run()
+}
+</code></pre>
+<p>The <code>input</code> function injects your input test data. Note that the <code>TestIO[T]</code> should match the input source used in the pipeline e.g. TextIO for sc.textFile, AvroIO for sc.avro. The TextIO id (“in.txt”) should match the one specified in the args.</p>
+<p>The output function evaluates the output of the pipeline using the provided assertion from the <code>SCollectionMatchers</code>. More info on <code>SCollectionMatchers</code> can be found <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html">here</a>. In this example, we are asserting that the output of the pipeline should contain an <code>SCollection</code> with elements that in the expected variable in any order. Also, note that the <code>TestIO[T]</code> should match the output used in the pipeline e.g. TextIO for sc.saveAsTextFile</p>
+<p>The run function will run the pipeline.</p>
+<h3><a href="#test-for-pipeline-with-sideinput" name="test-for-pipeline-with-sideinput" class="anchor"><span class="anchor-link"></span></a>Test for pipeline with sideinput</h3>
+<p>We will use the <a href="https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala#L25">SideInputJoinExamples</a> test in JoinExamplesTest to illustrate how to write a test for pipelines with sideinputs. The <a href="https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/cookbook/JoinExamples.scala#L86">SideInputJoinExamples</a> pipeline has two input sources, one for eventsInfo and the other for countryInfo. CountryInfo is used as a sideinput to join with eventInfo.</p>
+<p>Since we have two input sources, we have to specify both in the <code>JobTest</code>. Note that the injected data type should match one expected by the sink. </p>
+<pre class="prettyprint"><code class="language-scala">&quot;SideInputJoinExamples&quot; should &quot;work&quot; in {
+ JobTest[com.spotify.scio.examples.cookbook.SideInputJoinExamples.type]
+   .args(&quot;--output=out.txt&quot;)
+   .input(BigQueryIO(ExampleData.EVENT_TABLE), eventData)
+   .input(BigQueryIO(ExampleData.COUNTRY_TABLE), countryData)
+   .output(TextIO(&quot;out.txt&quot;))(_ should containInAnyOrder(expected))
+   .run()
+}
+</code></pre>
+<h3><a href="#test-for-pipeline-with-sideoutput" name="test-for-pipeline-with-sideoutput" class="anchor"><span class="anchor-link"></span></a>Test for pipeline with sideoutput</h3>
+<p><a href="https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/SideInOutExampleTest.scala">SideInOutExampleTest</a> shows an example of how to test pipelines with sideoutputs. Each sideoutput is evaluated using the output function. The ids for <code>TextIO</code> e.g. “out1.txt” should match the ones specified in the args.</p>
+<pre class="prettyprint"><code class="language-scala">&quot;SideInOutExample&quot; should &quot;work&quot; in {
+ JobTest[SideInOutExample.type]
+ .args(&quot;--input=in.txt&quot;,
+     &quot;--stopWords=stop.txt&quot;,
+     &quot;--output1=out1.txt&quot;,
+     &quot;--output2=out2.txt&quot;,
+     &quot;--output3=out3.txt&quot;,
+     &quot;--output4=out4.txt&quot;)
+   .output(TextIO(&quot;out1.txt&quot;))(_ should containInAnyOrder(Seq.empty[String]))
+   .output(TextIO(&quot;out2.txt&quot;))(_ should containInAnyOrder(Seq.empty[String]))
+   ………………...
+   }
+   .run()
+</code></pre>
+<h3><a href="#test-partial-pipeline" name="test-partial-pipeline" class="anchor"><span class="anchor-link"></span></a>Test partial pipeline</h3>
+<p>To test a section of a pipeline, use <code>runWithContext</code>. The TriggerExample.extractFlowInfo test in <a href="https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala">TriggerExampleTest</a> tests only the extractFlowInfo part of the pipeline.</p>
+<p>The data variable hold the test data and <code>sc.parallelize</code> will transform the input iterable to a <code>SCollection</code> of strings. TriggerExample.extractFlowInfo will be executed using the <code>ScioContext</code> and you can then specify assertions against the result of the pipeline.</p>
+<pre class="prettyprint"><code class="language-scala">val data = Seq(
+ &quot;01/01/2010 00:00:00,1108302,94,E,ML,36,100,29,0.0065,66,9,1,0.001,74.8,1,9,3,0.0028,71,1,9,&quot;
+   + &quot;12,0.0099,67.4,1,9,13,0.0121,99.0,1,,,,,0,,,,,0,,,,,0,,,,,0&quot;,
+ &quot;01/01/2010 00:00:00,&quot;
+   + &quot;1100333,5,N,FR,9,0,39,,,9,,,,0,,,,,0,,,,,0,,,,,0,,,,,0,,,,,0,,,,,0,,,,&quot;
+)
+
+runWithContext { sc =&gt;
+ val r = TriggerExample.extractFlowInfo(sc.parallelize(data))
+ r should haveSize(1)
+ r should containSingleValue((&quot;94&quot;, 29))
+}
+````
+
+### Test for pipeline with windowing
+We will use the LeaderBoardTest to explain how to test Windowing in Scio. The full example code is found [here](https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala). LeaderBoardTest also extends `PipelineSpec`. The function under test is the [LeaderBoard.calculateTeamScores](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/complete/game/LeaderBoard.scala#L131).  This function calculates teams scores within a fixed window with the following the window options: 
+* Calculate the scores every time the window ends
+* Calculate an early/&quot;speculative&quot; result from partial data, 5 minutes after the first element in our window is processed (withEarlyFiring)
+* Accept late entries (and recalculates based on them) only if they arrive within the allowedLateness duration.
+
+In this test,  we are testing calculateTeamScores for when all of the elements arrive on time, i.e. before the watermark. 
+
+We specify, the fixed window size is set to 20 minutes and allowedLateness is 1 hour.
+private val allowedLateness = Duration.standardHours(1)
+private val teamWindowDuration = Duration.standardMinutes(20)
+
+First, we have to create an input stream representing an unbounded `SCollection` of type GameActionInfo using the `testStreamOf`. Each element is assigned a timestamp representing when each event occurred. In the code snippet above, we start at epoch equal zero,  by setting watermark to 0 in the advanceWatermarkTo.
+
+We add GameActionInfo elements with varying timestamps, and we advanced the watermark to 3 minutes. At this point, all elements are on time because they came before the watermark advances to 3 minutes.
+  
+</code></pre>
+<p>val stream = testStreamOf[GameActionInfo] // Start at the epoch  .advanceWatermarkTo(baseTime)  // add some elements ahead of the watermark  .addElements(  event(blueOne, 3, Duration.standardSeconds(3)),  event(blueOne, 2, Duration.standardMinutes(1)),  event(redTwo, 3, Duration.standardSeconds(22)),  event(blueTwo, 5, Duration.standardSeconds(3))  )  // The watermark advances slightly, but not past the end of the window  .advanceWatermarkTo(baseTime.plus(Duration.standardMinutes(3)))</p>
+<pre><code>We then more GameActionInfo elements and advance the watermark to infinity by calling the advanceWatermarkToInfinity. Similarly, these elements are also on time because the watermark is infinity.
+
+</code></pre>
+<p>.addElements(event(redOne, 1, Duration.standardMinutes(4)),  event(blueOne, 2, Duration.standardSeconds(270))) // The window should close and emit an ON_TIME pane .advanceWatermarkToInfinity</p>
+<pre><code><br/>To run the test, we use the `runWithContext`, this will run calculateTeamScores using the ScioContext. In calculateTeamScores, we pass the `SCollection` we created above using `testStreamOf`. The `IntervalWindow` specifies the window for which we want to assert the `SCollection` of elements created by calculateTeamScores. We want to assert that elements with initial window of 0 to 20 minutes were on time. Next we assert, using `inOnTimePane` that the `SCollection` elements are equal to the expected sums.
+
+</code></pre>
+<p>runWithContext { sc =&gt;  val teamScores =  LeaderBoard.calculateTeamScores(sc.testStream(stream), teamWindowDuration, allowedLateness)</p>
+<p>val window = new IntervalWindow(baseTime, teamWindowDuration)  teamScores should inOnTimePane(window) {  containInAnyOrder(Seq((blueOne.team, 12), (redOne.team, 4)))  } } ``<code>
+Scio provides more</code>SCollection<code>assertions such as</code>inWindow<code>,</code>inCombinedNonLatePanes<code>,</code>inFinalPane<code>, and</code>inOnlyPane`. You can find the full list <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html">here</a>. More information on testing unbounded pipelines can be found <a href="https://beam.apache.org/blog/2016/10/20/test-stream.html">here</a>.</p>
+</div>
+<div>
+<a href="https://github.com/spotify/scio/tree/master/site/src/paradox/Scio-Unit-Tests.md" title="Edit this page" class="md-source-file md-edit">
+Edit this page
+</a>
+</div>
+<div class="print-only">
+<span class="md-source-file md-version">
+0.7.0*
+</span>
+</div>
+</article>
+</div>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
+<div class="md-footer-copyright__highlight">
+Copyright (C) 2018 Spotify AB
+</div>
+Powered by
+<a href="https://github.com/lightbend/paradox">Paradox</a>
+and
+<a href="https://jonas.github.io/paradox-material-theme/">Paradox Material Theme</a>
+
+</div>
+<div class="md-footer-social">
+<a href="https://github.com/spotify" class="md-footer-social__link fa fa-github"></a><a href="https://twitter.com/spotifyeng" class="md-footer-social__link fa fa-twitter"></a>
+</div>
+
+</div>
+</div>
+</footer>
+
+</div>
+<script src="assets/javascripts/application.583bbe55.js"></script>
+<script src="assets/javascripts/paradox-material-theme.js"></script>
+<script>app.initialize({version:"0.17",url:{base:"."}})</script>
+<script type="text/javascript" src="lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function(event) {
+window.prettyPrint && prettyPrint();
+});
+</script>
+</body>
+</html>
