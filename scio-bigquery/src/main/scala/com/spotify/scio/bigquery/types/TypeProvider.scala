@@ -173,7 +173,17 @@ private[types] object TypeProvider {
         """,
          caseClassTree,
          cName.toString())
-      case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
+      case t =>
+        val error =
+          s"""Invalid annotation:
+             |
+             |Refer to https://spotify.github.io/scio/api/com/spotify/scio/bigquery/types/BigQueryType$$$$toTable.html
+             |for details on how to use `@BigQueryType.toTable`
+             |
+             |>> $t
+          """.stripMargin
+
+        c.abort(c.enclosingPosition, error)
     }
     debug(s"TypeProvider.toTableImpl:")
     debug(r)

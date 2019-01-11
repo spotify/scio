@@ -174,7 +174,17 @@ private[types] object TypeProvider {
                            schemaMethod ++ docMethod,
                            fields.asInstanceOf[Seq[c.Tree]])}
         """
-      case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
+      case t =>
+        val error =
+          s"""Invalid annotation:
+             |
+             |Refer to https://spotify.github.io/scio/api/com/spotify/scio/avro/types/AvroType$$$$toSchema.html
+             |for details on how to use `@AvroType.toSchema`
+             |
+             |>> $t
+          """.stripMargin
+
+        c.abort(c.enclosingPosition, error)
     }
 
     c.Expr[Any](r)
