@@ -20,6 +20,12 @@ object TestData {
     (1 to 10).map { i =>
       UserWithId(UserId(i), s"user$i", s"user$i@spotify.com", 20 + i)
     }.toList
+
+  case class UserWithFallBack(id: Long, username: String, locale: java.util.Locale)
+  val usersWithLocale =
+    (1 to 10).map { i =>
+      UserWithFallBack(i, s"user$i", java.util.Locale.FRANCE)
+    }.toList
 }
 
 class BeamSQLTest extends PipelineSpec {
@@ -61,15 +67,43 @@ class BeamSQLTest extends PipelineSpec {
     r should containInAnyOrder(expected)
   }
 
-  ignore should "support fallback coders" in {
-    // TODO
+  it should "support fallback coders" in runWithContext { sc =>
+    val schemaRes = BSchema.builder().addStringField("username").build()
+    val expected = usersWithLocale.map { u =>
+      Row.withSchema(schemaRes).addValue(u.username).build()
+    }
+    implicit def coderRowRes = Coder.row(schemaRes)
+    val in = sc.parallelize(usersWithLocale)
+    val r = in.applyTransform(SqlTransform.query("select username from PCOLLECTION"))
+    r should containInAnyOrder(expected)
   }
 
-  ignore should "infer the schema of results" in {
-    // TODO
+  it should "infer the schema of results" in runWithContext { sc =>
+    val schemaRes = BSchema.builder().addStringField("username").build()
+    val expected = users.map { u =>
+      Row.withSchema(schemaRes).addValue(u.username).build()
+    }
+    implicit def coderRowRes = Coder.row(schemaRes)
+    val in = sc.parallelize(users)
+    val r = in.sql("select username from PCOLLECTION")
+    r should containInAnyOrder(expected)
   }
 
-  ignore should "Automatically convert rows results to Products" in {
-    // TODO
+  it should "Automatically convert rows results to Products" in runWithContext { sc =>
+    val expected = users.map { u =>
+      (u.username, u.age)
+    }
+    val in = sc.parallelize(users)
+    val r = in.typedSql[(String, Int)]("select username, age from PCOLLECTION")
+    r should containInAnyOrder(expected)
+  }
+
+  it should "support fallback in typedSql" in runWithContext { sc =>
+    val expected = usersWithLocale.map { u =>
+      (u.username, u.locale)
+    }
+    val in = sc.parallelize(usersWithLocale)
+    val r = in.typedSql[(String, java.util.Locale)]("select username, locale from PCOLLECTION")
+    r should containInAnyOrder(expected)
   }
 }

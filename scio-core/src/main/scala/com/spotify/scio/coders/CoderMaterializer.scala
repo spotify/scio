@@ -52,15 +52,20 @@ object CoderMaterializer {
         val u = f(beam(r, o, c))
         WrappedBCoder.create(beam(r, o, u))
       case Record(typeName, schema, coders, construct, destruct) =>
-        val bcs: Array[(String, BCoder[Any])] = coders.map(c => c._1 -> beam(r, o, c._2))
+        import org.apache.beam.sdk.util.CoderUtils
+        val bcs: Array[(String, Coder[Any], BCoder[Any])] =
+          coders.map(c => (c._1, c._2, beam(r, o, c._2)))
         // XXX: Is getRowSchema safe ?
         //TODO: check for null values ?
+        //TODO: refactor that crap
         val bschema = schema.fieldType.getRowSchema()
         val fromRow: Row => T = { row =>
           val values =
             row.getValues.asScala.zip(bcs).map {
-              case (v, (_, RecordCoder(_, (_, _, fromRow), _, _, _))) =>
+              case (v, (_, _, RecordCoder(_, (_, _, fromRow), _, _, _))) =>
                 fromRow(v.asInstanceOf[Row])
+              case (v, (_, Fallback(_), c)) =>
+                CoderUtils.decodeFromByteArray(c, v.asInstanceOf[Array[Byte]])
               case (v, c) => v
             }
           construct(values)
@@ -70,16 +75,22 @@ object CoderMaterializer {
           destruct(t)
             .zip(bcs)
             .map {
-              case (v, (_, RecordCoder(_, (_, toRow, _), _, _, _))) =>
+              case (v, (_, _, RecordCoder(_, (_, toRow, _), _, _, _))) =>
                 toRow(v)
-              case (v, c) =>
+              case (v, (_, Fallback(_), c)) =>
+                CoderUtils.encodeToByteArray(c, v)
+              case (v, _) =>
                 v
             }
             .foreach(builder.addValue _)
           builder.build()
         }
         WrappedBCoder.create(
-          new RecordCoder(typeName, (bschema, toRow, fromRow), bcs, construct, destruct))
+        new RecordCoder(typeName,
+                        (bschema, toRow, fromRow),
+                        bcs.map(x => (x._1, x._3)),
+                        construct,
+                        destruct))
       case Disjunction(typeName, idCoder, id, coders) =>
         WrappedBCoder.create(
           // `.map(identity) is really needed to make Map serializable.
