@@ -330,7 +330,8 @@ lazy val scioCore: Project = Project(
       "io.grpc" % "grpc-all" % grpcVersion exclude ("io.opencensus", "opencensus-api"),
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
       "me.lyh" %% "magnolia" % magnoliaVersion,
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test"
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test",
+      "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion
     )
   )
   .dependsOn(

@@ -128,8 +128,25 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def name: String = internal.getName
 
   /** Assign a Coder to this SCollection. */
-  def setCoder(coder: org.apache.beam.sdk.coders.Coder[T]): SCollection[T] =
-    context.wrap(internal.setCoder(coder))
+  def setCoder(coder: org.apache.beam.sdk.coders.Coder[T]): SCollection[T] = {
+    coder match {
+      case com.spotify.scio.coders.RecordCoder(_, (schema, toRow, fromRow), _, _, _) =>
+        val to =
+          new SerializableFunction[T, Row]() {
+            override def apply(t: T): Row =
+              toRow(t)
+          }
+        val from =
+          new SerializableFunction[Row, T]() {
+            override def apply(r: Row): T =
+              fromRow(r)
+          }
+
+        context.wrap(internal.setCoder(coder).setSchema(schema, to, from))
+      case _ =>
+        context.wrap(internal.setCoder(coder))
+    }
+  }
 
   /**
    * Apply a [[org.apache.beam.sdk.transforms.PTransform PTransform]] and wrap the output in an
@@ -137,12 +154,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def applyTransform[U: Coder](
     transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {
-    val bcoder = CoderMaterializer.beam(context, Coder[U])
-    if (context.isTest) {
+    val coder = CoderMaterializer.beam(context, Coder[U])
+    // https://issues.apache.org/jira/browse/BEAM-5645
+    if (context.isTest && !coder.isInstanceOf[org.apache.beam.sdk.coders.RowCoder]) {
       org.apache.beam.sdk.util.SerializableUtils
-        .ensureSerializable(bcoder)
+        .ensureSerializable(coder)
     }
-    this.pApply(transform).setCoder(bcoder)
+    this.pApply(transform).setCoder(coder)
   }
 
   /**

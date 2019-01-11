@@ -19,7 +19,7 @@ package com.spotify.scio.coders
 
 import java.nio.ByteBuffer
 
-import org.apache.avro.Schema
+import org.apache.avro.{Schema => ASchema}
 import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.util.CoderUtils
@@ -28,11 +28,14 @@ import scala.collection.JavaConverters._
 
 private[scio] object AvroBytesUtil {
 
-  val schema: Schema = {
-    val s = Schema.createRecord("AvroBytesRecord", null, null, false)
+  val schema: ASchema = {
+    val s = ASchema.createRecord("AvroBytesRecord", null, null, false)
     s.setFields(
       List(
-        new Schema.Field("bytes", Schema.create(Schema.Type.BYTES), null, null.asInstanceOf[Object])
+        new ASchema.Field("bytes",
+                          ASchema.create(ASchema.Type.BYTES),
+                          null,
+                          null.asInstanceOf[Object])
       ).asJava)
     s
   }

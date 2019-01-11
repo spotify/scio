@@ -30,7 +30,7 @@ def mkTypes(n):
     return ', '.join(mkVals(n))
 
 def mkBounds(n):
-    return ', '.join(x + ': Strict[Coder[' + x + ']]' for x in mkVals(n))
+    return ', '.join(x + ': Strict[Coder[' + x + ']], S' + x + ': Schema[' + x + ']' for x in mkVals(n))
 
 def mkImplicits(n):
     return '\n'.join('      implicit val x' + x + ' = ' + x + '.value' for x in mkVals(n))
@@ -79,6 +79,7 @@ def main(out):
 
         package com.spotify.scio.coders.instances
 
+        import com.spotify.scio.coders.{Schema, Coder}
         import shapeless.Strict
 
         trait TupleCoders {

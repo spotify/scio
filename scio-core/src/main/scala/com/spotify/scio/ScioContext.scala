@@ -693,11 +693,32 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
    */
   def parallelize[T: Coder](elems: Iterable[T]): SCollection[T] =
     requireNotClosed {
-      wrap(
-        this.applyInternal(
-          Create
-            .of(elems.asJava)
-            .withCoder(CoderMaterializer.beam(context, Coder[T]))))
+      val coder = CoderMaterializer.beam(context, Coder[T])
+      coder match {
+        case com.spotify.scio.coders.RecordCoder(_, (schema, toRow, fromRow), _, _, _) =>
+          val to =
+            new SerializableFunction[T, Row]() {
+              override def apply(t: T): Row =
+                toRow(t)
+            }
+          val from =
+            new SerializableFunction[Row, T]() {
+              override def apply(r: Row): T =
+                fromRow(r)
+            }
+          wrap(
+            this.applyInternal(
+              Create
+                .of(elems.asJava)
+                .withCoder(coder)
+                .withSchema(schema, to, from)))
+        case _ =>
+          wrap(
+            this.applyInternal(
+              Create
+                .of(elems.asJava)
+                .withCoder(coder)))
+      }
     }
 
   /**

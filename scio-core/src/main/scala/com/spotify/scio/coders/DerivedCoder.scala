@@ -29,6 +29,7 @@ private object Derived extends Serializable {
     }
 
   def combineCoder[T](typeName: TypeName,
+                      schema: FSchema[T],
                       ps: Seq[Param[Coder, T]],
                       rawConstruct: Seq[Any] => T): Coder[T] = {
     val cs = new Array[(String, Coder[Any])](ps.length)
@@ -58,7 +59,7 @@ private object Derived extends Serializable {
       ps =>
         catching(s"Error while constructing object from parameters $ps", stack)(rawConstruct(ps))
 
-    Coder.record[T](typeName.full, cs, constructor, destruct)
+    Coder.record[T](typeName.full, schema, cs, constructor, destruct)
   }
 }
 
@@ -68,8 +69,11 @@ trait LowPriorityCoderDerivation {
 
   type Typeclass[T] = Coder[T]
 
-  def combine[T](ctx: CaseClass[Coder, T]): Coder[T] =
-    Derived.combineCoder(ctx.typeName, ctx.parameters, ctx.rawConstruct)
+  def combine[T](ctx: CaseClass[Coder, T])(implicit schema: Schema[T]): Coder[T] =
+    Derived.combineCoder(ctx.typeName,
+                         schema.asInstanceOf[FSchema[T]],
+                         ctx.parameters,
+                         ctx.rawConstruct)
 
   def dispatch[T](sealedTrait: SealedTrait[Coder, T]): Coder[T] = {
     val typeName = sealedTrait.typeName.full
