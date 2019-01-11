@@ -55,11 +55,6 @@ object TypedBigQueryIT {
   private val recordGen = {
     implicitly[Arbitrary[Record]].arbitrary
   }
-}
-
-class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
-
-  import TypedBigQueryIT._
 
   private val table = {
     val TIME_FORMATTER = DateTimeFormat.forPattern("yyyyMMddHHmmss")
@@ -67,18 +62,24 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     "data-integration-test:bigquery_avro_it.records_" + now + "_" + Random.nextInt(Int.MaxValue)
   }
   private val records = Gen.listOfN(1000, recordGen).sample.get
-
-  override protected def beforeAll(): Unit = {
-    val bq = BigQuery.defaultInstance()
-    bq.writeTypedRows[Record](table, records)
-  }
-
   private val options = PipelineOptionsFactory
     .fromArgs("--project=data-integration-test",
               "--tempLocation=gs://data-integration-test-eu/temp")
     .create()
+}
 
-  "TypedBigQuery" should "work" in {
+class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
+
+  import TypedBigQueryIT._
+
+  override protected def beforeAll(): Unit = {
+    val sc = ScioContext(options)
+    sc.parallelize(records).saveAsTypedBigQuery(table)
+
+    sc.close()
+  }
+
+  "TypedBigQuery" should "read records" in {
     val sc = ScioContext(options)
     sc.typedBigQuery[Record](table) should containInAnyOrder(records)
     sc.close()
