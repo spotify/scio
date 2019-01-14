@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="description" content="site">
+<meta name="generator" content="Paradox, paradox-material-theme=0.5.1, mkdocs-material=3.0.3">
+
+<meta name="lang:clipboard.copy" content="Copy to clipboard">
+<meta name="lang:clipboard.copied" content="Copied to clipboard">
+<meta name="lang:search.language" content="">
+<meta name="lang:search.pipeline.stopwords" content="true">
+<meta name="lang:search.pipeline.trimmer" content="true">
+<meta name="lang:search.result.none" content="No matching documents">
+<meta name="lang:search.result.one" content="1 matching document">
+<meta name="lang:search.result.other" content="# matching documents">
+<meta name="lang:search.tokenizer" content="[\s\-]+">
+
+
+<meta name="description" content="site">
+<link rel="shortcut icon" href="assets/images/favicon.png">
+<title>Getting Started · Scio</title>
+<link rel="stylesheet" href="assets/stylesheets/application.451f80e5.css">
+<link rel="stylesheet" href="assets/stylesheets/application-palette.22915126.css">
+<link rel="stylesheet" href="lib/material__tabs/dist/mdc.tabs.min.css">
+<link rel="stylesheet" href="lib/prettify/prettify.css">
+<script src="assets/javascripts/modernizr.1aa3b519.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+<style>
+body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}
+code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}
+</style>
+<link rel="stylesheet" href="assets/fonts/font-awesome.css">
+<link rel="stylesheet" href="assets/fonts/material-icons.css">
+<link rel="stylesheet" href="assets/stylesheets/paradox-material-theme.css">
+</head>
+<body
+data-md-color-primary="white"
+data-md-color-accent="indigo"
+>
+<input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+<input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+<label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+<header class="md-header" data-md-component="header">
+<nav class="md-header-nav md-grid">
+<div class="md-flex">
+<div class="md-flex__cell md-flex__cell--shrink">
+<a href="index.html" title="Scio" class="md-header-nav__button md-logo">
+<img src="images/logo.png" width="24" height="24">
+</a>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch">
+<div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+<span class="md-header-nav__topic">
+Scio
+</span>
+<span class="md-header-nav__topic">
+Getting Started
+</span>
+</div>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+<label class="md-icon md-search__icon" for="__search"></label>
+<button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">&#xE5CD;</button>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix>
+<div class="md-search-result" data-md-component="result">
+<div class="md-search-result__meta">
+Type to start searching
+</div>
+<ol class="md-search-result__list"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<div class="md-header-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+</div>
+</div>
+</nav>
+</header>
+
+<div class="md-container">
+<main class="md-main">
+<div class="md-main__inner md-grid" data-md-component="container">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--primary" data-md-level="0" style="visibility: hidden">
+<label class="md-nav__title md-nav__title--site" for="drawer">
+<a href="index.html" title="Scio" class="md-nav__button md-logo">
+<span class="md-nav__button md-logo">
+<img src="images/logo.png" width="24" height="24">
+</a>
+<a href="index.html" title="Scio">
+Scio
+</a>
+</label>
+<div class="md-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+<ul>
+  <li><a href="Getting-Started.html" class="active page">Getting Started</a></li>
+  <li><a href="examples.html" class="page">Examples</a></li>
+  <li><a href="io/index.html" class="page">IO</a>
+  <ul>
+    <li><a href="io/Type-Safe-BigQuery.html" class="page">BigQuery</a></li>
+    <li><a href="io/HDFS.html" class="page">HDFS</a></li>
+    <li><a href="io/Bigtable.html" class="page">Bigtable</a></li>
+    <li><a href="io/Avro.html" class="page">Avro</a></li>
+    <li><a href="io/Protobuf.html" class="page">Protobuf</a></li>
+    <li><a href="io/Parquet.html" class="page">Parquet</a></li>
+  </ul></li>
+  <li><a href="Scio-Unit-Tests.html" class="page">Testing</a></li>
+  <li><a href="Scio-REPL.html" class="page">REPL</a></li>
+  <li><a href="internals/index.html" class="page">Internals</a>
+  <ul>
+    <li><a href="internals/Coders.html" class="page">Coder Typeclass</a></li>
+    <li><a href="internals/Kryo.html" class="page">Kryo</a></li>
+    <li><a href="internals/OverrideTypeProvider.html" class="page">OverrideTypeProvider</a></li>
+    <li><a href="internals/ScioIO.html" class="page">ScioIO</a></li>
+  </ul></li>
+  <li><a href="migrations/index.html" class="page">Migration Guides</a>
+  <ul>
+    <li><a href="migrations/v0.7.0-Migration-Guide.html" class="page">Scio 0.7.0</a></li>
+  </ul></li>
+  <li><a href="dev/index.html" class="page">Development</a>
+  <ul>
+    <li><a href="dev/Style-Guide.html" class="page">Style Guide</a></li>
+    <li><a href="dev/How-to-Release.html" class="page">How to Release</a></li>
+    <li><a href="dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
+  </ul></li>
+  <li><a href="scaladoc.html" class="page">Scaladoc</a></li>
+  <li><a href="Scio,-Beam-and-Dataflow.html" class="page">Scio, Beam and Dataflow</a></li>
+  <li><a href="Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
+  <li><a href="Runners.html" class="page">Runners</a></li>
+  <li><a href="Scio-data-guideline.html" class="page">Data Guidelines</a></li>
+  <li><a href="Apache-Beam.html" class="page">Versions</a></li>
+  <li><a href="Changelog.html" class="page">Changelog</a></li>
+  <li><a href="FAQ.html" class="page">FAQ</a></li>
+  <li><a href="Powered-By.html" class="page">Powered By</a></li>
+</ul>
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="Getting-Started.html#getting-started" class="header">Getting Started</a>
+  <ul>
+    <li><a href="Getting-Started.html#building-scio" class="header">Building Scio</a></li>
+    <li><a href="Getting-Started.html#running-the-examples" class="header">Running the Examples</a></li>
+    <li><a href="Getting-Started.html#sbt-project-setup" class="header">SBT project setup</a></li>
+    <li><a href="Getting-Started.html#bigquery-settings" class="header">BigQuery Settings</a></li>
+    <li><a href="Getting-Started.html#options" class="header">Options</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</nav>
+<ul style="display: none">
+<li class="md-nav__item md-version" id="project.version">
+<label class="md-nav__link" for="__version">
+<i class="md-icon" title="Version">label_outline</i> 0.7.0*
+</label>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="Getting-Started.html#getting-started" class="header">Getting Started</a>
+  <ul>
+    <li><a href="Getting-Started.html#building-scio" class="header">Building Scio</a></li>
+    <li><a href="Getting-Started.html#running-the-examples" class="header">Running the Examples</a></li>
+    <li><a href="Getting-Started.html#sbt-project-setup" class="header">SBT project setup</a></li>
+    <li><a href="Getting-Started.html#bigquery-settings" class="header">BigQuery Settings</a></li>
+    <li><a href="Getting-Started.html#options" class="header">Options</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<div class="md-content__searchable">
+<h1><a href="#getting-started" name="getting-started" class="anchor"><span class="anchor-link"></span></a>Getting Started</h1>
+<p>First install the <a href="https://cloud.google.com/sdk/">Google Cloud SDK</a> and create a <a href="https://cloud.google.com/storage/">Google Cloud Storage</a> bucket for your project, e.g. <code>gs://my-bucket</code>. Make sure it&rsquo;s in the same region as the <a href="https://cloud.google.com/bigquery/">BigQuery</a> datasets you want to access and where you want Dataflow to launch workers on GCE.</p>
+<p>Scio may need Google Cloud&rsquo;s application default credentials for features like BigQuery. Run the following command to set it up.</p>
+<pre class="prettyprint"><code class="language-bash">gcloud auth application-default login
+</code></pre>
+<h2><a href="#building-scio" name="building-scio" class="anchor"><span class="anchor-link"></span></a>Building Scio</h2>
+<p>Scio is built using <a href="https://www.scala-sbt.org/">SBT</a>. To build Scio and publish artifacts locally, run:</p>
+<pre class="prettyprint"><code class="language-bash">git clone git@github.com:spotify/scio.git
+cd scio
+# &#39;sbt +publishLocal&#39; to cross build for all Scala versions
+# &#39;sbt ++$SCALA_VERSION publishLocal&#39; to build for a specific Scala version
+sbt publishLocal
+</code></pre>
+<p>You can also specify sbt heap size with <code>-mem</code>, e.g. <code>sbt -mem 8192</code>. Use the <code>SBT_OPTS</code> environment variable for more fine grained settings.</p>
+<pre class="prettyprint"><code class="language-bash ">export SBT_OPTS=&quot;-Xmx8G -Xms8G -Xss1M -XX:MaxMetaspaceSize=1G -XX:+CMSClassUnloadingEnabled -XX:ReservedCodeCacheSize=128m&quot;
+</code></pre>
+<p>To ensure the project loads and builds successfully, run the following sbt command so that all custom tasks are executed</p>
+<pre class="prettyprint"><code class="language-bash">sbt compile test:compile it:compile
+</code></pre>
+<h2><a href="#running-the-examples" name="running-the-examples" class="anchor"><span class="anchor-link"></span></a>Running the Examples</h2>
+<p>You can execute the examples locally from SBT. By default pipelines will be executed using the <a href="https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/runners/direct/DirectRunner.html"><code>DirectRunner</code></a> and local filesystem will be used for input and output. Take a look at the <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples">examples</a> to find out more.</p>
+<pre><code>neville@localhost scio $ sbt
+[info] ...
+&gt; project scio-examples
+[info] ...
+&gt; runMain com.spotify.scio.examples.WordCount --input=&lt;FILE PATTERN&gt; --output=&lt;DIRECTORY&gt;
+</code></pre>
+<p>Note that unlike Hadoop, Scio or Dataflow input should be file patterns and not directories, i.e. <code>gs://bucket/path/part-*.txt</code> and not <code>gs://bucket/path</code>. Output on the other hand should be directories just like Hadoop, so <code>gs://bucket/path</code> will produce files like <code>gs://bucket/path/part-00000-of-00005.txt</code>.</p>
+<p>Use the <a href="https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/runners/dataflow/DataflowRunner.html"><code>DataflowRunner</code></a> to execute pipelines on Google Cloud Dataflow service using managed resources in the Google Cloud Platform.</p>
+<pre><code>neville@localhost scio $ sbt -Dbigquery.project=&lt;BILLING_PROJECT&gt;
+[info] ...
+&gt; project scio-examples
+[info] ...
+&gt; set beamRunners := &quot;DataflowRunner&quot;
+[info] ...
+&gt; runMain com.spotify.scio.examples.WordCount
+--project=&lt;PROJECT ID&gt;
+--zone=&lt;GCE AVAILABILITY ZONE&gt; --runner=DataflowRunner
+--input=&lt;FILE PATTERN&gt; --output=&lt;DIRECTORY&gt;
+</code></pre>
+<p>The Cloud Platform <code>project</code> refers to its name (not number). GCE availability <code>zone</code> should be in the same region as the BigQuery datasets and GCS bucket.</p>
+<p>By default only <code>DirectRunner</code> is in the library dependencies list. Use <code>set beamRunners := &quot;&lt;runners&gt;&quot;</code> to specify additional runner dependencies as a comma separated list, i.e. &ldquo;DataflowRunner,FlinkRunner&rdquo;.</p>
+<h2><a href="#sbt-project-setup" name="sbt-project-setup" class="anchor"><span class="anchor-link"></span></a>SBT project setup</h2>
+<p>To create a new SBT project using Giter8 <a href="https://github.com/spotify/scio-template.g8">scio-template</a>, simply:</p>
+<pre><code>sbt new spotify/scio-template.g8
+</code></pre>
+<p>Or add the following to your <code>build.sbt</code>. Replace the direct and Dataflow runner with ones you wish to use. The compiler plugin dependency is only needed for the type safe BigQuery API.</p>
+<pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
+  &quot;com.spotify&quot; %% &quot;scio-core&quot; % &quot;0.6.1&quot;,
+  &quot;com.spotify&quot; %% &quot;scio-test&quot; % &quot;0.6.1&quot; % &quot;test&quot;,
+  &quot;org.apache.beam&quot; % &quot;beam-runners-direct-java&quot; % &quot;2.6.0&quot;,
+  &quot;org.apache.beam&quot; % &quot;beam-runners-google-cloud-dataflow-java&quot; % &quot;2.6.0&quot;
+)
+
+addCompilerPlugin(&quot;org.scalamacros&quot; % &quot;paradise&quot; % &quot;2.1.1&quot; cross CrossVersion.full)
+</code></pre>
+<h2><a href="#bigquery-settings" name="bigquery-settings" class="anchor"><span class="anchor-link"></span></a>BigQuery Settings</h2>
+<p>You may need a few extra settings to use BigQuery queries as pipeline input.</p>
+<pre><code>sbt -Dbigquery.project=&lt;PROJECT-ID&gt;
+</code></pre>
+<ul>
+  <li><code>bigquery.project</code>: GCP project to make BigQuery requests with at compile time.</li>
+  <li><code>bigquery.secret</code>: By default the credential in Google Cloud SDK will be used. A JSON secret file can be used instead with <code>-Dbigquery.secret=secret.json</code>.</li>
+</ul>
+<h2><a href="#options" name="options" class="anchor"><span class="anchor-link"></span></a>Options</h2>
+<p>The following options should be specified when running a job on Google Cloud Dataflow service.</p>
+<ul>
+  <li><code>--project</code> - The project ID for your Google Cloud Project. This is required if you want to run your pipeline using the Cloud Dataflow managed service.</li>
+  <li><code>--zone</code> - The Compute Engine <a href="https://cloud.google.com/compute/docs/zones">availability zone</a> for launching worker instances to run your pipeline.</li>
+</ul>
+<p>For pipeline execution parameters and optimization, see the following documents.</p>
+<ul>
+  <li><a href="https://cloud.google.com/dataflow/pipelines/specifying-exec-params">Specifying Pipeline Execution Parameters</a></li>
+  <li><a href="https://cloud.google.com/dataflow/service/dataflow-service-desc">Service Optimization and Execution</a></li>
+</ul>
+<p>The defaults should work well for most cases but we sometimes tune the following parameters manually. - <code>--workerMachineType</code> - start with smaller types like <code>n1-standard-1</code> and go up if you run into memory problem. <code>n1-standard-4</code> works well for a lot of our memory hungry jobs. - <code>--maxNumWorkers</code> - avoid setting it to too high, i.e. 1000 or close to quota, since that reduces available instances for other jobs and more workers means more expensive shuffle. - <code>--diskSizeGb</code> - increase this if you run into disk space problem during shuffle, or alternatively optimize code by replacing <code>groupByKey</code> with <code>reduceByKey</code> or <code>sumByKey</code>. - <code>--workerDiskType</code> - specify SSD for jobs with really expensive shuffles. See a list of disk types <a href="https://cloud.google.com/compute/docs/reference/latest/diskTypes">here</a>. Also see this <a href="https://cloud.google.com/compute/docs/disks/performance">page</a> about persistent disk size and type. - <code>--network</code> - specify this if you use VPN to communicate with external services, e.g. HDFS on an on-premise cluster.</p>
+<p>More Dataflow pipeline specific options available can be found in <a href="https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/runners/dataflow/options/DataflowPipelineOptions.html"><code>DataflowPipelineOptions</code></a> and super interfaces. Some more useful ones are from <a href="https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/runners/dataflow/options/DataflowPipelineWorkerPoolOptions.html"><code>DataflowPipelineWorkerPoolOptions</code></a>.</p>
+<p><a href="https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--"><code>DataflowWorkerHarnessOptions#getWorkerCacheMb</code></a> affects side input performance but needs an extra step to enable. See this <a href="https://github.com/spotify/scio/wiki/FAQ#how-do-i-improve-side-input-performance">FAQ item</a>.</p>
+<p>There are a few more experimental settings that might help specific scenarios: - <code>--experiments=shuffle_mode=service</code> - use external <a href="https://cloud.google.com/dataflow/service/dataflow-service-desc#cloud-dataflow-shuffle">shuffle service</a> instead of local disk - <code>--experiments=enable_custom_bigquery_sink</code> - new custom sink that works around certain limitations when writing to BigQuery - <code>--experiments=worker_region-&lt;REGION&gt;</code> - use specified Google Cloud region instead of zone for more flexible capacity</p>
+</div>
+<div>
+<a href="https://github.com/spotify/scio.git/tree/master/site/src/paradox/Getting-Started.md" title="Edit this page" class="md-source-file md-edit">
+Edit this page
+</a>
+</div>
+<div class="print-only">
+<span class="md-source-file md-version">
+0.7.0*
+</span>
+</div>
+</article>
+</div>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-nav">
+<nav class="md-footer-nav__inner md-grid">
+<a href="index.html" title="Scio" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Previous
+</span>
+Scio
+</span>
+</div>
+</a>
+<a href="examples.html" title="Examples" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Next
+</span>
+Examples
+</span>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+</div>
+</a>
+</nav>
+</div>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
+<div class="md-footer-copyright__highlight">
+Copyright (C) 2018 Spotify AB
+</div>
+Powered by
+<a href="https://github.com/lightbend/paradox">Paradox</a>
+and
+<a href="https://jonas.github.io/paradox-material-theme/">Paradox Material Theme</a>
+
+</div>
+<div class="md-footer-social">
+<a href="https://github.com/spotify" class="md-footer-social__link fa fa-github"></a><a href="https://twitter.com/spotifyeng" class="md-footer-social__link fa fa-twitter"></a>
+</div>
+
+</div>
+</div>
+</footer>
+
+</div>
+<script src="assets/javascripts/application.583bbe55.js"></script>
+<script src="assets/javascripts/paradox-material-theme.js"></script>
+<script>app.initialize({version:"0.17",url:{base:"."}})</script>
+<script type="text/javascript" src="lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function(event) {
+window.prettyPrint && prettyPrint();
+});
+</script>
+</body>
+</html>

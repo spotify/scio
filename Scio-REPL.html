@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="description" content="site">
+<meta name="generator" content="Paradox, paradox-material-theme=0.5.1, mkdocs-material=3.0.3">
+
+<meta name="lang:clipboard.copy" content="Copy to clipboard">
+<meta name="lang:clipboard.copied" content="Copied to clipboard">
+<meta name="lang:search.language" content="">
+<meta name="lang:search.pipeline.stopwords" content="true">
+<meta name="lang:search.pipeline.trimmer" content="true">
+<meta name="lang:search.result.none" content="No matching documents">
+<meta name="lang:search.result.one" content="1 matching document">
+<meta name="lang:search.result.other" content="# matching documents">
+<meta name="lang:search.tokenizer" content="[\s\-]+">
+
+
+<meta name="description" content="site">
+<link rel="shortcut icon" href="assets/images/favicon.png">
+<title>REPL · Scio</title>
+<link rel="stylesheet" href="assets/stylesheets/application.451f80e5.css">
+<link rel="stylesheet" href="assets/stylesheets/application-palette.22915126.css">
+<link rel="stylesheet" href="lib/material__tabs/dist/mdc.tabs.min.css">
+<link rel="stylesheet" href="lib/prettify/prettify.css">
+<script src="assets/javascripts/modernizr.1aa3b519.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+<style>
+body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}
+code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}
+</style>
+<link rel="stylesheet" href="assets/fonts/font-awesome.css">
+<link rel="stylesheet" href="assets/fonts/material-icons.css">
+<link rel="stylesheet" href="assets/stylesheets/paradox-material-theme.css">
+</head>
+<body
+data-md-color-primary="white"
+data-md-color-accent="indigo"
+>
+<input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+<input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+<label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+<header class="md-header" data-md-component="header">
+<nav class="md-header-nav md-grid">
+<div class="md-flex">
+<div class="md-flex__cell md-flex__cell--shrink">
+<a href="index.html" title="Scio" class="md-header-nav__button md-logo">
+<img src="images/logo.png" width="24" height="24">
+</a>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch">
+<div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+<span class="md-header-nav__topic">
+Scio
+</span>
+<span class="md-header-nav__topic">
+REPL
+</span>
+</div>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+<label class="md-icon md-search__icon" for="__search"></label>
+<button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">&#xE5CD;</button>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix>
+<div class="md-search-result" data-md-component="result">
+<div class="md-search-result__meta">
+Type to start searching
+</div>
+<ol class="md-search-result__list"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<div class="md-header-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+</div>
+</div>
+</nav>
+</header>
+
+<div class="md-container">
+<main class="md-main">
+<div class="md-main__inner md-grid" data-md-component="container">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--primary" data-md-level="0" style="visibility: hidden">
+<label class="md-nav__title md-nav__title--site" for="drawer">
+<a href="index.html" title="Scio" class="md-nav__button md-logo">
+<span class="md-nav__button md-logo">
+<img src="images/logo.png" width="24" height="24">
+</a>
+<a href="index.html" title="Scio">
+Scio
+</a>
+</label>
+<div class="md-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+<ul>
+  <li><a href="Getting-Started.html" class="page">Getting Started</a></li>
+  <li><a href="examples.html" class="page">Examples</a></li>
+  <li><a href="io/index.html" class="page">IO</a>
+  <ul>
+    <li><a href="io/Type-Safe-BigQuery.html" class="page">BigQuery</a></li>
+    <li><a href="io/HDFS.html" class="page">HDFS</a></li>
+    <li><a href="io/Bigtable.html" class="page">Bigtable</a></li>
+    <li><a href="io/Avro.html" class="page">Avro</a></li>
+    <li><a href="io/Protobuf.html" class="page">Protobuf</a></li>
+    <li><a href="io/Parquet.html" class="page">Parquet</a></li>
+  </ul></li>
+  <li><a href="Scio-Unit-Tests.html" class="page">Testing</a></li>
+  <li><a href="Scio-REPL.html" class="active page">REPL</a></li>
+  <li><a href="internals/index.html" class="page">Internals</a>
+  <ul>
+    <li><a href="internals/Coders.html" class="page">Coder Typeclass</a></li>
+    <li><a href="internals/Kryo.html" class="page">Kryo</a></li>
+    <li><a href="internals/OverrideTypeProvider.html" class="page">OverrideTypeProvider</a></li>
+    <li><a href="internals/ScioIO.html" class="page">ScioIO</a></li>
+  </ul></li>
+  <li><a href="migrations/index.html" class="page">Migration Guides</a>
+  <ul>
+    <li><a href="migrations/v0.7.0-Migration-Guide.html" class="page">Scio 0.7.0</a></li>
+  </ul></li>
+  <li><a href="dev/index.html" class="page">Development</a>
+  <ul>
+    <li><a href="dev/Style-Guide.html" class="page">Style Guide</a></li>
+    <li><a href="dev/How-to-Release.html" class="page">How to Release</a></li>
+    <li><a href="dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
+  </ul></li>
+  <li><a href="scaladoc.html" class="page">Scaladoc</a></li>
+  <li><a href="Scio,-Beam-and-Dataflow.html" class="page">Scio, Beam and Dataflow</a></li>
+  <li><a href="Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
+  <li><a href="Runners.html" class="page">Runners</a></li>
+  <li><a href="Scio-data-guideline.html" class="page">Data Guidelines</a></li>
+  <li><a href="Apache-Beam.html" class="page">Versions</a></li>
+  <li><a href="Changelog.html" class="page">Changelog</a></li>
+  <li><a href="FAQ.html" class="page">FAQ</a></li>
+  <li><a href="Powered-By.html" class="page">Powered By</a></li>
+</ul>
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="Scio-REPL.html#repl" class="header">REPL</a>
+  <ul>
+    <li><a href="Scio-REPL.html#quick-start" class="header">Quick start</a></li>
+    <li><a href="Scio-REPL.html#tutorial" class="header">Tutorial</a></li>
+    <li><a href="Scio-REPL.html#tips" class="header">Tips</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</nav>
+<ul style="display: none">
+<li class="md-nav__item md-version" id="project.version">
+<label class="md-nav__link" for="__version">
+<i class="md-icon" title="Version">label_outline</i> 0.7.0*
+</label>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="Scio-REPL.html#repl" class="header">REPL</a>
+  <ul>
+    <li><a href="Scio-REPL.html#quick-start" class="header">Quick start</a></li>
+    <li><a href="Scio-REPL.html#tutorial" class="header">Tutorial</a></li>
+    <li><a href="Scio-REPL.html#tips" class="header">Tips</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<div class="md-content__searchable">
+<h1><a href="#repl" name="repl" class="anchor"><span class="anchor-link"></span></a>REPL</h1>
+<p>The Scio REPL is an extension of the Scala REPL, with added functionality that allows you to interactively experiment with Scio. Think of it as a playground to try out things.</p>
+<h2><a href="#quick-start" name="quick-start" class="anchor"><span class="anchor-link"></span></a>Quick start</h2>
+<p>You can either install Scio REPL via our <a href="https://github.com/spotify/homebrew-public">Homebrew tap</a> on a Mac or download the pre-built jar on other platforms.</p>
+<h3><a href="#homebrew" name="homebrew" class="anchor"><span class="anchor-link"></span></a>Homebrew</h3>
+<pre class="prettyprint"><code class="language-bash">brew tap spotify/public
+brew install scio
+scio-repl
+</code></pre>
+<h3><a href="#pre-built-jar" name="pre-built-jar" class="anchor"><span class="anchor-link"></span></a>Pre-built jar</h3>
+<p>To download pre-built jar of Scio REPL, find version you are interested in on the <a href="https://github.com/spotify/scio/releases">release page</a>, and download the REPL jar from <code>Downloads</code> section.</p>
+<pre><code>$ java -jar scio-repl-&lt;version&gt;.jar
+Welcome to
+                 _____
+    ________________(_)_____
+    __  ___/  ___/_  /_  __ \
+    _(__  )/ /__ _  / / /_/ /
+    /____/ \___/ /_/  \____/   version 0.3.4
+
+Using Scala version 2.11.11 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_131)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+BigQuery client available as &#39;bq&#39;
+Scio context available as &#39;sc&#39;
+
+scio&gt;
+</code></pre>
+<p>A <a href="http://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html"><code>ScioContext</code></a> is created on REPL startup as <code>sc</code> and a starting point to most operations. Use <code>tab</code> completion, history and other REPL goodies to play around.</p>
+<h3><a href="#start-from-sbt-console-scala-2-11-x-only-" name="start-from-sbt-console-scala-2-11-x-only-" class="anchor"><span class="anchor-link"></span></a>Start from SBT console (Scala <code>2.11.x</code> only)</h3>
+<pre><code>$ git clone git@github.com:spotify/scio.git
+Cloning into &#39;scio&#39;...
+remote: Counting objects: 9336, done.
+remote: Compressing objects: 100% (275/275), done.
+remote: Total 9336 (delta 139), reused 0 (delta 0), pack-reused 8830
+Receiving objects: 100% (9336/9336), 1.76 MiB | 0 bytes/s, done.
+Resolving deltas: 100% (3509/3509), done.
+Checking connectivity... done.
+$ cd scio
+$ sbt scio-repl/run
+</code></pre>
+<h3><a href="#build-repl-jar-manually" name="build-repl-jar-manually" class="anchor"><span class="anchor-link"></span></a>Build REPL jar manually</h3>
+<p>You can also build REPL jar from source.</p>
+<pre><code>$ git clone git@github.com:spotify/scio.git
+Cloning into &#39;scio&#39;...
+remote: Counting objects: 9336, done.
+remote: Compressing objects: 100% (275/275), done.
+remote: Total 9336 (delta 139), reused 0 (delta 0), pack-reused 8830
+Receiving objects: 100% (9336/9336), 1.76 MiB | 0 bytes/s, done.
+Resolving deltas: 100% (3509/3509), done.
+Checking connectivity... done.
+$ cd scio
+$ sbt scio-repl/assembly
+</code></pre>
+<h3><a href="#sbt-project-from-scio-template" name="sbt-project-from-scio-template" class="anchor"><span class="anchor-link"></span></a>sbt project from scio-template</h3>
+<p>Projects generated from <a href="https://github.com/spotify/scio-template.g8">scio-template.g8</a> have built-in REPL. Run <code>sbt repl/run</code> from the project root.</p>
+<h2><a href="#tutorial" name="tutorial" class="anchor"><span class="anchor-link"></span></a>Tutorial</h2>
+<h3><a href="#local-pipeline" name="local-pipeline" class="anchor"><span class="anchor-link"></span></a>Local pipeline</h3>
+<p>Let&rsquo;s start with simple local-mode word count example:</p>
+<pre><code>scio&gt; val wordCount = sc.textFile(&quot;README.md&quot;).flatMap(_.split(&quot;[^a-zA-Z&#39;]+&quot;).filter(_.nonEmpty)).countByValue.map(_.toString).saveAsTextFile(&quot;/tmp/local_wordcount&quot;)
+scio&gt; sc.close()
+scio&gt; wordCount.waitForResult().value.take(3).foreach(println)
+(but,4)
+(via,4)
+(Hadoop,6)
+</code></pre>
+<p>Make sure <code>README.md</code> is in the current directory. This example counts words in local file using a local runner (<a href="https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/runners/direct/DirectRunner.html"><code>DirectRunner</code></a> and writes result in a local file. The pipeline and actual computation starts on <code>sc.close()</code>. The last command take 3 lines from results and prints them.</p>
+<h3><a href="#local-pipeline-" name="local-pipeline-" class="anchor"><span class="anchor-link"></span></a>Local pipeline ++</h3>
+<p>In the next example we will spice things up a bit and read data from GCS:</p>
+<pre><code>scio&gt; :newScio
+scio&gt; val shakespeare = sc.textFile(&quot;gs://dataflow-samples/shakespeare/hamlet.txt&quot;)
+scio&gt; val wordCount = shakespeare.flatMap(_.split(&quot;[^a-zA-Z&#39;]+&quot;).filter(_.nonEmpty)).countByValue.map(_.toString).saveAsTextFile(&quot;/tmp/gcs-wordcount&quot;)
+scio&gt; sc.close()
+scio&gt; wordCount.waitForResult().value.take(3).foreach(println)
+(frown&#39;st,1)
+(comfortable,13)
+(diversity,1)
+</code></pre>
+<p>Each Scio context is associated with one and only one pipeline. The previous instance of <code>sc</code> was used for the local pipeline example and cannot be reused anymore. The first magic command, <code>:newScio</code> creates a new context as <code>sc</code>. The pipeline still performs computation locally, but reads data from Google Cloud Storage (it could also be BigQuery, Datastore, etc). This example may take a bit longer due to additional network overhead.</p>
+<h3><a href="#dataflow-service-pipeline" name="dataflow-service-pipeline" class="anchor"><span class="anchor-link"></span></a>Dataflow service pipeline</h3>
+<p>To create a Scio context for Google Cloud Dataflow service, add Dataflow pipeline options when starting the REPL. The same options will also be used by <code>:newScio</code> when creating new context. For example:</p>
+<pre><code>$ java -jar scio-repl-0.3.4.jar \
+&gt; --project=&lt;project-id&gt; \
+&gt; --stagingLocation=&lt;stagin-dir&gt; \
+&gt; --runner=DataflowRunner
+Welcome to
+                 _____
+    ________________(_)_____
+    __  ___/  ___/_  /_  __ \
+    _(__  )/ /__ _  / / /_/ /
+    /____/ \___/ /_/  \____/   version 0.3.4
+
+Using Scala version 2.11.11 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_131)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+BigQuery client available as &#39;bq&#39;
+Scio context available as &#39;sc&#39;
+
+scio&gt; val shakespeare = sc.textFile(&quot;gs://dataflow-samples/shakespeare/*&quot;)
+scio&gt; val wordCount = shakespeare.flatMap(_.split(&quot;[^a-zA-Z&#39;]+&quot;).filter(_.nonEmpty)).countByValue.map(_.toString).saveAsTextFile(&quot;gs://&lt;gcs-output-dir&gt;&quot;)
+scio&gt; sc.close()
+scio&gt; wordCount.waitForResult().value.take(3).foreach(println)
+(decreased,1)
+(&#39;shall&#39;,2)
+(War,4)
+</code></pre>
+<p>In this case we are reading data from GCS and performing computation in GCE virtual machines managed by Dataflow service. The last line is an example of reading data from GCS files to local memory after a context is closed. Most write operations in Scio return <code>Future[Tap[T]]</code> where a <a href="http://spotify.github.io/scio/api/com/spotify/scio/io/Tap.html"><code>Tap[T]</code></a> encapsulates some dataset that can be re-opened in another context or directly.</p>
+<p>Use <code>:scioOpts</code> to view or update Dataflow options inside the REPL. New options will be applied the next time you create a context.</p>
+<h3><a href="#ad-hoc-local-mode" name="ad-hoc-local-mode" class="anchor"><span class="anchor-link"></span></a>Ad-hoc local mode</h3>
+<p>You may start the REPL in distributed mode and run pipelines to aggregate from large datasets, and play around the results in local mode. You can create a local Scio context any time with <code>:newLocalScio &lt;name&gt;</code> and use it for local computations.</p>
+<pre><code>scio&gt; :newLocalScio lsc
+Local Scio context available as &#39;lsc&#39;
+</code></pre>
+<h3><a href="#bigquery-example" name="bigquery-example" class="anchor"><span class="anchor-link"></span></a>BigQuery example</h3>
+<p>In this example we will read some data from BigQuery and process it in Dataflow. We shall count number of tornadoes per month from a public sample dataset. Scio will do its best to find your configured Google Cloud project, but you can also specify it explicitly via <code>-Dbigquery.project</code> option.</p>
+<pre><code>$ java -jar -Dbigquery.project=&lt;project-id&gt; scio-repl-0.3.4.jar \
+&gt; --project=&lt;project-id&gt; \
+&gt; --stagingLocation=&lt;stagin-dir&gt; \
+&gt; --runner=DataflowRunner
+Welcome to
+                 _____
+    ________________(_)_____
+    __  ___/  ___/_  /_  __ \
+    _(__  )/ /__ _  / / /_/ /
+    /____/ \___/ /_/  \____/   version 0.3.4
+
+Using Scala version 2.11.11 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_131)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+BigQuery client available as &#39;bq&#39;
+Scio context available as &#39;sc&#39;
+
+scio&gt; val tornadoes = sc.bigQuerySelect(&quot;SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]&quot;)
+scio&gt; val counts = tornadoes.flatMap(r =&gt; if (r.getBoolean(&quot;tornado&quot;)) Seq(r.getLong(&quot;month&quot;)) else Nil).countByValue.map(kv =&gt; TableRow(&quot;month&quot; -&gt; kv._1, &quot;tornado_count&quot; -&gt; kv._2))
+scio&gt; val result = counts.take(3).materialize
+scio&gt; sc.close()
+scio&gt; result.waitForResult().value.foreach(println)
+{month=4, tornado_count=5}
+{month=3, tornado_count=6}
+{month=5, tornado_count=6}
+</code></pre>
+<p>In this example we combine power of BigQuery and flexibility of Dataflow. We first query BigQuery table, perform a couple of transformations and take (<code>take(3)</code>) some data back locally (<code>materialize</code>) to view the results.</p>
+<h3><a href="#bigquery-project-id" name="bigquery-project-id" class="anchor"><span class="anchor-link"></span></a>BigQuery project id</h3>
+<p>Scio REPL will do its best to find your configured Google Cloud project, without the need to explicitly specifying <code>bigquery.project</code> property. It will search for project-id in this specific order:</p>
+<ol>
+  <li><code>bigquery.project</code> java system property</li>
+  <li><code>GCLOUD_PROJECT</code> java system property</li>
+  <li><code>GCLOUD_PROJECT</code> environmental variable</li>
+  <li><a href="https://cloud.google.com/sdk/gcloud/">gcloud</a> config files:</li>
+  <li><code>scio</code> <a href="https://cloud.google.com/sdk/gcloud/reference/topic/configurations">named configuration</a></li>
+  <li>default configuration</li>
+</ol>
+<p>This means that you can always set <code>bigquery.project</code> and it will take precedence over other configurations. Read more about gcloud configuration <a href="https://cloud.google.com/sdk/gcloud/reference/config/">here</a>.</p>
+<h3><a href="#i-o-commands" name="i-o-commands" class="anchor"><span class="anchor-link"></span></a>I/O Commands</h3>
+<p>There are few built-in commands for simple file I/O.</p>
+<pre class="prettyprint"><code class="language-scala">// Read from an Avro, text, CSV or TSV file on local filesystem or GCS.
+def readAvro[T : ClassTag](path: String): Iterator[T]
+def readText(path: String): Iterator[String]
+def readCsv[T: RowDecoder](path: String,
+                           sep: Char = &#39;,&#39;,
+                           header: Boolean = false): Iterator[T]
+def readTsv[T: RowDecoder](path: String
+                           sep: Char = &#39;\t&#39;,
+                           header: Boolean = false): Iterator[T]
+
+// Write to an Avro, text, CSV or TSV file on local filesystem or GCS.
+def writeAvro[T: ClassTag](path: String, data: Seq[T]): Unit
+def writeText(path: String, data: Seq[String]): Unit
+def writeCsv[T: RowEncoder](path: String, data: Seq[T],
+                            sep: Char = &#39;,&#39;,
+                            header: Seq[String] = Seq.empty): Unit
+def writeTsv[T: RowEncoder](path: String, data: Seq[T],
+                            sep: Char = &#39;\t&#39;,
+                            header: Seq[String] = Seq.empty): Unit
+</code></pre>
+<h2><a href="#tips" name="tips" class="anchor"><span class="anchor-link"></span></a>Tips</h2>
+<h3><a href="#multi-line-code" name="multi-line-code" class="anchor"><span class="anchor-link"></span></a>Multi-line code</h3>
+<p>While in the REPL, use <code>:paste</code> magic command to paste or write multi-line code</p>
+<pre><code>scio&gt; :paste
+// Entering paste mode (ctrl-D to finish)
+
+def evenNumber(x: Int) = x % 2 == 0
+val evenNumbers = sc.parallelize(1 to 100).filter(evenNumber)
+
+// Exiting paste mode, now interpreting.
+
+evenNumber: (x: Int)Boolean
+evenNumbers: com.spotify.scio.values.SCollection[Int] = com.spotify.scio.values.SCollectionImpl@14fe085b
+
+scio&gt; evenNumbers.saveAsTextFile(&quot;/tmp/even&quot;)
+scio&gt; sc.close()
+</code></pre>
+<h3><a href="#running-jobs-asynchronously" name="running-jobs-asynchronously" class="anchor"><span class="anchor-link"></span></a>Running jobs asynchronously</h3>
+<p>When using REPL and Dataflow service consider using the non-blocking <a href="https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/runners/dataflow/DataflowRunner.html"><code>DataflowRunner</code></a> for a more interactive experience. To start:</p>
+<pre><code>java -jar scio-repl-0.3.4.jar \
+&gt; --project=&lt;project-id&gt; \
+&gt; --stagingLocation=&lt;stagin-dir&gt; \
+&gt; --runner=DataflowRunner
+Welcome to
+                 _____
+    ________________(_)_____
+    __  ___/  ___/_  /_  __ \
+    _(__  )/ /__ _  / / /_/ /
+    /____/ \___/ /_/  \____/   version 0.3.4
+
+Using Scala version 2.11.11 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_131)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+BigQuery client available as &#39;bq&#39;
+Scio context available as &#39;sc&#39;
+
+scio&gt; sc.parallelize(1 to 100).map( _.toString ).saveAsTextFile(&quot;gs://&lt;output&gt;&quot;)
+res0: scala.concurrent.Future[com.spotify.scio.io.Tap[String]] = scala.concurrent.impl.Promise$DefaultPromise@1399ad68
+scio&gt; val result = sc.close()
+[main] INFO org.apache.beam.runners.dataflow.DataflowRunner - Executing pipeline on the Dataflow Service, which will have billing implications related to Google Compute Engine usage and other Google Cloud Services.
+[main] INFO org.apache.beam.runners.dataflow.util.PackageUtil - Uploading 3 files from PipelineOptions.filesToStage to staging location to prepare for execution.
+[main] INFO org.apache.beam.runners.dataflow.util.PackageUtil - Uploading PipelineOptions.filesToStage complete: 2 files newly uploaded, 1 files cached
+Dataflow SDK version: 1.5.0
+scio&gt; result.state
+res1: org.apache.beam.sdk.PipelineResult.State = RUNNING
+</code></pre>
+<p>Note that now <code>sc.close()</code> doesn&rsquo;t block and wait until job completes and gives back control of the REPL right away. Use <a href="http://spotify.github.io/scio/api/com/spotify/scio/ScioResult.html"><code>ScioResult</code></a> and <code>Future[Tap[T]]</code>s to check for progress, results and orchestrate jobs.</p>
+<h3><a href="#multiple-scio-contexts" name="multiple-scio-contexts" class="anchor"><span class="anchor-link"></span></a>Multiple Scio contexts</h3>
+<p>You can use multiple Scio context objects to work with several pipelines at the same time, simply use magic <code>:newScio &lt;context name&gt;</code>, for example:</p>
+<pre><code>scio&gt; :newScio c1
+Scio context available as &#39;c1&#39;
+scio&gt; :newScio c2
+Scio context available as &#39;c2&#39;
+scio&gt; :newLocalScio lc
+Scio context available as &#39;lc&#39;
+</code></pre>
+<p>You can use those in combination with <code>DataflowRunner</code> to run multiple pipelines in the same session or wire them with for comprehension over futures.</p>
+<h3><a href="#bigquery-client" name="bigquery-client" class="anchor"><span class="anchor-link"></span></a>BigQuery client</h3>
+<p>Whenever possible leverage BigQuery! <a href="http://spotify.github.io/scio/api/com/spotify/scio/bigquery/types/BigQueryType.html"><code>@BigQueryType</code></a> annotations enable type safe and civilized  integration with BigQuery inside Scio. Here is example of using the annotations and BigQuery client to read and write typed data directly without Scio context.</p>
+<pre><code>$ java -jar -Dbigquery.project=&lt;project-id&gt; scio-repl-0.3.4.jar
+Welcome to
+                 _____
+    ________________(_)_____
+    __  ___/  ___/_  /_  __ \
+    _(__  )/ /__ _  / / /_/ /
+    /____/ \___/ /_/  \____/   version 0.3.4
+
+Using Scala version 2.11.11 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_131)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+BigQuery client available as &#39;bq&#39;
+Scio context available as &#39;sc&#39;
+
+scio&gt; @BigQueryType.fromQuery(&quot;SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]&quot;) class Row
+scio&gt; val tornadoes = bq.getTypedRows[Row]()
+scio&gt; tornadoes.next.month
+res0: Option[Long] = Some(5)
+scio&gt; bq.writeTypedRows(&quot;project-id:dataset-id.table-id&quot;, tornadoes.take(100).toList)
+</code></pre>
+<h3><a href="#out-of-memory-exception" name="out-of-memory-exception" class="anchor"><span class="anchor-link"></span></a>Out of memory exception</h3>
+<p>In case of OOM exceptions, like for example:</p>
+<pre><code>scio&gt; res1.waitForResult().value.next
+Exception in thread &quot;main&quot;
+Exception: java.lang.OutOfMemoryError thrown from the UncaughtExceptionHandler in thread &quot;main&quot;
+</code></pre>
+<p>simply increase the size of the heap - be reasonable about the amount of data and heap size though.</p>
+<p>Example of REPL startup with 2GiB of heap size:</p>
+<pre><code>$ java -Xmx2g -jar scio-repl-0.3.4.jar
+Welcome to
+                 _____
+    ________________(_)_____
+    __  ___/  ___/_  /_  __ \
+    _(__  )/ /__ _  / / /_/ /
+    /____/ \___/ /_/  \____/   version 0.3.4
+
+Using Scala version 2.11.11 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_131)
+
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+BigQuery client available as &#39;bq&#39;
+Scio context available as &#39;sc&#39;
+
+scio&gt; Runtime.getRuntime().maxMemory();
+res1: Long = 1908932608
+</code></pre>
+<h3><a href="#what-is-the-type-of-an-expression-" name="what-is-the-type-of-an-expression-" class="anchor"><span class="anchor-link"></span></a>What is the type of an expression?</h3>
+<p>Use build in <code>:t</code> magic, <code>:t</code> displays the type of an expression without evaluating it. Example:</p>
+<pre><code>scio&gt; :t sc.textFile(&quot;README&quot;).flatMap(_.split(&quot;[^a-zA-Z&#39;]+&quot;)).filter(_.nonEmpty).map(_.length)
+com.spotify.scio.values.SCollection[Int]
+</code></pre>
+<p>Learn more about magic keywords via <code>scio&gt; :help</code></p>
+</div>
+<div>
+<a href="https://github.com/spotify/scio.git/tree/master/site/src/paradox/Scio-REPL.md" title="Edit this page" class="md-source-file md-edit">
+Edit this page
+</a>
+</div>
+<div class="print-only">
+<span class="md-source-file md-version">
+0.7.0*
+</span>
+</div>
+</article>
+</div>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-nav">
+<nav class="md-footer-nav__inner md-grid">
+<a href="Scio-Unit-Tests.html" title="Testing" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Previous
+</span>
+Testing
+</span>
+</div>
+</a>
+<a href="internals/index.html" title="Internals" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Next
+</span>
+Internals
+</span>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+</div>
+</a>
+</nav>
+</div>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
+<div class="md-footer-copyright__highlight">
+Copyright (C) 2018 Spotify AB
+</div>
+Powered by
+<a href="https://github.com/lightbend/paradox">Paradox</a>
+and
+<a href="https://jonas.github.io/paradox-material-theme/">Paradox Material Theme</a>
+
+</div>
+<div class="md-footer-social">
+<a href="https://github.com/spotify" class="md-footer-social__link fa fa-github"></a><a href="https://twitter.com/spotifyeng" class="md-footer-social__link fa fa-twitter"></a>
+</div>
+
+</div>
+</div>
+</footer>
+
+</div>
+<script src="assets/javascripts/application.583bbe55.js"></script>
+<script src="assets/javascripts/paradox-material-theme.js"></script>
+<script>app.initialize({version:"0.17",url:{base:"."}})</script>
+<script type="text/javascript" src="lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function(event) {
+window.prettyPrint && prettyPrint();
+});
+</script>
+</body>
+</html>

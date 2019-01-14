@@ -1,0 +1,89 @@
+/*!
+ Paradox Material Theme
+ Copyright (c) 2017-2018 Jonas Fonseca
+ License: MIT
+*/
+
+.callout {
+  visibility: hidden;
+}
+
+.md-nav--primary > .md-nav--secondary {
+  display: none;
+}
+
+.md-nav--primary .md-version {
+  padding: 1.2rem 1.2rem 0rem;
+}
+
+.md-nav--primary .md-version label {
+  cursor: default;
+}
+
+.md-version .md-icon {
+  position: relative;
+  top: .2rem;
+  left: 0;
+}
+
+@media only screen and (max-width: 76.1875em) {
+  .md-nav--primary .md-version {
+    padding: 0;
+  }
+}
+
+.md-nav--secondary {
+  visibility: hidden;
+}
+
+dl.mdc-tab-bar {
+  margin-left: 0;
+}
+
+.mdc-tab-content {
+  display: none;
+}
+
+.mdc-tab-content--active {
+  display: block;
+}
+
+.md-source__icon i {
+  font-size: 24px;
+  margin-top: 1.2rem;
+  margin-left: 1.2rem;
+}
+
+.md-edit:before {
+  content: "\E3C9";
+}
+
+pre.prettyprint {
+  border: none;
+}
+
+.callout.no-title .callout-title {
+  display: none;
+}
+
+.callout.no-title > :nth-child(2) {
+  margin-top: 0;
+}
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  .print-only {
+    display: block;
+  }
+
+  .md-edit, h1 a.anchor {
+    display: none;
+  }
+
+  .md-version:before {
+    content: "\E893";
+  }
+}
