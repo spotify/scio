@@ -150,7 +150,7 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
   licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
   homepage := Some(url("https://github.com/spotify/scio")),
   scmInfo := Some(
-    ScmInfo(url("https://github.com/spotify/scio.git"), "scm:git:git@github.com:spotify/scio.git")),
+    ScmInfo(url("https://github.com/spotify/scio"), "scm:git:git@github.com:spotify/scio.git")),
   developers := List(
     Developer(id = "sinisa_lyh",
               name = "Neville Li",
