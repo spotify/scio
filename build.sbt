@@ -286,25 +286,10 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
   libraryDependencies ++= beamRunnersEval.value
 )
 
-lazy val root: Project = Project(
-  "scio",
-  file(".")
-).enablePlugins(GhpagesPlugin, ScalaUnidocPlugin, SiteScaladocPlugin)
+lazy val root: Project = Project("scio", file("."))
+  .settings(commonSettings)
+  .settings(noPublishSettings)
   .settings(
-    commonSettings ++ siteSettings ++ noPublishSettings,
-    unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
-      -- inProjects(scioCassandra2)
-      -- inProjects(scioElasticsearch2, scioElasticsearch5)
-      -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples)
-      -- inProjects(scioJmh),
-    // unidoc handles class paths differently than compile and may give older
-    // versions high precedence.
-    unidocAllClasspaths in (ScalaUnidoc, unidoc) := {
-      (unidocAllClasspaths in (ScalaUnidoc, unidoc)).value.map { cp =>
-        cp.filterNot(_.data.getCanonicalPath.matches(""".*guava-11\..*"""))
-          .filterNot(_.data.getCanonicalPath.matches(""".*bigtable-client-core-0\..*"""))
-      }
-    },
     aggregate in assembly := false
   )
   .aggregate(
@@ -818,6 +803,46 @@ lazy val scioJmh: Project = Project(
   )
   .enablePlugins(JmhPlugin)
 
+lazy val site: Project = project
+  .in(file("site"))
+  .enablePlugins(ParadoxSitePlugin,
+                 ParadoxMaterialThemePlugin,
+                 GhpagesPlugin,
+                 ScalaUnidocPlugin,
+                 SiteScaladocPlugin)
+  .settings(commonSettings)
+  .settings(siteSettings)
+  .settings(
+    name := "site",
+    publish / skip := true,
+    unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
+      -- inProjects(scioCassandra2)
+      -- inProjects(scioElasticsearch2, scioElasticsearch5)
+      -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples)
+      -- inProjects(scioJmh),
+    // unidoc handles class paths differently than compile and may give older
+    // versions high precedence.
+    unidocAllClasspaths in (ScalaUnidoc, unidoc) := {
+      (unidocAllClasspaths in (ScalaUnidoc, unidoc)).value.map { cp =>
+        cp.filterNot(_.data.getCanonicalPath.matches(""".*guava-11\..*"""))
+          .filterNot(_.data.getCanonicalPath.matches(""".*bigtable-client-core-0\..*"""))
+      }
+    },
+    paradoxProperties in Paradox ++= Map(
+      "javadoc.com.spotify.scio.base_url" -> "http://spotify.github.com/scio/api"
+    ),
+    sourceDirectory in Paradox in paradoxTheme := sourceDirectory.value / "paradox" / "_template",
+    ParadoxMaterialThemePlugin.paradoxMaterialThemeSettings(Paradox),
+    paradoxMaterialTheme in Paradox := {
+      ParadoxMaterialTheme()
+        .withColor("white", "indigo")
+        .withLogo("images/logo.png")
+        .withCopyright("Copyright (C) 2018 Spotify AB")
+        .withRepository(uri("https://github.com/spotify/scio"))
+        .withSocial(uri("https://github.com/spotify"), uri("https://twitter.com/spotifyeng"))
+    }
+  )
+
 // =======================================================================
 // Site settings
 // =======================================================================
@@ -844,7 +869,7 @@ lazy val siteSettings = Seq(
   addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
   gitRemoteRepo := "git@github.com:spotify/scio.git",
   mappings in makeSite ++= Seq(
-    file("site/index.html") -> "index.html",
+//    file("site/index.html") -> "index.html",
     file("scio-examples/target/site/index.html") -> "examples/index.html"
   ) ++ SoccoIndex.mappings,
   makeSite := {
