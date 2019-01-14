@@ -19,7 +19,6 @@ package com.spotify.scio.bigquery
 
 import com.google.protobuf.ByteString
 import com.spotify.scio._
-import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.testing._
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.joda.time.format.DateTimeFormat
