@@ -52,7 +52,7 @@ Cannot find an implicit Coder instance for type:
       Alternatively, you can use a context bound instead of an implicit parameter:
         def foo[T: Coder](coll: SCollection[SomeClass], param: String): SCollection[T]
                     ^
-      read more here: https://github.com/spotify/scio/wiki/v0.7.0-Migration-Guide#add-missing-context-bounds
+      read more here: https://spotify.github.io/scio/migrations/v0.7.0-Migration-Guide#add-missing-context-bounds
 
     - You can check that an instance exists for Coder in the REPL or in your code:
         scala> com.spotify.scio.coders.Coder[Foo]

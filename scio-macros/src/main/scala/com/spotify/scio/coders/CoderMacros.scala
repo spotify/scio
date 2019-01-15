@@ -98,7 +98,7 @@ private[coders] object CoderMacros {
         |       implicit def coder${typeName}: Coder[$fullType] = Coder.kryo[$fullType]
         |
         |  Additional info at:
-        |   - https://github.com/spotify/scio/wiki/Coders
+        |   - https://spotify.github.io/scio/internals/Coders
         |
         """
 
