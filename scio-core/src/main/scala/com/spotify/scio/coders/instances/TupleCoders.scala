@@ -29,7 +29,8 @@
 
 package com.spotify.scio.coders.instances
 
-import com.spotify.scio.coders.{Schema, Coder}
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.schemas.Schema
 import shapeless.Strict
 
 trait TupleCoders {

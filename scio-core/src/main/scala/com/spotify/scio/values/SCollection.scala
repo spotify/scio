@@ -128,24 +128,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def name: String = internal.getName
 
   /** Assign a Coder to this SCollection. */
-  def setCoder(coder: org.apache.beam.sdk.coders.Coder[T]): SCollection[T] = {
-    coder match {
-      case com.spotify.scio.coders.RecordCoder(_, (schema, toRow, fromRow), _, _, _) =>
-        val to =
-          new SerializableFunction[T, Row]() {
-            override def apply(t: T): Row =
-              toRow(t)
-          }
-        val from =
-          new SerializableFunction[Row, T]() {
-            override def apply(r: Row): T =
-              fromRow(r)
-          }
+  def setCoder(coder: org.apache.beam.sdk.coders.Coder[T]): SCollection[T] =
+    context.wrap(internal.setCoder(coder))
 
-        context.wrap(internal.setCoder(coder).setSchema(schema, to, from))
-      case _ =>
-        context.wrap(internal.setCoder(coder))
-    }
+  def setSchema(schema: com.spotify.scio.schemas.Schema[T]): SCollection[T] = {
+    import com.spotify.scio.schemas.SchemaMaterializer
+    val (s, to, from) = SchemaMaterializer.materialize(this.context, schema)
+    context.wrap(internal.setSchema(s, to, from))
   }
 
   /**
@@ -179,31 +168,28 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.pApply(transform).setCoder(bcoder)
   }
 
-  def sql(query: String): SCollection[Row] = {
+  import com.spotify.scio.schemas.{Record, Schema, SchemaMaterializer}
+  def sql(query: String)(implicit schemaT: Schema[T]): SCollection[Row] = {
     import org.apache.beam.sdk.extensions.sql.SqlTransform
     import org.apache.beam.sdk.extensions.sql.impl.BeamSqlEnv
     import org.apache.beam.sdk.extensions.sql.impl.schema.BeamPCollectionTable
     import org.apache.beam.sdk.extensions.sql.impl.utils.CalciteUtils
     import com.google.common.collect.ImmutableMap
+
     val PCOLLECTION_NAME = "PCOLLECTION"
+    val scoll = setSchema(schemaT)
     val sqlEnv = BeamSqlEnv.readOnly(
       PCOLLECTION_NAME,
-      ImmutableMap.of(PCOLLECTION_NAME, new BeamPCollectionTable(internal)))
+      ImmutableMap.of(PCOLLECTION_NAME, new BeamPCollectionTable(scoll.internal)))
     // Will it support UDF (see SqlTransform.expand) ?
     val q = sqlEnv.parseQuery(query)
     val schema = CalciteUtils.toSchema(q.getRowType)
-    applyTransform[Row](SqlTransform.query(query))(Coder.row(schema))
+    scoll.applyTransform[Row](SqlTransform.query(query))(Coder.row(schema))
   }
 
-  import com.spotify.scio.{coders => c}
-  def typedSql[A: Coder](query: String): SCollection[A] = {
-    import org.apache.beam.sdk.extensions.sql.SqlTransform
-    val f =
-      CoderMaterializer.beam(context, Coder[A]) match { // XXX: unsafe
-        case c.RecordCoder(_, (_, _, fromRow), _, _, _) =>
-          fromRow
-      }
-    sql(query).map(f)
+  def typedSql[A: Record: Coder](query: String)(implicit schemaT: Schema[T]): SCollection[A] = {
+    val (_, _, from) = SchemaMaterializer.materialize(context, implicitly[Record[A]])
+    sql(query).map[A](r => from(r))
   }
 
   /** Apply a transform. */

@@ -1,6 +1,7 @@
 package com.spotify.scio.values
 
-import com.spotify.scio.coders.{Coder, Schema}
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.schemas.Schema
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.extensions.sql.SqlTransform
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
@@ -38,12 +39,12 @@ class BeamSQLTest extends PipelineSpec {
     }
     implicit def coderRowRes = Coder.row(schemaRes)
     val in = sc.parallelize(users)
-    val r = in.applyTransform(SqlTransform.query("select username from PCOLLECTION"))
+    val r = in.sql("select username from PCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
   it should "support nested case classes" in runWithContext { sc =>
-    implicit def userIDSchema = Schema[UserId]
+    // implicit def userIDSchema = Schema[UserId]
 
     val schemaRes =
       BSchema
@@ -63,7 +64,7 @@ class BeamSQLTest extends PipelineSpec {
     implicit def coderRowRes = Coder.row(schemaRes)
     val in = sc.parallelize(usersWithIds)
     val r =
-      in.applyTransform(SqlTransform.query("select id, username from PCOLLECTION"))
+      in.sql("select id, username from PCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
@@ -74,7 +75,7 @@ class BeamSQLTest extends PipelineSpec {
     }
     implicit def coderRowRes = Coder.row(schemaRes)
     val in = sc.parallelize(usersWithLocale)
-    val r = in.applyTransform(SqlTransform.query("select username from PCOLLECTION"))
+    val r = in.sql("select username from PCOLLECTION")
     r should containInAnyOrder(expected)
   }
 

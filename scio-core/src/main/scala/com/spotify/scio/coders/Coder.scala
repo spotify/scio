@@ -79,7 +79,6 @@ final case class Disjunction[T, Id] private (typeName: String,
 }
 
 final case class Record[T] private (typeName: String,
-                                    schema: FSchema[T],
                                     cs: Array[(String, Coder[Any])],
                                     construct: Seq[Any] => T,
                                     destruct: T => Array[Any])
@@ -230,12 +229,10 @@ private object WrappedBCoder {
 // Coder used internally specifically for Magnolia derived coders.
 // It's technically possible to define Product coders only in terms of `Coder.transform`
 // This is just faster
-private[scio] final case class RecordCoder[T](
-  typeName: String,
-  schema: (org.apache.beam.sdk.schemas.Schema, T => Row, Row => T),
-  cs: Array[(String, BCoder[Any])],
-  construct: Seq[Any] => T,
-  destruct: T => Array[Any])
+private[scio] final case class RecordCoder[T](typeName: String,
+                                              cs: Array[(String, BCoder[Any])],
+                                              construct: Seq[Any] => T,
+                                              destruct: T => Array[Any])
     extends AtomicCoder[T] {
 
   @inline def onErrorMsg[A](msg: => String)(f: => A): A =
@@ -374,11 +371,10 @@ sealed trait CoderGrammar {
   }
 
   private[scio] def record[T](typeName: String,
-                              schema: FSchema[T],
                               cs: Array[(String, Coder[Any])],
                               construct: Seq[Any] => T,
                               destruct: T => Array[Any]): Coder[T] =
-    Record[T](typeName, schema, cs, construct, destruct)
+    Record[T](typeName, cs, construct, destruct)
 }
 
 object Coder extends CoderGrammar with Implicits {
