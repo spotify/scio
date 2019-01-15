@@ -27,6 +27,12 @@ object TestData {
     (1 to 10).map { i =>
       UserWithFallBack(i, s"user$i", java.util.Locale.FRANCE)
     }.toList
+
+  case class UserWithOption(username: String, email: String, age: Option[Int])
+  val usersWithOption =
+    (1 to 10).map { i =>
+      UserWithOption(s"user$i", s"user$i@spotify.com", if (i > 5) Option(20 + i) else None)
+    }.toList
 }
 
 class BeamSQLTest extends PipelineSpec {
@@ -106,5 +112,26 @@ class BeamSQLTest extends PipelineSpec {
     val in = sc.parallelize(usersWithLocale)
     val r = in.typedSql[(String, java.util.Locale)]("select username, locale from PCOLLECTION")
     r should containInAnyOrder(expected)
+  }
+
+  it should "support Option" in runWithContext { sc =>
+    val expected = usersWithOption.map { u =>
+      (u.username, u.age)
+    }
+    val in = sc.parallelize(usersWithOption)
+    val r = in.typedSql[(String, Option[Int])]("select username, age from PCOLLECTION")
+    r should containInAnyOrder(expected)
+  }
+
+  ignore should "support scala collections" in runWithContext { sc =>
+    // TODO
+  }
+
+  ignore should "support javabeans" in runWithContext { sc =>
+    // TODO
+  }
+
+  ignore should "support java collections" in runWithContext { sc =>
+    // TODO
   }
 }

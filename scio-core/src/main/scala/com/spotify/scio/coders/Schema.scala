@@ -159,7 +159,11 @@ object SchemaMaterializer {
       case Type(t) =>
         v
       case Optional(s) =>
-        Option(encode(s, fieldType, v))
+        v.asInstanceOf[Option[_]]
+          .map { v =>
+            encode(s, fieldType, v)
+          }
+          .getOrElse(null)
       case Fallback(c) =>
         CoderUtils.encodeToByteArray(c.asInstanceOf[BCoder[A]], v)
     }
