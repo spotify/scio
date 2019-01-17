@@ -2,6 +2,7 @@ package com.spotify.scio.schemas
 
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import scala.language.higherKinds
+import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.transforms.SerializableFunction
@@ -9,14 +10,30 @@ import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.values.Row
 import BSchema.{Field, FieldType}
 
-sealed trait Schema[T]
+sealed trait Schema[T] {
+  type Repr
+  type Decode = Repr => T
+  type Encode = T => Repr
+}
+
 final case class Record[T] private (schemas: Array[(String, Schema[Any])],
                                     construct: Seq[Any] => T,
                                     destruct: T => Array[Any])
-    extends Schema[T]
-final case class Type[T](fieldType: FieldType) extends Schema[T]
-final case class Optional[T](s: Schema[T]) extends Schema[Option[T]]
-final case class Fallback[F[_], T](coder: F[T]) extends Schema[T]
+    extends Schema[T] {
+  type Repr = Row
+}
+final case class Type[T](fieldType: FieldType) extends Schema[T] {
+  type Repr = T
+}
+final case class Optional[T](schema: Schema[T]) extends Schema[Option[T]] {
+  type Repr = schema.Repr
+}
+final case class Fallback[F[_], T](coder: F[T]) extends Schema[T] {
+  type Repr = Array[Byte]
+}
+final case class Arr[T](schema: Schema[T]) extends Schema[List[T]] { // TODO: polymorphism ?
+  type Repr = java.util.List[schema.Repr]
+}
 
 object Schema extends LowPriorityFallbackSchema {
   implicit val stringSchema = Type[String](FieldType.STRING)
@@ -32,6 +49,7 @@ object Schema extends LowPriorityFallbackSchema {
   // implicit def datetimeSchema = FSchema[](FieldType.DATETIME)
 
   implicit def optionSchema[T](implicit s: Schema[T]): Schema[Option[T]] = Optional(s)
+  implicit def arraySchema[T](implicit s: Schema[T]): Schema[List[T]] = Arr(s)
 
   @inline final def apply[T](implicit c: Schema[T]): Schema[T] = c
 
@@ -100,6 +118,7 @@ object SchemaMaterializer {
         FieldType.row(BSchema.of(fields: _*))
       case Type(t)     => t
       case Fallback(_) => FieldType.BYTES
+      case Arr(s)      => FieldType.array(fieldType(s))
       case Optional(_) => throw new IllegalStateException("Optional(_) match should be impossible")
     }
 
@@ -120,73 +139,92 @@ object SchemaMaterializer {
         Optional(materializeSchema(sc, s))
       case Fallback(c) =>
         Fallback[BCoder, A](CoderMaterializer.beam[A](sc, c.asInstanceOf[Coder[A]]))
+      case Arr(s) =>
+        Arr(materializeSchema(sc, s))
     }
 
   import org.apache.beam.sdk.util.CoderUtils
-  // TODO: typesafety
-  private def decode[A](schema: Schema[A], v: Any): A =
+
+  // XXX: scalac can't unify schema.Repr with s.Repr
+  private def dispatchDecode[A](schema: Schema[A]): schema.Decode =
     schema match {
-      case Record(schemas, construct, destruct) =>
-        val row = v.asInstanceOf[Row]
-        val values =
-          row.getValues.asScala.zip(schemas).map {
-            case (v, (name, schema)) =>
-              decode(schema, v)
-          }
-        construct(values)
-      case Type(t) =>
-        v.asInstanceOf[A]
-      case Optional(s) =>
-        Option(decode(s, v))
-      case Fallback(c) =>
-        CoderUtils.decodeFromByteArray(c.asInstanceOf[BCoder[A]], v.asInstanceOf[Array[Byte]])
+      case s @ Record(_, _, _) => (decode(s)(_)).asInstanceOf[schema.Repr => A]
+      case s @ Type(_)         => (decode(s)(_)).asInstanceOf[schema.Repr => A]
+      case s @ Optional(_)     => (decode(s)(_)).asInstanceOf[schema.Repr => A]
+      case s @ Arr(_)          => (decode(s)(_)).asInstanceOf[schema.Repr => A]
+      case s @ Fallback(_) =>
+        (decode(s.asInstanceOf[Fallback[BCoder, A]])(_)).asInstanceOf[schema.Repr => A]
     }
 
-  // TODO: typesafety
-  private def encode[A](schema: Schema[A], fieldType: FieldType, v: A): Any =
+  private def decode[A](schema: Record[A])(v: schema.Repr): A = {
+    val values =
+      v.getValues.asScala.zip(schema.schemas).map {
+        case (v, (name, schema)) =>
+          dispatchDecode(schema)(v.asInstanceOf[schema.Repr])
+      }
+    schema.construct(values)
+  }
+  private def decode[A](schema: Type[A])(v: schema.Repr): A = v
+  private def decode[A](schema: Optional[A])(v: schema.Repr): Option[A] =
+    Option(dispatchDecode(schema.schema)(v))
+  private def decode[A: ClassTag](schema: Arr[A])(v: schema.Repr): List[A] =
+    v.asScala.map { v =>
+      dispatchDecode[A](schema.schema)(v)
+    }.toList
+  private def decode[A](schema: Fallback[BCoder, A])(v: schema.Repr): A =
+    CoderUtils.decodeFromByteArray(schema.coder, v)
+
+  // XXX: scalac can't unify schema.Repr with s.Repr
+  private def dispatchEncode[A](schema: Schema[A], fieldType: FieldType): schema.Encode =
     schema match {
-      case Record(schemas, construct, destruct) =>
-        val builder = Row.withSchema(fieldType.getRowSchema())
-        destruct(v)
-          .zip(schemas)
-          .zip(fieldType.getRowSchema.getFields.asScala)
-          .map {
-            case ((v, (_, s)), f) =>
-              encode(s, f.getType, v)
-          }
-          .foreach(builder.addValue _)
-        builder.build()
-      case Type(t) =>
-        v
-      case Optional(s) =>
-        v.asInstanceOf[Option[_]]
-          .map { v =>
-            encode(s, fieldType, v)
-          }
-          .getOrElse(null)
-      case Fallback(c) =>
-        CoderUtils.encodeToByteArray(c.asInstanceOf[BCoder[A]], v)
+      case s @ Record(_, _, _) => (encode(s, fieldType)(_)).asInstanceOf[A => schema.Repr]
+      case s @ Type(_)         => (encode(s)(_)).asInstanceOf[A => schema.Repr]
+      case s @ Optional(_)     => (encode(s, fieldType)(_)).asInstanceOf[A => schema.Repr]
+      case s @ Arr(_)          => (encode(s, fieldType)(_)).asInstanceOf[A => schema.Repr]
+      case s @ Fallback(_) =>
+        (encode(s.asInstanceOf[Fallback[BCoder, A]])(_)).asInstanceOf[A => schema.Repr]
     }
+
+  private def encode[A](schema: Record[A], fieldType: FieldType)(v: A): schema.Repr = {
+    val builder = Row.withSchema(fieldType.getRowSchema())
+    schema
+      .destruct(v)
+      .zip(schema.schemas)
+      .zip(fieldType.getRowSchema.getFields.asScala)
+      .map {
+        case ((v, (_, s)), f) =>
+          dispatchEncode(s, f.getType)(v)
+      }
+      .foreach(builder.addValue _)
+    builder.build()
+  }
+  private def encode[A](schema: Type[A])(v: A): schema.Repr = v
+  private def encode[A](schema: Optional[A], fieldType: FieldType)(v: Option[A]): schema.Repr =
+    v.map { dispatchEncode(schema.schema, fieldType)(_) }.getOrElse(null.asInstanceOf[schema.Repr])
+  private def encode[A: ClassTag](schema: Arr[A], fieldType: FieldType)(v: List[A]): schema.Repr =
+    v.map { dispatchEncode(schema.schema, fieldType.getCollectionElementType)(_) }.asJava
+  private def encode[A](schema: Fallback[BCoder, A])(v: A): schema.Repr =
+    CoderUtils.encodeToByteArray(schema.coder, v)
 
   def materialize[T](
     sc: ScioContext,
-    schema: Schema[T]): (BSchema, SerializableFunction[T, Row], SerializableFunction[Row, T]) = {
+    schema: Record[T]): (BSchema, SerializableFunction[T, Row], SerializableFunction[Row, T]) = {
     //  XXX: Is getRowSchema safe ?
     // TODO: check for null values ?
     val ft = fieldType(schema)
     val bschema = ft.getRowSchema()
-    val schemaMat = materializeSchema(sc, schema)
+    val schemaMat = materializeSchema(sc, schema).asInstanceOf[Record[T]]
 
     def fromRow =
       new SerializableFunction[Row, T] {
         def apply(r: Row): T =
-          decode[T](schemaMat, r)
+          decode[T](schemaMat)(r)
       }
 
     def toRow =
       new SerializableFunction[T, Row] {
         def apply(t: T): Row =
-          encode[T](schemaMat, ft, t).asInstanceOf[Row]
+          encode[T](schemaMat, ft)(t)
       }
 
     (bschema, toRow, fromRow)

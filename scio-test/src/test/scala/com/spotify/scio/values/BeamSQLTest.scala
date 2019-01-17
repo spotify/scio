@@ -1,9 +1,7 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.schemas.Schema
 import com.spotify.scio.testing.PipelineSpec
-import org.apache.beam.sdk.extensions.sql.SqlTransform
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.values.Row
 
@@ -32,6 +30,12 @@ object TestData {
   val usersWithOption =
     (1 to 10).map { i =>
       UserWithOption(s"user$i", s"user$i@spotify.com", if (i > 5) Option(20 + i) else None)
+    }.toList
+
+  case class UserWithList(username: String, emails: List[String])
+  val usersWithList =
+    (1 to 10).map { i =>
+      UserWithList(s"user$i", List(s"user$i@spotify.com", s"user$i@yolo.com"))
     }.toList
 }
 
@@ -105,7 +109,7 @@ class BeamSQLTest extends PipelineSpec {
     r should containInAnyOrder(expected)
   }
 
-  it should "support fallback in typedSql" in runWithContext { sc =>
+  it should "support fallback in sql" in runWithContext { sc =>
     val expected = usersWithLocale.map { u =>
       (u.username, u.locale)
     }
@@ -123,8 +127,13 @@ class BeamSQLTest extends PipelineSpec {
     r should containInAnyOrder(expected)
   }
 
-  ignore should "support scala collections" in runWithContext { sc =>
-    // TODO
+  it should "support scala collections" in runWithContext { sc =>
+    val expected = usersWithList.map { u =>
+      (u.username, u.emails)
+    }
+    val in = sc.parallelize(usersWithList)
+    val r = in.typedSql[(String, List[String])]("select username, emails from PCOLLECTION")
+    r should containInAnyOrder(expected)
   }
 
   ignore should "support javabeans" in runWithContext { sc =>

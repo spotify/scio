@@ -131,7 +131,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def setCoder(coder: org.apache.beam.sdk.coders.Coder[T]): SCollection[T] =
     context.wrap(internal.setCoder(coder))
 
-  def setSchema(schema: com.spotify.scio.schemas.Schema[T]): SCollection[T] = {
+  def setSchema(schema: com.spotify.scio.schemas.Record[T]): SCollection[T] = {
     import com.spotify.scio.schemas.SchemaMaterializer
     val (s, to, from) = SchemaMaterializer.materialize(this.context, schema)
     context.wrap(internal.setSchema(s, to, from))
@@ -169,7 +169,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   import com.spotify.scio.schemas.{Record, Schema, SchemaMaterializer}
-  def sql(query: String)(implicit schemaT: Schema[T]): SCollection[Row] = {
+  def sql(query: String)(implicit schemaT: Record[T]): SCollection[Row] = {
     import org.apache.beam.sdk.extensions.sql.SqlTransform
     import org.apache.beam.sdk.extensions.sql.impl.BeamSqlEnv
     import org.apache.beam.sdk.extensions.sql.impl.schema.BeamPCollectionTable
@@ -187,9 +187,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     scoll.applyTransform[Row](SqlTransform.query(query))(Coder.row(schema))
   }
 
-  def typedSql[A: Record: Coder](query: String)(implicit schemaT: Schema[T]): SCollection[A] = {
-    val (_, _, from) = SchemaMaterializer.materialize(context, implicitly[Record[A]])
-    sql(query).map[A](r => from(r))
+  def typedSql[A: Record](query: String)(implicit schemaT: Record[T]): SCollection[A] = {
+    import org.apache.beam.sdk.schemas.SchemaCoder
+    val (schema, to, from) = SchemaMaterializer.materialize(context, implicitly[Record[A]])
+    val coll: SCollection[Row] = sql(query)
+    coll.map[A](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
   }
 
   /** Apply a transform. */
