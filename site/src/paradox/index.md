@@ -9,7 +9,7 @@ Scio is a Scala API for [Apache Beam](https://beam.apache.org/) and [Google Clou
 
 Scio `0.3.0` and future versions depend on Apache Beam (`org.apache.beam`) while earlier versions depend on Google Cloud Dataflow SDK (`com.google.cloud.dataflow`). See this [page](https://github.com/spotify/scio/wiki/Apache-Beam) for a list of breaking changes.
 
-[Getting Started](https://spotify.github.io/scio/Getting-Started.md) is the best place to start with Scio. If you are new to Apache Beam and distributed data processing, check out the [Beam Programming Guide](https://beam.apache.org/documentation/programming-guide/) first for a detailed explanation of the Beam programming model and concepts. If you have experience with other Scala data processing libraries, check out this comparison between [[Scio, Scalding and Spark]]. Finally check out this document about the relationship between [[Scio, Beam and Dataflow]].
+@ref:[Getting Started](Getting-Started.md) is the best place to start with Scio. If you are new to Apache Beam and distributed data processing, check out the [Beam Programming Guide](https://beam.apache.org/documentation/programming-guide/) first for a detailed explanation of the Beam programming model and concepts. If you have experience with other Scala data processing libraries, check out this comparison between [[Scio, Scalding and Spark]]. Finally check out this document about the relationship between [[Scio, Beam and Dataflow]].
 
 Example Scio pipelines and tests can be found under [scio-examples](https://github.com/spotify/scio/tree/master/scio-examples/src). A lot of them are direct ports from Beam's Java [examples](https://github.com/apache/beam/tree/master/examples). See this [page](https://spotify.github.io/scio/examples/) for some of them with side-by-side explanation. Also see [Big Data Rosetta Code](https://github.com/spotify/big-data-rosetta-code) for common data processing code snippets in Scio, Scalding and Spark.
 
@@ -23,33 +23,33 @@ See [scio-contrib](https://github.com/spotify/scio-contrib) for community-suppor
 - [![Stack Overflow](https://img.shields.io/badge/Stack%20Overflow-spotify--scio-yellow.svg)](https://stackoverflow.com/questions/tagged/spotify-scio)
 
 ## Documentation
-- [Getting Started](Getting-Started.md) - current API documentation
-- [Scio REPL](Scio-REPL.md) - tutorial for the interactive Scio REPL
-- [Scio, Beam and Dataflow](Scio,-Beam-and-Dataflow.md) - how Scio concepts map to Beam and Dataflow
-- [Scio, Scalding and Spark](Scio,-Scalding-and-Spark.md) - comparison of these frameworks
-- [Runners](Runners.md) - how Scio handles Beam runners and runner specific logic
-- [Scio data guideline](Scio-data-guideline.md) - guideline for common problems
-- [Apache Beam](Apache-Beam.md) - notes on Apache Beam compatibility
-- [Changelog](Changelog.md) - breaking changes in each release
-- [FAQ](FAQ.md) - frequently asked questions
-- [Powered By](Powered-By.md) - see who is using Scio in production
+- @ref:[Getting Started](Getting-Started.md) - current API documentation
+- @ref:[Scio REPL](Scio-REPL.md) - tutorial for the interactive Scio REPL
+- @ref:[Scio, Beam and Dataflow](Scio,-Beam-and-Dataflow.md) - how Scio concepts map to Beam and Dataflow
+- @ref:[Scio, Scalding and Spark](Scio,-Scalding-and-Spark.md) - comparison of these frameworks
+- @ref:[Runners](Runners.md) - how Scio handles Beam runners and runner specific logic
+- @ref:[Scio data guideline](Scio-data-guideline.md) - guideline for common problems
+- @ref:[Apache Beam](Apache-Beam.md) - notes on Apache Beam compatibility
+- @ref:[Changelog](Changelog.md) - breaking changes in each release
+- @ref:[FAQ](FAQ.md) - frequently asked questions
+- @ref:[Powered By](Powered-By.md) - see who is using Scio in production
 
 ### IO
-  - [Type safe BigQuery](io/Type-Safe-BigQuery.md) - tutorial for the type safe BigQuery API
-  - [HDFS](io/HDFS.md) - using Scio with HDFS files
-  - [Bigtable](io/Bigtable.md) - using Scio with Bigtable
-  - [Avro](io/Avro.md) - using Scio with Avro files
-  - [Protobuf](io/Protobuf.md) - using Scio with Protobuf
-  - [Parquet](io/Parquet.md) - using Scio with Parquet files
+  - @ref:[Type safe BigQuery](io/Type-Safe-BigQuery.md) - tutorial for the type safe BigQuery API
+  - @ref:[HDFS](io/HDFS.md) - using Scio with HDFS files
+  - @ref:[Bigtable](io/Bigtable.md) - using Scio with Bigtable
+  - @ref:[Avro](io/Avro.md) - using Scio with Avro files
+  - @ref:[Protobuf](io/Protobuf.md) - using Scio with Protobuf
+  - @ref:[Parquet](io/Parquet.md) - using Scio with Parquet files
   
 ### Extras
-  - [Algebird](extras/Algebird.md)
+  - @ref:[Algebird](extras/Algebird.md)
   
 ### Internals
-  - [ScioIO](internals/ScioIO.md) - new IO system to simplify implementation and stubbing in `JobTest`
-  - [OverrideTypeProvider](internals/OverrideTypeProvider.md) - custom mappings for type-safe BigQuery
-  - [Kryo](internals/Kryo.md) - [Kryo](https://github.com/EsotericSoftware/kryo) data serialization
-  - [Coders](internals/Coders.md) - new [Magnolia](https://github.com/propensive/magnolia) based [Coders](internals/Coders.md) derivation
+  - @ref:[ScioIO](internals/ScioIO.md) - new IO system to simplify implementation and stubbing in `JobTest`
+  - @ref:[OverrideTypeProvider](internals/OverrideTypeProvider.md) - custom mappings for type-safe BigQuery
+  - @ref:[Kryo](internals/Kryo.md) - [Kryo](https://github.com/EsotericSoftware/kryo) data serialization
+  - @ref:[Coders](internals/Coders.md) - new [Magnolia](https://github.com/propensive/magnolia) based [Coders](internals/Coders.md) derivation
 
 ## Further Readings
   - [Big Data Processing at Spotify: The Road to Scio (Part 1)](https://labs.spotify.com/2017/10/16/big-data-processing-at-spotify-the-road-to-scio-part-1/)
