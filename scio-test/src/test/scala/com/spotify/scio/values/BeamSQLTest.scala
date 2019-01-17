@@ -53,6 +53,13 @@ class BeamSQLTest extends PipelineSpec {
     r should containInAnyOrder(expected)
   }
 
+  it should "support scalar results" in runWithContext { sc =>
+    val expected = 255
+    val in = sc.parallelize(users)
+    val r = in.typedSql[Int]("select sum(age) from PCOLLECTION")
+    r should containSingleValue(expected)
+  }
+
   it should "support nested case classes" in runWithContext { sc =>
     // implicit def userIDSchema = Schema[UserId]
 

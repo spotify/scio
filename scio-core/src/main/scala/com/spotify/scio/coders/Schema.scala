@@ -35,6 +35,8 @@ final case class Arr[T](schema: Schema[T]) extends Schema[List[T]] { // TODO: po
   type Repr = java.util.List[schema.Repr]
 }
 
+private[schemas] case class ScalarWrapper[T](value: T) extends AnyVal
+
 object Schema extends LowPriorityFallbackSchema {
   implicit val stringSchema = Type[String](FieldType.STRING)
   implicit val byteSchema = Type[Byte](FieldType.BYTE)
@@ -208,25 +210,43 @@ object SchemaMaterializer {
 
   def materialize[T](
     sc: ScioContext,
-    schema: Record[T]): (BSchema, SerializableFunction[T, Row], SerializableFunction[Row, T]) = {
-    //  XXX: Is getRowSchema safe ?
-    // TODO: check for null values ?
-    val ft = fieldType(schema)
-    val bschema = ft.getRowSchema()
-    val schemaMat = materializeSchema(sc, schema).asInstanceOf[Record[T]]
+    schema: Schema[T]): (BSchema, SerializableFunction[T, Row], SerializableFunction[Row, T]) = {
 
-    def fromRow =
-      new SerializableFunction[Row, T] {
-        def apply(r: Row): T =
-          decode[T](schemaMat)(r)
+    schema match {
+      case s @ Record(_, _, _) => {
+        val ft = fieldType(schema)
+        val bschema = ft.getRowSchema()
+        val schemaMat = materializeSchema(sc, schema).asInstanceOf[Record[T]]
+        def fromRow =
+          new SerializableFunction[Row, T] {
+            def apply(r: Row): T =
+              decode[T](schemaMat)(r)
+          }
+
+        def toRow =
+          new SerializableFunction[T, Row] {
+            def apply(t: T): Row =
+              encode[T](schemaMat, ft)(t)
+          }
+
+        (bschema, toRow, fromRow)
       }
+      case s =>
+        implicit val imp = schema
+        val (bschema, to, from) = materialize(sc, implicitly[Record[ScalarWrapper[T]]])
+        def fromRow =
+          new SerializableFunction[Row, T] {
+            def apply(r: Row): T =
+              from(r).value
+          }
 
-    def toRow =
-      new SerializableFunction[T, Row] {
-        def apply(t: T): Row =
-          encode[T](schemaMat, ft)(t)
-      }
+        def toRow =
+          new SerializableFunction[T, Row] {
+            def apply(t: T): Row =
+              to(ScalarWrapper(t))
+          }
 
-    (bschema, toRow, fromRow)
+        (bschema, toRow, fromRow)
+    }
   }
 }

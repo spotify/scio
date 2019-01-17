@@ -187,9 +187,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     scoll.applyTransform[Row](SqlTransform.query(query))(Coder.row(schema))
   }
 
-  def typedSql[A: Record](query: String)(implicit schemaT: Record[T]): SCollection[A] = {
+  def typedSql[A: Schema](query: String)(implicit schemaT: Record[T]): SCollection[A] = {
     import org.apache.beam.sdk.schemas.SchemaCoder
-    val (schema, to, from) = SchemaMaterializer.materialize(context, implicitly[Record[A]])
+    val (schema, to, from) = SchemaMaterializer.materialize(context, Schema[A])
     val coll: SCollection[Row] = sql(query)
     coll.map[A](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
   }
