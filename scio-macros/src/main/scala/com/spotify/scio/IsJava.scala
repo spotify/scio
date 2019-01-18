@@ -23,20 +23,59 @@ import scala.reflect.macros._
 /**
  * Proof that a type is implemented in Java
  */
-sealed trait IsJava[T]
+sealed trait IsJavaBean[T]
 
-object IsJava {
-  implicit def isJava[T]: IsJava[T] = macro IsJava.isJavaImpl[T]
+object IsJavaBean {
+  implicit def isJava[T]: IsJavaBean[T] = macro IsJavaBean.isJavaImpl[T]
 
-  def apply[T](implicit i: IsJava[T]) = i
+  def apply[T](implicit i: IsJavaBean[T]) = i
+
+  private def checkGetterAndSetters(c: blackbox.Context)(t: c.universe.Type): Unit = {
+    val getters =
+      t.decls.collect {
+        case s if s.name.toString.startsWith("get") =>
+          (s.name.toString.drop(3), s.asMethod.info.asInstanceOf[c.universe.MethodType])
+      }
+
+    val setters =
+      t.decls.collect {
+        case s if s.name.toString.startsWith("set") =>
+          (s.name.toString.drop(3), s.asMethod.info.asInstanceOf[c.universe.MethodType])
+      }.toMap
+
+    getters.foreach {
+      case (name, info) =>
+        val setter =
+          setters
+            .get(name)
+            .getOrElse {
+              val mess =
+                s"""JavaBean contained a getter for field $name but did not contain a matching setter."""
+              c.abort(c.enclosingPosition, mess)
+            }
+
+        val resType = info.resultType
+        val paramType = setter.params.head.asTerm.info
+
+        if (resType != paramType) {
+          val mess =
+            s"""JavaBean contained setter for field $name that had a mismatching type.
+                |  found:    $paramType
+                |  expected: $resType""".stripMargin
+          c.abort(c.enclosingPosition, mess)
+        }
+    }
+  }
 
   def isJavaImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
     import c.universe._
     val wtt = weakTypeOf[T]
-
-    if (wtt.typeSymbol.isJava)
-      q"null: IsJava[$wtt]"
-    else
+    val sym = wtt.typeSymbol
+    if (sym.isJava && sym.isClass) {
+      checkGetterAndSetters(c)(wtt)
+      q"null: IsJavaBean[$wtt]"
+    } else {
       c.abort(c.enclosingPosition, s"$wtt is not a Java class")
+    }
   }
 }

@@ -1,6 +1,8 @@
 package com.spotify.scio.values
 
+import com.spotify.scio.IsJavaBean
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.schemas.Schema
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.values.Row
@@ -42,6 +44,12 @@ object TestData {
     (1 to 10).map { i =>
       new com.spotify.scio.bean.UserBean(s"user$i", 20 + i)
     }
+
+  case class UserWithJList(username: String, emails: java.util.List[String])
+  val usersWithJList =
+    (1 to 10).map { i =>
+      UserWithJList(s"user$i", java.util.Arrays.asList(s"user$i@spotify.com", s"user$i@yolo.com"))
+    }.toList
 }
 
 class BeamSQLTest extends PipelineSpec {
@@ -156,6 +164,23 @@ class BeamSQLTest extends PipelineSpec {
   }
 
   ignore should "support java collections" in runWithContext { sc =>
-    // TODO
+    val expected = usersWithJList.map { u =>
+      (u.username, u.emails.get(0))
+    }
+    val in = sc.parallelize(usersWithJList)
+    val r =
+      in.typedSql[(String, String)]("select username, emails[0] from PCOLLECTION")
+    r should containInAnyOrder(expected)
+  }
+
+  it should "not derive a Schema for non-bean Java classes" in {
+    import com.spotify.scio.bean._
+    "IsJavaBean[UserBean]" should compile
+    "IsJavaBean[NotABean]" shouldNot compile
+    "IsJavaBean[TypeMismatch]" shouldNot compile
+
+    "Schema.javaBeanSchema[UserBean]" should compile
+    "Schema.javaBeanSchema[NotABean]" shouldNot compile
+    "Schema.javaBeanSchema[TypeMismatch]" shouldNot compile
   }
 }

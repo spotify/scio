@@ -1,6 +1,6 @@
 package com.spotify.scio.schemas
 
-import com.spotify.scio.{IsJava}
+import com.spotify.scio.{IsJavaBean}
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import scala.language.higherKinds
 import scala.reflect.{classTag, ClassTag}
@@ -54,7 +54,7 @@ object Schema extends LowPriorityFallbackSchema {
   implicit def optionSchema[T](implicit s: Schema[T]): Schema[Option[T]] = Optional(s)
   implicit def arraySchema[T](implicit s: Schema[T]): Schema[List[T]] = Arr(s)
 
-  implicit def javaBeanSchema[T: IsJava: ClassTag]: Schema[T] = {
+  implicit def javaBeanSchema[T: IsJavaBean: ClassTag]: Schema[T] = {
     val schema =
       org.apache.beam.sdk.schemas.utils.JavaBeanUtils
         .schemaFromJavaBeanClass(classTag[T].runtimeClass)
