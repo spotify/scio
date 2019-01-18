@@ -37,6 +37,11 @@ object TestData {
     (1 to 10).map { i =>
       UserWithList(s"user$i", List(s"user$i@spotify.com", s"user$i@yolo.com"))
     }.toList
+
+  val javaUsers =
+    (1 to 10).map { i =>
+      new com.spotify.scio.bean.UserBean(s"user$i", 20 + i)
+    }
 }
 
 class BeamSQLTest extends PipelineSpec {
@@ -143,8 +148,11 @@ class BeamSQLTest extends PipelineSpec {
     r should containInAnyOrder(expected)
   }
 
-  ignore should "support javabeans" in runWithContext { sc =>
-    // TODO
+  it should "support javabeans" in runWithContext { sc =>
+    val expected = 255
+    val in = sc.parallelize(users)
+    val r = in.typedSql[Int]("select sum(age) from PCOLLECTION")
+    r should containSingleValue(expected)
   }
 
   ignore should "support java collections" in runWithContext { sc =>
