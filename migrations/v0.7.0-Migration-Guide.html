@@ -230,10 +230,10 @@ spotify/scio
 <h3><a href="#new-ios-api" name="new-ios-api" class="anchor"><span class="anchor-link"></span></a>New IOs api</h3>
 <p>In this version, we&rsquo;ve refactored the implementation of IOs. Scio now provides a new class <code>ScioIO</code> that you can extend to support new types of IOs. <code>ScioContext</code> now has a new method called <code>read</code> and <code>SCollection</code> now has a new method <code>write</code>. Both take an instance of a class extending <code>ScioIO</code> as a parameter and may read from any source, or write to any target.</p>
 <p>All existing IOs (GCS, BigQuery, BigTable, etc.) have been rewritten to use the new IO API.</p>
-<p><strong>Read more: <a href="./ScioIO.html">ScioIO</a></strong></p>
+<p><strong>Read more: <a href="../internals/ScioIO.html">ScioIO</a></strong></p>
 <h3><a href="#new-coders" name="new-coders" class="anchor"><span class="anchor-link"></span></a>New &ldquo;static&rdquo; coders</h3>
 <p>Scio <code>0.7.0</code> also ship with a new <code>Coder</code> implementation that statically resolve the correct <code>Coder</code> for a given type <strong>at compile time</strong>. In previous versions, Scio would infer the correct coder implementation at runtime, which could lead to poor performances and occasionally, exceptions at runtime.</p>
-<p><strong>Read more: <a href="./Coders.html">Coders</a>.</strong></p>
+<p><strong>Read more: <a href="../internals/Coders.html">Coders</a>.</strong></p>
 <h3><a href="#performances-improvements-benchmarks" name="performances-improvements-benchmarks" class="anchor"><span class="anchor-link"></span></a>Performances improvements &amp; benchmarks</h3>
 <p>Thanks to the new static coders implementation, and because of the time we spend on profiling, Scio <code>0.7.0</code> should overall be more efficient than previous versions.</p>
 <h2><a href="#automated-migration" name="automated-migration" class="anchor"><span class="anchor-link"></span></a>Automated migration</h2>
@@ -322,7 +322,7 @@ spotify/scio
   <li><code>com.spotify.scio.testing.{AvroIO, ProtobufIO}</code> -&gt; <code>com.spotify.scio.avro.{AvroIO, ProtobufIO}</code></li>
   <li><code>com.spotify.scio.testing.TextIO</code> -&gt; <code>com.spotify.scio.io.TextIO</code></li>
 </ul>
-<p>A complete list of IO packages can be found <a href="https://github.com/spotify/scio/wiki/ScioIO">here</a>.</p>
+<p>A complete list of IO packages can be found <a href="https://spotify.github.com/scio/internals/ScioIO">here</a>.</p>
 <p>Additionally, some IOs are now parameterized. For example, <code>AvroIO</code> must now be parameterized with the Avro record type (either <code>GenericRecord</code> or an extension of <code>SpecificRecordBase</code>). In previous versions of Scio, it was possible in some cases to omit that type. For example:</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.io._
 import com.spotify.scio.avro._
