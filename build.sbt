@@ -186,24 +186,6 @@ val commonSettings = Sonatype.sonatypeSettings ++ assemblySettings ++ Seq(
     password <- sys.env.get("SONATYPE_PASSWORD")
   } yield
     Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq,
-  // Mappings from dependencies to external ScalaDoc/JavaDoc sites
-  apiMappings ++= {
-    def mappingFn(organization: String, name: String, apiUrl: String) = {
-      (for {
-        entry <- (fullClasspath in Compile).value
-        module <- entry.get(moduleID.key)
-        if module.organization == organization
-        if module.name.startsWith(name)
-      } yield entry.data).toList.map((_, url(apiUrl)))
-    }
-    val bootClasspath = System
-      .getProperty("sun.boot.class.path")
-      .split(sys.props("path.separator"))
-      .map(file(_))
-    val jdkMapping = Map(bootClasspath.find(_.getPath.endsWith("rt.jar")).get -> url(
-      "http://docs.oracle.com/javase/8/docs/api/"))
-    docMappings.flatMap((mappingFn _).tupled).toMap ++ jdkMapping
-  },
   buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
   buildInfoPackage := "com.spotify.scio"
 ) ++ mimaSettings ++ scalafmtSettings ++ scalafixSettings
@@ -812,36 +794,6 @@ lazy val site: Project = project
                  SiteScaladocPlugin)
   .settings(commonSettings)
   .settings(siteSettings)
-  .settings(
-    name := "site",
-    publish / skip := true,
-    unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
-      -- inProjects(scioCassandra2)
-      -- inProjects(scioElasticsearch2, scioElasticsearch5)
-      -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples)
-      -- inProjects(scioJmh),
-    // unidoc handles class paths differently than compile and may give older
-    // versions high precedence.
-    unidocAllClasspaths in (ScalaUnidoc, unidoc) := {
-      (unidocAllClasspaths in (ScalaUnidoc, unidoc)).value.map { cp =>
-        cp.filterNot(_.data.getCanonicalPath.matches(""".*guava-11\..*"""))
-          .filterNot(_.data.getCanonicalPath.matches(""".*bigtable-client-core-0\..*"""))
-      }
-    },
-    paradoxProperties in Paradox ++= Map(
-      "javadoc.com.spotify.scio.base_url" -> "http://spotify.github.com/scio/api"
-    ),
-    sourceDirectory in Paradox in paradoxTheme := sourceDirectory.value / "paradox" / "_template",
-    ParadoxMaterialThemePlugin.paradoxMaterialThemeSettings(Paradox),
-    paradoxMaterialTheme in Paradox := {
-      ParadoxMaterialTheme()
-        .withColor("white", "indigo")
-        .withLogo("images/logo.png")
-        .withCopyright("Copyright (C) 2018 Spotify AB")
-        .withRepository(uri("https://github.com/spotify/scio"))
-        .withSocial(uri("https://github.com/spotify"), uri("https://twitter.com/spotifyeng"))
-    }
-  )
 
 // =======================================================================
 // Site settings
@@ -863,13 +815,14 @@ def fixJavaDocLinks(bases: Seq[String], doc: String): String = {
 
 lazy val soccoIndex = taskKey[File]("Generates examples/index.html")
 
-lazy val siteSettings = Seq(
+lazy val siteSettings = Def.settings(
+  publish / skip := true,
+  description := "Scio - Documentation",
   autoAPIMappings := true,
   siteSubdirName in ScalaUnidoc := "api",
   addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
   gitRemoteRepo := "git@github.com:spotify/scio.git",
   mappings in makeSite ++= Seq(
-//    file("site/index.html") -> "index.html",
     file("scio-examples/target/site/index.html") -> "examples/index.html"
   ) ++ SoccoIndex.mappings,
   makeSite := {
@@ -882,6 +835,52 @@ lazy val siteSettings = Seq(
       IO.write(f, doc)
     }
     makeSite.value
+  },
+  // Mappings from dependencies to external ScalaDoc/JavaDoc sites
+  apiMappings ++= {
+    def mappingFn(organization: String, name: String, apiUrl: String) = {
+      (for {
+        entry <- (fullClasspath in Compile).value
+        module <- entry.get(moduleID.key)
+        if module.organization == organization
+        if module.name.startsWith(name)
+      } yield entry.data).toList.map((_, url(apiUrl)))
+    }
+    val bootClasspath = System
+      .getProperty("sun.boot.class.path")
+      .split(sys.props("path.separator"))
+      .map(file(_))
+    val jdkMapping = Map(
+      bootClasspath.find(_.getPath.endsWith("rt.jar")).get -> url(
+        "http://docs.oracle.com/javase/8/docs/api/"))
+    docMappings.flatMap((mappingFn _).tupled).toMap ++ jdkMapping
+  },
+  unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject
+    -- inProjects(scioCassandra2)
+    -- inProjects(scioElasticsearch2, scioElasticsearch5)
+    -- inProjects(scioRepl) -- inProjects(scioSchemas) -- inProjects(scioExamples)
+    -- inProjects(scioJmh),
+  // unidoc handles class paths differently than compile and may give older
+  // versions high precedence.
+  unidocAllClasspaths in (ScalaUnidoc, unidoc) := {
+    (unidocAllClasspaths in (ScalaUnidoc, unidoc)).value.map { cp =>
+      cp.filterNot(_.data.getCanonicalPath.matches(""".*guava-11\..*"""))
+        .filterNot(_.data.getCanonicalPath.matches(""".*bigtable-client-core-0\..*"""))
+    }
+  },
+  paradoxProperties in Paradox ++= Map(
+    "javadoc.com.spotify.scio.base_url" -> "http://spotify.github.com/scio/api"
+  ),
+  sourceDirectory in Paradox in paradoxTheme := sourceDirectory.value / "paradox" / "_template",
+  ParadoxMaterialThemePlugin.paradoxMaterialThemeSettings(Paradox),
+  paradoxMaterialTheme in Paradox := {
+    ParadoxMaterialTheme()
+      .withFavicon("images/favicon.ico")
+      .withColor("white", "indigo")
+      .withLogo("images/logo.png")
+      .withCopyright("Copyright (C) 2018 Spotify AB")
+      .withRepository(uri("https://github.com/spotify/scio"))
+      .withSocial(uri("https://github.com/spotify"), uri("https://twitter.com/spotifyeng"))
   }
 )
 
