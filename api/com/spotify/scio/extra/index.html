@@ -705,8 +705,8 @@ main.withSideInputs(side)
         <a title="Utilities for Breeze." href="Breeze$.html"><span class="name">Breeze</span></a>
       </span>
       
-      <p class="shortcomment cmt">Utilities for Breeze.</p><div class="fullcomment"><div class="comment cmt"><p>Utilities for Breeze.</p><p>Includes <a href="https://twitter.github.io/algebird/api/com/twitter/algebird/Semigroup.html" class="extype" name="com.twitter.algebird.Semigroup">Semigroup</a>s for Breeze data types like
-<a href="http://www.scalanlp.org/api/breeze/breeze/linalg/DenseVector.html" class="extype" name="breeze.linalg.DenseVector">DenseVector</a>s and <span class="extype" name="breeze.linalg.DenseMatrix">DenseMatrix</span>s.</p><pre><span class="kw">import</span> com.spotify.scio.extra.Breeze._
+      <p class="shortcomment cmt">Utilities for Breeze.</p><div class="fullcomment"><div class="comment cmt"><p>Utilities for Breeze.</p><p>Includes <span class="extype" name="com.twitter.algebird.Semigroup">Semigroup</span>s for Breeze data types like
+<span class="extype" name="breeze.linalg.DenseVector">DenseVector</span>s and <span class="extype" name="breeze.linalg.DenseMatrix">DenseMatrix</span>s.</p><pre><span class="kw">import</span> com.spotify.scio.extra.Breeze._
 
 <span class="kw">val</span> vectors: SCollection[DenseVector[<span class="std">Double</span>]] = <span class="cmt">// ...</span>
 vectors.sum  <span class="cmt">// implicit Semigroup[T]</span></pre></div></div>

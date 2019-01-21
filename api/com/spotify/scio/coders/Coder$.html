@@ -498,7 +498,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">batchedCoder</span><span class="tparams">[<span name="U">U</span>]</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="https://twitter.github.io/algebird/api/com/twitter/algebird/Batched.html#com.twitter.algebird.Batched" class="extype" name="com.twitter.algebird.Batched">Batched</a>[<span class="extype" name="com.spotify.scio.coders.instances.AlgebirdCoders.batchedCoder.U">U</span>]]</span>
+        <span class="name">batchedCoder</span><span class="tparams">[<span name="U">U</span>]</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.twitter.algebird.Batched">Batched</span>[<span class="extype" name="com.spotify.scio.coders.instances.AlgebirdCoders.batchedCoder.U">U</span>]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/AlgebirdCoders.html" class="extype" name="com.spotify.scio.coders.instances.AlgebirdCoders">AlgebirdCoders</a></dd></dl></div>
@@ -514,7 +514,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">beam</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="beam">beam: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.9.0/org/apache/beam/sdk/coders/Coder.html#org.apache.beam.sdk.coders.Coder" class="extype" name="org.apache.beam.sdk.coders.Coder">org.apache.beam.sdk.coders.Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.beam.T">T</span>]</span>)</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.beam.T">T</span>]</span>
+        <span class="name">beam</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="beam">beam: <span class="extype" name="org.apache.beam.sdk.coders.Coder">org.apache.beam.sdk.coders.Coder</span>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.beam.T">T</span>]</span>)</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.beam.T">T</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="CoderGrammar.html" class="extype" name="com.spotify.scio.coders.CoderGrammar">CoderGrammar</a></dd></dl></div>
@@ -530,7 +530,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">beamKVCoder</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.beamKVCoder.K">K</span>]</span>, <span name="arg1">arg1: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.beamKVCoder.V">V</span>]</span>)</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.9.0/org/apache/beam/sdk/values/KV.html#org.apache.beam.sdk.values.KV" class="extype" name="org.apache.beam.sdk.values.KV">KV</a>[<span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.beamKVCoder.K">K</span>, <span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.beamKVCoder.V">V</span>]]</span>
+        <span class="name">beamKVCoder</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.beamKVCoder.K">K</span>]</span>, <span name="arg1">arg1: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.beamKVCoder.V">V</span>]</span>)</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.beam.sdk.values.KV">KV</span>[<span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.beamKVCoder.K">K</span>, <span class="extype" name="com.spotify.scio.coders.instances.JavaCoders.beamKVCoder.V">V</span>]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JavaCoders">JavaCoders</a></dd></dl></div>
@@ -546,7 +546,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">bfCoder</span><span class="tparams">[<span name="K">K</span>]</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="https://twitter.github.io/algebird/api/com/twitter/algebird/BF.html#com.twitter.algebird.BF" class="extype" name="com.twitter.algebird.BF">BF</a>[<span class="extype" name="com.spotify.scio.coders.instances.AlgebirdCoders.bfCoder.K">K</span>]]</span>
+        <span class="name">bfCoder</span><span class="tparams">[<span name="K">K</span>]</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.twitter.algebird.BF">BF</span>[<span class="extype" name="com.spotify.scio.coders.instances.AlgebirdCoders.bfCoder.K">K</span>]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/AlgebirdCoders.html" class="extype" name="com.spotify.scio.coders.instances.AlgebirdCoders">AlgebirdCoders</a></dd></dl></div>
@@ -626,7 +626,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">boundedWindowCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.9.0/org/apache/beam/sdk/transforms/windowing/BoundedWindow.html#org.apache.beam.sdk.transforms.windowing.BoundedWindow" class="extype" name="org.apache.beam.sdk.transforms.windowing.BoundedWindow">BoundedWindow</a>]</span>
+        <span class="name">boundedWindowCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.beam.sdk.transforms.windowing.BoundedWindow">BoundedWindow</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JavaCoders">JavaCoders</a></dd></dl></div>
@@ -714,7 +714,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">cmsCoder</span><span class="tparams">[<span name="K">K</span>]</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="https://twitter.github.io/algebird/api/com/twitter/algebird/CMS.html#com.twitter.algebird.CMS" class="extype" name="com.twitter.algebird.CMS">CMS</a>[<span class="extype" name="com.spotify.scio.coders.instances.AlgebirdCoders.cmsCoder.K">K</span>]]</span>
+        <span class="name">cmsCoder</span><span class="tparams">[<span name="K">K</span>]</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.twitter.algebird.CMS">CMS</span>[<span class="extype" name="com.spotify.scio.coders.instances.AlgebirdCoders.cmsCoder.K">K</span>]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/AlgebirdCoders.html" class="extype" name="com.spotify.scio.coders.instances.AlgebirdCoders">AlgebirdCoders</a></dd></dl></div>
@@ -998,7 +998,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">intervalWindowCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.9.0/org/apache/beam/sdk/transforms/windowing/IntervalWindow.html#org.apache.beam.sdk.transforms.windowing.IntervalWindow" class="extype" name="org.apache.beam.sdk.transforms.windowing.IntervalWindow">IntervalWindow</a>]</span>
+        <span class="name">intervalWindowCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.beam.sdk.transforms.windowing.IntervalWindow">IntervalWindow</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JavaCoders">JavaCoders</a></dd></dl></div>
@@ -1350,7 +1350,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">kv</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="koder">koder: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.kv.K">K</span>]</span>, <span name="voder">voder: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.kv.V">V</span>]</span>)</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.9.0/org/apache/beam/sdk/values/KV.html#org.apache.beam.sdk.values.KV" class="extype" name="org.apache.beam.sdk.values.KV">KV</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.kv.K">K</span>, <span class="extype" name="com.spotify.scio.coders.CoderGrammar.kv.V">V</span>]]</span>
+        <span class="name">kv</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="koder">koder: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.kv.K">K</span>]</span>, <span name="voder">voder: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.kv.V">V</span>]</span>)</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.beam.sdk.values.KV">KV</span>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.kv.K">K</span>, <span class="extype" name="com.spotify.scio.coders.CoderGrammar.kv.V">V</span>]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="CoderGrammar.html" class="extype" name="com.spotify.scio.coders.CoderGrammar">CoderGrammar</a></dd></dl></div>
@@ -1430,7 +1430,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">messageCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.9.0/org/apache/beam/sdk/io/gcp/pubsub/PubsubMessage.html#org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage" class="extype" name="org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage">PubsubMessage</a>]</span>
+        <span class="name">messageCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage">PubsubMessage</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JavaCoders">JavaCoders</a></dd></dl></div>
@@ -1564,7 +1564,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">paneInfoCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.9.0/org/apache/beam/sdk/transforms/windowing/PaneInfo.html#org.apache.beam.sdk.transforms.windowing.PaneInfo" class="extype" name="org.apache.beam.sdk.transforms.windowing.PaneInfo">PaneInfo</a>]</span>
+        <span class="name">paneInfoCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.beam.sdk.transforms.windowing.PaneInfo">PaneInfo</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JavaCoders">JavaCoders</a></dd></dl></div>
@@ -1612,7 +1612,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">row</span><span class="params">(<span name="schema">schema: <a href="https://beam.apache.org/documentation/sdks/javadoc/2.9.0/org/apache/beam/sdk/schemas/Schema.html#org.apache.beam.sdk.schemas.Schema" class="extype" name="org.apache.beam.sdk.schemas.Schema">Schema</a></span>)</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.9.0/org/apache/beam/sdk/values/Row.html#org.apache.beam.sdk.values.Row" class="extype" name="org.apache.beam.sdk.values.Row">Row</a>]</span>
+        <span class="name">row</span><span class="params">(<span name="schema">schema: <span class="extype" name="org.apache.beam.sdk.schemas.Schema">Schema</span></span>)</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.beam.sdk.values.Row">Row</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JavaCoders">JavaCoders</a></dd></dl></div>
@@ -1724,7 +1724,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">spannerReadOperationCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="https://beam.apache.org/documentation/sdks/javadoc/2.9.0/org/apache/beam/sdk/io/gcp/spanner/ReadOperation.html#org.apache.beam.sdk.io.gcp.spanner.ReadOperation" class="extype" name="org.apache.beam.sdk.io.gcp.spanner.ReadOperation">ReadOperation</a>]</span>
+        <span class="name">spannerReadOperationCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.apache.beam.sdk.io.gcp.spanner.ReadOperation">ReadOperation</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JavaCoders">JavaCoders</a></dd></dl></div>
@@ -1788,7 +1788,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">tableRowCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/com/google/api/services/bigquery/model/TableRow.html#com.google.api.services.bigquery.model.TableRow" class="extype" name="com.google.api.services.bigquery.model.TableRow">TableRow</a>]</span>
+        <span class="name">tableRowCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.google.api.services.bigquery.model.TableRow">TableRow</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JavaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JavaCoders">JavaCoders</a></dd></dl></div>
@@ -1836,7 +1836,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">topKCoder</span><span class="tparams">[<span name="K">K</span>]</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="https://twitter.github.io/algebird/api/com/twitter/algebird/TopK.html#com.twitter.algebird.TopK" class="extype" name="com.twitter.algebird.TopK">TopK</a>[<span class="extype" name="com.spotify.scio.coders.instances.AlgebirdCoders.topKCoder.K">K</span>]]</span>
+        <span class="name">topKCoder</span><span class="tparams">[<span name="K">K</span>]</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.twitter.algebird.TopK">TopK</span>[<span class="extype" name="com.spotify.scio.coders.instances.AlgebirdCoders.topKCoder.K">K</span>]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/AlgebirdCoders.html" class="extype" name="com.spotify.scio.coders.instances.AlgebirdCoders">AlgebirdCoders</a></dd></dl></div>
@@ -1852,7 +1852,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">transform</span><span class="tparams">[<span name="A">A</span>, <span name="B">B</span>]</span><span class="params">(<span name="c">c: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.transform.A">A</span>]</span>)</span><span class="params">(<span name="f">f: (<a href="https://beam.apache.org/documentation/sdks/javadoc/2.9.0/org/apache/beam/sdk/coders/Coder.html#org.apache.beam.sdk.coders.Coder" class="extype" name="org.apache.beam.sdk.coders.Coder">org.apache.beam.sdk.coders.Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.transform.A">A</span>]) ⇒ <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.transform.B">B</span>]</span>)</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.transform.B">B</span>]</span>
+        <span class="name">transform</span><span class="tparams">[<span name="A">A</span>, <span name="B">B</span>]</span><span class="params">(<span name="c">c: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.transform.A">A</span>]</span>)</span><span class="params">(<span name="f">f: (<span class="extype" name="org.apache.beam.sdk.coders.Coder">org.apache.beam.sdk.coders.Coder</span>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.transform.A">A</span>]) ⇒ <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.transform.B">B</span>]</span>)</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.coders.CoderGrammar.transform.B">B</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="CoderGrammar.html" class="extype" name="com.spotify.scio.coders.CoderGrammar">CoderGrammar</a></dd></dl></div>

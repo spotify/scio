@@ -310,7 +310,7 @@ nn.lookup(candidate, 10)
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">lookup</span><span class="params">(<span name="vec">vec: <a href="http://www.scalanlp.org/api/breeze/breeze/linalg/DenseVector.html#breeze.linalg.DenseVector" class="extype" name="breeze.linalg.DenseVector">DenseVector</a>[<span class="extype" name="com.spotify.scio.extra.nn.NearestNeighbor.V">V</span>]</span>, <span name="maxResult">maxResult: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>, <span name="minSimilarity">minSimilarity: <a href="http://www.scala-lang.org/api/2.12.8/scala/Double.html#scala.Double" class="extype" name="scala.Double">Double</a> = <span class="symbol">Double.NegativeInfinity</span></span>)</span><span class="result">: <span class="extype" name="scala.Iterable">Iterable</span>[(<span class="extype" name="com.spotify.scio.extra.nn.NearestNeighbor.K">K</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Double.html#scala.Double" class="extype" name="scala.Double">Double</a>)]</span>
+        <span class="name">lookup</span><span class="params">(<span name="vec">vec: <span class="extype" name="breeze.linalg.DenseVector">DenseVector</span>[<span class="extype" name="com.spotify.scio.extra.nn.NearestNeighbor.V">V</span>]</span>, <span name="maxResult">maxResult: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>, <span name="minSimilarity">minSimilarity: <a href="http://www.scala-lang.org/api/2.12.8/scala/Double.html#scala.Double" class="extype" name="scala.Double">Double</a> = <span class="symbol">Double.NegativeInfinity</span></span>)</span><span class="result">: <span class="extype" name="scala.Iterable">Iterable</span>[(<span class="extype" name="com.spotify.scio.extra.nn.NearestNeighbor.K">K</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Double.html#scala.Double" class="extype" name="scala.Double">Double</a>)]</span>
       </span>
       
       <p class="shortcomment cmt">Lookup nearest neighbors of a vector.</p><div class="fullcomment"><div class="comment cmt"><p>Lookup nearest neighbors of a vector. The vector should be normalized.</p></div></div>
@@ -342,7 +342,7 @@ nn.lookup(candidate, 10)
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">vectors</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="http://www.scalanlp.org/api/breeze/breeze/linalg/DenseVector.html#breeze.linalg.DenseVector" class="extype" name="breeze.linalg.DenseVector">DenseVector</a>[<span class="extype" name="com.spotify.scio.extra.nn.NearestNeighbor.V">V</span>]]</span>
+        <span class="name">vectors</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<span class="extype" name="breeze.linalg.DenseVector">DenseVector</span>[<span class="extype" name="com.spotify.scio.extra.nn.NearestNeighbor.V">V</span>]]</span>
       </span>
       
       <p class="shortcomment cmt">Raw item vectors.</p><div class="fullcomment"><div class="comment cmt"><p>Raw item vectors.</p></div><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd></dl></div>
