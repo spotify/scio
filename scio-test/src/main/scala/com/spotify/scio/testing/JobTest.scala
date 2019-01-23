@@ -90,6 +90,9 @@ object JobTest {
 
     private[testing] def wasRunInvoked: Boolean = state.wasRunInvoked
 
+    def args[T: ArgGenerator](t: T): Builder =
+      args(ArgGenerator[T].gen(t).flatMap(ArgFormatter.format(_)): _*)
+
     /** Feed command line arguments to the pipeline being tested. */
     def args(newArgs: String*): Builder = {
       state = state.copy(cmdlineArgs = (state.cmdlineArgs.toSeq ++ newArgs).toArray)
