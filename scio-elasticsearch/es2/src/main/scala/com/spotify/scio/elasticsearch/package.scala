@@ -52,24 +52,14 @@ package object elasticsearch {
      * @param numOfShards number of parallel writes to be performed, recommended setting is the
      *                   number of pipeline workers
      * @param errorFn function to handle error when performing Elasticsearch bulk writes
-     * @param maxRetries Maximum number of retries for each bulk save operation upon Exceptions
-     * @param retryPause Number of seconds to pause between subsequent attempts
      */
     def saveAsElasticsearch(esOptions: ElasticsearchOptions,
                             flushInterval: Duration = WriteParam.DefaultFlushInterval,
                             numOfShards: Long = WriteParam.DefaultNumShards,
                             maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
-                            errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn,
-                            maxRetries: Int = WriteParam.DefaultMaxRetries,
-                            retryPause: Int = WriteParam.DefaultRetryPause)(
+                            errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn)(
       f: T => Iterable[ActionRequest[_]])(implicit coder: Coder[T]): Future[Tap[Nothing]] = {
-      val param = WriteParam(f,
-                             errorFn,
-                             flushInterval,
-                             numOfShards,
-                             maxBulkRequestSize,
-                             maxRetries,
-                             retryPause)
+      val param = WriteParam(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize)
       self.write(ElasticsearchIO[T](esOptions))(param)
     }
   }
