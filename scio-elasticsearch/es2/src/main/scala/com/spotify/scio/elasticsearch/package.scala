@@ -55,9 +55,17 @@ package object elasticsearch {
                             flushInterval: Duration = WriteParam.DefaultFlushInterval,
                             numOfShards: Long = WriteParam.DefaultNumShards,
                             maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
-                            errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn)(
+                            errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn,
+                            maxRetries: Int = WriteParam.DefaultMaxRetries,
+                            retryPause: Int = WriteParam.DefaultRetryPause)(
       f: T => Iterable[ActionRequest[_]])(implicit coder: Coder[T]): ClosedTap[Nothing] = {
-      val param = WriteParam(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize)
+      val param = WriteParam(f,
+                             errorFn,
+                             flushInterval,
+                             numOfShards,
+                             maxBulkRequestSize,
+                             maxRetries,
+                             retryPause)
       self.write(ElasticsearchIO[T](esOptions))(param)
     }
   }
