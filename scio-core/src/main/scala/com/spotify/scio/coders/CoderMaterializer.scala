@@ -52,7 +52,6 @@ object CoderMaterializer {
         val u = f(beam(r, o, c))
         WrappedBCoder.create(beam(r, o, u))
       case Record(typeName, coders, construct, destruct) =>
-        import org.apache.beam.sdk.util.CoderUtils
         val bcs: Array[(String, Coder[Any], BCoder[Any])] =
           coders.map(c => (c._1, c._2, beam(r, o, c._2)))
         WrappedBCoder.create(new RecordCoder(typeName, bcs.map(x => (x._1, x._3)), construct, destruct))

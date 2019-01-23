@@ -32,8 +32,15 @@ final case class Optional[T](schema: Schema[T]) extends Schema[Option[T]] {
 final case class Fallback[F[_], T](coder: F[T]) extends Schema[T] {
   type Repr = Array[Byte]
 }
-final case class Arr[T](schema: Schema[T]) extends Schema[List[T]] { // TODO: polymorphism ?
-  type Repr = java.util.List[schema.Repr]
+
+import java.util.{List => jList}
+final case class Arr[F[_], T](schema: Schema[T],
+                              toList: F[T] => jList[T],
+                              fromList: jList[T] => F[T])
+    extends Schema[F[T]] { // TODO: polymorphism ?
+  type Repr = jList[schema.Repr]
+  type _T = T
+  type _F[A] = F[A]
 }
 
 private[schemas] case class ScalarWrapper[T](value: T) extends AnyVal
@@ -52,7 +59,11 @@ object Schema extends LowPriorityFallbackSchema {
   // implicit def datetimeSchema = FSchema[](FieldType.DATETIME)
 
   implicit def optionSchema[T](implicit s: Schema[T]): Schema[Option[T]] = Optional(s)
-  implicit def arraySchema[T](implicit s: Schema[T]): Schema[List[T]] = Arr(s)
+  implicit def listSchema[T](implicit s: Schema[T]): Schema[List[T]] =
+    Arr(s, _.asJava, _.asScala.toList)
+
+  implicit def jCollectionSchema[T](implicit s: Schema[T]): Schema[java.util.List[T]] =
+    Arr(s, identity, identity)
 
   implicit def javaBeanSchema[T: IsJavaBean: ClassTag]: Schema[T] = {
     val schema =
@@ -126,10 +137,10 @@ object SchemaMaterializer {
           }
 
         FieldType.row(BSchema.of(fields: _*))
-      case Type(t)     => t
-      case Fallback(_) => FieldType.BYTES
-      case Arr(s)      => FieldType.array(fieldType(s))
-      case Optional(_) => throw new IllegalStateException("Optional(_) match should be impossible")
+      case Type(t)      => t
+      case Fallback(_)  => FieldType.BYTES
+      case Arr(s, _, _) => FieldType.array(fieldType(s))
+      case Optional(_)  => throw new IllegalStateException("Optional(_) match should be impossible")
     }
 
   /**
@@ -149,8 +160,8 @@ object SchemaMaterializer {
         Optional(materializeSchema(sc, s))
       case Fallback(c) =>
         Fallback[BCoder, A](CoderMaterializer.beam[A](sc, c.asInstanceOf[Coder[A]]))
-      case Arr(s) =>
-        Arr(materializeSchema(sc, s))
+      case a @ Arr(s, t, f) =>
+        Arr[a._F, a._T](materializeSchema(sc, s), t, f)
     }
 
   import org.apache.beam.sdk.util.CoderUtils
@@ -161,7 +172,7 @@ object SchemaMaterializer {
       case s @ Record(_, _, _) => (decode(s)(_)).asInstanceOf[schema.Repr => A]
       case s @ Type(_)         => (decode(s)(_)).asInstanceOf[schema.Repr => A]
       case s @ Optional(_)     => (decode(s)(_)).asInstanceOf[schema.Repr => A]
-      case s @ Arr(_)          => (decode(s)(_)).asInstanceOf[schema.Repr => A]
+      case s @ Arr(_, _, _)    => (decode[s._F, s._T](s)(_)).asInstanceOf[schema.Repr => A]
       case s @ Fallback(_) =>
         (decode(s.asInstanceOf[Fallback[BCoder, A]])(_)).asInstanceOf[schema.Repr => A]
     }
@@ -177,10 +188,10 @@ object SchemaMaterializer {
   private def decode[A](schema: Type[A])(v: schema.Repr): A = v
   private def decode[A](schema: Optional[A])(v: schema.Repr): Option[A] =
     Option(dispatchDecode(schema.schema)(v))
-  private def decode[A: ClassTag](schema: Arr[A])(v: schema.Repr): List[A] =
-    v.asScala.map { v =>
+  private def decode[F[_], A: ClassTag](schema: Arr[F, A])(v: schema.Repr): F[A] =
+    schema.fromList(v.asScala.map { v =>
       dispatchDecode[A](schema.schema)(v)
-    }.toList
+    }.asJava)
   private def decode[A](schema: Fallback[BCoder, A])(v: schema.Repr): A =
     CoderUtils.decodeFromByteArray(schema.coder, v)
 
@@ -190,7 +201,7 @@ object SchemaMaterializer {
       case s @ Record(_, _, _) => (encode(s, fieldType)(_)).asInstanceOf[A => schema.Repr]
       case s @ Type(_)         => (encode(s)(_)).asInstanceOf[A => schema.Repr]
       case s @ Optional(_)     => (encode(s, fieldType)(_)).asInstanceOf[A => schema.Repr]
-      case s @ Arr(_)          => (encode(s, fieldType)(_)).asInstanceOf[A => schema.Repr]
+      case s @ Arr(_, _, _)    => (encode[s._F, s._T](s, fieldType)(_)).asInstanceOf[A => schema.Repr]
       case s @ Fallback(_) =>
         (encode(s.asInstanceOf[Fallback[BCoder, A]])(_)).asInstanceOf[A => schema.Repr]
     }
@@ -211,8 +222,16 @@ object SchemaMaterializer {
   private def encode[A](schema: Type[A])(v: A): schema.Repr = v
   private def encode[A](schema: Optional[A], fieldType: FieldType)(v: Option[A]): schema.Repr =
     v.map { dispatchEncode(schema.schema, fieldType)(_) }.getOrElse(null.asInstanceOf[schema.Repr])
-  private def encode[A: ClassTag](schema: Arr[A], fieldType: FieldType)(v: List[A]): schema.Repr =
-    v.map { dispatchEncode(schema.schema, fieldType.getCollectionElementType)(_) }.asJava
+  private def encode[F[_], A](schema: Arr[F, A], fieldType: FieldType)(v: F[A]): schema.Repr = {
+    // XXX: probably slow
+    schema
+      .toList(v)
+      .asScala
+      .map { x =>
+        dispatchEncode(schema.schema, fieldType.getCollectionElementType)(x)
+      }
+      .asJava
+  }
   private def encode[A](schema: Fallback[BCoder, A])(v: A): schema.Repr =
     CoderUtils.encodeToByteArray(schema.coder, v)
 

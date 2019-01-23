@@ -24,7 +24,6 @@ import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, Coder => BCoder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.values.KV
-import org.apache.beam.sdk.values.Row
 
 import scala.annotation.implicitNotFound
 import scala.collection.JavaConverters._
