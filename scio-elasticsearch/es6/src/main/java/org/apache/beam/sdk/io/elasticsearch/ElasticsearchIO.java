@@ -50,6 +50,7 @@ import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
@@ -317,37 +318,51 @@ public class ElasticsearchIO {
 
         final Iterable<List<DocWriteRequest>> chunks =
             Iterables.partition(docWriteRequests::iterator, maxBulkRequestSize);
+
         chunks.forEach(chunk -> {
           int attempts = 0;
-          try {
-            BulkResponse failedBulkItemResponse = null;
+          Exception exception = null;
 
-            while (attempts <= maxRetries) {
+          while (attempts <= maxRetries) {
+            try {
+              if (attempts > 0) {
+                // Sleep on subsequent attempts.
+                Thread.sleep(retryPause * 1000);
+              }
+
               final BulkRequest bulkRequest = new BulkRequest().add(chunk.toArray(
-                  new DocWriteRequest[0]));
+                  new DocWriteRequest[0]))
+                  .setRefreshPolicy(WriteRequest.RefreshPolicy.NONE);
               final BulkResponse bulkItemResponse = clientSupplier.get().bulk(bulkRequest).get();
-
               if (bulkItemResponse.hasFailures()) {
-                failedBulkItemResponse = bulkItemResponse;
-                LOG.error(
-                    "ElasticsearchWriter: Failed to bulk save chunk of {} items, " +
-                        "attempts remaining: {}",
-                    chunk.size(),
-                    (maxRetries - attempts));
-                attempts += 1;
-                if (attempts <= maxRetries) {
-                  Thread.sleep(retryPause * 1000);
-                }
+                exception = new BulkExecutionException(bulkItemResponse);
               } else {
-                failedBulkItemResponse = null;
+                exception = null;
                 break;
               }
+            } catch (Exception e) {
+              exception = e;
+            } finally {
+              if (exception != null) {
+                LOG.error(
+                    "ElasticsearchWriter: Failed to bulk save chunk of " +
+                        Objects.toString(chunk.size()) + " items, attempts remaining: " +
+                        Objects.toString(maxRetries - attempts),
+                    exception);
+              }
+              attempts += 1;
             }
+          }
 
-            if (failedBulkItemResponse != null) {
-              error.accept(new BulkExecutionException(failedBulkItemResponse));
+          try {
+            if (exception != null) {
+              if (exception instanceof BulkExecutionException) {
+                // This may result in no exception being thrown, depending on callback.
+                error.accept((BulkExecutionException) exception);
+              } else {
+                throw exception;
+              }
             }
-
           } catch (Exception e) {
             throw new RuntimeException(e);
           }

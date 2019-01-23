@@ -321,37 +321,49 @@ public class ElasticsearchIO {
 
         chunks.forEach(chunk -> {
           int attempts = 0;
-          try {
-            BulkResponse failedBulkItemResponse = null;
+          Exception exception = null;
 
-            while (attempts <= maxRetries) {
-              final BulkRequest bulkRequest = new BulkRequest().add(chunk);
+          while (attempts <= maxRetries) {
+            try {
+              if (attempts > 0) {
+                // Sleep on subsequent attempts.
+                Thread.sleep(retryPause * 1000);
+              }
+
+              final BulkRequest bulkRequest = new BulkRequest().add(chunk).refresh(false);
               final BulkResponse bulkItemResponse = clientSupplier.get().bulk(bulkRequest).get();
-
               if (bulkItemResponse.hasFailures()) {
-                failedBulkItemResponse = bulkItemResponse;
-                LOG.error(
-                    "ElasticsearchWriter: Failed to bulk save chunk of {} items, " +
-                        "attempts remaining: {}",
-                    chunk.size(),
-                    (maxRetries - attempts));
-                attempts += 1;
-                if (attempts <= maxRetries) {
-                  Thread.sleep(retryPause * 1000);
-                }
+                exception = new BulkExecutionException(bulkItemResponse);
               } else {
-                failedBulkItemResponse = null;
+                exception = null;
                 break;
               }
+            } catch (Exception e) {
+              exception = e;
+            } finally {
+              if (exception != null) {
+                LOG.error(
+                    "ElasticsearchWriter: Failed to bulk save chunk of " +
+                        Objects.toString(chunk.size()) + " items, attempts remaining: " +
+                        Objects.toString(maxRetries - attempts),
+                    exception);
+              }
+              attempts += 1;
             }
+          }
 
-            if (failedBulkItemResponse != null) {
-              error.accept(new BulkExecutionException(failedBulkItemResponse));
+          try {
+            if (exception != null) {
+              if (exception instanceof BulkExecutionException) {
+                // This may result in no exception being thrown, depending on callback.
+                error.accept((BulkExecutionException) exception);
+              } else {
+                throw exception;
+              }
             }
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
-
         });
       }
     }
