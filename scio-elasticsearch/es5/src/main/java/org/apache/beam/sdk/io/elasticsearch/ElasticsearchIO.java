@@ -121,12 +121,34 @@ public class ElasticsearchIO {
       return new Bound<>().withError(error);
     }
 
-    public static<T> Bound withMaxBulkRequestSize(int maxBulkRequestSize) {
+    public static <T> Bound withMaxBulkRequestSize(int maxBulkRequestSize) {
       return new Bound<>().withMaxBulkRequestSize(maxBulkRequestSize);
     }
 
+    /**
+     * Returns a transform for writing to Elasticsearch cluster.
+     *
+     * @param maxRetries Maximum number of retries to attempt for saving any single chunk of bulk
+     * requests to the Elasticsearch cluster.
+     */
+    public static <T> Bound withMaxRetries(int maxRetries) {
+      return new Bound<>().withMaxRetries(maxRetries);
+    }
+
+    /**
+     * Returns a transform for writing to Elasticsearch cluster.
+     *
+     * @param retryPause Number of seconds to wait between successive retry attempts.
+     */
+    public static <T> Bound withRetryPause(int retryPause) {
+      return new Bound<>().withRetryPause(retryPause);
+    }
+
     public static class Bound<T> extends PTransform<PCollection<T>, PDone> {
+
       private static final int CHUNK_SIZE = 3000;
+      private static final int DEFAULT_RETRIES = 3;
+      private static final int DEFAULT_RETRY_PAUSE = 5;
 
       private final String clusterName;
       private final InetSocketAddress[] servers;
@@ -134,55 +156,88 @@ public class ElasticsearchIO {
       private final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests;
       private final long numOfShard;
       private final int maxBulkRequestSize;
+      private final int maxRetries;
+      private final int retryPause;
       private final ThrowingConsumer<BulkExecutionException> error;
 
       private Bound(final String clusterName,
-                    final InetSocketAddress[] servers,
-                    final Duration flushInterval,
-                    final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
-                    final long numOfShard,
-                    final int maxBulkRequestSize,
-                    final ThrowingConsumer<BulkExecutionException> error) {
+          final InetSocketAddress[] servers,
+          final Duration flushInterval,
+          final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
+          final long numOfShard,
+          final int maxBulkRequestSize,
+          final int maxRetries, final int retryPause,
+          final ThrowingConsumer<BulkExecutionException> error) {
         this.clusterName = clusterName;
         this.servers = servers;
         this.flushInterval = flushInterval;
         this.toDocWriteRequests = toDocWriteRequests;
         this.numOfShard = numOfShard;
         this.maxBulkRequestSize = maxBulkRequestSize;
+        this.maxRetries = maxRetries;
+        this.retryPause = retryPause;
         this.error = error;
       }
 
       Bound() {
-        this(null, null, null, null, 0, CHUNK_SIZE, defaultErrorHandler());
+        this(null, null, null, null, 0,
+            CHUNK_SIZE, DEFAULT_RETRIES, DEFAULT_RETRY_PAUSE,
+            defaultErrorHandler());
       }
 
       public Bound<T> withClusterName(String clusterName) {
-        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard, maxBulkRequestSize, error);
+        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard,
+            maxBulkRequestSize,
+            maxRetries, retryPause, error);
       }
 
       public Bound<T> withServers(InetSocketAddress[] servers) {
-        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard, maxBulkRequestSize, error);
+        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard,
+            maxBulkRequestSize,
+            maxRetries, retryPause, error);
       }
 
       public Bound<T> withFlushInterval(Duration flushInterval) {
-        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard, maxBulkRequestSize, error);
+        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard,
+            maxBulkRequestSize,
+            maxRetries, retryPause, error);
       }
 
       public Bound<T> withFunction(
           SerializableFunction<T, Iterable<DocWriteRequest<?>>> toIndexRequest) {
-        return new Bound<>(clusterName, servers, flushInterval, toIndexRequest, numOfShard, maxBulkRequestSize, error);
+        return new Bound<>(clusterName, servers, flushInterval, toIndexRequest, numOfShard,
+            maxBulkRequestSize,
+            maxRetries, retryPause, error);
       }
 
       public Bound<T> withNumOfShard(long numOfShard) {
-        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard, maxBulkRequestSize, error);
+        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard,
+            maxBulkRequestSize,
+            maxRetries, retryPause, error);
       }
 
       public Bound<T> withError(ThrowingConsumer<BulkExecutionException> error) {
-        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard, maxBulkRequestSize, error);
+        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard,
+            maxBulkRequestSize,
+            maxRetries, retryPause, error);
       }
 
       public Bound<T> withMaxBulkRequestSize(int maxBulkRequestSize) {
-        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard, maxBulkRequestSize, error);
+        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard,
+            maxBulkRequestSize,
+            maxRetries, retryPause, error);
+      }
+
+      public Bound<T> withMaxRetries(int maxRetries) {
+        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard,
+            maxBulkRequestSize,
+            maxRetries, retryPause, error);
+      }
+
+      public Bound<T> withRetryPause(int retryPause) {
+        return new Bound<>(clusterName, servers, flushInterval, toDocWriteRequests, numOfShard,
+            maxBulkRequestSize,
+            maxRetries, retryPause, error);
       }
 
       @Override
@@ -193,6 +248,8 @@ public class ElasticsearchIO {
         checkNotNull(flushInterval);
         checkArgument(numOfShard > 0);
         checkArgument(maxBulkRequestSize > 0);
+        checkArgument(maxRetries >= 0);
+        checkArgument(retryPause >= 0);
         input
             .apply("Assign To Shard", ParDo.of(new AssignToShard<>(numOfShard)))
             .apply("Re-Window to Global Window", Window.<KV<Long, T>>into(new GlobalWindows())
@@ -203,9 +260,10 @@ public class ElasticsearchIO {
                 .discardingFiredPanes()
                 .withTimestampCombiner(TimestampCombiner.END_OF_WINDOW))
             .apply(GroupByKey.create())
-            .apply("Write to Elasticesarch",
+            .apply("Write to Elasticsearch",
                 ParDo.of(new ElasticsearchWriter<>
-                    (clusterName, servers, maxBulkRequestSize, toDocWriteRequests, error)));
+                    (clusterName, servers, maxBulkRequestSize, toDocWriteRequests, error,
+                        maxRetries, retryPause)));
         return PDone.in(input.getPipeline());
       }
     }
@@ -233,19 +291,25 @@ public class ElasticsearchIO {
       private final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests;
       private final ThrowingConsumer<BulkExecutionException> error;
       private final int maxBulkRequestSize;
+      private final int maxRetries;
+      private final int retryPause;
 
       public ElasticsearchWriter(String clusterName,
-                                 InetSocketAddress[] servers,
-                                 int maxBulkRequestSize,
-                                 SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
-                                 ThrowingConsumer<BulkExecutionException> error) {
+          InetSocketAddress[] servers,
+          int maxBulkRequestSize,
+          SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
+          ThrowingConsumer<BulkExecutionException> error,
+          int maxRetries, int retryPause) {
         this.maxBulkRequestSize = maxBulkRequestSize;
+        this.maxRetries = maxRetries;
+        this.retryPause = retryPause;
         this.clientSupplier = new ClientSupplier(clusterName, servers);
         this.toDocWriteRequests = toDocWriteRequests;
         this.error = error;
       }
 
 
+      @SuppressWarnings("Duplicates")
       @ProcessElement
       public void processElement(ProcessContext c) throws Exception {
         final Iterable<T> values = c.element().getValue();
@@ -265,12 +329,35 @@ public class ElasticsearchIO {
         final Iterable<List<DocWriteRequest>> chunks =
             Iterables.partition(docWriteRequests::iterator, maxBulkRequestSize);
         chunks.forEach(chunk -> {
+          int attempts = 0;
           try {
-            final BulkRequest bulkRequest = new BulkRequest().add(chunk);
-            final BulkResponse bulkItemResponse = clientSupplier.get().bulk(bulkRequest).get();
-            if (bulkItemResponse.hasFailures()) {
-              error.accept(new BulkExecutionException(bulkItemResponse));
+            BulkResponse failedBulkItemResponse = null;
+
+            while (attempts <= maxRetries) {
+              final BulkRequest bulkRequest = new BulkRequest().add(chunk);
+              final BulkResponse bulkItemResponse = clientSupplier.get().bulk(bulkRequest).get();
+
+              if (bulkItemResponse.hasFailures()) {
+                failedBulkItemResponse = bulkItemResponse;
+                LOG.error(
+                    "ElasticsearchWriter: Failed to bulk save chunk of {} items, " +
+                        "attempts remaining: {}",
+                    chunk.size(),
+                    (maxRetries - attempts));
+                attempts += 1;
+                if (attempts <= maxRetries) {
+                  Thread.sleep(retryPause * 1000);
+                }
+              } else {
+                failedBulkItemResponse = null;
+                break;
+              }
             }
+
+            if (failedBulkItemResponse != null) {
+              error.accept(new BulkExecutionException(failedBulkItemResponse));
+            }
+
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
