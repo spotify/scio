@@ -174,7 +174,7 @@ trait StringCaseFormatter extends (String => String) {}
 
 object StringCaseFormatter {
   import caseapp.core.util.CaseUtil
-  
+
   def pascalCase: StringCaseFormatter = new StringCaseFormatter {
     override def apply(str: String): String =
       CaseUtil.pascalCaseSplit(str.toList).map(_.toLowerCase).mkString("-")
