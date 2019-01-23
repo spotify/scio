@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ final case class BooleanArg(name: Option[String], value: Boolean) extends Arg {
   override type Type = Boolean
 }
 
-trait ArgGenerator[T] {
+sealed trait ArgGenerator[T] {
   def gen(name: Option[String], t: T): List[Arg]
 
   def gen(name: String, t: T): List[Arg] = gen(Some(name), t)
@@ -123,7 +123,7 @@ trait LowPriorityArgGeneratorDerivation {
   def combine[T](caseClass: CaseClass[Typeclass, T]): Typeclass[T] = new Typeclass[T] {
     override def gen(name: Option[String], t: T): List[Arg] = {
       caseClass.parameters.foldLeft(List[Arg]()) { (acc, p) =>
-        val flagName = name.map(n => s"$n-${p.label}").getOrElse(p.label)
+        val flagName = name.map(_ + p.label).getOrElse(p.label)
         acc ++ p.typeclass.gen(flagName, p.dereference(t))
       }
     }
@@ -132,7 +132,7 @@ trait LowPriorityArgGeneratorDerivation {
   implicit def gen[T]: Typeclass[T] = macro Magnolia.gen[T]
 }
 
-trait ArgFormatter[T <: Arg] {
+sealed trait ArgFormatter[T <: Arg] {
   def format(t: T)(implicit stringCaseFormatter: StringCaseFormatter): List[String]
 }
 
