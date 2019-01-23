@@ -17,6 +17,14 @@ final case class LongArg(name: Option[String], value: Long) extends Arg {
   override type Type = Long
 }
 
+final case class FloatArg(name: Option[String], value: Float) extends Arg {
+  override type Type = Float
+}
+
+final case class DecimalArg(name: Option[String], value: BigDecimal) extends Arg {
+  override type Type = BigDecimal
+}
+
 final case class StringArg(name: Option[String], value: String) extends Arg {
   override type Type = String
 }
@@ -38,30 +46,56 @@ object ArgGenerator
     with LowPriorityArgGeneratorDerivation {
 
   @inline final def apply[T: ArgGenerator]: ArgGenerator[T] = implicitly[ArgGenerator[T]]
-
 }
 
 sealed trait LowPriorityArgGeneratorImplicits {
   implicit val int: ArgGenerator[Int] = new ArgGenerator[Int] {
     override def gen(name: Option[String], t: Int): List[Arg] = IntArg(name, t) :: Nil
   }
-
   implicit val long: ArgGenerator[Long] = new ArgGenerator[Long] {
     override def gen(name: Option[String], t: Long): List[Arg] = LongArg(name, t) :: Nil
   }
-
   implicit val string: ArgGenerator[String] = new ArgGenerator[String] {
     override def gen(name: Option[String], t: String): List[Arg] = StringArg(name, t) :: Nil
   }
-
   implicit val boolean: ArgGenerator[Boolean] = new ArgGenerator[Boolean] {
     override def gen(name: Option[String], t: Boolean): List[Arg] = BooleanArg(name, t) :: Nil
   }
+  implicit val float: ArgGenerator[Float] = new ArgGenerator[Float] {
+    override def gen(name: Option[String], t: Float): List[Arg] = FloatArg(name, t) :: Nil
+  }
+  implicit val decimal: ArgGenerator[BigDecimal] = new ArgGenerator[BigDecimal] {
+    override def gen(name: Option[String], t: BigDecimal): List[Arg] = DecimalArg(name, t) :: Nil
+  }
+
+  implicit def option[A](implicit ArgGenerator: ArgGenerator[A]): ArgGenerator[Option[A]] =
+    new ArgGenerator[Option[A]] {
+      override def gen(name: Option[String], t: Option[A]): List[Arg] =
+        t.map(v => ArgGenerator.gen(name, v)).getOrElse(List.empty)
+    }
+
+  implicit def iterator[T](implicit ArgGenerator: ArgGenerator[T]): ArgGenerator[Iterator[T]] =
+    new ArgGenerator[Iterator[T]] {
+      override def gen(name: Option[String], t: Iterator[T]): List[Arg] =
+        t.flatMap(e => ArgGenerator.gen(name, e)).toList
+    }
 
   implicit def list[T](implicit ArgGenerator: ArgGenerator[T]): ArgGenerator[List[T]] =
     new ArgGenerator[List[T]] {
       override def gen(name: Option[String], t: List[T]): List[Arg] =
-        t.flatMap(e => ArgGenerator.gen(name, e))
+        iterator[T].gen(name, t.iterator)
+    }
+
+  implicit def seq[T](implicit ArgGenerator: ArgGenerator[T]): ArgGenerator[Seq[T]] =
+    new ArgGenerator[Seq[T]] {
+      override def gen(name: Option[String], t: Seq[T]): List[Arg] =
+        iterator[T].gen(name, t.iterator)
+    }
+
+  implicit def vector[T](implicit ArgGenerator: ArgGenerator[T]): ArgGenerator[Vector[T]] =
+    new ArgGenerator[Vector[T]] {
+      override def gen(name: Option[String], t: Vector[T]): List[Arg] =
+        iterator[T].gen(name, t.iterator)
     }
 }
 
@@ -105,13 +139,17 @@ sealed trait LowPriorityArgFormatterImplicits {
   implicit val int: ArgFormatter[IntArg] = formatter(_.toString)
   implicit val long: ArgFormatter[LongArg] = formatter(_.toString)
   implicit val boolean: ArgFormatter[BooleanArg] = formatter(_.toString)
+  implicit val float: ArgFormatter[FloatArg] = formatter(_.toString)
+  implicit val decimal: ArgFormatter[DecimalArg] = formatter(_.toString)
 
   implicit val arg: ArgFormatter[Arg] = new ArgFormatter[Arg] {
     override def format(t: Arg)(implicit scf: StringCaseFormatter): List[String] = t match {
-      case a: IntArg    => ArgFormatter.format(a)
-      case a: LongArg   => ArgFormatter.format(a)
-      case a: StringArg => ArgFormatter.format(a)
+      case a: IntArg     => ArgFormatter.format(a)
+      case a: LongArg    => ArgFormatter.format(a)
+      case a: StringArg  => ArgFormatter.format(a)
       case a: BooleanArg => ArgFormatter.format(a)
+      case a: FloatArg   => ArgFormatter.format(a)
+      case a: DecimalArg => ArgFormatter.format(a)
     }
   }
 }
