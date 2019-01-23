@@ -14,6 +14,7 @@ Early Scio releases depend on Google Cloud [Dataflow Java SDK](https://github.co
 
 | **Scio** | **SDK Dependency** | **Description**     |
 |:--------:|:------------------:|:--------------------|
+| 0.7.x    | Apache Beam 2.x.x  | Static coders, new ScioIO |
 | 0.6.x    | Apache Beam 2.x.x  | Cassandra 2.2       |
 | 0.5.x    | Apache Beam 2.x.x  | Better type-safe Avro and BigQuery IO |
 | 0.4.x    | Apache Beam 2.0.0  | Stable release Beam |
@@ -23,6 +24,7 @@ Early Scio releases depend on Google Cloud [Dataflow Java SDK](https://github.co
 
 | **Scio Version** | **Beam Version** |
 |:----------------:|:----------------:|
+| 0.7.0            | 2.9.0            |
 | 0.6.0            | 2.6.0            |
 | 0.5.7            | 2.6.0            |
 | 0.5.6            | 2.5.0            |
