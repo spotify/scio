@@ -21,12 +21,23 @@ import com.google.cloud.spanner.{Mutation, Struct}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.gcp.spanner.SpannerConfig
+import org.apache.beam.sdk.{coders => bcoders}
+import org.apache.beam.sdk.io.gcp.spanner.{ReadOperation, SpannerConfig}
 import org.apache.beam.sdk.io.gcp.spanner.SpannerIO.FailureMode
 
 import scala.concurrent.Future
 
 package object spanner {
+
+  // Kryo coders throw runtime exceptions deserializing Spanner types (#1447), so force Beam coders
+  implicit def spannerReadOperationCoder: Coder[ReadOperation] =
+    Coder.beam(bcoders.SerializableCoder.of(classOf[ReadOperation]))
+
+  implicit def spannerStructCoder: Coder[Struct] =
+    Coder.beam(bcoders.SerializableCoder.of(classOf[Struct]))
+
+  implicit def spannerMutationCoder: Coder[Mutation] =
+    Coder.beam(bcoders.SerializableCoder.of(classOf[Mutation]))
 
   implicit class SpannerScioContext(@transient private val self: ScioContext) extends AnyVal {
     import SpannerRead.ReadParam._
@@ -65,8 +76,7 @@ package object spanner {
 
     def saveAsSpanner(spannerConfig: SpannerConfig,
                       failureMode: FailureMode = DefaultFailureMode,
-                      batchSizeBytes: Long = DefaultBatchSizeBytes)(
-      implicit coder: Coder[Mutation]): Future[Tap[Nothing]] = {
+                      batchSizeBytes: Long = DefaultBatchSizeBytes): Future[Tap[Nothing]] = {
       val params = SpannerWrite.WriteParam(failureMode, batchSizeBytes)
 
       self

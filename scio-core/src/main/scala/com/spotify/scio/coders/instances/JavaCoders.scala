@@ -22,17 +22,14 @@ import java.math.{BigDecimal, BigInteger}
 import java.time.Instant
 
 import com.google.api.services.bigquery.model.TableRow
-import com.google.cloud.spanner.{Mutation, Struct}
 import com.spotify.scio.coders.Coder
-import org.apache.beam.sdk.values.Row
-import org.apache.beam.sdk.schemas.Schema
-import org.apache.beam.sdk.{coders => bcoders}
-import org.apache.beam.sdk.values.KV
-import org.apache.beam.sdk.io.gcp.pubsub.{PubsubMessage, PubsubMessageWithAttributesCoder}
-import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
-import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.beam.sdk.coders.{Coder => _, _}
-import org.apache.beam.sdk.io.gcp.spanner.ReadOperation
+import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
+import org.apache.beam.sdk.io.gcp.pubsub.{PubsubMessage, PubsubMessageWithAttributesCoder}
+import org.apache.beam.sdk.schemas.Schema
+import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
+import org.apache.beam.sdk.values.{KV, Row}
+import org.apache.beam.sdk.{coders => bcoders}
 
 private object VoidCoder extends AtomicCoder[Void] {
   override def encode(value: Void, outStream: OutputStream): Unit = ()
@@ -111,14 +108,4 @@ trait JavaCoders {
 
   implicit def coderJEnum[E <: java.lang.Enum[_]: scala.reflect.ClassTag]: Coder[E] =
     Coder.kryo[E]
-
-  // #1447: Kryo throws a NPE
-  implicit def spannerReadOperationCoder: Coder[ReadOperation] =
-    Coder.beam(bcoders.SerializableCoder.of(classOf[ReadOperation]))
-
-  implicit def spannerMutationCoder: Coder[Mutation] =
-    Coder.beam(bcoders.SerializableCoder.of(classOf[Mutation]))
-
-  implicit def spannerStructCoder: Coder[Struct] =
-    Coder.beam(bcoders.SerializableCoder.of(classOf[Struct]))
 }
