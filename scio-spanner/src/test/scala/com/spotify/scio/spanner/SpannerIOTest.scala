@@ -38,9 +38,9 @@ class SpannerIOTest extends ScioIOSpec with Matchers {
     Mutation.newInsertBuilder("someTable").set("foo").to("bar").build()
   )
 
-  private def checkCoder[T](t: T)(implicit C: Coder[T], eq: Equality[T]): Assertion = {
+  private def checkCoder[T](t: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
     val options = PipelineOptionsFactory.create()
-    val beamCoder = CoderMaterializer.beamWithDefault(C, o = options)
+    val beamCoder = CoderMaterializer.beamWithDefault(c, o = options)
     SerializableUtils.ensureSerializable(beamCoder)
     val enc = CoderUtils.encodeToByteArray(beamCoder, t)
     val dec = CoderUtils.decodeFromByteArray(beamCoder, enc)
