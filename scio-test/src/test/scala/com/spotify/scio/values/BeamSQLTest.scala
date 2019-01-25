@@ -85,7 +85,7 @@ class BeamSQLTest extends PipelineSpec {
   it should "support scalar results" in runWithContext { sc =>
     val expected = 255
     val in = sc.parallelize(users)
-    val r = in.typedSql[Int]("select sum(age) from PCOLLECTION")
+    val r = in.sql[Int]("select sum(age) from PCOLLECTION")
     r should containSingleValue(expected)
   }
 
@@ -141,7 +141,7 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.age)
     }
     val in = sc.parallelize(users)
-    val r = in.typedSql[(String, Int)]("select username, age from PCOLLECTION")
+    val r = in.sql[(String, Int)]("select username, age from PCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
@@ -150,7 +150,7 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.locale)
     }
     val in = sc.parallelize(usersWithLocale)
-    val r = in.typedSql[(String, java.util.Locale)]("select username, locale from PCOLLECTION")
+    val r = in.sql[(String, java.util.Locale)]("select username, locale from PCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
@@ -159,7 +159,7 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.age)
     }
     val in = sc.parallelize(usersWithOption)
-    val r = in.typedSql[(String, Option[Int])]("select username, age from PCOLLECTION")
+    val r = in.sql[(String, Option[Int])]("select username, age from PCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
@@ -168,14 +168,14 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.emails)
     }
     val in = sc.parallelize(usersWithList)
-    val r = in.typedSql[(String, List[String])]("select username, emails from PCOLLECTION")
+    val r = in.sql[(String, List[String])]("select username, emails from PCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
   it should "support javabeans" in runWithContext { sc =>
     val expected = 255
     val in = sc.parallelize(users)
-    val r = in.typedSql[Int]("select sum(age) from PCOLLECTION")
+    val r = in.sql[Int]("select sum(age) from PCOLLECTION")
     r should containSingleValue(expected)
   }
 
@@ -185,7 +185,7 @@ class BeamSQLTest extends PipelineSpec {
     }
     val in = sc.parallelize(usersWithJList)
     val r =
-      in.typedSql[(String, String)]("select username, emails[1] from PCOLLECTION")
+      in.sql[(String, String)]("select username, emails[1] from PCOLLECTION")
     r should containInAnyOrder(expected)
   }
 
