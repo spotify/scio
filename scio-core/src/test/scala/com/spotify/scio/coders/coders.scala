@@ -365,22 +365,6 @@ class CodersTest extends FlatSpec with Matchers {
     check(new FixedSpefificDataExample(bytes))
   }
 
-  it should "#1447: Properly serde spanner's ReadOperation" in {
-    import org.apache.beam.sdk.io.gcp.spanner.ReadOperation
-    val ro = ReadOperation.create().withQuery("SELECT 1")
-    check(ro)
-  }
-
-  it should "support spanner's Mutation class" in {
-    import com.google.cloud.spanner.Mutation
-    check(Mutation.newInsertBuilder("myTable").set("foo").to("bar").build())
-  }
-
-  it should "support spanner's Struct class" in {
-    import com.google.cloud.spanner.Struct
-    check(Struct.newBuilder().set("foo").to("bar").build())
-  }
-
   it should "#1604: not throw on null" in {
     import java.lang.{
       Integer => jInt,

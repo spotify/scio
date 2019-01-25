@@ -18,9 +18,13 @@
 package com.spotify.scio.spanner
 
 import com.google.cloud.spanner.{Mutation, Struct}
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.testing.ScioIOSpec
-import org.apache.beam.sdk.io.gcp.spanner.SpannerConfig
-import org.scalatest.Matchers
+import org.apache.beam.sdk.io.gcp.spanner.{ReadOperation, SpannerConfig}
+import org.apache.beam.sdk.options.PipelineOptionsFactory
+import org.apache.beam.sdk.util.{CoderUtils, SerializableUtils}
+import org.scalactic.Equality
+import org.scalatest.{Assertion, Matchers}
 
 class SpannerIOTest extends ScioIOSpec with Matchers {
   private val config: SpannerConfig = SpannerConfig
@@ -34,6 +38,15 @@ class SpannerIOTest extends ScioIOSpec with Matchers {
     Mutation.newInsertBuilder("someTable").set("foo").to("bar").build()
   )
 
+  private def checkCoder[T](t: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
+    val options = PipelineOptionsFactory.create()
+    val beamCoder = CoderMaterializer.beamWithDefault(c, o = options)
+    SerializableUtils.ensureSerializable(beamCoder)
+    val enc = CoderUtils.encodeToByteArray(beamCoder, t)
+    val dec = CoderUtils.decodeFromByteArray(beamCoder, enc)
+    dec should ===(t)
+  }
+
   "SpannerScioContext" should "support table input" in {
     testJobTestInput(readData)(_ => SpannerRead(config))(
       _.spannerTable(config, _, Seq("someColumn")))
@@ -45,5 +58,18 @@ class SpannerIOTest extends ScioIOSpec with Matchers {
 
   "SpannerSCollection" should "support writes" in {
     testJobTestOutput(writeData)(_ => SpannerWrite(config))((data, _) => data.saveAsSpanner(config))
+  }
+
+  "Spanner coders" should "#1447: Properly serde spanner's ReadOperation" in {
+    val ro = ReadOperation.create().withQuery("SELECT 1")
+    checkCoder(ro)
+  }
+
+  it should "support spanner's Mutation class" in {
+    checkCoder(Mutation.newInsertBuilder("myTable").set("foo").to("bar").build())
+  }
+
+  it should "support spanner's Struct class" in {
+    checkCoder(Struct.newBuilder().set("foo").to("bar").build())
   }
 }
