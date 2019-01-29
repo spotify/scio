@@ -98,7 +98,7 @@ runWithContext { sc =>
  r should haveSize(1)
  r should containSingleValue(("94", 29))
 }
-````
+```
 
 ### Test for pipeline with windowing
 We will use the LeaderBoardTest to explain how to test Windowing in Scio. The full example code is found [here](https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala). LeaderBoardTest also extends `PipelineSpec`. The function under test is the [LeaderBoard.calculateTeamScores](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/complete/game/LeaderBoard.scala#L131).  This function calculates teams scores within a fixed window with the following the window options: 
