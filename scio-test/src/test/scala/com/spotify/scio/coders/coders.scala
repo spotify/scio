@@ -24,8 +24,6 @@ import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.CoderRegistry
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
-import org.joda.time.{DateTime, LocalDate, LocalDateTime, LocalTime}
-import org.joda.time.chrono.ISOChronology
 import org.scalactic.Equality
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -368,25 +366,5 @@ class CodersTest extends FlatSpec with Matchers {
     null.asInstanceOf[jShort] coderShould roundtrip(opts)
     (null, null).asInstanceOf[(String, String)] coderShould roundtrip(opts)
     DummyCC(null) coderShould roundtrip(opts)
-  }
-
-  it should "support Joda DateTime" in {
-    val value = new DateTime(2018, 3, 12, 7, 15, 5, 900, ISOChronology.getInstanceUTC)
-    value coderShould notFallback()
-  }
-
-  it should "support Joda LocalDateTimeCoder" in {
-    val value = new LocalDateTime(2018, 3, 12, 7, 15, 5, 900)
-    value coderShould notFallback()
-  }
-
-  it should "support Joda LocalDateCoder" in {
-    val value = new LocalDate(2018, 5, 12)
-    value coderShould notFallback()
-  }
-
-  it should "support Joda LocalTimeCoder" in {
-    val value = new LocalTime(7, 30, 45, 100)
-    value coderShould notFallback()
   }
 }
