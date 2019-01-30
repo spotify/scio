@@ -148,7 +148,7 @@ class CodersTest extends FlatSpec with Matchers {
   }
 
   it should "Derive serializable coders" in {
-    coderIsSerializable[String]
+    coderIsSerializable[Int]
     coderIsSerializable[String]
     coderIsSerializable[List[Int]]
     coderIsSerializable(Coder.kryo[Int])
@@ -232,8 +232,8 @@ class CodersTest extends FlatSpec with Matchers {
     import java.time.{Instant => jInstant}
 
     // Both thow exceptions but they should be unusual enough to not be an issue
-    // jInstant.MIN)
-    // jInstant.MAX)
+    // jInstant.MIN coderShould notFallback()
+    // jInstant.MAX coderShould notFallback()
     jInstant.EPOCH coderShould notFallback()
     jInstant.now coderShould notFallback()
   }

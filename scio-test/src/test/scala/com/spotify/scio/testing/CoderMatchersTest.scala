@@ -47,7 +47,7 @@ class CoderMatchersTest extends FlatSpec with Matchers {
     an[TestFailedException] should be thrownBy {
       implicit def coder: Coder[Foo] = incorrectCoder
 
-      new Foo("someId2") coderShould roundtrip()
+      new Foo("someId") coderShould roundtrip()
     }
   }
 
