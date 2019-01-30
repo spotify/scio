@@ -30,36 +30,35 @@ import scala.reflect.ClassTag
 object CoderAssertions {
   private lazy val DefaultPipelineOptions = PipelineOptionsFactory.create()
 
-  implicit class CoderShouldMatchers[T](private val value: T) extends AnyVal {
-    def coderShould(coderMatcher: CoderShouldMatcher[T])(implicit c: Coder[T],
-                                                         eq: Equality[T]): Assertion =
-      coderMatcher.assert(value)
+  implicit class CoderAssertionsImplicits[T](private val value: T) extends AnyVal {
+    def coderShould(coderAssertion: CoderAssertion[T])(implicit c: Coder[T],
+                                                       eq: Equality[T]): Assertion =
+      coderAssertion.assert(value)
   }
 
-  trait CoderShouldMatcher[T] {
+  trait CoderAssertion[T] {
     def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion
   }
 
-  def roundtrip[T](opts: PipelineOptions = DefaultPipelineOptions): CoderShouldMatcher[T] =
-    new CoderShouldMatcher[T] {
+  def roundtrip[T](opts: PipelineOptions = DefaultPipelineOptions): CoderAssertion[T] =
+    new CoderAssertion[T] {
       override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         val beamCoder = CoderMaterializer.beamWithDefault(c, o = opts)
         checkRoundtripWithCoder(beamCoder, value)
       }
     }
 
-  def roundtripKryo[T: ClassTag](opts: PipelineOptions = DefaultPipelineOptions):
-  CoderShouldMatcher[T] =
-    new CoderShouldMatcher[T] {
+  def roundtripKryo[T: ClassTag](
+    opts: PipelineOptions = DefaultPipelineOptions): CoderAssertion[T] =
+    new CoderAssertion[T] {
       override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         val kryoCoder = CoderMaterializer.beamWithDefault(Coder.kryo[T], o = opts)
         checkRoundtripWithCoder(kryoCoder, value)
       }
     }
 
-  def notFallback[T: ClassTag](opts: PipelineOptions = DefaultPipelineOptions):
-  CoderShouldMatcher[T] =
-    new CoderShouldMatcher[T] {
+  def notFallback[T: ClassTag](opts: PipelineOptions = DefaultPipelineOptions): CoderAssertion[T] =
+    new CoderAssertion[T] {
       override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         c should !==(Coder.kryo[T])
         val beamCoder = CoderMaterializer.beamWithDefault(c, o = opts)
@@ -67,8 +66,8 @@ object CoderAssertions {
       }
     }
 
-  def fallback[T: ClassTag](opts: PipelineOptions = DefaultPipelineOptions): CoderShouldMatcher[T] =
-    new CoderShouldMatcher[T] {
+  def fallback[T: ClassTag](opts: PipelineOptions = DefaultPipelineOptions): CoderAssertion[T] =
+    new CoderAssertion[T] {
       override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         c should ===(Coder.kryo[T])
         roundtripKryo(opts).assert(value)
