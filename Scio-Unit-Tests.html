@@ -187,6 +187,7 @@ spotify/scio
     <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-sideinput" class="header">Test for pipeline with sideinput</a></li>
     <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-sideoutput" class="header">Test for pipeline with sideoutput</a></li>
     <li><a href="Scio-Unit-Tests.html#test-partial-pipeline" class="header">Test partial pipeline</a></li>
+    <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-windowing" class="header">Test for pipeline with windowing</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -214,6 +215,7 @@ spotify/scio
     <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-sideinput" class="header">Test for pipeline with sideinput</a></li>
     <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-sideoutput" class="header">Test for pipeline with sideoutput</a></li>
     <li><a href="Scio-Unit-Tests.html#test-partial-pipeline" class="header">Test partial pipeline</a></li>
+    <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-windowing" class="header">Test for pipeline with windowing</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -298,36 +300,44 @@ runWithContext { sc =&gt;
  r should haveSize(1)
  r should containSingleValue((&quot;94&quot;, 29))
 }
-````
-
-### Test for pipeline with windowing
-We will use the LeaderBoardTest to explain how to test Windowing in Scio. The full example code is found [here](https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala). LeaderBoardTest also extends `PipelineSpec`. The function under test is the [LeaderBoard.calculateTeamScores](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/complete/game/LeaderBoard.scala#L131).  This function calculates teams scores within a fixed window with the following the window options: 
-* Calculate the scores every time the window ends
-* Calculate an early/&quot;speculative&quot; result from partial data, 5 minutes after the first element in our window is processed (withEarlyFiring)
-* Accept late entries (and recalculates based on them) only if they arrive within the allowedLateness duration.
-
-In this test,  we are testing calculateTeamScores for when all of the elements arrive on time, i.e. before the watermark. 
-
-We specify, the fixed window size is set to 20 minutes and allowedLateness is 1 hour.
-private val allowedLateness = Duration.standardHours(1)
-private val teamWindowDuration = Duration.standardMinutes(20)
-
-First, we have to create an input stream representing an unbounded `SCollection` of type GameActionInfo using the `testStreamOf`. Each element is assigned a timestamp representing when each event occurred. In the code snippet above, we start at epoch equal zero,  by setting watermark to 0 in the advanceWatermarkTo.
-
-We add GameActionInfo elements with varying timestamps, and we advanced the watermark to 3 minutes. At this point, all elements are on time because they came before the watermark advances to 3 minutes.
-  
 </code></pre>
-<p>val stream = testStreamOf[GameActionInfo] // Start at the epoch  .advanceWatermarkTo(baseTime)  // add some elements ahead of the watermark  .addElements(  event(blueOne, 3, Duration.standardSeconds(3)),  event(blueOne, 2, Duration.standardMinutes(1)),  event(redTwo, 3, Duration.standardSeconds(22)),  event(blueTwo, 5, Duration.standardSeconds(3))  )  // The watermark advances slightly, but not past the end of the window  .advanceWatermarkTo(baseTime.plus(Duration.standardMinutes(3)))</p>
-<pre><code>We then more GameActionInfo elements and advance the watermark to infinity by calling the advanceWatermarkToInfinity. Similarly, these elements are also on time because the watermark is infinity.
-
+<h3><a href="#test-for-pipeline-with-windowing" name="test-for-pipeline-with-windowing" class="anchor"><span class="anchor-link"></span></a>Test for pipeline with windowing</h3>
+<p>We will use the LeaderBoardTest to explain how to test Windowing in Scio. The full example code is found <a href="https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala">here</a>. LeaderBoardTest also extends <code>PipelineSpec</code>. The function under test is the <a href="https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/complete/game/LeaderBoard.scala#L131">LeaderBoard.calculateTeamScores</a>. This function calculates teams scores within a fixed window with the following the window options: * Calculate the scores every time the window ends * Calculate an early/&ldquo;speculative&rdquo; result from partial data, 5 minutes after the first element in our window is processed (withEarlyFiring) * Accept late entries (and recalculates based on them) only if they arrive within the allowedLateness duration.</p>
+<p>In this test, we are testing calculateTeamScores for when all of the elements arrive on time, i.e. before the watermark. </p>
+<p>We specify, the fixed window size is set to 20 minutes and allowedLateness is 1 hour. private val allowedLateness = Duration.standardHours(1) private val teamWindowDuration = Duration.standardMinutes(20)</p>
+<p>First, we have to create an input stream representing an unbounded <code>SCollection</code> of type GameActionInfo using the <code>testStreamOf</code>. Each element is assigned a timestamp representing when each event occurred. In the code snippet above, we start at epoch equal zero, by setting watermark to 0 in the advanceWatermarkTo.</p>
+<p>We add GameActionInfo elements with varying timestamps, and we advanced the watermark to 3 minutes. At this point, all elements are on time because they came before the watermark advances to 3 minutes.</p>
+<pre class="prettyprint"><code class="language-scala">val stream = testStreamOf[GameActionInfo]
+// Start at the epoch
+ .advanceWatermarkTo(baseTime)
+ // add some elements ahead of the watermark
+ .addElements(
+   event(blueOne, 3, Duration.standardSeconds(3)),
+   event(blueOne, 2, Duration.standardMinutes(1)),
+   event(redTwo, 3, Duration.standardSeconds(22)),
+   event(blueTwo, 5, Duration.standardSeconds(3))
+ )
+ // The watermark advances slightly, but not past the end of the window
+ .advanceWatermarkTo(baseTime.plus(Duration.standardMinutes(3)))
 </code></pre>
-<p>.addElements(event(redOne, 1, Duration.standardMinutes(4)),  event(blueOne, 2, Duration.standardSeconds(270))) // The window should close and emit an ON_TIME pane .advanceWatermarkToInfinity</p>
-<pre><code><br/>To run the test, we use the `runWithContext`, this will run calculateTeamScores using the ScioContext. In calculateTeamScores, we pass the `SCollection` we created above using `testStreamOf`. The `IntervalWindow` specifies the window for which we want to assert the `SCollection` of elements created by calculateTeamScores. We want to assert that elements with initial window of 0 to 20 minutes were on time. Next we assert, using `inOnTimePane` that the `SCollection` elements are equal to the expected sums.
-
+<p>We then more GameActionInfo elements and advance the watermark to infinity by calling the advanceWatermarkToInfinity. Similarly, these elements are also on time because the watermark is infinity.</p>
+<pre class="prettyprint"><code class="language-scala">.addElements(event(redOne, 1, Duration.standardMinutes(4)),
+            event(blueOne, 2, Duration.standardSeconds(270)))
+// The window should close and emit an ON_TIME pane
+.advanceWatermarkToInfinity
 </code></pre>
-<p>runWithContext { sc =&gt;  val teamScores =  LeaderBoard.calculateTeamScores(sc.testStream(stream), teamWindowDuration, allowedLateness)</p>
-<p>val window = new IntervalWindow(baseTime, teamWindowDuration)  teamScores should inOnTimePane(window) {  containInAnyOrder(Seq((blueOne.team, 12), (redOne.team, 4)))  } } ``<code>
-Scio provides more</code>SCollection<code>assertions such as</code>inWindow<code>,</code>inCombinedNonLatePanes<code>,</code>inFinalPane<code>, and</code>inOnlyPane`. You can find the full list <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html">here</a>. More information on testing unbounded pipelines can be found <a href="https://beam.apache.org/blog/2016/10/20/test-stream.html">here</a>.</p>
+<p>To run the test, we use the <code>runWithContext</code>, this will run calculateTeamScores using the ScioContext. In calculateTeamScores, we pass the <code>SCollection</code> we created above using <code>testStreamOf</code>. The <code>IntervalWindow</code> specifies the window for which we want to assert the <code>SCollection</code> of elements created by calculateTeamScores. We want to assert that elements with initial window of 0 to 20 minutes were on time. Next we assert, using <code>inOnTimePane</code> that the <code>SCollection</code> elements are equal to the expected sums.</p>
+<pre class="prettyprint"><code class="language-scala">runWithContext { sc =&gt;
+ val teamScores =
+   LeaderBoard.calculateTeamScores(sc.testStream(stream), teamWindowDuration, allowedLateness)
+
+ val window = new IntervalWindow(baseTime, teamWindowDuration)
+ teamScores should inOnTimePane(window) {
+   containInAnyOrder(Seq((blueOne.team, 12), (redOne.team, 4)))
+ }
+}
+</code></pre>
+<p>Scio provides more <code>SCollection</code> assertions such as <code>inWindow</code>, <code>inCombinedNonLatePanes</code>, <code>inFinalPane</code>, and <code>inOnlyPane</code>. You can find the full list <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html">here</a>. More information on testing unbounded pipelines can be found <a href="https://beam.apache.org/blog/2016/10/20/test-stream.html">here</a>.</p>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/src/paradox/Scio-Unit-Tests.md" title="Edit this page" class="md-source-file md-edit">
