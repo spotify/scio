@@ -23,6 +23,11 @@ final case class Record[T] private (schemas: Array[(String, Schema[Any])],
     extends Schema[T] {
   type Repr = Row
 }
+
+object Record {
+  def apply[T](implicit r: Record[T]) = r
+}
+
 final case class Type[T](fieldType: FieldType) extends Schema[T] {
   type Repr = T
 }
