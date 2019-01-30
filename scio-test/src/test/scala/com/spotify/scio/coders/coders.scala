@@ -341,7 +341,7 @@ class CodersTest extends FlatSpec with Matchers {
 
   it should "support specific fixed data" in {
     val bytes = (0 to 15).map(_.toByte).toArray
-    new FixedSpefificDataExample(bytes) coderShould roundtrip()
+    new FixedSpecificDataExample(bytes) coderShould roundtrip()
   }
 
   it should "#1604: not throw on null" in {
