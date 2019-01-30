@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,33 +21,30 @@ import java.io.{InputStream, OutputStream}
 
 import scala.collection.JavaConverters._
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.testing.CoderMatchers._
+import com.spotify.scio.testing.CoderAssertions._
 import org.apache.beam.sdk.coders.{AtomicCoder, StringUtf8Coder}
 import org.scalatest.{FlatSpec, Matchers}
 import org.scalatest.exceptions.TestFailedException
 
-class CoderMatchersTest extends FlatSpec with Matchers {
-  class Foo(val id: String) {
-    override def equals(obj: Any): Boolean = this.id == obj.asInstanceOf[Foo].id
-    override def hashCode(): Int = super.hashCode()
-  }
+case class Foo(id: String)
 
+class CoderAssertionsTest extends FlatSpec with Matchers {
   // A coder which roundtrips incorrectly
   private def incorrectCoder: Coder[Foo] =
     Coder.beam(new AtomicCoder[Foo] {
       override def encode(value: Foo, outStream: OutputStream): Unit =
         StringUtf8Coder.of().encode(value.id, outStream)
       override def decode(inStream: InputStream): Foo =
-        new Foo(StringUtf8Coder.of().decode(inStream) + "wrongBytes")
+        Foo(StringUtf8Coder.of().decode(inStream) + "wrongBytes")
     })
 
-  "CoderMatchers" should "support roundtrip" in {
-    "foo" coderShould roundtrip()
+  "CoderAssertions" should "support roundtrip" in {
+    Foo("bar") coderShould roundtrip()
 
     an[TestFailedException] should be thrownBy {
       implicit def coder: Coder[Foo] = incorrectCoder
 
-      new Foo("someId") coderShould roundtrip()
+      Foo("baz") coderShould roundtrip()
     }
   }
 
@@ -70,17 +67,18 @@ class CoderMatchersTest extends FlatSpec with Matchers {
   }
 
   it should "support coderIsSerializable" in {
-    coderIsSerializable[String]
-    coderIsSerializable(Coder[String])
+    coderIsSerializable[Foo]
+    coderIsSerializable(Coder[Foo])
 
-    implicit def coder: Coder[Foo] = incorrectCoder
+    // Inner class's Coder is not serializable
+    case class InnerCaseClass(id: String)
 
     an[TestFailedException] should be thrownBy {
-      coderIsSerializable[Foo]
+      coderIsSerializable[InnerCaseClass]
     }
 
     an[TestFailedException] should be thrownBy {
-      coderIsSerializable(Coder[Foo])
+      coderIsSerializable(Coder[InnerCaseClass])
     }
   }
 }

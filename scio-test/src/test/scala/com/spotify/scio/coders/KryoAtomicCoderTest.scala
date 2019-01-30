@@ -24,7 +24,7 @@ import com.google.common.collect.ImmutableList
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.coders.CoderTestUtils._
-import com.spotify.scio.testing.CoderMatchers._
+import com.spotify.scio.testing.CoderAssertions._
 
 import com.spotify.scio.testing.PipelineSpec
 import com.twitter.chill.{java => _, _}

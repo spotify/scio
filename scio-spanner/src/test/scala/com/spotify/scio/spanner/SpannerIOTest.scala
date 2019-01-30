@@ -21,7 +21,7 @@ import com.google.cloud.spanner.{Mutation, Struct}
 import com.spotify.scio.testing.ScioIOSpec
 import org.apache.beam.sdk.io.gcp.spanner.{ReadOperation, SpannerConfig}
 import org.scalatest.Matchers
-import com.spotify.scio.testing.CoderMatchers._
+import com.spotify.scio.testing.CoderAssertions._
 
 class SpannerIOTest extends ScioIOSpec with Matchers {
   private val config: SpannerConfig = SpannerConfig

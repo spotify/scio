@@ -18,11 +18,10 @@
 package com.spotify.scio.coders
 
 import com.spotify.scio.proto.OuterClassForProto
-import com.spotify.scio.testing.CoderMatchers._
+import com.spotify.scio.testing.CoderAssertions._
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.coders.{Coder => BCoder}
+import org.apache.beam.sdk.coders.{Coder => BCoder, CoderRegistry}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
-import org.apache.beam.sdk.coders.CoderRegistry
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.scalactic.Equality
 import org.scalatest.{FlatSpec, Matchers}

@@ -27,8 +27,8 @@ import org.scalatest.Matchers._
 
 import scala.reflect.ClassTag
 
-object CoderMatchers {
-  private lazy val defaultOpts = PipelineOptionsFactory.create()
+object CoderAssertions {
+  private lazy val DefaultPipelineOptions = PipelineOptionsFactory.create()
 
   implicit class CoderShouldMatchers[T](private val value: T) extends AnyVal {
     def coderShould(coderMatcher: CoderShouldMatcher[T])(implicit c: Coder[T],
@@ -40,7 +40,7 @@ object CoderMatchers {
     def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion
   }
 
-  def roundtrip[T](opts: PipelineOptions = defaultOpts): CoderShouldMatcher[T] =
+  def roundtrip[T](opts: PipelineOptions = DefaultPipelineOptions): CoderShouldMatcher[T] =
     new CoderShouldMatcher[T] {
       override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         val beamCoder = CoderMaterializer.beamWithDefault(c, o = opts)
@@ -48,7 +48,8 @@ object CoderMatchers {
       }
     }
 
-  def roundtripKryo[T: ClassTag](opts: PipelineOptions = defaultOpts): CoderShouldMatcher[T] =
+  def roundtripKryo[T: ClassTag](opts: PipelineOptions = DefaultPipelineOptions):
+  CoderShouldMatcher[T] =
     new CoderShouldMatcher[T] {
       override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         val kryoCoder = CoderMaterializer.beamWithDefault(Coder.kryo[T], o = opts)
@@ -56,7 +57,8 @@ object CoderMatchers {
       }
     }
 
-  def notFallback[T: ClassTag](opts: PipelineOptions = defaultOpts): CoderShouldMatcher[T] =
+  def notFallback[T: ClassTag](opts: PipelineOptions = DefaultPipelineOptions):
+  CoderShouldMatcher[T] =
     new CoderShouldMatcher[T] {
       override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         c should !==(Coder.kryo[T])
@@ -65,7 +67,7 @@ object CoderMatchers {
       }
     }
 
-  def fallback[T: ClassTag](opts: PipelineOptions = defaultOpts): CoderShouldMatcher[T] =
+  def fallback[T: ClassTag](opts: PipelineOptions = DefaultPipelineOptions): CoderShouldMatcher[T] =
     new CoderShouldMatcher[T] {
       override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         c should ===(Coder.kryo[T])
