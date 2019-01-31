@@ -24,9 +24,6 @@ import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.values.Row
 
-import shapeless.tag
-import shapeless.tag.@@
-
 object TestData {
   case class User(username: String, email: String, age: Int)
   val users =
@@ -78,7 +75,7 @@ class BeamSQLTest extends PipelineSpec {
   "BeamSQL" should "support queries on case classes" in runWithContext { sc =>
     val schemaRes = BSchema.builder().addStringField("username").build()
     val expected = users.map { u =>
-      tag[Schema[Row]](Row.withSchema(schemaRes).addValue(u.username).build())
+      Row.withSchema(schemaRes).addValue(u.username).build()
     }
     implicit def coderRowRes = Coder.row(schemaRes)
     val in = sc.parallelize(users)
@@ -104,12 +101,11 @@ class BeamSQLTest extends PipelineSpec {
         .build()
 
     val expected = usersWithIds.map { u =>
-      tag[Schema[Row]](
-        Row
-          .withSchema(schemaRes)
-          .addValue(u.id.id)
-          .addValue(u.username)
-          .build())
+      Row
+        .withSchema(schemaRes)
+        .addValue(u.id.id)
+        .addValue(u.username)
+        .build()
     }
 
     implicit def coderRowRes = Coder.row(schemaRes)
@@ -122,7 +118,7 @@ class BeamSQLTest extends PipelineSpec {
   it should "support fallback coders" in runWithContext { sc =>
     val schemaRes = BSchema.builder().addStringField("username").build()
     val expected = usersWithLocale.map { u =>
-      tag[Schema[Row]](Row.withSchema(schemaRes).addValue(u.username).build())
+      Row.withSchema(schemaRes).addValue(u.username).build()
     }
     implicit def coderRowRes = Coder.row(schemaRes)
     val in = sc.parallelize(usersWithLocale)
@@ -133,7 +129,7 @@ class BeamSQLTest extends PipelineSpec {
   it should "infer the schema of results" in runWithContext { sc =>
     val schemaRes = BSchema.builder().addStringField("username").build()
     val expected = users.map { u =>
-      tag[Schema[Row]](Row.withSchema(schemaRes).addValue(u.username).build())
+      Row.withSchema(schemaRes).addValue(u.username).build()
     }
     implicit def coderRowRes = Coder.row(schemaRes)
     val in = sc.parallelize(users)
@@ -210,13 +206,14 @@ class BeamSQLTest extends PipelineSpec {
   }
 
   it should "properly chain row queries" in runWithContext { sc =>
-    val schemaRes = BSchema.builder().addInt32Field("sum(age)").build()
-    val expected = tag[Schema[Row]](Row.withSchema(schemaRes).addValue(255).build())
+    val schemaRes = BSchema.builder().addInt64Field("sum(age)").build()
+    val expected = Row.withSchema(schemaRes).addValue(255).build()
 
     val in = sc.parallelize(users)
     val r =
       in.sql(Query.row("select username, age from PCOLLECTION"))
-        .sql(Query.trow("select sum(age) from PCOLLECTION"))
+        .sql(Query.row("select sum(age) from PCOLLECTION"))
+
     r should containSingleValue(expected)
   }
 
