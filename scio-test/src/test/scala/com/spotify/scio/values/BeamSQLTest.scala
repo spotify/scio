@@ -18,10 +18,14 @@ package com.spotify.scio.values
 
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.sql.Query
 import com.spotify.scio.schemas.Schema
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.values.Row
+
+import shapeless.tag
+import shapeless.tag.@@
 
 object TestData {
   case class User(username: String, email: String, age: Int)
@@ -74,18 +78,18 @@ class BeamSQLTest extends PipelineSpec {
   "BeamSQL" should "support queries on case classes" in runWithContext { sc =>
     val schemaRes = BSchema.builder().addStringField("username").build()
     val expected = users.map { u =>
-      Row.withSchema(schemaRes).addValue(u.username).build()
+      tag[Schema[Row]](Row.withSchema(schemaRes).addValue(u.username).build())
     }
     implicit def coderRowRes = Coder.row(schemaRes)
     val in = sc.parallelize(users)
-    val r = in.sql("select username from PCOLLECTION")
+    val r = in.sql(Query.row("select username from PCOLLECTION"))
     r should containInAnyOrder(expected)
   }
 
   it should "support scalar results" in runWithContext { sc =>
     val expected = 255
     val in = sc.parallelize(users)
-    val r = in.sql[Int]("select sum(age) from PCOLLECTION")
+    val r = in.sql[Int](Query.of("select sum(age) from PCOLLECTION"))
     r should containSingleValue(expected)
   }
 
@@ -100,39 +104,40 @@ class BeamSQLTest extends PipelineSpec {
         .build()
 
     val expected = usersWithIds.map { u =>
-      Row
-        .withSchema(schemaRes)
-        .addValue(u.id.id)
-        .addValue(u.username)
-        .build()
+      tag[Schema[Row]](
+        Row
+          .withSchema(schemaRes)
+          .addValue(u.id.id)
+          .addValue(u.username)
+          .build())
     }
 
     implicit def coderRowRes = Coder.row(schemaRes)
     val in = sc.parallelize(usersWithIds)
     val r =
-      in.sql("select id, username from PCOLLECTION")
+      in.sql(Query.row("select id, username from PCOLLECTION"))
     r should containInAnyOrder(expected)
   }
 
   it should "support fallback coders" in runWithContext { sc =>
     val schemaRes = BSchema.builder().addStringField("username").build()
     val expected = usersWithLocale.map { u =>
-      Row.withSchema(schemaRes).addValue(u.username).build()
+      tag[Schema[Row]](Row.withSchema(schemaRes).addValue(u.username).build())
     }
     implicit def coderRowRes = Coder.row(schemaRes)
     val in = sc.parallelize(usersWithLocale)
-    val r = in.sql("select username from PCOLLECTION")
+    val r = in.sql(Query.row("select username from PCOLLECTION"))
     r should containInAnyOrder(expected)
   }
 
   it should "infer the schema of results" in runWithContext { sc =>
     val schemaRes = BSchema.builder().addStringField("username").build()
     val expected = users.map { u =>
-      Row.withSchema(schemaRes).addValue(u.username).build()
+      tag[Schema[Row]](Row.withSchema(schemaRes).addValue(u.username).build())
     }
     implicit def coderRowRes = Coder.row(schemaRes)
     val in = sc.parallelize(users)
-    val r = in.sql("select username from PCOLLECTION")
+    val r = in.sql(Query.row("select username from PCOLLECTION"))
     r should containInAnyOrder(expected)
   }
 
@@ -141,7 +146,7 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.age)
     }
     val in = sc.parallelize(users)
-    val r = in.sql[(String, Int)]("select username, age from PCOLLECTION")
+    val r = in.sql[(String, Int)](Query.of("select username, age from PCOLLECTION"))
     r should containInAnyOrder(expected)
   }
 
@@ -150,7 +155,7 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.locale)
     }
     val in = sc.parallelize(usersWithLocale)
-    val r = in.sql[(String, java.util.Locale)]("select username, locale from PCOLLECTION")
+    val r = in.sql[(String, java.util.Locale)](Query.of("select username, locale from PCOLLECTION"))
     r should containInAnyOrder(expected)
   }
 
@@ -159,8 +164,12 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.age)
     }
     val in = sc.parallelize(usersWithOption)
-    val r = in.sql[(String, Option[Int])]("select username, age from PCOLLECTION")
+    val r = in.sql[(String, Option[Int])](Query.of("select username, age from PCOLLECTION"))
     r should containInAnyOrder(expected)
+
+    val in2 = sc.parallelize(usersWithOption)
+    val r2 = in2.sql[Option[Int]](Query.of("select age from PCOLLECTION"))
+    r2 should containInAnyOrder(expected.map(_._2))
   }
 
   it should "support scala collections" in runWithContext { sc =>
@@ -168,14 +177,14 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.emails)
     }
     val in = sc.parallelize(usersWithList)
-    val r = in.sql[(String, List[String])]("select username, emails from PCOLLECTION")
+    val r = in.sql[(String, List[String])](Query.of("select username, emails from PCOLLECTION"))
     r should containInAnyOrder(expected)
   }
 
   it should "support javabeans" in runWithContext { sc =>
     val expected = 255
     val in = sc.parallelize(users)
-    val r = in.sql[Int]("select sum(age) from PCOLLECTION")
+    val r = in.sql[Int](Query.of("select sum(age) from PCOLLECTION"))
     r should containSingleValue(expected)
   }
 
@@ -185,7 +194,7 @@ class BeamSQLTest extends PipelineSpec {
     }
     val in = sc.parallelize(usersWithJList)
     val r =
-      in.sql[(String, String)]("select username, emails[1] from PCOLLECTION")
+      in.sql[(String, String)](Query.of("select username, emails[1] from PCOLLECTION"))
     r should containInAnyOrder(expected)
   }
 
@@ -198,5 +207,25 @@ class BeamSQLTest extends PipelineSpec {
     "Schema.javaBeanSchema[UserBean]" should compile
     "Schema.javaBeanSchema[NotABean]" shouldNot compile
     "Schema.javaBeanSchema[TypeMismatch]" shouldNot compile
+  }
+
+  it should "properly chain row queries" in runWithContext { sc =>
+    val schemaRes = BSchema.builder().addInt32Field("sum(age)").build()
+    val expected = tag[Schema[Row]](Row.withSchema(schemaRes).addValue(255).build())
+
+    val in = sc.parallelize(users)
+    val r =
+      in.sql(Query.row("select username, age from PCOLLECTION"))
+        .sql(Query.trow("select sum(age) from PCOLLECTION"))
+    r should containSingleValue(expected)
+  }
+
+  it should "properly chain typed queries" in runWithContext { sc =>
+    val expected = 255
+    val in = sc.parallelize(users)
+    val r =
+      in.sql[(String, Int)](Query.of("select username, age from PCOLLECTION"))
+        .sql[Int](Query.of("select sum(_2) from PCOLLECTION"))
+    r should containSingleValue(expected)
   }
 }

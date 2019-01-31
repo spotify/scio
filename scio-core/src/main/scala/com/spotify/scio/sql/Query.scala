@@ -35,15 +35,19 @@ sealed trait Query[I, O] {
 }
 
 object Query {
-  implicit class QueryCompiler(private val sc: StringContext) extends AnyVal {
-    def tsql[I, O](args: Any*): Query[I, O] = ???
-  }
+  import shapeless.tag._
 
-  def row[I: Record](q: String): Query[I, Row] =
-    new Query[I, Row] {
+  type TypedRow = Row @@ Schema[Row]
+
+  val PCOLLECTION_NAME = "PCOLLECTION"
+
+  def row(q: String): Query[TypedRow, TypedRow] = ???
+  def trow(q: String): Query[TypedRow, TypedRow] = ???
+
+  def row[I: Record](q: String): Query[I, TypedRow] =
+    new Query[I, TypedRow] {
       val query = q
       def run(c: SCollection[I]) = {
-        val PCOLLECTION_NAME = "PCOLLECTION"
         val scoll = c.setSchema(Record[I])
         val sqlEnv = BeamSqlEnv.readOnly(
           PCOLLECTION_NAME,
@@ -51,7 +55,9 @@ object Query {
         // Will it support UDF (see SqlTransform.expand) ?
         val q = sqlEnv.parseQuery(query)
         val schema = CalciteUtils.toSchema(q.getRowType)
-        scoll.applyTransform[Row](SqlTransform.query(query))(Coder.row(schema))
+        scoll
+          .applyTransform[Row](SqlTransform.query(query))(Coder.row(schema))
+          .asInstanceOf[SCollection[TypedRow]]
       }
     }
 
@@ -61,7 +67,7 @@ object Query {
       def run(s: SCollection[I]): SCollection[O] = {
         import org.apache.beam.sdk.schemas.SchemaCoder
         val (schema, to, from) = SchemaMaterializer.materialize(s.context, Schema[O])
-        val coll: SCollection[Row] = Query.row(query).run(s)
+        val coll = Query.row[I](query).run(s)
         coll.map[O](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
       }
     }

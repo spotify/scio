@@ -29,13 +29,14 @@ private[sql] object QueryMacros {
     import c.universe._
     val typeOfI = weakTypeOf[I]
     val q"${s: String}" = query.tree
-    // val q"UnliftableSchema(${schema: String})" = iRecord.tree
-    // println(schema)
-    // val q"${arr: Array[Int]}" = q"Array[Int]()"
-    println(iRecord.tree.tpe.member(TypeName("Repr")).typeSignature)
-    println(oSchema.tree.tpe.member(TypeName("Repr")).typeSignature)
+
+    println(iRecord.tree.tpe.member(TypeName("Repr")).typeSignature.dealias)
+    println(oSchema.tree.tpe.member(TypeName("Repr")).typeSignature.dealias)
     println(s"Query was: $s")
     ???
   }
 
+  // import com.spotify.scio.sql._
+  // case class Foo(i: Int, s: String)
+  // Query.tsql[Foo, (Int, String)]("select * from yolo")
 }
