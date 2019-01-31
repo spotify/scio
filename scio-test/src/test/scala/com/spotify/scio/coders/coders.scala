@@ -17,19 +17,19 @@
 
 package com.spotify.scio.coders
 
+import com.spotify.scio.proto.OuterClassForProto
+import com.spotify.scio.testing.CoderAssertions._
+import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.coders.{Coder => BCoder, CoderRegistry}
+import org.apache.beam.sdk.coders.Coder.NonDeterministicException
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
+import org.scalactic.Equality
+import org.scalatest.{FlatSpec, Matchers}
+
 import scala.collection.JavaConverters._
 import scala.collection.{mutable => mut}
-import org.apache.beam.sdk.util.CoderUtils
-import org.apache.beam.sdk.coders.{Coder => BCoder}
-import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.coders.Coder.NonDeterministicException
-import org.apache.beam.sdk.coders.CoderRegistry
-import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
-import org.scalatest.{Assertion, FlatSpec, Matchers}
-import scala.reflect.{classTag, ClassTag}
 
 final case class UserId(bytes: Seq[Byte])
-
 final case class User(id: UserId, username: String, email: String)
 
 sealed trait Top
@@ -72,39 +72,12 @@ object PrivateClass {
   def apply(l: Long): PrivateClass = new PrivateClass(l)
 }
 
-import com.spotify.scio.proto._
 case class ClassWithProtoEnum(s: String, enum: OuterClassForProto.EnumExample)
 
 class CodersTest extends FlatSpec with Matchers {
 
   val userId = UserId(Array[Byte](1, 2, 3, 4))
   val user = User(userId, "johndoe", "johndoe@spotify.com")
-
-  private def checkSer[A](implicit c: Coder[A]) = {
-    val beamCoder = CoderMaterializer.beamWithDefault(c)
-    org.apache.beam.sdk.util.SerializableUtils.ensureSerializable(beamCoder)
-  }
-
-  import org.scalactic.Equality
-  def check[T](t: T, options: PipelineOptions = PipelineOptionsFactory.create())(
-    implicit C: Coder[T],
-    eq: Equality[T]): Assertion = {
-    val beamCoder = CoderMaterializer.beamWithDefault(C, o = options)
-    org.apache.beam.sdk.util.SerializableUtils.ensureSerializable(beamCoder)
-    val enc = CoderUtils.encodeToByteArray(beamCoder, t)
-    val dec = CoderUtils.decodeFromByteArray(beamCoder, enc)
-    dec should ===(t)
-  }
-
-  def checkNotFallback[T: ClassTag](t: T)(implicit C: Coder[T], eq: Equality[T]): Assertion = {
-    C should !==(Coder.kryo[T])
-    check[T](t)(C, eq)
-  }
-
-  def checkFallback[T: ClassTag](t: T)(implicit C: Coder[T], eq: Equality[T]): Assertion = {
-    C should ===(Coder.kryo[T])
-    check[T](t)(C, eq)
-  }
 
   def materialize[T](coder: Coder[T]): BCoder[T] = {
     CoderMaterializer
@@ -116,9 +89,9 @@ class CodersTest extends FlatSpec with Matchers {
   }
 
   "Coders" should "support primitives" in {
-    check(1)
-    check("yolo")
-    check(4.5)
+    1 coderShould roundtrip()
+    "yolo" coderShould roundtrip()
+    4.5 coderShould roundtrip()
   }
 
   it should "support Scala collections" in {
@@ -130,17 +103,17 @@ class CodersTest extends FlatSpec with Matchers {
       v.toString -> v
     }.toMap
 
-    checkNotFallback(nil)
-    checkNotFallback(s)
-    checkNotFallback(s.toList)
-    checkNotFallback(s.toVector)
-    checkNotFallback(m)
-    checkNotFallback(s.toSet)
-    checkNotFallback(mut.ListBuffer((1 to 10): _*))
-    checkNotFallback(None)
-    checkNotFallback(Option(1))
-    checkNotFallback(Some(1))
-    checkNotFallback(BitSet(1 to 100000: _*))
+    nil coderShould notFallback()
+    s coderShould notFallback()
+    s.toList coderShould notFallback()
+    s.toVector coderShould notFallback()
+    m coderShould notFallback()
+    s.toSet coderShould notFallback()
+    mut.ListBuffer((1 to 10): _*) coderShould notFallback()
+    None coderShould notFallback()
+    Option(1) coderShould notFallback()
+    Some(1) coderShould notFallback()
+    BitSet(1 to 100000: _*) coderShould notFallback()
   }
 
   it should "support Java collections" in {
@@ -153,12 +126,13 @@ class CodersTest extends FlatSpec with Matchers {
       }
       .toMap
       .asJava
-    checkNotFallback(s)
-    checkNotFallback(m)
+    s coderShould notFallback()
+    m coderShould notFallback()
   }
 
   object Avro {
     import com.spotify.scio.avro.{User => AvUser, Account, Address}
+
     val accounts: List[Account] = List(new Account(1, "tyoe", "name", 12.5))
     val address =
       new Address("street1", "street2", "city", "state", "01234", "Sweden")
@@ -171,65 +145,70 @@ class CodersTest extends FlatSpec with Matchers {
   }
 
   it should "Derive serializable coders" in {
-    checkSer[Int]
-    checkSer[String]
-    checkSer[List[Int]]
-    checkSer(Coder.kryo[Int])
-    checkSer(Coder.gen[(Int, Int)])
-    checkSer(Coder.gen[DummyCC])
-    checkSer[com.spotify.scio.avro.User]
-    checkSer[NestedA]
+    coderIsSerializable[Int]
+    coderIsSerializable[String]
+    coderIsSerializable[List[Int]]
+    coderIsSerializable(Coder.kryo[Int])
+    coderIsSerializable(Coder.gen[(Int, Int)])
+    coderIsSerializable(Coder.gen[DummyCC])
+    coderIsSerializable[com.spotify.scio.avro.User]
+    coderIsSerializable[NestedA]
   }
 
   it should "support Avro's SpecificRecordBase" in {
-    checkNotFallback(Avro.user)
+    Avro.user coderShould notFallback()
   }
 
   it should "support Avro's GenericRecord" in {
     val schema = Avro.user.getSchema
     val record: GenericRecord = Avro.user
-    checkNotFallback(record)(classTag[GenericRecord], Coder.avroGenericRecordCoder(schema), Avro.eq)
+
+    implicit val c: Coder[GenericRecord] = Coder.avroGenericRecordCoder(schema)
+    implicit val eq: Equality[GenericRecord] = Avro.eq
+
+    record coderShould notFallback()
   }
 
   it should "derive coders for product types" in {
-    checkNotFallback(DummyCC("dummy"))
-    checkNotFallback(DummyCC(""))
-    checkNotFallback(ParameterizedDummy("dummy"))
-    checkNotFallback(MultiParameterizedDummy("dummy", 2))
-    checkNotFallback(user)
-    checkNotFallback((1, "String", List[Int]()))
+    DummyCC("dummy") coderShould notFallback()
+    DummyCC("") coderShould notFallback()
+    ParameterizedDummy("dummy") coderShould notFallback()
+    MultiParameterizedDummy("dummy", 2) coderShould notFallback()
+    user coderShould notFallback()
+    (1, "String", List[Int]()) coderShould notFallback()
     val ds = (1 to 10).map { _ =>
       DummyCC("dummy")
     }.toList
-    checkNotFallback(ds)
+    ds coderShould notFallback()
   }
 
   it should "derive coders for sealed class hierarchies" in {
     val ta: Top = TA(1, "test")
     val tb: Top = TB(4.2)
-    checkNotFallback(ta)
-    checkNotFallback(tb)
-    checkNotFallback((123, "hello", ta, tb, List(("bar", 1, "foo"))))
+    ta coderShould notFallback()
+    tb coderShould notFallback()
+    (123, "hello", ta, tb, List(("bar", 1, "foo"))) coderShould notFallback()
   }
 
   // FIXME: implement the missing coders
   it should "support all the already supported types" in {
-    import org.joda.time._
-    import java.nio.file.FileSystems
     import java.math.{BigInteger, BigDecimal => jBigDecimal}
+    import java.nio.file.FileSystems
+
     import org.apache.beam.sdk.transforms.windowing.IntervalWindow
+    import org.joda.time._
 
     // TableRowJsonCoder
     // SpecificRecordBase
     // Message
     // ByteString
-    checkNotFallback(BigDecimal("1234"))
-    checkNotFallback(new Instant)
-    checkNotFallback(new LocalDate)
-    checkNotFallback(new LocalTime)
-    checkNotFallback(new LocalDateTime)
-    checkNotFallback(new DateTime)
-    checkNotFallback(FileSystems.getDefault().getPath("logs", "access.log"))
+    BigDecimal("1234") coderShould notFallback()
+    new Instant coderShould notFallback()
+    new LocalDate coderShould notFallback()
+    new LocalTime coderShould notFallback()
+    new LocalDateTime coderShould notFallback()
+    new DateTime coderShould notFallback()
+    FileSystems.getDefault().getPath("logs", "access.log") coderShould notFallback()
 
     "Coder[Void]" should compile
     "Coder[Unit]" should compile
@@ -239,30 +218,30 @@ class CodersTest extends FlatSpec with Matchers {
     (1 to 100000).foreach { x =>
       bs.set(x)
     }
-    checkNotFallback(bs)
+    bs coderShould notFallback()
 
-    checkNotFallback(new BigInteger("123456789"))
-    checkNotFallback(new jBigDecimal("123456789.98765"))
-    checkNotFallback(new IntervalWindow((new Instant).minus(4000), new Instant))
-
+    new BigInteger("123456789") coderShould notFallback()
+    new jBigDecimal("123456789.98765") coderShould notFallback()
+    new IntervalWindow((new Instant).minus(4000), new Instant) coderShould notFallback()
   }
 
   it should "Serialize java's Instant" in {
     import java.time.{Instant => jInstant}
 
     // Both thow exceptions but they should be unusual enough to not be an issue
-    // checkNotFallback(jInstant.MIN)
-    // checkNotFallback(jInstant.MAX)
-    checkNotFallback(jInstant.EPOCH)
-    checkNotFallback(jInstant.now)
+    // jInstant.MIN coderShould notFallback()
+    // jInstant.MAX coderShould notFallback()
+    jInstant.EPOCH coderShould notFallback()
+    jInstant.now coderShould notFallback()
   }
 
   // Broken because of a bug in Beam
   // See: https://issues.apache.org/jira/browse/BEAM-5645
   ignore should "Serialize Row (see: BEAM-5645)" in {
+    import java.lang.{Double => jDouble, Integer => jInt, String => jString}
+
     import org.apache.beam.sdk.schemas.{Schema => bSchema}
     import org.apache.beam.sdk.values.Row
-    import java.lang.{Integer => jInt, String => jString, Double => jDouble}
 
     val beamSchema =
       bSchema
@@ -280,29 +259,29 @@ class CodersTest extends FlatSpec with Matchers {
             Row.withSchema(beamSchema).addValues(a, b, c).build()
         }
         .foreach { r =>
-          checkNotFallback(r)
+          r coderShould notFallback()
         }
   }
 
   it should "Serialize objects" in {
-    checkNotFallback(TestObject)
-    checkNotFallback(TestObject1)
+    TestObject coderShould notFallback()
+    TestObject1 coderShould notFallback()
   }
 
   it should "only derive Coder if no coder exists" in {
-    checkNotFallback(CaseClassWithExplicitCoder(1, "hello"))
+    CaseClassWithExplicitCoder(1, "hello") coderShould notFallback()
     Coder[CaseClassWithExplicitCoder] should
       ===(CaseClassWithExplicitCoder.caseClassWithExplicitCoderCoder)
   }
 
   it should "provide a fallback if no safe coder is available" in {
     val record: GenericRecord = Avro.user
-    checkFallback(record)
+    record coderShould fallback()
   }
 
   it should "support classes with private constructors" in {
     Coder.gen[PrivateClass]
-    checkFallback(PrivateClass(42L))
+    PrivateClass(42L) coderShould fallback()
   }
 
   it should "not derive Coders for org.apache.beam.sdk.values.Row" in {
@@ -347,29 +326,28 @@ class CodersTest extends FlatSpec with Matchers {
   }
 
   it should "support protobuf messages" in {
-    import com.spotify.scio.proto._
     "Coder[OuterClassForProto.ProtoComplexMessage]" should compile
     val b = OuterClassForProto.ProtoComplexMessage.newBuilder
     val ex = b.setArtistGid("1").setTimeFilter(OuterClassForProto.EnumExample.OPT1).build()
-    checkNotFallback(ex)
-    checkNotFallback(ClassWithProtoEnum("somestring", OuterClassForProto.EnumExample.OPT1))
+    ex coderShould notFallback()
+    ClassWithProtoEnum("somestring", OuterClassForProto.EnumExample.OPT1) coderShould notFallback()
   }
 
   it should "support java enums" in {
-    check(JavaEnumExample.GOOD_THING)
-    check(JavaEnumExample.BAD_THING)
+    JavaEnumExample.GOOD_THING coderShould roundtrip()
+    JavaEnumExample.BAD_THING coderShould roundtrip()
   }
 
   it should "support specific fixed data" in {
     val bytes = (0 to 15).map(_.toByte).toArray
-    check(new FixedSpefificDataExample(bytes))
+    new FixedSpecificDataExample(bytes) coderShould roundtrip()
   }
 
   it should "#1604: not throw on null" in {
     import java.lang.{
-      Integer => jInt,
-      Float => jFloat,
       Double => jDouble,
+      Float => jFloat,
+      Integer => jInt,
       Long => jLong,
       Short => jShort
     }
@@ -379,13 +357,13 @@ class CodersTest extends FlatSpec with Matchers {
         .fromArgs("--nullableCoders=true")
         .create()
 
-    check[String](null, opts)
-    check[jInt](null, opts)
-    check[jFloat](null, opts)
-    check[jDouble](null, opts)
-    check[jLong](null, opts)
-    check[jShort](null, opts)
-    check[(String, String)]((null, null), opts)
-    check(DummyCC(null), opts)
+    null.asInstanceOf[String] coderShould roundtrip(opts)
+    null.asInstanceOf[jInt] coderShould roundtrip(opts)
+    null.asInstanceOf[jFloat] coderShould roundtrip(opts)
+    null.asInstanceOf[jDouble] coderShould roundtrip(opts)
+    null.asInstanceOf[jLong] coderShould roundtrip(opts)
+    null.asInstanceOf[jShort] coderShould roundtrip(opts)
+    (null, null).asInstanceOf[(String, String)] coderShould roundtrip(opts)
+    DummyCC(null) coderShould roundtrip(opts)
   }
 }

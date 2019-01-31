@@ -7,7 +7,7 @@ package com.spotify.scio.coders;
 @SuppressWarnings("all")
 @org.apache.avro.specific.FixedSize(16)
 @org.apache.avro.specific.AvroGenerated
-public class FixedSpefificDataExample extends org.apache.avro.specific.SpecificFixed {
+public class FixedSpecificDataExample extends org.apache.avro.specific.SpecificFixed {
   private static final long serialVersionUID = -2338097724925344269L;
   public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse
       ("{\"type\":\"fixed\",\"name\":\"FixedSpecificDataExample\",\"namespace\":\"com.spotify.scio.coders\","
@@ -15,21 +15,21 @@ public class FixedSpefificDataExample extends org.apache.avro.specific.SpecificF
   public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
   public org.apache.avro.Schema getSchema() { return SCHEMA$; }
 
-  /** Creates a new FixedSpefificDataExample */
-  public FixedSpefificDataExample() {
+  /** Creates a new FixedSpecificDataExample */
+  public FixedSpecificDataExample() {
     super();
   }
 
   /**
    * Creates a new FixedSpecificDataExample with the given bytes.
-   * @param bytes The bytes to create the new FixedSpefificDataExample.
+   * @param bytes The bytes to create the new FixedSpecificDataExample.
    */
-  public FixedSpefificDataExample(byte[] bytes) {
+  public FixedSpecificDataExample(byte[] bytes) {
     super(bytes);
   }
 
   private static final org.apache.avro.io.DatumWriter
-      WRITER$ = new org.apache.avro.specific.SpecificDatumWriter<FixedSpefificDataExample>(SCHEMA$);
+      WRITER$ = new org.apache.avro.specific.SpecificDatumWriter<FixedSpecificDataExample>(SCHEMA$);
 
   @Override public void writeExternal(java.io.ObjectOutput out)
       throws java.io.IOException {
@@ -37,7 +37,7 @@ public class FixedSpefificDataExample extends org.apache.avro.specific.SpecificF
   }
 
   private static final org.apache.avro.io.DatumReader
-      READER$ = new org.apache.avro.specific.SpecificDatumReader<FixedSpefificDataExample>(SCHEMA$);
+      READER$ = new org.apache.avro.specific.SpecificDatumReader<FixedSpecificDataExample>(SCHEMA$);
 
   @Override public void readExternal(java.io.ObjectInput in)
       throws java.io.IOException {

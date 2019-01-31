@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.coders.CoderTestUtils._
+import com.spotify.scio.testing.CoderAssertions._
 
 import com.spotify.scio.testing.PipelineSpec
 import com.twitter.chill.{java => _, _}
@@ -33,7 +34,6 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values.KV
 import org.joda.time.Instant
-import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -48,29 +48,21 @@ class KryoAtomicCoderTest extends PipelineSpec {
   type CoderFactory = () => BCoder[Any]
   val cf = () => new KryoAtomicCoder[Any](KryoOptions())
 
-  private def roundTrip[T: ClassTag](value: T) = new Matcher[CoderFactory] {
-    override def apply(left: CoderFactory): MatchResult = {
-      MatchResult(testRoundTrip(left(), left(), value),
-                  s"Coder did not round trip $value",
-                  s"Coder did round trip $value")
-    }
-  }
-
   "KryoAtomicCoder" should "support Scala collections" in {
-    cf should roundTrip(Seq(1, 2, 3))
-    cf should roundTrip(List(1, 2, 3))
-    cf should roundTrip(Set(1, 2, 3))
-    cf should roundTrip(Map("a" -> 1, "b" -> 2, "c" -> 3))
+    Seq(1, 2, 3) coderShould roundtripKryo()
+    List(1, 2, 3) coderShould roundtripKryo()
+    Set(1, 2, 3) coderShould roundtripKryo()
+    Map("a" -> 1, "b" -> 2, "c" -> 3) coderShould roundtripKryo()
   }
 
   it should "support Scala tuples" in {
-    cf should roundTrip(("hello", 10))
-    cf should roundTrip(("hello", 10, 10.0))
-    cf should roundTrip(("hello", (10, 10.0)))
+    ("hello", 10) coderShould roundtripKryo()
+    ("hello", 10, 10.0) coderShould roundtripKryo()
+    ("hello", (10, 10.0)) coderShould roundtripKryo()
   }
 
   it should "support Scala case classes" in {
-    cf should roundTrip(Pair("record", 10))
+    Pair("record", 10) coderShould roundtripKryo()
   }
 
   it should "support wrapped iterables" in {
@@ -78,50 +70,50 @@ class KryoAtomicCoderTest extends PipelineSpec {
     val list = ImmutableList.of(1, 2, 3)
 
     // Iterable/Collection should have proper equality
-    cf should roundTrip(list.asInstanceOf[jl.Iterable[Int]].asScala)
-    cf should roundTrip(list.asInstanceOf[ju.Collection[Int]].asScala)
-    cf should roundTrip(list.asScala)
+    list.asInstanceOf[jl.Iterable[Int]].asScala coderShould roundtripKryo()
+    list.asInstanceOf[ju.Collection[Int]].asScala coderShould roundtripKryo()
+    list.asScala coderShould roundtripKryo()
   }
 
   it should "support Avro GenericRecord" in {
     val r = newGenericRecord(1)
-    cf should roundTrip(r)
-    cf should roundTrip(("key", r))
-    cf should roundTrip(CaseClassWithGenericRecord("record", 10, r))
+    r coderShould roundtripKryo()
+    ("key", r) coderShould roundtripKryo()
+    CaseClassWithGenericRecord("record", 10, r) coderShould roundtripKryo()
   }
 
   it should "support Avro SpecificRecord" in {
     val r = newSpecificRecord(1)
-    cf should roundTrip(r)
-    cf should roundTrip(("key", r))
-    cf should roundTrip(CaseClassWithSpecificRecord("record", 10, r))
+    r coderShould roundtripKryo()
+    ("key", r) coderShould roundtripKryo()
+    CaseClassWithSpecificRecord("record", 10, r) coderShould roundtripKryo()
   }
 
   it should "support KV" in {
-    cf should roundTrip(KV.of("key", 1.0))
-    cf should roundTrip(KV.of("key", (10, 10.0)))
-    cf should roundTrip(KV.of("key", newSpecificRecord(1)))
-    cf should roundTrip(KV.of("key", newGenericRecord(1)))
+    KV.of("key", 1.0) coderShould roundtripKryo()
+    KV.of("key", (10, 10.0)) coderShould roundtripKryo()
+    KV.of("key", newSpecificRecord(1)) coderShould roundtripKryo()
+    KV.of("key", newGenericRecord(1)) coderShould roundtripKryo()
   }
 
   it should "support Instant" in {
-    cf should roundTrip(Instant.now())
+    Instant.now() coderShould roundtripKryo()
   }
 
   it should "support TableRow" in {
     val r = new TableRow().set("repeated_field", ImmutableList.of("a", "b"))
-    cf should roundTrip(r)
+    r coderShould roundtripKryo()
   }
 
   it should "support large objects" in {
     val vs = iterable((1 to 1000000).map("value-%08d".format(_)): _*)
     val kv = ("key", vs)
-    cf should roundTrip(kv)
+    kv coderShould roundtripKryo()
   }
 
   it should "support BigDecimal" in {
     val bigDecimal = BigDecimal(1000.42)
-    cf should roundTrip(bigDecimal)
+    bigDecimal coderShould roundtripKryo()
   }
 
   it should "support custom KryoRegistrar" in {
