@@ -378,11 +378,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def sparseLookup[A: Coder](that: SCollection[(K, A)], thisNumKeys: Long, fpProb: Double)(
     implicit hash: Hash128[K],
     koder: Coder[K],
-    voder: Coder[V]): SCollection[(K, (V, Iterable[A]))] = {
-    val selfBfSideInputs = self.optimalKeysBloomFiltersAsSideInputs(thisNumKeys, fpProb)
+    voder: Coder[V]): SCollection[(K, (V, Iterable[A]))] = self.transform { sColl =>
+    val selfBfSideInputs = sColl.optimalKeysBloomFiltersAsSideInputs(thisNumKeys, fpProb)
     val n = selfBfSideInputs.size
 
-    val thisParts = self.partition(n, _._1.hashCode() % n)
+    val thisParts = sColl.partition(n, _._1.hashCode() % n)
     val thatParts = that.partition(n, _._1.hashCode() % n)
 
     SCollection.unionAll(
@@ -433,11 +433,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
                                        fpProb: Double)(
     implicit hash: Hash128[K],
     koder: Coder[K],
-    voder: Coder[V]): SCollection[(K, (V, Iterable[A], Iterable[B]))] = {
-    val selfBfSideInputs = self.optimalKeysBloomFiltersAsSideInputs(thisNumKeys, fpProb)
+    voder: Coder[V]): SCollection[(K, (V, Iterable[A], Iterable[B]))] = self.transform { sColl =>
+    val selfBfSideInputs = sColl.optimalKeysBloomFiltersAsSideInputs(thisNumKeys, fpProb)
     val n = selfBfSideInputs.size
 
-    val thisParts = self.partition(n, _._1.hashCode() % n)
+    val thisParts = sColl.partition(n, _._1.hashCode() % n)
     val that1Parts = that1.partition(n, _._1.hashCode() % n)
     val that2Parts = that2.partition(n, _._1.hashCode() % n)
 
@@ -488,14 +488,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
     val numKeysPerPartition = if (bfSettings.numBFs == 1) thisNumKeys.toInt else bfSettings.capacity
     val n = bfSettings.numBFs
+    val width = BloomFilter.optimalWidth(numKeysPerPartition, fpProb).get
+    val numHashes = BloomFilter.optimalNumHashes(numKeysPerPartition, width)
+    val bfAggregator = BloomFilterAggregator[K](numHashes, width)
     self
       .partition(n, _._1.hashCode() % n)
       .map { me =>
-        val width = BloomFilter.optimalWidth(numKeysPerPartition, fpProb).get
-        val numHashes = BloomFilter.optimalNumHashes(numKeysPerPartition, width)
-        val bfAggregator = BloomFilterAggregator[K](numHashes, width)
         me.keys
-          .aggregate(bfAggregator)
+          .aggregate(bfAggregator.monoid.zero)(_ + _, _ ++ _)
           .asSingletonSideInput(bfAggregator.monoid.zero)
       }
   }
@@ -707,9 +707,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     hash: Hash128[K]): SCollection[(K, V)] = {
     val width = BloomFilter.optimalWidth(thatNumKeys, fpProb).get
     val numHashes = BloomFilter.optimalNumHashes(thatNumKeys, width)
+    val bfAggregator = BloomFilterAggregator[K](numHashes, width)
     val rhsBf = that
-      .aggregate(BloomFilterAggregator[K](numHashes, width))
-      .asSingletonSideInput(BFZero[K](BFHash[K](0, 0), 0))
+      .aggregate(bfAggregator.monoid.zero)(_ + _, _ ++ _)
+      .asSingletonSideInput(bfAggregator.monoid.zero)
 
     val approxResults = self
       .withSideInputs(rhsBf)
