@@ -255,7 +255,6 @@ trait ScalaCoders {
 
   implicit def byteCoder: Coder[Byte] =
     Coder.beam(ByteCoder.of().asInstanceOf[BCoder[Byte]])
-  // TODO: keep an eye on https://issues.apache.org/jira/browse/BEAM-5439
   implicit def stringCoder: Coder[String] =
     Coder.beam(StringUtf8Coder.of())
   implicit def shortCoder: Coder[Short] =
