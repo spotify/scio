@@ -19,12 +19,11 @@ package com.spotify.scio.testing
 
 import java.io.{InputStream, OutputStream}
 
-import scala.collection.JavaConverters._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing.CoderAssertions._
 import org.apache.beam.sdk.coders.{AtomicCoder, StringUtf8Coder}
-import org.scalatest.{FlatSpec, Matchers}
 import org.scalatest.exceptions.TestFailedException
+import org.scalatest.{FlatSpec, Matchers}
 
 case class Foo(id: String)
 
@@ -49,20 +48,22 @@ class CoderAssertionsTest extends FlatSpec with Matchers {
   }
 
   it should "support fallback" in {
-    val list = List("1", "2", "3")
-    new java.util.ArrayList[String](list.asJava) coderShould fallback()
+    val str = "boom"
+    val cs: java.lang.CharSequence = str
+    cs coderShould fallback()
 
     an[TestFailedException] should be thrownBy {
-      list coderShould fallback()
+      str coderShould fallback()
     }
   }
 
   it should "support notFallback" in {
-    val list = List("1", "2", "3")
-    list coderShould notFallback()
+    val str = "boom"
+    str coderShould notFallback()
 
     an[TestFailedException] should be thrownBy {
-      new java.util.ArrayList[String](list.asJava) coderShould notFallback()
+      val cs: java.lang.CharSequence = str
+      cs coderShould notFallback()
     }
   }
 

@@ -117,7 +117,7 @@ class CodersTest extends FlatSpec with Matchers {
   }
 
   it should "support Java collections" in {
-    import java.util.{List => jList, Map => jMap}
+    import java.util.{List => jList, Map => jMap, ArrayList => jArrayList}
     val is = (1 to 10).toSeq
     val s: jList[String] = is.map(_.toString).asJava
     val m: jMap[String, Int] = is
@@ -126,8 +126,11 @@ class CodersTest extends FlatSpec with Matchers {
       }
       .toMap
       .asJava
+    val arrayList = new jArrayList(s)
+
     s coderShould notFallback()
     m coderShould notFallback()
+    arrayList coderShould notFallback()
   }
 
   object Avro {
