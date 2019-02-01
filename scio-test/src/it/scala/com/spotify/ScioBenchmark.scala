@@ -20,8 +20,8 @@ package com.spotify
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
-import com.google.api.services.dataflow.{Dataflow, DataflowScopes}
 import com.google.api.services.dataflow.model.{Job, JobMetrics}
+import com.google.api.services.dataflow.{Dataflow, DataflowScopes}
 import com.google.datastore.v1._
 import com.google.datastore.v1.client.{Datastore, DatastoreHelper}
 import com.spotify.scio._
@@ -29,7 +29,6 @@ import com.spotify.scio.runners.dataflow.DataflowResult
 import org.apache.beam.sdk.PipelineResult.State
 import org.joda.time.format.{ISODateTimeFormat, PeriodFormat}
 import org.joda.time.{Instant, LocalDateTime, Seconds}
-import shapeless.datatype.datastore.DatastoreType
 import shapeless.datatype.datastore._
 
 import scala.collection.JavaConverters._
@@ -124,7 +123,9 @@ case class BenchmarkResult(
   finishTime: Option[LocalDateTime],
   state: State,
   extraArgs: Array[String],
-  metrics: Map[String, String]
+  metrics: Map[String, String],
+  scioVersion: String,
+  beamVersion: String
 )
 
 object BenchmarkResult {
@@ -149,14 +150,18 @@ object BenchmarkResult {
       .sortBy(_._1)
       .toMap
 
-    BenchmarkResult(name,
-                    Some(elapsedTime),
-                    circleCIEnv.map(_.buildNum).getOrElse(-1L),
-                    startTime,
-                    Some(finishTime),
-                    scioResult.state,
-                    extraArgs,
-                    metrics)
+    BenchmarkResult(
+      name,
+      Some(elapsedTime),
+      circleCIEnv.map(_.buildNum).getOrElse(-1L),
+      startTime,
+      Some(finishTime),
+      scioResult.state,
+      extraArgs,
+      metrics,
+      BuildInfo.version,
+      BuildInfo.beamVersion
+    )
   }
 
   def streaming(name: String,
@@ -171,7 +176,16 @@ object BenchmarkResult {
       .sortBy(_._1)
       .toMap
 
-    BenchmarkResult(name, None, buildNum, startTime, None, State.RUNNING, Array(), metrics)
+    BenchmarkResult(name,
+                    None,
+                    buildNum,
+                    startTime,
+                    None,
+                    State.RUNNING,
+                    Array(),
+                    metrics,
+                    BuildInfo.version,
+                    BuildInfo.beamVersion)
   }
 }
 
@@ -219,6 +233,12 @@ class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try
               val entityValue = DatastoreHelper.makeValue(value).build()
               entity.putProperties(key, entityValue)
           }
+
+          val scioVersionValue = DatastoreHelper.makeValue(benchmark.scioVersion).build()
+          entity.putProperties("ScioVersion", scioVersionValue)
+
+          val beamVersionValue = DatastoreHelper.makeValue(benchmark.beamVersion).build()
+          entity.putProperties("BeamVersion", beamVersionValue)
 
           Try {
             val commit = Storage.commit(
@@ -324,6 +344,8 @@ final case class ConsoleLogger() extends BenchmarkLogger[Try] {
     benchmarks.foreach { benchmark =>
       PrettyPrint.printSeparator()
       PrettyPrint.print("Benchmark", benchmark.name)
+      PrettyPrint.print("Scio version", benchmark.scioVersion)
+      PrettyPrint.print("Beam version", benchmark.beamVersion)
       PrettyPrint.print("Extra arguments", benchmark.extraArgs.mkString(" "))
       PrettyPrint.print("State", benchmark.state.toString)
       PrettyPrint.print("Create time", benchmark.startTime.toString())
