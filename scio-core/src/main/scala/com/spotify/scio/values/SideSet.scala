@@ -16,6 +16,4 @@
  */
 package com.spotify.scio.values
 
-import scala.collection.mutable.{ArrayBuffer, Map => MMap}
-
-case class SideSet[K](side: SideInput[MMap[K, ArrayBuffer[Unit]]])
+case class SideSet[T](side: SideInput[Set[T]])

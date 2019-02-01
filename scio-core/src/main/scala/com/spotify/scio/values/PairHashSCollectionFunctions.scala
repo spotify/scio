@@ -148,7 +148,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashIntersectByKey(that: SCollection[K])(implicit koder: Coder[K],
                                                voder: Coder[V]): SCollection[(K, V)] =
-    hashIntersectByKey(SideSet(combineAsMapSideInput(that.map((_, ())))))
+    hashIntersectByKey(that.toSideSet)
 
   /**
    * Return an SCollection with the pairs from `this` whose keys are in the SideSet `that`.

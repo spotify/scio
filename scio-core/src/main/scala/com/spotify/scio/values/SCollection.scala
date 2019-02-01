@@ -953,7 +953,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         .of(Functions.serializableFn(f))
         .withAllowedTimestampSkew(allowedTimestampSkew))
 
-  def toSideSet(implicit coder: Coder[T]): SideSet[T] = SideSet(self.map((_, ())).toSideMap.side)
+  def toSideSet(implicit coder: Coder[T]): SideSet[T] = SideSet(combineAsSet(self))
+
+  private def combineAsSet[A: Coder](c: SCollection[A]): SideInput[Set[A]] =
+    c.aggregate[Set[A], Set[A]](Aggregator.prepareSemigroup(x => Set(x))).asSingletonSideInput
 
   // =======================================================================
   // Read operations
