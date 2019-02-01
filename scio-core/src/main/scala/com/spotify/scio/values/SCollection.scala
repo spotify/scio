@@ -956,7 +956,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def toSideSet(implicit coder: Coder[T]): SideSet[T] = SideSet(combineAsSet(self))
 
   private def combineAsSet[A: Coder](c: SCollection[A]): SideInput[Set[A]] =
-    c.aggregate[Set[A], Set[A]](Aggregator.prepareSemigroup(x => Set(x))).asSingletonSideInput
+    c.aggregate[Set[A], Set[A]](Aggregator.prepareSemigroup(x => Set(x))).asSingletonSideInput(Set[A])
 
   // =======================================================================
   // Read operations
