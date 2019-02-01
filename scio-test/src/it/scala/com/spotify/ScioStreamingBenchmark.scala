@@ -197,9 +197,6 @@ object ScioStreamingBenchmarkMetrics {
 
     val jobs = dataflow.projects().jobs().list(projectId)
 
-    val scioVersion = sys.props.get("scio.version").get
-    val beamVersion = sys.props.get("beam.version").get
-
     val hourlyMetrics =
       Option(jobs.setFilter("ACTIVE").execute().getJobs)
         .map { activeJobs =>
@@ -210,8 +207,8 @@ object ScioStreamingBenchmarkMetrics {
                 benchmarkNameAndBuildNum.group(2).toLong,
                 job.getCreateTime,
                 dataflow.projects().jobs().getMetrics(projectId, job.getId).execute(),
-                scioVersion,
-                beamVersion
+                BuildInfo.version,
+                BuildInfo.beamVersion
               )
             }
           }

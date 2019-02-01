@@ -55,11 +55,9 @@ object ScioBatchBenchmark {
       .withZone(DateTimeZone.UTC)
       .print(System.currentTimeMillis())
     val prefix = s"ScioBenchmark-$name-$timestamp"
-    val scioVersion = sys.props.get("scio.version").get
-    val beamVersion = sys.props.get("beam.version").get
     val results = benchmarks
       .filter(_.name.matches(regex))
-      .flatMap(_.run(projectId, prefix, commonArgs(), scioVersion, beamVersion))
+      .flatMap(_.run(projectId, prefix, commonArgs(), BuildInfo.version, BuildInfo.beamVersion))
 
     val logger = ScioBenchmarkLogger[Try](
       ConsoleLogger(),
