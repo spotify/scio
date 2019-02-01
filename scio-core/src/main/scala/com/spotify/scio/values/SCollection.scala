@@ -256,6 +256,20 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     (left, right)
   }
 
+  /**
+   * Partition this SCollection using Object.hashCode() into `n` partitions
+   *
+   * @param numPartitions number of output partitions
+   * @return partitioned SCollections in a `Seq`
+   * @group collection
+   */
+  def hashPartition(numPartitions: Int): Seq[SCollection[T]] =
+    self.partition(
+      numPartitions, { t =>
+        ScioUtil.mod(t.hashCode(), numPartitions)
+      }
+    )
+
   // =======================================================================
   // Transformations
   // =======================================================================

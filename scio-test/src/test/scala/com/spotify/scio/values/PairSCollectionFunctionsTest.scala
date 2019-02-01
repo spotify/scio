@@ -517,6 +517,16 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  it should "support hashPartitionByKey()" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq((1, Seq(1, 2, 3)), (-2, Seq(4, 5, 6))))
+        .hashPartitionByKey(2)
+      p(0) should containInAnyOrder(Seq((-2, Seq(4, 5, 6))))
+      p(1) should containInAnyOrder(Seq((1, Seq(1, 2, 3))))
+    }
+  }
+
   val sparseLhs = Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4))
   val sparseRhs = Seq(("a", 11), ("d", 5))
   val sparseOuterJoinExpected = Seq(("a", (Some(1), Some(11))),
@@ -705,6 +715,21 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val rhs = sc.parallelize(Seq[(String, Unit)]())
       val result = lhs.join(rhs)
       result should beEmpty
+    }
+  }
+
+  it should "support negative hashCodes in sparse implementations" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq((-1, 11), (2, 12)))
+      val p2 = sc.parallelize(Seq((-1, 111), (2, 122), (-3, 133), (6, 166)))
+      val p = p1.sparseRightOuterJoin(p2, 1000000000L)
+      val expected = Seq(
+        (-1, (Some(11), 111)),
+        (2, (Some(12), 122)),
+        (-3, (None, 133)),
+        (6, (None, 166))
+      )
+      p should containInAnyOrder(expected)
     }
   }
 
