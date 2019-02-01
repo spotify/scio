@@ -171,9 +171,7 @@ object BenchmarkResult {
   def streaming(name: String,
                 buildNum: Long,
                 createTime: String,
-                jobMetrics: JobMetrics,
-                scioVersion: String,
-                beamVersion: String): BenchmarkResult = {
+                jobMetrics: JobMetrics): BenchmarkResult = {
     val startTime: LocalDateTime = dateTimeParser.parseLocalDateTime(createTime)
 
     val metrics = jobMetrics.getMetrics.asScala
@@ -190,8 +188,8 @@ object BenchmarkResult {
                     State.RUNNING,
                     Array(),
                     metrics,
-                    scioVersion,
-                    beamVersion)
+                    BuildInfo.version,
+                    BuildInfo.beamVersion)
   }
 }
 

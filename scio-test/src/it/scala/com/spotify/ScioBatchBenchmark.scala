@@ -57,7 +57,7 @@ object ScioBatchBenchmark {
     val prefix = s"ScioBenchmark-$name-$timestamp"
     val results = benchmarks
       .filter(_.name.matches(regex))
-      .flatMap(_.run(projectId, prefix, commonArgs(), BuildInfo.version, BuildInfo.beamVersion))
+      .flatMap(_.run(projectId, prefix, commonArgs()))
 
     val logger = ScioBenchmarkLogger[Try](
       ConsoleLogger(),
@@ -366,9 +366,7 @@ abstract class Benchmark(val extraConfs: Map[String, Array[String]] = null) {
 
   def run(projectId: String,
           prefix: String,
-          args: Array[String],
-          scioVersion: String,
-          beamVersion: String): Iterable[Future[BenchmarkResult]] = {
+          args: Array[String]): Iterable[Future[BenchmarkResult]] = {
     val username = CoreSysProps.User.value
     configurations
       .map {
@@ -379,8 +377,10 @@ abstract class Benchmark(val extraConfs: Map[String, Array[String]] = null) {
           sc.setJobName(s"$prefix-$confName-$username".toLowerCase())
           run(sc)
           val result = sc.close()
-          result.finalState.map(_ =>
-            BenchmarkResult.batch(confName, extraArgs, result, scioVersion, beamVersion))
+          result.finalState.map(
+            _ =>
+              BenchmarkResult
+                .batch(confName, extraArgs, result, BuildInfo.version, BuildInfo.beamVersion))
       }
   }
 

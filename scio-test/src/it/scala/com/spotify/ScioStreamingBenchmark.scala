@@ -206,9 +206,7 @@ object ScioStreamingBenchmarkMetrics {
                 benchmarkNameAndBuildNum.group(1),
                 benchmarkNameAndBuildNum.group(2).toLong,
                 job.getCreateTime,
-                dataflow.projects().jobs().getMetrics(projectId, job.getId).execute(),
-                BuildInfo.version,
-                BuildInfo.beamVersion
+                dataflow.projects().jobs().getMetrics(projectId, job.getId).execute()
               )
             }
           }
