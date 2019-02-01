@@ -132,11 +132,7 @@ object BenchmarkResult {
   import ScioBenchmarkSettings._
   private val dateTimeParser = ISODateTimeFormat.dateTimeParser()
 
-  def batch(name: String,
-            extraArgs: Array[String],
-            scioResult: ScioResult,
-            scioVersion: String,
-            beamVersion: String): BenchmarkResult = {
+  def batch(name: String, extraArgs: Array[String], scioResult: ScioResult): BenchmarkResult = {
     require(scioResult.isCompleted)
 
     val job: Job = scioResult.as[DataflowResult].getJob
@@ -163,8 +159,8 @@ object BenchmarkResult {
       scioResult.state,
       extraArgs,
       metrics,
-      scioVersion,
-      beamVersion
+      BuildInfo.version,
+      BuildInfo.beamVersion
     )
   }
 
