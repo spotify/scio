@@ -29,6 +29,7 @@ import scala.reflect.ClassTag
 import scala.collection.{BitSet, SortedSet, TraversableOnce, mutable => m}
 import scala.collection.convert.Wrappers
 import scala.language.higherKinds
+import scala.util.Try
 
 private object UnitCoder extends AtomicCoder[Unit] {
   override def encode(value: Unit, os: OutputStream): Unit = ()
@@ -251,6 +252,7 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
   }
 }
 
+// scalastyle:off number.of.methods
 trait ScalaCoders {
 
   implicit def byteCoder: Coder[Byte] =
@@ -277,6 +279,12 @@ trait ScalaCoders {
 
   implicit def bigDecimalCoder: Coder[BigDecimal] =
     Coder.xmap(Coder.beam(BigDecimalCoder.of()))(BigDecimal.apply, _.bigDecimal)
+
+  implicit def tryCoder[A: Coder, B: Coder]: Coder[Try[A]] =
+    Coder.gen[Try[A]]
+
+  implicit def eitherCoder[A: Coder, B: Coder]: Coder[Either[A, B]] =
+    Coder.gen[Either[A, B]]
 
   implicit def optionCoder[T, S[_] <: Option[_]](implicit c: Coder[T]): Coder[S[T]] =
     Coder
