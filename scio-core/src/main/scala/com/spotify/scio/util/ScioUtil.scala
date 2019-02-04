@@ -96,14 +96,4 @@ private[scio] object ScioUtil {
     }
   }
 
-  /**
-   * Modulo operation, This always return a non negative value in the range [0, mod)
-   * Returns incorrect value for `mod(Int.MinValue, Int.MaxValue)` as Int.MaxValue - 1
-   * but remainder of Int.MinValue % Int.MaxValue is -1
-   */
-  @inline def mod(value: Int, mod: Int): Int = {
-    val rawMod = value % mod
-    rawMod + (if (rawMod < 0) mod else 0)
-  }
-
 }

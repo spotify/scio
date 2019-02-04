@@ -221,7 +221,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def hashPartitionByKey(numPartitions: Int): Seq[SCollection[(K, V)]] =
     self.partition(numPartitions, {
       case (key, _) =>
-        ScioUtil.mod(key.hashCode(), numPartitions)
+        Math.floorMod(key.hashCode(), numPartitions)
     })
 
   // =======================================================================
