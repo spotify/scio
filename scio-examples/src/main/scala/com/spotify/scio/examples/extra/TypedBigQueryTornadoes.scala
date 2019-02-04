@@ -25,7 +25,6 @@ package com.spotify.scio.examples.extra
 
 import com.spotify.scio.bigquery._
 import com.spotify.scio.ContextAndArgs
-import com.spotify.scio.bigquery.{BigQueryType, CREATE_IF_NEEDED, WRITE_TRUNCATE}
 
 object TypedBigQueryTornadoes {
 
