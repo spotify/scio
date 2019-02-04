@@ -211,6 +211,19 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     voder: Coder[V]): SCollection[(K, (Iterable[V], Iterable[W1], Iterable[W2], Iterable[W3]))] =
     this.cogroup(that1, that2, that3)
 
+  /**
+   * Partition this SCollection using K.hashCode() into `n` partitions
+   *
+   * @param numPartitions number of output partitions
+   * @return partitioned SCollections in a `Seq`
+   * @group collection
+   */
+  def hashPartitionByKey(numPartitions: Int): Seq[SCollection[(K, V)]] =
+    self.partition(numPartitions, {
+      case (key, _) =>
+        Math.floorMod(key.hashCode(), numPartitions)
+    })
+
   // =======================================================================
   // Joins
   // =======================================================================
@@ -345,8 +358,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val thatBfSIs = that.optimalKeysBloomFiltersAsSideInputs(thatNumKeys, fpProb)
     val n = thatBfSIs.size
 
-    val thisParts = self.partition(n, { case (key, _) => key.hashCode() % n })
-    val thatParts = that.partition(n, { case (key, _) => key.hashCode() % n })
+    val thisParts = self.hashPartitionByKey(n)
+    val thatParts = that.hashPartitionByKey(n)
 
     thisParts.zip(thatParts).zip(thatBfSIs).map {
       case ((lhs, rhs), bfsi) =>
@@ -381,8 +394,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val selfBfSideInputs = sColl.optimalKeysBloomFiltersAsSideInputs(thisNumKeys, fpProb)
     val n = selfBfSideInputs.size
 
-    val thisParts = sColl.partition(n, { case (key, _) => key.hashCode() % n })
-    val thatParts = that.partition(n, { case (key, _)  => key.hashCode() % n })
+    val thisParts = sColl.hashPartitionByKey(n)
+    val thatParts = that.hashPartitionByKey(n)
 
     SCollection.unionAll(
       thisParts
@@ -436,9 +449,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val selfBfSideInputs = sColl.optimalKeysBloomFiltersAsSideInputs(thisNumKeys, fpProb)
     val n = selfBfSideInputs.size
 
-    val thisParts = sColl.partition(n, { case (key, _)  => key.hashCode() % n })
-    val that1Parts = that1.partition(n, { case (key, _) => key.hashCode() % n })
-    val that2Parts = that2.partition(n, { case (key, _) => key.hashCode() % n })
+    val thisParts = sColl.hashPartitionByKey(n)
+    val that1Parts = that1.hashPartitionByKey(n)
+    val that2Parts = that2.hashPartitionByKey(n)
 
     SCollection.unionAll(
       thisParts.zip(selfBfSideInputs).zip(that1Parts).zip(that2Parts).map {
@@ -490,11 +503,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val width = BloomFilter.optimalWidth(numKeysPerPartition, fpProb).get
     val numHashes = BloomFilter.optimalNumHashes(numKeysPerPartition, width)
     val bfAggregator = BloomFilterAggregator[K](numHashes, width)
-    self
-      .partition(n, { case (key, _) => key.hashCode() % n })
+    self.keys
+      .hashPartition(n)
       .map { me =>
-        me.keys
-          .aggregate(bfAggregator.monoid.zero)(_ + _, _ ++ _)
+        me.aggregate(bfAggregator.monoid.zero)(_ + _, _ ++ _)
           .asSingletonSideInput(bfAggregator.monoid.zero)
       }
   }
@@ -687,8 +699,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       sparseIntersectByKeyImpl(that, thatNumKeys.toInt, computeExact, fpProb)
     } else {
       val n = bfSettings.numBFs
-      val thisParts = self.partition(n, { case (key, _) => key.hashCode() % n })
-      val thatParts = that.partition(n, _.hashCode() % n)
+      val thisParts = self.hashPartitionByKey(n)
+      val thatParts = that.hashPartition(n)
       val joined = thisParts.zip(thatParts).map {
         case (lhs, rhs) =>
           lhs.sparseIntersectByKeyImpl(rhs, bfSettings.capacity, computeExact, fpProb)

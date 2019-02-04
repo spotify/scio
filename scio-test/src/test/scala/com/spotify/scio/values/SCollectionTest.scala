@@ -164,6 +164,15 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support hashPartition() based on Object.hashCode()" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq(-1, 2, -3, 4, -5, 6)).hashPartition(3)
+      p(0) should containInAnyOrder(Seq(-3, 6))
+      p(1) should containInAnyOrder(Seq(4, -5))
+      p(2) should containInAnyOrder(Seq(-1, 2))
+    }
+  }
+
   it should "support aggregate()" in {
     runWithContext { sc =>
       val p = sc.parallelize(1 to 100)
