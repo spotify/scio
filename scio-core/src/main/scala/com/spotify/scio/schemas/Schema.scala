@@ -48,7 +48,12 @@ final case class Arr[F[_], T](schema: Schema[T],
   type _F[A] = F[A]
 }
 
-private[schemas] case class ScalarWrapper[T](value: T) extends AnyVal
+private[scio] case class ScalarWrapper[T](value: T) extends AnyVal
+
+trait LowPriorityFallbackSchema extends LowPrioritySchemaDerivation {
+  def fallback[A: Coder]: Schema[A] =
+    Fallback[Coder, A](Coder[A]) // ¯\_(ツ)_/¯
+}
 
 object Schema extends LowPriorityFallbackSchema {
   implicit val stringSchema = Type[String](FieldType.STRING)
@@ -83,11 +88,6 @@ object Schema extends LowPriorityFallbackSchema {
   // TODO: Schema for traits ?
 }
 
-trait LowPriorityFallbackSchema extends LowPrioritySchemaDerivation {
-  def fallback[A: Coder]: Schema[A] =
-    Fallback[Coder, A](Coder[A]) // ¯\_(ツ)_/¯
-}
-
 private object Derived extends Serializable {
   import magnolia._
   def combineSchema[T](ps: Seq[Param[Schema, T]], rawConstruct: Seq[Any] => T) = {
@@ -118,14 +118,14 @@ trait LowPrioritySchemaDerivation {
     Derived.combineSchema(ps, ctx.rawConstruct)
   }
 
-  implicit def gen[T]: Record[T] = macro Magnolia.gen[T]
+  implicit def gen[T]: Schema[T] = macro Magnolia.gen[T]
 }
 
 object SchemaMaterializer {
 
   import com.spotify.scio.ScioContext
 
-  @inline private def fieldType[A](schema: Schema[A]): FieldType =
+  @inline private[scio] def fieldType[A](schema: Schema[A]): FieldType =
     schema match {
       case Record(schemas, _, _) =>
         val fields =
@@ -265,7 +265,7 @@ object SchemaMaterializer {
       }
       case s =>
         implicit val imp = schema
-        val (bschema, to, from) = materialize(sc, implicitly[Record[ScalarWrapper[T]]])
+        val (bschema, to, from) = materialize(sc, implicitly[Schema[ScalarWrapper[T]]])
         def fromRow =
           new SerializableFunction[Row, T] {
             def apply(r: Row): T =

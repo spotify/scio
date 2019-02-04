@@ -19,7 +19,7 @@ package com.spotify.scio.values
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.sql.Query
-import com.spotify.scio.schemas.Schema
+import com.spotify.scio.schemas.{Record, Schema}
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.values.Row
@@ -110,9 +110,12 @@ class BeamSQLTest extends PipelineSpec {
 
     implicit def coderRowRes = Coder.row(schemaRes)
     val in = sc.parallelize(usersWithIds)
-    val r =
-      in.sql(Query.row("select id, username from PCOLLECTION"))
+    val r = in.sql(Query.row("select id, username from PCOLLECTION"))
     r should containInAnyOrder(expected)
+
+    val in2 = sc.parallelize(usersWithIds)
+    val r2 = in2.sql(Query.row("select `PCOLLECTION`.`id`.`id`, username from PCOLLECTION"))
+    r2 should containInAnyOrder(expected)
   }
 
   it should "support fallback coders" in runWithContext { sc =>
@@ -205,17 +208,24 @@ class BeamSQLTest extends PipelineSpec {
     "Schema.javaBeanSchema[TypeMismatch]" shouldNot compile
   }
 
-  it should "properly chain row queries" in runWithContext { sc =>
-    val schemaRes = BSchema.builder().addInt64Field("sum(age)").build()
-    val expected = Row.withSchema(schemaRes).addValue(255).build()
+  // TODO: check(query)
+  // TODO: Typechecked query ?
+  // TODO: Join SCollections ?
+  // TODO: nested case classes query
+  // TODO: Positional vs Nominal binding
+  // TODO: Should chaining row queries be supported ?
+  // TODO: Apply 2 queries to the same SCOllection
+  // ignore should "properly chain row queries" in runWithContext { sc =>
+  //   val schemaRes = BSchema.builder().addInt64Field("sum(age)").build()
+  //   val expected = Row.withSchema(schemaRes).addValue(255).build()
 
-    val in = sc.parallelize(users)
-    val r =
-      in.sql(Query.row("select username, age from PCOLLECTION"))
-        .sql(Query.row("select sum(age) from PCOLLECTION"))
+  //   val in = sc.parallelize(users)
+  //   val r =
+  //     in.sql(Query.row("select username, age from PCOLLECTION"))
+  //       .sql(Query.row("select sum(age) from PCOLLECTION"))
 
-    r should containSingleValue(expected)
-  }
+  //   r should containSingleValue(expected)
+  // }
 
   it should "properly chain typed queries" in runWithContext { sc =>
     val expected = 255
@@ -224,5 +234,46 @@ class BeamSQLTest extends PipelineSpec {
       in.sql[(String, Int)](Query.of("select username, age from PCOLLECTION"))
         .sql[Int](Query.of("select sum(_2) from PCOLLECTION"))
     r should containSingleValue(expected)
+  }
+
+  it should "Support scalar inputs" in runWithContext { sc =>
+    val in = sc.parallelize((1 to 10).toList)
+    val r = in.sql[Int](Query.of("select sum(`value`) from PCOLLECTION"))
+    r should containSingleValue(55)
+  }
+
+  it should "provide a typecheck method for tests" in {
+    import java.util.Locale
+    val Q = Query
+
+    case class Foo(i: Int, s: String)
+    case class Bar(l: Long, f: Foo)
+    case class Result(x: Int)
+
+    def checkOK[A: Schema, B: Schema](q: String) =
+      Q.typecheck(Q.of[A, B](q)) should be('right)
+
+    def checkNOK[A: Schema, B: Schema](q: String) =
+      Q.typecheck(Q.of[A, B](q)) should be('left)
+
+    checkOK[Bar, Long]("select l from PCOLLECTION")
+    checkOK[Bar, Int]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")
+    checkOK[Bar, Result]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")
+    checkOK[Bar, Foo]("select f from PCOLLECTION")
+    checkOK[Bar, (String, Long)]("select `PCOLLECTION`.`f`.`s`, l from PCOLLECTION")
+
+    // test fallback support
+    checkOK[UserWithFallBack, Locale]("select locale from PCOLLECTION")
+
+    checkOK[UserWithOption, Option[Int]]("select age from PCOLLECTION")
+    checkNOK[UserWithOption, Int]("select age from PCOLLECTION")
+
+    checkNOK[Bar, (String, Long)]("select l from PCOLLECTION")
+    checkNOK[Bar, String]("select l from PCOLLECTION")
+
+    checkOK[Bar, Long]("""
+      select cast(`PCOLLECTION`.`f`.`i` as BIGINT)
+      from PCOLLECTION
+    """)
   }
 }

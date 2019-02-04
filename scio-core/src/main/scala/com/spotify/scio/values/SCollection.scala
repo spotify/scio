@@ -133,7 +133,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def setCoder(coder: org.apache.beam.sdk.coders.Coder[T]): SCollection[T] =
     context.wrap(internal.setCoder(coder))
 
-  def setSchema(schema: com.spotify.scio.schemas.Record[T]): SCollection[T] = {
+  def setSchema(schema: com.spotify.scio.schemas.Schema[T]): SCollection[T] = {
     import com.spotify.scio.schemas.SchemaMaterializer
     val (s, to, from) = SchemaMaterializer.materialize(this.context, schema)
     context.wrap(internal.setSchema(s, to, from))
@@ -172,32 +172,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   def sql[O](query: Query[T, O]): SCollection[O] =
     query.run(this)
-
-  // import com.spotify.scio.schemas.{Record, Schema, SchemaMaterializer}
-  // def sql(query: String)(implicit schemaT: Record[T]): SCollection[Row] = {
-  //   import org.apache.beam.sdk.extensions.sql.SqlTransform
-  //   import org.apache.beam.sdk.extensions.sql.impl.BeamSqlEnv
-  //   import org.apache.beam.sdk.extensions.sql.impl.schema.BeamPCollectionTable
-  //   import org.apache.beam.sdk.extensions.sql.impl.utils.CalciteUtils
-  //   import com.google.common.collect.ImmutableMap
-
-  //   val PCOLLECTION_NAME = "PCOLLECTION"
-  //   val scoll = setSchema(schemaT)
-  //   val sqlEnv = BeamSqlEnv.readOnly(
-  //     PCOLLECTION_NAME,
-  //     ImmutableMap.of(PCOLLECTION_NAME, new BeamPCollectionTable(scoll.internal)))
-  //   // Will it support UDF (see SqlTransform.expand) ?
-  //   val q = sqlEnv.parseQuery(query)
-  //   val schema = CalciteUtils.toSchema(q.getRowType)
-  //   scoll.applyTransform[Row](SqlTransform.query(query))(Coder.row(schema))
-  // }
-
-  // def sql[A: Schema](query: String)(implicit schemaT: Record[T]): SCollection[A] = {
-  //   import org.apache.beam.sdk.schemas.SchemaCoder
-  //   val (schema, to, from) = SchemaMaterializer.materialize(context, Schema[A])
-  //   val coll: SCollection[Row] = sql(query)
-  //   coll.map[A](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
-  // }
 
   /** Apply a transform. */
   @experimental
