@@ -6,7 +6,7 @@ First please read Google's official [doc](https://cloud.google.com/bigtable/docs
 
 This depends on APIs from `scio-bigtable` and imports from `com.spotify.scio.bigtable._`.
 
-Look at example [here](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/BigtableExample.scala).
+Look at example @extref[here](example:BigtableExample).
 
 ## Common issues
 

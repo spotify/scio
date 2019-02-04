@@ -45,7 +45,7 @@ For changes available in `latest` but not in `current`:
 - Copy Java files from `latest` to Scio repo
 - Rename classes and modify as necessary
 - Release Scio
-- Update checklist for the next `current` version like [#633](https://github.com/spotify/scio/issues/633)
+- Update checklist for the next `current` version like @github[#633](#633)
 - Remove change once `current` is updated
 
 For changes we want to make to `latest`:

@@ -34,7 +34,7 @@ sbt compile test:compile it:compile
 
 ## Running the Examples
 
-You can execute the examples locally from SBT. By default pipelines will be executed using the [`DirectRunner`](https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/runners/direct/DirectRunner.html) and local filesystem will be used for input and output. Take a look at the [examples](https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples) to find out more.
+You can execute the examples locally from SBT. By default pipelines will be executed using the [`DirectRunner`](https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/runners/direct/DirectRunner.html) and local filesystem will be used for input and output. Take a look at the @github[examples](/scio-examples/src/main/scala/com/spotify/scio/examples) to find out more.
 
 ```
 neville@localhost scio $ sbt
@@ -118,7 +118,7 @@ The defaults should work well for most cases but we sometimes tune the following
 
 More Dataflow pipeline specific options available can be found in [`DataflowPipelineOptions`](https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/runners/dataflow/options/DataflowPipelineOptions.html) and super interfaces. Some more useful ones are from [`DataflowPipelineWorkerPoolOptions`](https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/runners/dataflow/options/DataflowPipelineWorkerPoolOptions.html).
 
-[`DataflowWorkerHarnessOptions#getWorkerCacheMb`](https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--) affects side input performance but needs an extra step to enable. See this [FAQ item](https://github.com/spotify/scio/wiki/FAQ#how-do-i-improve-side-input-performance).
+[`DataflowWorkerHarnessOptions#getWorkerCacheMb`](https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--) affects side input performance but needs an extra step to enable. See this @ref[FAQ item](FAQ.md#how-do-i-improve-side-input-performance-).
 
 There are a few more experimental settings that might help specific scenarios:
 - `--experiments=shuffle_mode=service` - use external [shuffle service](https://cloud.google.com/dataflow/service/dataflow-service-desc#cloud-dataflow-shuffle) instead of local disk

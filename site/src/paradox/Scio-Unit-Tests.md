@@ -17,7 +17,7 @@ $ sbt
 Click on this [link](https://www.scala-sbt.org/1.x/docs/Testing.html) for more Scala testing tasks.
 
 ### Test entire pipeline
-We will use the WordCountTest to explain how Scio tests work. [WordCount](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/WordCount.scala) is the pipeline under test. Full example code for WordCountTest and other test examples can be found [here](https://github.com/spotify/scio/tree/master/scio-examples/src/test).
+We will use the WordCountTest to explain how Scio tests work. @extref[WordCount](example:WordCount) is the pipeline under test. Full example code for WordCountTest and other test examples can be found @github[here](/scio-examples/src/test).
 
 Let’s walk through the details of the test: The test class should extend the `PipelineSpec` which is a trait for unit testing pipelines.
 
@@ -47,7 +47,7 @@ Also, note that the `TestIO[T]` should match the output used in the pipeline e.g
 The run function will run the pipeline.
 
 ### Test for pipeline with sideinput
-We will use the [SideInputJoinExamples](https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala#L25) test in JoinExamplesTest to illustrate how to write a test for pipelines with sideinputs. The [SideInputJoinExamples](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/cookbook/JoinExamples.scala#L86) pipeline has two input sources, one for eventsInfo and the other for countryInfo. CountryInfo is used as a sideinput to join with eventInfo.
+We will use the @github[SideInputJoinExamples](/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/JoinExamplesTest.scala#L73) test in JoinExamplesTest to illustrate how to write a test for pipelines with sideinputs. The @extref[SideInputJoinExamples](example:JoinExamples) pipeline has two input sources, one for eventsInfo and the other for countryInfo. CountryInfo is used as a sideinput to join with eventInfo.
 
 Since we have two input sources, we have to specify both in the `JobTest`. Note that the injected data type should match one expected by the sink. 
 
@@ -62,7 +62,7 @@ Since we have two input sources, we have to specify both in the `JobTest`. Note 
 }
 ```
 ### Test for pipeline with sideoutput
-[SideInOutExampleTest](https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/SideInOutExampleTest.scala) shows an example of how to test pipelines with sideoutputs. Each sideoutput is evaluated using the output function. The ids for `TextIO`  e.g. “out1.txt” should match the ones specified in the args.
+@github[SideInOutExampleTest](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/SideInOutExampleTest.scala) shows an example of how to test pipelines with sideoutputs. Each sideoutput is evaluated using the output function. The ids for `TextIO`  e.g. “out1.txt” should match the ones specified in the args.
 
 ```scala
 "SideInOutExample" should "work" in {
@@ -81,7 +81,7 @@ Since we have two input sources, we have to specify both in the `JobTest`. Note 
 ```
 
 ### Test partial pipeline
-To test a section of a pipeline, use `runWithContext`. The TriggerExample.extractFlowInfo test in [TriggerExampleTest](https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala) tests only the extractFlowInfo part of the pipeline.
+To test a section of a pipeline, use `runWithContext`. The TriggerExample.extractFlowInfo test in @github[TriggerExampleTest](/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala) tests only the extractFlowInfo part of the pipeline.
 
 The data variable hold the test data and `sc.parallelize` will transform the input iterable to a `SCollection` of strings. TriggerExample.extractFlowInfo will be executed using the `ScioContext` and you can then specify assertions against the result of the pipeline.
 
@@ -101,7 +101,7 @@ runWithContext { sc =>
 ```
 
 ### Test for pipeline with windowing
-We will use the LeaderBoardTest to explain how to test Windowing in Scio. The full example code is found [here](https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala). LeaderBoardTest also extends `PipelineSpec`. The function under test is the [LeaderBoard.calculateTeamScores](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/complete/game/LeaderBoard.scala#L131).  This function calculates teams scores within a fixed window with the following the window options: 
+We will use the LeaderBoardTest to explain how to test Windowing in Scio. The full example code is found @github[here](/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala). LeaderBoardTest also extends `PipelineSpec`. The function under test is the @github[LeaderBoard.calculateTeamScores](/scio-examples/src/main/scala/com/spotify/scio/examples/complete/game/LeaderBoard.scala#L131).  This function calculates teams scores within a fixed window with the following the window options:
 * Calculate the scores every time the window ends
 * Calculate an early/"speculative" result from partial data, 5 minutes after the first element in our window is processed (withEarlyFiring)
 * Accept late entries (and recalculates based on them) only if they arrive within the allowedLateness duration.

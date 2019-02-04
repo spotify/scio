@@ -15,6 +15,12 @@
  * under the License.
  */
 
+// Example: Use Futures and Taps to orchestrate multiple jobs with dependencies
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.extra.WordCountOrchestration
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --output=gs://[BUCKET]/[PATH]/wordcount`
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
@@ -25,15 +31,6 @@ import org.apache.beam.sdk.options.PipelineOptions
 
 import scala.concurrent.Future
 
-/*
-SBT
-runMain
-  com.spotify.scio.examples.extra.WordCountOrchestration
-  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --output=gs://[BUCKET]/[PATH]/wordcount
- */
-
-// Use Futures and Taps to orchestrate multiple jobs with dependencies
 object WordCountOrchestration {
 
   type FT[T] = Future[Tap[T]]

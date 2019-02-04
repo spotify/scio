@@ -4,7 +4,7 @@
 - `aggregate` and `sum` on `SCollection[T]` ([ScalaDoc](https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html))
 - `aggregateByKey` and `sumByKey` on `SCollection[(K, V)]` ([ScalaDoc](https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html))
 
-See [AlgebirdSpec.scala](https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/AlgebirdSpec.scala) and [Algebird wiki](https://github.com/twitter/algebird/wiki) for more details. Also see these [slides](http://www.lyh.me/slides/semigroups.html) on semigroups.
+See @github[AlgebirdSpec.scala](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/AlgebirdSpec.scala) and [Algebird wiki](https://github.com/twitter/algebird/wiki) for more details. Also see these [slides](http://www.lyh.me/slides/semigroups.html) on semigroups.
 
 ### Algebird in REPL
 

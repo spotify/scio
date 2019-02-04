@@ -24,7 +24,7 @@ credentials ++= Seq(
 - Update the list of release names below
 - When the tag build completes, update release notes with name and change log
 - If the release includes a Beam version bump, update the [version matrix](https://github.com/spotify/scio/wiki/Apache-Beam)
-- Run [scripts/bump_scio.sh](https://github.com/spotify/scio/blob/master/scripts/bump_scio.sh) to update [homebrew formula](https://github.com/spotify/homebrew-public/blob/master/scio.rb) and `scioVersion` in downstream repos including [scio.g8](https://github.com/spotify/scio.g8), [scio-contrib](https://github.com/spotify/scio-contrib), [featran](https://github.com/spotify/featran), etc.
+- Run @github[scripts/bump_scio.sh](/scripts/bump_scio.sh) to update [homebrew formula](https://github.com/spotify/homebrew-public/blob/master/scio.rb) and `scioVersion` in downstream repos including [scio.g8](https://github.com/spotify/scio.g8), [scio-contrib](https://github.com/spotify/scio-contrib), [featran](https://github.com/spotify/featran), etc.
 - Bump version in the internal `scio-cookie` and monorepo
 - Send internal announcement to scio-users@spotify.com and flatmap-announce@spotify.com
 - Send external announcement to scio-users@googlegroups.com and user@beam.apache.org
