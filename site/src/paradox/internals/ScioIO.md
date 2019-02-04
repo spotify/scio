@@ -1,6 +1,6 @@
 # ScioIO
 
-Scio `0.7.0` introduces a new [`ScioIO[T]`](https://github.com/spotify/scio/blob/v0.7.0-beta2/scio-core/src/main/scala/com/spotify/scio/io/ScioIO.scala) trait to simplify IO implementation and stubbing in `JobTest`. This page lists some major changes to this new API.
+Scio `0.7.0` introduces a new @scaladoc[`ScioIO[T]`](com.spotify.scio.io.ScioIO) trait to simplify IO implementation and stubbing in `JobTest`. This page lists some major changes to this new API.
 
 ## Dependencies
 
@@ -51,4 +51,4 @@ As part of the refactor `TestIO[T]` was replaced by `ScioIO[T]` for `JobTest`. S
 
 ## Using `ScioIO[T]` directly
 
-2 methods, `ScioContext#read` and `SCollection#write` were added to leverage `ScioIO[T]` directly without needing the extra `ScioContext#{textFile,AvroFile,...}` and `SCollection#saveAs{TextFile,AvroFile,...}` syntactic sugar. See [WordCountScioIO](https://github.com/spotify/scio/blob/v0.7.0-beta2/scio-examples/src/main/scala/com/spotify/scio/examples/extra/WordCountScioIO.scala) and [WordCountScioIOTest](https://github.com/spotify/scio/blob/v0.7.0-beta2/scio-examples/src/test/scala/com/spotify/scio/examples/extra/WordCountScioIOTest.scala) for concrete examples.
+2 methods, `ScioContext#read` and `SCollection#write` were added to leverage `ScioIO[T]` directly without needing the extra `ScioContext#{textFile,AvroFile,...}` and `SCollection#saveAs{TextFile,AvroFile,...}` syntactic sugar. See @extref[WordCountScioIO](example:WordCountScioIO) and @github[WordCountScioIOTest](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/WordCountScioIOTest.scala) for concrete examples.

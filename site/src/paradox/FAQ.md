@@ -37,7 +37,7 @@ Check out the wiki page on [[Scio, Scalding and Spark]]. Also check out [Big Dat
 
 #### How do I setup a new SBT project?
 
-Read the [documentation](https://github.com/spotify/scio/wiki/Getting-Started#sbt-project-setup).
+Read the @ref:[documentation](Getting-Started.md#sbt-project-setup).
 
 #### How do I deploy Scio jobs to Dataflow?
 
@@ -68,15 +68,15 @@ resolvers ++= Seq(
 
 Any Scala or Java unit testing frameworks can be used with Scio but we provide some utilities for [ScalaTest](http://www.scalatest.org/).
 
-- [PipelineTestUtils](https://github.com/spotify/scio/blob/master/scio-test/src/main/scala/com/spotify/scio/testing/PipelineTestUtils.scala) - utilities for testing parts of a pipeline
-- [JobTest](https://github.com/spotify/scio/blob/master/scio-core/src/main/scala/com/spotify/scio/testing/JobTest.scala) - for testing pipelines end-to-end with complete arguments and IO coverage
-- [SCollectionMatchers](https://github.com/spotify/scio/blob/master/scio-test/src/main/scala/com/spotify/scio/testing/SCollectionMatchers.scala) - ScalaTest matchers for `SCollection`
-- [PipelineSpec](https://github.com/spotify/scio/blob/master/scio-test/src/main/scala/com/spotify/scio/testing/PipelineSpec.scala) - shortcut for ScalaTest `FlatSpec` with utilities and matchers
+- @scaladoc[PipelineTestUtils](com.spotify.scio.testing.PipelineTestUtils) - utilities for testing parts of a pipeline
+- @scaladoc[JobTest](com.spotify.scio.testing.JobTest$) - for testing pipelines end-to-end with complete arguments and IO coverage
+- @scaladoc[SCollectionMatchers](com.spotify.scio.testing.SCollectionMatchers) - ScalaTest matchers for `SCollection`
+- @scaladoc[PipelineSpec](com.spotify.scio.testing.PipelineSpec) - shortcut for ScalaTest `FlatSpec` with utilities and matchers
 
-The best place to find example useage of `JobTest` and `SCollectionMatchers` are their respective tests in [JobTestTest](https://github.com/spotify/scio/blob/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) and [SCollectionMatchersTest](https://github.com/spotify/scio/blob/master/scio-test/src/test/scala/com/spotify/scio/testing/SCollectionMatchersTest.scala).
+The best place to find example useage of `JobTest` and `SCollectionMatchers` are their respective tests in @github[JobTestTest](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) and @github[SCollectionMatchersTest](/scio-test/src/test/scala/com/spotify/scio/testing/SCollectionMatchersTest.scala).
 For more examples see:
 
-- https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples
+- @github[scio-examples](/scio-examples/src/test/scala/com/spotify/scio/examples)
 - https://github.com/spotify/big-data-rosetta-code/tree/master/src/test/scala/com/spotify/bdrc/testing
 
 #### How do I combine multiple input sources?
@@ -120,7 +120,7 @@ Scio exposes a few things to allow easy integration with native Beam Java API, n
 - `SCollection#applyTransform` to apply a `PTransform[_ >: PCollection[T], PCollection[U]]` and get a `SCollection[U]`
 - `SCollection#saveAsCustomOutput` to apply a `PTransform[_ >: PCollection[T], PDone]` (sink) and get a `Future[Tap[T]]`.
 
-See [BeamExample.scala](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/BeamExample.scala) for more details. Custom I/O can also be tested via the [`JobTest`](https://spotify.github.io/scio/api/com/spotify/scio/testing/JobTest$.html) harness.
+See @extref[BeamExample.scala](example:BeamExample) for more details. Custom I/O can also be tested via the @scaladoc[`JobTest`](com.spotify.scio.testing.JobTest$) harness.
 
 #### What are the different types of joins and performance implication?
 
@@ -195,7 +195,7 @@ Also see these [slides](http://www.lyh.me/slides/for-yield.html) and this [blog 
 
 #### How do I unit test BigQuery queries?
 
-BigQuery doesn't provide a way to unit test query logic locally, but we can query the service directly in an integration test. Take a look at [BigQueryIT.scala](https://github.com/spotify/scio/blob/master/scio-bigquery/src/it/scala/com/spotify/scio/bigquery/BigQueryIT.scala). `MockBigQuery` will create temporary tables on the service, feed them with mock data, and substitute table references in your query string with the mocked ones.
+BigQuery doesn't provide a way to unit test query logic locally, but we can query the service directly in an integration test. Take a look at @github[BigQueryIT.scala](/scio-bigquery/src/it/scala/com/spotify/scio/bigquery/BigQueryIT.scala). `MockBigQuery` will create temporary tables on the service, feed them with mock data, and substitute table references in your query string with the mocked ones.
 
 #### How do I stream to a partitioned BigQuery table?
 
@@ -228,7 +228,7 @@ In Scio 0.3.X it is possible to achieve the same behaviour using `SerializableFu
 
 #### How do I invalidate cached BigQuery results or disable cache?
 
-[BigQueryClient](https://github.com/spotify/scio/blob/master/scio-bigquery/src/main/scala/com/spotify/scio/bigquery/BigQueryClient.scala) in Scio caches query result in system property `bigquery.cache.directory`, which defaults to `$PWD/.bigquery`. Use `rm -rf .bigquery` to invalidate all cached results. To disable caching, set system property `bigquery.cache.enabled` to `false`.
+Scio's @scaladoc[BigQuery client](com.spotify.scio.bigquery.client.BigQuery) in Scio caches query result in system property `bigquery.cache.directory`, which defaults to `$PWD/.bigquery`. Use `rm -rf .bigquery` to invalidate all cached results. To disable caching, set system property `bigquery.cache.enabled` to `false`.
 
 #### How does BigQuery determines job priority?
 
@@ -289,7 +289,7 @@ val gcsUtil = sc.optionsAs[GcsOptions].getGcsUtil
 
 #### How do I reduce Datastore boilerplate?
 
-Datastore `Entity` class is actually generated from [Protobuf](https://github.com/googleapis/googleapis/blob/master/google/datastore/v1/entity.proto) which uses the builder pattern and very boilerplate heavy. You can use the [shapeless-datatype](https://github.com/nevillelyh/shapeless-datatype#datastoretype) library to seamlessly convert bewteen case classes and `Entity`s. See [ShapelessDatastoreExample.scala](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/ShapelessDatastoreExample.scala) for an example job and [ShapelessDatastoreExampleTest.scala](https://github.com/spotify/scio/blob/a254de70962ec6df6d42884e7f213c88313a4e96/scio-examples/src/test/scala/com/spotify/scio/examples/extra/ShapelessDatastoreExampleTest.scala) for tests.
+Datastore `Entity` class is actually generated from @github[Protobuf](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/ShapelessDatastoreExampleTest.scala) which uses the builder pattern and very boilerplate heavy. You can use the [shapeless-datatype](https://github.com/nevillelyh/shapeless-datatype#datastoretype) library to seamlessly convert bewteen case classes and `Entity`s. See @extref[ShapelessDatastoreExample.scala](example:ShapelessDatastoreExample) for an example job and @github[ShapelessDatastoreExampleTest.scala](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/ShapelessDatastoreExampleTest.scala) for tests.
 
 #### How do I throttle Bigtable writes?
 
@@ -342,7 +342,7 @@ class MyKryoRegistrar extends IKryoRegistrar {
 
 #### What Kryo tuning options are there?
 
-See [KryoOptions.java](https://github.com/spotify/scio/blob/master/scio-core/src/main/java/com/spotify/scio/options/KryoOptions.java) for a complete list of available Kryo tuning options. These can be passed via command line, for example:
+See @github[KryoOptions.java](/scio-core/src/main/java/com/spotify/scio/options/KryoOptions.java) for a complete list of available Kryo tuning options. These can be passed via command line, for example:
 
 `--kryoBufferSize=1024 --kryoMaxBufferSize=8192 --kryoReferenceTracking=false --kryoRegistrationRequired=true`
 
@@ -472,7 +472,7 @@ Your Scio applications should define a `main` method instead of extending `scala
 There is multiple options here:
 - Use `debug()` method on an `SCollection` to print its content as the data flows through the DAG during the execution (after the `close` or `closeAndCollect`)
 - Use a debugger and setup break points - make sure to break inside of your functions to stop control at the execution not the pipeline construction time
-- In [scio-repl](https://github.com/spotify/scio/wiki/Scio-REPL), use `closeAndCollect()` to close the context and materialize the content of an `SCollection`
+- In [[Scio-REPL]], use `closeAndCollect()` to close the context and materialize the content of an `SCollection`
 
 #### How do I improve side input performance?
 
