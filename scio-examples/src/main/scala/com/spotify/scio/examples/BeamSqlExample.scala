@@ -18,7 +18,8 @@
 // Example: Minimal BeamSQL Example
 // Usage:
 
-// `sbt runMain "com.spotify.scio.examples.BeamSqlExample"
+// `sbt runMain "com.spotify.scio.examples.BeamSqlExample
+//  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]"`
 package com.spotify.scio.examples
 
 import com.spotify.scio._
@@ -42,7 +43,7 @@ object BeamSqlExample {
 
     val (sc, _) = ContextAndArgs(cmdlineArgs)
 
-    //define the input row format
+    // define the input row format
     val schema =
       Schema.builder().addInt32Field("c1").addStringField("c2").addDoubleField("c3").build()
     def coderRow1 = Coder.row(schema)
@@ -56,7 +57,7 @@ object BeamSqlExample {
           Row.withSchema(schema).addValues(a, b, c).build()
       }
 
-    //Case 1. run a simple SQL query over input PCollection with BeamSql.simpleQuery;
+    // Case 1. run a simple SQL query over input `PCollection` with `SqlTransform.query`
     sc.parallelize(rows)(coderRow1)
       .map(log("PCOLLECTION"))(coderRow1)
       .applyTransform(SqlTransform.query("select c1, c2, c3 from PCOLLECTION where c1 > 1"))(

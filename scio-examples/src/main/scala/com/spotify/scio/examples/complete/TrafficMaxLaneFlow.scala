@@ -15,6 +15,13 @@
  * under the License.
  */
 
+// Example: Traffic max lane flow computation from sensor data
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.complete.TrafficMaxLaneFlow
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --input=gs://apache-beam-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv
+// --output=[DATASET].traffic_max_lane_flow"`
 package com.spotify.scio.examples.complete
 
 import com.spotify.scio._
@@ -25,15 +32,6 @@ import org.joda.time.format.DateTimeFormat
 import org.joda.time.{Duration, Instant}
 
 import scala.util.control.NonFatal
-
-/*
-SBT
-runMain
-  com.spotify.scio.examples.complete.TrafficMaxLaneFlow
-  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://apache-beam-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv
-  --output=[DATASET].traffic_max_lane_flow
- */
 
 object TrafficMaxLaneFlow {
 

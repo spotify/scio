@@ -15,20 +15,18 @@
  * under the License.
  */
 
+// Example: SafeFlatMap usage
+
+// Usage:
+// `sbt runMain "com.spotify.scio.examples.extra.SafeFlatMapExample
+//  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+//  --input=gs://apache-beam-samples/shakespeare/kinglear.txt
+//  --output=gs://[BUCKET]/[PATH]/safe_flat_map"`
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.transforms._
-
-/*
-SBT
-runMain
-  com.spotify.scio.examples.MinimalWordCount
-  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://apache-beam-samples/shakespeare/kinglear.txt
-  --output=gs://[BUCKET]/[PATH]/safe_flat_map
- */
 
 object SafeFlatMapExample {
   def main(cmdlineArgs: Array[String]): Unit = {

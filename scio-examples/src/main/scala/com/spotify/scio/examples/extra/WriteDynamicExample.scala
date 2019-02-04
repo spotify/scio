@@ -21,7 +21,7 @@
 // `sbt runMain "com.spotify.scio.examples.extra.WriteDynamicExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
-// --output=[OUTPUT]"`
+// --output=gs://[OUTPUT]"`
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.ContextAndArgs
@@ -34,7 +34,7 @@ import org.apache.beam.sdk.transforms.{Contextful, SerializableFunction}
 object WriteDynamicExample {
   case class LinesPerCharacter(name: String, lines: Long)
 
-  // The King Lear text is formatted as "CHARACTER_NAME  dialogue"
+  // The King Lear text is formatted as `$CHARACTER_NAME  $dialogue`
   lazy val kingLearTextSplitter = "\t"
 
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -57,7 +57,7 @@ object WriteDynamicExample {
       .withDestinationCoder(StringUtf8Coder.of())
       .withNumShards(1) // Since input is small, restrict to one file per bucket
       .via(
-        Contextful.fn[LinesPerCharacter, String]( // Output LinesPerCharacter records as Strings
+        Contextful.fn[LinesPerCharacter, String]( // Output `LinesPerCharacter` records as Strings
           new SerializableFunction[LinesPerCharacter, String] {
             override def apply(input: LinesPerCharacter): String =
               input.toString

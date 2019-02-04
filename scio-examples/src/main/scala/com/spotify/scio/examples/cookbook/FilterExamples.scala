@@ -72,7 +72,7 @@ object FilterExamples {
       .cross(globalMeanTemp)
       // Filter by mean temperature
       .filter(kv => kv._1.meanTemp < kv._2)
-      // Keep the keys (`Record`) and iscard the values (`Double`)
+      // Keep the keys (`Record`) and discard the values (`Double`)
       .keys
       // Map `Record`s into result `TableRow`s
       .map { r =>

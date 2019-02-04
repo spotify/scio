@@ -15,6 +15,13 @@
  * under the License.
  */
 
+// Example: Trigger example
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.cookbook.TriggerExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --input=gs://apache-beam-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv
+// --output=[DATASET].trigger_example"`
 package com.spotify.scio.examples.cookbook
 
 import com.spotify.scio._
@@ -28,15 +35,6 @@ import org.apache.beam.sdk.transforms.windowing._
 import org.joda.time.{DateTimeConstants, Duration, Instant}
 
 import scala.util.Try
-
-/*
-SBT
-runMain
-  com.spotify.scio.examples.cookbook.TriggerExample
-  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://apache-beam-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv
-  --output=[DATASET].trigger_example
- */
 
 object TriggerExample {
 

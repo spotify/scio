@@ -15,6 +15,13 @@
  * under the License.
  */
 
+// Example: Streaming Word Extract
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.complete.StreamingWordExtract
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --input=gs://apache-beam-samples/shakespeare/kinglear.txt
+// --output=[DATASET].streaming_word_extract"`
 package com.spotify.scio.examples.complete
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
@@ -25,15 +32,6 @@ import org.apache.beam.examples.common.{ExampleOptions, ExampleUtils}
 import org.apache.beam.sdk.options.StreamingOptions
 
 import scala.collection.JavaConverters._
-
-/*
-SBT
-runMain
-  com.spotify.scio.examples.complete.StreamingWordExtract
-  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://apache-beam-samples/shakespeare/kinglear.txt
-  --output=[DATASET].streaming_word_extract
- */
 
 object StreamingWordExtract {
   def main(cmdlineArgs: Array[String]): Unit = {

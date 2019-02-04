@@ -16,6 +16,11 @@
  */
 
 // Example: Protocol Buffer Input and Output
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.extra.ProtobufExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --input=gs://[INPUT].proto --output=gs://[OUTPUT].avro"`
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.ContextAndArgs
@@ -23,14 +28,13 @@ import com.spotify.scio.proto.SimpleV2.SimplePB
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.avro._
 
-// Read protobuf on input, and write another protobuf on output
 object ProtobufExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     // Create `ScioContext` and `Args`
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     // Open Protobuf files as a `SCollection[SimplePB]` where `SimplePB` is a Protobuf record Java
-    // class  compiled from Protobuf schema.
+    // class compiled from Protobuf schema.
     sc.protobufFile[SimplePB](args("input"))
       // Create a new `TrackPB` Protobuf record.
       .map(p => TrackPB.newBuilder().setTrackId(p.getTrackId).build())

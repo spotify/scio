@@ -16,6 +16,11 @@
  */
 
 // Example: Mix Beam Java SDK and Scio Code
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.extra.BeamExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --inputTopic=[TOPIC] --outputTopic=[TOPIC]"`
 package com.spotify.scio.examples.extra
 
 import java.lang.{Double => JDouble}
@@ -96,7 +101,7 @@ object BeamExample {
       // Custom output with a Beam sink `PTransform`
       .saveAsCustomOutput("Output", pubsubOut(args("outputTopic")))
 
-    // This calls sc.pipeline.run() under the hood
+    // This calls `sc.pipeline.run()` under the hood
     val result = sc.close()
 
     // Underlying Beam pipeline result

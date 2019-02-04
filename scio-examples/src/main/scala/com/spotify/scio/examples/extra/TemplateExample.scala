@@ -15,6 +15,26 @@
  * under the License.
  */
 
+// Example: Pubsub Example using templates:
+// https://cloud.google.com/dataflow/docs/templates/overview
+
+// Usage:
+
+// To upload the template:
+// `sbt runMain "com.spotify.scio.examples.extra.TemplateExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --stagingLocation=gs://[BUCKET]/staging --templateLocation=gs://[BUCKET]/TemplateExample"`
+
+// To run the template, e.g. from gcloud:
+// `gcloud dataflow jobs run [JOB-NAME] --gcs-location gs://[BUCKET]/TemplateExample \
+// --parameters inputSub=projects/[PROJECT]/subscriptions/sub,\
+//  outputTopic=projects/[PROJECT]/topics/[TOPIC]`
+
+// To run the job directly:
+// `sbt runMain "com.spotify.scio.examples.extra.TemplateExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --inputSub=projects/[PROJECT]/subscriptions/sub
+// --outputTopic=projects/[PROJECT]/topics/[TOPIC]"`
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
@@ -28,25 +48,6 @@ import org.apache.beam.sdk.options.{
 }
 import org.apache.beam.sdk.options.Validation.Required
 
-// Example: Pubsub Example using templates:
-// https://cloud.google.com/dataflow/docs/templates/overview
-// Usage:
-
-// To upload the template:
-// `sbt runMain "com.spotify.scio.examples.extra.TemplateExample
-//   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-//   --stagingLocation=gs://[BUCKET]/staging --templateLocation=gs://[BUCKET]/TemplateExample"`
-
-// To run the template, e.g. from gcloud:
-// `gcloud dataflow jobs run [JOB-NAME] --gcs-location gs://[BUCKET]/TemplateExample \
-//   --parameters inputSub=projects/[PROJECT]/subscriptions/sub,\
-//   outputTopic=projects/[PROJECT]/topics/[TOPIC]
-
-// To run the job directly:
-// `sbt runMain "com.spotify.scio.examples.extra.TemplateExample
-//   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-//   --inputSub==projects/[PROJECT]/subscriptions/sub
-//   --outputTopic=projects/[PROJECT]/topics/[TOPIC]"`
 object TemplateExample {
 
   trait Options extends PipelineOptions with StreamingOptions {
@@ -77,7 +78,7 @@ object TemplateExample {
     val inputIO = PubsubIO.readStrings().fromSubscription(options.getInputSubscription)
     val outputIO = PubsubIO.writeStrings().to(options.getOutputTopic)
 
-    // We have to use custom inputs and outputs to work with ValueProviders
+    // We have to use custom inputs and outputs to work with `ValueProvider`s
     sc.customInput("input", inputIO)
       .saveAsCustomOutput("output", outputIO)
 

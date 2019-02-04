@@ -36,14 +36,15 @@ object ShapelessDatastoreExample {
   val wordCountType = DatastoreType[WordCount]
 }
 
+// ## Shapeless Datastore Write Example
+// Count words and save result to Datastore
+
 // Usage:
 
 // `sbt runMain "com.spotify.scio.examples.extra.ShapelessDatastoreWriteExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=[PROJECT]"`
-
-// Count words and save result to Datastore
 object ShapelessDatastoreWriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     import ShapelessDatastoreExample._
@@ -65,14 +66,15 @@ object ShapelessDatastoreWriteExample {
   }
 }
 
+// ## Shapeless Datastore Read Example
+// Read word count result back from Datastore
+
 // Usage:
 
 // `sbt runMain "com.spotify.scio.examples.extra.ShapelessDatastoreReadExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=[PROJECT]
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
-
-// Read word count result back from Datastore
 object ShapelessDatastoreReadExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     import ShapelessDatastoreExample._

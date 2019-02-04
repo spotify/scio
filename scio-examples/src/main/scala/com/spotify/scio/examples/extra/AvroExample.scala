@@ -15,6 +15,12 @@
  * under the License.
  */
 
+// Example: Read and Write specific and generic Avro records
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.extra.AvroExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --input=[INPUT].avro --output=[OUTPUT].avro --method=[METHOD]"`
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
@@ -27,7 +33,6 @@ import org.apache.avro.generic.{GenericData, GenericRecord}
 
 import scala.collection.JavaConverters._
 
-// Read and write specific and generic Avro records
 object AvroExample {
   @AvroType.fromSchema("""{
       | "type":"record",
