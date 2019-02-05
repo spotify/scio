@@ -46,7 +46,7 @@ object Query {
         val nullable = if (f.getNullable) "YES" else "NO"
         // val out =  s"${prefix}${f.getName}\t${f.getType.getTypeName}\t$nullable\n"
         val out =
-          f"|| ${prefix + f.getName}%-40s | ${f.getType.getTypeName}%-8s | $nullable%-8s |%n"
+          f"│ ${prefix + f.getName}%-40s │ ${f.getType.getTypeName}%-8s │ $nullable%-8s │%n"
         val underlying =
           if (f.getType.getTypeName == BSchema.TypeName.ROW)
             printContent(f.getType.getRowSchema.getFields.asScala.toList, s"${prefix}${f.getName}.")
@@ -59,11 +59,13 @@ object Query {
 
   private def prettyPrint(fs: List[BSchema.Field]): String = {
     val header =
-      f"+------------------------------------------+----------+----------+%n" +
-        f"|| NAME                                     | TYPE     | NULLABLE |%n" +
-        f"+------------------------------------------+----------+----------+%n"
+      f"""
+      |┌──────────────────────────────────────────┬──────────┬──────────┐
+      |│ NAME                                     │ TYPE     │ NULLABLE │
+      |├──────────────────────────────────────────┼──────────┼──────────┤%n""".stripMargin.drop(1)
     val footer =
-      f"""+------------------------------------------+----------+----------+%n"""
+      f"""
+      |└──────────────────────────────────────────┴──────────┴──────────┘%n""".stripMargin.trim
 
     header + printContent(fs) + footer
   }
@@ -108,9 +110,9 @@ object Query {
           |Query:
           |${q.query}
           |
-          |Input schema:
+          |PCOLLECTION schema:
           |${prettyPrint(schema.getFields.asScala.toList)}
-          |Query schema (infered):
+          |Query result schema (infered):
           |${prettyPrint(inferedSchema.getFields.asScala.toList)}
           |Expected schema:
           |${prettyPrint(expectedSchema.getFields.asScala.toList)}
