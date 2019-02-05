@@ -20,7 +20,7 @@
 
 // `sbt runMain "com.spotify.scio.examples.extra.WordCountOrchestration
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-// --output=gs://[BUCKET]/[PATH]/wordcount`
+// --output=gs://[BUCKET]/[PATH]/wordcount"`
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
@@ -48,7 +48,7 @@ object WordCountOrchestration {
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
-    // extract Tap[T]s from two Future[Tap[T]]s
+    // extract `Tap[T]`s from two `Future[Tap[T]]`s
     val f = for {
       t1 <- f1
       t2 <- f2

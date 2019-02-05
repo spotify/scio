@@ -84,7 +84,7 @@ object LeaderBoard {
     // Add windowing information to team score results by converting to `WindowedSCollection`
     .toWindowed
       .map { wv =>
-        // Convert from score tuple to TeamScoreSums object with both tuple and windowing info
+        // Convert from score tuple to `TeamScoreSums` case class with both tuple and windowing info
         val start = fmt.print(wv.window.asInstanceOf[IntervalWindow].start())
         val now = fmt.print(Instant.now())
         val timing = wv.pane.getTiming.toString

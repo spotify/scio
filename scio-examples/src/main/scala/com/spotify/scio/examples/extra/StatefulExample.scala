@@ -16,6 +16,10 @@
  */
 
 // Example: Stateful Processing
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.extra.StatefulExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]"`
 package com.spotify.scio.examples.extra
 
 import java.lang.{Integer => JInt}

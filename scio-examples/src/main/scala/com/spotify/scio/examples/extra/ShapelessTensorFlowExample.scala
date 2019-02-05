@@ -35,14 +35,14 @@ object ShapelessTensorFlowExample {
   val wordCountType = TensorFlowType[WordCount]
 }
 
+// ## Shapeless Tensorflow Write Example
+// Count words and save result as `TFRecord`s
 // Usage:
 
 // `sbt runMain "com.spotify.scio.examples.extra.ShapelessTensorFlowWriteExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount-tf"`
-
-// Count words and save result to TFRecord
 object ShapelessTensorFlowWriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     import ShapelessTensorFlowExample._
@@ -58,14 +58,14 @@ object ShapelessTensorFlowWriteExample {
   }
 }
 
+// ## Shapeless Tensorflow Read Example
+// Read word count result back from `TFRecord`
 // Usage:
 
 // `sbt runMain "com.spotify.scio.examples.extra.ShapelessTensorFlowReadExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://[BUCKET]/[PATH]/wordcount-tf
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
-
-// Read word count result back from TFRecord
 object ShapelessTensorFlowReadExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     import ShapelessTensorFlowExample._

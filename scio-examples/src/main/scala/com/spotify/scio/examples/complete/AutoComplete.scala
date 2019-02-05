@@ -15,6 +15,13 @@
  * under the License.
  */
 
+// Example: AutoComplete lines of text
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.complete.AutoComplete
+// --project=[PROJECT] --runner=DataflowPRunner --zone=[ZONE]
+// --input=gs://apache-beam-samples/shakespeare/kinglear.txt
+// --outputToBigqueryTable=true --outputToDatastore=false --output=[DATASET].auto_complete"`
 package com.spotify.scio.examples.complete
 
 import com.google.common.collect.ImmutableMap
@@ -30,17 +37,6 @@ import org.apache.beam.sdk.transforms.windowing.{GlobalWindows, SlidingWindows}
 import org.joda.time.Duration
 
 import scala.collection.JavaConverters._
-
-/*
-SBT
-runMain
-  com.spotify.scio.examples.complete.AutoComplete
-  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://apache-beam-samples/shakespeare/kinglear.txt
-  --outputToBigqueryTable=true
-  --outputToDatastore=false
-  --output=[DATASET].auto_complete
- */
 
 object AutoComplete {
 

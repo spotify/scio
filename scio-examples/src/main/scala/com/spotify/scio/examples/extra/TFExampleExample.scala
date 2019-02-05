@@ -15,6 +15,17 @@
  * under the License.
  */
 
+// Example: TensorFlow examples using shapeless-datatype
+// Shapeless seamlessly converts between case classes and TensorFlow Example ProtoBufs.
+
+// See: https://github.com/nevillelyh/shapeless-datatype shapeless-datatype
+
+// Usage:
+// `sbt runMain "com.spotify.scio.examples.extra.TFExampleExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --input=gs://apache-beam-samples/shakespeare/kinglear.txt
+// --output=gs://[BUCKET]/[PATH]/tf-example-features
+// --feature-desc-path=gs://[BUCKET]/[PATH]/tf-example-features/_features"`
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
@@ -22,27 +33,11 @@ import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.tensorflow._
 import shapeless.datatype.tensorflow._
 
-/**
- * TensorFlow examples using shapeless-datatype to seamlessly convert between case classes and
- * TensorFlow Example ProtoBuf.
- *
- * [[https://github.com/nevillelyh/shapeless-datatype shapeless-datatype]]
- */
 object WordCountFeatureSpec {
   val featuresType: TensorFlowType[WordCountFeatures] =
     TensorFlowType[WordCountFeatures]
   case class WordCountFeatures(wordLength: Float, count: Float)
 }
-
-/*
-SBT
-runMain
-  com.spotify.scio.examples.extra.TFExampleExample
-  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://apache-beam-samples/shakespeare/kinglear.txt
-  --output=gs://[BUCKET]/[PATH]/tf-example-features
-  --feature-desc-path=gs://[BUCKET]/[PATH]/tf-example-features/_features
- */
 
 object TFExampleExample {
 

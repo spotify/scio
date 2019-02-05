@@ -15,6 +15,12 @@
  * under the License.
  */
 
+// Example: Java converters for various output formats
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.extra.JavaConvertersExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --output=gs://[OUTPUT] --converter=[CONVERTER]"`
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.ContextAndArgs
@@ -37,7 +43,7 @@ object JavaConvertersExample {
         t.to(FilenamePolicy(output, "-SSSSS-of-NNNNN", ".csv").asJava)
     }
 
-    // In prod, TextIO transform converts Int -> String before write.
+    // In prod, `TextIO` transform converts `Int` -> `String` before write.
     // Test does not apply transform, compares SCol prior to output to expected. Need manual cast.
     sc.parallelize(1 to 10)
       .map(_.toString)

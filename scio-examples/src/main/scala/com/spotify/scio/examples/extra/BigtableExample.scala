@@ -49,6 +49,9 @@ object BigtableExample {
 
 }
 
+// ## Bigtable Write example
+// Count words and save result to Bigtable
+
 // Usage:
 
 // `sbt runMain "com.spotify.scio.examples.extra.BigtableWriteExample
@@ -57,8 +60,6 @@ object BigtableExample {
 // --bigtableProjectId=[BIG_TABLE_PROJECT_ID]
 // --bigtableInstanceId=[BIG_TABLE_INSTANCE_ID]
 // --bigtableTableId=[BIG_TABLE_TABLE_ID]"`
-
-// Count words and save result to Bigtable
 object BigtableWriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -92,6 +93,9 @@ object BigtableWriteExample {
   }
 }
 
+// ## Bigtable Read example
+// Read word count result back from Bigtable
+
 // Usage:
 
 // `sbt runMain "com.spotify.scio.examples.extra.BigtableReadExample
@@ -100,8 +104,6 @@ object BigtableWriteExample {
 // --bigtableInstanceId=[BIG_TABLE_INSTANCE_ID]
 // --bigtableTableId=[BIG_TABLE_TABLE_ID]
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
-
-// Read word count result back from Bigtable
 object BigtableReadExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)

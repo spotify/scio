@@ -15,6 +15,7 @@
  * under the License.
  */
 
+// Example: Write a keyed SCollection as an Annoy file
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
@@ -42,13 +43,13 @@ object AnnoyExamples {
   }
 }
 
-/*
-SBT
-runMain
-  com.spotify.scio.examples.extra.AnnoyIndexSaveExample
-  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --output=gs://[BUCKET]/[PATH]/annoy.tree
- */
+// ## Index save example
+
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.extra.AnnoyIndexSaveExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+//--output=gs://[BUCKET]/[PATH]/annoy.tree"`
 object AnnoyIndexSaveExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     import AnnoyExamples._
@@ -62,14 +63,14 @@ object AnnoyIndexSaveExample {
   }
 }
 
-/*
-SBT
-runMain
-  com.spotify.scio.examples.extra.AnnoySideInputExample
-  --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
-  --input=gs://[BUCKET]/[PATH]/annoy.tree
-  --output=gs://[BUCKET]/[PATH]/otuput
- */
+// ## Side input example
+
+// Usage:
+
+// `sbt runMain "com.spotify.scio.examples.extra.AnnoySideInputExample
+// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --input=gs://[BUCKET]/[PATH]/annoy.tree
+// --output=gs://[BUCKET]/[PATH]/otuput"`
 object AnnoySideInputExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     import AnnoyExamples._
