@@ -36,8 +36,17 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashJoin[W: Coder](that: SCollection[(K, W)])(implicit koder: Coder[K],
                                                     voder: Coder[V]): SCollection[(K, (V, W))] =
+    hashJoin(SideMap(combineAsMapSideInput(that)))
+
+  /**
+   * Perform an inner join with a SideMap.
+   *
+   * @group join
+   */
+  def hashJoin[W: Coder](that: SideMap[K, W])(implicit koder: Coder[K],
+                                              voder: Coder[V]): SCollection[(K, (V, W))] =
     self.transform { in =>
-      val side = combineAsMapSideInput(that)
+      val side = that.side
       implicit val vwCoder = Coder[(V, W)]
       in.withSideInputs(side)
         .flatMap[(K, (V, W))] { (kv, s) =>
@@ -57,8 +66,18 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashLeftJoin[W: Coder](that: SCollection[(K, W)])(
     implicit koder: Coder[K],
+    voder: Coder[V]): SCollection[(K, (V, Option[W]))] =
+    hashLeftJoin(SideMap(combineAsMapSideInput(that)))
+
+  /**
+   * Perform a left outer join with a SideMap.
+   *
+   * @group join
+   */
+  def hashLeftJoin[W: Coder](that: SideMap[K, W])(
+    implicit koder: Coder[K],
     voder: Coder[V]): SCollection[(K, (V, Option[W]))] = self.transform { in =>
-    val side = combineAsMapSideInput(that)
+    val side = that.side
     implicit val vwCoder = Coder[(V, Option[W])]
     in.withSideInputs(side)
       .flatMap[(K, (V, Option[W]))] { (kv, s) =>
@@ -79,8 +98,18 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def hashFullOuterJoin[W: Coder](that: SCollection[(K, W)])(
     implicit koder: Coder[K],
     voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] =
+    hashFullOuterJoin(SideMap(combineAsMapSideInput(that)))
+
+  /**
+   * Perform a full outer join with a SideMap.
+   *
+   * @group join
+   */
+  def hashFullOuterJoin[W: Coder](that: SideMap[K, W])(
+    implicit koder: Coder[K],
+    voder: Coder[V]): SCollection[(K, (Option[V], Option[W]))] =
     self.transform { in =>
-      val side = combineAsMapSideInput(that)
+      val side = that.side
 
       val leftHashed = in
         .withSideInputs(side)
@@ -118,13 +147,24 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per key
    */
   def hashIntersectByKey(that: SCollection[K])(implicit koder: Coder[K],
-                                               voder: Coder[V]): SCollection[(K, V)] = {
-    val side = combineAsMapSideInput(that.map((_, ())))
+                                               voder: Coder[V]): SCollection[(K, V)] =
+    hashIntersectByKey(that.toSideSet)
+
+  /**
+   * Return an SCollection with the pairs from `this` whose keys are in the SideSet `that`.
+   * @group per key
+   */
+  def hashIntersectByKey(that: SideSet[K])(implicit koder: Coder[K],
+                                           voder: Coder[V]): SCollection[(K, V)] = {
+    val side = that.side
     self
       .withSideInputs(side)
       .filter { case ((k, v), s) => s(side).contains(k) }
       .toSCollection
   }
+
+  def toSideMap(implicit koder: Coder[K], voder: Coder[V]): SideMap[K, V] =
+    SideMap[K, V](combineAsMapSideInput(self))
 
   private def combineAsMapSideInput[W: Coder](that: SCollection[(K, W)])(
     implicit koder: Coder[K]): SideInput[MMap[K, ArrayBuffer[W]]] = {

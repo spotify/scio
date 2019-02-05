@@ -444,6 +444,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     }
 
   /**
+   * Return a new SCollection containing only the elements that also exist in the SideSet.
+   *
+   * @group transform
+   */
+  def hashFilter(that: SideSet[T])(implicit coder: Coder[T]): SCollection[T] =
+    self.map((_, ())).hashIntersectByKey(that).keys
+
+  /**
    * Create tuples of the elements in this SCollection by applying `f`.
    * @group transform
    */
@@ -958,6 +966,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       WithTimestamps
         .of(Functions.serializableFn(f))
         .withAllowedTimestampSkew(allowedTimestampSkew))
+
+  def toSideSet(implicit coder: Coder[T]): SideSet[T] = SideSet(combineAsSet(self))
+
+  private def combineAsSet[A: Coder](c: SCollection[A]): SideInput[Set[A]] =
+    c.aggregate[Set[A], Set[A]](Aggregator.prepareSemigroup(x => Set(x)))
+      .asSingletonSideInput(Set[A]())
 
   // =======================================================================
   // Read operations

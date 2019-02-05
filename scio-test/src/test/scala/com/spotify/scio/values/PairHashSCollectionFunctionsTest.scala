@@ -153,4 +153,23 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       p should beEmpty
     }
   }
+
+  it should "support hashIntersectByKey() with SideSet" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
+      val p2 = sc.parallelize(Seq[String]("a", "b", "d")).toSideSet
+      val p = p1.hashIntersectByKey(p2)
+      p should containInAnyOrder(Seq(("a", 1), ("b", 2), ("b", 4)))
+    }
+  }
+
+  it should "support hashJoin() with with SideMap" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
+      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13))).toSideMap
+      val p = p1.hashJoin(p2)
+      p should
+        containInAnyOrder(Seq(("a", (1, 11)), ("a", (2, 11)), ("b", (3, 12)), ("b", (3, 13))))
+    }
+  }
 }
