@@ -23,6 +23,7 @@ import com.spotify.scio.schemas.{Record, Schema}
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.values.Row
+import com.spotify.scio.bean.UserBean
 
 object TestData {
   case class User(username: String, email: String, age: Int)
@@ -59,7 +60,7 @@ object TestData {
 
   val javaUsers =
     (1 to 10).map { i =>
-      new com.spotify.scio.bean.UserBean(s"user$i", 20 + i)
+      new UserBean(s"user$i", 20 + i)
     }
 
   case class UserWithJList(username: String, emails: java.util.List[String])
@@ -208,7 +209,6 @@ class BeamSQLTest extends PipelineSpec {
     "Schema.javaBeanSchema[TypeMismatch]" shouldNot compile
   }
 
-  // TODO: check(query)
   // TODO: Typechecked query ?
   // TODO: Join SCollections ?
   // TODO: nested case classes query
@@ -240,6 +240,14 @@ class BeamSQLTest extends PipelineSpec {
     val in = sc.parallelize((1 to 10).toList)
     val r = in.sql[Int](Query.of("select sum(`value`) from PCOLLECTION"))
     r should containSingleValue(55)
+  }
+
+  it should "support applying multiple queries on the same SCollection" in runWithContext { sc =>
+    val in = sc.parallelize(users)
+    val sumAges = in.sql[Int](Query.of("select sum(age) from PCOLLECTION"))
+    sumAges should containSingleValue(255)
+    val usernames = in.sql[String](Query.of("select username from PCOLLECTION"))
+    usernames should containInAnyOrder(users.map(_.username))
   }
 
   it should "provide a typecheck method for tests" in {
@@ -275,5 +283,14 @@ class BeamSQLTest extends PipelineSpec {
       select cast(`PCOLLECTION`.`f`.`i` as BIGINT)
       from PCOLLECTION
     """)
+
+    checkOK[UserBean, (String, Int)]("select name, age from PCOLLECTION")
+    checkNOK[UserBean, (String, Long)]("select name, age from PCOLLECTION")
+    checkNOK[UserBean, User]("select name, age from PCOLLECTION")
+    checkNOK[UserBean, (String, Option[Int])]("select name, age from PCOLLECTION")
+    checkNOK[UserBean, Bar]("select name, age from PCOLLECTION")
+    // Calcite flattens the row value
+    checkOK[UserBean, (Long, Int, String)](
+      "select cast(age AS BIGINT), row(age, name) from PCOLLECTION")
   }
 }
