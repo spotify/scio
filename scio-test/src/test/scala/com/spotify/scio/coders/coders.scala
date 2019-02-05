@@ -114,6 +114,9 @@ class CodersTest extends FlatSpec with Matchers {
     Option(1) coderShould notFallback()
     Some(1) coderShould notFallback()
     BitSet(1 to 100000: _*) coderShould notFallback()
+
+    Right(1) coderShould notFallback()
+    Left(1) coderShould notFallback()
   }
 
   it should "support Java collections" in {
@@ -322,10 +325,10 @@ class CodersTest extends FlatSpec with Matchers {
     val rightCoder = materialize(Coder[scala.util.Right[Double, Int]]).toString
 
     val expectedMsg = s"DisjunctionCoder[scala.util.Either](" +
-      s"id -> VarIntCoder, 0 -> $leftCoder, 1 -> $rightCoder) is not deterministic"
+      s"id -> BooleanCoder, false -> $leftCoder, true -> $rightCoder) is not deterministic"
 
     caught.getMessage should startWith(expectedMsg)
-    caught.getMessage should include(s"case 0 is using non-deterministic $leftCoder")
+    caught.getMessage should include(s"case false is using non-deterministic $leftCoder")
   }
 
   it should "support protobuf messages" in {
