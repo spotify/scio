@@ -224,7 +224,7 @@ spotify/scio
 <p>First please read Google&rsquo;s official <a href="https://cloud.google.com/bigtable/docs/how-to">doc</a>.</p>
 <h3><a href="#bigtable-example" name="bigtable-example" class="anchor"><span class="anchor-link"></span></a>Bigtable example</h3>
 <p>This depends on APIs from <code>scio-bigtable</code> and imports from <code>com.spotify.scio.bigtable._</code>.</p>
-<p>Look at example <a href="https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/BigtableExample.scala">here</a>.</p>
+<p>Look at example <a href="https://spotify.github.io/scio/examples/BigtableExample.scala.html">here</a>.</p>
 <h2><a href="#common-issues" name="common-issues" class="anchor"><span class="anchor-link"></span></a>Common issues</h2>
 <h4><a href="#size-of-the-cluster-vs-dataflow-cluster" name="size-of-the-cluster-vs-dataflow-cluster" class="anchor"><span class="anchor-link"></span></a>Size of the cluster vs Dataflow cluster</h4>
 <p>As a general note when writing to Bigtable from Dataflow you should at most use the # of Bigtable nodes you have * 3 cpus. Otherwise Bigtable will be overwhelmed and throttle the writes (and the reads)</p>

@@ -271,8 +271,12 @@ hr {
           </section>
           
               <section class="">
-                <div class="comment "><p>https://cloud.google.com/dataflow/docs/templates/overview
-Usage:</p></p></div>
+                <div class="comment "><p>https://cloud.google.com/dataflow/docs/templates/overview</p></p></div>
+                <div class="code empty">&nbsp;</div>
+              </section>
+            
+              <section class="">
+                <div class="comment "><p>Usage:</p></p></div>
                 <div class="code empty">&nbsp;</div>
               </section>
             
@@ -286,9 +290,9 @@ Usage:</p></p></div>
             
               <section class="">
                 <div class="comment "><p>To run the template, e.g. from gcloud:
-`gcloud dataflow jobs run [JOB-NAME] --gcs-location gs://[BUCKET]/TemplateExample \
+<code>gcloud dataflow jobs run [JOB-NAME] --gcs-location gs://[BUCKET]/TemplateExample \
 --parameters inputSub=projects/[PROJECT]/subscriptions/sub,\
-outputTopic=projects/[PROJECT]/topics/[TOPIC]</p></p></div>
+outputTopic=projects/[PROJECT]/topics/[TOPIC]</code></p></p></div>
                 <div class="code empty">&nbsp;</div>
               </section>
             
@@ -296,9 +300,22 @@ outputTopic=projects/[PROJECT]/topics/[TOPIC]</p></p></div>
                 <div class="comment "><p>To run the job directly:
 <code>sbt runMain &quot;com.spotify.scio.examples.extra.TemplateExample
 --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
---inputSub==projects/[PROJECT]/subscriptions/sub
+--inputSub=projects/[PROJECT]/subscriptions/sub
 --outputTopic=projects/[PROJECT]/topics/[TOPIC]&quot;</code></p></p></div>
-                <div class="code "><span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/TemplateExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.TemplateExample</span>">TemplateExample</a></span> {
+                <div class="code "><span class="keyword">package</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/index.html" data-tooltip="<span>com.spotify.scio.examples</span>">examples</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/index.html" data-tooltip="<span>com.spotify.scio.examples.extra</span>">extra</a></span>
+
+<span class="keyword">import</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>._
+<span class="keyword">import</span> <span class="identifier">org</span>.<span class="identifier">apache</span>.<span class="identifier">beam</span>.<span class="identifier">sdk</span>.<span class="identifier">io</span>.<span class="identifier">gcp</span>.<span class="identifier">pubsub</span>.<span class="identifier">PubsubIO</span>
+<span class="keyword">import</span> <span class="identifier">org</span>.<span class="identifier">apache</span>.<span class="identifier">beam</span>.<span class="identifier">sdk</span>.<span class="identifier">options</span>.{
+  <span class="identifier">Description</span>,
+  <span class="identifier">PipelineOptions</span>,
+  <span class="identifier">PipelineOptionsFactory</span>,
+  <span class="identifier">StreamingOptions</span>,
+  <span class="identifier">ValueProvider</span>
+}
+<span class="keyword">import</span> <span class="identifier">org</span>.<span class="identifier">apache</span>.<span class="identifier">beam</span>.<span class="identifier">sdk</span>.<span class="identifier">options</span>.<span class="identifier">Validation</span>.<span class="identifier">Required</span>
+
+<span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/TemplateExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.TemplateExample</span>">TemplateExample</a></span> {
 
   trait <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/TemplateExample$$Options.html" data-tooltip="<span>com.spotify.scio.examples.extra.TemplateExample.Options</span>">Options</a></span> <span class="keyword">extends</span> <span class="identifier">PipelineOptions</span> with <span class="identifier">StreamingOptions</span> {
     @<span class="identifier">Description</span>(<span class="string">"The Cloud Pub/Sub subscription to read from"</span>)
@@ -331,7 +348,7 @@ outputTopic=projects/[PROJECT]/topics/[TOPIC]</p></p></div>
               </section>
             
               <section class="">
-                <div class="comment "><p>We have to use custom inputs and outputs to work with ValueProviders</p></p></div>
+                <div class="comment "><p>We have to use custom inputs and outputs to work with <code>ValueProvider</code>s</p></p></div>
                 <div class="code ">    <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" data-tooltip="<span>com.spotify.scio.ScioContext</span>">sc</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#customInput[T,I>:org.apache.beam.sdk.values.PBegin<:org.apache.beam.sdk.values.PInput](name:String,transform:org.apache.beam.sdk.transforms.PTransform[I,org.apache.beam.sdk.values.PCollection[T]])(implicitevidence$21:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" data-tooltip="<span>com.spotify.scio.ScioContext.customInput[T, I >: org.apache.beam.sdk.values.PBegin <: org.apache.beam.sdk.values.PInput](name: String, transform: org.apache.beam.sdk.transforms.PTransform[I,org.apache.beam.sdk.values.PCollection[T]])(implicit evidence$21: com.spotify.scio.coders.Coder[T]): com.spotify.scio.values.SCollection[T]</span>">customInput</a></span>(<span class="string">"input"</span>, <span class="identifier">inputIO</span>)
       .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#saveAsCustomOutput[O<:org.apache.beam.sdk.values.POutput](name:String,transform:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[T],O]):scala.concurrent.Future[com.spotify.scio.io.Tap[T]]" data-tooltip="<span>com.spotify.scio.values.SCollection.saveAsCustomOutput[O <: org.apache.beam.sdk.values.POutput](name: String, transform: org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[T],O]): scala.concurrent.Future[com.spotify.scio.io.Tap[T]]</span>">saveAsCustomOutput</a></span>(<span class="string">"output"</span>, <span class="identifier">outputIO</span>)
 &nbsp;</div>

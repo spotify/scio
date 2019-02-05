@@ -317,6 +317,12 @@ hr {
               </section>
             
               <section class="">
+                <div class="comment "><h1 id="bigtable-write-example" class="title">Bigtable Write example</h1>
+<p>Count words and save result to Bigtable</p></p></div>
+                <div class="code empty">&nbsp;</div>
+              </section>
+            
+              <section class="">
                 <div class="comment "><p>Usage:</p></p></div>
                 <div class="code empty">&nbsp;</div>
               </section>
@@ -328,11 +334,6 @@ hr {
 --bigtableProjectId=[BIG_TABLE_PROJECT_ID]
 --bigtableInstanceId=[BIG_TABLE_INSTANCE_ID]
 --bigtableTableId=[BIG_TABLE_TABLE_ID]&quot;</code></p></p></div>
-                <div class="code empty">&nbsp;</div>
-              </section>
-            
-              <section class="">
-                <div class="comment "><p>Count words and save result to Bigtable</p></p></div>
                 <div class="code "><span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/BigtableWriteExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.BigtableWriteExample</span>">BigtableWriteExample</a></span> {
   <span class="keyword">def</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/BigtableWriteExample$.html#main(cmdlineArgs:Array[String]):Unit" data-tooltip="<span>com.spotify.scio.examples.extra.BigtableWriteExample.main(cmdlineArgs: Array[String]): Unit</span>">main</a></span>(<span class="identifier">cmdlineArgs</span>: <span class="identifier">Array</span>[<span class="identifier">String</span>]): <span class="identifier">Unit</span> = {
     <span class="keyword">val</span> (<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" data-tooltip="<span>com.spotify.scio.ScioContext</span>">sc</a></span>, <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/Args.html" data-tooltip="<span>com.spotify.scio.Args</span>">args</a></span>) = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ContextAndArgs$.html#apply(args:Array[String]):(com.spotify.scio.ScioContext,com.spotify.scio.Args)" data-tooltip="<span>com.spotify.scio.ContextAndArgs.apply(args: Array[String])(com.spotify.scio.ScioContext, com.spotify.scio.Args)</span>">ContextAndArgs</a></span>(<span class="identifier">cmdlineArgs</span>)
@@ -378,6 +379,12 @@ after bumping the nodes down.</p></p></div>
               </section>
             
               <section class="">
+                <div class="comment "><h1 id="bigtable-read-example" class="title">Bigtable Read example</h1>
+<p>Read word count result back from Bigtable</p></p></div>
+                <div class="code empty">&nbsp;</div>
+              </section>
+            
+              <section class="">
                 <div class="comment "><p>Usage:</p></p></div>
                 <div class="code empty">&nbsp;</div>
               </section>
@@ -389,11 +396,6 @@ after bumping the nodes down.</p></p></div>
 --bigtableInstanceId=[BIG_TABLE_INSTANCE_ID]
 --bigtableTableId=[BIG_TABLE_TABLE_ID]
 --output=gs://[BUCKET]/[PATH]/wordcount&quot;</code></p></p></div>
-                <div class="code empty">&nbsp;</div>
-              </section>
-            
-              <section class="">
-                <div class="comment "><p>Read word count result back from Bigtable</p></p></div>
                 <div class="code "><span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/BigtableReadExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.BigtableReadExample</span>">BigtableReadExample</a></span> {
   <span class="keyword">def</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/BigtableReadExample$.html#main(cmdlineArgs:Array[String]):Unit" data-tooltip="<span>com.spotify.scio.examples.extra.BigtableReadExample.main(cmdlineArgs: Array[String]): Unit</span>">main</a></span>(<span class="identifier">cmdlineArgs</span>: <span class="identifier">Array</span>[<span class="identifier">String</span>]): <span class="identifier">Unit</span> = {
     <span class="keyword">val</span> (<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" data-tooltip="<span>com.spotify.scio.ScioContext</span>">sc</a></span>, <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/Args.html" data-tooltip="<span>com.spotify.scio.Args</span>">args</a></span>) = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/ContextAndArgs$.html#apply(args:Array[String]):(com.spotify.scio.ScioContext,com.spotify.scio.Args)" data-tooltip="<span>com.spotify.scio.ContextAndArgs.apply(args: Array[String])(com.spotify.scio.ScioContext, com.spotify.scio.Args)</span>">ContextAndArgs</a></span>(<span class="identifier">cmdlineArgs</span>)

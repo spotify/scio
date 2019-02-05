@@ -186,6 +186,10 @@
                         <a class="class" href="SideInputContext.html" title="Encapsulate context of one or more SideInputs in an SCollectionWithSideInput."></a>
                         <a href="SideInputContext.html" title="Encapsulate context of one or more SideInputs in an SCollectionWithSideInput.">SideInputContext</a>
                       </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="SideMap.html" title=""></a>
+                        <a href="SideMap.html" title="">SideMap</a>
+                      </li><li class="current-entities indented4">
                         <a class="object" href="SideOutput$.html" title="Companion object for SideOutput."></a>
                         <a class="trait" href="SideOutput.html" title="Encapsulate a side output for a transform."></a>
                         <a href="SideOutput.html" title="Encapsulate a side output for a transform.">SideOutput</a>
@@ -197,6 +201,10 @@
                         <span class="separator"></span>
                         <a class="class" href="SideOutputContext.html" title="Encapsulate context of one or more SideOutputs in an SCollectionWithSideOutput."></a>
                         <a href="SideOutputContext.html" title="Encapsulate context of one or more SideOutputs in an SCollectionWithSideOutput.">SideOutputContext</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="SideSet.html" title=""></a>
+                        <a href="SideSet.html" title="">SideSet</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="TransformNameable.html" title="Trait for setting custom names on transforms."></a>
@@ -929,6 +937,24 @@ any key in memory. If a key has too many values, it can result in an <code>OutOf
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
+    </li><li name="com.spotify.scio.values.PairSCollectionFunctions#hashPartitionByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="collection">
+      <a id="hashPartitionByKey(numPartitions:Int):Seq[com.spotify.scio.values.SCollection[(K,V)]]"></a><a id="hashPartitionByKey(Int):Seq[SCollection[(K,V)]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/PairSCollectionFunctions.html#hashPartitionByKey(numPartitions:Int):Seq[com.spotify.scio.values.SCollection[(K,V)]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">hashPartitionByKey</span><span class="params">(<span name="numPartitions">numPartitions: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>)]]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Partition this SCollection using K.hashCode() into <code>n</code> partitions
+</p><div class="fullcomment"><div class="comment cmt"><p>Partition this SCollection using K.hashCode() into <code>n</code> partitions
+</p></div><dl class="paramcmts block"><dt class="param">numPartitions</dt><dd class="cmt"><p>number of output partitions</p></dd><dt>returns</dt><dd class="cmt"><p>partitioned SCollections in a <code>Seq</code></p></dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#intersectByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="per_key">
       <a id="intersectByKey(that:com.spotify.scio.values.SCollection[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]"></a><a id="intersectByKey(SCollection[K])(Coder[K],Coder[V]):SCollection[(K,V)]"></a>
       <span class="permalink">
@@ -1254,9 +1280,9 @@ of <code>math.ceil(numItems * samplingRate)</code> over all key values.
       
       <p class="shortcomment cmt">Return an SCollection with the pairs from <code>this</code> whose keys are in <code>that</code>
 when the cardinality of <code>this</code> &gt;&gt; <code>that</code>, but neither can fit in memory
-(see <a href="PairHashSCollectionFunctions.html#hashIntersectByKey(that:com.spotify.scio.values.SCollection[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" class="extmbr" name="com.spotify.scio.values.PairHashSCollectionFunctions#hashIntersectByKey">PairHashSCollectionFunctions.hashIntersectByKey</a>).</p><div class="fullcomment"><div class="comment cmt"><p>Return an SCollection with the pairs from <code>this</code> whose keys are in <code>that</code>
+(see <a href="PairHashSCollectionFunctions.html#hashIntersectByKey(that:com.spotify.scio.values.SideSet[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" class="extmbr" name="com.spotify.scio.values.PairHashSCollectionFunctions#hashIntersectByKey">PairHashSCollectionFunctions.hashIntersectByKey</a>).</p><div class="fullcomment"><div class="comment cmt"><p>Return an SCollection with the pairs from <code>this</code> whose keys are in <code>that</code>
 when the cardinality of <code>this</code> &gt;&gt; <code>that</code>, but neither can fit in memory
-(see <a href="PairHashSCollectionFunctions.html#hashIntersectByKey(that:com.spotify.scio.values.SCollection[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" class="extmbr" name="com.spotify.scio.values.PairHashSCollectionFunctions#hashIntersectByKey">PairHashSCollectionFunctions.hashIntersectByKey</a>).</p></div><dl class="paramcmts block"><dt class="param">computeExact</dt><dd class="cmt"><p>Whether or not to directly pass through bloom filter results (with a small
+(see <a href="PairHashSCollectionFunctions.html#hashIntersectByKey(that:com.spotify.scio.values.SideSet[K])(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" class="extmbr" name="com.spotify.scio.values.PairHashSCollectionFunctions#hashIntersectByKey">PairHashSCollectionFunctions.hashIntersectByKey</a>).</p></div><dl class="paramcmts block"><dt class="param">computeExact</dt><dd class="cmt"><p>Whether or not to directly pass through bloom filter results (with a small
                     false positive rate) or perform an additional inner join to confirm
                     exact result set.</p></dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#sparseIntersectByKeyImpl" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
@@ -1695,6 +1721,9 @@ not be sent through an intermediate node.</p></dd></dl></div>
         <div id="groupedMembers">
         <div class="group" name="cogroup">
               <h3>CoGroup Operations</h3>
+              
+            </div><div class="group" name="collection">
+              <h3>collection</h3>
               
             </div><div class="group" name="join">
               <h3>Join Operations</h3>

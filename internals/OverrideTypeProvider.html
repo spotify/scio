@@ -221,7 +221,7 @@ spotify/scio
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
 <h1><a href="#overridetypeprovider" name="overridetypeprovider" class="anchor"><span class="anchor-link"></span></a>OverrideTypeProvider</h1>
-<p>The <a href="https://github.com/spotify/scio/blob/master/scio-bigquery/src/main/scala/com/spotify/scio/bigquery/validation/OverrideTypeProvider.scala"><code>OverrideTypeProvider</code></a> trait allows the user to provide custom mappings from BigQuery types to custom Scala types.</p>
+<p>The <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/validation/OverrideTypeProvider.html"><code>OverrideTypeProvider</code></a> trait allows the user to provide custom mappings from BigQuery types to custom Scala types.</p>
 <p>This can be used for a number of use cases: * Using higher level types in Scio in order to be explicit about what your data is * Custom code can be run when you create new objects to do things like data validation or simple transformation</p>
 <p>The methods in the Scala trait allow you to inspect the incoming types from BigQuery and decide if you&rsquo;d like to provide an alternative type mapping to your own custom type. You also must tell Scio how to convert your types back into BigQuery data types.</p>
 <h1><a href="#setup" name="setup" class="anchor"><span class="anchor-link"></span></a>Setup</h1>

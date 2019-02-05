@@ -231,60 +231,76 @@ spotify/scio
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
 <h1><a href="#faq" name="faq" class="anchor"><span class="anchor-link"></span></a>FAQ</h1>
+<div class="toc ">
 <ul>
-  <li><a href="#general-questions">General questions</a></li>
-  <li><a href="#whats-the-status-of-scio">What&rsquo;s the status of Scio?</a></li>
-  <li><a href="#whos-using-scio">Who&rsquo;s using Scio?</a></li>
-  <li><a href="#whats-the-relationship-between-scio-and-apache-beam">What&rsquo;s the relationship between Scio and Apache Beam?</a></li>
-  <li><a href="#whats-the-relationship-between-scio-and-google-cloud-dataflow">What&rsquo;s the relationship between Scio and Google Cloud Dataflow?</a></li>
-  <li><a href="#how-does-scio-compare-to-scalding-or-spark">How does Scio compare to Scalding or Spark?</a></li>
-  <li><a href="#what-are-gce-availability-zone-and-gcs-bucket-location">What are GCE availability zone and GCS bucket location?</a></li>
-  <li><a href="#programming-questions">Programming questions</a></li>
-  <li><a href="#how-do-i-setup-a-new-sbt-project">How do I setup a new SBT project?</a></li>
-  <li><a href="#how-do-i-deploy-scio-jobs-to-dataflow">How do I deploy Scio jobs to Dataflow?</a></li>
-  <li><a href="#how-do-i-use-the-snapshot-builds-of-scio">How do I use the SNAPSHOT builds of Scio?</a></li>
-  <li><a href="#how-do-i-unit-test-pipelines">How do I unit test pipelines?</a></li>
-  <li><a href="#how-do-i-combine-multiple-input-sources">How do I combine multiple input sources?</a></li>
-  <li><a href="#how-do-i-log-in-a-job">How do I log in a job?</a></li>
-  <li><a href="#how-do-i-use-beams-java-api-in-scio">How do I use Beam&rsquo;s Java API in Scio?</a></li>
-  <li><a href="#what-are-the-different-types-of-joins-and-performance-implication">What are the different types of joins and performance implication?</a></li>
-  <li><a href="#how-to-create-dataflow-job-template">How to create Dataflow job template?</a></li>
-  <li><a href="#how-do-i-cancel-a-job-after-certain-time-period">How do I cancel a job after certain time period?</a></li>
-  <li><a href="#why-cant-i-have-an-scollection-inside-another-scollection">Why can&rsquo;t I have an SCollection inside another SCollection?</a></li>
-  <li><a href="#bigquery-questions">BigQuery questions</a></li>
-  <li><a href="#what-is-bigquery-dataset-location">What is BigQuery dataset location?</a></li>
-  <li><a href="#how-stable-is-the-type-safe-bigquery-api">How stable is the type safe BigQuery API?</a></li>
-  <li><a href="#how-do-i-work-with-nested-options-in-type-safe-bigquery">How do I work with nested Options in type safe BigQuery?</a></li>
-  <li><a href="#how-do-i-unit-test-bigquery-queries">How do I unit test BigQuery queries?</a></li>
-  <li><a href="#how-do-i-stream-to-a-partitioned-bigquery-table">How do I stream to a partitioned BigQuery table?</a></li>
-  <li><a href="#how-do-i-invalidate-cached-bigquery-results-or-disable-cache">How do I invalidate cached BigQuery results or disable cache?</a></li>
-  <li><a href="#how-does-bigquery-determines-job-priority">How does BigQuery determines job priority?</a></li>
-  <li><a href="#streaming-questions">Streaming questions</a></li>
-  <li><a href="#how-do-i-update-a-streaming-job">How do I update a streaming job?</a></li>
-  <li><a href="#how-do-i-read-pubsub-input-in-a-local-pipeline">How do I read Pubsub input in a local pipeline?</a></li>
-  <li><a href="#other-io-components">Other IO components</a></li>
-  <li><a href="#how-do-i-access-various-files-outside-of-a-sciocontext">How do I access various files outside of a ScioContext?</a></li>
-  <li><a href="#how-do-i-reduce-datastore-boilerplate">How do I reduce Datastore boilerplate?</a></li>
-  <li><a href="#how-do-i-throttle-bigtable-writes">How do I throttle Bigtable writes?</a></li>
-  <li><a href="#how-do-i-use-custom-kryo-serializers">How do I use custom Kryo serializers?</a></li>
-  <li><a href="#what-kryo-tuning-options-are-there">What Kryo tuning options are there?</a></li>
-  <li><a href="#development-environment-issues">Development environment issues</a></li>
-  <li><a href="#how-do-i-keep-sbt-from-running-out-of-memory">How do I keep SBT from running out of memory?</a></li>
-  <li><a href="#how-do-i-fix-unable-to-create-parent-directories-error-in-intellij">How do I fix &ldquo;Unable to create parent directories&rdquo; error in IntelliJ?</a></li>
-  <li><a href="#how-to-make-intellij-idea-work-with-type-safe-bigquery-classes">How to make IntelliJ IDEA work with type safe BigQuery classes?</a></li>
-  <li><a href="#common-issues">Common issues</a></li>
-  <li><a href="#what-does-cannot-prove-that-t1--t2-mean">What does &ldquo;Cannot prove that T1 &lt;:&lt; T2&rdquo; mean?</a></li>
-  <li><a href="#how-do-i-fix-invalid-default-bigquery-credentials">How do I fix invalid default BigQuery credentials?</a></li>
-  <li><a href="#why-are-my-typed-bigquery-case-classes-not-up-to-date">Why are my typed BigQuery case classes not up to date?</a></li>
-  <li><a href="#how-do-i-fix-sockettimeoutexception-with-bigquery">How do I fix &ldquo;SocketTimeoutException&rdquo; with BigQuery?</a></li>
-  <li><a href="#why-do-i-see-names-like-mainnativemethodaccessorimpl-in-the-ui">Why do I see names like &ldquo;<a href="mailto:&#109;a&#x69;&#x6e;&#x40;&#123;&#78;a&#116;&#105;&#x76;e&#77;&#101;&#116;&#x68;&#111;d&#65;cce&#115;&#x73;&#x6f;&#x72;I&#x6d;pl&#46;&#46;&#46;&#125;">&#109;a&#x69;&#x6e;&#x40;&#123;&#78;a&#116;&#105;&#x76;e&#77;&#101;&#116;&#x68;&#111;d&#65;cce&#115;&#x73;&#x6f;&#x72;I&#x6d;pl&#46;&#46;&#46;&#125;</a>&rdquo; in the UI?</a></li>
-  <li><a href="#how-do-i-fix-resource_exhausted-error">How do I fix &ldquo;RESOURCE_EXHAUSTED&rdquo; error?</a></li>
-  <li><a href="#can-i-use-scalaapp-trait-instead-of-main-method">Can I use &ldquo;scala.App&rdquo; trait instead of &ldquo;main&rdquo; method?</a></li>
-  <li><a href="#how-to-inspect-the-content-of-an-scollection">How to inspect the content of an SCollection?</a></li>
-  <li><a href="#how-do-i-improve-side-input-performance">How do I improve side input performance?</a></li>
-  <li><a href="#how-do-i-control-concurrency-number-of-dofn-threads-in-dataflow-workers">How do I control concurrency (number of DoFn threads) in Dataflow workers</a></li>
-  <li><a href="#how-to-manually-investigate-a-cloud-dataflow-worker">How to manually investigate a Cloud Dataflow worker</a></li>
+  <li><a href="FAQ.html#general-questions" class="header">General questions</a>
+  <ul>
+    <li><a href="FAQ.html#whats-the-status-of-scio-" class="header">What&rsquo;s the status of Scio?</a></li>
+    <li><a href="FAQ.html#whos-using-scio-" class="header">Who&rsquo;s using Scio?</a></li>
+    <li><a href="FAQ.html#whats-the-relationship-between-scio-and-apache-beam-" class="header">What&rsquo;s the relationship between Scio and Apache Beam?</a></li>
+    <li><a href="FAQ.html#whats-the-relationship-between-scio-and-google-cloud-dataflow-" class="header">What&rsquo;s the relationship between Scio and Google Cloud Dataflow?</a></li>
+    <li><a href="FAQ.html#how-does-scio-compare-to-scalding-or-spark-" class="header">How does Scio compare to Scalding or Spark?</a></li>
+    <li><a href="FAQ.html#what-are-gce-availability-zone-and-gcs-bucket-location-" class="header">What are GCE availability zone and GCS bucket location?</a></li>
+  </ul></li>
+  <li><a href="FAQ.html#programming-questions" class="header">Programming questions</a>
+  <ul>
+    <li><a href="FAQ.html#how-do-i-setup-a-new-sbt-project-" class="header">How do I setup a new SBT project?</a></li>
+    <li><a href="FAQ.html#how-do-i-deploy-scio-jobs-to-dataflow-" class="header">How do I deploy Scio jobs to Dataflow?</a></li>
+    <li><a href="FAQ.html#how-do-i-use-the-snapshot-builds-of-scio-" class="header">How do I use the SNAPSHOT builds of Scio?</a></li>
+    <li><a href="FAQ.html#how-do-i-unit-test-pipelines-" class="header">How do I unit test pipelines?</a></li>
+    <li><a href="FAQ.html#how-do-i-combine-multiple-input-sources-" class="header">How do I combine multiple input sources?</a></li>
+    <li><a href="FAQ.html#how-do-i-log-in-a-job-" class="header">How do I log in a job?</a></li>
+    <li><a href="FAQ.html#how-do-i-use-beams-java-api-in-scio-" class="header">How do I use Beam&rsquo;s Java API in Scio?</a></li>
+    <li><a href="FAQ.html#what-are-the-different-types-of-joins-and-performance-implication-" class="header">What are the different types of joins and performance implication?</a></li>
+    <li><a href="FAQ.html#how-to-create-dataflow-job-template-" class="header">How to create Dataflow job template?</a></li>
+    <li><a href="FAQ.html#how-do-i-cancel-a-job-after-certain-time-period-" class="header">How do I cancel a job after certain time period?</a></li>
+    <li><a href="FAQ.html#why-cant-i-have-an-scollection-inside-another-scollection-" class="header">Why can&rsquo;t I have an SCollection inside another SCollection?</a></li>
+  </ul></li>
+  <li><a href="FAQ.html#bigquery-questions" class="header">BigQuery questions</a>
+  <ul>
+    <li><a href="FAQ.html#what-is-bigquery-dataset-location-" class="header">What is BigQuery dataset location?</a></li>
+    <li><a href="FAQ.html#how-stable-is-the-type-safe-bigquery-api-" class="header">How stable is the type safe BigQuery API?</a></li>
+    <li><a href="FAQ.html#how-do-i-work-with-nested-options-in-type-safe-bigquery-" class="header">How do I work with nested Options in type safe BigQuery?</a></li>
+    <li><a href="FAQ.html#how-do-i-unit-test-bigquery-queries-" class="header">How do I unit test BigQuery queries?</a></li>
+    <li><a href="FAQ.html#how-do-i-stream-to-a-partitioned-bigquery-table-" class="header">How do I stream to a partitioned BigQuery table?</a></li>
+    <li><a href="FAQ.html#how-do-i-invalidate-cached-bigquery-results-or-disable-cache-" class="header">How do I invalidate cached BigQuery results or disable cache?</a></li>
+    <li><a href="FAQ.html#how-does-bigquery-determines-job-priority-" class="header">How does BigQuery determines job priority?</a></li>
+  </ul></li>
+  <li><a href="FAQ.html#streaming-questions" class="header">Streaming questions</a>
+  <ul>
+    <li><a href="FAQ.html#how-do-i-update-a-streaming-job-" class="header">How do I update a streaming job?</a></li>
+    <li><a href="FAQ.html#how-do-i-read-pubsub-input-in-a-local-pipeline-" class="header">How do I read Pubsub input in a local pipeline?</a></li>
+  </ul></li>
+  <li><a href="FAQ.html#other-io-components" class="header">Other IO components</a>
+  <ul>
+    <li><a href="FAQ.html#how-do-i-access-various-files-outside-of-a-sciocontext-" class="header">How do I access various files outside of a ScioContext?</a></li>
+    <li><a href="FAQ.html#how-do-i-reduce-datastore-boilerplate-" class="header">How do I reduce Datastore boilerplate?</a></li>
+    <li><a href="FAQ.html#how-do-i-throttle-bigtable-writes-" class="header">How do I throttle Bigtable writes?</a></li>
+    <li><a href="FAQ.html#how-do-i-use-custom-kryo-serializers-" class="header">How do I use custom Kryo serializers?</a></li>
+    <li><a href="FAQ.html#what-kryo-tuning-options-are-there-" class="header">What Kryo tuning options are there?</a></li>
+  </ul></li>
+  <li><a href="FAQ.html#development-environment-issues" class="header">Development environment issues</a>
+  <ul>
+    <li><a href="FAQ.html#how-do-i-keep-sbt-from-running-out-of-memory-" class="header">How do I keep SBT from running out of memory?</a></li>
+    <li><a href="FAQ.html#how-do-i-fix-error-in-intellij-" class="header">How do I fix &ldquo;Unable to create parent directories&rdquo; error in IntelliJ?</a></li>
+    <li><a href="FAQ.html#how-to-make-intellij-idea-work-with-type-safe-bigquery-classes-" class="header">How to make IntelliJ IDEA work with type safe BigQuery classes?</a></li>
+  </ul></li>
+  <li><a href="FAQ.html#common-issues" class="header">Common issues</a>
+  <ul>
+    <li><a href="FAQ.html#what-does-mean-" class="header">What does &ldquo;Cannot prove that T1 &lt;:&lt; T2&rdquo; mean?</a></li>
+    <li><a href="FAQ.html#how-do-i-fix-invalid-default-bigquery-credentials-" class="header">How do I fix invalid default BigQuery credentials?</a></li>
+    <li><a href="FAQ.html#why-are-my-typed-bigquery-case-classes-not-up-to-date-" class="header">Why are my typed BigQuery case classes not up to date?</a></li>
+    <li><a href="FAQ.html#how-do-i-fix-with-bigquery-" class="header">How do I fix &ldquo;SocketTimeoutException&rdquo; with BigQuery?</a></li>
+    <li><a href="FAQ.html#why-do-i-see-names-like-in-the-ui-" class="header">Why do I see names like &ldquo;<a href="mailto:&#109;a&#x69;&#x6e;&#x40;&#123;&#78;a&#116;&#105;&#x76;e&#77;&#101;&#116;&#x68;&#111;d&#65;cce&#115;&#x73;&#x6f;&#x72;I&#x6d;pl&#46;&#46;&#46;&#125;">&#109;a&#x69;&#x6e;&#x40;&#123;&#78;a&#116;&#105;&#x76;e&#77;&#101;&#116;&#x68;&#111;d&#65;cce&#115;&#x73;&#x6f;&#x72;I&#x6d;pl&#46;&#46;&#46;&#125;</a>&rdquo; in the UI?</a></li>
+    <li><a href="FAQ.html#how-do-i-fix-error-" class="header">How do I fix &ldquo;RESOURCE_EXHAUSTED&rdquo; error?</a></li>
+    <li><a href="FAQ.html#can-i-use-trait-instead-of-method-" class="header">Can I use &ldquo;scala.App&rdquo; trait instead of &ldquo;main&rdquo; method?</a></li>
+    <li><a href="FAQ.html#how-to-inspect-the-content-of-an-scollection-" class="header">How to inspect the content of an <code>SCollection</code>?</a></li>
+    <li><a href="FAQ.html#how-do-i-improve-side-input-performance-" class="header">How do I improve side input performance?</a></li>
+    <li><a href="FAQ.html#how-do-i-control-concurrency-number-of-dofn-threads-in-dataflow-workers" class="header">How do I control concurrency (number of DoFn threads) in Dataflow workers</a></li>
+    <li><a href="FAQ.html#how-to-manually-investigate-a-cloud-dataflow-worker" class="header">How to manually investigate a Cloud Dataflow worker</a></li>
+  </ul></li>
 </ul>
+</div>
 <h3><a href="#general-questions" name="general-questions" class="anchor"><span class="anchor-link"></span></a>General questions</h3>
 <h4><a href="#whats-the-status-of-scio-" name="whats-the-status-of-scio-" class="anchor"><span class="anchor-link"></span></a>What&rsquo;s the status of Scio?</h4>
 <p>Scio is widely being used for production data pipelines at Spotify and is our preferred framework for building new pipelines on Google Cloud. We run Scio on <a href="https://cloud.google.com/dataflow/">Google Cloud Dataflow</a> service in both batch and streaming modes. However it&rsquo;s still under heavy development and there might be minor breaking API changes from time to time.</p>
@@ -305,7 +321,7 @@ spotify/scio
 </ul>
 <h3><a href="#programming-questions" name="programming-questions" class="anchor"><span class="anchor-link"></span></a>Programming questions</h3>
 <h4><a href="#how-do-i-setup-a-new-sbt-project-" name="how-do-i-setup-a-new-sbt-project-" class="anchor"><span class="anchor-link"></span></a>How do I setup a new SBT project?</h4>
-<p>Read the <a href="https://github.com/spotify/scio/wiki/Getting-Started#sbt-project-setup">documentation</a>.</p>
+<p>Read the <a href="Getting-Started.html#sbt-project-setup">documentation</a>.</p>
 <h4><a href="#how-do-i-deploy-scio-jobs-to-dataflow-" name="how-do-i-deploy-scio-jobs-to-dataflow-" class="anchor"><span class="anchor-link"></span></a>How do I deploy Scio jobs to Dataflow?</h4>
 <p>When developing locally, you can do <code>sbt &quot;runMain MyClass ...</code> or just <code>runMain MyClass ...</code> in the SBT console without building any artifacts.</p>
 <p>When deploying to the cloud, we recommend using <a href="https://github.com/xerial/sbt-pack">sbt-pack</a> or <a href="https://github.com/sbt/sbt-native-packager">sbt-native-packager</a> plugin instead of <a href="https://github.com/sbt/sbt-assembly">sbt-assembly</a>. Unlike assembly, they pack dependency jars in a directory instead of merging them, so that we don&rsquo;t have to deal with merge strategy and dependency jars can be cached by Dataflow service.</p>
@@ -323,14 +339,14 @@ spotify/scio
 <h4><a href="#how-do-i-unit-test-pipelines-" name="how-do-i-unit-test-pipelines-" class="anchor"><span class="anchor-link"></span></a>How do I unit test pipelines?</h4>
 <p>Any Scala or Java unit testing frameworks can be used with Scio but we provide some utilities for <a href="http://www.scalatest.org/">ScalaTest</a>.</p>
 <ul>
-  <li><a href="https://github.com/spotify/scio/blob/master/scio-test/src/main/scala/com/spotify/scio/testing/PipelineTestUtils.scala">PipelineTestUtils</a> - utilities for testing parts of a pipeline</li>
-  <li><a href="https://github.com/spotify/scio/blob/master/scio-core/src/main/scala/com/spotify/scio/testing/JobTest.scala">JobTest</a> - for testing pipelines end-to-end with complete arguments and IO coverage</li>
-  <li><a href="https://github.com/spotify/scio/blob/master/scio-test/src/main/scala/com/spotify/scio/testing/SCollectionMatchers.scala">SCollectionMatchers</a> - ScalaTest matchers for <code>SCollection</code></li>
-  <li><a href="https://github.com/spotify/scio/blob/master/scio-test/src/main/scala/com/spotify/scio/testing/PipelineSpec.scala">PipelineSpec</a> - shortcut for ScalaTest <code>FlatSpec</code> with utilities and matchers</li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/PipelineTestUtils.html">PipelineTestUtils</a> - utilities for testing parts of a pipeline</li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/JobTest$.html">JobTest</a> - for testing pipelines end-to-end with complete arguments and IO coverage</li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html">SCollectionMatchers</a> - ScalaTest matchers for <code>SCollection</code></li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/PipelineSpec.html">PipelineSpec</a> - shortcut for ScalaTest <code>FlatSpec</code> with utilities and matchers</li>
 </ul>
-<p>The best place to find example useage of <code>JobTest</code> and <code>SCollectionMatchers</code> are their respective tests in <a href="https://github.com/spotify/scio/blob/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala">JobTestTest</a> and <a href="https://github.com/spotify/scio/blob/master/scio-test/src/test/scala/com/spotify/scio/testing/SCollectionMatchersTest.scala">SCollectionMatchersTest</a>. For more examples see:</p>
+<p>The best place to find example useage of <code>JobTest</code> and <code>SCollectionMatchers</code> are their respective tests in <a href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala">JobTestTest</a> and <a href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/SCollectionMatchersTest.scala">SCollectionMatchersTest</a>. For more examples see:</p>
 <ul>
-  <li><a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples">https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples</a></li>
+  <li><a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples">scio-examples</a></li>
   <li><a href="https://github.com/spotify/big-data-rosetta-code/tree/master/src/test/scala/com/spotify/bdrc/testing">https://github.com/spotify/big-data-rosetta-code/tree/master/src/test/scala/com/spotify/bdrc/testing</a></li>
 </ul>
 <h4><a href="#how-do-i-combine-multiple-input-sources-" name="how-do-i-combine-multiple-input-sources-" class="anchor"><span class="anchor-link"></span></a>How do I combine multiple input sources?</h4>
@@ -364,7 +380,7 @@ object MyJob {
   <li><code>SCollection#applyTransform</code> to apply a <code>PTransform[_ &gt;: PCollection[T], PCollection[U]]</code> and get a <code>SCollection[U]</code></li>
   <li><code>SCollection#saveAsCustomOutput</code> to apply a <code>PTransform[_ &gt;: PCollection[T], PDone]</code> (sink) and get a <code>Future[Tap[T]]</code>.</li>
 </ul>
-<p>See <a href="https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/BeamExample.scala">BeamExample.scala</a> for more details. Custom I/O can also be tested via the <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/JobTest$.html"><code>JobTest</code></a> harness.</p>
+<p>See <a href="https://spotify.github.io/scio/examples/BeamExample.scala.html">BeamExample.scala</a> for more details. Custom I/O can also be tested via the <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/JobTest$.html"><code>JobTest</code></a> harness.</p>
 <h4><a href="#what-are-the-different-types-of-joins-and-performance-implication-" name="what-are-the-different-types-of-joins-and-performance-implication-" class="anchor"><span class="anchor-link"></span></a>What are the different types of joins and performance implication?</h4>
 <ul>
   <li>Inner (<code>a.join(b)</code>), left (<code>a.leftOuterJoin(b)</code>), outer (<code>a.fullOuterJoin(b)</code>) performs better with a large LHS. So <code>a</code> should be the larger data set with potentially more hot keys, i.e. key with many values. Every key-value pair from every input is shuffled.</li>
@@ -419,7 +435,7 @@ e.foreach(doSomething)
 </code></pre>
 <p>Also see these <a href="http://www.lyh.me/slides/for-yield.html">slides</a> and this <a href="https://dzone.com/articles/scala-comprehensions-options">blog article</a>.</p>
 <h4><a href="#how-do-i-unit-test-bigquery-queries-" name="how-do-i-unit-test-bigquery-queries-" class="anchor"><span class="anchor-link"></span></a>How do I unit test BigQuery queries?</h4>
-<p>BigQuery doesn&rsquo;t provide a way to unit test query logic locally, but we can query the service directly in an integration test. Take a look at <a href="https://github.com/spotify/scio/blob/master/scio-bigquery/src/it/scala/com/spotify/scio/bigquery/BigQueryIT.scala">BigQueryIT.scala</a>. <code>MockBigQuery</code> will create temporary tables on the service, feed them with mock data, and substitute table references in your query string with the mocked ones.</p>
+<p>BigQuery doesn&rsquo;t provide a way to unit test query logic locally, but we can query the service directly in an integration test. Take a look at <a href="https://github.com/spotify/scio/tree/master/scio-bigquery/src/it/scala/com/spotify/scio/bigquery/BigQueryIT.scala">BigQueryIT.scala</a>. <code>MockBigQuery</code> will create temporary tables on the service, feed them with mock data, and substitute table references in your query string with the mocked ones.</p>
 <h4><a href="#how-do-i-stream-to-a-partitioned-bigquery-table-" name="how-do-i-stream-to-a-partitioned-bigquery-table-" class="anchor"><span class="anchor-link"></span></a>How do I stream to a partitioned BigQuery table?</h4>
 <p>Currently there is no way to create a <a href="https://cloud.google.com/bigquery/docs/partitioned-tables">partitioned</a> BigQuery table via Scio/Beam when streaming, however it is possible to stream to a partitioned table if it is already created.</p>
 <p>This can be done by using fixed windows and using the window bounds to infer date. As of Scio 0.4.0-beta2 this looks as follows:</p>
@@ -445,7 +461,7 @@ sc.pubsubSubscription(&quot;projects/data-university/topics/data-university&quot
 </code></pre>
 <p>In Scio 0.3.X it is possible to achieve the same behaviour using <code>SerializableFunction[BoundedWindow, String]</code> and <code>BigQueryIO.Write.to</code>. It is also possible to stream to separate tables with a Date suffix by modifying <code>DayPartitionFunction</code>, specifying the Schema, and changing the CreateDisposition to <code>CreateDisposition.CREATE_IF_NEEDED</code>.</p>
 <h4><a href="#how-do-i-invalidate-cached-bigquery-results-or-disable-cache-" name="how-do-i-invalidate-cached-bigquery-results-or-disable-cache-" class="anchor"><span class="anchor-link"></span></a>How do I invalidate cached BigQuery results or disable cache?</h4>
-<p><a href="https://github.com/spotify/scio/blob/master/scio-bigquery/src/main/scala/com/spotify/scio/bigquery/BigQueryClient.scala">BigQueryClient</a> in Scio caches query result in system property <code>bigquery.cache.directory</code>, which defaults to <code>$PWD/.bigquery</code>. Use <code>rm -rf .bigquery</code> to invalidate all cached results. To disable caching, set system property <code>bigquery.cache.enabled</code> to <code>false</code>.</p>
+<p>Scio&rsquo;s <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/client/BigQuery.html">BigQuery client</a> in Scio caches query result in system property <code>bigquery.cache.directory</code>, which defaults to <code>$PWD/.bigquery</code>. Use <code>rm -rf .bigquery</code> to invalidate all cached results. To disable caching, set system property <code>bigquery.cache.enabled</code> to <code>false</code>.</p>
 <h4><a href="#how-does-bigquery-determines-job-priority-" name="how-does-bigquery-determines-job-priority-" class="anchor"><span class="anchor-link"></span></a>How does BigQuery determines job priority?</h4>
 <p>By default Scio runs BigQuery jobs with <code>BATCH</code> priority except when in the REPL where it runs with <code>INTERACTIVE</code>. To override this, set system property <code>bigquery.priority</code> to either <code>BATCH</code> or <code>INTERACTIVE</code>.</p>
 <h3><a href="#streaming-questions" name="streaming-questions" class="anchor"><span class="anchor-link"></span></a>Streaming questions</h3>
@@ -485,7 +501,7 @@ val readme = FileSystems.open(readmeResource)
 <pre class="prettyprint"><code class="language-scala">val gcsUtil = sc.optionsAs[GcsOptions].getGcsUtil
 </code></pre>
 <h4><a href="#how-do-i-reduce-datastore-boilerplate-" name="how-do-i-reduce-datastore-boilerplate-" class="anchor"><span class="anchor-link"></span></a>How do I reduce Datastore boilerplate?</h4>
-<p>Datastore <code>Entity</code> class is actually generated from <a href="https://github.com/googleapis/googleapis/blob/master/google/datastore/v1/entity.proto">Protobuf</a> which uses the builder pattern and very boilerplate heavy. You can use the <a href="https://github.com/nevillelyh/shapeless-datatype#datastoretype">shapeless-datatype</a> library to seamlessly convert bewteen case classes and <code>Entity</code>s. See <a href="https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/ShapelessDatastoreExample.scala">ShapelessDatastoreExample.scala</a> for an example job and <a href="https://github.com/spotify/scio/blob/a254de70962ec6df6d42884e7f213c88313a4e96/scio-examples/src/test/scala/com/spotify/scio/examples/extra/ShapelessDatastoreExampleTest.scala">ShapelessDatastoreExampleTest.scala</a> for tests.</p>
+<p>Datastore <code>Entity</code> class is actually generated from <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/ShapelessDatastoreExampleTest.scala">Protobuf</a> which uses the builder pattern and very boilerplate heavy. You can use the <a href="https://github.com/nevillelyh/shapeless-datatype#datastoretype">shapeless-datatype</a> library to seamlessly convert bewteen case classes and <code>Entity</code>s. See <a href="https://spotify.github.io/scio/examples/ShapelessDatastoreExample.scala.html">ShapelessDatastoreExample.scala</a> for an example job and <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/ShapelessDatastoreExampleTest.scala">ShapelessDatastoreExampleTest.scala</a> for tests.</p>
 <h4><a href="#how-do-i-throttle-bigtable-writes-" name="how-do-i-throttle-bigtable-writes-" class="anchor"><span class="anchor-link"></span></a>How do I throttle Bigtable writes?</h4>
 <p>Currently Dataflow autoscaling may not work well with large writes BigtableIO. Specifically It does not take into account Bigtable IO rate limits and may scale up more workers and end up hitting the limit and eventually fail the job. As a workaround, you can enable throttling for Bigtable writes in Scio 0.4.0-alpha2 or later.</p>
 <pre class="prettyprint"><code class="language-scala">val btOptions = new BigtableOptions.Builder()
@@ -524,7 +540,7 @@ class MyKryoRegistrar extends IKryoRegistrar {
 }
 </code></pre>
 <h4><a href="#what-kryo-tuning-options-are-there-" name="what-kryo-tuning-options-are-there-" class="anchor"><span class="anchor-link"></span></a>What Kryo tuning options are there?</h4>
-<p>See <a href="https://github.com/spotify/scio/blob/master/scio-core/src/main/java/com/spotify/scio/options/KryoOptions.java">KryoOptions.java</a> for a complete list of available Kryo tuning options. These can be passed via command line, for example:</p>
+<p>See <a href="https://github.com/spotify/scio/tree/master/scio-core/src/main/java/com/spotify/scio/options/KryoOptions.java">KryoOptions.java</a> for a complete list of available Kryo tuning options. These can be passed via command line, for example:</p>
 <p><code>--kryoBufferSize=1024 --kryoMaxBufferSize=8192 --kryoReferenceTracking=false --kryoRegistrationRequired=true</code></p>
 <p>Among these, <code>--kryoRegistrationRequired=true</code> might be useful when developing to ensure that all data types in the pipeline are registered.</p>
 <h3><a href="#development-environment-issues" name="development-environment-issues" class="anchor"><span class="anchor-link"></span></a>Development environment issues</h3>
@@ -602,7 +618,7 @@ p.map(kv =&gt; Result(kv._1, kv._2)).saveAsTypedBigQuery(args(&quot;output&quot;
 <h4><a href="#can-i-use-trait-instead-of-method-" name="can-i-use-trait-instead-of-method-" class="anchor"><span class="anchor-link"></span></a>Can I use &ldquo;scala.App&rdquo; trait instead of &ldquo;main&rdquo; method?</h4>
 <p>Your Scio applications should define a <code>main</code> method instead of extending <code>scala.App</code>. Applications extending <code>scala.App</code> due to delayed initialization and closure cleaning may not work properly.</p>
 <h4><a href="#how-to-inspect-the-content-of-an-scollection-" name="how-to-inspect-the-content-of-an-scollection-" class="anchor"><span class="anchor-link"></span></a>How to inspect the content of an <code>SCollection</code>?</h4>
-<p>There is multiple options here: - Use <code>debug()</code> method on an <code>SCollection</code> to print its content as the data flows through the DAG during the execution (after the <code>close</code> or <code>closeAndCollect</code>) - Use a debugger and setup break points - make sure to break inside of your functions to stop control at the execution not the pipeline construction time - In <a href="https://github.com/spotify/scio/wiki/Scio-REPL">scio-repl</a>, use <code>closeAndCollect()</code> to close the context and materialize the content of an <code>SCollection</code></p>
+<p>There is multiple options here: - Use <code>debug()</code> method on an <code>SCollection</code> to print its content as the data flows through the DAG during the execution (after the <code>close</code> or <code>closeAndCollect</code>) - Use a debugger and setup break points - make sure to break inside of your functions to stop control at the execution not the pipeline construction time - In <a href="./Scio-REPL.html">Scio-REPL</a>, use <code>closeAndCollect()</code> to close the context and materialize the content of an <code>SCollection</code></p>
 <h4><a href="#how-do-i-improve-side-input-performance-" name="how-do-i-improve-side-input-performance-" class="anchor"><span class="anchor-link"></span></a>How do I improve side input performance?</h4>
 <p>By default Dataflow workers allocate 100MB (see <a href="https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--">DataflowWorkerHarnessOptions#getWorkerCacheMb</a>) of memory for caching side inputs, and falls back to disk or network. Therefore jobs with large side inputs may be slow. To override this default, register <code>DataflowWorkerHarnessOptions</code> before parsing command line arguments and then pass <code>--workerCacheMb=N</code> when submitting the job.</p>
 <pre class="prettyprint"><code class="language-scala">PipelineOptionsFactory.register(classOf[DataflowWorkerHarnessOptions])

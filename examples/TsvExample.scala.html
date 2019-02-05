@@ -266,12 +266,23 @@ hr {
 </style>
           
           <section id="header">
-            <div class="comment"><h1>Word Count Example writing to TSV file</h1></div>
+            <div class="comment"><h1>Reading and writing tsv data</h1></div>
             <div class="code"></div>
           </section>
           
               <section class="">
-                <div class="comment "><p>Usage:</p></p></div>
+                <div class="comment empty"></p></div>
+                <div class="code "><span class="keyword">package</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/index.html" data-tooltip="<span>com.spotify.scio.examples</span>">examples</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/index.html" data-tooltip="<span>com.spotify.scio.examples.extra</span>">extra</a></span>
+
+<span class="keyword">import</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>._
+<span class="keyword">import</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/index.html" data-tooltip="<span>com.spotify.scio.examples</span>">examples</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/common/index.html" data-tooltip="<span>com.spotify.scio.examples.common</span>">common</a></span>.<span class="identifier">ExampleData</span>
+<span class="keyword">import</span> <span class="identifier">org</span>.<span class="identifier">apache</span>.<span class="identifier">beam</span>.<span class="identifier">sdk</span>.{<span class="identifier">io</span> => <span class="identifier">beam</span>}
+&nbsp;</div>
+              </section>
+            
+              <section class="">
+                <div class="comment "><h1 id="writing-tsv-data-example" class="title">Writing TSV data example</h1>
+<p>Usage:</p></p></div>
                 <div class="code empty">&nbsp;</div>
               </section>
             
@@ -298,7 +309,7 @@ hr {
               </section>
             
               <section class="">
-                <div class="comment "><p>Create a Write Transformation with tsv suffix, single file and specific header.</p></p></div>
+                <div class="comment "><p>Create a <code>Write</code> Transformation with tsv suffix, single file and specific header.</p></p></div>
                 <div class="code ">    <span class="keyword">val</span> <span class="identifier">transform</span> = <span class="identifier">beam</span>.<span class="identifier">TextIO</span>
       .<span class="identifier">write</span>()
       .<span class="identifier">to</span>(<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/TsvExampleWrite$.html#pathWithShards(path:String):String" data-tooltip="<span>com.spotify.scio.examples.extra.TsvExampleWrite.pathWithShards(path: String): String</span>">pathWithShards</a></span>(<span class="identifier">output</span>))
@@ -350,7 +361,7 @@ hr {
               </section>
             
               <section class="">
-                <div class="comment "><h1 id="reading-tsv-data-example" class="title">Reading TSV data Example</h1>
+                <div class="comment "><h1 id="reading-tsv-data-example" class="title">Reading TSV data example</h1>
 <p>Usage:</p></p></div>
                 <div class="code empty">&nbsp;</div>
               </section>

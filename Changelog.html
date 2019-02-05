@@ -229,7 +229,7 @@ spotify/scio
 <h1><a href="#changelog" name="changelog" class="anchor"><span class="anchor-link"></span></a>Changelog</h1>
 <h2><a href="#breaking-changes-since-scio-0-7-0-v0-7-0-migration-guide-" name="breaking-changes-since-scio-0-7-0-v0-7-0-migration-guide-" class="anchor"><span class="anchor-link"></span></a>Breaking changes since Scio 0.7.0 (<a href="./v0.7.0-Migration-Guide.html">v0.7.0 Migration Guide</a>)</h2>
 <ul>
-  <li>New <a href="https://github.com/propensive/magnolia">Magnolia</a> based <a href="./Coders.html">Coders</a> derivation</li>
+  <li>New <a href="https://github.com/propensive/magnolia">Magnolia</a> based <a href="internals/Coders.html">Coders</a> derivation</li>
   <li>New <a href="./ScioIO.html">ScioIO</a> replaces <code>TestIO[T]</code> to simplify IO implementation and stubbing in <code>JobTest</code></li>
 </ul>
 <h2><a href="#breaking-changes-since-scio-0-6-0" name="breaking-changes-since-scio-0-6-0" class="anchor"><span class="anchor-link"></span></a>Breaking changes since Scio 0.6.0</h2>
@@ -244,7 +244,7 @@ spotify/scio
 </ul>
 <h2><a href="#breaking-changes-since-scio-0-4-0" name="breaking-changes-since-scio-0-4-0" class="anchor"><span class="anchor-link"></span></a>Breaking changes since Scio 0.4.0</h2>
 <ul>
-  <li>Accumulators are replaced by the new metrics API, see <a href="https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/MetricsExample.scala">MetricsExample.scala</a> for more</li>
+  <li>Accumulators are replaced by the new metrics API, see <a href="https://spotify.github.io/scio/examples/MetricsExample.scala.html">MetricsExample.scala</a> for more</li>
   <li><code>com.spotify.scio.hdfs</code> package and related APIs (<code>ScioContext#hdfs*</code>, <code>SCollection#saveAsHdfs*</code>) are removed, regular file IO API should now support both GCS and HDFS (if <code>scio-hdfs</code> is included as a dependency).</li>
   <li>Starting Scio 0.4.4, Beam runner is completely decoupled from <code>scio-core</code>. See <a href="./Runners.html">Runners</a> page for more details.</li>
 </ul>
@@ -258,7 +258,7 @@ spotify/scio
   <li><code>BlockingDataflowPipelineRunner</code> is removed and <code>ScioContext#close()</code> will not block execution; use <code>sc.close().waitUntilDone()</code> to retain the blocking behavior, i.e. if you launch job from an orchestration engine like <a href="https://airflow.apache.org/">Airflow</a> or <a href="https://github.com/spotify/luigi">Luigi</a></li>
   <li>You should set <code>tempLocation</code> instead of <code>stagingLocation</code> regardless of runner; set it to a local path for <code>DirectRunner</code> or a GCS path for <code>DataflowRunner</code>; if not set, <code>DataflowRunner</code> will create a default bucket for the project</li>
   <li>Type safe BigQuery is now stable API; use <code>import com.spotify.scio.bigquery._</code> instead of <code>import com.spotify.scio.experimental._</code></li>
-  <li><code>scio-bigtable</code> no longer depends on HBase and uses Protobuf based Bigtable API; check out the updated <a href="https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/BigtableExample.scala">example</a></li>
+  <li><code>scio-bigtable</code> no longer depends on HBase and uses Protobuf based Bigtable API; check out the updated <a href="https://spotify.github.io/scio/examples/BigtableExample.scala.html">example</a></li>
   <li>Custom IO, i.e. <code>ScioContext#customInput</code> and <code>SCollection#saveAsCustomOutput</code> require a <code>name: String</code> parameter</li>
 </ul>
 </div>

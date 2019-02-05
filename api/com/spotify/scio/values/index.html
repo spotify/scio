@@ -517,6 +517,10 @@ detects the query's dialect. To override this, start the query with either <code
                         <a class="class" href="SideInputContext.html" title="Encapsulate context of one or more SideInputs in an SCollectionWithSideInput."></a>
                         <a href="SideInputContext.html" title="Encapsulate context of one or more SideInputs in an SCollectionWithSideInput.">SideInputContext</a>
                       </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="SideMap.html" title=""></a>
+                        <a href="SideMap.html" title="">SideMap</a>
+                      </li><li class="current-entities indented4">
                         <a class="object" href="SideOutput$.html" title="Companion object for SideOutput."></a>
                         <a class="trait" href="SideOutput.html" title="Encapsulate a side output for a transform."></a>
                         <a href="SideOutput.html" title="Encapsulate a side output for a transform.">SideOutput</a>
@@ -528,6 +532,10 @@ detects the query's dialect. To override this, start the query with either <code
                         <span class="separator"></span>
                         <a class="class" href="SideOutputContext.html" title="Encapsulate context of one or more SideOutputs in an SCollectionWithSideOutput."></a>
                         <a href="SideOutputContext.html" title="Encapsulate context of one or more SideOutputs in an SCollectionWithSideOutput.">SideOutputContext</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="SideSet.html" title=""></a>
+                        <a href="SideSet.html" title="">SideSet</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="TransformNameable.html" title="Trait for setting custom names on transforms."></a>
@@ -817,6 +825,22 @@ performing the full combine.</p>
       </span>
       
       <p class="shortcomment cmt">Encapsulate context of one or more <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>s in an <a href="SCollectionWithSideInput.html" class="extype" name="com.spotify.scio.values.SCollectionWithSideInput">SCollectionWithSideInput</a>.</p>
+    </li><li name="com.spotify.scio.values.SideMap" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SideMap[K,V]extendsProductwithSerializable"></a><a id="SideMap[K,V]:SideMap[K,V]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/index.html#SideMap[K,V]extendsProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="SideMap.html"><span class="name">SideMap</span></a><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="side">side: <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/collection/mutable/Map.html#scala.collection.mutable.Map" class="extype" name="scala.collection.mutable.Map">Map</a>[<span class="extype" name="com.spotify.scio.values.SideMap.K">K</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/collection/mutable/ArrayBuffer.html#scala.collection.mutable.ArrayBuffer" class="extype" name="scala.collection.mutable.ArrayBuffer">ArrayBuffer</a>[<span class="extype" name="com.spotify.scio.values.SideMap.V">V</span>]]]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
     </li><li name="com.spotify.scio.values.SideOutput" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="SideOutput[T]extendsSerializable"></a><a id="SideOutput[T]:SideOutput[T]"></a>
       <span class="permalink">
@@ -865,6 +889,22 @@ performing the full combine.</p>
       </span>
       
       <p class="shortcomment cmt">Encapsulate context of one or more <a href="SideOutput.html" class="extype" name="com.spotify.scio.values.SideOutput">SideOutput</a>s in an <a href="SCollectionWithSideOutput.html" class="extype" name="com.spotify.scio.values.SCollectionWithSideOutput">SCollectionWithSideOutput</a>.</p>
+    </li><li name="com.spotify.scio.values.SideSet" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SideSet[T]extendsProductwithSerializable"></a><a id="SideSet[T]:SideSet[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/values/index.html#SideSet[T]extendsProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="SideSet.html"><span class="name">SideSet</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="side">side: <a href="SideInput.html" class="extype" name="com.spotify.scio.values.SideInput">SideInput</a>[<span class="extype" name="scala.Predef.Set">Set</span>[<span class="extype" name="com.spotify.scio.values.SideSet.T">T</span>]]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
     </li><li name="com.spotify.scio.values.TransformNameable" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="TransformNameableextendsAnyRef"></a><a id="TransformNameable:TransformNameable"></a>
       <span class="permalink">
@@ -893,7 +933,7 @@ performing the full combine.</p>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="Window options for an SCollection." href="WindowOptions.html"><span class="name">WindowOptions</span></a><span class="params">(<span name="trigger">trigger: <span class="extype" name="org.apache.beam.sdk.transforms.windowing.Trigger">Trigger</span> = <span class="symbol">null</span></span>, <span name="accumulationMode">accumulationMode: <span class="extype" name="org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode">AccumulationMode</span> = <span class="symbol">null</span></span>, <span name="allowedLateness">allowedLateness: <a href="http://www.joda.org/joda-time/apidocs/org/joda/time/Duration.html#org.joda.time.Duration" class="extype" name="org.joda.time.Duration">Duration</a> = <span class="symbol">null</span></span>, <span name="closingBehavior">closingBehavior: <span class="extype" name="org.apache.beam.sdk.transforms.windowing.Window.ClosingBehavior">ClosingBehavior</span> = <span class="symbol">null</span></span>, <span name="timestampCombiner">timestampCombiner: <span class="extype" name="org.apache.beam.sdk.transforms.windowing.TimestampCombiner">TimestampCombiner</span> = <span class="symbol">null</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Window options for an SCollection." href="WindowOptions.html"><span class="name">WindowOptions</span></a><span class="params">(<span name="trigger">trigger: <span class="extype" name="org.apache.beam.sdk.transforms.windowing.Trigger">Trigger</span> = <span class="symbol">null</span></span>, <span name="accumulationMode">accumulationMode: <span class="extype" name="org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode">AccumulationMode</span> = <span class="symbol">null</span></span>, <span name="allowedLateness">allowedLateness: <span class="extype" name="org.joda.time.Duration">Duration</span> = <span class="symbol">null</span></span>, <span name="closingBehavior">closingBehavior: <span class="extype" name="org.apache.beam.sdk.transforms.windowing.Window.ClosingBehavior">ClosingBehavior</span> = <span class="symbol">null</span></span>, <span name="timestampCombiner">timestampCombiner: <span class="extype" name="org.apache.beam.sdk.transforms.windowing.TimestampCombiner">TimestampCombiner</span> = <span class="symbol">null</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Window options for an <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>.</p>
@@ -925,7 +965,7 @@ performing the full combine.</p>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="Value with window information to be used inside a WindowedSCollection." href="WindowedValue.html"><span class="name">WindowedValue</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="value">value: <span class="extype" name="com.spotify.scio.values.WindowedValue.T">T</span></span>, <span name="timestamp">timestamp: <a href="http://www.joda.org/joda-time/apidocs/org/joda/time/Instant.html#org.joda.time.Instant" class="extype" name="org.joda.time.Instant">Instant</a></span>, <span name="window">window: <span class="extype" name="org.apache.beam.sdk.transforms.windowing.BoundedWindow">BoundedWindow</span></span>, <span name="pane">pane: <span class="extype" name="org.apache.beam.sdk.transforms.windowing.PaneInfo">PaneInfo</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Value with window information to be used inside a WindowedSCollection." href="WindowedValue.html"><span class="name">WindowedValue</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="value">value: <span class="extype" name="com.spotify.scio.values.WindowedValue.T">T</span></span>, <span name="timestamp">timestamp: <span class="extype" name="org.joda.time.Instant">Instant</span></span>, <span name="window">window: <span class="extype" name="org.apache.beam.sdk.transforms.windowing.BoundedWindow">BoundedWindow</span></span>, <span name="pane">pane: <span class="extype" name="org.apache.beam.sdk.transforms.windowing.PaneInfo">PaneInfo</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Value with window information to be used inside a <a href="WindowedSCollection.html" class="extype" name="com.spotify.scio.values.WindowedSCollection">WindowedSCollection</a>.</p>

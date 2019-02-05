@@ -298,7 +298,9 @@ convert between case classes and TensorFlow <code>Example</code>s.</p></p></div>
               </section>
             
               <section class="">
-                <div class="comment "><p>Usage:</p></p></div>
+                <div class="comment "><h1 id="shapeless-tensorflow-write-example" class="title">Shapeless Tensorflow Write Example</h1>
+<p>Count words and save result as <code>TFRecord</code>s
+Usage:</p></p></div>
                 <div class="code empty">&nbsp;</div>
               </section>
             
@@ -307,11 +309,6 @@ convert between case classes and TensorFlow <code>Example</code>s.</p></p></div>
 --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 --output=gs://[BUCKET]/[PATH]/wordcount-tf&quot;</code></p></p></div>
-                <div class="code empty">&nbsp;</div>
-              </section>
-            
-              <section class="">
-                <div class="comment "><p>Count words and save result to TFRecord</p></p></div>
                 <div class="code "><span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/ShapelessTensorFlowWriteExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.ShapelessTensorFlowWriteExample</span>">ShapelessTensorFlowWriteExample</a></span> {
   <span class="keyword">def</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/ShapelessTensorFlowWriteExample$.html#main(cmdlineArgs:Array[String]):Unit" data-tooltip="<span>com.spotify.scio.examples.extra.ShapelessTensorFlowWriteExample.main(cmdlineArgs: Array[String]): Unit</span>">main</a></span>(<span class="identifier">cmdlineArgs</span>: <span class="identifier">Array</span>[<span class="identifier">String</span>]): <span class="identifier">Unit</span> = {
     <span class="keyword">import</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/ShapelessTensorFlowExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.ShapelessTensorFlowExample</span>">ShapelessTensorFlowExample</a></span>._
@@ -333,7 +330,9 @@ convert between case classes and TensorFlow <code>Example</code>s.</p></p></div>
               </section>
             
               <section class="">
-                <div class="comment "><p>Usage:</p></p></div>
+                <div class="comment "><h1 id="shapeless-tensorflow-read-example" class="title">Shapeless Tensorflow Read Example</h1>
+<p>Read word count result back from <code>TFRecord</code>
+Usage:</p></p></div>
                 <div class="code empty">&nbsp;</div>
               </section>
             
@@ -342,11 +341,6 @@ convert between case classes and TensorFlow <code>Example</code>s.</p></p></div>
 --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 --input=gs://[BUCKET]/[PATH]/wordcount-tf
 --output=gs://[BUCKET]/[PATH]/wordcount&quot;</code></p></p></div>
-                <div class="code empty">&nbsp;</div>
-              </section>
-            
-              <section class="">
-                <div class="comment "><p>Read word count result back from TFRecord</p></p></div>
                 <div class="code "><span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/ShapelessTensorFlowReadExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.ShapelessTensorFlowReadExample</span>">ShapelessTensorFlowReadExample</a></span> {
   <span class="keyword">def</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/ShapelessTensorFlowReadExample$.html#main(cmdlineArgs:Array[String]):Unit" data-tooltip="<span>com.spotify.scio.examples.extra.ShapelessTensorFlowReadExample.main(cmdlineArgs: Array[String]): Unit</span>">main</a></span>(<span class="identifier">cmdlineArgs</span>: <span class="identifier">Array</span>[<span class="identifier">String</span>]): <span class="identifier">Unit</span> = {
     <span class="keyword">import</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/ShapelessTensorFlowExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.ShapelessTensorFlowExample</span>">ShapelessTensorFlowExample</a></span>._
