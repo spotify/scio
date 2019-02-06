@@ -376,8 +376,8 @@ abstract class Benchmark(val extraConfs: Map[String, Array[String]] = null) {
           sc.setAppName(confName)
           sc.setJobName(s"$prefix-$confName-$username".toLowerCase())
           run(sc)
-          val result = sc.close()
-          result.finalState.map(_ => BenchmarkResult.batch(confName, extraArgs, result))
+          val result: Future[ScioResult] = Future(sc.close().waitUntilDone())
+          result.map(sr => BenchmarkResult.batch(confName, extraArgs, sr))
       }
   }
 

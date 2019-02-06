@@ -42,7 +42,6 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.apache.parquet.io.{DelegatingSeekableInputStream, InputFile, SeekableInputStream}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[T] {
@@ -75,7 +74,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     sc.wrap(sc.applyInternal(source)).map(_.getValue)
   }
 
-  override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
+  override def write(data: SCollection[T], params: WriteP): Tap[T] = {
     val job = Job.getInstance()
     if (ScioUtil.isLocalRunner(data.context.options.getRunner)) {
       GcsConnectorUtil.setCredentials(job)
@@ -99,7 +98,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
                                       params.compression)
     val t = WriteFiles.to(sink).withNumShards(params.numShards)
     data.applyInternal(t)
-    data.context.makeFuture(tap(ParquetAvroIO.ReadParam[T, T](writerSchema, null, identity)))
+    tap(ParquetAvroIO.ReadParam[T, T](writerSchema, null, identity))
   }
 
   override def tap(params: ReadP): Tap[T] =

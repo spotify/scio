@@ -53,7 +53,6 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Future, Promise}
 import scala.io.Source
 import scala.reflect.ClassTag
-import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 /** Runner specific context. */
@@ -311,7 +310,11 @@ final case class ClosedScioContext private (pipelineResult: PipelineResult, cont
   def waitUntilFinish(duration: Duration = getAwaitDuration,
                       cancelJob: Boolean = true): ScioResult = {
     try {
-      pipelineResult.waitUntilFinish(time.Duration.millis(duration.toMillis))
+      val wait = duration match {
+        case Duration.Inf => 0
+        case d            => d.toMillis
+      }
+      pipelineResult.waitUntilFinish(time.Duration.millis(wait))
     } catch {
       case _: InterruptedException =>
         if (cancelJob) {
@@ -322,22 +325,9 @@ final case class ClosedScioContext private (pipelineResult: PipelineResult, cont
     }
 
     new ScioResult(pipelineResult) {
-      override val finalState: Future[State] = {
-        import scala.concurrent.ExecutionContext.Implicits.global
-        val f = Future {
-          context.updateFutures(internal.getState)
-          val metricsLocation = context.optionsAs[ScioOptions].getMetricsLocation
-          if (metricsLocation != null) {
-            saveMetrics(metricsLocation)
-          }
-
-          state
-        }
-        f.onComplete {
-          case Success(_)           => Unit
-          case Failure(NonFatal(_)) => context.updateFutures(state)
-        }
-        f
+      private val metricsLocation = context.optionsAs[ScioOptions].getMetricsLocation
+      if (metricsLocation != null) {
+        saveMetrics(metricsLocation)
       }
 
       override def getMetrics: Metrics =

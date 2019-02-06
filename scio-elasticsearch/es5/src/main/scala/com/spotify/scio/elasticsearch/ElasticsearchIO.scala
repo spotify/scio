@@ -28,7 +28,6 @@ import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionE
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.joda.time.Duration
 
-import scala.concurrent.Future
 import scala.collection.JavaConverters._
 
 final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends ScioIO[T] {
@@ -43,7 +42,7 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
   /**
    * Save this SCollection into Elasticsearch.
    */
-  override def write(data: SCollection[T], params: WriteP): Future[Tap[Nothing]] = {
+  override def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     val shards = if (params.numOfShards > 0) {
       params.numOfShards
     } else {
@@ -65,7 +64,7 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
           override def accept(t: BulkExecutionException): Unit =
             params.errorFn(t)
         }))
-    Future.successful(EmptyTap)
+    EmptyTap
   }
 
   override def tap(params: ReadP): Tap[Nothing] =

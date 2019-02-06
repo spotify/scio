@@ -25,8 +25,6 @@ import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.{io => beam}
 import org.tensorflow.example.Example
 
-import scala.concurrent.Future
-
 final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {
   override type ReadP = TFRecordIO.ReadParam
   override type WriteP = TFRecordIO.WriteParam
@@ -35,9 +33,9 @@ final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {
   override def read(sc: ScioContext, params: ReadP): SCollection[Array[Byte]] =
     TFRecordMethods.read(sc, path, params)
 
-  override def write(data: SCollection[Array[Byte]], params: WriteP): Future[Tap[Array[Byte]]] = {
+  override def write(data: SCollection[Array[Byte]], params: WriteP): Tap[Array[Byte]] = {
     TFRecordMethods.write(data, path, params)
-    data.context.makeFuture(tap(TFRecordIO.ReadParam(params.compression)))
+    tap(TFRecordIO.ReadParam(params.compression))
   }
 
   override def tap(params: ReadP): Tap[Array[Byte]] =
@@ -72,9 +70,9 @@ final case class TFExampleIO(path: String) extends ScioIO[Example] {
   override def read(sc: ScioContext, params: ReadP): SCollection[Example] =
     TFRecordMethods.read(sc, path, params).map(Example.parseFrom)
 
-  override def write(data: SCollection[Example], params: WriteP): Future[Tap[Example]] = {
+  override def write(data: SCollection[Example], params: WriteP): Tap[Example] = {
     TFRecordMethods.write(data.map(_.toByteArray), path, params)
-    data.context.makeFuture(tap(TFExampleIO.ReadParam(params.compression)))
+    tap(TFExampleIO.ReadParam(params.compression))
   }
 
   override def tap(params: ReadP): Tap[Example] =

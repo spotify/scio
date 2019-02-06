@@ -19,6 +19,7 @@ package com.spotify.scio
 
 import java.nio.ByteBuffer
 
+import com.spotify.scio.io.{ClosedTap, Tap}
 import com.spotify.scio.metrics._
 import com.spotify.scio.util.ScioUtil
 import com.twitter.algebird.Semigroup
@@ -29,7 +30,6 @@ import org.apache.beam.sdk.util.MimeTypes
 import org.apache.beam.sdk.{PipelineResult, metrics => beam}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.util.Try
 
@@ -54,11 +54,7 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
     }
   }
 
-  /**
-   * `Future` for pipeline's final state. The `Future` will be completed once the pipeline
-   * completes successfully.
-   */
-  val finalState: Future[State]
+  def tap[T](tap: ClosedTap[T]): Tap[T] = tap.underlying
 
   /** Get metrics of the finished pipeline. */
   def getMetrics: Metrics

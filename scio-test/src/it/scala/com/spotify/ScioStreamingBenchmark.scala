@@ -162,7 +162,7 @@ abstract class StreamingBenchmark {
   val name: String = this.getClass.getSimpleName.replaceAll("\\$$", "")
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  def run(projectId: String, prefix: String, args: Array[String]): (String, ScioResult) = {
+  def run(projectId: String, prefix: String, args: Array[String]): (String, ClosedScioContext) = {
     val username = CoreSysProps.User.value
     val buildNum = circleCIEnv.map(_.buildNum).getOrElse(-1L)
 

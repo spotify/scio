@@ -19,13 +19,11 @@ package com.spotify.scio
 
 import com.google.cloud.spanner.{Mutation, Struct}
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.io.Tap
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.{coders => bcoders}
 import org.apache.beam.sdk.io.gcp.spanner.{ReadOperation, SpannerConfig}
 import org.apache.beam.sdk.io.gcp.spanner.SpannerIO.FailureMode
-
-import scala.concurrent.Future
 
 package object spanner {
 
@@ -76,7 +74,7 @@ package object spanner {
 
     def saveAsSpanner(spannerConfig: SpannerConfig,
                       failureMode: FailureMode = DefaultFailureMode,
-                      batchSizeBytes: Long = DefaultBatchSizeBytes): Future[Tap[Nothing]] = {
+                      batchSizeBytes: Long = DefaultBatchSizeBytes): ClosedTap[Nothing] = {
       val params = SpannerWrite.WriteParam(failureMode, batchSizeBytes)
 
       self

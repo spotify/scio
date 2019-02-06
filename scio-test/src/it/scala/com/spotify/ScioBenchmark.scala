@@ -133,7 +133,6 @@ object BenchmarkResult {
   private val dateTimeParser = ISODateTimeFormat.dateTimeParser()
 
   def batch(name: String, extraArgs: Array[String], scioResult: ScioResult): BenchmarkResult = {
-    require(scioResult.isCompleted)
 
     val job: Job = scioResult.as[DataflowResult].getJob
     val startTime: LocalDateTime = dateTimeParser.parseLocalDateTime(job.getCreateTime)

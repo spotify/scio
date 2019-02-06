@@ -21,11 +21,10 @@ import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.values._
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.io.Tap
+import com.spotify.scio.io.ClosedTap
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 
-import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
@@ -44,7 +43,7 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
                      codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
                      metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
     implicit ct: ClassTag[T],
-    coder: Coder[T]): Future[Tap[T]] = {
+    coder: Coder[T]): ClosedTap[T] = {
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(AvroIO[T](path, schema))(param)
   }
@@ -62,7 +61,7 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
     implicit ct: ClassTag[T],
     tt: TypeTag[T],
     ev: T <:< HasAvroAnnotation,
-    coder: Coder[T]): Future[Tap[T]] = {
+    coder: Coder[T]): ClosedTap[T] = {
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(AvroTyped.AvroIO[T](path))(param)
   }
@@ -79,7 +78,7 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
                        suffix: String = ".obj",
                        codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
                        metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
-    implicit coder: Coder[T]): Future[Tap[T]] = {
+    implicit coder: Coder[T]): ClosedTap[T] = {
     val param = ObjectFileIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(ObjectFileIO[T](path))(param)
   }
@@ -97,7 +96,7 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
                          metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
     implicit ev: T <:< Message,
     ct: ClassTag[T],
-    coder: Coder[T]): Future[Tap[T]] = {
+    coder: Coder[T]): ClosedTap[T] = {
     val param = ProtobufIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(ProtobufIO[T](path))(param)
   }

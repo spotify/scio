@@ -26,21 +26,20 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
 import org.apache.commons.io.FileUtils
 
-import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 /** Trait for unit testing [[ScioIO]]. */
 trait ScioIOSpec extends PipelineSpec {
 
-  def testTap[T: Coder](xs: Seq[T])(writeFn: (SCollection[T], String) => Future[Tap[T]])(
+  def testTap[T: Coder](xs: Seq[T])(writeFn: (SCollection[T], String) => ClosedTap[T])(
     suffix: String): Unit = {
     val tmpDir = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
 
     val sc = ScioContext()
     val data = sc.parallelize(xs)
-    val future = writeFn(data, tmpDir.getAbsolutePath)
-    sc.close().waitUntilDone()
-    val tap = future.waitForResult()
+    val closedTap = writeFn(data, tmpDir.getAbsolutePath)
+    val scioResult = sc.close().waitUntilDone()
+    val tap = scioResult.tap(closedTap)
 
     tap.value.toSeq should contain theSameElementsAs xs
     tap.open(ScioContext()) should containInAnyOrder(xs)
@@ -81,7 +80,7 @@ trait ScioIOSpec extends PipelineSpec {
   }
 
   def testJobTestOutput[T: Coder, WT](xs: Seq[T], out: String = "out")(ioFn: String => ScioIO[T])(
-    writeFn: (SCollection[T], String) => Future[Tap[WT]]): Unit = {
+    writeFn: (SCollection[T], String) => ClosedTap[WT]): Unit = {
     def runMain(args: Array[String]): Unit = {
       val (sc, argz) = ContextAndArgs(args)
       writeFn(sc.parallelize(xs), argz("output"))
@@ -110,7 +109,7 @@ trait ScioIOSpec extends PipelineSpec {
 
   def testJobTest[T: Coder](xs: Seq[T], in: String = "in", out: String = "out")(
     ioFn: String => ScioIO[T])(readFn: (ScioContext, String) => SCollection[T])(
-    writeFn: (SCollection[T], String) => Future[Tap[_]]): Unit = {
+    writeFn: (SCollection[T], String) => ClosedTap[_]): Unit = {
     def runMain(args: Array[String]): Unit = {
       val (sc, argz) = ContextAndArgs(args)
       val data = readFn(sc, argz("input"))

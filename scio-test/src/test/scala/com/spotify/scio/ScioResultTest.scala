@@ -17,20 +17,15 @@
 
 package com.spotify.scio
 
-import java.util.concurrent.TimeUnit
 
 import com.spotify.scio.ScioResultTest._
 import com.spotify.scio.metrics.{BeamDistribution, MetricValue}
 import com.spotify.scio.testing.PipelineSpec
-import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.PipelineResult
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.metrics.MetricResults
 import org.joda.time
 
-import scala.concurrent.Future
-import scala.concurrent.duration.{Duration, DurationInt}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class ScioResultTest extends PipelineSpec {
 
@@ -92,16 +87,9 @@ object ScioResultTest {
     override def metrics(): MetricResults = null
   }
 
-  // Give the ScioResult a 10 nanosecond timeout and verify job is cancelled after timeout
-  private val nanos = Duration.create(10L, TimeUnit.NANOSECONDS)
-
   // Mock Scio result takes 100 milliseconds to complete
   private val mockScioResult = new ScioResult(mockPipeline) {
     override def getMetrics: metrics.Metrics = null
-    override val finalState: Future[State] = Future {
-      Thread.sleep(10.seconds.toMillis)
-      State.DONE
-    }
   }
 
 }

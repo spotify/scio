@@ -32,8 +32,8 @@ class SparkeyTest extends PipelineSpec {
   "SCollection" should "support .asSparkey with temporary local file" in {
     val sc = ScioContext()
     val p = sc.parallelize(sideData).asSparkey.materialize
-    sc.close().waitUntilFinish()
-    val basePath = p.waitForResult().value.next().basePath
+    val scioResult = sc.close().waitUntilFinish()
+    val basePath = scioResult.tap(p).value.next().basePath
     val reader = Sparkey.open(new File(basePath))
     reader.toMap shouldBe sideData.toMap
     for (ext <- Seq(".spi", ".spl")) {
