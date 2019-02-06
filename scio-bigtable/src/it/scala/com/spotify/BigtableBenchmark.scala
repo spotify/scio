@@ -15,6 +15,8 @@
  * under the License.
  */
 
+package com.spotify
+
 import java.util.{List => JList}
 
 import com.google.bigtable.v2.{ReadRowsRequest, RowFilter, RowSet}
@@ -24,9 +26,11 @@ import com.google.cloud.bigtable.grpc.{BigtableInstanceName, BigtableSession}
 import com.google.common.cache.CacheBuilder
 import com.google.common.util.concurrent.{Futures, ListenableFuture, MoreExecutors}
 import com.google.protobuf.ByteString
+import com.spotify.ScioBenchmarkSettings.commonArgs
 import com.spotify.scio._
 import com.spotify.scio.bigtable._
 import com.spotify.scio.transforms.AsyncLookupDoFn
+import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.KV
@@ -35,8 +39,8 @@ import scala.util.{Failure, Success}
 
 object BigtableBenchmark {
   val projectId: String = "data-integration-test"
-  val instanceId: String = "side-input-test"
-  val tableId: String = "side-input-test"
+  val instanceId: String = "scio-bigtable-benchmark"
+  val tableId: String = "scio-bigtable-benchmark"
 
   val bigtableOptions: BigtableOptions = new BigtableOptions.Builder()
     .setProjectId(projectId)
@@ -91,13 +95,11 @@ object BigtableBenchmark {
   }
 
   class NonFatalException(msg: String) extends RuntimeException(msg)
+
   class FatalException(msg: String) extends RuntimeException(msg)
 
   def readFlatRowsAsync(session: BigtableSession, input: String): ListenableFuture[String] =
-    if (input.endsWith("0000000000")) {
-      // Simulate a fatal exception, to be propagated via `BigtableDoFn.Try`
-      Futures.immediateFailedFuture(new FatalException(input))
-    } else if (input.endsWith("0000000001")) {
+    if (input.endsWith("0000000001")) {
       // Simulate a non-fatal exception, to be recovered with a fallback
       Futures.immediateFailedFuture(new NonFatalException(input))
     } else {
@@ -135,119 +137,121 @@ object BigtableBenchmark {
         assert(kv.getKey == exception.getMessage)
         (0, 1)
     }
-}
 
-// Generate 52 million key value pairs
-object BigtableWrite {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    import BigtableBenchmark._
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.ensureTables(bigtableOptions, Map(tableId -> List(familyName)))
-    sc.parallelize(letters)
-      .applyTransform(ParDo.of(new FillDoFn(1000000)))
-      .map { s =>
-        val key = ByteString.copyFromUtf8(s"key-$s")
-        val value = ByteString.copyFromUtf8(s"val-$s")
-        val m = Mutations.newSetCell(familyName, columnQualifier, value, 0L)
-        (key, Iterable(m))
+  def main(args: Array[String]): Unit = {
+    // Run sequentially to avoid read/write contention
+    BenchmarkRunner.runSequentially(args,
+      "BigtableBenchmark",
+      benchmarks,
+      commonArgs() ++ Array("--region=us-east1"))
+  }
+
+  private val benchmarks =
+    ScioBenchmarkSettings
+      .benchmarks("com\\.spotify\\.BigtableBenchmark\\$[\\w]+\\$")
+
+  // Generate 52 million key value pairs
+  object BigtableWrite extends Benchmark {
+    override def run(sc: ScioContext): Unit = {
+      sc.ensureTables(bigtableOptions, Map(tableId -> List(familyName)))
+      sc.parallelize(letters)
+        .applyTransform(ParDo.of(new FillDoFn(1000000)))
+        .map { s =>
+          val key = ByteString.copyFromUtf8(s"key-$s")
+          val value = ByteString.copyFromUtf8(s"val-$s")
+          val m = Mutations.newSetCell(familyName, columnQualifier, value, 0L)
+          (key, Iterable(m))
+        }
+        .saveAsBigtable(bigtableOptions, tableId)
+    }
+  }
+
+  // Read 52 million records from BigTable
+  object BigtableRead extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      sc.bigtable(bigtableOptions, tableId, ByteKeyRange.ALL_KEYS, RowFilter.getDefaultInstance)
+        .count
+  }
+
+  // Async key value lookup 52 million reads
+  object AsyncBigtableDoFnRead extends Benchmark {
+    override def run(sc: ScioContext): Unit = {
+      sc.parallelize(letters)
+        .applyTransform(ParDo.of(new FillDoFn(1000000)))
+        .applyTransform(ParDo.of(new BigtableDoFn[String, String](bigtableOptions, 10000) {
+          override def asyncLookup(session: BigtableSession, input: String) =
+            bigtableLookup(session, input)
+        }))
+        .map(checkResult)
+        .sum
+    }
+  }
+
+  // Async key value lookup for 52 millions from Bigtable with caching
+  object AsyncCachingBigtableDoFnRead extends Benchmark {
+    override def run(sc: ScioContext): Unit = {
+      val cache = new AsyncLookupDoFn.CacheSupplier[String, String, String] {
+        override def createCache() =
+          CacheBuilder
+            .newBuilder()
+            .maximumSize(1000000)
+            .build[String, String]()
+
+        override def getKey(input: String) = input
       }
-      .saveAsBigtable(bigtableOptions, tableId)
-    sc.close()
-  }
-}
 
-// Async key value lookup
-object AsyncBigtableRead {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    import BigtableBenchmark._
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-
-    sc.parallelize(letters)
-      .applyTransform(ParDo.of(new FillDoFn(1000000)))
-      .applyTransform(ParDo.of(new BigtableDoFn[String, String](bigtableOptions, 10000) {
-        override def asyncLookup(session: BigtableSession, input: String) =
-          bigtableLookup(session, input)
-      }))
-      .map(checkResult)
-      .sum
-    sc.close()
-  }
-}
-
-// Async key value lookup with caching
-object AsyncCachingBigtableRead {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    import BigtableBenchmark._
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-
-    val cache = new AsyncLookupDoFn.CacheSupplier[String, String, String] {
-      override def createCache() =
-        CacheBuilder
-          .newBuilder()
-          .maximumSize(1000000)
-          .build[String, String]()
-      override def getKey(input: String) = input
+      sc.parallelize(letters)
+        .applyTransform(ParDo.of(new FillDoFn(1)))
+        .flatMap(s => Seq.fill(1000000)(s))
+        .applyTransform(ParDo.of(new BigtableDoFn[String, String](bigtableOptions, 10000, cache) {
+          override def asyncLookup(session: BigtableSession, input: String) =
+            bigtableLookup(session, input)
+        }))
+        .map(checkResult)
+        .sum
     }
-
-    sc.parallelize(letters)
-      .applyTransform(ParDo.of(new FillDoFn(1)))
-      .flatMap(s => Seq.fill(1000000)(s))
-      .applyTransform(ParDo.of(new BigtableDoFn[String, String](bigtableOptions, 10000, cache) {
-        override def asyncLookup(session: BigtableSession, input: String) =
-          bigtableLookup(session, input)
-      }))
-      .map(checkResult)
-      .sum
-    sc.close()
   }
-}
 
-// Blocking key value lookup
-object BlockingBigtableRead {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    import BigtableBenchmark._
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-
-    sc.parallelize(letters)
-      .applyTransform(ParDo.of(new FillDoFn(1000000)))
-      .applyTransform(ParDo.of(new BigtableDoFn[String, String](bigtableOptions) {
-        override def asyncLookup(session: BigtableSession, input: String) = {
-          val output = bigtableLookup(session, input).get()
-          Futures.immediateFuture(output)
-        }
-      }))
-      .map(checkResult)
-      .sum
-    sc.close()
-  }
-}
-
-// Blocking key value lookup with caching
-object BlockingCachingBigtableRead {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    import BigtableBenchmark._
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-
-    val cache = new AsyncLookupDoFn.CacheSupplier[String, String, String] {
-      override def createCache() =
-        CacheBuilder
-          .newBuilder()
-          .maximumSize(1000000)
-          .build[String, String]()
-      override def getKey(input: String) = input
+  // Blocking key value lookup for 52 millions from Bigtable
+  object BlockingBigtableDoFnRead extends Benchmark {
+    override def run(sc: ScioContext): Unit = {
+      sc.parallelize(letters)
+        .applyTransform(ParDo.of(new FillDoFn(1000000)))
+        .applyTransform(ParDo.of(new BigtableDoFn[String, String](bigtableOptions) {
+          override def asyncLookup(session: BigtableSession, input: String) = {
+            val output = bigtableLookup(session, input).get()
+            Futures.immediateFuture(output)
+          }
+        }))
+        .map(checkResult)
+        .sum
     }
+  }
 
-    sc.parallelize(letters)
-      .applyTransform(ParDo.of(new FillDoFn(1)))
-      .flatMap(s => Seq.fill(1000000)(s))
-      .applyTransform(ParDo.of(new BigtableDoFn[String, String](bigtableOptions, 10000, cache) {
-        override def asyncLookup(session: BigtableSession, input: String) = {
-          val output = bigtableLookup(session, input).get()
-          Futures.immediateFuture(output)
-        }
-      }))
-      .map(checkResult)
-      .sum
-    sc.close()
+  // Blocking key value lookup for 52 millions from Bigtable with caching
+  object BlockingCachingBigtableDoFnRead extends Benchmark {
+    override def run(sc: ScioContext): Unit = {
+      val cache = new AsyncLookupDoFn.CacheSupplier[String, String, String] {
+        override def createCache() =
+          CacheBuilder
+            .newBuilder()
+            .maximumSize(1000000)
+            .build[String, String]()
+
+        override def getKey(input: String) = input
+      }
+
+      sc.parallelize(letters)
+        .applyTransform(ParDo.of(new FillDoFn(1)))
+        .flatMap(s => Seq.fill(100000)(s))
+        .applyTransform(ParDo.of(new BigtableDoFn[String, String](bigtableOptions, 10000, cache) {
+          override def asyncLookup(session: BigtableSession, input: String) = {
+            val output = bigtableLookup(session, input).get()
+            Futures.immediateFuture(output)
+          }
+        }))
+        .map(checkResult)
+        .sum
+    }
   }
 }
