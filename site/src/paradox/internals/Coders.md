@@ -33,8 +33,8 @@ In Scio `0.6.x` and below, Scio would delegate this serialization process to [Kr
 
 While it saves a lot of work, it also has a few drawbacks:
 
-- `Kryo` coders can be really inefficient. Especially if you forget to [register you classes using a custom `KryoRegistrar`](https://github.com/spotify/scio/wiki/FAQ#how-do-i-use-custom-kryo-serializers).
-- The only way to be sure Kryo coders are correctly registered is to write tests and run them with a specific option: (see [kryoRegistrationRequired=true](https://github.com/spotify/scio/wiki/FAQ#what-kryo-tuning-options-are-there)).
+- `Kryo` coders can be really inefficient. Especially if you forget to @ref[register your classes using a custom `KryoRegistrar`](../FAQ.md#how-do-i-use-custom-kryo-serializers-).
+- The only way to be sure Kryo coders are correctly registered is to write tests and run them with a specific option: (see @ref[kryoRegistrationRequired=true](../FAQ.md#what-kryo-tuning-options-are-there-)).
 - Kryo coders are very dynamic and it can be hard to know exactly which coder is used for a given class.
 - Kryo coders do not always play well with Beam, and sometime can cause weird runtime exceptions. For example, Beam may sometimes throw an `IllegalMutationException` because of the default Kryo coder implementation.
 
@@ -176,4 +176,4 @@ Scio will still use a "proper" Coder for `Int`, `String` and `List`. Only the se
 ## Upgrating to `v0.7.0` or above: Migrating to static coder
 
 Migrating to Scio `0.7.x` from an older version is likely to break a few things at compile time in your project.
-See the complete [[v0.7.0-Migration-Guide]] for more information.
+See the complete @ref[v0.7.0 Migration Guide](../migrations/v0.7.0-Migration-Guide.md) for more information.

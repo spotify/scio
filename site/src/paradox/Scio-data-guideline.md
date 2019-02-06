@@ -25,5 +25,5 @@ Here are some common guidelines for building efficient, cost-effective, and main
 
 ## Streaming
 
-* For streaming jobs with periodically updated state, i.e. log decoration with metadata, keep (and update) states in Bigtable, and do look ups from the streaming job (read more about @ref[Bigtable key structure](io/Bigtable.md#key-structure)). Also see @javadoc[BigtableDoFn](com.spotify.scio.bigtable.BigtableDoFn) for an abstraction that handles asynchronous Bigtable requests.
+* For streaming jobs with periodically updated state, i.e. log decoration with metadata, keep (and update) states in Bigtable, and do look ups from the streaming job (read more about @ref[Bigtable key structure](io/Bigtable.md#key-structure)). Also see @scaladoc[BigtableDoFn](com.spotify.scio.bigtable.BigtableDoFn) for an abstraction that handles asynchronous Bigtable requests.
 * For streaming, larger worker machine types and SSD for [`workerDiskType`](https://cloud.google.com/compute/docs/reference/latest/diskTypes) might be more suitable. A typical job with 5 x n1-standard-4 and 100GB SSDs can handle ~30k peak events per second. Also see this article on [disk performance](https://cloud.google.com/compute/docs/disks/performance).

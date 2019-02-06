@@ -53,6 +53,6 @@ sc.map(<build Avro generic records>)
 
 ## Common issues/guidelines
 
-* Follow Avro [guidelines](https://avro.apache.org/docs/current/spec.html), especially the one about [schema evolution](#rules-for-schema-evolution)
+* Follow Avro [guidelines](https://avro.apache.org/docs/current/spec.html), especially the one about [schema evolution](http://avro.apache.org/docs/current/spec.html#Schema+Resolution)
 * Wherever possible use specific records
 * Use `Builder` pattern to construct Avro records

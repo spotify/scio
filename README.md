@@ -14,7 +14,7 @@ Scio
 
 Scio is a Scala API for [Apache Beam](http://beam.incubator.apache.org/) and [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) inspired by [Apache Spark](http://spark.apache.org/) and [Scalding](https://github.com/twitter/scalding).
 
-Scio 0.3.0 and future versions depend on Apache Beam (`org.apache.beam`) while earlier versions depend on Google Cloud Dataflow SDK (`com.google.cloud.dataflow`). See this [page](https://github.com/spotify/scio/wiki/Apache-Beam) for a list of breaking changes.
+Scio 0.3.0 and future versions depend on Apache Beam (`org.apache.beam`) while earlier versions depend on Google Cloud Dataflow SDK (`com.google.cloud.dataflow`). See this [page](https://spotify.github.io/scio/Apache-Beam.html) for a list of breaking changes.
 
 # Features
 
@@ -51,12 +51,12 @@ Inspect the results:
 
 # Documentation
 
-[Getting Started](https://github.com/spotify/scio/wiki/Getting-Started) is the best place to start with Scio. If you are new to Apache Beam and distributed data processing, check out the [Beam Programming Guide](https://beam.apache.org/documentation/programming-guide/) first for a detailed explanation of the Beam programming model and concepts. If you have experience with other Scala data processing libraries, check out this comparison between [Scio, Scalding and Spark](https://github.com/spotify/scio/wiki/Scio%2C-Scalding-and-Spark). Finally check out this document about the relationship between [Scio, Beam and Dataflow](https://github.com/spotify/scio/wiki/Scio,-Beam-and-Dataflow).
+[Getting Started](https://spotify.github.io/scio/Getting-Started.html) is the best place to start with Scio. If you are new to Apache Beam and distributed data processing, check out the [Beam Programming Guide](https://beam.apache.org/documentation/programming-guide/) first for a detailed explanation of the Beam programming model and concepts. If you have experience with other Scala data processing libraries, check out this comparison between [Scio, Scalding and Spark](https://spotify.github.io/scio/Scio,-Scalding-and-Spark.html). Finally check out this document about the relationship between [Scio, Beam and Dataflow](https://spotify.github.io/scio/Scio,-Beam-and-Dataflow.html).
 
 Example Scio pipelines and tests can be found under [scio-examples](https://github.com/spotify/scio/tree/master/scio-examples/src). A lot of them are direct ports from Beam's Java [examples](https://github.com/apache/beam/tree/master/examples). See this [page](http://spotify.github.io/scio/examples/) for some of them with side-by-side explanation. Also see [Big Data Rosetta Code](https://github.com/spotify/big-data-rosetta-code) for common data processing code snippets in Scio, Scalding and Spark.
 
-- [Scio Wiki](https://github.com/spotify/scio/wiki) - wiki page
-- [Scio Scaladocs](http://spotify.github.io/scio) - current API documentation
+- [Scio Wiki](https://spotify.github.io/scio/) - wiki page
+- [Scio Scaladocs](http://spotify.github.io/scio/api/) - current API documentation
 - [Scio Examples](http://spotify.github.io/scio/examples/) - examples with side-by-side explanation
 
 # Artifacts

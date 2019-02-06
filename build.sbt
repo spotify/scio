@@ -870,6 +870,7 @@ lazy val siteSettings = Def.settings(
   },
   paradoxProperties in Paradox ++= Map(
     "javadoc.com.spotify.scio.base_url" -> "http://spotify.github.com/scio/api",
+    "javadoc.org.apache.beam.base_url" -> s"https://beam.apache.org/releases/javadoc/$beamVersion",
     "scaladoc.com.spotify.scio.base_url" -> "https://spotify.github.io/scio/api",
     "github.base_url" -> "https://github.com/spotify/scio",
     "extref.example.base_url" -> "https://spotify.github.io/scio/examples/%s.scala.html"
