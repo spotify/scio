@@ -20,14 +20,16 @@ package com.spotify
 import java.util.UUID
 
 import com.google.common.reflect.ClassPath
+import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.scio._
 import com.spotify.scio.coders._
 import com.spotify.scio.values.SCollection
 import com.twitter.algebird.Aggregator
+import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
-import org.joda.time.format.DateTimeFormat
 import org.joda.time.DateTimeZone
+import org.joda.time.format.DateTimeFormat
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -290,9 +292,78 @@ object ScioBatchBenchmark {
     }
   }
 
+  object AvroIORead extends Benchmark {
+    override def run(sc: ScioContext): Unit = {
+      import TestDataSchema._
+      import com.spotify.scio.avro._
+      implicit def genericCoder = Coder.avroGenericRecordCoder(shakespeareSchema)
+
+      sc.avroFile[GenericRecord](avroGcsPath, shakespeareSchema)
+        .flatMap(e => shakespeareType.fromGenericRecord(e))
+        .map(s => s.word + ": " + s.word_count)
+    }
+  }
+
+  object TextIORead extends Benchmark {
+    override def run(sc: ScioContext): Unit =
+      sc.textFile(textGcsPath)
+        .map(_.split("\t"))
+  }
+
+  object BigQueryWrite extends Benchmark {
+
+    import com.spotify.scio.bigquery._
+
+    import scala.collection.JavaConverters._
+
+    val schema = new TableSchema().setFields(
+      List(
+        new TableFieldSchema().setName("key").setType("INTEGER"),
+        new TableFieldSchema().setName("word").setType("STRING")
+      ).asJava)
+
+    val table = "bigquery_benchmarks.bigquery_write"
+
+    override def run(sc: ScioContext): Unit = {
+      randomUUIDs(sc, 100 * M)
+        .transform("Assign random key")(withRandomKey[Elem[String]](10 * K))
+        .map(e => TableRow("key" -> e._1, "word" -> e._2.elem))
+        .saveAsBigQuery(table, schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
+    }
+  }
+
+  object BigQueryRead extends Benchmark {
+
+    import TestDataSchema._
+    import com.spotify.scio.bigquery._
+
+    val table = "bigquery_benchmarks.shakespeare"
+
+    override def run(sc: ScioContext): Unit = {
+      sc.bigQueryTable(table)
+        .map(BigQueryType.fromTableRow[Shakespeare])
+        .map(s => (s.word, s.word_count))
+    }
+  }
+
+  object TestDataSchema {
+
+    import shapeless.datatype.avro._
+
+    val shakespeareType = AvroType[Shakespeare]
+    val shakespeareSchema = AvroSchema[Shakespeare]
+
+    case class Shakespeare(word: String, word_count: Long, corpus: String, corpus_date: Long)
+  }
+
   // =======================================================================
   // Utilities
   // =======================================================================
+  private val avroGcsPath =
+    "gs://data-integration-test-benchmark-eu/avro-benchmark/folder-a/folder-b/part-*"
+
+  private val textGcsPath =
+    "gs://data-integration-test-benchmark-eu/text-benchmark/folder-a/part-*"
 
   private val M = 1000000
   private val K = 1000

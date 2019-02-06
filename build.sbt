@@ -354,6 +354,7 @@ lazy val scioTest: Project = Project(
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test,it",
       "me.lyh" %% "shapeless-datatype-datastore_1.3" % shapelessDatatypeVersion % "test,it",
+      "me.lyh" %% "shapeless-datatype-avro" % shapelessDatatypeVersion % "it",
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-all" % hamcrestVersion,
       "com.spotify" % "annoy" % annoyVersion % "test",
@@ -368,8 +369,8 @@ lazy val scioTest: Project = Project(
   .dependsOn(
     scioCore % "test->test;compile->compile;it->it",
     scioSchemas % "test,it",
-    scioAvro % "compile->test",
-    scioBigQuery % "compile->test"
+    scioAvro % "compile->test,it->it",
+    scioBigQuery % "compile->test,it->it"
   )
 
 lazy val scioMacros: Project = Project(
