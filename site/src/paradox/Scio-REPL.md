@@ -25,9 +25,9 @@ Welcome to
     ________________(_)_____
     __  ___/  ___/_  /_  __ \
     _(__  )/ /__ _  / / /_/ /
-    /____/ \___/ /_/  \____/   version 0.3.4
+    /____/ \___/ /_/  \____/   version 0.7.0
 
-Using Scala version 2.11.11 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_131)
+Using Scala version 2.12.8 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_144)
 Type in expressions to have them evaluated.
 Type :help for more information.
 
@@ -37,9 +37,9 @@ Scio context available as 'sc'
 scio>
 ```
 
-A [`ScioContext`](http://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html) is created on REPL startup as `sc` and a starting point to most operations. Use `tab` completion, history and other REPL goodies to play around.
+A @scaladoc[`ScioContext`](com.spotify.scio.ScioContext) is created on REPL startup as `sc` and a starting point to most operations. Use `tab` completion, history and other REPL goodies to play around.
 
-### Start from SBT console (Scala `2.11.x` only)
+### Start from SBT console (Scala `2.11.x`+ only)
 
 ```
 $ git clone git@github.com:spotify/scio.git
@@ -90,7 +90,7 @@ scio> wordCount.waitForResult().value.take(3).foreach(println)
 (Hadoop,6)
 ```
 
-Make sure `README.md` is in the current directory. This example counts words in local file using a local runner ([`DirectRunner`](https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/runners/direct/DirectRunner.html) and writes result in a local file. The pipeline and actual computation starts on `sc.close()`. The last command take 3 lines from results and prints them.
+Make sure `README.md` is in the current directory. This example counts words in local file using a local runner (@javadoc[`DirectRunner`](org.apache.beam.runners.direct.DirectRunner) and writes result in a local file. The pipeline and actual computation starts on `sc.close()`. The last command take 3 lines from results and prints them.
 
 ### Local pipeline ++
 
@@ -114,7 +114,7 @@ Each Scio context is associated with one and only one pipeline. The previous ins
 To create a Scio context for Google Cloud Dataflow service, add Dataflow pipeline options when starting the REPL. The same options will also be used by `:newScio` when creating new context. For example:
 
 ```
-$ java -jar scio-repl-0.3.4.jar \
+$ java -jar scio-repl-0.7.0.jar \
 > --project=<project-id> \
 > --stagingLocation=<stagin-dir> \
 > --runner=DataflowRunner
@@ -123,9 +123,9 @@ Welcome to
     ________________(_)_____
     __  ___/  ___/_  /_  __ \
     _(__  )/ /__ _  / / /_/ /
-    /____/ \___/ /_/  \____/   version 0.3.4
+    /____/ \___/ /_/  \____/   version 0.7.0
 
-Using Scala version 2.11.11 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_131)
+Using Scala version 2.12.8 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_144)
 Type in expressions to have them evaluated.
 Type :help for more information.
 
@@ -159,7 +159,7 @@ Local Scio context available as 'lsc'
 In this example we will read some data from BigQuery and process it in Dataflow. We shall count number of tornadoes per month from a public sample dataset. Scio will do its best to find your configured Google Cloud project, but you can also specify it explicitly via `-Dbigquery.project` option.
 
 ```
-$ java -jar -Dbigquery.project=<project-id> scio-repl-0.3.4.jar \
+$ java -jar -Dbigquery.project=<project-id> scio-repl-0.7.0.jar \
 > --project=<project-id> \
 > --stagingLocation=<stagin-dir> \
 > --runner=DataflowRunner
@@ -168,9 +168,9 @@ Welcome to
     ________________(_)_____
     __  ___/  ___/_  /_  __ \
     _(__  )/ /__ _  / / /_/ /
-    /____/ \___/ /_/  \____/   version 0.3.4
+    /____/ \___/ /_/  \____/   version 0.7.0
 
-Using Scala version 2.11.11 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_131)
+Using Scala version 2.12.8 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_144)
 Type in expressions to have them evaluated.
 Type :help for more information.
 
@@ -252,10 +252,10 @@ scio> sc.close()
 
 ### Running jobs asynchronously
 
-When using REPL and Dataflow service consider using the non-blocking [`DataflowRunner`](https://beam.apache.org/documentation/sdks/javadoc/2.0.0/org/apache/beam/runners/dataflow/DataflowRunner.html) for a more interactive experience. To start:
+When using REPL and Dataflow service consider using the non-blocking @javadoc[`DataflowRunner`](org.apache.beam.runners.dataflow.DataflowRunner) for a more interactive experience. To start:
 
 ```
-java -jar scio-repl-0.3.4.jar \
+java -jar scio-repl-0.7.0.jar \
 > --project=<project-id> \
 > --stagingLocation=<stagin-dir> \
 > --runner=DataflowRunner
@@ -264,9 +264,9 @@ Welcome to
     ________________(_)_____
     __  ___/  ___/_  /_  __ \
     _(__  )/ /__ _  / / /_/ /
-    /____/ \___/ /_/  \____/   version 0.3.4
+    /____/ \___/ /_/  \____/   version 0.7.0
 
-Using Scala version 2.11.11 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_131)
+Using Scala version 2.12.8 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_144)
 Type in expressions to have them evaluated.
 Type :help for more information.
 
@@ -279,12 +279,12 @@ scio> val result = sc.close()
 [main] INFO org.apache.beam.runners.dataflow.DataflowRunner - Executing pipeline on the Dataflow Service, which will have billing implications related to Google Compute Engine usage and other Google Cloud Services.
 [main] INFO org.apache.beam.runners.dataflow.util.PackageUtil - Uploading 3 files from PipelineOptions.filesToStage to staging location to prepare for execution.
 [main] INFO org.apache.beam.runners.dataflow.util.PackageUtil - Uploading PipelineOptions.filesToStage complete: 2 files newly uploaded, 1 files cached
-Dataflow SDK version: 1.5.0
+Dataflow SDK version: 2.9.0
 scio> result.state
 res1: org.apache.beam.sdk.PipelineResult.State = RUNNING
 ```
 
-Note that now `sc.close()` doesn't block and wait until job completes and gives back control of the REPL right away. Use [`ScioResult`](http://spotify.github.io/scio/api/com/spotify/scio/ScioResult.html) and `Future[Tap[T]]`s to check for progress, results and orchestrate jobs.
+Note that now `sc.close()` doesn't block and wait until job completes and gives back control of the REPL right away. Use @scaladoc[`ScioResult`](com.spotify.scio.ScioResult) and `Future[Tap[T]]`s to check for progress, results and orchestrate jobs.
 
 ### Multiple Scio contexts
 
@@ -304,19 +304,19 @@ You can use those in combination with `DataflowRunner` to run multiple pipelines
 
 ### BigQuery client
 
-Whenever possible leverage BigQuery! [`@BigQueryType`](http://spotify.github.io/scio/api/com/spotify/scio/bigquery/types/BigQueryType.html) annotations enable type safe and civilized
+Whenever possible leverage BigQuery! @scaladoc[`@BigQueryType`](com.spotify.scio.bigquery.types.BigQueryType) annotations enable type safe and civilized
  integration with BigQuery inside Scio. Here is example of using the annotations and BigQuery client to read and write typed data directly without Scio context.
 
 ```
-$ java -jar -Dbigquery.project=<project-id> scio-repl-0.3.4.jar
+$ java -jar -Dbigquery.project=<project-id> scio-repl-0.7.0.jar
 Welcome to
                  _____
     ________________(_)_____
     __  ___/  ___/_  /_  __ \
     _(__  )/ /__ _  / / /_/ /
-    /____/ \___/ /_/  \____/   version 0.3.4
+    /____/ \___/ /_/  \____/   version 0.7.0
 
-Using Scala version 2.11.11 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_131)
+Using Scala version 2.12.8 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_144)
 Type in expressions to have them evaluated.
 Type :help for more information.
 
@@ -345,15 +345,15 @@ simply increase the size of the heap - be reasonable about the amount of data an
 Example of REPL startup with 2GiB of heap size:
 
 ```
-$ java -Xmx2g -jar scio-repl-0.3.4.jar
+$ java -Xmx2g -jar scio-repl-0.7.0.jar
 Welcome to
                  _____
     ________________(_)_____
     __  ___/  ___/_  /_  __ \
     _(__  )/ /__ _  / / /_/ /
-    /____/ \___/ /_/  \____/   version 0.3.4
+    /____/ \___/ /_/  \____/   version 0.7.0
 
-Using Scala version 2.11.11 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_131)
+Using Scala version 2.12.8 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_144)
 
 Type in expressions to have them evaluated.
 Type :help for more information.

@@ -1,8 +1,8 @@
 # Algebird
 
 [Algebird](https://github.com/twitter/algebird) is Twitter's abstract algebra library. It has a lot of reusable modules for parallel aggregation and approximation. One can use any Algebird `Aggregator` or `Semigroup` with:
-- `aggregate` and `sum` on `SCollection[T]` ([ScalaDoc](https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html))
-- `aggregateByKey` and `sumByKey` on `SCollection[(K, V)]` ([ScalaDoc](https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html))
+- `aggregate` and `sum` on @scaladoc[`SCollection[T]`](com.spotify.scio.values.SCollection)
+- `aggregateByKey` and `sumByKey` on @scaladoc[`SCollection[(K, V)]`](com.spotify.scio.values.PairSCollectionFunctions)
 
 See @github[AlgebirdSpec.scala](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/AlgebirdSpec.scala) and [Algebird wiki](https://github.com/twitter/algebird/wiki) for more details. Also see these [slides](http://www.lyh.me/slides/semigroups.html) on semigroups.
 

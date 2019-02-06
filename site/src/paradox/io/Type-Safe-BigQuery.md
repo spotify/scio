@@ -17,7 +17,7 @@ The type safe BigQuery API in Scio represents rows as case classes and generates
 - Records are mapped to nested case classes
 - Timestamps are mapped to Joda Time [`Instant`](http://www.joda.org/joda-time/apidocs/org/joda/time/class-use/Instant.html)
 
-See documentation for [BigQueryType](http://spotify.github.io/scio/api/com/spotify/scio/bigquery/types/BigQueryType$.html) for the complete list of supported types.
+See documentation for @scaladoc[BigQueryType](com.spotify.scio.bigquery.types.BigQueryType$) for the complete list of supported types.
 
 ## Type annotations
 
@@ -250,8 +250,8 @@ tableRows
 
 ### BigQueryType and IntelliJ IDEA
 
-See [[FAQ#how-to-make-intellij-idea-work-with-type-safe-bigquery-classes]] for making IntelliJ happy with type safe BigQuery.
+See @ref[the FAQ](../FAQ.md#how-to-make-intellij-idea-work-with-type-safe-bigquery-classes-) for making IntelliJ happy with type safe BigQuery.
 
 ### Custom types and validation
 
-See [[OverrideTypeProvider]] for details about the custom types and validation mechanism.
+See @ref[OverrideTypeProvider](../internals/OverrideTypeProvider.md) for details about the custom types and validation mechanism.
