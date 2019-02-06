@@ -247,8 +247,8 @@ val sc: SCollection[Foo] = ??? // Beam will need an org.apache.beam.sdk.coders.C
 <p>In Scio <code>0.6.x</code> and below, Scio would delegate this serialization process to <a href="https://github.com/EsotericSoftware/kryo">Kryo</a>. Kryo&rsquo;s job is to automagically &ldquo;generate&rdquo; the serialization logic for any type. The benefit is you don&rsquo;t really have to care about serialization most of the time when writing pipelines with Scio. Using Beam, you would need to explicitly set the coder everytime you use a <code>PTtransform</code>.</p>
 <p>While it saves a lot of work, it also has a few drawbacks:</p>
 <ul>
-  <li><code>Kryo</code> coders can be really inefficient. Especially if you forget to <a href="https://github.com/spotify/scio/wiki/FAQ#how-do-i-use-custom-kryo-serializers">register you classes using a custom <code>KryoRegistrar</code></a>.</li>
-  <li>The only way to be sure Kryo coders are correctly registered is to write tests and run them with a specific option: (see <a href="https://github.com/spotify/scio/wiki/FAQ#what-kryo-tuning-options-are-there">kryoRegistrationRequired=true</a>).</li>
+  <li><code>Kryo</code> coders can be really inefficient. Especially if you forget to <a href="../FAQ.html#how-do-i-use-custom-kryo-serializers-">register your classes using a custom <code>KryoRegistrar</code></a>.</li>
+  <li>The only way to be sure Kryo coders are correctly registered is to write tests and run them with a specific option: (see <a href="../FAQ.html#what-kryo-tuning-options-are-there-">kryoRegistrationRequired=true</a>).</li>
   <li>Kryo coders are very dynamic and it can be hard to know exactly which coder is used for a given class.</li>
   <li>Kryo coders do not always play well with Beam, and sometime can cause weird runtime exceptions. For example, Beam may sometimes throw an <code>IllegalMutationException</code> because of the default Kryo coder implementation.</li>
 </ul>
@@ -357,7 +357,7 @@ res5: com.spotify.scio.coders.Coder[Demo2] = Transform(Record([Lscala.Tuple2;@60
 </code></pre>
 <p>Scio will still use a &ldquo;proper&rdquo; Coder for <code>Int</code>, <code>String</code> and <code>List</code>. Only the serialization of <code>Locale</code> instances is delegated to Kryo.</p>
 <h2><a href="#upgrating-to-v0-7-0-or-above-migrating-to-static-coder" name="upgrating-to-v0-7-0-or-above-migrating-to-static-coder" class="anchor"><span class="anchor-link"></span></a>Upgrating to <code>v0.7.0</code> or above: Migrating to static coder</h2>
-<p>Migrating to Scio <code>0.7.x</code> from an older version is likely to break a few things at compile time in your project. See the complete <a href="./v0.7.0-Migration-Guide.html">v0.7.0-Migration-Guide</a> for more information.</p>
+<p>Migrating to Scio <code>0.7.x</code> from an older version is likely to break a few things at compile time in your project. See the complete <a href="../migrations/v0.7.0-Migration-Guide.html">v0.7.0 Migration Guide</a> for more information.</p>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/src/paradox/internals/Coders.md" title="Edit this page" class="md-source-file md-edit">
