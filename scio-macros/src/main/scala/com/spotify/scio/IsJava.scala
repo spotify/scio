@@ -73,7 +73,7 @@ object IsJavaBean {
     val sym = wtt.typeSymbol
     if (sym.isJava && sym.isClass) {
       checkGetterAndSetters(c)(wtt)
-      q"null: IsJavaBean[$wtt]"
+      q"null: _root_.com.spotify.scio.IsJavaBean[$wtt]"
     } else {
       c.abort(c.enclosingPosition, s"$wtt is not a Java class")
     }

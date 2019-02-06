@@ -45,8 +45,15 @@ object Query {
     fs.map { f =>
         val nullable = if (f.getNullable) "YES" else "NO"
         // val out =  s"${prefix}${f.getName}\t${f.getType.getTypeName}\t$nullable\n"
+        val `type` = f.getType
+        val typename =
+          `type`.getTypeName match {
+            case t @ BSchema.TypeName.ARRAY =>
+              s"${`type`.getCollectionElementType.getTypeName}[]"
+            case t => t
+          }
         val out =
-          f"│ ${prefix + f.getName}%-40s │ ${f.getType.getTypeName}%-8s │ $nullable%-8s │%n"
+          f"│ ${prefix + f.getName}%-40s │ ${typename}%-8s │ $nullable%-8s │%n"
         val underlying =
           if (f.getType.getTypeName == BSchema.TypeName.ROW)
             printContent(f.getType.getRowSchema.getFields.asScala.toList, s"${prefix}${f.getName}.")
@@ -146,4 +153,32 @@ object Query {
         coll.map[O](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
       }
     }
+
+  def tsql[I: Schema, O: Schema](query: String): Query[I, O] =
+    macro com.spotify.scio.sql.QueryMacros.tsqlImpl[I, O]
+}
+
+object QueryMacros {
+  import scala.reflect.macros.blackbox
+  def tsqlImpl[I: c.WeakTypeTag, O: c.WeakTypeTag](c: blackbox.Context)(query: c.Expr[String])(
+    iSchema: c.Expr[Schema[I]],
+    oSchema: c.Expr[Schema[O]]): c.Expr[Query[I, O]] = {
+    import c.universe._
+    val typeOfI = weakTypeOf[I].dealias
+    val typeOfO = weakTypeOf[O].dealias
+    // TODO: check that `query` is a stable value
+    val q"${s: String}" = query.tree
+
+    val sInTree = c.Expr[Schema[I]](c.untypecheck(iSchema.tree.duplicate))
+    val sOutTree = c.Expr[Schema[O]](c.untypecheck(oSchema.tree.duplicate))
+
+    val (sIn, sOut) = c.eval(c.Expr[(Schema[I], Schema[O])]((q"($sInTree, $sOutTree)")))
+
+    Query
+      .typecheck(Query.of(s)(sIn, sOut))(sIn, sOut)
+      .fold(
+        err => c.abort(c.enclosingPosition, err),
+        t =>
+          c.Expr[Query[I, O]](q"_root_.com.spotify.scio.sql.Query.of($query)($iSchema, $oSchema)"))
+  }
 }

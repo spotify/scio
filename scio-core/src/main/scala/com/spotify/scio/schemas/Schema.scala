@@ -22,6 +22,7 @@ final case class Record[T] private (schemas: Array[(String, Schema[Any])],
                                     destruct: T => Array[Any])
     extends Schema[T] {
   type Repr = Row
+
 }
 
 object Record {

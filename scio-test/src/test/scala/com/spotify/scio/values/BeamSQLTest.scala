@@ -24,8 +24,13 @@ import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.values.Row
 import com.spotify.scio.bean.UserBean
+import java.util.Locale
 
 object TestData {
+  case class Foo(i: Int, s: String)
+  case class Bar(l: Long, f: Foo)
+  case class Result(x: Int)
+
   case class User(username: String, email: String, age: Int)
   val users =
     (1 to 10).map { i =>
@@ -40,10 +45,10 @@ object TestData {
       UserWithId(UserId(i), s"user$i", s"user$i@spotify.com", 20 + i)
     }.toList
 
-  case class UserWithFallBack(id: Long, username: String, locale: java.util.Locale)
+  case class UserWithFallBack(id: Long, username: String, locale: Locale)
   val usersWithLocale =
     (1 to 10).map { i =>
-      UserWithFallBack(i, s"user$i", java.util.Locale.FRANCE)
+      UserWithFallBack(i, s"user$i", Locale.FRANCE)
     }.toList
 
   case class UserWithOption(username: String, email: String, age: Option[Int])
@@ -92,8 +97,6 @@ class BeamSQLTest extends PipelineSpec {
   }
 
   it should "support nested case classes" in runWithContext { sc =>
-    // implicit def userIDSchema = Schema[UserId]
-
     val schemaRes =
       BSchema
         .builder()
@@ -155,7 +158,7 @@ class BeamSQLTest extends PipelineSpec {
       (u.username, u.locale)
     }
     val in = sc.parallelize(usersWithLocale)
-    val r = in.sql[(String, java.util.Locale)](Query.of("select username, locale from PCOLLECTION"))
+    val r = in.sql[(String, Locale)](Query.of("select username, locale from PCOLLECTION"))
     r should containInAnyOrder(expected)
   }
 
@@ -212,9 +215,9 @@ class BeamSQLTest extends PipelineSpec {
   // TODO: Typechecked query ?
   // TODO: Join SCollections ?
   // TODO: nested case classes query
-  // TODO: Positional vs Nominal binding
+  // TODO: convert compatible classes using nominal binding
   // TODO: Should chaining row queries be supported ?
-  // TODO: Apply 2 queries to the same SCOllection
+  // TODO: Support UDF
   // ignore should "properly chain row queries" in runWithContext { sc =>
   //   val schemaRes = BSchema.builder().addInt64Field("sum(age)").build()
   //   val expected = Row.withSchema(schemaRes).addValue(255).build()
@@ -251,12 +254,7 @@ class BeamSQLTest extends PipelineSpec {
   }
 
   it should "provide a typecheck method for tests" in {
-    import java.util.Locale
     val Q = Query
-
-    case class Foo(i: Int, s: String)
-    case class Bar(l: Long, f: Foo)
-    case class Result(x: Int)
 
     def checkOK[A: Schema, B: Schema](q: String) =
       Q.typecheck(Q.of[A, B](q)) should be('right)
@@ -292,5 +290,36 @@ class BeamSQLTest extends PipelineSpec {
     // Calcite flattens the row value
     checkOK[UserBean, (Long, Int, String)](
       "select cast(age AS BIGINT), row(age, name) from PCOLLECTION")
+
+    checkOK[UserBean, List[Int]]("select ARRAY[age] from PCOLLECTION")
+    checkOK[UserBean, (String, List[Int])]("select name, ARRAY[age] from PCOLLECTION")
+    checkNOK[UserBean, (String, Int)]("select name, ARRAY[age] from PCOLLECTION")
+    checkNOK[UserBean, (String, List[Int])]("select name, age from PCOLLECTION")
+  }
+
+  it should "typecheck queries at compile time" in {
+    import Query.tsql
+    """tsql[Bar, Long]("select l from PCOLLECTION")""" should compile
+    """tsql[Bar, Int]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")""" should compile
+    """tsql[Bar, Result]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")""" should compile
+    """tsql[Bar, Foo]("select f from PCOLLECTION")""" should compile
+    """tsql[Bar, (String, Long)]("select `PCOLLECTION`.`f`.`s`, l from PCOLLECTION")""" should compile
+    // st fallback support
+    """tsql[UserWithFallBack, Locale]("select locale from PCOLLECTION")""" should compile
+    """tsql[UserWithOption, Option[Int]]("select age from PCOLLECTION")""" should compile
+    """tsql[Bar, Long]("select cast(`PCOLLECTION`.`f`.`i` as BIGINT) from PCOLLECTION")""" should compile
+    """tsql[UserBean, (String, Int)]("select name, age from PCOLLECTION")""" should compile
+    """tsql[UserBean, (Long, Int, String)]("select cast(age AS BIGINT), row(age, name) from PCOLLECTION")""" should compile
+    """tsql[UserBean, List[Int]]("select ARRAY[age] from PCOLLECTION")""" should compile
+    """tsql[UserBean, (String, List[Int])]("select name, ARRAY[age] from PCOLLECTION")""" should compile
+    """tsql[UserWithOption, Int]("select age from PCOLLECTION")""" shouldNot compile
+    """tsql[Bar, (String, Long)]("select l from PCOLLECTION")""" shouldNot compile
+    """tsql[Bar, String]("select l from PCOLLECTION")""" shouldNot compile
+    """tsql[UserBean, (String, Long)]("select name, age from PCOLLECTION")""" shouldNot compile
+    """tsql[UserBean, User]("select name, age from PCOLLECTION")""" shouldNot compile
+    """tsql[UserBean, (String, Option[Int])]("select name, age from PCOLLECTION")""" shouldNot compile
+    """tsql[UserBean, Bar]("select name, age from PCOLLECTION")""" shouldNot compile
+    """tsql[UserBean, (String, Int)]("select name, ARRAY[age] from PCOLLECTION")""" shouldNot compile
+    """tsql[UserBean, (String, List[Int])]("select name, age from PCOLLECTION")""" shouldNot compile
   }
 }
