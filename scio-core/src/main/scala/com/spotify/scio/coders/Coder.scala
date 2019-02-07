@@ -60,23 +60,41 @@ Cannot find an implicit Coder instance for type:
 """)
 sealed trait Coder[T] extends Serializable
 // scalastyle:on line.size.limit
-final case class Beam[T] private (beam: BCoder[T]) extends Coder[T]
-final case class Fallback[T] private (ct: ClassTag[T]) extends Coder[T]
-final case class Transform[A, B] private (c: Coder[A], f: BCoder[A] => Coder[B]) extends Coder[B]
+final case class Beam[T] private (beam: BCoder[T]) extends Coder[T] {
+  override def toString: String = s"Beam($beam)"
+}
+final case class Fallback[T] private (ct: ClassTag[T]) extends Coder[T] {
+  override def toString: String = s"Fallback($ct)"
+}
+final case class Transform[A, B] private (c: Coder[A], f: BCoder[A] => Coder[B]) extends Coder[B] {
+  override def toString: String = s"Transform($c, $f)"
+}
 final case class Disjunction[T, Id] private (typeName: String,
                                              idCoder: Coder[Id],
                                              id: T => Id,
                                              coder: Map[Id, Coder[T]])
-    extends Coder[T]
+    extends Coder[T] {
+  override def toString: String = s"Disjunction($typeName, $coder)"
+}
 
 final case class Record[T] private (typeName: String,
                                     cs: Array[(String, Coder[Any])],
                                     construct: Seq[Any] => T,
                                     destruct: T => Array[Any])
-    extends Coder[T]
+    extends Coder[T] {
+  override def toString: String = {
+    val str = cs
+      .map {
+        case (k, v) => s"($k, $v)"
+      }
+    s"Record($typeName, ${str.mkString(", ")})"
+  }
+}
 
 // KV are special in beam and need to be serialized using an instance of KvCoder.
-final case class KVCoder[K, V] private (koder: Coder[K], voder: Coder[V]) extends Coder[KV[K, V]]
+final case class KVCoder[K, V] private (koder: Coder[K], voder: Coder[V]) extends Coder[KV[K, V]] {
+  override def toString: String = s"KVCoder($koder, $voder)"
+}
 
 private final case class DisjunctionCoder[T, Id](typeName: String,
                                                  idCoder: BCoder[Id],
