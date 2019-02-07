@@ -175,20 +175,24 @@ object QueryMacros {
     iSchema: c.Expr[Schema[I]],
     oSchema: c.Expr[Schema[O]]): c.Expr[Query[I, O]] = {
     import c.universe._
-    // TODO: check that `query` is a stable value
+
     val queryTree = c.untypecheck(query.tree.duplicate)
     val sInTree = c.untypecheck(iSchema.tree.duplicate)
     val sOutTree = c.untypecheck(oSchema.tree.duplicate)
 
-    // val q = c.eval(c.Expr[String](queryTree))
-    // val sIn = c.eval(c.Expr[Schema[I]](sInTree))
-    // val sOut = c.eval(c.Expr[Schema[O]](sOutTree))
+    val (sIn, sOut) =
+      c.eval(c.Expr[(Schema[I], Schema[O])](q"($sInTree, $sOutTree)"))
 
-    val (q, sIn, sOut) =
-      c.eval(c.Expr[(String, Schema[I], Schema[O])]((q"($queryTree, $sInTree, $sOutTree)")))
+    val sq =
+      queryTree match {
+        case Literal(Constant(q: String)) =>
+          Query.of(q)(sIn, sOut)
+        case _ =>
+          c.abort(c.enclosingPosition, s"Expression $queryTree does not evaluate to a constant")
+      }
 
     Query
-      .typecheck(Query.of(q)(sIn, sOut))(sIn, sOut)
+      .typecheck(sq)(sIn, sOut)
       .fold(
         err => c.abort(c.enclosingPosition, err), { t =>
           val out =

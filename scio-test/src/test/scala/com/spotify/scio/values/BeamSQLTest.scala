@@ -322,5 +322,17 @@ class BeamSQLTest extends PipelineSpec {
     """tsql[UserBean, Bar]("select name, age from PCOLLECTION")""" shouldNot compile
     """tsql[UserBean, (String, Int)]("select name, ARRAY[age] from PCOLLECTION")""" shouldNot compile
     """tsql[UserBean, (String, List[Int])]("select name, age from PCOLLECTION")""" shouldNot compile
+
+  }
+
+  it should "give a clear error message when the query can not be checked at compile time" in {
+    """
+    val q = "select name, age from PCOLLECTION"
+    Query.tsql[UserBean, (String, Int)](q)
+    """ shouldNot compile
+
+    """
+    def functionName(q: String) = Query.tsql[(String, String), String](q)
+    """ shouldNot compile
   }
 }
