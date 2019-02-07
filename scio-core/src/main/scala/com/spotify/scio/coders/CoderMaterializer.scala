@@ -17,10 +17,8 @@
 
 package com.spotify.scio.coders
 
-import org.apache.beam.sdk.coders.{Coder => BCoder, KvCoder, NullableCoder}
-import org.apache.beam.sdk.coders.CoderRegistry
-import org.apache.beam.sdk.options.PipelineOptions
-import org.apache.beam.sdk.options.PipelineOptionsFactory
+import org.apache.beam.sdk.coders.{CoderRegistry, KvCoder, NullableCoder, Coder => BCoder}
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 
 object CoderMaterializer {
   import com.spotify.scio.ScioContext
@@ -41,9 +39,8 @@ object CoderMaterializer {
         else c
       case Fallback(ct) =>
         WrappedBCoder.create(
-          com.spotify.scio.Implicits
-            .RichCoderRegistry(r)
-            .getScalaCoder[T](o)(ct))
+          new KryoAtomicCoder[T](KryoOptions(o))
+        )
       case Transform(c, f) =>
         val u = f(beam(r, o, c))
         WrappedBCoder.create(beam(r, o, u))
