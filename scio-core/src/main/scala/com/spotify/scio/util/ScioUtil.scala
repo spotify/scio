@@ -23,9 +23,7 @@ import java.util.UUID
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.spotify.scio.ScioContext
-import org.apache.beam.sdk.coders.{Coder, CoderRegistry}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
-import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.Transport
 import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
 import org.slf4j.LoggerFactory
@@ -54,16 +52,6 @@ private[scio] object ScioUtil {
 
   def classOf[T: ClassTag]: Class[T] =
     implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
-
-  def getScalaCoder[T: ClassTag]: Coder[T] = {
-    import com.spotify.scio.Implicits._
-
-    val coderRegistry = CoderRegistry.createDefault()
-    coderRegistry.registerScalaCoders()
-
-    val options = PipelineOptionsFactory.create()
-    coderRegistry.getScalaCoder[T](options)
-  }
 
   def getScalaJsonMapper: ObjectMapper =
     new ObjectMapper().registerModule(DefaultScalaModule)

@@ -18,9 +18,8 @@
 package com.spotify.scio.io
 
 import com.google.protobuf.Message
-import com.spotify.scio.Implicits._
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.{JMapWrapper, ScioUtil}
 import com.spotify.scio.values.SCollection
@@ -102,7 +101,7 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](name: Str
       val t = setup(beam.PubsubIO.readMessages())
       sc.wrap(sc.applyInternal(t)).asInstanceOf[SCollection[T]]
     } else {
-      val coder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
+      val coder = CoderMaterializer.beam(sc, Coder[T])
       val t = setup(beam.PubsubIO.readMessages())
       sc.wrap(sc.applyInternal(t))
         .map(m => CoderUtils.decodeFromByteArray(coder, m.getPayload))
@@ -139,8 +138,7 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](name: Str
       val t = setup(beam.PubsubIO.writeMessages())
       data.asInstanceOf[SCollection[PubsubMessage]].applyInternal(t)
     } else {
-      val coder = data.internal.getPipeline.getCoderRegistry
-        .getScalaCoder[T](data.context.options)
+      val coder = CoderMaterializer.beam(data.context, Coder[T])
       val t = setup(beam.PubsubIO.writeMessages())
       data
         .map { record =>
@@ -172,10 +170,10 @@ private final case class PubsubIOWithAttributes[T: ClassTag: Coder](name: String
       r = r.withTimestampAttribute(timestampAttribute)
     }
 
-    val elementCoder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
+    val coder = CoderMaterializer.beam(sc, Coder[T])
     sc.wrap(sc.applyInternal(r))
       .map { m =>
-        val payload = CoderUtils.decodeFromByteArray(elementCoder, m.getPayload)
+        val payload = CoderUtils.decodeFromByteArray(coder, m.getPayload)
         val attributes = JMapWrapper.of(m.getAttributeMap)
         (payload, attributes)
       }
@@ -200,8 +198,7 @@ private final case class PubsubIOWithAttributes[T: ClassTag: Coder](name: String
     if (timestampAttribute != null) {
       w = w.withTimestampAttribute(timestampAttribute)
     }
-    val coder = data.internal.getPipeline.getCoderRegistry
-      .getScalaCoder[T](data.context.options)
+    val coder = CoderMaterializer.beam(data.context, Coder[T])
     data
       .map { kv =>
         val payload = CoderUtils.encodeToByteArray(coder, kv._1)
