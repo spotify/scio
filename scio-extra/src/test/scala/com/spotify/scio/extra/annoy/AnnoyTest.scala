@@ -22,7 +22,10 @@ import java.nio.file.Files
 
 import com.spotify.annoy.{ANNIndex, IndexType}
 import com.spotify.scio.ScioContext
+import com.spotify.scio.io.Tap
 import com.spotify.scio.testing.PipelineSpec
+
+import scala.concurrent.Future
 
 class AnnoyTest extends PipelineSpec {
 
@@ -50,13 +53,15 @@ class AnnoyTest extends PipelineSpec {
 
   it should "support .asAnnoy with specified local file" in {
     val sc = ScioContext()
-    val p = sc
+    val p: Future[Tap[AnnoyUri]] = sc
       .parallelize(sideData)
       .asAnnoy("test.tree", metric, dim, nTrees)
       .materialize
+
     sc.close().waitUntilFinish()
 
     val path = p.waitForResult().value.next().path
+
     val reader = new ANNIndex(dim, path, IndexType.ANGULAR)
 
     sideData.foreach { s =>

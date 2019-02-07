@@ -35,13 +35,13 @@ trait PipelineTestUtils {
    * }
    * }}}
    */
-  def runWithContext[T](fn: ScioContext => T): ScioResult = {
+  def runWithContext[T](fn: ScioContext => T): ClosedScioContext = {
     val sc = ScioContext.forTest()
     fn(sc)
     sc.close()
   }
 
-  def runWithRealContext[T](options: PipelineOptions)(fn: ScioContext => T): ScioResult = {
+  def runWithRealContext[T](options: PipelineOptions)(fn: ScioContext => T): ClosedScioContext = {
     val sc = ScioContext(options)
     fn(sc)
     sc.close()

@@ -40,16 +40,8 @@ class ScioResultTest extends PipelineSpec {
     r.state shouldBe State.DONE
   }
 
-  it should "respect waitUntilDone() with cancelJob passed in" in {
-    the[PipelineExecutionException] thrownBy {
-      mockScioResult.waitUntilDone(cancelJob = true)
-    } should have message s"java.lang.Exception: Job cancelled after exceeding timeout value $nanos"
-
-    mockScioResult.state shouldBe State.CANCELLED
-  }
-
   it should "expose Beam metrics" in {
-    val r = runWithContext { sc =>
+    val r: ClosedScioContext = runWithContext { sc =>
       val c = ScioMetrics.counter("c")
       val d = ScioMetrics.distribution("d")
       val g = ScioMetrics.gauge("g")
@@ -61,7 +53,7 @@ class ScioResultTest extends PipelineSpec {
           x
         }
     }
-    val m = r.getMetrics.beamMetrics
+    val m = r.waitUntilDone().getMetrics.beamMetrics
 
     m.counters.map(_.name) shouldBe Iterable("c")
     m.counters.map(_.value) shouldBe Iterable(MetricValue(3L, Some(3L)))
@@ -78,7 +70,7 @@ class ScioResultTest extends PipelineSpec {
 
   "isTest" should "return true when testing" in {
     val r = runWithContext(_.parallelize(Seq(1, 2, 3)))
-    r.isTest shouldBe true
+    r.waitUntilDone().isTest shouldBe true
   }
 
   "isTest" should "return false when not testing" in {
@@ -110,7 +102,6 @@ object ScioResultTest {
       Thread.sleep(10.seconds.toMillis)
       State.DONE
     }
-
-    override def getAwaitDuration: Duration = nanos
   }
+
 }

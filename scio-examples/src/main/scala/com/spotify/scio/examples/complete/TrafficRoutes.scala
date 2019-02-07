@@ -113,7 +113,7 @@ object TrafficRoutes {
       .saveAsTypedBigQuery(args("output"))
 
     val result = sc.close()
-    exampleUtils.waitToFinish(result.internal)
+    exampleUtils.waitToFinish(result.pipelineResult)
   }
   // scalastyle:on method.length
 

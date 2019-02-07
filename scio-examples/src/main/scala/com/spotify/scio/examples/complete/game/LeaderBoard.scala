@@ -124,7 +124,7 @@ object LeaderBoard {
     // Close context and execute the pipeline
     val result = sc.close()
     // Wait to finish processing before exiting when streaming pipeline is canceled during shutdown
-    exampleUtils.waitToFinish(result.internal)
+    exampleUtils.waitToFinish(result.pipelineResult)
   }
   // scalastyle:on method.length
 

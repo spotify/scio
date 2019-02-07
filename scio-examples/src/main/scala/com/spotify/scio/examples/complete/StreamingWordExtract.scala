@@ -52,6 +52,6 @@ object StreamingWordExtract {
       .saveAsBigQuery(args("output"), schema)
 
     val result = sc.close()
-    exampleUtils.waitToFinish(result.internal)
+    exampleUtils.waitToFinish(result.pipelineResult)
   }
 }
