@@ -1124,6 +1124,19 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /**
+   * Save this SCollection as raw bytes. Note that elements must be of type `Array[Byte]`.
+   * @group output
+   */
+  def saveAsBinaryFile(path: String,
+                       numShards: Int = 0,
+                       suffix: String = ".bin",
+                       compression: Compression = Compression.UNCOMPRESSED)(
+    implicit ev: T <:< Array[Byte]): Future[Tap[Nothing]] =
+    this
+      .asInstanceOf[SCollection[Array[Byte]]]
+      .write(BinaryIO(path))(BinaryIO.WriteParam(suffix, numShards, compression))
+
+  /**
    * Save this SCollection with a custom output transform. The transform should have a unique name.
    * @group output
    */

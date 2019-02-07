@@ -17,6 +17,8 @@
 
 package com.spotify.scio.io
 
+import java.nio.ByteBuffer
+
 import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper
 import com.spotify.scio.avro._
@@ -93,6 +95,11 @@ class ScioIOTest extends ScioIOSpec {
     val xs = (1 to 100).map(_.toString)
     testTap(xs)(_.saveAsTextFile(_))(".txt")
     testJobTest(xs)(TextIO(_))(_.textFile(_))(_.saveAsTextFile(_))
+  }
+
+  "BinaryIO" should "work" in {
+    val xs = (1 to 100).map(i => ByteBuffer.allocate(4).putInt(i).array)
+    testJobTestOutput(xs)(BinaryIO(_))(_.saveAsBinaryFile(_))
   }
 
   "DatastoreIO" should "work" in {
