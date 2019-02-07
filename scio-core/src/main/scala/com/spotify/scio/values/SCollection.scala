@@ -27,12 +27,11 @@ import com.google.datastore.v1.Entity
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
+import com.spotify.scio.sql.Query
 import com.spotify.scio.io._
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
-import com.spotify.scio.sql.Query
-import com.spotify.scio.schemas.Record
 import com.twitter.algebird.{Aggregator, Monoid, Semigroup}
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord

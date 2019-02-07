@@ -77,6 +77,17 @@ object Query {
     header + printContent(fs) + footer
   }
 
+  // Beam is anoigly verbose when is parses SQL queries.
+  // This function makes is silent.
+  private def silence[A](a: => A): A = {
+    val prop = "org.slf4j.simpleLogger.defaultLogLevel"
+    val ll = System.getProperty(prop)
+    System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "ERROR")
+    val x = a
+    System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", ll)
+    x
+  }
+
   def typecheck[I: Schema, O: Schema](q: Query[I, O]): Either[String, Query[I, O]] = {
     val schema: BSchema = SchemaMaterializer.fieldType(Schema[I]).getRowSchema()
 
@@ -97,7 +108,7 @@ object Query {
       }
 
     scala.util
-      .Try(sqlEnv.parseQuery(q.query))
+      .Try(silence(sqlEnv.parseQuery(q.query)))
       .toEither
       .left
       .map { ex =>
@@ -160,25 +171,30 @@ object Query {
 
 object QueryMacros {
   import scala.reflect.macros.blackbox
-  def tsqlImpl[I: c.WeakTypeTag, O: c.WeakTypeTag](c: blackbox.Context)(query: c.Expr[String])(
+  def tsqlImpl[I, O](c: blackbox.Context)(query: c.Expr[String])(
     iSchema: c.Expr[Schema[I]],
     oSchema: c.Expr[Schema[O]]): c.Expr[Query[I, O]] = {
     import c.universe._
-    val typeOfI = weakTypeOf[I].dealias
-    val typeOfO = weakTypeOf[O].dealias
     // TODO: check that `query` is a stable value
-    val q"${s: String}" = query.tree
+    val queryTree = c.untypecheck(query.tree.duplicate)
+    val sInTree = c.untypecheck(iSchema.tree.duplicate)
+    val sOutTree = c.untypecheck(oSchema.tree.duplicate)
 
-    val sInTree = c.Expr[Schema[I]](c.untypecheck(iSchema.tree.duplicate))
-    val sOutTree = c.Expr[Schema[O]](c.untypecheck(oSchema.tree.duplicate))
+    // val q = c.eval(c.Expr[String](queryTree))
+    // val sIn = c.eval(c.Expr[Schema[I]](sInTree))
+    // val sOut = c.eval(c.Expr[Schema[O]](sOutTree))
 
-    val (sIn, sOut) = c.eval(c.Expr[(Schema[I], Schema[O])]((q"($sInTree, $sOutTree)")))
+    val (q, sIn, sOut) =
+      c.eval(c.Expr[(String, Schema[I], Schema[O])]((q"($queryTree, $sInTree, $sOutTree)")))
 
     Query
-      .typecheck(Query.of(s)(sIn, sOut))(sIn, sOut)
+      .typecheck(Query.of(q)(sIn, sOut))(sIn, sOut)
       .fold(
-        err => c.abort(c.enclosingPosition, err),
-        t =>
-          c.Expr[Query[I, O]](q"_root_.com.spotify.scio.sql.Query.of($query)($iSchema, $oSchema)"))
+        err => c.abort(c.enclosingPosition, err), { t =>
+          val out =
+            q"_root_.com.spotify.scio.sql.Query.of($query)($iSchema, $oSchema)"
+          c.Expr[Query[I, O]](out)
+        }
+      )
   }
 }
