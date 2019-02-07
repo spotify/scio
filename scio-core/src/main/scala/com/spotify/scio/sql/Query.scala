@@ -112,7 +112,16 @@ object Query {
       .toEither
       .left
       .map { ex =>
-        org.apache.commons.lang3.exception.ExceptionUtils.getRootCauseMessage(ex)
+        val mess = org.apache.commons.lang3.exception.ExceptionUtils.getRootCauseMessage(ex)
+        s"""
+          |$mess
+          |
+          |Query:
+          |${q.query}
+          |
+          |PCOLLECTION schema:
+          |${prettyPrint(schema.getFields.asScala.toList)}
+        """.stripMargin
       }
       .map { q =>
         CalciteUtils.toSchema(q.getRowType)
