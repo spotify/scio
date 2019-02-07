@@ -17,7 +17,6 @@
 
 package com.spotify.scio
 
-
 import com.spotify.scio.ScioResultTest._
 import com.spotify.scio.metrics.{BeamDistribution, MetricValue}
 import com.spotify.scio.testing.PipelineSpec
@@ -25,7 +24,6 @@ import org.apache.beam.sdk.PipelineResult
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.metrics.MetricResults
 import org.joda.time
-
 
 class ScioResultTest extends PipelineSpec {
 

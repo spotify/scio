@@ -25,7 +25,6 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.testing.PipelineSpec
 
-
 class AnnoyTest extends PipelineSpec {
 
   val metric = Angular

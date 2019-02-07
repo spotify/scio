@@ -27,7 +27,7 @@ import java.nio.file.Files
 
 import com.google.datastore.v1.{Entity, Query}
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.io.{Tap, _}
+import com.spotify.scio.io._
 import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
@@ -50,7 +50,6 @@ import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer}
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Future, Promise}
 import scala.io.Source
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
@@ -480,7 +479,6 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   /* Mutable members */
   private var _pipeline: Pipeline = _
   private var _isClosed: Boolean = false
-  private val _promises: MBuffer[(Promise[Tap[_]], Tap[_])] = MBuffer.empty
   private val _preRunFns: MBuffer[() => Unit] = MBuffer.empty
   private val _counters: MBuffer[Counter] = MBuffer.empty
   private var _onClose: Unit => Unit = identity
@@ -567,26 +565,6 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   private[scio] def requireNotClosed[T](body: => T): T = {
     require(!this.isClosed, "ScioContext already closed")
     body
-  }
-
-  // =======================================================================
-  // Futures
-  // =======================================================================
-
-  // To be updated once the pipeline completes.
-  private[scio] def makeFuture[T](value: Tap[T]): Future[Tap[T]] = {
-    val p = Promise[Tap[T]]()
-    _promises.append((p.asInstanceOf[Promise[Tap[_]]], value.asInstanceOf[Tap[_]]))
-    p.future
-  }
-
-  // Update pending futures after pipeline completes.
-  private[scio] def updateFutures(state: State): Unit = _promises.foreach { kv =>
-    if (state == State.DONE || state == State.UPDATED) {
-      kv._1.success(kv._2)
-    } else {
-      kv._1.failure(new RuntimeException("Pipeline failed to complete: " + state))
-    }
   }
 
   // =======================================================================
