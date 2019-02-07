@@ -21,8 +21,6 @@ import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.testing.TestStream
 
-import scala.reflect.ClassTag
-
 package object testing {
 
   /** Create a `TestStream.Builder` instance. */
