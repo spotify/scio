@@ -19,8 +19,6 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
-import com.spotify.scio.examples.common.ExampleData
-import com.spotify.scio.io.Taps
 
 // ## Tap Output example
 // Save collections as text files, then open their `Tap`s in a new `ScioContext`

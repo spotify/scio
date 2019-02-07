@@ -1132,7 +1132,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                        numShards: Int = 0,
                        suffix: String = ".bin",
                        compression: Compression = Compression.UNCOMPRESSED)(
-    implicit ev: T <:< Array[Byte]): Future[Tap[Nothing]] =
+    implicit ev: T <:< Array[Byte]): ClosedTap[Nothing] =
     this
       .asInstanceOf[SCollection[Array[Byte]]]
       .write(BinaryIO(path))(BinaryIO.WriteParam(suffix, numShards, compression))

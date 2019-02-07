@@ -25,8 +25,6 @@ import com.spotify.scio.io.BinaryIO.BytesSink
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io._
 
-import scala.concurrent.Future
-
 /**
  * A ScioIO class for writing raw bytes to files.
  * Like TextIO, but without newline delimiters and operating over Array[Byte] instead of String.
@@ -42,7 +40,7 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
   override def read(sc: ScioContext, params: ReadP): SCollection[Array[Byte]] =
     throw new IllegalStateException("BinaryIO is write-only")
 
-  override def write(data: SCollection[Array[Byte]], params: WriteP): Future[Tap[Nothing]] = {
+  override def write(data: SCollection[Array[Byte]], params: WriteP): Tap[Nothing] = {
     data.applyInternal(
       FileIO
         .write[Array[Byte]]
@@ -51,7 +49,7 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
         .withNumShards(params.numShards)
         .withSuffix(params.suffix)
         .to(pathWithShards(path)))
-    Future.successful(EmptyTap)
+    EmptyTap
   }
 
   override def tap(params: Nothing): Tap[Nothing] = EmptyTap
