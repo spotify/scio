@@ -148,7 +148,7 @@ object Query {
       }
   }
 
-  def row[I: Schema](q: String): Query[I, Row] =
+  def row[I: Schema](q: String, udfs: Udf*): Query[I, Row] =
     new Query[I, Row] {
       val query = q
       def run(c: SCollection[I]) = {
@@ -156,20 +156,34 @@ object Query {
         val sqlEnv = BeamSqlEnv.readOnly(
           PCOLLECTION_NAME,
           ImmutableMap.of(PCOLLECTION_NAME, new BeamPCollectionTable(scoll.internal)))
-        // Will it support UDF (see SqlTransform.expand) ?
+        var sqlTransform = SqlTransform.query(query)
+
+        udfs.foreach {
+          case x: UdfFromClass[_] =>
+            sqlTransform = sqlTransform.registerUdf(x.fnName, x.clazz)
+            sqlEnv.registerUdf(x.fnName, x.clazz)
+          case x: UdfFromSerializableFn[_, _] =>
+            sqlTransform = sqlTransform.registerUdf(x.fnName, x.fn)
+            sqlEnv.registerUdf(x.fnName, x.fn)
+          case x: UdafFromCombineFn[_, _, _] =>
+            sqlTransform = sqlTransform.registerUdaf(x.fnName, x.fn)
+            sqlEnv.registerUdaf(x.fnName, x.fn)
+        }
+
         val q = sqlEnv.parseQuery(query)
         val schema = CalciteUtils.toSchema(q.getRowType)
-        scoll.applyTransform[Row](SqlTransform.query(query))(Coder.row(schema))
+
+        scoll.applyTransform[Row](sqlTransform)(Coder.row(schema))
       }
     }
 
-  def of[I: Schema, O: Schema](q: String): Query[I, O] =
+  def of[I: Schema, O: Schema](q: String, udfs: Udf*): Query[I, O] =
     new Query[I, O] {
       val query = q
       def run(s: SCollection[I]): SCollection[O] = {
         import org.apache.beam.sdk.schemas.SchemaCoder
         val (schema, to, from) = SchemaMaterializer.materialize(s.context, Schema[O])
-        val coll: SCollection[Row] = Query.row[I](query).run(s)
+        val coll: SCollection[Row] = Query.row[I](query, udfs: _*).run(s)
         coll.map[O](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
       }
     }

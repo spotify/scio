@@ -16,15 +16,21 @@
  */
 package com.spotify.scio.sql
 
-import com.spotify.scio.IsJavaBean
-import com.spotify.scio.coders.Coder
-import com.spotify.scio.sql.Query
-import com.spotify.scio.schemas.{Record, Schema}
-import com.spotify.scio.testing.PipelineSpec
-import org.apache.beam.sdk.schemas.{Schema => BSchema}
-import org.apache.beam.sdk.values.Row
-import com.spotify.scio.bean.UserBean
 import java.util.Locale
+import java.lang.{Iterable => JIterable}
+
+import com.spotify.scio.IsJavaBean
+import com.spotify.scio.bean.UserBean
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.schemas.Schema
+import com.spotify.scio.testing.PipelineSpec
+import org.apache.beam.sdk.extensions.sql.BeamSqlUdf
+import org.apache.beam.sdk.schemas.{Schema => BSchema}
+import org.apache.beam.sdk.transforms.Combine.CombineFn
+import org.apache.beam.sdk.transforms.SerializableFunction
+import org.apache.beam.sdk.values.Row
+
+import scala.collection.JavaConverters._
 
 object TestData {
   case class Foo(i: Int, s: String)
@@ -73,6 +79,26 @@ object TestData {
     (1 to 10).map { i =>
       UserWithJList(s"user$i", java.util.Arrays.asList(s"user$i@spotify.com", s"user$i@yolo.com"))
     }.toList
+
+  class IsOver18UdfFn extends SerializableFunction[Integer, Boolean] {
+    override def apply(input: Integer): Boolean = input >= 18
+  }
+
+  class IsOver18Udf extends BeamSqlUdf {
+    def eval(input: Integer): Boolean = input >= 18
+  }
+
+  class MaxUserAgeUdafFn extends CombineFn[Integer, Integer, Integer] {
+    override def createAccumulator(): Integer = 0
+
+    override def addInput(accumulator: Integer, input: Integer): Integer =
+      Math.max(accumulator, input)
+
+    override def mergeAccumulators(accumulators: JIterable[Integer]): Integer =
+      accumulators.asScala.max
+
+    override def extractOutput(accumulator: Integer): Integer = accumulator
+  }
 }
 
 class BeamSQLTest extends PipelineSpec {
@@ -334,5 +360,49 @@ class BeamSQLTest extends PipelineSpec {
     """
     def functionName(q: String) = Query.tsql[(String, String), String](q)
     """ shouldNot compile
+  }
+
+  it should "support UDFs from SerializableFunctions and classes" in runWithContext { sc =>
+    val schemaRes = BSchema
+      .builder()
+      .addStringField("username")
+      .addBooleanField("isOver18")
+      .build()
+
+    val expected = users.map { u =>
+      Row.withSchema(schemaRes).addValue(u.username).addValue(true).build()
+    }
+    implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
+
+    val in = sc.parallelize(users)
+
+    in.sql(
+      Query.row(
+        "select username, isUserOver18(age) as isOver18 from PCOLLECTION",
+        Udf.fromSerializableFn("isUserOver18", new IsOver18UdfFn())
+      )) should containInAnyOrder(expected)
+
+    in.sql(
+      Query.row(
+        "select username, isUserOver18(age) as isOver18 from PCOLLECTION",
+        Udf.fromClass("isUserOver18", classOf[IsOver18Udf])
+      )) should containInAnyOrder(expected)
+  }
+
+  it should "support UDAFs from CombineFns" in runWithContext { sc =>
+    val schemaRes = BSchema
+      .builder()
+      .addInt32Field("maxUserAge")
+      .build()
+
+    val expected = Seq(Row.withSchema(schemaRes).addValue(30).build())
+    implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
+
+    sc.parallelize(users)
+      .sql(
+        Query.row(
+          "select maxUserAge(age) as maxUserAge from PCOLLECTION",
+          Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn())
+        )) should containInAnyOrder(expected)
   }
 }
