@@ -192,10 +192,16 @@ workflows:
   # Per commit build
   build:
     jobs:
-      - checks
+      - checks:
+          filters:
+            tags:
+              only: /^v.*/
       - build_211:
           requires:
             - checks
+          filters:
+            tags:
+              only: /^v.*/
       - build_it_211:
           requires:
             - checks
@@ -205,6 +211,9 @@ workflows:
       - build_212:
           requires:
             - checks
+          filters:
+            tags:
+              only: /^v.*/
       - build_it_212:
           requires:
             - checks
