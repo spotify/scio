@@ -195,7 +195,7 @@ private class RecordCoder[T](typeName: String,
     while (i < array.length) {
       val (label, c) = cs(i)
       val v = array(i)
-      onErrorMsg(s"Exception while trying to `encode` field $label with value $v") {
+      onErrorMsg(s"Exception while trying to `encode` an instance of $typeName:  Can't encode field $label value $v") {
         c.encode(v, os)
       }
       i += 1
@@ -207,7 +207,7 @@ private class RecordCoder[T](typeName: String,
     var i = 0
     while (i < cs.length) {
       val (label, c) = cs(i)
-      onErrorMsg(s"Exception while trying to `decode` field $label") {
+      onErrorMsg(s"Exception while trying to `decode` an instance of $typeName: Can't decode field $label") {
         vs.update(i, c.decode(is))
       }
       i += 1
