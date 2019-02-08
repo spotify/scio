@@ -311,8 +311,6 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  import Implicits._
-
   /** Get PipelineOptions as a more specific sub-type. */
   def optionsAs[T <: PipelineOptions: ClassTag]: T =
     options.as(ScioUtil.classOf[T])
@@ -412,8 +410,8 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
           .invoke(tp, Boolean.box(true))
         tp
       }
-      _pipeline.getCoderRegistry.registerScalaCoders()
     }
+
     _pipeline
   }
 
@@ -730,9 +728,9 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
    * Distribute a local Scala `Iterable` with timestamps to form an SCollection.
    * @group in_memory
    */
-  def parallelizeTimestamped[T: ClassTag](elems: Iterable[(T, Instant)]): SCollection[T] =
+  def parallelizeTimestamped[T: Coder](elems: Iterable[(T, Instant)]): SCollection[T] =
     requireNotClosed {
-      val coder = pipeline.getCoderRegistry.getScalaCoder[T](options)
+      val coder = CoderMaterializer.beam(context, Coder[T])
       val v = elems.map(t => TimestampedValue.of(t._1, t._2))
       wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder)))
     }
@@ -741,10 +739,10 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
    * Distribute a local Scala `Iterable` with timestamps to form an SCollection.
    * @group in_memory
    */
-  def parallelizeTimestamped[T: ClassTag](elems: Iterable[T],
-                                          timestamps: Iterable[Instant]): SCollection[T] =
+  def parallelizeTimestamped[T: Coder](elems: Iterable[T],
+                                       timestamps: Iterable[Instant]): SCollection[T] =
     requireNotClosed {
-      val coder = pipeline.getCoderRegistry.getScalaCoder[T](options)
+      val coder = CoderMaterializer.beam(context, Coder[T])
       val v = elems.zip(timestamps).map(t => TimestampedValue.of(t._1, t._2))
       wrap(this.applyInternal(Create.timestamped(v.asJava).withCoder(coder)))
     }

@@ -17,15 +17,15 @@
 
 package com.spotify.scio.jdbc
 
-import com.spotify.scio.Implicits._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TestIO}
 import org.apache.beam.sdk.io.{jdbc => beam}
 
 import scala.concurrent.Future
-import scala.reflect.ClassTag
 import java.sql.{PreparedStatement, ResultSet}
+
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 
 sealed trait JdbcIO[T] extends TestIO[T] {
   override final val tapT = EmptyTapOf[T]
@@ -50,7 +50,7 @@ object JdbcIO {
   }
 }
 
-final case class JdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T]) extends ScioIO[T] {
+final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends ScioIO[T] {
 
   override type ReadP = Unit
   override type WriteP = Nothing
@@ -59,10 +59,9 @@ final case class JdbcSelect[T: ClassTag](readOptions: JdbcReadOptions[T]) extend
   override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(readOptions)})"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    val coder = sc.pipeline.getCoderRegistry.getScalaCoder[T](sc.options)
     var transform = beam.JdbcIO
       .read[T]()
-      .withCoder(coder)
+      .withCoder(CoderMaterializer.beam(sc, Coder[T]))
       .withDataSourceConfiguration(getDataSourceConfig(readOptions.connectionOptions))
       .withQuery(readOptions.query)
       .withRowMapper(new beam.JdbcIO.RowMapper[T] {
