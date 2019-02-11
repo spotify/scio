@@ -79,30 +79,6 @@ class TapTest extends TapSpec {
     verifyTap(t, expectedRecords)
   }
 
-//  it should "update isCompleted with testId" in {
-//    val sc = ScioContext.forTest()
-//    val f = sc
-//      .parallelize(Seq(1, 2, 3))
-//      .map(newSpecificRecord)
-//      .saveAsInMemoryTap
-//    f.isCompleted shouldBe false
-//    sc.close().waitUntilFinish() // block non-test runner
-//    f.isCompleted shouldBe true
-//  }
-
-//  it should "update isCompleted without testId" in {
-//    val dir = tmpDir
-//    val sc = ScioContext()
-//    val f = sc
-//      .parallelize(Seq(1, 2, 3))
-//      .map(newSpecificRecord)
-//      .saveAsAvroFile(dir.getPath)
-//    f.isCompleted shouldBe false
-//    sc.close().waitUntilFinish() // block non-test runner
-//    f.isCompleted shouldBe true
-//    FileUtils.deleteDirectory(dir)
-//  }
-
   it should "support materialize" in {
     val t = runWithFileFuture { makeRecords(_).materialize }
     verifyTap(t, expectedRecords)
