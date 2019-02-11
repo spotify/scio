@@ -372,4 +372,17 @@ class CodersTest extends FlatSpec with Matchers {
     (null, null).asInstanceOf[(String, String)] coderShould roundtrip(opts)
     DummyCC(null) coderShould roundtrip(opts)
   }
+
+  it should "have a useful stacktrace when a Coder throws" in {
+    val ok: (String, String) = ("foo", "bar")
+    val nok: (String, String) = (null, "bar")
+    ok coderShould roundtrip()
+    val caught =
+      intercept[RuntimeException] {
+        nok coderShould roundtrip()
+      }
+
+    caught.getStackTrace.find(_.getClassName.contains(classOf[CodersTest].getName)) shouldNot be(
+      None)
+  }
 }

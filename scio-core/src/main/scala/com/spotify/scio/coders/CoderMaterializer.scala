@@ -35,15 +35,16 @@ object CoderMaterializer {
     coder match {
       case Beam(c) =>
         val nullableCoder = o.as(classOf[com.spotify.scio.options.ScioOptions]).getNullableCoders()
-        if (nullableCoder) NullableCoder.of(c)
-        else c
+        if (nullableCoder) WrappedBCoder.create(NullableCoder.of(c))
+        else WrappedBCoder.create(c)
       case Fallback(ct) =>
         WrappedBCoder.create(new KryoAtomicCoder[T](KryoOptions(o)))
       case Transform(c, f) =>
         val u = f(beam(r, o, c))
         WrappedBCoder.create(beam(r, o, u))
       case Record(typeName, coders, construct, destruct) =>
-        new RecordCoder(typeName, coders.map(c => c._1 -> beam(r, o, c._2)), construct, destruct)
+        WrappedBCoder.create(
+          new RecordCoder(typeName, coders.map(c => c._1 -> beam(r, o, c._2)), construct, destruct))
       case Disjunction(typeName, idCoder, id, coders) =>
         WrappedBCoder.create(
           // `.map(identity) is really needed to make Map serializable.
@@ -52,7 +53,7 @@ object CoderMaterializer {
                            id,
                            coders.mapValues(u => beam(r, o, u)).map(identity)))
       case KVCoder(koder, voder) =>
-        KvCoder.of(beam(r, o, koder), beam(r, o, voder))
+        WrappedBCoder.create(KvCoder.of(beam(r, o, koder), beam(r, o, voder)))
     }
   }
 
