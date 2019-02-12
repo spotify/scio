@@ -84,4 +84,7 @@ private[scio] object ScioUtil {
     }
   }
 
+  def pathWithShards(path: String): String =
+    path.replaceAll("\\/+$", "") + "/part"
+
 }

@@ -145,7 +145,7 @@ final case class AvroIO[T: ClassTag: Coder](path: String, schema: Schema = null)
                          codec: CodecFactory,
                          metadata: Map[String, AnyRef]) =
     write
-      .to(sc.pathWithShards(path))
+      .to(ScioUtil.pathWithShards(path))
       .withNumShards(numShards)
       .withSuffix(suffix)
       .withCodec(codec)
@@ -224,7 +224,7 @@ object AvroTyped {
                                 codec: CodecFactory,
                                 metadata: Map[String, AnyRef]) =
       write
-        .to(sc.pathWithShards(path))
+        .to(ScioUtil.pathWithShards(path))
         .withNumShards(numShards)
         .withSuffix(suffix)
         .withCodec(codec)
