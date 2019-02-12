@@ -74,6 +74,13 @@ object PrivateClass {
 
 case class ClassWithProtoEnum(s: String, enum: OuterClassForProto.EnumExample)
 
+@SerialVersionUID(1)
+sealed trait TraitWithAnnotation
+@SerialVersionUID(2)
+final case class FirstImplementationWithAnnotation(s: String) extends TraitWithAnnotation
+@SerialVersionUID(3)
+final case class SecondImplementationWithAnnotation(i: Int) extends TraitWithAnnotation
+
 class CodersTest extends FlatSpec with Matchers {
 
   val userId = UserId(Array[Byte](1, 2, 3, 4))
@@ -384,5 +391,9 @@ class CodersTest extends FlatSpec with Matchers {
 
     caught.getStackTrace.find(_.getClassName.contains(classOf[CodersTest].getName)) shouldNot be(
       None)
+  }
+
+  it should "#1651: remove all anotations from derived coders" in {
+    coderIsSerializable[TraitWithAnnotation]
   }
 }

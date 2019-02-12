@@ -149,16 +149,22 @@ private[coders] object CoderMacros {
           tree match {
             case Apply(AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps),
                        List(typeName, isObject, isValueClass, params, annotations)) =>
-              Apply(AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps),
-                    List(typeName, isObject, isValueClass, params, q"""Array()"""))
-            case q"""new magnolia.CaseClass[$tc, $t]($typeName, $isObject, $isValueClass, $params, $annotations){ $body }""" =>
-              q"""_root_.magnolia.CaseClass[$tc, $t]($typeName, $isObject, $isValueClass, $params, Array()){ $body }"""
-            case q"com.spotify.scio.coders.Coder.dispatch(new magnolia.SealedTrait($name, $subtypes, $annotations))" =>
-              q"_root_.com.spotify.scio.coders.Coder.dispatch(new magnolia.SealedTrait($name, $subtypes, Array()))"
+              val t2 = Apply(AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps),
+                             List(typeName, isObject, isValueClass, params, q"""Array()"""))
+              super.transform(t2)
             case q"""magnolia.Magnolia.param[$tc, $t, $p]($name, $idx, $repeated, $tcParam, $defaultVal, $annotations)""" =>
-              q"""_root_.magnolia.Magnolia.param[$tc, $t, $p]($name, $idx, $repeated, $tcParam, $defaultVal, Array())"""
+              val t2 =
+                q"""_root_.magnolia.Magnolia.param[$tc, $t, $p]($name, $idx, $repeated, $tcParam, $defaultVal, Array())"""
+              super.transform(t2)
+            case q"""new magnolia.SealedTrait($typeName, $subtypes, $annotations)""" =>
+              val t2 = q"""new _root_.magnolia.SealedTrait($typeName, $subtypes, Array())"""
+              super.transform(t2)
+            case q"""magnolia.Magnolia.subtype[$tc, $t, $p]($typeName, $id, $annotations, $coder, $cast0, $cast1)""" =>
+              val t2 =
+                q"""_root_.magnolia.Magnolia.subtype[$tc, $t, $p]($typeName, $id, Array(), $coder, $cast0, $cast1)"""
+              super.transform(t2)
             case t =>
-              super.transform(tree)
+              super.transform(t)
           }
         }
       }
@@ -176,7 +182,7 @@ private[coders] object CoderMacros {
     val tree: c.Tree =
       if (isPrivateContructor) {
         // Magnolia does not support classes with a private constructor.
-        // Workaround the limitation by usong a fallback in that case
+        // Workaround the limitation by using a fallback in that case
         q"""_root_.com.spotify.scio.coders.Coder.fallback[$wtt](null)"""
       } else {
         //XXX: find a way to get rid of $outer references at compile time
