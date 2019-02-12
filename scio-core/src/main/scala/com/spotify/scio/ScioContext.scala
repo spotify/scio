@@ -419,7 +419,6 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   private var _pipeline: Pipeline = _
   private var _isClosed: Boolean = false
   private val _promises: MBuffer[(Promise[Tap[_]], Tap[_])] = MBuffer.empty
-  private val _preRunFns: MBuffer[() => Unit] = MBuffer.empty
   private val _counters: MBuffer[Counter] = MBuffer.empty
   private var _onClose: Unit => Unit = identity
   private val _localInstancesCache: scala.collection.mutable.Map[ClassTag[_], Any] =
@@ -677,8 +676,6 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   def read[T: Coder](io: ScioIO[T] { type ReadP = Unit }): SCollection[T] =
     io.readWithContext(this, ())
   // scalastyle:on structural.type
-
-  private[scio] def addPreRunFn(f: () => Unit): Unit = _preRunFns += f
 
   // =======================================================================
   // In-memory collections
