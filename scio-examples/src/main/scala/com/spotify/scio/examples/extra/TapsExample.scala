@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  * under the License.
  */
 
+// Example: Use Futures and Taps to wait for resources
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
@@ -23,7 +24,7 @@ import com.spotify.scio.io.Taps
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-// Use Futures and Taps to wait for resources
+// Set system properties to chose the appropriate taps algorithm.
 // Set -Dtaps.algorithm=polling to wait for the resources to become available
 // Set -Dtaps.algorithm=immediate to fail immediately if a resource is not available
 object TapsExample {

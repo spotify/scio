@@ -315,12 +315,14 @@ final case class ClosedScioContext private (pipelineResult: PipelineResult, cont
       }
       pipelineResult.waitUntilFinish(time.Duration.millis(wait))
     } catch {
-      case _: InterruptedException =>
-        if (cancelJob) {
+      case e: InterruptedException =>
+        val cause = if (cancelJob) {
           pipelineResult.cancel()
-          throw new PipelineExecutionException(
-            new Exception(s"Job cancelled after exceeding timeout value $duration"))
+          new InterruptedException(s"Job cancelled after exceeding timeout value $duration")
+        } else {
+          e
         }
+        throw new PipelineExecutionException(cause)
     }
 
     new ScioResult(pipelineResult) {
