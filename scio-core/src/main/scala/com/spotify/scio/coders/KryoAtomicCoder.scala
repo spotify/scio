@@ -33,7 +33,7 @@ import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
-import org.apache.beam.sdk.coders.{AtomicCoder, CoderException, InstantCoder}
+import org.apache.beam.sdk.coders.{AtomicCoder, CoderException => BCoderException, InstantCoder}
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.VarInt
@@ -125,7 +125,7 @@ private[scio] final class KryoAtomicCoder[T](private val options: KryoOptions)
   override def encode(value: T, os: OutputStream): Unit =
     withKryoState(instanceId, options) { kryoState =>
       if (value == null) {
-        throw new CoderException("cannot encode a null value")
+        throw new BCoderException("cannot encode a null value")
       }
 
       VarInt.encode(Header, os)

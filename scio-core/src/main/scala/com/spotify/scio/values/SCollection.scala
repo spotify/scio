@@ -138,11 +138,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def applyTransform[U: Coder](
     transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {
+    val bcoder = CoderMaterializer.beam(context, Coder[U])
     if (context.isTest) {
       org.apache.beam.sdk.util.SerializableUtils
-        .ensureSerializable(CoderMaterializer.beam(context, Coder[U]))
+        .ensureSerializable(bcoder)
     }
-    this.pApply(transform).setCoder(CoderMaterializer.beam(context, Coder[U]))
+    this.pApply(transform).setCoder(bcoder)
   }
 
   /**
@@ -153,11 +154,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def applyKvTransform[K, V](transform: PTransform[_ >: PCollection[T], PCollection[KV[K, V]]])(
     implicit koder: Coder[K],
     voder: Coder[V]): SCollection[KV[K, V]] = {
+    val bcoder = CoderMaterializer.kvCoder[K, V](context)
     if (context.isTest) {
       org.apache.beam.sdk.util.SerializableUtils
-        .ensureSerializable(CoderMaterializer.kvCoder[K, V](context))
+        .ensureSerializable(bcoder)
     }
-    this.pApply(transform).setCoder(CoderMaterializer.kvCoder[K, V](context))
+    this.pApply(transform).setCoder(bcoder)
   }
 
   /** Apply a transform. */

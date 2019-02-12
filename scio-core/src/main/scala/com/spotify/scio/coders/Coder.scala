@@ -147,12 +147,55 @@ private final case class DisjunctionCoder[T, Id](typeName: String,
     coders.values.forall(_.consistentWithEquals())
 }
 
+final case class CoderException private[coders] (stacktrace: Array[StackTraceElement],
+                                                 cause: Throwable)
+    extends RuntimeException {
+  override def getMessage: String = cause.getMessage
+  override def getCause: Throwable = new RuntimeException {
+    override def getMessage: String = "Coder was materialized at"
+    override def getStackTrace: Array[StackTraceElement] = stacktrace
+    override def getCause: Throwable = cause.getCause
+  }
+  override def getStackTrace: Array[StackTraceElement] = cause.getStackTrace
+}
+
 // XXX: Workaround a NPE deep down the stack in Beam
 // info]   java.lang.NullPointerException: null value in entry: T=null
 private case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
+
+  /**
+   * Eagerly compute a stack trace on materialization
+   * to provide a helpful stacktrace if an exception happens
+   */
+  private val stackTrace: Array[StackTraceElement] =
+    Thread
+      .currentThread()
+      .getStackTrace()
+      .dropWhile(_.getClassName.contains(WrappedBCoder.getClass.getName))
+
+  private def buildException(cause: Throwable): Exception =
+    CoderException(stackTrace, cause)
+
   override def toString: String = u.toString
-  override def encode(value: T, os: OutputStream): Unit = u.encode(value, os)
-  override def decode(is: InputStream): T = u.decode(is)
+
+  @inline private def catching[A](a: => A) =
+    try { a } catch {
+      case ex: Throwable =>
+        throw buildException(ex)
+    }
+
+  override def encode(value: T, os: OutputStream): Unit =
+    catching { u.encode(value, os) }
+
+  override def decode(is: InputStream): T =
+    catching { u.decode(is) }
+
+  override def decode(inStream: InputStream, context: BCoder.Context): T =
+    catching { u.decode(inStream, context) }
+
+  override def encode(value: T, outStream: OutputStream, context: BCoder.Context): Unit =
+    catching { u.encode(value, outStream, context) }
+
   override def getCoderArguments: java.util.List[_ <: BCoder[_]] = u.getCoderArguments
 
   // delegate methods for determinism and equality checks
@@ -195,7 +238,10 @@ private class RecordCoder[T](typeName: String,
     while (i < array.length) {
       val (label, c) = cs(i)
       val v = array(i)
-      onErrorMsg(s"Exception while trying to `encode` field $label with value $v") {
+      onErrorMsg(
+        // scalastyle:off line.size.limit
+        s"Exception while trying to `encode` an instance of $typeName:  Can't encode field $label value $v") {
+        // scalastyle:on line.size.limit
         c.encode(v, os)
       }
       i += 1
@@ -207,7 +253,8 @@ private class RecordCoder[T](typeName: String,
     var i = 0
     while (i < cs.length) {
       val (label, c) = cs(i)
-      onErrorMsg(s"Exception while trying to `decode` field $label") {
+      onErrorMsg(
+        s"Exception while trying to `decode` an instance of $typeName: Can't decode field $label") {
         vs.update(i, c.decode(is))
       }
       i += 1
