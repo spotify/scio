@@ -84,8 +84,8 @@ lazy val mimaSettings = Seq(
   mimaBinaryIssueFilters ++= Seq()
 )
 
-val beamSDKIO =
-  Seq(
+val beamSDKIODependencies = Def.settings(
+  libraryDependencies ++= Seq(
     "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (
       ExclusionRule("com.google.cloud", "google-cloud-spanner"),
       ExclusionRule("com.google.cloud", "google-cloud-core"),
@@ -97,7 +97,11 @@ val beamSDKIO =
     "io.grpc" % "grpc-auth" % grpcVersion,
     "io.grpc" % "grpc-netty" % grpcVersion,
     "io.grpc" % "grpc-stub" % grpcVersion
+  ),
+  dependencyOverrides ++= Seq(
+    "com.google.guava" % "guava" % guavaVersion
   )
+)
 
 def previousVersion(currentVersion: String): Option[String] = {
   val Version = """(\d+)\.(\d+)\.(\d+).*""".r
@@ -398,7 +402,8 @@ lazy val scioAvro: Project = Project(
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
       "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % scalacheckShapelessVersion % "test",
       "me.lyh" %% "shapeless-datatype-core" % shapelessDatatypeVersion % "test"
-    ) ++ beamSDKIO
+    ),
+    beamSDKIODependencies
   )
   .dependsOn(
     scioCore % "compile,it->it"
@@ -442,7 +447,8 @@ lazy val scioBigtable: Project = Project(
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % "test",
       "com.novocode" % "junit-interface" % junitInterfaceVersion,
       "junit" % "junit" % junitVersion % "test"
-    ) ++ beamSDKIO
+    ),
+    beamSDKIODependencies
   )
   .dependsOn(
     scioCore,
