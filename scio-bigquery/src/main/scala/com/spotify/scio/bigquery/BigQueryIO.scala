@@ -17,6 +17,9 @@
 
 package com.spotify.scio.bigquery
 
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function
+
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.client.BigQuery
@@ -37,28 +40,36 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 private object Reads {
-  @inline private def client(sc: ScioContext) =
-    sc.cached[BigQuery] {
-      val o = sc.optionsAs[GcpOptions]
-      BigQuery(o.getProject, o.getGcpCredential)
-    }
+  private[this] val cache = new ConcurrentHashMap[Class[_], BigQuery]()
+
+  @inline private def client(sc: ScioContext): BigQuery =
+    cache.computeIfAbsent(
+      BigQuery.getClass,
+      new function.Function[Class[_], BigQuery] {
+        override def apply(t: Class[_]): BigQuery = {
+          val o = sc.optionsAs[GcpOptions]
+          BigQuery(o.getProject, o.getGcpCredential)
+        }
+      }
+    )
 
   private[scio] def bqReadQuery[T: ClassTag](sc: ScioContext)(
     typedRead: beam.BigQueryIO.TypedRead[T],
     sqlQuery: String,
-    flattenResults: Boolean = false): SCollection[T] = {
+    flattenResults: Boolean = false): SCollection[T] = sc.wrap {
     val bigQueryClient = client(sc)
-    import sc.wrap
     if (bigQueryClient.isCacheEnabled) {
-      val read = bigQueryClient.query.newQueryJob(sqlQuery, flattenResults).map { job =>
-        sc.onClose { _ =>
-          bigQueryClient.waitForJobs(job)
+      val read = bigQueryClient.query
+        .newQueryJob(sqlQuery, flattenResults)
+        .map { job =>
+          sc.onClose { _ =>
+            bigQueryClient.waitForJobs(job)
+          }
+
+          typedRead.from(job.table).withoutValidation()
         }
 
-        typedRead.from(job.table).withoutValidation()
-      }
-
-      wrap(sc.applyInternal(read.get))
+      sc.applyInternal(read.get)
     } else {
       val baseQuery = if (!flattenResults) {
         typedRead.fromQuery(sqlQuery).withoutResultFlattening()
@@ -70,7 +81,7 @@ private object Reads {
       } else {
         baseQuery.usingStandardSql()
       }
-      wrap(sc.applyInternal(query))
+      sc.applyInternal(query)
     }
   }
 

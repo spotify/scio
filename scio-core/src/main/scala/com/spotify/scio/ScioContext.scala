@@ -421,8 +421,6 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   private val _promises: MBuffer[(Promise[Tap[_]], Tap[_])] = MBuffer.empty
   private val _counters: MBuffer[Counter] = MBuffer.empty
   private var _onClose: Unit => Unit = identity
-  private val _localInstancesCache: scala.collection.mutable.Map[ClassTag[_], Any] =
-    scala.collection.mutable.Map.empty
 
   /** Wrap a [[org.apache.beam.sdk.values.PCollection PCollection]]. */
   def wrap[T](p: PCollection[T]): SCollection[T] =
@@ -433,21 +431,6 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
    */
   private[scio] def onClose(f: Unit => Unit): Unit =
     _onClose = _onClose compose f
-
-  /*
-   * Get from or put in an object in this context local cache
-   * This method is used in `scio-bigquery` to only instantiate the BigQuery client once
-   * even if there's multiple implicit conversions from [[ScioContext]] to `BigQueryScioContext`
-   */
-  private[scio] def cached[T: ClassTag](t: => T): T = {
-    val key = implicitly[ClassTag[T]]
-    _localInstancesCache
-      .getOrElse(key, {
-        _localInstancesCache += key -> t
-        t
-      })
-      .asInstanceOf[T]
-  }
 
   // =======================================================================
   // States
@@ -482,7 +465,6 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
 
     _isClosed = true
 
-    _preRunFns.foreach(_())
     val result = new ContextScioResult(this.pipeline.run(), context)
 
     if (this.isTest) {
