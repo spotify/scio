@@ -29,7 +29,7 @@ import org.apache.avro.Schema
 import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.io._
-import org.apache.beam.sdk.io.hadoop.inputformat.HadoopInputFormatIO
+import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.beam.sdk.values.TypeDescriptor
@@ -132,11 +132,11 @@ object ParquetAvroIO {
       }
     }
 
-    val read: HadoopInputFormatIO.Read[JBoolean, T] = {
+    val read: HadoopFormatIO.Read[JBoolean, T] = {
       val g = ClosureCleaner(projectionFn) // defeat closure
       val aCls = avroClass
       val oCls = ScioUtil.classOf[T]
-      HadoopInputFormatIO
+      HadoopFormatIO
         .read[JBoolean, T]()
         .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
           override def apply(input: Void): JBoolean = true // workaround for NPE
