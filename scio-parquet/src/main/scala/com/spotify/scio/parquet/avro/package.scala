@@ -18,7 +18,7 @@
 package com.spotify.scio.parquet
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.Tap
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam
@@ -29,7 +29,6 @@ import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.Future
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
@@ -135,7 +134,7 @@ package object avro {
       numShards: Int = WriteParam.DefaultNumShards,
       suffix: String = WriteParam.DefaultSuffix,
       compression: CompressionCodecName = WriteParam.DefaultCompression
-    )(implicit ct: ClassTag[T], coder: Coder[T]): Future[Tap[T]] = {
+    )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
       val param = WriteParam(schema, numShards, suffix, compression)
       self.write(ParquetAvroIO[T](path))(param)
     }

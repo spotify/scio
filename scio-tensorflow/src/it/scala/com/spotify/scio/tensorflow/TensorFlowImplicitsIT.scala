@@ -20,6 +20,7 @@ package com.spotify.scio.tensorflow
 import java.util.UUID
 
 import com.google.protobuf.ByteString
+import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.util.ItUtils
 import com.spotify.scio.testing.{PipelineSpec, PipelineTestUtils}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
@@ -81,29 +82,28 @@ class TensorFlowImplicitsIT extends PipelineSpec with PipelineTestUtils with Bef
 
   "Storing and loading a Schema file remotely" should "work" in {
     val outputPath = s"$outputPrefix/${UUID.randomUUID}"
+    val sc1 = ScioContext(options)
 
-    runWithRealContext(options) { sc =>
-      val writeFuture = sc
-        .parallelize(examples)
-        .saveAsTfExampleFileWithSchema(path = outputPath,
-                                       schema = tfSchema,
-                                       schemaFilename = "schema_it.pb",
-                                       suffix = ".tfrecords",
-                                       compression = Compression.UNCOMPRESSED,
-                                       numShards = 0)
+    val closedTap = sc1
+      .parallelize(examples)
+      .saveAsTfExampleFileWithSchema(path = outputPath,
+                                     schema = tfSchema,
+                                     schemaFilename = "schema_it.pb",
+                                     suffix = ".tfrecords",
+                                     compression = Compression.UNCOMPRESSED,
+                                     numShards = 0)
 
-      import scala.concurrent.ExecutionContext.Implicits.global
+    val tap = sc1.close().waitUntilDone().tap(closedTap)
 
-      writeFuture.map { tap =>
-        val (data, schemaCache) = sc.tfRecordExampleFileWithSchema(
-          path = s"$outputPath/*.tfrecords",
-          schemaFilename = s"$outputPath/schema_it.pb",
-          compression = Compression.UNCOMPRESSED
-        )
+    val sc2 = ScioContext(options)
+    val (data, schemaCache) = sc2.tfRecordExampleFileWithSchema(
+      path = s"$outputPath/*.tfrecords",
+      schemaFilename = s"$outputPath/schema_it.pb",
+      compression = Compression.UNCOMPRESSED
+    )
 
-        data should containInAnyOrder(tap.value.toSeq)
-        schemaCache() shouldEqual tfSchema
-      }
-    }
+    data should containInAnyOrder(tap.value.toSeq)
+    sc2.close().waitUntilDone()
+    schemaCache() shouldEqual tfSchema
   }
 }

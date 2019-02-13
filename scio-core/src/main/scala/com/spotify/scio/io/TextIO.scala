@@ -31,7 +31,6 @@ import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.IOUtils
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 import scala.util.Try
 
 final case class TextIO(path: String) extends ScioIO[String] {
@@ -48,9 +47,9 @@ final case class TextIO(path: String) extends ScioIO[String] {
           .from(path)
           .withCompression(params.compression)))
 
-  override def write(data: SCollection[String], params: WriteP): Future[Tap[String]] = {
+  override def write(data: SCollection[String], params: WriteP): Tap[String] = {
     data.applyInternal(textOut(path, params))
-    data.context.makeFuture(tap(TextIO.ReadParam()))
+    tap(TextIO.ReadParam())
   }
 
   override def tap(params: ReadP): Tap[String] =

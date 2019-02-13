@@ -17,11 +17,9 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.io.Tap
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
-
-import scala.concurrent.Future
 
 /**
  * Main package for Cassandra APIs. Import all.
@@ -65,7 +63,7 @@ package object cassandra {
      */
     def saveAsCassandra(opts: CassandraOptions,
                         parallelism: Int = CassandraIO.WriteParam.DefaultPar)(f: T => Seq[Any])(
-      implicit coder: Coder[T]): Future[Tap[Nothing]] =
+      implicit coder: Coder[T]): ClosedTap[Nothing] =
       self.write(CassandraIO[T](opts))(CassandraIO.WriteParam(f, parallelism))
   }
 }

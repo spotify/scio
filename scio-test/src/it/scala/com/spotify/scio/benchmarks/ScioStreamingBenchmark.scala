@@ -164,7 +164,7 @@ abstract class StreamingBenchmark extends ScioJob {
   val name: String = this.getClass.getSimpleName.replaceAll("\\$$", "")
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  override def run(projectId: String, prefix: String, args: Array[String]): (String, ScioResult) = {
+  def run(projectId: String, prefix: String, args: Array[String]): (String, ClosedScioContext) = {
     val username = CoreSysProps.User.value
     val buildNum = CircleCI.map(_.buildNum).getOrElse(-1L)
     val gitHash = CircleCI.map(_.gitHash).getOrElse("none")

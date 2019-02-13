@@ -18,12 +18,11 @@
 package com.spotify.scio
 
 import java.nio.ByteBuffer
-import java.util.concurrent.TimeoutException
 
+import com.spotify.scio.io.{ClosedTap, Tap}
 import com.spotify.scio.metrics._
 import com.spotify.scio.util.ScioUtil
 import com.twitter.algebird.Semigroup
-import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.metrics.{DistributionResult, GaugeResult}
@@ -31,8 +30,6 @@ import org.apache.beam.sdk.util.MimeTypes
 import org.apache.beam.sdk.{PipelineResult, metrics => beam}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
 import scala.reflect.ClassTag
 import scala.util.Try
 
@@ -57,51 +54,10 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
     }
   }
 
-  /**
-   * `Future` for pipeline's final state. The `Future` will be completed once the pipeline
-   * completes successfully.
-   */
-  val finalState: Future[State]
+  def tap[T](tap: ClosedTap[T]): Tap[T] = tap.underlying
 
   /** Get metrics of the finished pipeline. */
   def getMetrics: Metrics
-
-  /** Get the timeout period of the Scio job. Default to `Duration.Inf`. */
-  def getAwaitDuration: Duration = Duration.Inf
-
-  /** Wait until the pipeline finishes. If timeout duration is exceeded and `cancelJob` is set,
-   * cancel the internal [[PipelineResult]]. */
-  def waitUntilFinish(duration: Duration = getAwaitDuration,
-                      cancelJob: Boolean = true): ScioResult = {
-    try {
-      Await.ready(finalState, duration)
-    } catch {
-      case e: TimeoutException =>
-        if (cancelJob) {
-          internal.cancel()
-          throw new PipelineExecutionException(
-            new Exception(s"Job cancelled after exceeding timeout value $duration"))
-        }
-    }
-    this
-  }
-
-  /**
-   * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
-   * `FAILED`). Throw exception otherwise.
-   */
-  def waitUntilDone(duration: Duration = getAwaitDuration,
-                    cancelJob: Boolean = true): ScioResult = {
-    waitUntilFinish(duration, cancelJob)
-
-    if (!this.state.equals(State.DONE)) {
-      throw new PipelineExecutionException(new Exception(s"Job finished with state ${this.state}"))
-    }
-    this
-  }
-
-  /** Whether the pipeline is completed. */
-  def isCompleted: Boolean = internal.getState.isTerminal
 
   /** Whether this is the result of a test. */
   def isTest: Boolean = false
@@ -111,7 +67,6 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
 
   /** Save metrics of the finished pipeline to a file. */
   def saveMetrics(filename: String): Unit = {
-    require(isCompleted, "Pipeline has to be finished to save metrics.")
     val mapper = ScioUtil.getScalaJsonMapper
     val resourceId = FileSystems.matchNewResource(filename, false)
     val out = FileSystems.create(resourceId, MimeTypes.TEXT)
@@ -125,8 +80,6 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
   }
 
   protected def getBeamMetrics: BeamMetrics = {
-    require(isCompleted, "Pipeline has to be finished to get metrics.")
-
     def mkDist(d: beam.DistributionResult): BeamDistribution = {
       val dist = Option(d).getOrElse(DistributionResult.IDENTITY_ELEMENT)
       BeamDistribution(dist.getSum, dist.getCount, dist.getMin, dist.getMax, dist.getMean)

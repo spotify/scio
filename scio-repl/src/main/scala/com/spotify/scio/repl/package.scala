@@ -26,9 +26,12 @@ package object repl {
 
     /** Convenience method to close the current [[ScioContext]] and collect elements. */
     def closeAndCollect()(implicit c: Coder[T]): Iterator[T] = {
-      val f = self.materialize
-      self.context.close()
-      f.waitForResult().value
+      val closedTap = self.materialize
+      self.context
+        .close()
+        .waitUntilDone()
+        .tap(closedTap)
+        .value
     }
   }
 
