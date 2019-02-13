@@ -365,7 +365,8 @@ lazy val scioTest: Project = Project(
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
       "com.novocode" % "junit-interface" % junitInterfaceVersion,
       "junit" % "junit" % junitVersion % "test"
-    )
+    ),
+    (Test / compileOrder) := CompileOrder.JavaThenScala
   )
   .configs(
     IntegrationTest

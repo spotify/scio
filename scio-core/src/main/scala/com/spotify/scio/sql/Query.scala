@@ -43,7 +43,7 @@ object Query {
 
   private def printContent(fs: List[BSchema.Field], prefix: String = ""): String = {
     fs.map { f =>
-        val nullable = if (f.getNullable) "YES" else "NO"
+        val nullable = if (f.getType.getNullable) "YES" else "NO"
         // val out =  s"${prefix}${f.getName}\t${f.getType.getTypeName}\t$nullable\n"
         val `type` = f.getType
         val typename =
@@ -94,6 +94,7 @@ object Query {
     val table = new BaseBeamTable(schema) {
       def buildIOReader(begin: PBegin): PCollection[Row] = ???
       def buildIOWriter(input: PCollection[Row]): POutput = ???
+      def isBounded(): PCollection.IsBounded = PCollection.IsBounded.BOUNDED
     }
 
     val sqlEnv =
@@ -106,6 +107,22 @@ object Query {
         case _ =>
           SchemaMaterializer.fieldType(Schema[ScalarWrapper[O]]).getRowSchema()
       }
+
+    def typesEqual(s1: BSchema.FieldType, s2: BSchema.FieldType): Boolean =
+      (s1.getTypeName == s2.getTypeName) && (s1.getTypeName match {
+        case BSchema.TypeName.ROW =>
+          s1.getRowSchema.getFields.asScala
+            .map(_.getType)
+            .zip(s2.getRowSchema.getFields.asScala.map(_.getType))
+            .forall { case (l, r) => typesEqual(l, r) }
+        case BSchema.TypeName.ARRAY =>
+          typesEqual(s1.getCollectionElementType, s2.getCollectionElementType)
+        case BSchema.TypeName.MAP =>
+          typesEqual(s1.getMapKeyType, s2.getMapKeyType) && typesEqual(s1.getMapValueType,
+                                                                       s2.getMapValueType)
+        case _ if (s1.getNullable == s2.getNullable) => true
+        case _                                       => false
+      })
 
     scala.util
       .Try(silence(sqlEnv.parseQuery(q.query)))
@@ -127,7 +144,9 @@ object Query {
         CalciteUtils.toSchema(q.getRowType)
       }
       .flatMap {
-        case inferedSchema if inferedSchema.typesEqual(expectedSchema) =>
+        case inferedSchema
+            if typesEqual(BSchema.FieldType.row(inferedSchema),
+                          BSchema.FieldType.row(expectedSchema)) =>
           Right(q)
         case inferedSchema =>
           val message =

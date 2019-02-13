@@ -26,7 +26,7 @@ import java.util.concurrent.ThreadLocalRandom
 import com.google.datastore.v1.Entity
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
+import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer, WrappedBCoder}
 import com.spotify.scio.sql.Query
 import com.spotify.scio.io._
 import com.spotify.scio.testing.TestDataManager
@@ -148,9 +148,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {
     val coder = CoderMaterializer.beam(context, Coder[U])
     // https://issues.apache.org/jira/browse/BEAM-5645
-    if (context.isTest && !coder.isInstanceOf[org.apache.beam.sdk.coders.RowCoder]) {
-      org.apache.beam.sdk.util.SerializableUtils
-        .ensureSerializable(coder)
+    coder match {
+      case _ if !context.isTest                                                         => ()
+      case c: WrappedBCoder[_] if c.u.isInstanceOf[org.apache.beam.sdk.coders.RowCoder] => ()
+      case _ =>
+        org.apache.beam.sdk.util.SerializableUtils
+          .ensureSerializable(coder)
     }
     this.pApply(transform).setCoder(coder)
   }

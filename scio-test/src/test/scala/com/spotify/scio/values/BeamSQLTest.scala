@@ -325,7 +325,6 @@ class BeamSQLTest extends PipelineSpec {
 
   it should "typecheck queries at compile time" in {
     import Query.tsql
-
     """tsql[Bar, Long]("select l from PCOLLECTION")""" should compile
     """tsql[Bar, Int]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")""" should compile
     """tsql[Bar, Result]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")""" should compile
