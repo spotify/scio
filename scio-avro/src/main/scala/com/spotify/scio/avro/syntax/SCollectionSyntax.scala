@@ -21,13 +21,12 @@ import com.google.protobuf.Message
 import com.spotify.scio.avro._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.io.Tap
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.specific.SpecificRecordBase
 
-import scala.concurrent.Future
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
@@ -46,7 +45,7 @@ final class GenericRecordSCollection[T](private val self: SCollection[T]) extend
                      codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
                      metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
     implicit ct: ClassTag[T],
-    coder: Coder[T]): Future[Tap[T]] = {
+    coder: Coder[T]): ClosedTap[T] = {
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(GenericRecordIO[T](path, schema))(param)
   }
@@ -62,7 +61,7 @@ final class GenericRecordSCollection[T](private val self: SCollection[T]) extend
                        suffix: String = ".obj",
                        codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
                        metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
-    implicit coder: Coder[T]): Future[Tap[T]] = {
+    implicit coder: Coder[T]): ClosedTap[T] = {
     val param = ObjectFileIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(ObjectFileIO[T](path))(param)
   }
@@ -82,7 +81,7 @@ final class SpecificRecordSCollection[T <: SpecificRecordBase](private val self:
                      codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
                      metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
     implicit ct: ClassTag[T],
-    coder: Coder[T]): Future[Tap[T]] = {
+    coder: Coder[T]): ClosedTap[T] = {
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(SpecificRecordIO[T](path))(param)
   }
@@ -103,7 +102,7 @@ final class TypedAvroSCollection[T <: HasAvroAnnotation](private val self: SColl
                           metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
     implicit ct: ClassTag[T],
     tt: TypeTag[T],
-    coder: Coder[T]): Future[Tap[T]] = {
+    coder: Coder[T]): ClosedTap[T] = {
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(AvroTyped.AvroIO[T](path))(param)
   }
@@ -125,7 +124,7 @@ final class ProtobufSCollection[T <: Message](private val self: SCollection[T]) 
                          codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
                          metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
     implicit ct: ClassTag[T],
-    coder: Coder[T]): Future[Tap[T]] = {
+    coder: Coder[T]): ClosedTap[T] = {
     val param = ProtobufIO.WriteParam(numShards, suffix, codec, metadata)
     self.write(ProtobufIO[T](path))(param)
   }

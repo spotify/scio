@@ -19,12 +19,11 @@ package com.spotify.scio
 
 import java.sql.{Driver, PreparedStatement, ResultSet}
 
-import com.spotify.scio.io.Tap
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.io.{jdbc => beam}
 
-import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 /**
@@ -113,7 +112,7 @@ package object jdbc {
 
     /** Save this SCollection as a JDBC database. */
     def saveAsJdbc(writeOptions: JdbcWriteOptions[T])(
-      implicit coder: Coder[T]): Future[Tap[Nothing]] =
+      implicit coder: Coder[T]): ClosedTap[Nothing] =
       self.write(JdbcWrite(writeOptions))
   }
 

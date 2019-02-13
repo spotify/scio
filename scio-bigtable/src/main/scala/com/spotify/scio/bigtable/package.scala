@@ -21,13 +21,12 @@ import com.google.bigtable.v2._
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.io.Tap
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.joda.time.Duration
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 
 /**
  * Main package for Bigtable APIs. Import all.
@@ -222,11 +221,11 @@ package object bigtable {
     def saveAsBigtable(projectId: String, instanceId: String, tableId: String)(
       implicit ev: T <:< Mutation,
       coder: Coder[T]
-    ): Future[Tap[(ByteString, Iterable[Mutation])]] = {
+    ): ClosedTap[(ByteString, Iterable[Mutation])] = {
       val param = BigtableWrite.Default
       self
         .write(BigtableWrite[T](projectId, instanceId, tableId))(param)
-        .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
+        .asInstanceOf[ClosedTap[(ByteString, Iterable[Mutation])]]
     }
 
     /**
@@ -235,11 +234,11 @@ package object bigtable {
     def saveAsBigtable(bigtableOptions: BigtableOptions, tableId: String)(
       implicit ev: T <:< Mutation,
       coder: Coder[T]
-    ): Future[Tap[(ByteString, Iterable[Mutation])]] = {
+    ): ClosedTap[(ByteString, Iterable[Mutation])] = {
       val param = BigtableWrite.Default
       self
         .write(BigtableWrite[T](bigtableOptions, tableId))(param)
-        .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
+        .asInstanceOf[ClosedTap[(ByteString, Iterable[Mutation])]]
     }
 
     /**
@@ -252,11 +251,11 @@ package object bigtable {
                        flushInterval: Duration = BigtableWrite.Bulk.DefaultFlushInterval)(
       implicit ev: T <:< Mutation,
       coder: Coder[T]
-    ): Future[Tap[(ByteString, Iterable[Mutation])]] = {
+    ): ClosedTap[(ByteString, Iterable[Mutation])] = {
       val param = BigtableWrite.Bulk(numOfShards, flushInterval)
       self
         .write(BigtableWrite[T](bigtableOptions, tableId))(param)
-        .asInstanceOf[Future[Tap[(ByteString, Iterable[Mutation])]]]
+        .asInstanceOf[ClosedTap[(ByteString, Iterable[Mutation])]]
     }
   }
 

@@ -22,7 +22,6 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TestIO}
 import org.apache.beam.sdk.io.{jdbc => beam}
 
-import scala.concurrent.Future
 import java.sql.{PreparedStatement, ResultSet}
 
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
@@ -82,7 +81,7 @@ final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends S
     sc.wrap(sc.applyInternal(transform))
   }
 
-  override def write(data: SCollection[T], params: WriteP): Future[Tap[Nothing]] =
+  override def write(data: SCollection[T], params: WriteP): Tap[Nothing] =
     throw new IllegalStateException("jdbc.Select is read-only")
 
   override def tap(params: ReadP): Tap[Nothing] =
@@ -100,7 +99,7 @@ final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends ScioIO[
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new IllegalStateException("jdbc.Write is write-only")
 
-  override def write(data: SCollection[T], params: WriteP): Future[Tap[Nothing]] = {
+  override def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     var transform = beam.JdbcIO
       .write[T]()
       .withDataSourceConfiguration(getDataSourceConfig(writeOptions.connectionOptions))
@@ -117,7 +116,7 @@ final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends ScioIO[
       transform = transform.withBatchSize(writeOptions.batchSize)
     }
     data.applyInternal(transform)
-    Future.successful(EmptyTap)
+    EmptyTap
   }
 
   override def tap(params: ReadP): Tap[Nothing] =

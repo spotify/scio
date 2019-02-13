@@ -35,7 +35,6 @@ import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
 import org.apache.beam.sdk.transforms.SerializableFunction
 
-import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
@@ -129,7 +128,7 @@ final case class BigQuerySelect(sqlQuery: String) extends BigQueryIO[TableRow] {
   override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     Reads.bqReadQuery(sc)(beam.BigQueryIO.readTableRows(), sqlQuery, params.flattenResults)
 
-  override def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] =
+  override def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] =
     throw new IllegalStateException("BigQuerySelect is read-only")
 
   override def tap(params: ReadP): Tap[TableRow] =
@@ -158,7 +157,7 @@ final case class BigQueryTable(tableSpec: String) extends BigQueryIO[TableRow] {
   override def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
     Reads.bqReadTable(sc)(beam.BigQueryIO.readTableRows(), table)
 
-  override def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] = {
+  override def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
     var transform = beam.BigQueryIO.writeTableRows().to(table)
     if (params.schema != null) {
       transform = transform.withSchema(params.schema)
@@ -178,9 +177,9 @@ final case class BigQueryTable(tableSpec: String) extends BigQueryIO[TableRow] {
     data.applyInternal(transform)
 
     if (params.writeDisposition == WriteDisposition.WRITE_APPEND) {
-      Future.failed(new NotImplementedError("BigQuery future with append not implemented"))
+      throw new NotImplementedError("BigQuery future with append not implemented")
     } else {
-      data.context.makeFuture(BigQueryTap(table))
+      BigQueryTap(table)
     }
   }
 
@@ -219,11 +218,11 @@ final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
     sc.wrap(sc.applyInternal(TextIO.read().from(path)))
       .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
 
-  override def write(data: SCollection[TableRow], params: WriteP): Future[Tap[TableRow]] = {
+  override def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
     data
       .map(e => ScioUtil.jsonFactory.toString(e))
       .applyInternal(data.textOut(path, ".json", params.numShards, params.compression))
-    data.context.makeFuture(tap(Unit))
+    tap(Unit)
   }
 
   override def tap(read: ReadP): Tap[TableRow] =
@@ -310,7 +309,7 @@ object BigQueryTyped {
       Reads.bqReadQuery(sc)(typedRead(sc), query)
     }
 
-    override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] =
+    override def write(data: SCollection[T], params: WriteP): Tap[T] =
       throw new IllegalStateException("Select queries are read-only")
 
     override def tap(params: ReadP): Tap[T] =
@@ -338,9 +337,8 @@ object BigQueryTyped {
       Reads.bqReadTable(sc)(typedRead(sc), table)
     }
 
-    override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
+    override def write(data: SCollection[T], params: WriteP): Tap[T] = {
       val initialTfName = data.tfName
-      import scala.concurrent.ExecutionContext.Implicits.global
       val rows =
         data
           .map(bqt.toTableRow)
@@ -355,7 +353,7 @@ object BigQueryTyped {
 
       BigQueryTable(table)
         .write(rows, ps)
-        .map(_.map(bqt.fromTableRow))
+        .map(bqt.fromTableRow)
     }
 
     override def tap(read: ReadP): Tap[T] =

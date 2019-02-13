@@ -106,3 +106,5 @@ object MaterializeTap {
   def apply[T: Coder](path: String, context: ScioContext): MaterializeTap[T] =
     new MaterializeTap(path, CoderMaterializer.beam(context, Coder[T]))
 }
+
+final case class ClosedTap[T] private (private[scio] val underlying: Tap[T])

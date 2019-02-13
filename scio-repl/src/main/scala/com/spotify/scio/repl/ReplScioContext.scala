@@ -18,7 +18,7 @@
 package com.spotify.scio.repl
 
 import org.apache.beam.sdk.options.PipelineOptions
-import com.spotify.scio.{CoreSysProps, ScioContext, ScioResult}
+import com.spotify.scio.{ClosedScioContext, CoreSysProps, ScioContext}
 
 class ReplScioContext(options: PipelineOptions, artifacts: List[String])
     extends ScioContext(options, artifacts) {
@@ -27,7 +27,7 @@ class ReplScioContext(options: PipelineOptions, artifacts: List[String])
   this.setJobName(s"""sciorepl-${CoreSysProps.User.value}-${System.currentTimeMillis()}""")
 
   /** Enhanced version that dumps REPL session jar. */
-  override def close(): ScioResult = {
+  override def close(): ClosedScioContext = {
     createJar()
     super.close()
   }

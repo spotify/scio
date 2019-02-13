@@ -17,11 +17,8 @@
 
 package com.spotify
 
-import com.spotify.scio.io.Tap
 import com.twitter.algebird.Monoid
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
 import scala.reflect.ClassTag
 
 /**
@@ -32,24 +29,6 @@ import scala.reflect.ClassTag
  * }}}
  */
 package object scio {
-
-  /**
-   * Wait for [[com.spotify.scio.io.Tap Tap]] to be available and get Tap reference from `Future`.
-   */
-  implicit class WaitableFutureTap[T](self: Future[Tap[T]]) {
-    def waitForResult(atMost: Duration = Duration.Inf): Tap[T] =
-      Await.result(self, atMost)
-  }
-
-  /**
-   * Wait for nested [[com.spotify.scio.io.Tap Tap]] to be available, flatten result and get Tap
-   * reference from `Future`.
-   */
-  implicit class WaitableNestedFutureTap[T](self: Future[Future[Tap[T]]]) {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    def waitForResult(atMost: Duration = Duration.Inf): Tap[T] =
-      Await.result(self.flatMap(identity), atMost)
-  }
 
   /** [[com.twitter.algebird.Monoid Monoid]] for `Array[Int]`. */
   implicit val intArrayMon: Monoid[Array[Int]] = new ArrayMonoid[Int]

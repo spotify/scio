@@ -21,8 +21,6 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap}
 
-import scala.concurrent.Future
-
 final case class CassandraIO[T](opts: CassandraOptions) extends ScioIO[T] {
 
   override type ReadP = Nothing
@@ -41,13 +39,13 @@ final case class CassandraIO[T](opts: CassandraOptions) extends ScioIO[T] {
    * occur at the end of each window in streaming mode. The bulk writer writes to all nodes in a
    * cluster so remote nodes in a multi-datacenter cluster may become a bottleneck.
    */
-  override def write(data: SCollection[T], params: WriteP): Future[Tap[Nothing]] = {
+  override def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     val bulkOps = new BulkOperations(opts, params.parallelism)
     data
       .map(params.outputFn.andThen(bulkOps.serializeFn))
       .groupBy(bulkOps.partitionFn)
       .map(bulkOps.writeFn)
-    Future.successful(EmptyTap)
+    EmptyTap
   }
 
   override def tap(params: ReadP): Tap[Nothing] =

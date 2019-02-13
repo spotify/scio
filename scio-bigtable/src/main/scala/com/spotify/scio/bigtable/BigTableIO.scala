@@ -30,7 +30,6 @@ import org.apache.beam.sdk.values.KV
 import org.joda.time.Duration
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 
 sealed trait BigtableIO[T] extends ScioIO[T] {
   override final val tapT = EmptyTapOf[T]
@@ -74,7 +73,7 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
     sc.wrap(sc.applyInternal(read))
   }
 
-  override def write(data: SCollection[Row], params: WriteP): Future[Tap[Nothing]] =
+  override def write(data: SCollection[Row], params: WriteP): Tap[Nothing] =
     throw new IllegalStateException("BigtableRead is read-only, use Mutation to write to Bigtable")
 
   override def tap(params: ReadP): Tap[Nothing] =
@@ -113,8 +112,7 @@ final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: Str
   override def read(sc: ScioContext, params: ReadP): SCollection[(ByteString, Iterable[T])] =
     throw new IllegalStateException("BigtableWrite is write-only, use Row to read from Bigtable")
 
-  override def write(data: SCollection[(ByteString, Iterable[T])],
-                     params: WriteP): Future[Tap[Nothing]] = {
+  override def write(data: SCollection[(ByteString, Iterable[T])], params: WriteP): Tap[Nothing] = {
     val sink =
       params match {
         case BigtableWrite.Default =>
@@ -138,7 +136,7 @@ final case class BigtableWrite[T](bigtableOptions: BigtableOptions, tableId: Str
           KV.of(key, value.asJava.asInstanceOf[java.lang.Iterable[Mutation]])
       }
       .applyInternal(sink)
-    Future.successful(EmptyTap)
+    EmptyTap
   }
 
   override def tap(params: ReadP): Tap[Nothing] =

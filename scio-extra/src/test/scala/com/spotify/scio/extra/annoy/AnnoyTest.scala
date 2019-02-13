@@ -22,6 +22,7 @@ import java.nio.file.Files
 
 import com.spotify.annoy.{ANNIndex, IndexType}
 import com.spotify.scio.ScioContext
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.testing.PipelineSpec
 
 class AnnoyTest extends PipelineSpec {
@@ -35,10 +36,10 @@ class AnnoyTest extends PipelineSpec {
 
   "SCollection" should "support .asAnnoy with temporary local file" in {
     val sc = ScioContext()
-    val p = sc.parallelize(sideData).asAnnoy(metric, dim, nTrees).materialize
-    sc.close().waitUntilFinish()
+    val closedTap = sc.parallelize(sideData).asAnnoy(metric, dim, nTrees).materialize
+    val scioResult = sc.close().waitUntilFinish()
 
-    val path = p.waitForResult().value.next().path
+    val path = scioResult.tap(closedTap).value.next().path
     val reader = new ANNIndex(dim, path, IndexType.ANGULAR)
 
     sideData.foreach { s =>
@@ -50,13 +51,14 @@ class AnnoyTest extends PipelineSpec {
 
   it should "support .asAnnoy with specified local file" in {
     val sc = ScioContext()
-    val p = sc
+    val p: ClosedTap[AnnoyUri] = sc
       .parallelize(sideData)
       .asAnnoy("test.tree", metric, dim, nTrees)
       .materialize
-    sc.close().waitUntilFinish()
 
-    val path = p.waitForResult().value.next().path
+    val scioResult = sc.close().waitUntilFinish()
+    val path = scioResult.tap(p).value.next().path
+
     val reader = new ANNIndex(dim, path, IndexType.ANGULAR)
 
     sideData.foreach { s =>
