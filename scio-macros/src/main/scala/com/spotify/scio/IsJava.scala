@@ -28,7 +28,7 @@ sealed trait IsJavaBean[T]
 object IsJavaBean {
   implicit def isJava[T]: IsJavaBean[T] = macro IsJavaBean.isJavaImpl[T]
 
-  def apply[T](implicit i: IsJavaBean[T]) = i
+  def apply[T](implicit i: IsJavaBean[T]): IsJavaBean[T] = i
 
   private def checkGetterAndSetters(c: blackbox.Context)(t: c.universe.Type): Unit = {
     val getters =
@@ -50,7 +50,8 @@ object IsJavaBean {
             .get(name)
             .getOrElse {
               val mess =
-                s"""JavaBean contained a getter for field $name but did not contain a matching setter."""
+                s"""JavaBean contained a getter for field $name""" +
+                  """ but did not contain a matching setter."""
               c.abort(c.enclosingPosition, mess)
             }
 

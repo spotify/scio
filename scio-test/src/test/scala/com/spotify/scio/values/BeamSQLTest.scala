@@ -29,6 +29,7 @@ import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.Row
+import org.scalatest.Assertion
 
 import scala.collection.JavaConverters._
 
@@ -109,7 +110,7 @@ class BeamSQLTest extends PipelineSpec {
     val expected = users.map { u =>
       Row.withSchema(schemaRes).addValue(u.username).build()
     }
-    implicit def coderRowRes = Coder.row(schemaRes)
+    implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
     val in = sc.parallelize(users)
     val r = in.sql(Query.row("select username from PCOLLECTION"))
     r should containInAnyOrder(expected)
@@ -138,7 +139,7 @@ class BeamSQLTest extends PipelineSpec {
         .build()
     }
 
-    implicit def coderRowRes = Coder.row(schemaRes)
+    implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
     val in = sc.parallelize(usersWithIds)
     val r = in.sql(Query.row("select id, username from PCOLLECTION"))
     r should containInAnyOrder(expected)
@@ -153,7 +154,7 @@ class BeamSQLTest extends PipelineSpec {
     val expected = usersWithLocale.map { u =>
       Row.withSchema(schemaRes).addValue(u.username).build()
     }
-    implicit def coderRowRes = Coder.row(schemaRes)
+    implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
     val in = sc.parallelize(usersWithLocale)
     val r = in.sql(Query.row("select username from PCOLLECTION"))
     r should containInAnyOrder(expected)
@@ -164,7 +165,7 @@ class BeamSQLTest extends PipelineSpec {
     val expected = users.map { u =>
       Row.withSchema(schemaRes).addValue(u.username).build()
     }
-    implicit def coderRowRes = Coder.row(schemaRes)
+    implicit def coderRowRes: Coder[Row] = Coder.row(schemaRes)
     val in = sc.parallelize(users)
     val r = in.sql(Query.row("select username from PCOLLECTION"))
     r should containInAnyOrder(expected)
@@ -282,10 +283,10 @@ class BeamSQLTest extends PipelineSpec {
   it should "provide a typecheck method for tests" in {
     val Q = Query
 
-    def checkOK[A: Schema, B: Schema](q: String) =
+    def checkOK[A: Schema, B: Schema](q: String): Assertion =
       Q.typecheck(Q.of[A, B](q)) should be('right)
 
-    def checkNOK[A: Schema, B: Schema](q: String) =
+    def checkNOK[A: Schema, B: Schema](q: String): Assertion =
       Q.typecheck(Q.of[A, B](q)) should be('left)
 
     checkOK[Bar, Long]("select l from PCOLLECTION")
@@ -325,6 +326,7 @@ class BeamSQLTest extends PipelineSpec {
 
   it should "typecheck queries at compile time" in {
     import Query.tsql
+    // scalastyle:off line.size.limit
     """tsql[Bar, Long]("select l from PCOLLECTION")""" should compile
     """tsql[Bar, Int]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")""" should compile
     """tsql[Bar, Result]("select `PCOLLECTION`.`f`.`i` from PCOLLECTION")""" should compile
@@ -347,6 +349,7 @@ class BeamSQLTest extends PipelineSpec {
     """tsql[UserBean, Bar]("select name, age from PCOLLECTION")""" shouldNot compile
     """tsql[UserBean, (String, Int)]("select name, ARRAY[age] from PCOLLECTION")""" shouldNot compile
     """tsql[UserBean, (String, List[Int])]("select name, age from PCOLLECTION")""" shouldNot compile
+    // scalastyle:on line.size.limit
 
   }
 

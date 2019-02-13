@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 Spotify AB.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package com.spotify.scio.schemas
 
 import com.spotify.scio.{IsJavaBean}
@@ -27,7 +43,7 @@ final case class Record[T] private (schemas: Array[(String, Schema[Any])],
 }
 
 object Record {
-  def apply[T](implicit r: Record[T]) = r
+  def apply[T](implicit r: Record[T]): Record[T] = r
 }
 
 final case class Type[T](fieldType: FieldType) extends Schema[T] {
@@ -92,7 +108,7 @@ object Schema extends LowPriorityFallbackSchema {
 
 private object Derived extends Serializable {
   import magnolia._
-  def combineSchema[T](ps: Seq[Param[Schema, T]], rawConstruct: Seq[Any] => T) = {
+  def combineSchema[T](ps: Seq[Param[Schema, T]], rawConstruct: Seq[Any] => T): Record[T] = {
     @inline def destruct(v: T): Array[Any] = {
       val arr = new Array[Any](ps.length)
       var i = 0
@@ -200,7 +216,8 @@ object SchemaMaterializer {
       case s @ Record(_, _, _) => (encode(s, fieldType)(_)).asInstanceOf[A => schema.Repr]
       case s @ Type(_)         => (encode(s)(_)).asInstanceOf[A => schema.Repr]
       case s @ Optional(_)     => (encode(s, fieldType)(_)).asInstanceOf[A => schema.Repr]
-      case s @ Arr(_, _, _)    => (encode[s._F, s._T](s, fieldType)(_)).asInstanceOf[A => schema.Repr]
+      case s @ Arr(_, _, _) =>
+        (encode[s._F, s._T](s, fieldType)(_)).asInstanceOf[A => schema.Repr]
       case s @ Fallback(_) =>
         (encode(s.asInstanceOf[Fallback[BCoder, A]])(_)).asInstanceOf[A => schema.Repr]
     }
