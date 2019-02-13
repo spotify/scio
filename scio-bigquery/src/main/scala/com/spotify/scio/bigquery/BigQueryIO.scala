@@ -40,15 +40,15 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 private object Reads {
-  private[this] val cache = new ConcurrentHashMap[Class[_], BigQuery]()
+  private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
 
   @inline private def client(sc: ScioContext): BigQuery =
     cache.computeIfAbsent(
-      BigQuery.getClass,
-      new function.Function[Class[_], BigQuery] {
-        override def apply(t: Class[_]): BigQuery = {
-          val o = sc.optionsAs[GcpOptions]
-          BigQuery(o.getProject, o.getGcpCredential)
+      sc,
+      new function.Function[ScioContext, BigQuery] {
+        override def apply(context: ScioContext): BigQuery = {
+          val opts = context.optionsAs[GcpOptions]
+          BigQuery(opts.getProject, opts.getGcpCredential)
         }
       }
     )
