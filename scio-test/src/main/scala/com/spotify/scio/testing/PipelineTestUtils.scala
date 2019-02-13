@@ -35,13 +35,13 @@ trait PipelineTestUtils {
    * }
    * }}}
    */
-  def runWithContext[T](fn: ScioContext => T): ScioResult = {
+  def runWithContext[T](fn: ScioContext => T): ClosedScioContext = {
     val sc = ScioContext.forTest()
     fn(sc)
     sc.close()
   }
 
-  def runWithRealContext[T](options: PipelineOptions)(fn: ScioContext => T): ScioResult = {
+  def runWithRealContext[T](options: PipelineOptions)(fn: ScioContext => T): ClosedScioContext = {
     val sc = ScioContext(options)
     fn(sc)
     sc.close()
@@ -151,8 +151,8 @@ trait PipelineTestUtils {
   def runWithLocalOutput[U: Coder](fn: ScioContext => SCollection[U]): (ScioResult, Seq[U]) = {
     val sc = ScioContext()
     val f = fn(sc).materialize
-    val result = sc.close().waitUntilFinish() // block non-test runner
-    (result, f.waitForResult().value.toSeq)
+    val result: ScioResult = sc.close().waitUntilFinish() // block non-test runner
+    (result, result.tap(f).value.toSeq)
   }
 
 }

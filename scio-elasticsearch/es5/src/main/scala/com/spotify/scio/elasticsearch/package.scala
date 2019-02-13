@@ -19,15 +19,13 @@ package com.spotify.scio
 
 import java.net.InetSocketAddress
 
-import com.spotify.scio.io.Tap
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.elasticsearch.ElasticsearchIO.WriteParam
 import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException
 import org.elasticsearch.action.DocWriteRequest
 import org.joda.time.Duration
-
-import scala.concurrent.Future
 
 /**
  * Main package for Elasticsearch APIs. Import all.
@@ -58,7 +56,7 @@ package object elasticsearch {
                             numOfShards: Long = WriteParam.DefaultNumShards,
                             maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
                             errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn)(
-      f: T => Iterable[DocWriteRequest[_]])(implicit coder: Coder[T]): Future[Tap[Nothing]] = {
+      f: T => Iterable[DocWriteRequest[_]])(implicit coder: Coder[T]): ClosedTap[Nothing] = {
       val param = WriteParam(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize)
       self.write(ElasticsearchIO[T](esOptions))(param)
     }

@@ -18,14 +18,13 @@
 package com.spotify.scio.extra
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.Tap
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
 import io.circe.Printer
 import io.circe.generic.AutoDerivation
 import org.apache.beam.sdk.io.Compression
 
-import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 /**
@@ -71,7 +70,7 @@ package object json extends AutoDerivation {
                        suffix: String = ".json",
                        numShards: Int = 0,
                        compression: Compression = Compression.UNCOMPRESSED,
-                       printer: Printer = Printer.noSpaces): Future[Tap[T]] =
+                       printer: Printer = Printer.noSpaces): ClosedTap[T] =
       self.write(JsonIO[T](path))(JsonIO.WriteParam(suffix, numShards, compression, printer))
   }
 

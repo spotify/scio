@@ -35,7 +35,6 @@ import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.{FileUtils, IOUtils}
 
-import scala.concurrent.Future
 import com.spotify.scio.coders.Coder
 
 trait TapSpec extends PipelineSpec {
@@ -47,16 +46,16 @@ trait TapSpec extends PipelineSpec {
     sc.close().waitUntilFinish() // block non-test runner
   }
 
-  def runWithInMemoryFuture[T](fn: ScioContext => Future[Tap[T]]): Tap[T] =
+  def runWithInMemoryFuture[T](fn: ScioContext => ClosedTap[T]): Tap[T] =
     runWithFuture(ScioContext.forTest())(fn)
 
-  def runWithFileFuture[T](fn: ScioContext => Future[Tap[T]]): Tap[T] =
+  def runWithFileFuture[T](fn: ScioContext => ClosedTap[T]): Tap[T] =
     runWithFuture(ScioContext())(fn)
 
-  def runWithFuture[T](sc: ScioContext)(fn: ScioContext => Future[Tap[T]]): Tap[T] = {
+  def runWithFuture[T](sc: ScioContext)(fn: ScioContext => ClosedTap[T]): Tap[T] = {
     val f = fn(sc)
-    sc.close().waitUntilFinish() // block non-test runner
-    f.waitForResult()
+    val scioResult = sc.close().waitUntilFinish() // block non-test runner
+    scioResult.tap(f)
   }
 
   def tmpDir: File =
@@ -78,30 +77,6 @@ class TapTest extends TapSpec {
   "Future" should "support saveAsInMemoryTap" in {
     val t = runWithInMemoryFuture { makeRecords(_).saveAsInMemoryTap }
     verifyTap(t, expectedRecords)
-  }
-
-  it should "update isCompleted with testId" in {
-    val sc = ScioContext.forTest()
-    val f = sc
-      .parallelize(Seq(1, 2, 3))
-      .map(newSpecificRecord)
-      .saveAsInMemoryTap
-    f.isCompleted shouldBe false
-    sc.close().waitUntilFinish() // block non-test runner
-    f.isCompleted shouldBe true
-  }
-
-  it should "update isCompleted without testId" in {
-    val dir = tmpDir
-    val sc = ScioContext()
-    val f = sc
-      .parallelize(Seq(1, 2, 3))
-      .map(newSpecificRecord)
-      .saveAsAvroFile(dir.getPath)
-    f.isCompleted shouldBe false
-    sc.close().waitUntilFinish() // block non-test runner
-    f.isCompleted shouldBe true
-    FileUtils.deleteDirectory(dir)
   }
 
   it should "support materialize" in {
@@ -247,16 +222,15 @@ class TapTest extends TapSpec {
   it should "support waitForResult" in {
     val sc = ScioContext()
     val f = sc.parallelize(1 to 10).materialize
-    sc.close()
-    f.waitForResult().value.toSet shouldBe (1 to 10).toSet
+    val scioResult = sc.close().waitUntilDone()
+    scioResult.tap(f).value.toSet shouldBe (1 to 10).toSet
   }
 
   it should "support nested waitForResult" in {
     val sc = ScioContext()
     val f = sc.parallelize(1 to 10).materialize
-    sc.close()
-    import scala.concurrent.ExecutionContext.Implicits.global
-    Future(f).waitForResult().value.toSet shouldBe (1 to 10).toSet
+    val scioResult = sc.close().waitUntilDone()
+    scioResult.tap(f).value.toSet shouldBe (1 to 10).toSet
   }
 
 }

@@ -50,7 +50,7 @@ class TapsTest extends FlatSpec with Matchers {
     val future = Taps().textFile(f.toString)
     future.isCompleted shouldBe true
     future.value.get.isSuccess shouldBe true
-    future.waitForResult().value.toSeq shouldBe data
+    Await.result(future, Duration.Inf).value.toSeq shouldBe data
     Files.delete(f)
   }
 

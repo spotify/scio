@@ -26,14 +26,14 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
 import com.google.datastore.v1.{Entity, Query}
-import com.spotify.scio.io.Tap
-import com.spotify.scio.metrics.Metrics
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io._
+import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.values._
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 import org.apache.beam.sdk.io.FileSystems
@@ -42,6 +42,7 @@ import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{Pipeline, PipelineResult, io => beam}
+import org.joda.time
 import org.joda.time.Instant
 import org.slf4j.LoggerFactory
 
@@ -49,11 +50,9 @@ import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Buffer => MBuffer}
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Future, Promise}
 import scala.io.Source
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
-import scala.util.control.NonFatal
 
 /** Runner specific context. */
 trait RunnerContext {
@@ -294,6 +293,70 @@ object ScioContext {
 
 }
 
+final case class ClosedScioContext private (pipelineResult: PipelineResult, context: ScioContext) {
+
+  /** Get the timeout period of the Scio job. Default to `Duration.Inf`. */
+  def getAwaitDuration: Duration = context.awaitDuration
+
+  /** Whether the pipeline is completed. */
+  def isCompleted: Boolean = pipelineResult.getState.isTerminal
+
+  /** Pipeline's current state. */
+  def state: State = Try(pipelineResult.getState).getOrElse(State.UNKNOWN)
+
+  /** Wait until the pipeline finishes. If timeout duration is exceeded and `cancelJob` is set,
+   * cancel the internal [[PipelineResult]]. */
+  def waitUntilFinish(duration: Duration = getAwaitDuration,
+                      cancelJob: Boolean = true): ScioResult = {
+    try {
+      val wait = duration match {
+        case Duration.Inf => 0
+        case d            => d.toMillis
+      }
+      pipelineResult.waitUntilFinish(time.Duration.millis(wait))
+    } catch {
+      case e: InterruptedException =>
+        val cause = if (cancelJob) {
+          pipelineResult.cancel()
+          new InterruptedException(s"Job cancelled after exceeding timeout value $duration")
+        } else {
+          e
+        }
+        throw new PipelineExecutionException(cause)
+    }
+
+    new ScioResult(pipelineResult) {
+      private val metricsLocation = context.optionsAs[ScioOptions].getMetricsLocation
+      if (metricsLocation != null) {
+        saveMetrics(metricsLocation)
+      }
+
+      override def getMetrics: Metrics =
+        Metrics(BuildInfo.version,
+                BuildInfo.scalaVersion,
+                context.optionsAs[ApplicationNameOptions].getAppName,
+                state.toString,
+                getBeamMetrics)
+
+      override def isTest: Boolean = context.isTest
+    }
+  }
+
+  /**
+   * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
+   * `FAILED`). Throw exception otherwise.
+   */
+  def waitUntilDone(duration: Duration = getAwaitDuration,
+                    cancelJob: Boolean = true): ScioResult = {
+    val result = waitUntilFinish(duration, cancelJob)
+    if (!state.equals(State.DONE)) {
+      throw new PipelineExecutionException(new Exception(s"Job finished with state $state"))
+    }
+
+    result
+  }
+}
+
 /**
  * Main entry point for Scio functionality. A ScioContext represents a pipeline and can be used to
  * create SCollections and distributed caches on that cluster.
@@ -365,7 +428,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
         .map(Duration(_))
         .getOrElse(Duration.Inf)
     } catch {
-      case e: NumberFormatException =>
+      case _: NumberFormatException =>
         throw new IllegalArgumentException(
           s"blockFor param $blockFor cannot be cast to " +
             s"type scala.concurrent.duration.Duration")
@@ -418,7 +481,6 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   /* Mutable members */
   private var _pipeline: Pipeline = _
   private var _isClosed: Boolean = false
-  private val _promises: MBuffer[(Promise[Tap[_]], Tap[_])] = MBuffer.empty
   private val _counters: MBuffer[Counter] = MBuffer.empty
   private var _onClose: Unit => Unit = identity
 
@@ -453,7 +515,7 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   }
 
   /** Close the context. No operation can be performed once the context is closed. */
-  def close(): ScioResult = requireNotClosed {
+  def close(): ClosedScioContext = requireNotClosed {
     _onClose(())
 
     if (_counters.nonEmpty) {
@@ -465,51 +527,18 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
 
     _isClosed = true
 
-    val result = new ContextScioResult(this.pipeline.run(), context)
-
-    if (this.isTest) {
-      TestDataManager.closeTest(testId.get, result)
-    }
+    val closedContext = ClosedScioContext(this.pipeline.run(), context)
 
     if (this.isTest || (this
           .optionsAs[ScioOptions]
           .isBlocking && awaitDuration == Duration.Inf)) {
-      result.waitUntilDone()
-    } else {
-      result
-    }
-  }
-
-  private class ContextScioResult(internal: PipelineResult, val context: ScioContext)
-      extends ScioResult(internal) {
-    override val finalState: Future[State] = {
-      import scala.concurrent.ExecutionContext.Implicits.global
-      val f = Future {
-        val state = internal.waitUntilFinish()
-        context.updateFutures(state)
-        val metricsLocation = context.optionsAs[ScioOptions].getMetricsLocation
-        if (metricsLocation != null) {
-          saveMetrics(metricsLocation)
-        }
-        this.state
+      val result = closedContext.waitUntilDone()
+      if (this.isTest) {
+        TestDataManager.closeTest(testId.get, result)
       }
-      f.onComplete {
-        case Success(_)           => Unit
-        case Failure(NonFatal(_)) => context.updateFutures(state)
-      }
-      f
     }
 
-    override def getMetrics: Metrics =
-      Metrics(BuildInfo.version,
-              BuildInfo.scalaVersion,
-              context.optionsAs[ApplicationNameOptions].getAppName,
-              state.toString,
-              getBeamMetrics)
-
-    override def getAwaitDuration: Duration = awaitDuration
-
-    override def isTest: Boolean = context.isTest
+    closedContext
   }
 
   /** Whether the context is closed. */
@@ -519,26 +548,6 @@ class ScioContext private[scio] (val options: PipelineOptions, private var artif
   private[scio] def requireNotClosed[T](body: => T): T = {
     require(!this.isClosed, "ScioContext already closed")
     body
-  }
-
-  // =======================================================================
-  // Futures
-  // =======================================================================
-
-  // To be updated once the pipeline completes.
-  private[scio] def makeFuture[T](value: Tap[T]): Future[Tap[T]] = {
-    val p = Promise[Tap[T]]()
-    _promises.append((p.asInstanceOf[Promise[Tap[_]]], value.asInstanceOf[Tap[_]]))
-    p.future
-  }
-
-  // Update pending futures after pipeline completes.
-  private[scio] def updateFutures(state: State): Unit = _promises.foreach { kv =>
-    if (state == State.DONE || state == State.UPDATED) {
-      kv._1.success(kv._2)
-    } else {
-      kv._1.failure(new RuntimeException("Pipeline failed to complete: " + state))
-    }
   }
 
   // =======================================================================

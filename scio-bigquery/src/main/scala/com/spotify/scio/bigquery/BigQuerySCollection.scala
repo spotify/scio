@@ -27,7 +27,6 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 
-import scala.concurrent._
 import scala.reflect.runtime.universe._
 
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
@@ -43,7 +42,7 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition,
     tableDescription: String,
-    timePartitioning: TimePartitioning)(implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
+    timePartitioning: TimePartitioning)(implicit ev: T <:< TableRow): ClosedTap[TableRow] = {
     val param =
       BigQueryTable.WriteParam(schema,
                                writeDisposition,
@@ -64,7 +63,7 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
     createDisposition: CreateDisposition = BigQueryTable.WriteParam.DefaultCreateDisposition,
     tableDescription: String = BigQueryTable.WriteParam.DefaultTableDescription,
     timePartitioning: TimePartitioning = BigQueryTable.WriteParam.DefaultTimePartitioning
-  )(implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
+  )(implicit ev: T <:< TableRow): ClosedTap[TableRow] = {
     val param =
       BigQueryTable.WriteParam(schema,
                                writeDisposition,
@@ -85,14 +84,14 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
                           createDisposition: CreateDisposition,
                           timePartitioning: TimePartitioning)(implicit tt: TypeTag[T],
                                                               ev: T <:< HasAnnotation,
-                                                              coder: Coder[T]): Future[Tap[T]] = {
+                                                              coder: Coder[T]): ClosedTap[T] = {
     val param =
       TableWriteParam(writeDisposition, createDisposition, timePartitioning)
     implicit val hcoder = coder.asInstanceOf[Coder[T with HasAnnotation]]
     self
       .asInstanceOf[SCollection[T with HasAnnotation]]
       .write(BigQueryTyped.Table[T with HasAnnotation](table))(param)
-      .asInstanceOf[Future[Tap[T]]]
+      .asInstanceOf[ClosedTap[T]]
   }
 
   /**
@@ -132,13 +131,13 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
     timePartitioning: TimePartitioning = TableWriteParam.DefaultTimePartitioning)(
     implicit tt: TypeTag[T],
     ev: T <:< HasAnnotation,
-    coder: Coder[T]): Future[Tap[T]] = {
+    coder: Coder[T]): ClosedTap[T] = {
     val param = TableWriteParam(writeDisposition, createDisposition, timePartitioning)
     implicit val hcoder = coder.asInstanceOf[Coder[T with HasAnnotation]]
     self
       .asInstanceOf[SCollection[T with HasAnnotation]]
       .write(BigQueryTyped.Table[T with HasAnnotation](tableSpec))(param)
-      .asInstanceOf[Future[Tap[T]]]
+      .asInstanceOf[ClosedTap[T]]
   }
 
   /**
@@ -148,7 +147,7 @@ final class BigQuerySCollection[T](@transient val self: SCollection[T]) extends 
   def saveAsTableRowJsonFile(path: String,
                              numShards: Int = TableRowJsonWriteParam.DefaultNumShards,
                              compression: Compression = TableRowJsonWriteParam.DefaultCompression)(
-    implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
+    implicit ev: T <:< TableRow): ClosedTap[TableRow] = {
     val param = TableRowJsonWriteParam(numShards, compression)
     self.asInstanceOf[SCollection[TableRow]].write(TableRowJsonIO(path))(param)
   }

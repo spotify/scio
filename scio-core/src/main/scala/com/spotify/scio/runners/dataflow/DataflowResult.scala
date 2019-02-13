@@ -32,7 +32,6 @@ import org.apache.beam.sdk.values.{PInput, POutput}
 import org.apache.beam.sdk.{Pipeline, PipelineResult}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 
 /** Represent a Dataflow runner specific result. */
 class DataflowResult(val internal: DataflowPipelineJob) extends RunnerResult {
@@ -58,14 +57,6 @@ class DataflowResult(val internal: DataflowPipelineJob) extends RunnerResult {
   override def asScioResult: ScioResult = new DataflowScioResult(internal)
 
   private class DataflowScioResult(internal: PipelineResult) extends ScioResult(internal) {
-    override val finalState: Future[PipelineResult.State] = {
-      import scala.concurrent.ExecutionContext.Implicits.global
-      Future {
-        internal.waitUntilFinish()
-        this.state
-      }
-    }
-
     override def getMetrics: Metrics = {
       val options = getJob.getEnvironment.getSdkPipelineOptions
         .get("options")

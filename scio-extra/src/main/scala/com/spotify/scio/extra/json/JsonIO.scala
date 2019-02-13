@@ -27,7 +27,6 @@ import io.circe.parser._
 import io.circe.syntax._
 import org.apache.beam.sdk.{io => beam}
 
-import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.util.{Left, Right}
 
@@ -40,11 +39,11 @@ final case class JsonIO[T: ClassTag: Encoder: Decoder: Coder](path: String) exte
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
     sc.wrap(sc.applyInternal(beam.TextIO.read().from(path))).map(decodeJson)
 
-  override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
+  override def write(data: SCollection[T], params: WriteP): Tap[T] = {
     data
       .map(x => params.printer.pretty(x.asJson))
       .applyInternal(jsonOut(path, params))
-    data.context.makeFuture(tap(Unit))
+    tap(Unit)
   }
 
   override def tap(params: ReadP): Tap[T] = new Tap[T] {
