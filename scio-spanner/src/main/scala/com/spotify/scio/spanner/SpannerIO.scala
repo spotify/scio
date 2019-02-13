@@ -25,7 +25,6 @@ import org.apache.beam.sdk.io.gcp.spanner.SpannerIO.FailureMode
 import org.apache.beam.sdk.io.gcp.spanner.{SpannerConfig, SpannerIO => BSpannerIO}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 
 sealed trait SpannerIO[T] extends ScioIO[T] {
   override final val tapT = EmptyTapOf[T]
@@ -78,7 +77,7 @@ final case class SpannerRead(config: SpannerConfig) extends SpannerIO[Struct] {
     sc.applyInternal(transform)
   }
 
-  override protected def write(data: SCollection[Struct], params: WriteP): Future[Tap[Nothing]] =
+  override protected def write(data: SCollection[Struct], params: WriteP): Tap[Nothing] =
     throw new IllegalStateException("SpannerRead is read-only")
 
   override def tap(params: ReadP): Tap[Nothing] = EmptyTap
@@ -100,8 +99,7 @@ final case class SpannerWrite(config: SpannerConfig) extends SpannerIO[Mutation]
   override type ReadP = Nothing
   override type WriteP = SpannerWrite.WriteParam
 
-  override protected def write(data: SCollection[Mutation],
-                               params: WriteP): Future[Tap[Nothing]] = {
+  override protected def write(data: SCollection[Mutation], params: WriteP): Tap[Nothing] = {
     val transform = BSpannerIO
       .write()
       .withSpannerConfig(config)
@@ -109,7 +107,7 @@ final case class SpannerWrite(config: SpannerConfig) extends SpannerIO[Mutation]
       .withFailureMode(params.failureMode)
 
     data.applyInternal(transform)
-    Future.successful(EmptyTap)
+    EmptyTap
   }
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Mutation] = sc.wrap {

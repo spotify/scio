@@ -30,7 +30,6 @@ import org.apache.beam.sdk.util.CoderUtils
 import org.joda.time.Instant
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 sealed trait PubsubIO[T] extends ScioIO[T] {
@@ -108,7 +107,7 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](name: Str
     }
   }
 
-  override def write(data: SCollection[T], params: WriteP): Future[Tap[Nothing]] = {
+  override def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     def setup[U](write: beam.PubsubIO.Write[U]) = {
       var w = write.to(name)
       if (idAttribute != null) {
@@ -147,7 +146,8 @@ private final case class PubsubIOWithoutAttributes[T: ClassTag: Coder](name: Str
         }
         .applyInternal(t)
     }
-    Future.successful(EmptyTap)
+
+    EmptyTap
   }
 }
 
@@ -190,7 +190,7 @@ private final case class PubsubIOWithAttributes[T: ClassTag: Coder](name: String
     }
   }
 
-  override def write(data: SCollection[WithAttributeMap], params: WriteP): Future[Tap[Nothing]] = {
+  override def write(data: SCollection[WithAttributeMap], params: WriteP): Tap[Nothing] = {
     var w = beam.PubsubIO.writeMessages().to(name)
     if (idAttribute != null) {
       w = w.withIdAttribute(idAttribute)
@@ -206,6 +206,7 @@ private final case class PubsubIOWithAttributes[T: ClassTag: Coder](name: String
         new beam.PubsubMessage(payload, attributes)
       }
       .applyInternal(w)
-    Future.successful(EmptyTap)
+
+    EmptyTap
   }
 }

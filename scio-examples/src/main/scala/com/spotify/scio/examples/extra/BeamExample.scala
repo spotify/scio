@@ -101,11 +101,11 @@ object BeamExample {
       // Custom output with a Beam sink `PTransform`
       .saveAsCustomOutput("Output", pubsubOut(args("outputTopic")))
 
-    // This calls `sc.pipeline.run()` under the hood
-    val result = sc.close()
+    // This calls sc.pipeline.run() under the hood
+    val closedContext = sc.close()
 
     // Underlying Beam pipeline result
-    val pipelineResult: PipelineResult = result.internal
+    val pipelineResult: PipelineResult = closedContext.pipelineResult
   }
 
 }

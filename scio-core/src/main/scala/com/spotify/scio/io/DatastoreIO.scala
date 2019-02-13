@@ -22,12 +22,11 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.{datastore => beam}
 
-import scala.concurrent.Future
-
 final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
 
   override type ReadP = DatastoreIO.ReadParam
   override type WriteP = Unit
+
   override val tapT = EmptyTapOf[Entity]
 
   override def read(sc: ScioContext, params: ReadP): SCollection[Entity] =
@@ -40,15 +39,14 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
           .withNamespace(params.namespace)
           .withQuery(params.query)))
 
-  override def write(data: SCollection[Entity], params: WriteP): Future[Tap[tapT.T]] = {
+  override def write(data: SCollection[Entity], params: WriteP): Tap[Nothing] = {
     data
       .asInstanceOf[SCollection[Entity]]
       .applyInternal(beam.DatastoreIO.v1.write.withProjectId(projectId))
-    Future.successful(EmptyTap)
+    EmptyTap
   }
 
-  override def tap(params: ReadP): Tap[Nothing] =
-    EmptyTap
+  override def tap(read: DatastoreIO.ReadParam): Tap[Nothing] = EmptyTap
 }
 
 object DatastoreIO {

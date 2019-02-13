@@ -149,7 +149,7 @@ object AutoComplete {
     }
 
     val result = sc.close()
-    exampleUtils.waitToFinish(result.internal)
+    exampleUtils.waitToFinish(result.pipelineResult)
   }
 
 }

@@ -19,8 +19,6 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
-import com.spotify.scio.examples.common.ExampleData
-import com.spotify.scio.io.Taps
 
 // ## Tap Output example
 // Save collections as text files, then open their `Tap`s in a new `ScioContext`
@@ -47,11 +45,11 @@ object TapOutputExample {
       .map(_.toString)
       // Save data for use later as a `Future[Tap[T]]`
       .saveAsTextFile(args("output"))
-    sc1.close()
+    val scioResult = sc1.close().waitUntilDone()
 
-    // Wait for `Future` completions, which should happen when `sc1` finishes
-    val t1 = f1.waitForResult()
-    val t2 = f2.waitForResult()
+    // Wait for future completions, which should happen when `sc1` finishes
+    val t1 = scioResult.tap(f1)
+    val t2 = scioResult.tap(f2)
 
     // scalastyle:off regex
     // Fetch `Tap` values directly
@@ -65,41 +63,6 @@ object TapOutputExample {
     // Block until job finishes
     val result = sc2.close().waitUntilFinish()
 
-    println(result.finalState)
-    // scalastyle:on regex
-  }
-}
-
-// ## Tap Input example
-// Use `Tap`s as input to defer execution logic until both `Future`s complete
-
-// Usage:
-
-// `sbt runMain "com.spotify.scio.examples.extra.TapInputExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]"`
-object TapInputExample {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val taps = Taps() // entry point to acquire taps
-
-    // extract `Tap[T]`s from two `Future[Tap[T]]`s
-    val r = for {
-      t1 <- taps.textFile(ExampleData.KING_LEAR)
-      t2 <- taps.textFile(ExampleData.OTHELLO)
-    } yield {
-      // execution logic when both taps are available
-      val (sc, _) = ContextAndArgs(cmdlineArgs)
-      val out = (t1.open(sc) ++ t2.open(sc))
-        .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-        .countByValue
-        .map(kv => kv._1 + "\t" + kv._2)
-        .materialize
-      sc.close()
-      out
-    }
-
-    // scalastyle:off regex
-    println(r.waitForResult().value.take(10).toList)
-    // scalastyle:on regex
+    println(result.state)
   }
 }

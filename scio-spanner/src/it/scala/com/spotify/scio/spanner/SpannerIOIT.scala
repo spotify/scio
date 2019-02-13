@@ -25,7 +25,7 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContext
+
 import scala.util.Random
 
 object SpannerIOIT {
@@ -77,7 +77,6 @@ object SpannerIOIT {
 
 class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
   import SpannerIOIT._
-  implicit val ec: ExecutionContext = ExecutionContext.global
 
   override def beforeAll(): Unit = {
     adminClient
@@ -136,10 +135,9 @@ class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
         )
       )
       .materialize
-      .map(_.value.toList)
 
-    sc.close().waitUntilDone()
-    read.map(_ should contain theSameElementsAs spannerRows.asStructs)
+    val scioResult = sc.close().waitUntilDone()
+    scioResult.tap(read).value.toList should contain theSameElementsAs spannerRows.asStructs
   }
 
   it should "perform reads from query" in new PopulatedSpannerTable("read_query_test") {
@@ -155,9 +153,8 @@ class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
         )
       )
       .materialize
-      .map(_.value.toList)
 
-    sc.close().waitUntilDone()
-    read.map(_ should contain theSameElementsAs spannerRows.asStructs)
+    val scioResult = sc.close().waitUntilDone()
+    scioResult.tap(read).value.toList should contain theSameElementsAs spannerRows.asStructs
   }
 }

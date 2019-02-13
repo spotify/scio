@@ -45,7 +45,6 @@ import org.joda.time.{Duration, Instant}
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.TreeMap
-import scala.concurrent._
 import scala.reflect.ClassTag
 
 /** Convenience functions for creating SCollections. */
@@ -1028,11 +1027,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * pipeline completes successfully.
    * @group output
    */
-  def materialize(implicit coder: Coder[T]): Future[Tap[T]] =
+  def materialize(implicit coder: Coder[T]): ClosedTap[T] =
     materialize(ScioUtil.getTempFile(context), isCheckpoint = false)
 
   private[scio] def materialize(path: String, isCheckpoint: Boolean)(
-    implicit coder: Coder[T]): Future[Tap[T]] =
+    implicit coder: Coder[T]): ClosedTap[T] =
     if (context.isTest) {
       // Do not run assertions on materialized value but still access test context to trigger
       // the test checking if we're running inside a JobTest
@@ -1053,7 +1052,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
             c.output(AvroBytesUtil.encode(elemCoder, c.element()))
         })
         .applyInternal(write)
-      context.makeFuture(MaterializeTap[T](path, context))
+      ClosedTap(MaterializeTap[T](path, context))
     }
 
   private[scio] def textOut(path: String,
@@ -1072,7 +1071,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection as a Datastore dataset. Note that elements must be of type `Entity`.
    * @group output
    */
-  def saveAsDatastore(projectId: String)(implicit ev: T <:< Entity): Future[Tap[Nothing]] =
+  def saveAsDatastore(projectId: String)(implicit ev: T <:< Entity): ClosedTap[Nothing] =
     this.asInstanceOf[SCollection[Entity]].write(DatastoreIO(projectId))
 
   /**
@@ -1084,7 +1083,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                    timestampAttribute: String = null,
                    maxBatchSize: Option[Int] = None,
                    maxBatchBytesSize: Option[Int] = None)(implicit ct: ClassTag[T],
-                                                          coder: Coder[T]): Future[Tap[Nothing]] = {
+                                                          coder: Coder[T]): ClosedTap[Nothing] = {
     val io = PubsubIO[T](topic, idAttribute, timestampAttribute)
     this.write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
   }
@@ -1098,7 +1097,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                                                      timestampAttribute: String = null,
                                                      maxBatchSize: Option[Int] = None,
                                                      maxBatchBytesSize: Option[Int] = None)(
-    implicit ev: T <:< (V, Map[String, String])): Future[Tap[Nothing]] = {
+    implicit ev: T <:< (V, Map[String, String])): ClosedTap[Nothing] = {
     val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
     this
       .asInstanceOf[SCollection[(V, Map[String, String])]]
@@ -1113,7 +1112,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                      numShards: Int = 0,
                      suffix: String = ".txt",
                      compression: Compression = Compression.UNCOMPRESSED)(
-    implicit ct: ClassTag[T]): Future[Tap[String]] = {
+    implicit ct: ClassTag[T]): ClosedTap[String] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
     } else {
@@ -1130,7 +1129,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
                        numShards: Int = 0,
                        suffix: String = ".bin",
                        compression: Compression = Compression.UNCOMPRESSED)(
-    implicit ev: T <:< Array[Byte]): Future[Tap[Nothing]] =
+    implicit ev: T <:< Array[Byte]): ClosedTap[Nothing] =
     this
       .asInstanceOf[SCollection[Array[Byte]]]
       .write(BinaryIO(path))(BinaryIO.WriteParam(suffix, numShards, compression))
@@ -1139,20 +1138,22 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Save this SCollection with a custom output transform. The transform should have a unique name.
    * @group output
    */
-  def saveAsCustomOutput[O <: POutput](name: String,
-                                       transform: PTransform[PCollection[T], O]): Future[Tap[T]] = {
+  def saveAsCustomOutput[O <: POutput](
+    name: String,
+    transform: PTransform[PCollection[T], O]): ClosedTap[Nothing] = {
     if (context.isTest) {
       TestDataManager.getOutput(context.testId.get)(CustomIO[T](name))(this)
     } else {
       this.internal.apply(name, transform)
     }
-    Future.failed(new NotImplementedError("Custom future not implemented"))
+
+    ClosedTap[Nothing](EmptyTap)
   }
 
-  private[scio] def saveAsInMemoryTap(implicit coder: Coder[T]): Future[Tap[T]] = {
+  private[scio] def saveAsInMemoryTap(implicit coder: Coder[T]): ClosedTap[T] = {
     val tap = new InMemoryTap[T]
     InMemorySink.save(tap.id, this)
-    context.makeFuture(tap)
+    ClosedTap(tap)
   }
 
   /**
@@ -1164,12 +1165,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @param io     an implementation of `ScioIO[T]` trait
    * @param params configurations need to pass to perform underline write implementation
    */
-  def write(io: ScioIO[T])(params: io.WriteP)(implicit coder: Coder[T]): Future[Tap[io.tapT.T]] =
+  def write(io: ScioIO[T])(params: io.WriteP)(implicit coder: Coder[T]): ClosedTap[io.tapT.T] =
     io.writeWithContext(this, params)
 
   // scalastyle:off structural.type
-  def write(io: ScioIO[T] { type WriteP = Unit })(
-    implicit coder: Coder[T]): Future[Tap[io.tapT.T]] =
+  def write(io: ScioIO[T] { type WriteP = Unit })(implicit coder: Coder[T]): ClosedTap[io.tapT.T] =
     io.writeWithContext(this, ())
   // scalastyle:on structural.type
 

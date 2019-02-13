@@ -22,11 +22,9 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.values.SCollection
 
-import scala.concurrent.Future
-
 sealed trait TapT[A] extends Serializable {
   type T
-  def saveForTest(data: SCollection[A])(implicit c: Coder[A]): Future[Tap[T]]
+  def saveForTest(data: SCollection[A])(implicit c: Coder[A]): Tap[T]
 }
 
 object TapT {
@@ -36,17 +34,18 @@ object TapT {
 }
 
 final class EmptyTapOf[A] private extends TapT[A] {
-  type T = Nothing
-  def saveForTest(data: SCollection[A])(implicit c: Coder[A]): Future[Tap[T]] =
-    Future.successful(EmptyTap)
+  override type T = Nothing
+
+  override def saveForTest(data: SCollection[A])(implicit c: Coder[A]): Tap[T] = EmptyTap
 }
 
 object EmptyTapOf { def apply[A]: TapT.Aux[A, Nothing] = new EmptyTapOf[A] }
 
 final class TapOf[A] private extends TapT[A] {
-  type T = A
-  def saveForTest(data: SCollection[A])(implicit c: Coder[A]): Future[Tap[T]] =
-    data.saveAsInMemoryTap
+  override type T = A
+
+  override def saveForTest(data: SCollection[A])(implicit c: Coder[A]): Tap[T] =
+    data.saveAsInMemoryTap.underlying
 }
 
 object TapOf { def apply[A]: TapT.Aux[A, A] = new TapOf[A] }
@@ -66,6 +65,7 @@ trait ScioIO[T] {
   // !!! This needs to be a stable value (ie: a val, not a def) in every implementations,
   // !!! otherwise the return type of write cannot be inferred.
   val tapT: TapT[T]
+
   // identifier for JobTest IO matching
   def testId: String = this.toString
 
@@ -89,22 +89,23 @@ trait ScioIO[T] {
   protected def read(sc: ScioContext, params: ReadP): SCollection[T]
 
   private[scio] def writeWithContext(data: SCollection[T], params: WriteP)(
-    implicit coder: Coder[T]): Future[Tap[tapT.T]] =
+    implicit coder: Coder[T]): ClosedTap[tapT.T] = ClosedTap {
     if (data.context.isTest) {
       writeTest(data, params)
     } else {
       write(data, params)
     }
+  }
 
-  protected def write(data: SCollection[T], params: WriteP): Future[Tap[tapT.T]]
+  protected def write(data: SCollection[T], params: WriteP): Tap[tapT.T]
 
   protected def writeTest(data: SCollection[T], params: WriteP)(
-    implicit coder: Coder[T]): Future[Tap[tapT.T]] = {
+    implicit coder: Coder[T]): Tap[tapT.T] = {
     TestDataManager.getOutput(data.context.testId.get)(this)(data)
     tapT.saveForTest(data)
   }
 
-  def tap(params: ReadP): Tap[tapT.T]
+  def tap(read: ReadP): Tap[tapT.T]
 }
 
 object ScioIO {
@@ -133,11 +134,11 @@ object ScioIO {
       override def read(sc: ScioContext, params: ReadP): SCollection[T] =
         io.read(sc, params)
 
-      override def write(data: SCollection[T], params: WriteP): Future[Tap[tapT.T]] =
+      override def write(data: SCollection[T], params: WriteP): Tap[io.tapT.T] =
         throw new IllegalStateException("read-only IO. This code should be unreachable")
 
-      override def tap(params: ReadP): Tap[tapT.T] =
-        io.tap(params)
+      override def tap(params: ReadP): Tap[io.tapT.T] = io.tap(params)
+
     }
   // scalastyle:on structural.type
 }
@@ -149,7 +150,7 @@ trait TestIO[T] extends ScioIO[T] {
 
   override def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new IllegalStateException(s"$this is for testing purpose only")
-  override def write(data: SCollection[T], params: WriteP): Future[Tap[tapT.T]] =
+  override def write(data: SCollection[T], params: WriteP): Tap[tapT.T] =
     throw new IllegalStateException(s"$this is for testing purpose only")
   override def tap(params: ReadP): Tap[tapT.T] =
     throw new IllegalStateException(s"$this is for testing purpose only")
@@ -160,7 +161,7 @@ trait TestIO[T] extends ScioIO[T] {
  * [[SCollection.saveAsCustomOutput]].
  */
 final case class CustomIO[T](id: String) extends TestIO[T] {
-  override val tapT = TapOf[T]
+  override val tapT: TapT.Aux[T, T] = TapOf[T]
 }
 
 /**
@@ -168,5 +169,5 @@ final case class CustomIO[T](id: String) extends TestIO[T] {
  * [[SCollection.readAllBytes]].
  */
 final case class ReadIO[T](id: String) extends TestIO[T] {
-  override val tapT = TapOf[T]
+  override val tapT: TapT.Aux[T, T] = TapOf[T]
 }

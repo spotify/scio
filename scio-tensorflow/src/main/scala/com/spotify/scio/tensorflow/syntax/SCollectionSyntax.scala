@@ -20,13 +20,13 @@ package com.spotify.scio.tensorflow.syntax
 import java.nio.channels.Channels
 
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.io.Tap
 import com.spotify.scio.tensorflow.{
   SavedBundlePredictDoFn,
   TFExampleIO,
   TFRecordIO,
   TFSequenceExampleIO
 }
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import com.spotify.zoltar.tf.TensorFlowModel
 import com.twitter.algebird.{Aggregator, MultiAggregator}
@@ -38,7 +38,6 @@ import org.tensorflow.example.{Example, SequenceExample}
 import org.tensorflow.metadata.v0._
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
@@ -155,7 +154,7 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
     path: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
-    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[Example]] =
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): ClosedTap[Example] =
     saveAsTfRecordFile(path, suffix = suffix, compression = compression, numShards = numShards)
 
   /**
@@ -166,7 +165,7 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
     path: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
-    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[Example]] = {
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): ClosedTap[Example] = {
     val param = TFExampleIO.WriteParam(suffix, compression, numShards)
     self.asInstanceOf[SCollection[Example]].write(TFExampleIO(path))(param)
   }
@@ -177,7 +176,7 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
    */
   @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
               "Scio 0.7.0")
-  def saveAsTfExampleFileWithSchema(path: String): Future[Tap[Example]] = {
+  def saveAsTfExampleFileWithSchema(path: String): ClosedTap[Example] = {
     this.saveAsTfExampleFileWithSchema(
       path,
       schema = null,
@@ -192,7 +191,7 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
    */
   @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
               "Scio 0.7.0")
-  def saveAsTfExampleFileWithSchema(path: String, schema: Schema): Future[Tap[Example]] = {
+  def saveAsTfExampleFileWithSchema(path: String, schema: Schema): ClosedTap[Example] = {
     this.saveAsTfExampleFileWithSchema(
       path,
       schema,
@@ -213,7 +212,7 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
     schemaFilename: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
-    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[Example]] = {
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): ClosedTap[Example] = {
     require(schemaFilename != null && schemaFilename != "", "schema filename has to be set!")
     val schemaPath = path.replaceAll("\\/+$", "") + "/" + schemaFilename
     if (schema == null) {
@@ -275,7 +274,7 @@ final class SeqExampleSCollectionOps[T <: Example](private val self: SCollection
     path: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
-    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[Example]] =
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): ClosedTap[Example] =
     saveAsTfRecordFile(path, suffix = suffix, compression = compression, numShards = numShards)
 
   /**
@@ -288,7 +287,7 @@ final class SeqExampleSCollectionOps[T <: Example](private val self: SCollection
     path: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
-    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[Example]] =
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): ClosedTap[Example] =
     new ExampleSCollectionOps(self.map(SeqExampleSCollectionOps.mergeExamples))
       .saveAsTfRecordFile(path, suffix, compression, numShards)
 
@@ -300,7 +299,7 @@ final class SeqExampleSCollectionOps[T <: Example](private val self: SCollection
    */
   @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
               "Scio 0.7.0")
-  def saveAsTfExampleFileWithSchema(path: String): Future[Tap[Example]] =
+  def saveAsTfExampleFileWithSchema(path: String): ClosedTap[Example] =
     saveAsTfExampleFileWithSchema(path, schema = null, schemaFilename = "_inferred_schema.pb")
 
   /**
@@ -311,7 +310,7 @@ final class SeqExampleSCollectionOps[T <: Example](private val self: SCollection
    */
   @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
               "Scio 0.7.0")
-  def saveAsTfExampleFileWithSchema(path: String, schema: Schema): Future[Tap[Example]] =
+  def saveAsTfExampleFileWithSchema(path: String, schema: Schema): ClosedTap[Example] =
     saveAsTfExampleFileWithSchema(path, schema, schemaFilename = "_schema.pb")
 
   /**
@@ -328,7 +327,7 @@ final class SeqExampleSCollectionOps[T <: Example](private val self: SCollection
     schemaFilename: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
-    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[Example]] =
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): ClosedTap[Example] =
     new ExampleSCollectionOps(self.map(this.mergeExamples))
       .saveAsTfExampleFileWithSchema(path, schema, schemaFilename, suffix, compression, numShards)
 
@@ -348,7 +347,7 @@ final class TFRecordSCollectionOps[T <: Array[Byte]](private val self: SCollecti
                          suffix: String = TFRecordIO.WriteParam.DefaultSuffix,
                          compression: Compression = TFRecordIO.WriteParam.DefaultCompression,
                          numShards: Int = TFRecordIO.WriteParam.DefaultNumShards)(
-    implicit ev: T <:< Array[Byte]): Future[Tap[Array[Byte]]] = {
+    implicit ev: T <:< Array[Byte]): ClosedTap[Array[Byte]] = {
     val param = TFRecordIO.WriteParam(suffix, compression, numShards)
     self.asInstanceOf[SCollection[Array[Byte]]].write(TFRecordIO(path))(param)
   }
@@ -368,7 +367,7 @@ final class SequenceExampleSCollectionOps[T <: SequenceExample](private val self
     path: String,
     suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
     compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
-    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[SequenceExample]] = {
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): ClosedTap[SequenceExample] = {
     val param = TFExampleIO.WriteParam(suffix, compression, numShards)
     self.asInstanceOf[SCollection[SequenceExample]].write(TFSequenceExampleIO(path))(param)
   }
