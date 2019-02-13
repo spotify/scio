@@ -87,7 +87,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
       params.schema
     }
     val resource =
-      FileBasedSink.convertToFileResourceIfPossible(data.pathWithShards(path))
+      FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithShards(path))
     val prefix = StaticValueProvider.of(resource)
     val usedFilenamePolicy =
       DefaultFilenamePolicy.fromStandardParameters(prefix, null, ".parquet", false)

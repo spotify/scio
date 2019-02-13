@@ -1042,7 +1042,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       val elemCoder = CoderMaterializer.beam(context, coder)
       val write = beam.AvroIO
         .writeGenericRecords(AvroBytesUtil.schema)
-        .to(this.pathWithShards(path))
+        .to(ScioUtil.pathWithShards(path))
         .withSuffix(".obj.avro")
         .withCodec(CodecFactory.deflateCodec(6))
         .withMetadata(Map.empty[String, AnyRef].asJava)
@@ -1056,16 +1056,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       context.makeFuture(MaterializeTap[T](path, context))
     }
 
-  private[scio] def pathWithShards(path: String) =
-    path.replaceAll("\\/+$", "") + "/part"
-
   private[scio] def textOut(path: String,
                             suffix: String,
                             numShards: Int,
                             compression: Compression) = {
     beam.TextIO
       .write()
-      .to(pathWithShards(path))
+      .to(ScioUtil.pathWithShards(path))
       .withSuffix(suffix)
       .withNumShards(numShards)
       .withWritableByteChannelFactory(FileBasedSink.CompressionType.fromCanonical(compression))
