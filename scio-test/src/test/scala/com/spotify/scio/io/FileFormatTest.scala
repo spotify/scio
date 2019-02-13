@@ -29,8 +29,6 @@ class FileFormatTest extends PipelineSpec {
   // Legacy files generated with 0.3.0-beta1, the last release before the
   // BufferedPrefix{Input,Output}Stream change.
 
-  private val path = "scio-test/src/test/resources"
-
   private val objects =
     (1 to 100).map(x => (x, x.toDouble, x % 2 == 0, "s" + x))
   private val protobufs = (1 to 100)
@@ -59,7 +57,7 @@ class FileFormatTest extends PipelineSpec {
   // Protobuf file IS not backwards compatible
   "Protobuf file" should "work with legacy file format" in {
     val sc = ScioContext()
-    val p = sc.protobufFile[Timestamp](s"$path/protobuf-file.avro")
+    val p = sc.protobufFile[Timestamp](getClass.getResource("/protobuf-file.avro").toString)
     p should containInAnyOrder(protobufs)
     sc.close()
   }
