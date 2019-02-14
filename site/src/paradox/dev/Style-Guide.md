@@ -4,38 +4,44 @@
 
 ### Scalafmt
 
-We use [scalafmt](https://scalameta.org/scalafmt) to format code automatically. Run the following command to format the entire codebase.
+We use [scalafmt](https://scalameta.org/scalafmt) to format code automatically and keep the code style consistent.
 
-`sbt scalafmt test:scalafmt scalafmtSbt`
+#### `Sbt` plugin 
 
-### IntelliJ IDEA
+Run the following command to format the entire codebase.
 
-Most of us write Scala code in IntelliJ IDEA and it's wise to let the IDE do most of the work including managing imports and formatting code. We also want to avoid custom settings as much as possible to make on-boarding new developers easier. Hence we use IntelliJ IDEA's default settings with the following exceptions:
+`sbt scalafmt test:scalafmt scalafmtSbt it:scalafmt`
 
-- Set _Code Style &rarr; Default Options &rarr; Right margin (columns)_ to 100
-- Turn off _Code Style &rarr; Scala &rarr; ScalaDoc &rarr; Use scaladoc indent for leading asterisk_
+#### IntelliJ IDEA
+
+Most of us write Scala code in IntelliJ IDEA and it's wise to let the IDE do most of the work including managing imports and formatting code. To use `scalafmt` you need an additional plugin. Follow this [link](https://plugins.jetbrains.com/plugin/8236-scalafmt) to install it.
+
+We also want to avoid custom settings as much as possible to make on-boarding new developers easier. Hence we use IntelliJ IDEA's default settings with the following exceptions:
+
+- Set _Code Style &rarr; Scala &rarr; Formatter &rarr; scalafmt_
 - Under _Copyright &rarr; Copyright Profiles_, add the following template.
-
-```
-Copyright $today.year Spotify AB.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
-```
+  
+  ```
+  Copyright $today.year Spotify AB.
+  
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  
+      http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied.  See the License for the
+  specific language governing permissions and limitations
+  under the License.
+  ```
 
 ### ScalaStyle
 
-We use ScalaStyle to cover the basics and the entire code base should pass. In case of exceptions, wrap the violating code with a pair of comments to temporarily suppress the warning.
+We use `ScalaStyle` to cover other rules that we don't cover with `scalafmt` and the entire code base should pass.
+In case of exceptions, on way of temporarily suppress the warnings is to wrap the violating code with a pair of comments:
 
 ```scala
 // scalastyle:off regex
@@ -43,13 +49,23 @@ println("hello")
 // scalastyle:on regex
 ```
 
-### Consistency
+Check `ScalaStyle` [configuration](http://www.scalastyle.org/configuration.html) doc for other ways of using comment filters.
 
-There are many different ways to write Scala code and it's hard to enforce a strict style. ScalaStyle's rule set is also not as comprehensive as Java's CheckStyle. When in doubt, be consistent with the rest of the code base.
+
+### Scalafix
+
+[Scalafix](https://scalacenter.github.io/scalafix/) is a refactoring and linting tool that we rely on as well to keep our code tidy. Currently we use the following rules:
+
+```
+rules = [
+  RemoveUnused,
+  LeakingImplicitClassVal
+]  
+```
 
 ### References
 
-We want to adhere to the styles of well known Scala projects and use the following documents as references. We follow the Databricks Scala Guide mainly with a few differences described in the next section.
+We want to adhere to the styles of well known Scala projects and use the following documents as references when `scalafmt` needs a little bit of help. We follow the Databricks Scala Guide mainly with a few differences described in the next section.
 
 - [Databricks Scala Guide](https://github.com/databricks/scala-style-guide)
 - The Official [Scala Style Guide](http://docs.scala-lang.org/style)
@@ -59,26 +75,32 @@ We want to adhere to the styles of well known Scala projects and use the followi
 
 ### Spacing and Indentation
 
-- For method declarations, align parameters when they don't fit in a single line. Return types can be either on the same line as the last parameter, or put to next line with no indent.
+- For method declarations, align parameters when they don't fit in a single line. Return types on the same line as the last parameter.
 
 ```scala
-def saveAsBigQuery(table: TableReference, schema: TableSchema,
-                   writeDisposition: WriteDisposition,
-                   createDisposition: CreateDisposition)
-                  (implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
-  // method body
-}
+  def saveAsBigQuery(
+    table: TableReference,
+    schema: TableSchema,
+    writeDisposition: WriteDisposition,
+    createDisposition: CreateDisposition,
+    tableDescription: String,
+    timePartitioning: TimePartitioning)(implicit ev: T <:< TableRow): Future[Tap[TableRow]] = {
+   // method body 
+  }
 
-def saveAsBigQuery(table: TableReference, schema: TableSchema,
-                   writeDisposition: WriteDisposition,
-                   createDisposition: CreateDisposition)
-                  (implicit ev: T <:< TableRow)
-: Future[Tap[TableRow]] = {
-  // method body
-}
+  def saveAsTypedBigQuery(
+    tableSpec: String,
+    writeDisposition: WriteDisposition = TableWriteParam.DefaultWriteDisposition,
+    createDisposition: CreateDisposition = TableWriteParam.DefaultCreateDisposition,
+    timePartitioning: TimePartitioning = TableWriteParam.DefaultTimePartitioning)(
+    implicit tt: TypeTag[T],
+    ev: T <:< HasAnnotation,
+    coder: Coder[T]): Future[Tap[T]] = {
+      // method body
+  }
 ```
 
-- For classes whose header doesn't fit in a single line, align the next line and add a blank line after class header.
+- For classes whose header doesn't fit in a single line and exceed the line, align the next line and add a blank line after class header.
 
 ```scala
 class Foo(val param1: String,
