@@ -73,8 +73,6 @@ object ScioIOBenchmark {
   object BigQueryWrite extends Benchmark {
     import com.spotify.scio.bigquery._
 
-    import scala.collection.JavaConverters._
-
     override def run(sc: ScioContext): Unit = {
       val table = "bigquery_benchmarks.bigquery_write"
       randomUUIDs(sc, 100 * 100000)

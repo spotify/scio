@@ -141,9 +141,9 @@ object BigtableBenchmark {
   def main(args: Array[String]): Unit = {
     // Run sequentially to avoid read/write contention
     BenchmarkRunner.runSequentially(args,
-      "BigtableBenchmark",
-      benchmarks,
-      commonArgs() ++ Array("--region=us-east1"))
+                                    "BigtableBenchmark",
+                                    benchmarks,
+                                    commonArgs() ++ Array("--region=us-east1"))
   }
 
   private val benchmarks =
