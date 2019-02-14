@@ -1,5 +1,7 @@
 # Internals
 
+@@toc { depth=2 }
+
 @@@ index
 
 * [Coders](Coders.md)
