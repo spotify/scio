@@ -194,7 +194,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.7.1*
+<i class="md-icon" title="Version">label_outline</i> 0.7.2*
 </label>
 </li>
 </ul>
@@ -288,7 +288,7 @@ scio&gt; wordCount.waitForResult().value.take(3).foreach(println)
 (via,4)
 (Hadoop,6)
 </code></pre>
-<p>Make sure <code>README.md</code> is in the current directory. This example counts words in local file using a local runner (<a href="https://beam.apache.org/releases/javadoc/2.9.0/?org/apache/beam/runners/direct/DirectRunner.html"><code>DirectRunner</code></a> and writes result in a local file. The pipeline and actual computation starts on <code>sc.close()</code>. The last command take 3 lines from results and prints them.</p>
+<p>Make sure <code>README.md</code> is in the current directory. This example counts words in local file using a local runner (<a href="https://beam.apache.org/releases/javadoc/2.10.0/?org/apache/beam/runners/direct/DirectRunner.html"><code>DirectRunner</code></a> and writes result in a local file. The pipeline and actual computation starts on <code>sc.close()</code>. The last command take 3 lines from results and prints them.</p>
 <h3><a href="#local-pipeline-" name="local-pipeline-" class="anchor"><span class="anchor-link"></span></a>Local pipeline ++</h3>
 <p>In the next example we will spice things up a bit and read data from GCS:</p>
 <pre><code>scio&gt; :newScio
@@ -417,7 +417,7 @@ scio&gt; evenNumbers.saveAsTextFile(&quot;/tmp/even&quot;)
 scio&gt; sc.close()
 </code></pre>
 <h3><a href="#running-jobs-asynchronously" name="running-jobs-asynchronously" class="anchor"><span class="anchor-link"></span></a>Running jobs asynchronously</h3>
-<p>When using REPL and Dataflow service consider using the non-blocking <a href="https://beam.apache.org/releases/javadoc/2.9.0/?org/apache/beam/runners/dataflow/DataflowRunner.html"><code>DataflowRunner</code></a> for a more interactive experience. To start:</p>
+<p>When using REPL and Dataflow service consider using the non-blocking <a href="https://beam.apache.org/releases/javadoc/2.10.0/?org/apache/beam/runners/dataflow/DataflowRunner.html"><code>DataflowRunner</code></a> for a more interactive experience. To start:</p>
 <pre><code>java -jar scio-repl-0.7.0.jar \
 &gt; --project=&lt;project-id&gt; \
 &gt; --stagingLocation=&lt;stagin-dir&gt; \
@@ -521,7 +521,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.7.1*
+0.7.2*
 </span>
 </div>
 </article>

@@ -196,7 +196,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.7.1*
+<i class="md-icon" title="Version">label_outline</i> 0.7.2*
 </label>
 </li>
 </ul>
@@ -231,17 +231,17 @@ spotify/scio
 <p>Scio aims to be a thin wrapper on top of Beam while offering idiomatic Scala style API.</p>
 <h2><a href="#basics" name="basics" class="anchor"><span class="anchor-link"></span></a>Basics</h2>
 <ul>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html"><code>ScioContext</code></a> wraps <a href="https://beam.apache.org/releases/javadoc/2.9.0/?org/apache/beam/sdk/Pipeline.html"><code>Pipeline</code></a></li>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html"><code>SCollection</code></a> wraps <a href="https://beam.apache.org/releases/javadoc/2.9.0/?org/apache/beam/sdk/values/PCollection.html"><code>PCollection</code></a></li>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioResult.html"><code>ScioResult</code></a> wraps <a href="https://beam.apache.org/releases/javadoc/2.9.0/?org/apache/beam/sdk/PipelineResult.html"><code>PipelineResult</code></a></li>
-  <li>Most <a href="https://beam.apache.org/releases/javadoc/2.9.0/?org/apache/beam/sdk/transforms/PTransform.html"><code>PTransform</code></a> are implemented as idiomatic Scala methods on <code>SCollection</code> e.g. <code>map</code>, <code>flatMap</code>, <code>filter</code>, <code>reduce</code>.</li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html"><code>ScioContext</code></a> wraps <a href="https://beam.apache.org/releases/javadoc/2.10.0/?org/apache/beam/sdk/Pipeline.html"><code>Pipeline</code></a></li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html"><code>SCollection</code></a> wraps <a href="https://beam.apache.org/releases/javadoc/2.10.0/?org/apache/beam/sdk/values/PCollection.html"><code>PCollection</code></a></li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioResult.html"><code>ScioResult</code></a> wraps <a href="https://beam.apache.org/releases/javadoc/2.10.0/?org/apache/beam/sdk/PipelineResult.html"><code>PipelineResult</code></a></li>
+  <li>Most <a href="https://beam.apache.org/releases/javadoc/2.10.0/?org/apache/beam/sdk/transforms/PTransform.html"><code>PTransform</code></a> are implemented as idiomatic Scala methods on <code>SCollection</code> e.g. <code>map</code>, <code>flatMap</code>, <code>filter</code>, <code>reduce</code>.</li>
   <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html"><code>PairSCollectionFunctions</code></a> and <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/DoubleSCollectionFunctions.html"><code>DoubleSCollectionFunctions</code></a> are specialized version of <code>SCollection</code> implemented via the Scala &ldquo;<a href="https://coderwall.com/p/k_1jzw/scala-s-pimp-my-library-pattern-example">pimp my library</a>&rdquo; pattern.</li>
   <li>An <code>SCollection[(K, V)]</code> is automatically converted to a <code>PairSCollectionFunctions</code> which provides key-value operations, e.g. <code>groupByKey</code>, <code>reduceByKey</code>, <code>cogroup</code>, <code>join</code>.</li>
   <li>An <code>SCollection[Double]</code> is automatically converted to a <code>DoubleSCollectionFunctions</code> which provides statistical operations, e.g. <code>stddev</code>, <code>variance</code>.</li>
 </ul>
 <h2><a href="#sciocontext-pipelineoptions-args-and-scioresult" name="sciocontext-pipelineoptions-args-and-scioresult" class="anchor"><span class="anchor-link"></span></a>ScioContext, PipelineOptions, Args and ScioResult</h2>
 <ul>
-  <li>Beam/Dataflow uses <a href="https://beam.apache.org/releases/javadoc/2.9.0/?org/apache/beam/sdk/options/PipelineOptions.html"><code>PipelineOptions</code></a> and its subclasses to parse command line arguments. Users have to extend the interface for their application level arguments.</li>
+  <li>Beam/Dataflow uses <a href="https://beam.apache.org/releases/javadoc/2.10.0/?org/apache/beam/sdk/options/PipelineOptions.html"><code>PipelineOptions</code></a> and its subclasses to parse command line arguments. Users have to extend the interface for their application level arguments.</li>
   <li>Scalding uses <a href="https://twitter.github.io/scalding/api/#com.twitter.scalding.Args"><code>Args</code></a> to parse application arguments in a more generic and boilerplate free style.</li>
   <li><code>ScioContext</code> has a <code>parseArguments</code> method that takes an <code>Array[String]</code> of command line arguments, parses Beam/Dataflow specific ones into a <code>PipelineOptions</code>, and application specific ones into an <code>Args</code>, and returns the <code>(PipelineOptions, Args)</code>.</li>
   <li><code>ContextAndArgs</code> is a short cut to create a <code>(ScioContext, Args)</code>.</li>
@@ -249,7 +249,7 @@ spotify/scio
 </ul>
 <h2><a href="#io" name="io" class="anchor"><span class="anchor-link"></span></a>IO</h2>
 <ul>
-  <li>Most <a href="https://beam.apache.org/releases/javadoc/2.9.0/?org/apache/beam/sdk/io/package-summary.html"><code>IO</code></a> Read transforms are implemented as methods on <code>ScioContext</code>, e.g. <code>avroFile</code>, <code>textFile</code>, <code>bigQueryTable</code>.</li>
+  <li>Most <a href="https://beam.apache.org/releases/javadoc/2.10.0/?org/apache/beam/sdk/io/package-summary.html"><code>IO</code></a> Read transforms are implemented as methods on <code>ScioContext</code>, e.g. <code>avroFile</code>, <code>textFile</code>, <code>bigQueryTable</code>.</li>
   <li>Most <code>IO</code> Write transforms are implemented as methods on <code>SCollection</code>, e.g. <code>saveAsAvroFile</code>, <code>saveAsTextFile</code>, <code>saveAsBigQueryTable</code>.</li>
   <li>These IO operations also detects when the <code>ScioContext</code> is running in a <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/JobTest$.html"><code>JobTest</code></a> and manages test IO in memory.</li>
   <li>Write options also return a <code>Future[Tap[T]]</code> where <a href="https://spotify.github.io/scio/api/com/spotify/scio/io/Tap.html"><code>Tap</code></a> abstracts away the logic of reading the dataset directly as an <code>Iterator[T]</code> or re-opening it in another <code>ScioContext</code>. The <code>Future</code> is complete once the job finishes. This can be used to do light weight pipeline orchestration e.g. <a href="https://spotify.github.io/scio/examples/WordCountOrchestration.scala.html">WordCountOrchestration.scala</a>.</li>
@@ -262,11 +262,11 @@ spotify/scio
 </ul>
 <h2><a href="#coders" name="coders" class="anchor"><span class="anchor-link"></span></a>Coders</h2>
 <ul>
-  <li>Beam/Dataflow uses <a href="https://beam.apache.org/releases/javadoc/2.9.0/?org/apache/beam/sdk/coders/Coder.html"><code>Coder</code></a> for (de)serializing elements in a <code>PCollection</code> during shuffle. There are built-in coders for Java primitive types, collections, and common types in GCP like Avro, ProtoBuf, BigQuery <code>TableRow</code>, Datastore <code>Entity</code>.</li>
+  <li>Beam/Dataflow uses <a href="https://beam.apache.org/releases/javadoc/2.10.0/?org/apache/beam/sdk/coders/Coder.html"><code>Coder</code></a> for (de)serializing elements in a <code>PCollection</code> during shuffle. There are built-in coders for Java primitive types, collections, and common types in GCP like Avro, ProtoBuf, BigQuery <code>TableRow</code>, Datastore <code>Entity</code>.</li>
   <li><code>PCollection</code> uses <a href="https://google.github.io/guava/releases/snapshot/api/docs/com/google/common/reflect/TypeToken.html"><code>TypeToken</code></a> from <a href="https://github.com/google/guava/wiki/ReflectionExplained">Guava reflection</a> and  to workaround Java type erasure and retrieve type information of elements. This may not always work but there is a <code>PCollection#setCoder</code> method to override.</li>
   <li>Twitter&rsquo;s <a href="https://github.com/twitter/chill">chill</a> library uses <a href="https://github.com/EsotericSoftware/kryo">kryo</a> to (de)serialize data. Chill includes serializers for common Scala types and cal also automatically derive serializers for arbitrary objects. Scio falls back to <a href="https://github.com/spotify/scio/tree/master/scio-core/src/main/scala/com/spotify/scio/coders/KryoAtomicCoder.scala"><code>KryoAtomicCoder</code></a> when a built-in one isn&rsquo;t available.</li>
   <li>A coder may be non-deterministic if <code>Coder#verifyDeterministic</code> throws an exception. Any data type with such a coder cannot be used as a key in <code>ByKey</code> operations. However <code>KryoAtomicCoder</code> assumes all types are deterministic for simplicity so it&rsquo;s up to the user&rsquo;s discretion to not avoid non-deterministic types e.g. tuples or case classes with doubles as keys.</li>
-  <li>Avro <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/generic/GenericRecord.html"><code>GenericRecord</code></a> requires a schema during deserialization (which is available as <code>GenericRecord#getSchema</code> for serialization) and <a href="https://beam.apache.org/releases/javadoc/2.9.0/?org/apache/beam/sdk/coders/AvroCoder.html"><code>AvroCoder</code></a> requires that too during initialization. This is not possible in <code>KryoAtomicCoder</code>, i.e. when nesting <code>GenericRecord</code> inside a Scala type. Instead <code>KryoAtomicCoder</code> serializes the schema before every record so that they can roundtrip safely. This is not optimal but the only way without requiring user to handcraft a custom coder.</li>
+  <li>Avro <a href="https://avro.apache.org/docs/current/api/java/org/apache/avro/generic/GenericRecord.html"><code>GenericRecord</code></a> requires a schema during deserialization (which is available as <code>GenericRecord#getSchema</code> for serialization) and <a href="https://beam.apache.org/releases/javadoc/2.10.0/?org/apache/beam/sdk/coders/AvroCoder.html"><code>AvroCoder</code></a> requires that too during initialization. This is not possible in <code>KryoAtomicCoder</code>, i.e. when nesting <code>GenericRecord</code> inside a Scala type. Instead <code>KryoAtomicCoder</code> serializes the schema before every record so that they can roundtrip safely. This is not optimal but the only way without requiring user to handcraft a custom coder.</li>
 </ul>
 </div>
 <div>
@@ -276,7 +276,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.7.1*
+0.7.2*
 </span>
 </div>
 </article>

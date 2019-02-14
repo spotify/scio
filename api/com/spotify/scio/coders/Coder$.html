@@ -163,6 +163,10 @@
                         <a href="Coder.html" title="">Coder</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="CoderException.html" title=""></a>
+                        <a href="CoderException.html" title="">CoderException</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="trait" href="CoderGrammar.html" title=""></a>
                         <a href="CoderGrammar.html" title="">CoderGrammar</a>
                       </li><li class="current-entities indented4">
@@ -226,7 +230,7 @@
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <span class="name">Coder</span><span class="result"> extends <a href="CoderGrammar.html" class="extype" name="com.spotify.scio.coders.CoderGrammar">CoderGrammar</a> with <a href="instances/Implicits.html" class="extype" name="com.spotify.scio.coders.instances.Implicits">coders.instances.Implicits</a></span>
+        <span class="name">Coder</span><span class="result"> extends <a href="CoderGrammar.html" class="extype" name="com.spotify.scio.coders.CoderGrammar">CoderGrammar</a> with <a href="instances/Implicits.html" class="extype" name="com.spotify.scio.coders.instances.Implicits">Implicits</a></span>
       </span>
       </h4>
 
@@ -235,7 +239,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="instances/Implicits.html" class="extype" name="com.spotify.scio.coders.instances.Implicits">instances.Implicits</a>, <a href="instances/LowPriorityFallbackCoder.html" class="extype" name="com.spotify.scio.coders.instances.LowPriorityFallbackCoder">LowPriorityFallbackCoder</a>, <a href="LowPriorityCoderDerivation.html" class="extype" name="com.spotify.scio.coders.LowPriorityCoderDerivation">LowPriorityCoderDerivation</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a>, <a href="http://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html#java.io.Serializable" class="extype" name="java.io.Serializable">Serializable</a>, <a href="instances/JodaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JodaCoders">JodaCoders</a>, <a href="instances/AlgebirdCoders.html" class="extype" name="com.spotify.scio.coders.instances.AlgebirdCoders">AlgebirdCoders</a>, <a href="instances/JavaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JavaCoders">JavaCoders</a>, <a href="instances/ProtobufCoders.html" class="extype" name="com.spotify.scio.coders.instances.ProtobufCoders">ProtobufCoders</a>, <a href="instances/AvroCoders.html" class="extype" name="com.spotify.scio.coders.instances.AvroCoders">AvroCoders</a>, <a href="instances/ScalaCoders.html" class="extype" name="com.spotify.scio.coders.instances.ScalaCoders">ScalaCoders</a>, <a href="instances/TupleCoders.html" class="extype" name="com.spotify.scio.coders.instances.TupleCoders">TupleCoders</a>, <a href="CoderGrammar.html" class="extype" name="com.spotify.scio.coders.CoderGrammar">CoderGrammar</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="instances/Implicits.html" class="extype" name="com.spotify.scio.coders.instances.Implicits">Implicits</a>, <a href="instances/LowPriorityFallbackCoder.html" class="extype" name="com.spotify.scio.coders.instances.LowPriorityFallbackCoder">LowPriorityFallbackCoder</a>, <a href="LowPriorityCoderDerivation.html" class="extype" name="com.spotify.scio.coders.LowPriorityCoderDerivation">LowPriorityCoderDerivation</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a>, <a href="http://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html#java.io.Serializable" class="extype" name="java.io.Serializable">Serializable</a>, <a href="instances/JodaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JodaCoders">JodaCoders</a>, <a href="instances/AlgebirdCoders.html" class="extype" name="com.spotify.scio.coders.instances.AlgebirdCoders">AlgebirdCoders</a>, <a href="instances/JavaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JavaCoders">JavaCoders</a>, <a href="instances/ProtobufCoders.html" class="extype" name="com.spotify.scio.coders.instances.ProtobufCoders">ProtobufCoders</a>, <a href="instances/AvroCoders.html" class="extype" name="com.spotify.scio.coders.instances.AvroCoders">AvroCoders</a>, <a href="instances/ScalaCoders.html" class="extype" name="com.spotify.scio.coders.instances.ScalaCoders">ScalaCoders</a>, <a href="instances/TupleCoders.html" class="extype" name="com.spotify.scio.coders.instances.TupleCoders">TupleCoders</a>, <a href="CoderGrammar.html" class="extype" name="com.spotify.scio.coders.CoderGrammar">CoderGrammar</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -982,7 +986,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">instantCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.joda.time.Instant">Instant</span>]</span>
+        <span class="name">instantCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="http://www.joda.org/joda-time/apidocs/org/joda/time/Instant.html#org.joda.time.Instant" class="extype" name="org.joda.time.Instant">Instant</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JodaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JodaCoders">JodaCoders</a></dd></dl></div>
@@ -1302,7 +1306,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">jodaDateTimeCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.joda.time.DateTime">DateTime</span>]</span>
+        <span class="name">jodaDateTimeCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="http://www.joda.org/joda-time/apidocs/org/joda/time/DateTime.html#org.joda.time.DateTime" class="extype" name="org.joda.time.DateTime">DateTime</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JodaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JodaCoders">JodaCoders</a></dd></dl></div>
@@ -1318,7 +1322,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">jodaLocalDateCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.joda.time.LocalDate">LocalDate</span>]</span>
+        <span class="name">jodaLocalDateCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="http://www.joda.org/joda-time/apidocs/org/joda/time/LocalDate.html#org.joda.time.LocalDate" class="extype" name="org.joda.time.LocalDate">LocalDate</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JodaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JodaCoders">JodaCoders</a></dd></dl></div>
@@ -1334,7 +1338,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">jodaLocalDateTimeCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.joda.time.LocalDateTime">LocalDateTime</span>]</span>
+        <span class="name">jodaLocalDateTimeCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="http://www.joda.org/joda-time/apidocs/org/joda/time/LocalDateTime.html#org.joda.time.LocalDateTime" class="extype" name="org.joda.time.LocalDateTime">LocalDateTime</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JodaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JodaCoders">JodaCoders</a></dd></dl></div>
@@ -1350,7 +1354,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">jodaLocalTimeCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="org.joda.time.LocalTime">LocalTime</span>]</span>
+        <span class="name">jodaLocalTimeCoder</span><span class="result">: <a href="Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<a href="http://www.joda.org/joda-time/apidocs/org/joda/time/LocalTime.html#org.joda.time.LocalTime" class="extype" name="org.joda.time.LocalTime">LocalTime</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="instances/JodaCoders.html" class="extype" name="com.spotify.scio.coders.instances.JodaCoders">JodaCoders</a></dd></dl></div>
@@ -2367,7 +2371,7 @@
 
         <div id="inheritedMembers">
         <div class="parent" name="com.spotify.scio.coders.instances.Implicits">
-              <h3>Inherited from <a href="instances/Implicits.html" class="extype" name="com.spotify.scio.coders.instances.Implicits">instances.Implicits</a></h3>
+              <h3>Inherited from <a href="instances/Implicits.html" class="extype" name="com.spotify.scio.coders.instances.Implicits">Implicits</a></h3>
             </div><div class="parent" name="com.spotify.scio.coders.instances.LowPriorityFallbackCoder">
               <h3>Inherited from <a href="instances/LowPriorityFallbackCoder.html" class="extype" name="com.spotify.scio.coders.instances.LowPriorityFallbackCoder">LowPriorityFallbackCoder</a></h3>
             </div><div class="parent" name="com.spotify.scio.coders.LowPriorityCoderDerivation">

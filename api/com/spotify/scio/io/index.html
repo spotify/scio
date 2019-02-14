@@ -288,6 +288,10 @@ detects the query's dialect. To override this, start the query with either <code
       
       <p class="shortcomment cmt">IO package for dynamic destinations.</p><div class="fullcomment"><div class="comment cmt"><p>IO package for dynamic destinations. Import All.</p><pre><span class="kw">import</span> com.spotify.scio.io.dynamic._</pre></div></div>
     </li><li class="current-entities indented4">
+                        <a class="object" href="BinaryIO$.html" title=""></a>
+                        <a class="class" href="BinaryIO.html" title="A ScioIO class for writing raw bytes to files."></a>
+                        <a href="BinaryIO.html" title="A ScioIO class for writing raw bytes to files.">BinaryIO</a>
+                      </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="CustomIO.html" title="Special version of ScioIO for use with ScioContext.customInput and SCollection.saveAsCustomOutput."></a>
                         <a href="CustomIO.html" title="Special version of ScioIO for use with ScioContext.customInput and SCollection.saveAsCustomOutput.">CustomIO</a>
@@ -611,7 +615,24 @@ detects the query's dialect. To override this, start the query with either <code
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.spotify.scio.io.CustomIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+              <ol><li name="com.spotify.scio.io.BinaryIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="BinaryIOextendsScioIO[Array[Byte]]withProductwithSerializable"></a><a id="BinaryIO:BinaryIO"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/index.html#BinaryIOextendsScioIO[Array[Byte]]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="A ScioIO class for writing raw bytes to files." href="BinaryIO.html"><span class="name">BinaryIO</span></a><span class="params">(<span name="path">path: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]] with <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">A ScioIO class for writing raw bytes to files.</p><div class="fullcomment"><div class="comment cmt"><p>A ScioIO class for writing raw bytes to files.
+Like TextIO, but without newline delimiters and operating over Array[Byte] instead of String.</p></div><dl class="paramcmts block"><dt class="param">path</dt><dd class="cmt"><p>a path to write to.</p></dd></dl></div>
+    </li><li name="com.spotify.scio.io.CustomIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="CustomIO[T]extendsTestIO[T]withProductwithSerializable"></a><a id="CustomIO[T]:CustomIO[T]"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/io/index.html#CustomIO[T]extendsTestIO[T]withProductwithSerializable" title="Permalink">
@@ -626,7 +647,7 @@ detects the query's dialect. To override this, start the query with either <code
         <a title="Special version of ScioIO for use with ScioContext.customInput and SCollection.saveAsCustomOutput." href="CustomIO.html"><span class="name">CustomIO</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="id">id: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="TestIO.html" class="extype" name="com.spotify.scio.io.TestIO">TestIO</a>[<span class="extype" name="com.spotify.scio.io.CustomIO.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
-      <p class="shortcomment cmt">Special version of <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a> for use with <a href="../ScioContext.html#customInput[T,I&gt;:org.apache.beam.sdk.values.PBegin&lt;:org.apache.beam.sdk.values.PInput](name:String,transform:org.apache.beam.sdk.transforms.PTransform[I,org.apache.beam.sdk.values.PCollection[T]])(implicitevidence$21:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" class="extmbr" name="com.spotify.scio.ScioContext#customInput">ScioContext.customInput</a> and
+      <p class="shortcomment cmt">Special version of <a href="ScioIO.html" class="extype" name="com.spotify.scio.io.ScioIO">ScioIO</a> for use with <a href="../ScioContext.html#customInput[T,I&gt;:org.apache.beam.sdk.values.PBegin&lt;:org.apache.beam.sdk.values.PInput](name:String,transform:org.apache.beam.sdk.transforms.PTransform[I,org.apache.beam.sdk.values.PCollection[T]])(implicitevidence$20:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" class="extmbr" name="com.spotify.scio.ScioContext#customInput">ScioContext.customInput</a> and
 <span class="extype" name="SCollection.saveAsCustomOutput">SCollection.saveAsCustomOutput</span>.</p>
     </li><li name="com.spotify.scio.io.DatastoreIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="DatastoreIOextendsScioIO[com.google.datastore.v1.Entity]withProductwithSerializable"></a><a id="DatastoreIO:DatastoreIO"></a>
@@ -851,7 +872,23 @@ opened in a new <a href="../ScioContext.html" class="extype" name="com.spotify.s
         <div class="values members">
               <h3>Value Members</h3>
               <ol>
-                <li name="com.spotify.scio.io.DatastoreIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+                <li name="com.spotify.scio.io.BinaryIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="BinaryIO"></a><a id="BinaryIO:BinaryIO"></a>
+      <span class="permalink">
+      <a href="../../../../com/spotify/scio/io/index.html#BinaryIO" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="BinaryIO$.html"><span class="name">BinaryIO</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.spotify.scio.io.DatastoreIO" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="DatastoreIO"></a><a id="DatastoreIO:DatastoreIO"></a>
       <span class="permalink">
       <a href="../../../../com/spotify/scio/io/index.html#DatastoreIO" title="Permalink">
