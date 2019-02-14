@@ -86,6 +86,7 @@ See [scio-contrib](https://github.com/spotify/scio-contrib) for community-suppor
 * [Testing](Scio-Unit-Tests.md)
 * [REPL](Scio-REPL.md)
 * [Internals](internals/index.md)
+* [Extras](extras/index.md)
 * [Migration guides](migrations/index.md)
 * [Development](dev/index.md)
 * [Scaladoc](scaladoc.md)
