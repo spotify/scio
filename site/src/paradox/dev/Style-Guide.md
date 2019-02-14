@@ -10,7 +10,7 @@ We use [scalafmt](https://scalameta.org/scalafmt) to format code automatically a
 
 Run the following command to format the entire codebase.
 
-`sbt scalafmt test:scalafmt scalafmtSbt`
+`sbt scalafmt test:scalafmt scalafmtSbt it:scalafmt`
 
 #### IntelliJ IDEA
 
@@ -40,13 +40,17 @@ We also want to avoid custom settings as much as possible to make on-boarding ne
 
 ### ScalaStyle
 
-We use ScalaStyle to cover other rules that we don't cover with `scalafmt` and the entire code base should pass. In case of exceptions, wrap the violating code with a pair of comments to temporarily suppress the warning.
+We use `ScalaStyle` to cover other rules that we don't cover with `scalafmt` and the entire code base should pass.
+In case of exceptions, on way of temporarily suppress the warnings is to wrap the violating code with a pair of comments:
 
 ```scala
 // scalastyle:off regex
 println("hello")
 // scalastyle:on regex
 ```
+
+Check `ScalaStyle` [configuration](http://www.scalastyle.org/configuration.html) doc for other ways of using comment filters.
+
 
 ### Scalafix
 
@@ -96,7 +100,7 @@ We want to adhere to the styles of well known Scala projects and use the followi
   }
 ```
 
-- For classes whose header doesn't fit in a single line and exceed the line line, align the next line and add a blank line after class header.
+- For classes whose header doesn't fit in a single line and exceed the line, align the next line and add a blank line after class header.
 
 ```scala
 class Foo(val param1: String,
