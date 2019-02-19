@@ -31,7 +31,7 @@ lazy val root: Project = project
       "com.spotify" %% "scio-core" % scioVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
-      "org.slf4j" % "slf4j-simple" % "1.7.25"
+      "org.slf4j" % "slf4j-simple" % "1.7.26"
     ),
     publish / skip := true
   )
