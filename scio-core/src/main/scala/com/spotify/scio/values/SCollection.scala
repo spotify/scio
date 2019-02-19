@@ -27,6 +27,7 @@ import com.google.datastore.v1.Entity
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer, WrappedBCoder}
+import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.sql.Query
 import com.spotify.scio.io._
 import com.spotify.scio.testing.TestDataManager
@@ -176,6 +177,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 
   def sql[O](query: Query[T, O]): SCollection[O] =
     query.run(this)
+
+  /**
+   * Convert instance of ${T} in this SCollection into instances of ${O}
+   * based on the Schemas on the 2 classes.
+   */
+  def to[O](implicit st: Schema[T], so: Schema[O]): SCollection[O] =
+    Query.to[T, O](this)
 
   /** Apply a transform. */
   @experimental

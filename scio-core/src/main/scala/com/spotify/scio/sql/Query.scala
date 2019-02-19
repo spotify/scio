@@ -209,6 +209,61 @@ object Query {
 
   def tsql[I: Schema, O: Schema](query: String): Query[I, O] =
     macro com.spotify.scio.sql.QueryMacros.tsqlImpl[I, O]
+
+  private def areCompatible(s0: BSchema, s1: BSchema): Boolean = {
+    val s0Fields = s0.getFields.asScala
+    println(s"s0Fields: $s0Fields")
+    println(s"s1Fields: ${s1.getFields}")
+    s1.getFields.asScala.forall { f =>
+      s0Fields
+        .find { x =>
+          println(s"${x.getName} == ${f.getName} = ${x.getName == f.getName}")
+          x.getName == f.getName
+        }
+        .map { other =>
+          (f.getType.getTypeName, other.getType.getTypeName) match {
+            case (BSchema.TypeName.ROW, BSchema.TypeName.ROW) =>
+              areCompatible(f.getType.getRowSchema, other.getType.getRowSchema)
+            case (_, _) =>
+              println("test equivalence")
+              f.getType.equivalent(other.getType, BSchema.EquivalenceNullablePolicy.SAME)
+          }
+        }
+        .getOrElse(false)
+    }
+  }
+
+  /**
+   * Convert instance of ${T} in this SCollection into instances of ${O}
+   * based on the Schemas on the 2 classes.
+   */
+  private[scio] def to[T, O](coll: SCollection[T])(implicit st: Schema[T],
+                                                   so: Schema[O]): SCollection[O] = {
+    import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
+    val (bst, toT, _) = SchemaMaterializer.materialize(coll.context, st)
+    val (bso, toO, fromO) = SchemaMaterializer.materialize(coll.context, so)
+
+    @inline def transform(schema: BSchema): Row => Row = { t0 =>
+      val values =
+        schema.getFields.asScala.map { f =>
+          t0.getValue[Object](f.getName) match {
+            case r if f.getType.getTypeName == BSchema.TypeName.ROW =>
+              transform(f.getType.getRowSchema)(r.asInstanceOf[Row])
+            case v => v
+          }
+        }
+      Row
+        .withSchema(schema)
+        .addValues(values: _*)
+        .build()
+    }
+
+    if (areCompatible(bst, bso)) {
+      coll.map[O] { t =>
+        fromO(transform(bso)(toT(t)))
+      }(Coder.beam(SchemaCoder.of(bso, toO, fromO)))
+    } else throw new IllegalArgumentException(s"Schemas $bst and $bso are not compatible")
+  }
 }
 
 object QueryMacros {

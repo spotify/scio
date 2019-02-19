@@ -407,4 +407,44 @@ class BeamSQLTest extends PipelineSpec {
           Udf.fromAggregateFn("maxUserAge", new MaxUserAgeUdafFn())
         )) should containInAnyOrder(expected)
   }
+
+  it should "automatically convert from compatible classes" in runWithContext { sc =>
+    sc.parallelize(FromTo.inputs)
+      .to[FromTo.To1] should containInAnyOrder(FromTo.expected)
+
+    case class JavaCompatibleUser(name: String, age: Int)
+    val expectedJavaCompatUsers =
+      javaUsers.map { j =>
+        JavaCompatibleUser(j.getName, j.getAge)
+      }
+    sc.parallelize(javaUsers)
+      .to[JavaCompatibleUser] should containInAnyOrder(expectedJavaCompatUsers)
+
+  // import com.spotify.scio.avro.{User => AvUser, Account, Address}
+  // val accounts: List[Account] = List(new Account(1, "tyoe", "name", 12.5))
+  // val address =
+  //   new Address("street1", "street2", "city", "state", "01234", "Sweden")
+  // val user = new AvUser(1, "lastname", "firstname", "email@foobar.com", accounts.asJava, address)
+
+  // sc.parallelize(javaUsers)
+  }
+}
+
+object FromTo {
+  case class From1(xs: List[Long], q: String)
+  case class From0(i: Int, s: String, e: From1)
+
+  case class To0(q: String, xs: List[Long])
+  case class To1(s: String, e: To0, i: Int)
+
+  val inputs =
+    (1 to 10).map { i =>
+      From0(1, s"from0_$i", From1((20 to 30).toList.map(_.toLong), s"from1_$i"))
+    }.toList
+
+  val expected =
+    inputs.map {
+      case From0(i, s, From1(xs, q)) =>
+        To1(s, To0(q, xs), i)
+    }.toList
 }
