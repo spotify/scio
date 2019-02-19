@@ -660,8 +660,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def cross[U: Coder](that: SCollection[U])(implicit tcoder: Coder[T]): SCollection[(T, U)] =
     this.transform { in =>
-      // TODO: switch to ListSideInput when https://github.com/spotify/scio/issues/1152 is resolved
-      val side = that.aggregate(Aggregator.toList[U]).asSingletonSideInput
+      val side = that.asListSideInput
       in.withSideInputs(side)
         .flatMap((t, s) => s(side).map((t, _)))
         .toSCollection
