@@ -43,6 +43,8 @@ import org.apache.beam.sdk.transforms.windowing.GlobalWindows;
 import org.apache.beam.sdk.transforms.windowing.Repeatedly;
 import org.apache.beam.sdk.transforms.windowing.TimestampCombiner;
 import org.apache.beam.sdk.transforms.windowing.Window;
+import org.apache.beam.sdk.util.BackOff;
+import org.apache.beam.sdk.util.FluentBackoff;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
@@ -282,8 +284,7 @@ public class ElasticsearchIO {
       private final SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests;
       private final ThrowingConsumer<BulkExecutionException> error;
       private final int maxBulkRequestSize;
-      private final int maxRetries;
-      private final int retryPause;
+      private final FluentBackoff backoffConfig;
 
       public ElasticsearchWriter(String clusterName,
           InetSocketAddress[] servers,
@@ -291,11 +292,13 @@ public class ElasticsearchIO {
           SerializableFunction<T, Iterable<ActionRequest<?>>> toActionRequests,
           ThrowingConsumer<BulkExecutionException> error, int maxRetries, int retryPause) {
         this.maxBulkRequestSize = maxBulkRequestSize;
-        this.maxRetries = maxRetries;
-        this.retryPause = retryPause;
         this.clientSupplier = new ClientSupplier(clusterName, servers);
         this.toActionRequests = toActionRequests;
         this.error = error;
+
+        this.backoffConfig = FluentBackoff.DEFAULT
+            .withMaxRetries(maxRetries)
+            .withInitialBackoff(Duration.standardSeconds(retryPause));
       }
 
 
@@ -320,37 +323,41 @@ public class ElasticsearchIO {
             Iterables.partition(actionRequests::iterator, maxBulkRequestSize);
 
         chunks.forEach(chunk -> {
-          int attempts = 0;
-          Exception exception = null;
+          Exception exception;
 
-          while (attempts <= maxRetries) {
+          final BackOff backoff = backoffConfig.backoff();
+
+          do {
             try {
-              if (attempts > 0) {
-                // Sleep on subsequent attempts.
-                Thread.sleep(retryPause * 1000);
-              }
-
               final BulkRequest bulkRequest = new BulkRequest().add(chunk).refresh(false);
               final BulkResponse bulkItemResponse = clientSupplier.get().bulk(bulkRequest).get();
               if (bulkItemResponse.hasFailures()) {
-                exception = new BulkExecutionException(bulkItemResponse);
+                throw new BulkExecutionException(bulkItemResponse);
               } else {
                 exception = null;
                 break;
               }
             } catch (Exception e) {
               exception = e;
-            } finally {
-              if (exception != null) {
-                LOG.error(
-                    "ElasticsearchWriter: Failed to bulk save chunk of " +
-                        Objects.toString(chunk.size()) + " items, attempts remaining: " +
-                        Objects.toString(maxRetries - attempts),
-                    exception);
+
+              LOG.error(
+                  "ElasticsearchWriter: Failed to bulk save chunk of " +
+                      Objects.toString(chunk.size()),
+                  exception);
+
+              // Backoff
+              try {
+                final long sleepTime = backoff.nextBackOffMillis();
+                if (sleepTime == BackOff.STOP) {
+                  break;
+                }
+                Thread.sleep(sleepTime);
+              } catch (InterruptedException | IOException e1) {
+                LOG.error("Interrupt during backoff", e1);
+                break;
               }
-              attempts += 1;
             }
-          }
+          } while (true);
 
           try {
             if (exception != null) {
