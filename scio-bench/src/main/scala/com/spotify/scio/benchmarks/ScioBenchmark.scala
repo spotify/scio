@@ -1,1 +1,1 @@
-../../../../../../../../scio-test/src/it/scala/com/spotify/com/spotify/scio/benchmarks/ScioBenchmark.scala
+../../../../../../../../scio-test/src/it/scala/com/spotify/scio/benchmarks/ScioBenchmark.scala

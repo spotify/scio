@@ -19,18 +19,18 @@ package com.spotify.scio.benchmarks
 
 import java.util.UUID
 
-import com.spotify.scio._
-import com.spotify.scio.coders.Coder
-import com.spotify.scio.runners.dataflow.DataflowResult
-import com.spotify.scio.values.SCollection
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.dataflow.model.{Job, JobMetrics}
-import com.google.api.services.dataflow.{Dataflow => GDataflow, DataflowScopes}
+import com.google.api.services.dataflow.{DataflowScopes, Dataflow => GDataflow}
 import com.google.common.reflect.ClassPath
 import com.google.datastore.v1._
 import com.google.datastore.v1.client.{Datastore, DatastoreHelper}
+import com.spotify.scio._
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.runners.dataflow.DataflowResult
+import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
