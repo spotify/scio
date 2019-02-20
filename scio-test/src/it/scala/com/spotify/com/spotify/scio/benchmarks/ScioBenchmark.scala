@@ -15,24 +15,22 @@
  * under the License.
  */
 
-package com.spotify
+package com.spotify.scio.benchmarks
 
 import java.util.UUID
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
-import com.google.api.client.json.jackson2.JacksonFactory
-import com.google.api.services.dataflow.model.{Job, JobMetrics}
-import com.google.api.services.dataflow.{Dataflow, DataflowScopes}
-import com.google.common.reflect.ClassPath
-import com.google.datastore.v1._
-import com.google.datastore.v1.client.{Datastore, DatastoreHelper}
-import com.spotify.ScioBatchBenchmark.Elem
-import com.spotify.ScioBenchmarkSettings.numOfWorkers
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.runners.dataflow.DataflowResult
 import com.spotify.scio.values.SCollection
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
+import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.services.dataflow.model.{Job, JobMetrics}
+import com.google.api.services.dataflow.{Dataflow => GDataflow, DataflowScopes}
+import com.google.common.reflect.ClassPath
+import com.google.datastore.v1._
+import com.google.datastore.v1.client.{Datastore, DatastoreHelper}
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
@@ -55,18 +53,18 @@ import scala.util.{Failure, Random, Success, Try}
  * that it can run with past Scio releases.
  */
 object ScioBenchmarkSettings {
-  val defaultProjectId: String = "data-integration-test"
-  val numOfWorkers = 4
+  val DefaultProjectId: String = "data-integration-test"
+  val NumOfWorkers = 4
 
   def commonArgs(machineType: String = "n1-standard-4"): Array[String] =
     Array("--runner=DataflowRunner",
-          s"--numWorkers=$numOfWorkers",
+          s"--numWorkers=$NumOfWorkers",
           s"--workerMachineType=$machineType",
           "--autoscalingAlgorithm=NONE")
 
-  val shuffleConf = Map("ShuffleService" -> Array("--experiments=shuffle_mode=service"))
+  val ShuffleConf = Map("ShuffleService" -> Array("--experiments=shuffle_mode=service"))
 
-  val circleCIEnv: Option[CircleCIEnv] = {
+  val CircleCI: Option[CircleCIEnv] = {
     val isCircleCIRun = sys.env.get("CIRCLECI").contains("true")
 
     if (isCircleCIRun) {
@@ -132,12 +130,12 @@ object ScioBenchmarkSettings {
 final case class CircleCIEnv(buildNum: Long, gitHash: String)
 
 object DataflowProvider {
-  val dataflow: Dataflow = {
+  val Dataflow: GDataflow = {
     val transport = GoogleNetHttpTransport.newTrustedTransport()
     val jackson = JacksonFactory.getDefaultInstance
     val credential = GoogleCredential.getApplicationDefault
       .createScoped(DataflowScopes.all())
-    new Dataflow.Builder(transport, jackson, credential).build()
+    new GDataflow.Builder(transport, jackson, credential).build()
   }
 }
 
@@ -164,17 +162,16 @@ case class BenchmarkResult(
 )
 
 object BenchmarkResult {
-
   import ScioBenchmarkSettings._
 
-  private val dateTimeParser = ISODateTimeFormat.dateTimeParser()
+  private val DateTimeParser = ISODateTimeFormat.dateTimeParser()
 
   def batch(name: String, extraArgs: Array[String], scioResult: ScioResult): BenchmarkResult = {
     require(scioResult.isCompleted)
 
     val job: Job = scioResult.as[DataflowResult].getJob
-    val startTime: LocalDateTime = dateTimeParser.parseLocalDateTime(job.getCreateTime)
-    val finishTime: LocalDateTime = dateTimeParser.parseLocalDateTime(job.getCurrentStateTime)
+    val startTime: LocalDateTime = DateTimeParser.parseLocalDateTime(job.getCreateTime)
+    val finishTime: LocalDateTime = DateTimeParser.parseLocalDateTime(job.getCurrentStateTime)
     val elapsedTime: Seconds = Seconds.secondsBetween(startTime, finishTime)
 
     val metrics: Map[String, String] = scioResult
@@ -190,7 +187,7 @@ object BenchmarkResult {
     BenchmarkResult(
       name,
       Some(elapsedTime),
-      circleCIEnv.map(_.buildNum).getOrElse(-1L),
+      CircleCI.map(_.buildNum).getOrElse(-1L),
       startTime,
       Some(finishTime),
       scioResult.state,
@@ -205,7 +202,7 @@ object BenchmarkResult {
                 buildNum: Long,
                 createTime: String,
                 jobMetrics: JobMetrics): BenchmarkResult = {
-    val startTime: LocalDateTime = dateTimeParser.parseLocalDateTime(createTime)
+    val startTime: LocalDateTime = DateTimeParser.parseLocalDateTime(createTime)
 
     val metrics = jobMetrics.getMetrics.asScala
       .filter(metric => StreamingMetrics.contains(metric.getName.getName))
@@ -242,14 +239,14 @@ object DatastoreLogger {
 class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try] {
 
   import DatastoreLogger._
-  import ScioBenchmarkSettings.circleCIEnv
+  import ScioBenchmarkSettings.CircleCI
 
   def dsKeyId(benchmark: BenchmarkResult): String = benchmark.buildNum.toString
 
   // Save metrics to integration testing Datastore instance. Can't make this into a
   // transaction because DS limit is 25 entities per transaction.
   def log(benchmarks: Iterable[BenchmarkResult]): Try[Unit] = {
-    circleCIEnv
+    CircleCI
       .map { env =>
         val now = new Instant()
         val dt = DatastoreType[ScioBenchmarkRun]
@@ -417,16 +414,19 @@ private[this] object PrettyPrint {
 // sbt scio-test/it:runMain com.spotify.ScioBatchBenchmarkResult $buildNum1 $buildNum2
 // where $buildNum1 and $buildNum2 are build number of "bench" jobs in CircleCI
 object ScioBatchBenchmarkResult {
-
   import ScioBenchmarkSettings._
 
   def main(args: Array[String]): Unit =
     new DatastoreLogger(BatchMetrics)
-      .printMetricsComparison(ScioBatchBenchmark.benchmarkNames, Some((args(0), args(1))))
+      .printMetricsComparison(ScioBatchBenchmark.BenchmarkNames, Some((args(0), args(1))))
 }
 
-abstract class Benchmark(val extraConfs: Map[String, Array[String]] = Map.empty)
-    extends Serializable {
+trait ScioJob {
+  def run(projectId: String, prefix: String, args: Array[String]): Any
+  def run(sc: ScioContext): Unit
+}
+
+abstract class Benchmark(val extraConfs: Map[String, Array[String]] = Map.empty) extends ScioJob {
   val name: String = this.getClass.getSimpleName.replaceAll("\\$$", "")
 
   private val configurations: Map[String, Array[String]] = {
@@ -439,9 +439,9 @@ abstract class Benchmark(val extraConfs: Map[String, Array[String]] = Map.empty)
     base ++ extra
   }
 
-  def run(projectId: String,
-          prefix: String,
-          args: Array[String]): Iterable[Future[BenchmarkResult]] = {
+  override def run(projectId: String,
+                   prefix: String,
+                   args: Array[String]): Iterable[Future[BenchmarkResult]] = {
     val username = CoreSysProps.User.value
     configurations
       .map {
@@ -455,8 +455,12 @@ abstract class Benchmark(val extraConfs: Map[String, Array[String]] = Map.empty)
           result.finalState.map(_ => BenchmarkResult.batch(confName, extraArgs, result))
       }
   }
+}
 
-  def run(sc: ScioContext): Unit
+object Benchmark {
+  import ScioBenchmarkSettings._
+
+  final case class Elem[T](elem: T)
 
   def randomUUIDs(sc: ScioContext, n: Long): SCollection[Elem[String]] =
     sc.parallelize(partitions(n)).transform("UUID-generator") {
@@ -477,7 +481,7 @@ abstract class Benchmark(val extraConfs: Map[String, Array[String]] = Map.empty)
 
   private def partitions(n: Long,
                          numPartitions: Int = 100,
-                         numOfWorkers: Int = numOfWorkers): Iterable[Iterable[Long]] = {
+                         numOfWorkers: Int = NumOfWorkers): Iterable[Iterable[Long]] = {
     val chunks = numPartitions * numOfWorkers
 
     def loop(n: Long): Seq[Long] = {
@@ -508,18 +512,17 @@ abstract class Benchmark(val extraConfs: Map[String, Array[String]] = Map.empty)
 }
 
 object BenchmarkRunner {
-  import ScioBenchmarkSettings._
 
   def runParallel(args: Array[String],
                   benchmarkPrefix: String,
                   benchmarks: mutable.Set[Benchmark]): Unit = {
     val argz = Args(args)
     val regex = argz.getOrElse("regex", ".*")
-    val projectId = argz.getOrElse("project", ScioBenchmarkSettings.defaultProjectId)
+    val projectId = argz.getOrElse("project", ScioBenchmarkSettings.DefaultProjectId)
     val prefix = createPrefix(argz, benchmarkPrefix)
     val results = benchmarks
       .filter(_.name.matches(regex))
-      .flatMap(_.run(projectId, prefix, commonArgs()))
+      .flatMap(_.run(projectId, prefix, ScioBenchmarkSettings.commonArgs()))
     val future = Future.sequence(results.map(_.map(ScioBenchmarkSettings.logger.log(_))))
     Await.result(future, Duration.Inf)
   }
@@ -539,7 +542,7 @@ object BenchmarkRunner {
                       pipelineArgs: Array[String]): Unit = {
     val argz = Args(args)
     val regex = argz.getOrElse("regex", ".*")
-    val projectId = argz.getOrElse("project", ScioBenchmarkSettings.defaultProjectId)
+    val projectId = argz.getOrElse("project", ScioBenchmarkSettings.DefaultProjectId)
     benchmarks
       .filter(_.name.matches(regex))
       .foreach(j => {

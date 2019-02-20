@@ -14,11 +14,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.spotify
+package com.spotify.scio.benchmarks
 
 import com.spotify.scio._
-import com.spotify.scio.avro.types.AvroType
-import com.spotify.scio.bigquery.types.BigQueryType
+import com.spotify.scio.avro._
+import com.spotify.scio.bigquery._
 
 /**
  * IO benchmark jobs, run once daily and logged to DataStore.
@@ -27,18 +27,17 @@ import com.spotify.scio.bigquery.types.BigQueryType
  * that it can run with past Scio releases.
  */
 object ScioIOBenchmark {
+  import Benchmark._
 
-  import ScioBatchBenchmark._
-
-  private val benchmarks =
-    ScioBenchmarkSettings.benchmarks("com\\.spotify\\.ScioIOBenchmark\\$[\\w]+\\$")
+  private val Benchmarks = ScioBenchmarkSettings
+    .benchmarks("com\\.spotify\\.scio\\.benchmarks\\.ScioIOBenchmark\\$[\\w]+\\$")
 
   // Has 823,280 records
-  private val avroGcsPath =
+  private val AvroGcsPath =
     "gs://data-integration-test-benchmark-eu/avro-benchmark/part-*"
 
   // Has 55,250 records
-  private val textGcsPath =
+  private val TextGcsPath =
     "gs://data-integration-test-benchmark-eu/text-benchmark/part-*"
 
   @AvroType.toSchema
@@ -51,28 +50,24 @@ object ScioIOBenchmark {
   case class Words(key: Int, word: String)
 
   def main(args: Array[String]): Unit =
-    BenchmarkRunner.runParallel(args, "ScioIOBenchmark", benchmarks)
+    BenchmarkRunner.runParallel(args, "ScioIOBenchmark", Benchmarks)
 
   // Reads 823,280 records
   object AvroIORead extends Benchmark {
-    import com.spotify.scio.avro._
-
     override def run(sc: ScioContext): Unit =
-      sc.typedAvroFile[Shakespeare](avroGcsPath)
+      sc.typedAvroFile[Shakespeare](AvroGcsPath)
         .map(s => s.word + ": " + s.word_count)
   }
 
   // Reads 55,250 records
   object TextIORead extends Benchmark {
     override def run(sc: ScioContext): Unit =
-      sc.textFile(textGcsPath)
+      sc.textFile(TextGcsPath)
         .map(_.split("\t"))
   }
 
   // Writes 10,000,000 records
   object BigQueryWrite extends Benchmark {
-    import com.spotify.scio.bigquery._
-
     override def run(sc: ScioContext): Unit = {
       val table = "bigquery_benchmarks.bigquery_write"
       randomUUIDs(sc, 100 * 100000)
@@ -84,8 +79,6 @@ object ScioIOBenchmark {
 
   // Reads 10,000,000 records
   object BigQueryRead extends Benchmark {
-    import com.spotify.scio.bigquery._
-
     override def run(sc: ScioContext): Unit =
       sc.typedBigQuery[Row]()
         .map(r => (r.key, r.word))
