@@ -20,6 +20,14 @@ package com.spotify.scio.coders
 private object Derived extends Serializable {
   import magnolia._
 
+  @inline private def catching[T](msg: String, stack: Array[StackTraceElement])(v: => T): T =
+    try {
+      v
+    } catch {
+      case e: Exception =>
+        throw new CoderException(stack, e, msg)
+    }
+
   def combineCoder[T](typeName: TypeName,
                       ps: Seq[Param[Coder, T]],
                       rawConstruct: Seq[Any] => T): Coder[T] = {
@@ -31,18 +39,26 @@ private object Derived extends Serializable {
       i = i + 1
     }
 
+    val stack = CoderException.prepareStackTrace
+
     @inline def destruct(v: T): Array[Any] = {
       val arr = new Array[Any](ps.length)
       var i = 0
       while (i < ps.length) {
         val p = ps(i)
-        arr.update(i, p.dereference(v))
-        i = i + 1
+        catching(s"Error while dereferencing parameter ${p.label} in $v", stack) {
+          arr.update(i, p.dereference(v))
+          i = i + 1
+        }
       }
       arr
     }
 
-    Coder.record[T](typeName.full, cs, rawConstruct, destruct)
+    val constructor: Seq[Any] => T =
+      ps =>
+        catching(s"Error while constructing object from parameters $ps", stack)(rawConstruct(ps))
+
+    Coder.record[T](typeName.full, cs, constructor, destruct)
   }
 }
 

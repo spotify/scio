@@ -148,15 +148,24 @@ private final case class DisjunctionCoder[T, Id](typeName: String,
 }
 
 final case class CoderException private[coders] (stacktrace: Array[StackTraceElement],
-                                                 cause: Throwable)
+                                                 cause: Throwable,
+                                                 message: String = "")
     extends RuntimeException {
   override def getMessage: String = cause.getMessage
   override def getCause: Throwable = new RuntimeException {
-    override def getMessage: String = "Coder was materialized at"
+    override def getMessage: String = s"$message - Coder was materialized at"
     override def getStackTrace: Array[StackTraceElement] = stacktrace
     override def getCause: Throwable = cause.getCause
   }
   override def getStackTrace: Array[StackTraceElement] = cause.getStackTrace
+}
+
+private[coders] object CoderException {
+  def prepareStackTrace: Array[StackTraceElement] =
+    Thread
+      .currentThread()
+      .getStackTrace()
+      .dropWhile(_.getClassName.contains(WrappedBCoder.getClass.getName))
 }
 
 // XXX: Workaround a NPE deep down the stack in Beam
@@ -168,10 +177,7 @@ private case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
    * to provide a helpful stacktrace if an exception happens
    */
   private val stackTrace: Array[StackTraceElement] =
-    Thread
-      .currentThread()
-      .getStackTrace()
-      .dropWhile(_.getClassName.contains(WrappedBCoder.getClass.getName))
+    CoderException.prepareStackTrace
 
   private def buildException(cause: Throwable): Exception =
     CoderException(stackTrace, cause)
