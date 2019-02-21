@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify
+package com.spotify.scio.benchmarks
 
 import java.util.UUID
 
@@ -48,7 +48,7 @@ object ScioStreamingBenchmark {
     val argz = Args(args)
     val name = argz("name")
     val regex = argz.getOrElse("regex", ".*")
-    val projectId = argz.getOrElse("project", defaultProjectId)
+    val projectId = argz.getOrElse("project", DefaultProjectId)
     val timestamp = DateTimeFormat
       .forPattern("yyyyMMddHHmmss")
       .withZone(DateTimeZone.UTC)
@@ -57,16 +57,17 @@ object ScioStreamingBenchmark {
 
     cancelCurrentJobs(projectId)
 
-    benchmarks
+    Benchmarks
       .filter(_.name.matches(regex))
       .map(_.run(projectId, prefix, commonArgs("n1-highmem-8")))
   }
 
-  private val benchmarks = ClassPath
+  private val Benchmarks = ClassPath
     .from(Thread.currentThread().getContextClassLoader)
     .getAllClasses
     .asScala
-    .filter(_.getName.matches("com\\.spotify\\.ScioStreamingBenchmark\\$[\\w]+\\$"))
+    .filter(_.getName
+      .matches("com\\.spotify\\.scio\\.benchmarks\\.ScioStreamingBenchmark\\$[\\w]+\\$"))
     .flatMap { ci =>
       val cls = ci.load()
       if (classOf[StreamingBenchmark] isAssignableFrom cls) {
@@ -76,11 +77,11 @@ object ScioStreamingBenchmark {
       }
     }
 
-  private val cancelledState = "JOB_STATE_CANCELLED"
+  private val CancelledState = "JOB_STATE_CANCELLED"
 
   /** Cancel any currently running streaming benchmarks before spawning new ones */
   private def cancelCurrentJobs(projectId: String): Unit = {
-    val jobs = dataflow.projects().jobs()
+    val jobs = Dataflow.projects().jobs()
 
     Option(jobs.list(projectId).setFilter("ACTIVE").execute().getJobs).foreach { activeJobs =>
       activeJobs.asScala.foreach { job =>
@@ -91,7 +92,7 @@ object ScioStreamingBenchmark {
             .update(
               projectId,
               job.getId,
-              new Job().setProjectId(projectId).setId(job.getId).setRequestedState(cancelledState)
+              new Job().setProjectId(projectId).setId(job.getId).setRequestedState(CancelledState)
             )
             .execute()
         }
@@ -156,15 +157,15 @@ object ScioStreamingBenchmark {
       .map(_ => UUID.randomUUID().toString)
 }
 
-abstract class StreamingBenchmark {
-  import ScioBenchmarkSettings.circleCIEnv
+abstract class StreamingBenchmark extends ScioJob {
+  import ScioBenchmarkSettings.CircleCI
 
   val name: String = this.getClass.getSimpleName.replaceAll("\\$$", "")
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  def run(projectId: String, prefix: String, args: Array[String]): (String, ScioResult) = {
+  override def run(projectId: String, prefix: String, args: Array[String]): (String, ScioResult) = {
     val username = CoreSysProps.User.value
-    val buildNum = circleCIEnv.map(_.buildNum).getOrElse(-1L)
+    val buildNum = CircleCI.map(_.buildNum).getOrElse(-1L)
 
     val (sc, _) = ContextAndArgs(args)
     sc.setAppName(name)
@@ -176,8 +177,6 @@ abstract class StreamingBenchmark {
 
     (name, sc.close())
   }
-
-  def run(sc: ScioContext): Unit
 
   def outputTopic(sc: ScioContext): String =
     s"projects/${sc.optionsAs[GcpOptions].getProject}/topics/StreamingBenchmark-$name"
@@ -192,10 +191,10 @@ object ScioStreamingBenchmarkMetrics {
   def main(args: Array[String]): Unit = {
     val argz = Args(args)
     val name = argz("name")
-    val projectId = argz.getOrElse("project", defaultProjectId)
+    val projectId = argz.getOrElse("project", DefaultProjectId)
     val jobNamePattern = s"sciostreamingbenchmark-$name-\\d+-([a-zA-Z0-9]+)-(-?\\d+)-\\w+".r
 
-    val jobs = dataflow.projects().jobs().list(projectId)
+    val jobs = Dataflow.projects().jobs().list(projectId)
 
     val hourlyMetrics =
       Option(jobs.setFilter("ACTIVE").execute().getJobs)
@@ -206,7 +205,7 @@ object ScioStreamingBenchmarkMetrics {
                 benchmarkNameAndBuildNum.group(1),
                 benchmarkNameAndBuildNum.group(2).toLong,
                 job.getCreateTime,
-                dataflow.projects().jobs().getMetrics(projectId, job.getId).execute()
+                Dataflow.projects().jobs().getMetrics(projectId, job.getId).execute()
               )
             }
           }
