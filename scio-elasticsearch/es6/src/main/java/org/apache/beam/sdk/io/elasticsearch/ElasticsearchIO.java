@@ -164,12 +164,14 @@ public class ElasticsearchIO {
       private final ThrowingConsumer<BulkExecutionException> error;
 
       private Bound(final String clusterName,
-          final InetSocketAddress[] servers,
-          final Duration flushInterval,
-          final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
-          final long numOfShard,
-          final int maxBulkRequestSize,
-          int maxRetries, int retryPause, final ThrowingConsumer<BulkExecutionException> error) {
+                    final InetSocketAddress[] servers,
+                    final Duration flushInterval,
+                    final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
+                    final long numOfShard,
+                    final int maxBulkRequestSize,
+                    int maxRetries,
+                    int retryPause,
+                    final ThrowingConsumer<BulkExecutionException> error) {
         this.clusterName = clusterName;
         this.servers = servers;
         this.flushInterval = flushInterval;
