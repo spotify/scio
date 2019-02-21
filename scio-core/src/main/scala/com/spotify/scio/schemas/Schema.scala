@@ -22,7 +22,12 @@ import scala.language.higherKinds
 import scala.reflect.{classTag, ClassTag}
 import scala.collection.JavaConverters._
 import org.apache.beam.sdk.schemas.utils.JavaBeanUtils
-import org.apache.beam.sdk.schemas.{Schema => BSchema, JavaBeanSchema}
+import org.apache.beam.sdk.schemas.{
+  Schema => BSchema,
+  JavaBeanSchema,
+  FieldValueGetter,
+  FieldValueSetter
+}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.values.Row
@@ -94,10 +99,32 @@ object Schema extends LowPriorityFallbackSchema {
     Arr(s, identity, identity)
 
   implicit def javaBeanSchema[T: IsJavaBean: ClassTag]: Schema[T] = {
+    val rc = classTag[T].runtimeClass.asInstanceOf[Class[T]]
     val schema =
-      JavaBeanUtils.schemaFromJavaBeanClass(classTag[T].runtimeClass,
-                                            JavaBeanSchema.GetterTypeSupplier.INSTANCE)
-    Type[T](FieldType.row(schema))
+      JavaBeanUtils.schemaFromJavaBeanClass(rc, JavaBeanSchema.GetterTypeSupplier.INSTANCE)
+    val getters = JavaBeanUtils.getGetters(rc, schema, JavaBeanSchema.GetterTypeSupplier.INSTANCE)
+    val setters = JavaBeanUtils.getSetters(rc, schema, new JavaBeanSchema.SetterTypeSupplier())
+
+    val fields: Array[(String, Schema[Any])] =
+      schema.getFields.asScala.map { f =>
+        (f.getName, Type[Any](f.getType))
+      }.toArray
+
+    val construct: Seq[Any] => T = { ps =>
+      val instance: T = rc.newInstance()
+      ps.zip(setters.asScala).foreach {
+        case (v, s) =>
+          s.asInstanceOf[FieldValueSetter[T, Any]].set(instance, v)
+      }
+      instance
+    }
+
+    val destruct: T => Array[Any] = { t =>
+      getters.asScala.map { g =>
+        g.asInstanceOf[FieldValueGetter[T, Any]].get(t)
+      }.toArray
+    }
+    Record(fields, construct, destruct)
   }
 
   @inline final def apply[T](implicit c: Schema[T]): Schema[T] = c

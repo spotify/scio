@@ -24,7 +24,7 @@ import org.apache.beam.sdk.extensions.sql.SqlTransform
 import org.apache.beam.sdk.extensions.sql.impl.BeamSqlEnv
 import org.apache.beam.sdk.extensions.sql.impl.schema.BeamPCollectionTable
 import org.apache.beam.sdk.extensions.sql.impl.schema.BaseBeamTable
-import org.apache.beam.sdk.schemas.{Schema => BSchema}
+import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaCoder}
 import org.apache.beam.sdk.extensions.sql.impl.utils.CalciteUtils
 import com.google.common.collect.ImmutableMap
 
@@ -210,26 +210,34 @@ object Query {
   def tsql[I: Schema, O: Schema](query: String): Query[I, O] =
     macro com.spotify.scio.sql.QueryMacros.tsqlImpl[I, O]
 
+  private def areCompatible(t0: BSchema.FieldType, t1: BSchema.FieldType): Boolean = {
+    (t0.getTypeName, t1.getTypeName) match {
+      case (BSchema.TypeName.ROW, BSchema.TypeName.ROW) =>
+        areCompatible(t0.getRowSchema, t1.getRowSchema)
+      case (BSchema.TypeName.ARRAY, BSchema.TypeName.ARRAY) =>
+        areCompatible(t0.getCollectionElementType, t1.getCollectionElementType)
+      case (BSchema.TypeName.MAP, BSchema.TypeName.MAP) =>
+        areCompatible(t0.getMapKeyType, t1.getMapKeyType)
+        areCompatible(t0.getMapValueType, t1.getMapValueType)
+      case (_, _) =>
+        t0.equivalent(t1, BSchema.EquivalenceNullablePolicy.SAME)
+    }
+  }
+
   private def areCompatible(s0: BSchema, s1: BSchema): Boolean = {
     val s0Fields = s0.getFields.asScala
-    println(s"s0Fields: $s0Fields")
-    println(s"s1Fields: ${s1.getFields}")
     s1.getFields.asScala.forall { f =>
       s0Fields
         .find { x =>
-          println(s"${x.getName} == ${f.getName} = ${x.getName == f.getName}")
           x.getName == f.getName
         }
         .map { other =>
-          (f.getType.getTypeName, other.getType.getTypeName) match {
-            case (BSchema.TypeName.ROW, BSchema.TypeName.ROW) =>
-              areCompatible(f.getType.getRowSchema, other.getType.getRowSchema)
-            case (_, _) =>
-              println("test equivalence")
-              f.getType.equivalent(other.getType, BSchema.EquivalenceNullablePolicy.SAME)
-          }
+          val res = areCompatible(f.getType, other.getType)
+          res
         }
-        .getOrElse(false)
+        .getOrElse {
+          false
+        }
     }
   }
 
@@ -239,7 +247,6 @@ object Query {
    */
   private[scio] def to[T, O](coll: SCollection[T])(implicit st: Schema[T],
                                                    so: Schema[O]): SCollection[O] = {
-    import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
     val (bst, toT, _) = SchemaMaterializer.materialize(coll.context, st)
     val (bso, toO, fromO) = SchemaMaterializer.materialize(coll.context, so)
 
