@@ -239,12 +239,8 @@ class BeamSQLTest extends PipelineSpec {
     "Schema.javaBeanSchema[TypeMismatch]" shouldNot compile
   }
 
-  // TODO: Typechecked query ?
   // TODO: Join SCollections ?
-  // TODO: nested case classes query
-  // TODO: convert compatible classes using nominal binding
   // TODO: Should chaining row queries be supported ?
-  // TODO: Support UDF
   // ignore should "properly chain row queries" in runWithContext { sc =>
   //   val schemaRes = BSchema.builder().addInt64Field("sum(age)").build()
   //   val expected = Row.withSchema(schemaRes).addValue(255).build()
