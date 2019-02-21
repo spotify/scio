@@ -293,25 +293,32 @@ public class ElasticsearchIO {
       private final ClientSupplier clientSupplier;
       private final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests;
       private final ThrowingConsumer<BulkExecutionException> error;
+      private FluentBackoff backoffConfig;
       private final int maxBulkRequestSize;
-      private final FluentBackoff backoffConfig;
+      private final int maxRetries;
+      private final int retryPause;
 
       public ElasticsearchWriter(String clusterName,
-          InetSocketAddress[] servers,
-          int maxBulkRequestSize,
-          SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
-          ThrowingConsumer<BulkExecutionException> error,
-          int maxRetries, int retryPause) {
+                    InetSocketAddress[] servers,
+                    int maxBulkRequestSize,
+                    SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
+                    ThrowingConsumer<BulkExecutionException> error,
+                    int maxRetries,
+                    int retryPause) {
         this.maxBulkRequestSize = maxBulkRequestSize;
         this.clientSupplier = new ClientSupplier(clusterName, servers);
         this.toDocWriteRequests = toDocWriteRequests;
         this.error = error;
-
-        this.backoffConfig = FluentBackoff.DEFAULT
-            .withMaxRetries(maxRetries)
-            .withInitialBackoff(Duration.standardSeconds(retryPause));
+        this.maxRetries = maxRetries;
+        this.retryPause = retryPause;
       }
 
+      @Setup
+      public void setup() throws Exception {
+        this.backoffConfig = FluentBackoff.DEFAULT
+            .withMaxRetries(this.maxRetries)
+            .withInitialBackoff(Duration.standardSeconds(this.retryPause));
+      }
 
       @SuppressWarnings("Duplicates")
       @ProcessElement
