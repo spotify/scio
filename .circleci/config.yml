@@ -155,13 +155,31 @@ jobs:
     <<: [*publish_211]
     executor: scala_212
 
+  bench_io:
+    executor: scala_212
+    steps:
+    - build:
+        build-steps:
+        - run:
+            command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioIOBenchmark --name=ci"
+            no_output_timeout: 30m
+
+  bench_bigtable:
+    executor: scala_212
+    steps:
+    - build:
+        build-steps:
+        - run:
+            command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-bigtable/it:runMain com.spotify.scio.bigtable.BigtableBenchmark --name=ci"
+            no_output_timeout: 30m
+
   bench_batch:
     executor: scala_212
     steps:
     - build:
         build-steps:
         - run:
-            command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.ScioBatchBenchmark --name=ci"
+            command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioBatchBenchmark --name=ci"
             no_output_timeout: 30m
 
   bench_streaming:
@@ -170,7 +188,7 @@ jobs:
     - build:
         build-steps:
         - run:
-            command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.ScioStreamingBenchmark --name=ci"
+            command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioStreamingBenchmark --name=ci"
             no_output_timeout: 30m
 
   bench_streaming_metrics:
@@ -179,7 +197,7 @@ jobs:
     - build:
         build-steps:
         - run:
-            command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.ScioStreamingBenchmarkMetrics --name=ci"
+            command: sbt -v $SBT_OPTS ++$SCALA_VERSION "scio-test/it:runMain com.spotify.scio.benchmarks.ScioStreamingBenchmarkMetrics --name=ci"
             no_output_timeout: 30m
 
 ####################
@@ -278,6 +296,8 @@ workflows:
               only:
                 - master
     jobs:
+      - bench_io
+      - bench_bigtable
       - bench_batch
       - bench_streaming
   bench_streaming_metrics:
