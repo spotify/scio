@@ -18,23 +18,21 @@
 package com.spotify.scio.util
 
 import java.lang.{Iterable => JIterable}
-import java.util.{List => JList}
+import java.util.{ArrayList => JArrayList, List => JList}
 
-import com.google.common.collect.Lists
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-
+import com.twitter.algebird.{Monoid, Semigroup}
 import org.apache.beam.sdk.coders.{CoderRegistry, Coder => BCoder}
 import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.Partition.PartitionFn
 import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
-import com.twitter.algebird.{Monoid, Semigroup}
 
 import scala.collection.JavaConverters._
 
 private[scio] object Functions {
 
-  private val BUFFER_SIZE = 20
+  private[this] val BufferSize = 20
 
   // TODO: rename
   private abstract class KryoCombineFn[VI, VA, VO] extends CombineFn[VI, VA, VO] with NamedFn {
@@ -67,13 +65,13 @@ private[scio] object Functions {
       }
 
       override def createAccumulator(): (U, JList[T]) =
-        (zeroValue, Lists.newArrayList())
+        (zeroValue, new JArrayList[T])
 
       override def addInput(accumulator: (U, JList[T]), input: T): (U, JList[T]) = {
-        val (a, l) = accumulator
+        val (_, l) = accumulator
         l.add(input)
-        if (l.size() >= BUFFER_SIZE) {
-          (fold(accumulator), Lists.newArrayList())
+        if (l.size() >= BufferSize) {
+          (fold(accumulator), new JArrayList[T]())
         } else {
           accumulator
         }
@@ -84,7 +82,7 @@ private[scio] object Functions {
 
       override def mergeAccumulators(accumulators: JIterable[(U, JList[T])]): (U, JList[T]) = {
         val combined = accumulators.iterator.asScala.map(fold).reduce(c)
-        (combined, Lists.newArrayList())
+        (combined, new JArrayList[T]())
       }
 
     }
@@ -118,13 +116,13 @@ private[scio] object Functions {
         }
 
       override def createAccumulator(): (Option[C], JList[T]) =
-        (None, Lists.newArrayList())
+        (None, new JArrayList[T]())
 
       override def addInput(accumulator: (Option[C], JList[T]), input: T): (Option[C], JList[T]) = {
         val (a, l) = accumulator
         l.add(input)
-        if (l.size() >= BUFFER_SIZE) {
-          (foldOption(accumulator), Lists.newArrayList())
+        if (l.size() >= BufferSize) {
+          (foldOption(accumulator), new JArrayList[T]())
         } else {
           accumulator
         }
@@ -144,7 +142,7 @@ private[scio] object Functions {
           } else {
             None
           }
-        (combined, Lists.newArrayList())
+        (combined, new JArrayList[T]())
       }
 
     }
@@ -180,11 +178,11 @@ private[scio] object Functions {
 
   private abstract class ReduceFn[T: Coder] extends KryoCombineFn[T, JList[T], T] {
 
-    override def createAccumulator(): JList[T] = Lists.newArrayList()
+    override def createAccumulator(): JList[T] = new JArrayList[T]()
 
     override def addInput(accumulator: JList[T], input: T): JList[T] = {
       accumulator.add(input)
-      if (accumulator.size > BUFFER_SIZE) {
+      if (accumulator.size > BufferSize) {
         val v = reduceOption(accumulator.asScala).get
         accumulator.clear()
         accumulator.add(v)
@@ -198,7 +196,7 @@ private[scio] object Functions {
     override def mergeAccumulators(accumulators: JIterable[JList[T]]): JList[T] = {
       val partial: Iterable[T] =
         accumulators.asScala.flatMap(a => reduceOption(a.asScala))
-      val r = Lists.newArrayList[T]()
+      val r = new JArrayList[T]()
       reduceOption(partial).foreach(r.add)
       r
     }
@@ -224,8 +222,10 @@ private[scio] object Functions {
       override def mergeAccumulators(accumulators: JIterable[JList[T]]): JList[T] = {
         val partial =
           accumulators.asScala.flatMap(a => _sg.sumOption(a.asScala))
-        val combined = _sg.sumOption(partial).get
-        Lists.newArrayList(combined)
+        val combined: T = _sg.sumOption(partial).get
+        val list = new JArrayList[T]()
+        list.add(combined)
+        list
       }
       override def reduceOption(accumulator: Iterable[T]): Option[T] =
         _sg.sumOption(accumulator)
