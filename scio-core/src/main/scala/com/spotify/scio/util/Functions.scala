@@ -34,14 +34,32 @@ private[scio] object Functions {
 
   private[this] val BufferSize = 20
 
-  private object CombineFn {
-    def fold[A, B](accumulator: A, list: JList[B])(f: (A, B) => A): A = {
+  private object Fns {
+    def fold[A, B](accumulator: A, list: JIterable[B])(f: (A, B) => A): A = {
       val iter = list.iterator()
       var acc: A = accumulator
       while (iter.hasNext) {
         acc = f(acc, iter.next())
       }
       acc
+    }
+
+    def reduce[A](list: JIterable[A])(op: (A, A) => A): A = {
+      val iter = list.iterator()
+      var acc = iter.next()
+      while (iter.hasNext) {
+        acc = op(acc, iter.next())
+      }
+      acc
+    }
+
+    def reduceOption[A](list: JIterable[A])(op: (A, A) => A): Option[A] = {
+      val iter = list.iterator()
+      if (iter.hasNext) {
+        Some(reduce(list)(op))
+      } else {
+        None
+      }
     }
   }
 
@@ -70,7 +88,7 @@ private[scio] object Functions {
 
       private def fold(accumulator: (U, JList[T])): U = {
         val (a, l) = accumulator
-        CombineFn.fold(a, l)(s)
+        Fns.fold(a, l)(s)
       }
 
       override def createAccumulator(): (U, JList[T]) =
@@ -116,7 +134,7 @@ private[scio] object Functions {
       private def foldOption(accumulator: (Option[C], JList[T])): Option[C] = {
         val (opt, l) = accumulator
         if (opt.isDefined) {
-          Some(CombineFn.fold(opt.get, l)(mv))
+          Some(Fns.fold(opt.get, l)(mv))
         } else {
           if (opt.isEmpty && l.isEmpty) {
             None
@@ -242,18 +260,8 @@ private[scio] object Functions {
       val vocoder = Coder[T]
       private[this] val g = ClosureCleaner(f) // defeat closure
 
-      override def reduceOption(accumulator: JIterable[T]): Option[T] = {
-        val iter = accumulator.iterator()
-        if (iter.hasNext) {
-          var acc = iter.next()
-          while (iter.hasNext) {
-            acc = g(acc, iter.next())
-          }
-          Some(acc)
-        } else {
-          None
-        }
-      }
+      override def reduceOption(accumulator: JIterable[T]): Option[T] =
+        Fns.reduceOption(accumulator)(g)
     }
 
   def reduceFn[T: Coder](sg: Semigroup[T]): BCombineFn[T, JList[T], T] =
@@ -266,7 +274,7 @@ private[scio] object Functions {
         val iter = accumulators.iterator()
         val acc: JArrayList[T] = new JArrayList[T]()
         while (iter.hasNext) {
-          _sg.sumOption(iter.next().asScala).foreach(acc.add(_))
+          Fns.reduceOption(iter.next())(_sg.plus(_, _)).foreach(acc.add(_))
         }
 
         val combined: T = _sg.sumOption(acc.asScala).get
@@ -276,7 +284,7 @@ private[scio] object Functions {
       }
 
       override def reduceOption(accumulator: JIterable[T]): Option[T] =
-        _sg.sumOption(accumulator.asScala)
+        Fns.reduceOption(accumulator)(_sg.plus(_, _))
     }
 
   def reduceFn[T: Coder](mon: Monoid[T]): BCombineFn[T, JList[T], T] =
@@ -286,7 +294,7 @@ private[scio] object Functions {
       private[this] val _mon = ClosureCleaner(mon) // defeat closure
 
       override def reduceOption(accumulator: JIterable[T]): Option[T] =
-        _mon.sumOption(accumulator.asScala).orElse(Some(_mon.zero))
+        Fns.reduceOption(accumulator)(_mon.plus(_, _)).orElse(Some(_mon.zero))
     }
 
 }
