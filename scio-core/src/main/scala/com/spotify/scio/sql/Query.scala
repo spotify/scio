@@ -138,6 +138,9 @@ object Query {
           |
           |PCOLLECTION schema:
           |${prettyPrint(schema.getFields.asScala.toList)}
+          |Query result schema (infered) is unknown
+          |Expected schema:
+          |${prettyPrint(expectedSchema.getFields.asScala.toList)}
         """.stripMargin
       }
       .map { q =>
@@ -200,10 +203,17 @@ object Query {
     new Query[I, O] {
       val query = q
       def run(s: SCollection[I]): SCollection[O] = {
-        import org.apache.beam.sdk.schemas.SchemaCoder
-        val (schema, to, from) = SchemaMaterializer.materialize(s.context, Schema[O])
-        val coll: SCollection[Row] = Query.row[I](query, udfs: _*).run(s)
-        coll.map[O](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
+        try {
+          import org.apache.beam.sdk.schemas.SchemaCoder
+          val (schema, to, from) = SchemaMaterializer.materialize(s.context, Schema[O])
+          val coll: SCollection[Row] = Query.row[I](query, udfs: _*).run(s)
+          coll.map[O](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
+        } catch {
+          case e: org.apache.beam.sdk.extensions.sql.impl.ParseException =>
+            Query
+              .typecheck(this)
+              .fold(err => throw new RuntimeException(err, e), _ => throw e)
+        }
       }
     }
 
@@ -265,11 +275,22 @@ object Query {
         .build()
     }
 
+    // TODO: Make that check at compile time ?
     if (areCompatible(bst, bso)) {
       coll.map[O] { t =>
         fromO(transform(bso)(toT(t)))
       }(Coder.beam(SchemaCoder.of(bso, toO, fromO)))
-    } else throw new IllegalArgumentException(s"Schemas $bst and $bso are not compatible")
+    } else {
+      val message =
+        s"""
+          |Schema are not compatible.
+          |
+          |FROM schema:
+          |${prettyPrint(bst.getFields.asScala.toList)}
+          |TO schema:
+          |${prettyPrint(bso.getFields.asScala.toList)}""".stripMargin
+      throw new IllegalArgumentException(message)
+    }
   }
 }
 

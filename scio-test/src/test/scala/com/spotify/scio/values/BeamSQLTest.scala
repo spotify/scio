@@ -32,6 +32,7 @@ import org.apache.beam.sdk.values.Row
 import org.scalatest.Assertion
 
 import scala.collection.JavaConverters._
+import com.spotify.scio.avro
 
 object TestData {
   case class Foo(i: Int, s: String)
@@ -100,6 +101,20 @@ object TestData {
 
     override def extractOutput(accumulator: Integer): Integer = accumulator
   }
+
+  val avroUsers: List[avro.User] =
+    (1 to 10).map { i =>
+      val addr =
+        new avro.Address(
+          s"street1_$i",
+          s"street2_$i",
+          s"city_$i",
+          s"",
+          s"114 36",
+          s"SE"
+        )
+      new avro.User(i, s"lastname_$i", s"firstname_$i", s"email$i@spotify.com", Nil.asJava, addr)
+    }.toList
 }
 
 class BeamSQLTest extends PipelineSpec {
@@ -415,6 +430,31 @@ class BeamSQLTest extends PipelineSpec {
     sc.parallelize(from)
       .to[TinyTo] should containInAnyOrder(tinyTo)
   }
+
+  it should "Support queries on Avro generated classes" in runWithContext { sc =>
+    val expected: List[(Int, String, String)] =
+      avroUsers.map { u =>
+        (u.getId.toInt, u.getFirstName.toString, u.getLastName.toString)
+      }
+
+    val query =
+      Query.of[avro.User, (Int, String, String)](
+        "SELECT id, first_name, last_name from PCOLLECTION")
+
+    sc.parallelize(avroUsers)
+      .sql(query) should containInAnyOrder(expected)
+  }
+
+  it should "Automatically convert from Avro to Scala" in runWithContext { sc =>
+    import TypeConvertionsTestData._
+    val expected: List[AvroCompatibleUser] =
+      avroUsers.map { u =>
+        AvroCompatibleUser(u.getId.toInt, u.getFirstName.toString, u.getLastName.toString)
+      }
+
+    sc.parallelize(avroUsers)
+      .to[AvroCompatibleUser] should containInAnyOrder(expected)
+  }
 }
 
 object TypeConvertionsTestData {
@@ -447,4 +487,6 @@ object TypeConvertionsTestData {
     javaUsers.map { j =>
       JavaCompatibleUser(j.getName, j.getAge)
     }
+
+  case class AvroCompatibleUser(id: Int, first_name: String, last_name: String)
 }

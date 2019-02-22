@@ -21,16 +21,16 @@ import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import scala.language.higherKinds
 import scala.reflect.{classTag, ClassTag}
 import scala.collection.JavaConverters._
-import org.apache.beam.sdk.schemas.utils.JavaBeanUtils
 import org.apache.beam.sdk.schemas.{
   Schema => BSchema,
   JavaBeanSchema,
-  FieldValueGetter,
-  FieldValueSetter
+  AvroRecordSchema,
+  SchemaProvider
 }
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.coders.{Coder => BCoder}
-import org.apache.beam.sdk.values.Row
+import org.apache.beam.sdk.values.{Row, TypeDescriptor}
+import org.apache.avro.specific.SpecificRecord
 import BSchema.{Field, FieldType}
 
 sealed trait Schema[T] {
@@ -49,6 +49,25 @@ final case class Record[T] private (schemas: Array[(String, Schema[Any])],
 
 object Record {
   def apply[T](implicit r: Record[T]): Record[T] = r
+}
+
+final case class RawRecord[T](schema: BSchema,
+                              fromRow: SerializableFunction[Row, T],
+                              toRow: SerializableFunction[T, Row])
+    extends Schema[T] {
+  type Repr = Row
+}
+
+object RawRecord {
+  def apply[T: ClassTag](provider: SchemaProvider): RawRecord[T] = {
+    val rc = classTag[T].runtimeClass.asInstanceOf[Class[T]]
+    val td = TypeDescriptor.of(rc)
+    val schema = provider.schemaFor(td)
+    def toRow = provider.toRowFunction(td)
+    def fromRow = provider.fromRowFunction(td)
+    RawRecord(schema, fromRow, toRow)
+  }
+
 }
 
 final case class Type[T](fieldType: FieldType) extends Schema[T] {
@@ -98,34 +117,11 @@ object Schema extends LowPriorityFallbackSchema {
   implicit def jCollectionSchema[T](implicit s: Schema[T]): Schema[java.util.List[T]] =
     Arr(s, identity, identity)
 
-  implicit def javaBeanSchema[T: IsJavaBean: ClassTag]: Schema[T] = {
-    val rc = classTag[T].runtimeClass.asInstanceOf[Class[T]]
-    val schema =
-      JavaBeanUtils.schemaFromJavaBeanClass(rc, JavaBeanSchema.GetterTypeSupplier.INSTANCE)
-    val getters = JavaBeanUtils.getGetters(rc, schema, JavaBeanSchema.GetterTypeSupplier.INSTANCE)
-    val setters = JavaBeanUtils.getSetters(rc, schema, new JavaBeanSchema.SetterTypeSupplier())
+  implicit def javaBeanSchema[T: IsJavaBean: ClassTag]: Schema[T] =
+    RawRecord[T](new JavaBeanSchema())
 
-    val fields: Array[(String, Schema[Any])] =
-      schema.getFields.asScala.map { f =>
-        (f.getName, Type[Any](f.getType))
-      }.toArray
-
-    val construct: Seq[Any] => T = { ps =>
-      val instance: T = rc.newInstance()
-      ps.zip(setters.asScala).foreach {
-        case (v, s) =>
-          s.asInstanceOf[FieldValueSetter[T, Any]].set(instance, v)
-      }
-      instance
-    }
-
-    val destruct: T => Array[Any] = { t =>
-      getters.asScala.map { g =>
-        g.asInstanceOf[FieldValueGetter[T, Any]].get(t)
-      }.toArray
-    }
-    Record(fields, construct, destruct)
-  }
+  implicit def avroSchema[T <: SpecificRecord: ClassTag]: Schema[T] =
+    RawRecord[T](new AvroRecordSchema())
 
   @inline final def apply[T](implicit c: Schema[T]): Schema[T] = c
 
@@ -179,6 +175,8 @@ object SchemaMaterializer {
               Field.of(name, fieldType(schema))
           }
         FieldType.row(BSchema.of(fields: _*))
+      case RawRecord(bschema, _, _) =>
+        FieldType.row(bschema)
       case Type(t)      => t
       case Fallback(_)  => FieldType.BYTES
       case Arr(s, _, _) => FieldType.array(fieldType(s))
@@ -196,8 +194,10 @@ object SchemaMaterializer {
           case (n, s) => (n, materializeSchema(sc, s))
         }
         Record[A](schemasMat, construct, destruct)
-      case Type(t) =>
-        Type(t)
+      case r @ RawRecord(_, _, _) =>
+        r
+      case t @ Type(_) =>
+        t
       case Optional(s) =>
         Optional(materializeSchema(sc, s))
       case Fallback(c) =>
@@ -211,10 +211,11 @@ object SchemaMaterializer {
   // XXX: scalac can't unify schema.Repr with s.Repr
   private def dispatchDecode[A](schema: Schema[A]): schema.Decode =
     schema match {
-      case s @ Record(_, _, _) => (decode(s)(_)).asInstanceOf[schema.Repr => A]
-      case s @ Type(_)         => (decode(s)(_)).asInstanceOf[schema.Repr => A]
-      case s @ Optional(_)     => (decode(s)(_)).asInstanceOf[schema.Repr => A]
-      case s @ Arr(_, _, _)    => (decode[s._F, s._T](s)(_)).asInstanceOf[schema.Repr => A]
+      case s @ Record(_, _, _)          => (decode(s)(_)).asInstanceOf[schema.Repr => A]
+      case s @ RawRecord(_, fromRow, _) => (fromRow.apply(_)).asInstanceOf[schema.Repr => A]
+      case s @ Type(_)                  => (decode(s)(_)).asInstanceOf[schema.Repr => A]
+      case s @ Optional(_)              => (decode(s)(_)).asInstanceOf[schema.Repr => A]
+      case s @ Arr(_, _, _)             => (decode[s._F, s._T](s)(_)).asInstanceOf[schema.Repr => A]
       case s @ Fallback(_) =>
         (decode(s.asInstanceOf[Fallback[BCoder, A]])(_)).asInstanceOf[schema.Repr => A]
     }
@@ -283,6 +284,8 @@ object SchemaMaterializer {
     schema: Schema[T]): (BSchema, SerializableFunction[T, Row], SerializableFunction[Row, T]) = {
 
     schema match {
+      case RawRecord(bschema, fromRow, toRow) =>
+        (bschema, toRow, fromRow)
       case s @ Record(_, _, _) => {
         val ft = fieldType(schema)
         val bschema = ft.getRowSchema()
