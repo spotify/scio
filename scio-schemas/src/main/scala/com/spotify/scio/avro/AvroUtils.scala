@@ -20,6 +20,7 @@ package com.spotify.scio.avro
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
 
+import scala.annotation.switch
 import scala.collection.JavaConverters._
 
 object AvroUtils {
@@ -67,4 +68,146 @@ object AvroUtils {
                    "hello",
                    List[CharSequence]("a", "b", "c").asJava)
 
+  def newCaseClassSpecificRecord(i: Int): CaseClassTestRecord =
+    new CaseClassTestRecord(Option(i),
+                            Option(i.toLong),
+                            Option(i.toFloat),
+                            Option(i.toDouble),
+                            Option(true),
+                            Option("hello"),
+                            Seq("a", "b", "c"))
 }
+
+// scalastyle:off
+case class CaseClassTestRecord(var int_field: Option[Int] = None,
+                               var long_field: Option[Long] = None,
+                               var float_field: Option[Float] = None,
+                               var double_field: Option[Double] = None,
+                               var boolean_field: Option[Boolean] = None,
+                               var string_field: Option[String] = None,
+                               var array_field: Seq[String] = Seq())
+    extends org.apache.avro.specific.SpecificRecordBase {
+  def this() = this(None, None, None, None, None, None, Seq())
+
+  def get(field$ : Int): AnyRef = {
+    (field$ : @switch) match {
+      case 0 => {
+        int_field match {
+          case Some(x) => x
+          case None    => null
+        }
+      }.asInstanceOf[AnyRef]
+      case 1 => {
+        long_field match {
+          case Some(x) => x
+          case None    => null
+        }
+      }.asInstanceOf[AnyRef]
+      case 2 => {
+        float_field match {
+          case Some(x) => x
+          case None    => null
+        }
+      }.asInstanceOf[AnyRef]
+      case 3 => {
+        double_field match {
+          case Some(x) => x
+          case None    => null
+        }
+      }.asInstanceOf[AnyRef]
+      case 4 => {
+        boolean_field match {
+          case Some(x) => x
+          case None    => null
+        }
+      }.asInstanceOf[AnyRef]
+      case 5 => {
+        string_field match {
+          case Some(x) => x
+          case None    => null
+        }
+      }.asInstanceOf[AnyRef]
+      case 6 => {
+        scala.collection.JavaConverters
+          .bufferAsJavaListConverter({
+            array_field map { x =>
+              x
+            }
+          }.toBuffer)
+          .asJava
+      }.asInstanceOf[AnyRef]
+      case _ => new org.apache.avro.AvroRuntimeException("Bad index")
+    }
+  }
+
+  def put(field$ : Int, value: Any): Unit = {
+    (field$ : @switch) match {
+      case 0 =>
+        this.int_field = {
+          value match {
+            case null => None
+            case _    => Some(value)
+          }
+        }.asInstanceOf[Option[Int]]
+      case 1 =>
+        this.long_field = {
+          value match {
+            case null => None
+            case _    => Some(value)
+          }
+        }.asInstanceOf[Option[Long]]
+      case 2 =>
+        this.float_field = {
+          value match {
+            case null => None
+            case _    => Some(value)
+          }
+        }.asInstanceOf[Option[Float]]
+      case 3 =>
+        this.double_field = {
+          value match {
+            case null => None
+            case _    => Some(value)
+          }
+        }.asInstanceOf[Option[Double]]
+      case 4 =>
+        this.boolean_field = {
+          value match {
+            case null => None
+            case _    => Some(value)
+          }
+        }.asInstanceOf[Option[Boolean]]
+      case 5 =>
+        this.string_field = {
+          value match {
+            case null => None
+            case _    => Some(value.toString)
+          }
+        }.asInstanceOf[Option[String]]
+      case 6 =>
+        this.array_field = {
+          value match {
+            case (array: java.util.List[_]) => {
+              Seq(
+                scala.collection.JavaConverters
+                  .asScalaIteratorConverter(array.iterator)
+                  .asScala
+                  .toSeq map { x =>
+                  x.toString
+                }: _*)
+            }
+          }
+        }.asInstanceOf[Seq[String]]
+      case _ => new org.apache.avro.AvroRuntimeException("Bad index")
+    }
+    ()
+  }
+
+  def getSchema: org.apache.avro.Schema = CaseClassTestRecord.SCHEMA$
+}
+
+object CaseClassTestRecord {
+  val SCHEMA$ = new org.apache.avro.Schema.Parser().parse(
+    "{\"type\":\"record\",\"name\":\"CaseClassTestRecord\",\"namespace\":\"com.spotify.scio.avro\",\"doc\":\"Record for testing\",\"fields\":[{\"name\":\"int_field\",\"type\":[\"null\",\"int\"],\"default\":null},{\"name\":\"long_field\",\"type\":[\"null\",\"long\"],\"default\":null},{\"name\":\"float_field\",\"type\":[\"null\",\"float\"],\"default\":null},{\"name\":\"double_field\",\"type\":[\"null\",\"double\"],\"default\":null},{\"name\":\"boolean_field\",\"type\":[\"null\",\"boolean\"],\"default\":null},{\"name\":\"string_field\",\"type\":[\"null\",\"string\"],\"default\":null},{\"name\":\"array_field\",\"type\":{\"type\":\"array\",\"items\":\"string\"},\"default\":null}]}")
+}
+// scalastyle:on

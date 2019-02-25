@@ -64,8 +64,12 @@ private[scio] final class FileStorage(protected[scio] val path: String) {
 
   def avroFile[T: ClassTag](schema: Schema = null): Iterator[T] = {
     val cls = ScioUtil.classOf[T]
-    val reader = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-      new SpecificDatumReader[T](cls)
+    val reader = if ((classOf[SpecificRecordBase] isAssignableFrom cls)) {
+      if (schema == null) {
+        new SpecificDatumReader[T](cls)
+      } else {
+        new SpecificDatumReader[T](schema)
+      }
     } else {
       new GenericDatumReader[T](schema)
     }

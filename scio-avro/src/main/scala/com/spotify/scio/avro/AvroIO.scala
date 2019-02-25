@@ -27,7 +27,7 @@ import com.spotify.scio.{avro, ScioContext}
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.{SpecificData, SpecificRecordBase}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
 import org.apache.beam.sdk.{io => beam}
@@ -155,28 +155,33 @@ final case class AvroIO[T: ClassTag: Coder](path: String, schema: Schema = null)
 
   /**
    * Get an SCollection for an Avro file. `schema` must be not null if `T` is of type
-   * [[org.apache.avro.generic.GenericRecord GenericRecord]].
+   * [[org.apache.avro.generic.GenericRecord GenericRecord]] or if SpecificRecordBase is case class.
    */
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val cls = ScioUtil.classOf[T]
-    val t = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-      beam.AvroIO.read(cls).from(path)
+    def readGenericRecords =
+      beam.AvroIO.readGenericRecords(schema).from(path)
+    if ((classOf[SpecificRecordBase] isAssignableFrom cls)) {
+      if (schema == null) {
+        val t = beam.AvroIO.read(cls).from(path)
+        sc.wrap(sc.applyInternal(t))
+      } else {
+        sc.wrap(sc.applyInternal(readGenericRecords))
+          .map(e => SpecificData.get.deepCopy(e.getSchema, e).asInstanceOf[T])
+      }
     } else {
-      beam.AvroIO
-        .readGenericRecords(schema)
-        .from(path)
-        .asInstanceOf[beam.AvroIO.Read[T]]
+      val t = readGenericRecords.asInstanceOf[beam.AvroIO.Read[T]]
+      sc.wrap(sc.applyInternal(t))
     }
-    sc.wrap(sc.applyInternal(t))
   }
 
   /**
    * Save this SCollection as an Avro file. `schema` must be not null if `T` is of type
-   * [[org.apache.avro.generic.GenericRecord GenericRecord]].
+   * [[org.apache.avro.generic.GenericRecord GenericRecord]] of if SpecificRecordBase is case class.
    */
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
     val cls = ScioUtil.classOf[T]
-    val t = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+    val t = if ((classOf[SpecificRecordBase] isAssignableFrom cls) && schema == null) {
       beam.AvroIO.write(cls)
     } else {
       beam.AvroIO.writeGenericRecords(schema).asInstanceOf[beam.AvroIO.Write[T]]
