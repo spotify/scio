@@ -157,7 +157,7 @@ final case class AvroIO[T: ClassTag: Coder](path: String, schema: Schema = null)
    * Get an SCollection for an Avro file. `schema` must be not null if `T` is of type
    * [[org.apache.avro.generic.GenericRecord GenericRecord]] or if
    * [[org.apache.avro.specific.SpecificRecordBase]] does not have getClassSchema method or
-   * SCHEMA$ field such as case classes.
+   * SCHEMA$ field such as in case classes.
    */
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val cls = ScioUtil.classOf[T]
@@ -181,7 +181,7 @@ final case class AvroIO[T: ClassTag: Coder](path: String, schema: Schema = null)
    * Save this SCollection as an Avro file. `schema` must be not null if `T` is of type
    * [[org.apache.avro.generic.GenericRecord GenericRecord]] or if
    * [[org.apache.avro.specific.SpecificRecordBase]] does not have getClassSchema method or
-   * SCHEMA$ field such as case classes.
+   * SCHEMA$ field such as in case classes.
    */
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
     val cls = ScioUtil.classOf[T]
