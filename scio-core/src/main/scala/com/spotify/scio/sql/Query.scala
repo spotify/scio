@@ -221,15 +221,17 @@ object Query {
     macro com.spotify.scio.sql.QueryMacros.tsqlImpl[I, O]
 
   private def areCompatible(t0: BSchema.FieldType, t1: BSchema.FieldType): Boolean = {
-    (t0.getTypeName, t1.getTypeName) match {
-      case (BSchema.TypeName.ROW, BSchema.TypeName.ROW) =>
+    (t0.getTypeName, t1.getTypeName, t0.getNullable == t1.getNullable) match {
+      case (_, _, false) =>
+        false
+      case (BSchema.TypeName.ROW, BSchema.TypeName.ROW, _) =>
         areCompatible(t0.getRowSchema, t1.getRowSchema)
-      case (BSchema.TypeName.ARRAY, BSchema.TypeName.ARRAY) =>
+      case (BSchema.TypeName.ARRAY, BSchema.TypeName.ARRAY, _) =>
         areCompatible(t0.getCollectionElementType, t1.getCollectionElementType)
-      case (BSchema.TypeName.MAP, BSchema.TypeName.MAP) =>
+      case (BSchema.TypeName.MAP, BSchema.TypeName.MAP, _) =>
         areCompatible(t0.getMapKeyType, t1.getMapKeyType)
         areCompatible(t0.getMapValueType, t1.getMapValueType)
-      case (_, _) =>
+      case (_, _, _) =>
         t0.equivalent(t1, BSchema.EquivalenceNullablePolicy.SAME)
     }
   }
@@ -264,9 +266,11 @@ object Query {
       val values =
         schema.getFields.asScala.map { f =>
           t0.getValue[Object](f.getName) match {
+            case None => null
             case r if f.getType.getTypeName == BSchema.TypeName.ROW =>
               transform(f.getType.getRowSchema)(r.asInstanceOf[Row])
-            case v => v
+            case v =>
+              v
           }
         }
       Row
@@ -277,8 +281,9 @@ object Query {
 
     // TODO: Make that check at compile time ?
     if (areCompatible(bst, bso)) {
+      val trans = transform(bso)
       coll.map[O] { t =>
-        fromO(transform(bso)(toT(t)))
+        fromO(trans(toT(t)))
       }(Coder.beam(SchemaCoder.of(bso, toO, fromO)))
     } else {
       val message =
