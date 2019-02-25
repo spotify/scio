@@ -107,12 +107,8 @@ private[scio] object Functions {
       override def extractOutput(accumulator: (U, JList[T])): U = fold(accumulator)
 
       override def mergeAccumulators(accumulators: JIterable[(U, JList[T])]): (U, JList[T]) = {
-        val iter = accumulators.iterator()
-        var acc: U = fold(iter.next())
-        while (iter.hasNext) {
-          acc = c(acc, fold(iter.next()))
-        }
-        (acc, new JArrayList[T]())
+        val empty = new JArrayList[T]()
+        Fns.reduce(accumulators) { case (a, b) => (c(fold(a), fold(b)), empty) }
       }
 
     }
@@ -169,28 +165,29 @@ private[scio] object Functions {
       override def mergeAccumulators(
         accumulators: JIterable[(Option[C], JList[T])]): (Option[C], JList[T]) = {
         val iter = accumulators.iterator()
-        val combined = if (!iter.hasNext) {
-          None
+        val empty = new JArrayList[T]()
+
+        if (!iter.hasNext) {
+          (None, empty)
         } else {
-          var acc: Option[C] = foldOption(iter.next())
-          while (iter.hasNext) {
-            val elem: Option[C] = foldOption(iter.next())
-            acc = if (acc.isDefined && elem.isDefined) {
-              Some(mc(acc.get, elem.get))
+          Fns.reduce(accumulators) { (a, b) =>
+            val aa = foldOption(a)
+            val bb = foldOption(b)
+
+            val result = if (aa.isDefined && bb.isDefined) {
+              Some(mc(aa.get, bb.get))
             } else {
-              if (acc.isDefined || elem.isDefined) {
-                acc.orElse(elem)
+              if (aa.isDefined || bb.isDefined) {
+                aa.orElse(bb)
               } else {
                 None
               }
             }
+
+            (result, empty)
           }
-          acc
         }
-
-        (combined, new JArrayList[T]())
       }
-
     }
 
   def flatMapFn[T, U](f: T => TraversableOnce[U]): DoFn[T, U] =
