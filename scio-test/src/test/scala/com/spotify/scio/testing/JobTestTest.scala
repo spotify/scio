@@ -22,11 +22,15 @@ import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
+import com.spotify.scio.avro.AvroUtils.{
+  newCaseClassSpecificRecord,
+  newGenericRecord,
+  newSpecificRecord
+}
 import com.spotify.scio.avro._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.io._
-import com.spotify.scio.avro.{AvroUtils, TestRecord}
+import com.spotify.scio.avro.{AvroUtils, CaseClassTestRecord, TestRecord}
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
@@ -53,6 +57,16 @@ object SpecificAvroFileJob {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.avroFile[TestRecord](args("input"))
       .saveAsAvroFile(args("output"))
+    sc.close()
+  }
+}
+
+object SpecificAvroWithSchemaFileJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val schema = CaseClassTestRecord.SCHEMA$
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.avroFile[CaseClassTestRecord](args("input"), schema = schema)
+      .saveAsAvroFile(args("output"), schema = schema)
     sc.close()
   }
 }
@@ -274,6 +288,27 @@ class JobTestTest extends PipelineSpec {
     }
     an[AssertionError] should be thrownBy {
       testSpecificAvroFileJob((1 to 4).map(newSpecificRecord))
+    }
+  }
+
+  def testSpecificAvroWithSchemaFileJob(xs: Seq[CaseClassTestRecord]): Unit = {
+    JobTest[SpecificAvroWithSchemaFileJob.type]
+      .args("--input=in.avro", "--output=out.avro")
+      .input(AvroIO[CaseClassTestRecord]("in.avro"), (1 to 3).map(newCaseClassSpecificRecord))
+      .output(AvroIO[CaseClassTestRecord]("out.avro"))(_ should containInAnyOrder(xs))
+      .run()
+  }
+
+  it should "pass correct specific with schema AvroFileIO" in {
+    testSpecificAvroWithSchemaFileJob((1 to 3).map(newCaseClassSpecificRecord))
+  }
+
+  it should "fail incorrect specific with schema AvroFileIO with" in {
+    an[AssertionError] should be thrownBy {
+      testSpecificAvroWithSchemaFileJob((1 to 2).map(newCaseClassSpecificRecord))
+    }
+    an[AssertionError] should be thrownBy {
+      testSpecificAvroWithSchemaFileJob((1 to 4).map(newCaseClassSpecificRecord))
     }
   }
 

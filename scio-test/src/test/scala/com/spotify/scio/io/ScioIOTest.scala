@@ -56,7 +56,7 @@ class ScioIOTest extends ScioIOSpec {
 
   it should "work with SpecificRecordBase case class" in {
     val schema = CaseClassTestRecord.SCHEMA$
-    val xs = (1 to 2).map(AvroUtils.newCaseClassSpecificRecord)
+    val xs = (1 to 100).map(AvroUtils.newCaseClassSpecificRecord)
     testTap(xs)(_.saveAsAvroFile(_, schema = schema))(".avro")
     testJobTest(xs)(AvroIO(_))(_.avroFile(_, schema))(_.saveAsAvroFile(_, schema = schema))
   }

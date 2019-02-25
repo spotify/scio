@@ -120,6 +120,18 @@ class TapTest extends TapSpec {
     FileUtils.deleteDirectory(dir)
   }
 
+  it should "support saveAsAvroFile with SpecificRecord and schema" in {
+    val dir = tmpDir
+    val schema = CaseClassTestRecord.SCHEMA$
+    val t = runWithFileFuture {
+      _.parallelize(Seq(1, 2, 3))
+        .map(newCaseClassSpecificRecord)
+        .saveAsAvroFile(dir.getPath, schema = schema)
+    }
+    verifyTap(t, Set(1, 2, 3).map(newCaseClassSpecificRecord))
+    FileUtils.deleteDirectory(dir)
+  }
+
   it should "support saveAsAvroFile with GenericRecord" in {
     val dir = tmpDir
     val t = runWithFileFuture {
