@@ -77,13 +77,13 @@ object Query {
     header + printContent(fs) + footer
   }
 
-  // Beam is anoigly verbose when is parses SQL queries.
+  // Beam is annoyingly verbose when is parses SQL queries.
   // This function makes is silent.
-  private def silence[A](a: => A): A = {
+  private def silence[A](a: Unit => A): A = {
     val prop = "org.slf4j.simpleLogger.defaultLogLevel"
     val ll = System.getProperty(prop)
     System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "ERROR")
-    val x = a
+    val x = a(())
     System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", ll)
     x
   }
@@ -125,7 +125,7 @@ object Query {
       })
 
     scala.util
-      .Try(silence(sqlEnv.parseQuery(q.query)))
+      .Try(silence(_ => sqlEnv.parseQuery(q.query)))
       .toEither
       .left
       .map { ex =>
