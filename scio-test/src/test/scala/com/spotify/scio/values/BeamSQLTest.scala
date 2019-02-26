@@ -445,7 +445,7 @@ class BeamSQLTest extends PipelineSpec {
       .sql(query) should containInAnyOrder(expected)
   }
 
-  ignore should "Automatically convert from Avro to Scala" in runWithContext { sc =>
+  it should "Automatically convert from Avro to Scala" in runWithContext { sc =>
     import TypeConvertionsTestData._
     val expected: List[AvroCompatibleUser] =
       avroUsers.map { u =>
@@ -455,11 +455,9 @@ class BeamSQLTest extends PipelineSpec {
     sc.parallelize(avroUsers)
       .to[AvroCompatibleUser] should containInAnyOrder(expected)
 
-    // TODO: broken because of a bug upstream https://issues.apache.org/jira/browse/BEAM-6742
     // Test support for nullable fields
-    sc.parallelize(avroWithNullable.take(1))
+    sc.parallelize(avroWithNullable)
       .to[CompatibleAvroTestRecord] should containInAnyOrder(expectedAvro)
-
   }
 }
 

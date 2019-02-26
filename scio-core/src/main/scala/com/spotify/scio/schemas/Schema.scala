@@ -27,6 +27,7 @@ import org.apache.beam.sdk.schemas.{
   AvroRecordSchema,
   SchemaProvider
 }
+import org.apache.beam.sdk.schemas.utils.AvroUtils
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.values.{Row, TypeDescriptor}
@@ -120,13 +121,48 @@ object Schema extends LowPriorityFallbackSchema {
   implicit def javaBeanSchema[T: IsJavaBean: ClassTag]: Schema[T] =
     RawRecord[T](new JavaBeanSchema())
 
-  implicit def avroSchema[T <: SpecificRecord: ClassTag]: Schema[T] =
-    RawRecord[T](new AvroRecordSchema())
+  private class SerializableSchema(@transient schema: org.apache.avro.Schema) extends Serializable {
+    val stringSchema = schema.toString
+    def get = new org.apache.avro.Schema.Parser().parse(stringSchema)
+  }
+
+  // Workaround BEAM-6742
+  private def specificRecordtoRow[T <: SpecificRecord](schema: BSchema,
+                                                       avroSchema: SerializableSchema,
+                                                       t: T): Row = {
+    val row = Row.withSchema(schema)
+    schema.getFields.asScala.zip(avroSchema.get.getFields.asScala).zipWithIndex.foreach {
+      case ((f, a), i) =>
+        val value = t.get(i)
+        val v = AvroUtils.convertAvroFieldStrict(value, a.schema, f.getType)
+        row.addValue(v)
+    }
+    row.build()
+  }
+
+  implicit def avroSchema[T <: SpecificRecord: ClassTag]: Schema[T] = {
+    // TODO: broken because of a bug upstream https://issues.apache.org/jira/browse/BEAM-6742
+    // RawRecord[T](new AvroRecordSchema())
+    import org.apache.avro.reflect.ReflectData
+    val rc = classTag[T].runtimeClass.asInstanceOf[Class[T]]
+    val provider = new AvroRecordSchema()
+    val td = TypeDescriptor.of(rc)
+    val schema = provider.schemaFor(td)
+    val avroSchema = new SerializableSchema(ReflectData.get().getSchema(td.getRawType()))
+
+    def fromRow = provider.fromRowFunction(td)
+
+    val toRow: SerializableFunction[T, Row] =
+      new SerializableFunction[T, Row] {
+        def apply(t: T): Row =
+          specificRecordtoRow(schema, avroSchema, t)
+      }
+    RawRecord[T](schema, fromRow, toRow)
+  }
 
   @inline final def apply[T](implicit c: Schema[T]): Schema[T] = c
 
   // TODO: List and Map Schemas
-  // TODO: Schema for traits ?
 }
 
 private object Derived extends Serializable {
