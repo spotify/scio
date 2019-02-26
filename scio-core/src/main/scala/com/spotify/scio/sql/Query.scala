@@ -217,7 +217,7 @@ object Query {
       }
     }
 
-  def tsql[I: Schema, O: Schema](query: String): Query[I, O] =
+  def tsql[I: Schema, O: Schema](query: String, udfs: Udf*): Query[I, O] =
     macro com.spotify.scio.sql.QueryMacros.tsqlImpl[I, O]
 
   private def areCompatible(t0: BSchema.FieldType, t1: BSchema.FieldType): Boolean = {
@@ -301,7 +301,7 @@ object Query {
 
 object QueryMacros {
   import scala.reflect.macros.blackbox
-  def tsqlImpl[I, O](c: blackbox.Context)(query: c.Expr[String])(
+  def tsqlImpl[I, O](c: blackbox.Context)(query: c.Expr[String], udfs: c.Expr[Udf]*)(
     iSchema: c.Expr[Schema[I]],
     oSchema: c.Expr[Schema[O]]): c.Expr[Query[I, O]] = {
     import c.universe._
@@ -326,7 +326,7 @@ object QueryMacros {
       .fold(
         err => c.abort(c.enclosingPosition, err), { t =>
           val out =
-            q"_root_.com.spotify.scio.sql.Query.of($query)($iSchema, $oSchema)"
+            q"_root_.com.spotify.scio.sql.Query.of($query, ..$udfs)($iSchema, $oSchema)"
           c.Expr[Query[I, O]](out)
         }
       )
