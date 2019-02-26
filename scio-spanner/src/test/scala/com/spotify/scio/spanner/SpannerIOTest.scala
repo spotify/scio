@@ -19,7 +19,7 @@ package com.spotify.scio.spanner
 
 import com.google.cloud.spanner.{Mutation, Struct}
 import com.spotify.scio.testing.ScioIOSpec
-import org.apache.beam.sdk.io.gcp.spanner.{ReadOperation, SpannerConfig}
+import org.apache.beam.sdk.io.gcp.spanner.{MutationGroup, ReadOperation, SpannerConfig}
 import org.scalatest.Matchers
 import com.spotify.scio.testing.CoderAssertions._
 
@@ -58,5 +58,10 @@ class SpannerIOTest extends ScioIOSpec with Matchers {
 
   it should "support spanner's Struct class" in {
     Struct.newBuilder().set("foo").to("bar").build() coderShould roundtrip()
+  }
+
+  it should "support spanner's MutationGroup class" in {
+    val mutation = Mutation.newInsertBuilder("myTable").set("foo").to("bar").build()
+    MutationGroup.create(mutation) coderShould roundtrip()
   }
 }

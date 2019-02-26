@@ -22,7 +22,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.Tap
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.{coders => bcoders}
-import org.apache.beam.sdk.io.gcp.spanner.{ReadOperation, SpannerConfig}
+import org.apache.beam.sdk.io.gcp.spanner.{MutationGroup, ReadOperation, SpannerConfig}
 import org.apache.beam.sdk.io.gcp.spanner.SpannerIO.FailureMode
 
 import scala.concurrent.Future
@@ -38,6 +38,9 @@ package object spanner {
 
   implicit def spannerMutationCoder: Coder[Mutation] =
     Coder.beam(bcoders.SerializableCoder.of(classOf[Mutation]))
+
+  implicit def spannerMutationGroupCoder: Coder[MutationGroup] =
+    Coder.beam(bcoders.SerializableCoder.of(classOf[MutationGroup]))
 
   implicit class SpannerScioContext(@transient private val self: ScioContext) extends AnyVal {
     import SpannerRead.ReadParam._
