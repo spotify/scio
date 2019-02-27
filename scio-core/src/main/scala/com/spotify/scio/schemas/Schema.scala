@@ -123,7 +123,7 @@ object Schema extends LowPriorityFallbackSchema {
 
   private class SerializableSchema(@transient schema: org.apache.avro.Schema) extends Serializable {
     val stringSchema = schema.toString
-    def get = new org.apache.avro.Schema.Parser().parse(stringSchema)
+    def get: org.apache.avro.Schema = new org.apache.avro.Schema.Parser().parse(stringSchema)
   }
 
   // Workaround BEAM-6742
