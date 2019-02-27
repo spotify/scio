@@ -18,13 +18,13 @@ package com.spotify.scio.sql
 
 import com.spotify.scio.values._
 import com.spotify.scio.coders._
-import com.spotify.scio.schemas.{Record, ScalarWrapper, Schema, SchemaMaterializer}
+import com.spotify.scio.schemas.{PrettyPrint, Record, ScalarWrapper, Schema, SchemaMaterializer}
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.extensions.sql.SqlTransform
 import org.apache.beam.sdk.extensions.sql.impl.BeamSqlEnv
 import org.apache.beam.sdk.extensions.sql.impl.schema.BeamPCollectionTable
 import org.apache.beam.sdk.extensions.sql.impl.schema.BaseBeamTable
-import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaCoder}
+import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.extensions.sql.impl.utils.CalciteUtils
 import com.google.common.collect.ImmutableMap
 
@@ -32,50 +32,13 @@ import scala.collection.JavaConverters._
 import scala.language.experimental.macros
 
 // TODO: could be a PTransform
-sealed trait Query[I, O] {
+sealed trait Query[I, O] extends (SCollection[I] => SCollection[O]) {
   val query: String
-  def run(c: SCollection[I]): SCollection[O]
 }
 
 object Query {
 
   val PCOLLECTION_NAME = "PCOLLECTION"
-
-  private def printContent(fs: List[BSchema.Field], prefix: String = ""): String = {
-    fs.map { f =>
-        val nullable = if (f.getType.getNullable) "YES" else "NO"
-        // val out =  s"${prefix}${f.getName}\t${f.getType.getTypeName}\t$nullable\n"
-        val `type` = f.getType
-        val typename =
-          `type`.getTypeName match {
-            case t @ BSchema.TypeName.ARRAY =>
-              s"${`type`.getCollectionElementType.getTypeName}[]"
-            case t => t
-          }
-        val out =
-          f"│ ${prefix + f.getName}%-40s │ ${typename}%-8s │ $nullable%-8s │%n"
-        val underlying =
-          if (f.getType.getTypeName == BSchema.TypeName.ROW)
-            printContent(f.getType.getRowSchema.getFields.asScala.toList, s"${prefix}${f.getName}.")
-          else ""
-
-        out + underlying
-      }
-      .mkString("")
-  }
-
-  private def prettyPrint(fs: List[BSchema.Field]): String = {
-    val header =
-      f"""
-      |┌──────────────────────────────────────────┬──────────┬──────────┐
-      |│ NAME                                     │ TYPE     │ NULLABLE │
-      |├──────────────────────────────────────────┼──────────┼──────────┤%n""".stripMargin.drop(1)
-    val footer =
-      f"""
-      |└──────────────────────────────────────────┴──────────┴──────────┘%n""".stripMargin.trim
-
-    header + printContent(fs) + footer
-  }
 
   // Beam is annoyingly verbose when is parses SQL queries.
   // This function makes is silent.
@@ -137,10 +100,10 @@ object Query {
           |${q.query}
           |
           |PCOLLECTION schema:
-          |${prettyPrint(schema.getFields.asScala.toList)}
+          |${PrettyPrint.prettyPrint(schema.getFields.asScala.toList)}
           |Query result schema (infered) is unknown
           |Expected schema:
-          |${prettyPrint(expectedSchema.getFields.asScala.toList)}
+          |${PrettyPrint.prettyPrint(expectedSchema.getFields.asScala.toList)}
         """.stripMargin
       }
       .map { q =>
@@ -160,11 +123,11 @@ object Query {
           |${q.query}
           |
           |PCOLLECTION schema:
-          |${prettyPrint(schema.getFields.asScala.toList)}
+          |${PrettyPrint.prettyPrint(schema.getFields.asScala.toList)}
           |Query result schema (infered):
-          |${prettyPrint(inferedSchema.getFields.asScala.toList)}
+          |${PrettyPrint.prettyPrint(inferedSchema.getFields.asScala.toList)}
           |Expected schema:
-          |${prettyPrint(expectedSchema.getFields.asScala.toList)}
+          |${PrettyPrint.prettyPrint(expectedSchema.getFields.asScala.toList)}
         """.stripMargin
           Left(message)
       }
@@ -173,7 +136,7 @@ object Query {
   def row[I: Schema](q: String, udfs: Udf*): Query[I, Row] =
     new Query[I, Row] {
       val query = q
-      def run(c: SCollection[I]) = {
+      def apply(c: SCollection[I]) = {
         val scoll = c.setSchema(Schema[I])
         val sqlEnv = BeamSqlEnv.readOnly(
           PCOLLECTION_NAME,
@@ -202,11 +165,11 @@ object Query {
   def of[I: Schema, O: Schema](q: String, udfs: Udf*): Query[I, O] =
     new Query[I, O] {
       val query = q
-      def run(s: SCollection[I]): SCollection[O] = {
+      def apply(s: SCollection[I]): SCollection[O] = {
         try {
           import org.apache.beam.sdk.schemas.SchemaCoder
           val (schema, to, from) = SchemaMaterializer.materialize(s.context, Schema[O])
-          val coll: SCollection[Row] = Query.row[I](query, udfs: _*).run(s)
+          val coll: SCollection[Row] = Query.row[I](query, udfs: _*).apply(s)
           coll.map[O](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
         } catch {
           case e: org.apache.beam.sdk.extensions.sql.impl.ParseException =>
@@ -220,83 +183,6 @@ object Query {
   def tsql[I: Schema, O: Schema](query: String, udfs: Udf*): Query[I, O] =
     macro com.spotify.scio.sql.QueryMacros.tsqlImpl[I, O]
 
-  private def areCompatible(t0: BSchema.FieldType, t1: BSchema.FieldType): Boolean = {
-    (t0.getTypeName, t1.getTypeName, t0.getNullable == t1.getNullable) match {
-      case (_, _, false) =>
-        false
-      case (BSchema.TypeName.ROW, BSchema.TypeName.ROW, _) =>
-        areCompatible(t0.getRowSchema, t1.getRowSchema)
-      case (BSchema.TypeName.ARRAY, BSchema.TypeName.ARRAY, _) =>
-        areCompatible(t0.getCollectionElementType, t1.getCollectionElementType)
-      case (BSchema.TypeName.MAP, BSchema.TypeName.MAP, _) =>
-        areCompatible(t0.getMapKeyType, t1.getMapKeyType)
-        areCompatible(t0.getMapValueType, t1.getMapValueType)
-      case (_, _, _) =>
-        t0.equivalent(t1, BSchema.EquivalenceNullablePolicy.SAME)
-    }
-  }
-
-  private def areCompatible(s0: BSchema, s1: BSchema): Boolean = {
-    val s0Fields = s0.getFields.asScala
-    s1.getFields.asScala.forall { f =>
-      s0Fields
-        .find { x =>
-          x.getName == f.getName
-        }
-        .map { other =>
-          val res = areCompatible(f.getType, other.getType)
-          res
-        }
-        .getOrElse {
-          false
-        }
-    }
-  }
-
-  /**
-   * Convert instance of ${T} in this SCollection into instances of ${O}
-   * based on the Schemas on the 2 classes.
-   */
-  private[scio] def to[T, O](coll: SCollection[T])(implicit st: Schema[T],
-                                                   so: Schema[O]): SCollection[O] = {
-    val (bst, toT, _) = SchemaMaterializer.materialize(coll.context, st)
-    val (bso, toO, fromO) = SchemaMaterializer.materialize(coll.context, so)
-
-    @inline def transform(schema: BSchema): Row => Row = { t0 =>
-      val values =
-        schema.getFields.asScala.map { f =>
-          t0.getValue[Object](f.getName) match {
-            case None => null
-            case r if f.getType.getTypeName == BSchema.TypeName.ROW =>
-              transform(f.getType.getRowSchema)(r.asInstanceOf[Row])
-            case v =>
-              v
-          }
-        }
-      Row
-        .withSchema(schema)
-        .addValues(values: _*)
-        .build()
-    }
-
-    // TODO: Make that check at compile time ?
-    if (areCompatible(bst, bso)) {
-      val trans = transform(bso)
-      coll.map[O] { t =>
-        fromO(trans(toT(t)))
-      }(Coder.beam(SchemaCoder.of(bso, toO, fromO)))
-    } else {
-      val message =
-        s"""
-          |Schema are not compatible.
-          |
-          |FROM schema:
-          |${prettyPrint(bst.getFields.asScala.toList)}
-          |TO schema:
-          |${prettyPrint(bso.getFields.asScala.toList)}""".stripMargin
-      throw new IllegalArgumentException(message)
-    }
-  }
 }
 
 object QueryMacros {

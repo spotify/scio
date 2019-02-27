@@ -59,9 +59,10 @@ object To {
     }
   }
 
-  private def checkCompatibility[T](bsi: BSchema, bso: BSchema)(t: => T): T = {
+  private[schemas] def checkCompatibility[T](bsi: BSchema, bso: BSchema)(
+    t: => T): Either[String, T] = {
     if (areCompatible(bsi, bso)) {
-      t
+      Right(t)
     } else {
       val message =
         s"""
@@ -71,7 +72,7 @@ object To {
         |${PrettyPrint.prettyPrint(bsi.getFields.asScala.toList)}
         |TO schema:
         |${PrettyPrint.prettyPrint(bso.getFields.asScala.toList)}""".stripMargin
-      throw new IllegalArgumentException(message)
+      Left(message)
     }
   }
 
@@ -109,7 +110,24 @@ object To {
           coll.map[O] { t =>
             fromO(trans(toT(t)))
           }(Coder.beam(SchemaCoder.of(bso, toO, fromO)))
-        }
+        }.fold(message => throw new IllegalArgumentException(message), identity)
+      }
+    }
+
+  /**
+   * FOR INTERNAL USE ONLY - Convert from I to O without performing any check.
+   * @see To#safe
+   * @see To#unsafe
+   */
+  def unchecked[I: Schema, O: Schema]: To[I, O] =
+    new To[I, O] {
+      def apply(coll: SCollection[I]): SCollection[O] = {
+        val (bst, toT, _) = SchemaMaterializer.materialize(coll.context, Schema[I])
+        val (bso, toO, fromO) = SchemaMaterializer.materialize(coll.context, Schema[O])
+        val trans = transform(bso)
+        coll.map[O] { t =>
+          fromO(trans(toT(t)))
+        }(Coder.beam(SchemaCoder.of(bso, toO, fromO)))
       }
     }
 
@@ -119,13 +137,32 @@ object To {
    * at compile time.
    * @see To#unsafe
    */
-  def apply[I: Schema, O: Schema]: To[I, O] =
-    macro com.spotify.scio.schemas.ToMacro.applyImpl[I, O]
+  def safe[I: Schema, O: Schema]: To[I, O] =
+    macro com.spotify.scio.schemas.ToMacro.safeImpl[I, O]
 }
 
 object ToMacro {
   import scala.reflect.macros.blackbox
-  def applyImpl[I, O](c: blackbox.Context)(iSchema: c.Expr[Schema[I]],
-                                           oSchema: c.Expr[Schema[O]]): c.Expr[To[I, O]] =
-    ???
+  def safeImpl[I: c.WeakTypeTag, O: c.WeakTypeTag](c: blackbox.Context)(
+    iSchema: c.Expr[Schema[I]],
+    oSchema: c.Expr[Schema[O]]): c.Expr[To[I, O]] = {
+    import c.universe._
+
+    val tpeI = weakTypeOf[I]
+    val tpeO = weakTypeOf[O]
+
+    val sInTree = c.untypecheck(iSchema.tree.duplicate)
+    val sOutTree = c.untypecheck(oSchema.tree.duplicate)
+
+    val (sIn, sOut) =
+      c.eval(c.Expr[(Schema[I], Schema[O])](q"($sInTree, $sOutTree)"))
+
+    val schemaIn: BSchema = SchemaMaterializer.fieldType(sIn).getRowSchema()
+    val schemaOut: BSchema = SchemaMaterializer.fieldType(sOut).getRowSchema()
+
+    To.checkCompatibility(schemaIn, schemaOut) {
+        q"""To.unchecked[$tpeI, $tpeO]"""
+      }
+      .fold(message => c.abort(c.enclosingPosition, message), t => c.Expr[To[I, O]](t))
+  }
 }

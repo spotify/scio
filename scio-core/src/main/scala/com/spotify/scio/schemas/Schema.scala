@@ -359,3 +359,41 @@ object SchemaMaterializer {
     }
   }
 }
+
+private[scio] object PrettyPrint {
+  private def printContent(fs: List[BSchema.Field], prefix: String = ""): String = {
+    fs.map { f =>
+        val nullable = if (f.getType.getNullable) "YES" else "NO"
+        // val out =  s"${prefix}${f.getName}\t${f.getType.getTypeName}\t$nullable\n"
+        val `type` = f.getType
+        val typename =
+          `type`.getTypeName match {
+            case t @ BSchema.TypeName.ARRAY =>
+              s"${`type`.getCollectionElementType.getTypeName}[]"
+            case t => t
+          }
+        val out =
+          f"│ ${prefix + f.getName}%-40s │ ${typename}%-8s │ $nullable%-8s │%n"
+        val underlying =
+          if (f.getType.getTypeName == BSchema.TypeName.ROW)
+            printContent(f.getType.getRowSchema.getFields.asScala.toList, s"${prefix}${f.getName}.")
+          else ""
+
+        out + underlying
+      }
+      .mkString("")
+  }
+
+  def prettyPrint(fs: List[BSchema.Field]): String = {
+    val header =
+      f"""
+      |┌──────────────────────────────────────────┬──────────┬──────────┐
+      |│ NAME                                     │ TYPE     │ NULLABLE │
+      |├──────────────────────────────────────────┼──────────┼──────────┤%n""".stripMargin.drop(1)
+    val footer =
+      f"""
+      |└──────────────────────────────────────────┴──────────┴──────────┘%n""".stripMargin.trim
+
+    header + printContent(fs) + footer
+  }
+}

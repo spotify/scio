@@ -22,7 +22,7 @@ import java.lang.{Iterable => JIterable}
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.bean.UserBean
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.schemas.Schema
+import com.spotify.scio.schemas.{Schema, To}
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.extensions.sql.BeamSqlUdf
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
@@ -422,13 +422,22 @@ class BeamSQLTest extends PipelineSpec {
   it should "automatically convert from compatible classes" in runWithContext { sc =>
     import TypeConvertionsTestData._
     sc.parallelize(from)
-      .to[To1] should containInAnyOrder(to)
+      .to[To1](To.unsafe) should containInAnyOrder(to)
 
     sc.parallelize(javaUsers)
-      .to[JavaCompatibleUser] should containInAnyOrder(expectedJavaCompatUsers)
+      .to[JavaCompatibleUser](To.unsafe) should containInAnyOrder(expectedJavaCompatUsers)
 
     sc.parallelize(from)
-      .to[TinyTo] should containInAnyOrder(tinyTo)
+      .to[TinyTo](To.unsafe) should containInAnyOrder(tinyTo)
+
+    sc.parallelize(from)
+      .to[To1](To.safe) should containInAnyOrder(to)
+
+    sc.parallelize(javaUsers)
+      .to[JavaCompatibleUser](To.safe) should containInAnyOrder(expectedJavaCompatUsers)
+
+    sc.parallelize(from)
+      .to[TinyTo](To.safe) should containInAnyOrder(tinyTo)
   }
 
   it should "Support queries on Avro generated classes" in runWithContext { sc =>
@@ -453,11 +462,23 @@ class BeamSQLTest extends PipelineSpec {
       }
 
     sc.parallelize(avroUsers)
-      .to[AvroCompatibleUser] should containInAnyOrder(expected)
+      .to[AvroCompatibleUser](To.unsafe) should containInAnyOrder(expected)
 
     // Test support for nullable fields
     sc.parallelize(avroWithNullable)
-      .to[CompatibleAvroTestRecord] should containInAnyOrder(expectedAvro)
+      .to[CompatibleAvroTestRecord](To.unsafe) should containInAnyOrder(expectedAvro)
+
+    sc.parallelize(avroUsers)
+      .to[AvroCompatibleUser](To.safe) should containInAnyOrder(expected)
+
+    sc.parallelize(avroWithNullable)
+      .to[CompatibleAvroTestRecord](To.safe) should containInAnyOrder(expectedAvro)
+  }
+
+  it should "typecheck classes compatibilty" in {
+    import TypeConvertionsTestData._
+    """To.safe[TinyTo, From0]""" shouldNot compile
+    """To.safe[From0, CompatibleAvroTestRecord]""" shouldNot compile
   }
 }
 
