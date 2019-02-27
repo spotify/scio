@@ -24,7 +24,7 @@ import org.apache.beam.sdk.extensions.sql.SqlTransform
 import org.apache.beam.sdk.extensions.sql.impl.BeamSqlEnv
 import org.apache.beam.sdk.extensions.sql.impl.schema.BeamPCollectionTable
 import org.apache.beam.sdk.extensions.sql.impl.schema.BaseBeamTable
-import org.apache.beam.sdk.schemas.{Schema => BSchema}
+import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
 import org.apache.beam.sdk.extensions.sql.impl.utils.CalciteUtils
 import com.google.common.collect.ImmutableMap
 
@@ -137,7 +137,15 @@ object Query {
     new Query[I, Row] {
       val query = q
       def apply(c: SCollection[I]) = {
-        val scoll = c.setSchema(Schema[I])
+
+        // XXX: Hack to set the coder on the existing PCOLLECTION
+        // and hide it in a "set schema" dataflow block
+        val coder = {
+          val (schema, to, from) = SchemaMaterializer.materialize(c.context, Schema[I])
+          Coder.beam(SchemaCoder.of(schema, to, from))
+        }
+        val scoll = c.transform("set schema")(_.map(identity)(coder)).setSchema(Schema[I])
+
         val sqlEnv = BeamSqlEnv.readOnly(
           PCOLLECTION_NAME,
           ImmutableMap.of(PCOLLECTION_NAME, new BeamPCollectionTable(scoll.internal)))
@@ -167,7 +175,6 @@ object Query {
       val query = q
       def apply(s: SCollection[I]): SCollection[O] = {
         try {
-          import org.apache.beam.sdk.schemas.SchemaCoder
           val (schema, to, from) = SchemaMaterializer.materialize(s.context, Schema[O])
           val coll: SCollection[Row] = Query.row[I](query, udfs: _*).apply(s)
           coll.map[O](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
