@@ -380,10 +380,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @tparam U The type of representative values used to dedup.
    * @group transform
    */
-  def distinctBy[U](f: T => U)(implicit ctu: ClassTag[U]): SCollection[T] =
-    this.pApply(Distinct
-      .withRepresentativeValueFn(Functions.serializableFn(f))
-      .withRepresentativeType(TypeDescriptor.of(ctu.runtimeClass).asInstanceOf[TypeDescriptor[U]]))
+  // This is simplier than Distinct.withRepresentativeValueFn, and allows us to set Coders
+  def distinctBy[U](f: T => U)(implicit toder: Coder[T], uoder: Coder[U]): SCollection[T] =
+    this.transform(me => me.groupBy(f).values.map(_.head))
 
   /**
    * Return a new SCollection containing only the elements that satisfy a predicate.
