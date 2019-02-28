@@ -233,9 +233,9 @@ object DatastoreLogger {
   lazy val Storage: Datastore = DatastoreHelper.getDatastoreFromEnv
   val Kind = "Benchmarks"
 
-  def latestBuildNumQuery(benchmarkName: String) =
+  private def latestBuildNumQuery(benchmarkName: String) =
     f"SELECT * from ${Kind}_$benchmarkName%s ORDER BY buildNum DESC LIMIT 1"
-  def buildNumQuery(benchmarkName: String, buildNum: Long) =
+  private def buildNumQuery(benchmarkName: String, buildNum: Long) =
     f"SELECT * from ${Kind}_$benchmarkName%s WHERE buildNum = $buildNum%d"
 }
 
@@ -311,9 +311,9 @@ class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try
   }
 
   def latestBenchmark(benchmarkName: String): Option[Entity] =
-    benchmarksByBuildNum(benchmarkName, Nil).headOption
+    benchmarksByBuildNums(benchmarkName, Nil).headOption
 
-  def benchmarksByBuildNum(benchmarkName: String, buildNums: List[Long]): List[Entity] = {
+  def benchmarksByBuildNums(benchmarkName: String, buildNums: List[Long]): List[Entity] = {
     val results = buildNums match {
       case Nil =>
         //fetch latest
@@ -381,7 +381,7 @@ class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try
   def printMetricsComparison(benchmarks: Iterable[String], buildNums: List[Long]): Unit =
     benchmarks.foreach { benchmarkName =>
       try {
-        val bs = benchmarksByBuildNum(benchmarkName, buildNums)
+        val bs = benchmarksByBuildNums(benchmarkName, buildNums)
         bs.zip(bs.tail).foreach {
           case (a, b) =>
             printMetricsComparison(a, b)
