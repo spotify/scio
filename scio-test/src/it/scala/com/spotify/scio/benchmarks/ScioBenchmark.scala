@@ -232,8 +232,11 @@ object DatastoreLogger {
 
   lazy val Storage: Datastore = DatastoreHelper.getDatastoreFromEnv
   val Kind = "Benchmarks"
-  val OrderByBuildNumQuery = s"SELECT * from ${Kind}_%s ORDER BY buildNum DESC LIMIT 2"
-  val WhereBuildNumQuery = s"SELECT * from ${Kind}_%s WHERE buildNum = %s"
+
+  private def latestBuildNumQuery(benchmarkName: String) =
+    f"SELECT * from ${Kind}_$benchmarkName%s ORDER BY buildNum DESC LIMIT 1"
+  private def buildNumQuery(benchmarkName: String, buildNum: Long) =
+    f"SELECT * from ${Kind}_$benchmarkName%s WHERE buildNum = $buildNum%d"
 }
 
 class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try] {
@@ -252,7 +255,7 @@ class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try
         val dt = DatastoreType[ScioBenchmarkRun]
 
         val commits = benchmarks.map { benchmark =>
-          val entity = dt
+          val entityBuilder = dt
             .toEntityBuilder(ScioBenchmarkRun(now, env.gitHash, benchmark.buildNum, benchmark.name))
             .setKey(
               DatastoreHelper
@@ -267,104 +270,121 @@ class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try
           metrics.foreach {
             case (key, value) =>
               val entityValue = DatastoreHelper.makeValue(value).build()
-              entity.putProperties(key, entityValue)
+              entityBuilder.putProperties(key, entityValue)
           }
 
           val scioVersionValue = DatastoreHelper.makeValue(benchmark.scioVersion).build()
-          entity.putProperties("ScioVersion", scioVersionValue)
+          entityBuilder.putProperties("ScioVersion", scioVersionValue)
 
           val beamVersionValue = DatastoreHelper.makeValue(benchmark.beamVersion).build()
-          entity.putProperties("BeamVersion", beamVersionValue)
+          entityBuilder.putProperties("BeamVersion", beamVersionValue)
+
+          val entity = entityBuilder.build()
 
           Try {
+            latestBenchmark(benchmark.name).foreach(printMetricsComparison(_, entity))
+
             val commit = Storage.commit(
               CommitRequest
                 .newBuilder()
                 .setMode(CommitRequest.Mode.NON_TRANSACTIONAL)
                 // Upsert means we can re-run a job for same build if necessary;
                 // insert would trigger a Datastore exception
-                .addMutations(Mutation.newBuilder().setUpsert(entity.build()).build())
+                .addMutations(Mutation.newBuilder().setUpsert(entity).build())
                 .build())
 
-            (benchmark, commit)
+            (entity, commit)
           }
         }
 
         commits
-          .foldLeft(Try(List[(BenchmarkResult, CommitResponse)]())) {
+          .foldLeft(Try(List.empty[(Entity, CommitResponse)])) {
             case (Success(list), Success(value)) => Success(value :: list)
             case (Success(_), Failure(ex))       => Failure(ex)
             case (f @ Failure(_), _)             => f
           }
-          .map(_.map(_._1.name))
-          .map(metrics => printMetricsComparison(benchmarks.map(_.name)))
+          .map(_ => ())
       }
       .getOrElse {
         Success(Unit)
       }
   }
 
-  private def getMetrics(benchmarkName: String, buildNums: Option[(String, String)]) =
-    buildNums match {
-      case Some((prev, curr)) =>
-        Seq(prev, curr)
-          .map { b =>
-            Storage.runQuery(
-              RunQueryRequest
-                .newBuilder()
-                .setGqlQuery(
-                  GqlQuery
-                    .newBuilder()
-                    .setAllowLiterals(true)
-                    .setQueryString(WhereBuildNumQuery.format(benchmarkName, b))
-                    .build()
-                )
-                .build())
-          }
-          .map(_.getBatch.getEntityResults(0).getEntity)
-      case None =>
-        val comparisonMetrics = Storage.runQuery(
+  def latestBenchmark(benchmarkName: String): Option[Entity] =
+    benchmarksByBuildNums(benchmarkName, Nil).headOption
+
+  def benchmarksByBuildNums(benchmarkName: String, buildNums: List[Long]): List[Entity] = {
+    val results = buildNums match {
+      case Nil =>
+        //fetch latest
+        Storage.runQuery(
           RunQueryRequest
             .newBuilder()
             .setGqlQuery(
               GqlQuery
                 .newBuilder()
                 .setAllowLiterals(true)
-                .setQueryString(OrderByBuildNumQuery.format(benchmarkName))
+                .setQueryString(latestBuildNumQuery(benchmarkName))
                 .build()
             )
-            .build())
+            .build()) :: Nil
 
-        comparisonMetrics.getBatch.getEntityResultsList.asScala
-          .sortBy(_.getEntity.getKey.getPath(0).getName)
-          .map(_.getEntity)
+      case bns =>
+        bns.map { bn =>
+          Storage.runQuery(
+            RunQueryRequest
+              .newBuilder()
+              .setGqlQuery(
+                GqlQuery
+                  .newBuilder()
+                  .setAllowLiterals(true)
+                  .setQueryString(buildNumQuery(benchmarkName, bn))
+                  .build()
+              )
+              .build())
+        }
     }
 
+    results
+      .flatMap(_.getBatch.getEntityResultsList.asScala)
+      .sortBy(_.getEntity.getKey.getPath(0).getName)
+      .map(_.getEntity)
+  }
+
+  def printMetricsComparison(previous: Entity, current: Entity): Unit = {
+    val buildNum: Entity => String = _.getKey.getPath(0).getName
+    val entityPropValue: Entity => String => Double = e =>
+      k => e.getPropertiesMap.get(k).getStringValue.toDouble
+
+    val opName = current.getKey.getPath(0).getKind.substring(Kind.length + 1)
+    PrettyPrint.printSeparator()
+    PrettyPrint.print("Benchmark", opName)
+    PrettyPrint.print("BuildNum",
+                      "%15s%15s%15s".format(buildNum(previous), buildNum(current), "Delta"))
+
+    val previousProps = entityPropValue(previous)
+    val currentProps = entityPropValue(current)
+    metricsToCompare.foreach { k: String =>
+      val prev = previousProps(k)
+      val curr = currentProps(k)
+      val delta = (curr - prev) / prev * 100.0
+      val signed = if (delta.isNaN) {
+        "0.00%"
+      } else {
+        (if (delta > 0) "+" else "") + "%.2f%%".format(delta)
+      }
+      PrettyPrint.print(k, "%15.2f%15.2f%15s".format(prev, curr, signed))
+    }
+  }
+
   // TODO: move this to email generator
-  def printMetricsComparison(benchmarks: Iterable[String],
-                             buildNums: Option[(String, String)] = None): Unit = {
+  def printMetricsComparison(benchmarks: Iterable[String], buildNums: List[Long]): Unit =
     benchmarks.foreach { benchmarkName =>
       try {
-        val metrics = getMetrics(benchmarkName, buildNums)
-        if (metrics.size == 2) {
-          val opName = metrics.head.getKey.getPath(0).getKind.substring(Kind.length + 1)
-          val props = metrics.map(_.getPropertiesMap.asScala)
-          PrettyPrint.printSeparator()
-          PrettyPrint.print("Benchmark", opName)
-
-          val List(b1, b2) = metrics.map(_.getKey.getPath(0).getName).toList
-          PrettyPrint.print("BuildNum", "%15s%15s%15s".format(b1, b2, "Delta"))
-
-          metricsToCompare.foreach { k: String =>
-            val List(prev, curr) = props.map(_(k).getStringValue.toDouble).toList
-            val delta = (curr - prev) / prev * 100.0
-            val signed = if (delta.isNaN) {
-              "0.00%"
-            } else {
-              (if (delta > 0) "+" else "") + "%.2f%%".format(delta)
-            }
-            PrettyPrint.print(k, "%15.2f%15.2f%15s".format(prev, curr, signed))
-          }
+        val bs = benchmarksByBuildNums(benchmarkName, buildNums)
+        bs.zip(bs.tail).foreach {
+          case (a, b) =>
+            printMetricsComparison(a, b)
         }
       } catch {
         case e: Exception =>
@@ -372,7 +392,6 @@ class DatastoreLogger(metricsToCompare: Set[String]) extends BenchmarkLogger[Try
             .print(benchmarkName, s"Caught error fetching benchmark metrics from Datastore: $e")
       }
     }
-  }
 }
 
 final case class ConsoleLogger() extends BenchmarkLogger[Try] {
@@ -411,14 +430,14 @@ private[this] object PrettyPrint {
 
 // Usage:
 // export DATASTORE_PROJECT_ID=data-integration-test
-// sbt scio-test/it:runMain com.spotify.ScioBatchBenchmarkResult $buildNum1 $buildNum2
+// sbt scio-test/it:runMain com.spotify.ScioBatchBenchmarkResult $buildNum1 $buildNum2...
 // where $buildNum1 and $buildNum2 are build number of "bench" jobs in CircleCI
 object ScioBatchBenchmarkResult {
   import ScioBenchmarkSettings._
 
   def main(args: Array[String]): Unit =
     new DatastoreLogger(BatchMetrics)
-      .printMetricsComparison(ScioBatchBenchmark.BenchmarkNames, Some((args(0), args(1))))
+      .printMetricsComparison(ScioBatchBenchmark.BenchmarkNames, args.map(_.toLong).toList)
 }
 
 trait ScioJob {
