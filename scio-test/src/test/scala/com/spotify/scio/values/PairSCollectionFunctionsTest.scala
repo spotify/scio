@@ -234,7 +234,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support distinctByKey() on Strings" in {
+  it should "support distinctByKey() on String keys" in {
     runWithContext { sc =>
       val p = sc
         .parallelize(Seq(("a", 11), ("a", 11), ("b", 22), ("b", 22), ("b", 22)))
@@ -243,7 +243,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support distinctByKey() on scala Long" in {
+  it should "support distinctByKey() on Scala Long keys" in {
     runWithContext { sc =>
       val p = sc
         .parallelize(Seq((1L, 11), (1L, 11), (2L, 22), (2L, 22), (2L, 22)))
@@ -252,7 +252,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support distinctByKey() on scala Int" in {
+  it should "support distinctByKey() on Scala Int keys" in {
     runWithContext { sc =>
       val p = sc
         .parallelize(Seq((1, 11), (1, 11), (2, 22), (2, 22), (2, 22)))
