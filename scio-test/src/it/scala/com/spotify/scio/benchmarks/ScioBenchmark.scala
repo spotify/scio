@@ -28,6 +28,7 @@ import com.google.common.reflect.ClassPath
 import com.google.datastore.v1._
 import com.google.datastore.v1.client.{Datastore, DatastoreHelper}
 import com.spotify.scio._
+import com.spotify.scio.benchmarks.BenchmarkResult.{Batch, BenchmarkType, Metric}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.runners.dataflow.DataflowResult
 import com.spotify.scio.values.SCollection
@@ -100,7 +101,7 @@ object ScioBenchmarkSettings {
       }
   }
 
-  def logger[A <: BenchmarkResult.Type]: ScioBenchmarkLogger[Try, A] = ScioBenchmarkLogger[Try, A](
+  def logger[A <: BenchmarkType]: ScioBenchmarkLogger[Try, A] = ScioBenchmarkLogger[Try, A](
     ConsoleLogger[A](),
     new DatastoreLogger[A]()
   )
@@ -118,48 +119,24 @@ object DataflowProvider {
   }
 }
 
-trait BenchmarkLogger[F[_], A <: BenchmarkResult.Type] {
+trait BenchmarkLogger[F[_], A <: BenchmarkType] {
   def log(benchmarks: Iterable[BenchmarkResult[A]]): F[Unit]
 }
 
-final case class ScioBenchmarkLogger[F[_], A <: BenchmarkResult.Type](
+final case class ScioBenchmarkLogger[F[_], A <: BenchmarkType](
   loggers: BenchmarkLogger[F, A]*) {
   def log(benchmarks: BenchmarkResult[A]*): Seq[F[Unit]] =
     loggers.map(_.log(benchmarks))
 }
 
-case class Metric(name: String, value: String)
-
-case class BenchmarkResult[A <: BenchmarkResult.Type](timestamp: Instant,
-                                                      name: String,
-                                                      elapsed: Option[Long],
-                                                      buildNum: Long,
-                                                      gitHash: String,
-                                                      startTime: String,
-                                                      finishTime: Option[String],
-                                                      state: String,
-                                                      extraArgs: Array[String],
-                                                      metrics: List[Metric],
-                                                      scioVersion: String,
-                                                      beamVersion: String) {
-
-  def compareMetrics(other: BenchmarkResult[A]): List[(String, Double, Double, Double)] = {
-    val otherMetrics = other.metrics.map(m => (m.name, m.value)).toMap
-    metrics.map { m =>
-      val prev = otherMetrics(m.name).toDouble
-      val delta = (m.value.toDouble - prev) / prev * 100.0
-      (m.name, prev, m.value.toDouble, delta)
-    }
-  }
-
-}
-
 object BenchmarkResult {
   import ScioBenchmarkSettings._
 
-  sealed trait Type
-  final case class Batch() extends Type
-  final case class Streaming() extends Type
+  sealed trait BenchmarkType
+  final case class Batch() extends BenchmarkType
+  final case class Streaming() extends BenchmarkType
+
+  final case class Metric(name: String, value: Long)
 
   private val DateTimeParser = ISODateTimeFormat.dateTimeParser()
   private val BatchMetrics = Set("Elapsed",
@@ -193,13 +170,13 @@ object BenchmarkResult {
     val finishTime: LocalDateTime = DateTimeParser.parseLocalDateTime(job.getCurrentStateTime)
     val elapsedTime: Long = Seconds.secondsBetween(startTime, finishTime).getSeconds.toLong
 
-    val metrics: List[Metric] = Metric("Elapsed", elapsedTime.toString) :: scioResult
+    val metrics: List[Metric] = Metric("Elapsed", elapsedTime) :: scioResult
       .as[DataflowResult]
       .getJobMetrics
       .getMetrics
       .asScala
       .filter(metric => BatchMetrics.contains(metric.getName.getName))
-      .map(m => Metric(m.getName.getName, m.getScalar.toString))
+      .map(m => Metric(m.getName.getName, m.getScalar.toString.toLong))
       .toList
 
     BenchmarkResult[Batch](
@@ -226,7 +203,7 @@ object BenchmarkResult {
                 jobMetrics: JobMetrics): BenchmarkResult[Streaming] = {
     val metrics = jobMetrics.getMetrics.asScala
       .filter(metric => StreamingMetrics.contains(metric.getName.getName))
-      .map(m => Metric(m.getName.getName, m.getScalar.toString))
+      .map(m => Metric(m.getName.getName, m.getScalar.toString.toLong))
       .toList
 
     BenchmarkResult[Streaming](timestamp,
@@ -244,6 +221,42 @@ object BenchmarkResult {
   }
 }
 
+case class BenchmarkResult[A <: BenchmarkType](timestamp: Instant,
+                                                      name: String,
+                                                      elapsed: Option[Long],
+                                                      buildNum: Long,
+                                                      gitHash: String,
+                                                      startTime: String,
+                                                      finishTime: Option[String],
+                                                      state: String,
+                                                      extraArgs: Array[String],
+                                                      metrics: List[Metric],
+                                                      scioVersion: String,
+                                                      beamVersion: String) {
+
+  def compareMetrics(other: BenchmarkResult[A]): List[(Option[Metric], Option[Metric], Double)] = {
+    val otherMetrics = other.metrics.map(m => (m.name, m)).toMap
+    val thisMetrics = metrics.map(m => (m.name, m)).toMap
+
+    (thisMetrics.keySet ++ otherMetrics.keySet)
+      .map { k =>
+        (thisMetrics.get(k), otherMetrics.get(k))
+      }
+      .flatMap {
+        case (optCurr @ Some(curr), optPrev @ Some(prev)) =>
+          val delta = (curr.value - prev.value) / prev.value * 100.0
+          Some((optPrev, optCurr, delta))
+        case (None, optPrev @ Some(_)) =>
+          Some((optPrev, None, 0d))
+        case (optCurr @ Some(_), None) =>
+          Some((None, optCurr, 0d))
+        case (None, None) =>
+          None
+      }
+      .toList
+  }
+}
+
 object DatastoreLogger {
   lazy val Storage: Datastore = DatastoreHelper.getDatastoreFromEnv
   val Kind = "Benchmarks"
@@ -254,7 +267,7 @@ object DatastoreLogger {
     f"SELECT * from ${Kind}_$benchmarkName%s WHERE buildNum = $buildNum%d"
 }
 
-class DatastoreLogger[A <: BenchmarkResult.Type] extends BenchmarkLogger[Try, A] {
+class DatastoreLogger[A <: BenchmarkType] extends BenchmarkLogger[Try, A] {
 
   import DatastoreLogger._
 
@@ -338,13 +351,11 @@ class DatastoreLogger[A <: BenchmarkResult.Type] extends BenchmarkLogger[Try, A]
                       "%15s%15s%15s".format(previous.buildNum, current.buildNum, "Delta"))
 
     current.compareMetrics(previous).foreach {
-      case (name, prev, curr, delta) =>
-        val signed = if (delta.isNaN) {
-          "0.00%"
-        } else {
-          (if (delta > 0) "+" else "") + "%.2f%%".format(delta)
-        }
-        PrettyPrint.print(name, "%15.2f%15.2f%15s".format(prev, curr, signed))
+      case (prev, curr, delta) =>
+        val value: Option[Metric] => String = _.map(_.value.toString).getOrElse("-")
+        val name = curr.map(_.name).getOrElse(prev.map(_.name).getOrElse("N/A"))
+
+        PrettyPrint.print(name, "%15s%15s%15.2f%%".format(value(prev), value(curr), delta))
     }
   }
 
@@ -367,7 +378,7 @@ class DatastoreLogger[A <: BenchmarkResult.Type] extends BenchmarkLogger[Try, A]
     }
 }
 
-final case class ConsoleLogger[A <: BenchmarkResult.Type]() extends BenchmarkLogger[Try, A] {
+final case class ConsoleLogger[A <: BenchmarkType]() extends BenchmarkLogger[Try, A] {
   override def log(benchmarks: Iterable[BenchmarkResult[A]]): Try[Unit] = Try {
     benchmarks.foreach { benchmark =>
       PrettyPrint.printSeparator()
@@ -384,7 +395,7 @@ final case class ConsoleLogger[A <: BenchmarkResult.Type]() extends BenchmarkLog
           .map(period => PeriodFormat.getDefault.print(Seconds.seconds(period.toInt)))
           .getOrElse("N/A"))
       benchmark.metrics.foreach { kv =>
-        PrettyPrint.print(kv.name, kv.value)
+        PrettyPrint.print(kv.name, kv.value.toString)
       }
     }
   }
@@ -435,7 +446,7 @@ abstract class Benchmark(val extraConfs: Map[String, Array[String]] = Map.empty)
   override def run(
     projectId: String,
     prefix: String,
-    args: Array[String]): Iterable[Future[BenchmarkResult[BenchmarkResult.Batch]]] = {
+    args: Array[String]): Iterable[Future[BenchmarkResult[Batch]]] = {
     val username = CoreSysProps.User.value
     configurations
       .map {

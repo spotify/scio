@@ -22,6 +22,7 @@ import java.util.UUID
 import com.google.api.services.dataflow.model.Job
 import com.google.common.reflect.ClassPath
 import com.spotify.scio._
+import com.spotify.scio.benchmarks.BenchmarkResult.Streaming
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.GenerateSequence
@@ -220,8 +221,8 @@ object ScioStreamingBenchmarkMetrics {
         }
         .getOrElse(List())
 
-    new DatastoreLogger[BenchmarkResult.Streaming]() {
-      override def dsKeyId(benchmark: BenchmarkResult[BenchmarkResult.Streaming]): String = {
+    new DatastoreLogger[Streaming]() {
+      override def dsKeyId(benchmark: BenchmarkResult[Streaming]): String = {
         val startTime = ISODateTimeFormat.dateTimeParser().parseLocalDateTime(benchmark.startTime)
         val hourOffset = Hours
           .hoursBetween(
