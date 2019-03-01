@@ -100,9 +100,9 @@ object ScioBenchmarkSettings {
       }
   }
 
-  def logger: ScioBenchmarkLogger[Try] = ScioBenchmarkLogger[Try](
-    ConsoleLogger(),
-    new DatastoreLogger()
+  def logger[A <: BenchmarkResult.Type]: ScioBenchmarkLogger[Try, A] = ScioBenchmarkLogger[Try, A](
+    ConsoleLogger[A](),
+    new DatastoreLogger[A]()
   )
 }
 
@@ -118,31 +118,32 @@ object DataflowProvider {
   }
 }
 
-trait BenchmarkLogger[F[_]] {
-  def log(benchmarks: Iterable[BenchmarkResult]): F[Unit]
+trait BenchmarkLogger[F[_], A <: BenchmarkResult.Type] {
+  def log(benchmarks: Iterable[BenchmarkResult[A]]): F[Unit]
 }
 
-final case class ScioBenchmarkLogger[F[_]](loggers: BenchmarkLogger[F]*) {
-  def log(benchmarks: BenchmarkResult*): Seq[F[Unit]] =
+final case class ScioBenchmarkLogger[F[_], A <: BenchmarkResult.Type](
+  loggers: BenchmarkLogger[F, A]*) {
+  def log(benchmarks: BenchmarkResult[A]*): Seq[F[Unit]] =
     loggers.map(_.log(benchmarks))
 }
 
 case class Metric(name: String, value: String)
 
-case class BenchmarkResult(timestamp: Instant,
-                           name: String,
-                           elapsed: Option[Long],
-                           buildNum: Long,
-                           gitHash: String,
-                           startTime: String,
-                           finishTime: Option[String],
-                           state: String,
-                           extraArgs: Array[String],
-                           metrics: List[Metric],
-                           scioVersion: String,
-                           beamVersion: String) {
+case class BenchmarkResult[A <: BenchmarkResult.Type](timestamp: Instant,
+                                                      name: String,
+                                                      elapsed: Option[Long],
+                                                      buildNum: Long,
+                                                      gitHash: String,
+                                                      startTime: String,
+                                                      finishTime: Option[String],
+                                                      state: String,
+                                                      extraArgs: Array[String],
+                                                      metrics: List[Metric],
+                                                      scioVersion: String,
+                                                      beamVersion: String) {
 
-  def compareMetrics(other: BenchmarkResult): List[(String, Double, Double, Double)] = {
+  def compareMetrics(other: BenchmarkResult[A]): List[(String, Double, Double, Double)] = {
     val otherMetrics = other.metrics.map(m => (m.name, m.value)).toMap
     metrics.map { m =>
       val prev = otherMetrics(m.name).toDouble
@@ -155,6 +156,10 @@ case class BenchmarkResult(timestamp: Instant,
 
 object BenchmarkResult {
   import ScioBenchmarkSettings._
+
+  sealed trait Type
+  final case class Batch() extends Type
+  final case class Streaming() extends Type
 
   private val DateTimeParser = ISODateTimeFormat.dateTimeParser()
   private val BatchMetrics = Set("Elapsed",
@@ -180,7 +185,7 @@ object BenchmarkResult {
   def batch(timestamp: Instant,
             name: String,
             extraArgs: Array[String],
-            scioResult: ScioResult): BenchmarkResult = {
+            scioResult: ScioResult): BenchmarkResult[Batch] = {
     require(scioResult.isCompleted)
 
     val job: Job = scioResult.as[DataflowResult].getJob
@@ -197,7 +202,7 @@ object BenchmarkResult {
       .map(m => Metric(m.getName.getName, m.getScalar.toString))
       .toList
 
-    BenchmarkResult(
+    BenchmarkResult[Batch](
       timestamp,
       name,
       Some(elapsedTime),
@@ -218,24 +223,24 @@ object BenchmarkResult {
                 buildNum: Long,
                 gitHash: String,
                 createTime: String,
-                jobMetrics: JobMetrics): BenchmarkResult = {
+                jobMetrics: JobMetrics): BenchmarkResult[Streaming] = {
     val metrics = jobMetrics.getMetrics.asScala
       .filter(metric => StreamingMetrics.contains(metric.getName.getName))
       .map(m => Metric(m.getName.getName, m.getScalar.toString))
       .toList
 
-    BenchmarkResult(timestamp,
-                    name,
-                    None,
-                    buildNum,
-                    gitHash,
-                    createTime,
-                    None,
-                    State.RUNNING.toString,
-                    Array(),
-                    metrics,
-                    BuildInfo.version,
-                    BuildInfo.beamVersion)
+    BenchmarkResult[Streaming](timestamp,
+                               name,
+                               None,
+                               buildNum,
+                               gitHash,
+                               createTime,
+                               None,
+                               State.RUNNING.toString,
+                               Array(),
+                               metrics,
+                               BuildInfo.version,
+                               BuildInfo.beamVersion)
   }
 }
 
@@ -249,16 +254,16 @@ object DatastoreLogger {
     f"SELECT * from ${Kind}_$benchmarkName%s WHERE buildNum = $buildNum%d"
 }
 
-class DatastoreLogger extends BenchmarkLogger[Try] {
+class DatastoreLogger[A <: BenchmarkResult.Type] extends BenchmarkLogger[Try, A] {
 
   import DatastoreLogger._
 
-  def dsKeyId(benchmark: BenchmarkResult): String = benchmark.buildNum.toString
+  def dsKeyId(benchmark: BenchmarkResult[A]): String = benchmark.buildNum.toString
 
   // Save metrics to integration testing Datastore instance. Can't make this into a
   // transaction because DS limit is 25 entities per transaction.
-  def log(benchmarks: Iterable[BenchmarkResult]): Try[Unit] = {
-    val dt = DatastoreType[BenchmarkResult]
+  def log(benchmarks: Iterable[BenchmarkResult[A]]): Try[Unit] = {
+    val dt = DatastoreType[BenchmarkResult[A]]
 
     val commits = benchmarks.map { benchmark =>
       Try {
@@ -294,22 +299,23 @@ class DatastoreLogger extends BenchmarkLogger[Try] {
       .map(_ => ())
   }
 
-  def latestBenchmark(benchmarkName: String): Option[BenchmarkResult] =
+  def latestBenchmark(benchmarkName: String): Option[BenchmarkResult[A]] =
     benchmarksByBuildNums(benchmarkName, Nil).headOption
 
-  def benchmarksByBuildNums(benchmarkName: String, buildNums: List[Long]): List[BenchmarkResult] = {
-    val dt = DatastoreType[BenchmarkResult]
+  def benchmarksByBuildNums(benchmarkName: String,
+                            buildNums: List[Long]): List[BenchmarkResult[A]] = {
+    val dt = DatastoreType[BenchmarkResult[A]]
     val query: String => RunQueryRequest = q =>
       RunQueryRequest
-      .newBuilder()
-      .setGqlQuery(
-        GqlQuery
-          .newBuilder()
-          .setAllowLiterals(true)
-          .setQueryString(q)
-          .build()
-      )
-      .build()
+        .newBuilder()
+        .setGqlQuery(
+          GqlQuery
+            .newBuilder()
+            .setAllowLiterals(true)
+            .setQueryString(q)
+            .build()
+        )
+        .build()
     val results = buildNums match {
       case Nil =>
         query(latestBuildNumQuery(benchmarkName)) :: Nil
@@ -325,7 +331,7 @@ class DatastoreLogger extends BenchmarkLogger[Try] {
       .flatMap(dt.fromEntity(_))
   }
 
-  def printMetricsComparison(previous: BenchmarkResult, current: BenchmarkResult): Unit = {
+  def printMetricsComparison(previous: BenchmarkResult[A], current: BenchmarkResult[A]): Unit = {
     PrettyPrint.printSeparator()
     PrettyPrint.print("Benchmark", current.name)
     PrettyPrint.print("BuildNum",
@@ -361,8 +367,8 @@ class DatastoreLogger extends BenchmarkLogger[Try] {
     }
 }
 
-final case class ConsoleLogger() extends BenchmarkLogger[Try] {
-  override def log(benchmarks: Iterable[BenchmarkResult]): Try[Unit] = Try {
+final case class ConsoleLogger[A <: BenchmarkResult.Type]() extends BenchmarkLogger[Try, A] {
+  override def log(benchmarks: Iterable[BenchmarkResult[A]]): Try[Unit] = Try {
     benchmarks.foreach { benchmark =>
       PrettyPrint.printSeparator()
       PrettyPrint.print("Benchmark", benchmark.name)
@@ -426,9 +432,10 @@ abstract class Benchmark(val extraConfs: Map[String, Array[String]] = Map.empty)
     base ++ extra
   }
 
-  override def run(projectId: String,
-                   prefix: String,
-                   args: Array[String]): Iterable[Future[BenchmarkResult]] = {
+  override def run(
+    projectId: String,
+    prefix: String,
+    args: Array[String]): Iterable[Future[BenchmarkResult[BenchmarkResult.Batch]]] = {
     val username = CoreSysProps.User.value
     configurations
       .map {

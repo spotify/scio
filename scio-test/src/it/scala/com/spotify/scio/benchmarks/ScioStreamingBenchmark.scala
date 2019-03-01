@@ -220,8 +220,8 @@ object ScioStreamingBenchmarkMetrics {
         }
         .getOrElse(List())
 
-    new DatastoreLogger() {
-      override def dsKeyId(benchmark: BenchmarkResult): String = {
+    new DatastoreLogger[BenchmarkResult.Streaming]() {
+      override def dsKeyId(benchmark: BenchmarkResult[BenchmarkResult.Streaming]): String = {
         val startTime = ISODateTimeFormat.dateTimeParser().parseLocalDateTime(benchmark.startTime)
         val hourOffset = Hours
           .hoursBetween(
