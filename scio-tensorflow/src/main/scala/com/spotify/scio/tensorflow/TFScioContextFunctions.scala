@@ -52,8 +52,6 @@ class TFScioContextFunctions(val self: ScioContext) extends AnyVal {
    * remotely stored `org.tensorflow.metadata.v0.Schema` object available in a DistCache.
    * @group input
    */
-  @deprecated("Schema inference will be removed. We recommend using TensorFlow Data Validation",
-              "Scio 0.7.0")
   def tfRecordExampleFileWithSchema(
     path: String,
     schemaFilename: String,
