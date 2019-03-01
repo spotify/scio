@@ -299,33 +299,22 @@ class DatastoreLogger extends BenchmarkLogger[Try] {
 
   def benchmarksByBuildNums(benchmarkName: String, buildNums: List[Long]): List[BenchmarkResult] = {
     val dt = DatastoreType[BenchmarkResult]
+    val query: String => RunQueryRequest = q =>
+      RunQueryRequest
+      .newBuilder()
+      .setGqlQuery(
+        GqlQuery
+          .newBuilder()
+          .setAllowLiterals(true)
+          .setQueryString(q)
+          .build()
+      )
+      .build()
     val results = buildNums match {
       case Nil =>
-        //fetch latest
-        RunQueryRequest
-          .newBuilder()
-          .setGqlQuery(
-            GqlQuery
-              .newBuilder()
-              .setAllowLiterals(true)
-              .setQueryString(latestBuildNumQuery(benchmarkName))
-              .build()
-          )
-          .build() :: Nil
-
+        query(latestBuildNumQuery(benchmarkName)) :: Nil
       case bns =>
-        bns.map { bn =>
-          RunQueryRequest
-            .newBuilder()
-            .setGqlQuery(
-              GqlQuery
-                .newBuilder()
-                .setAllowLiterals(true)
-                .setQueryString(buildNumQuery(benchmarkName, bn))
-                .build()
-            )
-            .build()
-        }
+        bns.map(bn => query(buildNumQuery(benchmarkName, bn)))
     }
 
     results
