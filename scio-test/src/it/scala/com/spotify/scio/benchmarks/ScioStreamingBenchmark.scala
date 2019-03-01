@@ -27,7 +27,7 @@ import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.GenerateSequence
 import org.apache.beam.sdk.options.StreamingOptions
 import org.joda.time._
-import org.joda.time.format.DateTimeFormat
+import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
@@ -166,10 +166,11 @@ abstract class StreamingBenchmark extends ScioJob {
   override def run(projectId: String, prefix: String, args: Array[String]): (String, ScioResult) = {
     val username = CoreSysProps.User.value
     val buildNum = CircleCI.map(_.buildNum).getOrElse(-1L)
+    val gitHash = CircleCI.map(_.gitHash).getOrElse("none")
 
     val (sc, _) = ContextAndArgs(args)
     sc.setAppName(name)
-    sc.setJobName(s"$prefix-$name-$buildNum-$username".toLowerCase())
+    sc.setJobName(s"$prefix-$name-$buildNum-$gitHash-$username".toLowerCase())
     sc.optionsAs[GcpOptions].setProject(projectId)
     sc.optionsAs[StreamingOptions].setStreaming(true)
 
@@ -192,7 +193,8 @@ object ScioStreamingBenchmarkMetrics {
     val argz = Args(args)
     val name = argz("name")
     val projectId = argz.getOrElse("project", DefaultProjectId)
-    val jobNamePattern = s"sciostreamingbenchmark-$name-\\d+-([a-zA-Z0-9]+)-(-?\\d+)-\\w+".r
+    val jobNamePattern =
+      s"sciostreamingbenchmark-$name-\\d+-([a-zA-Z0-9]+)-(-?\\d+)-([a-zA-Z0-9]+)-\\w+".r
 
     val jobs = Dataflow.projects().jobs().list(projectId)
 
@@ -200,23 +202,30 @@ object ScioStreamingBenchmarkMetrics {
       Option(jobs.setFilter("ACTIVE").execute().getJobs)
         .map { activeJobs =>
           activeJobs.asScala.flatMap { job =>
-            for (benchmarkNameAndBuildNum <- jobNamePattern.findFirstMatchIn(job.getName)) yield {
-              BenchmarkResult.streaming(
-                benchmarkNameAndBuildNum.group(1),
-                benchmarkNameAndBuildNum.group(2).toLong,
-                job.getCreateTime,
-                Dataflow.projects().jobs().getMetrics(projectId, job.getId).execute()
-              )
+            job.getName match {
+              case jobNamePattern(name, buildNum, gitHash) =>
+                Some(
+                  BenchmarkResult.streaming(
+                    Instant.now(),
+                    name,
+                    buildNum.toLong,
+                    gitHash,
+                    job.getCreateTime,
+                    Dataflow.projects().jobs().getMetrics(projectId, job.getId).execute()
+                  ))
+
+              case _ => None
             }
           }
         }
         .getOrElse(List())
 
-    new DatastoreLogger(StreamingMetrics) {
+    new DatastoreLogger() {
       override def dsKeyId(benchmark: BenchmarkResult): String = {
+        val startTime = ISODateTimeFormat.dateTimeParser().parseLocalDateTime(benchmark.startTime)
         val hourOffset = Hours
           .hoursBetween(
-            benchmark.startTime,
+            startTime,
             new LocalDateTime(DateTimeZone.UTC)
           )
           .getHours
