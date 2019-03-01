@@ -250,15 +250,6 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support distinctBy() on Java types as representative values" in {
-    runWithContext { sc =>
-      val p = sc
-        .parallelize(Seq(1 -> "vA1", 2 -> "vB", 1 -> "vA2"))
-        .distinctBy(a => java.lang.Long.valueOf(a._1))
-      p.keys should containInAnyOrder(Seq(1, 2))
-    }
-  }
-
   it should "support filter()" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).filter(_ % 2 == 0)

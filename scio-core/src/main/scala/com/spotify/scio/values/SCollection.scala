@@ -382,7 +382,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   // This is simplier than Distinct.withRepresentativeValueFn, and allows us to set Coders
   def distinctBy[U](f: T => U)(implicit toder: Coder[T], uoder: Coder[U]): SCollection[T] =
-    this.transform(me => me.groupBy(f).values.map(_.head))
+    this.transform { me =>
+      me.keyBy(f).groupBy(identity) { case (c, _) => c } { case (c, _) => c }.values
+    }
 
   /**
    * Return a new SCollection containing only the elements that satisfy a predicate.
