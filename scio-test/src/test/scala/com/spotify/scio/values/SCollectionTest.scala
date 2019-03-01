@@ -227,19 +227,35 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support distinct" in {
+  it should "support distinct on String" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq("a", "b", "b", "c", "c", "c")).distinct
       p should containInAnyOrder(Seq("a", "b", "c"))
     }
   }
 
-  it should "support distinctBy()" in {
+  it should "support distinct on Int" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq(1, 3, 4, 2, 2, 5, 4, 2, 1, 1)).distinct
+      p should containInAnyOrder(Seq(1, 2, 3, 4, 5))
+    }
+  }
+
+  it should "support distinctBy() with Scala primitive as representative values" in {
     runWithContext { sc =>
       val p = sc
-        .parallelize(Seq("kA" -> "vA1", "kB" -> "vB", "kA" -> "vA2"))
+        .parallelize(Seq(1 -> "vA1", 2 -> "vB", 1 -> "vA2"))
         .distinctBy(_._1)
-      p.keys should containInAnyOrder(Seq("kA", "kB"))
+      p.keys should containInAnyOrder(Seq(1, 2))
+    }
+  }
+
+  it should "support distinctBy() on Java types as representative values" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq(1 -> "vA1", 2 -> "vB", 1 -> "vA2"))
+        .distinctBy(a => java.lang.Long.valueOf(a._1))
+      p.keys should containInAnyOrder(Seq(1, 2))
     }
   }
 

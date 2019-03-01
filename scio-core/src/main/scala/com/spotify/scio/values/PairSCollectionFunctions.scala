@@ -30,8 +30,6 @@ import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection, PCollectionView}
 import org.slf4j.LoggerFactory
 
-import scala.reflect.ClassTag
-
 private object PairSCollectionFunctions {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
@@ -618,7 +616,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @return a new SCollection of (key, value) pairs
    * @group per_key
    */
-  def distinctByKey(implicit ct: ClassTag[K]): SCollection[(K, V)] =
+  def distinctByKey(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
     self.distinctBy(_._1)
 
   /**
