@@ -32,9 +32,7 @@ private[scio] class TestInput(val m: Map[String, Iterable[_]]) {
     val key = io.testId
     require(m.contains(key),
             s"Missing test input: $key, available: ${m.keys.mkString("[", ", ", "]")}")
-    require(!s.contains(key),
-            s"There already exists test input for $key, currently " +
-              s"registered inputs: ${s.mkString("[", ", ", "]")}")
+    require(!s.contains(key), s"Test input $key has already been used once.")
     s.add(key)
     m(key).asInstanceOf[Iterable[T]]
   }
