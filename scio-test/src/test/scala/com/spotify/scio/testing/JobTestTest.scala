@@ -196,7 +196,7 @@ object JobWithoutClose {
   }
 }
 
-object JobWitDuplicateInput {
+object JobWithDuplicateInput {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.textFile(args("input"))
@@ -205,7 +205,7 @@ object JobWitDuplicateInput {
   }
 }
 
-object JobWitDuplicateOutput {
+object JobWithDuplicateOutput {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.parallelize(1 to 10)
@@ -842,11 +842,10 @@ class JobTestTest extends PipelineSpec {
     } should have message msg
   }
 
-  it should "fail on duplicate inputs in the job itself" in {
-    val msg = "requirement failed: There already exists test input for TextIO(input), " +
-      "currently registered inputs: [TextIO(input)]"
+  it should "fail on duplicate usages of inputs in the job itself" in {
+    val msg = "requirement failed: Test input TextIO(input) has already been read from once."
     the[IllegalArgumentException] thrownBy {
-      JobTest[JobWitDuplicateInput.type]
+      JobTest[JobWithDuplicateInput.type]
         .args("--input=input")
         .input(TextIO("input"), Seq("does", "not", "matter"))
         .run()
@@ -854,10 +853,9 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail on duplicate outputs in the job itself" in {
-    val msg = "requirement failed: There already exists test output for TextIO(output), " +
-      "currently registered outputs: [TextIO(output)]"
+    val msg = "requirement failed: Test output TextIO(output) has already been written to once."
     the[IllegalArgumentException] thrownBy {
-      JobTest[JobWitDuplicateOutput.type]
+      JobTest[JobWithDuplicateOutput.type]
         .args("--output=output")
         .output(TextIO("output"))(_ should containSingleValue("does not matter"))
         .run()
