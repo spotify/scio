@@ -32,7 +32,7 @@ private[scio] class TestInput(val m: Map[String, Iterable[_]]) {
     val key = io.testId
     require(m.contains(key),
             s"Missing test input: $key, available: ${m.keys.mkString("[", ", ", "]")}")
-    require(!s.contains(key), s"Test input $key has already been used once.")
+    require(!s.contains(key), s"Test input $key has already been read from once.")
     s.add(key)
     m(key).asInstanceOf[Iterable[T]]
   }
@@ -52,9 +52,7 @@ private[scio] class TestOutput(val m: Map[String, SCollection[_] => Unit]) {
     val key = io.testId
     require(m.contains(key),
             s"Missing test output: $key, available: ${m.keys.mkString("[", ", ", "]")}")
-    require(!s.contains(key),
-            s"There already exists test output for $key, currently " +
-              s"registered outputs: ${s.mkString("[", ", ", "]")}")
+    require(!s.contains(key), s"Test output $key has already been written to once.")
     s.add(key)
     m(key)
   }

@@ -843,7 +843,7 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail on duplicate usages of inputs in the job itself" in {
-    val msg = "requirement failed: Test input TextIO(input) has already been used once."
+    val msg = "requirement failed: Test input TextIO(input) has already been read from once."
     the[IllegalArgumentException] thrownBy {
       JobTest[JobWithDuplicateInput.type]
         .args("--input=input")
@@ -853,8 +853,7 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "fail on duplicate outputs in the job itself" in {
-    val msg = "requirement failed: There already exists test output for TextIO(output), " +
-      "currently registered outputs: [TextIO(output)]"
+    val msg = "requirement failed: Test output TextIO(output) has already been written to once."
     the[IllegalArgumentException] thrownBy {
       JobTest[JobWithDuplicateOutput.type]
         .args("--output=output")
