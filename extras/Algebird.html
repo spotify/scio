@@ -20,7 +20,7 @@
 
 <meta name="description" content="Scio - Documentation">
 <link rel="shortcut icon" href="../images/favicon.ico">
-<title>Algebird</title>
+<title>Algebird · Scio</title>
 <link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
 <link rel="stylesheet" href="../lib/material__tabs/dist/mdc.tabs.min.css">
@@ -46,7 +46,7 @@ data-md-color-accent="indigo"
 <nav class="md-header-nav md-grid">
 <div class="md-flex">
 <div class="md-flex__cell md-flex__cell--shrink">
-<a href="../extras/Algebird.html" title="Algebird" class="md-header-nav__button md-logo">
+<a href="../index.html" title="Scio" class="md-header-nav__button md-logo">
 <img src="../images/logo.png" width="24" height="24">
 </a>
 </div>
@@ -55,7 +55,12 @@ data-md-color-accent="indigo"
 </div>
 <div class="md-flex__cell md-flex__cell--stretch">
 <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+<span class="md-header-nav__topic">
+Scio
+</span>
+<span class="md-header-nav__topic">
 Algebird
+</span>
 </div>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">
@@ -110,12 +115,12 @@ spotify/scio
 <div class="md-sidebar__inner">
 <nav class="md-nav md-nav--primary" data-md-level="0" style="visibility: hidden">
 <label class="md-nav__title md-nav__title--site" for="drawer">
-<a href="../extras/Algebird.html" title="Algebird" class="md-nav__button md-logo">
+<a href="../index.html" title="Scio" class="md-nav__button md-logo">
 <span class="md-nav__button md-logo">
 <img src="../images/logo.png" width="24" height="24">
 </a>
-<a href="../extras/Algebird.html" title="Algebird">
-Algebird
+<a href="../index.html" title="Scio">
+Scio
 </a>
 </label>
 <div class="md-nav__source">
@@ -133,6 +138,49 @@ spotify/scio
 
 </div>
 <ul>
+  <li><a href="../Getting-Started.html" class="page">Getting Started</a></li>
+  <li><a href="../examples.html" class="page">Examples</a></li>
+  <li><a href="../io/index.html" class="page">IO</a>
+  <ul>
+    <li><a href="../io/Type-Safe-BigQuery.html" class="page">BigQuery</a></li>
+    <li><a href="../io/HDFS.html" class="page">HDFS</a></li>
+    <li><a href="../io/Bigtable.html" class="page">Bigtable</a></li>
+    <li><a href="../io/Avro.html" class="page">Avro</a></li>
+    <li><a href="../io/Protobuf.html" class="page">Protobuf</a></li>
+    <li><a href="../io/Parquet.html" class="page">Parquet</a></li>
+  </ul></li>
+  <li><a href="../Scio-Unit-Tests.html" class="page">Testing</a></li>
+  <li><a href="../Scio-REPL.html" class="page">REPL</a></li>
+  <li><a href="../internals/index.html" class="page">Internals</a>
+  <ul>
+    <li><a href="../internals/Coders.html" class="page">Coder Typeclass</a></li>
+    <li><a href="../internals/Kryo.html" class="page">Kryo</a></li>
+    <li><a href="../internals/OverrideTypeProvider.html" class="page">OverrideTypeProvider</a></li>
+    <li><a href="../internals/ScioIO.html" class="page">ScioIO</a></li>
+  </ul></li>
+  <li><a href="../extras/index.html" class="page">Extras</a>
+  <ul>
+    <li><a href="../extras/Algebird.html" class="active page">Algebird</a></li>
+  </ul></li>
+  <li><a href="../migrations/index.html" class="page">Migration Guides</a>
+  <ul>
+    <li><a href="../migrations/v0.7.0-Migration-Guide.html" class="page">Scio 0.7.0</a></li>
+  </ul></li>
+  <li><a href="../dev/index.html" class="page">Development</a>
+  <ul>
+    <li><a href="../dev/Style-Guide.html" class="page">Style Guide</a></li>
+    <li><a href="../dev/How-to-Release.html" class="page">How to Release</a></li>
+    <li><a href="../dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
+  </ul></li>
+  <li><a href="../scaladoc.html" class="page">Scaladoc</a></li>
+  <li><a href="../Scio,-Beam-and-Dataflow.html" class="page">Scio, Beam and Dataflow</a></li>
+  <li><a href="../Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
+  <li><a href="../Runners.html" class="page">Runners</a></li>
+  <li><a href="../Scio-data-guideline.html" class="page">Data Guidelines</a></li>
+  <li><a href="../Apache-Beam.html" class="page">Versions</a></li>
+  <li><a href="../Changelog.html" class="page">Changelog</a></li>
+  <li><a href="../FAQ.html" class="page">FAQ</a></li>
+  <li><a href="../Powered-By.html" class="page">Powered By</a></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
 <label class="md-nav__title" for="__toc">Table of contents</label>
@@ -148,7 +196,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.7.2*
+<i class="md-icon" title="Version">label_outline</i> 0.7.3*
 </label>
 </li>
 </ul>
@@ -203,7 +251,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.7.2*
+0.7.3*
 </span>
 </div>
 </article>
@@ -211,6 +259,36 @@ Edit this page
 </div>
 </main>
 <footer class="md-footer">
+<div class="md-footer-nav">
+<nav class="md-footer-nav__inner md-grid">
+<a href="../extras/index.html" title="Extras" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Previous
+</span>
+Extras
+</span>
+</div>
+</a>
+<a href="../migrations/index.html" title="Migration Guides" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Next
+</span>
+Migration Guides
+</span>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+</div>
+</a>
+</nav>
+</div>
 <div class="md-footer-meta md-typeset">
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">

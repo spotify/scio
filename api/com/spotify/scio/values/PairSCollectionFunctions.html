@@ -667,9 +667,9 @@ more accurate the estimate will be; should be <code>&gt;= 16</code>.</p></dd></d
       
       <p class="shortcomment cmt">Count the number of elements for each key.</p><div class="fullcomment"><div class="comment cmt"><p>Count the number of elements for each key.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>a new SCollection of (key, count) pairs</p></dd></dl></div>
     </li><li name="com.spotify.scio.values.PairSCollectionFunctions#distinctByKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="per_key">
-      <a id="distinctByKey(implicitct:scala.reflect.ClassTag[K]):com.spotify.scio.values.SCollection[(K,V)]"></a><a id="distinctByKey(ClassTag[K]):SCollection[(K,V)]"></a>
+      <a id="distinctByKey(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]"></a><a id="distinctByKey(Coder[K],Coder[V]):SCollection[(K,V)]"></a>
       <span class="permalink">
-      <a href="../../../../com/spotify/scio/values/PairSCollectionFunctions.html#distinctByKey(implicitct:scala.reflect.ClassTag[K]):com.spotify.scio.values.SCollection[(K,V)]" title="Permalink">
+      <a href="../../../../com/spotify/scio/values/PairSCollectionFunctions.html#distinctByKey(implicitkoder:com.spotify.scio.coders.Coder[K],implicitvoder:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[(K,V)]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -678,7 +678,7 @@ more accurate the estimate will be; should be <code>&gt;= 16</code>.</p></dd></d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">distinctByKey</span><span class="params">(<span class="implicit">implicit </span><span name="ct">ct: <a href="http://www.scala-lang.org/api/2.12.8/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">ClassTag</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>)]</span>
+        <span class="name">distinctByKey</span><span class="params">(<span class="implicit">implicit </span><span name="koder">koder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>]</span>, <span name="voder">voder: <a href="../coders/Coder.html" class="extype" name="com.spotify.scio.coders.Coder">Coder</a>[<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>]</span>)</span><span class="result">: <a href="SCollection.html" class="extype" name="com.spotify.scio.values.SCollection">SCollection</a>[(<span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.K">K</span>, <span class="extype" name="com.spotify.scio.values.PairSCollectionFunctions.V">V</span>)]</span>
       </span>
       
       <p class="shortcomment cmt">Return a new SCollection of (key, value) pairs without duplicates based on the keys.</p><div class="fullcomment"><div class="comment cmt"><p>Return a new SCollection of (key, value) pairs without duplicates based on the keys.

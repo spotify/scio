@@ -20,7 +20,7 @@
 
 <meta name="description" content="Scio - Documentation">
 <link rel="shortcut icon" href="../images/favicon.ico">
-<title>HDFS · Scio</title>
+<title>Extras · Scio</title>
 <link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
 <link rel="stylesheet" href="../lib/material__tabs/dist/mdc.tabs.min.css">
@@ -59,7 +59,7 @@ data-md-color-accent="indigo"
 Scio
 </span>
 <span class="md-header-nav__topic">
-HDFS
+Extras
 </span>
 </div>
 </div>
@@ -143,7 +143,7 @@ spotify/scio
   <li><a href="../io/index.html" class="page">IO</a>
   <ul>
     <li><a href="../io/Type-Safe-BigQuery.html" class="page">BigQuery</a></li>
-    <li><a href="../io/HDFS.html" class="active page">HDFS</a></li>
+    <li><a href="../io/HDFS.html" class="page">HDFS</a></li>
     <li><a href="../io/Bigtable.html" class="page">Bigtable</a></li>
     <li><a href="../io/Avro.html" class="page">Avro</a></li>
     <li><a href="../io/Protobuf.html" class="page">Protobuf</a></li>
@@ -158,7 +158,7 @@ spotify/scio
     <li><a href="../internals/OverrideTypeProvider.html" class="page">OverrideTypeProvider</a></li>
     <li><a href="../internals/ScioIO.html" class="page">ScioIO</a></li>
   </ul></li>
-  <li><a href="../extras/index.html" class="page">Extras</a>
+  <li><a href="../extras/index.html" class="active page">Extras</a>
   <ul>
     <li><a href="../extras/Algebird.html" class="page">Algebird</a></li>
   </ul></li>
@@ -183,15 +183,6 @@ spotify/scio
   <li><a href="../Powered-By.html" class="page">Powered By</a></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
-<label class="md-nav__title" for="__toc">Table of contents</label>
-<ul>
-  <li><a href="../io/HDFS.html#hdfs" class="header">HDFS</a>
-  <ul>
-    <li><a href="../io/HDFS.html#settings-for-scio-version-0-4-0" class="header">Settings for Scio version &gt;= <code>0.4.0</code></a></li>
-    <li><a href="../io/HDFS.html#settings-for-scio-version-0-4-0" class="header">Settings for Scio version &lt; <code>0.4.0</code></a></li>
-    <li><a href="../io/HDFS.html#common-issues" class="header">Common issues</a></li>
-  </ul></li>
-</ul>
 </nav>
 
 </nav>
@@ -205,97 +196,21 @@ spotify/scio
 </div>
 </div>
 </div>
-<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
-<div class="md-sidebar__scrollwrap">
-<div class="md-sidebar__inner">
-<nav class="md-nav md-nav--secondary">
-<label class="md-nav__title" for="__toc">Table of contents</label>
-<ul>
-  <li><a href="../io/HDFS.html#hdfs" class="header">HDFS</a>
-  <ul>
-    <li><a href="../io/HDFS.html#settings-for-scio-version-0-4-0" class="header">Settings for Scio version &gt;= <code>0.4.0</code></a></li>
-    <li><a href="../io/HDFS.html#settings-for-scio-version-0-4-0" class="header">Settings for Scio version &lt; <code>0.4.0</code></a></li>
-    <li><a href="../io/HDFS.html#common-issues" class="header">Common issues</a></li>
-  </ul></li>
-</ul>
-</nav>
-
-</div>
-</div>
-</div>
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#hdfs" name="hdfs" class="anchor"><span class="anchor-link"></span></a>HDFS</h1>
-<h2><a href="#settings-for-scio-version-0-4-0" name="settings-for-scio-version-0-4-0" class="anchor"><span class="anchor-link"></span></a>Settings for Scio version &gt;= <code>0.4.0</code></h2>
-<p>Hadoop configuration is loaded from &lsquo;core-site.xml&rsquo; and &lsquo;hdfs-site.xml&rsquo; files based upon the <code>HADOOP_CONF_DIR</code> and <code>YARN_CONF_DIR</code> environment variables. Set one of them to the location of your Hadoop configuration directory.</p>
-<h2><a href="#settings-for-scio-version-0-4-0" name="settings-for-scio-version-0-4-0" class="anchor"><span class="anchor-link"></span></a>Settings for Scio version &lt; <code>0.4.0</code></h2>
-<p>To access HDFS from a Scio job, Hadoop configuration files (<code>core-site.xml</code>, <code>hdfs-site.xml</code>, etc.) must be available in classpath of both runner&rsquo;s client and workers. There is multiple ways to achieve it:</p>
+<h1><a href="#extras" name="extras" class="anchor"><span class="anchor-link"></span></a>Extras</h1>
+<div class="toc ">
 <ul>
-  <li>place your configuration files in java startup classpath via <code>java -cp &lt;classpath&gt;</code></li>
-  <li>place your configuration files in <code>src/main/resources</code></li>
+  <li><a href="../extras/Algebird.html" class="page">Algebird</a>
+  <ul>
+    <li><a href="../extras/Algebird.html#algebird-in-repl" class="header">Algebird in REPL</a></li>
+  </ul></li>
 </ul>
-<p>The following example handles local, GCS and HDFS in the same job code.</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.hdfs._
-
-val input = args(&quot;input&quot;)
-val output = args(&quot;output&quot;)
-
-val pipe = if (input.startsWith(&quot;hdfs://&quot;)) {
-  sc.hdfsTextFile(input)  // HDFS
-} else {
-  sc.textFile(input)  // local or GCS
-}
-
-val result = pipe
-  .map(/*...*/)
-  .reduce(/*...*/)
-
-if (output.startsWith(&quot;hdfs://&quot;)) {
-  result.saveAsHdfsTextFile(output)  // HDFS
-} else {
-  result.saveAsTextFile(output)  // local or GCS
-}
-</code></pre>
-<h3><a href="#running-locally" name="running-locally" class="anchor"><span class="anchor-link"></span></a>Running locally</h3>
-<p>You local environment needs access to the name and data nodes in the Hadoop cluster when running a job locally.</p>
-<h3><a href="#running-on-dataflow-service" name="running-on-dataflow-service" class="anchor"><span class="anchor-link"></span></a>Running on Dataflow service</h3>
-<p>When running a job on the Dataflow managed service, worker VM instances need access to the Hadoop cluster. Set <code>--network</code>/<code>--subnetwork</code> to one that has proper setup, e.g. VPN to your on-premise cluster or another cloud provider.</p>
-<h3><a href="#use-hdfs-from-scio-repl" name="use-hdfs-from-scio-repl" class="anchor"><span class="anchor-link"></span></a>Use HDFS from Scio REPL</h3>
-<p>Assuming that you have your configuration files in <code>hadoop-conf.jar</code>, for example:</p>
-<pre><code>$ jar -tf hadoop-conf.jar
-META-INF/
-META-INF/MANIFEST.MF
-core-site.xml
-hdfs-site.xml
-</code></pre>
-<p>Assembly HDFS submodule:</p>
-<pre><code>$ sbt &#39;project scio-hdfs&#39; assembly
-</code></pre>
-<p>Start Scio REPL:</p>
-<pre><code>$ java -cp scio-repl/target/scala-2.11/scio-repl-0.3.4-SNAPSHOT.jar:scio-hdfs/target/scala-2.11/scio-hdfs-assembly-0.3.4-SNAPSHOT.jar:hadoop-conf.jar com.spotify.scio.repl.ScioShell
-</code></pre>
-<h2><a href="#common-issues" name="common-issues" class="anchor"><span class="anchor-link"></span></a>Common issues</h2>
-<h4><a href="#permission-denied-user-root-access-write-inode-" name="permission-denied-user-root-access-write-inode-" class="anchor"><span class="anchor-link"></span></a>Permission denied: user=root, access=WRITE, inode=&hellip;</h4>
-<pre class="prettyprint"><code class="language-org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.AccessControlException): Permission denied: user=root, access=WRITE, inode=... ```"><br/>By default your Dataflow job is run as `root` user on worker containers. If you are using Simple Authentication for HDFS, Scio provides a parameter in HDFS sink methods to specify remote user via `username` parameter.
-
-#### java.io.IOException: No FileSystem for scheme: hdfs
-
-This is a common issue with fat jars built with [sbt-assembly](https://github.com/sbt/sbt-assembly) plugin. It&#39;s related to Hadoop filesystem registration services file - there are multiple jars that provide the same file with configuration, in your case most probably only one is picked (and it&#39;s not the one holding configuration for HDFS filesystem).
-
-###### Possible solutions
-
-* 1st solution - if you are using [sbt-assembly](https://github.com/sbt/sbt-assembly) plugin - merge those service files, so in your sbt merge configuration add strategy to filter distinct lines, like this:
-
-</code></pre>
-<p>mergeStrategy in assembly &lt;&lt;= (mergeStrategy in assembly) { (old) =&gt; {  case PathList(&ldquo;META-INF&rdquo;, &ldquo;services&rdquo;, &ldquo;org.apache.hadoop.fs.FileSystem&rdquo;) =&gt; MergeStrategy.filterDistinctLines  case s =&gt; old(s)  } } ```</p>
-<ul>
-  <li>2nd solution - give <a href="https://github.com/xerial/sbt-pack">sbt-pack</a> a try, it creates a directory/tarball of all dependency jars without explicit merging/fatjars.</li>
-</ul>
-<p>More on this/related issues <a href="https://stackoverflow.com/questions/17265002/hadoop-no-filesystem-for-scheme-file">here</a>.</p>
+</div>
 </div>
 <div>
-<a href="https://github.com/spotify/scio/tree/master/site/src/paradox/io/HDFS.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/spotify/scio/tree/master/site/src/paradox/extras/index.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
@@ -311,7 +226,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../io/Type-Safe-BigQuery.html" title="BigQuery" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../internals/ScioIO.html" title="ScioIO" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -320,17 +235,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-BigQuery
+ScioIO
 </span>
 </div>
 </a>
-<a href="../io/Bigtable.html" title="Bigtable" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../extras/Algebird.html" title="Algebird" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-Bigtable
+Algebird
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">
