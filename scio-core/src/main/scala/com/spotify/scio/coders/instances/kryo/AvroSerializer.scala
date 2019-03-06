@@ -58,7 +58,7 @@ private[coders] class SpecificAvroSerializer[T <: SpecificRecordBase] extends KS
 
   private def getCoder(cls: Class[T]): AvroCoder[T] =
     cache.getOrElseUpdate(cls,
-                          Try(cls.getMethod("getClassSchema").invoke(null).asInstanceOf[Schema])
+                          Try(cls.newInstance.getSchema)
                             .map(AvroCoder.of(cls, _))
                             .getOrElse(AvroCoder.of(cls)))
 
