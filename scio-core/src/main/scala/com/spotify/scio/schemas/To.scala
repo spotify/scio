@@ -161,7 +161,7 @@ object ToMacro {
     val schemaOut: BSchema = SchemaMaterializer.fieldType(sOut).getRowSchema()
 
     To.checkCompatibility(schemaIn, schemaOut) {
-        q"""To.unchecked[$tpeI, $tpeO]"""
+        q"""_root_.com.spotify.scio.schemas.To.unchecked[$tpeI, $tpeO]"""
       }
       .fold(message => c.abort(c.enclosingPosition, message), t => c.Expr[To[I, O]](t))
   }
