@@ -22,8 +22,10 @@ import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.values._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.Tap
+import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
+import org.apache.avro.specific.SpecificRecordBase
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -45,8 +47,13 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
                      metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
     implicit ct: ClassTag[T],
     coder: Coder[T]): Future[Tap[T]] = {
+    val cls = ScioUtil.classOf[T]
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
-    self.write(AvroIO[T](path, schema))(param)
+    if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+      self.write(AvroIO[T](path))(param)
+    } else {
+      self.write(AvroIO[T](path, schema))(param)
+    }
   }
 
   /**
