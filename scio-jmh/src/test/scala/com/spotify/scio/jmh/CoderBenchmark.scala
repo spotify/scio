@@ -38,7 +38,7 @@ final case class SpecializedUserForDerived(id: UserId, username: String, email: 
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Thread)
-class KryoAtomicCoderBenchmark {
+class CoderBenchmark {
 
   // please don't use arrays outside of benchmarks
   val userId = UserId(Array[Byte](1, 2, 3, 4))
