@@ -19,12 +19,13 @@ package com.spotify.scio.avro
 
 import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.values._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.Tap
 import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
+import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 
 import scala.concurrent.Future
@@ -39,21 +40,38 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
    * @param schema must be not null if `T` is of type
    *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
    */
+  // scalastyle:off parameter.number
   def saveAsAvroFile(path: String,
                      numShards: Int = AvroIO.WriteParam.DefaultNumShards,
                      schema: Schema = null,
                      suffix: String = AvroIO.WriteParam.DefaultSuffix,
                      codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
                      metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
-    implicit ct: ClassTag[T],
+    implicit ev: T <:< GenericRecord,
     coder: Coder[T]): Future[Tap[T]] = {
+    //val cls = ScioUtil.classOf[T]
+    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
+    //if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+    //  self.write(AvroIO[T](path))(param)
+    // } else {
+    self.write(AvroIO[T](path, schema))(param)
+    //}
+  }
+
+  def saveAsAvroFile(path: String,
+                     numShards: Int,
+                     suffix: String,
+                     codec: CodecFactory,
+                     metadata: Map[String, AnyRef])(implicit ct: ClassTag[T],
+                                                    ev: T <:< SpecificRecordBase,
+                                                    coder: Coder[T]): Future[Tap[T]] = {
     val cls = ScioUtil.classOf[T]
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
-    if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-      self.write(AvroIO[T](path))(param)
-    } else {
-      self.write(AvroIO[T](path, schema))(param)
-    }
+    // if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+    self.write(AvroIO[T](path))(param)
+    //  } else {
+    //   self.write(AvroIO[T](path, schema))(param)
+    // }
   }
 
   /**

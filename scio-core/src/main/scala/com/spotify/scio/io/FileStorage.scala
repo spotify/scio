@@ -28,7 +28,7 @@ import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
 import org.apache.avro.file.{DataFileReader, SeekableInput}
 import org.apache.avro.generic.GenericDatumReader
-import org.apache.avro.specific.{SpecificDatumReader, SpecificRecordBase}
+import org.apache.avro.specific.SpecificDatumReader
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
 import org.apache.commons.compress.compressors.CompressorStreamFactory
@@ -67,14 +67,15 @@ private[scio] final class FileStorage(protected[scio] val path: String) {
       override def close(): Unit = in.close()
     }
 
-  def avroFile[T: ClassTag](schema: Schema = null): Iterator[T] = {
+  def avroFile[T: ClassTag](): Iterator[T] = {
     val cls = ScioUtil.classOf[T]
-    val reader = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-      new SpecificDatumReader[T](cls)
-    } else {
-      new GenericDatumReader[T](schema)
-    }
+    files(new SpecificDatumReader[T](cls))
+  }
 
+  def avroFile[T](schema: Schema): Iterator[T] =
+    files(new GenericDatumReader[T](schema))
+
+  private def files[T](reader: GenericDatumReader[T]): Iterator[T] = {
     listFiles
       .map(m => DataFileReader.openReader(getAvroSeekableInput(m), reader))
       .map(_.iterator().asScala)

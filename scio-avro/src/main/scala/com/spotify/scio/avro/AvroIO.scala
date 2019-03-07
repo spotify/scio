@@ -27,6 +27,7 @@ import com.spotify.scio.{avro, ScioContext}
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
+import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
 import org.apache.beam.sdk.{io => beam}
@@ -131,6 +132,7 @@ object ProtobufIO {
   val WriteParam = AvroIO.WriteParam
 }
 sealed trait AvroIO[T] extends ScioIO[T] {
+  override final val tapT = TapOf[T]
 
   protected def avroOut[U](sc: SCollection[T],
                            write: beam.AvroIO.Write[U],
@@ -148,10 +150,11 @@ sealed trait AvroIO[T] extends ScioIO[T] {
 
 }
 
-final case class SpecificRecordIO[T: ClassTag: Coder](path: String) extends AvroIO[T] {
+final case class SpecificRecordIO[T: ClassTag: Coder](path: String)(
+  implicit ev: T <:< SpecificRecordBase)
+    extends AvroIO[T] {
   override type ReadP = Unit
   override type WriteP = AvroIO.WriteParam
-  override final val tapT = TapOf[T]
 
   override def testId: String = s"AvroIO($path)"
 
@@ -181,11 +184,11 @@ final case class SpecificRecordIO[T: ClassTag: Coder](path: String) extends Avro
     SpecificRecordAvroTap[T](ScioUtil.addPartSuffix(path))
 }
 
-final case class SchemaAvroIO[T: ClassTag: Coder](path: String, schema: Schema = null)
+final case class SchemaAvroIO[T: Coder](path: String, schema: Schema)(
+  implicit ev: T <:< GenericRecord)
     extends AvroIO[T] {
   override type ReadP = Unit
   override type WriteP = AvroIO.WriteParam
-  override final val tapT = TapOf[T]
 
   override def testId: String = s"AvroIO($path)"
 
@@ -194,7 +197,6 @@ final case class SchemaAvroIO[T: ClassTag: Coder](path: String, schema: Schema =
    * [[org.apache.avro.generic.GenericRecord GenericRecord]].
    */
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    val cls = ScioUtil.classOf[T]
     val t = beam.AvroIO
       .readGenericRecords(schema)
       .from(path)
@@ -207,7 +209,6 @@ final case class SchemaAvroIO[T: ClassTag: Coder](path: String, schema: Schema =
    * [[org.apache.avro.generic.GenericRecord GenericRecord]].
    */
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
-    val cls = ScioUtil.classOf[T]
     val t = beam.AvroIO.writeGenericRecords(schema).asInstanceOf[beam.AvroIO.Write[T]]
     data.applyInternal(
       avroOut(data, t, path, params.numShards, params.suffix, params.codec, params.metadata))
@@ -233,9 +234,12 @@ object AvroIO {
     val suffix: String = _suffix + ".avro"
   }
 
-  def apply[T: ClassTag: Coder](path: String): SpecificRecordIO[T] = SpecificRecordIO[T](path)
+  def apply[T: ClassTag: Coder](path: String)(
+    implicit ev: T <:< SpecificRecordBase): SpecificRecordIO[T] =
+    SpecificRecordIO[T](path)
 
-  def apply[T: ClassTag: Coder](path: String, schema: Schema): SchemaAvroIO[T] =
+  def apply[T: Coder](path: String, schema: Schema)(
+    implicit ev: T <:< GenericRecord): SchemaAvroIO[T] =
     SchemaAvroIO[T](path, schema)
 }
 
