@@ -19,7 +19,7 @@ public abstract class Coder<T> implements Serializable {
 }
 ```
 
-Beam provides built-in Coders for various basic Java types (`Integer`, `Long`, `Double`, etc.). But anytime you create a new class, and that that class is used in a `SCollection`, a beam coder needs to be provided.
+Beam provides built-in Coders for various basic Java types (`Integer`, `Long`, `Double`, etc.). But anytime you create a new class, and that class is used in a `SCollection`, a beam coder needs to be provided.
 
 ```scala
 case class Foo(x: Int, s: String)
@@ -45,7 +45,7 @@ In most cases, the compiler should be able to either directly find a proper `Cod
 
 Please note that Scio wraps Beam coders in its own `Coder` definition: `com.spotify.scio.coders.Coder`
 
-### Buit-in Coder instances
+### Built-in Coder instances
 
 Here's an example REPL session that demonstrate it:
 
