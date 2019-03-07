@@ -23,9 +23,19 @@ import java.util.concurrent.TimeUnit
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
 import com.spotify.scio.coders._
+import com.spotify.scio.schemas._
 import com.twitter.chill.IKryoRegistrar
-import org.apache.beam.sdk.coders.{AtomicCoder, ByteArrayCoder, SerializableCoder, StringUtf8Coder}
+import org.apache.beam.sdk.coders.{
+  CoderRegistry,
+  AtomicCoder,
+  ByteArrayCoder,
+  SerializableCoder,
+  StringUtf8Coder,
+  Coder => BCoder
+}
 import org.apache.beam.sdk.util.CoderUtils
+import org.apache.beam.sdk.schemas.SchemaCoder
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.openjdk.jmh.annotations._
 
 final case class UserId(bytes: Array[Byte])
@@ -51,9 +61,16 @@ class CoderBenchmark {
     SpecializedUser(userId, "johndoe", "johndoe@spotify.com")
   val specializedUserForDerived =
     SpecializedUserForDerived(userId, "johndoe", "johndoe@spotify.com")
+
+  val javaUser =
+    new j.User(new j.UserId(Array[Byte](1, 2, 3, 4).map(x => x: java.lang.Byte)),
+               "johndoe",
+               "johndoe@spotify.com")
+
   val tenTimes = List.fill(10)(specializedUserForDerived)
 
   val kryoCoder = new KryoAtomicCoder[User](KryoOptions())
+  val kryoJavaCoder = new KryoAtomicCoder[j.User](KryoOptions())
   val javaCoder = SerializableCoder.of(classOf[User])
   val specializedCoder = new SpecializedCoder
   val specializedKryoCoder = new KryoAtomicCoder[SpecializedUser](KryoOptions())
@@ -164,6 +181,55 @@ class CoderBenchmark {
   @Benchmark
   def derivedStringListDecode: Seq[String] =
     CoderUtils.decodeFromByteArray(derivedStringListCoder, derivedStringListEncoded)
+
+  // Compare the performance of Schema Coders vs compile time derived Coder
+  val (specializedUserSchema, specializedTo, specializedFrom) =
+    SchemaMaterializer.materialize(CoderRegistry.createDefault(),
+                                   PipelineOptionsFactory.create(),
+                                   Schema[SpecializedUserForDerived])
+
+  val specializedSchemaCoder: BCoder[SpecializedUserForDerived] =
+    SchemaCoder.of(specializedUserSchema, specializedTo, specializedFrom)
+
+  @Benchmark
+  def schemaCoderEncode: Array[Byte] =
+    CoderUtils.encodeToByteArray(specializedSchemaCoder, specializedUserForDerived)
+
+  val shemaEncoded = schemaCoderEncode
+
+  @Benchmark
+  def schemaCoderDecode: SpecializedUserForDerived =
+    CoderUtils.decodeFromByteArray(specializedSchemaCoder, shemaEncoded)
+
+  // Compare the performance of Schema Coders vs Kryo coder for java class
+
+  val (javaUserSchema, javaTo, javaFrom) =
+    SchemaMaterializer.materialize(CoderRegistry.createDefault(),
+                                   PipelineOptionsFactory.create(),
+                                   Schema[j.User])
+
+  val javaSchemaCoder: BCoder[j.User] =
+    SchemaCoder.of(javaUserSchema, javaTo, javaFrom)
+
+  @Benchmark
+  def javaSchemaCoderEncode: Array[Byte] =
+    CoderUtils.encodeToByteArray(javaSchemaCoder, javaUser)
+
+  val javaShemaEncoded = javaSchemaCoderEncode
+
+  @Benchmark
+  def javaSchemaCoderDecode: j.User =
+    CoderUtils.decodeFromByteArray(javaSchemaCoder, javaShemaEncoded)
+
+  @Benchmark
+  def javaKryoCoderEncode: Array[Byte] =
+    CoderUtils.encodeToByteArray(kryoJavaCoder, javaUser)
+
+  val javaKryoEncoded = javaKryoCoderEncode
+
+  @Benchmark
+  def javaKryoCoderDecode: j.User =
+    CoderUtils.decodeFromByteArray(kryoJavaCoder, javaKryoEncoded)
 }
 
 final class SpecializedCoder extends AtomicCoder[SpecializedUser] {
@@ -210,6 +276,9 @@ class KryoRegistrar extends IKryoRegistrar {
     k.register(classOf[SpecializedUser], new SpecializedKryoSerializer)
     k.register(classOf[UserId])
     k.register(classOf[Array[Byte]])
+    k.register(classOf[Array[java.lang.Byte]])
+    k.register(classOf[j.UserId])
+    k.register(classOf[j.User])
 
     k.setRegistrationRequired(true)
   }

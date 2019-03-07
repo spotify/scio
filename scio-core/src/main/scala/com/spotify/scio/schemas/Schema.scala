@@ -29,8 +29,9 @@ import org.apache.beam.sdk.schemas.{
 }
 import org.apache.beam.sdk.schemas.utils.AvroUtils
 import org.apache.beam.sdk.transforms.SerializableFunction
-import org.apache.beam.sdk.coders.{Coder => BCoder}
+import org.apache.beam.sdk.coders.{CoderRegistry, Coder => BCoder}
 import org.apache.beam.sdk.values.{Row, TypeDescriptor}
+import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.avro.specific.SpecificRecord
 import BSchema.{Field, FieldType}
 
@@ -223,11 +224,13 @@ object SchemaMaterializer {
    * Convert the Scio coders that may be embeded in this schema
    * to proper beam coders
    */
-  private def materializeSchema[A](sc: ScioContext, schema: Schema[A]): Schema[A] =
+  private def materializeSchema[A](reg: CoderRegistry,
+                                   opt: PipelineOptions,
+                                   schema: Schema[A]): Schema[A] =
     schema match {
       case Record(schemas, construct, destruct) =>
         val schemasMat = schemas.map {
-          case (n, s) => (n, materializeSchema(sc, s))
+          case (n, s) => (n, materializeSchema(reg, opt, s))
         }
         Record[A](schemasMat, construct, destruct)
       case r @ RawRecord(_, _, _) =>
@@ -235,11 +238,11 @@ object SchemaMaterializer {
       case t @ Type(_) =>
         t
       case Optional(s) =>
-        Optional(materializeSchema(sc, s))
+        Optional(materializeSchema(reg, opt, s))
       case Fallback(c) =>
-        Fallback[BCoder, A](CoderMaterializer.beam[A](sc, c.asInstanceOf[Coder[A]]))
+        Fallback[BCoder, A](CoderMaterializer.beam[A](reg, opt, c.asInstanceOf[Coder[A]]))
       case a @ Arr(s, t, f) =>
-        Arr[a._F, a._T](materializeSchema(sc, s), t, f)
+        Arr[a._F, a._T](materializeSchema(reg, opt, s), t, f)
     }
 
   import org.apache.beam.sdk.util.CoderUtils
@@ -315,17 +318,22 @@ object SchemaMaterializer {
   private def encode[A](schema: Fallback[BCoder, A])(v: A): schema.Repr =
     CoderUtils.encodeToByteArray(schema.coder, v)
 
-  def materialize[T](
+  final def materialize[T](
     sc: ScioContext,
-    schema: Schema[T]): (BSchema, SerializableFunction[T, Row], SerializableFunction[Row, T]) = {
+    schema: Schema[T]): (BSchema, SerializableFunction[T, Row], SerializableFunction[Row, T]) =
+    materialize(sc.pipeline.getCoderRegistry, sc.options, schema)
 
+  final def materialize[T](
+    reg: CoderRegistry,
+    opt: PipelineOptions,
+    schema: Schema[T]): (BSchema, SerializableFunction[T, Row], SerializableFunction[Row, T]) = {
     schema match {
       case RawRecord(bschema, fromRow, toRow) =>
         (bschema, toRow, fromRow)
       case s @ Record(_, _, _) => {
         val ft = fieldType(schema)
         val bschema = ft.getRowSchema()
-        val schemaMat = materializeSchema(sc, schema).asInstanceOf[Record[T]]
+        val schemaMat = materializeSchema(reg, opt, schema).asInstanceOf[Record[T]]
         def fromRow =
           new SerializableFunction[Row, T] {
             def apply(r: Row): T =
@@ -342,7 +350,7 @@ object SchemaMaterializer {
       }
       case s =>
         implicit val imp = schema
-        val (bschema, to, from) = materialize(sc, implicitly[Schema[ScalarWrapper[T]]])
+        val (bschema, to, from) = materialize(reg, opt, implicitly[Schema[ScalarWrapper[T]]])
         def fromRow =
           new SerializableFunction[Row, T] {
             def apply(r: Row): T =
