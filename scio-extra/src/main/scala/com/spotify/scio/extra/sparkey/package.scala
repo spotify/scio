@@ -124,12 +124,16 @@ package object sparkey {
       val uri = SparkeyUri(basePath, self.context.options)
       require(!uri.exists, s"Sparkey URI ${uri.basePath} already exists")
       logger.info(s"Saving as Sparkey: $uri")
+      val atLeastOneElement: SCollection[Option[(K, V)]] =
+        self.context.parallelize(Seq[Option[(K, V)]](None))
       self.transform { in =>
-        in.groupBy(_ => ())
+        in.map(Option(_))
+          .union(atLeastOneElement)
+          .groupBy(_ => ())
           .map {
             case (_, xs) =>
               val writer = new SparkeyWriter(uri, maxMemoryUsage)
-              val it = xs.iterator
+              val it = xs.iterator.flatten
               while (it.hasNext) {
                 val kv = it.next()
                 w.put(writer, kv._1, kv._2)
