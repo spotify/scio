@@ -30,14 +30,12 @@ private[coders] object AvroCoderMacros {
     import c.universe._
     val wtt = weakTypeOf[T]
     val companioned = wtt.typeSymbol
-    val companionSymbol = companioned.companion
-    val companionType = companionSymbol.typeSignature
 
     q"""
     _root_.com.spotify.scio.coders.Coder.beam(
       _root_.org.apache.beam.sdk.coders.AvroCoder.of[$companioned](
         classOf[$companioned],
-        ${companionType}.getClassSchema()
+        new $companioned().getSchema
       )
     )
     """
