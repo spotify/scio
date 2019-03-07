@@ -101,4 +101,26 @@ class SparkeyIT extends PipelineSpec {
     }
   }
 
+  it should "create files for empty data" in {
+    runWithContext { sc =>
+      FileSystems.setDefaultPipelineOptions(sc.options)
+      val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
+      val basePath = tempLocation + "/sparkey-empty"
+      try {
+        val sparkeyExists = sc
+          .parallelize(Seq[(String, String)]())
+          .asSparkey(basePath)
+          .map(_.exists)
+        sparkeyExists should containSingleValue(true)
+      } finally {
+        val files = FileSystems
+          .`match`(tempLocation + "/sparkey-empty*")
+          .metadata()
+          .asScala
+          .map(_.resourceId())
+        FileSystems.delete(files.asJava)
+      }
+    }
+  }
+
 }
