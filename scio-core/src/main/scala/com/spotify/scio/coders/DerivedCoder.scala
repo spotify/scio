@@ -20,7 +20,7 @@ package com.spotify.scio.coders
 private object Derived extends Serializable {
   import magnolia._
 
-  @inline private def catching[T](msg: String, stack: Array[StackTraceElement])(v: => T): T =
+  @inline private def catching[T](msg: => String, stack: Array[StackTraceElement])(v: => T): T =
     try {
       v
     } catch {
