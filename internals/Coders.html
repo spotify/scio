@@ -242,7 +242,7 @@ spotify/scio
   public abstract T decode(InputStream inStream);
 }
 </code></pre>
-<p>Beam provides built-in Coders for various basic Java types (<code>Integer</code>, <code>Long</code>, <code>Double</code>, etc.). But anytime you create a new class, and that that class is used in a <code>SCollection</code>, a beam coder needs to be provided.</p>
+<p>Beam provides built-in Coders for various basic Java types (<code>Integer</code>, <code>Long</code>, <code>Double</code>, etc.). But anytime you create a new class, and that class is used in a <code>SCollection</code>, a beam coder needs to be provided.</p>
 <pre class="prettyprint"><code class="language-scala">case class Foo(x: Int, s: String)
 
 val sc: SCollection[Foo] = ??? // Beam will need an org.apache.beam.sdk.coders.Coder[Foo]
@@ -259,7 +259,7 @@ val sc: SCollection[Foo] = ??? // Beam will need an org.apache.beam.sdk.coders.C
 <h2><a href="#scio-0-7-0" name="scio-0-7-0" class="anchor"><span class="anchor-link"></span></a>Scio &gt;= <code>0.7.0</code></h2>
 <p>In Scio <code>0.7.0</code> and above, the Scala compiler will try to find the correct instance of <code>Coder</code> at compile time. In most cases, the compiler should be able to either directly find a proper <code>Coder</code> implementation, or derive one automatically.</p>
 <p>Please note that Scio wraps Beam coders in its own <code>Coder</code> definition: <code>com.spotify.scio.coders.Coder</code></p>
-<h3><a href="#buit-in-coder-instances" name="buit-in-coder-instances" class="anchor"><span class="anchor-link"></span></a>Buit-in Coder instances</h3>
+<h3><a href="#built-in-coder-instances" name="built-in-coder-instances" class="anchor"><span class="anchor-link"></span></a>Built-in Coder instances</h3>
 <p>Here&rsquo;s an example REPL session that demonstrate it:</p>
 <pre class="prettyprint"><code class="language-scala">scala&gt; import com.spotify.scio.coders._
 import com.spotify.scio.coders._

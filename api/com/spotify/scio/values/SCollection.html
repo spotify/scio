@@ -638,8 +638,8 @@ to be used with <a href="#withSideInputs(sides:com.spotify.scio.values.SideInput
       
       <p class="shortcomment cmt">Generic function to combine the elements using a custom set of aggregation functions.</p><div class="fullcomment"><div class="comment cmt"><p>Generic function to combine the elements using a custom set of aggregation functions. Turns
 an <code>SCollection[T]</code> into a result of type <code>SCollection[C]</code>, for a &quot;combined type&quot; <code>C</code>. Note
-that <code>V</code> and <code>C</code> can be different -- for example, one might combine an SCollection of type
-<code>Int</code> into an SCollection of type <code>Seq[Int]</code>. Users provide three functions:</p><p>- <code>createCombiner</code>, which turns a <code>V</code> into a <code>C</code> (e.g., creates a one-element list)</p><p>- <code>mergeValue</code>, to merge a <code>V</code> into a <code>C</code> (e.g., adds it to the end of a list)</p><p>- <code>mergeCombiners</code>, to combine two <code>C</code>'s into a single one.</p></div></div>
+that <code>T</code> and <code>C</code> can be different -- for example, one might combine an SCollection of type
+<code>Int</code> into an SCollection of type <code>Seq[Int]</code>. Users provide three functions:</p><p>- <code>createCombiner</code>, which turns a <code>T</code> into a <code>C</code> (e.g., creates a one-element list)</p><p>- <code>mergeValue</code>, to merge a <code>T</code> into a <code>C</code> (e.g., adds it to the end of a list)</p><p>- <code>mergeCombiners</code>, to combine two <code>C</code>'s into a single one.</p></div></div>
     </li><li name="com.spotify.scio.values.SCollection#count" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="transform">
       <a id="count:com.spotify.scio.values.SCollection[Long]"></a><a id="count:SCollection[Long]"></a>
       <span class="permalink">
