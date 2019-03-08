@@ -156,7 +156,7 @@ final case class SpecificRecordIO[T: ClassTag: Coder](path: String) extends Avro
   override def testId: String = s"AvroIO($path)"
 
   /**
-   * Get an SCollection for an Avro file.  It will return `T` of type
+   * Get an SCollection for an Avro file.  Returns `T` of type
    * [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]].
    */
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
@@ -166,8 +166,8 @@ final case class SpecificRecordIO[T: ClassTag: Coder](path: String) extends Avro
   }
 
   /**
-   * Save this SCollection as an Avro file. `schema` must be not null if `T` is of type
-   * [[org.apache.avro.generic.GenericRecord GenericRecord]].
+   * Save this SCollection as an Avro file. `T` must be of type
+   * [[org.apache.avro.generic.SpecificRecordBase SpecificRecordBase]].
    */
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
     val cls = ScioUtil.classOf[T]
@@ -181,15 +181,14 @@ final case class SpecificRecordIO[T: ClassTag: Coder](path: String) extends Avro
     SpecificRecordAvroTap[T](ScioUtil.addPartSuffix(path))
 }
 
-final case class SchemaAvroIO[T: ClassTag: Coder](path: String, schema: Schema = null)
-    extends AvroIO[T] {
+final case class SchemaAvroIO[T: ClassTag: Coder](path: String, schema: Schema) extends AvroIO[T] {
   override type ReadP = Unit
   override type WriteP = AvroIO.WriteParam
 
   override def testId: String = s"AvroIO($path)"
 
   /**
-   * Get an SCollection for an Avro file. `schema` must be not null if `T` is of type
+   * Get an SCollection for an Avro file. Returns `T` of type
    * [[org.apache.avro.generic.GenericRecord GenericRecord]].
    */
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
@@ -201,7 +200,7 @@ final case class SchemaAvroIO[T: ClassTag: Coder](path: String, schema: Schema =
   }
 
   /**
-   * Save this SCollection as an Avro file. `schema` must be not null if `T` is of type
+   * Save this SCollection as an Avro file. `T` is of type
    * [[org.apache.avro.generic.GenericRecord GenericRecord]].
    */
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {

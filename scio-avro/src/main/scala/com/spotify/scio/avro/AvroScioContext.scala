@@ -41,14 +41,14 @@ final class AvroScioContext(@transient val self: ScioContext) extends Serializab
 
   /**
    * Get an SCollection for an Avro file.
-   * @param schema must be not null if `T` is of type
-   *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
+   * `T` is of type [[org.apache.avro.generic.GenericRecord GenericRecord]].
    */
   def avroFile[T: ClassTag: Coder](path: String, schema: Schema): SCollection[T] =
     self.read(AvroIO[T](path, schema))
 
   /**
-   * Get an SCollection for an Avro file.
+   * Get an SCollection for an Avro file. `T` is of type
+   * [[org.apache.avro.generic.SpecificRecordBase SpecificRecordBase]].
    */
   def avroFile[T: ClassTag: Coder](path: String): SCollection[T] =
     self.read(AvroIO[T](path))
