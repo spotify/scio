@@ -313,12 +313,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /**
    * Generic function to combine the elements using a custom set of aggregation functions. Turns
    * an `SCollection[T]` into a result of type `SCollection[C]`, for a "combined type" `C`. Note
-   * that `V` and `C` can be different -- for example, one might combine an SCollection of type
+   * that `T` and `C` can be different -- for example, one might combine an SCollection of type
    * `Int` into an SCollection of type `Seq[Int]`. Users provide three functions:
    *
-   * - `createCombiner`, which turns a `V` into a `C` (e.g., creates a one-element list)
+   * - `createCombiner`, which turns a `T` into a `C` (e.g., creates a one-element list)
    *
-   * - `mergeValue`, to merge a `V` into a `C` (e.g., adds it to the end of a list)
+   * - `mergeValue`, to merge a `T` into a `C` (e.g., adds it to the end of a list)
    *
    * - `mergeCombiners`, to combine two `C`'s into a single one.
    * @group transform
