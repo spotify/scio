@@ -26,7 +26,7 @@ import scala.reflect.macros._
 sealed trait IsJavaBean[T]
 
 object IsJavaBean {
-  implicit def isJava[T]: IsJavaBean[T] = macro IsJavaBean.isJavaImpl[T]
+  implicit def isJavaBean[T]: IsJavaBean[T] = macro IsJavaBean.isJavaBeanImpl[T]
 
   def apply[T](implicit i: IsJavaBean[T]): IsJavaBean[T] = i
 
@@ -42,6 +42,11 @@ object IsJavaBean {
         case s if s.name.toString.startsWith("set") =>
           (s.name.toString.drop(3), s.asMethod.info.asInstanceOf[c.universe.MethodType])
       }.toMap
+
+    if (getters.isEmpty) {
+      val mess = s"""Class $t is not a Java bean since it does not have any getter"""
+      c.abort(c.enclosingPosition, mess)
+    }
 
     getters.foreach {
       case (name, info) =>
@@ -68,7 +73,7 @@ object IsJavaBean {
     }
   }
 
-  def isJavaImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
+  def isJavaBeanImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
     import c.universe._
     val wtt = weakTypeOf[T]
     val sym = wtt.typeSymbol

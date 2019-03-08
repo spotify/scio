@@ -42,6 +42,7 @@ import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
+import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.{io => beam}
 import org.joda.time.{Duration, Instant}
 
@@ -141,6 +142,17 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     } else this
   }
 
+  private def checkCoderSerialization[T](coder: BCoder[T]): Unit =
+    coder match {
+      case _ if !context.isTest => ()
+      // https://issues.apache.org/jira/browse/BEAM-5645
+      case c: WrappedBCoder[_] if c.u.getClass.getPackage.getName.startsWith("org.apache.beam") =>
+        ()
+      case _ =>
+        org.apache.beam.sdk.util.SerializableUtils
+          .ensureSerializable(coder)
+    }
+
   /**
    * Apply a [[org.apache.beam.sdk.transforms.PTransform PTransform]] and wrap the output in an
    * [[SCollection]].
@@ -148,15 +160,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def applyTransform[U: Coder](
     transform: PTransform[_ >: PCollection[T], PCollection[U]]): SCollection[U] = {
     val coder = CoderMaterializer.beam(context, Coder[U])
-    // https://issues.apache.org/jira/browse/BEAM-5645
-    coder match {
-      case _ if !context.isTest => ()
-      case c: WrappedBCoder[_] if c.u.getClass.getPackage.getName.startsWith("org.google.beam") =>
-        ()
-      case _ =>
-        org.apache.beam.sdk.util.SerializableUtils
-          .ensureSerializable(coder)
-    }
+    checkCoderSerialization(coder)
     this.pApply(transform).setCoder(coder)
   }
 
@@ -169,10 +173,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     implicit koder: Coder[K],
     voder: Coder[V]): SCollection[KV[K, V]] = {
     val bcoder = CoderMaterializer.kvCoder[K, V](context)
-    if (context.isTest) {
-      org.apache.beam.sdk.util.SerializableUtils
-        .ensureSerializable(bcoder)
-    }
+    checkCoderSerialization(bcoder)
     this.pApply(transform).setCoder(bcoder)
   }
 
