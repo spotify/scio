@@ -16,7 +16,7 @@
  */
 package com.spotify.scio.schemas
 
-import com.spotify.scio.{IsJavaBean}
+import com.spotify.scio.IsJavaBean
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import scala.language.higherKinds
 import scala.reflect.{classTag, ClassTag}
@@ -119,7 +119,7 @@ object Schema extends LowPriorityFallbackSchema {
   implicit def jCollectionSchema[T](implicit s: Schema[T]): Schema[java.util.List[T]] =
     Arr(s, identity, identity)
 
-  implicit def javaBeanSchema[T: IsJavaBean: ClassTag]: Schema[T] =
+  implicit def javaBeanSchema[T: IsJavaBean: ClassTag]: RawRecord[T] =
     RawRecord[T](new JavaBeanSchema())
 
   private class SerializableSchema(@transient schema: org.apache.avro.Schema) extends Serializable {

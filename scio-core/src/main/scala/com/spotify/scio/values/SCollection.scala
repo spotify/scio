@@ -150,8 +150,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     val coder = CoderMaterializer.beam(context, Coder[U])
     // https://issues.apache.org/jira/browse/BEAM-5645
     coder match {
-      case _ if !context.isTest                                                         => ()
-      case c: WrappedBCoder[_] if c.u.isInstanceOf[org.apache.beam.sdk.coders.RowCoder] => ()
+      case _ if !context.isTest => ()
+      case c: WrappedBCoder[_] if c.u.getClass.getPackage.getName.startsWith("org.google.beam") =>
+        ()
       case _ =>
         org.apache.beam.sdk.util.SerializableUtils
           .ensureSerializable(coder)

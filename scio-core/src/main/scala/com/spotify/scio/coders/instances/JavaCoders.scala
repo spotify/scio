@@ -22,14 +22,18 @@ import java.math.{BigDecimal, BigInteger}
 import java.time.Instant
 
 import com.google.api.services.bigquery.model.TableRow
+import com.spotify.scio.IsJavaBean
+import com.spotify.scio.schemas.{RawRecord, Schema}
 import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.coders.{Coder => _, _}
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.io.gcp.pubsub.{PubsubMessage, PubsubMessageWithAttributesCoder}
-import org.apache.beam.sdk.schemas.Schema
+import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaCoder}
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.beam.sdk.values.{KV, Row}
 import org.apache.beam.sdk.{coders => bcoders}
+
+import scala.reflect.{classTag, ClassTag}
 
 private object VoidCoder extends AtomicCoder[Void] {
   override def encode(value: Void, outStream: OutputStream): Unit = ()
@@ -99,7 +103,7 @@ trait JavaCoders {
 
   implicit def tableRowCoder: Coder[TableRow] = Coder.beam(TableRowJsonCoder.of())
 
-  def row(schema: Schema): Coder[Row] = Coder.beam(RowCoder.of(schema))
+  def row(schema: BSchema): Coder[Row] = Coder.beam(RowCoder.of(schema))
 
   implicit def messageCoder: Coder[PubsubMessage] =
     Coder.beam(PubsubMessageWithAttributesCoder.of())
@@ -111,4 +115,9 @@ trait JavaCoders {
 
   implicit def coderJEnum[E <: java.lang.Enum[_]: scala.reflect.ClassTag]: Coder[E] =
     Coder.kryo[E]
+
+  implicit def javaBeanCoder[T: IsJavaBean: ClassTag]: Coder[T] = {
+    val rec = Schema.javaBeanSchema[T]
+    Coder.beam(SchemaCoder.of(rec.schema, rec.toRow, rec.fromRow))
+  }
 }
