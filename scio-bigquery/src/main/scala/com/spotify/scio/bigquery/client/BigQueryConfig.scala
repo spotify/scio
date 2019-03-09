@@ -52,6 +52,6 @@ object BigQueryConfig {
   def readTimeoutMs: Option[Int] =
     BigQuerySysProps.ReadTimeoutMs.valueOption.map(_.toInt)
 
-  def priority: Option[String] = BigQuerySysProps.Priority.valueOption
+  def priority: Option[String] = BigQuerySysProps.Priority.valueOption.map(_.toUpperCase)
 
 }
