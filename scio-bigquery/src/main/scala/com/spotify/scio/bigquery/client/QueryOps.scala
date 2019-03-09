@@ -21,6 +21,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model._
 import com.spotify.scio.bigquery.client.BigQuery.Client
 import com.spotify.scio.bigquery.{BigQueryUtil, TableRow}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.QueryPriority
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
 import org.slf4j.LoggerFactory
@@ -33,18 +34,10 @@ import scala.util.{Failure, Success, Try}
 private[client] object QueryOps {
   private val Logger = LoggerFactory.getLogger(this.getClass)
 
-  private def isInteractive =
-    BigQueryConfig.priority
-      .map(_ == "INTERACTIVE")
-      .getOrElse {
-        Thread
-          .currentThread()
-          .getStackTrace
-          .exists { e =>
-            e.getClassName.startsWith("scala.tools.nsc.interpreter.") ||
-            e.getClassName.startsWith("org.scalatest.tools.")
-          }
-      }
+  private def isInteractive: Boolean = BigQueryConfig.priority match {
+    case QueryPriority.INTERACTIVE => true
+    case QueryPriority.BATCH       => false
+  }
 
   private val Priority = if (isInteractive) "INTERACTIVE" else "BATCH"
 

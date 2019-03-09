@@ -19,6 +19,7 @@ package com.spotify.scio.bigquery.client
 
 import com.google.api.services.bigquery.BigqueryScopes
 import com.spotify.scio.bigquery.BigQuerySysProps
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.QueryPriority
 
 import scala.util.Try
 
@@ -29,6 +30,9 @@ object BigQueryConfig {
 
   /** Default cache behavior is enabled. */
   private[this] val CacheEnabledDefault: Boolean = true
+
+  /** Default priority is batch. */
+  private[this] val PriorityDefault: QueryPriority = QueryPriority.BATCH
 
   private[this] val DefaultScopes = List(BigqueryScopes.BIGQUERY)
 
@@ -52,6 +56,21 @@ object BigQueryConfig {
   def readTimeoutMs: Option[Int] =
     BigQuerySysProps.ReadTimeoutMs.valueOption.map(_.toInt)
 
-  def priority: Option[String] = BigQuerySysProps.Priority.valueOption.map(_.toUpperCase)
+  def priority: QueryPriority = {
+    val isCompilingOrTesting = Thread
+      .currentThread()
+      .getStackTrace
+      .exists { e =>
+        e.getClassName.startsWith("scala.tools.nsc.interpreter.") ||
+        e.getClassName.startsWith("org.scalatest.tools.")
+      }
+
+    BigQuerySysProps.Priority.valueOption.map(_.toUpperCase) match {
+      case Some("INTERACTIVE")       => QueryPriority.INTERACTIVE
+      case Some("BATCH")             => QueryPriority.BATCH
+      case _ if isCompilingOrTesting => QueryPriority.INTERACTIVE
+      case _                         => PriorityDefault
+    }
+  }
 
 }
