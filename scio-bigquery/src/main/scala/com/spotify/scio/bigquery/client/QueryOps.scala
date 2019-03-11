@@ -21,6 +21,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model._
 import com.spotify.scio.bigquery.client.BigQuery.Client
 import com.spotify.scio.bigquery.{BigQueryUtil, TableRow}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.QueryPriority
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
 import org.slf4j.LoggerFactory
@@ -33,18 +34,7 @@ import scala.util.{Failure, Success, Try}
 private[client] object QueryOps {
   private val Logger = LoggerFactory.getLogger(this.getClass)
 
-  private def isInteractive =
-    BigQueryConfig.priority
-      .map(_ == "INTERACTIVE")
-      .getOrElse {
-        Thread
-          .currentThread()
-          .getStackTrace
-          .exists { e =>
-            e.getClassName.startsWith("scala.tools.nsc.interpreter.") ||
-            e.getClassName.startsWith("org.scalatest.tools.")
-          }
-      }
+  private def isInteractive: Boolean = BigQueryConfig.priority.equals(QueryPriority.INTERACTIVE)
 
   private val Priority = if (isInteractive) "INTERACTIVE" else "BATCH"
 
@@ -240,9 +230,9 @@ private[client] final class QueryOps(client: Client, tableService: TableOps, job
       client.underlying.jobs().insert(client.project, job).execute()
     }
     if (config.useLegacySql) {
-      Logger.info(s"Executing legacy query: `${config.sql}`")
+      Logger.info(s"Executing legacy query (${Priority}): `${config.sql}`")
     } else {
-      Logger.info(s"Executing standard SQL query: `${config.sql}`")
+      Logger.info(s"Executing standard SQL query (${Priority}): `${config.sql}`")
     }
     if (config.dryRun) {
       dryRunCache.getOrElseUpdate((config.sql, config.flattenResults, config.useLegacySql), run)
