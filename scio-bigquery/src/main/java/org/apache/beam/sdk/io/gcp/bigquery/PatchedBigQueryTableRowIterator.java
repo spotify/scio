@@ -61,6 +61,8 @@ import javax.annotation.Nullable;
 import org.apache.beam.sdk.util.BackOffAdapter;
 import org.apache.beam.sdk.util.FluentBackoff;
 import org.joda.time.Duration;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -240,7 +242,7 @@ public class PatchedBigQueryTableRowIterator implements AutoCloseable {
     }
 
     if (fieldSchema.getType().equals("TIMESTAMP")) {
-      return BigQueryAvroUtils.formatTimestamp((String) v);
+      return formatTimestamp((String) v);
     }
 
     // Returns the original value for:
@@ -501,5 +503,35 @@ public class PatchedBigQueryTableRowIterator implements AutoCloseable {
       throw new RuntimeException(e);
     }
 
+  }
+
+  private static final DateTimeFormatter DATE_AND_SECONDS_FORMATTER =
+      DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZoneUTC();
+
+  private static String formatTimestamp(String timestamp) {
+    // timestamp is in "seconds since epoch" format, with scientific notation.
+    // e.g., "1.45206229112345E9" to mean "2016-01-06 06:38:11.123456 UTC".
+    // Separate into seconds and microseconds.
+    double timestampDoubleMicros = Double.parseDouble(timestamp) * 1000000;
+    long timestampMicros = (long) timestampDoubleMicros;
+    long seconds = timestampMicros / 1000000;
+    int micros = (int) (timestampMicros % 1000000);
+    String dayAndTime = DATE_AND_SECONDS_FORMATTER.print(seconds * 1000);
+
+    // No sub-second component.
+    if (micros == 0) {
+      return String.format("%s UTC", dayAndTime);
+    }
+
+    // Sub-second component.
+    int digits = 6;
+    int subsecond = micros;
+    while (subsecond % 10 == 0) {
+      digits--;
+      subsecond /= 10;
+    }
+    String formatString = String.format("%%0%dd", digits);
+    String fractionalSeconds = String.format(formatString, subsecond);
+    return String.format("%s.%s UTC", dayAndTime, fractionalSeconds);
   }
 }
