@@ -57,7 +57,7 @@ object BigQueryConfig {
     BigQuerySysProps.ReadTimeoutMs.valueOption.map(_.toInt)
 
   def priority: QueryPriority = {
-    val isCompilingOrTesting = Thread
+    lazy val isCompilingOrTesting = Thread
       .currentThread()
       .getStackTrace
       .exists { e =>
