@@ -123,8 +123,7 @@ trait BenchmarkLogger[F[_], A <: BenchmarkType] {
   def log(benchmarks: Iterable[BenchmarkResult[A]]): F[Unit]
 }
 
-final case class ScioBenchmarkLogger[F[_], A <: BenchmarkType](
-  loggers: BenchmarkLogger[F, A]*) {
+final case class ScioBenchmarkLogger[F[_], A <: BenchmarkType](loggers: BenchmarkLogger[F, A]*) {
   def log(benchmarks: BenchmarkResult[A]*): Seq[F[Unit]] =
     loggers.map(_.log(benchmarks))
 }
@@ -222,17 +221,17 @@ object BenchmarkResult {
 }
 
 case class BenchmarkResult[A <: BenchmarkType](timestamp: Instant,
-                                                      name: String,
-                                                      elapsed: Option[Long],
-                                                      buildNum: Long,
-                                                      gitHash: String,
-                                                      startTime: String,
-                                                      finishTime: Option[String],
-                                                      state: String,
-                                                      extraArgs: Array[String],
-                                                      metrics: List[Metric],
-                                                      scioVersion: String,
-                                                      beamVersion: String) {
+                                               name: String,
+                                               elapsed: Option[Long],
+                                               buildNum: Long,
+                                               gitHash: String,
+                                               startTime: String,
+                                               finishTime: Option[String],
+                                               state: String,
+                                               extraArgs: Array[String],
+                                               metrics: List[Metric],
+                                               scioVersion: String,
+                                               beamVersion: String) {
 
   def compareMetrics(other: BenchmarkResult[A]): List[(Option[Metric], Option[Metric], Double)] = {
     val otherMetrics = other.metrics.map(m => (m.name, m)).toMap
@@ -443,10 +442,9 @@ abstract class Benchmark(val extraConfs: Map[String, Array[String]] = Map.empty)
     base ++ extra
   }
 
-  override def run(
-    projectId: String,
-    prefix: String,
-    args: Array[String]): Iterable[Future[BenchmarkResult[Batch]]] = {
+  override def run(projectId: String,
+                   prefix: String,
+                   args: Array[String]): Iterable[Future[BenchmarkResult[Batch]]] = {
     val username = CoreSysProps.User.value
     configurations
       .map {

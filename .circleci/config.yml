@@ -92,8 +92,8 @@ jobs:
             command: |
               sbt -v $SBT_OPTS \
                 scalastyle \
-                "; scalafix --check; test:scalafix --check; it:scalafix --check" \
-                scalafmtCheck test:scalafmtCheck it:scalafmtCheck scalafmtSbtCheck
+                scalafmtCheck test:scalafmtCheck it:scalafmtCheck scalafmtSbtCheck \
+                "; scalafix --check; test:scalafix --check; it:scalafix --check"
 
   build_211:
     executor: scala_211
