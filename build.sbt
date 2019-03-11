@@ -21,7 +21,7 @@ import sbtassembly.AssemblyPlugin.autoImport._
 import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 
-val beamVersion = "2.10.0"
+val beamVersion = "2.11.0"
 
 val algebirdVersion = "0.13.5"
 val annoy4sVersion = "0.8.0"
@@ -66,7 +66,7 @@ val sparkeyVersion = "3.0.0"
 val tensorFlowVersion = "1.13.1"
 val zoltarVersion = "0.5.1"
 val magnoliaVersion = "0.10.1-jto"
-val grpcVersion = "1.13.1"
+val grpcVersion = "1.17.1"
 val caseappVersion = "2.0.0-M6"
 
 lazy val scalafixSettings = Def.settings(

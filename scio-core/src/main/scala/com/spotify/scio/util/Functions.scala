@@ -26,7 +26,7 @@ import org.apache.beam.sdk.coders.{CoderRegistry, Coder => BCoder}
 import org.apache.beam.sdk.transforms.Combine.{CombineFn => BCombineFn}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.Partition.PartitionFn
-import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
+import org.apache.beam.sdk.transforms.{DoFn, ProcessFunction, SerializableFunction}
 
 import scala.collection.JavaConverters._
 
@@ -199,6 +199,13 @@ private[scio] object Functions {
         while (i.hasNext) c.output(i.next())
       }
     }
+
+  def processFn[T, U](f: T => U): ProcessFunction[T, U] = new NamedProcessFn[T, U] {
+    private[this] val g = ClosureCleaner(f) // defeat closure
+
+    @throws[Exception]
+    override def apply(input: T): U = g(input)
+  }
 
   def serializableFn[T, U](f: T => U): SerializableFunction[T, U] =
     new NamedSerializableFn[T, U] {

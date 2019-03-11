@@ -391,7 +391,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def filter(f: T => Boolean): SCollection[T] =
-    this.pApply(Filter.by(Functions.serializableFn(f.asInstanceOf[T => JBoolean])))
+    this.pApply(Filter.by(Functions.processFn(f.asInstanceOf[T => JBoolean])))
 
   /**
    * Return a new SCollection by first applying a function to all elements of
