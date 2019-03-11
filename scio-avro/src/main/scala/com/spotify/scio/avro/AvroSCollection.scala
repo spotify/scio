@@ -43,7 +43,7 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
   // scalastyle:off parameter.number
   def saveAsAvroFile(path: String,
                      numShards: Int = AvroIO.WriteParam.DefaultNumShards,
-                     schema: Schema = null,
+                     schema: Schema,
                      suffix: String = AvroIO.WriteParam.DefaultSuffix,
                      codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
                      metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
