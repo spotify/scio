@@ -54,7 +54,7 @@ private[scio] final class FileStorage(protected[scio] val path: String) {
       require(meta.isReadSeekEfficient)
       private val in =
         FileSystems.open(meta.resourceId()).asInstanceOf[SeekableByteChannel]
-      in.read(ByteBuffer.allocate(1))  // read a single byte to initialize the channel
+      in.read(ByteBuffer.allocate(1)) // read a single byte to initialize the channel
       override def read(b: Array[Byte], off: Int, len: Int): Int =
         in.read(ByteBuffer.wrap(b, off, len))
       override def tell(): Long = in.position()
