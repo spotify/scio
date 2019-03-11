@@ -34,10 +34,7 @@ import scala.util.{Failure, Success, Try}
 private[client] object QueryOps {
   private val Logger = LoggerFactory.getLogger(this.getClass)
 
-  private def isInteractive: Boolean = BigQueryConfig.priority match {
-    case QueryPriority.INTERACTIVE => true
-    case QueryPriority.BATCH       => false
-  }
+  private def isInteractive: Boolean = BigQueryConfig.priority.equals(QueryPriority.INTERACTIVE)
 
   private val Priority = if (isInteractive) "INTERACTIVE" else "BATCH"
 
