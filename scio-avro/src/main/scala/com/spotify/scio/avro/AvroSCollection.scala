@@ -49,13 +49,8 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
                      metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
     implicit ev: T <:< GenericRecord,
     coder: Coder[T]): Future[Tap[T]] = {
-    //val cls = ScioUtil.classOf[T]
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
-    //if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-    //  self.write(AvroIO[T](path))(param)
-    // } else {
     self.write(AvroIO[T](path, schema))(param)
-    //}
   }
 
   def saveAsAvroFile(path: String,
@@ -67,11 +62,7 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
                                                     coder: Coder[T]): Future[Tap[T]] = {
     val cls = ScioUtil.classOf[T]
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
-    // if (classOf[SpecificRecordBase] isAssignableFrom cls) {
     self.write(AvroIO[T](path))(param)
-    //  } else {
-    //   self.write(AvroIO[T](path, schema))(param)
-    // }
   }
 
   /**
