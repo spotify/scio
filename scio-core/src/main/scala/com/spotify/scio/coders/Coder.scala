@@ -176,7 +176,7 @@ private case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
    * Eagerly compute a stack trace on materialization
    * to provide a helpful stacktrace if an exception happens
    */
-  private val stackTrace: Array[StackTraceElement] =
+  @transient private val stackTrace: Array[StackTraceElement] =
     CoderException.prepareStackTrace
 
   private def buildException(cause: Throwable): Exception =
