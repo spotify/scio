@@ -54,11 +54,10 @@ private[scio] final class FileStorage(protected[scio] val path: String) {
       require(meta.isReadSeekEfficient)
       private val in = {
         val channel = FileSystems.open(meta.resourceId()).asInstanceOf[SeekableByteChannel]
-        // metadata is lazy loaded and only triggered upon first read
+        // metadata is lazy loaded on GCS FS and only triggered upon first read
         channel.read(ByteBuffer.allocate(1))
         // reset position
         channel.position(0)
-        channel
       }
       override def read(b: Array[Byte], off: Int, len: Int): Int =
         in.read(ByteBuffer.wrap(b, off, len))
