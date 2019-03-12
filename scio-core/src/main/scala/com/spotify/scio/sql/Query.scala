@@ -45,9 +45,9 @@ object Query {
   private def silence[A](a: Unit => A): A = {
     val prop = "org.slf4j.simpleLogger.defaultLogLevel"
     val ll = System.getProperty(prop)
-    System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "ERROR")
+    System.setProperty(prop, "ERROR")
     val x = a(())
-    System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", ll)
+    if (ll != null) System.setProperty(prop, ll)
     x
   }
 
