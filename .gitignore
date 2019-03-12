@@ -5,3 +5,5 @@ target
 .bigquery
 .scio_repl
 *.jfr
+
+.bloop
