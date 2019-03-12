@@ -17,7 +17,7 @@
 package com.spotify.scio.schemas
 
 import scala.collection.JavaConverters._
-import org.apache.beam.sdk.schemas.{ Schema => BSchema }
+import org.apache.beam.sdk.schemas.{Schema => BSchema}
 
 private[scio] object PrettyPrint {
   private def printContent(fs: List[BSchema.Field], prefix: String = ""): String = {
