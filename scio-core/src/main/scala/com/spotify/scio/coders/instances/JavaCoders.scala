@@ -23,7 +23,7 @@ import java.time.Instant
 
 import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.IsJavaBean
-import com.spotify.scio.schemas.{RawRecord, Schema}
+import com.spotify.scio.schemas.Schema
 import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.coders.{Coder => _, _}
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
@@ -32,8 +32,7 @@ import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaCoder}
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.beam.sdk.values.{KV, Row}
 import org.apache.beam.sdk.{coders => bcoders}
-
-import scala.reflect.{classTag, ClassTag}
+import scala.reflect.ClassTag
 
 private object VoidCoder extends AtomicCoder[Void] {
   override def encode(value: Void, outStream: OutputStream): Unit = ()

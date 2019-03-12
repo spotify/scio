@@ -134,9 +134,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def setCoder(coder: org.apache.beam.sdk.coders.Coder[T]): SCollection[T] =
     context.wrap(internal.setCoder(coder))
 
-  def setSchema(schema: com.spotify.scio.schemas.Schema[T]): SCollection[T] = {
+  def setSchema(schema: Schema[T]): SCollection[T] = {
     if (!internal.hasSchema) {
-      import com.spotify.scio.schemas.SchemaMaterializer
       val (s, to, from) = SchemaMaterializer.materialize(this.context, schema)
       context.wrap(internal.setSchema(s, to, from))
     } else this
