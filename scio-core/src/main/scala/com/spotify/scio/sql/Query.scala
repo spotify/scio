@@ -139,7 +139,8 @@ object Query {
   }
 
   /**
-   * Create a BeanSQL Query that can be applied on a SCollection[I] and will return a SCollection[Row].
+   * Create a BeanSQL Query that can be applied on a SCollection[I]
+   * and will return a SCollection[Row].
    * Note that the Schema of thoses Rows is automatically infered, and therefore,
    * does not need to be set.
    */
@@ -181,7 +182,8 @@ object Query {
     }
 
   /**
-   * Create a BeanSQL Query that can be applied on a SCollection[I] and will return a SCollection[O].
+   * Create a BeanSQL Query that can be applied on a SCollection[I]
+   * and will return a SCollection[O].
    * The Schema of O is expected to match the data returned by the SQL query.
    * If it does not, a RuntimeException will be thrown.
    */

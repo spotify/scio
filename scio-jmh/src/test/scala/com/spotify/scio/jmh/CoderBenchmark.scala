@@ -269,7 +269,7 @@ class SerializedOutputSize(var outputSize: Int) {
 }
 
 object Counter {
-  def track[A](o: SerializedOutputSize)(f: => Array[Byte]) = {
+  def track[A](o: SerializedOutputSize)(f: => Array[Byte]): Array[Byte] = {
     val out = f
     if (o.outputSize == 0)
       o.outputSize = out.length
