@@ -31,12 +31,19 @@ object CoderMaterializer {
                                o: PipelineOptions = PipelineOptionsFactory.create()): BCoder[T] =
     beam(r, o, coder)
 
+  @inline private def nullCoder[T](o: PipelineOptions, c: BCoder[T]) = {
+    val nullableCoder = o.as(classOf[com.spotify.scio.options.ScioOptions]).getNullableCoders()
+    if (nullableCoder) NullableCoder.of(c)
+    else c
+  }
+
   final def beam[T](r: CoderRegistry, o: PipelineOptions, coder: Coder[T]): BCoder[T] = {
     coder match {
+      // #1734: do not wrap native beam coders
+      case Beam(c) if c.getClass.getPackage.getName.startsWith("org.apache.beam") =>
+        nullCoder(o, c)
       case Beam(c) =>
-        val nullableCoder = o.as(classOf[com.spotify.scio.options.ScioOptions]).getNullableCoders()
-        if (nullableCoder) WrappedBCoder.create(NullableCoder.of(c))
-        else WrappedBCoder.create(c)
+        WrappedBCoder.create(nullCoder(o, c))
       case Fallback(ct) =>
         WrappedBCoder.create(new KryoAtomicCoder[T](KryoOptions(o)))
       case Transform(c, f) =>
