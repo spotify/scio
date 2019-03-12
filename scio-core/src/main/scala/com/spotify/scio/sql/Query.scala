@@ -30,8 +30,8 @@ import com.google.common.collect.ImmutableMap
 
 import scala.collection.JavaConverters._
 import scala.language.experimental.macros
+import scala.util.{Failure, Success, Try}
 
-// TODO: could be a PTransform
 sealed trait Query[I, O] extends (SCollection[I] => SCollection[O]) {
   val query: String
 }
@@ -92,10 +92,14 @@ object Query {
         case _                                       => false
       })
 
-    scala.util
-      .Try(silence(_ => sqlEnv.parseQuery(q.query)))
-      .toEither
-      .left
+    // Try.toEither does not exists in Scala 2.11
+    @inline def toEither[T](t: Try[T]): Either[Throwable, T] =
+      t match {
+        case Success(s) => Right(s)
+        case Failure(e) => Left(e)
+      }
+
+    toEither(Try(silence(_ => sqlEnv.parseQuery(q.query)))).left
       .map { ex =>
         val mess = org.apache.commons.lang3.exception.ExceptionUtils.getRootCauseMessage(ex)
         s"""
@@ -111,9 +115,11 @@ object Query {
           |${PrettyPrint.prettyPrint(expectedSchema.getFields.asScala.toList)}
         """.stripMargin
       }
+      .right
       .map { q =>
         CalciteUtils.toSchema(q.getRowType)
       }
+      .right
       .flatMap {
         case inferedSchema
             if typesEqual(BSchema.FieldType.row(inferedSchema),

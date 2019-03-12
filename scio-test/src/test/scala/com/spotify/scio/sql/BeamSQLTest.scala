@@ -254,19 +254,9 @@ class BeamSQLTest extends PipelineSpec {
     "Schema.javaBeanSchema[TypeMismatch]" shouldNot compile
   }
 
-  // TODO: Join SCollections ?
-  // TODO: Should chaining row queries be supported ?
-  // ignore should "properly chain row queries" in runWithContext { sc =>
-  //   val schemaRes = BSchema.builder().addInt64Field("sum(age)").build()
-  //   val expected = Row.withSchema(schemaRes).addValue(255).build()
-
-  //   val in = sc.parallelize(users)
-  //   val r =
-  //     in.sql(Query.row("select username, age from PCOLLECTION"))
-  //       .sql(Query.row("select sum(age) from PCOLLECTION"))
-
-  //   r should containSingleValue(expected)
-  // }
+  ignore should "support JOIN" in {
+    // TODO: Join SCollections impl
+  }
 
   it should "properly chain typed queries" in runWithContext { sc =>
     val expected = 255
