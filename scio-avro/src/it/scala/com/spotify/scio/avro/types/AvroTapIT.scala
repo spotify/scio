@@ -34,7 +34,8 @@ final class AvroTapIT extends FlatSpec with Matchers {
     val asd = AvroTaps(Taps()).avroFile[GenericRecord](
       "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro")
     val result = Await.result(asd, Duration.Inf)
-    result.value.hasNext should be true
+
+    result.value.hasNext shouldBe true
   }
 
 }
