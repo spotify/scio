@@ -52,9 +52,13 @@ private[scio] final class FileStorage(protected[scio] val path: String) {
   private def getAvroSeekableInput(meta: Metadata): SeekableInput =
     new SeekableInput {
       require(meta.isReadSeekEfficient)
-      private val in =
-        FileSystems.open(meta.resourceId()).asInstanceOf[SeekableByteChannel]
-      in.read(ByteBuffer.allocate(1)) // read a single byte to initialize the channel
+      private val in = {
+        val channel = FileSystems.open(meta.resourceId()).asInstanceOf[SeekableByteChannel]
+        // metadata is lazy loaded on GCS FS and only triggered upon first read
+        channel.read(ByteBuffer.allocate(1))
+        // reset position
+        channel.position(0)
+      }
       override def read(b: Array[Byte], off: Int, len: Int): Int =
         in.read(ByteBuffer.wrap(b, off, len))
       override def tell(): Long = in.position()
