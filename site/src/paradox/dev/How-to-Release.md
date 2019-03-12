@@ -20,7 +20,7 @@ credentials ++= Seq(
 - Run `release skip-tests` in sbt console and follow the instructions
 - Go to [oss.sonatype.org](https://oss.sonatype.org/), find the staging repository, "close" and "release"
 - Run `./scripts/make-site.sh` to update documentation
-- Pick a release name from [here](https://en.wikipedia.org/wiki/List_of_Latin_phrases_(full)), [here](https://en.wikipedia.org/wiki/List_of_songs_with_Latin_lyrics) or other interesting sources<sup>*</sup>
+- Pick a release name from [here](https://en.wikipedia.org/wiki/List_of_Latin_phrases_(full)#), [here](https://en.wikipedia.org/wiki/List_of_songs_with_Latin_lyrics) or other interesting sources<sup>*</sup>
 - Update the list of release names below
 - When the tag build completes, update release notes with name and change log
 - If the release includes a Beam version bump, update the @ref[version matrix](../Apache-Beam.md)
@@ -41,6 +41,7 @@ credentials ++= Seq(
 ## Past release names
 
 ### 0.7.x
+- [v0.7.3](https://github.com/spotify/scio/releases/tag/v0.7.3) - _"Vulpes Vulpes"_
 - [v0.7.2](https://github.com/spotify/scio/releases/tag/v0.7.2) - _"Ursus t. Ussuricus"_
 - [v0.7.1](https://github.com/spotify/scio/releases/tag/v0.7.1) - _"Taxidea Taxus"_
 - [v0.7.0](https://github.com/spotify/scio/releases/tag/v0.7.0) - _"Suricata suricatta"_
