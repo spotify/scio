@@ -51,6 +51,11 @@ object Query {
     x
   }
 
+  /**
+   * Typecheck [[Query]] q against the provided schemas.
+   * If the query correctly typechecks, it's simply return as a [[Right]].
+   * If it fails, a error message is returned in a [[Left]].
+   */
   def typecheck[I: Schema, O: Schema](q: Query[I, O]): Either[String, Query[I, O]] = {
     val schema: BSchema = SchemaMaterializer.fieldType(Schema[I]).getRowSchema()
 
@@ -133,6 +138,11 @@ object Query {
       }
   }
 
+  /**
+   * Create a BeanSQL Query that can be applied on a SCollection[I] and will return a SCollection[Row].
+   * Note that the Schema of thoses Rows is automatically infered, and therefore,
+   * does not need to be set.
+   */
   def row[I: Schema](q: String, udfs: Udf*): Query[I, Row] =
     new Query[I, Row] {
       val query = q
@@ -170,6 +180,11 @@ object Query {
       }
     }
 
+  /**
+   * Create a BeanSQL Query that can be applied on a SCollection[I] and will return a SCollection[O].
+   * The Schema of O is expected to match the data returned by the SQL query.
+   * If it does not, a RuntimeException will be thrown.
+   */
   def of[I: Schema, O: Schema](q: String, udfs: Udf*): Query[I, O] =
     new Query[I, O] {
       val query = q
@@ -187,6 +202,11 @@ object Query {
       }
     }
 
+  /**
+   * Similar to [[Query.of]] exept the query is type-checked at compile time.
+   * @note [[query]] needs to be a stable (known at compile time) value.
+   * @see: Query.of
+   */
   def tsql[I: Schema, O: Schema](query: String, udfs: Udf*): Query[I, O] =
     macro com.spotify.scio.sql.QueryMacros.tsqlImpl[I, O]
 
