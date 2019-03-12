@@ -105,8 +105,14 @@ class SCollectionMatchersTest extends PipelineSpec {
     // shouldNot cases
     runWithContext { _.parallelize(Seq(1, 2, 3)) shouldNot containValue(4) }
 
+    runWithContext { _.parallelize(Seq(1, 2, 3)) should not(containValue(4)) }
+
     an[AssertionError] should be thrownBy {
       runWithContext { _.parallelize(Seq(1, 2, 3)) shouldNot containValue(1) }
+    }
+
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq(1, 2, 3)) should not(containValue(1)) }
     }
   }
 
@@ -121,8 +127,14 @@ class SCollectionMatchersTest extends PipelineSpec {
     // shouldNot cases
     runWithContext { _.parallelize(1 to 10) shouldNot beEmpty }
 
+    runWithContext { _.parallelize(1 to 10) should not(beEmpty) }
+
     an[AssertionError] should be thrownBy {
       runWithContext { _.parallelize(Seq.empty[Int]) shouldNot beEmpty }
+    }
+
+    an[AssertionError] should be thrownBy {
+      runWithContext { _.parallelize(Seq.empty[Int]) should not(beEmpty) }
     }
   }
 
