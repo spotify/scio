@@ -165,7 +165,8 @@ private[coders] object CoderException {
     Thread
       .currentThread()
       .getStackTrace()
-      .dropWhile(_.getClassName.contains(WrappedBCoder.getClass.getName))
+      .dropWhile(!_.getClassName.contains(CoderMaterializer.getClass.getName))
+      .take(10)
 }
 
 // XXX: Workaround a NPE deep down the stack in Beam
