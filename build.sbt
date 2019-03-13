@@ -66,7 +66,7 @@ val sparkeyVersion = "3.0.0"
 val tensorFlowVersion = "1.13.1"
 val zoltarVersion = "0.5.1"
 val magnoliaVersion = "0.10.1-jto"
-val grpcVersion = "1.17.1"
+val grpcVersion = "1.19.0"
 val caseappVersion = "2.0.0-M6"
 
 lazy val scalafixSettings = Def.settings(
