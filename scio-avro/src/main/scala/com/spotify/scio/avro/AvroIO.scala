@@ -51,7 +51,7 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = CoderMaterializer.beam(sc, Coder[T])
     implicit val bcoder = Coder.avroGenericRecordCoder(AvroBytesUtil.schema)
-    AvroIO[GenericRecord](path, AvroBytesUtil.schema)
+    SchemaAvroIO[GenericRecord](path, AvroBytesUtil.schema)
       .read(sc, params)
       .parDo(new DoFn[GenericRecord, T] {
         @ProcessElement
@@ -75,7 +75,7 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
         private[scio] def processElement(c: DoFn[T, GenericRecord]#ProcessContext): Unit =
           c.output(AvroBytesUtil.encode(elemCoder, c.element()))
       })
-    AvroIO[GenericRecord](path, AvroBytesUtil.schema).write(bytes, params)
+    SchemaAvroIO[GenericRecord](path, AvroBytesUtil.schema).write(bytes, params)
     data.context.makeFuture(tap(Unit))
   }
 
@@ -131,6 +131,7 @@ object ProtobufIO {
   type WriteParam = AvroIO.WriteParam
   val WriteParam = AvroIO.WriteParam
 }
+
 sealed trait AvroIO[T] extends ScioIO[T] {
   override final val tapT = TapOf[T]
 
@@ -150,8 +151,7 @@ sealed trait AvroIO[T] extends ScioIO[T] {
 
 }
 
-final case class SpecificRecordIO[T: ClassTag: Coder](path: String)(
-  implicit ev: T <:< SpecificRecordBase)
+final case class SpecificRecordIO[T <: SpecificRecordBase: ClassTag: Coder](path: String)
     extends AvroIO[T] {
   override type ReadP = Unit
   override type WriteP = AvroIO.WriteParam
@@ -159,8 +159,8 @@ final case class SpecificRecordIO[T: ClassTag: Coder](path: String)(
   override def testId: String = s"AvroIO($path)"
 
   /**
-   * Get an SCollection for an Avro file.  It will return `T` of type
-   * [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]].
+   * Get an SCollection of [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]]
+   * from an Avro file.
    */
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val cls = ScioUtil.classOf[T]
@@ -169,8 +169,8 @@ final case class SpecificRecordIO[T: ClassTag: Coder](path: String)(
   }
 
   /**
-   * Save this SCollection as an Avro file. `schema` must be not null if `T` is of type
-   * [[org.apache.avro.generic.GenericRecord GenericRecord]].
+   * Save this SCollection of [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]] as
+   * an Avro file.
    */
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
     val cls = ScioUtil.classOf[T]
@@ -184,17 +184,16 @@ final case class SpecificRecordIO[T: ClassTag: Coder](path: String)(
     SpecificRecordAvroTap[T](ScioUtil.addPartSuffix(path))
 }
 
-final case class SchemaAvroIO[T: Coder](path: String, schema: Schema)(
-  implicit ev: T <:< GenericRecord)
-    extends AvroIO[T] {
+final case class SchemaAvroIO[T: ClassTag: Coder](path: String, schema: Schema) extends AvroIO[T] {
   override type ReadP = Unit
   override type WriteP = AvroIO.WriteParam
 
   override def testId: String = s"AvroIO($path)"
 
   /**
-   * Get an SCollection for an Avro file. `schema` must be not null if `T` is of type
-   * [[org.apache.avro.generic.GenericRecord GenericRecord]].
+   * Get an SCollection of [[org.apache.avro.generic.GenericRecord GenericRecord]] from an Avro
+   * file.
+   *
    */
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val t = beam.AvroIO
@@ -205,8 +204,7 @@ final case class SchemaAvroIO[T: Coder](path: String, schema: Schema)(
   }
 
   /**
-   * Save this SCollection as an Avro file. `schema` must be not null if `T` is of type
-   * [[org.apache.avro.generic.GenericRecord GenericRecord]].
+   * Save this SCollection [[org.apache.avro.generic.GenericRecord GenericRecord]] as a Avro file.
    */
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
     val t = beam.AvroIO.writeGenericRecords(schema).asInstanceOf[beam.AvroIO.Write[T]]
@@ -220,6 +218,7 @@ final case class SchemaAvroIO[T: Coder](path: String, schema: Schema)(
 }
 
 object AvroIO {
+
   object WriteParam {
     private[avro] val DefaultNumShards = 0
     private[avro] val DefaultSuffix = ""
@@ -234,13 +233,10 @@ object AvroIO {
     val suffix: String = _suffix + ".avro"
   }
 
-  def apply[T: ClassTag: Coder](path: String)(
-    implicit ev: T <:< SpecificRecordBase): SpecificRecordIO[T] =
-    SpecificRecordIO[T](path)
-
-  def apply[T: Coder](path: String, schema: Schema)(
-    implicit ev: T <:< GenericRecord): SchemaAvroIO[T] =
-    SchemaAvroIO[T](path, schema)
+  @inline final def apply[T](id: String, schema: Schema = null): AvroIO[T] =
+    new AvroIO[T] with TestIO[T] {
+      override def testId: String = s"AvroIO($id)"
+    }
 }
 
 object AvroTyped {

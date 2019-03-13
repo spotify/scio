@@ -21,12 +21,9 @@ import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.Tap
-import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
-import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -36,9 +33,8 @@ import scala.reflect.runtime.universe._
 final class AvroSCollection[T](@transient val self: SCollection[T]) extends Serializable {
 
   /**
-   * Save this SCollection as an Avro file.
-   * @param schema must be not null if `T` is of type
-   *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
+   * Save this SCollection of type
+   * [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]] as an Avro file.
    */
   // scalastyle:off parameter.number
   def saveAsAvroFile(path: String,
@@ -47,22 +43,10 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
                      suffix: String = AvroIO.WriteParam.DefaultSuffix,
                      codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
                      metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata)(
-    implicit ev: T <:< GenericRecord,
+    implicit ct: ClassTag[T],
     coder: Coder[T]): Future[Tap[T]] = {
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
-    self.write(AvroIO[T](path, schema))(param)
-  }
-
-  def saveAsAvroFile(path: String,
-                     numShards: Int,
-                     suffix: String,
-                     codec: CodecFactory,
-                     metadata: Map[String, AnyRef])(implicit ct: ClassTag[T],
-                                                    ev: T <:< SpecificRecordBase,
-                                                    coder: Coder[T]): Future[Tap[T]] = {
-    val cls = ScioUtil.classOf[T]
-    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
-    self.write(AvroIO[T](path))(param)
+    self.write(SchemaAvroIO[T](path, schema))(param)
   }
 
   /**
