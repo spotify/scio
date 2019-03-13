@@ -90,7 +90,7 @@ class SpannerIOIT extends FlatSpec with Matchers with BeforeAndAfterAll {
           "CREATE TABLE write_test ( Key INT64, Value STRING(MAX) ) PRIMARY KEY (Key)"
         ).asJava
       )
-      .waitFor()
+      .get()
   }
 
   override def afterAll(): Unit =
