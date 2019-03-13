@@ -162,7 +162,6 @@ object BenchmarkResult {
             name: String,
             extraArgs: Array[String],
             scioResult: ScioResult): BenchmarkResult[Batch] = {
-    require(scioResult.isCompleted)
 
     val job: Job = scioResult.as[DataflowResult].getJob
     val startTime: LocalDateTime = DateTimeParser.parseLocalDateTime(job.getCreateTime)
@@ -449,14 +448,16 @@ abstract class Benchmark(val extraConfs: Map[String, Array[String]] = Map.empty)
     configurations
       .map {
         case (confName, extraArgs) =>
-          val (sc, _) =
-            ContextAndArgs(Array(s"--project=$projectId") ++ args ++ extraArgs)
-          sc.setAppName(confName)
-          sc.setJobName(s"$prefix-$confName-$username".toLowerCase())
-          run(sc)
-          val result = sc.close()
-          result.finalState.map(_ =>
-            BenchmarkResult.batch(Instant.now(), confName, extraArgs, result))
+          Future {
+            val (sc, _) =
+              ContextAndArgs(Array(s"--project=$projectId") ++ args ++ extraArgs)
+            sc.setAppName(confName)
+            sc.setJobName(s"$prefix-$confName-$username".toLowerCase())
+            run(sc)
+            sc.close()
+            val result = sc.close().waitUntilDone()
+            BenchmarkResult.batch(Instant.now(), confName, extraArgs, result)
+          }
       }
   }
 }
