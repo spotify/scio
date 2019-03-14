@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,26 @@
  */
 package com.spotify.scio.schemas
 
-import com.spotify.scio.coders.Coder
+import java.util.{List => jList}
+
 import com.spotify.scio.IsJavaBean
-import scala.language.higherKinds
-import scala.reflect.{classTag, ClassTag}
-import scala.collection.JavaConverters._
-import org.apache.beam.sdk.schemas.{
-  Schema => BSchema,
-  JavaBeanSchema,
-  AvroRecordSchema,
-  SchemaProvider
-}
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.util.ScioUtil
+import org.apache.avro.specific.SpecificRecord
+import org.apache.beam.sdk.schemas.Schema.FieldType
 import org.apache.beam.sdk.schemas.utils.AvroUtils
+import org.apache.beam.sdk.schemas.{
+  AvroRecordSchema,
+  JavaBeanSchema,
+  SchemaProvider,
+  Schema => BSchema
+}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.{Row, TypeDescriptor}
-import org.apache.avro.specific.SpecificRecord
-import BSchema.FieldType
+
+import scala.collection.JavaConverters._
+import scala.language.higherKinds
+import scala.reflect.{classTag, ClassTag}
 
 sealed trait Schema[T] {
   type Repr
@@ -48,7 +52,7 @@ final case class Record[T] private (schemas: Array[(String, Schema[Any])],
 }
 
 object Record {
-  def apply[T](implicit r: Record[T]): Record[T] = r
+  @inline final def apply[T](implicit r: Record[T]): Record[T] = r
 }
 
 final case class RawRecord[T](schema: BSchema,
@@ -60,8 +64,7 @@ final case class RawRecord[T](schema: BSchema,
 
 object RawRecord {
   def apply[T: ClassTag](provider: SchemaProvider): RawRecord[T] = {
-    val rc = classTag[T].runtimeClass.asInstanceOf[Class[T]]
-    val td = TypeDescriptor.of(rc)
+    val td = TypeDescriptor.of(ScioUtil.classOf[T])
     val schema = provider.schemaFor(td)
     def toRow = provider.toRowFunction(td)
     def fromRow = provider.fromRowFunction(td)
@@ -80,7 +83,6 @@ final case class Fallback[F[_], T](coder: F[T]) extends Schema[T] {
   type Repr = Array[Byte]
 }
 
-import java.util.{List => jList}
 final case class Arr[F[_], T](schema: Schema[T],
                               toList: F[T] => jList[T],
                               fromList: jList[T] => F[T])
@@ -98,30 +100,30 @@ trait LowPriorityFallbackSchema extends LowPrioritySchemaDerivation {
 }
 
 object Schema extends LowPriorityFallbackSchema {
-  implicit val stringSchema = Type[String](FieldType.STRING)
-  implicit val byteSchema = Type[Byte](FieldType.BYTE)
-  implicit val bytesSchema = Type[Array[Byte]](FieldType.BYTES)
-  implicit val sortSchema = Type[Short](FieldType.INT16)
-  implicit val intSchema = Type[Int](FieldType.INT32)
-  implicit val LongSchema = Type[Long](FieldType.INT64)
-  implicit val floatSchema = Type[Float](FieldType.FLOAT)
-  implicit val doubleSchema = Type[Double](FieldType.DOUBLE)
-  implicit val bigdecimalSchema = Type[BigDecimal](FieldType.DECIMAL)
-  implicit val booleanSchema = Type[Boolean](FieldType.BOOLEAN)
+  implicit val stringSchema: Type[String] = Type[String](FieldType.STRING)
+  implicit val byteSchema: Type[Byte] = Type[Byte](FieldType.BYTE)
+  implicit val bytesSchema: Type[Array[Byte]] = Type[Array[Byte]](FieldType.BYTES)
+  implicit val sortSchema: Type[Short] = Type[Short](FieldType.INT16)
+  implicit val intSchema: Type[Int] = Type[Int](FieldType.INT32)
+  implicit val longSchema: Type[Long] = Type[Long](FieldType.INT64)
+  implicit val floatSchema: Type[Float] = Type[Float](FieldType.FLOAT)
+  implicit val doubleSchema: Type[Double] = Type[Double](FieldType.DOUBLE)
+  implicit val bigdecimalSchema: Type[BigDecimal] = Type[BigDecimal](FieldType.DECIMAL)
+  implicit val booleanSchema: Type[Boolean] = Type[Boolean](FieldType.BOOLEAN)
   // implicit def datetimeSchema = FSchema[](FieldType.DATETIME)
 
   implicit def optionSchema[T](implicit s: Schema[T]): Schema[Option[T]] = Optional(s)
   implicit def listSchema[T](implicit s: Schema[T]): Schema[List[T]] =
     Arr(s, _.asJava, _.asScala.toList)
 
-  implicit def jCollectionSchema[T](implicit s: Schema[T]): Schema[java.util.List[T]] =
+  implicit def jCollectionSchema[T](implicit s: Schema[T]): Schema[jList[T]] =
     Arr(s, identity, identity)
 
   implicit def javaBeanSchema[T: IsJavaBean: ClassTag]: RawRecord[T] =
     RawRecord[T](new JavaBeanSchema())
 
   private class SerializableSchema(@transient schema: org.apache.avro.Schema) extends Serializable {
-    val stringSchema = schema.toString
+    private[this] val stringSchema = schema.toString
     def get: org.apache.avro.Schema = new org.apache.avro.Schema.Parser().parse(stringSchema)
   }
 
@@ -185,7 +187,9 @@ private object Derived extends Serializable {
 }
 
 trait LowPrioritySchemaDerivation {
-  import language.experimental.macros, magnolia._
+  import magnolia._
+
+  import language.experimental.macros
 
   type Typeclass[T] = Schema[T]
 

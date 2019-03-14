@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,18 +49,12 @@ object To {
         .find { x =>
           x.getName == f.getName
         }
-        .map { other =>
-          val res = areCompatible(f.getType, other.getType)
-          res
-        }
-        .getOrElse {
-          false
-        }
+        .exists(other => areCompatible(f.getType, other.getType))
     }
   }
 
   private[schemas] def checkCompatibility[T](bsi: BSchema, bso: BSchema)(
-    t: => T): Either[String, T] = {
+    t: => T): Either[String, T] =
     if (areCompatible(bsi, bso)) {
       Right(t)
     } else {
@@ -74,7 +68,6 @@ object To {
         |${PrettyPrint.prettyPrint(bso.getFields.asScala.toList)}""".stripMargin
       Left(message)
     }
-  }
 
   @inline private def transform(schema: BSchema): Row => Row = { t0 =>
     val values =
@@ -122,7 +115,7 @@ object To {
   def unchecked[I: Schema, O: Schema]: To[I, O] =
     new To[I, O] {
       def apply(coll: SCollection[I]): SCollection[O] = {
-        val (bst, toT, _) = SchemaMaterializer.materialize(coll.context, Schema[I])
+        val (_, toT, _) = SchemaMaterializer.materialize(coll.context, Schema[I])
         val (bso, toO, fromO) = SchemaMaterializer.materialize(coll.context, Schema[O])
         val trans = transform(bso)
         coll.map[O] { t =>
@@ -138,7 +131,7 @@ object To {
    * @see To#unsafe
    */
   def safe[I: Schema, O: Schema]: To[I, O] =
-    macro com.spotify.scio.schemas.ToMacro.safeImpl[I, O]
+    macro ToMacro.safeImpl[I, O]
 }
 
 object ToMacro {

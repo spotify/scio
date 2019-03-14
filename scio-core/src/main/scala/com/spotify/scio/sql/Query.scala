@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,20 +33,20 @@ import scala.language.experimental.macros
 import scala.util.{Failure, Success, Try}
 
 sealed trait Query[I, O] extends (SCollection[I] => SCollection[O]) {
-  val query: String
+  def query: String
 }
 
 object Query {
 
-  val PCOLLECTION_NAME = "PCOLLECTION"
+  private[this] val PCollectionName = "PCOLLECTION"
 
   // Beam is annoyingly verbose when is parses SQL queries.
   // This function makes is silent.
-  private def silence[A](a: Unit => A): A = {
+  private def silence[A](a: => A): A = {
     val prop = "org.slf4j.simpleLogger.defaultLogLevel"
     val ll = System.getProperty(prop)
     System.setProperty(prop, "ERROR")
-    val x = a(())
+    val x = a
     if (ll != null) System.setProperty(prop, ll)
     x
   }
@@ -66,7 +66,7 @@ object Query {
     }
 
     val sqlEnv =
-      BeamSqlEnv.readOnly(Query.PCOLLECTION_NAME, ImmutableMap.of(Query.PCOLLECTION_NAME, table))
+      BeamSqlEnv.readOnly(PCollectionName, ImmutableMap.of(PCollectionName, table))
 
     val expectedSchema: BSchema =
       Schema[O] match {
@@ -88,8 +88,8 @@ object Query {
         case BSchema.TypeName.MAP =>
           typesEqual(s1.getMapKeyType, s2.getMapKeyType) && typesEqual(s1.getMapValueType,
                                                                        s2.getMapValueType)
-        case _ if (s1.getNullable == s2.getNullable) => true
-        case _                                       => false
+        case _ if s1.getNullable == s2.getNullable => true
+        case _                                     => false
       })
 
     // Try.toEither does not exists in Scala 2.11
@@ -99,7 +99,7 @@ object Query {
         case Failure(e) => Left(e)
       }
 
-    toEither(Try(silence(_ => sqlEnv.parseQuery(q.query)))).left
+    toEither(Try(silence(sqlEnv.parseQuery(q.query)))).left
       .map { ex =>
         val mess = org.apache.commons.lang3.exception.ExceptionUtils.getRootCauseMessage(ex)
         s"""
@@ -152,8 +152,8 @@ object Query {
    */
   def row[I: Schema](q: String, udfs: Udf*): Query[I, Row] =
     new Query[I, Row] {
-      val query = q
-      def apply(c: SCollection[I]) = {
+      val query: String = q
+      def apply(c: SCollection[I]): SCollection[Row] = {
 
         // XXX: Hack to set the coder on the existing PCOLLECTION
         // and hide it in a "set schema" dataflow block
@@ -164,8 +164,8 @@ object Query {
         val scoll = c.transform("set schema")(_.map(identity)(coder)).setSchema(Schema[I])
 
         val sqlEnv = BeamSqlEnv.readOnly(
-          PCOLLECTION_NAME,
-          ImmutableMap.of(PCOLLECTION_NAME, new BeamPCollectionTable(scoll.internal)))
+          PCollectionName,
+          ImmutableMap.of(PCollectionName, new BeamPCollectionTable(scoll.internal)))
         var sqlTransform = SqlTransform.query(query)
 
         udfs.foreach {
@@ -195,7 +195,7 @@ object Query {
    */
   def of[I: Schema, O: Schema](q: String, udfs: Udf*): Query[I, O] =
     new Query[I, O] {
-      val query = q
+      val query: String = q
       def apply(s: SCollection[I]): SCollection[O] = {
         try {
           val (schema, to, from) = SchemaMaterializer.materialize(s.context, Schema[O])
@@ -213,15 +213,16 @@ object Query {
   /**
    * Similar to [[Query.of]] exept the query is type-checked at compile time.
    * @note [[query]] needs to be a stable (known at compile time) value.
-   * @see: Query.of
+   * @see Query.of
    */
   def tsql[I: Schema, O: Schema](query: String, udfs: Udf*): Query[I, O] =
-    macro com.spotify.scio.sql.QueryMacros.tsqlImpl[I, O]
+    macro QueryMacros.tsqlImpl[I, O]
 
 }
 
 object QueryMacros {
   import scala.reflect.macros.blackbox
+
   def tsqlImpl[I, O](c: blackbox.Context)(query: c.Expr[String], udfs: c.Expr[Udf]*)(
     iSchema: c.Expr[Schema[I]],
     oSchema: c.Expr[Schema[O]]): c.Expr[Query[I, O]] = {
