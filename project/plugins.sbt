@@ -19,5 +19,5 @@ addSbtPlugin("com.lightbend.paradox" % "sbt-paradox" % "0.4.4")
 addSbtPlugin("io.github.jonas" % "sbt-paradox-material-theme" % "0.5.1")
 
 libraryDependencies ++= Seq(
-  "com.github.os72" % "protoc-jar" % "3.6.0"
+  "com.github.os72" % "protoc-jar" % "3.7.0"
 )

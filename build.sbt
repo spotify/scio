@@ -54,7 +54,7 @@ val kryoVersion = "4.0.2" // explicitly depend on 4.0.1+ due to https://github.c
 val parquetAvroExtraVersion = "0.2.2"
 val parquetVersion = "1.10.1"
 val protobufGenericVersion = "0.2.4"
-val protobufVersion = "3.6.1"
+val protobufVersion = "3.7.0"
 val scalacheckShapelessVersion = "1.1.8"
 val scalacheckVersion = "1.14.0"
 val scalaMacrosVersion = "2.1.1"
@@ -657,7 +657,7 @@ lazy val scioTensorFlow: Project = Project(
     description := "Scio add-on for TensorFlow",
     version in ProtobufConfig := protobufVersion,
     protobufRunProtoc in ProtobufConfig := (args =>
-      com.github.os72.protocjar.Protoc.runProtoc("-v3.6.0" +: args.toArray)),
+      com.github.os72.protocjar.Protoc.runProtoc("-v3.7.0" +: args.toArray)),
     sourceDirectories in Compile := (sourceDirectories in Compile).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     managedSourceDirectories in Compile := (managedSourceDirectories in Compile).value
