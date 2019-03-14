@@ -35,9 +35,9 @@ import scala.reflect.runtime.universe._
 /**
  * Tap for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro files.
  */
-case class GenericRecordTap[T: ClassTag: Coder](path: String,
-                                                @transient private val
-                                                schema: Schema)
+final case class GenericRecordTap[T: ClassTag: Coder](path: String,
+                                                      @transient private val
+                                                      schema: Schema)
     extends Tap[T] {
   private lazy val s = Externalizer(schema)
 
@@ -49,8 +49,7 @@ case class GenericRecordTap[T: ClassTag: Coder](path: String,
 /**
  * Tap for [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]] Avro files.
  */
-case class SpecificRecordTap[T <: SpecificRecordBase: ClassTag: Coder](path: String)(
-  implicit ev: T <:< SpecificRecordBase)
+final case class SpecificRecordTap[T <: SpecificRecordBase: ClassTag: Coder](path: String)
     extends Tap[T] {
 
   override def value: Iterator[T] = FileStorage(path).avroFile[T]()
