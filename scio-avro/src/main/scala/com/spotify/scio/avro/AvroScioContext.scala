@@ -45,7 +45,7 @@ final class AvroScioContext(@transient val self: ScioContext) extends Serializab
    * file.
    */
   def avroFile[T: ClassTag: Coder](path: String, schema: Schema): SCollection[T] =
-    self.read(SchemaAvroIO[T](path, schema))
+    self.read(GenericRecordIO[T](path, schema))
 
   /**
    * Get an SCollection of type [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]]

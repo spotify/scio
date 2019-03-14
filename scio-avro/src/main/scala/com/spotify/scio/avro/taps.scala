@@ -35,9 +35,9 @@ import scala.reflect.runtime.universe._
 /**
  * Tap for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro files.
  */
-case class SchemaAvroTap[T: ClassTag: Coder](path: String,
-                                             @transient private val
-                                             schema: Schema)
+case class GenericRecordTap[T: ClassTag: Coder](path: String,
+                                                @transient private val
+                                                schema: Schema)
     extends Tap[T] {
   private lazy val s = Externalizer(schema)
 
@@ -49,7 +49,7 @@ case class SchemaAvroTap[T: ClassTag: Coder](path: String,
 /**
  * Tap for [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]] Avro files.
  */
-case class SpecificRecordAvroTap[T <: SpecificRecordBase: ClassTag: Coder](path: String)(
+case class SpecificRecordTap[T <: SpecificRecordBase: ClassTag: Coder](path: String)(
   implicit ev: T <:< SpecificRecordBase)
     extends Tap[T] {
 
@@ -86,13 +86,13 @@ final case class AvroTaps(self: Taps) {
    * file.
    */
   def avroFile[T: ClassTag: Coder](path: String, schema: Schema): Future[Tap[T]] =
-    self.mkTap(s"Avro: $path", () => self.isPathDone(path), () => SchemaAvroTap[T](path, schema))
+    self.mkTap(s"Avro: $path", () => self.isPathDone(path), () => GenericRecordTap[T](path, schema))
 
   /** Get a `Future[Tap[T]]` for
    * [[org.apache.avro.specific.SpecificRecordBase SpecificRecordBase]] Avro file.
    */
   def avroFile[T <: SpecificRecordBase: ClassTag: Coder](path: String): Future[Tap[T]] =
-    self.mkTap(s"Avro: $path", () => self.isPathDone(path), () => SpecificRecordAvroTap[T](path))
+    self.mkTap(s"Avro: $path", () => self.isPathDone(path), () => SpecificRecordTap[T](path))
 
   /** Get a `Future[Tap[T]]` for typed Avro source. */
   def typedAvroFile[T <: HasAvroAnnotation: TypeTag: ClassTag: Coder](

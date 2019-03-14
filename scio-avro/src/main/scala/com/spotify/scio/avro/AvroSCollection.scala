@@ -46,7 +46,7 @@ final class AvroSCollection[T](@transient val self: SCollection[T]) extends Seri
     implicit ct: ClassTag[T],
     coder: Coder[T]): Future[Tap[T]] = {
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
-    self.write(SchemaAvroIO[T](path, schema))(param)
+    self.write(GenericRecordIO[T](path, schema))(param)
   }
 
   /**

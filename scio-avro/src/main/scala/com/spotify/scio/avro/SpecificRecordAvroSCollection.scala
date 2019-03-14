@@ -27,7 +27,7 @@ import scala.reflect.ClassTag
 
 final class SpecificRecordAvroSCollection[T <: SpecificRecordBase](
   @transient val self: SCollection[T])
-    extends {
+    extends Serializable {
 
   /**
    * Save this SCollection of type

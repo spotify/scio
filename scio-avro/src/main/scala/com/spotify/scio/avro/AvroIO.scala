@@ -51,7 +51,7 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = CoderMaterializer.beam(sc, Coder[T])
     implicit val bcoder = Coder.avroGenericRecordCoder(AvroBytesUtil.schema)
-    SchemaAvroIO[GenericRecord](path, AvroBytesUtil.schema)
+    GenericRecordIO[GenericRecord](path, AvroBytesUtil.schema)
       .read(sc, params)
       .parDo(new DoFn[GenericRecord, T] {
         @ProcessElement
@@ -75,7 +75,7 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
         private[scio] def processElement(c: DoFn[T, GenericRecord]#ProcessContext): Unit =
           c.output(AvroBytesUtil.encode(elemCoder, c.element()))
       })
-    SchemaAvroIO[GenericRecord](path, AvroBytesUtil.schema).write(bytes, params)
+    GenericRecordIO[GenericRecord](path, AvroBytesUtil.schema).write(bytes, params)
     data.context.makeFuture(tap(Unit))
   }
 
@@ -181,10 +181,11 @@ final case class SpecificRecordIO[T <: SpecificRecordBase: ClassTag: Coder](path
   }
 
   override def tap(read: ReadP): Tap[T] =
-    SpecificRecordAvroTap[T](ScioUtil.addPartSuffix(path))
+    SpecificRecordTap[T](ScioUtil.addPartSuffix(path))
 }
 
-final case class SchemaAvroIO[T: ClassTag: Coder](path: String, schema: Schema) extends AvroIO[T] {
+final case class GenericRecordIO[T: ClassTag: Coder](path: String, schema: Schema)
+    extends AvroIO[T] {
   override type ReadP = Unit
   override type WriteP = AvroIO.WriteParam
 
@@ -214,7 +215,7 @@ final case class SchemaAvroIO[T: ClassTag: Coder](path: String, schema: Schema) 
   }
 
   override def tap(read: ReadP): Tap[T] =
-    SchemaAvroTap[T](ScioUtil.addPartSuffix(path), schema)
+    GenericRecordTap[T](ScioUtil.addPartSuffix(path), schema)
 }
 
 object AvroIO {
@@ -298,7 +299,7 @@ object AvroTyped {
     override def tap(read: ReadP): Tap[T] = {
       val avroT = AvroType[T]
       implicit val bcoder = Coder.avroGenericRecordCoder(avroT.schema)
-      SchemaAvroTap[GenericRecord](ScioUtil.addPartSuffix(path), avroT.schema)
+      GenericRecordTap[GenericRecord](ScioUtil.addPartSuffix(path), avroT.schema)
         .map(avroT.fromGenericRecord)
     }
   }
