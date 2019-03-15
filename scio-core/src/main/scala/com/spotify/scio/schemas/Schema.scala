@@ -63,7 +63,8 @@ final case class RawRecord[T](schema: BSchema,
 }
 
 object RawRecord {
-  def apply[T: ClassTag](provider: SchemaProvider): RawRecord[T] = {
+
+  final def apply[T: ClassTag](provider: SchemaProvider): RawRecord[T] = {
     val td = TypeDescriptor.of(ScioUtil.classOf[T])
     val schema = provider.schemaFor(td)
     def toRow = provider.toRowFunction(td)
@@ -122,7 +123,8 @@ object Schema extends LowPriorityFallbackSchema {
   implicit def javaBeanSchema[T: IsJavaBean: ClassTag]: RawRecord[T] =
     RawRecord[T](new JavaBeanSchema())
 
-  private class SerializableSchema(@transient schema: org.apache.avro.Schema) extends Serializable {
+  private[this] class SerializableSchema(@transient private val schema: org.apache.avro.Schema)
+      extends Serializable {
     private[this] val stringSchema = schema.toString
     def get: org.apache.avro.Schema = new org.apache.avro.Schema.Parser().parse(stringSchema)
   }
@@ -149,7 +151,7 @@ object Schema extends LowPriorityFallbackSchema {
     val provider = new AvroRecordSchema()
     val td = TypeDescriptor.of(rc)
     val schema = provider.schemaFor(td)
-    val avroSchema = new SerializableSchema(ReflectData.get().getSchema(td.getRawType()))
+    val avroSchema = new SerializableSchema(ReflectData.get().getSchema(td.getRawType))
 
     def fromRow = provider.fromRowFunction(td)
 

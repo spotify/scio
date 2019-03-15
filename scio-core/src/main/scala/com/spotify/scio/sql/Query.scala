@@ -21,7 +21,7 @@ import com.spotify.scio.coders._
 import com.spotify.scio.schemas.{PrettyPrint, Record, ScalarWrapper, Schema, SchemaMaterializer}
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.extensions.sql.SqlTransform
-import org.apache.beam.sdk.extensions.sql.impl.BeamSqlEnv
+import org.apache.beam.sdk.extensions.sql.impl.{BeamSqlEnv, ParseException}
 import org.apache.beam.sdk.extensions.sql.impl.schema.BeamPCollectionTable
 import org.apache.beam.sdk.extensions.sql.impl.schema.BaseBeamTable
 import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
@@ -42,11 +42,11 @@ object Query {
 
   // Beam is annoyingly verbose when is parses SQL queries.
   // This function makes is silent.
-  private def silence[A](a: => A): A = {
+  private def silence[A](a: () => A): A = {
     val prop = "org.slf4j.simpleLogger.defaultLogLevel"
     val ll = System.getProperty(prop)
     System.setProperty(prop, "ERROR")
-    val x = a
+    val x = a()
     if (ll != null) System.setProperty(prop, ll)
     x
   }
@@ -57,12 +57,14 @@ object Query {
    * If it fails, a error message is returned in a [[Left]].
    */
   def typecheck[I: Schema, O: Schema](q: Query[I, O]): Either[String, Query[I, O]] = {
-    val schema: BSchema = SchemaMaterializer.fieldType(Schema[I]).getRowSchema()
+    val schema: BSchema = SchemaMaterializer.fieldType(Schema[I]).getRowSchema
 
     val table = new BaseBeamTable(schema) {
-      def buildIOReader(begin: PBegin): PCollection[Row] = ???
-      def buildIOWriter(input: PCollection[Row]): POutput = ???
-      def isBounded(): PCollection.IsBounded = PCollection.IsBounded.BOUNDED
+      override def buildIOReader(begin: PBegin): PCollection[Row] = ???
+
+      override def buildIOWriter(input: PCollection[Row]): POutput = ???
+
+      override def isBounded: PCollection.IsBounded = PCollection.IsBounded.BOUNDED
     }
 
     val sqlEnv =
@@ -71,9 +73,9 @@ object Query {
     val expectedSchema: BSchema =
       Schema[O] match {
         case s @ Record(_, _, _) =>
-          SchemaMaterializer.fieldType(s).getRowSchema()
+          SchemaMaterializer.fieldType(s).getRowSchema
         case _ =>
-          SchemaMaterializer.fieldType(Schema[ScalarWrapper[O]]).getRowSchema()
+          SchemaMaterializer.fieldType(Schema[ScalarWrapper[O]]).getRowSchema
       }
 
     def typesEqual(s1: BSchema.FieldType, s2: BSchema.FieldType): Boolean =
@@ -99,7 +101,7 @@ object Query {
         case Failure(e) => Left(e)
       }
 
-    toEither(Try(silence(sqlEnv.parseQuery(q.query)))).left
+    toEither(Try(silence(() => sqlEnv.parseQuery(q.query)))).left
       .map { ex =>
         val mess = org.apache.commons.lang3.exception.ExceptionUtils.getRootCauseMessage(ex)
         s"""
@@ -121,11 +123,11 @@ object Query {
       }
       .right
       .flatMap {
-        case inferedSchema
-            if typesEqual(BSchema.FieldType.row(inferedSchema),
+        case inferredSchema
+            if typesEqual(BSchema.FieldType.row(inferredSchema),
                           BSchema.FieldType.row(expectedSchema)) =>
           Right(q)
-        case inferedSchema =>
+        case inferredSchema =>
           val message =
             s"""
           |Infered schema for query is not compatible with the expected schema.
@@ -136,7 +138,7 @@ object Query {
           |PCOLLECTION schema:
           |${PrettyPrint.prettyPrint(schema.getFields.asScala.toList)}
           |Query result schema (infered):
-          |${PrettyPrint.prettyPrint(inferedSchema.getFields.asScala.toList)}
+          |${PrettyPrint.prettyPrint(inferredSchema.getFields.asScala.toList)}
           |Expected schema:
           |${PrettyPrint.prettyPrint(expectedSchema.getFields.asScala.toList)}
         """.stripMargin
@@ -196,13 +198,14 @@ object Query {
   def of[I: Schema, O: Schema](q: String, udfs: Udf*): Query[I, O] =
     new Query[I, O] {
       val query: String = q
+
       def apply(s: SCollection[I]): SCollection[O] = {
         try {
           val (schema, to, from) = SchemaMaterializer.materialize(s.context, Schema[O])
           val coll: SCollection[Row] = Query.row[I](query, udfs: _*).apply(s)
           coll.map[O](r => from(r))(Coder.beam(SchemaCoder.of(schema, to, from)))
         } catch {
-          case e: org.apache.beam.sdk.extensions.sql.impl.ParseException =>
+          case e: ParseException =>
             Query
               .typecheck(this)
               .fold(err => throw new RuntimeException(err, e), _ => throw e)
