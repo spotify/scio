@@ -17,8 +17,10 @@
 
 package com.spotify.scio
 
-import scala.language.implicitConversions
 import com.spotify.scio.values._
+import org.apache.avro.specific.SpecificRecordBase
+
+import scala.language.implicitConversions
 
 /**
  * Main package for Avro APIs. Import all.
@@ -37,7 +39,10 @@ package object avro {
 
   implicit def toAvroScioContext(c: ScioContext): AvroScioContext =
     new AvroScioContext(c)
+
   implicit def toAvroSCollection[T](c: SCollection[T]): AvroSCollection[T] =
     new AvroSCollection[T](c)
 
+  implicit def toSpecificRecordAvroSCollection[T <: SpecificRecordBase](
+    c: SCollection[T]): SpecificRecordAvroSCollection[T] = new SpecificRecordAvroSCollection[T](c)
 }
