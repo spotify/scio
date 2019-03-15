@@ -45,6 +45,12 @@ class ScioIOTest extends ScioIOSpec {
     testJobTest(xs)(AvroIO(_))(_.avroFile(_))(_.saveAsAvroFile(_))
   }
 
+  it should "work with case class SpecificRecord" in {
+    val xs = (1 to 100).map(AvroUtils.newCaseClassSpecificRecord)
+    testTap(xs)(_.saveAsAvroFile(_))(".avro")
+    testJobTest(xs)(AvroIO(_))(_.avroFile(_))(_.saveAsAvroFile(_))
+  }
+
   it should "work with GenericRecord" in {
     import AvroUtils.schema
     implicit val coder = Coder.avroGenericRecordCoder(schema)

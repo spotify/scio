@@ -67,19 +67,22 @@ private[scio] final class FileStorage(protected[scio] val path: String) {
       override def close(): Unit = in.close()
     }
 
-  def avroFile[T: ClassTag](schema: Schema = null): Iterator[T] = {
+  def avroFile[T <: SpecificRecordBase: ClassTag]: Iterator[T] = {
     val cls = ScioUtil.classOf[T]
-    val reader = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-      new SpecificDatumReader[T](cls)
-    } else {
-      new GenericDatumReader[T](schema)
-    }
+    val reader = new SpecificDatumReader[T](cls)
+    avroRecords(reader)
+  }
 
+  def avroFile[T: ClassTag](schema: Schema): Iterator[T] = {
+    val reader = new GenericDatumReader[T](schema)
+    avroRecords(reader)
+  }
+
+  private def avroRecords[T](reader: GenericDatumReader[T]) =
     listFiles
       .map(m => DataFileReader.openReader(getAvroSeekableInput(m), reader))
       .map(_.iterator().asScala)
       .reduce(_ ++ _)
-  }
 
   def textFile: Iterator[String] = {
     val factory = new CompressorStreamFactory()

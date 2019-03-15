@@ -22,7 +22,11 @@ import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
+import com.spotify.scio.avro.AvroUtils.{
+  newCaseClassSpecificRecord,
+  newGenericRecord,
+  newSpecificRecord
+}
 import com.spotify.scio.avro._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.io._
@@ -52,6 +56,15 @@ object SpecificAvroFileJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.avroFile[TestRecord](args("input"))
+      .saveAsAvroFile(args("output"))
+    sc.close()
+  }
+}
+
+object CaseClassSpecificAvroFileJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.avroFile[CaseClassTestRecord](args("input"))
       .saveAsAvroFile(args("output"))
     sc.close()
   }
@@ -274,6 +287,27 @@ class JobTestTest extends PipelineSpec {
     }
     an[AssertionError] should be thrownBy {
       testSpecificAvroFileJob((1 to 4).map(newSpecificRecord))
+    }
+  }
+
+  def testCaseClassSpecificAvroFileJob(xs: Seq[CaseClassTestRecord]): Unit = {
+    JobTest[CaseClassSpecificAvroFileJob.type]
+      .args("--input=in.avro", "--output=out.avro")
+      .input(AvroIO[CaseClassTestRecord]("in.avro"), (1 to 3).map(newCaseClassSpecificRecord))
+      .output(AvroIO[CaseClassTestRecord]("out.avro"))(_ should containInAnyOrder(xs))
+      .run()
+  }
+
+  it should "pass correct case class SpecificRecord AvroFileIO" in {
+    testCaseClassSpecificAvroFileJob((1 to 3).map(newCaseClassSpecificRecord))
+  }
+
+  it should "fail incorrect case class SpecificRecord AvroFileIO" in {
+    an[AssertionError] should be thrownBy {
+      testCaseClassSpecificAvroFileJob((1 to 2).map(newCaseClassSpecificRecord))
+    }
+    an[AssertionError] should be thrownBy {
+      testCaseClassSpecificAvroFileJob((1 to 4).map(newCaseClassSpecificRecord))
     }
   }
 

@@ -22,11 +22,12 @@ import com.spotify.scio._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io.{FileStorage, Tap, Taps}
+import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values._
 import com.twitter.chill.Externalizer
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.{SpecificData, SpecificRecordBase}
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -52,7 +53,16 @@ final case class GenericRecordTap[T: ClassTag: Coder](path: String,
 final case class SpecificRecordTap[T <: SpecificRecordBase: ClassTag: Coder](path: String)
     extends Tap[T] {
 
-  override def value: Iterator[T] = FileStorage(path).avroFile[T]()
+  override def value: Iterator[T] = {
+    val cls = ScioUtil.classOf[T]
+    if (classOf[scala.Product] isAssignableFrom cls) {
+      FileStorage(path)
+        .avroFile[GenericRecord](cls.newInstance().getSchema)
+        .map(e => SpecificData.get().deepCopy(e.getSchema, e).asInstanceOf[T])
+    } else {
+      FileStorage(path).avroFile[T]
+    }
+  }
 
   override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path)
 }

@@ -27,7 +27,7 @@ import com.spotify.scio.{avro, ScioContext}
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.{SpecificData, SpecificRecordBase}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
 import org.apache.beam.sdk.{io => beam}
@@ -163,8 +163,16 @@ final case class SpecificRecordIO[T <: SpecificRecordBase: ClassTag: Coder](path
    */
   override def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val cls = ScioUtil.classOf[T]
-    val t = beam.AvroIO.read(cls).from(path)
-    sc.wrap(sc.applyInternal(t))
+    if (classOf[scala.Product] isAssignableFrom cls) {
+      GenericRecordIO[GenericRecord](path, cls.newInstance().getSchema)
+        .read(sc, params)
+        .map(e => {
+          SpecificData.get().deepCopy(e.getSchema, e).asInstanceOf[T]
+        })
+    } else {
+      val t = beam.AvroIO.read(cls).from(path)
+      sc.wrap(sc.applyInternal(t))
+    }
   }
 
   /**
@@ -173,7 +181,13 @@ final case class SpecificRecordIO[T <: SpecificRecordBase: ClassTag: Coder](path
    */
   override def write(data: SCollection[T], params: WriteP): Future[Tap[T]] = {
     val cls = ScioUtil.classOf[T]
-    val t = beam.AvroIO.write(cls)
+    val t = if (classOf[scala.Product] isAssignableFrom cls) {
+      beam.AvroIO
+        .writeGenericRecords(cls.newInstance().getSchema)
+        .asInstanceOf[beam.AvroIO.Write[T]]
+    } else {
+      beam.AvroIO.write(cls)
+    }
     data.applyInternal(
       avroOut(data, t, path, params.numShards, params.suffix, params.codec, params.metadata))
     data.context.makeFuture(tap(Unit))
