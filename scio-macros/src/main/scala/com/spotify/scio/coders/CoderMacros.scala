@@ -17,6 +17,8 @@
 
 package com.spotify.scio.coders
 
+import com.spotify.scio.MagnoliaMacros
+
 import scala.reflect.macros._
 
 private[coders] object CoderMacros {
@@ -132,44 +134,7 @@ private[coders] object CoderMacros {
               s"Automatic coder derivation can't derive a Coder for $wtt <: Seq")
     }
 
-    val magTree = magnolia.Magnolia.gen[T](c)
-
-    def getLazyVal =
-      magTree match {
-        case q"val $name = $body; $rest" =>
-          body
-      }
-
-    // Remove annotations from magnolia since they are
-    // not serialiazable and we don't use them anyway
-    // scalastyle:off line.size.limit
-    val removeAnnotations =
-      new Transformer {
-        override def transform(tree: Tree) = {
-          tree match {
-            case Apply(AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps),
-                       List(typeName, isObject, isValueClass, params, annotations)) =>
-              val t2 = Apply(AppliedTypeTree(Select(pack, TypeName("CaseClass")), ps),
-                             List(typeName, isObject, isValueClass, params, q"""Array()"""))
-              super.transform(t2)
-            case q"""magnolia.Magnolia.param[$tc, $t, $p]($name, $idx, $repeated, $tcParam, $defaultVal, $annotations)""" =>
-              val t2 =
-                q"""_root_.magnolia.Magnolia.param[$tc, $t, $p]($name, $idx, $repeated, $tcParam, $defaultVal, Array())"""
-              super.transform(t2)
-            case q"""new magnolia.SealedTrait($typeName, $subtypes, $annotations)""" =>
-              val t2 = q"""new _root_.magnolia.SealedTrait($typeName, $subtypes, Array())"""
-              super.transform(t2)
-            case q"""magnolia.Magnolia.subtype[$tc, $t, $p]($typeName, $id, $annotations, $coder, $cast0, $cast1)""" =>
-              val t2 =
-                q"""_root_.magnolia.Magnolia.subtype[$tc, $t, $p]($typeName, $id, Array(), $coder, $cast0, $cast1)"""
-              super.transform(t2)
-            case t =>
-              super.transform(t)
-          }
-        }
-      }
-    // scalastyle:on line.size.limit
-    val coder = removeAnnotations.transform(getLazyVal)
+    val magTree = MagnoliaMacros.genWithoutAnnotations[T](c)
 
     val isPrivateContructor =
       wtt.decls
@@ -186,7 +151,7 @@ private[coders] object CoderMacros {
         q"""_root_.com.spotify.scio.coders.Coder.fallback[$wtt](null)"""
       } else {
         //XXX: find a way to get rid of $outer references at compile time
-        coder
+        magTree
       }
 
     tree

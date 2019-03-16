@@ -200,5 +200,6 @@ trait LowPrioritySchemaDerivation {
     Derived.combineSchema(ps, ctx.rawConstruct)
   }
 
-  implicit def gen[T]: Schema[T] = macro Magnolia.gen[T]
+  import com.spotify.scio.MagnoliaMacros
+  implicit def gen[T]: Schema[T] = macro MagnoliaMacros.genWithoutAnnotations[T]
 }
