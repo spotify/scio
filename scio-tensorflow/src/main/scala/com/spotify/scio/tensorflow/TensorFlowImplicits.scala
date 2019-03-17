@@ -21,6 +21,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
 import org.tensorflow.example.{Example, SequenceExample}
+
 import scala.reflect.ClassTag
 import scala.language.implicitConversions
 

@@ -17,12 +17,11 @@
 
 package com.spotify.scio.tensorflow
 
-import scala.collection.JavaConverters._
-
 import com.google.protobuf.ByteString
+import com.spotify.scio.testing.ScioIOSpec
 import org.tensorflow.example._
 
-import com.spotify.scio.testing.ScioIOSpec
+import scala.collection.JavaConverters._
 
 object TFSequenceExampleIOTest {
 

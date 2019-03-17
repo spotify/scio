@@ -18,12 +18,13 @@
 package com.spotify.scio.tensorflow
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
+import com.spotify.scio.io.{ScioIO, Tap, TapOf}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.{io => beam}
 import org.tensorflow.example.{Example, SequenceExample}
+
 import scala.concurrent.Future
 
 final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {
