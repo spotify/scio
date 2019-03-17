@@ -18,13 +18,12 @@
 package com.spotify.scio.tensorflow
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.{ScioIO, Tap, TapOf}
+import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.{io => beam}
-import org.tensorflow.example.Example
-
+import org.tensorflow.example.{Example, SequenceExample}
 import scala.concurrent.Future
 
 final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {
@@ -67,7 +66,7 @@ final case class TFExampleIO(path: String) extends ScioIO[Example] {
   override type WriteP = TFExampleIO.WriteParam
   override val tapT = TapOf[Example]
 
-  override def testId: String = s"TFRecordIO($path)"
+  override def testId: String = s"TFExampleIO($path)"
 
   override def read(sc: ScioContext, params: ReadP): SCollection[Example] =
     TFRecordMethods.read(sc, path, params).map(Example.parseFrom)
@@ -86,6 +85,26 @@ object TFExampleIO {
   type WriteParam = TFRecordIO.WriteParam
   val ReadParam = TFRecordIO.ReadParam
   val WriteParam = TFRecordIO.WriteParam
+}
+
+final case class TFSequenceExampleIO(path: String) extends ScioIO[SequenceExample] {
+  override type ReadP = TFExampleIO.ReadParam
+  override type WriteP = TFExampleIO.WriteParam
+  override val tapT = TapOf[SequenceExample]
+
+  override def testId: String = s"TFSequenceExampleIO($path)"
+
+  override def read(sc: ScioContext, params: ReadP): SCollection[SequenceExample] =
+    TFRecordMethods.read(sc, path, params).map(SequenceExample.parseFrom)
+
+  override def write(data: SCollection[SequenceExample],
+                     params: WriteP): Future[Tap[SequenceExample]] = {
+    TFRecordMethods.write(data.map(_.toByteArray), path, params)
+    data.context.makeFuture(tap(TFExampleIO.ReadParam(params.compression)))
+  }
+
+  override def tap(params: ReadP): Tap[SequenceExample] =
+    TFRecordMethods.tap(params, path).map(SequenceExample.parseFrom)
 }
 
 private object TFRecordMethods {

@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentMap
 import java.util.function.Function
 
 import com.google.common.collect.Maps
+
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.Tap
 import com.spotify.scio.transforms.DoFnWithResource
@@ -32,17 +33,17 @@ import com.spotify.zoltar.tf.{TensorFlowGraphModel, TensorFlowModel}
 import com.spotify.zoltar.{Model, Models}
 import com.twitter.algebird.{Aggregator, MultiAggregator}
 import javax.annotation.Nullable
+
 import org.apache.beam.sdk.io.{Compression, FileSystems}
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Teardown}
 import org.apache.beam.sdk.util.MimeTypes
 import org.slf4j.LoggerFactory
 import org.tensorflow._
-import org.tensorflow.example.Example
+import org.tensorflow.example.{Example, SequenceExample}
 import org.tensorflow.example.Feature.KindCase
 import org.tensorflow.framework.ConfigProto
 import org.tensorflow.metadata.v0._
-
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -448,4 +449,24 @@ final class TFRecordSCollectionFunctions[T <: Array[Byte]](private val self: SCo
     self.asInstanceOf[SCollection[Array[Byte]]].write(TFRecordIO(path))(param)
   }
 
+}
+
+final class TFSequenceExampleSCollectionFunctions[T <: SequenceExample](
+  private val self: SCollection[T])
+    extends AnyVal {
+
+  /**
+   * Saves this SCollection of `org.tensorflow.example.SequenceExample` as a TensorFlow
+   * TFRecord file.
+   *
+   * @return
+   */
+  def saveAsTfSequenceExampleFile(
+    path: String,
+    suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
+    compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards): Future[Tap[SequenceExample]] = {
+    val param = TFExampleIO.WriteParam(suffix, compression, numShards)
+    self.asInstanceOf[SCollection[SequenceExample]].write(TFSequenceExampleIO(path))(param)
+  }
 }

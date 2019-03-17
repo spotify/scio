@@ -20,8 +20,7 @@ package com.spotify.scio.tensorflow
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
-import org.tensorflow.example.Example
-
+import org.tensorflow.example.{Example, SequenceExample}
 import scala.reflect.ClassTag
 import scala.language.implicitConversions
 
@@ -65,6 +64,13 @@ trait TensorFlowImplicits {
     s: SCollection[Seq[T]]): SeqTFExampleSCollectionFunctions[T] =
     new SeqTFExampleSCollectionFunctions(s)
 
+  /**
+   * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
+   * [[TFSequenceExampleSCollectionFunctions]].
+   */
+  implicit def makeSequenceTFExampleSCollectionFunctions[T <: SequenceExample](
+    s: SCollection[T]): TFSequenceExampleSCollectionFunctions[T] =
+    new TFSequenceExampleSCollectionFunctions(s)
 }
 
 /**
